@@ -1,2 +1,2 @@
-chipsec
+CHIPSEC
 =======
