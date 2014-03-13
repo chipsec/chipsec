@@ -12,9 +12,9 @@ security test suite, security assessment tools for various low level components 
 as well as forensic capabilities for firmware
 
 CHIPSEC can run on any of these environments:
-1. Windows (client and server)
-2. Linux
-3. UEFI Shell
+ 1. Windows (client and server)
+ 2. Linux
+ 3. UEFI Shell
 
 
 NOTE: This software is for security testing purposes. Use at your own risk.
