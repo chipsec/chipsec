@@ -1,0 +1,49 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!                                              WARNING
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Chipsec should only be run on test systems! It should not be installed/deployed on end-user systems!
+!! 
+!! There are multiple reasons for that:
+!! 
+!! 1. Chipsec kernel drivers provide raw access to HW resources to user-mode applications
+!! (like access to physical memory). This would allow malware to compromise the OS kernel.
+!!
+!! 2. The driver is distributed as a source code. In order to load it on OS which requires signed drivers
+!! (e.g. x64 Microsoft Windows 7 and higher), you'll need to enable TestSigning mode and self-sign the
+!! driver binary. Enabling TestSigning (or equivalent) mode also turns off important protection of OS kernel.
+!!
+!! 3. Due to the nature of access to HW resources, if any chipsec module issues incorrect access
+!! to these HW resources, OS can crash/hang.
+!!
+!! If, for any reason, you want to production sign chipsec driver and deploy chipsec on end-user systems,
+!! DON'T!
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+1. Build chipsec_hlpr.sys on Windows 32bit and 64bit
+----------------------------------------------------
+
+- Install WDK 7600
+  You can get WDK (e.g. WDK 7600.16385.1) from http://www.microsoft.com/en-us/download/details.aspx?id=11800
+- Open WDK build environment command prompt:
+  "x86 Free Build Environment" or "x64 Free Build Environment" (for release build)
+  "x86 Checked Build Environment" or "x64 Checked Build Environment" (for debug build)
+- cd <PATH_TO_CHIPSEC>\source\drivers\win7
+- build -cZg
+- If build complete without errors the driver binary (chipsec_hlpr.sys) will be in source\drivers\win7\sys\i386 or source\drivers\win7\sys\amd64 directory
+
+
+2. Sign driver on Windows 64bit
+----------------------------------------------------
+
+- Run in "x64 Free Build Environment" (or "x64 Checked Build Environment"):
+  makecert -r -n "CN=Chipsec" -ss ChipsecCertStore -sr LocalMachine
+- cd sign
+- Run "sign64_sys.bat" to sign .sys file and have CHIPSEC install the driver automatically  
+- If any error/warning returned, create a new certificate store and modify "sign64_sys.bat" accordingly
+- copy the signed *.sys file to source/tool/chipsec/helper/win/win7_amd64/ or source/tool/chipsec/helper/win/win7_x86/ 
+- You'll need to enable loading test-signed kernel mode drivers
+
+
