@@ -93,14 +93,6 @@ Windows Server 2008 x86 and AMD64
      * Then to stop/delete service:
        sc stop chipsec
        sc delete chipsec
-   OR
-     * Open Device Manager
-     * Right click on computer name > "Add legacy hardware"
-     * Next > "Install the hardware that I manually select from the list (Advanced)"
-     * Next > Choose "System devices"
-     * Next > "Have Disk"
-     * Select chipsec.inf
-
 
 
 UEFI shell

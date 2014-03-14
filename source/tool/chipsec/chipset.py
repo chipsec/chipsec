@@ -77,51 +77,15 @@ CHIPSET_ID_IVB     = 9
 CHIPSET_ID_HSW     = 10
 CHIPSET_ID_BDW     = 11
 CHIPSET_ID_BYT     = 12
-CHIPSET_ID_JKT      = 13
-CHIPSET_ID_HSX      = 14
-CHIPSET_ID_IVT      = 15
+CHIPSET_ID_JKT     = 13
+CHIPSET_ID_HSX     = 14
+CHIPSET_ID_IVT     = 15
 
 VID_INTEL = 0x8086
 
 # PCI 0/0/0 Device IDs
 Chipset_Dictionary = {
 # DID  : Data Dictionary
-
-# 3 Series Desktop Chipset (Bearlake) = 29xx
-#0x2970 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH / ICH9' },
-#0x2980 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - Woodriver / ICH9' },
-#0x2990 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - Aledo / ICH9' },
-#0x29B0 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - Q35 Host Controller / ICH9' },
-#0x29C0 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - G33/P35 Host Controller / ICH9' },
-#0x29D0 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - Q33 Host Controller / ICH9' },
-#0x29E0 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - X38 Host Controller / ICH9' },
-#0x29F0 : {'name' : 'Bearlake',   'id' : CHIPSET_ID_BLK , 'code' : 'BLK',  'longname' : 'BearLake MCH - Bigby / ICH9' },
-
-# 4 Series Mobile Chipset (Cantiga) = 2A4x - 2AF0
-#0x2A40 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2A50 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2A60 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2A70 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2A80 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2A90 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2AA0 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2AB0 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2AC0 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2AD0 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2AE0 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-#0x2AF0 : {'name' : 'Cantiga',    'id' : CHIPSET_ID_CNTG, 'code' : 'CNTG',  'longname' : 'Cantiga MCH / ICH9m' },
-
-# 4 Series Desktop Chipset (Eaglelake) = 2E0x,2E1x,2E2x,2E3x,2E4
-#0x2E00 : {'name' : 'Eaglelake',  'id' : CHIPSET_ID_EGLK, 'code' : 'EGLK',  'longname' : 'EagleLake MCH / ICH10' },
-#0x2E10 : {'name' : 'Eaglelake',  'id' : CHIPSET_ID_EGLK, 'code' : 'EGLK',  'longname' : 'EagleLake MCH - Q45/Q43 Host Controller / ICH10' },
-#0x2E20 : {'name' : 'Eaglelake',  'id' : CHIPSET_ID_EGLK, 'code' : 'EGLK',  'longname' : 'EagleLake MCH - G45/G43/P45 Host Controller / ICH10'    },
-#0x2E30 : {'name' : 'Eaglelake',  'id' : CHIPSET_ID_EGLK, 'code' : 'EGLK',  'longname' : 'EagleLake MCH - G41 Host Controller / ICH10'            },
-#0x2E40 : {'name' : 'Eaglelake',  'id' : CHIPSET_ID_EGLK, 'code' : 'EGLK',  'longname' : 'EagleLake MCH - B43 Host Controller / ICH10'            },
-#0x2E90 : {'name' : 'Eaglelake',  'id' : CHIPSET_ID_EGLK, 'code' : 'EGLK',  'longname' : 'EagleLake MCH - B43 (Upgraded) Host Controller / ICH10' },
-
-# Core Processor Family (Westmere)
-# 0040h - 007Fh
-#0x0040 : {'name' : 'Westmere',     'id' : CHIPSET_ID_WSM , 'code' : 'WSM',  'longname' : 'Westmere (Ironlake MCH) / Ibex Peak PCH' },
 
 # 2nd Generation Core Processor Family (Sandy Bridge)
 0x0100 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : 'SNB',  'longname' : 'Desktop 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)' },
@@ -142,15 +106,9 @@ Chipset_Dictionary = {
 0x0A00 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 0x0A04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 0x0A08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
-0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : 'HSX',  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
-
-# 5th Generation Core Processor Family (Broadwell)
-0x1602 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
-0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
-0x1606 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Intel Xeon Processor E3 (Broadwell CPU)' },
 
 # Bay Trail SoC
-0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : 'BYT',  'longname' : 'Bay Trail' },
+0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : 'BYT',  'longname' : 'Intel Bay Trail' },
 
 }
  
