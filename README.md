@@ -1,5 +1,6 @@
-Read [WARNING.txt](source/tool/WARNING.txt)
+Read [WARNING.txt](source/tool/WARNING.txt) before using.
 
+Questions? enter a new issue labeled as question, or e-mail chipsec@intel.com.
 
 1. Description
 ====================================================================
