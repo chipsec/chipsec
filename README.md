@@ -35,13 +35,13 @@ Windows
 -----------------------
 
 Supports the following client versions:
-Windows 8 x86 and AMD64
-Windows 7 x86 and AMD64
-Windows XP (support discontinued)
+ - Windows 8 x86 and AMD64
+ - Windows 7 x86 and AMD64
+ - Windows XP (support discontinued)
 
 Supports the following server versions:
-Windows Server 2012 x86 and AMD64
-Windows Server 2008 x86 and AMD64
+ - Windows Server 2012 x86 and AMD64
+ - Windows Server 2008 x86 and AMD64
 
 
 1. Install Python (http://www.python.org/download/)
@@ -85,37 +85,46 @@ Windows Server 2008 x86 and AMD64
 5. Notes on loading chipsec kernel driver:
    - On Windows 7, launch CMD.EXE as Administrator
    - CHIPSEC will attempt to automatically register and start its service (load driver) or call existing if it's already started.
-
    - (OPTIONAL) You can manually register and start the service/driver. Follow below instructions before running CHIPSEC
      then run it with "--exists" command-line option. CHIPSEC will not attempt to start the driver but will call already running driver.
-     * To start the service (in cmd.exe)
-       sc create chipsec binpath="<PATH_TO_CHIPSEC_DIR>\\chipsec\\win\\<YOUR_PLATFORM>\\chipsec_hlpr.sys" type= kernel DisplayName="Chipsec driver"
-       sc start chipsec
-     * Then to stop/delete service:
-       sc stop chipsec
-       sc delete chipsec
 
+To start the service (in cmd.exe)
+     
+```
+sc create chipsec binpath="<PATH_TO_CHIPSEC_DIR>\\chipsec\\win\\<YOUR_PLATFORM>\\chipsec_hlpr.sys" type= kernel DisplayName="Chipsec driver"
+sc start chipsec
+```
+
+
+Then to stop/delete service: 
+
+```
+sc stop chipsec
+sc delete chipsec
+```
 
 UEFI shell
 -----------------------
 
 If you don't have bootable USB thumb drive with UEFI Shell yet, you need to build it:
-1. Download UDK from Tianocore http://sourceforge.net/apps/mediawiki/tianocore/index.php?title=UDK2010 (Tested with UDK2010.SR1)
-2. Follow instructions in DuetPkg/ReadMe.txt to create a bootable USB thumb drive with UEFI Shell (DUET)
+ 1. Download UDK from Tianocore http://sourceforge.net/apps/mediawiki/tianocore/index.php?title=UDK2010 (Tested with UDK2010.SR1)
+ 2. Follow instructions in DuetPkg/ReadMe.txt to create a bootable USB thumb drive with UEFI Shell (DUET)
    
-Installing CHIPSEC on bootable thumb drive with UEFI shell:
-1. Extract contents of __install__/UEFI/chipsec_uefi.7z to the DUET USB drive
+#### Installing CHIPSEC on bootable thumb drive with UEFI shell:
+ 1. Extract contents of __install__/UEFI/chipsec_uefi.7z to the DUET USB drive
    - This will create /efi/Tools directory with Python.efi and /efi/StdLib with subdirectories
-2. Copy contents of CHIPSEC (source/tool) to the DUET USB drive
-3. Reboot to the USB drive (this will load UEFI shell)
-4. Run CHIPSEC in UEFI shell
-   a. fs0:
-   b. cd source/tool
-   c. python chipsec_main.py (or python chipsec_util.py)
+ 2. Copy contents of CHIPSEC (source/tool) to the DUET USB drive
+ 3. Reboot to the USB drive (this will load UEFI shell)
+ 4. Run CHIPSEC in UEFI shell
+```
+   fs0:
+   cd source/tool
+   python chipsec_main.py (or python chipsec_util.py)
+```
 
 
+#### Extending CHIPSEC functionality for UEFI
 
-[Extending CHIPSEC functionality for UEFI]
 You don't need to read this section if you don't plan on extending native UEFI functionality for CHIPSEC.
 
 Native functions accessing HW resources are built directly into Python UEFI port in built-in edk2 module.
@@ -145,34 +154,36 @@ Linux
 -----------------------
 
 Tested on:
-  Linux 3.2.6 x32 (Mint/Ubuntu)
-  Linux 2.6.32 x32 (Ubuntu)
-  Fedora 20 LXDE 64bit
+ - Linux 3.2.6 x32 (Mint/Ubuntu)
+ - Linux 2.6.32 x32 (Ubuntu)
+ - Fedora 20 LXDE 64bit
 
 Creating a Live Linux image with CHIPSEC:
-1. Download things you will need
-   a. Download chipsec
-   b. liveusb-creator: https://fedorahosted.org/liveusb-creator/
-   c. desired Linux image (e.g. 64bit Fedora 20 LXDE)
+
+1. Download things you will need:
+   - Download chipsec
+   - liveusb-creator: https://fedorahosted.org/liveusb-creator/
+   - desired Linux image (e.g. 64bit Fedora 20 LXDE)
 2. Use liveusb-creator to image a USB stick with the desired linux image. Include as much persistent storage as possible.
 3. Reboot to USB
 4. Update and install necessary packages
-   #> yum install kernel kernel-devel python python-devel gcc
+   ```#> yum install kernel kernel-devel python python-devel gcc```
 5. Copy chipsec to the USB stick
 
 Installing CHIPSEC:
+
 6. Build Linux driver for CHIPSEC
-   a. cd source/drivers/linux
-   b. make
+   - ```#> cd source/drivers/linux ```
+   - ```#> make ```
 7. Load CHIPSEC driver in running system
-   a. cd source/drivers/linux
-   b. (Optional) chmod 755 run.sh
-   c. sudo ./run.sh or sudo make install
+   - ```#> cd source/drivers/linux ```
+   - ```#> chmod 755 run.sh ```
+   - ```#> sudo ./run.sh or sudo make install```
 8. Run CHIPSEC
-   a. cd source/tool
-   b. sudo python chipsec_main.py (or sudo python chipsec_util.py)
+   - ```#> cd source/tool ```
+   - ```#> sudo python chipsec_main.py ``` (or ```#> sudo python chipsec_util.py```)
 9. Remove CHIPSEC driver after using
-   a. sudo make uninstall
+   - ```#> sudo make uninstall ```
 
 
 
@@ -187,6 +198,7 @@ Open elevated Windows command shell (CMD.EXE) as Administrator
 
 - In command shell, run chipsec_main.py
  > python chipsec_main.py --help
+
 ```
 USAGE: chipsec_main.py [options]
 OPTIONS:
@@ -220,7 +232,7 @@ Using CHIPSEC as Python package
 
 - The directory should contain file 'setup.py'.
 - Install CHIPSEC into your system's site-packages directory:
-  # python setup.py install
+  ``` # python setup.py install ```
 
 Compiling CHIPSEC executables on Windows 
 ----------------------------------------
@@ -228,15 +240,15 @@ Compiling CHIPSEC executables on Windows
 - Directories "bin/<platform>" should already contain compiled CHIPSEC binaries:
   "chipsec_main.exe", "chipsec_util.exe"
 - To run all security tests run "chipsec_main.exe" from "bin" directory:
-  # chipsec_main.exe
+  ``` # chipsec_main.exe ```
 - To access hardware resources run "chipsec_util.exe" from "bin" directory:
-  # chipsec_util.exe
+  ``` # chipsec_util.exe ```
 
 If directory "bin" doesn't exist, then you can compile CHIPSEC executables:
 
 - Install "py2exe" package from http://www.py2exe.org
 - From root chipsec directory run "build_exe_<platform>.py" as follows:
-  # python build_exe_<platform>.py py2exe
+  ``` # python build_exe_<platform>.py py2exe ```
 - chipsec_main.exe, chipsec_util.exe executables and required libraries will be created in "bin/<platform>" directory
 
 
