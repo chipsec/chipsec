@@ -1,4 +1,4 @@
-INC=-I/usr/include/python2.7
+INC ?= -I/usr/include/python2.7
 
 cores: 	
 	$(CC) $(INC) -c -fPIC cores.c -o cores.o
