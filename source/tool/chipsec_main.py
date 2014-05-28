@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2014, Intel Corporation
 # 
