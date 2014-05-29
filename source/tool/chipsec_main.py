@@ -209,6 +209,13 @@ def unload_module( module_path ):
     return True
 
 
+#
+# Returns a chipsec-module relative path if given an absolute path
+# beginning with INSTALL_MOD_PREFIX. Returns path unchanged otherwise.
+#
+def make_relative( path ):
+    return path.replace( INSTALL_MOD_PATH_PREFIX + os.path.sep, "" )
+
 def load_my_modules():
     #
     # Step 1.
@@ -220,7 +227,8 @@ def load_my_modules():
     for dirname, subdirs, mod_fnames in os.walk( common_path ):
         for modx in mod_fnames:
             if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
-                load_module( os.path.join( dirname, modx ) )
+                path = make_relative( os.path.join( dirname, modx ) )
+                load_module( path )
     #
     # Step 2.
     # Load platform-specific modules from the corresponding platform module directory
@@ -231,7 +239,8 @@ def load_my_modules():
         for dirname, subdirs, mod_fnames in os.walk( chipset_path ):
             for modx in mod_fnames:
                 if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
-                    load_module( os.path.join( dirname, modx ) )
+                    path = make_relative( os.path.join( dirname, modx ) )
+                    load_module( path )
     else:
         logger().log( "[*] No platform specific modules to load" )
     #
@@ -248,10 +257,12 @@ def load_my_modules():
             #    AVAILABLE_MODULES[ _cs.id ][modx.split('.')[0]] = "invalidmodule." + modx.split('.')[0]
                     
     for modx in AVAILABLE_MODULES[ CHIPSET_ID_COMMON ]:
-        load_module( os.path.join( Modules_Path, modx + '.py' ) )
+        path = make_relative( os.path.join( Modules_Path, modx + '.py' ) )
+        load_module( path )
     try:
         for modx in AVAILABLE_MODULES[ _cs.id ]:
-            load_module( os.path.join( Modules_Path, modx + '.py' ) )
+            path = make_relative( os.path.join( Modules_Path, modx + '.py' ) )
+            load_module( path )
     except KeyError:
         pass
     #print Loaded_Modules
