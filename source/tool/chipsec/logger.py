@@ -118,6 +118,7 @@ class Logger:
         pass
         self.mytime = localtime()
         self.logfile = None
+        self.ALWAYS_FLUSH = False
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
         #self._set_log_files()
@@ -188,6 +189,22 @@ class Logger:
     # Logging functions
     ######################################################################
 
+    def flush(self):
+        sys.stdout.flush()
+        if self.LOG_TO_FILE and self.logfile is not None:
+           # not sure why flush doesn't work as excpected
+           # self.logfile.flush()
+           # close and re-open log file
+           try:
+               self.logfile.close()
+               self.logfile = open( self.LOG_FILE_NAME, 'a+' )
+           except None:
+               self.disable()
+
+
+    def set_always_flush( self, val ):
+        self.ALWAYS_FLUSH = val
+
     def log( self, text):
         """Sends plain text to logging."""
         self._log(text, None, None)
@@ -195,15 +212,13 @@ class Logger:
     
     def _log(self, text, color, isStatus):
         """Internal method for logging"""
-        if self.LOG_TO_FILE:
-            self._save_to_log_file( text )
+        if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:              
-            if color:
-                log_color( color, text )
+            if color: log_color( color, text )
             else:
                 print text
-            self.xmlAux.append_stdout(text)
-
+                if self.ALWAYS_FLUSH: sys.stdout.flush()
+            if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
   
     def error( self, text ):
@@ -315,23 +330,34 @@ class Logger:
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
         text = "\n[+] imported %s" % module_name
-        self._log(text, None, None)
+        self._log(text, WHITE, None) 
         self.xmlAux.start_module( module_name )
 
     def end_module( self, module_name ):
+        #text = "\n[-] *** Done *** %s" % module_name
+        #self._log(text, None, None)
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-#        with open(filename, 'a+') as f:
-#            print>>f, text
-#
-#		f = open(filename, 'a+')
-#		try:
-#			print>>f, text
-#		finally:
-#			f.close()
+        """
+           #with open( filename, 'a+' ) as f:
+           #    print >> f, text
+           f = open( filename, 'a+' )
+           try:
+               print >> f, text
+           finally:
+               f.close()
+        """
         print >> self.logfile, text
-
+        if self.ALWAYS_FLUSH:
+           # not sure why flush doesn't work as excpected
+           # self.logfile.flush()
+           # close and re-open log file
+           try:
+               self.logfile.close()
+               self.logfile = open( self.LOG_FILE_NAME, 'a+' )
+           except None:
+               self.disable()
 
     def _save_to_status_log_file(self, text):
         if(self.LOG_TO_STATUS_FILE):

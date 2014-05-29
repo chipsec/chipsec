@@ -166,7 +166,8 @@ class EfiHelper:
 
 
 def get_threads_count ( self ):
-    print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
+    logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
+    #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
     return 0
 
 def get_helper():

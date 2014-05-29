@@ -34,73 +34,77 @@ from chipsec.hal.uefi      import *
 # SPECIFY PLATFORMS THIS MODULE IS APPLICABLE TO
 # ############################################################
 _MODULE_NAME = 'keys'
-AVAILABLE_MODULES[ CHIPSET_ID_COMMON ].append( _MODULE_NAME )
+cs.add_available_module(_MODULE_NAME, 'COMMON')
+
 TAGS = [MTAG_SECUREBOOT]
 
-
-logger = logger()
-_uefi  = UEFI( cs.helper )
-
-SECURE = 0x1
-INSECURE = 0x2
-ERROR = 0x4
-
-def check_EFI_variable_authentication( name, guid ):
-    logger.log( "[*] Checking EFI variable %s {%s}.." % (name, guid) )
-    orig_var = _uefi.get_EFI_variable( name, guid, None )
-    if not orig_var:
-        logger.log( "[*] EFI variable %s {%s} doesn't exist" % (name, guid) )
-        return ERROR
-    fname = name + '_' + guid + '.bin'
-    if logger.VERBOSE: write_file( fname, orig_var )
-    origvar_len = len(orig_var)
-    mod_var = chr( ord(orig_var[0]) ^ 0xFF ) + orig_var[1:] 
-    if origvar_len > 1: mod_var = mod_var[:origvar_len-1] + chr( ord(mod_var[origvar_len-1]) ^ 0xFF )
-    if logger.VERBOSE: write_file( fname + '.mod', mod_var )
-    status = _uefi.set_EFI_variable( name, guid, mod_var )
-    if not status: logger.log( '[*] Writing EFI variable %s did not succeed. Verifying contents..' % name )
-    new_var = _uefi.get_EFI_variable( name, guid, None )
-    if logger.VERBOSE: write_file( fname + '.new', new_var )
-    ok = (origvar_len == len(new_var))
-    for i in range( origvar_len ):
-        if not (new_var[i] == orig_var[i]):
-            ok = INSECURE
-            break
-    if ok == INSECURE:
-        logger.log_bad( "EFI variable %s is not protected! It has been modified. Restoring original contents.." % name )
-        _uefi.set_EFI_variable( name, guid, orig_var )
-    else:                                                                     
-        logger.log_good( "Could not modify EFI variable %s {%s}" % (name, guid) )
-    return ok
-
-# checks authentication of Secure Boot EFI variables
-def check_secureboot_key_variables():
-    sts = 0
-    sts |= check_EFI_variable_authentication( EFI_VAR_NAME_PK,         EFI_VARIABLE_DICT[EFI_VAR_NAME_PK]         )
-    sts |= check_EFI_variable_authentication( EFI_VAR_NAME_KEK,        EFI_VARIABLE_DICT[EFI_VAR_NAME_KEK]        )
-    sts |= check_EFI_variable_authentication( EFI_VAR_NAME_db,         EFI_VARIABLE_DICT[EFI_VAR_NAME_db]         )
-    sts |= check_EFI_variable_authentication( EFI_VAR_NAME_dbx,        EFI_VARIABLE_DICT[EFI_VAR_NAME_dbx]        )
-    sts |= check_EFI_variable_authentication( EFI_VAR_NAME_SecureBoot, EFI_VARIABLE_DICT[EFI_VAR_NAME_SecureBoot] )
-    sts |= check_EFI_variable_authentication( EFI_VAR_NAME_SetupMode,  EFI_VARIABLE_DICT[EFI_VAR_NAME_SetupMode]  )
-    #sts |= check_EFI_variable_authentication( EFI_VAR_NAME_CustomMode, EFI_VARIABLE_DICT[EFI_VAR_NAME_CustomMode] )
-    if (sts & ERROR) != 0: logger.log_important( "Some Secure Boot variables don't exist" )
-
-    ok = ((sts & INSECURE) == 0)
-    logger.log('')
-    if ok: logger.log_passed_check( 'All existing Secure Boot EFI variables seem to be protected' )
-    else:  logger.log_failed_check( 'One or more Secure Boot variables are not protected' )
-    return ok
-
-
-# --------------------------------------------------------------------------
-# run( module_argv )
-# Required function: run here all tests from this module
-# --------------------------------------------------------------------------
-def run( module_argv ):
-    #logger.VERBOSE = True
-    logger.start_test( "Protection of Secure Boot Key and Configuraion EFI Variables" )
-    if not (cs.helper.is_win8_or_greater() or cs.helper.is_linux()):
-        logger.log_skipped_check( 'Currently this module can only run on Windows 8 or greater or Linux. Exiting..' )
-        return ModuleResult.SKIPPED
-    return check_secureboot_key_variables()
+class keys(BaseModule):
+    SECURE = 0x1
+    INSECURE = 0x2
+    ERROR = 0x4
+    
+    def __init__(self):
+        BaseModule.__init__(self)
+        self._uefi  = UEFI( self.cs.helper )
+    
+            
+    
+    def check_EFI_variable_authentication( self, name, guid ):
+        self.logger.log( "[*] Checking EFI variable %s {%s}.." % (name, guid) )
+        orig_var = self._uefi.get_EFI_variable( name, guid, None )
+        if not orig_var:
+            self.logger.log( "[*] EFI variable %s {%s} doesn't exist" % (name, guid) )
+            return keys.ERROR
+        fname = name + '_' + guid + '.bin'
+        if self.logger.VERBOSE: write_file( fname, orig_var )
+        origvar_len = len(orig_var)
+        mod_var = chr( ord(orig_var[0]) ^ 0xFF ) + orig_var[1:] 
+        if origvar_len > 1: mod_var = mod_var[:origvar_len-1] + chr( ord(mod_var[origvar_len-1]) ^ 0xFF )
+        if self.logger.VERBOSE: write_file( fname + '.mod', mod_var )
+        status = self._uefi.set_EFI_variable( name, guid, mod_var )
+        if not status: self.logger.log( '[*] Writing EFI variable %s did not succeed. Verifying contents..' % name )
+        new_var = self._uefi.get_EFI_variable( name, guid, None )
+        if self.logger.VERBOSE: write_file( fname + '.new', new_var )
+        ok = (origvar_len == len(new_var))
+        for i in range( origvar_len ):
+            if not (new_var[i] == orig_var[i]):
+                ok = keys.INSECURE
+                break
+        if ok == keys.INSECURE:
+            self.logger.log_bad( "EFI variable %s is not protected! It has been modified. Restoring original contents.." % name )
+            self._uefi.set_EFI_variable( name, guid, orig_var )
+        else:                                                                     
+            self.logger.log_good( "Could not modify EFI variable %s {%s}" % (name, guid) )
+        return ok
+    
+    # checks authentication of Secure Boot EFI variables
+    def check_secureboot_key_variables(self):
+        sts = 0
+        sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_PK,         EFI_VARIABLE_DICT[EFI_VAR_NAME_PK]         )
+        sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_KEK,        EFI_VARIABLE_DICT[EFI_VAR_NAME_KEK]        )
+        sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_db,         EFI_VARIABLE_DICT[EFI_VAR_NAME_db]         )
+        sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_dbx,        EFI_VARIABLE_DICT[EFI_VAR_NAME_dbx]        )
+        sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_SecureBoot, EFI_VARIABLE_DICT[EFI_VAR_NAME_SecureBoot] )
+        sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_SetupMode,  EFI_VARIABLE_DICT[EFI_VAR_NAME_SetupMode]  )
+        #sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_CustomMode, EFI_VARIABLE_DICT[EFI_VAR_NAME_CustomMode] )
+        if (sts & keys.ERROR) != 0: self.logger.log_important( "Some Secure Boot variables don't exist" )
+    
+        ok = ((sts & keys.INSECURE) == 0)
+        self.logger.log('')
+        if ok: self.logger.log_passed_check( 'All existing Secure Boot EFI variables seem to be protected' )
+        else:  self.logger.log_failed_check( 'One or more Secure Boot variables are not protected' )
+        return ok
+    
+    
+    # --------------------------------------------------------------------------
+    # run( module_argv )
+    # Required function: run here all tests from this module
+    # --------------------------------------------------------------------------
+    def run( self, module_argv ):
+        #self.logger.VERBOSE = True
+        self.logger.start_test( "Protection of Secure Boot Key and Configuraion EFI Variables" )
+        if not (self.cs.helper.is_win8_or_greater() or self.cs.helper.is_linux()):
+            self.logger.log_skipped_check( 'Currently this module can only run on Windows 8 or greater or Linux. Exiting..' )
+            return ModuleResult.SKIPPED
+        return self.check_secureboot_key_variables()
    

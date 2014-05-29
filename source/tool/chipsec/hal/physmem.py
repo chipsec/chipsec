@@ -115,6 +115,13 @@ class Memory:
            logger().log( '[mem] byte to PA = 0x%016X <- 0x%02X' % (phys_address, byte_value) )
         return self.write_physical_mem( phys_address, 1, struct.pack( 'B', byte_value ) )
 
+    # Allocate physical memory buffer
+
+    def alloc_physical_mem( self, length, max_phys_address=0xFFFFFFFFFFFFFFFF ):
+        (va, pa) = self.helper.alloc_physical_mem( length, max_phys_address )
+        if logger().VERBOSE: logger().log( '[mem] Allocated: PA = 0x%016X, VA = 0x%016X' % (pa, va) )
+        return (va, pa)
+
 
     ####################################################################################
     #

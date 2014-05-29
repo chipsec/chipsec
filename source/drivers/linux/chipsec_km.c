@@ -527,8 +527,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		outl((0x80000000) | (bus << 16) | (dev << 11) | (func << 8) | (offset), 0xcf8);
 		switch( ptr[3] ) //Size in bytes
 		{
-			case 1:  outb(val & 0xf, 0xcfc);  break;
-			case 2:	 outw(val & 0xff, 0xcfc); break;
+			case 1:  outb((char)val, 0xcfc);  break;
+			case 2:	 outw((short)val, 0xcfc); break;
 			default: outl(val, 0xcfc);        break;
 		}
 

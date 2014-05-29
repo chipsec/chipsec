@@ -71,7 +71,7 @@ def smbus(argv):
 
     try:
        smbus = SMBus( _cs )
-    except SMBusRuntimeError, msg:
+    except BaseException, msg:
        print msg
        return
 

@@ -102,6 +102,14 @@ Then to stop/delete service:
 sc stop chipsec
 sc delete chipsec
 ```
+OR
+* Open Device Manager
+* Right click on computer name > "Add legacy hardware"
+* Next > "Install the hardware that I manually select from the list (Advanced)"
+* Next > Choose "System devices"
+* Next > "Have Disk"
+* Select chipsec.inf
+
 
 UEFI shell
 -----------------------
@@ -208,13 +216,15 @@ OPTIONS:
 -l --log                output to log file
 
 ADVANCED OPTIONS:
--p --platform           platform in [ SNB | IVB | JKT | BYT | IVT | BDW | HSW | HSX ]
+-p --platform           explicitly specify platform code. Should be among the supported platforms:
+                        [ SNB | IVB | JKT | BYT | IVT | HSW ]
 -n --no_driver          chipsec won't need kernel mode functions so don't load chipsec driver
--i --ignore_platform    run chipsec even if the platform is an unrecognized platform.
+-i --ignore_platform    run chipsec even if the platform is not recognized
 -e --exists             chipsec service has already been manually installed and started (driver loaded).
 -x --xml                specify filename for xml output (JUnit style).
 -t --moduletype         run tests of a specific type (tag).
---list_tags             list all the available options for -t,--moduletype
+   --list_tags          list all the available options for -t,--moduletype
+-I --import             specify additional path to load modules from
 ```
   Use "--no-driver" command-line option if the module you are executing does not require loading kernel mode driver
   Chipsec won't load/unload the driver and won't try to access existing driver

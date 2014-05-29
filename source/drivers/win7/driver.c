@@ -480,6 +480,50 @@ DriverDeviceControl(
                 break;
               }
           }
+        case IOCTL_ALLOC_PHYSMEM:
+          {
+            SIZE_T NumberOfBytes = 0;
+            PVOID va = 0;
+            PHYSICAL_ADDRESS HighestAcceptableAddress = { 0xFFFFFFFF, 0xFFFFFFFF };
+
+            DbgPrint( "[chipsec] > IOCTL_ALLOC_PHYSMEM\n" );
+            pInBuf  = Irp->AssociatedIrp.SystemBuffer;
+            pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+            if( !pInBuf || IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(UINT64) + sizeof(UINT32))
+              {
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+              }
+            RtlCopyBytes( &HighestAcceptableAddress.QuadPart, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT64) );
+            RtlCopyBytes( &NumberOfBytes, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT64), sizeof(UINT32) );
+            DbgPrint( "[chipsec] Allocating: NumberOfBytes = 0x%X, PhysAddr = 0x%I64x", NumberOfBytes, HighestAcceptableAddress.QuadPart );
+            va = MmAllocateContiguousMemory( NumberOfBytes, HighestAcceptableAddress );
+            if( !va )
+              {
+                DbgPrint( "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+                Status = STATUS_UNSUCCESSFUL;
+              }
+            else if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < 2*sizeof(UINT64) )
+              {
+                DbgPrint( "[chipsec] ERROR: STATUS_BUFFER_TOO_SMALL - should be at least 2*UINT64\n" );
+                Status = STATUS_BUFFER_TOO_SMALL;
+              }
+            else
+              {
+                PHYSICAL_ADDRESS pa   = MmGetPhysicalAddress( va );
+                DbgPrint( "[chipsec] Allocated Buffer: VirtAddr = 0x%I64x, PhysAddr = 0x%I64x\n", (UINT64)va, pa.QuadPart );
+                ((UINT64*)pOutBuf)[0] = (UINT64)va;
+                ((UINT64*)pOutBuf)[1] = pa.QuadPart;
+
+                IrpSp->Parameters.Read.Length = 2*sizeof(UINT64);
+                dwBytesWritten = IrpSp->Parameters.Read.Length;
+                Status = STATUS_SUCCESS;
+              }
+
+            break;
+          }
+
         case IOCTL_LOAD_UCODE_PATCH:
           {
             PVOID ucode_buf = NULL;

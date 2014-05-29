@@ -74,7 +74,7 @@ def cmos(argv):
       return
 
     try:
-       cmos = CMOS( _cs )
+       cmos = CMOS(  )
     except CmosRuntimeError, msg:
        print msg
        return

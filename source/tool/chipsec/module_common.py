@@ -34,39 +34,34 @@
 #
 #
 
-from chipsec.logger  import *
-from chipsec.chipset import *
+import platform
+import string
+import sys
+import os
+from time import localtime, strftime
 
-#
-# Instace of Chipset class to be used by all modules
-#
-cs = cs()
-
-def init ():
-    #
-    # Import platform configuration defines in the following order:
-    # 1. chipsec.cfg.common (imported in chipsec.chipset)
-    # 2. chipsec.cfg.<platform>
-    #
-    #from chipsec.cfg.common import *
-    if cs.code and '' != cs.code:
-        try:
-            exec 'from chipsec.cfg.' + cs.code + ' import *'
-            logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % cs.code )
-        except ImportError, msg:
-            if logger().VERBOSE: logger().log( "[*] Couldn't import chipsec.cfg.%s" % cs.code )
+import chipsec.logger
+import chipsec.chipset
+cs = chipsec.chipset.cs()             #\TODO: remove
+logger = chipsec.logger.logger()      #\TODO: remove
+from chipsec.cfg.common      import * #\TODO: remove
 
 
-#
-# Instace of Logger class to be used by all modules
-#
-#logger = logger()
+class BaseModule( object ):
+    def __init__(self):
+        self.cs = chipsec.chipset.cs()
+        self.logger = chipsec.logger.logger()
 
-AVAILABLE_MODULES = dict( [(Chipset_Dictionary[ _did ]['id'], []) for _did in Chipset_Dictionary] )
-AVAILABLE_MODULES[ CHIPSET_ID_COMMON ] = []
-
-DISABLED_MODULES = dict( [(Chipset_Dictionary[ _did ]['id'], []) for _did in Chipset_Dictionary] )
-DISABLED_MODULES[ CHIPSET_ID_COMMON ] = []
+    # This method should be overwritten by the module returning True or False
+    # depending wether or not this module is supported in the currently running
+    # platform.
+    # To access the currently running platform use
+    #    self.cs.code
+    def is_supported(self):
+        raise NotImplementedError('sub class should overwrite this method')
+    
+    def run( self, module_argv ):
+        raise NotImplementedError('sub class should overwrite this method')
 
 
 MTAG_BIOS       = "BIOS"
@@ -84,12 +79,12 @@ MTAG_METAS = {
 ##! [Available Tags]
 MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])
 
-USER_MODULE_TAGS = []
 
 class ModuleResult:
     FAILED  = 0
     PASSED  = 1
     WARNING = 2
     SKIPPED = 3
+    DEPRECATED = 4
     ERROR   = -1
 

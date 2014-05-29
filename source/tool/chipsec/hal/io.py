@@ -61,48 +61,48 @@ class PortIO:
     def _read_port(self, io_port, size ):
         value = self.helper.read_io_port( io_port, size )
         if logger().VERBOSE:
-           logger().log( "[io] reading from I/O port 0x%04X: value = 0x%08X (size = 0x%02x)" % (io_port, value, size) )
+            logger().log( "[io] reading from I/O port 0x%04X: value = 0x%08X (size = 0x%02x)" % (io_port, value, size) )
         return value
 
-    def _write_port(self, io_port, size ):
+    def _write_port(self, io_port, value, size ):
         value = self.helper.write_io_port( io_port, value, size )
         if logger().VERBOSE:
-           logger().log( "[io] writing to I/O port 0x%04X: value = 0x%08X (size = 0x%02x)" % (io_port, value, size) )
+            logger().log( "[io] writing to I/O port 0x%04X: value = 0x%08X (size = 0x%02x)" % (io_port, value, size) )
         return value
 
     def read_port_dword(self, io_port ):
         value = self.helper.read_io_port( io_port, 4 )
         if logger().VERBOSE:
-           logger().log( "[io] reading dword from I/O port 0x%04X -> 0x%08X" % (io_port, value) )
+            logger().log( "[io] reading dword from I/O port 0x%04X -> 0x%08X" % (io_port, value) )
         return value
 
     def read_port_word(self, io_port ):
         value = self.helper.read_io_port( io_port, 2 )
         if logger().VERBOSE:
-           logger().log( "[io] reading word from I/O port 0x%04X -> 0x%04X" % (io_port, value) )
+            logger().log( "[io] reading word from I/O port 0x%04X -> 0x%04X" % (io_port, value) )
         return value
 
     def read_port_byte(self, io_port ):
         value = self.helper.read_io_port( io_port, 1 )
         if logger().VERBOSE:
-           logger().log( "[io] reading byte from I/O port 0x%04X -> 0x%02X" % (io_port, value) )
+            logger().log( "[io] reading byte from I/O port 0x%04X -> 0x%02X" % (io_port, value) )
         return value
 
 
     def write_port_byte(self, io_port, value ):
         if logger().VERBOSE:
-           logger().log( "[io] writing byte to I/O port 0x%04X <- 0x%02X" % (io_port, value) )
+            logger().log( "[io] writing byte to I/O port 0x%04X <- 0x%02X" % (io_port, value) )
         self.helper.write_io_port( io_port, value, 1 )
         return
 
     def write_port_word(self, io_port, value ):
         if logger().VERBOSE:
-           logger().log( "[io] writing word to I/O port 0x%04X <- 0x%04X" % (io_port, value) )
+            logger().log( "[io] writing word to I/O port 0x%04X <- 0x%04X" % (io_port, value) )
         self.helper.write_io_port( io_port, value, 2 )
         return
 
     def write_port_dword(self, io_port, value ):
         if logger().VERBOSE:
-           logger().log( "[io] writing dword to I/O port 0x%04X <- 0x%08X" % (io_port, value) )
+            logger().log( "[io] writing dword to I/O port 0x%04X <- 0x%08X" % (io_port, value) )
         self.helper.write_io_port( io_port, value, 4 )
         return

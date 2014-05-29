@@ -43,7 +43,7 @@ __version__ = '1.0'
 import struct
 import sys
 import time
-
+from chipsec.cfg.common import *
 from chipsec.logger import *
 from chipsec.hal.mmio import *
 from chipsec.file import *
@@ -72,27 +72,27 @@ SPI_READ_WRITE_DEF_DBC = 4
 PCH_RCBA_SPI_BFPR                  = 0x00  # BIOS Flash Primary Region Register (= FREG1)
 
 PCH_RCBA_SPI_HSFSTS                = 0x04  # Hardware Sequencing Flash Status Register
-PCH_RCBA_SPI_HSFSTS_FLOCKDN        = BIT15                         # Flash Configuration Lock-Down
-PCH_RCBA_SPI_HSFSTS_FDV            = BIT14                         # Flash Descriptor Valid
-PCH_RCBA_SPI_HSFSTS_FDOPSS         = BIT13                         # Flash Descriptor Override Pin-Strap Status
-PCH_RCBA_SPI_HSFSTS_SCIP           = BIT5                          # SPI cycle in progress
-PCH_RCBA_SPI_HSFSTS_BERASE_MASK    = (BIT4 | BIT3)                 # Block/Sector Erase Size
+PCH_RCBA_SPI_HSFSTS_FLOCKDN        = Cfg.BIT15                         # Flash Configuration Lock-Down
+PCH_RCBA_SPI_HSFSTS_FDV            = Cfg.BIT14                         # Flash Descriptor Valid
+PCH_RCBA_SPI_HSFSTS_FDOPSS         = Cfg.BIT13                         # Flash Descriptor Override Pin-Strap Status
+PCH_RCBA_SPI_HSFSTS_SCIP           = Cfg.BIT5                          # SPI cycle in progress
+PCH_RCBA_SPI_HSFSTS_BERASE_MASK    = (Cfg.BIT4 | Cfg.BIT3)                 # Block/Sector Erase Size
 PCH_RCBA_SPI_HSFSTS_BERASE_256B    = 0x00                          # Block/Sector = 256 Bytes
 PCH_RCBA_SPI_HSFSTS_BERASE_4K      = 0x01                          # Block/Sector = 4K Bytes
 PCH_RCBA_SPI_HSFSTS_BERASE_8K      = 0x10                          # Block/Sector = 8K Bytes
 PCH_RCBA_SPI_HSFSTS_BERASE_64K     = 0x11                          # Block/Sector = 64K Bytes
-PCH_RCBA_SPI_HSFSTS_AEL            = BIT2                          # Access Error Log
-PCH_RCBA_SPI_HSFSTS_FCERR          = BIT1                          # Flash Cycle Error
-PCH_RCBA_SPI_HSFSTS_FDONE          = BIT0                          # Flash Cycle Done
+PCH_RCBA_SPI_HSFSTS_AEL            = Cfg.BIT2                          # Access Error Log
+PCH_RCBA_SPI_HSFSTS_FCERR          = Cfg.BIT1                          # Flash Cycle Error
+PCH_RCBA_SPI_HSFSTS_FDONE          = Cfg.BIT0                          # Flash Cycle Done
 
 PCH_RCBA_SPI_HSFCTL                = 0x06  # Hardware Sequencing Flash Control Register
-PCH_RCBA_SPI_HSFCTL_FSMIE          = BIT15                         # Flash SPI SMI Enable
+PCH_RCBA_SPI_HSFCTL_FSMIE          = Cfg.BIT15                         # Flash SPI SMI Enable
 PCH_RCBA_SPI_HSFCTL_FDBC_MASK      = 0x3F00                        # Flash Data Byte Count, Count = FDBC + 1.
 PCH_RCBA_SPI_HSFCTL_FCYCLE_MASK    = 0x0006                        # Flash Cycle
 PCH_RCBA_SPI_HSFCTL_FCYCLE_READ    = 0                             # Flash Cycle Read
 PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE   = 2                             # Flash Cycle Write
 PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE   = 3                             # Flash Cycle Block Erase
-PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO     = BIT0                          # Flash Cycle GO
+PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO     = Cfg.BIT0                          # Flash Cycle GO
 
 PCH_RCBA_SPI_FADDR               = 0x08  # SPI Flash Address
 PCH_RCBA_SPI_FADDR_MASK          = 0x07FFFFFF                      # SPI Flash Address Mask [0:26]
@@ -117,29 +117,29 @@ PCH_RCBA_SPI_FDATA15             = 0x4C
 # SPI Flash Regions Access Permisions Register
 PCH_RCBA_SPI_FRAP                = 0x50
 PCH_RCBA_SPI_FRAP_BMWAG_MASK     = 0xFF000000                    
-PCH_RCBA_SPI_FRAP_BMWAG_GBE      = BIT27                         
-PCH_RCBA_SPI_FRAP_BMWAG_ME       = BIT26                         
-PCH_RCBA_SPI_FRAP_BMWAG_BIOS     = BIT25                         
+PCH_RCBA_SPI_FRAP_BMWAG_GBE      = Cfg.BIT27                         
+PCH_RCBA_SPI_FRAP_BMWAG_ME       = Cfg.BIT26                         
+PCH_RCBA_SPI_FRAP_BMWAG_BIOS     = Cfg.BIT25                         
 PCH_RCBA_SPI_FRAP_BMRAG_MASK     = 0x00FF0000                    
-PCH_RCBA_SPI_FRAP_BMRAG_GBE      = BIT19                         
-PCH_RCBA_SPI_FRAP_BMRAG_ME       = BIT18                         
-PCH_RCBA_SPI_FRAP_BMRAG_BIOS     = BIT17                         
+PCH_RCBA_SPI_FRAP_BMRAG_GBE      = Cfg.BIT19                         
+PCH_RCBA_SPI_FRAP_BMRAG_ME       = Cfg.BIT18                         
+PCH_RCBA_SPI_FRAP_BMRAG_BIOS     = Cfg.BIT17                         
 PCH_RCBA_SPI_FRAP_BRWA_MASK      = 0x0000FF00                    
-PCH_RCBA_SPI_FRAP_BRWA_SB        = BIT14                         
-PCH_RCBA_SPI_FRAP_BRWA_DE        = BIT13                         
-PCH_RCBA_SPI_FRAP_BRWA_PD        = BIT12                         
-PCH_RCBA_SPI_FRAP_BRWA_GBE       = BIT11                         
-PCH_RCBA_SPI_FRAP_BRWA_ME        = BIT10                         
-PCH_RCBA_SPI_FRAP_BRWA_BIOS      = BIT9                          
-PCH_RCBA_SPI_FRAP_BRWA_FLASHD    = BIT8                          
+PCH_RCBA_SPI_FRAP_BRWA_SB        = Cfg.BIT14                         
+PCH_RCBA_SPI_FRAP_BRWA_DE        = Cfg.BIT13                         
+PCH_RCBA_SPI_FRAP_BRWA_PD        = Cfg.BIT12                         
+PCH_RCBA_SPI_FRAP_BRWA_GBE       = Cfg.BIT11                         
+PCH_RCBA_SPI_FRAP_BRWA_ME        = Cfg.BIT10                         
+PCH_RCBA_SPI_FRAP_BRWA_BIOS      = Cfg.BIT9                          
+PCH_RCBA_SPI_FRAP_BRWA_FLASHD    = Cfg.BIT8                          
 PCH_RCBA_SPI_FRAP_BRRA_MASK      = 0x000000FF                    
-PCH_RCBA_SPI_FRAP_BRRA_SB        = BIT6                          
-PCH_RCBA_SPI_FRAP_BRRA_DE        = BIT5                          
-PCH_RCBA_SPI_FRAP_BRRA_PD        = BIT4                          
-PCH_RCBA_SPI_FRAP_BRRA_GBE       = BIT3                          
-PCH_RCBA_SPI_FRAP_BRRA_ME        = BIT2                          
-PCH_RCBA_SPI_FRAP_BRRA_BIOS      = BIT1                          
-PCH_RCBA_SPI_FRAP_BRRA_FLASHD    = BIT0                          
+PCH_RCBA_SPI_FRAP_BRRA_SB        = Cfg.BIT6                          
+PCH_RCBA_SPI_FRAP_BRRA_DE        = Cfg.BIT5                          
+PCH_RCBA_SPI_FRAP_BRRA_PD        = Cfg.BIT4                          
+PCH_RCBA_SPI_FRAP_BRRA_GBE       = Cfg.BIT3                          
+PCH_RCBA_SPI_FRAP_BRRA_ME        = Cfg.BIT2                          
+PCH_RCBA_SPI_FRAP_BRRA_BIOS      = Cfg.BIT1                          
+PCH_RCBA_SPI_FRAP_BRRA_FLASHD    = Cfg.BIT0                          
 
 # Flash Region Registers
 PCH_RCBA_SPI_FREG0_FLASHD           = 0x54  # Flash Region 0 (Flash Descriptor)
@@ -155,40 +155,40 @@ PCH_RCBA_SPI_FREGx_BASE_MASK     = 0x00007FFF                    # Base
 
 # Protected Range Registers
 PCH_RCBA_SPI_PR0                 = 0x74  # Protected Region 0 Register
-PCH_RCBA_SPI_PR0_WPE             = BIT31                         # Write Protection Enable
+PCH_RCBA_SPI_PR0_WPE             = Cfg.BIT31                         # Write Protection Enable
 PCH_RCBA_SPI_PR0_PRL_MASK        = 0x7FFF0000                    # Protected Range Limit Mask
-PCH_RCBA_SPI_PR0_RPE             = BIT15                         # Read Protection Enable
+PCH_RCBA_SPI_PR0_RPE             = Cfg.BIT15                         # Read Protection Enable
 PCH_RCBA_SPI_PR0_PRB_MASK        = 0x00007FFF                    # Protected Range Base Mask
 PCH_RCBA_SPI_PR1                 = 0x78
-PCH_RCBA_SPI_PR1_WPE             = BIT31
+PCH_RCBA_SPI_PR1_WPE             = Cfg.BIT31
 PCH_RCBA_SPI_PR1_PRL_MASK        = 0x7FFF0000
-PCH_RCBA_SPI_PR1_RPE             = BIT15
+PCH_RCBA_SPI_PR1_RPE             = Cfg.BIT15
 PCH_RCBA_SPI_PR1_PRB_MASK        = 0x00007FFF
 PCH_RCBA_SPI_PR2                 = 0x7C
-PCH_RCBA_SPI_PR2_WPE             = BIT31
+PCH_RCBA_SPI_PR2_WPE             = Cfg.BIT31
 PCH_RCBA_SPI_PR2_PRL_MASK        = 0x7FFF0000
-PCH_RCBA_SPI_PR2_RPE             = BIT15 
+PCH_RCBA_SPI_PR2_RPE             = Cfg.BIT15 
 PCH_RCBA_SPI_PR2_PRB_MASK        = 0x00007FFF
 PCH_RCBA_SPI_PR3                 = 0x80
-PCH_RCBA_SPI_PR3_WPE             = BIT31
+PCH_RCBA_SPI_PR3_WPE             = Cfg.BIT31
 PCH_RCBA_SPI_PR3_PRL_MASK        = 0x7FFF0000
-PCH_RCBA_SPI_PR3_RPE             = BIT15                         
+PCH_RCBA_SPI_PR3_RPE             = Cfg.BIT15                         
 PCH_RCBA_SPI_PR3_PRB_MASK        = 0x00007FFF                    
 PCH_RCBA_SPI_PR4                 = 0x84  
-PCH_RCBA_SPI_PR4_WPE             = BIT31 
+PCH_RCBA_SPI_PR4_WPE             = Cfg.BIT31 
 PCH_RCBA_SPI_PR4_PRL_MASK        = 0x7FFF0000
-PCH_RCBA_SPI_PR4_RPE             = BIT15     
+PCH_RCBA_SPI_PR4_RPE             = Cfg.BIT15     
 PCH_RCBA_SPI_PR4_PRB_MASK        = 0x00007FFF
 
 PCH_RCBA_SPI_OPTYPE              = 0x96  # Opcode Type Configuration
-PCH_RCBA_SPI_OPTYPE7_MASK        = (BIT15 | BIT14)
-PCH_RCBA_SPI_OPTYPE6_MASK        = (BIT13 | BIT12)
-PCH_RCBA_SPI_OPTYPE5_MASK        = (BIT11 | BIT10)
-PCH_RCBA_SPI_OPTYPE4_MASK        = (BIT9 | BIT8)  
-PCH_RCBA_SPI_OPTYPE3_MASK        = (BIT7 | BIT6)  
-PCH_RCBA_SPI_OPTYPE2_MASK        = (BIT5 | BIT4)  
-PCH_RCBA_SPI_OPTYPE1_MASK        = (BIT3 | BIT2)  
-PCH_RCBA_SPI_OPTYPE0_MASK        = (BIT1 | BIT0)  
+PCH_RCBA_SPI_OPTYPE7_MASK        = (Cfg.BIT15 | Cfg.BIT14)
+PCH_RCBA_SPI_OPTYPE6_MASK        = (Cfg.BIT13 | Cfg.BIT12)
+PCH_RCBA_SPI_OPTYPE5_MASK        = (Cfg.BIT11 | Cfg.BIT10)
+PCH_RCBA_SPI_OPTYPE4_MASK        = (Cfg.BIT9 | Cfg.BIT8)  
+PCH_RCBA_SPI_OPTYPE3_MASK        = (Cfg.BIT7 | Cfg.BIT6)  
+PCH_RCBA_SPI_OPTYPE2_MASK        = (Cfg.BIT5 | Cfg.BIT4)  
+PCH_RCBA_SPI_OPTYPE1_MASK        = (Cfg.BIT3 | Cfg.BIT2)  
+PCH_RCBA_SPI_OPTYPE0_MASK        = (Cfg.BIT1 | Cfg.BIT0)  
 PCH_RCBA_SPI_OPTYPE_RDNOADDR     = 0x00
 PCH_RCBA_SPI_OPTYPE_WRNOADDR     = 0x01
 PCH_RCBA_SPI_OPTYPE_RDADDR       = 0x02
@@ -197,7 +197,7 @@ PCH_RCBA_SPI_OPTYPE_WRADDR       = 0x03
 PCH_RCBA_SPI_OPMENU              = 0x98  # Opcode Menu Configuration
 
 PCH_RCBA_SPI_FDOC                = 0xB0  # Flash Descriptor Observability Control Register
-PCH_RCBA_SPI_FDOC_FDSS_MASK      = (BIT14 | BIT13 | BIT12)       # Flash Descritor Section Select
+PCH_RCBA_SPI_FDOC_FDSS_MASK      = (Cfg.BIT14 | Cfg.BIT13 | Cfg.BIT12)       # Flash Descritor Section Select
 PCH_RCBA_SPI_FDOC_FDSS_FSDM      = 0x0000                        # Flash Signature and Descriptor Map
 PCH_RCBA_SPI_FDOC_FDSS_COMP      = 0x1000                        # Component
 PCH_RCBA_SPI_FDOC_FDSS_REGN      = 0x2000                        # Region
@@ -287,8 +287,8 @@ def get_SPI_region( flreg ):
     return (range_base, range_limit)
 
 def get_SPI_MMIO_base( cs ):
-    reg_value = cs.pci.read_dword( SPI_MMIO_BUS, SPI_MMIO_DEV, SPI_MMIO_FUN, SPI_MMIO_REG_OFFSET )
-    spi_base = ((reg_value >> SPI_BASE_ADDR_SHIFT) << SPI_BASE_ADDR_SHIFT) + SPI_MMIO_BASE_OFFSET
+    reg_value = cs.pci.read_dword( Cfg.SPI_MMIO_BUS, Cfg.SPI_MMIO_DEV, Cfg.SPI_MMIO_FUN, Cfg.SPI_MMIO_REG_OFFSET )
+    spi_base = ((reg_value >> Cfg.SPI_BASE_ADDR_SHIFT) << Cfg.SPI_BASE_ADDR_SHIFT) + Cfg.SPI_MMIO_BASE_OFFSET
     if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
     return spi_base
 
@@ -425,7 +425,7 @@ class SPI:
         logger().log( "BFPREG = %08X:" % bfpreg )
         logger().log( "  Base  : %08X" % ((bfpreg & PCH_RCBA_SPI_FREGx_BASE_MASK) << 12) )
         logger().log( "  Limit : %08X" % ((bfpreg & PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4) )
-        logger().log( "  Shadowed BIOS Select: %d" % ((bfpreg & BIT31)>>31) )
+        logger().log( "  Shadowed BIOS Select: %d" % ((bfpreg & Cfg.BIT31)>>31) )
 
 
     def display_SPI_Ranges_Access_Permissions( self ):
@@ -503,8 +503,8 @@ class SPI:
         #
         # BIOS Control (BC) 0:31:0 PCIe CFG register
         #
-        reg_value = self.cs.pci.read_byte( 0, 31, 0, LPC_BC_REG_OFF )
-        BcRegister = LPC_BC_REG( reg_value, (reg_value>>5)&0x1, (reg_value>>4)&0x1, (reg_value>>2)&0x3, (reg_value>>1)&0x1, reg_value&0x1 )
+        reg_value = self.cs.pci.read_byte( 0, 31, 0, Cfg.LPC_BC_REG_OFF )
+        BcRegister = Cfg.LPC_BC_REG( reg_value, (reg_value>>5)&0x1, (reg_value>>4)&0x1, (reg_value>>2)&0x3, (reg_value>>1)&0x1, reg_value&0x1 )
         return (BcRegister, reg_value)
 
     def disable_BIOS_write_protection( self ):
@@ -522,7 +522,7 @@ class SPI:
            logger().log( "[spi] BIOS write protection enabled but not locked. Disabling.." )
 
         reg_value |= 0x1
-        self.cs.pci.write_byte( 0, 31, 0, LPC_BC_REG_OFF, reg_value )
+        self.cs.pci.write_byte( 0, 31, 0, Cfg.LPC_BC_REG_OFF, reg_value )
         (BcRegister, reg_value) = self.get_BIOS_Control()
         if logger().VERBOSE: logger().log( BcRegister )
         if BcRegister.BIOSWE:

@@ -1,4 +1,26 @@
-Read source/tool/WARNING.txt
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!                                              WARNING
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Chipsec should only be run on test systems! It should not be installed/deployed on end-user systems!
+!! 
+!! There are multiple reasons for that:
+!! 
+!! 1. Chipsec kernel drivers provide raw access to HW resources to user-mode applications
+!! (like access to physical memory). This would allow malware to compromise the OS kernel.
+!!
+!! 2. The driver is distributed as a source code. In order to load it on OS which requires signed drivers
+!! (e.g. x64 Microsoft Windows 7 and higher), you'll need to enable TestSigning mode and self-sign the
+!! driver binary. Enabling TestSigning (or equivalent) mode also turns off important protection of OS kernel.
+!!
+!! 3. Due to the nature of access to HW resources, if any chipsec module issues incorrect access
+!! to these HW resources, OS can crash/hang.
+!!
+!! If, for any reason, you want to production sign chipsec driver and deploy chipsec on end-user systems,
+!! DON'T!
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 1. Build chipsec_hlpr.sys on Windows 32bit and 64bit
 ----------------------------------------------------

@@ -41,8 +41,10 @@ import fnmatch
 import re
 import errno
 
+import chipsec.file
 from chipsec.logger import *
 import traceback
+
 
 _importlib = True
 try:
@@ -51,9 +53,6 @@ try:
 except ImportError:
     _importlib = False
 
-# determine if CHIPSEC is loaded as chipsec_*.exe or in python
-frozen = hasattr(sys, "frozen") or hasattr(sys, "importers") 
-CHIPSEC_LOADED_AS_EXE = True if frozen else False
 
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
@@ -79,7 +78,8 @@ class OsHelper:
         if(not self.helper):
             import platform
             os_system  = platform.system()
-            raise OsHelperError("Unsupported platform '%s'" % os_system,errno.ENODEV)
+            #raise OsHelperError("Unsupported platform '%s'" % os_system,errno.ENODEV)
+            raise OsHelperError( "Could not load helper for '%s' environment (unsupported environment?)" % os_system, errno.ENODEV )
         else:
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -87,14 +87,14 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        if CHIPSEC_LOADED_AS_EXE:
+        if chipsec.file.main_is_frozen():
             self.loadHelpersFromEXE()
         else:
             self.loadHelpersFromFileSystem()
             
     def loadHelpersFromEXE(self):
         import zipfile
-        myzip = zipfile.ZipFile("library.zip")
+        myzip = zipfile.ZipFile(os.path.join(chipsec.file.get_main_dir(),"library.zip"))
         helpers = map( map_modname_zip, filter(f_mod_zip, myzip.namelist()) )
         #print helpers
         for h in helpers:
@@ -125,14 +125,20 @@ class OsHelper:
                 module = importlib.import_module( mod_fullname )
                 result = getattr( module, 'get_helper' )(  )
                 self.helper = result
-            else:
-                exec 'import ' + mod_fullname
-                exec 'self.helper = ' + mod_fullname + ".get_helper()"
+            # Support for older Python < 2.5
+            #else:
+            #    exec 'import ' + mod_fullname
+            #    exec 'self.helper = ' + mod_fullname + ".get_helper()"
         except ImportError, msg:
-            #logger().warn(str(msg) + ' ' + mod_fullname )
-            #logger().log_bad(traceback.format_exc())
+            # @TODO: UTIL_TRACE/VERBOSE aren't correct here
+            if logger().UTIL_TRACE or logger().VERBOSE:
+                logger().warn( str(msg) + ' ' + mod_fullname )
+                logger().log_bad( traceback.format_exc() )
             pass
-        except BaseException, err:
+        except BaseException, msg:
+            logger().error( str(msg) + ' ' + mod_fullname )
+            logger().log_bad( traceback.format_exc() )
+            #raise OsHelperError( "Could not import OS helper %s (%s)" % (mod_fullname, str(msg)) )
             pass
             
 
@@ -190,6 +196,8 @@ class OsHelper:
         return self.helper.read_phys_mem( phys_address_hi, phys_address_lo, length )
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         return self.helper.write_phys_mem( phys_address_hi, phys_address_lo, length, buf )
+    def alloc_phys_mem( self, length, max_pa_hi, max_pa_lo ):
+        return self.helper.alloc_phys_mem( length, (phys_address_hi<<32|phys_address_lo) )
 
     #
     # physical_address is 64 bit integer
@@ -198,6 +206,10 @@ class OsHelper:
         return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
     def write_physical_mem( self, phys_address, length, buf ):
         return self.helper.write_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length, buf )
+    def alloc_physical_mem( self, length, max_phys_address ):
+        return self.helper.alloc_phys_mem( length, max_phys_address )
+        #return self.helper.alloc_phys_mem( length, (max_phys_address>>32)&0xFFFFFFFF, max_phys_address&0xFFFFFFFF )
+
 
     #
     # Read/Write I/O port
@@ -233,8 +245,8 @@ class OsHelper:
     def get_EFI_variable( self, name, guid ):
         return self.helper.get_EFI_variable( name, guid )
 
-    def set_EFI_variable( self, name, guid, var ):
-        return self.helper.set_EFI_variable( name, guid, var )
+    def set_EFI_variable( self, name, guid, var, attrs=None ):
+        return self.helper.set_EFI_variable( name, guid, var, attrs )
 
     def list_EFI_variables( self ):
         return self.helper.list_EFI_variables()

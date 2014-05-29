@@ -57,7 +57,9 @@ usage = "chipsec_util mem <phys_addr_hi> <phys_addr_lo> <length> [value]\n" + \
         "Examples:\n" + \
         "  chipsec_util mem 0x0 0x41E 0x20\n" + \
         "  chipsec_util mem 0x0 0xA0000 4 0x9090CCCC\n" + \
-        "  chipsec_util mem 0x0 0xFED40000 0x4\n\n"
+        "  chipsec_util mem 0x0 0xFED40000 0x4\n" + \
+        "  chipsec_util mem allocate 0x1000\n\n"
+
 
 chipsec_util.global_usage += usage
 
@@ -74,6 +76,15 @@ def mem(argv):
     phys_address    = 0
     size = 0x100
 
+    op = argv[2]
+    t = time.time()
+
+    if 'allocate' == op and 4 == len(argv):
+       size = int(argv[3],16)
+       (va, pa) = _cs.mem.alloc_physical_mem( size )
+       logger().log( '[CHIPSEC] Allocated %X bytes of physical memory: VA = 0x%016X, PA = 0x%016X' % (size, va, pa) )
+       return
+
     if 4 > len(argv):
       print usage
       return
@@ -87,11 +98,12 @@ def mem(argv):
        logger().log( '[CHIPSEC] Writing: PA = 0x%016X <- 0x%08X' % (phys_address, value) )
        _cs.mem.write_physical_mem_dword( phys_address, value )
     else:
-       if 5 == len(argv):
-          size = int(argv[4],16)
+       if 5 == len(argv): size = int(argv[4],16)
        out_buf = _cs.mem.read_physical_mem( phys_address, size )
        logger().log( '[CHIPSEC] Reading: PA = 0x%016X, len = 0x%X, output:' % (phys_address, len(out_buf)) )
        print_buffer( out_buf )
+
+    logger().log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
 
 chipsec_util_commands['mem'] = {'func' : mem,     'start_driver' : True  }
 

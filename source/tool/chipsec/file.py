@@ -44,6 +44,7 @@ __version__ = '1.0'
 
 import struct
 import sys
+import os
 
 from chipsec.logger import logger
 
@@ -54,19 +55,19 @@ def read_file( filename, size=0 ):
     #f.closed
 
     try:
-      f = open(filename, "rb")
+        f = open(filename, "rb")
     except:
-      logger().error( "Unable to open file '%.256s' for read access" % filename )
-      return 0
+        logger().error( "Unable to open file '%.256s' for read access" % filename )
+        return 0
 
     if size:
-       _file = f.read( size )
+        _file = f.read( size )
     else:
-       _file = f.read()
+        _file = f.read()
     f.close()
 
     if logger().VERBOSE:
-       logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
+        logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
     return _file
 
 def write_file( filename, buffer, append=False ):
@@ -78,15 +79,15 @@ def write_file( filename, buffer, append=False ):
     if (append): perm = "ab"
 
     try:
-      f = open(filename, perm)
+        f = open(filename, perm)
     except:
-      logger().error( "Unable to open file '%.256s' for write access" % filename )
-      return 0
+        logger().error( "Unable to open file '%.256s' for write access" % filename )
+        return 0
     f.write( buffer )
     f.close()
 
     if logger().VERBOSE:
-       logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
+        logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
     return True
 
 
@@ -95,3 +96,13 @@ def read_chunk( f, size=1024 ):
 # intended usage
 #for piece in iter(read1k, ''):
 #    process_data(piece)
+
+# determine if CHIPSEC is loaded as chipsec.exe or in python
+def main_is_frozen():
+    return (hasattr(sys, "frozen") or  # new py2exe
+            hasattr(sys, "importers")) # old py2exe
+
+def get_main_dir():
+    if main_is_frozen():
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(sys.argv[0])

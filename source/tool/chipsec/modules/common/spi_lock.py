@@ -30,29 +30,32 @@
 #
 
 from chipsec.module_common import *
+TAGS = [MTAG_BIOS]
 
 from chipsec.hal.spi import *
 
-logger = logger()
+class spi_lock(BaseModule):
+    
+    def __init__(self):
+        BaseModule.__init__(self)
 
-
-def check_spi_lock():
-    logger.start_test( "SPI Flash Controller Configuration Lock" )
-
-    spi_locked = 0
-    hsfsts_reg_value = cs.mem.read_physical_mem_dword( get_PCH_RCBA_SPI_base(cs) + SPI_HSFSTS_OFFSET )
-    logger.log( '[*] HSFSTS register = 0x%08X' % hsfsts_reg_value )
-    logger.log( '    FLOCKDN = %u' % ((hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK)>>15) )
-
-    if 0 != (hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK):
-        spi_locked = 1
-        logger.log_passed_check( "SPI Flash Controller configuration is locked" )
-    else:
-        logger.log_failed_check( "SPI Flash Controller configuration is not locked" )
-
-    return spi_locked==1
-
-def run( module_argv ):
-    return check_spi_lock()
-
-
+    def check_spi_lock(self):
+        self.logger.start_test( "SPI Flash Controller Configuration Lock" )
+    
+        spi_locked = 0
+        hsfsts_reg_value = self.cs.mem.read_physical_mem_dword( get_PCH_RCBA_SPI_base(self.cs) + SPI_HSFSTS_OFFSET )
+        self.logger.log( '[*] HSFSTS register = 0x%08X' % hsfsts_reg_value )
+        self.logger.log( '    FLOCKDN = %u' % ((hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK)>>15) )
+    
+        if 0 != (hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK):
+            spi_locked = 1
+            self.logger.log_passed_check( "SPI Flash Controller configuration is locked" )
+        else:
+            self.logger.log_failed_check( "SPI Flash Controller configuration is not locked" )
+    
+        return spi_locked==1
+    
+    def run( self, module_argv ):
+        return self.check_spi_lock()
+    
+    

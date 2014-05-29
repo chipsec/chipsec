@@ -98,8 +98,8 @@ class Ucode:
 
     # @TODO remove later/replace with msr.get_cpu_thread_count()
     def get_cpu_thread_count( self ):
-        (core_thread_count, dummy) = self.helper.read_msr( 0, IA32_MSR_CORE_THREAD_COUNT )
-        return (core_thread_count & IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
+        (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
+        return (core_thread_count & Cfg.IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
 
     def ucode_update_id(self, cpu_thread_id):
         #self.helper.write_msr( cpu_thread_id, IA32_MSR_BIOS_SIGN_ID, 0, 0 )

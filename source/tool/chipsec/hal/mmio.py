@@ -65,8 +65,8 @@ from chipsec.cfg.common import *
 # Dev0 BARs: MCHBAR, DMIBAR
 ##################################################################################
 def get_MCHBAR_base_address(cs):
-    #bar = PCI_BDF( 0, 0, 0, PCI_MCHBAR_REG_OFF )
-    base = cs.pci.read_dword( 0, 0, 0, PCI_MCHBAR_REG_OFF )
+    #bar = PCI_BDF( 0, 0, 0, Cfg.PCI_MCHBAR_REG_OFF )
+    base = cs.pci.read_dword( 0, 0, 0, Cfg.PCI_MCHBAR_REG_OFF )
     if (0 == base & 0x1):
        logger().warn('MCHBAR is disabled')
     base = base & 0xFFFFF000
@@ -75,9 +75,9 @@ def get_MCHBAR_base_address(cs):
     return base
 
 def get_DMIBAR_base_address(cs):
-    #bar = PCI_BDF( 0, 0, 0, PCI_DMIBAR_REG_OFF )
-    base_lo = cs.pci.read_dword( 0, 0, 0, PCI_DMIBAR_REG_OFF )
-    base_hi = cs.pci.read_dword( 0, 0, 0, PCI_DMIBAR_REG_OFF + 4 )
+    #bar = PCI_BDF( 0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF )
+    base_lo = cs.pci.read_dword( 0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF )
+    base_hi = cs.pci.read_dword( 0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF + 4 )
     if (0 == base_lo & 0x1):
        logger().warn('DMIBAR is disabled')
     base = (base_hi << 32) | (base_lo & 0xFFFFF000)
@@ -91,10 +91,10 @@ def get_DMIBAR_base_address(cs):
 ##################################################################################
 
 def get_LPC_RCBA_base_address(cs):
-    reg_value = cs.pci.read_dword( 0, 31, 0, LPC_RCBA_REG_OFFSET )
+    reg_value = cs.pci.read_dword( 0, 31, 0, Cfg.LPC_RCBA_REG_OFFSET )
     #RcbaReg = LPC_RCBA_REG( (reg_value>>14)&0x3FFFF, (reg_value>>1)&0x1FFF, reg_value&0x1 )
-    #rcba_base = RcbaReg.BaseAddr << RCBA_BASE_ADDR_SHIFT
-    rcba_base = (reg_value >> RCBA_BASE_ADDR_SHIFT) << RCBA_BASE_ADDR_SHIFT
+    #rcba_base = RcbaReg.BaseAddr << Cfg.RCBA_BASE_ADDR_SHIFT
+    rcba_base = (reg_value >> Cfg.RCBA_BASE_ADDR_SHIFT) << Cfg.RCBA_BASE_ADDR_SHIFT
     if logger().VERBOSE:
       logger().log( "[mmio] LPC RCBA: 0x%08X" % rcba_base )
     return rcba_base
@@ -105,7 +105,7 @@ def get_LPC_RCBA_base_address(cs):
 ##################################################################################
 
 def get_PCH_RCBA_SPI_base(cs):
-    rcba_spi_base = get_LPC_RCBA_base_address(cs) + PCH_RCRB_SPI_BASE
+    rcba_spi_base = get_LPC_RCBA_base_address(cs) + Cfg.PCH_RCRB_SPI_BASE
     if logger().VERBOSE:
        logger().log( "[mmio] RCBA SPI base: 0x%08X (assuming below 4GB)" % rcba_spi_base )
     return rcba_spi_base
@@ -122,12 +122,12 @@ def get_GFx_base_address(cs, dev2_offset):
     base = base_hi | (base_lo & 0xFF000000)
     return base
 def get_GMADR_base_address( cs ):
-    base = get_GFx_base_address(cs, PCI_GMADR_REG_OFF)
+    base = get_GFx_base_address(cs, Cfg.PCI_GMADR_REG_OFF)
     if logger().VERBOSE:
        logger().log( '[mmio] GMADR: 0x%016X' % base )
     return base
 def get_GTTMMADR_base_address( cs ):
-    base = get_GFx_base_address(cs, PCI_GTTMMADR_REG_OFF)
+    base = get_GFx_base_address(cs, Cfg.PCI_GTTMMADR_REG_OFF)
     if logger().VERBOSE:
        logger().log( '[mmio] GTTMMADR: 0x%016X' % base )
     return base
@@ -137,7 +137,7 @@ def get_GTTMMADR_base_address( cs ):
 ##################################################################################
 
 def get_HDAudioBAR_base_address(cs):
-    base = cs.pci.read_dword( 0, PCI_HDA_DEV, 0, PCI_HDAUDIOBAR_REG_OFF )
+    base = cs.pci.read_dword( 0, Cfg.PCI_HDA_DEV, 0, Cfg.PCI_HDAUDIOBAR_REG_OFF )
     base = base & (0xFFFFFFFF << 14)
     if logger().VERBOSE:
        logger().log( '[mmio] HD Audio MMIO: 0x%08X' % base )
@@ -150,16 +150,16 @@ def get_HDAudioBAR_base_address(cs):
 ##################################################################################
 
 def get_PCIEXBAR_base_address(cs):
-    base_lo = cs.pci.read_dword( 0, 0, 0, PCI_PCIEXBAR_REG_OFF )
-    base_hi = cs.pci.read_dword( 0, 0, 0, PCI_PCIEXBAR_REG_OFF + 4 )
+    base_lo = cs.pci.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF )
+    base_hi = cs.pci.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF + 4 )
     if (0 == base_lo & 0x1):
        logger().warn('PCIEXBAR is disabled')
 
-    base_lo &= PCI_PCIEXBAR_REG_ADMSK256
-    if (PCI_PCIEXBAR_REG_LENGTH_128MB == (base_lo & PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-       base_lo |= PCI_PCIEXBAR_REG_ADMSK128
-    elif (PCI_PCIEXBAR_REG_LENGTH_64MB == (base_lo & PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-       base_lo |= (PCI_PCIEXBAR_REG_ADMSK128|PCI_PCIEXBAR_REG_ADMSK64)
+    base_lo &= Cfg.PCI_PCIEXBAR_REG_ADMSK256
+    if (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+       base_lo |= Cfg.PCI_PCIEXBAR_REG_ADMSK128
+    elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+       base_lo |= (Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
     base = (base_hi << 32) | base_lo
     if logger().VERBOSE:
        logger().log( '[mmio] PCIEXBAR (MMCFG): 0x%016X' % base )

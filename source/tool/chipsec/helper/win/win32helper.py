@@ -60,6 +60,7 @@ import win32api, win32process, win32security, win32file
 
 
 from chipsec.logger import logger, print_buffer
+import chipsec.file
 
 class PCI_BDF(Structure):
     _fields_ = [("BUS",  c_ushort, 16),  # Bus
@@ -109,6 +110,7 @@ READ_PCI_CFG_REGISTER          = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x807, METHOD_BUF
 WRITE_PCI_CFG_REGISTER         = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x808, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_READ_PHYSMEM             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x809, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRITE_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80a, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_ALLOC_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x812, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_LOAD_UCODE_PATCH         = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80b, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRMSR                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80c, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_RDMSR                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80d, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
@@ -248,16 +250,38 @@ class Win32Helper:
         win32security.AdjustTokenPrivileges( token, False, [(privilege, win32security.SE_PRIVILEGE_ENABLED)] )
         win32api.CloseHandle( token )       
         # import firmware variable API
-        self.GetFirmwareEnvironmentVariable = kernel32.GetFirmwareEnvironmentVariableW
-        self.GetFirmwareEnvironmentVariable.restype = c_int
-        self.GetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
-        self.SetFirmwareEnvironmentVariable = kernel32.SetFirmwareEnvironmentVariableW
-        self.SetFirmwareEnvironmentVariable.restype = c_int
-        self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
-        self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
-        self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
-        self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
+        try:
+            self.GetFirmwareEnvironmentVariable = kernel32.GetFirmwareEnvironmentVariableW
+            self.GetFirmwareEnvironmentVariable.restype = c_int
+            self.GetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
+            self.SetFirmwareEnvironmentVariable = kernel32.SetFirmwareEnvironmentVariableW
+            self.SetFirmwareEnvironmentVariable.restype = c_int
+            self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
+        except AttributeError, msg:
+            logger().warn( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
+            pass
 
+        try:
+            self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
+            self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
+            self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
+        except AttributeError, msg:
+            logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
+            pass
+
+        c_int_p = POINTER(c_int)
+        #self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableW
+        #self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableW
+        try:
+            self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
+            self.GetFirmwareEnvironmentVariableEx.restype = c_int
+            self.GetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int_p]
+            self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableExW
+            self.SetFirmwareEnvironmentVariableEx.restype = c_int
+            self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
+        except AttributeError, msg:
+            logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
+            pass
 
     def __del__(self):
         try:
@@ -320,14 +344,12 @@ class Win32Helper:
 
         if logger().VERBOSE: logger().log( "[helper] SC Manager opened (handle = 0x%08x)" % hscm )
 
-        driver_path = os.path.join( os.path.join( os.path.join( self.getcwd(), "chipsec" ), "helper" ),"win" )            
-        if not os.path.exists( driver_path ):
-            driver_path = os.path.join( os.path.join( CHIPSEC_INSTALL_PATH, "helper" ),"win" )
-        driver_path = os.path.join( os.path.join( driver_path, self.win_ver ), DRIVER_FILE_NAME )
+        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec" , "helper" ,"win" )
+        driver_path = os.path.join( driver_path, self.win_ver , DRIVER_FILE_NAME )
 
         if os.path.exists( driver_path ) and os.path.isfile( driver_path ):
             self.driver_path = driver_path
-            if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % self.driver_path )
+            if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
         else:
             logger().error( "could not locate driver file '%.256s'" % driver_path )
             return False
@@ -340,7 +362,7 @@ class Win32Helper:
                      win32service.SERVICE_KERNEL_DRIVER,
                      win32service.SERVICE_DEMAND_START,
                      win32service.SERVICE_ERROR_NORMAL,
-                     driver_path,
+                     os.path.abspath(driver_path),
                      None, 0, u"", None, None )
             if not self.hs:
                 raise win32service.error, (0, None, "hs is None")
@@ -437,8 +459,9 @@ class Win32Helper:
     #
     def get_threads_count ( self ):
         sum = 0
-        for i in range(int(kernel32.GetActiveProcessorGroupCount())):
-            procs = kernel32.GetActiveProcessorCount(i)
+        proc_group_count = (kernel32.GetActiveProcessorGroupCount() & 0xFFFF)
+        for grp in range(proc_group_count):
+            procs = kernel32.GetActiveProcessorCount( grp )
             sum = sum + procs
         return sum
 
@@ -484,6 +507,22 @@ class Win32Helper:
 
         del in_buf, in_length, out_size
         return out_buf
+
+    def alloc_phys_mem( self, length, max_pa ):
+        (va, pa) = (0,0)
+        in_length  = 12
+        out_length = 16
+        out_buf = (c_char * out_length)()
+        out_size = c_ulong(out_length)
+        in_buf = struct.pack( 'QI', max_pa, length )
+        out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
+        try:
+           (va, pa) = struct.unpack( '2Q', out_buf )
+        except:
+           logger().error( 'DeviceIoControl did not return 4 DWORD values' )
+
+        del in_buf, in_length, out_length, out_size
+        return (va, pa)
 
     def read_msr( self, cpu_thread_id, msr_addr ):
 
@@ -592,24 +631,37 @@ class Win32Helper:
     #
     # EFI Variable API
     #
-    def get_EFI_variable( self, name, guid ):
-        if logger().VERBOSE: logger().log( "[helper] calling GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
+    def get_EFI_variable( self, name, guid, attrs=None ):
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
-        length = self.GetFirmwareEnvironmentVariable( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE )
+        if attrs is None:
+            if self.GetFirmwareEnvironmentVariable is not None:
+                if logger().VERBOSE: logger().log( "[helper] calling GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
+                length = self.GetFirmwareEnvironmentVariable( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE )
+        else:
+            if self.GetFirmwareEnvironmentVariableEx is not None:
+                pattrs = c_int(attrs)
+                if logger().VERBOSE: logger().log( "[helper] calling GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
+                length = self.GetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
            if logger().VERBOSE or logger().UTIL_TRACE:
-              logger().error( 'GetFirmwareEnvironmentVariable failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
+              logger().error( 'GetFirmwareEnvironmentVariable[Ex] failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
               print WinError()
            return None
            #raise WinError(errno.EIO,"Unable to get EFI variable")
         return efi_var[:length]
 
-    def set_EFI_variable( self, name, guid, var ):
+    def set_EFI_variable( self, name, guid, var, attrs=None ):
         var_len = 0
         if var is None: var = bytes(0)
         else: var_len = len(var)
-        if logger().VERBOSE: logger().log( "[helper] calling SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
-        success = self.SetFirmwareEnvironmentVariable( name, "{%s}" % guid, var, var_len )
+        if attrs is None:
+            if self.SetFirmwareEnvironmentVariable is not None:
+                if logger().VERBOSE: logger().log( "[helper] calling SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
+                success = self.SetFirmwareEnvironmentVariable( name, "{%s}" % guid, var, var_len )
+        else:
+            if self.SetFirmwareEnvironmentVariableEx is not None:
+                if logger().VERBOSE: logger().log( "[helper] calling SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
+                success = self.SetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, var, var_len, attrs )
         if 0 == success:
            err = kernel32.GetLastError()
            if logger().VERBOSE or logger().UTIL_TRACE:

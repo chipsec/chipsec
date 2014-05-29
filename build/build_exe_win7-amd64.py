@@ -78,6 +78,9 @@ if os.path.exists(VERSION_FILE):
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
+    if current.startswith(os.path.join(tool_dir,'build')): 
+        #print "*********** skipped: %s"%current
+        continue
     for file in files:
         if file == "__init__.py":
             pkg = current.replace(tool_dir+os.path.sep,"")

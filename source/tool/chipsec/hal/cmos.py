@@ -46,11 +46,7 @@ import struct
 import sys
 import time
 
-from chipsec.logger import *
-#from chipsec.hal.mmio import *
-from chipsec.file import *
-
-from chipsec.cfg.common import *
+from chipsec.hal.hal_base import HALBase
 
 
 class CmosRuntimeError (RuntimeError):
@@ -63,9 +59,8 @@ CMOS_DATA_PORT_LOW  = 0x71
 CMOS_ADDR_PORT_HIGH = 0x72
 CMOS_DATA_PORT_HIGH = 0x73
 
-class CMOS:
-    def __init__( self, cs ):
-        self.cs = cs
+
+class CMOS(HALBase):
 
     def read_cmos_high( self, offset ):
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_HIGH, offset );
@@ -85,34 +80,34 @@ class CMOS:
 
     def dump_low( self ):
         orig = self.cs.io.read_port_byte( CMOS_ADDR_PORT_LOW );
-        logger().log( "Low CMOS contents:" )
-        logger().log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
+        self.logger.log( "Low CMOS contents:" )
+        self.logger.log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
         cmos_str = []
         cmos_str += ["00.."] 
         for n in range(1, 129):
             val = self.read_cmos_low( n-1 )
             cmos_str += ["%02X  " % val] 
             if ( (0 == n%16) and n < 125 ):
-               cmos_str += ["\n%0X.." % n] 
+                cmos_str += ["\n%0X.." % n] 
 
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_LOW, orig );
-        logger().log( "".join(cmos_str) )
+        self.logger.log( "".join(cmos_str) )
         return
 
     def dump_high( self ):
         orig = self.cs.io.read_port_byte( CMOS_ADDR_PORT_HIGH );
-        logger().log( "High CMOS contents:" )
-        logger().log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
+        self.logger.log( "High CMOS contents:" )
+        self.logger.log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
         cmos_str = []
         cmos_str += ["00.."] 
         for n in range(1, 129):
             val = self.read_cmos_high( n-1 )
             cmos_str += ["%02X  " % val] 
             if ( (0 == n%16) and n < 125 ):
-               cmos_str += ["\n%0X.." % n] 
+                cmos_str += ["\n%0X.." % n] 
 
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_HIGH, orig );
-        logger().log( "".join(cmos_str) )
+        self.logger.log( "".join(cmos_str) )
         return
 
     def dump( self ):

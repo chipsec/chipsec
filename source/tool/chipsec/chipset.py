@@ -45,6 +45,7 @@ from chipsec.hal.ucode       import Ucode
 from chipsec.hal.io          import PortIO
 from chipsec.hal.cpuid       import CpuID
 
+from chipsec.cfg.common      import Cfg 
 from chipsec.logger         import logger
 
 
@@ -53,12 +54,6 @@ from chipsec.logger         import logger
 #except ImportError: _importlib = False
 
 #
-# Import platform configuration defines in the following order:
-# 1. chipsec.cfg.common
-# 2. chipsec.cfg.<platform>
-#
-from chipsec.cfg.common import *
-logger().log_good( "imported common configuration: chipsec.cfg.common" )
 
 
 ##################################################################################
@@ -67,19 +62,23 @@ logger().log_good( "imported common configuration: chipsec.cfg.common" )
 CHIPSET_ID_COMMON  = -1
 CHIPSET_ID_UNKNOWN = 0
 
-CHIPSET_ID_BLK     = 1
-CHIPSET_ID_CNTG    = 2
-CHIPSET_ID_EGLK    = 3
-CHIPSET_ID_TBG     = 4
-CHIPSET_ID_WSM     = 5
-CHIPSET_ID_SNB     = 8
-CHIPSET_ID_IVB     = 9
-CHIPSET_ID_HSW     = 10
-CHIPSET_ID_BDW     = 11
-CHIPSET_ID_BYT     = 12
-CHIPSET_ID_JKT     = 13
-CHIPSET_ID_HSX     = 14
-CHIPSET_ID_IVT     = 15
+CHIPSET_ID_SNB     = 1
+CHIPSET_ID_JKT     = 2
+CHIPSET_ID_IVB     = 3
+CHIPSET_ID_IVT     = 4
+CHIPSET_ID_HSW     = 5
+CHIPSET_ID_BYT     = 6
+
+CHIPSET_CODE_COMMON  = 'COMMON'
+CHIPSET_CODE_UNKNOWN = ''
+
+CHIPSET_CODE_SNB     = 'SNB'
+CHIPSET_CODE_JKT     = 'JKT'
+CHIPSET_CODE_IVB     = 'IVB'
+CHIPSET_CODE_IVT     = 'IVT'
+CHIPSET_CODE_HSW     = 'HSW'
+CHIPSET_CODE_BYT     = 'BYT'
+
 
 VID_INTEL = 0x8086
 
@@ -88,29 +87,35 @@ Chipset_Dictionary = {
 # DID  : Data Dictionary
 
 # 2nd Generation Core Processor Family (Sandy Bridge)
-0x0100 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : 'SNB',  'longname' : 'Desktop 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)' },
-0x0104 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : 'SNB',  'longname' : 'Mobile 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)' },
-0x0108 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : 'SNB',  'longname' : 'Intel Xeon Processor E3-1200 (Sandy Bridge CPU, C200 Series PCH)' },
-0x3C00 : {'name' : 'Jaketown',       'id' : CHIPSET_ID_JKT,  'code' : 'JKT',  'longname' : 'Server 2nd Generation Core Processor (Jaketown CPU / Patsburg PCH)'},
+0x0100 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : CHIPSET_CODE_SNB,  'longname' : 'Desktop 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)' },
+0x0104 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : CHIPSET_CODE_SNB,  'longname' : 'Mobile 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)' },
+0x0108 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : CHIPSET_CODE_SNB,  'longname' : 'Intel Xeon Processor E3-1200 (Sandy Bridge CPU, C200 Series PCH)' },
+
+0x3C00 : {'name' : 'Jaketown',       'id' : CHIPSET_ID_JKT,  'code' : CHIPSET_CODE_JKT,  'longname' : 'Server 2nd Generation Core Processor (Jaketown CPU / Patsburg PCH)'},
 
 # 3rd Generation Core Processor Family (Ivy Bridge)
-0x0150 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : 'IVB',  'longname' : 'Desktop 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)' },
-0x0154 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : 'IVB',  'longname' : 'Mobile 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)' },
-0x0158 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : 'IVB',  'longname' : 'Intel Xeon Processor E3-1200 v2 (Ivy Bridge CPU, C200/C216 Series PCH)' },
-0x0E00 : {'name' : 'Ivytown',        'id' : CHIPSET_ID_IVT,  'code' : 'IVT',  'longname' : 'Server 3rd Generation Core Procesor (Ivytown CPU / Patsburg PCH)'},
+0x0150 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : CHIPSET_CODE_IVB,  'longname' : 'Desktop 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)' },
+0x0154 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : CHIPSET_CODE_IVB,  'longname' : 'Mobile 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)' },
+0x0158 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : CHIPSET_CODE_IVB,  'longname' : 'Intel Xeon Processor E3-1200 v2 (Ivy Bridge CPU, C200/C216 Series PCH)' },
+
+0x0E00 : {'name' : 'Ivytown',        'id' : CHIPSET_ID_IVT,  'code' : CHIPSET_CODE_IVT,  'longname' : 'Server 3rd Generation Core Procesor (Ivytown CPU / Patsburg PCH)'},
 
 # 4th Generation Core Processor Family (Haswell)
-0x0C00 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : 'Desktop 4th Generation Core Processor (Haswell CPU / Lynx Point PCH)' },
-0x0C04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : 'Mobile 4th Generation Core Processor (Haswell M/H / Lynx Point PCH)' },
-0x0C08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : 'Intel Xeon Processor E3-1200 v3 (Haswell CPU, C220 Series PCH)' },
-0x0A00 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
-0x0A04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
-0x0A08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : 'HSW',  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
+0x0C00 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : 'Desktop 4th Generation Core Processor (Haswell CPU / Lynx Point PCH)' },
+0x0C04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : 'Mobile 4th Generation Core Processor (Haswell M/H / Lynx Point PCH)' },
+0x0C08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : 'Intel Xeon Processor E3-1200 v3 (Haswell CPU, C220 Series PCH)' },
+0x0A00 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
+0x0A04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
+0x0A08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 
 # Bay Trail SoC
-0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : 'BYT',  'longname' : 'Intel Bay Trail' },
+0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail' },
 
 }
+try:
+    from custom_chipsets import *
+except :
+    pass
  
 Chipset_Code = dict( [(Chipset_Dictionary[ _did ]['code'], _did) for _did in Chipset_Dictionary] )
 
@@ -123,6 +128,13 @@ def print_supported_chipsets():
     for _code in sorted(codes_dict):    
         for _did in codes_dict[_code]:
             logger().log( " %-#6x | %-14s | %-6s | %-40s" % (_did, Chipset_Dictionary[_did]['name'], _code.lower(), Chipset_Dictionary[_did]['longname']) )
+
+
+AVAILABLE_MODULES = dict( [(Chipset_Dictionary[ _did ]['id'], []) for _did in Chipset_Dictionary] )
+AVAILABLE_MODULES[ CHIPSET_ID_COMMON ] = []
+
+DISABLED_MODULES = dict( [(Chipset_Dictionary[ _did ]['id'], []) for _did in Chipset_Dictionary] )
+DISABLED_MODULES[ CHIPSET_ID_COMMON ] = []
 
 
 class UnknownChipsetError (RuntimeError):
@@ -138,9 +150,10 @@ class Chipset:
 
         self.vid        = 0
         self.did        = 0
-        self.code       = ""
+        self.code       = CHIPSET_CODE_UNKNOWN
         self.longname   = "Unrecognized Platform"
         self.id         = CHIPSET_ID_UNKNOWN
+        self.Cfg        = Cfg()
 
         #
         # Initializing 'basic primitive' HAL components
@@ -182,7 +195,16 @@ class Chipset:
             self.id         = data_dict['id']
         else:
             raise UnknownChipsetError, ('UnsupportedPlatform: Device ID = 0x%04X' % self.did)
-
+        self.init_cfg()
+        
+    def init_cfg(self):
+        if self.code and '' != self.code:
+            try:
+                exec 'from chipsec.cfg.' + self.code + ' import *'
+                logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % self.code )
+                exec 'self.Cfg = ' +self.code + '()'
+            except ImportError, msg:
+                if logger().VERBOSE: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
 
 
     def destroy( self, start_svc ):
@@ -205,6 +227,15 @@ class Chipset:
 
     def print_chipset(self):
         logger().log( "Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
+    
+    def add_available_module(self, module_name, platform_code):
+        chipset_id = CHIPSET_ID_UNKNOWN
+        if Chipset_Code.has_key( platform_code ):
+            chipset_id = Chipset_Dictionary[ Chipset_Code[ platform_code] ]['id']
+        elif platform_code == CHIPSET_CODE_COMMON:
+            chipset_id = CHIPSET_ID_COMMON
+        AVAILABLE_MODULES[ chipset_id ].append( module_name )
+        #print AVAILABLE_MODULES
 
 from chipsec.helper.oshelper import helper
 _chipset = Chipset( helper() )

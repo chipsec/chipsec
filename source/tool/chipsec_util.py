@@ -39,7 +39,7 @@ from chipsec.logger     import *
 from chipsec.file       import *
 from chipsec.helper.oshelper   import helper
 
-from chipsec.chipset import cs
+from chipsec.chipset import cs, UnknownChipsetError
 _cs = cs()
 
 #

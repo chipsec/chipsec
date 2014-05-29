@@ -66,14 +66,20 @@ class Msr:
         self.helper = helper
 
     def get_cpu_thread_count( self ):
-        (core_thread_count, dummy) = self.helper.read_msr( 0, IA32_MSR_CORE_THREAD_COUNT )
-        if (core_thread_count & IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK) == 0:
-            return self.helper.get_threads_count()
-        return (core_thread_count & IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
+        thread_count = self.helper.get_threads_count()
+        if thread_count is None or thread_count <= 0:
+            if logger().VERBOSE: logger().log( "helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)" )
+            (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
+            thread_count = (cnt & Cfg.IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
 
+        if 0 == thread_count: thread_count = 1
+        if logger().VERBOSE: logger().log( "[cpu] # of logical CPUs: %d" % thread_count )
+        return thread_count
+
+    # @TODO: fix
     def get_cpu_core_count( self ):
-        (core_thread_count, dummy) = self.helper.read_msr( 0, IA32_MSR_CORE_THREAD_COUNT )
-        return ((core_thread_count & IA32_MSR_CORE_THREAD_COUNT_CORECOUNT_MASK) >> 16)
+        (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
+        return ((core_thread_count & Cfg.IA32_MSR_CORE_THREAD_COUNT_CORECOUNT_MASK) >> 16)
 
 
 ##########################################################################################################

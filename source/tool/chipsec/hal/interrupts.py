@@ -77,10 +77,13 @@ class Interrupts:
            logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x%02X, data 0xB3 <- 0x%02X (0x%04X)" % (SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
         return self.cs.io.write_port_word( SMI_APMC_PORT, SMI_code_data )
 
-    def get_TCOBASE( self ):
-        abase = self.cs.pci.read_dword( 0, 31, 0, CFG_REG_PCH_LPC_ABASE ) & ~0x1
-        tcobase = abase + TCOBASE_ABASE_OFFSET
-        return tcobase
+
+    def get_PMBASE(self):
+        return (self.cs.pci.read_dword( 0, 31, 0, Cfg.CFG_REG_PCH_LPC_PMBASE ) & ~0x1)
+
+    def get_TCOBASE(self):
+        return (self.get_PMBASE() + Cfg.TCOBASE_ABASE_OFFSET)
+
 
     def send_NMI( self ):
         if logger().VERBOSE:

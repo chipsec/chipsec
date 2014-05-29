@@ -184,16 +184,16 @@ class Pci:
     ##################################################################################
 
     def get_PCIEXBAR_base_address( self ):
-        base_lo = self.read_dword( 0, 0, 0, PCI_PCIEXBAR_REG_OFF )
-        base_hi = self.read_dword( 0, 0, 0, PCI_PCIEXBAR_REG_OFF + 4 )
+        base_lo = self.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF )
+        base_hi = self.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF + 4 )
         if (0 == base_lo & 0x1):
            logger().warn('PCIEXBAR is disabled')
 
-        base_lo &= PCI_PCIEXBAR_REG_ADMSK256
-        if (PCI_PCIEXBAR_REG_LENGTH_128MB == (base_lo & PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-           base_lo |= PCI_PCIEXBAR_REG_ADMSK128
-        elif (PCI_PCIEXBAR_REG_LENGTH_64MB == (base_lo & PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-           base_lo |= (PCI_PCIEXBAR_REG_ADMSK128|PCI_PCIEXBAR_REG_ADMSK64)
+        base_lo &= Cfg.PCI_PCIEXBAR_REG_ADMSK256
+        if (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+           base_lo |= Cfg.PCI_PCIEXBAR_REG_ADMSK128
+        elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+           base_lo |= (Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
         base = (base_hi << 32) | base_lo
         if logger().VERBOSE:
            logger().log( '[mmio] PCIEXBAR (MMCFG): 0x%016X' % base )

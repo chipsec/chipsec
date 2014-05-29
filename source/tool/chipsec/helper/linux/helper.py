@@ -107,6 +107,7 @@ class LinuxHelper:
         self.delete()
 
     def init( self ):
+        x64 = True if sys.maxsize > 2**32 else False
         global _DEV_FH
         _DEV_FH = None
         
@@ -124,13 +125,13 @@ class LinuxHelper:
        
         #decode the arg size
         global _PACK
-        _PACK = 'I'
+        _PACK = 'Q' if x64 else 'I'
 
         global _IOCTL_BASE
         _IOCTL_BASE = fcntl.ioctl(_DEV_FH, IOCTL_BASE()) << 4 
 
         global CPU_MASK_LEN
-        CPU_MASK_LEN = 8 if sys.maxsize > 2**32 else 4
+        CPU_MASK_LEN = 8 if x64 else 4
 
 	
     def close():
@@ -271,11 +272,23 @@ class LinuxHelper:
             print "set_affinity error: %s" % os.strerror(ret)
             return None
         
-    #########
+##############
     # UEFI Variable API
-    #########
+##############
 
-    def get_efivar_from_sys( self, filename ):
+    def use_efivars(self):
+        rel = platform.release()
+        ind = rel.find('.')
+	major = rel[:ind]
+	minor = rel[ind+1:rel.find('.', ind+1)]
+	return (int(major) >= 3) and (int(minor) >= 10)
+	
+
+#
+# Legacy /efi/vars methods
+#	
+		
+    def VARS_get_efivar_from_sys( self, filename ): 	
         off = 0
         buf = list()
         hdr = 0
@@ -315,41 +328,164 @@ class LinuxHelper:
         
         finally:
             return (off, buf, hdr, data, guid, attr)
-        
-
-    def get_EFI_variable( self, name, guid ):
-        if not name:
-            name = '*'
-        if not guid:
-            guid = '*'
-        for var in os.listdir('/sys/firmware/efi/vars'):
-            if fnmatch.fnmatch(var, '%s-%s' % (name,guid)):
-                return get_efivar_from_sys(var)
-
-    def list_EFI_variables ( self, infcls=2 ):
+			
+    def VARS_list_EFI_variables ( self, infcls=2 ):
         varlist = os.listdir('/sys/firmware/efi/vars')
         variables = dict()
         for v in varlist:
             name = v[:-37]
             if name and name is not None:
                 variables[name] = []
-                var = self.get_efivar_from_sys(v)
+                var = self.VARS_get_efivar_from_sys(v)
                 # did we get something real back?
                 (off, buf, hdr, data, guid, attr) = var
                 if data != "" or guid != 0 or attr != 0:
                     variables[name].append(var)
-        return variables
-
-    def set_EFI_variable( name, guid, value ):
+        return variables	
+	
+    def VARS_get_EFI_variable( self, name, guid ):
         if not name:
             name = '*'
         if not guid:
             guid = '*'
         for var in os.listdir('/sys/firmware/efi/vars'):
-            if fnmatch.fnmatch(var, '%s-%s' %name %guid):
-                f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
-		f.write(value)
+            if fnmatch.fnmatch(var, '%s-%s' % (name,guid)):
+                (off,buf,hdr,data,guid,attr) = self.VARS_get_efivar_from_sys(var)	
+		return data
+
+    def VARS_set_EFI_variable(self,  name, guid, value ):
+        ret = True
+        if not name:
+            name = '*'
+        if not guid:
+            guid = '*'
+        for var in os.listdir('/sys/firmware/efi/vars'):
+            if fnmatch.fnmatch(var, '%s-%s' % (name,guid)):
+                try:
+                    f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
+                    f.write(value)
+                except Exception, err:
+                    logger().error('Failed to write EFI variable. %s' % err)
+                    ret = False        
+                finally:
+                    pass
+        return ret
+		
+
+		
+#
+# New (kernel 3.10+) /efi/efivars methods
+#	
+    def EFIVARS_get_efivar_from_sys( self, filename ): 	
+	guid = filename[filename.find('-')+1:]
+        off = 0
+        buf = list()
+        hdr = 0
+	try:
+            f = open('/sys/firmware/efi/efivars/'+filename, 'r')
+            data = f.read() 
+            attr = struct.unpack_from("<I",data)[0]   
+            data = data[4:]
+            f.close()
+
+        except Exception, err:
+            logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
+            data = ""
+            guid = 0
+            attr = 0
         
+        finally:
+            return (off, buf, hdr, data, guid, attr)
+
+
+    def EFIVARS_list_EFI_variables ( self, infcls=2 ):
+        varlist = os.listdir('/sys/firmware/efi/efivars')
+        variables = dict()
+        for v in varlist:
+            name = v[:-37]
+            if name and name is not None:
+                variables[name] = []
+                var = self.EFIVARS_get_efivar_from_sys(v)
+                # did we get something real back?
+                (off, buf, hdr, data, guid, attr) = var
+                if data != "" or guid != 0 or attr != 0:
+                    variables[name].append(var)
+        return variables	
+		
+    def EFIVARS_get_EFI_variable( self, name, guid ):
+        filename = name + "-" + guid
+        try:
+            f = open('/sys/firmware/efi/efivars/'+filename, 'r')
+            data = f.read()
+            attr = struct.unpack_from("<I",data)[0] 
+            data = data[4:]
+            f.close()
+
+        except Exception, err:
+            logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
+            data = ""
+        
+        finally:
+	    return data
+				
+	
+    def EFIVARS_set_EFI_variable(self, name, guid, value, attrs=None):
+        if not name:
+            name = '*'
+        if not guid:
+            guid = '*'
+
+        path = '/sys/firmware/efi/efivars/%s-%s' % (name, guid)	
+        if value != None:
+		try:		
+			if os.path.isfile(path):
+				#Variable already exists 
+				if attrs is not None: logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
+				f = open(path, 'r')
+				sattrs = f.read(4)
+			else:
+				#Create new variable with attributes NV+BS+RT if attrs were not passed in
+				sattrs = struct.pack("I", 0x7) if attrs is None else struct.pack("I",attrs)				
+			f = open(path, 'w')
+			f.write(sattrs + value) 							
+			f.close()
+			return True
+		except Exception, err:
+			logger().error('Failed to write EFI variable. %s' % err)
+			return False
+	else:
+		try:
+			os.remove(path)
+			return True
+		except Exception, err:
+			logger().error('Failed to delete EFI variable. %s' % err)
+				
+#
+# UEFI API entry points
+#	
+
+
+    def delete_EFI_variable(self, name, guid):
+        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, None)
+
+    def list_EFI_variables (self, infcls=2):
+        if self.use_efivars():  return self.EFIVARS_list_EFI_variables(infcls)
+        else:  		            return self.VARS_list_EFI_variables(infcls)
+		
+    def get_EFI_variable(self, name, guid, attrs=None):
+        if self.use_efivars():  return self.EFIVARS_get_EFI_variable(name, guid)
+        else:                       return self.VARS_get_EFI_variable(name, guid)		
+	
+    def set_EFI_variable(self, name, guid, value, attrs=None):
+        if self.use_efivars():  return self.EFIVARS_set_EFI_variable(name, guid, value, attrs)
+        else:                       return self.VARS_set_EFI_variable(name, guid, value)
+        
+	
+##############
+    # End UEFI Variable API
+##############
+		
+		
     #
     # Interrupts
     #
@@ -367,8 +503,8 @@ class LinuxHelper:
         return os.getcwd()
     
     def get_threads_count ( self ):
-        print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
-        return 0
+        import subprocess
+        return int(subprocess.check_output("grep -c process /proc/cpuinfo", shell=True))
 
 def get_helper():
     return LinuxHelper()

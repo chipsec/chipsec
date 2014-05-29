@@ -82,19 +82,19 @@ SUPPORTED_EFI_VARIABLES   = ('BootOrder', 'Boot####', 'DriverOrder', 'Driver####
 def get_attr_string( attr ):
     attr_str = ' '
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_NON_VOLATILE ):
-       attr_str = attr_str + 'NV+'
+        attr_str = attr_str + 'NV+'
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_BOOTSERVICE_ACCESS ):
-       attr_str = attr_str + 'BS+'
+        attr_str = attr_str + 'BS+'
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_RUNTIME_ACCESS ):
-       attr_str = attr_str + 'RT+'
+        attr_str = attr_str + 'RT+'
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_HARDWARE_ERROR_RECORD ):
-       attr_str = attr_str + 'HER+'
+        attr_str = attr_str + 'HER+'
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS ):
-       attr_str = attr_str + 'AWS+'
+        attr_str = attr_str + 'AWS+'
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS ):
-       attr_str = attr_str + 'TBAWS+'
+        attr_str = attr_str + 'TBAWS+'
     if IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_APPEND_WRITE ):
-       attr_str = attr_str + 'AW+'
+        attr_str = attr_str + 'AW+'
     return attr_str[:-1].lstrip()
 
 
@@ -194,7 +194,7 @@ class UEFI:
     def dump_EFI_variables_from_SPI( self ):
         return self.read_EFI_variables_from_SPI( 0, 0x800000 )
 
-    def read_EFI_variables_from_SPI( BIOS_region_base, BIOS_region_size ):
+    def read_EFI_variables_from_SPI( self, BIOS_region_base, BIOS_region_size ):
         rom = spi.read_spi( BIOS_region_base, BIOS_region_size )
         efi_var_store = self.find_EFI_Variable_Store( rom )
         return self.read_EFI_NVRAM_variables( efi_var_store )
@@ -206,8 +206,8 @@ class UEFI:
 
     def find_EFI_variable_store( self, rom_buffer ):
         if ( rom_buffer is None ):
-           logger().error( 'rom_buffer is None' )
-           return None
+            logger().error( 'rom_buffer is None' )
+            return None
         # Meh..
         rom = "".join( rom_buffer )
         offset       = 0
@@ -290,27 +290,29 @@ NVRAM: EFI Variable Store
               print_buffer( var )
         return var
 
-    def set_EFI_variable( self, name, guid, var ):
+    def set_EFI_variable( self, name, guid, var, attrs=None ):
         if logger().UTIL_TRACE or logger().VERBOSE:
            logger().log( '[uefi] Writing EFI variable:' )
            logger().log( 'Name: %s' % name )
            logger().log( 'GUID: %s' % guid )
+           if attrs is not None: logger().log( 'Attributes: %s' % attrs )
            #print_buffer( var )
-        return self.helper.set_EFI_variable( name, guid, var )
+        return self.helper.set_EFI_variable( name, guid, var, attrs )
 
-    def set_EFI_variable_from_file( self, name, guid, filename=None ):
-        if not filename:
+    def set_EFI_variable_from_file( self, name, guid, filename, attrs=None ):
+        if filename is None:
            logger().error( 'File with EFI variable is not specified' )
            return False
         var = read_file( filename )
-        return self.set_EFI_variable( name, guid, var )
+        return self.set_EFI_variable( name, guid, var, attrs )
 
-    def delete_EFI_variable( self, name, guid ):
+    def delete_EFI_variable( self, name, guid, attrs=None ):
         if logger().UTIL_TRACE or logger().VERBOSE:
            logger().log( '[uefi] Deleting EFI variable:' )
            logger().log( 'Name: %s' % name )
            logger().log( 'GUID: %s' % guid )
-        return self.helper.set_EFI_variable( name, guid, None )
+           if attrs is not None: logger().log( 'Attributes: %s' % attrs )
+        return self.helper.set_EFI_variable( name, guid, None, attrs )
 
 
 
