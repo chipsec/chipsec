@@ -175,7 +175,7 @@ Creating a Live Linux image with CHIPSEC:
 2. Use liveusb-creator to image a USB stick with the desired linux image. Include as much persistent storage as possible.
 3. Reboot to USB
 4. Update and install necessary packages
-   ```#> yum install kernel kernel-devel python python-devel gcc```
+   ```#> yum install kernel kernel-devel python python-devel gcc``` or ```# apt-get install build-essential python-dev python gcc linux-headers-$(uname -r)```
 5. Copy chipsec to the USB stick
 
 Installing CHIPSEC:
