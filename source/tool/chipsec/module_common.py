@@ -56,25 +56,27 @@ class BaseModule( object ):
     # depending wether or not this module is supported in the currently running
     # platform.
     # To access the currently running platform use
-    #    self.cs.code
+    #    self.cs.get_chipset_id()
     def is_supported(self):
-        raise NotImplementedError('sub class should overwrite this method')
+        return True
     
     def run( self, module_argv ):
-        raise NotImplementedError('sub class should overwrite this method')
+        raise NotImplementedError('sub class should overwrite the run() method')
 
 
 MTAG_BIOS       = "BIOS"
 MTAG_SMM        = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
+MTAG_HWCONFIG   = "HWCONFIG"
  
 
 
 ##! [Available Tags]
 MTAG_METAS = {
-              MTAG_BIOS:      "System firmware (BIOS/UEFI) specific tests", 
-              MTAG_SMM:       "System Management Mode (SMM) specific tests",
-              MTAG_SECUREBOOT: "Secure Boot specific tests",
+              MTAG_BIOS:       "System Firmware (BIOS/UEFI) Modules", 
+              MTAG_SMM:        "System Management Mode (SMM) Modules",
+              MTAG_SECUREBOOT: "Secure Boot Modules",
+              MTAG_HWCONFIG:   "Hardware Configuration Modules",
               }
 ##! [Available Tags]
 MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])

@@ -103,6 +103,10 @@ def main_is_frozen():
             hasattr(sys, "importers")) # old py2exe
 
 def get_main_dir():
+    path = os.path.abspath( os.path.join( os.path.dirname( __file__ ), os.path.pardir ) )
     if main_is_frozen():
-        return os.path.dirname(sys.executable)
-    return os.path.dirname(sys.argv[0])
+        path = os.path.dirname(sys.executable)
+    #elif len( os.path.dirname(sys.argv[0]) ) > 0:
+    #    path = os.path.dirname(sys.argv[0])
+    return  path
+    

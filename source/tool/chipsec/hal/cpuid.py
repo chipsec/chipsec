@@ -52,10 +52,10 @@ class CpuID:
     def __init__( self, helper ):
         self.helper = helper
 
-    def cpuid(self, eax ):
-        value = self.helper.cpuid( eax )
-        if logger().VERBOSE:
-            logger().log( "[CpuID] calling cpuid EAX=0x%x" % eax )
-        return value
+    def cpuid(self, eax, ecx ):
+        if logger().VERBOSE: logger().log( "[cpuid] in: EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
+        (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
+        if logger().VERBOSE: logger().log( "[cpuid] out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
+        return (eax, ebx, ecx, edx)
 
      

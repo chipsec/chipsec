@@ -194,22 +194,22 @@ class LinuxHelper:
         return x[4]
 
     def read_io_port(self, io_port, size):
-        in_buf = struct.pack( "3"+_PACK, io_port, size, 0 )
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDIO(), in_buf )
-        try:
-            if 1 == size:
-                value = struct.unpack_from( 'B', out_buf, 2)
-            elif 2 == size:
-                value = struct.unpack_from( 'H', out_buf, 2)
-            else:
-                value = struct.unpack_from( 'I', out_buf, 2)
-        except:
-            logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
+           in_buf = struct.pack( "3"+_PACK, io_port, size, 0 )
+           out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDIO(), in_buf )
+           try:
+               if 1 == size:
+                   value = struct.unpack("3"+_PACK, out_buf)[2] & 0xff
+               elif 2 == size:
+                   value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffff
+               else:
+                   value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffffffff
+           except:
+               logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
 
-        return value[0]
+           return value
 
     def write_io_port( self, io_port, value, size ):
-        in_buf = struct.pack( 'HIB', io_port, value, size )
+        in_buf = struct.pack( "3"+_PACK, io_port, size, value )
         return fcntl.ioctl( _DEV_FH, IOCTL_WRIO(), in_buf)
 
     def read_msr(self, thread_id, msr_addr):
@@ -240,7 +240,8 @@ class LinuxHelper:
         regs = struct.unpack( "7"+_PACK, out_buf )
         return regs
 
-    def cpuid(self, eax):
+    def cpuid(self, eax, ecx):
+        # add ecx
         in_buf = struct.pack( "4"+_PACK, eax, 0, 0, 0) 
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_CPUID(), in_buf)
         return struct.unpack( "4"+_PACK, out_buf )
@@ -279,10 +280,12 @@ class LinuxHelper:
     def use_efivars(self):
         rel = platform.release()
         ind = rel.find('.')
-	major = rel[:ind]
-	minor = rel[ind+1:rel.find('.', ind+1)]
-	return (int(major) >= 3) and (int(minor) >= 10)
+        major = rel[:ind]
+        minor = rel[ind+1:rel.find('.', ind+1)]
+        return (int(major) >= 3) and (int(minor) >= 10)
 	
+    def EFI_supported( self):
+        return os.path.exists("/sys/firmware/efi/vars/") or os.path.exists("/sys/firmware/efi/efivars/")
 
 #
 # Legacy /efi/vars methods
@@ -330,7 +333,11 @@ class LinuxHelper:
             return (off, buf, hdr, data, guid, attr)
 			
     def VARS_list_EFI_variables ( self, infcls=2 ):
-        varlist = os.listdir('/sys/firmware/efi/vars')
+	varlist = []
+	try:
+        	varlist = os.listdir('/sys/firmware/efi/vars')
+	except Exception:
+		logger().error('Failed to read /sys/firmware/efi/vars. Folder does not exist')
         variables = dict()
         for v in varlist:
             name = v[:-37]
@@ -399,7 +406,12 @@ class LinuxHelper:
 
 
     def EFIVARS_list_EFI_variables ( self, infcls=2 ):
-        varlist = os.listdir('/sys/firmware/efi/efivars')
+	varlist = []
+	try:
+        	varlist = os.listdir('/sys/firmware/efi/efivars')
+	except Exception:
+		logger().error('Failed to read /sys/firmware/efi/efivars. Folder does not exist')
+		return None
         variables = dict()
         for v in varlist:
             name = v[:-37]

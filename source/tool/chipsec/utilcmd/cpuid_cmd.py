@@ -40,18 +40,15 @@ import sys
 import time
 
 import chipsec_util
-#from chipsec_util import global_usage, chipsec_util_commands, _cs
-from chipsec_util import chipsec_util_commands, _cs
 
 from chipsec.logger     	import *
 from chipsec.file       	import *
 #_cs = cs()
 
-usage = "chipsec_util cpuid <eax> \n" + \
+usage = "chipsec_util cpuid <eax> [ecx]\n" + \
         "Examples:\n" + \
         "  chipsec_util cpuid 40000000\n\n"
 
-chipsec_util.global_usage += usage
 
 
 
@@ -65,17 +62,20 @@ def cpuid(argv):
     if 3 > len(argv):
       print usage
       return
-
+  
     eax = int(argv[2],16)
+    ecx = int(argv[3],16) if 4 == len(argv) else 0
 
-    if (3 == len(argv)):
-		logger().log( "[CHIPSEC] CPUID in EAX=0x%x " % (eax))
-		val = _cs.cpuid.cpuid(eax)
-		logger().log( "[CHIPSEC] CPUID out EAX: 0x%x" % (val[0]) )
-		logger().log( "[CHIPSEC] CPUID out EBX: 0x%x" % (val[1]) )
-		logger().log( "[CHIPSEC] CPUID out ECX: 0x%x" % (val[2]) )
-		logger().log( "[CHIPSEC] CPUID out EDX: 0x%x" % (val[3]) )
+    logger().log( "[CHIPSEC] CPUID < EAX: 0x%08X" % eax)
+    logger().log( "[CHIPSEC]         ECX: 0x%08X" % ecx)
+
+    val = chipsec_util._cs.cpuid.cpuid( eax, ecx )
+
+    logger().log( "[CHIPSEC] CPUID > EAX: 0x%08X" % (val[0]) )
+    logger().log( "[CHIPSEC]         EBX: 0x%08X" % (val[1]) )
+    logger().log( "[CHIPSEC]         ECX: 0x%08X" % (val[2]) )
+    logger().log( "[CHIPSEC]         EDX: 0x%08X" % (val[3]) )
 
 
-chipsec_util_commands['cpuid'] = {'func' : cpuid ,    'start_driver' : True  }
+chipsec_util.commands['cpuid'] = {'func' : cpuid ,    'start_driver' : True, 'help' : usage  }
 

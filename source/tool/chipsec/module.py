@@ -58,9 +58,11 @@ class Module():
                 #    #module = __import__(module_path)
                 #    exec ('import ' + self.name)
                 loaded = True
+                if self.logger.VERBOSE: self.logger.log_good( "imported: %s" % self.name )
             except BaseException, msg:
                 self.logger.error( "Exception occurred during import of %s: '%s'" % (self.name, str(msg)) )
                 if self.logger.VERBOSE: self.logger.log_bad(traceback.format_exc())
+                raise msg
         return loaded
     
     def run( self, module_argv ):
@@ -74,7 +76,11 @@ class Module():
                 module_argv = []
 
             if isinstance(self.mod_obj,chipsec.module_common.BaseModule):
-                result = self.mod_obj.run(module_argv)
+                if self.mod_obj.is_supported() :
+                    result = self.mod_obj.run(module_argv)
+                else:
+                    result = ModuleResult.SKIPPED
+                    self.logger.log("Skipping module %s since it is not supported in this platform"%self.name)
 
         return result 
 

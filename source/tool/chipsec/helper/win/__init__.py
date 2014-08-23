@@ -27,5 +27,8 @@
 #
 ##################################################################################
 
-
-__all__ = [ "win32helper" ]
+import platform
+if "windows" == platform.system().lower():
+    __all__ = [ "win32helper" ]
+else:
+    __all__ = []

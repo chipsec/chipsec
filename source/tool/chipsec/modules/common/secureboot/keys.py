@@ -34,7 +34,6 @@ from chipsec.hal.uefi      import *
 # SPECIFY PLATFORMS THIS MODULE IS APPLICABLE TO
 # ############################################################
 _MODULE_NAME = 'keys'
-cs.add_available_module(_MODULE_NAME, 'COMMON')
 
 TAGS = [MTAG_SECUREBOOT]
 
@@ -47,7 +46,11 @@ class keys(BaseModule):
         BaseModule.__init__(self)
         self._uefi  = UEFI( self.cs.helper )
     
-            
+    def is_supported(self):
+        supported = self.cs.helper.EFI_supported()
+        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        return supported
+
     
     def check_EFI_variable_authentication( self, name, guid ):
         self.logger.log( "[*] Checking EFI variable %s {%s}.." % (name, guid) )
@@ -103,8 +106,5 @@ class keys(BaseModule):
     def run( self, module_argv ):
         #self.logger.VERBOSE = True
         self.logger.start_test( "Protection of Secure Boot Key and Configuraion EFI Variables" )
-        if not (self.cs.helper.is_win8_or_greater() or self.cs.helper.is_linux()):
-            self.logger.log_skipped_check( 'Currently this module can only run on Windows 8 or greater or Linux. Exiting..' )
-            return ModuleResult.SKIPPED
         return self.check_secureboot_key_variables()
    

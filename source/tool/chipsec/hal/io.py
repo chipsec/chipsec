@@ -60,15 +60,13 @@ class PortIO:
 
     def _read_port(self, io_port, size ):
         value = self.helper.read_io_port( io_port, size )
-        if logger().VERBOSE:
-            logger().log( "[io] reading from I/O port 0x%04X: value = 0x%08X (size = 0x%02x)" % (io_port, value, size) )
+        if logger().VERBOSE: logger().log( "[io] IN 0x%04X: value = 0x%08X, size = 0x%02x" % (io_port, value, size) )
         return value
 
     def _write_port(self, io_port, value, size ):
-        value = self.helper.write_io_port( io_port, value, size )
-        if logger().VERBOSE:
-            logger().log( "[io] writing to I/O port 0x%04X: value = 0x%08X (size = 0x%02x)" % (io_port, value, size) )
-        return value
+        if logger().VERBOSE: logger().log( "[io] OUT 0x%04X: value = 0x%08X, size = 0x%02x" % (io_port, value, size) )
+        status = self.helper.write_io_port( io_port, value, size )
+        return status
 
     def read_port_dword(self, io_port ):
         value = self.helper.read_io_port( io_port, 4 )

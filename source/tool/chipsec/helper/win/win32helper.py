@@ -48,7 +48,7 @@ import platform
 import re
 from collections import namedtuple
 
-from chipsec.helper.oshelper import OsHelperError
+from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError
 import errno
 
 
@@ -61,6 +61,9 @@ import win32api, win32process, win32security, win32file
 
 from chipsec.logger import logger, print_buffer
 import chipsec.file
+import traceback
+
+
 
 class PCI_BDF(Structure):
     _fields_ = [("BUS",  c_ushort, 16),  # Bus
@@ -79,6 +82,9 @@ SERVICE_NAME     = "chipsec"
 DISPLAY_NAME     = "CHIPSEC Service"
 
 CHIPSEC_INSTALL_PATH = os.path.join(sys.prefix, "Lib\site-packages\chipsec")
+
+# Status Codes
+STATUS_PRIVILEGED_INSTRUCTION = 0xC0000096
 
 # Defines for Win32 API Calls
 GENERIC_READ    = 0x80000000
@@ -118,6 +124,7 @@ IOCTL_READ_IO_PORT             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80e, METHOD_BUF
 IOCTL_WRITE_IO_PORT            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80f, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_GET_CPU_DESCRIPTOR_TABLE = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x810, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_SWSMI                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x811, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_CPUID                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x813, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
 #
 # NT Errors
@@ -244,6 +251,8 @@ class Win32Helper:
         #self.device_file    =  u"%s" % DEVICE_FILE
         self.device_file = pywintypes.Unicode(DEVICE_FILE)
 
+        c_int_p = POINTER(c_int)
+
         # enable required SeSystemEnvironmentPrivilege privilege
         privilege = win32security.LookupPrivilegeValue( None, 'SeSystemEnvironmentPrivilege' )
         token = win32security.OpenProcessToken( win32process.GetCurrentProcess(), win32security.TOKEN_READ|win32security.TOKEN_ADJUST_PRIVILEGES )
@@ -269,7 +278,6 @@ class Win32Helper:
             logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
             pass
 
-        c_int_p = POINTER(c_int)
         #self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableW
         #self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableW
         try:
@@ -280,8 +288,18 @@ class Win32Helper:
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError, msg:
-            logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
+            if logger().VERBOSE: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
             pass
+        """
+        CPUInfo = c_int * 4
+        try:
+            self.cpuid = win32api.__cpuidex
+            self.cpuid.restype = c_int
+            self.cpuid.argtypes = [CPUInfo, c_int, c_int]
+        except AttributeError, msg:
+            logger().warn( "__cpuidex function doesn't seem to exist" )
+            pass
+        """
 
     def __del__(self):
         try:
@@ -306,23 +324,24 @@ class Win32Helper:
         if win32service.SERVICE_RUNNING == state:
             if logger().VERBOSE: logger().log( "[helper] chipsec service already running" )           
         else:
-           try:
-              win32service.StartService( self.hs, None );
-              state = win32service.QueryServiceStatus( self.hs )[1]
-              while win32service.SERVICE_START_PENDING == state:
-                 time.sleep( 1 )
-                 state = win32service.QueryServiceStatus( self.hs )[1]
-              if win32service.SERVICE_RUNNING == state:
-                 if logger().VERBOSE: logger().log( "[helper] chipsec service started (SERVICE_RUNNING)" )           
-           except win32service.error, (hr, fn, msg):
-              if (winerror.ERROR_ALREADY_EXISTS == hr):
-                 if logger().VERBOSE: logger().log( "[helper] chipsec service already exists: %s (%d)" % (msg, hr) )           
-              else:
-                 win32service.CloseServiceHandle( self.hs )
-                 self.hs = None
-                 string  = "StartService failed: %s (%d)" % (msg, hr)
-                 logger().error( string )
-                 raise OsHelperError(string,hr)
+            try:
+                win32service.StartService( self.hs, None );
+                state = win32service.QueryServiceStatus( self.hs )[1]
+                while win32service.SERVICE_START_PENDING == state:
+                    time.sleep( 1 )
+                    state = win32service.QueryServiceStatus( self.hs )[1]
+                if win32service.SERVICE_RUNNING == state:
+                    if logger().VERBOSE: logger().log( "[helper] chipsec service started (SERVICE_RUNNING)" )           
+            except win32service.error, (hr, fn, msg):
+                if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+                if (winerror.ERROR_ALREADY_EXISTS == hr or winerror.ERROR_SERVICE_ALREADY_RUNNING == hr):
+                    if logger().VERBOSE: logger().log( "[helper] chipsec service already exists: %s (%d)" % (msg, hr) )           
+                else:
+                    win32service.CloseServiceHandle( self.hs )
+                    self.hs = None
+                    string  = "StartService failed: %s (%d)" % (msg, hr)
+                    logger().error( string )
+                    raise OsHelperError(string,hr)
 
         #if logger().VERBOSE:
         #   logger().log( "[helper] chipsec service handle = 0x%08x" % self.hs )
@@ -343,6 +362,7 @@ class Win32Helper:
             raise OsHelperError(string,hr)
 
         if logger().VERBOSE: logger().log( "[helper] SC Manager opened (handle = 0x%08x)" % hscm )
+        
 
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec" , "helper" ,"win" )
         driver_path = os.path.join( driver_path, self.win_ver , DRIVER_FILE_NAME )
@@ -477,10 +497,19 @@ class Win32Helper:
         #ret = kernel32.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, len(in_buf), byref(out_buf), out_length, byref(out_size), None )
         if logger().VERBOSE: print_buffer( in_buf )
         try:
-           out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )       
-        except pywintypes.error, msg:
-           logger().error( 'DeviceIoControl returned error: %s' % str(msg) )
-           return None
+            out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )       
+        except pywintypes.error, _err:
+            err_status = _err[0] + 0x100000000
+            if STATUS_PRIVILEGED_INSTRUCTION == err_status:
+                err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x%X)" % err_status
+                logger().error( err_msg )
+                raise HWAccessViolationError( err_msg, err_status )
+            else:
+                #err_msg = "%s ('%s')" % (_err[1],_err[2])
+                err_msg = "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2])
+                logger().error( err_msg )
+                raise OSHelperError( err_msg, err_status )
+            #return None
         return out_buf
 
 ###############################################################################################
@@ -490,22 +519,15 @@ class Win32Helper:
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
         out_length = length
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length )
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
-
-        del in_buf, out_length, out_size
         return out_buf
 
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         in_length = length + 12
         out_buf = (c_char * 4)()
-        out_size = c_ulong(4)
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
-
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
-
-        del in_buf, in_length, out_size
         return out_buf
 
     def alloc_phys_mem( self, length, max_pa ):
@@ -513,43 +535,29 @@ class Win32Helper:
         in_length  = 12
         out_length = 16
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( 'QI', max_pa, length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
-        try:
-           (va, pa) = struct.unpack( '2Q', out_buf )
-        except:
-           logger().error( 'DeviceIoControl did not return 4 DWORD values' )
-
-        del in_buf, in_length, out_length, out_size
+        #try:
+        (va, pa) = struct.unpack( '2Q', out_buf )
+        #except: logger().error( 'DeviceIoControl(ALLOC_PHYSMEM) did not return 4 DWORD values' )
         return (va, pa)
 
     def read_msr( self, cpu_thread_id, msr_addr ):
-
         (eax,edx) = (0,0)
         out_length = 8
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( '=BI', cpu_thread_id, msr_addr )
-        out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )     
-        try:
-           (eax, edx) = struct.unpack( '2I', out_buf )
-        except:
-           logger().error( 'DeviceIoControl did not return 2 DWORD values' )
-        
-        del in_buf, out_length, out_size
-        
+        out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
+        #try:
+        (eax, edx) = struct.unpack( '2I', out_buf )
+        #except: logger().error( 'DeviceIoControl(READ_MSR) did not return 2 DWORD values' )      
         return (eax, edx)
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
-
         out_length = 0
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( '=B3I', cpu_thread_id, msr_addr, eax, edx )
         out_buf = self._ioctl( IOCTL_WRMSR, in_buf, out_length )     
-
-        del in_buf, out_length, out_size
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
@@ -557,66 +565,51 @@ class Win32Helper:
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         out_length = size
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( '4HB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, size )
-
         out_buf = self._ioctl( READ_PCI_CFG_REGISTER, in_buf, out_length )
-        try:
-           if 1 == size:
-              value = struct.unpack( 'B', out_buf )[0]
-           elif 2 == size:
-              value = struct.unpack( 'H', out_buf )[0]
-           else:
-              value = struct.unpack( 'I', out_buf )[0]
-        except:
-           logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf.raw) )
-        del in_buf, out_length, out_size
-
+        #try:
+        if 1 == size:
+            value = struct.unpack( 'B', out_buf )[0]
+        elif 2 == size:
+            value = struct.unpack( 'H', out_buf )[0]
+        else:
+            value = struct.unpack( 'I', out_buf )[0]
+        #except: logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf.raw) )
         return value
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         out_length = 0
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( '4HIB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, value, size )
         out_buf = self._ioctl( WRITE_PCI_CFG_REGISTER, in_buf, out_length )     
-
-        del in_buf, out_length, out_size
-        return
+        return True
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
-
         in_length = len(ucode_update_buf) + 3
         out_length = 0
         out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
         in_buf = struct.pack( '=BH', cpu_thread_id, len(ucode_update_buf) ) + ucode_update_buf
         #print_buffer( in_buf )
         out_buf = self._ioctl( IOCTL_LOAD_UCODE_PATCH, in_buf, out_length )     
-
-        del in_buf, in_length, out_size
         return True
 
     def read_io_port( self, io_port, size ):
+        value =0
         in_buf = struct.pack( '=HB', io_port, size )
         out_buf = self._ioctl( IOCTL_READ_IO_PORT, in_buf, size )
-        try:
-          if 1 == size:
-             value = struct.unpack( 'B', out_buf )[0]
-          elif 2 == size:
-             value = struct.unpack( 'H', out_buf )[0]
-          else:
-             value = struct.unpack( 'I', out_buf )[0]
-        except:
-           logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
-
+        if 1 == size:
+            value = struct.unpack( 'B', out_buf )[0]
+        elif 2 == size:
+            value = struct.unpack( 'H', out_buf )[0]
+        else:
+            value = struct.unpack( 'I', out_buf )[0]
         return value
 
     def write_io_port( self, io_port, value, size ):
         in_buf = struct.pack( '=HIB', io_port, value, size )
-        return self._ioctl( IOCTL_WRITE_IO_PORT, in_buf, 0 )
-
+        out_buf = self._ioctl( IOCTL_WRITE_IO_PORT, in_buf, 0 )
+        return True
 
     #
     # IDTR/GDTR/LDTR
@@ -631,6 +624,9 @@ class Win32Helper:
     #
     # EFI Variable API
     #
+    def EFI_supported( self):
+        return ((self.GetFirmwareEnvironmentVariable is not None) or (self.GetFirmwareEnvironmentVariableEx is not None))
+
     def get_EFI_variable( self, name, guid, attrs=None ):
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         if attrs is None:
@@ -703,9 +699,18 @@ class Win32Helper:
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '=H6Q', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )     
-        del in_buf, out_length, out_size
         return
 
+    #
+    # CPUID
+    #
+    def cpuid( self, eax, ecx ):
+        out_length = 16
+        out_buf = (c_char * out_length)()
+        in_buf = struct.pack( '=2I', eax, ecx )
+        out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )     
+        (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )
+        return (eax, ebx, ecx, edx)
     
 
 #

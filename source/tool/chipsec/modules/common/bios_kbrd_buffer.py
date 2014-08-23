@@ -47,9 +47,12 @@ COMMON_FILL_PTRN = "".join( ['%c' % chr(x + 0x1E) for x in range(32)] )
 class bios_kbrd_buffer(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+    
+    def is_supported(self):
+        return True
 
     def check_BIOS_keyboard_buffer(self):
-        self.logger.start_test( "Pre-boot Passwords in the BIOS Keyboard Buffer" )        
+        self.logger.start_test( "Pre-boot Passwords in the BIOS Keyboard Buffer" )
     
         bios_kbrd_buf_clear = 0
     
@@ -58,7 +61,7 @@ class bios_kbrd_buffer(BaseModule):
         self.logger.log( "[*] Keyboard buffer head pointer = 0x%X (at 0x41A), tail pointer = 0x%X (at 0x41C)" % (kbrd_buf_head,kbrd_buf_tail) )
         bios_kbrd_buf = self.cs.mem.read_physical_mem( 0x41E, 32 )
         self.logger.log( "[*] Keyboard buffer contents (at 0x41E):" )
-        print_buffer( bios_kbrd_buf )
+        chipsec.logger.print_buffer( bios_kbrd_buf )
     
         #try:
             #s = struct.unpack( '32c', bios_kbrd_buf.raw )

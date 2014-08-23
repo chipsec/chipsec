@@ -49,14 +49,14 @@ import sys
 import time
 
 import chipsec_util
-from chipsec_util import chipsec_util_commands, _cs
+
 
 from chipsec.logger     import *
 from chipsec.file       import *
 
 from chipsec.hal.mmio   import *
 
-#_cs = cs()
+
 
 usage = "chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]\n" + \
         "Examples:\n" + \
@@ -64,9 +64,6 @@ usage = "chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]\n
         "  chipsec_util mmcfg 0 0 0 0x88 byte 0x1A\n" + \
         "  chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1\n" + \
         "  chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040\n\n"
-
-chipsec_util.global_usage += usage
-
 
 
 # ###################################################################
@@ -79,47 +76,48 @@ def mmcfg(argv):
     t = time.time()
 
     if 2 == len(argv):
-        pciexbar = get_PCIEXBAR_base_address( _cs )
-        logger().log( "[CHIPSEC] Memory Mapped Configuration Space (PCIEXBAR) = 0x%016X" % pciexbar )
+        #pciexbar = get_PCIEXBAR_base_address( chipsec_util._cs )
+        pciexbar = get_MMCFG_base_address( chipsec_util._cs )
+        logger().log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
         return
     elif 6 > len(argv):
         print usage
         return
 
     try:
-       bus         = int(argv[2],16)
-       device      = int(argv[3],16)
-       function    = int(argv[4],16)
-       offset      = int(argv[5],16)
+        bus         = int(argv[2],16)
+        device      = int(argv[3],16)
+        function    = int(argv[4],16)
+        offset      = int(argv[5],16)
 
-       if 6 == len(argv):
-          width = 1
-       else:
-          if 'byte' == argv[6]:
-             width = 1
-          elif 'word' == argv[6]:
-             width = 2
-          elif 'dword' == argv[6]:
-             width = 4
-          else:
-             width = int(argv[6])
+        if 6 == len(argv):
+            width = 1
+        else:
+            if 'byte' == argv[6]:
+                width = 1
+            elif 'word' == argv[6]:
+                width = 2
+            elif 'dword' == argv[6]:
+                width = 4
+            else:
+                width = int(argv[6])
 
     except Exception as e :
-       print usage
-       return
+        print usage
+        return
 
     if 8 == len(argv):
-       value = int(argv[7], 16)
-       write_mmcfg_reg( _cs, bus, device, function, offset, width, value )
-       #_cs.pci.write_mmcfg_reg( bus, device, function, offset, width, value )
-       logger().log( "[CHIPSEC] writing MMCFG register (%d/%d/%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
+        value = int(argv[7], 16)
+        write_mmcfg_reg( chipsec_util._cs, bus, device, function, offset, width, value )
+        #_cs.pci.write_mmcfg_reg( bus, device, function, offset, width, value )
+        logger().log( "[CHIPSEC] writing MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
     else:
-       value = read_mmcfg_reg( _cs, bus, device, function, offset, width )
-       #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
-       logger().log( "[CHIPSEC] reading MMCFG register (%d/%d/%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
+        value = read_mmcfg_reg( chipsec_util._cs, bus, device, function, offset, width )
+        #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
+        logger().log( "[CHIPSEC] reading MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
 
     logger().log( "[CHIPSEC] (mmcfg) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util_commands['mmcfg'] = {'func' : mmcfg ,    'start_driver' : True  }
+chipsec_util.commands['mmcfg'] = {'func' : mmcfg ,    'start_driver' : True, 'help' : usage  }
 

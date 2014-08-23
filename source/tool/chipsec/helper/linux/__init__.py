@@ -27,5 +27,8 @@
 #
 ##################################################################################
 
-
-__all__ = [ "helper" ]
+import platform
+if "linux" == platform.system().lower():
+    __all__ = [ "helper" ]
+else:
+    __all__ = [ ]

@@ -43,22 +43,18 @@ import sys
 import time
 
 import chipsec_util
-from chipsec_util import chipsec_util_commands, _cs
+
 
 from chipsec.logger     import *
 from chipsec.file       import *
 
 from chipsec.hal.msr    import Msr
 
-#_cs = cs()
 
 usage = "chipsec_util msr <msr> [eax] [edx] [cpu_id]\n" + \
         "Examples:\n" + \
         "  chipsec_util msr 0x3A\n" + \
         "  chipsec_util msr 0x8B 0x0 0x0 0\n\n"
-
-chipsec_util.global_usage += usage
-
 
 
 # ###################################################################
@@ -69,34 +65,34 @@ chipsec_util.global_usage += usage
 def msr(argv):
 
     if 3 > len(argv):
-      print usage
-      return
+        print usage
+        return
 
     #msr = Msr( os_helper )
     msr_addr = int(argv[2],16)
 
     if (3 == len(argv)):
-       for tid in range(_cs.msr.get_cpu_thread_count()):
-           (eax, edx) = _cs.msr.read_msr( tid, msr_addr )
-           val64 = ((edx << 32) | eax)
-           logger().log( "[CHIPSEC] CPU%d: RDMSR( 0x%x ) = %016X (EAX=%08X, EDX=%08X)" % (tid, msr_addr, val64, eax, edx) )
+        for tid in range(chipsec_util._cs.msr.get_cpu_thread_count()):
+            (eax, edx) = chipsec_util._cs.msr.read_msr( tid, msr_addr )
+            val64 = ((edx << 32) | eax)
+            logger().log( "[CHIPSEC] CPU%d: RDMSR( 0x%x ) = %016X (EAX=%08X, EDX=%08X)" % (tid, msr_addr, val64, eax, edx) )
     elif (4 == len(argv)):
-       cpu_thread_id = int(argv[3], 16)
-       (eax, edx) = _cs.msr.read_msr( cpu_thread_id, msr_addr )
-       val64 = ((edx << 32) | eax)
-       logger().log( "[CHIPSEC] CPU%d: RDMSR( 0x%x ) = %016X (EAX=%08X, EDX=%08X)" % (cpu_thread_id, msr_addr, val64, eax, edx) )
+        cpu_thread_id = int(argv[3], 16)
+        (eax, edx) = chipsec_util._cs.msr.read_msr( cpu_thread_id, msr_addr )
+        val64 = ((edx << 32) | eax)
+        logger().log( "[CHIPSEC] CPU%d: RDMSR( 0x%x ) = %016X (EAX=%08X, EDX=%08X)" % (cpu_thread_id, msr_addr, val64, eax, edx) )
     else:
-       eax = int(argv[3], 16)
-       edx = int(argv[4], 16)
-       val64 = ((edx << 32) | eax)
-       if (5 == len(argv)):
-          logger().log( "[CHIPSEC] All CPUs: WRMSR( 0x%x ) = %016X" % (msr_addr, val64) )
-          for tid in range(_cs.msr.get_cpu_thread_count()):
-              _cs.msr.write_msr( tid, msr_addr, eax, edx )
-       elif (6 == len(argv)):
-          cpu_thread_id = int(argv[5], 16)
-          logger().log( "[CHIPSEC] CPU%d: WRMSR( 0x%x ) = %016X" % (cpu_thread_id, msr_addr, val64) )
-          _cs.msr.write_msr( cpu_thread_id, msr_addr, eax, edx )
+        eax = int(argv[3], 16)
+        edx = int(argv[4], 16)
+        val64 = ((edx << 32) | eax)
+        if (5 == len(argv)):
+            logger().log( "[CHIPSEC] All CPUs: WRMSR( 0x%x ) = %016X" % (msr_addr, val64) )
+            for tid in range(chipsec_util._cs.msr.get_cpu_thread_count()):
+                chipsec_util._cs.msr.write_msr( tid, msr_addr, eax, edx )
+        elif (6 == len(argv)):
+            cpu_thread_id = int(argv[5], 16)
+            logger().log( "[CHIPSEC] CPU%d: WRMSR( 0x%x ) = %016X" % (cpu_thread_id, msr_addr, val64) )
+            chipsec_util._cs.msr.write_msr( cpu_thread_id, msr_addr, eax, edx )
 
-chipsec_util_commands['msr'] = {'func' : msr ,    'start_driver' : True  }
+chipsec_util.commands['msr'] = {'func' : msr ,    'start_driver' : True, 'help' : usage  }
 

@@ -45,8 +45,6 @@ import sys
 import time
 
 import chipsec_util
-#from chipsec_util import global_usage, chipsec_util_commands, _cs
-from chipsec_util import chipsec_util_commands, _cs
 
 from  chipsec.logger import *
 import  chipsec.file   
@@ -56,8 +54,8 @@ import chipsec.hal.spi_descriptor as spi_descriptor
 import chipsec.hal.spi_uefi       as spi_uefi
 import chipsec.hal.uefi           as uefi
 
-#_cs = cs()
-_uefi = uefi.UEFI( _cs.helper )
+
+_uefi = uefi.UEFI( chipsec_util._cs.helper )
 
 
 usage = "chipsec_util decode <rom> [fw_type]\n" + \
@@ -65,7 +63,6 @@ usage = "chipsec_util decode <rom> [fw_type]\n" + \
         "Examples:\n" + \
         "  chipsec_util decode spi.bin vss\n\n"
 
-chipsec_util.global_usage += usage
 
 def decode(argv):
 
@@ -103,7 +100,7 @@ def decode(argv):
 
     _orig_logname = logger().LOG_FILE_NAME
 
-    pth = os.path.join( _cs.helper.getcwd(), rom_file + ".dir" )
+    pth = os.path.join( chipsec_util._cs.helper.getcwd(), rom_file + ".dir" )
     if not os.path.exists( pth ):
         os.makedirs( pth )
 
@@ -130,5 +127,5 @@ def decode(argv):
     logger().log( "[CHIPSEC] (decode) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util_commands['decode'] = {'func' : decode,     'start_driver' : False  }
+chipsec_util.commands['decode'] = {'func' : decode,     'start_driver' : False, 'help' : usage  }
 

@@ -44,8 +44,6 @@ import sys
 import time
 
 import chipsec_util
-#from chipsec_util import global_usage, chipsec_util_commands, _cs
-from chipsec_util import chipsec_util_commands, _cs
 
 from chipsec.logger     import *
 from chipsec.file       import *
@@ -60,7 +58,6 @@ usage = "chipsec_util smi <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [R
         "  chipsec_util smi 0xDE 0x0\n" + \
         "  chipsec_util nmi\n\n"
 
-chipsec_util.global_usage += usage
 
 
 # ###################################################################
@@ -70,53 +67,53 @@ chipsec_util.global_usage += usage
 # ###################################################################
 def smi(argv):
     try:
-       interrupts = Interrupts( _cs )
+        interrupts = Interrupts( chipsec_util._cs )
     except RuntimeError, msg:
-       print msg
-       return
+        print msg
+        return
 
     SMI_code_port_value = 0xF
     SMI_data_port_value = 0x0
     if (2 == len(argv)):
-       pass
+        pass
     elif (3 < len(argv)):
-       SMI_code_port_value = int(argv[2],16)
-       SMI_data_port_value = int(argv[3],16)
-       logger().log( "[CHIPSEC] Sending SW SMI (code: 0x%02X, data: 0x%02X).." % (SMI_code_port_value, SMI_data_port_value) )
-       if (4 == len(argv)):
-           interrupts.send_SMI_APMC( SMI_code_port_value, SMI_data_port_value )
-       elif (10 == len(argv)):
-           _rax = int(argv[4],16)
-           _rbx = int(argv[5],16)
-           _rcx = int(argv[6],16)
-           _rdx = int(argv[7],16)
-           _rsi = int(argv[8],16)
-           _rdi = int(argv[9],16)
-           logger().log( "          RAX: 0x%016X (AX will be overwridden with values of SW SMI ports B2/B3)" % _rax )
-           logger().log( "          RBX: 0x%016X" % _rbx )
-           logger().log( "          RCX: 0x%016X" % _rcx )
-           logger().log( "          RDX: 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
-           logger().log( "          RSI: 0x%016X" % _rsi )
-           logger().log( "          RDI: 0x%016X" % _rdi )
-           interrupts.send_SW_SMI( SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-       else: print usage
+        SMI_code_port_value = int(argv[2],16)
+        SMI_data_port_value = int(argv[3],16)
+        logger().log( "[CHIPSEC] Sending SW SMI (code: 0x%02X, data: 0x%02X).." % (SMI_code_port_value, SMI_data_port_value) )
+        if (4 == len(argv)):
+            interrupts.send_SMI_APMC( SMI_code_port_value, SMI_data_port_value )
+        elif (10 == len(argv)):
+            _rax = int(argv[4],16)
+            _rbx = int(argv[5],16)
+            _rcx = int(argv[6],16)
+            _rdx = int(argv[7],16)
+            _rsi = int(argv[8],16)
+            _rdi = int(argv[9],16)
+            logger().log( "          RAX: 0x%016X (AX will be overwridden with values of SW SMI ports B2/B3)" % _rax )
+            logger().log( "          RBX: 0x%016X" % _rbx )
+            logger().log( "          RCX: 0x%016X" % _rcx )
+            logger().log( "          RDX: 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
+            logger().log( "          RSI: 0x%016X" % _rsi )
+            logger().log( "          RDI: 0x%016X" % _rdi )
+            interrupts.send_SW_SMI( SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+        else: print usage
     else: print usage
 
 
 def nmi(argv):
     if 2 < len(argv):
-       print usage
+        print usage
 
     try:
-       interrupts = Interrupts( _cs )
+        interrupts = Interrupts( chipsec_util._cs )
     except RuntimeError, msg:
-       print msg
-       return
+        print msg
+        return
 
     logger().log( "[CHIPSEC] Sending NMI#.." )
     interrupts.send_NMI()
 
 
-chipsec_util_commands['nmi'] = {'func' : nmi,     'start_driver' : True  }
-chipsec_util_commands['smi'] = {'func' : smi,     'start_driver' : True  }
+chipsec_util.commands['nmi'] = {'func' : nmi,     'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['smi'] = {'func' : smi,     'start_driver' : True, 'help' : usage  }
 

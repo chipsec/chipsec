@@ -38,12 +38,19 @@ class spi_lock(BaseModule):
     
     def __init__(self):
         BaseModule.__init__(self)
+        self.spi    = SPI( self.cs )
+
+    def is_supported(self):
+        # TODO: temporarily disabled SNB due to hang
+        if self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_SNB]:
+            return True
+        return False
 
     def check_spi_lock(self):
         self.logger.start_test( "SPI Flash Controller Configuration Lock" )
     
         spi_locked = 0
-        hsfsts_reg_value = self.cs.mem.read_physical_mem_dword( get_PCH_RCBA_SPI_base(self.cs) + SPI_HSFSTS_OFFSET )
+        hsfsts_reg_value = self.spi.spi_reg_read( SPI_HSFSTS_OFFSET )
         self.logger.log( '[*] HSFSTS register = 0x%08X' % hsfsts_reg_value )
         self.logger.log( '    FLOCKDN = %u' % ((hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK)>>15) )
     

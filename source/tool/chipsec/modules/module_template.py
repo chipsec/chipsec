@@ -27,14 +27,16 @@
 from chipsec.module_common import *
 
 _MODULE_NAME = 'module_template'
-cs.add_available_module( _MODULE_NAME, chipsec.chipset.CHIPSET_CODE_COMMON )
 
 class module_template (BaseModule):
     def check_something( self ):
         self.logger.start_test( "Module Template" )
         self.logger.log_passed_check( "Test Passed" )
         return ModuleResult.PASSED
-    
+
+    def is_supported(self):
+        return False
+
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module

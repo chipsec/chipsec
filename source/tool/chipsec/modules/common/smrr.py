@@ -42,6 +42,9 @@ class smrr(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
 
+    def is_supported(self):
+        return True
+
     #
     # Check that SMRR are supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #

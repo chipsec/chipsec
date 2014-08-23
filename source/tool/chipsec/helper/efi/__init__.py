@@ -27,5 +27,8 @@
 #
 ##################################################################################
 
-
-__all__ = [ "efihelper" ]
+import sys
+if sys.platform.startswith('uefi') or sys.platform.startswith('EFI'):
+    __all__ = [ "efihelper" ]
+else:
+    __all__ = [ ]

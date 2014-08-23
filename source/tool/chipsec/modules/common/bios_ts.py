@@ -35,6 +35,12 @@ class bios_ts(chipsec.module_common.BaseModule):
     def __init__(self):
         chipsec.module_common.BaseModule.__init__(self)
         
+    def is_supported(self):
+        # TODO: temorarily disabled SNB due to hang
+        if self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_SNB]:
+            return True
+        return False
+        
     def get_RCBA_general_registers_base(self):
         rcba_general_base = mmio.get_MMIO_base_address( self.cs, mmio.MMIO_BAR_LPCRCBA ) + self.cs.Cfg.RCBA_GENERAL_CONFIG_OFFSET
         self.logger.log( "[*] RCBA General Config base: 0x%08X" % rcba_general_base )
@@ -51,8 +57,8 @@ class bios_ts(chipsec.module_common.BaseModule):
     
         buc_reg_value = self.cs.mem.read_physical_mem_dword( rcba_general_base + self.cs.Cfg.RCBA_GC_BUC_REG_OFFSET )
         self.logger.log( "[*] BUC (Backed Up Control) register = 0x%08X" % buc_reg_value )
-        self.logger.log( "    [00] TS (Top Swap) = %u" % (buc_reg_value & self.cs.Cfg.RCBA_GC_BUC_REG_TS_MASK) )
-    
+        self.logger.log( "    [00] TS (Top Swap) = %u" % ( (buc_reg_value & self.cs.Cfg.RCBA_GC_BUC_REG_TS_MASK) >> self.cs.Cfg.scan_single_bit_mask(self.cs.Cfg.RCBA_GC_BUC_REG_TS_MASK)))
+        
         reg_value = self.cs.pci.read_byte( 0, 31, 0, self.cs.Cfg.LPC_BC_REG_OFF )
         BcRegister = self.cs.Cfg.LPC_BC_REG( reg_value, (reg_value>>5)&0x1, (reg_value>>4)&0x1, (reg_value>>2)&0x3, (reg_value>>1)&0x1, reg_value&0x1 )
         #self.logger.log( BcRegister )

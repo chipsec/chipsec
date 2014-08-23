@@ -34,7 +34,8 @@ from chipsec.hal.uefi      import *
 # SPECIFY PLATFORMS THIS MODULE IS APPLICABLE TO
 # ############################################################
 _MODULE_NAME = 'variables'
-cs.add_available_module(_MODULE_NAME, 'COMMON')
+
+
 TAGS = [MTAG_SECUREBOOT]
 
 class variables(BaseModule):
@@ -42,7 +43,11 @@ class variables(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi  = UEFI( self.cs.helper )
-    
+
+    def is_supported(self):
+        supported = self.cs.helper.EFI_supported()
+        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        return supported
     
     ## check_secureboot_variable_attributes
     # checks authentication attributes of Secure Boot EFI variables
@@ -52,7 +57,7 @@ class variables(BaseModule):
         sbvars = self._uefi.list_EFI_variables()
         if sbvars is None:
             self.logger.log_error_check( 'Could not enumerate UEFI Variables from runtime (Legacy OS?)' )
-            self.logger.log_important( "Note that the Secure Boot UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them. You can extract Secure Boot variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes" )
+            self.logger.log_important( "Note that the Secure Boot UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them. You can extract Secure Boot variables directly from ROM binary and verify their attributes" )
             return ModuleResult.ERROR
     
         for name in SECURE_BOOT_KEY_VARIABLES:
@@ -84,7 +89,4 @@ class variables(BaseModule):
     # --------------------------------------------------------------------------
     def run( self,  module_argv ):
         self.logger.start_test( "Attributes of Secure Boot EFI Variables" )
-        if not (self.cs.helper.is_win8_or_greater() or self.cs.helper.is_linux()):
-            self.logger.log_skipped_check( 'Currently this module can only run on Windows 8 or higher or Linux. Exiting..' )
-            return ModuleResult.SKIPPED
         return self.check_secureboot_variable_attributes()

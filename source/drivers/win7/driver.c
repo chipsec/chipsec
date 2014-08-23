@@ -681,15 +681,15 @@ DriverDeviceControl(
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE), sizeof(UINT32) );
             _msr_addr = msrData[0];
 
-            // --
-            // -- read MSR to check if it was written
-            // --
-            __try {
-              _rdmsr( _msr_addr, &_eax, &_edx );
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
-             Status = GetExceptionCode();
-             break;
-            }
+            __try
+              {
+                _rdmsr( _msr_addr, &_eax, &_edx );
+              }
+            __except( EXCEPTION_EXECUTE_HANDLER )
+              {
+                Status = GetExceptionCode();
+                break;
+              }
             DbgPrint( "[chipsec][IOCTL_RDMSR] RDMSR( 0x%x ) --> 0x%08x%08x\n", _msr_addr, _edx, _eax );
 
             if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength >= 2*sizeof(UINT32) )
@@ -789,7 +789,7 @@ DriverDeviceControl(
           }
         case IOCTL_SWSMI:
           {
-            CPU_REG_TYPE gprs[6];
+            CPU_REG_TYPE gprs[6] = {0};
             CPU_REG_TYPE _rax = 0, _rbx = 0, _rcx = 0, _rdx = 0, _rsi = 0, _rdi = 0;
             unsigned int _smi_code_data = 0;
 
@@ -837,7 +837,50 @@ DriverDeviceControl(
             Status = STATUS_SUCCESS;
             break;
           }
+        case IOCTL_CPUID:
+          {
+            DWORD CPUInfo[4] = {-1};
+            DWORD gprs[2] = {0};
+            DWORD _rax = 0, _rcx = 0;
+            //CPU_REG_TYPE gprs[6];
+            //CPU_REG_TYPE _rax = 0, _rbx = 0, _rcx = 0, _rdx = 0, _rsi = 0, _rdi = 0;
 
+            DbgPrint("[chipsec] > IOCTL_CPUID\n");
+            pInBuf = Irp->AssociatedIrp.SystemBuffer;
+            if( !pInBuf )
+              {
+	        DbgPrint( "[chipsec] ERROR: NO data provided\n" );
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+              }
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(gprs) )
+              {
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < %d)\n", sizeof(gprs) );
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+              }
+            RtlCopyBytes( gprs, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(gprs) );
+            _rax = gprs[ 0 ];
+            _rcx = gprs[ 1 ];
+            DbgPrint( "[chipsec][IOCTL_CPUID] CPUID:\n" );
+            DbgPrint( "                       EAX = 0x%08X\n", _rax );
+            DbgPrint( "                       ECX = 0x%08X\n", _rcx );
+
+            __cpuidex( CPUInfo, _rax, _rcx );
+
+            DbgPrint( "[chipsec][IOCTL_CPUID] CPUID returned:\n" );
+            DbgPrint( "                       EAX = 0x%08X\n", CPUInfo[0] );
+            DbgPrint( "                       EBX = 0x%08X\n", CPUInfo[1] );
+            DbgPrint( "                       ECX = 0x%08X\n", CPUInfo[2] );
+            DbgPrint( "                       EDX = 0x%08X\n", CPUInfo[3] );
+
+            IrpSp->Parameters.Read.Length = sizeof(CPUInfo);
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)CPUInfo, sizeof(CPUInfo) );    
+
+            dwBytesWritten = IrpSp->Parameters.Read.Length;
+            Status = STATUS_SUCCESS;
+            break;
+          }
 
         default:
             DbgPrint( "[chipsec] ERROR: invalid IOCTL\n");

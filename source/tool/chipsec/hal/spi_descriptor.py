@@ -102,11 +102,11 @@ def parse_spi_flash_descriptor( rom ):
     if not (type(rom) == str):
         logger().error('Invalid fd object type %s'%type(rom))
         return
-    
+
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-       logger().error( 'Valid SPI flash descriptor is not found (should have signature %08X)' % SPI_FLASH_DESCRIPTOR_SIGNATURE )
-       return None
+        logger().error( 'Valid SPI flash descriptor is not found (should have signature %08X)' % struct.unpack('=I',SPI_FLASH_DESCRIPTOR_SIGNATURE) )
+        return None
 
     fd_off = pos - 0x10
     logger().log( '[spi_fd] Valid SPI flash descriptor found at offset 0x%08X' % fd_off )

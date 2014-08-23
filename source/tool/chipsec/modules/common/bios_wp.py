@@ -41,14 +41,19 @@ class bios_wp(BaseModule):
         BaseModule.__init__(self)
         self.spi    = SPI( self.cs )
     
+    def is_supported(self):
+        # TODO: temporarily disabled SNB due to hang
+        if self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_SNB]:
+            return True
+        return False
+    
     def check_BIOS_write_protection(self):
         self.logger.start_test( "BIOS Region Write Protection" )
         #
-        # BIOS Control (BC) 0:31:0 PCIe CFG register
+        # BIOS Control Register
         #
-        reg_value = self.cs.pci.read_byte( 0, 31, 0, Cfg.LPC_BC_REG_OFF )
-        BcRegister = Cfg.LPC_BC_REG( reg_value, (reg_value>>5)&0x1, (reg_value>>4)&0x1, (reg_value>>2)&0x3, (reg_value>>1)&0x1, reg_value&0x1 )
-        self.logger.log( BcRegister )
+        (BcRegister, reg_value) = self.spi.get_BIOS_Control()
+        logger().log( BcRegister )
     
         # Is the BIOS flash region write protected?
         write_protected = 0
@@ -64,7 +69,6 @@ class bios_wp(BaseModule):
         return write_protected == 1
     
     def check_SPI_protected_ranges(self):
-        #self.logger.start_test( "SPI Protected Ranges" )
         (bios_base,bios_limit,bios_freg) = self.spi.get_SPI_region( BIOS )
         self.logger.log( "\n[*] BIOS Region: Base = 0x%08X, Limit = 0x%08X" % (bios_base,bios_limit) )
         self.spi.display_SPI_Protected_Ranges()

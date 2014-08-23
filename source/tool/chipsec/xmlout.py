@@ -130,27 +130,21 @@ class xmlAux:
 
     def saveXML( self ):
         """Saves the XML info to a file in a JUnit style."""
-        try:
-            if self.useXML == True:
-                if self.xmlFile is not None:
-                    filename = self.xmlFile.replace("'", "")
-                    filename2 = filename.replace(" ", "")
-                    if filename2 in ["", " "]:
-                        print "filename for XML received empty or invalid string. So skipping writing to a file."
-                        return
-                    ts = xmlTestSuite( basename( os.path.splitext(filename)[0] ) )
-                    ts.test_cases = self.test_cases
-                    if self.properties is not None and len( self.properties ) > 0:
-                        ts.properties = self.properties
-                else:
-                    print "xmlFile is None. So skipping writing to a file."
-                    return
-                print "\nSaving XML to file : " + str( filename )
-                ts.to_file( filename )
-        except:
-            print "Unexpected error : ", sys.exc_info() [0]
-            print traceback.format_exc()
-            raise
+        if self.useXML == True:
+            if self.xmlFile is not None:
+                filename = self.xmlFile.replace("'", "")
+                filename2 = filename.replace(" ", "")
+                if filename2 in ["", " "]:
+                    return "filename for XML received empty or invalid string. So skipping writing to a file."
+
+                ts = xmlTestSuite( basename( os.path.splitext(filename)[0] ) )
+                ts.test_cases = self.test_cases
+                if self.properties is not None and len( self.properties ) > 0:
+                    ts.properties = self.properties
+            else:
+                return "xmlFile is None. So skipping writing to a file."
+            ts.to_file( filename )
+            return "\nSaving XML to file : " + str( os.path.abspath( filename ) )
 
 class testCaseType:
     """Used to represent the types of TestCase that can be assigned (FAILURE, ERROR, SKIPPED, PASS)"""
@@ -307,13 +301,9 @@ class xmlTestSuite(object):
         """Writes the JUnit XML document to a file.
            In case of any error, it will print the exception information.
         """
-        try:
-            with open( file_name, 'w') as f :
-                #f.write( '<?xml-stylesheet type="text/xsl" href="junit.xsl"?>' )
-                f.write( self.to_xml_string() )
-        except:
-            print "Unexpected error : ", sys.exc_info() [0]
-            print traceback.format_exc()
+        with open( file_name, 'wb') as f :
+            #f.write( '<?xml-stylesheet type="text/xsl" href="junit.xsl"?>' )
+            f.write( self.to_xml_string() )
 
 
 class ts_property(object):
@@ -389,9 +379,9 @@ class TestSuite(object):
 
             tc_element = ET.SubElement( xml_element, "testcase", tc_attributes )
 
-            #For the is_pass() case, there is nothing special, so we do nothing and process once.
+            #For the is_pass() case, just log a 'pass' tag.
             if tc.is_pass():
-                pass
+                pass_element = ET.SubElement( tc_element, "pass", {'type':'pass'} )
             elif tc.is_failure():
                 failure_element = ET.SubElement( tc_element, "failure", {'type': 'failure'} )
                 if tc.failure_message:

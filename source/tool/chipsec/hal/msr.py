@@ -90,14 +90,12 @@ class Msr:
 
     def read_msr( self, cpu_thread_id, msr_addr ):
         (eax, edx) = self.helper.read_msr( cpu_thread_id, msr_addr )
-        if logger().VERBOSE:
-          logger().log( "[cpu%d] RDMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X" % (cpu_thread_id, msr_addr, eax, edx) )
+        if logger().VERBOSE: logger().log( "[cpu%d] RDMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X" % (cpu_thread_id, msr_addr, eax, edx) )
         return (eax, edx)
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
         self.helper.write_msr( cpu_thread_id, msr_addr, eax, edx )
-        if logger().VERBOSE:
-          logger().log( "[cpu%d] WRMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X" % (cpu_thread_id, msr_addr, eax, edx) )
+        if logger().VERBOSE: logger().log( "[cpu%d] WRMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X" % (cpu_thread_id, msr_addr, eax, edx) )
         return
 
 ##########################################################################################################

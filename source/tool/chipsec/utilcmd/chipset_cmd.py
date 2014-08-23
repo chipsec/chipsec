@@ -45,18 +45,15 @@ import sys
 import time
 
 import chipsec_util
-#from chipsec_util import global_usage, chipsec_util_commands, _cs
-from chipsec_util import chipsec_util_commands, _cs
+
 
 from chipsec.logger     import *
 from chipsec.file       import *
 
 from chipsec.chipset    import UnknownChipsetError, print_supported_chipsets
-#_cs = cs()
+
 
 usage = "chipsec_util platform\n\n"
-
-chipsec_util.global_usage += usage
 
 
 # ###################################################################
@@ -69,9 +66,9 @@ def platform(argv):
     try:
         print_supported_chipsets()
         logger().log("")
-        _cs.print_chipset()
+        chipsec_util._cs.print_chipset()
     except UnknownChipsetError, msg:
         logger().error( msg )
 
-chipsec_util_commands['platform'] = {'func' : platform, 'start_driver' : True  }
+chipsec_util.commands['platform'] = {'func' : platform, 'start_driver' : True , 'help' : usage }
 

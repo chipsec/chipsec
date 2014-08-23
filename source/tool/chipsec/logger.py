@@ -127,7 +127,8 @@ class Logger:
         self.xmlAux.set_xml_file(name)
 
     def saveXML(self):
-        self.xmlAux.saveXML()
+        text = self.xmlAux.saveXML()
+        self.log(text)
     
     def set_log_file( self, name=None ):
         """Sets the log file for the output."""
@@ -218,7 +219,7 @@ class Logger:
             else:
                 print text
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
-            if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
+        if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
   
     def error( self, text ):
@@ -321,7 +322,7 @@ class Logger:
            If XML file was not specified, it will just display a banner for the test name.
         """
         text =        "[x][ =======================================================================\n"
-        text = text + "[x][ Test: " + test_name + "\n"
+        text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
         self._log(text, BLUE, True)
         self.xmlAux.start_test( test_name )
@@ -329,8 +330,9 @@ class Logger:
 
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
-        text = "\n[+] imported %s" % module_name
-        self._log(text, WHITE, None) 
+        #text = "\n[*] start module: %s" % module_name
+        #self._log(text, WHITE, None) 
+        self.log( "\n[*] running module: %s" % module_name ) 
         self.xmlAux.start_module( module_name )
 
     def end_module( self, module_name ):

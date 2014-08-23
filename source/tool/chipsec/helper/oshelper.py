@@ -64,6 +64,9 @@ class OsHelperError (RuntimeError):
     def __init__(self,msg,errorcode):
         super(OsHelperError,self).__init__(msg)
         self.errorcode = errorcode
+
+class HWAccessViolationError (OsHelperError):
+    pass
         
     
 ## OS Helper
@@ -85,6 +88,7 @@ class OsHelper:
             self.os_release = self.helper.os_release
             self.os_version = self.helper.os_version
             self.os_machine = self.helper.os_machine
+    
 
     def loadHelpers(self):
         if chipsec.file.main_is_frozen():
@@ -121,19 +125,26 @@ class OsHelper:
 
     def importModule(self, mod_fullname):
         try:
+            mod_path = mod_fullname.rpartition('.')[0]
+            #mod_path, mod_name = os.path.splitext(mod_fullname)
+            
             if _importlib:
-                module = importlib.import_module( mod_fullname )
-                result = getattr( module, 'get_helper' )(  )
-                self.helper = result
+                module = importlib.import_module( mod_path )
+                all    = getattr( module, '__all__' )
+
+                for sHelper in all:
+                    if logger().VERBOSE: logger().log('[helper] Importing OS helper: %s.%s' % (mod_path,sHelper) )
+                    mHelper = importlib.import_module( '%s.%s' % (mod_path,sHelper) )
+                    result = getattr( mHelper, 'get_helper' )(  )
+                    self.helper = result
+                    if result is not None: logger().log('[helper] Loaded OS helper: %s.%s' % (mod_path,sHelper) )
+
             # Support for older Python < 2.5
             #else:
             #    exec 'import ' + mod_fullname
             #    exec 'self.helper = ' + mod_fullname + ".get_helper()"
         except ImportError, msg:
-            # @TODO: UTIL_TRACE/VERBOSE aren't correct here
-            if logger().UTIL_TRACE or logger().VERBOSE:
-                logger().warn( str(msg) + ' ' + mod_fullname )
-                logger().log_bad( traceback.format_exc() )
+            logger().error( 'Failed to import %s: %s' % (mod_fullname,str(msg)) )
             pass
         except BaseException, msg:
             logger().error( str(msg) + ' ' + mod_fullname )
@@ -153,6 +164,7 @@ class OsHelper:
             self.helper.create()
             self.helper.start()
         except (None,Exception) , msg:
+            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
                 error_no = msg.errorcode
@@ -242,6 +254,9 @@ class OsHelper:
     #
     # EFI Variable API
     #
+    def EFI_supported(self):
+        return self.helper.EFI_supported()
+
     def get_EFI_variable( self, name, guid ):
         return self.helper.get_EFI_variable( name, guid )
 
@@ -260,8 +275,8 @@ class OsHelper:
     #
     # CPUID
     #
-    def cpuid( self, eax ):
-        return self.helper.cpuid( eax )
+    def cpuid( self, eax, ecx ):
+        return self.helper.cpuid( eax, ecx )
 
     def get_threads_count( self ):
         return self.helper.get_threads_count()
@@ -275,8 +290,12 @@ class OsHelper:
     def send_sw_smi( self, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         return self.helper.send_sw_smi( SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
-
-_helper  = OsHelper()
+try:
+    _helper  = OsHelper()
+except BaseException, msg:
+    logger().error( str(msg) )
+    sys.exit()
+    
 def helper():
     return _helper
 

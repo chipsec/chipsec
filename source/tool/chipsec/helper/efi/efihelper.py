@@ -164,6 +164,10 @@ class EfiHelper:
  def getcwd( self ):
      return os.getcwd()
 
+ def EFI_supported( self ):
+     # @TODO
+     return False
+
 
 def get_threads_count ( self ):
     logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )

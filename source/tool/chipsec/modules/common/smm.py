@@ -25,7 +25,7 @@
 # __chipsec/modules/common/smm.py__ - common checks for protection of compatible System Management Mode (SMM) memory (SMRAM)
 #
 from collections import namedtuple
-from chipsec.module_common import MTAG_BIOS,MTAG_SMM, BaseModule, ModuleResult
+from chipsec.module_common import *
 TAGS = [MTAG_BIOS,MTAG_SMM]
 #from chipsec.chipset import Cfg
 
@@ -33,25 +33,28 @@ class smm(BaseModule):
     
     def __init__(self):
         BaseModule.__init__(self)
-        
+
+    def is_supported(self):
+        return (self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_BYT,chipsec.chipset.CHIPSET_ID_AVN])
+
     # PCI Dev0 SMRAMC register
-    class SMRAMC( namedtuple('SMRAMC_REG', 'PCI_SMRAMC_REG_OFF value D_OPEN D_CLS D_LCK G_SMRAME C_BASE_SEG') ):
+    class SMRAMC( namedtuple('SMRAMC_REG', 'PCI_SMRAMC_BUS PCI_SMRAMC_DEV PCI_SMRAMC_FUN PCI_SMRAMC_REG_OFF value D_OPEN D_CLS D_LCK G_SMRAME C_BASE_SEG') ):
         __slots__ = ()
         def __str__(self):
-            return """[*] Compatible SMRAM Control (00:00.0 + 0x%X) = 0x%02X
+            return """[*] Compatible SMRAM Control (0%d:%2d.%d + 0x%X) = 0x%02X
     [06]    D_OPEN     = %u (SMRAM Open)
     [05]    D_CLS      = %u (SMRAM Closed)
     [04]    D_LCK      = %u (SMRAM Locked)
     [03]    G_SMRAME   = %u (SMRAM Enabled)
     [02:00] C_BASE_SEG = %X (SMRAM Base Segment = 010b)
-    """ % ( self.PCI_SMRAMC_REG_OFF, self.value, self.D_OPEN, self.D_CLS, self.D_LCK, self.G_SMRAME, self.C_BASE_SEG )         
+    """ % ( self.PCI_SMRAMC_BUS, self.PCI_SMRAMC_DEV, self.PCI_SMRAMC_FUN,self.PCI_SMRAMC_REG_OFF, self.value, self.D_OPEN, self.D_CLS, self.D_LCK, self.G_SMRAME, self.C_BASE_SEG )         
     
     
     def check_SMRAMC(self):
         self.logger.start_test( "Compatible SMM memory (SMRAM) Protection" )
     
-        regval = self.cs.pci.read_byte( 0, 0, 0, self.cs.Cfg.PCI_SMRAMC_REG_OFF )
-        SMRAMRegister = smm.SMRAMC(self.cs.Cfg.PCI_SMRAMC_REG_OFF, regval, (regval>>6)&0x1, (regval>>5)&0x1, (regval>>4)&0x3, (regval>>3)&0x1, regval&0x7 )
+        regval = self.cs.pci.read_byte( self.cs.Cfg.PCI_SMRAMC_BUS, self.cs.Cfg.PCI_SMRAMC_DEV, self.cs.Cfg.PCI_SMRAMC_FUN, self.cs.Cfg.PCI_SMRAMC_REG_OFF )
+        SMRAMRegister = smm.SMRAMC(self.cs.Cfg.PCI_SMRAMC_BUS, self.cs.Cfg.PCI_SMRAMC_DEV, self.cs.Cfg.PCI_SMRAMC_FUN,self.cs.Cfg.PCI_SMRAMC_REG_OFF, regval, (regval>>6)&0x1, (regval>>5)&0x1, (regval>>4)&0x3, (regval>>3)&0x1, regval&0x7 )
         self.logger.log( SMRAMRegister )
     
         res = ModuleResult.ERROR

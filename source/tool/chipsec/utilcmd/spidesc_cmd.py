@@ -42,7 +42,6 @@ import sys
 import time
 
 import chipsec_util
-from chipsec_util import chipsec_util_commands, _cs
 
 from chipsec.logger     import *
 from chipsec.file       import *
@@ -53,13 +52,12 @@ usage = "chipsec_util spidesc [rom]\n" + \
         "Examples:\n" + \
         "  chipsec_util spidesc spi.bin\n\n"
 
-chipsec_util.global_usage += usage
 
 def spidesc(argv):
 
     if 3 > len(argv):
-      print usage
-      return
+        print usage
+        return
 
     fd_file = argv[2]
     logger().log( "[CHIPSEC] Parsing SPI Flash Descriptor from file '%s'\n" % fd_file )
@@ -70,5 +68,5 @@ def spidesc(argv):
     logger().log( "\n[CHIPSEC] (spidesc) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util_commands['spidesc'] = {'func' : spidesc,     'start_driver' : False  }
+chipsec_util.commands['spidesc'] = {'func' : spidesc,     'start_driver' : False, 'help' : usage  }
 

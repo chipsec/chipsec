@@ -48,15 +48,12 @@ import sys
 import time
 
 import chipsec_util
-#from chipsec_util import global_usage, chipsec_util_commands, _cs
-from chipsec_util import chipsec_util_commands, _cs
+
 
 from chipsec.logger     import *
 from chipsec.file       import *
 
 from chipsec.hal.cmos   import CMOS, CmosRuntimeError
-#from chipsec.chipset    import cs
-#_cs = cs()
 
 usage = "chipsec_util cmos dump\n" + \
         "chipsec_util cmos readl|writel|readh|writeh <byte_offset> [byte_val]\n" + \
@@ -64,8 +61,6 @@ usage = "chipsec_util cmos dump\n" + \
         "  chipsec_util cmos dump\n" + \
         "  chipsec_util cmos rl 0x0\n" + \
         "  chipsec_util cmos wh 0x0 0xCC\n\n"
-
-chipsec_util.global_usage += usage
 
 
 def cmos(argv):
@@ -111,5 +106,5 @@ def cmos(argv):
     logger().log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util_commands['cmos'] = {'func' : cmos,    'start_driver' : True  }
+chipsec_util.commands['cmos'] = {'func' : cmos,    'start_driver' : True, 'help' : usage  }
 

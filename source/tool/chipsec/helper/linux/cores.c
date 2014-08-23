@@ -1,4 +1,4 @@
-#include "Python.h"
+#define _GNU_SOURCE
 #include <sched.h>
 #include <errno.h>
 
