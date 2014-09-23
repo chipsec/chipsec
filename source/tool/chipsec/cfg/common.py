@@ -345,6 +345,7 @@ class Cfg:
     PCI_B0D31F0_LPC_FUN = 0
     
     LPC_BC_REG_OFF        = 0xDC #  BIOS Control (BC)
+    GEN_PMCON = 0xA0
     
     class LPC_BC_REG( namedtuple('LPC_BC_REG', 'value SMM_BWP TSS SRC BLE BIOSWE') ):
         __slots__ = ()

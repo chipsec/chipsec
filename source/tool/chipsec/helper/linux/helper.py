@@ -47,6 +47,7 @@ from chipsec.helper.oshelper import OsHelperError
 from chipsec.logger import logger
 from chipsec.hal.uefi_common import *
 import errno
+import array
 
 from ctypes import *
 
@@ -63,7 +64,7 @@ def IOCTL_GET_CPU_DESCRIPTOR_TABLE():	return _IOCTL_BASE + 0x8
 def IOCTL_HYPERCALL():	return _IOCTL_BASE + 0x9
 def IOCTL_SWSMI():	return _IOCTL_BASE + 0xA
 def IOCTL_LOAD_UCODE_PATCH():	return _IOCTL_BASE + 0xB
-
+def IOCTL_ALLOC_PHYSMEM(): return _IOCTL_BASE + 0xC
 
 class LinuxHelper:
 
@@ -108,6 +109,7 @@ class LinuxHelper:
 
     def init( self ):
         x64 = True if sys.maxsize > 2**32 else False
+        global DEVICE_NAME
         global _DEV_FH
         _DEV_FH = None
         
@@ -115,9 +117,10 @@ class LinuxHelper:
         if(_DEV_FH != None): return
         
         logger().log("\n****** Chipsec Linux Kernel module is licensed under GPL 2.0\n")
+        DEVICE_NAME="/dev/chipsec"
 
         try: 
-            _DEV_FH = open("/dev/chipsec", "r+")
+            _DEV_FH = open(DEVICE_NAME, "r+")
         except IOError as e:
             raise OsHelperError("Unable to open chipsec device. %s"%str(e),e.errno)
         except BaseException as be:
@@ -193,20 +196,37 @@ class LinuxHelper:
         x = struct.unpack("5"+_PACK, ret)
         return x[4]
 
-    def read_io_port(self, io_port, size):
-           in_buf = struct.pack( "3"+_PACK, io_port, size, 0 )
-           out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDIO(), in_buf )
-           try:
-               if 1 == size:
-                   value = struct.unpack("3"+_PACK, out_buf)[2] & 0xff
-               elif 2 == size:
-                   value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffff
-               else:
-                   value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffffffff
-           except:
-               logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
+    def load_ucode_update( self, cpu_thread_id, ucode_update_buf):
+	cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
 
-           return value
+	in_buf = struct.pack('=BH', cpu_thread_id, len(ucode_update_buf)) + ucode_update_buf
+	in_buf_final = array.array("c", in_buf)
+	#print_buffer(in_buf)
+	out_length=0
+	out_buf=(c_char * out_length)()
+	try:
+            out_buf = fcntl.ioctl(_DEV_FH, IOCTL_LOAD_UCODE_PATCH(), in_buf_final, True)
+	except IOError:
+		print "IOError IOCTL Load Patch\n"
+		return None
+
+	return True
+	
+
+    def read_io_port(self, io_port, size):
+        in_buf = struct.pack( "3"+_PACK, io_port, size, 0 )
+        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDIO(), in_buf )
+        try:
+            if 1 == size:
+                value = struct.unpack("3"+_PACK, out_buf)[2] & 0xff
+            elif 2 == size:
+                value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffff
+            else:
+                value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffffffff
+        except:
+            logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
+
+        return value
 
     def write_io_port( self, io_port, value, size ):
         in_buf = struct.pack( "3"+_PACK, io_port, size, value )
@@ -246,6 +266,10 @@ class LinuxHelper:
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_CPUID(), in_buf)
         return struct.unpack( "4"+_PACK, out_buf )
 
+    def alloc_phys_mem(self, num_bytes, max_addr):
+        in_buf = struct.pack( "2"+_PACK, num_bytes, num_bytes) 
+        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_ALLOC_PHYSMEM(), in_buf)
+        return struct.unpack( "2"+_PACK, out_buf )
 
     def get_affinity(self):
         CORES = ctypes.cdll.LoadLibrary('./chipsec/helper/linux/cores.so')

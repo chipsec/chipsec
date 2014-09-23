@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<configuration platform="BYT">
+  <mmio>
+    <bar name="SPIBAR" bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFC000" size="0x200" enable_bit="0" desc="SPI Controller Register Range">
+      <!-- TODO
+      <register name="BIOS_CONTROL" offset="0xFC" size="1" mask="0xFF">
+        <field name="BIOSWE"  shift="0" size="1"/>
+        <field name="BLE"     shift="1" size="1"/>
+        <field name="SRC"     shift="2" size="2"/>
+        <field name="TSS"     shift="4" size="1"/>
+        <field name="SMM_BWP" shift="5" size="1"/>
+      </register>
+      -->
+    </bar>
+  </mmio>
+
+  <registers>
+    <register name="BC" type="mmio" bar="SPIBAR" offset="0xFC" size="1" desc="BIOS Control">
+      <field name="BIOSWE"  bit="0" size="1"/>
+      <field name="BLE"     bit="1" size="1"/>
+      <field name="SRC"     bit="2" size="2"/>
+      <field name="TSS"     bit="4" size="1"/>
+      <field name="SMM_BWP" bit="5" size="1"/>
+    </register>
+  </registers>
+
+</configuration>

@@ -101,7 +101,7 @@ def uefi(argv):
             guid = argv[4]
         if (5 < len(argv)):
             filename = argv[5]
-        logger().log( "[CHIPSEC] Reading EFI variable Name='%s' GUID={%s} from '%s' via Variable API.." % (name, guid, filename) )
+        logger().log( "[CHIPSEC] Reading EFI variable Name='%s' GUID={%s} to '%s' via Variable API.." % (name, guid, filename) )
         var = _uefi.get_EFI_variable( name, guid, filename )
 
     elif ( 'var-write' == op ):

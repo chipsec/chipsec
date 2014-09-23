@@ -19,7 +19,6 @@ Contact information:
 chipsec@intel.com
 */ 
 
-
 #include <linux/module.h>
 #include <linux/device.h>
 #include <linux/highmem.h>
@@ -30,6 +29,7 @@ chipsec@intel.com
 #include <linux/slab.h>
 #include <asm/io.h>
 #include "include/chipsec.h"
+#include <linux/smp.h>
 
 #ifdef CONFIG_IA64
 # include <linux/efi.h>
@@ -358,11 +358,55 @@ static loff_t memory_lseek(struct file * file, loff_t offset, int orig)
 	return ret;
 }
 
+
+void * patch_apply_ucode(void * ucode_buf)
+{
+	unsigned long long ucode_start;
+
+	printk(KERN_INFO "[chipsec] [patch_apply_ucode] Applying patch in the processor id: %d", smp_processor_id());
+
+	ucode_start=(unsigned long long) ucode_buf;
+	asm volatile("wrmsr" :  : "c"(MSR_IA32_BIOS_UPDT_TRIG),"d"((unsigned int)((ucode_start >> 32) & 0xffffffff)),"a"((unsigned int)(ucode_start & 0xffffffff))); // lo is in eax
+
+
+	return NULL;
+}
+
+void * patch_bios_sign(void * ucode_buf)
+{
+	asm volatile("wrmsr" :  : "c"(MSR_IA32_BIOS_SIGN_ID),"a"((unsigned int)0),"d"((unsigned int)0));
+	return NULL;
+}
+
+void * patch_cpuid_0(void * CPUInfo)
+{
+	int *pointer;
+	pointer=(int *) CPUInfo;
+	asm volatile( "cpuid" : "=a"(pointer[0]),"=b"(pointer[1]),"=c"(pointer[2]),"=d"(pointer[3]) : "a"((unsigned int)(1)));
+	return NULL;
+}
+
+void * patch_read_msr(void * CPUInfo)
+{
+	int *pointer;
+	pointer=(int *) CPUInfo;
+	asm volatile("rdmsr" : "=a"(pointer[0]), "=d"(pointer[3]) : "c"(MSR_IA32_BIOS_SIGN_ID));
+	return NULL;
+}
+
+
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	int numargs = 0;
 	long ptrbuf[8];
 	long *ptr = ptrbuf;
+	unsigned short ucode_size;
+	unsigned short thread_id;
+	char *ucode_buf;
+	//unsigned int counter;
+	char small_buffer[6]; //32 bits + char + \0
+	int CPUInfo[4]={-1};
+	smp_call_func_t apply_ucode_patch_p;
 
 	switch(ioctl_num)
 	{
@@ -426,6 +470,72 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #else
 		return -EFAULT;
 #endif
+
+	case IOCTL_LOAD_UCODE_PATCH:
+		ucode_size=0;
+
+		printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Initializing update routine\n");
+
+		/* we just check if the first bytes are in the ok range */
+		if (!access_ok(VERIFY_READ, ioctl_param, sizeof(unsigned short))) {
+			printk("\n address not in user-mode\n");
+			return -EFAULT;
+		}
+	
+		/* first byte: thread_id (we dont use this value currently) */
+		memset(small_buffer, 0x00, 6);
+
+		if ( copy_from_user(&small_buffer, (char *) ioctl_param, sizeof(unsigned char)) > 0 )
+			return -EFAULT;
+
+		thread_id=(unsigned short) small_buffer[0];	
+
+		memset(small_buffer, 0x00, 6);
+
+		if ( copy_from_user(&small_buffer, (unsigned char *)(ioctl_param+sizeof(unsigned char)), sizeof(unsigned short)) > 0 )
+			return -EFAULT;
+
+		ucode_size=(unsigned short) *((unsigned short *) small_buffer);
+
+		ucode_buf=kmalloc(ucode_size, GFP_KERNEL);
+		if (!ucode_buf)
+			return -EFAULT;
+
+		memset(ucode_buf, 0, ucode_size);
+		
+		if ( copy_from_user(ucode_buf, (unsigned char *)(ioctl_param+sizeof(unsigned char)+sizeof(unsigned short)), ucode_size) > 0 )
+			return -EFAULT;
+
+
+		/* to confirm the received patch is correct, uncomment */
+		/*
+		printk(KERN_INFO "\n");
+		for (counter=0; counter<40; counter++)
+			printk(KERN_INFO "ucode_buf[%d] = 0x%x ",counter, (unsigned char) ucode_buf[counter]);
+		printk(KERN_INFO "\n");
+		printk(KERN_INFO "ucode_buf[%d] = 0x%x ",ucode_size-1, (unsigned char) ucode_buf[ucode_size-1]);
+		*/
+
+		apply_ucode_patch_p=(void *) patch_apply_ucode;
+		smp_call_function_single(thread_id, apply_ucode_patch_p, ucode_buf, 0);
+		kfree(ucode_buf);
+
+		apply_ucode_patch_p=(void *)patch_bios_sign;
+		smp_call_function_single(thread_id, apply_ucode_patch_p, ucode_buf, 0);
+
+		apply_ucode_patch_p=(void *)patch_cpuid_0;
+		smp_call_function_single(thread_id, apply_ucode_patch_p, CPUInfo, 0);
+
+		apply_ucode_patch_p=(void *)patch_read_msr;
+		smp_call_function_single(thread_id, apply_ucode_patch_p, CPUInfo, 0);
+
+		if (0 != CPUInfo[3])
+			printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != 0)"); 
+		else
+			printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update failed"); 
+
+
+		break;
 
 	case IOCTL_RDMSR:
 		//IN  params: threadid, msr_addr
@@ -537,6 +647,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		return -EFAULT;
 #endif
 	}
+    
 	case IOCTL_GET_CPU_DESCRIPTOR_TABLE:
 	{
 		//IN  params: cpu_thread_id, desc_table_code, 0, 0, 0
@@ -562,6 +673,9 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		ptr[0] = dtr.limit;
 		ptr[1] = (uint32_t)(dtr.base >> 32);
 		ptr[2] = (uint32_t)dtr.base;
+
+		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.high
+		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.low
 		ptr[3] = dt_pa.u.high;
 		ptr[4] = dt_pa.u.low;
 
@@ -572,7 +686,48 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		return -EFAULT;
 #endif	
 	}
+    
+	case IOCTL_ALLOC_PHYSMEM:
+    {
+		//IN params: size
+        //OUT params: physical address
+#ifdef CONFIG_X86
 
+        uint32_t NumberOfBytes = 0;
+        void *va;
+        void *pa;
+        numargs = 2;
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+        {
+            printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+            break;
+        }
+        
+        NumberOfBytes = ptr[0];
+        
+        printk(KERN_ALERT "[chipsec] Allocating: NumberOfBytes = 0x%X", NumberOfBytes);
+        va = kmalloc(NumberOfBytes, GFP_KERNEL);
+        if( !va )
+        {
+            printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+            return -EFAULT;
+        }
+         
+        memset(va, 0, NumberOfBytes);
+        pa = (void*)virt_to_phys(va);
+        printk(KERN_ALERT "[chipsec] Allocated Buffer: VirtAddr = 0x%p PhysAddr = 0x%p\n", va, pa );
+        
+        ptr[0] = (unsigned long)va;
+        ptr[1] = (unsigned long)pa;
+
+        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+        break;
+#else
+		return -EFAULT;
+#endif
+    }
+    
 	default:
 		return -EFAULT;
 	}

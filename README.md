@@ -292,6 +292,7 @@ chipsec/hal/mmio.py               - Access to MMIO (Memory Mapped IO) BARs and M
 chipsec/hal/spi.py                - Access to SPI Flash parts
 chipsec/hal/ucode.py              - Microcode update specific functionality (for each CPU thread)
 chipsec/hal/io.py                 - Access to Port I/O Space
+chipsec/hal/iobar.py              - Access to I/O Ranges
 chipsec/hal/smbus.py              - Access to SMBus Controller in the PCH
 chipsec/hal/uefi.py               - Main UEFI component using platform specific and common UEFI functionality
 chipsec/hal/uefi_common.py        - Common UEFI functionality (EFI variables, db/dbx decode, etc.)

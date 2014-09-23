@@ -55,6 +55,7 @@ from chipsec.logger         import logger
 import chipsec.file
 
 import importlib
+import traceback 
 #_importlib = True
 #try:                import importlib
 #except ImportError: _importlib = False
@@ -99,6 +100,12 @@ CHIPSET_CODE_BYT     = 'BYT'
 CHIPSET_CODE_BDW     = 'BDW'
 CHIPSET_CODE_QRK     = 'QRK'
 CHIPSET_CODE_AVN     = 'AVN'
+
+CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT]
+CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW]
+CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN]
+CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
+
 
 VID_INTEL = 0x8086
 
@@ -316,6 +323,7 @@ class Chipset:
         try:
             self.init_xml_configuration()
         except:
+            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             pass
 
 

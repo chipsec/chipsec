@@ -15,7 +15,8 @@
 #define IOCTL_GET_CPU_DESCRIPTOR_TABLE _IOWR(0, 0x8, int*)
 #define IOCTL_SWSMI _IOWR(0, 0xA, int*)
 #define IOCTL_LOAD_UCODE_PATCH _IOWR(0, 0xB, int*)
-
+#define IOCTL_ALLOC_PHYSMEM _IOWR(0, 0xC, int*)
+        
 /// if defined debug is enabled
 #define DEBUG
 #ifdef DEBUG 

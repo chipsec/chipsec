@@ -35,7 +35,7 @@ class smm(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return (self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_BYT,chipsec.chipset.CHIPSET_ID_AVN])
+        return (self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM)
 
     # PCI Dev0 SMRAMC register
     class SMRAMC( namedtuple('SMRAMC_REG', 'PCI_SMRAMC_BUS PCI_SMRAMC_DEV PCI_SMRAMC_FUN PCI_SMRAMC_REG_OFF value D_OPEN D_CLS D_LCK G_SMRAME C_BASE_SEG') ):
