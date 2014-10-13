@@ -89,7 +89,7 @@ class ChipsecUtil:
     
     def f_mod(self, x):
         MODFILE_RE = re.compile("^\w+\.py$")
-        return ( x.find('__init__') == -1 and MODFILE_RE.match(x) )
+        return ( x.lower().find('__init__') == -1 and MODFILE_RE.match(x.lower()) )
     def map_modname(self, x):
         return x.split('.')[0]
     
