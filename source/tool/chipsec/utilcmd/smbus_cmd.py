@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -105,4 +105,3 @@ def smbus(argv):
 
 
 chipsec_util.commands['smbus'] = {'func' : smbus,    'start_driver' : True, 'help' : usage  }
-

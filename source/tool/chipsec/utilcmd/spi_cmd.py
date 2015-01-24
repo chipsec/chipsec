@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -92,11 +92,11 @@ def spi(argv):
 
         #
         # This write protection only matters for BIOS range in SPI
-        # Continue if FLA being written is not within BIOS range 
+        # Continue if FLA being written is not within BIOS range
         # @TODO: do smth smarter here
         #
         if not spi.disable_BIOS_write_protection():
-           logger().error( "Could not disable SPI Flash protection. Still trying.." )
+            logger().error( "Could not disable SPI Flash protection. Still trying.." )
 
         ok = spi.erase_spi_block( spi_fla )
         if ok: logger().log_result( "SPI Flash erase done" )
@@ -107,7 +107,7 @@ def spi(argv):
         logger().log( "[CHIPSEC] Writing to SPI Flash at FLA = 0x%X from '%.64s'" % (spi_fla, filename) )
         #
         # This write protection only matters for BIOS range in SPI
-        # Continue if FLA being written is not within BIOS range 
+        # Continue if FLA being written is not within BIOS range
         # @TODO: do smth smarter here
         #
         if not spi.disable_BIOS_write_protection():
@@ -145,7 +145,7 @@ def spi(argv):
         if (buf is None):
             logger().error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
         else:
-            logger().log_result( "Done dumping SPI Flash" ) 
+            logger().log_result( "Done dumping SPI Flash" )
     else:
         print usage
         return
@@ -155,4 +155,3 @@ def spi(argv):
 
 
 chipsec_util.commands['spi'] = {'func' : spi,     'start_driver' : True, 'help' : usage  }
-

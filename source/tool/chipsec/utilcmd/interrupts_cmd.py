@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -116,4 +116,3 @@ def nmi(argv):
 
 chipsec_util.commands['nmi'] = {'func' : nmi,     'start_driver' : True, 'help' : usage  }
 chipsec_util.commands['smi'] = {'func' : smi,     'start_driver' : True, 'help' : usage  }
-

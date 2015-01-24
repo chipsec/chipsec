@@ -2,7 +2,8 @@ TITLE   cpu.asm: Assembly code for the i386 resources
 
 include callconv.inc
 
-.586p
+.686p
+.XMM
 _TEXT    SEGMENT DWORD PUBLIC 'CODE'
     ASSUME  DS:FLAT, ES:FLAT, SS:NOTHING, FS:NOTHING, GS:NOTHING
 
@@ -373,6 +374,54 @@ cPublicProc __swsmi, 7
     xor eax, eax
     stdRET __swsmi
 stdENDP __swsmi
+
+cPublicProc _ReadCR0
+    xor eax, eax
+    mov eax, cr0
+    stdRET _ReadCR0
+stdENDP _ReadCR0
+
+cPublicProc _ReadCR2
+    xor eax, eax
+    mov eax, cr2
+    stdRET _ReadCR2
+stdENDP _ReadCR2
+
+cPublicProc _ReadCR3
+    xor eax, eax
+    mov eax, cr3
+    stdRET _ReadCR3
+stdENDP _ReadCR3
+
+cPublicProc _ReadCR4
+    xor eax, eax
+    mov eax, cr4
+    stdRET _ReadCR4
+stdENDP _ReadCR4
+
+cPublicProc _WriteCR0, 1
+    mov eax, dword ptr [esp + 4]
+    mov cr0, eax
+    stdRET _WriteCR0
+stdENDP _WriteCR0
+
+cPublicProc _WriteCR2, 1
+    mov eax, dword ptr [esp + 4]
+    mov cr2, eax
+    stdRET _WriteCR2
+stdENDP _WriteCR2
+
+cPublicProc _WriteCR3, 1
+    mov eax, dword ptr [esp + 4]
+    mov cr3, eax
+    stdRET _WriteCR3
+stdENDP _WriteCR3
+
+cPublicProc _WriteCR4, 1
+    mov eax, dword ptr [esp + 4]
+    mov cr4, eax
+    stdRET _WriteCR4
+stdENDP _WriteCR4
 
 _TEXT    ENDS
 

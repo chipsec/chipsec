@@ -21,6 +21,21 @@ typedef UINT32 CPU_REG_TYPE;
 #error "Architecture not supported"
 #endif
 
+extern CPU_REG_TYPE ReadCR0();
+extern CPU_REG_TYPE ReadCR2();
+extern CPU_REG_TYPE ReadCR3();
+extern CPU_REG_TYPE ReadCR4();
+#if defined(_M_AMD64)
+extern CPU_REG_TYPE ReadCR8();
+#endif
+extern void   WriteCR0( CPU_REG_TYPE cr_val );
+extern void   WriteCR2( CPU_REG_TYPE cr_val );
+extern void   WriteCR3( CPU_REG_TYPE cr_val );
+extern void   WriteCR4( CPU_REG_TYPE cr_val );
+#if defined(_M_AMD64)
+extern void   WriteCR8( CPU_REG_TYPE cr_val );
+#endif
+
 /*
  * External Assembly Functions
  */

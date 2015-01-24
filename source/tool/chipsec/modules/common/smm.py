@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -27,41 +27,35 @@
 from collections import namedtuple
 from chipsec.module_common import *
 TAGS = [MTAG_BIOS,MTAG_SMM]
-#from chipsec.chipset import Cfg
 
 class smm(BaseModule):
-    
+
     def __init__(self):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return (self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM)
-
-    # PCI Dev0 SMRAMC register
-    class SMRAMC( namedtuple('SMRAMC_REG', 'PCI_SMRAMC_BUS PCI_SMRAMC_DEV PCI_SMRAMC_FUN PCI_SMRAMC_REG_OFF value D_OPEN D_CLS D_LCK G_SMRAME C_BASE_SEG') ):
-        __slots__ = ()
-        def __str__(self):
-            return """[*] Compatible SMRAM Control (0%d:%2d.%d + 0x%X) = 0x%02X
-    [06]    D_OPEN     = %u (SMRAM Open)
-    [05]    D_CLS      = %u (SMRAM Closed)
-    [04]    D_LCK      = %u (SMRAM Locked)
-    [03]    G_SMRAME   = %u (SMRAM Enabled)
-    [02:00] C_BASE_SEG = %X (SMRAM Base Segment = 010b)
-    """ % ( self.PCI_SMRAMC_BUS, self.PCI_SMRAMC_DEV, self.PCI_SMRAMC_FUN,self.PCI_SMRAMC_REG_OFF, self.value, self.D_OPEN, self.D_CLS, self.D_LCK, self.G_SMRAME, self.C_BASE_SEG )         
-    
-    
+        chipset = self.cs.get_chipset_id()
+        return (chipset not in chipsec.chipset.CHIPSET_FAMILY_ATOM) and (chipset not in chipsec.chipset.CHIPSET_FAMILY_XEON)
+  
     def check_SMRAMC(self):
         self.logger.start_test( "Compatible SMM memory (SMRAM) Protection" )
-    
-        regval = self.cs.pci.read_byte( self.cs.Cfg.PCI_SMRAMC_BUS, self.cs.Cfg.PCI_SMRAMC_DEV, self.cs.Cfg.PCI_SMRAMC_FUN, self.cs.Cfg.PCI_SMRAMC_REG_OFF )
-        SMRAMRegister = smm.SMRAMC(self.cs.Cfg.PCI_SMRAMC_BUS, self.cs.Cfg.PCI_SMRAMC_DEV, self.cs.Cfg.PCI_SMRAMC_FUN,self.cs.Cfg.PCI_SMRAMC_REG_OFF, regval, (regval>>6)&0x1, (regval>>5)&0x1, (regval>>4)&0x3, (regval>>3)&0x1, regval&0x7 )
-        self.logger.log( SMRAMRegister )
-    
+        
+        if not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_SMRAMC'  ) :
+            self.logger.error( "Couldn't find definition of required registers (PCI0.0.0_SMRAMC)" )
+            return ModuleResult.ERROR
+        
+        regval = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_SMRAMC' )
+        g_smrame = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_SMRAMC', regval, 'G_SMRAME' )
+        d_open   = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_SMRAMC', regval, 'D_OPEN' )
+        d_lock   = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_SMRAMC', regval, 'D_LCK' )
+      
+        chipsec.chipset.print_register( self.cs, 'PCI0.0.0_SMRAMC', regval )
+
         res = ModuleResult.ERROR
-        if 1 == SMRAMRegister.G_SMRAME:
+        if 1 == g_smrame:
             self.logger.log( "[*] Compatible SMRAM is enabled" )
             # When D_LCK is set HW clears D_OPEN so generally no need to check for D_OPEN but doesn't hurt double checking
-            if 1 == SMRAMRegister.D_LCK and 0 == SMRAMRegister.D_OPEN:
+            if 1 == d_lock and 0 == d_open:
                 res = ModuleResult.PASSED
                 self.logger.log_passed_check( "Compatible SMRAM is locked down" )
             else:
@@ -70,10 +64,10 @@ class smm(BaseModule):
         else:
             res = ModuleResult.SKIPPED
             self.logger.log( "[*] Compatible SMRAM is not enabled. Skipping.." )
-    
+
         return res
-    
-    
+
+
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,8 +41,8 @@ import time
 
 import chipsec_util
 
-from chipsec.logger     	import *
-from chipsec.file       	import *
+from chipsec.logger             import *
+from chipsec.file               import *
 #_cs = cs()
 
 usage = "chipsec_util cpuid <eax> [ecx]\n" + \
@@ -60,9 +60,9 @@ usage = "chipsec_util cpuid <eax> [ecx]\n" + \
 def cpuid(argv):
 
     if 3 > len(argv):
-      print usage
-      return
-  
+        print usage
+        return
+
     eax = int(argv[2],16)
     ecx = int(argv[3],16) if 4 == len(argv) else 0
 
@@ -78,4 +78,3 @@ def cpuid(argv):
 
 
 chipsec_util.commands['cpuid'] = {'func' : cpuid ,    'start_driver' : True, 'help' : usage  }
-

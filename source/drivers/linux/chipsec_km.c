@@ -30,14 +30,13 @@ chipsec@intel.com
 #include <asm/io.h>
 #include "include/chipsec.h"
 #include <linux/smp.h>
-
-#ifdef CONFIG_IA64
-# include <linux/efi.h>
-#endif
+#include <linux/efi.h>
+#include <linux/proc_fs.h>
 
 #define _GNU_SOURCE 
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
+
 
 MODULE_LICENSE("GPL");
 
@@ -60,6 +59,202 @@ module_param(a3,ulong,0); //a3 is addr of raw_pci_write function
 /// Char we show before each debug print
 const char program_name[] = "chipsec";
 
+typedef struct tagCONTEXT {
+   unsigned int a;   // rax - 0x00; eax - 0x0
+   unsigned int b;   // rbx - 0x08; ebx - 0x4
+   unsigned int c;   // rcx - 0x10; ecx - 0x8
+   unsigned int d;   // rdx - 0x18; edx - 0xc
+} CONTEXT, *PCONTEXT;
+typedef CONTEXT CPUID_CTX, *PCPUID_CTX;
+
+  void __cpuid__(CPUID_CTX * ctx);
+
+typedef struct tagSMI_CONTEXT {
+   unsigned int c;     // rcx - 0x00;
+   unsigned int d;     // rdx - 0x08;
+   unsigned int r8;     // r8 - 0x10;
+   unsigned int r9;     // r9 - 0x18;
+   unsigned int r10;   // r10 - 0x20;
+   unsigned int r11;   // r11 - 0x28;
+   unsigned int r12;   // r12 - 0x30;
+} SMI_CONTEXT, *SMI_PCONTEXT;
+
+typedef SMI_CONTEXT SMI_CTX, *PSMI_CTX; 
+
+ void __swsmi__(SMI_CTX * ctx); 
+
+  void _rdmsr( 
+    unsigned long msr_num, // rdi
+    unsigned long * msr_lo, // rsi
+    unsigned long * msr_hi  // rdx
+    );
+
+  void _wrmsr( 
+    unsigned long msr_num, // rdi
+    unsigned long msr_hi, // rsi
+    unsigned long msr_lo  // rdx
+    );
+
+  unsigned int
+  ReadPortDword (
+    unsigned short	port_num           // rdi
+    );
+
+  unsigned short
+  ReadPortWord (
+    unsigned short	port_num           // rdi
+    );
+
+  unsigned char
+  ReadPortByte (
+    unsigned short	port_num           // rdi
+    );
+
+  void
+  WritePortByte (
+    unsigned char	out_value,          // rdi
+    unsigned short	port_num           // rsi
+    );
+
+  void
+  WritePortWord (
+    unsigned short	out_value,          // rdi 
+    unsigned short	port_num           // rsi
+    );
+
+  void
+  WritePortDword (
+    unsigned int	out_value,          // rdi
+    unsigned short	port_num           // rsi
+    );
+
+  void
+  WritePCIByte (
+    unsigned int	pci_reg,          // rdi
+    unsigned short	cfg_data_port,    // rsi
+    unsigned char	byte_value       // rdx
+    );
+
+  void
+  WritePCIWord (
+    unsigned int	pci_reg,          // rdi
+    unsigned short	cfg_data_port,    // rsi
+    unsigned short	word_value       // rdx
+    );
+
+  void
+  WritePCIDword (
+    unsigned int	pci_reg,          // rdi
+    unsigned short	cfg_data_port,    // rsi
+    unsigned int	dword_value      // rdx
+    );
+
+  unsigned char
+  ReadPCIByte (
+    unsigned int	pci_reg,          // rdi
+    unsigned short	cfg_data_port    // rsi
+    );
+
+  unsigned short
+  ReadPCIWord (
+    unsigned int	pci_reg,          // rdi
+    unsigned short	cfg_data_port    // rsi
+    );
+
+  unsigned int
+  ReadPCIDword (
+    unsigned int	pci_reg,          // rdi
+    unsigned short	cfg_data_port    // rsi
+    );
+
+    unsigned int ReadCR0(void);
+    unsigned int ReadCR2(void);
+    unsigned int ReadCR3(void);
+    unsigned int ReadCR4(void);
+#ifdef __x86_64__
+    unsigned int ReadCR8(void);
+#endif
+
+    void WriteCR0( unsigned int );
+    void WriteCR2( unsigned int );
+    void WriteCR3( unsigned int );
+    void WriteCR4( unsigned int );
+#ifdef __x86_64__
+    void WriteCR8( unsigned int );
+#endif
+
+    void __cpuid__(CPUID_CTX * ctx);
+   
+  void _store_idtr(
+    uint16_t *address // rdi
+    );
+
+ void _store_gdtr(
+   uint16_t *address // rdi
+   );
+
+ void _store_ldtr(
+   uint16_t *address // rdi
+   );
+
+uint32_t
+ReadPCICfg(
+  uint8_t bus,
+  uint8_t dev,
+  uint8_t fun,
+  uint8_t off,
+  uint8_t len // 1, 2, 4 bytes
+  )
+{
+  unsigned int result = 0;
+  unsigned int pci_addr = (0x80000000 | (bus << 16) | (dev << 11) | (fun << 8) | (off & ~3));
+  unsigned short cfg_data_port = (uint16_t)(0xCFC + ( off & 0x3 ));
+  if     ( 1 == len ) result = (ReadPCIByte ( pci_addr, cfg_data_port ) & 0xFF);
+  else if( 2 == len ) result = (ReadPCIWord ( pci_addr, cfg_data_port ) & 0xFFFF);
+  else if( 4 == len ) result =  ReadPCIDword( pci_addr, cfg_data_port );
+  return result;
+}
+
+void
+WritePCICfg(
+  uint8_t bus,
+  uint8_t dev,
+  uint8_t fun,
+  uint8_t off,
+  uint8_t len, // 1, 2, 4 bytes
+  uint32_t val
+  )
+{
+  uint32_t pci_addr = (0x80000000 | (bus << 16) | (dev << 11) | (fun << 8) | (off & ~3));
+  uint16_t cfg_data_port = (uint16_t)(0xCFC + ( off & 0x3 ));
+  if     ( 1 == len ) WritePCIByte ( pci_addr, cfg_data_port, (uint8_t)(val&0xFF) );
+  else if( 2 == len ) WritePCIWord ( pci_addr, cfg_data_port, (uint16_t)(val&0xFFFF) );
+  else if( 4 == len ) WritePCIDword( pci_addr, cfg_data_port, val );
+}
+
+void
+WriteIOPort(
+  uint32_t value,
+  uint16_t io_port,
+  uint8_t len // 1, 2, 4 bytes
+  )
+{
+  if     ( 1 == len ) WritePortByte ( (uint8_t)(value&0xFF), io_port );
+  else if( 2 == len ) WritePortWord ( (uint16_t)(value&0xFFFF), io_port );
+  else if( 4 == len ) WritePortDword( value, io_port );
+}
+
+uint32_t
+ReadIOPort(
+  uint16_t io_port,
+  uint8_t len // 1, 2, 4 bytes
+  )
+{
+  if     ( 1 == len ) return (ReadPortByte( io_port ) & 0xFF);
+  else if( 2 == len ) return (ReadPortWord( io_port ) & 0xFFFF);
+  else if( 4 == len ) return ReadPortDword( io_port );
+  return 0;
+}
 
 /* Own implementation of xlate_dev_mem_ptr
  * (so we can read highmem and other)
@@ -394,11 +589,55 @@ void * patch_read_msr(void * CPUInfo)
 	return NULL;
 }
 
+void print_stat(efi_status_t stat)
+{
+    switch (stat) {
+        case EFI_SUCCESS:
+            printk( KERN_DEBUG "EFI_SUCCESS\n");
+            break;
+        case EFI_LOAD_ERROR:
+            printk( KERN_DEBUG "EFI_LOAD_ERROR\n");
+            break;        
+        case EFI_INVALID_PARAMETER:
+            printk( KERN_DEBUG "EFI_INVALID_PARAMETER\n");
+            break;
+        case EFI_UNSUPPORTED:
+            printk( KERN_DEBUG "EFI_UNSUPPORTED\n");
+            break;
+        case EFI_BAD_BUFFER_SIZE:
+            printk( KERN_DEBUG "EFI_BAD_BUFFER_SIZE\n");
+            break;
+        case EFI_BUFFER_TOO_SMALL:
+            printk( KERN_DEBUG "EFI_BUFFER_TOO_SMALL\n");
+            break;
+        case EFI_NOT_READY:
+            printk( KERN_DEBUG "EFI_NOT_READY\n");
+            break;
+        case EFI_DEVICE_ERROR:
+            printk( KERN_DEBUG "EFI_DEVICE_ERROR\n");
+            break;
+        case EFI_WRITE_PROTECTED:
+            printk( KERN_DEBUG "EFI_WRITE_PROTECTED\n");
+            break;
+        case EFI_OUT_OF_RESOURCES:
+            printk( KERN_DEBUG "EFI_OUT_OF_RESOURCES\n");
+            break;
+        case EFI_NOT_FOUND:
+            printk( KERN_DEBUG "EFI_NOT_FOUND\n");
+            break;
+        case EFI_SECURITY_VIOLATION:
+            printk( KERN_DEBUG "EFI_SECURITY_VIOLATION\n");
+            break;
+        default:
+            printk( KERN_DEBUG "Unknown status\n");
+            break;
+    }
+}
 
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	int numargs = 0;
-	long ptrbuf[8];
+	long ptrbuf[16];
 	long *ptr = ptrbuf;
 	unsigned short ucode_size;
 	unsigned short thread_id;
@@ -406,14 +645,16 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	//unsigned int counter;
 	char small_buffer[6]; //32 bits + char + \0
 	int CPUInfo[4]={-1};
-	smp_call_func_t apply_ucode_patch_p;
+	void (*apply_ucode_patch_p)(void *info);
 
 	switch(ioctl_num)
 	{
 	case IOCTL_BASE:
+	{
 		return ((IOCTL_RDIO & 0xfffffff0) >> 4);
-
+	}
 	case IOCTL_RDIO:
+	{
 		//IN  params: addr, size
 		//OUT params: val
 #ifdef CONFIG_X86
@@ -424,15 +665,15 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		switch( ptr[1] )
 		{
 			case 1:
-				asm volatile("inb %%dx, %%al" : "=a"(ptr[2]) : "d"(ptr[0]));
+				ptr[2] = ReadPortByte(ptr[0]);
 				// BUGFIX: eax is returning more than a byte of data ??
 				ptr[2] = ptr[2] & 0xff;
 				break;
 			case 2:
-				asm volatile("inw %%dx, %%ax" : "=a"(ptr[2]) : "d"(ptr[0]));
+				ptr[2] = ReadPortWord(ptr[0]);
 				break;
 			default: // 4
-				asm volatile("inl %%dx, %%eax" : "=a"(ptr[2]) : "d"(ptr[0]));
+				ptr[2] = ReadPortDword(ptr[0]);
 				break;
 		}
 
@@ -442,8 +683,10 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #else
 		return -EFAULT;
 #endif
+	}
 
 	case IOCTL_WRIO:
+	{
 		//IN params: addr, size, val
 #ifdef CONFIG_X86
 
@@ -454,13 +697,13 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		switch(ptr[1])
 		{
 			case 1:
-				asm volatile("outb %%al, %%dx" : : "a"(ptr[2]),"d"(ptr[0]));
+				WritePortByte(ptr[2],ptr[0]);
 				break;
 			case 2:
-				asm volatile("outw %%ax, %%dx" : : "a"(ptr[2]),"d"(ptr[0]));
+				WritePortWord(ptr[2],ptr[0]);
 				break;
 			default:
-				asm volatile("outl %%eax, %%dx" : : "a"(ptr[2]),"d"(ptr[0]));
+				WritePortDword(ptr[2],ptr[0]);
 				break;
 		}
 
@@ -470,8 +713,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #else
 		return -EFAULT;
 #endif
+	}
 
 	case IOCTL_LOAD_UCODE_PATCH:
+	{
+
+#ifdef CONFIG_X86
 		ucode_size=0;
 
 		printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Initializing update routine\n");
@@ -482,7 +729,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		}
 	
-		/* first byte: thread_id (we dont use this value currently) */
+		/* first byte: thread_id */
 		memset(small_buffer, 0x00, 6);
 
 		if ( copy_from_user(&small_buffer, (char *) ioctl_param, sizeof(unsigned char)) > 0 )
@@ -536,8 +783,13 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
 
 		break;
+#else
+		return -EFAULT;
+#endif
+	}
 
 	case IOCTL_RDMSR:
+	{
 		//IN  params: threadid, msr_addr
 		//OUT params: edx, eax
 #ifdef CONFIG_X86
@@ -546,7 +798,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
-		asm volatile("rdmsr" : "=a"(ptr[3]),"=d"(ptr[2]) : "c"(ptr[1]));
+		_rdmsr(ptr[1],&ptr[3],&ptr[2]);
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
@@ -554,15 +806,17 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #else
 		return -EFAULT;
 #endif
+	}
 
 	case IOCTL_WRMSR:
-		//IN params: threadid, msr_addr, edx, eax
+	{
+		//IN params: threadid, msr_addr, {e,r}dx, {e,r}ax
 #ifdef CONFIG_X86
 		numargs = 4;
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
-		asm volatile("wrmsr" :  : "a"(ptr[3]),"d"(ptr[2]),"c"(ptr[1]));
+		_wrmsr(ptr[1],ptr[3],ptr[2]);
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
@@ -570,15 +824,18 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #else
 		return -EFAULT;
 #endif
+	}
+
 	case IOCTL_CPUID:
-		//IN  params: eax
-		//OUT params: eax, ebx, ecx, edx
+	{
+		//IN  params: {e,r}ax
+		//OUT params: {e,r}ax, {e,r}bx, {e,r}cx, {e,r}dx
 #ifdef CONFIG_X86
 		numargs = 4;
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
-		asm volatile( "cpuid" : "=a"(ptr[1]),"=b"(ptr[2]),"=c"(ptr[3]),"=d"(ptr[4]) : "a"(ptr[0]) );
+                __cpuid__((CPUID_CTX *)ptr);
 
 		if(copy_to_user( (void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
@@ -587,28 +844,27 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		return -EFAULT;
 #endif
 
+	}
+
 	case IOCTL_RDPCI:
 	{
-		//IN  params: dombus, devfunc, offset, len, value
+		//IN  params: bus, dev, fun, off, len
 		//OUT params: value
 #ifdef CONFIG_PCI
 		
-		uint32_t bus, dev, func, offset, val;
+		uint32_t bus, dev, fun, off, len, val;
 		numargs = 5;
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 		
 		bus = ptr[0] & 0xffff;
 		dev = ptr[1] >> 16 & 0xffff;
-		func = ptr[1] & 0xffff;
-		offset = ptr[2];
-		outl((0x80000000) | (bus << 16) | (dev << 11) | (func << 8) | (offset), 0xcf8);
-		switch( ptr[3] ) //Size in bytes
-		{
-			case 1: val = inb(0xcfc); break;
-			case 2: val = inw(0xcfc); break;
-			default:val = inl(0xcfc); break;
-		}
+		fun = ptr[1] & 0xffff;
+		off = ptr[2];
+		len = ptr[3];
+
+		val = ReadPCICfg( bus, dev, fun, off, len );
+
 		ptr[4] = val;	
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;	
@@ -620,27 +876,22 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
 	case IOCTL_WRPCI:
 	{ 
-		//IN params:  dombus, devfunc, offset, len, value
-		//OUT params: limit, base, pa
-#ifdef CONFIG_PCI
+		//IN params:  bus, dev, fun, off, len, val
+#ifdef CONFIG_PCI 
 
-		uint32_t bus, dev, func, offset, val;
+		uint32_t bus, dev, fun, off, len, val;
 		numargs = 5;
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
 		bus = ptr[0] & 0xffff;
 		dev = ptr[1] >> 16 & 0xffff;
-		func = ptr[1] & 0xffff;
-		offset = ptr[2];
+		fun = ptr[1] & 0xffff;
+		off = ptr[2];
 		val = ptr[4];
-		outl((0x80000000) | (bus << 16) | (dev << 11) | (func << 8) | (offset), 0xcf8);
-		switch( ptr[3] ) //Size in bytes
-		{
-			case 1:  outb((char)val, 0xcfc);  break;
-			case 2:	 outw((short)val, 0xcfc); break;
-			default: outl(val, 0xcfc);        break;
-		}
+		len = ptr[3];
+
+		WritePCICfg( bus, dev, fun, off, len, val );
 
 		break;
 #else
@@ -663,10 +914,21 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
 		switch(ptr[1]) 
               	{
-                	case CPU_DT_CODE_GDTR: { asm volatile( "sgdt %0" : "=m"( pdtr->limit )); break; }
-                	case CPU_DT_CODE_LDTR: { asm volatile( "sldt %0" : "=m"( pdtr->limit )); break; }
-                	case CPU_DT_CODE_IDTR: { asm volatile( "sidt %0" : "=m"( pdtr->limit )); break; }
-                	default:               { asm volatile( "sidt %0" : "=m"( pdtr->limit )); break; }
+                	case CPU_DT_CODE_GDTR: 
+			{ 
+				_store_gdtr(&pdtr->limit);
+				break; 
+			}
+                	case CPU_DT_CODE_LDTR: 
+			{ 
+				_store_ldtr(&pdtr->limit);
+				break; 
+			}
+                	case CPU_DT_CODE_IDTR: 
+			{ 
+				_store_idtr(&pdtr->limit);
+				break; 
+			}
               	}
 		
 		dt_pa.quadpart = virt_to_phys((void*)dtr.base);
@@ -687,51 +949,366 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #endif	
 	}
     
-	case IOCTL_ALLOC_PHYSMEM:
-    {
-		//IN params: size
-        //OUT params: physical address
+    	case IOCTL_SWSMI:
+	{
+		//IN params: SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi 
 #ifdef CONFIG_X86
 
-        uint32_t NumberOfBytes = 0;
-        void *va;
-        void *pa;
-        numargs = 2;
+		printk( KERN_INFO "[chipsec] > IOCTL_SWSMI\n");
+		numargs = 7;
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			break;
+		}
+	
+		__swsmi__((SMI_CTX *)ptr);
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;	
+		break;
+#else
+		return -EFAULT;
+#endif
+	}
+    
+	case IOCTL_RDCR:
+	{
+		//IN  params: number of CR reg
+		//OUT params: val
+#ifdef CONFIG_X86
+		numargs = 3;
+		if( copy_from_user( (void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs) ) > 0)
+			return -EFAULT;
+
+		switch( ptr[1] )
+		{
+                    case 0: 
+        		ptr[2] = ReadCR0();
+                        break;
+                    case 2: 
+        		ptr[2] = ReadCR2();
+                        break;
+                    case 3: 
+        		ptr[2] = ReadCR3();
+                        break;
+                    case 4: 
+        		ptr[2] = ReadCR4();
+                        break;
+                    case 8:
+#ifdef __x86_64__
+                        ptr[2] = ReadCR8();
+#endif
+                        break;
+		}
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+		break;
+#else
+		return -EFAULT;
+#endif
+        }
+	case IOCTL_WRCR:
+	{
+		//IN  params: number of CR reg
+		//OUT params: val
+#ifdef CONFIG_X86
+		numargs = 3;
+		if( copy_from_user( (void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs) ) > 0)
+			return -EFAULT;
+
+		switch( ptr[1] )
+		{
+                    case 0: 
+        		WriteCR0(ptr[2]);
+                        break;
+                    case 2: 
+        		WriteCR2(ptr[2]);
+                        break;
+                    case 3: 
+        		WriteCR3(ptr[2]);
+                        break;
+                    case 4: 
+        		WriteCR4(ptr[2]);
+                        break;
+                    case 8:
+#ifdef __x86_64__
+                        WriteCR8(ptr[2]);
+#endif
+                        break;
+		}
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+		break;
+#else
+		return -EFAULT;
+#endif
+        }
+	case IOCTL_ALLOC_PHYSMEM:
+	{
+		//IN params: size
+		//OUT params: physical address
+		uint32_t NumberOfBytes = 0;
+		void *va;
+		void *pa;
+		numargs = 2;
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			return -EFAULT;
+		}
+        
+		NumberOfBytes = ptr[0];
+        
+		printk(KERN_ALERT "[chipsec] Allocating: NumberOfBytes = 0x%X", NumberOfBytes);
+		va = kmalloc(NumberOfBytes, GFP_KERNEL);
+		if( !va )
+		{
+			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+			return -EFAULT;
+		}
+         
+		memset(va, 0, NumberOfBytes);
+		pa = (void*)virt_to_phys(va);
+		printk(KERN_ALERT "[chipsec] Allocated Buffer: VirtAddr = 0x%p PhysAddr = 0x%p\n", va, pa );
+        
+		ptr[0] = (unsigned long)va;
+		ptr[1] = (unsigned long)pa;
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+		break;
+	}
+    
+	case IOCTL_GET_EFIVAR:
+	{
+		//IN  params: name, guid
+		//OUT params: data
+ 
+		uint32_t *kbuf;
+		static efi_char16_t *name;
+		char *cptr, *var;
+		efi_guid_t GUID;
+		efi_status_t stat;
+		long unsigned int data_size, var_size;
+		uint32_t data_size_u32;
+		unsigned int namelen, index;
+		static struct efi *myefi;
+		myefi = &efi;
+    
+		printk( KERN_INFO "[chipsec] > IOCTL_GET_EFIVAR\n");
+        
+		// get the size (a uint32_t)
+		if(copy_from_user((void*)&data_size_u32, (void*)ioctl_param, sizeof(uint32_t)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			return -EFAULT;
+		}
+		data_size = (unsigned long)data_size_u32;
+
+		// check that this is enough memory 
+		if (data_size < sizeof(uint32_t) * 12)
+		{
+			printk(KERN_ALERT "[chipsec] ERROR: INVALID SIZE PARAMETER\n");
+			return -EFAULT;
+		}
+        
+		// allocate that much memory
+		kbuf = kzalloc(data_size, GFP_KERNEL);
+		if (!kbuf)
+		{
+			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+			return -EFAULT;
+		}
+
+		// fill kbuf with user's buffer
+		if(copy_from_user((void*)kbuf, (void*)ioctl_param, data_size) > 0)
+		{
+            kfree(kbuf);
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			return -EFAULT;
+		}
+        
+		GUID = EFI_GUID( kbuf[1], kbuf[2], kbuf[3], kbuf[4], kbuf[5], kbuf[6], kbuf[7], kbuf[8], kbuf[9], kbuf[10], kbuf[11]);
+        
+		cptr = (char *)&kbuf[12];
+		namelen = strnlen(cptr, data_size - (sizeof(uint32_t) * 12));
+
+		// if name overflowed, we only work with the part that fit in kbuf
+		name = kzalloc((namelen+1)*sizeof(efi_char16_t), GFP_KERNEL);
+		if (!name)
+		{
+            kfree(kbuf);
+			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+			return -EFAULT;
+		}
+
+		for(index=0; index < namelen; index++)
+		{
+			// upper byte is 0x0 (for ASCII), the lower byte is ASCII char
+			name[index] = (efi_char16_t)(cptr[index] & 0xFF);
+		}
+		name[index] = (efi_char16_t)(0);
+        
+		// now we're done with everything in kbuf. use it for get_variable
+		// the format for kbuf is:
+		//      size, return value, attrs, data
+		memset(kbuf, '\0', data_size);
+
+		// For the call to get_variable we reserve space for header information
+		var_size = data_size - (sizeof(uint32_t) * 3);
+		var = (char *)&kbuf[3];
+		stat = myefi->get_variable(name, &GUID, (u32*)&kbuf[2], &var_size, var); 
+                     
+		if (stat != EFI_SUCCESS)
+		{
+			print_stat(stat);
+			data_size = sizeof(uint32_t) * 2;
+		}
+        else if (var_size > data_size - (sizeof(uint32_t) * 3))
+        {
+            printk(KERN_ALERT "[chipsec] ERROR: get_variable runtime service returned EFI_SUCCESS but the variable size was larger than the size passed. Possible corruption? (Should have returned \n" );
+        }
+
+		kbuf[0] = var_size;
+		kbuf[1] = stat;
+		// kbuf[2] = attributes from the get_variable call above
+		// kbuf[3..] = contents of the variable
+		if(copy_to_user((void*)ioctl_param, (void*)kbuf, data_size) > 0)
+		{
+            kfree(name);
+            kfree(kbuf);
+			return -EFAULT;
+		}
+
+		kfree(name);
+		kfree(kbuf);
+        
+		break;
+	}
+
+    case IOCTL_SET_EFIVAR:
+    {
+    
+        uint32_t *kbuf;
+        static efi_char16_t *name;
+        char *cptr, *data;
+        efi_guid_t GUID;
+        efi_status_t stat;
+        unsigned long data_size;
+        uint32_t data_size_u32, attr, datalen;
+        unsigned int namelen, index;
+        static struct efi *myefi;
+        myefi = &efi;
+    
+        printk( KERN_INFO "[chipsec] > IOCTL_SET_EFIVAR\n");
+        
+        // size, guid, attr, name, data
+
+        // get the size (a uint32_t)
+        if(copy_from_user((void*)&data_size_u32, (void*)ioctl_param, sizeof(uint32_t)) > 0)
         {
             printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
-            break;
+            return -EFAULT;
+        }
+        data_size = (unsigned long)data_size_u32;
+
+        // check that this is enough to store what we will expect
+        if (data_size < (sizeof(uint32_t) * 14))
+        {
+            printk(KERN_ALERT "[chipsec] ERROR: INVALID data_size PARAMETER\n");
+            return -EFAULT;
         }
         
-        NumberOfBytes = ptr[0];
-        
-        printk(KERN_ALERT "[chipsec] Allocating: NumberOfBytes = 0x%X", NumberOfBytes);
-        va = kmalloc(NumberOfBytes, GFP_KERNEL);
-        if( !va )
+        // allocate that much memory
+        kbuf = kzalloc(data_size, GFP_KERNEL);
+        if (!kbuf)
         {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
             return -EFAULT;
         }
-         
-        memset(va, 0, NumberOfBytes);
-        pa = (void*)virt_to_phys(va);
-        printk(KERN_ALERT "[chipsec] Allocated Buffer: VirtAddr = 0x%p PhysAddr = 0x%p\n", va, pa );
-        
-        ptr[0] = (unsigned long)va;
-        ptr[1] = (unsigned long)pa;
 
-        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
-			return -EFAULT;
+        // fill kbuf with user's buffer
+        if(copy_from_user((void*)kbuf, (void*)ioctl_param, data_size) > 0)
+        {
+            printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+            kfree(kbuf);
+            return -EFAULT;
+        }
+        
+        GUID = EFI_GUID( kbuf[1], kbuf[2], kbuf[3], kbuf[4], kbuf[5], kbuf[6], kbuf[7], kbuf[8], kbuf[9], kbuf[10], kbuf[11]);
+
+        attr = kbuf[12];
+        datalen = kbuf[13];
+        cptr = (char *)&kbuf[14];
+        namelen = strnlen(cptr, (data_size - (sizeof(uint32_t) * 14)));
+        
+        // check for namelen underflow
+        if (data_size - (namelen+1) > data_size)
+        { 
+            printk(KERN_ALERT "[chipsec] ERROR: INVALID name PARAMETER (namelen = %u)\n", namelen);
+            kfree(kbuf);
+            return -EFAULT;
+        }
+        
+        // make sure size that was passed in actually fits
+        if (data_size - (namelen+1) - sizeof(uint32_t)*14 != datalen)
+        {
+            printk(KERN_ALERT "[chipsec] ERROR: INVALID datalen PARAMETER (%u != %lu)\n", datalen, data_size - namelen - sizeof(uint32_t)*14);
+            kfree(kbuf);
+            return -EFAULT;
+        }
+        
+        // if name overflowed, we only work with the part that fit in kbuf
+        name = kzalloc((namelen+1)*sizeof(efi_char16_t), GFP_KERNEL);
+        if (!name)
+        {
+            printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+            kfree(kbuf);
+            return -EFAULT;
+        }
+
+        for(index=0; index < namelen; index++)
+        {
+            // upper byte is 0x0 (for ASCII), the lower byte is ASCII char
+            name[index] = (efi_char16_t)(cptr[index] & 0xFF);
+        }
+        name[index] = (efi_char16_t)(0);
+        
+        data = (char *) &cptr[index+1];
+
+        stat = myefi->set_variable(name, &GUID, attr, datalen, data);
+        
+        // clear kbuf before using it for output
+        memset(kbuf, '\0', data_size);
+        
+        kbuf[0] = sizeof(uint32_t) * 2;
+        kbuf[1] = stat;
+        
+        if (stat != EFI_SUCCESS)
+        {
+            print_stat(stat);
+        }
+
+        if(copy_to_user((void*)ioctl_param, (void*)kbuf, sizeof(uint32_t) * 2) > 0)
+        {
+            kfree(kbuf);
+            kfree(name);
+            return -EFAULT;
+        }
+
+        kfree(name);
+        kfree(kbuf);
+        
         break;
-#else
-		return -EFAULT;
-#endif
-    }
+
+    } 
     
 	default:
 		return -EFAULT;
 	}
-
 	return 0;
 }
 

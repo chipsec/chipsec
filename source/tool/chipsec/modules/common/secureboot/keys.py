@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,17 +41,17 @@ class keys(BaseModule):
     SECURE = 0x1
     INSECURE = 0x2
     ERROR = 0x4
-    
+
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi  = UEFI( self.cs.helper )
-    
+
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
         if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
         return supported
 
-    
+
     def check_EFI_variable_authentication( self, name, guid ):
         self.logger.log( "[*] Checking EFI variable %s {%s}.." % (name, guid) )
         orig_var = self._uefi.get_EFI_variable( name, guid, None )
@@ -61,7 +61,7 @@ class keys(BaseModule):
         fname = name + '_' + guid + '.bin'
         if self.logger.VERBOSE: write_file( fname, orig_var )
         origvar_len = len(orig_var)
-        mod_var = chr( ord(orig_var[0]) ^ 0xFF ) + orig_var[1:] 
+        mod_var = chr( ord(orig_var[0]) ^ 0xFF ) + orig_var[1:]
         if origvar_len > 1: mod_var = mod_var[:origvar_len-1] + chr( ord(mod_var[origvar_len-1]) ^ 0xFF )
         if self.logger.VERBOSE: write_file( fname + '.mod', mod_var )
         status = self._uefi.set_EFI_variable( name, guid, mod_var )
@@ -76,10 +76,10 @@ class keys(BaseModule):
         if ok == keys.INSECURE:
             self.logger.log_bad( "EFI variable %s is not protected! It has been modified. Restoring original contents.." % name )
             self._uefi.set_EFI_variable( name, guid, orig_var )
-        else:                                                                     
+        else:
             self.logger.log_good( "Could not modify EFI variable %s {%s}" % (name, guid) )
         return ok
-    
+
     # checks authentication of Secure Boot EFI variables
     def check_secureboot_key_variables(self):
         sts = 0
@@ -91,20 +91,19 @@ class keys(BaseModule):
         sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_SetupMode,  EFI_VARIABLE_DICT[EFI_VAR_NAME_SetupMode]  )
         #sts |= self.check_EFI_variable_authentication( EFI_VAR_NAME_CustomMode, EFI_VARIABLE_DICT[EFI_VAR_NAME_CustomMode] )
         if (sts & keys.ERROR) != 0: self.logger.log_important( "Some Secure Boot variables don't exist" )
-    
+
         ok = ((sts & keys.INSECURE) == 0)
         self.logger.log('')
         if ok: self.logger.log_passed_check( 'All existing Secure Boot EFI variables seem to be protected' )
         else:  self.logger.log_failed_check( 'One or more Secure Boot variables are not protected' )
         return ok
-    
-    
+
+
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
         #self.logger.VERBOSE = True
-        self.logger.start_test( "Protection of Secure Boot Key and Configuraion EFI Variables" )
+        self.logger.start_test( "Protection of Secure Boot Key and Configuration EFI Variables" )
         return self.check_secureboot_key_variables()
-   

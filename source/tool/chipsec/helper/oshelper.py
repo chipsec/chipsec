@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ import traceback
 _importlib = True
 try:
     import importlib
-    
+
 except ImportError:
     _importlib = False
 
@@ -67,8 +67,8 @@ class OsHelperError (RuntimeError):
 
 class HWAccessViolationError (OsHelperError):
     pass
-        
-    
+
+
 ## OS Helper
 #
 # Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
@@ -88,14 +88,15 @@ class OsHelper:
             self.os_release = self.helper.os_release
             self.os_version = self.helper.os_version
             self.os_machine = self.helper.os_machine
-    
+
 
     def loadHelpers(self):
+        if logger().VERBOSE: logger().log("======== Load Helper for %s ==========="%platform.system().lower())
         if chipsec.file.main_is_frozen():
             self.loadHelpersFromEXE()
         else:
             self.loadHelpersFromFileSystem()
-            
+
     def loadHelpersFromEXE(self):
         import zipfile
         myzip = zipfile.ZipFile(os.path.join(chipsec.file.get_main_dir(),"library.zip"))
@@ -104,7 +105,7 @@ class OsHelper:
         for h in helpers:
             self.importModule(h)
             if self.helper : break
-        
+
     def loadHelpersFromFileSystem(self):
         mydir = os.path.dirname(__file__)
         dirs = os.listdir(mydir)
@@ -119,7 +120,7 @@ class OsHelper:
 #                    print os.path.join(adir,afile)
                     mod_shortname = adir + "." + os.path.splitext(afile)[0]
                     mod_fullname = "chipsec.helper." + mod_shortname
-#                    print mod_fullname
+                    if logger().VERBOSE:  logger().log("trying to load %s" % mod_fullname)
                     self.importModule(mod_fullname)
                     if self.helper : break
 
@@ -127,12 +128,12 @@ class OsHelper:
         try:
             mod_path = mod_fullname.rpartition('.')[0]
             #mod_path, mod_name = os.path.splitext(mod_fullname)
-            
+
             if _importlib:
                 module = importlib.import_module( mod_path )
-                all    = getattr( module, '__all__' )
+                module__all__    = getattr( module, '__all__' )
 
-                for sHelper in all:
+                for sHelper in module__all__:
                     if logger().VERBOSE: logger().log('[helper] Importing OS helper: %s.%s' % (mod_path,sHelper) )
                     mHelper = importlib.import_module( '%s.%s' % (mod_path,sHelper) )
                     result = getattr( mHelper, 'get_helper' )(  )
@@ -151,7 +152,7 @@ class OsHelper:
             logger().log_bad( traceback.format_exc() )
             #raise OsHelperError( "Could not import OS helper %s (%s)" % (mod_fullname, str(msg)) )
             pass
-            
+
 
     def __del__(self):
         try:
@@ -203,17 +204,17 @@ class OsHelper:
 
     #
     # physical_address_hi/physical_address_lo are 32 bit integers
-    # 
+    #
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
         return self.helper.read_phys_mem( phys_address_hi, phys_address_lo, length )
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         return self.helper.write_phys_mem( phys_address_hi, phys_address_lo, length, buf )
     def alloc_phys_mem( self, length, max_pa_hi, max_pa_lo ):
-        return self.helper.alloc_phys_mem( length, (phys_address_hi<<32|phys_address_lo) )
+        return self.helper.alloc_phys_mem( length, (max_pa_hi<<32|max_pa_lo) )
 
     #
     # physical_address is 64 bit integer
-    # 
+    #
     def read_physical_mem( self, phys_address, length ):
         return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
     def write_physical_mem( self, phys_address, length, buf ):
@@ -230,6 +231,15 @@ class OsHelper:
         return self.helper.read_io_port( io_port, size )
     def write_io_port( self, io_port, value, size ):
         return self.helper.write_io_port( io_port, value, size )
+    #
+    # Read/Write CR registers
+    #
+    def read_cr(self, cpu_thread_id, cr_number):
+        return self.helper.read_cr( cpu_thread_id, cr_number )
+
+    def write_cr(self, cpu_thread_id, cr_number, value):
+        return self.helper.write_cr( cpu_thread_id, cr_number, value )
+
 
     #
     # Read/Write MSR on a specific CPU thread
@@ -290,13 +300,15 @@ class OsHelper:
     def send_sw_smi( self, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         return self.helper.send_sw_smi( SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
-try:
-    _helper  = OsHelper()
-except BaseException, msg:
-    logger().error( str(msg) )
-    sys.exit()
-    
+_helper = None
+
 def helper():
+    global _helper
+    if _helper == None:
+        try:
+            _helper  = OsHelper()
+        except BaseException, msg:
+            logger().error( str(msg) )
+            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+            sys.exit()
     return _helper
-
-

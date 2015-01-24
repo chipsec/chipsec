@@ -1,4 +1,4 @@
-/* 
+/***
 CHIPSEC: Platform Security Assessment Framework
 Copyright (c) 2010-2014, Intel Corporation
  
@@ -303,7 +303,6 @@ NTSTATUS _write_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
   return STATUS_SUCCESS;
 }
 
-
 NTSTATUS
 DriverDeviceControl(
     IN PDEVICE_OBJECT DeviceObject,
@@ -524,6 +523,66 @@ DriverDeviceControl(
             break;
           }
 
+        case IOCTL_FREE_PHYSMEM:
+          {
+            UINT64 va = 0x0;
+            pInBuf  = Irp->AssociatedIrp.SystemBuffer;
+            pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+
+            DbgPrint( "[chipsec] > IOCTL_FREE_PHYSMEM\n" );
+            if( !Irp->AssociatedIrp.SystemBuffer ||
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(UINT64))
+            {
+               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+               Status = STATUS_INVALID_PARAMETER;
+               break;
+            }
+
+            RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT64) );
+            DbgPrint( "[chipsec][IOCTL_FREE_PHYSMEM] Virtual address of the memory being freed: 0x%I64X\n", va );
+            MmFreeContiguousMemory( (PVOID)va );
+
+            IrpSp->Parameters.Read.Length = 0;
+            dwBytesWritten = IrpSp->Parameters.Read.Length;
+            Status = STATUS_SUCCESS;
+            break;
+          }
+
+        case IOCTL_GET_PHYSADDR:
+          {
+            UINT64 va = 0x0;
+            PHYSICAL_ADDRESS pa = { 0x0, 0x0 };
+
+            pInBuf  = Irp->AssociatedIrp.SystemBuffer;
+            pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+
+            DbgPrint( "[chipsec] > IOCTL_GET_PHYSADDR\n" );
+            if( !Irp->AssociatedIrp.SystemBuffer ||
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(UINT64))
+            {
+               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+               Status = STATUS_INVALID_PARAMETER;
+               break;
+            }
+
+            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINT64))
+            {
+               DbgPrint( "[chipsec] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
+               Status = STATUS_BUFFER_TOO_SMALL;
+               break;
+            }
+
+            RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT64) );
+            pa = MmGetPhysicalAddress( (PVOID)va );
+
+            DbgPrint( "[chipsec][IOCTL_GET_PHYSADDR] Traslated virtual address 0x%I64X to physical: 0x%I64X\n", va, pa.QuadPart, pa.LowPart);
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&pa, sizeof(UINT64) );
+            IrpSp->Parameters.Read.Length = sizeof(UINT64);
+            dwBytesWritten = IrpSp->Parameters.Read.Length;
+            Status = STATUS_SUCCESS;
+            break;
+          }
+
         case IOCTL_LOAD_UCODE_PATCH:
           {
             PVOID ucode_buf = NULL;
@@ -543,7 +602,7 @@ DriverDeviceControl(
             }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
-            if( new_cpu_thread_id > _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
 
@@ -620,7 +679,7 @@ DriverDeviceControl(
               }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
-            if( new_cpu_thread_id > _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
 
@@ -674,7 +733,7 @@ DriverDeviceControl(
               }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
-            if( new_cpu_thread_id > _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
 
@@ -758,7 +817,7 @@ DriverDeviceControl(
             DbgPrint( "[chipsec] > GET_CPU_DESCRIPTOR_TABLE\n" );
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
-            if( new_cpu_thread_id > _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
             RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE), sizeof(BYTE) );
@@ -882,6 +941,129 @@ DriverDeviceControl(
             break;
           }
 
+        case IOCTL_WRCR:
+          {
+            UINT64 val64 = 0;
+            CPU_REG_TYPE value = 0;
+            WORD cr_reg = 0;
+            DbgPrint( "[chipsec] > WRITE_CR\n" );
+
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < (sizeof(cr_reg) + sizeof(val64) + sizeof(BYTE)))
+            {
+                 Status = STATUS_INVALID_PARAMETER;
+                 break;
+            }
+
+            RtlCopyBytes( &cr_reg, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(cr_reg) );
+            RtlCopyBytes( &val64, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg), sizeof(val64) );
+            new_cpu_thread_id = *((BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg) + sizeof(val64));
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+            //    new_cpu_thread_id = 0;
+                 Status = STATUS_INVALID_PARAMETER;
+                 break;
+            }
+
+            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
+            value = (CPU_REG_TYPE)val64;
+            DbgPrint( "[chipsec][WRITE_CR] CR Reg %#04x, value = %#010x \n", cr_reg, value );
+
+            switch (cr_reg) {
+            case 0: WriteCR0(value);
+                Status = STATUS_SUCCESS;
+                break;
+            case 2: WriteCR2(value);
+                Status = STATUS_SUCCESS;
+                break;
+            case 3: WriteCR3(value);
+                Status = STATUS_SUCCESS;
+                break;
+            case 4: WriteCR4(value);
+                Status = STATUS_SUCCESS;
+                break;
+            case 8:
+#if defined(_M_AMD64)
+                WriteCR8(value);
+                Status = STATUS_SUCCESS;
+                break;
+#endif
+            default:
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            if( !NT_SUCCESS(Status) ) {
+                break;
+            }
+
+            dwBytesWritten = 0;
+            Status = STATUS_SUCCESS;
+            break;
+          }
+        case IOCTL_RDCR:
+          {
+            UINT64 val64 = 0;
+            CPU_REG_TYPE value = 0;
+            WORD cr_reg = 0;
+            DbgPrint( "[chipsec] > READ_CR\n" );
+
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < (sizeof(cr_reg)+sizeof(BYTE))
+             || IrpSp->Parameters.DeviceIoControl.OutputBufferLength < (sizeof(val64))
+              )
+            {
+                 Status = STATUS_INVALID_PARAMETER;
+                 break;
+            }
+
+            RtlCopyBytes( &cr_reg, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(cr_reg) );
+            new_cpu_thread_id = *((BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg));
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+            //    new_cpu_thread_id = 0;
+                 Status = STATUS_INVALID_PARAMETER;
+                 break;
+            }
+
+            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
+
+            switch (cr_reg) {
+            case 0: value = ReadCR0();
+                Status = STATUS_SUCCESS;
+                break;
+            case 2: value = ReadCR2();
+                Status = STATUS_SUCCESS;
+                break;
+            case 3: value = ReadCR3();
+                Status = STATUS_SUCCESS;
+                break;
+            case 4: value = ReadCR4();
+                Status = STATUS_SUCCESS;
+                break;
+            case 8:
+#if defined(_M_AMD64)
+                value = ReadCR8();
+                Status = STATUS_SUCCESS;
+                break;
+#endif
+            default:
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+            
+            if( !NT_SUCCESS(Status) ) {
+                break;
+            }
+
+            val64 = value;
+            RtlCopyBytes( (BYTE*)Irp->AssociatedIrp.SystemBuffer, &val64, sizeof(val64) );
+            dwBytesWritten = sizeof(val64);
+
+            DbgPrint( "[chipsec][READ_CR] CR Reg %#04x, value = %#010x \n", cr_reg, value );
+
+            Status = STATUS_SUCCESS;
+            break;
+
+          }
         default:
             DbgPrint( "[chipsec] ERROR: invalid IOCTL\n");
             Status = STATUS_NOT_IMPLEMENTED;

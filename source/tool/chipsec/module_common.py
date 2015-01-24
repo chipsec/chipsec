@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -42,9 +42,6 @@ from time import localtime, strftime
 
 import chipsec.logger
 import chipsec.chipset
-cs = chipsec.chipset.cs()             #\TODO: remove
-logger = chipsec.logger.logger()      #\TODO: remove
-from chipsec.cfg.common      import * #\TODO: remove
 
 
 class BaseModule( object ):
@@ -59,7 +56,7 @@ class BaseModule( object ):
     #    self.cs.get_chipset_id()
     def is_supported(self):
         return True
-    
+
     def run( self, module_argv ):
         raise NotImplementedError('sub class should overwrite the run() method')
 
@@ -68,12 +65,12 @@ MTAG_BIOS       = "BIOS"
 MTAG_SMM        = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
 MTAG_HWCONFIG   = "HWCONFIG"
- 
+
 
 
 ##! [Available Tags]
 MTAG_METAS = {
-              MTAG_BIOS:       "System Firmware (BIOS/UEFI) Modules", 
+              MTAG_BIOS:       "System Firmware (BIOS/UEFI) Modules",
               MTAG_SMM:        "System Management Mode (SMM) Modules",
               MTAG_SECUREBOOT: "Secure Boot Modules",
               MTAG_HWCONFIG:   "Hardware Configuration Modules",
@@ -89,4 +86,3 @@ class ModuleResult:
     SKIPPED = 3
     DEPRECATED = 4
     ERROR   = -1
-

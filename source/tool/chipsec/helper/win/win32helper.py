@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -108,7 +108,7 @@ def CTL_CODE( DeviceType, Function, Method, Access ):
 
 #
 # chipsec driver IOCTL codes
-#              
+#
 CHIPSEC_CTL_ACCESS = (FILE_READ_ACCESS | FILE_WRITE_ACCESS)
 
 CLOSE_DRIVER                   = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x803, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
@@ -125,11 +125,13 @@ IOCTL_WRITE_IO_PORT            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80f, METHOD_BUF
 IOCTL_GET_CPU_DESCRIPTOR_TABLE = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x810, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_SWSMI                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x811, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_CPUID                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x813, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_WRCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x818, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_RDCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
 #
 # NT Errors
 #
-# Defined in WinDDK\7600.16385.1\inc\api\ntstatus.h 
+# Defined in WinDDK\7600.16385.1\inc\api\ntstatus.h
 #
 
 #
@@ -140,7 +142,7 @@ IOCTL_CPUID                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x813, METHOD_BUF
 EFI_VAR_MAX_BUFFER_SIZE = 1024*1024
 
 attributes = {
-  "EFI_VARIABLE_NON_VOLATILE"                          : 0x00000001, 
+  "EFI_VARIABLE_NON_VOLATILE"                          : 0x00000001,
   "EFI_VARIABLE_BOOTSERVICE_ACCESS"                    : 0x00000002,
   "EFI_VARIABLE_RUNTIME_ACCESS"                        : 0x00000004,
   "EFI_VARIABLE_HARDWARE_ERROR_RECORD"                 : 0x00000008,
@@ -167,12 +169,12 @@ def packl_ctypes( lnum, bitlength ):
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
 #
 def guid_str(guid0, guid1, guid2, guid3):
-        return ( "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ( "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 
 class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid0 guid1 guid2 guid3') ):
-        __slots__ = ()
-        def __str__(self):
-            return """
+    __slots__ = ()
+    def __str__(self):
+        return """
 Header (Windows)
 ----------------
 VendorGuid= {%08X-%04X-%04X-%04s-%06s}
@@ -183,34 +185,34 @@ Attributes= 0x%08X
 """ % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
 
 def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
-        start = 0
-        buffer = nvram_buf
-        bsize = len(buffer)
-        header_fmt = "<IIIIIHH8s"
-        header_size = struct.calcsize( header_fmt )
-        variables = dict()
-        off = 0
-        while (off + header_size) < bsize:
-           efi_var_hdr = EFI_HDR_WIN( *struct.unpack_from( header_fmt, buffer[ off : off + header_size ] ) )
+    start = 0
+    buffer = nvram_buf
+    bsize = len(buffer)
+    header_fmt = "<IIIIIHH8s"
+    header_size = struct.calcsize( header_fmt )
+    variables = dict()
+    off = 0
+    while (off + header_size) < bsize:
+        efi_var_hdr = EFI_HDR_WIN( *struct.unpack_from( header_fmt, buffer[ off : off + header_size ] ) )
 
-           next_var_offset = off + efi_var_hdr.Size
-           efi_var_buf     = buffer[ off : next_var_offset ]
-           efi_var_data    = buffer[ off + efi_var_hdr.DataOffset : off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
+        next_var_offset = off + efi_var_hdr.Size
+        efi_var_buf     = buffer[ off : next_var_offset ]
+        efi_var_data    = buffer[ off + efi_var_hdr.DataOffset : off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
 
-           #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
-           str_fmt = "%ds" % (efi_var_hdr.DataOffset - header_size)
-           s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
-           efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
+        str_fmt = "%ds" % (efi_var_hdr.DataOffset - header_size)
+        s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
+        efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
-           if efi_var_name not in variables.keys():
-               variables[efi_var_name] = []
-           #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
-           variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
+        if efi_var_name not in variables.keys():
+            variables[efi_var_name] = []
+        #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
+        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
 
-           if 0 == efi_var_hdr.Size: break
-           off = next_var_offset
- 
-        return variables
+        if 0 == efi_var_hdr.Size: break
+        off = next_var_offset
+
+    return variables
 #    return ( start, next_var_offset, efi_var_buf, efi_var_hdr, efi_var_name, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes )
 
 
@@ -227,19 +229,19 @@ class Win32Helper:
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
         if "windows" == self.os_system.lower():
-            win_ver = "win7_" + self.os_machine.lower() 
-            if ("5" == self.os_release): win_ver = "winxp" 
+            win_ver = "win7_" + self.os_machine.lower()
+            if ("5" == self.os_release): win_ver = "winxp"
             """
             if ("8" == self.os_release.lower()):
-                win_ver = "win7_" + self.os_machine.lower() 
+                win_ver = "win7_" + self.os_machine.lower()
             #elif ("post2008server" == self.os_release.lower()):
             elif ("2008server" in self.os_release.lower()):
-                win_ver = "win7_" + self.os_machine.lower() 
+                win_ver = "win7_" + self.os_machine.lower()
             elif ("7" == self.os_release.lower()):
-                win_ver = "win7_" + self.os_machine.lower() 
+                win_ver = "win7_" + self.os_machine.lower()
             else:
                 logger().warn( "Unknown OS release: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
-                win_ver = "win7_" + self.os_machine.lower() 
+                win_ver = "win7_" + self.os_machine.lower()
             """
             logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
             logger().log( "[helper] Using 'helper/win/%s' path for driver" % win_ver )
@@ -257,7 +259,7 @@ class Win32Helper:
         privilege = win32security.LookupPrivilegeValue( None, 'SeSystemEnvironmentPrivilege' )
         token = win32security.OpenProcessToken( win32process.GetCurrentProcess(), win32security.TOKEN_READ|win32security.TOKEN_ADJUST_PRIVILEGES )
         win32security.AdjustTokenPrivileges( token, False, [(privilege, win32security.SE_PRIVILEGE_ENABLED)] )
-        win32api.CloseHandle( token )       
+        win32api.CloseHandle( token )
         # import firmware variable API
         try:
             self.GetFirmwareEnvironmentVariable = kernel32.GetFirmwareEnvironmentVariableW
@@ -303,13 +305,13 @@ class Win32Helper:
 
     def __del__(self):
         try:
-           ##kernel32.CloseHandle( self.driver_handle )
-           #win32api.CloseHandle( self.driver_handle )
-           del self.driver_handle
-           del self.device_file
-           #self.delete()
+        ##kernel32.CloseHandle( self.driver_handle )
+        #win32api.CloseHandle( self.driver_handle )
+            del self.driver_handle
+            del self.device_file
+            #self.delete()
         except NameError:
-           pass
+            pass
 
 
 ###############################################################################################
@@ -322,7 +324,7 @@ class Win32Helper:
         if logger().VERBOSE: logger().log( "[helper] starting chipsec service: handle = 0x%x, type = 0x%x, state = 0x%x" % (self.hs, type, state) )
 
         if win32service.SERVICE_RUNNING == state:
-            if logger().VERBOSE: logger().log( "[helper] chipsec service already running" )           
+            if logger().VERBOSE: logger().log( "[helper] chipsec service already running" )
         else:
             try:
                 win32service.StartService( self.hs, None );
@@ -331,11 +333,11 @@ class Win32Helper:
                     time.sleep( 1 )
                     state = win32service.QueryServiceStatus( self.hs )[1]
                 if win32service.SERVICE_RUNNING == state:
-                    if logger().VERBOSE: logger().log( "[helper] chipsec service started (SERVICE_RUNNING)" )           
+                    if logger().VERBOSE: logger().log( "[helper] chipsec service started (SERVICE_RUNNING)" )
             except win32service.error, (hr, fn, msg):
                 if logger().VERBOSE: logger().log_bad(traceback.format_exc())
                 if (winerror.ERROR_ALREADY_EXISTS == hr or winerror.ERROR_SERVICE_ALREADY_RUNNING == hr):
-                    if logger().VERBOSE: logger().log( "[helper] chipsec service already exists: %s (%d)" % (msg, hr) )           
+                    if logger().VERBOSE: logger().log( "[helper] chipsec service already exists: %s (%d)" % (msg, hr) )
                 else:
                     win32service.CloseServiceHandle( self.hs )
                     self.hs = None
@@ -362,7 +364,7 @@ class Win32Helper:
             raise OsHelperError(string,hr)
 
         if logger().VERBOSE: logger().log( "[helper] SC Manager opened (handle = 0x%08x)" % hscm )
-        
+
 
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec" , "helper" ,"win" )
         driver_path = os.path.join( driver_path, self.win_ver , DRIVER_FILE_NAME )
@@ -405,7 +407,7 @@ class Win32Helper:
                 string      = "CreateService failed: %s (%d)" % (msg, hr)
                 logger().error( string )
                 raise OsHelperError(string,hr)
-            
+
             #(type, state, ca, exitcode, svc_exitcode, checkpoint, waithint) = win32service.QueryServiceStatus( self.hs )
             #if logger().VERBOSE:
             #   logger().log( "[helper] chipsec service: handle = 0x%x, type = 0x%x, state = 0x%x (SERVICE_RUNNING is 0x%x)" % (self.hs, type, state, win32service.SERVICE_RUNNING) )
@@ -472,7 +474,7 @@ class Win32Helper:
             logger().warn( "Invalid handle (wtf?): re-opened device '%.64s' (new handle: %08x)" % (self.device_file, self.driver_handle) )
             return False
         return True
-          
+
 
     #
     # Auxiliary functions
@@ -497,7 +499,7 @@ class Win32Helper:
         #ret = kernel32.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, len(in_buf), byref(out_buf), out_length, byref(out_size), None )
         if logger().VERBOSE: print_buffer( in_buf )
         try:
-            out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )       
+            out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
         except pywintypes.error, _err:
             err_status = _err[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
@@ -508,7 +510,7 @@ class Win32Helper:
                 #err_msg = "%s ('%s')" % (_err[1],_err[2])
                 err_msg = "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2])
                 logger().error( err_msg )
-                raise OSHelperError( err_msg, err_status )
+                raise OsHelperError( err_msg, err_status )
             #return None
         return out_buf
 
@@ -550,14 +552,14 @@ class Win32Helper:
         out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
         #try:
         (eax, edx) = struct.unpack( '2I', out_buf )
-        #except: logger().error( 'DeviceIoControl(READ_MSR) did not return 2 DWORD values' )      
+        #except: logger().error( 'DeviceIoControl(READ_MSR) did not return 2 DWORD values' )
         return (eax, edx)
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
         out_length = 0
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=B3I', cpu_thread_id, msr_addr, eax, edx )
-        out_buf = self._ioctl( IOCTL_WRMSR, in_buf, out_length )     
+        out_buf = self._ioctl( IOCTL_WRMSR, in_buf, out_length )
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
@@ -582,7 +584,7 @@ class Win32Helper:
         out_length = 0
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '4HIB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, value, size )
-        out_buf = self._ioctl( WRITE_PCI_CFG_REGISTER, in_buf, out_length )     
+        out_buf = self._ioctl( WRITE_PCI_CFG_REGISTER, in_buf, out_length )
         return True
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
@@ -591,7 +593,7 @@ class Win32Helper:
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=BH', cpu_thread_id, len(ucode_update_buf) ) + ucode_update_buf
         #print_buffer( in_buf )
-        out_buf = self._ioctl( IOCTL_LOAD_UCODE_PATCH, in_buf, out_length )     
+        out_buf = self._ioctl( IOCTL_LOAD_UCODE_PATCH, in_buf, out_length )
         return True
 
     def read_io_port( self, io_port, size ):
@@ -609,6 +611,18 @@ class Win32Helper:
     def write_io_port( self, io_port, value, size ):
         in_buf = struct.pack( '=HIB', io_port, value, size )
         out_buf = self._ioctl( IOCTL_WRITE_IO_PORT, in_buf, 0 )
+        return True
+
+    def read_cr(self, cpu_thread_id, cr_number):
+        value = 0
+        in_buf = struct.pack( '=HB', cr_number, cpu_thread_id )
+        out_buf = self._ioctl( IOCTL_RDCR, in_buf, 8 )
+        value, = struct.unpack( '=Q', out_buf )
+        return value
+
+    def write_cr(self, cpu_thread_id, cr_number, value):
+        in_buf = struct.pack( '=HQB', cr_number, value )
+        out_buf = self._ioctl( IOCTL_WRCR, in_buf, 0 )
         return True
 
     #
@@ -639,11 +653,11 @@ class Win32Helper:
                 if logger().VERBOSE: logger().log( "[helper] calling GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
-           if logger().VERBOSE or logger().UTIL_TRACE:
-              logger().error( 'GetFirmwareEnvironmentVariable[Ex] failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
-              print WinError()
-           return None
-           #raise WinError(errno.EIO,"Unable to get EFI variable")
+            if logger().VERBOSE or logger().UTIL_TRACE:
+                logger().error( 'GetFirmwareEnvironmentVariable[Ex] failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
+                print WinError()
+            return None
+            #raise WinError(errno.EIO,"Unable to get EFI variable")
         return efi_var[:length]
 
     def set_EFI_variable( self, name, guid, var, attrs=None ):
@@ -659,11 +673,11 @@ class Win32Helper:
                 if logger().VERBOSE: logger().log( "[helper] calling SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
                 success = self.SetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, var, var_len, attrs )
         if 0 == success:
-           err = kernel32.GetLastError()
-           if logger().VERBOSE or logger().UTIL_TRACE:
-              logger().error( 'SetFirmwareEnvironmentVariable failed (GetLastError = 0x%x)' % err )
-              print WinError()
-           #raise WinError(errno.EIO, "Unable to set EFI variable")
+            err = kernel32.GetLastError()
+            if logger().VERBOSE or logger().UTIL_TRACE:
+                logger().error( 'SetFirmwareEnvironmentVariable failed (GetLastError = 0x%x)' % err )
+                print WinError()
+            #raise WinError(errno.EIO, "Unable to set EFI variable")
         return success
 
     def list_EFI_variables( self, infcls=2 ):
@@ -673,17 +687,17 @@ class Win32Helper:
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         status = ( ((1 << 32) - 1) & status)
         if (0xC0000023 == status):
-           retlength, = struct.unpack("<I", length)
-           efi_vars = create_string_buffer( retlength )
-           status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
+            retlength, = struct.unpack("<I", length)
+            efi_vars = create_string_buffer( retlength )
+            status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
-           logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
-           logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot. To use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
-           return None
+            logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
+            logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot. To use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
+            return None
         if 0 != status:
-           logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
-           logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
-           raise WinError()
+            logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
+            logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
+            raise WinError()
         # for debug purposes (in case NtEnumerateSystemEnvironmentValuesEx changes format of the output binary)
         #from chipsec.file import write_file
         #write_file( 'list_EFI_variables.bin', efi_vars )
@@ -698,7 +712,7 @@ class Win32Helper:
         out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '=H6Q', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-        out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )     
+        out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
         return
 
     #
@@ -708,15 +722,13 @@ class Win32Helper:
         out_length = 16
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=2I', eax, ecx )
-        out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )     
+        out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )
         (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )
         return (eax, ebx, ecx, edx)
-    
+
 
 #
-# Get instance of this OS helper 
+# Get instance of this OS helper
 #
 def get_helper():
     return Win32Helper( )
-
-

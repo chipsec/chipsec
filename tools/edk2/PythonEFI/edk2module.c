@@ -43,6 +43,7 @@ PyDoc_STRVAR(edk2__doc__,
   // -- Access to CPU MSRs
   extern void _rdmsr( unsigned int msr_num, unsigned int* msr_lo, unsigned int* msr_hi );
   extern void _wrmsr( unsigned int msr_num, unsigned int  msr_hi, unsigned int  msr_lo );
+  extern void _swsmi( unsigned int smi_code_data, unsigned int rax_value, unsigned int rbx_value, unsigned int rcx_value, unsigned int rdx_value, unsigned int rsi_value, unsigned int rdi_value );
   // -- Access to PCI CFG space
   extern void WritePCIByte          ( unsigned int pci_reg, unsigned short cfg_data_port, unsigned char  byte_value );
   extern void WritePCIWord          ( unsigned int pci_reg, unsigned short cfg_data_port, unsigned short word_value );
@@ -6904,6 +6905,24 @@ posix_wrmsr(PyObject *self, PyObject *args)
   return Py_None;
 }
 
+PyDoc_STRVAR(efi_swsmi__doc__,
+"swsmi(smi_code_data, rax_value, rbx_value, rcx_value, rdx_value, rsi_value, rdi_value) -> None\n\
+Triggering Software SMI");
+
+static PyObject *
+posix_swsmi(PyObject *self, PyObject *args)
+{
+  unsigned int smi_code_data, rax_value, rbx_value, rcx_value, rdx_value, rsi_value, rdi_value;
+  if (!PyArg_Parse(args, "(IIIIIII)", &smi_code_data, &rax_value, &rbx_value, &rcx_value, &rdx_value, &rsi_value, &rdi_value))
+    return NULL;
+  Py_BEGIN_ALLOW_THREADS
+  _swsmi( smi_code_data, rax_value, rbx_value, rcx_value, rdx_value, rsi_value, rdi_value );
+  Py_END_ALLOW_THREADS
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
 PyDoc_STRVAR(efi_readio__doc__,
 "readio(addr, size) -> (int)\n\
 Read the value (size == 1, 2, or 4 bytes) of the specified IO port.");
@@ -6999,7 +7018,7 @@ Read the given memory address.");
 static PyObject *
 posix_readmem(PyObject *self, PyObject *args)
 {
-  int len, result;
+  int len;
   PyObject *pybuffer;
   char *cbuf, *addr;
 
@@ -7464,7 +7483,8 @@ static PyMethodDef posix_methods[] = {
   {"writemem_dword",    posix_writemem_dword, 0, efi_writemem_dword__doc__},
   {"writeio",           posix_writeio, 0, efi_writeio__doc__},
   {"readio",            posix_readio, 0, efi_readio__doc__},
-//  {"rdtsc",             posix_rdtsc, 0, efi_rdtsc__doc__},
+  {"swsmi",             posix_swsmi, 0, efi_swsmi__doc__},
+  //  {"rdtsc",             posix_rdtsc, 0, efi_rdtsc__doc__},
 //  {"cpuid",             posix_cpuid, 0, efi_cpuid__doc__},
 #endif
 

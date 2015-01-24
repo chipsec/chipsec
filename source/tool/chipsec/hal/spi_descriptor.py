@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -54,10 +54,10 @@ SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A )
 SPI_FLASH_DESCRIPTOR_SIZE      = 0x1000
 
 
-def get_spi_flash_descriptor( rom ):  
+def get_spi_flash_descriptor( rom ):
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-       return (-1, None)
+        return (-1, None)
     fd_off = pos - 0x10
     fd = rom[ fd_off : fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
     return (fd_off, fd)
@@ -75,11 +75,11 @@ def get_spi_regions( fd ):
     if not (pos == 0x10):
         return None
 
-    flmap0 = struct.unpack_from( '=I', fd[0x14:0x18] )[0]  
+    flmap0 = struct.unpack_from( '=I', fd[0x14:0x18] )[0]
     # Flash Region Base Address (bits [23:16])
-    frba = ( (flmap0 & 0x00FF0000) >> 12 )   
+    frba = ( (flmap0 & 0x00FF0000) >> 12 )
     # Number of Regions (bits [26:24])
-    nr   = ( ((flmap0 & 0xFF000000) >> 24) & 0x7 )   
+    nr   = ( ((flmap0 & 0xFF000000) >> 24) & 0x7 )
 
     flregs = [None]*SPI_REGION_NUMBER_IN_FD
     for r in range( SPI_REGION_NUMBER_IN_FD ):
@@ -135,15 +135,15 @@ def parse_spi_flash_descriptor( rom ):
     flmap1 = struct.unpack_from( '=I', fd[0x18:0x1C] )[0]
     flmap2 = struct.unpack_from( '=I', fd[0x1C:0x20] )[0]
     logger().log( '+ 0x0014 FLMAP0   : 0x%08X' % flmap0 )
-    
+
     # Flash Component Base Address (bits [7:0])
-    fcba = ( (flmap0 & 0x000000FF) << 4 )   
+    fcba = ( (flmap0 & 0x000000FF) << 4 )
     # Number of Components (bits [9:8])
-    nc   = ( ((flmap0 & 0x0000FF00) >> 8) & 0x3 )   
+    nc   = ( ((flmap0 & 0x0000FF00) >> 8) & 0x3 )
     # Flash Region Base Address (bits [23:16])
-    frba = ( (flmap0 & 0x00FF0000) >> 12 )   
+    frba = ( (flmap0 & 0x00FF0000) >> 12 )
     # Number of Regions (bits [26:24])
-    nr   = ( ((flmap0 & 0xFF000000) >> 24) & 0x7 )   
+    nr   = ( ((flmap0 & 0xFF000000) >> 24) & 0x7 )
     logger().log( '  Flash Component Base Address        = 0x%08X' % fcba )
     logger().log( '  Number of Flash Components          = %d' % nc )
     logger().log( '  Flash Region Base Address           = 0x%08X' % frba )
@@ -152,16 +152,16 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( '+ 0x0018 FLMAP1   : 0x%08X' % flmap1 )
 
     # Flash Master Base Address (bits [7:0])
-    fmba  = ( (flmap1 & 0x000000FF) << 4 )   
+    fmba  = ( (flmap1 & 0x000000FF) << 4 )
     # Number of Masters (bits [9:8])
-    nm    = ( ((flmap1 & 0x0000FF00) >> 8) & 0x3 )   
+    nm    = ( ((flmap1 & 0x0000FF00) >> 8) & 0x3 )
     logger().log( '  Flash Master Base Address           = 0x%08X' % fmba )
     logger().log( '  Number of Masters                   = %d' % nm )
 
     logger().log( '+ 0x001C FLMAP2   : 0x%08X' % flmap2 )
 
     # ICC Register Init Base Address (bits [23:16])
-    iccriba = ( (flmap2 & 0x00FF0000) >> 12 )   
+    iccriba = ( (flmap2 & 0x00FF0000) >> 12 )
     logger().log( '  ICC Register Init Base Address      = 0x%08X' % iccriba )
 
     #
@@ -192,7 +192,7 @@ def parse_spi_flash_descriptor( rom ):
         (base,limit) = get_SPI_region( flreg )
         notused = ''
         if base > limit:
-           notused = '(not used)'
+            notused = '(not used)'
         flregs[r] = (flreg,base,limit,notused)
         logger().log( '+ 0x%04X FLREG%d   : 0x%08X %s' % (flreg_off,r,flreg,notused) )
 
@@ -218,7 +218,7 @@ def parse_spi_flash_descriptor( rom ):
         (requester_id, master_region_ra, master_region_wa) = get_SPI_master( flmstr )
         flmstrs[m] = (flmstr, requester_id, master_region_ra, master_region_wa)
         logger().log( '+ 0x%04X FLMSTR%d   : 0x%08X' % (flmstr_off,m,flmstr) )
- 
+
     logger().log('')
     logger().log( 'Master Read/Write Access to Flash Regions' )
     logger().log( '--------------------------------------------------------' )
@@ -249,8 +249,8 @@ def parse_spi_flash_descriptor( rom ):
     flumap1 = struct.unpack_from( '=I', fd[0xEFC:0xF00] )[0]
     logger().log( '+ 0x%04X FLUMAP1   : 0x%08X' % (0xEFC, flumap1) )
 
-    vtba = ( (flumap1 & 0x000000FF) << 4 )   
-    vtl  = ( ((flumap1 & 0x0000FF00) >> 8) & 0xFF )   
+    vtba = ( (flumap1 & 0x000000FF) << 4 )
+    vtl  = ( ((flumap1 & 0x0000FF00) >> 8) & 0xFF )
     logger().log( '  VSCC Table Base Address    = 0x%08X' % vtba )
     logger().log( '  VSCC Table Length          = 0x%02X' % vtl )
 

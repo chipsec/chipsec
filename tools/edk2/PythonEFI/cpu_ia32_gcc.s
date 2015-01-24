@@ -16,6 +16,7 @@
 .global ReadPCIDword
 .global _rdmsr
 .global _wrmsr
+.global _swsmi
 
 
 .intel_syntax noprefix

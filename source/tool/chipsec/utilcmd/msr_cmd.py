@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -95,4 +95,3 @@ def msr(argv):
             chipsec_util._cs.msr.write_msr( cpu_thread_id, msr_addr, eax, edx )
 
 chipsec_util.commands['msr'] = {'func' : msr ,    'start_driver' : True, 'help' : usage  }
-

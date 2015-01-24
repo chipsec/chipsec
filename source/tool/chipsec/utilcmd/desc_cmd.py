@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -72,7 +72,7 @@ def idt(argv):
     elif (3 == len(argv)):
         tid = int(argv[2],16)
         chipsec_util._cs.msr.IDT( tid, 4 )
-   
+
 def gdt(argv):
     if (2 == len(argv)):
         logger().log( "[CHIPSEC] Dumping GDT of %d CPU threads" % chipsec_util._cs.msr.get_cpu_thread_count() )

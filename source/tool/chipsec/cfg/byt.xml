@@ -1,27 +1,69 @@
 <?xml version="1.0"?>
 <configuration platform="BYT">
+<!-- Reference: Intel(R) Atom(TM) Processor E3800 Product Family Datasheet September 2014, Revision 3.5 -->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
   <mmio>
-    <bar name="SPIBAR" bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFC000" size="0x200" enable_bit="0" desc="SPI Controller Register Range">
-      <!-- TODO
-      <register name="BIOS_CONTROL" offset="0xFC" size="1" mask="0xFF">
-        <field name="BIOSWE"  shift="0" size="1"/>
-        <field name="BLE"     shift="1" size="1"/>
-        <field name="SRC"     shift="2" size="2"/>
-        <field name="TSS"     shift="4" size="1"/>
-        <field name="SMM_BWP" shift="5" size="1"/>
-      </register>
-      -->
-    </bar>
+  
+    <!-- See BC - Section 31.5.45 -->
+    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>  
+    <!-- Section 14.9.5-14.9.6 -->
+    <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0xFFFFFFF0FFC00000"  desc="Graphics Translation Table Range"/>
+
   </mmio>
 
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
   <registers>
-    <register name="BC" type="mmio" bar="SPIBAR" offset="0xFC" size="1" desc="BIOS Control">
-      <field name="BIOSWE"  bit="0" size="1"/>
-      <field name="BLE"     bit="1" size="1"/>
-      <field name="SRC"     bit="2" size="2"/>
-      <field name="TSS"     bit="4" size="1"/>
-      <field name="SMM_BWP" bit="5" size="1"/>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- PCIe Configuration registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+   
+    <!-- Graphics -->
+     
+    <!-- Section 14.9.13 -->
+    <register name="GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
+      <field name="GGCLCK"      bit="0"  size="1" desc="GGC Lock"/>
+      <field name="VGA_DISABLE" bit="1"  size="1" desc="VGA Disable"/>
+      <field name="GMS"         bit="3"  size="7" desc="Graphics Mode Select"/>
+      <field name="GGMS"        bit="8"  size="2" desc="GTT Graphics Memory Size"/>
+      <field name="VAMEN"       bit="14" size="1" desc="Versatile Acceleration"/>
+    </register> 
+    <!-- Section 14.9.14 -->
+    <register name="BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
+      <field name="BDSM_LOCK" bit="0"  size="1" desc="BDSM Lock"/>
+      <field name="BGSM"      bit="20" size="12" desc="GFx Base of Data Stolen Memory"/>
     </register>
+    <!-- Section 14.9.16 -->
+    <register name="BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
+      <field name="BGSM_LOCK" bit="0"  size="1"  desc="BGSM Lock"/>
+      <field name="BGSM"      bit="20" size="12" desc="GFx Base of GTT Stolen Memory"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MMIO registers               -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- Section 31.5.45 -->
+    <register name="BC" type="mmio" bar="SPIBAR" offset="0xFC" size="4" desc="BIOS Control Register (BCR)">
+      <field name="BIOSWE"  bit="0" size="1" desc="BIOS Write Enable"/>
+      <field name="BLE"     bit="1" size="1" desc="BIOS Lock Enable"/>
+      <field name="SRC"     bit="2" size="2" desc="SPI Read Configuration"/>
+      <field name="SMM_BWP" bit="5" size="1" desc="SMM BIOS Write Protect"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- CPU MSRs                     -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    
   </registers>
 
 </configuration>

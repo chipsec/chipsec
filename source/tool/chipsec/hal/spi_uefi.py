@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -87,60 +87,60 @@ def save_section_info( cur_offset, Name, Type, file_path ):
     logger().log( info )
 
 def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, parent_path, decode_log_path ):
-   sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, offset, polarity)
-   secn = 0
-   ui_string = None
-   efi_file = None
-   while next_sec_offset != None:
-      if (SecName != None):
-         save_section_info( parent_offset + sec_offset, SecName, SecType, decode_log_path )
-         sec_fs_name = "%02d_%s" % (secn, SecName)
-         section_path = os.path.join(parent_path, sec_fs_name)
-         if (SecType in (EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16)):
-            type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pic', EFI_SECTION_COMPATIBILITY16: 'c16'}
-            sec_fs_name = "%02d_%s.%s.efi" % (secn, SecName, type2ext[SecType])
-            if ui_string != None:
-               sec_fs_name = ui_string
-               ui_string = None
-            efi_file = sec_fs_name
+    sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, offset, polarity)
+    secn = 0
+    ui_string = None
+    efi_file = None
+    while next_sec_offset != None:
+        if (SecName != None):
+            save_section_info( parent_offset + sec_offset, SecName, SecType, decode_log_path )
+            sec_fs_name = "%02d_%s" % (secn, SecName)
             section_path = os.path.join(parent_path, sec_fs_name)
-            write_file( section_path, SecBody[SecHeaderSize:] )
-         else:
-            write_file( section_path, SecBody[SecHeaderSize:] )
-            if (SecType == EFI_SECTION_USER_INTERFACE):
-               ui_string = unicode(SecBody[SecHeaderSize:], "utf-16-le")[:-1]
-               if (ui_string[-4:] != '.efi'): ui_string = "%s.efi" % ui_string
-               #print ui_string
-               if efi_file != None:
-                  os.rename(os.path.join(parent_path, efi_file), os.path.join(parent_path, ui_string))
-                  efi_file = None
-         if (SecType in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE)):
-            section_dir_path = "%s.dir" % section_path
-            os.makedirs( section_dir_path )
-            if   (SecType == EFI_SECTION_COMPRESSION):
-               UncompressedLength, CompressionType = struct.unpack(EFI_COMPRESSION_SECTION, SecBody[SecHeaderSize:SecHeaderSize+EFI_COMPRESSION_SECTION_size])
-               compressed_name = os.path.join(section_dir_path, "%s.gz" % sec_fs_name)
-               uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
-               write_file(compressed_name, SecBody[SecHeaderSize+EFI_COMPRESSION_SECTION_size:])
-               # TODO: decompress section
-               decompressed = DecompressSection(compressed_name, uncompressed_name, CompressionType)
-               if decompressed:
-                  parse_uefi_section(_uefi, decompressed, len(decompressed), 0, polarity, 0, section_dir_path, decode_log_path)
-                  pass
-            elif (SecType == EFI_SECTION_GUID_DEFINED):
-               # TODO: decode section based on its GUID
-               # Only CRC32 guided sectioni can be decoded for now
-               guid0, guid1, guid2, guid3, DataOffset, Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, SecBody[SecHeaderSize:SecHeaderSize+EFI_GUID_DEFINED_SECTION_size])
-               sguid = guid_str(guid0, guid1, guid2, guid3)
-               if (sguid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID):
-                  parse_uefi_section(_uefi, SecBody[DataOffset:], Size - DataOffset, 0, polarity, 0, section_dir_path, decode_log_path)
-               #else:
-               #   write_file( os.path.join(section_dir_path, "%s-%04X" % (sguid, Attributes)), SecBody[DataOffset:] )
-               pass
-            elif (SecType == EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
-               parse_uefi_region(_uefi, SecBody[SecHeaderSize:], section_dir_path)
-      sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, next_sec_offset, polarity)
-      secn = secn + 1
+            if (SecType in (EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16)):
+                type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pic', EFI_SECTION_COMPATIBILITY16: 'c16'}
+                sec_fs_name = "%02d_%s.%s.efi" % (secn, SecName, type2ext[SecType])
+                if ui_string != None:
+                    sec_fs_name = ui_string
+                    ui_string = None
+                efi_file = sec_fs_name
+                section_path = os.path.join(parent_path, sec_fs_name)
+                write_file( section_path, SecBody[SecHeaderSize:] )
+            else:
+                write_file( section_path, SecBody[SecHeaderSize:] )
+                if (SecType == EFI_SECTION_USER_INTERFACE):
+                    ui_string = unicode(SecBody[SecHeaderSize:], "utf-16-le")[:-1]
+                    if (ui_string[-4:] != '.efi'): ui_string = "%s.efi" % ui_string
+                    #print ui_string
+                    if efi_file != None:
+                        os.rename(os.path.join(parent_path, efi_file), os.path.join(parent_path, ui_string))
+                        efi_file = None
+            if (SecType in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE)):
+                section_dir_path = "%s.dir" % section_path
+                os.makedirs( section_dir_path )
+                if   (SecType == EFI_SECTION_COMPRESSION):
+                    UncompressedLength, CompressionType = struct.unpack(EFI_COMPRESSION_SECTION, SecBody[SecHeaderSize:SecHeaderSize+EFI_COMPRESSION_SECTION_size])
+                    compressed_name = os.path.join(section_dir_path, "%s.gz" % sec_fs_name)
+                    uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
+                    write_file(compressed_name, SecBody[SecHeaderSize+EFI_COMPRESSION_SECTION_size:])
+                    # TODO: decompress section
+                    decompressed = DecompressSection(compressed_name, uncompressed_name, CompressionType)
+                    if decompressed:
+                        parse_uefi_section(_uefi, decompressed, len(decompressed), 0, polarity, 0, section_dir_path, decode_log_path)
+                        pass
+                elif (SecType == EFI_SECTION_GUID_DEFINED):
+                    # TODO: decode section based on its GUID
+                    # Only CRC32 guided sectioni can be decoded for now
+                    guid0, guid1, guid2, guid3, DataOffset, Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, SecBody[SecHeaderSize:SecHeaderSize+EFI_GUID_DEFINED_SECTION_size])
+                    sguid = guid_str(guid0, guid1, guid2, guid3)
+                    if (sguid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID):
+                        parse_uefi_section(_uefi, SecBody[DataOffset:], Size - DataOffset, 0, polarity, 0, section_dir_path, decode_log_path)
+                    #else:
+                    #   write_file( os.path.join(section_dir_path, "%s-%04X" % (sguid, Attributes)), SecBody[DataOffset:] )
+                    pass
+                elif (SecType == EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
+                    parse_uefi_region(_uefi, SecBody[SecHeaderSize:], section_dir_path)
+        sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, next_sec_offset, polarity)
+        secn = secn + 1
 
 def parse_uefi_region( _uefi, data, uefi_region_path ):
     voln = 0
@@ -150,45 +150,45 @@ def parse_uefi_region( _uefi, data, uefi_region_path ):
         volume_file_path = os.path.join( uefi_region_path, "%02d_%s" % (voln, FsGuid) )
         volume_path = os.path.join( uefi_region_path, "%02d_%s.dir" % (voln, FsGuid) )
         if not os.path.exists( volume_path ):
-           os.makedirs( volume_path )
+            os.makedirs( volume_path )
         write_file( volume_file_path, FvImage )
         save_vol_info( FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, decode_log_path, CalcSum )
 
         polarity = bit_set(FvAttributes, EFI_FVB2_ERASE_POLARITY)
         if (FsGuid == ADDITIONAL_NV_STORE_GUID):
-           nvram_fname = os.path.join(volume_path, 'SHADOW_NVRAM')
-           _uefi.parse_EFI_variables( nvram_fname, FvImage, False, 'evsa' )
+            nvram_fname = os.path.join(volume_path, 'SHADOW_NVRAM')
+            _uefi.parse_EFI_variables( nvram_fname, FvImage, False, 'evsa' )
         elif ((FsGuid == EFI_FIRMWARE_FILE_SYSTEM2_GUID) or (FsGuid == EFI_FIRMWARE_FILE_SYSTEM_GUID)):
-           cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, FvHeaderLength, polarity)
-           while next_offset != None:
-              #print "File: offset=%08X, next_offset=%08X, UD=%s\n" % (cur_offset, next_offset, UD)
-              if (Name != None):
-                 file_type_str = "UNKNOWN_%02X" % Type
-                 if Type in FILE_TYPE_NAMES.keys():
-                    file_type_str = FILE_TYPE_NAMES[Type]
-                 file_path = os.path.join( volume_path, "%s.%s-%02X" % (Name, file_type_str, Type))
-                 if os.path.exists( file_path ):
-                    file_path = file_path + ("_%08X" % cur_offset)
-                 write_file( file_path, FileImage )
-                 file_dir_path = "%s.dir" % file_path
-                 save_file_info( FvOffset + cur_offset, Name, Type, Attributes, State, Checksum, Size, decode_log_path, fCalcSum)
-                 if (Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD)):
-                    os.makedirs( file_dir_path )
-                    parse_uefi_section(_uefi, FileImage, Size, HeaderSize, polarity, FvOffset + cur_offset, file_dir_path, decode_log_path)
-                 elif (Type == EFI_FV_FILETYPE_RAW):
-                    if ((Name == NVAR_NVRAM_FS_FILE) and UD):
-                       nvram_fname = os.path.join(file_dir_path, 'SHADOW_NVRAM')
-                       _uefi.parse_EFI_variables( nvram_fname, FvImage, False, 'nvar' )
-              cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, next_offset, polarity)
+            cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, FvHeaderLength, polarity)
+            while next_offset != None:
+                #print "File: offset=%08X, next_offset=%08X, UD=%s\n" % (cur_offset, next_offset, UD)
+                if (Name != None):
+                    file_type_str = "UNKNOWN_%02X" % Type
+                    if Type in FILE_TYPE_NAMES.keys():
+                        file_type_str = FILE_TYPE_NAMES[Type]
+                    file_path = os.path.join( volume_path, "%s.%s-%02X" % (Name, file_type_str, Type))
+                    if os.path.exists( file_path ):
+                        file_path = file_path + ("_%08X" % cur_offset)
+                    write_file( file_path, FileImage )
+                    file_dir_path = "%s.dir" % file_path
+                    save_file_info( FvOffset + cur_offset, Name, Type, Attributes, State, Checksum, Size, decode_log_path, fCalcSum)
+                    if (Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD)):
+                        os.makedirs( file_dir_path )
+                        parse_uefi_section(_uefi, FileImage, Size, HeaderSize, polarity, FvOffset + cur_offset, file_dir_path, decode_log_path)
+                    elif (Type == EFI_FV_FILETYPE_RAW):
+                        if ((Name == NVAR_NVRAM_FS_FILE) and UD):
+                            nvram_fname = os.path.join(file_dir_path, 'SHADOW_NVRAM')
+                            _uefi.parse_EFI_variables( nvram_fname, FvImage, False, 'nvar' )
+                cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, next_offset, polarity)
         FvOffset, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(data, FvOffset+FvLength)
         voln = voln + 1
 
 def parse_uefi_region_from_file( _uefi, filename, outpath = None):
 
     if outpath is None:
-       outpath = os.path.join( helper().getcwd(), filename + ".dir" )
+        outpath = os.path.join( helper().getcwd(), filename + ".dir" )
     if not os.path.exists( outpath ):
-       os.makedirs( outpath )
+        os.makedirs( outpath )
 
     #uefi_region_path = os.path.join( os.getcwd(), filename + "_UEFI_region" )
     #if not os.path.exists( uefi_region_path ):
@@ -197,7 +197,7 @@ def parse_uefi_region_from_file( _uefi, filename, outpath = None):
     rom = read_file( filename )
     parse_uefi_region( _uefi, rom, outpath )
 
-           
+
 def decode_uefi_region(_uefi, pth, fname, fwtype):
     bios_pth = os.path.join( pth, fname + '.dir' )
     if not os.path.exists( bios_pth ):

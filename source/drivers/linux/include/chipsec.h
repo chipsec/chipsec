@@ -16,7 +16,12 @@
 #define IOCTL_SWSMI _IOWR(0, 0xA, int*)
 #define IOCTL_LOAD_UCODE_PATCH _IOWR(0, 0xB, int*)
 #define IOCTL_ALLOC_PHYSMEM _IOWR(0, 0xC, int*)
+#define IOCTL_GET_EFIVAR _IOWR(0, 0xD, int*)
+#define IOCTL_SET_EFIVAR _IOWR(0, 0xE, int*)
         
+#define IOCTL_RDCR _IOWR(0, 0x10, int*) 
+#define IOCTL_WRCR _IOWR(0, 0x11, int*) 
+
 /// if defined debug is enabled
 #define DEBUG
 #ifdef DEBUG 
@@ -33,7 +38,17 @@
 #ifdef __x86_64__
 typedef u64 physaddr_t;
 #else
-typedef u32 physaddr_t;
+typedef __u32 physaddr_t;
+#endif
+
+#ifdef __x86_64__
+#define PUSH_REGS asm volatile ("push %rax\n\t" "push %rbx\n\t" "push %rcx\n\t" "push %rdx\n\t" "push %rsi\n\t" "push %rdi\n\t" );
+#define POP_REGS asm volatile ("pop %rdi\n\t" "pop %rsi\n\t" "pop %rdx\n\t" "pop %rcx\n\t" "pop %rbx\n\t" "pop %rax\n\t");
+#define GET_RETURN_VALUE asm volatile ( "mov %%rax, %%rbx" : "=b"(ret) : );
+#else
+#define PUSH_REGS asm volatile ("push %eax\n\t" "push %ebx\n\t" "push %ecx\n\t" "push %edx\n\t" "push %esi\n\t" "push %edi\n\t" );
+#define POP_REGS asm volatile ("pop %edi\n\t" "pop %esi\n\t" "pop %edx\n\t" "pop %ecx\n\t" "pop %ebx\n\t" "pop %eax\n\t");
+#define GET_RETURN_VALUE asm volatile ( "mov %%eax, %%ebx" : "=b"(ret) : );
 #endif
 
 typedef enum {

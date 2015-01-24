@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -37,6 +37,7 @@ from collections import namedtuple
 
 class Cfg:
     def __init__(self):
+        self.CONFIG_PCI    = {}
         self.REGISTERS     = {}
         self.MMIO_BARS     = {}
         self.IO_BARS       = {}
@@ -110,18 +111,18 @@ class Cfg:
     BIT63 = 0x8000000000000000
 
 
-    ALIGNED_4KB   = 0xFFF    
+    ALIGNED_4KB   = 0xFFF
     ALIGNED_1MB   = 0xFFFFF
     ALIGNED_8MB   = 0x7FFFFF
     ALIGNED_64MB  = 0x3FFFFFF
     ALIGNED_128MB = 0x7FFFFFF
     ALIGNED_256MB = 0xFFFFFFF
-    
+
     ##############################################################################
     # CPU common configuration
     ##############################################################################
     PCI_BUS0 = 0x0
-    
+
     # ----------------------------------------------------------------------------
     # Device 0 PCIe Config
     # ----------------------------------------------------------------------------
@@ -130,7 +131,7 @@ class Cfg:
     # Device 0 MMIO BARs
     # ----------------------------------------------------------------------------
     PCI_MCHBAR_REG_OFF            = 0x48
-    
+
     PCI_PCIEXBAR_REG_OFF          = 0x60
     PCI_PCIEXBAR_REG_LENGTH_MASK  = (0x3 << 1)
     PCI_PCIEXBAR_REG_LENGTH_256MB = 0x0
@@ -139,23 +140,23 @@ class Cfg:
     PCI_PCIEXBAR_REG_ADMSK64      = (1 << 26)
     PCI_PCIEXBAR_REG_ADMSK128     = (1 << 27)
     PCI_PCIEXBAR_REG_ADMSK256     = 0xF0000000
-    
+
     PCI_DMIBAR_REG_OFF            = 0x68
-    
+
     PCI_SMRAMC_BUS                = 0
     PCI_SMRAMC_DEV                = 0
     PCI_SMRAMC_FUN                = 0
     PCI_SMRAMC_REG_OFF            = 0x88 # 0x9D before Sandy Bridge
-    
-    
+
+
     # ----------------------------------------------------------------------------
     # Device 2 (Processor Graphics/Display) MMIO BARs
     # ----------------------------------------------------------------------------
     PCI_GTDE_DEV                  = 2
-    
+
     PCI_GTTMMADR_REG_OFF          = 0x10
     PCI_GMADR_REG_OFF             = 0x18
-    
+
     # ----------------------------------------------------------------------------
     # HD Audio device configuration
     # ----------------------------------------------------------------------------
@@ -164,39 +165,50 @@ class Cfg:
     PCI_HDA_MMAL_REG_OFF          = 0x64
     PCI_HDA_MMAH_REG_OFF          = 0x68
     PCI_HDA_MMD_REG_OFF           = 0x6C
-    
+
     PCI_HDAUDIOBAR_REG_OFF        = 0x10
-    
+
     # ----------------------------------------------------------------------------
     # CPU MSRs
     # ----------------------------------------------------------------------------
     IA32_MTRRCAP_MSR            = 0xFE
     IA32_MTRRCAP_SMRR_MASK      = 0x800
-    
+
     IA32_FEATURE_CONTROL_MSR    = 0x3A
     IA32_FEATURE_CTRL_LOCK_MASK = 0x1
-    
+
     IA32_SMRR_BASE_MSR          = 0x1F2
     IA32_SMRR_BASE_MEMTYPE_MASK = 0x7
     IA32_SMRR_BASE_BASE_MASK    = 0xFFFFF000
-    
+
     IA32_SMRR_MASK_MSR          = 0x1F3
     IA32_SMRR_MASK_VLD_MASK     = 0x800
     IA32_SMRR_MASK_MASK_MASK    = 0xFFFFF000
-    
+
     MTRR_MEMTYPE_UC = 0x0
+    MTRR_MEMTYPE_WC = 0x1
+    MTRR_MEMTYPE_WT = 0x4
+    MTRR_MEMTYPE_WP = 0x5
     MTRR_MEMTYPE_WB = 0x6
-    
+    MemType = {
+      MTRR_MEMTYPE_UC: 'Uncacheable (UC)',
+      MTRR_MEMTYPE_WB: 'Write Combining (WC)',
+      MTRR_MEMTYPE_WT: 'Write-through (WT)',
+      MTRR_MEMTYPE_WP: 'Write-protected (WP)',
+      MTRR_MEMTYPE_WB: 'Writeback (WB)'
+    }
+
+
     IA32_MSR_CORE_THREAD_COUNT                   = 0x35
     IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK  = 0xFFFF
     IA32_MSR_CORE_THREAD_COUNT_CORECOUNT_MASK    = 0xFFFF0000
-    
-    IA32_PLATFORM_INFO_MSR      = 0xCE
-    
+
+    MSR_PLATFORM_INFO      = 0xCE
+
     ##############################################################################
     # PCH common configuration
     ##############################################################################
-    
+
     #----------------------------------------------------------------------------
     # SPI Host Interface Registers
     #----------------------------------------------------------------------------
@@ -230,48 +242,21 @@ class Cfg:
     PCH_RCBA_SPI_FADDR_MASK          = 0x07FFFFFF                      # SPI Flash Address Mask [0:26]
 
     PCH_RCBA_SPI_FDATA00             = 0x10  # SPI Data 00 (32 bits)
-    PCH_RCBA_SPI_FDATA01             = 0x14  
-    PCH_RCBA_SPI_FDATA02             = 0x18  
-    PCH_RCBA_SPI_FDATA03             = 0x1C  
-    PCH_RCBA_SPI_FDATA04             = 0x20  
-    PCH_RCBA_SPI_FDATA05             = 0x24  
-    PCH_RCBA_SPI_FDATA06             = 0x28  
-    PCH_RCBA_SPI_FDATA07             = 0x2C  
-    PCH_RCBA_SPI_FDATA08             = 0x30  
-    PCH_RCBA_SPI_FDATA09             = 0x34  
-    PCH_RCBA_SPI_FDATA10             = 0x38  
-    PCH_RCBA_SPI_FDATA11             = 0x3C  
-    PCH_RCBA_SPI_FDATA12             = 0x40  
-    PCH_RCBA_SPI_FDATA13             = 0x44  
-    PCH_RCBA_SPI_FDATA14             = 0x48  
-    PCH_RCBA_SPI_FDATA15             = 0x4C  
-
-    # SPI Flash Regions Access Permisions Register
-    PCH_RCBA_SPI_FRAP                = 0x50
-    PCH_RCBA_SPI_FRAP_BMWAG_MASK     = 0xFF000000                    
-    PCH_RCBA_SPI_FRAP_BMWAG_GBE      = BIT27                         
-    PCH_RCBA_SPI_FRAP_BMWAG_ME       = BIT26                         
-    PCH_RCBA_SPI_FRAP_BMWAG_BIOS     = BIT25                         
-    PCH_RCBA_SPI_FRAP_BMRAG_MASK     = 0x00FF0000                    
-    PCH_RCBA_SPI_FRAP_BMRAG_GBE      = BIT19                         
-    PCH_RCBA_SPI_FRAP_BMRAG_ME       = BIT18                         
-    PCH_RCBA_SPI_FRAP_BMRAG_BIOS     = BIT17                         
-    PCH_RCBA_SPI_FRAP_BRWA_MASK      = 0x0000FF00                    
-    PCH_RCBA_SPI_FRAP_BRWA_SB        = BIT14                         
-    PCH_RCBA_SPI_FRAP_BRWA_DE        = BIT13                         
-    PCH_RCBA_SPI_FRAP_BRWA_PD        = BIT12                         
-    PCH_RCBA_SPI_FRAP_BRWA_GBE       = BIT11                         
-    PCH_RCBA_SPI_FRAP_BRWA_ME        = BIT10                         
-    PCH_RCBA_SPI_FRAP_BRWA_BIOS      = BIT9                          
-    PCH_RCBA_SPI_FRAP_BRWA_FLASHD    = BIT8                          
-    PCH_RCBA_SPI_FRAP_BRRA_MASK      = 0x000000FF                    
-    PCH_RCBA_SPI_FRAP_BRRA_SB        = BIT6                          
-    PCH_RCBA_SPI_FRAP_BRRA_DE        = BIT5                          
-    PCH_RCBA_SPI_FRAP_BRRA_PD        = BIT4                          
-    PCH_RCBA_SPI_FRAP_BRRA_GBE       = BIT3                          
-    PCH_RCBA_SPI_FRAP_BRRA_ME        = BIT2                          
-    PCH_RCBA_SPI_FRAP_BRRA_BIOS      = BIT1                          
-    PCH_RCBA_SPI_FRAP_BRRA_FLASHD    = BIT0                          
+    PCH_RCBA_SPI_FDATA01             = 0x14
+    PCH_RCBA_SPI_FDATA02             = 0x18
+    PCH_RCBA_SPI_FDATA03             = 0x1C
+    PCH_RCBA_SPI_FDATA04             = 0x20
+    PCH_RCBA_SPI_FDATA05             = 0x24
+    PCH_RCBA_SPI_FDATA06             = 0x28
+    PCH_RCBA_SPI_FDATA07             = 0x2C
+    PCH_RCBA_SPI_FDATA08             = 0x30
+    PCH_RCBA_SPI_FDATA09             = 0x34
+    PCH_RCBA_SPI_FDATA10             = 0x38
+    PCH_RCBA_SPI_FDATA11             = 0x3C
+    PCH_RCBA_SPI_FDATA12             = 0x40
+    PCH_RCBA_SPI_FDATA13             = 0x44
+    PCH_RCBA_SPI_FDATA14             = 0x48
+    PCH_RCBA_SPI_FDATA15             = 0x4C
 
     # Flash Region Registers
     PCH_RCBA_SPI_FREG0_FLASHD           = 0x54  # Flash Region 0 (Flash Descriptor)
@@ -279,8 +264,8 @@ class Cfg:
     PCH_RCBA_SPI_FREG2_ME               = 0x5C  # Flash Region 2 (ME)
     PCH_RCBA_SPI_FREG3_GBE              = 0x60  # Flash Region 3 (GbE)
     PCH_RCBA_SPI_FREG4_PLATFORM_DATA    = 0x64  # Flash Region 4 (Platform Data)
-    PCH_RCBA_SPI_FREG5_DEVICE_EXPANSION = 0x68  # Flash Region 5 (Device Expansion)
-    PCH_RCBA_SPI_FREG6_SECONDARY_BIOS   = 0x6C  # Flash Region 6 (Secondary BIOS)
+    PCH_RCBA_SPI_FREG5                  = 0x68  # Flash Region 5
+    PCH_RCBA_SPI_FREG6                  = 0x6C  # Flash Region 6
 
     PCH_RCBA_SPI_FREGx_LIMIT_MASK    = 0x7FFF0000                    # Size
     PCH_RCBA_SPI_FREGx_BASE_MASK     = 0x00007FFF                    # Base
@@ -299,28 +284,28 @@ class Cfg:
     PCH_RCBA_SPI_PR2                 = 0x7C
     PCH_RCBA_SPI_PR2_WPE             = BIT31
     PCH_RCBA_SPI_PR2_PRL_MASK        = 0x7FFF0000
-    PCH_RCBA_SPI_PR2_RPE             = BIT15 
+    PCH_RCBA_SPI_PR2_RPE             = BIT15
     PCH_RCBA_SPI_PR2_PRB_MASK        = 0x00007FFF
     PCH_RCBA_SPI_PR3                 = 0x80
     PCH_RCBA_SPI_PR3_WPE             = BIT31
     PCH_RCBA_SPI_PR3_PRL_MASK        = 0x7FFF0000
-    PCH_RCBA_SPI_PR3_RPE             = BIT15                         
-    PCH_RCBA_SPI_PR3_PRB_MASK        = 0x00007FFF                    
-    PCH_RCBA_SPI_PR4                 = 0x84  
-    PCH_RCBA_SPI_PR4_WPE             = BIT31 
+    PCH_RCBA_SPI_PR3_RPE             = BIT15
+    PCH_RCBA_SPI_PR3_PRB_MASK        = 0x00007FFF
+    PCH_RCBA_SPI_PR4                 = 0x84
+    PCH_RCBA_SPI_PR4_WPE             = BIT31
     PCH_RCBA_SPI_PR4_PRL_MASK        = 0x7FFF0000
-    PCH_RCBA_SPI_PR4_RPE             = BIT15     
+    PCH_RCBA_SPI_PR4_RPE             = BIT15
     PCH_RCBA_SPI_PR4_PRB_MASK        = 0x00007FFF
 
     PCH_RCBA_SPI_OPTYPE              = 0x96  # Opcode Type Configuration
     PCH_RCBA_SPI_OPTYPE7_MASK        = (BIT15 | BIT14)
     PCH_RCBA_SPI_OPTYPE6_MASK        = (BIT13 | BIT12)
     PCH_RCBA_SPI_OPTYPE5_MASK        = (BIT11 | BIT10)
-    PCH_RCBA_SPI_OPTYPE4_MASK        = (BIT9 | BIT8)  
-    PCH_RCBA_SPI_OPTYPE3_MASK        = (BIT7 | BIT6)  
-    PCH_RCBA_SPI_OPTYPE2_MASK        = (BIT5 | BIT4)  
-    PCH_RCBA_SPI_OPTYPE1_MASK        = (BIT3 | BIT2)  
-    PCH_RCBA_SPI_OPTYPE0_MASK        = (BIT1 | BIT0)  
+    PCH_RCBA_SPI_OPTYPE4_MASK        = (BIT9 | BIT8)
+    PCH_RCBA_SPI_OPTYPE3_MASK        = (BIT7 | BIT6)
+    PCH_RCBA_SPI_OPTYPE2_MASK        = (BIT5 | BIT4)
+    PCH_RCBA_SPI_OPTYPE1_MASK        = (BIT3 | BIT2)
+    PCH_RCBA_SPI_OPTYPE0_MASK        = (BIT1 | BIT0)
     PCH_RCBA_SPI_OPTYPE_RDNOADDR     = 0x00
     PCH_RCBA_SPI_OPTYPE_WRNOADDR     = 0x01
     PCH_RCBA_SPI_OPTYPE_RDADDR       = 0x02
@@ -343,10 +328,10 @@ class Cfg:
     # ----------------------------------------------------------------------------
     PCI_B0D31F0_LPC_DEV = 31
     PCI_B0D31F0_LPC_FUN = 0
-    
+
     LPC_BC_REG_OFF        = 0xDC #  BIOS Control (BC)
     GEN_PMCON = 0xA0
-    
+
     class LPC_BC_REG( namedtuple('LPC_BC_REG', 'value SMM_BWP TSS SRC BLE BIOSWE') ):
         __slots__ = ()
         def __str__(self):
@@ -355,18 +340,18 @@ class Cfg:
     [04] TSS     = %u (Top Swap Status)
     [01] BLE     = %u (BIOS Lock Enable)
     [00] BIOSWE  = %u (BIOS Write Enable)
-    """ % ( self.value, self.SMM_BWP, self.TSS, self.BLE, self.BIOSWE )         
+    """ % ( self.value, self.SMM_BWP, self.TSS, self.BLE, self.BIOSWE )
 
-    
+
     CFG_REG_PCH_LPC_PMBASE = 0x40 # ACPI I/O Base (PMBASE/ABASE)
     CFG_REG_PCH_LPC_PMBASE_MASK = ~0x1
     CFG_REG_PCH_LPC_ACTL   = 0x44 # ACPI Control  (ACTL)
-    CFG_REG_PCH_LPC_GBA    = 0x44 # GPIO I/O Base (GBA)
-    CFG_REG_PCH_LPC_GC     = 0x44 # GPIO Control  (GC)
-    
+    CFG_REG_PCH_LPC_GBA    = 0x48 # GPIO I/O Base (GBA)
+    CFG_REG_PCH_LPC_GC     = 0x4C # GPIO Control  (GC)
+
     # PMBASE registers
     PMBASE_SMI_EN         = 0x30 # SMI_EN offset in PMBASE (ABASE)
-    
+
     LPC_RCBA_REG_OFFSET   = 0xF0
     RCBA_BASE_ADDR_SHIFT  = 14
 
@@ -380,12 +365,12 @@ class Cfg:
     SPI_BASE_ADDR_SHIFT   = 14
     SPI_MMIO_BASE_OFFSET  = 0x3800  # Base address of the SPI host interface registers off of RCBA
     #SPI_MMIO_BASE_OFFSET = 0x3020  # Old (ICH8 and older) SPI registers base
-       
+
 
     SPI_BIOS_CONTROL_OFFSET = 0xDC # BIOS Control Register
-  
 
-    
+
+
     # ----------------------------------------------------------------------------
     # PCI B0:D31:F3 SMBus Controller
     # ----------------------------------------------------------------------------
@@ -395,13 +380,13 @@ class Cfg:
     #0x1C22 # SNB
     #0x1E22 # IVB 0x0154
     PCI_B0D31F3_SMBUS_CTRLR_DID = 0x1C22
-    
+
     CFG_REG_PCH_SMB_CMD  = 0x04                    # D31:F3 Command
-    
+
     CFG_REG_PCH_SMB_SBA  = 0x20                    # SMBus Base Address
     CFG_REG_PCH_SMB_SBA_BASE_ADDRESS_MASK = 0xFFE0 # Base Address
     CFG_REG_PCH_SMB_SBA_IO                = BIT0   # I/O Space Indicator
-    
+
     CFG_REG_PCH_SMB_HCFG = 0x40                    # D31:F3 Host Configuration
     CFG_REG_PCH_SMB_HCFG_SPD_WD           = BIT4   # SPD_WD
     CFG_REG_PCH_SMB_HCFG_SSRESET          = BIT3   # Soft SMBus Reset
@@ -417,34 +402,33 @@ class Cfg:
     [02] I2C_EN     = %u (I2C Enable)
     [01] SMB_SMI_EN = %u (SMBus SMI Enable)
     [00] HST_EN     = %u (Host Enable)
-    """ % ( Cfg.CFG_REG_PCH_SMB_HCFG, self.value, self.SPD_WD, self.SSRESET, self.I2C_EN, self.SMB_SMI_EN, self.HST_EN )         
+    """ % ( Cfg.CFG_REG_PCH_SMB_HCFG, self.value, self.SPD_WD, self.SSRESET, self.I2C_EN, self.SMB_SMI_EN, self.HST_EN )
 
-    
+
     # ----------------------------------------------------------------------------
     # PCH I/O Base Registers
     # ----------------------------------------------------------------------------
-    
+
     TCOBASE_ABASE_OFFSET = 0x60
-    
-    
+
+
     # ----------------------------------------------------------------------------
     # PCH RCBA
     # ----------------------------------------------------------------------------
-    
-    
+
+
     RCBA_GENERAL_CONFIG_OFFSET = 0x3400  # Offset of BIOS General Configuration memory mapped registers base in RCBA
-    
+
     RCBA_GC_RC_REG_OFFSET      = 0x0     # RTC Configuration (RC) register
-    
+
     RCBA_GC_GCS_REG_OFFSET     = 0x10    # General Control and Status (GCS) register
     RCBA_GC_GCS_REG_BILD_MASK  = 0x1     # BIOS Interface Lock-Down (BILD)
     RCBA_GC_GCS_REG_BBS_MASK   = 0xC00   # Boot BIOS Straps (BBS) - PCI/SPI/LPC
     RCBA_GC_BUC_REG_OFFSET     = 0x14    # Backup Control (BUC) register
     RCBA_GC_BUC_REG_TS_MASK    = 0x1     # Top-Swap strap (TS)
 
-    
+
     def scan_single_bit_mask(self,mask):
         for bit in range(0,7):
             if mask>>bit  == 1:
                 return bit
-

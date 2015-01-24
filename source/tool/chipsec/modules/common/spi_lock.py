@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -27,42 +27,36 @@
 # if it is not locked other Flash Program Registers can be written
 #
 #
-#
 
 from chipsec.module_common import *
 TAGS = [MTAG_BIOS]
 
-from chipsec.hal.spi import *
-
 class spi_lock(BaseModule):
-    
+
     def __init__(self):
         BaseModule.__init__(self)
-        self.spi    = SPI( self.cs )
 
     def is_supported(self):
         # TODO: temporarily disabled SNB due to hang
-        if self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_SNB]:
-            return True
-        return False
+        if self.cs.get_chipset_id() in [chipsec.chipset.CHIPSET_ID_SNB]:
+            return False
+        return True
 
     def check_spi_lock(self):
         self.logger.start_test( "SPI Flash Controller Configuration Lock" )
-    
-        spi_locked = 0
-        hsfsts_reg_value = self.spi.spi_reg_read( SPI_HSFSTS_OFFSET )
-        self.logger.log( '[*] HSFSTS register = 0x%08X' % hsfsts_reg_value )
-        self.logger.log( '    FLOCKDN = %u' % ((hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK)>>15) )
-    
-        if 0 != (hsfsts_reg_value & SPI_HSFSTS_FLOCKDN_MASK):
-            spi_locked = 1
+
+        spi_lock_res = ModuleResult.FAILED
+        hsfs_reg = chipsec.chipset.read_register( self.cs, 'HSFS' )
+        chipsec.chipset.print_register( self.cs, 'HSFS', hsfs_reg )
+        flockdn = chipsec.chipset.get_register_field( self.cs, 'HSFS', hsfs_reg, 'FLOCKDN' )
+
+        if 1 == flockdn:
+            spi_lock_res = ModuleResult.PASSED
             self.logger.log_passed_check( "SPI Flash Controller configuration is locked" )
         else:
             self.logger.log_failed_check( "SPI Flash Controller configuration is not locked" )
-    
-        return spi_locked==1
-    
+
+        return spi_lock_res
+
     def run( self, module_argv ):
         return self.check_spi_lock()
-    
-    

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -37,7 +37,7 @@ WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
 
 tool_dir = os.path.dirname(os.path.abspath(__file__))
 
-data_files = [ 
+data_files = [
               #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
               (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
               ("Lib/site-packages"                    , ['VERSION']),
@@ -66,15 +66,15 @@ for current, dirs, files in os.walk(tool_dir ):
 #print mypackages
 
 
-setup(  
+setup(
         name            = 'chipsec',
         description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.1.3',
+        version         = '1.1.7',
         author          = 'chipsec developers',
         author_email    = '',
         url             = 'https://github.com/chipsec/chipsec',
 
         data_files      = data_files,
-        packages        = mypackages 
+        packages        = mypackages
 
-) 
+)

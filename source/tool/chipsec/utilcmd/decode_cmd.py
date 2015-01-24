@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -47,7 +47,7 @@ import time
 import chipsec_util
 
 from  chipsec.logger import *
-import  chipsec.file   
+import  chipsec.file
 
 import chipsec.hal.spi            as spi
 import chipsec.hal.spi_descriptor as spi_descriptor
@@ -128,4 +128,3 @@ def decode(argv):
 
 
 chipsec_util.commands['decode'] = {'func' : decode,     'start_driver' : False, 'help' : usage  }
-

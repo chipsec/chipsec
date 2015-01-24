@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@ LOG_PATH                = os.path.join( os.getcwd(), "logs" )
 
 #
 # Colored output
-# 
+#
 if "windows" == platform.system().lower():
 
     try:
@@ -81,7 +81,7 @@ if "windows" == platform.system().lower():
                   CYAN   : WConio.CYAN,
                   WHITE  : WConio.WHITE
                   }
-        
+
         def log_color( fg_color, text ):
             # Store current attribute settings
             old_setting = WConio.gettextinfo()[4] & 0x00FF
@@ -90,7 +90,7 @@ if "windows" == platform.system().lower():
             WConio.textattr( old_setting )
 
     except ImportError, e:
-        #print "WConio package is not installed. No colored output" 
+        #print "WConio package is not installed. No colored output"
         def log_color( fg_color, text ):
             print text
 
@@ -98,7 +98,7 @@ elif "linux" == platform.system().lower():
     def log_color( fg_color, text ):
         #_text = "\033[%dm" + text + "\033[0m" % (fg_color + 30) #FIXME:     _text = "\033[%dm" + text + "\033[0m" % (fg_color + 30) \n TypeError: not all arguments converted during string formatting
 
-        print text #_text 
+        print text #_text
 
 else:
     def log_color( fg_color, text ):
@@ -122,14 +122,14 @@ class Logger:
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
         #self._set_log_files()
-    
+
     def set_xml_file(self, name=None):
         self.xmlAux.set_xml_file(name)
 
     def saveXML(self):
         text = self.xmlAux.saveXML()
         self.log(text)
-    
+
     def set_log_file( self, name=None ):
         """Sets the log file for the output."""
         # Close current log file if it's opened
@@ -193,14 +193,14 @@ class Logger:
     def flush(self):
         sys.stdout.flush()
         if self.LOG_TO_FILE and self.logfile is not None:
-           # not sure why flush doesn't work as excpected
-           # self.logfile.flush()
-           # close and re-open log file
-           try:
-               self.logfile.close()
-               self.logfile = open( self.LOG_FILE_NAME, 'a+' )
-           except None:
-               self.disable()
+            # not sure why flush doesn't work as excpected
+            # self.logfile.flush()
+            # close and re-open log file
+            try:
+                self.logfile.close()
+                self.logfile = open( self.LOG_FILE_NAME, 'a+' )
+            except None:
+                self.disable()
 
 
     def set_always_flush( self, val ):
@@ -210,18 +210,18 @@ class Logger:
         """Sends plain text to logging."""
         self._log(text, None, None)
 
-    
+
     def _log(self, text, color, isStatus):
         """Internal method for logging"""
         if self.LOG_TO_FILE: self._save_to_log_file( text )
-        else:              
+        else:
             if color: log_color( color, text )
             else:
                 print text
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
-  
+
     def error( self, text ):
         """Logs an Error message"""
         text = "ERROR: " + text
@@ -282,7 +282,7 @@ class Logger:
         text = "[!] WARNING: " + text
         self._log(text, YELLOW, None)
         #self.xmlAux.passed_check()
-    
+
     def log_skipped( self, text ):
         """Logs a skipped message."""
         text = "[*] SKIPPED: " + text
@@ -291,12 +291,12 @@ class Logger:
     def log_heading( self, text ):
         """Logs a heading message."""
         self._log(text, BLUE, None)
-        
+
     def log_important( self, text ):
         """Logs a important message."""
         text = "[!] " + text
         self._log(text, RED, None)
-        
+
     def log_result( self, text ):
         """Logs a result message."""
         text = "[+] " + text
@@ -306,17 +306,17 @@ class Logger:
         """Logs a bad message, so it calls attention in the information displayed."""
         text = "[-] " + text
         self._log(text, RED, None)
-        
+
     def log_good( self, text ):
         """Logs a message, if colors available, displays in green."""
         text = "[+] " + text
         self._log(text, GREEN, None)
-        
+
     def log_unknown( self, text ):
         """Logs a message with a question mark."""
         text = "[?] " + text
         self._log(text, None, None)
-        
+
     def start_test( self, test_name ):
         """Logs the start point of a Test, this is used for XML output.
            If XML file was not specified, it will just display a banner for the test name.
@@ -331,8 +331,8 @@ class Logger:
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
         #text = "\n[*] start module: %s" % module_name
-        #self._log(text, WHITE, None) 
-        self.log( "\n[*] running module: %s" % module_name ) 
+        #self._log(text, WHITE, None)
+        self.log( "\n[*] running module: %s" % module_name )
         self.xmlAux.start_module( module_name )
 
     def end_module( self, module_name ):
@@ -352,23 +352,23 @@ class Logger:
         """
         print >> self.logfile, text
         if self.ALWAYS_FLUSH:
-           # not sure why flush doesn't work as excpected
-           # self.logfile.flush()
-           # close and re-open log file
-           try:
-               self.logfile.close()
-               self.logfile = open( self.LOG_FILE_NAME, 'a+' )
-           except None:
-               self.disable()
+            # not sure why flush doesn't work as excpected
+            # self.logfile.flush()
+            # close and re-open log file
+            try:
+                self.logfile.close()
+                self.logfile = open( self.LOG_FILE_NAME, 'a+' )
+            except None:
+                self.disable()
 
     def _save_to_status_log_file(self, text):
         if(self.LOG_TO_STATUS_FILE):
             self._write_log(text, self.LOG_STATUS_FILE_NAME)
-    
+
     def _save_to_log_file(self, text):
         if(self.LOG_TO_FILE):
             self._write_log(text, self.LOG_FILE_NAME)
-    
+
     VERBOSE    = False
     UTIL_TRACE = False
     LOG_TO_STATUS_FILE = False

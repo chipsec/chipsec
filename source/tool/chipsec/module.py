@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -31,7 +31,7 @@ try:
     import importlib
 except ImportError:
     _importlib = False
-    
+
 MODPATH_RE      = re.compile("^\w+(\.\w+)*$")
 
 class Module():
@@ -41,10 +41,10 @@ class Module():
         self.module = None
         self.mod_obj = None
 
-    
+
     def get_name(self):
         return self.name
-    
+
     def do_import(self):
         loaded = False
         if not MODPATH_RE.match(self.get_name()):
@@ -64,7 +64,7 @@ class Module():
                 if self.logger.VERBOSE: self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
-    
+
     def run( self, module_argv ):
         result = self.get_module_object()
 
@@ -82,7 +82,7 @@ class Module():
                     result = ModuleResult.SKIPPED
                     self.logger.log("Skipping module %s since it is not supported in this platform"%self.name)
 
-        return result 
+        return result
 
     def get_module_object(self):
         result = ModuleResult.PASSED
@@ -94,7 +94,13 @@ class Module():
                     if pkg:
                         class_name = class_name.replace(pkg,'')
                     if class_name.startswith('.'): class_name = class_name.replace('.','')
-                    self.mod_obj = getattr(self.module,class_name.lower())()
+                    for iname, iref in self.module.__dict__.items():
+                        if isinstance(iref, type): 
+                            if issubclass(iref, chipsec.module_common.BaseModule):
+                                if iname.lower() == class_name.lower():
+                                    self.mod_obj = iref()
+                    if self.mod_obj == None:
+                        result = ModuleResult.DEPRECATED
                 # Support for older Python < 2.5
                 #else:
                 #    exec ('import ' + self.name)
@@ -104,7 +110,7 @@ class Module():
                 #        class_name = class_name.replace(pkg,'')
                 #    if class_name.startswith('.'): class_name = class_name.replace('.','')
                 #    exec ('self.mod_obj = ' + self.name + '.' + class_name + '()')
-            except AttributeError, ae:
+            except (AttributeError, TypeError) as ae:
                 result = ModuleResult.DEPRECATED
         return result
 
@@ -135,6 +141,6 @@ class Module():
             #self.logger.log_bad(traceback.format_exc())
             pass
         return module_tags
-    
+
     def __str__(self):
         return self.get_name()

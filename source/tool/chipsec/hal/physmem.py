@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@
 #
 # -------------------------------------------------------------------------------
 ## \addtogroup hal
-# chipsec/hal/physmem.py 
+# chipsec/hal/physmem.py
 # ==========================================
 # Access to physical memory
 # ~~~
@@ -56,8 +56,9 @@ class MemoryAccessError (RuntimeError):
     pass
 
 class Memory:
-    def __init__( self, helper ):
-        self.helper = helper
+    def __init__( self, cs ):
+        self.helper = cs.helper
+        self.cs = cs
 
     ####################################################################################
     #
@@ -69,50 +70,51 @@ class Memory:
     # Reading physical memory
 
     def read_physical_mem( self, phys_address, length ):
+        if logger().VERBOSE: logger().log("[mem] 0x%016X"%phys_address)
         return self.helper.read_physical_mem( phys_address, length )
 
     def read_physical_mem_dword( self, phys_address ):
         out_buf = self.read_physical_mem( phys_address, 4 )
         value = struct.unpack( '=I', out_buf )[0]
         if logger().VERBOSE:
-           logger().log( '[mem] dword at PA = 0x%016X: 0x%08X' % (phys_address, value) )
+            logger().log( '[mem] dword at PA = 0x%016X: 0x%08X' % (phys_address, value) )
         return value
 
     def read_physical_mem_word( self, phys_address ):
         out_buf = self.read_physical_mem( phys_address, 2 )
         value = struct.unpack( '=H', out_buf )[0]
         if logger().VERBOSE:
-           logger().log( '[mem] word at PA = 0x%016X: 0x%04X' % (phys_address, value) )
+            logger().log( '[mem] word at PA = 0x%016X: 0x%04X' % (phys_address, value) )
         return value
 
     def read_physical_mem_byte( self, phys_address ):
         out_buf = self.read_physical_mem( phys_address, 1 )
         value = struct.unpack( '=B', out_buf )[0]
         if logger().VERBOSE:
-           logger().log( '[mem] byte at PA = 0x%016X: 0x%02X' % (phys_address, value) )
+            logger().log( '[mem] byte at PA = 0x%016X: 0x%02X' % (phys_address, value) )
         return value
 
     # Writing physical memory
 
     def write_physical_mem( self, phys_address, length, buf ):
         if logger().VERBOSE:
-           logger().log( '[mem] buffer len = 0x%X to PA = 0x%016X' % (length, phys_address) )
-           print_buffer( buf )
+            logger().log( '[mem] buffer len = 0x%X to PA = 0x%016X' % (length, phys_address) )
+            print_buffer( buf )
         return self.helper.write_physical_mem( phys_address, length, buf )
 
     def write_physical_mem_dword( self, phys_address, dword_value ):
         if logger().VERBOSE:
-           logger().log( '[mem] dword to PA = 0x%016X <- 0x%08X' % (phys_address, dword_value) )
+            logger().log( '[mem] dword to PA = 0x%016X <- 0x%08X' % (phys_address, dword_value) )
         return self.write_physical_mem( phys_address, 4, struct.pack( 'I', dword_value ) )
 
     def write_physical_mem_word( self, phys_address, word_value ):
         if logger().VERBOSE:
-           logger().log( '[mem] word to PA = 0x%016X <- 0x%04X' % (phys_address, word_value) )
+            logger().log( '[mem] word to PA = 0x%016X <- 0x%04X' % (phys_address, word_value) )
         return self.write_physical_mem( phys_address, 2, struct.pack( 'H', word_value ) )
 
     def write_physical_mem_byte( self, phys_address, byte_value ):
         if logger().VERBOSE:
-           logger().log( '[mem] byte to PA = 0x%016X <- 0x%02X' % (phys_address, byte_value) )
+            logger().log( '[mem] byte to PA = 0x%016X <- 0x%02X' % (phys_address, byte_value) )
         return self.write_physical_mem( phys_address, 1, struct.pack( 'B', byte_value ) )
 
     # Allocate physical memory buffer
@@ -137,31 +139,31 @@ class Memory:
     def read_phys_mem_dword_64(self, phys_address_hi, phys_address_lo ):
         out_buf = self.read_phys_mem_64( phys_address_hi, phys_address_lo, 4 )
         try:
-           value = struct.unpack( 'L', out_buf.raw )[0]
+            value = struct.unpack( 'L', out_buf.raw )[0]
         except:
-           raise MemoryAccessError, "read_phys_mem did not return hex dword"
+            raise MemoryAccessError, "read_phys_mem did not return hex dword"
         if logger().VERBOSE:
-           logger().log( '[mem] dword at PA = 0x%08X_%08X: 0x%08X' % (phys_address_hi, phys_address_lo, value) )
+            logger().log( '[mem] dword at PA = 0x%08X_%08X: 0x%08X' % (phys_address_hi, phys_address_lo, value) )
         return value
 
     def read_phys_mem_word_64(self, phys_address_hi, phys_address_lo ):
         out_buf = self.read_phys_mem_64( phys_address_hi, phys_address_lo, 2 )
         try:
-           value = struct.unpack( 'H', out_buf.raw )[0]
+            value = struct.unpack( 'H', out_buf.raw )[0]
         except:
-           raise MemoryAccessError, "read_phys_mem did not return hex word"
+            raise MemoryAccessError, "read_phys_mem did not return hex word"
         if logger().VERBOSE:
-           logger().log( '[mem] word at PA = 0x%08X_%08X: 0x%04X' % (phys_address_hi, phys_address_lo, value) )
+            logger().log( '[mem] word at PA = 0x%08X_%08X: 0x%04X' % (phys_address_hi, phys_address_lo, value) )
         return value
 
     def read_phys_mem_byte_64(self, phys_address_hi, phys_address_lo ):
         out_buf = self.read_phys_mem_64( phys_address_hi, phys_address_lo, 1 )
         try:
-           value = struct.unpack( 'B', out_buf.raw )[0]
+            value = struct.unpack( 'B', out_buf.raw )[0]
         except:
-           raise MemoryAccessError, "read_phys_mem did not return 1 Byte"
+            raise MemoryAccessError, "read_phys_mem did not return 1 Byte"
         if logger().VERBOSE:
-           logger().log( '[mem] byte at PA = 0x%08X_%08X: 0x%02X' % (phys_address_hi, phys_address_lo, value) )
+            logger().log( '[mem] byte at PA = 0x%08X_%08X: 0x%02X' % (phys_address_hi, phys_address_lo, value) )
         return value
 
     def write_phys_mem_64( self, phys_address_hi, phys_address_lo, length, buf ):
@@ -169,17 +171,17 @@ class Memory:
 
     def write_phys_mem_dword_64( self, phys_address_hi, phys_address_lo, dword_value ):
         if logger().VERBOSE:
-           logger().log( '[mem] dword to PA = 0x%08X_%08X <- 0x%08X' % (phys_address_hi, phys_address_lo, dword_value) )
+            logger().log( '[mem] dword to PA = 0x%08X_%08X <- 0x%08X' % (phys_address_hi, phys_address_lo, dword_value) )
         return self.write_phys_mem_64( phys_address_hi, phys_address_lo, 4, struct.pack( 'I', dword_value ) )
 
     def write_phys_mem_word_64( self, phys_address_hi, phys_address_lo, word_value ):
         if logger().VERBOSE:
-           logger().log( '[mem] word to PA = 0x%08X_%08X <- 0x%04X' % (phys_address_hi, phys_address_lo, word_value) )
+            logger().log( '[mem] word to PA = 0x%08X_%08X <- 0x%04X' % (phys_address_hi, phys_address_lo, word_value) )
         return self.write_phys_mem_64( phys_address_hi, phys_address_lo, 2, struct.pack( 'H', word_value ) )
 
     def write_phys_mem_byte_64( self, phys_address_hi, phys_address_lo, byte_value ):
         if logger().VERBOSE:
-           logger().log( '[mem] byte to PA = 0x%08X_%08X <- 0x%02X' % (phys_address_hi, phys_address_lo, byte_value) )
+            logger().log( '[mem] byte to PA = 0x%08X_%08X <- 0x%02X' % (phys_address_hi, phys_address_lo, byte_value) )
         return self.write_phys_mem_64( phys_address_hi, phys_address_lo, 1, struct.pack( 'B', byte_value ) )
 
 
@@ -213,4 +215,3 @@ class Memory:
 
     def write_phys_mem(self, phys_address, length, buf ):
         return self.write_phys_mem_64( 0, phys_address, length, buf )
-

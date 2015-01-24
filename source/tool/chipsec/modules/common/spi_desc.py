@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -26,43 +26,41 @@
 
 
 from chipsec.module_common import *
+import chipsec.hal.spi
 TAGS = [MTAG_BIOS]
 
-from chipsec.hal.spi import *
-
-
 class spi_desc(BaseModule):
-    
+
     def __init__(self):
         BaseModule.__init__(self)
-        self.spi    = SPI( self.cs )
 
     def is_supported(self):
         # TODO: temporarily disabled SNB due to hang
-        if self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_SNB]:
-            return True
-        return False
+        if self.cs.get_chipset_id() in [chipsec.chipset.CHIPSET_ID_SNB]:
+            return False
+        return True
 
     ##
     # Displays the SPI Regions Access Permissions
     def check_flash_access_permissions(self):
         self.logger.start_test( "SPI Flash Region Access Control" )
-        #self.spi.display_SPI_Ranges_Access_Permissions()
+
+        res = ModuleResult.PASSED
+        frap = chipsec.chipset.read_register( self.cs, 'FRAP' )
+        chipsec.chipset.print_register( self.cs, 'FRAP', frap )
+        brra = chipsec.chipset.get_register_field( self.cs, 'FRAP', frap, 'BRRA' )
+        brwa = chipsec.chipset.get_register_field( self.cs, 'FRAP', frap, 'BRWA' )
+
+        self.logger.log("[*] Software access to SPI flash regions: read = 0x%02X, write = 0x%02X" % (brra, brwa) )
+        if brwa & (1 << chipsec.hal.spi.FLASH_DESCRIPTOR):
+            res = ModuleResult.FAILED
+            self.logger.log_bad("Software has write access to SPI flash descriptor")
+
         self.logger.log('')
-    
-        ok = True
-        frap = self.spi.spi_reg_read(self.cs.Cfg.PCH_RCBA_SPI_FRAP)
-        self.logger.log("[*] Software access permissions to SPI flash regions: read = 0x%02X, write = 0x%02X" % (frap&0xF, (frap>>8)&0xF) )
-        if (frap&self.cs.Cfg.PCH_RCBA_SPI_FRAP_BRWA_FLASHD != 0):
-            ok = False
-            self.logger.log_bad("Software has write access to SPI flash descriptor!")
-    
-        self.logger.log('')
-        if ok: self.logger.log_passed_check("SPI flash permissions prevent SW from writing to flash descriptor.")
-        else:  self.logger.log_failed_check("SPI flash permissions allow SW to write flash descriptor.")
-    
-        return ok
-    
+        if   ModuleResult.PASSED == res: self.logger.log_passed_check("SPI flash permissions prevent SW from writing to flash descriptor")
+        elif ModuleResult.FAILED == res: self.logger.log_failed_check("SPI flash permissions allow SW to write flash descriptor")
+        return res
+
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module

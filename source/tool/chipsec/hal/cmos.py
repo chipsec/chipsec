@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -83,12 +83,12 @@ class CMOS(HALBase):
         self.logger.log( "Low CMOS contents:" )
         self.logger.log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
         cmos_str = []
-        cmos_str += ["00.."] 
+        cmos_str += ["00.."]
         for n in range(1, 129):
             val = self.read_cmos_low( n-1 )
-            cmos_str += ["%02X  " % val] 
+            cmos_str += ["%02X  " % val]
             if ( (0 == n%16) and n < 125 ):
-                cmos_str += ["\n%0X.." % n] 
+                cmos_str += ["\n%0X.." % n]
 
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_LOW, orig );
         self.logger.log( "".join(cmos_str) )
@@ -99,12 +99,12 @@ class CMOS(HALBase):
         self.logger.log( "High CMOS contents:" )
         self.logger.log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
         cmos_str = []
-        cmos_str += ["00.."] 
+        cmos_str += ["00.."]
         for n in range(1, 129):
             val = self.read_cmos_high( n-1 )
-            cmos_str += ["%02X  " % val] 
+            cmos_str += ["%02X  " % val]
             if ( (0 == n%16) and n < 125 ):
-                cmos_str += ["\n%0X.." % n] 
+                cmos_str += ["\n%0X.." % n]
 
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_HIGH, orig );
         self.logger.log( "".join(cmos_str) )

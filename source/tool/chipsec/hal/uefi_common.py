@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -47,7 +47,7 @@ from chipsec.logger import *
 #
 
 """
-UDK2010.SR1\MdeModulePkg\Include\Guid\VariableFormat.h 
+UDK2010.SR1\MdeModulePkg\Include\Guid\VariableFormat.h
 
 #ifndef __VARIABLE_FORMAT_H__
 #define __VARIABLE_FORMAT_H__
@@ -112,7 +112,7 @@ typedef struct {
   ///
   EFI_GUID  Signature;
   ///
-  /// Size of entire variable store, 
+  /// Size of entire variable store,
   /// including size of variable store header but not including the size of FvHeader.
   ///
   UINT32  Size;
@@ -179,12 +179,12 @@ typedef struct _VARIABLE_INFO_ENTRY  VARIABLE_INFO_ENTRY;
 ///
 /// This structure contains the variable list that is put in EFI system table.
 /// The variable driver collects all variables that were used at boot service time and produces this list.
-/// This is an optional feature to dump all used variables in shell environment. 
+/// This is an optional feature to dump all used variables in shell environment.
 ///
 struct _VARIABLE_INFO_ENTRY {
   VARIABLE_INFO_ENTRY *Next;       ///< Pointer to next entry.
   EFI_GUID            VendorGuid;  ///< Guid of Variable.
-  CHAR16              *Name;       ///< Name of Variable. 
+  CHAR16              *Name;       ///< Name of Variable.
   UINT32              Attributes;  ///< Attributes of variable defined in UEFI specification.
   UINT32              ReadCount;   ///< Number of times to read this variable.
   UINT32              WriteCount;  ///< Number of times to write this variable.
@@ -212,7 +212,7 @@ VARIABLE_STORE_HEALTHY   = 0xfe
 #  ///
 #  EFI_GUID  Signature;
 #  ///
-#  /// Size of entire variable store, 
+#  /// Size of entire variable store,
 #  /// including size of variable store header but not including the size of FvHeader.
 #  ///
 #  UINT32  Size;
@@ -232,9 +232,9 @@ VARIABLE_STORE_HEALTHY   = 0xfe
 VARIABLE_STORE_HEADER_FMT  = '<8sIBBHI'
 VARIABLE_STORE_HEADER_SIZE = struct.calcsize( VARIABLE_STORE_HEADER_FMT )
 class VARIABLE_STORE_HEADER( namedtuple('VARIABLE_STORE_HEADER', 'guid0 guid1 guid2 guid3 Size Format State Reserved Reserved1') ):
-      __slots__ = ()
-      def __str__(self):
-          return """
+    __slots__ = ()
+    def __str__(self):
+        return """
 EFI Variable Store
 -----------------------------
 Signature : {%08X-%04X-%04X-%04s-%06s}
@@ -243,7 +243,7 @@ Format    : 0x%02X
 State     : 0x%02X
 Reserved  : 0x%04X
 Reserved1 : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )         
+""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
 #
 # Variable data start flag.
@@ -344,34 +344,34 @@ MAX_NVRAM_SIZE    = 1024*1024
 #################################################################################################
 
 def align(of, size):
-  of = (((of + size - 1)/size) * size)
-  return of
+    of = (((of + size - 1)/size) * size)
+    return of
 
 def bit_set(value, mask, polarity = False):
-  if polarity: value = ~value
-  return ( (value & mask) == mask )
+    if polarity: value = ~value
+    return ( (value & mask) == mask )
 
 def get_3b_size(s):
-  return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
+    return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
 def guid_str(guid0, guid1, guid2, guid3):
-  guid = "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper())
-  return guid
+    guid = "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper())
+    return guid
 
 def get_nvar_name(nvram, name_offset, isAscii):
-   if isAscii:
-      nend = nvram.find('\x00', name_offset) 
-      name_size = nend - name_offset + 1 # add trailing zero symbol
-      name = nvram[name_offset:nend]
-      return (name, name_size)
-   else:
-      nend = nvram.find('\x00\x00', name_offset)
-      while (nend & 1) == 1:
-         nend = nend + 1
-         nend = nvram.find('\x00\x00', nend)
-      name_size = nend - name_offset + 2 # add trailing zero symbol
-      name = unicode(nvram[name_offset:nend], "utf-16-le")
-      return (name, name_size)
+    if isAscii:
+        nend = nvram.find('\x00', name_offset)
+        name_size = nend - name_offset + 1 # add trailing zero symbol
+        name = nvram[name_offset:nend]
+        return (name, name_size)
+    else:
+        nend = nvram.find('\x00\x00', name_offset)
+        while (nend & 1) == 1:
+            nend = nend + 1
+            nend = nvram.find('\x00\x00', nend)
+        name_size = nend - name_offset + 2 # add trailing zero symbol
+        name = unicode(nvram[name_offset:nend], "utf-16-le")
+        return (name, name_size)
 
 #################################################################################################
 # Common NVRAM functions
@@ -385,65 +385,65 @@ VARIABLE_SIGNATURE_VSS = VARIABLE_DATA_SIGNATURE
 #################################################################################################
 
 def FvSum8(buffer):
-  sum8 = 0
-  for b in buffer:
-    sum8 = (sum8 + ord(b)) & 0xff
-  return sum8
+    sum8 = 0
+    for b in buffer:
+        sum8 = (sum8 + ord(b)) & 0xff
+    return sum8
 
 def FvChecksum8(buffer):
-  return ((0x100 - FvSum8(buffer)) & 0xff)
+    return ((0x100 - FvSum8(buffer)) & 0xff)
 
 def FvSum16(buffer):
-  sum16 = 0
-  blen = len(buffer)/2
-  i = 0
-  while i < blen:
-    el16 = ord(buffer[2*i]) | (ord(buffer[2*i+1]) << 8)
-    sum16 = (sum16 + el16) & 0xffff
-    i = i + 1
-  return sum16
+    sum16 = 0
+    blen = len(buffer)/2
+    i = 0
+    while i < blen:
+        el16 = ord(buffer[2*i]) | (ord(buffer[2*i+1]) << 8)
+        sum16 = (sum16 + el16) & 0xffff
+        i = i + 1
+    return sum16
 
 def FvChecksum16(buffer):
-  return ((0x10000 - FvSum16(buffer)) & 0xffff)
+    return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
 def NextFwVolume(buffer, off = 0):
-  fof = off
-  EFI_FIRMWARE_VOLUME_HEADER = "<16sIHH8sQIIHHHBB"
-  vf_header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
-  EFI_FV_BLOCK_MAP_ENTRY = "<II"
-  size = len(buffer)
-  res = (None, None, None, None, None, None, None, None, None)
-  if (fof + vf_header_size) < size:
-    fof =  buffer.find("_FVH", fof)
-    if fof < 0x28: return res
-    fof = fof - 0x28
-    ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
-      FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
-       Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
-    '''
-    print "\nFV volume offset: 0x%08X" % fof
-    print "\tFvLength:         0x%08X" % FvLength
-    print "\tAttributes:       0x%08X" % Attributes
-    print "\tHeaderLength:     0x%04X" % HeaderLength
-    print "\tChecksum:         0x%04X" % Checksum
-    print "\tRevision:         0x%02X" % Revision
-    '''
-    #print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
-    #print "FV Checksum:  0x%04X (0x%04X)" % (Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
-    #'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
-    fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
-                      FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
-                      FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
-                      Reserved, Revision)
-    if (len(fvh) < HeaderLength):
-       #print "len(fvh)=%d, HeaderLength=%d" % (len(fvh), HeaderLength)
-       tail = buffer[fof+len(fvh):fof+HeaderLength]
-       fvh = fvh + tail
-    CalcSum = FvChecksum16(fvh)
-    FsGuid = guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3)
-    res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
+    fof = off
+    EFI_FIRMWARE_VOLUME_HEADER = "<16sIHH8sQIIHHHBB"
+    vf_header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
+    EFI_FV_BLOCK_MAP_ENTRY = "<II"
+    size = len(buffer)
+    res = (None, None, None, None, None, None, None, None, None)
+    if (fof + vf_header_size) < size:
+        fof =  buffer.find("_FVH", fof)
+        if fof < 0x28: return res
+        fof = fof - 0x28
+        ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
+          FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
+           Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
+        '''
+        print "\nFV volume offset: 0x%08X" % fof
+        print "\tFvLength:         0x%08X" % FvLength
+        print "\tAttributes:       0x%08X" % Attributes
+        print "\tHeaderLength:     0x%04X" % HeaderLength
+        print "\tChecksum:         0x%04X" % Checksum
+        print "\tRevision:         0x%02X" % Revision
+        '''
+        #print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
+        #print "FV Checksum:  0x%04X (0x%04X)" % (Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
+        #'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
+        fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
+                          FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
+                          FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
+                          Reserved, Revision)
+        if (len(fvh) < HeaderLength):
+            #print "len(fvh)=%d, HeaderLength=%d" % (len(fvh), HeaderLength)
+            tail = buffer[fof+len(fvh):fof+HeaderLength]
+            fvh = fvh + tail
+        CalcSum = FvChecksum16(fvh)
+        FsGuid = guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3)
+        res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
+        return res
     return res
-  return res
 
 def NextFwFile(FvImage, FvLength, fof, polarity):
     EFI_FFS_FILE_HEADER = "<IHH8sHBB3sB"
@@ -455,32 +455,32 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
     res = None
     update_or_deleted = False
     if (fof + file_header_size) < FvLength:
-      fheader = FvImage[fof:fof+file_header_size]
-      Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, fheader)
-      fsize = get_3b_size(Size);
-      update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
-      if   (not bit_set(State, EFI_FILE_HEADER_VALID, polarity))   or (bit_set(State, EFI_FILE_HEADER_INVALID, polarity)):
-        next_offset = align(fof + 1, 8)
-      #elif  (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity)):
-      #  if fsize == 0: fsize = 1
-      #  next_offset = align(fof + fsize, 8)
-        update_or_deleted = True
-      elif (not bit_set(State, EFI_FILE_DATA_VALID, polarity)):
-        next_offset = align(fof + 1, 8)
-      elif fsize == 0:
-        next_offset = align(fof + 1, 8)
-      else:
-        next_offset = fof + fsize
-        next_offset = align(next_offset, 8)
-        Name = guid_str(Name0, Name1, Name2, Name3)
-        fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, Name1, Name2, Name3, 0, Type, Attributes, Size, 0)
-        hsum = FvChecksum8(fheader)
-        if (Attributes & FFS_ATTRIB_CHECKSUM):
-           fsum = FvChecksum8(FvImage[fof+file_header_size:fof+fsize])
+        fheader = FvImage[fof:fof+file_header_size]
+        Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, fheader)
+        fsize = get_3b_size(Size);
+        update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
+        if   (not bit_set(State, EFI_FILE_HEADER_VALID, polarity))   or (bit_set(State, EFI_FILE_HEADER_INVALID, polarity)):
+            next_offset = align(fof + 1, 8)
+        #elif  (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity)):
+        #  if fsize == 0: fsize = 1
+        #  next_offset = align(fof + fsize, 8)
+            update_or_deleted = True
+        elif (not bit_set(State, EFI_FILE_DATA_VALID, polarity)):
+            next_offset = align(fof + 1, 8)
+        elif fsize == 0:
+            next_offset = align(fof + 1, 8)
         else:
-           fsum = FFS_FIXED_CHECKSUM
-        CalcSum = (hsum | (fsum << 8))
-        res = (cur_offset, next_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[fof:fof+fsize], file_header_size, update_or_deleted, CalcSum)
+            next_offset = fof + fsize
+            next_offset = align(next_offset, 8)
+            Name = guid_str(Name0, Name1, Name2, Name3)
+            fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, Name1, Name2, Name3, 0, Type, Attributes, Size, 0)
+            hsum = FvChecksum8(fheader)
+            if (Attributes & FFS_ATTRIB_CHECKSUM):
+                fsum = FvChecksum8(FvImage[fof+file_header_size:fof+fsize])
+            else:
+                fsum = FFS_FIXED_CHECKSUM
+            CalcSum = (hsum | (fsum << 8))
+            res = (cur_offset, next_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[fof:fof+fsize], file_header_size, update_or_deleted, CalcSum)
     if res == None: return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
     else:           return res
 
@@ -488,23 +488,23 @@ EFI_COMMON_SECTION_HEADER = "<3sB"
 EFI_COMMON_SECTION_HEADER_size = struct.calcsize(EFI_COMMON_SECTION_HEADER)
 
 def NextFwFileSection(sections, ssize, sof, polarity):
-  # offset, next_offset, SecName, SecType, SecBody, SecHeaderSize
-  cur_offset = sof
-  if (sof + EFI_COMMON_SECTION_HEADER_size) < ssize:
-    header = sections[sof:sof+EFI_COMMON_SECTION_HEADER_size]
-    if len(header) < EFI_COMMON_SECTION_HEADER_size: return (None, None, None, None, None, None)
-    Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, header)
-    Size = get_3b_size(Size)
-    sec_name = "S_UNKNOWN_%02X" % Type
-    if Type in SECTION_NAMES.keys():
-      sec_name = SECTION_NAMES[Type]
-    if (Size == 0xffffff and Type == 0xff) or (Size == 0):
-      sof = align(sof + 4, 4)
-      return (cur_offset, sof, None, None, None, None)
-    sec_body = sections[sof:sof+Size]
-    sof = align(sof + Size, 4)
-    return (cur_offset, sof, sec_name, Type, sec_body, EFI_COMMON_SECTION_HEADER_size)
-  return (None, None, None, None, None, None)
+    # offset, next_offset, SecName, SecType, SecBody, SecHeaderSize
+    cur_offset = sof
+    if (sof + EFI_COMMON_SECTION_HEADER_size) < ssize:
+        header = sections[sof:sof+EFI_COMMON_SECTION_HEADER_size]
+        if len(header) < EFI_COMMON_SECTION_HEADER_size: return (None, None, None, None, None, None)
+        Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, header)
+        Size = get_3b_size(Size)
+        sec_name = "S_UNKNOWN_%02X" % Type
+        if Type in SECTION_NAMES.keys():
+            sec_name = SECTION_NAMES[Type]
+        if (Size == 0xffffff and Type == 0xff) or (Size == 0):
+            sof = align(sof + 4, 4)
+            return (cur_offset, sof, None, None, None, None)
+        sec_body = sections[sof:sof+Size]
+        sof = align(sof + Size, 4)
+        return (cur_offset, sof, sec_name, Type, sec_body, EFI_COMMON_SECTION_HEADER_size)
+    return (None, None, None, None, None, None)
 
 def DecodeSection(SecType, SecBody, SecHeaderSize):
     pass
@@ -529,7 +529,7 @@ def DecompressSection(CompressedFileName, OutputFileName, CompressionType):
             call('%s -d -o %s %s' % (exe, OutputFileName, CompressedFileName))
         decompressed = read_file( OutputFileName )
     except:
-       pass
+        pass
     return decompressed
 
 '''
@@ -549,13 +549,13 @@ typedef struct {
   ///
   /// Size of each signature.
   ///
-  UINT32              SignatureSize; 
+  UINT32              SignatureSize;
   ///
-  /// Header before the array of signatures. The format of this header is specified 
+  /// Header before the array of signatures. The format of this header is specified
   /// by the SignatureType.
   /// UINT8           SignatureHeader[SignatureHeaderSize];
   ///
-  /// An array of signatures. Each signature is SignatureSize bytes in length. 
+  /// An array of signatures. Each signature is SignatureSize bytes in length.
   /// EFI_SIGNATURE_DATA Signatures[][SignatureSize];
   ///
 } EFI_SIGNATURE_LIST;
@@ -564,34 +564,34 @@ SIGNATURE_LIST = "<IHH8sIII"
 SIGNATURE_LIST_size = struct.calcsize(SIGNATURE_LIST)
 
 def parse_sha256(data):
-   return
+    return
 
 def parse_rsa2048(data):
-   return
+    return
 
 def parse_rsa2048_sha256(data):
-   return
+    return
 
 def parse_sha1(data):
-   return
+    return
 
 def parse_rsa2048_sha1(data):
-   return
+    return
 
 def parse_x509(data):
-   return
+    return
 
 def parse_sha224(data):
-   return
+    return
 
 def parse_sha384(data):
-   return
+    return
 
 def parse_sha512(data):
-   return
+    return
 
 def parse_pkcs7(data):
-   return
+    return
 
 sig_types = {"C1C41626-504C-4092-ACA9-41F936934328": ("EFI_CERT_SHA256_GUID", parse_sha256, 0x30, "SHA256"), \
              "3C5766E8-269C-4E34-AA14-ED776E85B3B6": ("EFI_CERT_RSA2048_GUID", parse_rsa2048, 0x110, "RSA2048"), \
@@ -607,59 +607,59 @@ sig_types = {"C1C41626-504C-4092-ACA9-41F936934328": ("EFI_CERT_SHA256_GUID", pa
 
 #def parse_db(db, var_name, path):
 def parse_db( db, decode_dir ):
-   db_size = len(db)
-   if 0 == db_size:
-       return
-   dof = 0
-   nsig = 0
-   entries = []
-   # some platforms have 0's in the beginnig, skip all 0 (no known SignatureType starts with 0x00):
-   while (dof < db_size and db[dof] == '\x00'): dof = dof + 1
-   while (dof + SIGNATURE_LIST_size) < db_size:
-      SignatureType0, SignatureType1, SignatureType2, SignatureType3, SignatureListSize, SignatureHeaderSize, SignatureSize \
-       = struct.unpack(SIGNATURE_LIST, db[dof:dof+SIGNATURE_LIST_size])
-      SignatureType = guid_str(SignatureType0, SignatureType1, SignatureType2, SignatureType3)
-      short_name = "UNKNOWN"
-      sig_parse_f = None
-      sig_size = 0
-      if (SignatureType in sig_types.keys()):
-         sig_name, sig_parse_f, sig_size, short_name = sig_types[SignatureType]
-      #logger().log( "SignatureType       : %s (%s)" % (SignatureType, sig_name) )
-      #logger().log( "SignatureListSize   : 0x%08X" % SignatureListSize )
-      #logger().log( "SignatureHeaderSize : 0x%08X" % SignatureHeaderSize )
-      #logger().log( "SignatureSize       : 0x%08X" % SignatureSize )
-      #logger().log( "Parsing..." )
-      if (((sig_size > 0) and (sig_size == SignatureSize)) or ((sig_size == 0) and (SignatureSize >= 0x10))):
-         sof = 0
-         sig_list = db[dof+SIGNATURE_LIST_size+SignatureHeaderSize:dof+SignatureListSize]
-         sig_list_size = len(sig_list)
-         while ((sof + guid_size) < sig_list_size):
-            sig_data = sig_list[sof:sof+SignatureSize]
-            owner0, owner1, owner2, owner3 = struct.unpack(GUID, sig_data[:guid_size])
-            owner = guid_str(owner0, owner1, owner2, owner3)
-            data = sig_data[guid_size:]
-            #logger().log(  "owner: %s" % owner )
+    db_size = len(db)
+    if 0 == db_size:
+        return
+    dof = 0
+    nsig = 0
+    entries = []
+    # some platforms have 0's in the beginnig, skip all 0 (no known SignatureType starts with 0x00):
+    while (dof < db_size and db[dof] == '\x00'): dof = dof + 1
+    while (dof + SIGNATURE_LIST_size) < db_size:
+        SignatureType0, SignatureType1, SignatureType2, SignatureType3, SignatureListSize, SignatureHeaderSize, SignatureSize \
+         = struct.unpack(SIGNATURE_LIST, db[dof:dof+SIGNATURE_LIST_size])
+        SignatureType = guid_str(SignatureType0, SignatureType1, SignatureType2, SignatureType3)
+        short_name = "UNKNOWN"
+        sig_parse_f = None
+        sig_size = 0
+        if (SignatureType in sig_types.keys()):
+            sig_name, sig_parse_f, sig_size, short_name = sig_types[SignatureType]
+        #logger().log( "SignatureType       : %s (%s)" % (SignatureType, sig_name) )
+        #logger().log( "SignatureListSize   : 0x%08X" % SignatureListSize )
+        #logger().log( "SignatureHeaderSize : 0x%08X" % SignatureHeaderSize )
+        #logger().log( "SignatureSize       : 0x%08X" % SignatureSize )
+        #logger().log( "Parsing..." )
+        if (((sig_size > 0) and (sig_size == SignatureSize)) or ((sig_size == 0) and (SignatureSize >= 0x10))):
+            sof = 0
+            sig_list = db[dof+SIGNATURE_LIST_size+SignatureHeaderSize:dof+SignatureListSize]
+            sig_list_size = len(sig_list)
+            while ((sof + guid_size) < sig_list_size):
+                sig_data = sig_list[sof:sof+SignatureSize]
+                owner0, owner1, owner2, owner3 = struct.unpack(GUID, sig_data[:guid_size])
+                owner = guid_str(owner0, owner1, owner2, owner3)
+                data = sig_data[guid_size:]
+                #logger().log(  "owner: %s" % owner )
+                entries.append( data )
+                sig_file_name = "%s-%s-%02d.bin" % (short_name, owner, nsig)
+                sig_file_name = os.path.join(decode_dir, sig_file_name)
+                write_file(sig_file_name, data)
+                if (sig_parse_f != None):
+                    sig_parse_f(data)
+                sof = sof + SignatureSize
+                nsig = nsig + 1
+        else:
+            err_str = "Wrong SignatureSize for %s type: 0x%X."  % (SignatureType, SignatureSize)
+            if (sig_size > 0): err_str = err_str + " Must be 0x%X." % (sig_size)
+            else:              err_str = err_str + " Must be >= 0x10."
+            logger().error( err_str )
             entries.append( data )
-            sig_file_name = "%s-%s-%02d.bin" % (short_name, owner, nsig)
+            sig_file_name = "%s-%s-%02d.bin" % (short_name, SignatureType, nsig)
             sig_file_name = os.path.join(decode_dir, sig_file_name)
             write_file(sig_file_name, data)
-            if (sig_parse_f != None):
-               sig_parse_f(data)
-            sof = sof + SignatureSize
             nsig = nsig + 1
-      else:
-         err_str = "Wrong SignatureSize for %s type: 0x%X."  % (SignatureType, SignatureSize)
-         if (sig_size > 0): err_str = err_str + " Must be 0x%X." % (sig_size) 
-         else:              err_str = err_str + " Must be >= 0x10." 
-         logger().error( err_str )
-         entries.append( data )
-         sig_file_name = "%s-%s-%02d.bin" % (short_name, SignatureType, nsig)
-         sig_file_name = os.path.join(decode_dir, sig_file_name)
-         write_file(sig_file_name, data)
-         nsig = nsig + 1
-      dof = dof + SignatureListSize
+        dof = dof + SignatureListSize
 
-   return entries
+    return entries
 
 def parse_efivar_file( fname, var=None ):
     if not var:
@@ -673,7 +673,246 @@ def parse_efivar_file( fname, var=None ):
     parse_db( var, var_path )
 
 
-#################################################################################################
+########################################################################################################
+#
+# S3 Resume Boot-Script Parsing Functionality
+#
+########################################################################################################
+
+BOOTSCRIPT_TABLE_OFFSET          = 24
+RUNTIME_SCRIPT_TABLE_BASE_OFFSET = 32
+ACPI_VARIABLE_SET_STRUCT_SIZE    = 0x48
+S3_BOOTSCRIPT_VARIABLES          = [ 'AcpiGlobalVariable' ]
+
+MAX_S3_BOOTSCRIPT_ENTRY_LENGTH   = 0x200
+
+"""
+#define EFI_BOOT_SCRIPT_IO_WRITE_OPCODE 0x00
+#define EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE 0x01
+#define EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE 0x02
+#define EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE 0x03
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE 0x04
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE 0x05
+#define EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE 0x06
+#define EFI_BOOT_SCRIPT_STALL_OPCODE 0x07
+#define EFI_BOOT_SCRIPT_DISPATCH_OPCODE 0x08
+"""
+class S3BootScriptOpcode:
+  EFI_BOOT_SCRIPT_IO_WRITE_OPCODE               = 0x00
+  EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE          = 0x01
+  EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE              = 0x02
+  EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE         = 0x03
+  EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE       = 0x04
+  EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE  = 0x05
+  EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE          = 0x06
+  EFI_BOOT_SCRIPT_STALL_OPCODE                  = 0x07
+  EFI_BOOT_SCRIPT_DISPATCH_OPCODE               = 0x08
+  EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x0E
+  EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x81
+  EFI_BOOT_SCRIPT_INFORMATION_OPCODE            = 0x0A
+  EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      = 0x0B
+  EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE = 0x0C
+  EFI_BOOT_SCRIPT_TABLE_OPCODE                  = 0xAA
+  EFI_BOOT_SCRIPT_TERMINATE_OPCODE              = 0xFF
+
+script_opcodes = {
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE:               "S3_BOOTSCRIPT_IO_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE:          "S3_BOOTSCRIPT_IO_READ_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE:              "S3_BOOTSCRIPT_MEM_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE:         "S3_BOOTSCRIPT_MEM_READ_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE:       "S3_BOOTSCRIPT_PCI_CONFIG_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE:  "S3_BOOTSCRIPT_PCI_CONFIG_READ_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE:          "S3_BOOTSCRIPT_SMBUS_EXECUTE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE:                  "S3_BOOTSCRIPT_STALL",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE:               "S3_BOOTSCRIPT_DISPATCH",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE:               "S3_BOOTSCRIPT_MEM_POLL",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE:               "S3_BOOTSCRIPT_MEM_POLL",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_INFORMATION_OPCODE:            "S3_BOOTSCRIPT_INFORMATION",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE:      "S3_BOOTSCRIPT_PCI_CONFIG2_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE: "S3_BOOTSCRIPT_PCI_CONFIG2_READ_WRITE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_TABLE_OPCODE:                  "S3_BOOTSCRIPT_TABLE",
+    S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE:              "S3_BOOTSCRIPT_TERMINATE"
+}
 
 
+"""
+//*******************************************
+// EFI_BOOT_SCRIPT_WIDTH
+//*******************************************
+typedef enum {
+EfiBootScriptWidthUint8,
+EfiBootScriptWidthUint16,
+EfiBootScriptWidthUint32,
+EfiBootScriptWidthUint64,
+EfiBootScriptWidthFifoUint8,
+EfiBootScriptWidthFifoUint16,
+EfiBootScriptWidthFifoUint32,
+EfiBootScriptWidthFifoUint64,
+EfiBootScriptWidthFillUint8,
+EfiBootScriptWidthFillUint16,
+EfiBootScriptWidthFillUint32,
+EfiBootScriptWidthFillUint64,
+EfiBootScriptWidthMaximum
+} EFI_BOOT_SCRIPT_WIDTH;
+"""
+class S3BootScriptWidth:
+  EFI_BOOT_SCRIPT_WIDTH_UINT8  = 0x00
+  EFI_BOOT_SCRIPT_WIDTH_UINT16 = 0x01
+  EFI_BOOT_SCRIPT_WIDTH_UINT32 = 0x02
+  EFI_BOOT_SCRIPT_WIDTH_UINT64 = 0x03
+
+script_width_sizes = {
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8   : 1,
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16  : 2,
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32  : 4,
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64  : 8
+}
+script_width_formats = {
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8   : 'B',
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16  : 'H',
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32  : 'I',
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64  : 'Q'
+}
+
+"""
+//************************************************
+// EFI_SMBUS_DEVICE_ADDRESS
+//************************************************
+typedef struct _EFI_SMBUS_DEVICE_ADDRESS {
+UINTN SmbusDeviceAddress:7;
+} EFI_SMBUS_DEVICE_ADDRESS;
+//************************************************
+// EFI_SMBUS_DEVICE_COMMAND
+//************************************************
+typedef UINTN EFI_SMBUS_DEVICE_COMMAND;
+
+//************************************************
+// EFI_SMBUS_OPERATION
+//************************************************
+typedef enum _EFI_SMBUS_OPERATION {
+EfiSmbusQuickRead,
+EfiSmbusQuickWrite,
+EfiSmbusReceiveByte,
+EfiSmbusSendByte,
+EfiSmbusReadByte,
+EfiSmbusWriteByte,
+EfiSmbusReadWord,
+EfiSmbusWriteWord,
+EfiSmbusReadBlock,
+EfiSmbusWriteBlock,
+EfiSmbusProcessCall,
+EfiSmbusBWBRProcessCall
+} EFI_SMBUS_OPERATION;
+"""
+class S3BootScriptSmbusOperation:
+  QUICK_READ        = 0x00
+  QUICK_WRITE       = 0x01
+  RECEIVE_BYTE      = 0x02
+  SEND_BYTE         = 0x03
+  READ_BYTE         = 0x04
+  WRITE_BYTE        = 0x05
+  READ_WORD         = 0x06
+  WRITE_WORD        = 0x07
+  READ_BLOCK        = 0x08
+  WRITE_BLOCK       = 0x09
+  PROCESS_CALL      = 0x0A
+  BWBR_PROCESS_CALL = 0x0B
+
+class op_io_pci_mem():
+    def __init__(self, opcode, size, width, address, count, buffer, value=None, mask=None):
+        self.opcode  = opcode
+        self.size    = size
+        self.width   = width
+        self.address = address
+        self.count   = count
+        self.value   = value
+        self.mask    = mask
+        self.name    = script_opcodes[ opcode ] 
+        self.buffer  = buffer # data[ self.size : ]
+        self.values  = None
+        if self.count is not None and self.count > 0:
+            sz = self.count * script_width_sizes[ self.width ]
+            if len(self.buffer) != sz:
+                logger().log( '[?] buffer size (0x%X) != Width x Count (0x%X)' % (len(self.buffer), sz) )
+            else:
+                self.values = struct.unpack( ( '%d%c' % (self.count, script_width_formats[self.width]) ), self.buffer )
+    def __str__(self):
+        str_r =          "  Opcode : %s (0x%02X)\n" % (self.name, self.opcode)
+        str_r = str_r +  "  Width  : 0x%02X (%X bytes)\n" % (self.width, script_width_sizes[self.width])
+        str_r = str_r +  "  Address: 0x%08X\n" % self.address
+        if self.value  is not None: str_r = str_r +  "  Value  : 0x%08X\n" % self.value
+        if self.mask   is not None: str_r = str_r +  "  Mask   : 0x%08X\n" % self.mask
+        if self.count  is not None: str_r = str_r +  "  Count  : 0x%X\n" % self.count
+        if self.values is not None:
+            fmt = '0x%0' + ( '%dX' % (script_width_sizes[self.width]*2) )
+            str_r = str_r + "  Values : %s\n" % ("  ".join( [fmt % v for v in self.values] ))
+        elif self.buffer is not None:
+            str_r = str_r + ("  Buffer (size = 0x%X):\n" % len(self.buffer)) + dump_buffer( self.buffer, 16 )
+        return str_r
+
+class op_smbus_execute():
+    def __init__(self, opcode, size, slave_address, command, operation, peccheck):
+        self.opcode        = opcode
+        self.size          = size
+        self.slave_address = slave_address
+        self.command       = command
+        self.operation     = operation
+        self.peccheck      = peccheck
+        self.name          = script_opcodes[ opcode ] 
+    def __str__(self):
+        str_r =          "  Opcode       : %s (0x%02X)\n" % (self.name, self.opcode)
+        str_r = str_r +  "  Slave Address: 0x%02X\n" % self.slave_address
+        str_r = str_r +  "  Command      : 0x%08X\n" % self.command
+        str_r = str_r +  "  Operation    : 0x%02X\n" % self.operation
+        str_r = str_r +  "  PEC Check    : %d\n" % self.peccheck
+        return str_r
+
+
+class op_stall():
+    def __init__(self, opcode, size, duration):
+        self.opcode   = opcode
+        self.size     = size
+        self.duration = duration
+        self.name     = script_opcodes[ self.opcode ] 
+    def __str__(self):
+        str_r =          "  Opcode  : %s (0x%02X)\n" % (self.name, self.opcode)
+        str_r = str_r +  "  Duration: 0x%08X (us)\n" % self.duration
+        return str_r
+
+class op_dispatch():
+    def __init__(self, opcode, size, entrypoint):
+        self.opcode     = opcode
+        self.size       = size
+        self.entrypoint = entrypoint
+        self.name       = script_opcodes[ self.opcode ] 
+    def __str__(self):
+        str_r =          "  Opcode     : %s (0x%02X)\n" % (self.name, self.opcode)
+        str_r = str_r +  "  Entry Point: 0x%08X\n" % self.entrypoint
+        return str_r
+"""
+class opcode_terminate():
+    def __init__(self, data):
+        frmt = "<B"
+        self.size = struct.calcsize( frmt )
+        self.opcode = struct.unpack( frmt, data[ : self.size ] )
+        self.name = script_opcodes[ self.opcode ] 
+    def __str__(self):
+        return "  Opcode     : %s (0x%02X)\n" % (self.name, self.opcode)
+"""
+
+
+class S3BOOTSCRIPT_ENTRY():
+    def __init__( self, index, offset_in_script, length, data=None ):
+        self.index            = index
+        self.offset_in_script = offset_in_script
+        self.length           = length
+        self.data             = data
+        self.decoded_opcode   = None
+
+    def __str__(self):
+        entry_str = '' if self.index is None else ('[%03d] ' % self.index)
+        entry_str += ( 'Entry at offset 0x%04X (length = 0x%X):' % (self.offset_in_script, self.length) )
+        if self.data: entry_str = entry_str + '\nData:\n' + dump_buffer(self.data, 16)
+        if self.decoded_opcode: entry_str = entry_str + 'Decoded:\n' + str(self.decoded_opcode)
+        return entry_str
 

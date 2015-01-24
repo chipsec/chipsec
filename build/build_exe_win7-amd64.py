@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -58,6 +58,7 @@ root_dir = os.path.abspath(os.pardir)
 bin_dir = os.path.join(root_dir,"bin")
 source_dir = os.path.join(root_dir,"source")
 tool_dir   = os.path.join(source_dir,"tool")
+cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
 
 win_7_amd64 = os.path.join(bin_dir,'win7-amd64');
 
@@ -69,6 +70,12 @@ print os.getcwd()
 
 
 data_files = [(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys'])]
+for current, dirs, files in os.walk(cfg_dir ):
+    for file in files:
+        if file.endswith('.xml') :
+            #xf = os.path.join('chipsec','cfg') ,os.path.join(cfg_dir,file)
+            xf = 'chipsec/cfg' ,['chipsec/cfg/%s'%file]
+            data_files.append( xf ) 
 
 version=""
 if os.path.exists(VERSION_FILE):

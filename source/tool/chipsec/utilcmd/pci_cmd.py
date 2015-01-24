@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -133,4 +133,3 @@ def pci(argv):
     logger().log( "[CHIPSEC] (pci) time elapsed %.3f" % (time.time()-t) )
 
 chipsec_util.commands['pci'] = {'func' : pci ,    'start_driver' : True, 'help' : usage  }
-

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -46,15 +46,12 @@ from chipsec.logger import logger
 from chipsec.cfg.common import *
 from chipsec.hal.pcidb import *
 
-#class PCI_BDF(Structure):
-#    _fields_ = [("BUS",  c_ushort, 16),  # Bus
-#                ("DEV",  c_ushort, 16),  # Device
-#                ("FUNC", c_ushort, 16),  # Function
-#                ("OFF",  c_ushort, 16)]  # Offset
-
 
 class PciRuntimeError (RuntimeError):
     pass
+class PciDeviceNotFoundError (RuntimeError):
+    pass
+
 
 def get_vendor_name_by_vid( vid ):
     if vid in VENDORS:
@@ -78,45 +75,46 @@ def print_pci_devices( _devices ):
 
 class Pci:
 
-    def __init__( self, helper ):
-        self.helper = helper
+    def __init__( self, cs ):
+        self.helper = cs.helper
+        self.cs = cs
         #self.devices = []
 
     def read_dword(self, bus, device, function, address ):
         value = self.helper.read_pci_reg( bus, device, function, address, 4 )
         if logger().VERBOSE:
-          logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%08X" % (bus, device, function, address, value) )
+            logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%08X" % (bus, device, function, address, value) )
         return value
 
     def read_word(self, bus, device, function, address ):
         word_value = self.helper.read_pci_reg( bus, device, function, address, 2 )
         if logger().VERBOSE:
-          logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%04X" % (bus, device, function, address, word_value) )
+            logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%04X" % (bus, device, function, address, word_value) )
         return word_value
 
     def read_byte(self, bus, device, function, address ):
         byte_value = self.helper.read_pci_reg( bus, device, function, address, 1 )
         if logger().VERBOSE:
-          logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%02X" % (bus, device, function, address, byte_value) )
+            logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%02X" % (bus, device, function, address, byte_value) )
         return byte_value
 
 
     def write_byte(self, bus, device, function, address, byte_value ):
         self.helper.write_pci_reg( bus, device, function, address, byte_value, 1 )
         if logger().VERBOSE:
-          logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%02X" % (bus, device, function, address, byte_value) )
+            logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%02X" % (bus, device, function, address, byte_value) )
         return
 
     def write_word(self, bus, device, function, address, word_value ):
         self.helper.write_pci_reg( bus, device, function, address, word_value, 2 )
         if logger().VERBOSE:
-          logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%04X" % (bus, device, function, address, word_value) )
+            logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%04X" % (bus, device, function, address, word_value) )
         return
 
     def write_dword( self, bus, device, function, address, dword_value ):
         self.helper.write_pci_reg( bus, device, function, address, dword_value, 4 )
         if logger().VERBOSE:
-          logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%08X" % (bus, device, function, address, dword_value) )
+            logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%08X" % (bus, device, function, address, dword_value) )
         return
 
     def enumerate_devices( self ):
@@ -127,13 +125,13 @@ class Pci:
                     did_vid = self.read_dword( b, d, f, 0x0 )
                     #didvid = read_mmcfg_reg( cs, b, d, f, 0x0 )
                     if 0xFFFFFFFF != did_vid:
-                       vid = did_vid&0xFFFF
-                       did = (did_vid >> 16)&0xFFFF
-                       devices.append( (b, d, f, vid, did) ) 
+                        vid = did_vid&0xFFFF
+                        did = (did_vid >> 16)&0xFFFF
+                        devices.append( (b, d, f, vid, did) )
         return devices
 
     #
-    # Returns all I/O and MMIO BARs defined in the PCIe header of the device 
+    # Returns all I/O and MMIO BARs defined in the PCIe header of the device
     # Returns array of elements in format (bar_address, isMMIO_BAR, is64bit_BAR, pcie_BAR_reg_offset)
     # @TODO: need to account for Type 0 vs Type 1 headers
     def get_device_bars( self, bus, dev, fun ):
@@ -142,25 +140,25 @@ class Pci:
         while (off < 0x28):
             base_lo = self.read_dword( bus, dev, fun, off )
             if base_lo:
-               # BAR is initialized
-               if (0 == (base_lo & 0x1)):
-                  # MMIO BAR
-                  is64bit = ( (base_lo>>1) & 0x3 )
-                  if 0x2 == is64bit:
-                     # 64-bit MMIO BAR
-                     off += 4
-                     base_hi = self.read_dword( bus, dev, fun, off )
-                     base = ((base_hi << 32) | (base_lo & 0xFFFFFFF0))
-                     _bars.append( (base, True, True, off-4) )
-                  elif 1 == is64bit:
-                     # MMIO BAR below 1MB
-                     pass
-                  elif 0 == is64bit:
-                     # 32-bit only MMIO BAR
-                     _bars.append( (base_lo, True, False, off) )
-               else:
-                  # I/O BAR
-                  _bars.append( (base_lo&0xFFFFFFFE, False, False, off) )
+                # BAR is initialized
+                if (0 == (base_lo & 0x1)):
+                    # MMIO BAR
+                    is64bit = ( (base_lo>>1) & 0x3 )
+                    if 0x2 == is64bit:
+                        # 64-bit MMIO BAR
+                        off += 4
+                        base_hi = self.read_dword( bus, dev, fun, off )
+                        base = ((base_hi << 32) | (base_lo & 0xFFFFFFF0))
+                        _bars.append( (base, True, True, off-4) )
+                    elif 1 == is64bit:
+                        # MMIO BAR below 1MB
+                        pass
+                    elif 0 == is64bit:
+                        # 32-bit only MMIO BAR
+                        _bars.append( (base_lo, True, False, off) )
+                else:
+                    # I/O BAR
+                    _bars.append( (base_lo&0xFFFFFFFE, False, False, off) )
             off += 4
         return _bars
 

@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -32,10 +32,18 @@ _MODULE_NAME = 'smm_dma'
 TAGS = [MTAG_SMM,MTAG_HWCONFIG]
 
 
+IA32_SMRR_BASE_MEMTYPE_MASK = 0x7
+IA32_SMRR_BASE_BASE_MASK    = 0xFFFFF000
+
+IA32_SMRR_MASK_VLD_MASK     = 0x800
+IA32_SMRR_MASK_MASK_MASK    = 0xFFFFF000
+
+ALIGNED_8MB   = 0x7FFFFF
+
 _TSEG_MASK      = 0xFFFFF000
 
 class smm_dma(BaseModule):
-    
+
     def __init__(self):
         BaseModule.__init__(self)
 
@@ -46,7 +54,7 @@ class smm_dma(BaseModule):
 
     def check_tseg_config(self):
         self.logger.start_test( "SMRAM DMA Protection" )
-    
+
         if not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_TSEGMB' ) or \
            not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_BGSM' ):
             self.logger.error( "Couldn't find definition of required registers (TSEG, BGSM)" )
@@ -55,17 +63,15 @@ class smm_dma(BaseModule):
         tolud      = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TOLUD' )
         bgsm       = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_BGSM' )
         tsegmb     = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TSEGMB' )
-        (eax, edx) = self.cs.msr.read_msr( 0, self.cs.Cfg.IA32_SMRR_BASE_MSR )
-        smrr_base = ((edx << 32) | eax)
-        (eax, edx) = self.cs.msr.read_msr( 0, self.cs.Cfg.IA32_SMRR_MASK_MSR )
-        smrr_mask = ((edx << 32) | eax)
+        smrr_base  = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSBASE' )
+        smrr_mask  = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSMASK' )
 
         self.logger.log( "[*] Registers:" )
-        self.logger.log( "[*]   TOLUD    : 0x%08X" % tolud )
-        self.logger.log( "[*]   BGSM     : 0x%08X" % bgsm )
-        self.logger.log( "[*]   TSEGMB   : 0x%08X" % tsegmb )
-        self.logger.log( "[*]   SMRR_BASE: 0x%016X" % smrr_base )
-        self.logger.log( "[*]   SMRR_MASK: 0x%016X\n" % smrr_mask )
+        self.logger.log( "[*]   TOLUD             : 0x%08X" % tolud )
+        self.logger.log( "[*]   BGSM              : 0x%08X" % bgsm )
+        self.logger.log( "[*]   TSEGMB            : 0x%08X" % tsegmb )
+        self.logger.log( "[*]   IA32_SMRR_PHYSBASE: 0x%016X" % smrr_base )
+        self.logger.log( "[*]   IA32_SMRR_PHYSMASK: 0x%016X\n" % smrr_mask )
 
         tolud_lock      = tolud  & 0x1
         bgsm_lock       = bgsm   & 0x1
@@ -75,10 +81,12 @@ class smm_dma(BaseModule):
         tsegmb &= _TSEG_MASK
         tseg_size = bgsm - tsegmb
         tseg_limit = tsegmb + tseg_size - 1
-        smrrbase  = smrr_base & self.cs.Cfg.IA32_SMRR_BASE_BASE_MASK
+
+        smrrbase = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSBASE', smrr_base, 'PhysBase', True )
+        smrrmask = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSMASK', smrr_mask, 'PhysMask', True )
         # Actual SMRR Base = SMRR_BASE & SMRR_MASK
-        smrrbase &= smrr_mask
-        smrrsize = ((~(smrr_mask & self.cs.Cfg.IA32_SMRR_MASK_MASK_MASK))&0xFFFFFFFF) + 1
+        smrrbase &= smrrmask
+        smrrsize = ((~(smrrmask & IA32_SMRR_MASK_MASK_MASK))&0xFFFFFFFF) + 1
         smrrlimit = smrrbase + smrrsize - 1
 
         self.logger.log( "[*] Memory Map:" )
@@ -100,7 +108,7 @@ class smm_dma(BaseModule):
         else:  self.logger.log_bad( "  BGSM is not locked" )
 
         self.logger.log( "[*] checking TSEG alignment.." )
-        ok = (0 == tsegmb & Cfg.ALIGNED_8MB)
+        ok = (0 == tsegmb & ALIGNED_8MB) #(0 == tsegmb & self.cs.Cfg.ALIGNED_8MB)
         smram_dma_ok = smram_dma_ok and ok
         if ok: self.logger.log_good( "  TSEGMB is 8MB aligned" )
         else:  self.logger.log_bad( "  TSEGMB is not 8MB aligned" )
@@ -114,9 +122,9 @@ class smm_dma(BaseModule):
         self.logger.log('')
         if smram_dma_ok: self.logger.log_passed_check( "TSEG is properly configured. SMRAM is protected from DMA attacks" )
         else:            self.logger.log_failed_check( "TSEG is not properly configured. SMRAM is vulnerable to DMA attacks" )
-    
+
         return smram_dma_ok
-    
+
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module

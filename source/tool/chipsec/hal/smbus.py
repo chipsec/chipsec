@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -40,22 +40,27 @@
 from chipsec.logger import *
 from chipsec.cfg.common import *
 
+import chipsec.hal.iobar
+
 class SMBus:
     def __init__( self, cs ):
         self.cs = cs
+        self.iobar = chipsec.hal.iobar.iobar( self.cs )
 
     def get_SMBus_Base_Address( self ):
-        #
-        # B0:D31:F3 + 0x20 SMBus Base Address (SBA)
-        #
-        reg_value = self.cs.pci.read_byte( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, Cfg.CFG_REG_PCH_SMB_SBA )
-        return (reg_value & Cfg.CFG_REG_PCH_SMB_SBA_BASE_ADDRESS_MASK) 
+        if self.iobar.is_IO_BAR_defined( 'SMBUS_BASE' ):
+            (sba_base, sba_size) = self.iobar.get_IO_BAR_base_address( 'SMBUS_BASE' )
+            return sba_base
+        else:
+            raise chipsec.hal.iobar.IOBARNotFoundError, ('IOBARAccessError: SMBUS_BASE')
 
     def get_SMBus_HCFG( self ):
-        #
-        # B0:D31:F3 + 0x40 SMBus Host Configuration (HCFG)
-        #
-        reg_value = self.cs.pci.read_byte( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, Cfg.CFG_REG_PCH_SMB_HCFG )
+        if chipsec.chipset.is_register_defined( self.cs, 'SMBUS_HCFG' ):
+            reg_value = chipsec.chipset.read_register( self.cs, 'SMBUS_HCFG' )
+        else:
+            raise chipsec.chipset.RegisterNotFoundError, ('RegisterNotFound: SMBUS_HCFG')
+
+        # @TODO: use bit definitions from XML config
         hcfg = Cfg.SMB_HCFG_REG( reg_value, (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_SPD_WD > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_SSRESET > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_I2C_EN > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_SMB_SMI_EN > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_HST_EN > 0) )
         return hcfg
 
@@ -64,20 +69,18 @@ class SMBus:
         logger().log( self.get_SMBus_HCFG() )
 
     def is_SMBus_enabled( self ):
-        return self.cs.pci.is_enabled( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN )
+        #return self.cs.pci.is_enabled( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN )
+        return self.cs.is_device_enabled( 'SMBUS' )
 
     def is_SMBus_supported( self ):
-        (did,vid) = self.cs.pci.get_DIDVID( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN )
-        if logger().VERBOSE:
-           logger().log( "[*] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
-
-        # @TODO: check correct DIDs
+        #(did,vid) = self.cs.pci.get_DIDVID( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN )
+        (did,vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
+        if logger().VERBOSE: logger().log( "[*] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
         #if (0x8086 == vid and Cfg.PCI_B0D31F3_SMBUS_CTRLR_DID == did):
-        if (0x8086 == vid):
-          return True
+        if (0x8086 == vid): return True
         else:
-          logger().error( "Unknown SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
-          return False
+            logger().error( "Unknown SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
+            return False
 
     def is_SMBus_host_controller_enabled( self ):
         hcfg = self.get_SMBus_HCFG()
@@ -85,17 +88,13 @@ class SMBus:
 
     def enable_SMBus_host_controller( self ):
         # Enable SMBus Host Controller Interface in HCFG
-        hcfg = self.get_SMBus_HCFG()
-        if 0 == hcfg.HST_EN:
-            hcfg.HST_EN = 1
-            self.cs.pci.write_byte( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, Cfg.CFG_REG_PCH_SMB_HCFG, hcfg )
-
+        reg_value = chipsec.chipset.read_register( self.cs, 'SMBUS_HCFG' )
+        if 0 == (reg_value & 0x1): chipsec.chipset.write_register( self.cs, 'SMBUS_HCFG', (reg_value|0x1) )
         # @TODO: check SBA is programmed
         sba = self.get_SMBus_Base_Address()
-
-        # Enable I/O Space in CMD
-        cmd = self.cs.pci.read_word( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, Cfg.CFG_REG_PCH_SMB_CMD )
-        if (cmd & 0x1): self.cs.pci.write_byte( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, Cfg.CFG_REG_PCH_SMB_CMD, 0x1 )
+        # Enable SMBus I/O Space
+        cmd = chipsec.chipset.read_register( self.cs, 'SMBUS_CMD' )
+        if 0 == (cmd & 0x1): chipsec.chipset.write_register( self.cs, 'SMBUS_CMD', (cmd|0x1) )
 
 
     def _wait_for_cycle( self, smbus_io_base ):
@@ -118,7 +117,7 @@ class SMBus:
         #    sts = self.cs.io.read_port_byte( smbus_io_base )
         #    if (0 == (sts & 0x9F)): break
         #if (sts & 0x9F):
-        #    logger().error( "SMBus is not ready for whatever reason" ) 
+        #    logger().error( "SMBus is not ready for whatever reason" )
         #    return 0xFF
 
         self.cs.io.write_port_byte( smbus_io_base + 0x4, (target_address | 0x1) ) # Byte Read from SMBus device at target_address
@@ -145,20 +144,20 @@ class SMBus:
         return True
 
     def read_byte( self, target_address, offset ):
-        smbus_io_base = self.cs.pci.read_word( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, 0x20 ) & 0xFFFE
+        smbus_io_base = self.get_SMBus_Base_Address()
         value = self._read_byte( smbus_io_base, target_address, offset )
         if logger().VERBOSE: logger().log( "[smbus] read device %X off %X = %X" % (target_address, offset, value) )
         return value
 
     def write_byte( self, target_address, offset, value ):
-        smbus_io_base = self.cs.pci.read_word( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, 0x20 ) & 0xFFFE
+        smbus_io_base = self.get_SMBus_Base_Address()
         sts = self._write_byte( smbus_io_base, target_address, offset, value )
         if logger().VERBOSE: logger().log( "[smbus] write to device %X off %X = %X" % (target_address, offset, value) )
         return sts
 
     def read_range( self, target_address, start_offset, size ):
         buffer = [chr(0xFF)]*size
-        smbus_io_base = self.cs.pci.read_word( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, 0x20 ) & 0xFFFE
+        smbus_io_base = self.get_SMBus_Base_Address()
         for i in range (size):
             buffer[i] = chr( self._read_byte( smbus_io_base, target_address, start_offset + i ) )
         if logger().VERBOSE:
@@ -168,7 +167,7 @@ class SMBus:
 
     def write_range( self, target_address, start_offset, buffer ):
         size = len(buffer)
-        smbus_io_base = self.cs.pci.read_word( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN, 0x20 ) & 0xFFFE
+        smbus_io_base = self.get_SMBus_Base_Address()
         for i in range(size):
             self._write_byte( smbus_io_base, target_address, start_offset + i, ord(buffer[i]) )
         if logger().VERBOSE:

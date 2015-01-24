@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@
 # #usage:
 #     cpuid(0)
 # ~~~
-#   
+#
 __version__ = '1.0'
 
 import struct
@@ -49,13 +49,12 @@ class CpuIDRuntimeError (RuntimeError):
 
 class CpuID:
 
-    def __init__( self, helper ):
-        self.helper = helper
+    def __init__( self, cs ):
+        self.helper = cs.helper
+        self.cs = cs
 
     def cpuid(self, eax, ecx ):
         if logger().VERBOSE: logger().log( "[cpuid] in: EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
         if logger().VERBOSE: logger().log( "[cpuid] out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)
-
-     

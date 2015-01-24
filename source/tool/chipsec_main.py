@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -22,10 +22,10 @@
 
 
 #
-## \addtogroup core 
+## \addtogroup core
 # __chipsec_main.py__ -- main application logic and automation functions
 #
-__version__ = '1.1.3'
+__version__ = '1.1.7'
 
 ## These are for debugging imports
 import inspect
@@ -37,9 +37,9 @@ def newimp(name, *x):
     if 'chipsec' in name:
         print "%-35s -> %s" % (caller.f_globals.get('__name__'), name)
     return savimp(name, *x)
-## Uncomment this line to display  the imports that chipsec calls
+## Uncomment the following line to display  the imports that chipsec calls
 #__builtin__.__import__ = newimp
-## END DEBUG 
+## END DEBUG
 
 import os
 import re
@@ -49,8 +49,7 @@ import time
 import traceback
 
 import errno
-import chipsec.file
-import chipsec.module
+
 
 _importlib = True
 try:
@@ -76,14 +75,14 @@ class ExitCode:
         self._fail       = False
         self._error      = False
         self._exception  = False
-        
+
     def skipped(self):     self._skipped = True
     def warning(self):     self._warning = True
     def deprecated(self):  self._deprecated = True
     def fail(self):        self._fail = True
     def error(self):       self._error = True
     def exception(self):   self._exception = True
-    
+
     def get_code(self):
         exit_code = ExitCode.OK
         if self._skipped:      exit_code = exit_code | ExitCode.SKIPPED
@@ -93,7 +92,7 @@ class ExitCode:
         if self._error:        exit_code = exit_code | ExitCode.ERROR
         if self._exception:    exit_code = exit_code | ExitCode.EXCEPTION
         return exit_code
-    
+
     def is_skipped(self):     return self._skipped
     def is_warning(self):     return self._warning
     def is_deprecated(self):  return self._deprecated
@@ -112,7 +111,7 @@ class ExitCode:
         self._exception  = ( code & ExitCode.EXCEPTION )  != 0
 
     def __str__(self):
-        return """ 
+        return """
         SKIPPED    = %r
         WARNING    = %r
         DEPRECATED = %r
@@ -127,27 +126,23 @@ class ExitCode:
         self._exception  )
 
 
-CHIPSEC_FOLDER = os.path.abspath(chipsec.file.get_main_dir())
-version="    "
-VERSION_FILE = os.path.join( CHIPSEC_FOLDER , "VERSION" )
-if os.path.exists( VERSION_FILE ):
-    with open(VERSION_FILE, "r") as verFile:
-        version = verFile.read()
 
+import chipsec.file
+import chipsec.module
 from chipsec.helper.oshelper import OsHelperError
-from chipsec.chipset import cs, Chipset_Code, CHIPSET_ID_UNKNOWN, CHIPSET_ID_COMMON, UnknownChipsetError
-from chipsec.file import *
+
 
 class ChipsecMain:
-    
-    def __init__(self):
-        self._cs = cs()
+
+
+    def __init__(self, argv):
         self.VERBOSE = False
+        self.CHIPSEC_FOLDER = os.path.abspath(chipsec.file.get_main_dir())
         self.CHIPSEC_LOADED_AS_EXE = chipsec.file.main_is_frozen()
         self.USER_MODULE_TAGS = []
         self.ZIP_MODULES_RE = None
         self.Import_Path             = "chipsec.modules."
-        self.Modules_Path            = os.path.join(CHIPSEC_FOLDER,"chipsec","modules")
+        self.Modules_Path            = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
         self.IMPORT_PATHS            = []
         self.Loaded_Modules  = []
         self._list_tags = False
@@ -155,10 +150,27 @@ class ChipsecMain:
         self.MODPATH_RE      = re.compile("^\w+(\.\w+)*$")
         self.failfast = False
         self.no_time = False
-    
+        self._output         = 'chipsec.log'
+        self._module         = None
+        self._module_argv    = None
+        self._platform       = None
+        self._start_svc      = True
+        self._no_driver      = False
+        self._unkownPlatform = True
+        self._list_tags      = False
+        self.version="    "
+        self.VERSION_FILE = os.path.join( self.CHIPSEC_FOLDER , "VERSION" )
+        if os.path.exists( self.VERSION_FILE ):
+            with open(self.VERSION_FILE, "r") as verFile:
+                self.version = verFile.read()
+        self.argv = argv
+        self.parse_args()
+        from chipsec.chipset import cs
+        self._cs = cs()
+
     def get_chipsec_version(self):
         return "%s"% (__version__)
-    
+
     def print_banner(self):
         logger().log( '' )
         logger().log( "################################################################\n"
@@ -167,20 +179,22 @@ class ChipsecMain:
                       "##                                                            ##\n"
                       "################################################################" )
         logger().log( "Version %s" % self.get_chipsec_version() )
-   
+        logger().log('')
+        logger().log( "Arguments: \n%s"% " ".join(self.argv) )
+
     ##################################################################################
     # Module API
     ##################################################################################
     def f_mod(self,x):
         return ( x.find('__init__') == -1 and ZIP_MODULES_RE.match(x) )
-    
+
     def map_modname(self,x):
         return (x.rpartition('.')[0]).replace('/','.')
         #return ((x.split('/', 2)[2]).rpartition('.')[0]).replace('/','.')
-    
+
     def map_pass(self,x):
         return x
-    
+
     def import_module(self,module_path):
         module = None
         if not self.MODPATH_RE.match(module_path):
@@ -199,7 +213,7 @@ class ChipsecMain:
                 if logger().VERBOSE: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
         return module
-    
+
     def verify_module_tags(self,module):
         run_it = True
         if len(self.USER_MODULE_TAGS) > 0 or self._list_tags:
@@ -211,8 +225,8 @@ class ChipsecMain:
                 elif mt in  self.USER_MODULE_TAGS:
                     run_it = True
         return run_it
-    
-    
+
+
     def old_run_module( self, module_path, module_argv ):
         module_path = module_path.replace( os.sep, '.' )
         module = self.import_module(module_path)
@@ -237,14 +251,14 @@ class ChipsecMain:
                     if mt not in self.AVAILABLE_TAGS: self.AVAILABLE_TAGS.append(mt)
                 elif mt in  self.USER_MODULE_TAGS:
                     run_it = True
-    
+
         if module_argv:
             logger().log( "[*] Module arguments (%d):" % len(module_argv) )
             logger().log( module_argv )
         else:
             module_argv = []
-        
-    
+
+
         if run_it:
             try:
                 result = False
@@ -254,7 +268,7 @@ class ChipsecMain:
                 #    result = getattr( module, 'run' )( module_argv )
                 #else:
                 #    exec ('result = ' + module_path + '.run(module_argv)')
-                return result 
+                return result
             except (None,Exception) , msg:
                 if logger().VERBOSE: logger().log_bad(traceback.format_exc())
                 logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (module_path, str(msg)) )
@@ -262,27 +276,27 @@ class ChipsecMain:
         else:
             from chipsec.module_common import ModuleResult
             return ModuleResult.SKIPPED
-        
-    
-    
+
+
+
     def run_module( self, modx, module_argv ):
         from chipsec.module_common import ModuleResult
         result = None
         try:
             if not modx.do_import(): return ModuleResult.ERROR
             if not self._list_tags: logger().log( "[*] Module path: %s" % modx.get_location() )
-    
+
             if self.verify_module_tags( modx ):
                 result = modx.run( module_argv )
             else:
-                return ModuleResult.SKIPPED    
+                return ModuleResult.SKIPPED
         except BaseException , msg:
             if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (modx.get_name(), str(msg)) )
             raise msg
         return result
-    
-    ## 
+
+    ##
     # full_path can be one of three things:
     # 1. the actual full path to the py or pyc file  i.e. c:\some_path\chipsec\modules\common\bios_wp.py
     # 2. a path to the pyc file inside a zip file    i.e. chipsec/modules/common/bios_wp.pyc
@@ -290,8 +304,8 @@ class ChipsecMain:
     def get_module_name( self, full_path):
         name = full_path
         # case #1, the full path: remove prefix
-        if full_path.startswith(CHIPSEC_FOLDER+os.path.sep):
-            name = full_path.replace ( CHIPSEC_FOLDER+os.path.sep, '')
+        if full_path.startswith(self.CHIPSEC_FOLDER+os.path.sep):
+            name = full_path.replace ( self.CHIPSEC_FOLDER+os.path.sep, '')
         else:
             for path in self.IMPORT_PATHS:
                 if full_path.startswith(os.path.abspath(path)+os.path.sep):
@@ -303,15 +317,15 @@ class ChipsecMain:
         name = name.replace( os.path.sep, '.' )
         # case #2: when in a zip it is always forward slash
         name = name.replace( '/', '.' )
-    
+
         # Add 'chipsec.modules.' if shor module name was provided and alternative import paths were not specified
         if [] == self.IMPORT_PATHS and not name.startswith( self.Import_Path ):
             name = self.Import_Path + name
-    
+
         return name
-    
-    
-    
+
+
+
     #
     # module_path is a file path relative to chipsec
     # E.g. chipsec/modules/common/module.py
@@ -319,29 +333,30 @@ class ChipsecMain:
     def load_module( self, module_path, module_argv ):
         module_name =  self.get_module_name(module_path)
         module = chipsec.module.Module(module_name)
-    
-        if module not in self.Loaded_Modules:              
+
+        if module not in self.Loaded_Modules:
             self.Loaded_Modules.append( (module,module_argv) )
-            if not self._list_tags: logger().log( "[+] loaded %s" % module.get_name() ) 
+            if not self._list_tags: logger().log( "[+] loaded %s" % module.get_name() )
         return True
-    
+
     # @TODO: Fix it!
     def unload_module( self, module_path ):
         if module_path in self.Loaded_Modules:
             self.Loaded_Modules.remove( module_path )
         return True
-    
+
     def load_modules_from_path( self, from_path, recursive = True ):
         if logger().VERBOSE: logger().log( "[*] Path: %s" % os.path.abspath( from_path ) )
         for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ) :
-            if not recursive:  
-                while len(subdirs) > 0:  
-                    subdirs.pop()  
+            if not recursive:
+                while len(subdirs) > 0:
+                    subdirs.pop()
             for modx in mod_fnames:
                 if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
                     self.load_module( os.path.join( dirname, modx ), None )
-    
+
     def load_my_modules(self):
+        from chipsec.chipset import CHIPSET_ID_UNKNOWN
         #
         # Step 1.
         # Load modules common to all supported platforms
@@ -364,27 +379,27 @@ class ChipsecMain:
         # Enumerate all modules from the root module directory
         logger().log( "[*] loading modules from \"%s\" .." % self.Modules_Path.replace(os.getcwd(),'.') )
         self.load_modules_from_path( self.Modules_Path, False )
-    
-        
+
+
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
             logger().log( "[*] loading modules from \"%s\" .." % import_path )
             self.load_modules_from_path(import_path)
-    
+
     def clear_loaded_modules(self):
         del self.Loaded_Modules[:]
-    
-    
+
+
     def print_loaded_modules(self):
         if self.Loaded_Modules == []:
             logger().log( "No modules have been loaded" )
         for (modx,modx_argv) in self.Loaded_Modules:
             logger().log( modx )
-    
-    
+
+
     def run_loaded_modules(self):
         from chipsec.module_common import ModuleResult
-    
+
         failed   = []
         errors   = []
         warnings = []
@@ -393,14 +408,14 @@ class ChipsecMain:
         exceptions = []
         executed = 0
         exit_code = ExitCode()
-        
+
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
-    
+
         t = time.time()
         for (modx,modx_argv) in self.Loaded_Modules:
-            executed += 1 
+            executed += 1
             if not self._list_tags: logger().start_module( modx.get_name( ) )
-            # Run the module 
+            # Run the module
             try:
                 result = self.run_module( modx, modx_argv )
             except BaseException:
@@ -419,9 +434,9 @@ class ChipsecMain:
                     exit_code.exception()
                     result = ModuleResult.ERROR
                     if self.failfast: raise
-        
+
             if not self._list_tags: logger().end_module( modx.get_name() )
-            
+
             if None == result or ModuleResult.ERROR == result:
                 errors.append( modx )
                 exit_code.error()
@@ -436,8 +451,8 @@ class ChipsecMain:
             elif ModuleResult.SKIPPED == result:
                 exit_code.skipped()
                 skipped.append( modx )
-    
-    
+
+
         if not self._list_tags:
             logger().log( "" )
             logger().log( "[CHIPSEC] ***************************  SUMMARY  ***************************" )
@@ -462,19 +477,19 @@ class ChipsecMain:
         else:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    %s"%at)
-    
+
         return exit_code.get_code()
-    
-    
-    
+
+
+
     ##################################################################################
     # Running all chipset configuration security checks
     ##################################################################################
-    
+
     def run_all_modules(self):
         if self.CHIPSEC_LOADED_AS_EXE:
             import zipfile
-            myzip = zipfile.ZipFile( os.path.join(CHIPSEC_FOLDER, "library.zip" ))
+            myzip = zipfile.ZipFile( os.path.join(self.CHIPSEC_FOLDER, "library.zip" ))
             global ZIP_MODULES_RE
             ZIP_MODULES_RE = re.compile("^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/"+self._cs.code.lower()+"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
             zip_modules = []
@@ -489,17 +504,18 @@ class ChipsecMain:
             self.load_my_modules()
         self.load_user_modules()
         return self.run_loaded_modules()
-    
-    
-    
-    
+
+
+
+
     def usage(self):
+        from chipsec.chipset import Chipset_Code
         print "\nUSAGE: %.65s [options]" % sys.argv[0]
         print "OPTIONS:"
         print "-m --module             specify module to run (example: -m common.bios)"
         print "-a --module_args        additional module arguments, format is 'arg0,arg1..'"
         print "-v --verbose            verbose mode"
-        print "-l --log                output to log file"  
+        print "-l --log                output to log file"
         print "\nADVANCED OPTIONS:"
         print "-p --platform           explicitly specify platform code. Should be among the supported platforms:"
         print "                        [ %s ]" % (" | ".join( ["%.4s" % c for c in Chipset_Code]))
@@ -519,54 +535,41 @@ class ChipsecMain:
         print "        Bit 3: FAIL       at least one module failed"
         print "        Bit 4: ERROR      at least one module wasn't able to run"
         print "        Bit 5: EXCEPTION  at least one module thrown an unexpected exceptions"
-    
-    ##################################################################################
-    # Entry point for command-line execution
-    ##################################################################################
-    
-    def main ( self, argv ):
+
+
+    def parse_args(self):
         import getopt
         try:
-            opts, args = getopt.getopt(argv, "ip:m:ho:vea:nl:t:x:I:",
+            opts, args = getopt.getopt(self.argv, "ip:m:ho:vea:nl:t:x:I:",
             ["ignore_platform", "platform=", "module=", "help", "output=",
-              "verbose", "exists", "module_args=", "no_driver", "log=",  
+              "verbose", "exists", "module_args=", "no_driver", "log=",
               "moduletype=", "xml=","list_tags", "include", "failfast","no_time"])
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
             return ExitCode.EXCEPTION
-    
-        _output         = 'chipsec.log'
-        _module         = None
-        _module_argv    = None
-        _platform       = None
-        _start_svc      = True
-        _no_driver      = False
-        _unkownPlatform = True
-        _list_tags      = False
-    
-    
+
         for o, a in opts:
             if o in ("-v", "--verbose"):
                 logger().VERBOSE = True
-                #logger().log( "[*] Verbose mode is ON (-v command-line option or chipsec_main.logger().VERBOSE in Python console)" )
+                #logger().log( "[*] Verbose mode is ON" )
             elif o in ("-h", "--help"):
                 self.usage()
                 return 0
             elif o in ("-o", "--output"):
-                _output = a
+                self._output = a
             elif o in ("-p", "--platform"):
-                _platform = a.upper()
+                self._platform = a.upper()
             elif o in ("-m", "--module"):
                 #_module = a.lower()
-                _module = a
+                self._module = a
             elif o in ("-a", "--module_args"):
-                _module_argv = a.split(',')
+                self._module_argv = a.split(',')
             elif o in ("-e", "--exists"):
-                _start_svc = False
+                self._start_svc = False
             elif o in ("-i", "--ignore_platform"):
                 logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
-                _unkownPlatform = False
+                self._unkownPlatform = False
             elif o in ("-l", "--log"):
                 #logger().log( "[*] Output to log file '%s' (--log option or chipsec_main.logger().set_log_file in Python console)" % a )
                 logger().set_log_file( a )
@@ -575,7 +578,7 @@ class ChipsecMain:
                 for tag in usertags:
                     self.USER_MODULE_TAGS.append(tag)
             elif o in ("-n", "--no_driver"):
-                _no_driver = True
+                self._no_driver = True
             elif o in ("-x", "--xml"):
                 logger().set_xml_file(a)
             elif o in ("--list_tags"):
@@ -588,25 +591,32 @@ class ChipsecMain:
                 self.no_time = True
             else:
                 assert False, "unknown option"
-    
+
+    ##################################################################################
+    # Entry point for command-line execution
+    ##################################################################################
+
+    def main ( self ):
+        from chipsec.chipset import  UnknownChipsetError
         self.print_banner()
-    
+
+
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath( import_path ) )
-    
+
         # If no driver needed, we won't start/stop service
-        if _no_driver: _start_svc = False
-    
+        if self._no_driver: _start_svc = False
+
         try:
             # If no driver needed, we won't initialize chipset with automatic platform detection
-            if not _no_driver: self._cs.init( _platform, _start_svc )
+            if not self._no_driver: self._cs.init( self._platform, self._start_svc )
         except UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
-            if _unkownPlatform:
+            if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().VERBOSE: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
-                return  ExitCode.EXCEPTION 
+                return  ExitCode.EXCEPTION
             logger().warn("Platform dependent functionality is likely to be incorrect")
         except OsHelperError as os_helper_error:
             logger().error(str(os_helper_error))
@@ -617,8 +627,8 @@ class ChipsecMain:
             logger().log_bad(traceback.format_exc())
             if self.failfast: raise be
             return ExitCode.EXCEPTION
-            
-    
+
+
         _ver = self.get_chipsec_version()
         logger().log( " " )
         logger().log( "OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
@@ -628,25 +638,25 @@ class ChipsecMain:
         logger().xmlAux.add_test_suite_property( "Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did) )
         logger().xmlAux.add_test_suite_property( "CHIPSEC", "%s" % _ver )
         logger().log( " " )
-    
+
         if logger().VERBOSE: logger().log("[*] Running from %s" % os.getcwd())
-    
+
         modules_failed = 0
-        if _module:
-            self.load_module( _module, _module_argv )
+        if self._module:
+            self.load_module( self._module, self._module_argv )
             modules_failed = self.run_loaded_modules()
             #unload_module( _module );
         else:
             modules_failed = self.run_all_modules()
-    
+
         logger().saveXML()
-    
-        self._cs.destroy( _start_svc )
+
+        self._cs.destroy( self._start_svc )
         del self._cs
         logger().disable()
         return modules_failed
 
 if __name__ == "__main__":
-    chipsecMain = ChipsecMain()
-    ec = chipsecMain.main(sys.argv[1:])
+    chipsecMain = ChipsecMain(sys.argv[1:])
+    ec = chipsecMain.main()
     sys.exit(ec)

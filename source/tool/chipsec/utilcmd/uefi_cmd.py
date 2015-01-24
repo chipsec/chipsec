@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -95,7 +95,6 @@ def uefi(argv):
 
     filename = None
     if ( 'var-read' == op ):
-
         if (4 < len(argv)):
             name = argv[3]
             guid = argv[4]
@@ -219,5 +218,4 @@ def uefi(argv):
     logger().log( "[CHIPSEC] (uefi) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['uefi'] = {'func' : uefi,    'start_driver' : False, 'help' : usage }
-
+chipsec_util.commands['uefi'] = {'func' : uefi, 'start_driver' : False, 'help' : usage }

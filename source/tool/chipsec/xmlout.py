@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@ class xmlAux:
                 self.testCase = xmlTestCase( "test name", "class.name" )
             else:
                 self.testCase = xmlTestCase( self.class_name, self.class_name )
-                
+
     def _end_test(self):
         try:
             self.testCase.set_time()
@@ -291,9 +291,9 @@ class xmlTestSuite(object):
         except TypeError:
             raise Exception('test_suite has no test cases')
 
-        strXML = TestSuite.to_xml_string( TestSuite(self.name,       self.test_cases, 
-                                                     self.hostname,  self.ts_id, self.package, 
-                                                     self.timestamp, self.properties) 
+        strXML = TestSuite.to_xml_string( TestSuite(self.name,       self.test_cases,
+                                                     self.hostname,  self.ts_id, self.package,
+                                                     self.timestamp, self.properties)
                                           )
         return strXML
 
@@ -423,4 +423,3 @@ class TestSuite(object):
             xml_string = xml.dom.minidom.parseString(xml_string).toprettyxml()
 
         return xml_string
-

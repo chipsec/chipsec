@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -62,15 +62,16 @@ class MsrRuntimeError (RuntimeError):
 
 class Msr:
 
-    def __init__( self, helper ):
-        self.helper = helper
+    def __init__( self, cs ):
+        self.helper = cs.helper
+        self.cs = cs
 
     def get_cpu_thread_count( self ):
         thread_count = self.helper.get_threads_count()
         if thread_count is None or thread_count <= 0:
             if logger().VERBOSE: logger().log( "helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)" )
             (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
-            thread_count = (cnt & Cfg.IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
+            thread_count = (core_thread_count & Cfg.IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
 
         if 0 == thread_count: thread_count = 1
         if logger().VERBOSE: logger().log( "[cpu] # of logical CPUs: %d" % thread_count )
@@ -110,19 +111,19 @@ class Msr:
     def get_IDTR( self, cpu_thread_id ):
         (limit,base,pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR )
         if logger().VERBOSE:
-           logger().log( "[cpu%d] IDTR Limit = 0x%04X, Base = 0x%016X, Physical Address = 0x%016X" % (cpu_thread_id,limit,base,pa) )
+            logger().log( "[cpu%d] IDTR Limit = 0x%04X, Base = 0x%016X, Physical Address = 0x%016X" % (cpu_thread_id,limit,base,pa) )
         return (limit,base,pa)
 
     def get_GDTR( self, cpu_thread_id ):
         (limit,base,pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR )
         if logger().VERBOSE:
-           logger().log( "[cpu%d] GDTR Limit = 0x%04X, Base = 0x%016X, Physical Address = 0x%016X" % (cpu_thread_id,limit,base,pa) )
+            logger().log( "[cpu%d] GDTR Limit = 0x%04X, Base = 0x%016X, Physical Address = 0x%016X" % (cpu_thread_id,limit,base,pa) )
         return (limit,base,pa)
 
     def get_LDTR( self, cpu_thread_id ):
         (limit,base,pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR )
         if logger().VERBOSE:
-           logger().log( "[cpu%d] LDTR Limit = 0x%04X, Base = 0x%016X, Physical Address = 0x%016X" % (cpu_thread_id,limit,base,pa) )
+            logger().log( "[cpu%d] LDTR Limit = 0x%04X, Base = 0x%016X, Physical Address = 0x%016X" % (cpu_thread_id,limit,base,pa) )
         return (limit,base,pa)
 
 
@@ -137,7 +138,7 @@ class Msr:
         dt = self.helper.read_physical_mem( pa, limit + 1 )
         total_num = len(dt)/16
         if (total_num < num_entries) or (num_entries is None):
-           num_entries = total_num
+            num_entries = total_num
         logger().log( '[cpu%d] Physical Address: 0x%016X' % (cpu_thread_id,pa) )
         logger().log( '[cpu%d] # of entries    : %d' % (cpu_thread_id,total_num) )
         logger().log( '[cpu%d] Contents (%d entries):' % (cpu_thread_id,num_entries) )
@@ -146,10 +147,10 @@ class Msr:
         logger().log( '#    segment:offset         attributes' )
         logger().log( '--------------------------------------' )
         for i in range(0, num_entries):
-          offset = (ord(dt[i*16 + 11]) << 56) | (ord(dt[i*16 + 10]) << 48) | (ord(dt[i*16 + 9]) << 40) | (ord(dt[i*16 + 8]) << 32) | (ord(dt[i*16 + 7]) << 24) | (ord(dt[i*16 + 6]) << 16) | (ord(dt[i*16 + 1]) << 8) | ord(dt[i*16 + 0])
-          segsel = (ord(dt[i*16 + 3]) << 8) | ord(dt[i*16 + 2])
-          attr   = (ord(dt[i*16 + 5]) << 8) | ord(dt[i*16 + 4])
-          logger().log( '%03d  %04X:%016X  0x%04X' % (i,segsel,offset,attr) )
+            offset = (ord(dt[i*16 + 11]) << 56) | (ord(dt[i*16 + 10]) << 48) | (ord(dt[i*16 + 9]) << 40) | (ord(dt[i*16 + 8]) << 32) | (ord(dt[i*16 + 7]) << 24) | (ord(dt[i*16 + 6]) << 16) | (ord(dt[i*16 + 1]) << 8) | ord(dt[i*16 + 0])
+            segsel = (ord(dt[i*16 + 3]) << 8) | ord(dt[i*16 + 2])
+            attr   = (ord(dt[i*16 + 5]) << 8) | ord(dt[i*16 + 4])
+            logger().log( '%03d  %04X:%016X  0x%04X' % (i,segsel,offset,attr) )
 
         return (pa,dt)
 
@@ -166,4 +167,3 @@ class Msr:
     def GDT_all( self, num_entries=None ):
         for tid in range(self.get_cpu_thread_count()):
             self.GDT( tid, num_entries )
-

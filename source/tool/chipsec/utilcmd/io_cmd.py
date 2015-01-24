@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -68,7 +68,7 @@ def port_io(argv):
 
     try:
         io_port = int(argv[2],16)
-       
+
         if 3 == len(argv):
             width = 1
         else:
@@ -109,4 +109,3 @@ def port_io(argv):
         logger().log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
 
 chipsec_util.commands['io'] = {'func' : port_io, 'start_driver' : True, 'help' : usage  }
-

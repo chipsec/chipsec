@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@
 
 
 
-#THIS FILE WAS GENERATED 
+#THIS FILE WAS GENERATED
 
 
 ## \addtogroup hal
@@ -1654,7 +1654,7 @@ DEVICES = {
 0x0483 : { 0x2016 : "Driver Windows 7",
          },
 0x04B3 : { 0x24D5 : "Audio Controller",
-           0x401	 : "PCIVEN_8086&DEV_293E&SUBSYS_20F217AA&REV_033&B1BFB68&0&D8	",
+           0x401         : "PCIVEN_8086&DEV_293E&SUBSYS_20F217AA&REV_033&B1BFB68&0&D8   ",
            0x401 : "PCIVEN_8086&DEV_24C5&REV_013",
            0x4010 : "PCIVEN_8086&DEV_1C22&SUBSYS_FCD01179&REV_04",
            0x9876 : "PCIVEN_8086&DEV_293E&SUBSYS_20F217AA&REV_033&B1BFB68&0&D8",
@@ -2292,7 +2292,7 @@ DEVICES = {
            0x5a23 : "RD890",
            0x5a31 : "RS400/133",
            0x5A33 : "RC410",
-           0x5A41 : "0x5A41	ATI RADEON Xpress 1200 Series	0x1002",
+           0x5A41 : "0x5A41     ATI RADEON Xpress 1200 Series   0x1002",
            0x5A41 : "RS400",
            0x5A42 : "RS400M",
            0x5A43 : "RS400",
@@ -4101,7 +4101,7 @@ DEVICES = {
          },
 0x109E : { 0x0350 : "rb8701.1",
            0x0350 : "tv tuner driverhj",
-           0x0351 : "BrookTree Bt848 Video Capture Device - Audio Section	PCI",
+           0x0351 : "BrookTree Bt848 Video Capture Device - Audio Section       PCI",
            0x0369 : "Video Capture",
            0x036C : "",
            0x036E : "AVerMediaAverTV WDM AudioCapture (878)",
@@ -8176,7 +8176,7 @@ DEVICES = {
            0x7C12 : "RADEON 9200 ATLANTIS - Secondary",
            0x7C13 : "RADEON 9200 ATLANTIS",
            0x9501 : "ATI Radeon HD 3450",
-           0xE106 : "Graphics Chipset	ATI Radeon HD 4300/4500 Series       	",
+           0xE106 : "Graphics Chipset   ATI Radeon HD 4300/4500 Series          ",
            0xe131 : "ATI 4870",
            0xE140 : "Sapphire HD 5870 1GB GDDR5",
          },
@@ -9098,7 +9098,7 @@ DEVICES = {
            0x27D2 : "Intel(R) 82801G (ICH7 Family) PCI Express Root Port",
            0x27d8 : "Realtek High Definition Audio Driver FF311179 thequetta.com",
            0x27d8 : "Microsoft UAA Bus HD Audio",
-           0x27D9 : "IDT High Definition Audio Driver	",
+           0x27D9 : "IDT High Definition Audio Driver   ",
            0x27DA : "Intel[R] 82801G (ICH7 Family) C- 27DA",
            0x27DC : "Intel PRO/100 VE Desktop Adapter",
            0x27DC : "Intel PRO/100 VE Desktop Adapter",

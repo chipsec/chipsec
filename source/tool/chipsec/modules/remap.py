@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -36,7 +36,7 @@ _REMAP_ADDR_MASK = 0x7FFFF00000
 _TOLUD_MASK      = 0xFFFFF000
 
 class remap(BaseModule):
-    
+
     def __init__(self):
         BaseModule.__init__(self)
 
@@ -47,7 +47,7 @@ class remap(BaseModule):
 
     def check_remap_config(self):
         self.logger.start_test( "Memory Remapping Configuration" )
-    
+
         if not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_REMAPBASE'  ) or \
            not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_REMAPLIMIT' ) or \
            not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_TOUUD'      ) or \
@@ -83,7 +83,7 @@ class remap(BaseModule):
         self.logger.log( "[*]   Top Of Upper Memory: 0x%016X" % touud )
         self.logger.log( "[*]   Remap Limit Address: 0x%016X" % (remaplimit|0xFFFFF) )
         self.logger.log( "[*]   Remap Base Address : 0x%016X" % remapbase )
-        self.logger.log( "[*]   4GB                : 0x%016X" % Cfg.BIT32 )
+        self.logger.log( "[*]   4GB                : 0x%016X" % self.cs.Cfg.BIT32 )
         self.logger.log( "[*]   Top Of Low Memory  : 0x%016X" % tolud )
         self.logger.log( "[*]   TSEG (SMRAM) Base  : 0x%016X\n" % tsegmb )
 
@@ -100,10 +100,10 @@ class remap(BaseModule):
             if ok: self.logger.log_good( "  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD" )
             else:  self.logger.log_bad( "  Remap window configuration is not correct" )
 
-        ok = (0 == tolud & Cfg.ALIGNED_1MB)     and \
-             (0 == touud & Cfg.ALIGNED_1MB)     and \
-             (0 == remapbase & Cfg.ALIGNED_1MB) and \
-             (0 == remaplimit & Cfg.ALIGNED_1MB)
+        ok = (0 == tolud & self.cs.Cfg.ALIGNED_1MB)     and \
+             (0 == touud & self.cs.Cfg.ALIGNED_1MB)     and \
+             (0 == remapbase & self.cs.Cfg.ALIGNED_1MB) and \
+             (0 == remaplimit & self.cs.Cfg.ALIGNED_1MB)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good( "  All addresses are 1MB aligned" )
         else:  self.logger.log_bad( "  Not all addresses are 1MB aligned" )
@@ -127,9 +127,9 @@ class remap(BaseModule):
         self.logger.log('')
         if remap_ok: self.logger.log_passed_check( "Memory Remap is configured correctly and locked" )
         else:        self.logger.log_failed_check( "Memory Remap is not properly configured/locked. Remaping attack may be possible" )
-    
+
         return remap_ok
-    
+
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module

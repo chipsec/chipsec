@@ -2,6 +2,18 @@
 #include <sched.h>
 #include <errno.h>
 
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <asm/types.h>
+#include <linux/types.h>
+#define u64 uint64_t
+#include "../../../../drivers/linux/include/chipsec.h"
+
+#define BUF_LEN 4096
 /* Not using currently
 unsigned long getaffinity(){
 	cpu_set_t mask;

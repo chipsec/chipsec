@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup core 
+## \addtogroup core
 # __chipsec/chipset.py__ -- Contains platform identification functions
 #
 #
@@ -46,16 +46,20 @@ from chipsec.hal.physmem     import Memory
 from chipsec.hal.msr         import Msr
 from chipsec.hal.ucode       import Ucode
 from chipsec.hal.io          import PortIO
+from chipsec.hal.cr          import CrRegs
 from chipsec.hal.cpuid       import CpuID
-from chipsec.hal.mmio        import *
+#from chipsec.hal.mmio        import *
 
-from chipsec.cfg.common      import Cfg 
-from chipsec.logger         import logger
+import chipsec.hal.mmio as mmio
+import chipsec.hal.iobar as iobar 
+
+from chipsec.cfg.common      import Cfg
+from chipsec.logger          import logger
 
 import chipsec.file
 
 import importlib
-import traceback 
+import traceback
 #_importlib = True
 #try:                import importlib
 #except ImportError: _importlib = False
@@ -64,12 +68,12 @@ import traceback
 
 
 class RegisterType:
-  PCICFG = 'pcicfg'
-  MMCFG  = 'mmcfg'
-  MMIO   = 'mmio'
-  MSR    = 'msr'
-  PORTIO = 'io'
-  IOBAR  = 'iobar'
+    PCICFG = 'pcicfg'
+    MMCFG  = 'mmcfg'
+    MMIO   = 'mmio'
+    MSR    = 'msr'
+    PORTIO = 'io'
+    IOBAR  = 'iobar'
 
 
 ##################################################################################
@@ -141,6 +145,8 @@ Chipset_Dictionary = {
 #
 # Atom based SoC platforms
 #
+0x1F07 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F01 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 
 # Galileo Board
 0x0958 : {'name' : 'Galileo ',       'id' : CHIPSET_ID_QRK , 'code' : CHIPSET_CODE_QRK,  'longname' : 'Intel Quark SoC X1000' },
@@ -151,7 +157,7 @@ try:
     from custom_chipsets import *
 except :
     pass
- 
+
 Chipset_Code = dict( [(Chipset_Dictionary[ _did ]['code'], _did) for _did in Chipset_Dictionary] )
 
 def print_supported_chipsets():
@@ -160,25 +166,29 @@ def print_supported_chipsets():
     logger().log( "\nSupported platforms:\n" )
     logger().log( "DID     | Name           | Code   | Long Name" )
     logger().log( "-------------------------------------------------------------------------------------" )
-    for _code in sorted(codes_dict):    
+    for _code in sorted(codes_dict):
         for _did in codes_dict[_code]:
             logger().log( " %-#6x | %-14s | %-6s | %-40s" % (_did, Chipset_Dictionary[_did]['name'], _code.lower(), Chipset_Dictionary[_did]['longname']) )
 
 
 def f_xml(self, x):
-        XMLFILE_RE = re.compile("^\w+\.xml")
-        return ( x.find('common') == -1 and XMLFILE_RE.match(x) )
+    XMLFILE_RE = re.compile("^\w+\.xml")
+    return ( x.find('common') == -1 and XMLFILE_RE.match(x) )
 def map_xmlname(self, x):
-        return x.split('.')[0]
+    return x.split('.')[0]
 
 
 
 class UnknownChipsetError (RuntimeError):
     pass
 
+class DeviceNotFoundError (RuntimeError):
+    pass
+
 class Chipset:
 
     def __init__(self, helper=None):
+        if logger().VERBOSE: logger().log("[Chipset] __init__")
         if helper is None:
             self.helper = OsHelper()
         else:
@@ -195,12 +205,13 @@ class Chipset:
         # Initializing 'basic primitive' HAL components
         # (HAL components directly using native OS helper functionality)
         #
-        self.pci    	= Pci      ( self.helper )
-        self.mem    	= Memory   ( self.helper )
-        self.msr    	= Msr      ( self.helper )
-        self.ucode  	= Ucode    ( self.helper )
-        self.io     	= PortIO   ( self.helper )
-        self.cpuid      = CpuID    ( self.helper )
+        self.pci        = Pci      ( self )
+        self.mem        = Memory   ( self )
+        self.msr        = Msr      ( self )
+        self.ucode      = Ucode    ( self )
+        self.io         = PortIO   ( self )
+        self.cr         = CrRegs   ( self )
+        self.cpuid      = CpuID    ( self )
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -234,12 +245,33 @@ class Chipset:
         else:
             raise UnknownChipsetError, ('UnsupportedPlatform: Device ID = 0x%04X' % self.did)
         self.init_cfg()
-        
 
+    def destroy( self, start_svc ):
+        self.stop( start_svc )
+        #self.helper.destroy()
+
+    def stop( self, start_svc ):
+        if start_svc: self.helper.stop()
+
+    def get_chipset_id(self):
+        return self.id
+
+    def get_chipset_code(self):
+        return self.code
+
+    def get_chipset_name(self, id ):
+        return self.longname
+
+    def print_chipset(self):
+        logger().log( "Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
+
+
+    ##################################################################################
     #
-    # @TODO: EXPERIMENTAL FEATURE
-    # Load configuration from XML files in chipsec/cfg/
-    #  
+    # Loading platform configuration from XML files in chipsec/cfg/
+    #
+    ##################################################################################
+
     def init_xml_configuration( self ):
         _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
         # Load chipsec/cfg/common.xml configuration XML file common for all platforms if it exists
@@ -250,7 +282,7 @@ class Chipset:
         # Load configuration from all other XML files recursively (if any)
         for dirname, subdirs, xml_fnames in os.walk( _cfg_path ):
             for _xml in xml_fnames:
-                if fnmatch.fnmatch( _xml, '*.xml' ) and not fnmatch.fnmatch( _xml, 'common.xml' ) and not (_xml in ['%s.xml' % c.lower() for c in Chipset_Code]):                
+                if fnmatch.fnmatch( _xml, '*.xml' ) and not fnmatch.fnmatch( _xml, 'common.xml' ) and not (_xml in ['%s.xml' % c.lower() for c in Chipset_Code]):
                     self.init_cfg_xml( os.path.join(dirname,_xml), self.code )
         self.Cfg.XML_CONFIG_LOADED = True
 
@@ -258,15 +290,23 @@ class Chipset:
     def init_cfg_xml(self, fxml, code):
         import xml.etree.ElementTree as ET
         if not os.path.exists( fxml ): return
-        logger().log( "[*] loading platform config from '%s'.." % fxml )
+        if logger().VERBOSE: logger().log( "[*] looking for platform config in '%s'.." % fxml )
         tree = ET.parse( fxml )
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
-                if logger().VERBOSE: logger().log_good( "found common platform config" )
+                logger().log( "[*] loading common platform config from '%s'.." % fxml )
             elif code == _cfg.attrib['platform'].lower():
-                if logger().VERBOSE: logger().log_good( "found '%s' platform config" % code )
+                logger().log( "[*] loading '%s' platform config from '%s'.." % (code,fxml) )
             else: continue
+
+            if logger().VERBOSE: logger().log( "[*] loading integrated devices/controllers.." )
+            for _pci in _cfg.iter('pci'):
+                for _device in _pci.iter('device'):
+                    _name = _device.attrib['name']
+                    del _device.attrib['name']
+                    self.Cfg.CONFIG_PCI[ _name ] = _device.attrib
+                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _device.attrib) )
             if logger().VERBOSE: logger().log( "[*] loading MMIO BARs.." )
             for _mmio in _cfg.iter('mmio'):
                 for _bar in _mmio.iter('bar'):
@@ -293,16 +333,18 @@ class Chipset:
                 for _register in _registers.iter('register'):
                     _name = _register.attrib['name']
                     del _register.attrib['name']
+                    if 'size' not in _register.attrib: _register.attrib['size'] = "0x4"
+                    if 'desc' not in _register.attrib: _register.attrib['desc'] = ''
                     reg_fields = {}
                     if _register.find('field') is not None:
                         for _field in _register.iter('field'):
                             _field_name = _field.attrib['name']
                             del _field.attrib['name']
+                            if 'desc' not in _field.attrib: _field.attrib['desc'] = ''
                             reg_fields[ _field_name ] = _field.attrib
                         _register.attrib['FIELDS'] = reg_fields
                     self.Cfg.REGISTERS[ _name ] = _register.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _register.attrib) )
-
 
     #
     # Load chipsec/cfg/<code>.py configuration file for platform <code>
@@ -310,7 +352,7 @@ class Chipset:
     def init_cfg(self):
         if self.code and '' != self.code:
             try:
-                module_path = 'chipsec.cfg.' + self.code 
+                module_path = 'chipsec.cfg.' + self.code
                 module = importlib.import_module( module_path )
                 logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % self.code )
                 self.Cfg = getattr( module, self.code )()
@@ -327,36 +369,47 @@ class Chipset:
             pass
 
 
-    def destroy( self, start_svc ):
-        self.stop( start_svc )
-        #self.helper.destroy()
+    ##################################################################################
+    #
+    # Functions whcih access configuration of integrated PCI devices (interfaces, controllers)
+    # by device name (defined in XML configuration files)
+    #
+    ##################################################################################
 
-    def stop( self, start_svc ):
-        if start_svc:
-            self.helper.stop()
+    def get_device_BDF( self, device_name ):
+        device = self.Cfg.CONFIG_PCI[ device_name ]
+        if device is None or device == {}: raise DeviceNotFoundError, ('DeviceNotFound: %s' % device_name)
+        b = int(device['bus'],16)
+        d = int(device['dev'],16)
+        f = int(device['fun'],16)
+        return (b,d,f)
 
-    def get_chipset_id(self):
-        return self.id
+    def get_DeviceVendorID( self, device_name ):
+        (b,d,f) = self.get_device_BDF( device_name )
+        return self.pci.get_DIDVID( b, d, f )
 
-    def get_chipset_code(self):
-        return self.code
-
-    def get_chipset_name(self, id ):
-        return self.longname
+    def is_device_enabled( self, device_name ):
+        (b,d,f) = self.get_device_BDF( device_name )
+        return self.pci.is_enabled( b, d, f )
 
 
-    def print_chipset(self):
-        logger().log( "Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
+
+class RegisterNotFoundError (RuntimeError):
+    pass
 
 
 def is_register_defined( _cs, reg_name ):
     try:
         return (_cs.Cfg.REGISTERS[ reg_name ] is not None)
     except KeyError:
-        if logger().VERBOSE: logger().warn( "'%s' register definition not found in XML config" % reg_name)
+        #if logger().VERBOSE: logger().error( "'%s' register definition not found in XML config" % reg_name)
+        #raise RegisterNotFoundError, ('RegisterNotFound: %s' % reg_name)
         return False
 
-def read_register( _cs, reg_name ):
+def get_register_def( _cs, reg_name ):
+    return _cs.Cfg.REGISTERS[ reg_name ]
+        
+def read_register( _cs, reg_name, cpu_thread=0 ):
     reg = _cs.Cfg.REGISTERS[ reg_name ]
     rtype = reg['type']
     reg_value = 0
@@ -373,19 +426,20 @@ def read_register( _cs, reg_name ):
     elif RegisterType.MMCFG == rtype:
         reg_value = mmio.read_mmcfg_reg( _cs, int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16) )
     elif RegisterType.MMIO == rtype:
-        reg_value = mmio.read_MMIO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16) )
+        reg_value = mmio.read_MMIO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16), int(reg['size'],16) )
     elif RegisterType.MSR == rtype:
-        reg_value = _cs.msr.read_msr( int(reg['msr'],16) )
-    elif RegisterType.PORT == rtype:
+        (eax, edx) = _cs.msr.read_msr( cpu_thread, int(reg['msr'],16) )
+        reg_value = (edx << 32) | eax
+    elif RegisterType.PORTIO == rtype:
         port = int(reg['port'],16)
         size = int(reg['size'],16)
         reg_value = _cs.io._read_port( port, size )
     elif RegisterType.IOBAR == rtype:
-        iobar = chipsec.hal.iobar( _cs )
-        reg_value = iobar.read_IO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16) )
+        iobar = chipsec.hal.iobar.iobar( _cs )
+        reg_value = iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
     return reg_value
 
-def write_register( _cs, reg_name, reg_value ):
+def write_register( _cs, reg_name, reg_value, cpu_thread=0 ):
     reg = _cs.Cfg.REGISTERS[ reg_name ]
     rtype = reg['type']
     if RegisterType.PCICFG == rtype:
@@ -397,15 +451,17 @@ def write_register( _cs, reg_name, reg_value ):
         if   1 == size: _cs.pci.write_byte( b, d, f, o, reg_value )
         elif 2 == size: _cs.pci.write_word( b, d, f, o, reg_value )
         elif 4 == size: _cs.pci.write_dword( b, d, f, o, reg_value )
-        elif 8 == size: 
+        elif 8 == size:
             _cs.pci.write_dword( b, d, f, o, (reg_value & 0xFFFFFFFF) )
             _cs.pci.write_dword( b, d, f, o + 4, (reg_value>>32 & 0xFFFFFFFF) )
     elif RegisterType.MMCFG == rtype:
         mmio.write_mmcfg_reg( _cs, int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16), reg_value )
     elif RegisterType.MMIO == rtype:
-        mmio.write_MMIO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16), reg_value )
+        mmio.write_MMIO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16), reg_value, int(reg['size'],16) )
     elif RegisterType.MSR == rtype:
-        _cs.msr.write_msr( int(reg['msr'],16), reg_value )
+        eax = (reg_value & 0xFFFFFFFF)
+        edx = ((reg_value >> 32) & 0xFFFFFFFF)
+        _cs.msr.write_msr( cpu_thread, int(reg['msr'],16), eax, edx )
     elif RegisterType.PORT == rtype:
         port = int(reg['port'],16)
         size = int(reg['size'],16)
@@ -414,12 +470,90 @@ def write_register( _cs, reg_name, reg_value ):
         iobar = chipsec.hal.iobar( _cs )
         iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), reg_value )
 
+def read_register_dict( _cs, reg_name):
+    reg_value = read_register( _cs, reg_name)
+    reg_def = get_register_def( _cs, reg_name)
+    result = reg_def
+    result['value'] = reg_value
+    for f in reg_def['FIELDS']:
+        result['FIELDS'][f]['bit'] = field_bit = int(reg_def['FIELDS'][f]['bit'])
+        result['FIELDS'][f]['size'] = field_size = int(reg_def['FIELDS'][f]['size'])
+        field_mask = 0
+        for i in range(field_size):
+            field_mask = (field_mask << 1) | 1
+        result['FIELDS'][f]['value'] = (reg_value >> field_bit) & field_mask
+    return result
 
-from chipsec.helper.oshelper import helper
-_chipset = Chipset( helper() )
+def get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position=False ):
+    field_attrs = get_register_def( _cs, reg_name )['FIELDS'][field_name]
+    field_bit = int(field_attrs['bit'])
+    field_size = int(field_attrs['size'])
+    field_mask = 0
+    for i in range(field_size):
+        field_mask = (field_mask << 1) | 1
+    if preserve_field_position: return reg_value & (field_mask << field_bit)
+    else:                       return (reg_value >> field_bit) & field_mask
+
+def read_register_field( _cs, reg_name, field_name):
+    reg_value = read_register( _cs, reg_name )
+    return get_register_field( _cs, reg_name, reg_value, field_name )
+
+
+def register_has_field( _cs, reg_name, field_name ):
+    reg_def = get_register_def( _cs, reg_name )
+    return (field_name in reg_def['FIELDS'])
+
+def _register_fields_str( reg_def, reg_val ):
+    reg_fields_str = ''
+    if 'FIELDS' in reg_def:
+      # sort fields by their bit position in the register
+      sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
+      for f in sorted_fields:
+        field_attrs = f[1]
+        field_bit = int(field_attrs['bit'])
+        field_size = int(field_attrs['size'])
+        field_mask = 0
+        for i in range(field_size):
+            field_mask = (field_mask << 1) | 1
+        field_value = (reg_val >> field_bit) & field_mask
+        field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
+        reg_fields_str += ("    [%02d] %-16s = %X%s\n" % (field_bit,f[0],field_value,field_desc))
+
+    if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
+    return reg_fields_str
+
+def print_register( _cs, reg_name, reg_val ):
+    reg = _cs.Cfg.REGISTERS[ reg_name ]
+    rtype = reg['type']
+    reg_str = ''
+    reg_val_str = ("0x%0" + ("%dX" % (int(reg['size'],16)*2))) % reg_val
+    if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
+        b = int(reg['bus'],16)
+        d = int(reg['dev'],16)
+        f = int(reg['fun'],16)
+        o = int(reg['offset'],16)
+        mmcfg_off_str =  ''
+        if RegisterType.MMCFG == rtype:
+            mmcfg_off_str += ", MMCFG + 0x%X" % ((b*32*8 + d*8 + f) * 0x1000 + o)
+        reg_str = "[*] %s = %s << %s (b:d.f %02d:%02d.%d + 0x%X%s)\n" % (reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
+    elif RegisterType.MMIO == rtype:
+        reg_str = "[*] %s = %s << %s (%s + 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+    elif RegisterType.MSR == rtype:
+        reg_str = "[*] %s = %s << %s (MSR 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], int(reg['msr'],16))
+    elif RegisterType.PORTIO == rtype:
+        reg_str = "[*] %s = %s << %s (I/O port 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
+    elif RegisterType.IOBAR == rtype:
+        reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+
+    reg_str += _register_fields_str( reg, reg_val )
+    logger().log( reg_str )
+    return reg_str
+
+
+_chipset = None
+
 def cs():
-    # if _chipset is None: _chipset = Chipset( helper() )
+    global _chipset
+    from chipsec.helper.oshelper import helper
+    if _chipset is None: _chipset = Chipset( helper() )
     return _chipset
-
-
-

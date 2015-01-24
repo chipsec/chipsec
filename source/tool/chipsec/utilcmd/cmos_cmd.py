@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2014, Intel Corporation
+#Copyright (c) 2010-2015, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -65,46 +65,45 @@ usage = "chipsec_util cmos dump\n" + \
 
 def cmos(argv):
     if 3 > len(argv):
-      print usage
-      return
+        print usage
+        return
 
     try:
-       cmos = CMOS(  )
+        cmos = CMOS(  )
     except CmosRuntimeError, msg:
-       print msg
-       return
+        print msg
+        return
 
     op = argv[2]
     t = time.time()
 
     if ( 'dump' == op ):
-       logger().log( "[CHIPSEC] Dumping CMOS memory.." )
-       cmos.dump()
+        logger().log( "[CHIPSEC] Dumping CMOS memory.." )
+        cmos.dump()
     elif ( 'readl' == op ):
-       off = int(argv[3],16)
-       val = cmos.read_cmos_low( off )
-       logger().log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
+        off = int(argv[3],16)
+        val = cmos.read_cmos_low( off )
+        logger().log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
     elif ( 'writel' == op ):
-       off = int(argv[3],16)
-       val = int(argv[4],16)
-       logger().log( "[CHIPSEC] Writing CMOS low byte 0x%X <- 0x%X " % (off, val) )
-       cmos.write_cmos_low( off, val )
+        off = int(argv[3],16)
+        val = int(argv[4],16)
+        logger().log( "[CHIPSEC] Writing CMOS low byte 0x%X <- 0x%X " % (off, val) )
+        cmos.write_cmos_low( off, val )
     elif ( 'readh' == op ):
-       off = int(argv[3],16)
-       val = cmos.read_cmos_high( off )
-       logger().log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
+        off = int(argv[3],16)
+        val = cmos.read_cmos_high( off )
+        logger().log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
     elif ( 'writeh' == op ):
-       off = int(argv[3],16)
-       val = int(argv[4],16)
-       logger().log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
-       cmos.write_cmos_high( off, val )
+        off = int(argv[3],16)
+        val = int(argv[4],16)
+        logger().log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
+        cmos.write_cmos_high( off, val )
     else:
-       logger().error( "unknown command-line option '%.32s'" % op )
-       print usage
-       return
+        logger().error( "unknown command-line option '%.32s'" % op )
+        print usage
+        return
 
     logger().log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
 
 
 chipsec_util.commands['cmos'] = {'func' : cmos,    'start_driver' : True, 'help' : usage  }
-

@@ -22,6 +22,16 @@ PUBLIC _rdmsr
 PUBLIC _wrmsr
 PUBLIC _load_gdt
 PUBLIC _rflags
+PUBLIC ReadCR0
+PUBLIC ReadCR2
+PUBLIC ReadCR3
+PUBLIC ReadCR4
+PUBLIC ReadCR8
+PUBLIC WriteCR0
+PUBLIC WriteCR2
+PUBLIC WriteCR3
+PUBLIC WriteCR4
+PUBLIC WriteCR8
 
 
 ;------------------------------------------------------------------------------
@@ -529,5 +539,59 @@ ReadPCIDword PROC
     ret
 ReadPCIDword ENDP
 
+ReadCR0 PROC
+    xor rax, rax
+    mov rax, cr0
+    ret
+ReadCR0 ENDP
+
+ReadCR2 PROC
+    xor rax, rax
+    mov rax, cr2
+    ret
+ReadCR2 ENDP
+
+ReadCR3 PROC
+    xor rax, rax
+    mov rax, cr3
+    ret
+ReadCR3 ENDP
+
+ReadCR4 PROC
+    xor rax, rax
+    mov rax, cr4
+    ret
+ReadCR4 ENDP
+
+ReadCR8 PROC
+    xor rax, rax
+    mov rax, cr8
+    ret
+ReadCR8 ENDP
+
+WriteCR0 PROC
+    mov cr0, rcx
+    ret
+WriteCR0 ENDP
+
+WriteCR2 PROC
+    mov cr2, rcx
+    ret
+WriteCR2 ENDP
+
+WriteCR3 PROC
+    mov cr3, rcx
+    ret
+WriteCR3 ENDP
+
+WriteCR4 PROC
+    mov cr4, rcx
+    ret
+WriteCR4 ENDP
+
+WriteCR8 PROC
+    mov cr8, rcx
+    ret
+WriteCR8 ENDP
 
 END
