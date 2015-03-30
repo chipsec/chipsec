@@ -50,12 +50,11 @@ from chipsec.file       import *
 
 from chipsec.hal.interrupts import Interrupts
 
-#_cs = cs()
-
 usage = "chipsec_util smi <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]\n\n" + \
         "chipsec_util nmi\n" + \
         "Examples:\n" + \
         "  chipsec_util smi 0xDE 0x0\n" + \
+        "  chipsec_util smi 0xDE 0x0 0xAAAAAAAAAAAAAAAA ..\n" + \
         "  chipsec_util nmi\n\n"
 
 
@@ -75,7 +74,7 @@ def smi(argv):
     SMI_code_port_value = 0xF
     SMI_data_port_value = 0x0
     if (2 == len(argv)):
-        pass
+        print usage
     elif (3 < len(argv)):
         SMI_code_port_value = int(argv[2],16)
         SMI_data_port_value = int(argv[3],16)

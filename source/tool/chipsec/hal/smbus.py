@@ -57,26 +57,21 @@ class SMBus:
     def get_SMBus_HCFG( self ):
         if chipsec.chipset.is_register_defined( self.cs, 'SMBUS_HCFG' ):
             reg_value = chipsec.chipset.read_register( self.cs, 'SMBUS_HCFG' )
+            if logger().HAL: chipsec.chipset.print_register( self.cs, 'SMBUS_HCFG', reg_value )
+            return reg_value
         else:
             raise chipsec.chipset.RegisterNotFoundError, ('RegisterNotFound: SMBUS_HCFG')
 
-        # @TODO: use bit definitions from XML config
-        hcfg = Cfg.SMB_HCFG_REG( reg_value, (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_SPD_WD > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_SSRESET > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_I2C_EN > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_SMB_SMI_EN > 0), (reg_value&Cfg.CFG_REG_PCH_SMB_HCFG_HST_EN > 0) )
-        return hcfg
-
     def display_SMBus_info( self ):
-        logger().log( "[smbus] SMBus Base Address: 0x%04X" % self.get_SMBus_Base_Address() )
-        logger().log( self.get_SMBus_HCFG() )
+        if logger().HAL: logger().log( "[smbus] SMBus Base Address: 0x%04X" % self.get_SMBus_Base_Address() )
+        self.get_SMBus_HCFG()
 
     def is_SMBus_enabled( self ):
-        #return self.cs.pci.is_enabled( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN )
         return self.cs.is_device_enabled( 'SMBUS' )
 
     def is_SMBus_supported( self ):
-        #(did,vid) = self.cs.pci.get_DIDVID( 0, Cfg.PCI_B0D31F3_SMBUS_CTRLR_DEV, Cfg.PCI_B0D31F3_SMBUS_CTRLR_FUN )
         (did,vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
         if logger().VERBOSE: logger().log( "[*] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
-        #if (0x8086 == vid and Cfg.PCI_B0D31F3_SMBUS_CTRLR_DID == did):
         if (0x8086 == vid): return True
         else:
             logger().error( "Unknown SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
@@ -100,14 +95,13 @@ class SMBus:
     def _wait_for_cycle( self, smbus_io_base ):
         # wait for cycle to complete
         #while True:
-        for i in range(10):
+        for i in range(1000):
             sts = self.cs.io.read_port_byte( smbus_io_base )
             if   (sts & 0x02): break
             elif (sts & 0x04): logger().error( "SMBus cycle failed: Device error" )
             elif (sts & 0x08): logger().error( "SMBus cycle failed: Bus Error" )
             elif (sts & 0x10): logger().error( "SMBus cycle failed: Unknown Error" )
-        if (0x02 == sts): return True
-        else: return False
+        return ((sts & 0x02) > 0)
 
     def _read_byte( self, smbus_io_base, target_address, offset ):
         self.cs.io.write_port_byte( smbus_io_base + 0x0, 0xFF )                   # Clear status bits

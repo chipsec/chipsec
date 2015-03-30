@@ -19,5 +19,3 @@
 #
 
 
-##\defgroup  tools Security Tools
-# Security tools based on CHIPSEC framework (fuzzers, etc.)

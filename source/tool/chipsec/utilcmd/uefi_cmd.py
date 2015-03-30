@@ -114,7 +114,7 @@ def uefi(argv):
             return
         logger().log( "[CHIPSEC] Writing EFI variable Name='%s' GUID={%s} from '%s' via Variable API.." % (name, guid, filename) )
         status = _uefi.set_EFI_variable_from_file( name, guid, filename )
-        if status:
+        if status == 0:
             logger().log( "[CHIPSEC] set_EFI_variable return SUCCESS status" )
         else:
             logger().error( "set_EFI_variable wasn't able to modify variable" )

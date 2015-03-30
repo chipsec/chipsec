@@ -100,7 +100,20 @@ class EfiHelper:
         if logger().VERBOSE:
             logger().log( '[efi] helper does not support 64b PA' )
         return self._read_phys_mem( phys_address_lo, length )
-
+    
+    def read_mmio_reg(self, phys_address, size):
+        if logger().VERBOSE:
+            logger().log( '[efi] helper does not support 64b PA' )
+        out_buf = self._read_phys_mem( phys_address, size )
+        if size == 4:
+            value = struct.unpack( '=I', out_buf[:size] )[0]
+        elif size == 2:
+            value = struct.unpack( '=H', out_buf[:size] )[0]
+        elif size == 1:
+            value = struct.unpack( '=B', out_buf[:size] )[0]
+        else: value = 0
+        return value
+        
 # def _read_phys_mem( self, phys_address, length ):
 #  out_buf = (c_char * length)()
 #  s_buf = edk2.readmem( phys_address, length )
@@ -116,6 +129,11 @@ class EfiHelper:
             logger().log( '[efi] helper does not support 64b PA' )
         return self._write_phys_mem( phys_address_lo, length, buf )
 
+    def write_mmio_reg(self, phys_address, size, value):
+        if logger().VERBOSE:
+            logger().log( '[efi] helper does not support 64b PA' )
+        return self._write_phys_mem( phys_address, size, value )
+        
     def _write_phys_mem( self, phys_address, length, buf ):
         # temp hack
         if 4 == length:

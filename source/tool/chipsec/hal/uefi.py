@@ -58,36 +58,28 @@ from chipsec.file import *
 #
 ########################################################################################################
 
-def parse_script( script, log_script=True ):
-    len_s = len(script)
-    off = 0
+def parse_script( script, log_script=False ):
+    off                    = 0
+    entry_type             = 0
     s3_boot_script_entries = []
-    script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
+    len_s                  = len(script)
 
     if log_script: logger().log( '[uefi] +++ S3 Resume Boot-Script +++\n' )
-    start_op, = struct.unpack('<B', script[ : 1 ])
-    if S3BootScriptOpcode.EFI_BOOT_SCRIPT_TABLE_OPCODE == start_op:
-        script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_AA
-        if log_script: logger().log( '[uefi] Start opcode 0x%X' % start_op )
-        off += 1    # skip start opcode
-        off += 0x34 # @TODO: header? move to uefi_platform
+    script_type,script_header_length = id_s3bootscript_type( script, log_script )
+    off += script_header_length
 
-    while off < len_s:
-        index, entry_len, entry_type, entry_data = get_s3bs_entry( script_type, script, off )
-        if S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == entry_type:
-            if log_script: logger().log( '[uefi] +++ End of S3 Resume Boot-Script +++' )
-            break
-        if entry_len > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x%X)' % entry_len )
-            return []
-        if logger().VERBOSE: print_buffer( entry_data )
-        s3script_entry = S3BOOTSCRIPT_ENTRY( index, off, entry_len, entry_data )
-        s3script_entry.decoded_opcode = decode_s3bs_opcode( script_type, s3script_entry.data )
+    while (off < len_s) and (entry_type != S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE):
+        entry_type,s3script_entry = parse_s3bootscript_entry( script_type, script, off, log_script )
         s3_boot_script_entries.append( s3script_entry )
-        if log_script: logger().log( s3script_entry )
-        off += entry_len
+        off += s3script_entry.length
 
-    if log_script: logger().log( '[uefi] S3 Resume Boot-Script size: 0x%X' % off )
+    if log_script: logger().log( '[uefi] +++ End of S3 Resume Boot-Script +++' )
+
+    if logger().HAL: logger().log( '[uefi] S3 Resume Boot-Script size: 0x%X' % off )
+    if logger().VERBOSE: 
+        logger().log( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
+        print_buffer( script[ : off ] )
+
     return s3_boot_script_entries
 
 
@@ -343,23 +335,21 @@ NVRAM: EFI Variable Store
     #   AcpiBootScriptTable - physical address of the S3 resume boot script, 0 if (not found)
     #
     def find_s3_bootscript( self ):
-
-        found               = False
-        AcpiBootScriptTable = 0
+        found                = False
+        BootScript_addresses = []
 
         efivars = self.list_EFI_variables()
         if efivars is None:
             logger().error( 'Could not enumerate UEFI variables at runtime' )
-            return (found,AcpiBootScriptTable)
-        if (logger().UTIL_TRACE or logger().VERBOSE):
-            logger().log( "[uefi] searching for EFI variable(s): " + str(S3_BOOTSCRIPT_VARIABLES) )
+            return (found,BootScript_addresses)
+        if logger().HAL: logger().log( "[uefi] searching for EFI variable(s): " + str(S3_BOOTSCRIPT_VARIABLES) )
 
         for efivar_name in efivars:
             (off, buf, hdr, data, guid, attrs) = efivars[efivar_name][0]
             if efivar_name in S3_BOOTSCRIPT_VARIABLES:
-                logger().log( "[uefi] found: '%s' {%s} %s variable" % (efivar_name,guid,get_attr_string(attrs)) )
+                if logger().HAL: logger().log( "[uefi] found: '%s' {%s} %s variable" % (efivar_name,guid,get_attr_string(attrs)) )
                 if logger().VERBOSE:
-                    logger().log('%s variable data:' % efivar_name)
+                    logger().log('[uefi] %s variable data:' % efivar_name)
                     print_buffer( data )
 
                 varsz = len(data)
@@ -370,21 +360,22 @@ NVRAM: EFI Variable Store
                     break
                 AcpiGlobalAddr = struct.unpack_from( AcpiGlobalAddr_fmt, data )[0]
 
-                logger().log( "[uefi] Pointer to ACPI Global Data structure (variable contents): 0x%016X" % ( AcpiGlobalAddr ) )
-                logger().log( "[uefi] Decoding ACPI Global Data structure.." )
+                if logger().HAL: logger().log( "[uefi] Pointer to ACPI Global Data structure: 0x%016X" % ( AcpiGlobalAddr ) )
+                if logger().HAL: logger().log( "[uefi] Decoding ACPI Global Data structure.." )
                 AcpiVariableSet = self.helper.read_physical_mem( AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE )
                 if logger().VERBOSE:
-                    logger().log('AcpiVariableSet structure:')
+                    logger().log('[uefi] AcpiVariableSet structure:')
                     print_buffer( AcpiVariableSet )
                 AcpiVariableSet_fmt = '<6Q'
                 #if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
                 #    logger().error( 'Unrecognized format of AcpiVariableSet structure' )
                 #    return (False,0)
                 AcpiReservedMemoryBase, AcpiReservedMemorySize, S3ReservedLowMemoryBase, AcpiBootScriptTable, RuntimeScriptTableBase, AcpiFacsTable = struct.unpack_from( AcpiVariableSet_fmt, AcpiVariableSet )
-                if logger().VERBOSE: logger().log( '[uefi] ACPI Boot-Script table base = 0x%016X' % AcpiBootScriptTable )
+                if logger().HAL: logger().log( '[uefi] ACPI Boot-Script table base = 0x%016X' % AcpiBootScriptTable )
                 found   = True
-                break
-        return (found,AcpiBootScriptTable)
+                BootScript_addresses.append( AcpiBootScriptTable )
+                #break
+        return (found,BootScript_addresses)
 
     #
     # Upper level function to find and parse S3 resume boot script
@@ -392,23 +383,27 @@ NVRAM: EFI Variable Store
     #   bootscript_pa  - physical address of the S3 resume boot script
     #   script_entries - a list of parse S3 resume boot script operations
     #
-    def get_s3_bootscript( self ):
+    def get_s3_bootscript( self, log_script=False ):
+        parsed_scripts = {}
         script_entries = []
         #
         # Find the S3 Resume Boot-Script from UEFI variables
         #
-        found,bootscript_pa = self.find_s3_bootscript()
-        if not found: return (0,None)
-        logger().log( '[*] S3 Resume Boot-Script base = 0x%016X' % bootscript_pa )
+        found,bootscript_PAs = self.find_s3_bootscript()
+        if not found: return (bootscript_PAs,None)
+        if logger().HAL: logger().log( '[uefi] Found %d S3 resume boot-scripts' % len(bootscript_PAs) )
 
-        #
-        # Decode the S3 Resume Boot-Script into a sequence of operations/opcodes
-        #
-        # @TODO: should be dumping memory contents in a loop until end opcode is found or id'ing actual size
-        script_buffer = self.helper.read_physical_mem( bootscript_pa, 0x100000 )
-        if logger().UTIL_TRACE or logger().VERBOSE: self.logger.log( '[uefi] Decoding S3 Resume Boot-Script..\n' )
-        script_entries = parse_script( script_buffer )               
-        return (bootscript_pa,script_entries)
+        for bootscript_pa in bootscript_PAs:
+            if logger().HAL: logger().log( '[uefi] S3 resume boot-script at 0x%016X' % bootscript_pa )
+            #
+            # Decode the S3 Resume Boot-Script into a sequence of operations/opcodes
+            #
+            # @TODO: should be dumping memory contents in a loop until end opcode is found or id'ing actual size
+            script_buffer = self.helper.read_physical_mem( bootscript_pa, 0x100000 )
+            if logger().HAL: logger().log( '[uefi] Decoding S3 Resume Boot-Script..' )
+            script_entries = parse_script( script_buffer, log_script )               
+            parsed_scripts[ bootscript_pa ] = script_entries
+        return (bootscript_PAs,parsed_scripts)
 
 
     ######################################################################

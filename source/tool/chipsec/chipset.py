@@ -506,6 +506,7 @@ def register_has_field( _cs, reg_name, field_name ):
 def _register_fields_str( reg_def, reg_val ):
     reg_fields_str = ''
     if 'FIELDS' in reg_def:
+      reg_fields_str += '\n'
       # sort fields by their bit position in the register
       sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
       for f in sorted_fields:
@@ -535,15 +536,15 @@ def print_register( _cs, reg_name, reg_val ):
         mmcfg_off_str =  ''
         if RegisterType.MMCFG == rtype:
             mmcfg_off_str += ", MMCFG + 0x%X" % ((b*32*8 + d*8 + f) * 0x1000 + o)
-        reg_str = "[*] %s = %s << %s (b:d.f %02d:%02d.%d + 0x%X%s)\n" % (reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
+        reg_str = "[*] %s = %s << %s (b:d.f %02d:%02d.%d + 0x%X%s)" % (reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
     elif RegisterType.MMIO == rtype:
-        reg_str = "[*] %s = %s << %s (%s + 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+        reg_str = "[*] %s = %s << %s (%s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
     elif RegisterType.MSR == rtype:
-        reg_str = "[*] %s = %s << %s (MSR 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], int(reg['msr'],16))
+        reg_str = "[*] %s = %s << %s (MSR 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['msr'],16))
     elif RegisterType.PORTIO == rtype:
-        reg_str = "[*] %s = %s << %s (I/O port 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
+        reg_str = "[*] %s = %s << %s (I/O port 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
     elif RegisterType.IOBAR == rtype:
-        reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)\n" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+        reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
 
     reg_str += _register_fields_str( reg, reg_val )
     logger().log( reg_str )

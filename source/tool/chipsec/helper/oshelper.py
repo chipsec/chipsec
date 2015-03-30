@@ -213,6 +213,15 @@ class OsHelper:
         return self.helper.alloc_phys_mem( length, (max_pa_hi<<32|max_pa_lo) )
 
     #
+    # read/write mmio
+    #
+    def read_mmio_reg( self, phys_address, size ):
+        return self.helper.read_mmio_reg( phys_address, size )
+        
+    def write_mmio_reg( self, phys_address, size, value ):
+        return self.helper.write_mmio_reg( phys_address, size, value )
+        
+    #
     # physical_address is 64 bit integer
     #
     def read_physical_mem( self, phys_address, length ):
@@ -275,7 +284,16 @@ class OsHelper:
 
     def list_EFI_variables( self ):
         return self.helper.list_EFI_variables()
-
+    
+    #
+    # ACPI
+    #
+    def get_ACPI_table(self, name):
+        return self.helper.get_ACPI_table(name)
+        
+    def get_ACPI_table_list(self):
+        return self.helper.get_ACPI_table_list()
+    
     #
     # Xen Hypercall
     #

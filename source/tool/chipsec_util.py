@@ -27,7 +27,7 @@
 # __chipsec_util.py__ - standalone utility
 #
 
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 
 #import glob
 import re
@@ -48,6 +48,7 @@ _cs = cs()
 #
 logger().VERBOSE    = False
 logger().UTIL_TRACE = True
+logger().HAL        = True
 
 # If you want to specify a different platform change this line to a string from chiset.py
 # _Platform = 'SNB'

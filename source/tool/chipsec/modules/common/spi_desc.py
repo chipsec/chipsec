@@ -35,9 +35,6 @@ class spi_desc(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        # TODO: temporarily disabled SNB due to hang
-        if self.cs.get_chipset_id() in [chipsec.chipset.CHIPSET_ID_SNB]:
-            return False
         return True
 
     ##

@@ -218,7 +218,7 @@ def get_MMIO_base_address( cs, bar_id ):
 def read_MMIOBAR_reg(cs, bar_id, offset ):
     bar_base  = MMIO_BAR_base[ bar_id ](cs)
     reg_addr  = bar_base + offset
-    reg_value = cs.mem.read_physical_mem_dword( reg_addr )
+    reg_value = cs.helper.read_mmio_reg( reg_addr, 4 )
     if logger().VERBOSE:
         logger().log( '[mmio] %s + 0x%08X (0x%08X) = 0x%08X' % (MMIO_BAR_name[bar_id], offset, reg_addr, reg_value) )
     return reg_value
@@ -229,7 +229,7 @@ def write_MMIOBAR_reg(cs, bar_id, offset, dword_value ):
     bar_base  = MMIO_BAR_base[ bar_id ]()
     reg_addr  = bar_base + offset
     if logger().VERBOSE: logger().log( '[mmio] write %s + 0x%08X (0x%08X) = 0x%08X' % (MMIO_BAR_name[bar_id], offset, reg_addr, dword_value) )
-    cs.mem.write_physical_mem_dword( reg_addr, dword_value )
+    cs.helper.write_mmio_reg( reg_addr, 4, dword_value )
 
 
 
@@ -237,12 +237,7 @@ def write_MMIOBAR_reg(cs, bar_id, offset, dword_value ):
 # Read MMIO register as an offset off of MMIO range base address
 #
 def read_MMIO_reg(cs, bar_base, offset, size=4 ):
-    if 1 == size:
-        reg_value = cs.mem.read_physical_mem_byte( bar_base + offset )
-    elif 2 == size:
-        reg_value = cs.mem.read_physical_mem_word( bar_base + offset )
-    else:
-        reg_value = cs.mem.read_physical_mem_dword( bar_base + offset )
+    reg_value = cs.helper.read_mmio_reg( bar_base + offset, size )
     if logger().VERBOSE: logger().log( '[mmio] 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, reg_value) )
     return reg_value
 
@@ -251,12 +246,7 @@ def read_MMIO_reg(cs, bar_base, offset, size=4 ):
 #
 def write_MMIO_reg(cs, bar_base, offset, value, size=4 ):
     if logger().VERBOSE: logger().log( '[mmio] write 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, value) )
-    if 1 == size:
-        cs.mem.write_physical_mem_byte( bar_base + offset, (value&0xFF) )
-    elif 2 == size:
-        cs.mem.write_physical_mem_word( bar_base + offset, (value&0xFFFF) )
-    else:
-        cs.mem.write_physical_mem_dword( bar_base + offset, value )
+    cs.helper.write_mmio_reg( bar_base + offset, size, value )
 
 #
 # Read MMIO registers as offsets off of MMIO range base address

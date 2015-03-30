@@ -34,6 +34,7 @@
 # ~~~
 # #usage:
 #     read_physical_mem( 0xf0000, 0x100 )
+#     write_physical_mem( 0xf0000, 0x100, buffer )
 #     write_physical_mem_dowrd( 0xf0000, 0xdeadbeef )
 #     read_physical_mem_dowrd( 0xfed40000 )
 #DEPRECATED:

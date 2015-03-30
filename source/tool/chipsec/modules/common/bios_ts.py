@@ -33,9 +33,6 @@ class bios_ts(chipsec.module_common.BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        # TODO: temorarily disabled SNB due to hang
-        if self.cs.get_chipset_id() in [chipsec.chipset.CHIPSET_ID_SNB]:
-            return False
         if not chipsec.chipset.is_register_defined( self.cs, 'GCS' ):
             self.logger.error( "Couldn't find definition of required configuration registers (GCS)... skipping" )
             return False

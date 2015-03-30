@@ -132,33 +132,38 @@ class Pci:
 
     #
     # Returns all I/O and MMIO BARs defined in the PCIe header of the device
-    # Returns array of elements in format (bar_address, isMMIO_BAR, is64bit_BAR, pcie_BAR_reg_offset)
+    # Returns array of elements in format (BAR_address, isMMIO, is64bit, BAR_reg_offset, BAR_reg_value)
     # @TODO: need to account for Type 0 vs Type 1 headers
     def get_device_bars( self, bus, dev, fun ):
         _bars = []
         off = 0x10
         while (off < 0x28):
-            base_lo = self.read_dword( bus, dev, fun, off )
-            if base_lo:
+            reg = self.read_dword( bus, dev, fun, off )
+            if reg:
                 # BAR is initialized
-                if (0 == (base_lo & 0x1)):
+                isMMIO = (0 == (reg & 0x1))
+                if isMMIO:
                     # MMIO BAR
-                    is64bit = ( (base_lo>>1) & 0x3 )
+                    is64bit = ( (reg>>1) & 0x3 )
                     if 0x2 == is64bit:
                         # 64-bit MMIO BAR
                         off += 4
-                        base_hi = self.read_dword( bus, dev, fun, off )
-                        base = ((base_hi << 32) | (base_lo & 0xFFFFFFF0))
-                        _bars.append( (base, True, True, off-4) )
+                        reg_hi = self.read_dword( bus, dev, fun, off )
+                        reg |= (reg_hi << 32)
+                        base = (reg & 0xFFFFFFFFFFFFFFF0)
+                        #base = ((base_hi << 32) | (base_lo & 0xFFFFFFF0))
+                        _bars.append( (base, isMMIO, True, off-4, reg) )
                     elif 1 == is64bit:
-                        # MMIO BAR below 1MB
+                        # MMIO BAR below 1MB - not supported
                         pass
                     elif 0 == is64bit:
                         # 32-bit only MMIO BAR
-                        _bars.append( (base_lo, True, False, off) )
+                        base = (reg & 0xFFFFFFF0)
+                        _bars.append( (base, isMMIO, False, off, reg) )
                 else:
                     # I/O BAR
-                    _bars.append( (base_lo&0xFFFFFFFE, False, False, off) )
+                    base = (reg & 0xFFFFFFFE)
+                    _bars.append( ( base, isMMIO, False, off, reg) )
             off += 4
         return _bars
 

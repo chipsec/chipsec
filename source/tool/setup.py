@@ -69,7 +69,7 @@ for current, dirs, files in os.walk(tool_dir ):
 setup(
         name            = 'chipsec',
         description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.1.7',
+        version         = '1.1.8',
         author          = 'chipsec developers',
         author_email    = '',
         url             = 'https://github.com/chipsec/chipsec',

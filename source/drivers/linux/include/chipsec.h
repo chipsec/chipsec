@@ -17,10 +17,11 @@
 #define IOCTL_LOAD_UCODE_PATCH _IOWR(0, 0xB, int*)
 #define IOCTL_ALLOC_PHYSMEM _IOWR(0, 0xC, int*)
 #define IOCTL_GET_EFIVAR _IOWR(0, 0xD, int*)
-#define IOCTL_SET_EFIVAR _IOWR(0, 0xE, int*)
-        
+#define IOCTL_SET_EFIVAR _IOWR(0, 0xE, int*)       
 #define IOCTL_RDCR _IOWR(0, 0x10, int*) 
 #define IOCTL_WRCR _IOWR(0, 0x11, int*) 
+#define IOCTL_RDMMIO  _IOWR(0, 0x12, int*)
+#define IOCTL_WRMMIO  _IOWR(0, 0x13, int*)
 
 /// if defined debug is enabled
 #define DEBUG

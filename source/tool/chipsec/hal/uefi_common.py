@@ -889,16 +889,22 @@ class op_dispatch():
         str_r =          "  Opcode     : %s (0x%02X)\n" % (self.name, self.opcode)
         str_r = str_r +  "  Entry Point: 0x%08X\n" % self.entrypoint
         return str_r
-"""
-class opcode_terminate():
-    def __init__(self, data):
-        frmt = "<B"
-        self.size = struct.calcsize( frmt )
-        self.opcode = struct.unpack( frmt, data[ : self.size ] )
-        self.name = script_opcodes[ self.opcode ] 
+
+class op_terminate():
+    def __init__(self, opcode, size):
+        self.opcode     = opcode
+        self.size       = size
+        self.name       = script_opcodes[ self.opcode ] 
     def __str__(self):
         return "  Opcode     : %s (0x%02X)\n" % (self.name, self.opcode)
-"""
+
+class op_unknown():
+    def __init__(self, opcode, size):
+        self.opcode     = opcode
+        self.size       = size
+    def __str__(self):
+        return "  Opcode     : unknown (0x%02X)\n" % self.opcode
+
 
 
 class S3BOOTSCRIPT_ENTRY():
@@ -908,10 +914,11 @@ class S3BOOTSCRIPT_ENTRY():
         self.length           = length
         self.data             = data
         self.decoded_opcode   = None
+        self.header_length    = 0
 
     def __str__(self):
         entry_str = '' if self.index is None else ('[%03d] ' % self.index)
-        entry_str += ( 'Entry at offset 0x%04X (length = 0x%X):' % (self.offset_in_script, self.length) )
+        entry_str += ( 'Entry at offset 0x%04X (len = 0x%X, header len = 0x%X):' % (self.offset_in_script, self.length, self.header_length) )
         if self.data: entry_str = entry_str + '\nData:\n' + dump_buffer(self.data, 16)
         if self.decoded_opcode: entry_str = entry_str + 'Decoded:\n' + str(self.decoded_opcode)
         return entry_str

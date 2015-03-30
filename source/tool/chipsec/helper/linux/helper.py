@@ -68,9 +68,10 @@ def IOCTL_LOAD_UCODE_PATCH():   return _IOCTL_BASE + 0xB
 def IOCTL_ALLOC_PHYSMEM(): return _IOCTL_BASE + 0xC
 def IOCTL_GET_EFIVAR(): return _IOCTL_BASE + 0xD
 def IOCTL_SET_EFIVAR(): return _IOCTL_BASE + 0xE
-
 def IOCTL_RDCR():	return _IOCTL_BASE + 0x10
 def IOCTL_WRCR():	return _IOCTL_BASE + 0x11
+def IOCTL_RDMMIO():       return _IOCTL_BASE + 0x12
+def IOCTL_WRMMIO():       return _IOCTL_BASE + 0x13
 
 class LinuxHelper:
 
@@ -225,7 +226,7 @@ class LinuxHelper:
         in_buf = struct.pack( "3"+_PACK, io_port, size, 0 )
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDIO(), in_buf )
         try:
-            print_buffer(out_buf)
+            #print_buffer(out_buf)
             if 1 == size:
                 value = struct.unpack("3"+_PACK, out_buf)[2] & 0xff
             elif 2 == size:
@@ -294,6 +295,25 @@ class LinuxHelper:
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_ALLOC_PHYSMEM(), in_buf)
         return struct.unpack( "2"+_PACK, out_buf )
 
+    def read_mmio_reg(self, phys_address, size):
+        in_buf = struct.pack( "2"+_PACK, phys_address, size)
+        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDMMIO(), in_buf)
+        if size == 8:
+            value = struct.unpack( '=Q', out_buf[:size] )[0]
+        elif size == 4:
+            value = struct.unpack( '=I', out_buf[:size] )[0]
+        elif size == 2:
+            value = struct.unpack( '=H', out_buf[:size] )[0]
+        elif size == 1:
+            value = struct.unpack( '=B', out_buf[:size] )[0]
+        else: value = 0
+        return value
+
+    def write_mmio_reg(self, phys_address, size, value):
+        in_buf = struct.pack( "3"+_PACK, phys_address, size, value )
+        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_WRMMIO(), in_buf )
+        return
+        
     def kern_get_EFI_variable_full(self, name, guid):
         status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
         off = 0
@@ -406,10 +426,17 @@ class LinuxHelper:
 
         if (status != 0):
             logger().error("[chipsec] ERROR in SET_VARIABLE: " + status_dict[status])
-            return False
-        else:
-            return True
-    
+        return status
+
+    def get_ACPI_table(self, name):
+        f =open('/sys/firmware/acpi/tables/DSDT', 'r')
+        data = f.read()
+        f.close()
+        return data
+        
+    def get_ACPI_table_list(self):
+        pass
+        
     def get_affinity(self):
         CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))
         CORES.sched_getaffinity.argtypes = [ctypes.c_int, ctypes.c_int, POINTER(ctypes.c_int)]
@@ -449,7 +476,6 @@ class LinuxHelper:
         return os.path.exists("/sys/firmware/efi/efivars/")
  
     def use_kernvars(self):
-        print "*********************************************"
         return True
 
     def EFI_supported( self):

@@ -133,6 +133,6 @@ class Ucode:
         return self.load_ucode_update( cpu_thread_id, _ucode_buf )
 
     def load_ucode_update(self, cpu_thread_id, ucode_buf ):
-        logger().log( "[ucode] loading microcode update on CPU%d" % cpu_thread_id )
+        if logger().HAL: logger().log( "[ucode] loading microcode update on CPU%d" % cpu_thread_id )
         self.helper.load_ucode_update( cpu_thread_id, ucode_buf )
         return self.ucode_update_id( cpu_thread_id )

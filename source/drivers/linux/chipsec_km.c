@@ -357,6 +357,7 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 	char *ptr;
         
 	read = 0;
+
 #ifdef __ARCH_HAS_NO_PAGE_ZERO_MAPPED
 	/* we don't have page 0 mapped on sparc and m68k.. */
 	if (p < PAGE_SIZE) {
@@ -373,7 +374,7 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		}
 	}
 #endif
-
+    
 	while (count > 0) {
 		/*
 		 * Handle first page in case it's not aligned
@@ -1305,6 +1306,88 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         break;
 
     } 
+
+case IOCTL_RDMMIO:
+	{
+        unsigned long addr, first, second;
+        char *ioaddr;
+		
+        numargs = 2;
+        printk( KERN_INFO "[chipsec] > IOCTL_RDMMIO\n");
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			return -EFAULT;
+		}
+
+        addr = (unsigned long)ptr[0];
+        ioaddr = my_xlate_dev_mem_ptr(addr);
+        
+        switch(ptr[1])
+		{
+			case 1:
+				ptr[0] = ioread8(ioaddr);
+				break;
+			case 2:
+				ptr[0] = ioread16(ioaddr);
+				break;
+			case 4:
+				ptr[0] = ioread32(ioaddr);
+				break;
+            case 8:
+                first = ioread32(ioaddr);
+                second = ioread32( ioaddr + 4 );
+                ptr[0] = first | (second << 32);
+                break;
+		}
+
+		my_unxlate_dev_mem_ptr(addr, ioaddr);
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+		break;
+	}
+
+case IOCTL_WRMMIO:
+	{
+        unsigned long addr, value;
+        char *ioaddr;
+		
+        numargs = 3;
+        printk( KERN_INFO "[chipsec] > IOCTL_WRMMIO\n");
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			return -EFAULT;
+		}
+
+        addr = (unsigned long)ptr[0];
+        value = (unsigned long)ptr[2];
+        ioaddr = my_xlate_dev_mem_ptr(addr);
+        
+        switch(ptr[1])
+		{
+			case 1:
+				iowrite8(value, ioaddr);
+				break;
+			case 2:
+				iowrite16(value, ioaddr);
+				break;
+			case 4:
+				iowrite32(value, ioaddr);
+				break;
+            case 8:
+                iowrite32( ( value >> 32 ) & 0xFFFFFFFF, ioaddr );
+                iowrite32( value & 0xFFFFFFFF, ioaddr + 4 );
+                break;
+		}
+
+		my_unxlate_dev_mem_ptr(addr, ioaddr);
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+		break;
+	}
     
 	default:
 		return -EFAULT;

@@ -292,6 +292,28 @@ class Win32Helper:
         except AttributeError, msg:
             if logger().VERBOSE: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
             pass
+
+        try:
+            self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
+            self.GetSystemFirmwareTbl.restype = c_int
+            self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
+        except AttributeError, msg:
+            logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
+            pass
+        
+        try:
+            self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
+            self.EnumSystemFirmwareTbls.restype = c_int
+            self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
+        except AttributeError, msg:
+            logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
+            pass        
+        try:
+            self.GetLastErr = kernel32.GetLastError
+            self.GetLastErr.restype = c_int
+        except AttributeError, msg:
+            logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
+            pass
         """
         CPUInfo = c_int * 4
         try:
@@ -531,7 +553,24 @@ class Win32Helper:
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
-
+    
+    # Temporarily the same as read_phys_mem for compatibility 
+    def read_mmio_reg( self, phys_address, size ):
+        out_size = size
+        out_buf = (c_char * out_size)()
+        in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
+        out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_size )
+        if size == 8:
+            value = struct.unpack( '=Q', out_buf )[0]
+        elif size == 4:
+            value = struct.unpack( '=I', out_buf )[0]
+        elif size == 2:
+            value = struct.unpack( '=H', out_buf )[0]
+        elif size == 1:
+            value = struct.unpack( '=B', out_buf )[0]
+        else: value = 0
+        return value
+        
     def alloc_phys_mem( self, length, max_pa ):
         (va, pa) = (0,0)
         in_length  = 12
@@ -725,8 +764,35 @@ class Win32Helper:
         out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )
         (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )
         return (eax, ebx, ecx, edx)
-
-
+        
+    
+    def get_ACPI_table(self, name):
+        table_size = 1024
+        tBuffer = create_string_buffer( table_size )
+        namerev = name[::-1]
+        namei = int(namerev.encode('hex'), 16)
+        retVal = self.GetSystemFirmwareTbl(0x41435049, namei, tBuffer, table_size)
+        if retVal > table_size:
+            table_size = retVal
+            tBuffer = create_string_buffer( table_size )
+            retVal = self.GetSystemFirmwareTbl(0x41435049, namei, tBuffer, table_size)
+        if retVal == 0:
+            logger().error( "[helper] Get ACPI table failed" )
+            return 0
+        return tBuffer[:retVal]
+    
+    def get_ACPI_table_list(self):
+        table_size = 1024
+        tBuffer = create_string_buffer( table_size )
+        retVal = self.EnumSystemFirmwareTbls(0x41435049, tBuffer, table_size)
+        if retVal > table_size:
+            table_size = retVal
+            tBuffer = create_string_buffer( table_size )
+            retVal = self.EnumSystemFirmwareTbls(0x41435049, tBuffer, table_size)
+        if retVal == 0:
+            logger().error( "[helper] Get ACPI table list failed" )
+            return 0
+        return tBuffer[:retVal]
 #
 # Get instance of this OS helper
 #

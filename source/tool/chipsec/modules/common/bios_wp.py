@@ -42,10 +42,7 @@ class bios_wp(BaseModule):
         self.spi    = SPI( self.cs )
 
     def is_supported(self):
-        # TODO: temporarily disabled SNB due to hang
-        if self.cs.get_chipset_id() not in [chipsec.chipset.CHIPSET_ID_SNB]:
-            return True
-        return False
+        return True
 
     def check_BIOS_write_protection(self):
         self.logger.start_test( "BIOS Region Write Protection" )

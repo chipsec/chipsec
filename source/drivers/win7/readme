@@ -38,7 +38,7 @@
 2. Sign driver on Windows 64bit
 ----------------------------------------------------
 
-- Run in "x64 Free Build Environment" (or "x64 Checked Build Environment"):
+- As Administrator, run in "x64 Free Build Environment" (or "x64 Checked Build Environment"):
   makecert -r -n "CN=Chipsec" -ss ChipsecCertStore -sr LocalMachine
 - cd sign
 - Run "sign64_sys.bat" to sign .sys file and have CHIPSEC install the driver automatically  

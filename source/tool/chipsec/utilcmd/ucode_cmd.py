@@ -78,12 +78,12 @@ def ucode(argv):
     if ( 'load' == ucode_op ):
         if (4 == len(argv)):
             ucode_filename = argv[3]
-            logger().log( "[CHIPSEC] Loading Microcode update on all cores from '%.64s'" % ucode_filename )
+            logger().log( "[CHIPSEC] Loading Microcode update on all cores from '%s'" % ucode_filename )
             chipsec_util._cs.ucode.update_ucode_all_cpus( ucode_filename )
         elif (5 == len(argv)):
             ucode_filename = argv[3]
             cpu_thread_id = int(argv[4],16)
-            logger().log( "[CHIPSEC] Loading Microcode update on CPU%d from '%.64s'" % (cpu_thread_id, ucode_filename) )
+            logger().log( "[CHIPSEC] Loading Microcode update on CPU%d from '%s'" % (cpu_thread_id, ucode_filename) )
             chipsec_util._cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
         else:
             print usage
@@ -92,10 +92,10 @@ def ucode(argv):
         if (4 == len(argv)):
             ucode_filename = argv[3]
             if (not ucode_filename.endswith('.pdb')):
-                logger().log( "[CHIPSEC] Ucode update file is not PDB file: '%.256s'" % ucode_filename )
+                logger().log( "[CHIPSEC] Ucode update file is not PDB file: '%s'" % ucode_filename )
                 return
             pdb_ucode_buffer = read_file( ucode_filename )
-            logger().log( "[CHIPSEC] Decoding Microcode Update header of PDB file: '%.256s'" % ucode_filename )
+            logger().log( "[CHIPSEC] Decoding Microcode Update header of PDB file: '%s'" % ucode_filename )
             dump_ucode_update_header( pdb_ucode_buffer )
     elif ( 'id' == ucode_op ):
         if (3 == len(argv)):

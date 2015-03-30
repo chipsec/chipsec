@@ -25,7 +25,7 @@
 ## \addtogroup core
 # __chipsec_main.py__ -- main application logic and automation functions
 #
-__version__ = '1.1.7'
+__version__ = '1.1.8'
 
 ## These are for debugging imports
 import inspect
@@ -422,6 +422,8 @@ class ChipsecMain:
                 exceptions.append( modx )
                 exit_code.exception()
                 result = ModuleResult.ERROR
+                # @TODO: check if we need stack trace here
+                #if logger().VERBOSE: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise
             # Module uses the old API  display warning and try to run anyways
             if result == ModuleResult.DEPRECATED:
@@ -433,6 +435,7 @@ class ChipsecMain:
                     exceptions.append( modx )
                     exit_code.exception()
                     result = ModuleResult.ERROR
+                    if logger().VERBOSE: logger().log_bad(traceback.format_exc())
                     if self.failfast: raise
 
             if not self._list_tags: logger().end_module( modx.get_name() )
@@ -525,7 +528,9 @@ class ChipsecMain:
         print "-x --xml                specify filename for xml output (JUnit style)."
         print "-t --moduletype         run tests of a specific type (tag)."
         print "   --list_tags          list all the available options for -t,--moduletype"
-        print "-I --import             specify additional path to load modules from"
+        print "-I --include            specify additional path to load modules from"
+        print "   --failfast           fail on any exception and exit (don't mask exceptions)"
+        print "   --no_time            don't log timestamps"
         print "\n"
         print "EXIT CODE:"
         print "    CHIPSEC returns an integer where each bit means the following:"
@@ -552,9 +557,11 @@ class ChipsecMain:
         for o, a in opts:
             if o in ("-v", "--verbose"):
                 logger().VERBOSE = True
+                logger().HAL     = True
                 #logger().log( "[*] Verbose mode is ON" )
             elif o in ("-h", "--help"):
                 self.usage()
+                sys.exit(0)
                 return 0
             elif o in ("-o", "--output"):
                 self._output = a

@@ -371,11 +371,13 @@ class Logger:
 
     VERBOSE    = False
     UTIL_TRACE = False
-    LOG_TO_STATUS_FILE = False
-    LOG_TO_FILE = False
+    HAL        = False
+    DEBUG      = False
+
+    LOG_TO_STATUS_FILE   = False
     LOG_STATUS_FILE_NAME = ""
-    LOG_FILE_NAME = ""
-    DEBUG       = False
+    LOG_TO_FILE          = False
+    LOG_FILE_NAME        = ""
 
 _logger  = Logger()
 def logger():

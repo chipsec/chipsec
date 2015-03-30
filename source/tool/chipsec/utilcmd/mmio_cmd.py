@@ -31,14 +31,14 @@
 #~~~
 #chipsec_util mmio list
 #chipsec_util mmio dump <MMIO_BAR_name>
-#chipsec_util mmio read|write <MMIO_BAR_name> <offset> [value]
+#chipsec_util mmio read|write <MMIO_BAR_name> <offset> <size> [value]
 #''
 #    Examples:
 #''
 #        chipsec_util mmio list
 #        chipsec_util mmio dump MCHBAR
-#        chipsec_util mmio read SPIBAR 0x74
-#        chipsec_util mmio write SPIBAR 0x74 0x0
+#        chipsec_util mmio read SPIBAR 0x74 0x4
+#        chipsec_util mmio write SPIBAR 0x74 0x1 0x0
 #~~~
 
 
@@ -60,12 +60,13 @@ from chipsec.hal.mmio   import *
 
 usage = "chipsec_util mmio list\n" + \
         "chipsec_util mmio dump <MMIO_BAR_name>\n" + \
-        "chipsec_util mmio read|write <MMIO_BAR_name> <offset> [value]\n" + \
+        "chipsec_util mmio read <MMIO_BAR_name> <offset> [size]\n" + \
+        "chipsec_util mmio write <MMIO_BAR_name> <offset> <value> [size]\n" + \
         "Examples:\n" + \
         "  chipsec_util mmio list\n" + \
         "  chipsec_util mmio dump MCHBAR\n" + \
-        "  chipsec_util mmio read SPIBAR 0x74\n" + \
-        "  chipsec_util mmio write SPIBAR 0x74 0x0\n\n"
+        "  chipsec_util mmio read SPIBAR 0x74 0x4\n" + \
+        "  chipsec_util mmio write SPIBAR 0x74 0x0 0x4\n\n"
 
 
 # ###################################################################
@@ -93,14 +94,17 @@ def mmio(argv):
     elif ( 'read' == op ):
         bar = argv[3].upper()
         off = int(argv[4],16)
-        reg = read_MMIO_BAR_reg( chipsec_util._cs, bar, off )
+        if len(argv) == 6:
+            size = int(argv[5],16)
+        else: size = 4
+        reg = read_MMIO_BAR_reg( chipsec_util._cs, bar, off, size )
         logger().log( "[CHIPSEC] Read %s + 0x%X: 0x%08X" % (bar,off,reg) )
     elif ( 'write' == op ):
         bar = argv[3].upper()
         off = int(argv[4],16)
         reg = int(argv[5],16)
         logger().log( "[CHIPSEC] Write %s + 0x%X: 0x%08X" % (bar,off,reg) )
-        write_MMIO_BAR_reg( chipsec_util._cs, bar, off, reg )
+        write_MMIO_BAR_reg( chipsec_util._cs, bar, off, reg, size )
     else:
         logger().error( "unknown command-line option '%.32s'" % ucode_op )
         print usage
