@@ -159,7 +159,9 @@ class access_uefispec(BaseModule):
                     #self.logger.log(' UEFI Spec Var %s' % name)
                     if perms != attrs:
                         uefispec_concern.append(name)
-                        res = ModuleResult.FAILED
+                        self.logger.log_important( '  Unexpected attributes:' + get_attr_string(perms ^ attrs) + ' ' + get_auth_attr_string(perms ^ attrs))
+                        if ((perms ^ attrs) & ~(EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_APPEND_WRITE) != 0):  res = ModuleResult.FAILED
+                        else: res = ModuleResult.WARNING
 
                 if do_modify:
                     #self.logger.log('uefispec_ro_vars')

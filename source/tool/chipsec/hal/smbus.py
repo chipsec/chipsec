@@ -38,7 +38,7 @@
 
 
 from chipsec.logger import *
-from chipsec.cfg.common import *
+#from chipsec.cfg.common import *
 
 import chipsec.hal.iobar
 

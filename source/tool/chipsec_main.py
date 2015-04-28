@@ -25,7 +25,7 @@
 ## \addtogroup core
 # __chipsec_main.py__ -- main application logic and automation functions
 #
-__version__ = '1.1.8'
+__version__ = '1.1.9'
 
 ## These are for debugging imports
 import inspect

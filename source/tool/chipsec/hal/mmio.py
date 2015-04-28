@@ -399,12 +399,13 @@ def list_MMIO_BARs( cs ):
 
 def get_MMCFG_base_address(cs):
     (bar_base,bar_size)  = get_MMIO_BAR_base_address( cs, 'MMCFG' )
-    if (Cfg.PCI_PCIEXBAR_REG_LENGTH_256MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-        bar_base &= ~(Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
-    elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-        bar_base &= ~Cfg.PCI_PCIEXBAR_REG_ADMSK64
-    #elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-    #   pass
+    # @TODO: temporary w/a
+    #if (Cfg.PCI_PCIEXBAR_REG_LENGTH_256MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+    #    bar_base &= ~(Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
+    #elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+    #    bar_base &= ~Cfg.PCI_PCIEXBAR_REG_ADMSK64
+    ##elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
+    ##   pass
     if logger().VERBOSE: logger().log( '[mmcfg] Memory Mapped CFG Base: 0x%016X' % bar_base )
     return bar_base
 

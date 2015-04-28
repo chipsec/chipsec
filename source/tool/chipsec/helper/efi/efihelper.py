@@ -192,7 +192,10 @@ class EfiHelper:
     def EFI_supported( self ):
         # @TODO
         return False
-    
+
+    def get_ACPI_SDT( self ):
+        logger().error( "[efi] ACPI is not supported yet" )
+        return 0        
 
     def get_threads_count ( self ):
         logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )

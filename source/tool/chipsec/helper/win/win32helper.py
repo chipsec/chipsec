@@ -764,35 +764,30 @@ class Win32Helper:
         out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )
         (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )
         return (eax, ebx, ecx, edx)
+
+    def get_ACPI_SDT( self ):
+        xsdt = True
+        table_size = 36
+        tBuffer = create_string_buffer( table_size )
+        tName = 0x54445358
         
-    
-    def get_ACPI_table(self, name):
-        table_size = 1024
-        tBuffer = create_string_buffer( table_size )
-        namerev = name[::-1]
-        namei = int(namerev.encode('hex'), 16)
-        retVal = self.GetSystemFirmwareTbl(0x41435049, namei, tBuffer, table_size)
+        retVal = self.GetSystemFirmwareTbl(  0x41435049, tName, tBuffer, table_size )
+        
+        if retVal == 0:
+            tName = 0x54445352
+            retVal = self.GetSystemFirmwareTbl(  0x41435049, tName, tBuffer, table_size )
+            xsdt = False
+            if retVal == 0:
+                logger().error( "[Helper] No ACPI system description table found" )
+                return 0, xsdt
+            
         if retVal > table_size:
             table_size = retVal
             tBuffer = create_string_buffer( table_size )
-            retVal = self.GetSystemFirmwareTbl(0x41435049, namei, tBuffer, table_size)
-        if retVal == 0:
-            logger().error( "[helper] Get ACPI table failed" )
-            return 0
-        return tBuffer[:retVal]
-    
-    def get_ACPI_table_list(self):
-        table_size = 1024
-        tBuffer = create_string_buffer( table_size )
-        retVal = self.EnumSystemFirmwareTbls(0x41435049, tBuffer, table_size)
-        if retVal > table_size:
-            table_size = retVal
-            tBuffer = create_string_buffer( table_size )
-            retVal = self.EnumSystemFirmwareTbls(0x41435049, tBuffer, table_size)
-        if retVal == 0:
-            logger().error( "[helper] Get ACPI table list failed" )
-            return 0
-        return tBuffer[:retVal]
+            retVal = self.GetSystemFirmwareTbl(  0x41435049, tName, tBuffer, table_size )
+        
+        return tBuffer[:retVal], xsdt
+
 #
 # Get instance of this OS helper
 #

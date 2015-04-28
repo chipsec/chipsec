@@ -29,12 +29,12 @@
 #chipsec_util cr
 #----
 #~~~
-#chipsec_util cr <cr_reg_number> [value]
+#chipsec_util cr <cpu_id> <cr_number> [value]
 #''
 #    Examples:
 #''
-#        chipsec_util cr 0
-#        chipsec_util cr 4 0x0
+#        chipsec_util cr 0 0
+#        chipsec_util cr 0 4 0x0
 #~~~
 
 __version__ = '1.0'
@@ -48,7 +48,7 @@ import chipsec_util
 from chipsec.logger     import *
 from chipsec.file       import *
 
-usage = "chipsec_util cr <cpu_thread_id> <cr_reg_number> [value]\n" + \
+usage = "chipsec_util cr <cpu_id> <cr_number> [value]\n" + \
         "Examples:\n" + \
         "  chipsec_util cr 0 0\n" + \
         "  chipsec_util cr 0 4 0x0\n\n"

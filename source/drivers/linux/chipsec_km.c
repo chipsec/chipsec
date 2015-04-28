@@ -284,6 +284,15 @@ void *my_xlate_dev_mem_ptr(unsigned long phys)
 
 	// Not RAM, so it is some device (can be bios for example)
 	addr = (void __force *)ioremap_nocache(start, PAGE_SIZE);
+    
+    if (addr)
+    {
+        addr = (void *)((unsigned long)addr | (phys & ~PAGE_MASK));
+        return addr;
+    }
+    
+    addr = (void __force *)ioremap_prot(start, PAGE_SIZE,0);
+    
 	if (addr)
 		addr = (void *)((unsigned long)addr | (phys & ~PAGE_MASK));
 	return addr;
@@ -1044,41 +1053,50 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+        return -EFAULT;
 #endif
         }
-	case IOCTL_ALLOC_PHYSMEM:
-	{
-		//IN params: size
-		//OUT params: physical address
-		uint32_t NumberOfBytes = 0;
-		void *va;
-		void *pa;
-		numargs = 2;
-		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
-		{
-			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
-			return -EFAULT;
-		}
+    case IOCTL_ALLOC_PHYSMEM:
+    {
+        //IN params: size
+        //OUT params: physical address
+        uint32_t NumberOfBytes = 0;
+        void *va, *pa, *max_pa;
         
-		NumberOfBytes = ptr[0];
+        numargs = 2;
+        if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+        {
+            printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+            return -EFAULT;
+        }
         
-		printk(KERN_ALERT "[chipsec] Allocating: NumberOfBytes = 0x%X", NumberOfBytes);
-		va = kmalloc(NumberOfBytes, GFP_KERNEL);
-		if( !va )
-		{
-			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-			return -EFAULT;
-		}
+        NumberOfBytes = ptr[0];
+        max_pa = (void *)ptr[1];
+        
+        va = kmalloc(NumberOfBytes, GFP_KERNEL );
+        if( !va )
+        {
+            printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+            return -EFAULT;
+        }
          
-		memset(va, 0, NumberOfBytes);
-		pa = (void*)virt_to_phys(va);
-		printk(KERN_ALERT "[chipsec] Allocated Buffer: VirtAddr = 0x%p PhysAddr = 0x%p\n", va, pa );
-        
-		ptr[0] = (unsigned long)va;
-		ptr[1] = (unsigned long)pa;
+        memset(va, 0, NumberOfBytes);
+        pa = (void*)virt_to_phys(va);
 
-		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+        if (pa > max_pa)
+        {
+            //printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory below max_pa (%p > %p)\n", pa, max_pa );
+            //kfree(va);
+            //return -EFAULT;
+            printk(KERN_ALERT "[chipsec] WARNING: allocated memory (%p) is not below max_pa (%p) (ignoring)", pa, max_pa);
+        }
+        //else
+        //{
+            ptr[0] = (unsigned long)va;
+            ptr[1] = (unsigned long)pa;
+        //}
+		
+        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 		break;
 	}

@@ -291,7 +291,7 @@ class LinuxHelper:
         return struct.unpack( "4"+_PACK, out_buf )
 
     def alloc_phys_mem(self, num_bytes, max_addr):
-        in_buf = struct.pack( "2"+_PACK, num_bytes, num_bytes)
+        in_buf = struct.pack( "2"+_PACK, num_bytes, max_addr)
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_ALLOC_PHYSMEM(), in_buf)
         return struct.unpack( "2"+_PACK, out_buf )
 
@@ -380,9 +380,14 @@ class LinuxHelper:
         hdr = 0
         attr = 0
         try:
-            varlist = os.listdir('/sys/firmware/efi/efivars')
+            if os.path.isdir('/sys/firmware/efi/efivars'):
+                varlist = os.listdir('/sys/firmware/efi/efivars')
+            elif os.path.isdir('/sys/firmware/efi/vars'):
+                varlist = os.listdir('/sys/firmware/efi/vars')
+            else:
+                return None
         except Exception:
-            logger().error('Failed to read /sys/firmware/efi/efivars. Folder does not exist')
+            logger().error('Failed to read /sys/firmware/efi/[vars|efivars]. Folder does not exist')
             return None
         variables = dict()
         for v in varlist:
@@ -427,15 +432,10 @@ class LinuxHelper:
         if (status != 0):
             logger().error("[chipsec] ERROR in SET_VARIABLE: " + status_dict[status])
         return status
-
-    def get_ACPI_table(self, name):
-        f =open('/sys/firmware/acpi/tables/DSDT', 'r')
-        data = f.read()
-        f.close()
-        return data
         
-    def get_ACPI_table_list(self):
-        pass
+    def get_ACPI_SDT( self ):
+        logger().error( "[efi] ACPI is not supported yet" )
+        return 0  
         
     def get_affinity(self):
         CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))

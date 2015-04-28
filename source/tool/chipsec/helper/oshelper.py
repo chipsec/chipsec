@@ -288,8 +288,8 @@ class OsHelper:
     #
     # ACPI
     #
-    def get_ACPI_table(self, name):
-        return self.helper.get_ACPI_table(name)
+    def get_ACPI_SDT(self):
+        return self.helper.get_ACPI_SDT()
         
     def get_ACPI_table_list(self):
         return self.helper.get_ACPI_table_list()

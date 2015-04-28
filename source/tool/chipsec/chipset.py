@@ -360,7 +360,7 @@ class Chipset:
                 if logger().VERBOSE: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
 
         #
-        # EXPERIMENTAL FEATURE
+        # Initialize platform configuration from XML files
         #
         try:
             self.init_xml_configuration()
@@ -371,7 +371,7 @@ class Chipset:
 
     ##################################################################################
     #
-    # Functions whcih access configuration of integrated PCI devices (interfaces, controllers)
+    # Functions which access configuration of integrated PCI devices (interfaces, controllers)
     # by device name (defined in XML configuration files)
     #
     ##################################################################################
