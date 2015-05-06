@@ -554,7 +554,7 @@ class Win32Helper:
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
     
-    # Temporarily the same as read_phys_mem for compatibility 
+    # @TODO: Temporarily the same as read_phys_mem for compatibility 
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
         out_buf = (c_char * out_size)()
@@ -570,7 +570,14 @@ class Win32Helper:
             value = struct.unpack( '=B', out_buf )[0]
         else: value = 0
         return value
-        
+    def write_mmio_reg( self, phys_address, size, value ):
+        if   size == 8: buf = struct.pack( '=Q', value )
+        elif size == 4: buf = struct.pack( '=I', value&0xFFFFFFFF )
+        elif size == 2: buf = struct.pack( '=H', value&0xFFFF )
+        elif size == 1: buf = struct.pack( '=B', value&0xFF )
+        else: return False
+        return self.write_phys_mem( ((phys_address>>32)&0xFFFFFFFF), (phys_address&0xFFFFFFFF), size, buf )
+
     def alloc_phys_mem( self, length, max_pa ):
         (va, pa) = (0,0)
         in_length  = 12
