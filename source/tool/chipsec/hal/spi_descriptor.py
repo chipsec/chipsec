@@ -27,17 +27,16 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/spi_descriptor.py
-# ===========================================
-# SPI Flash Descriptor binary parsing functionality
-#
-# ~~~
-# #usage:
-#   fd = read_file( fd_file )
-#   parse_spi_flash_descriptor( fd )
-# ~~~
-#
+
+"""
+SPI Flash Descriptor binary parsing functionality
+
+
+usage:
+    >>> fd = read_file( fd_file )
+    >>> parse_spi_flash_descriptor( fd )
+"""
+
 __version__ = '1.0'
 
 import struct

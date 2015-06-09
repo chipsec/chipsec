@@ -19,12 +19,12 @@
 #
 
 
-#
-# UEFI Spec Variables Access Control Test
-#
-## \addtogroup modules
-# __chipsec/modules/common/uefi/access_uefispec.py__ - Checks protection of UEFI variables defined in the UEFI spec to have certain permissions. Returns failure if variable attributes are not as defined in table 11 "Global Variables" of the UEFI spec.
 
+"""
+Checks protection of UEFI variables defined in the UEFI spec to have certain permissions. 
+
+Returns failure if variable attributes are not as defined in `table 11 "Global Variables" <http://uefi.org/>`_ of the UEFI spec.
+"""
 
 from chipsec.module_common import *
 from chipsec.file          import *
@@ -39,7 +39,7 @@ class access_uefispec(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self._uefi = UEFI(self.cs.helper)
+        self._uefi = UEFI(self.cs)
 
         nv = EFI_VARIABLE_NON_VOLATILE
         bs = EFI_VARIABLE_BOOTSERVICE_ACCESS
@@ -134,7 +134,7 @@ class access_uefispec(BaseModule):
         vars = self._uefi.list_EFI_variables()
         if vars is None:
             self.logger.log_error_check( 'Could not enumerate UEFI Variables from runtime (Legacy OS?)' )
-            self.logger.log_important( "Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them. You can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually." )
+            self.logger.log_important( "Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually." )
             return ModuleResult.ERROR
 
         bsnv_vars = []
@@ -193,8 +193,6 @@ class access_uefispec(BaseModule):
 
     def run( self,  module_argv ):
         self.logger.start_test( "Access Control of EFI Variables" )
-        if len(module_argv) > 1:
-            if (module_argv[0] == "modify"):
-                return self.check_vars(True)
-        else:
-            return self.check_vars(False)
+        do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
+        return self.check_vars( do_modify )
+

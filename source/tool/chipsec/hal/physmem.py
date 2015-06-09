@@ -27,22 +27,22 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/physmem.py
-# ==========================================
-# Access to physical memory
-# ~~~
-# #usage:
-#     read_physical_mem( 0xf0000, 0x100 )
-#     write_physical_mem( 0xf0000, 0x100, buffer )
-#     write_physical_mem_dowrd( 0xf0000, 0xdeadbeef )
-#     read_physical_mem_dowrd( 0xfed40000 )
-#DEPRECATED:
-#     read_phys_mem( 0xf0000, 0x100 )
-#     write_phys_mem_dword( 0xf0000, 0xdeadbeef )
-#     read_phys_mem_dword( 0xfed40000 )
-# ~~~
-#
+
+"""
+Access to physical memory
+
+usage:
+    >>> read_physical_mem( 0xf0000, 0x100 )
+    >>> write_physical_mem( 0xf0000, 0x100, buffer )
+    >>> write_physical_mem_dowrd( 0xf0000, 0xdeadbeef )
+    >>> read_physical_mem_dowrd( 0xfed40000 )
+
+DEPRECATED
+    >>> read_phys_mem( 0xf0000, 0x100 )
+    >>> write_phys_mem_dword( 0xf0000, 0xdeadbeef )
+    >>> read_phys_mem_dword( 0xfed40000 )
+"""
+
 __version__ = '1.0'
 
 import struct
@@ -124,6 +124,11 @@ class Memory:
         (va, pa) = self.helper.alloc_physical_mem( length, max_phys_address )
         if logger().VERBOSE: logger().log( '[mem] Allocated: PA = 0x%016X, VA = 0x%016X' % (pa, va) )
         return (va, pa)
+
+    def va2pa( self, va ):
+        pa = self.helper.va2pa( va )
+        if logger().VERBOSE: logger().log( '[mem] VA (0x%016X) -> PA (0x%016X)' % (va, pa) )
+        return pa
 
 
     ####################################################################################

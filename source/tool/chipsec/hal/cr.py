@@ -27,17 +27,15 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-#
-# chipsec/hal/cr.py
-# ========================
-# Access to CR registers
-# ~~~
-# #usage:
-#     read_cr( 0 )
-#     write_cr( 4, 0 )
-# ~~~
-#
+
+"""
+Access to CR registers
+
+usage:
+    >>> read_cr( 0 )
+    >>> write_cr( 4, 0 )
+"""
+
 __version__ = '1.0'
 
 import struct

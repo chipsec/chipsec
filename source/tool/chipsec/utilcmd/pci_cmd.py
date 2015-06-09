@@ -21,25 +21,10 @@
 
 
 
+"""
+The pci command can enumerate PCI devices and allow direct access to them by bus/device/function.
+"""
 
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util pci
-#-----
-#~~~
-#chipsec_util pci enumerate
-#chipsec_util pci <bus> <device> <function> <offset> <width> [value]
-#''
-#    Examples:
-#''
-#        chipsec_util pci enumerate
-#        chipsec_util pci 0 0 0 0x88 4
-#        chipsec_util pci 0 0 0 0x88 byte 0x1A
-#        chipsec_util pci 0 0x1F 0 0xDC 1 0x1
-#        chipsec_util pci 0 0 0 0x98 dword 0x004E0040
-#~~~
 __version__ = '1.0'
 
 import os
@@ -55,25 +40,22 @@ from chipsec.file       import *
 from chipsec.hal.pci    import *
 
 
-usage = "chipsec_util pci enumerate\n" + \
-        "chipsec_util pci <bus> <device> <function> <offset> <width> [value]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util pci enumerate\n" + \
-        "  chipsec_util pci 0 0 0 0x88 4\n" + \
-        "  chipsec_util pci 0 0 0 0x88 byte 0x1A\n" + \
-        "  chipsec_util pci 0 0x1F 0 0xDC 1 0x1\n" + \
-        "  chipsec_util pci 0 0 0 0x98 dword 0x004E0040\n\n"
-
-
-# ###################################################################
-#
 # PCIe Devices and Configuration Registers
-#
-# ###################################################################
 def pci(argv):
+    """
+    >>> chipsec_util pci enumerate
+    >>> chipsec_util pci <bus> <device> <function> <offset> <width> [value]
 
+    Examples:
+
+    >>> chipsec_util pci enumerate
+    >>> chipsec_util pci 0 0 0 0x88 4
+    >>> chipsec_util pci 0 0 0 0x88 byte 0x1A
+    >>> chipsec_util pci 0 0x1F 0 0xDC 1 0x1
+    >>> chipsec_util pci 0 0 0 0x98 dword 0x004E0040
+    """
     if 3 > len(argv):
-        print usage
+        print pci.__doc__
         return
 
     op = argv[2]
@@ -103,7 +85,7 @@ def pci(argv):
             else:
                 width = int(argv[6])
     except Exception as e :
-        print usage
+        print pci.__doc__
         return
 
     if 8 == len(argv):
@@ -132,4 +114,4 @@ def pci(argv):
 
     logger().log( "[CHIPSEC] (pci) time elapsed %.3f" % (time.time()-t) )
 
-chipsec_util.commands['pci'] = {'func' : pci ,    'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['pci'] = {'func' : pci , 'start_driver' : True, 'help' : pci.__doc__ }

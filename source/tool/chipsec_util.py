@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 # 
@@ -21,13 +21,11 @@
 
 
 
+"""
+Standalone utility
+"""
 
-#
-## \addtogroup core
-# __chipsec_util.py__ - standalone utility
-#
-
-__version__ = '1.1.9'
+__version__ = '1.2.0'
 
 #import glob
 import re
@@ -48,9 +46,9 @@ _cs = cs()
 #
 logger().VERBOSE    = False
 logger().UTIL_TRACE = True
-logger().HAL        = True
+logger().HAL        = False
 
-# If you want to specify a different platform change this line to a string from chiset.py
+# If you want to specify a different platform change this line to a string from chipset.py
 # _Platform = 'SNB'
 _Platform = None
 
@@ -69,12 +67,14 @@ class ChipsecUtil:
 
 
     def chipsec_util_help(self, argv):
-
+        """
+        Shows the list of available command line extensions
+        """
         if len(argv) <= 2:
-            print "\n[CHIPSEC] chipsec_util command-line extensions should be one of the following:"
+            logger().log(  '\n[CHIPSEC] chipsec_util command-line extensions should be one of the following:' )
             for cmd in self.commands.keys():
-                print '    %s'%cmd
-                #print chipsec_util_commands[cmd]['help']
+                logger().log( '    %s' % cmd )
+                #logger().log( chipsec_util_commands[cmd]['help'] )
 
         else:
             print self.global_usage
@@ -84,9 +84,9 @@ class ChipsecUtil:
     def f_mod_zip(self, x):
         ZIP_UTILCMD_RE = re.compile("^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
         return ( x.find('__init__') == -1 and ZIP_UTILCMD_RE.match(x) )
+        
     def map_modname_zip(self, x):
         return ((x.split('/', 2)[2]).rpartition('.')[0]).replace('/','.')
-
 
     def f_mod(self, x):
         MODFILE_RE = re.compile("^\w+\.py$")
@@ -100,6 +100,9 @@ class ChipsecUtil:
 
 
     def main(self, argv):
+        """
+        Receives and executes the commands
+        """
         global _cs
         #import traceback
         if self.CHIPSEC_LOADED_AS_EXE:
@@ -112,9 +115,9 @@ class ChipsecUtil:
             cmds_dir = os.path.join(mydir,os.path.join("chipsec","utilcmd"))
             cmds = map( self.map_modname, filter(self.f_mod, os.listdir(cmds_dir)) )
 
-        #print "[CHIPSEC] Loaded command-line extensions:"
-        #print '   %s' % cmds
-        #print ' '
+        if logger().VERBOSE:
+            logger().log( '[CHIPSEC] Loaded command-line extensions:' )
+            logger().log( '   %s' % cmds )
         exit_code = 0
         module = None
         for cmd in cmds:
@@ -135,41 +138,45 @@ class ChipsecUtil:
                     try:
                         _cs.init( _Platform, True )
                     except UnknownChipsetError, msg:
-                        logger().warn("***************************************************************************************")
-                        logger().warn("* Unknown platform vendor. Platform dependent functionality is likely incorrect")
+                        logger().warn("*******************************************************************")
+                        logger().warn("* Unknown platform!")
+                        logger().warn("* Platform dependent functionality will likely be incorrect")
                         logger().warn("* Error Message: \"%s\"" % str(msg))
-                        logger().warn("***************************************************************************************")
+                        logger().warn("*******************************************************************")
                     except (None,Exception) , msg:
                         logger().error(str(msg))
                         exit(-1)
 
-                logger().log("[CHIPSEC] Executing command '%s' with args %s"%(cmd,argv[2:]))
+                logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,argv[2:]) )
                 self.commands[ cmd ]['func']( argv )
 
                 if self.commands[ cmd ]['start_driver']: _cs.destroy( True )
             else:
-                print "ERROR: Unknown command '%.32s'" % cmd
-                #print chipsec_util.global_usage
+                logger().error( "Unknown command '%.32s'" % cmd )
         else:
-            print "Not enough parameters"
+            logger().error( "Not enough parameters" )
             self.chipsec_util_help([])
-            #print chipsec_util.global_usage
             del _cs
             exit_code = 32
         return exit_code
 
     def set_logfile(self, logfile):
+        """
+        Calls logger's set_log_file function
+        """
         logger().set_log_file(logfile)
 
     def print_banner(self):
+        """
+        Prints chipsec banner
+        """
         logger().log( '' )
         logger().log( "################################################################\n"
                       "##                                                            ##\n"
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "Version %s" % __version__ )
-        logger().log('')
+        logger().log( "[CHIPSEC] Version %s" % __version__ )
 
         
 if __name__ == "__main__":

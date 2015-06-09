@@ -130,21 +130,14 @@ class xmlAux:
 
     def saveXML( self ):
         """Saves the XML info to a file in a JUnit style."""
-        if self.useXML == True:
-            if self.xmlFile is not None:
-                filename = self.xmlFile.replace("'", "")
-                filename2 = filename.replace(" ", "")
-                if filename2 in ["", " "]:
-                    return "filename for XML received empty or invalid string. So skipping writing to a file."
-
-                ts = xmlTestSuite( basename( os.path.splitext(filename)[0] ) )
-                ts.test_cases = self.test_cases
-                if self.properties is not None and len( self.properties ) > 0:
-                    ts.properties = self.properties
-            else:
-                return "xmlFile is None. So skipping writing to a file."
-            ts.to_file( filename )
-            return "\nSaving XML to file : " + str( os.path.abspath( filename ) )
+        if not self.useXML or self.xmlFile is None: return False
+        filename = self.xmlFile.replace("'", "")
+        ts = xmlTestSuite( basename( os.path.splitext(filename)[0] ) )
+        ts.test_cases = self.test_cases
+        if self.properties is not None and len( self.properties ) > 0: ts.properties = self.properties
+        ts.to_file( filename )
+        print "[CHIPSEC] Saving output to XML file: %s" % str( os.path.abspath( filename ) )
+        return True
 
 class testCaseType:
     """Used to represent the types of TestCase that can be assigned (FAILURE, ERROR, SKIPPED, PASS)"""

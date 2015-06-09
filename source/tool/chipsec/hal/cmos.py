@@ -27,19 +27,16 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-#
-#
-## \addtogroup hal
-# chipsec/hal/cmos.py
-# ==================================
-# CMOS memory specific functions (dump, read/write)
-#~~~
-# #usage:
-#     dump()
-#     read_byte( offset )
-#     write_byte( offset, value )
-#~~~
-#
+
+"""
+CMOS memory specific functions (dump, read/write)
+
+usage:
+    >>> dump()
+    >>> read_byte( offset )
+    >>> write_byte( offset, value )
+"""
+
 __version__ = '1.0'
 
 import struct

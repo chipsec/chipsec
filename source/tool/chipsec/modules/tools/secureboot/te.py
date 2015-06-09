@@ -18,19 +18,42 @@
 #chipsec@intel.com
 #
 
-#
 
-#
-## \addtogroup tools
-# __chipsec/modules/tools/secureboot/te.py__ - tool to test for 'TE Header' vulnerability in Secure Boot implementations
-#
+
+"""
+Tool to test for 'TE Header' vulnerability in Secure Boot implementations as described in 
+`All Your Boot Are Belong To Us <https://cansecwest.com/slides/2014/AllYourBoot_csw14-intel-final.pdf>`_
+
+Usage:
+  chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]
+      <mode>
+        generate_te        - (default) convert PE EFI binary <efi_file> to TE binary
+        replace_bootloader - replace bootloader files listed in <cfg_file> on ESP with modified <efi_file>
+        restore_bootloader - restore original bootloader files from .bak files
+      <cfg_file>           - path to config file listing paths to bootloader files to replace
+      <efi_file>           - path to EFI binary to convert to TE binary
+                             If no file path is provided, the tool will look for Shell.efi
+
+Examples:
+
+Convert Shell.efi PE/COFF EFI executable to TE executable:
+  chipsec_main.py -m tools.secureboot.te -a generate_te,Shell.efi
+Replace bootloaders listed in te.cfg file with TE version of Shell.efi executable:
+  chipsec_main.py -m tools.secureboot.te -a replace_bootloader,te.cfg,Shell.efi
+Restore bootloaders listed in te.cfg file:
+  chipsec_main.py -m tools.secureboot.te -a restore_bootloader,te.cfg
+"""
+
 import os
 import shutil
+import struct
+
 from chipsec.module_common import *
 
-logger = logger()
+logger  = chipsec.logger.logger()
 
-g_chain_loader_path = "chipsec/modules/tools/secureboot/chloader.efi"
+DEFAULT_PE_FILE_PATH     = "chipsec/modules/tools/secureboot/Shell.efi"
+DEFAULT_CONFIG_FILE_PATH = 'chipsec/modules/tools/secureboot/te.cfg'
 
 def dumpstr(s):
     for c in xrange(len(s)):
@@ -41,207 +64,192 @@ def dumpstr(s):
 
 #logger.VERBOSE = False
 
-'''
-typedef struct _IMAGE_DOS_HEADER
-{
-     WORD e_magic;
-     WORD e_cblp;
-     WORD e_cp;
-     WORD e_crlc;
-     WORD e_cparhdr;
-     WORD e_minalloc;
-     WORD e_maxalloc;
-     WORD e_ss;
-     WORD e_sp;
-     WORD e_csum;
-     WORD e_ip;
-     WORD e_cs;
-     WORD e_lfarlc;
-     WORD e_ovno;
-     WORD e_res[4];
-     WORD e_oemid;
-     WORD e_oeminfo;
-     WORD e_res2[10];
-     LONG e_lfanew;
-} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
-'''
+# typedef struct _IMAGE_DOS_HEADER
+# {
+#      WORD e_magic;
+#      WORD e_cblp;
+#      WORD e_cp;
+#      WORD e_crlc;
+#      WORD e_cparhdr;
+#      WORD e_minalloc;
+#      WORD e_maxalloc;
+#      WORD e_ss;
+#      WORD e_sp;
+#      WORD e_csum;
+#      WORD e_ip;
+#      WORD e_cs;
+#      WORD e_lfarlc;
+#      WORD e_ovno;
+#      WORD e_res[4];
+#      WORD e_oemid;
+#      WORD e_oeminfo;
+#      WORD e_res2[10];
+#      LONG e_lfanew;
+# } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
+
 IMAGE_DOS_HEADER = "<14H4HHH10Hi"
 IMAGE_DOS_HEADER_size = struct.calcsize(IMAGE_DOS_HEADER)
 E_MAGIC = 0x5A4D
 E_MAGIC_STR = "MZ"
 
-'''
-typedef struct _IMAGE_DATA_DIRECTORY
-{
-     ULONG VirtualAddress;
-     ULONG Size;
-} IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
-'''
+# typedef struct _IMAGE_DATA_DIRECTORY
+# {
+#      ULONG VirtualAddress;
+#      ULONG Size;
+# } IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
 
 IMAGE_DATA_DIRECTORY = "<II"
 IMAGE_DATA_DIRECTORY_size = struct.calcsize(IMAGE_DATA_DIRECTORY)
 
 IMAGE_NUMBEROF_DIRECTORY_ENTRIES = 16
 
-'''
-typedef struct _IMAGE_OPTIONAL_HEADER
-{
-     WORD Magic;
-     UCHAR MajorLinkerVersion;
-     UCHAR MinorLinkerVersion;
-     ULONG SizeOfCode;
-     ULONG SizeOfInitializedData;
-     ULONG SizeOfUninitializedData;
-     ULONG AddressOfEntryPoint;
-     ULONG BaseOfCode;
-     ULONG BaseOfData;
-     ULONG ImageBase;
-     ULONG SectionAlignment;
-     ULONG FileAlignment;
-     WORD MajorOperatingSystemVersion;
-     WORD MinorOperatingSystemVersion;
-     WORD MajorImageVersion;
-     WORD MinorImageVersion;
-     WORD MajorSubsystemVersion;
-     WORD MinorSubsystemVersion;
-     ULONG Win32VersionValue;
-     ULONG SizeOfImage;
-     ULONG SizeOfHeaders;
-     ULONG CheckSum;
-     WORD Subsystem;
-     WORD DllCharacteristics;
-     ULONG SizeOfStackReserve;
-     ULONG SizeOfStackCommit;
-     ULONG SizeOfHeapReserve;
-     ULONG SizeOfHeapCommit;
-     ULONG LoaderFlags;
-     ULONG NumberOfRvaAndSizes;
-     IMAGE_DATA_DIRECTORY DataDirectory[16];
-} IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
-'''
+# typedef struct _IMAGE_OPTIONAL_HEADER
+# {
+#      WORD Magic;
+#      UCHAR MajorLinkerVersion;
+#      UCHAR MinorLinkerVersion;
+#      ULONG SizeOfCode;
+#      ULONG SizeOfInitializedData;
+#      ULONG SizeOfUninitializedData;
+#      ULONG AddressOfEntryPoint;
+#      ULONG BaseOfCode;
+#      ULONG BaseOfData;
+#      ULONG ImageBase;
+#      ULONG SectionAlignment;
+#      ULONG FileAlignment;
+#      WORD MajorOperatingSystemVersion;
+#      WORD MinorOperatingSystemVersion;
+#      WORD MajorImageVersion;
+#      WORD MinorImageVersion;
+#      WORD MajorSubsystemVersion;
+#      WORD MinorSubsystemVersion;
+#      ULONG Win32VersionValue;
+#      ULONG SizeOfImage;
+#      ULONG SizeOfHeaders;
+#      ULONG CheckSum;
+#      WORD Subsystem;
+#      WORD DllCharacteristics;
+#      ULONG SizeOfStackReserve;
+#      ULONG SizeOfStackCommit;
+#      ULONG SizeOfHeapReserve;
+#      ULONG SizeOfHeapCommit;
+#      ULONG LoaderFlags;
+#      ULONG NumberOfRvaAndSizes;
+#      IMAGE_DATA_DIRECTORY DataDirectory[16];
+# } IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
+
 IMAGE_OPTIONAL_HEADER = "<HBB9I6H4I2H6I"
 IMAGE_OPTIONAL_HEADER_size = struct.calcsize(IMAGE_OPTIONAL_HEADER)
 IMAGE_NT_OPTIONAL_HDR32_MAGIC = 0x10b
 
-'''
-typedef struct {
-  //
-  // Standard fields.
-  //
-  UINT16                    Magic;
-  UINT8                     MajorLinkerVersion;
-  UINT8                     MinorLinkerVersion;
-  UINT32                    SizeOfCode;
-  UINT32                    SizeOfInitializedData;
-  UINT32                    SizeOfUninitializedData;
-  UINT32                    AddressOfEntryPoint;
-  UINT32                    BaseOfCode;
-  //
-  // NT additional fields.
-  //
-  UINT64                    ImageBase;
-  UINT32                    SectionAlignment;
-  UINT32                    FileAlignment;
-  UINT16                    MajorOperatingSystemVersion;
-  UINT16                    MinorOperatingSystemVersion;
-  UINT16                    MajorImageVersion;
-  UINT16                    MinorImageVersion;
-  UINT16                    MajorSubsystemVersion;
-  UINT16                    MinorSubsystemVersion;
-  UINT32                    Win32VersionValue;
-  UINT32                    SizeOfImage;
-  UINT32                    SizeOfHeaders;
-  UINT32                    CheckSum;
-  UINT16                    Subsystem;
-  UINT16                    DllCharacteristics;
-  UINT64                    SizeOfStackReserve;
-  UINT64                    SizeOfStackCommit;
-  UINT64                    SizeOfHeapReserve;
-  UINT64                    SizeOfHeapCommit;
-  UINT32                    LoaderFlags;
-  UINT32                    NumberOfRvaAndSizes;
-  EFI_IMAGE_DATA_DIRECTORY  DataDirectory[EFI_IMAGE_NUMBER_OF_DIRECTORY_ENTRIES];
-} EFI_IMAGE_OPTIONAL_HEADER64;
-
-'''
+# typedef struct {
+#   //
+#   // Standard fields.
+#   //
+#   UINT16                    Magic;
+#   UINT8                     MajorLinkerVersion;
+#   UINT8                     MinorLinkerVersion;
+#   UINT32                    SizeOfCode;
+#   UINT32                    SizeOfInitializedData;
+#   UINT32                    SizeOfUninitializedData;
+#   UINT32                    AddressOfEntryPoint;
+#   UINT32                    BaseOfCode;
+#   //
+#   // NT additional fields.
+#   //
+#   UINT64                    ImageBase;
+#   UINT32                    SectionAlignment;
+#   UINT32                    FileAlignment;
+#   UINT16                    MajorOperatingSystemVersion;
+#   UINT16                    MinorOperatingSystemVersion;
+#   UINT16                    MajorImageVersion;
+#   UINT16                    MinorImageVersion;
+#   UINT16                    MajorSubsystemVersion;
+#   UINT16                    MinorSubsystemVersion;
+#   UINT32                    Win32VersionValue;
+#   UINT32                    SizeOfImage;
+#   UINT32                    SizeOfHeaders;
+#   UINT32                    CheckSum;
+#   UINT16                    Subsystem;
+#   UINT16                    DllCharacteristics;
+#   UINT64                    SizeOfStackReserve;
+#   UINT64                    SizeOfStackCommit;
+#   UINT64                    SizeOfHeapReserve;
+#   UINT64                    SizeOfHeapCommit;
+#   UINT32                    LoaderFlags;
+#   UINT32                    NumberOfRvaAndSizes;
+#   EFI_IMAGE_DATA_DIRECTORY  DataDirectory[EFI_IMAGE_NUMBER_OF_DIRECTORY_ENTRIES];
+# } EFI_IMAGE_OPTIONAL_HEADER64;
 
 IMAGE_OPTIONAL_HEADER64 = "<HBBIIIIIQIIHHHHHHIIIIHHQQQQII"
 IMAGE_OPTIONAL_HEADER64_size = struct.calcsize(IMAGE_OPTIONAL_HEADER64)
 IMAGE_NT_OPTIONAL_HDR64_MAGIC = 0x20b
 
-'''
-typedef struct _IMAGE_FILE_HEADER
-{
-     WORD Machine;
-     WORD NumberOfSections;
-     ULONG TimeDateStamp;
-     ULONG PointerToSymbolTable;
-     ULONG NumberOfSymbols;
-     WORD SizeOfOptionalHeader;
-     WORD Characteristics;
-} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
-'''
+# typedef struct _IMAGE_FILE_HEADER
+# {
+#      WORD Machine;
+#      WORD NumberOfSections;
+#      ULONG TimeDateStamp;
+#      ULONG PointerToSymbolTable;
+#      ULONG NumberOfSymbols;
+#      WORD SizeOfOptionalHeader;
+#      WORD Characteristics;
+# } IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
+
 IMAGE_FILE_HEADER = "<2H3I2H"
 IMAGE_FILE_HEADER_size = struct.calcsize(IMAGE_FILE_HEADER)
 
-'''
-typedef struct _IMAGE_NT_HEADERS
-{
-     ULONG Signature;
-     IMAGE_FILE_HEADER FileHeader;
-     IMAGE_OPTIONAL_HEADER OptionalHeader;
-} IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
-'''
+# typedef struct _IMAGE_NT_HEADERS
+# {
+#      ULONG Signature;
+#      IMAGE_FILE_HEADER FileHeader;
+#      IMAGE_OPTIONAL_HEADER OptionalHeader;
+# } IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
+
 IMAGE_NT_SIGNATURE = 0x00004550
 IMAGE_NT_HEADERS_size = (4 + IMAGE_FILE_HEADER_size + IMAGE_OPTIONAL_HEADER_size + IMAGE_NUMBEROF_DIRECTORY_ENTRIES * IMAGE_DATA_DIRECTORY_size)
 
-'''
-typedef struct _IMAGE_SECTION_HEADER
-{
-     UCHAR Name[8];
-     ULONG Misc;
-     ULONG VirtualAddress;
-     ULONG SizeOfRawData;
-     ULONG PointerToRawData;
-     ULONG PointerToRelocations;
-     ULONG PointerToLinenumbers;
-     WORD NumberOfRelocations;
-     WORD NumberOfLinenumbers;
-     ULONG Characteristics;
-} IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
-'''
+# typedef struct _IMAGE_SECTION_HEADER
+# {
+#      UCHAR Name[8];
+#      ULONG Misc;
+#      ULONG VirtualAddress;
+#      ULONG SizeOfRawData;
+#      ULONG PointerToRawData;
+#      ULONG PointerToRelocations;
+#      ULONG PointerToLinenumbers;
+#      WORD NumberOfRelocations;
+#      WORD NumberOfLinenumbers;
+#      ULONG Characteristics;
+# } IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
+
 IMAGE_SECTION_HEADER = "<8s6I2HI"
 IMAGE_SECTION_HEADER_size = struct.calcsize(IMAGE_SECTION_HEADER)
 
-'''
-PE executable structure
-
-  MS-DOS header
-    ...
-    e_lfanew -------------------+
-                                |
-                                |
-  IMAGE_NT_HEADERS Header  <----+
-   ...
-  SECTION TABLE
-   ...
-'''
-
-'''
-TE header
-
-typedef struct {
-  UINT16                    Signature;            // signature for TE format = "VZ"
-  UINT16                    Machine;              // from the original file header
-  UINT8                     NumberOfSections;     // from the original file header
-  UINT8                     Subsystem;            // from original optional header
-  UINT16                    StrippedSize;         // how many bytes we removed from the header
-  UINT32                    AddressOfEntryPoint;  // offset to entry point -- from original optional header
-  UINT32                    BaseOfCode;           // from original image -- required for ITP debug
-  UINT64                    ImageBase;            // from original file header
-  IMAGE_DATA_DIRECTORY      DataDirectory[2];     // only base relocation and debug directory
-} EFI_TE_IMAGE_HEADER;
-'''
+# PE executable structure
+# 
+#   MS-DOS header
+#     ...
+#     e_lfanew -------------------+
+#                                 |
+#                                 |
+#   IMAGE_NT_HEADERS Header  <----+
+#    ...
+#   SECTION TABLE
+#    ...
+# TE header
+# 
+# typedef struct {
+#   UINT16                    Signature;            // signature for TE format = "VZ"
+#   UINT16                    Machine;              // from the original file header
+#   UINT8                     NumberOfSections;     // from the original file header
+#   UINT8                     Subsystem;            // from original optional header
+#   UINT16                    StrippedSize;         // how many bytes we removed from the header
+#   UINT32                    AddressOfEntryPoint;  // offset to entry point -- from original optional header
+#   UINT32                    BaseOfCode;           // from original image -- required for ITP debug
+#   UINT64                    ImageBase;            // from original file header
+#   IMAGE_DATA_DIRECTORY      DataDirectory[2];     // only base relocation and debug directory
+# } EFI_TE_IMAGE_HEADER;
 
 EFI_TE_IMAGE_HEADER = "<HHBBHIIQ"
 EFI_TE_IMAGE_HEADER_SIGNATURE = 0x5A56
@@ -353,87 +361,84 @@ def produce_te(fname, outfname):
         fte.write(te_data)
     return 1
 
-def replace_bootloader(boot_loader, chain_loader):
-    logger.log( "[*] Replacing %s.." % boot_loader )
-    chain_loader_te = chain_loader+".te"
-    if (not os.path.exists(chain_loader_te)):
-        produce_te(chain_loader, chain_loader_te)
-    # back up bootloader
-    backup = boot_loader + ".bak"
+def replace_efi_binary(orig_efi_binary, new_efi_binary):
+    logger.log( "[*] replacing EFI binary '%s'.." % orig_efi_binary )
+    te_binary = new_efi_binary + '.te'
+    if not os.path.exists(te_binary): produce_te(new_efi_binary, te_binary)
+    # back up original binary
+    backup = orig_efi_binary + '.bak'
+    if not os.path.exists(backup): os.rename(orig_efi_binary, backup)
     try:
-        if (not os.path.exists(backup)):
-            os.rename(boot_loader, backup)
-        shutil.copy(chain_loader_te, boot_loader)
+        shutil.copy(te_binary, orig_efi_binary)
     except OSError, err:
-        logger.error("Cannot replace bootloader (%s). Make sure you run as Administrator" % err)
-        return 0
-    return 1
-
-import subprocess
+        logger.error( 'Cannot replace binary (%s)' % err )
+        return False
+    return True
 
 def umount(drive):
+    import subprocess
     if os.path.exists(drive):
-        res = subprocess.call(["mountvol.exe", drive, "/D"])
-        if (res != 0):
-            logger.error("Cannot unmount EFI System partition: %d\n" % res)
+        res = subprocess.call( ["mountvol.exe", drive, "/D"] )
+        if res != 0: logger.warn( "Cannot unmount EFI System partition: %d" % res )
 
 def get_efi_mount():
+    import subprocess
     for l in xrange(ord('z'), ord('a'), -1):
-        if (not os.path.exists("%c:\\" % l)):
-            res = subprocess.call(["mountvol.exe", "%c:\\" % l, "/S"])
-            if (res != 0):
-                logger.error("Cannot mount EFI System partition: %d\n" % res)
+        if not os.path.exists('%c:\\' % l):
+            res = subprocess.call( ["mountvol.exe", "%c:\\" % l, "/S"] )
+            if res != 0:
+                logger.error( "Cannot mount EFI System partition (status = %d)" % res )
                 return None
-            return "%c:\\" % l
-    logger.error("Cannot mount EFI System partition. No drive letters to use.\n")
+            return '%c:\\' % l
+    logger.error( "Cannot mount EFI System partition. No drive letters to use." )
     return None
 
-def replace_bootloader_efi():
+def get_bootloader_paths( cfg_file ):
+    bootloader_paths = []
+    fcfg = open( cfg_file, 'r' )
+    logger.log( "[*] reading paths from '%s'.." % cfg_file )
+    for line in fcfg:
+        bl_path = line.rstrip()
+        if bl_path is not None: 
+            logger.log( "    adding path '%s'.." % bl_path )
+            bootloader_paths.append( bl_path )
+    return bootloader_paths
+
+def replace_bootloader( bootloader_paths, new_bootloader_file, do_mount=True ):
     logger.log( "[*] Replacing bootloaders on EFI System Partition (ESP).." )
-    dsk = get_efi_mount()
-    if dsk is None: return 0
-    boot_path_00 = dsk + "EFI\\Boot\\bootia32.efi"
-    boot_path_01 = dsk + "EFI\\Boot\\bootx64.efi"
-    boot_path_02 = dsk + "EFI\\Microsoft\\Boot\\bootmgfw.efi"
-    chain_loader = g_chain_loader_path
-    if os.path.exists(boot_path_00):
-        replace_bootloader(boot_path_00, chain_loader)
-    if os.path.exists(boot_path_01):
-        replace_bootloader(boot_path_01, chain_loader)
-    if os.path.exists(boot_path_02):
-        replace_bootloader(boot_path_02, chain_loader)
-    umount(dsk)
+    dsk = get_efi_mount() if do_mount else ''
+    if dsk is None: return False
+    for pth in bootloader_paths:
+        bootloader_path = os.path.join(dsk,pth)
+        if os.path.exists(bootloader_path): replace_efi_binary( bootloader_path, new_bootloader_file )
+    if do_mount: umount( dsk )
     logger.log( "[*] You will need to reboot the system to see the changes" )
-    return 1
+    return True
 
-def restore_bootloader(boot_loader):
-    logger.log( "[*] Restoring %s.." % boot_loader )
-    backup = boot_loader + ".bak"
+def restore_efi_binary( orig_efi_binary ):
+    logger.log( "[*] Restoring %s.." % orig_efi_binary )
+    backup = orig_efi_binary + ".bak"
+    if not os.path.exists(backup):
+        logger.error( "Cannot restore original binary: '%s' not found" % backup )
+        return False
     try:
-        if not os.path.exists(backup):
-            logger.error("Cannot restore bootloader - %s not found" % backup)
-            return 0
-        if os.path.exists(boot_loader):
-            os.remove(boot_loader)
-        os.rename(backup, boot_loader)
+        if os.path.exists(orig_efi_binary): os.remove(orig_efi_binary)
+        os.rename(backup, orig_efi_binary)
     except OSError, err:
-        logger.error("Cannot restore bootloader (%s). Make sure you run as Administrator" % err)
-        return 0
-    return 1
+        logger.error( 'Cannot restore original binary (%s)' % err )
+        return False
+    return True
 
-def restore_bootloader_efi():
+def restore_bootloader( bootloader_paths, do_mount=True ):
     logger.log( "[*] Restoring bootloaders on EFI System Partition (ESP).." )
-    dsk = get_efi_mount()
-    if dsk is None: return 0
-    boot_path_00 = dsk + "EFI\\Boot\\bootia32.efi"
-    boot_path_01 = dsk + "EFI\\Boot\\bootx64.efi"
-    boot_path_02 = dsk + "EFI\\Microsoft\\Boot\\bootmgfw.efi"
-    if os.path.exists(boot_path_00): restore_bootloader(boot_path_00)
-    if os.path.exists(boot_path_01): restore_bootloader(boot_path_01)
-    if os.path.exists(boot_path_02): restore_bootloader(boot_path_02)
-    umount(dsk)
+    dsk = get_efi_mount() if do_mount else ''
+    if dsk is None: return False
+    for pth in bootloader_paths:
+        bootloader_path = os.path.join(dsk,pth)
+        if os.path.exists(bootloader_path): restore_efi_binary( bootloader_path )
+    if do_mount: umount( dsk )
     logger.log( "[*] You will need to reboot the system to see the changes" )
-    return 1
+    return True
 
 def confirm():
     logger.warn("***************************************************************************************")
@@ -441,18 +446,18 @@ def confirm():
     logger.warn("* RUNNING THIS TOOL MAY RESULT IN UNBOOTABLE OS!")
     logger.warn("* USE IT FOR TESTING PURPOSES ON TEST SYSTEMS ONLY")
     logger.warn("*")
-    logger.warn("* If after reboot, Windows still boots then the firmware doesn't properly")
-    logger.warn("* enforce Secure Boot checks on TE executables (vulnerability)")
+    logger.warn("* The tool converts PE/COFF EFI executables to TE EFI executables.")
+    logger.warn("* The tool can also automatically replace files (boot loaders)")
+    logger.warn("* listed in the configuration file with the generated TE executable.")
     logger.warn("*")
-    logger.warn("* If Windows doesn't boot then Secure Boot correctly blocked TE executable.")
-    logger.warn("* To restore Windows in this case you may use one of the follwoing:")
-    logger.warn("* - Disable Secure Boot in BIOS setup, boot Linux or UEFI shell from bootable drive")
-    logger.warn("*   then restore original bootloader binaries from .bak files")
-    logger.warn("* - Use Windows recovery mode which should automatically restore correct executables")
+    logger.warn("* If after reboot, TE executable runs then the firmware doesn't properly")
+    logger.warn("* enforce Secure Boot checks on TE EFI executables")
     logger.warn("*")
-    logger.warn("* The tool will only automatically replace bootloaders on Windows 8 or higher.")
-    logger.warn("* To test on Linux, you'd need to modify EFI executable specified by <filename> argument")
-    logger.warn("* then manually replace bootloader with the modified executable")
+    logger.warn("* If TE executable doesn't run then the firmware correctly blocked it.")
+    logger.warn("* To restore OS boot loader in this case you may use one of the follwoing:")
+    logger.warn("* - Disable Secure Boot in BIOS, boot to external drive (e.g. Linux or UEFI shell)")
+    logger.warn("*   then restore original boot loader executables from .bak files")
+    logger.warn("* - On Windows, use recovery mode which should automatically restore correct executables")
     logger.warn("*")
     logger.warn("***************************************************************************************")
     s = raw_input( "Type 'yes' to continue running the tool > " )
@@ -460,33 +465,65 @@ def confirm():
 
 def usage():
     logger.log( 'Usage:\n' +       \
-                  'chipsec_main.py -m tools.secureboot.te -a [options]\n' + \
-                  '  options:\n' +\
-                  '    <filename> - name of EFI binary to be replaced with TE header (optional)\n' + \
-                  '                 If no filename is specified, bootloaders (boot<arch>.efi, bootmgfw.efi)\n' + \
-                  '                 on ESP will be replaced automatically\n' + \
-                  '    restore    - restore original bootloaders on EFI System Partition (ESP) from .bak files\n' )
+                  'chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]\n' + \
+                  '    <mode>\n' + \
+                  '      generate_te        - (default) convert PE EFI binary <efi_file> to TE binary\n' + \
+                  '      replace_bootloader - replace bootloader files listed in <cfg_file> on ESP with modified <efi_file>\n' + \
+                  '      restore_bootloader - restore original bootloader files from .bak files\n' + \
+                  '    <cfg_file>           - path to config file listing paths to bootloader files to replace\n' + \
+                  '    <efi_file>           - path to EFI binary to convert to TE binary\n' + \
+                  '                           If no file path is provided, the tool will look for Shell.efi\n' )
 
-def run( module_argv ):
-    logger.start_test( "'TE Header' Secure Boot Bypass Test" )
-    usage()
+class te(BaseModule):
 
-    if 0 == len(module_argv):
-        confirm()
-        return replace_bootloader_efi()
-    elif 1 == len(module_argv):
-        option = module_argv[ 0 ]
-        if option == "restore":
+    def __init__(self):
+        BaseModule.__init__(self)
+        
+    def is_supported(self):
+        #win8 = self.cs.helper.is_win8_or_greater()
+        efi_mode = self.cs.helper.EFI_supported()
+        if not efi_mode: self.logger.log_skipped_check( "OS did not boot in UEFI mode" )
+        return efi_mode
+
+    def run( self, module_argv ):
+        self.logger.start_test( "'TE Header' Secure Boot Bypass Test" )
+        usage()
+
+        sts       = False
+        do_mount  = True
+        file_path = DEFAULT_PE_FILE_PATH
+        te_cfg    = DEFAULT_CONFIG_FILE_PATH
+        mode      = module_argv[0] if len(module_argv) > 0 else 'generate_te'
+
+        if 'generate_te' == mode:
+            if len(module_argv) > 1: file_path = module_argv[1]
+            if not os.path.exists( file_path ):
+                self.logger.error( "Cannot find file '%s'" % file_path )
+                return ModuleResult.ERROR
+
+            sts = replace_efi_binary( file_path, file_path )
+
+        elif 'restore_bootloader' == mode or 'replace_bootloader' == mode:
             confirm()
-            return restore_bootloader_efi()
+
+            if len(module_argv) > 1: te_cfg    = module_argv[1]
+            if not os.path.exists( te_cfg ):
+                self.logger.error( "Cannot find file '%s'" % te_cfg )
+                return ModuleResult.ERROR
+
+            bootloader_paths = get_bootloader_paths( te_cfg )
+            if 0 == len(bootloader_paths):
+                self.logger.log( "[*] no bootloaders to replace. Exit.." )
+                return ModuleResult.SKIPPED
+
+            do_mount = self.cs.helper.is_windows() # @TODO
+            if   'restore_bootloader' == mode:
+                sts = restore_bootloader( bootloader_paths, do_mount )
+            elif 'replace_bootloader' == mode:
+                if len(module_argv) > 2: file_path = module_argv[2]
+                sts = replace_bootloader( bootloader_paths, file_path, do_mount )
+
         else:
-            return replace_bootloader( option )
-    else:
-        logger.error( 'Invalid module arguments' )
-        return 0
-        #option = module_argv[0]
-        #if (option == "restore"):
-        #  return restore_bootloader(module_argv[1])
-        #else:
-        #  logger.error( 'Invalid parameters' )
-        #  return 0
+            self.logger.error( "Invalid mode: '%s'" % mode )
+
+        return (ModuleResult.PASSED if sts else ModuleResult.ERROR)

@@ -27,13 +27,10 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-#
-## \addtogroup core
-#@{
-# __chipsec/helper/oshelper.py__ -- Abstracts support for various OS/environments, wrapper around platform
-#                specific code that invokes kernel driver
-#@}
-#
+
+"""
+Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
+"""
 
 import sys
 import os
@@ -44,7 +41,6 @@ import errno
 import chipsec.file
 from chipsec.logger import *
 import traceback
-
 
 _importlib = True
 try:
@@ -138,7 +134,7 @@ class OsHelper:
                     mHelper = importlib.import_module( '%s.%s' % (mod_path,sHelper) )
                     result = getattr( mHelper, 'get_helper' )(  )
                     self.helper = result
-                    if result is not None: logger().log('[helper] Loaded OS helper: %s.%s' % (mod_path,sHelper) )
+                    if result is not None and logger().HAL: logger().log('[helper] Loaded OS helper: %s.%s' % (mod_path,sHelper) )
 
             # Support for older Python < 2.5
             #else:
@@ -193,11 +189,13 @@ class OsHelper:
     # Read/Write PCI configuration registers via legacy CF8/CFC ports
     #
     def read_pci_reg( self, bus, device, function, address, size ):
+        """Read PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
             logger().warn( "Config register address is not naturally aligned" )
         return self.helper.read_pci_reg( bus, device, function, address, size )
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
+        """Write PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
             logger().warn( "Config register address is not naturally aligned" )
         return self.helper.write_pci_reg( bus, device, function, address, value, size )
@@ -211,6 +209,8 @@ class OsHelper:
         return self.helper.write_phys_mem( phys_address_hi, phys_address_lo, length, buf )
     def alloc_phys_mem( self, length, max_pa_hi, max_pa_lo ):
         return self.helper.alloc_phys_mem( length, (max_pa_hi<<32|max_pa_lo) )
+    def va2pa( self, va ):
+        return self.helper.va2pa( va )
 
     #
     # read/write mmio
@@ -226,20 +226,22 @@ class OsHelper:
     #
     def read_physical_mem( self, phys_address, length ):
         return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
+
     def write_physical_mem( self, phys_address, length, buf ):
         return self.helper.write_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length, buf )
+
     def alloc_physical_mem( self, length, max_phys_address ):
         return self.helper.alloc_phys_mem( length, max_phys_address )
-        #return self.helper.alloc_phys_mem( length, (max_phys_address>>32)&0xFFFFFFFF, max_phys_address&0xFFFFFFFF )
-
 
     #
     # Read/Write I/O port
     #
     def read_io_port( self, io_port, size ):
         return self.helper.read_io_port( io_port, size )
+
     def write_io_port( self, io_port, value, size ):
         return self.helper.write_io_port( io_port, value, size )
+
     #
     # Read/Write CR registers
     #
@@ -249,12 +251,12 @@ class OsHelper:
     def write_cr(self, cpu_thread_id, cr_number, value):
         return self.helper.write_cr( cpu_thread_id, cr_number, value )
 
-
     #
     # Read/Write MSR on a specific CPU thread
     #
     def read_msr( self, cpu_thread_id, msr_addr ):
         return self.helper.read_msr( cpu_thread_id, msr_addr )
+
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
         return self.helper.write_msr( cpu_thread_id, msr_addr, eax, edx )
 
@@ -295,7 +297,7 @@ class OsHelper:
         return self.helper.get_ACPI_table_list()
     
     #
-    # Xen Hypercall
+    # Hypervisor
     #
     def do_hypercall( self, vector, arg1=0, arg2=0, arg3=0, arg4=0, arg5=0, use_peach=0 ):
         return self.helper.do_hypercall( vector, arg1, arg2, arg3, arg4, arg5, use_peach)
@@ -306,17 +308,41 @@ class OsHelper:
     def cpuid( self, eax, ecx ):
         return self.helper.cpuid( eax, ecx )
 
+    #
+    # Logical CPU count
+    #
     def get_threads_count( self ):
         return self.helper.get_threads_count()
 
+    #
+    # Send SW SMI
+    #
+    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+        return self.helper.send_sw_smi( cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+
+    #
+    # File system
+    #
     def getcwd( self ):
         return self.helper.getcwd()
 
     #
-    # Interrupts
+    # Decompress binary with OS specific tools
     #
-    def send_sw_smi( self, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
-        return self.helper.send_sw_smi( SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+        from subprocess import call
+        exe = self.helper.get_compression_tool_path( CompressionType )
+        if exe is None: return None 
+        try:
+            call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName) )
+        except BaseException, msg:
+            logger().error( msg )
+            if logger().VERBOSE: logger().log_bad( traceback.format_exc() )
+            return None
+
+        return chipsec.file.read_file( OutputFileName )
+
+
 
 _helper = None
 

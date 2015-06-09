@@ -21,22 +21,10 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone chipsec util
-#  Chipsec Standalone utility\n
-#
-# chipsec_util platform
-# -----------------------------
-# ~~~
-# chipsec_util platform
-# ~~~
-#
-#
-#
-#
+""" 
+usage as a standalone utility:
+    >>> chipsec_util platform
+"""
 
 __version__ = '1.0'
 
@@ -52,17 +40,15 @@ from chipsec.file       import *
 
 from chipsec.chipset    import UnknownChipsetError, print_supported_chipsets
 
-
-usage = "chipsec_util platform\n\n"
-
-
 # ###################################################################
 #
 # Chipset/CPU Detection
 #
 # ###################################################################
 def platform(argv):
-
+    """
+    chipsec_util platform
+    """
     try:
         print_supported_chipsets()
         logger().log("")
@@ -70,4 +56,4 @@ def platform(argv):
     except UnknownChipsetError, msg:
         logger().error( msg )
 
-chipsec_util.commands['platform'] = {'func' : platform, 'start_driver' : True , 'help' : usage }
+chipsec_util.commands['platform'] = {'func' : platform, 'start_driver' : True , 'help' : platform.__doc__ }

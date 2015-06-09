@@ -20,10 +20,11 @@
 
 
 
+"""
+`BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ - Sun Bing
 
-## \addtogroup modules
-# __chipsec/modules/common/bios_ts.py__ -checks for BIOS Top Swap Mode
-#
+Checks for BIOS Top Swap Mode
+"""
 
 from chipsec.module_common import *
 TAGS = [chipsec.module_common.MTAG_BIOS]
@@ -45,36 +46,35 @@ class bios_ts(chipsec.module_common.BaseModule):
 
         self.logger.start_test( "BIOS Interface Lock and Top Swap Mode" )
 
-        if not chipsec.chipset.is_register_defined( self.cs, 'BC'):
-            self.logger.error("Couldn't find definition of required configuration registers (BC)")
+        if not chipsec.chipset.is_register_defined( self.cs, 'BC' ):
+            self.logger.warn("Couldn't locate the 'BC' register definition")
         else:
-            bc_reg = chipsec.chipset.read_register(self.cs, 'BC')
+            bc_reg = chipsec.chipset.read_register( self.cs, 'BC' )
             chipsec.chipset.print_register( self.cs, 'BC', bc_reg )
-               
-        if not chipsec.chipset.register_has_field( self.cs, 'BC', 'TSS'):
-            self.logger.error( "Couldn't locate 'Top Swap' bit in the configuration for the BC register" )
-        else:
-            tss  = chipsec.chipset.get_register_field( self.cs, 'BC', bc_reg, 'TSS' )
-            self.logger.log( "[*] BIOS Top Swap mode is %s" % ('enabled' if (1==tss) else 'disabled') )
+            if not chipsec.chipset.register_has_field( self.cs, 'BC', 'TSS' ):
+                self.logger.warn( "Couldn't locate 'TSS' bit in the 'BC' register definition" )
+            else:
+                tss  = chipsec.chipset.get_register_field( self.cs, 'BC', bc_reg, 'TSS' )
+                self.logger.log( "[*] BIOS Top Swap mode is %s" % ('enabled' if (1==tss) else 'disabled') )
 
         if not chipsec.chipset.is_register_defined( self.cs, 'BUC' ):
-            self.logger.error( "Couldn't find definition of required configuration registers (BUC)" )
+            self.logger.warn( "Couldn't locate the 'BUC' register definition" )
         else: 
             buc_reg = chipsec.chipset.read_register( self.cs, 'BUC' )
             chipsec.chipset.print_register( self.cs, 'BUC', buc_reg )
-            if not chipsec.chipset.register_has_field( self.cs, 'BUC', 'TS'):
-                self.logger.error( "Couldn't locate 'Top Swap' bit in the configuration for the BUC register" )
+            if not chipsec.chipset.register_has_field( self.cs, 'BUC', 'TS' ):
+                self.logger.warn( "Couldn't locate 'TS' bit in the 'BUC' register definition" )
             else:
                 ts  = chipsec.chipset.get_register_field( self.cs, 'BUC', buc_reg, 'TS' )
                 self.logger.log( "[*] RTC version of TS = %x" % ts )
 
         if not chipsec.chipset.is_register_defined( self.cs, 'GCS' ):
-            self.logger.error( "Couldn't find definition of required configuration registers (GCS)" )
+            self.logger.error( "Couldn't locate required 'GCS' register definition" )
             return ModuleResult.ERROR
         gcs_reg = chipsec.chipset.read_register( self.cs, 'GCS' )
         chipsec.chipset.print_register( self.cs, 'GCS', gcs_reg )
         if not chipsec.chipset.register_has_field( self.cs, 'GCS', 'BILD' ):
-            self.logger.error( "Couldn't locate 'BIOS Interface Lock-Down' bit in the configuration for the GCS register" )
+            self.logger.error( "Couldn't locate 'BILD' bit in the 'GCS' register definition" )
             return ModuleResult.ERROR
         bild = chipsec.chipset.get_register_field( self.cs, 'GCS', gcs_reg, 'BILD' )
 

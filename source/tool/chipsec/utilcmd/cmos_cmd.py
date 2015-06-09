@@ -22,25 +22,6 @@
 
 
 
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#
-#
-#chipsec_util cmos
-#------------------------
-#~~~
-#chipsec_util cmos dump\n
-#chipsec_util cmos readl|writel|readh|writeh \<byte_offset\> [byte_val]
-# ''
-#    Examples:
-#        chipsec_util cmos dump
-#        chipsec_util cmos readh 0x0
-#        chipsec_util cmos writeh 0x0 0xCC
-# ~~~
-#
-#
 __version__ = '1.0'
 
 import os
@@ -55,21 +36,23 @@ from chipsec.file       import *
 
 from chipsec.hal.cmos   import CMOS, CmosRuntimeError
 
-usage = "chipsec_util cmos dump\n" + \
-        "chipsec_util cmos readl|writel|readh|writeh <byte_offset> [byte_val]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util cmos dump\n" + \
-        "  chipsec_util cmos rl 0x0\n" + \
-        "  chipsec_util cmos wh 0x0 0xCC\n\n"
-
-
 def cmos(argv):
+    """
+    >>> chipsec_util cmos dump
+    >>> chipsec_util cmos readl|writel|readh|writeh <byte_offset> [byte_val]
+
+    Examples:
+
+    >>> chipsec_util cmos dump
+    >>> chipsec_util cmos rl 0x0
+    >>> chipsec_util cmos wh 0x0 0xCC
+    """
     if 3 > len(argv):
-        print usage
+        print cmos.__doc__
         return
 
     try:
-        cmos = CMOS(  )
+        _cmos = CMOS(  )
     except CmosRuntimeError, msg:
         print msg
         return
@@ -79,25 +62,25 @@ def cmos(argv):
 
     if ( 'dump' == op ):
         logger().log( "[CHIPSEC] Dumping CMOS memory.." )
-        cmos.dump()
+        _cmos.dump()
     elif ( 'readl' == op ):
         off = int(argv[3],16)
-        val = cmos.read_cmos_low( off )
+        val = _cmos.read_cmos_low( off )
         logger().log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
     elif ( 'writel' == op ):
         off = int(argv[3],16)
         val = int(argv[4],16)
         logger().log( "[CHIPSEC] Writing CMOS low byte 0x%X <- 0x%X " % (off, val) )
-        cmos.write_cmos_low( off, val )
+        _cmos.write_cmos_low( off, val )
     elif ( 'readh' == op ):
         off = int(argv[3],16)
-        val = cmos.read_cmos_high( off )
+        val = _cmos.read_cmos_high( off )
         logger().log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
     elif ( 'writeh' == op ):
         off = int(argv[3],16)
         val = int(argv[4],16)
         logger().log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
-        cmos.write_cmos_high( off, val )
+        _cmos.write_cmos_high( off, val )
     else:
         logger().error( "unknown command-line option '%.32s'" % op )
         print usage
@@ -106,4 +89,4 @@ def cmos(argv):
     logger().log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['cmos'] = {'func' : cmos,    'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['cmos'] = {'func' : cmos,    'start_driver' : True, 'help' : cmos.__doc__  }

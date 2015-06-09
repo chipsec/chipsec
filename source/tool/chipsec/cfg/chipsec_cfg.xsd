@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<!-- PCI -->
+<xs:complexType name="pci_type">
+  <xs:sequence>
+     <xs:element name="device" type="device_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:attributeGroup name="device_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="bus" type="xs:string" use="required"/>
+  <xs:attribute name="dev" type="xs:string" use="required"/>
+  <xs:attribute name="fun" type="xs:string" use="required"/>
+  <xs:attribute name="vid" type="xs:string" use="required"/>
+</xs:attributeGroup>
+
+<xs:complexType name="device_type">
+  <xs:attributeGroup ref="device_attr"/>
+</xs:complexType>
+
+<!-- MMIO -->
+<xs:complexType name="mmio_type">
+  <xs:sequence>
+     <xs:element name="bar" type="mmiobar_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:attributeGroup name="mmiobar_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="register" type="xs:string" use="optional"/>
+  <xs:attribute name="base_field" type="xs:string" use="optional"/>
+  <xs:attribute name="enable_field" type="xs:string" use="optional"/>
+  <xs:attribute name="bus" type="xs:string" use="optional"/>
+  <xs:attribute name="dev" type="xs:string" use="optional"/>
+  <xs:attribute name="fun" type="xs:string" use="optional"/>
+  <xs:attribute name="reg" type="xs:string" use="optional"/>
+  <xs:attribute name="width" type="xs:string" use="optional"/>
+  <xs:attribute name="mask" type="xs:string" use="optional"/>
+  <xs:attribute name="size" type="xs:string" use="optional"/>
+  <xs:attribute name="enable_bit" type="xs:string" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+  <xs:attribute name="offset" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:complexType name="mmiobar_type">
+  <xs:attributeGroup ref="mmiobar_attr"/>
+</xs:complexType>
+
+<!-- IO -->
+<xs:complexType name="io_type">
+  <xs:sequence>
+     <xs:element name="bar" type="iobar_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:attributeGroup name="iobar_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="bus" type="xs:string" use="optional"/>
+  <xs:attribute name="dev" type="xs:string" use="optional"/>
+  <xs:attribute name="fun" type="xs:string" use="optional"/>
+  <xs:attribute name="reg" type="xs:string" use="optional"/>
+  <xs:attribute name="mask" type="xs:string" use="optional"/>
+  <xs:attribute name="size" type="xs:string" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+  <xs:attribute name="offset" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:complexType name="iobar_type">
+  <xs:attributeGroup ref="iobar_attr"/>
+</xs:complexType>
+
+<!-- MEMORY -->
+<xs:complexType name="memory_type">
+  <xs:sequence>
+     <xs:element name="range" type="memrange_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="memtype">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="dram" />
+    <xs:enumeration value="mmio" />
+  </xs:restriction>
+</xs:simpleType>
+		
+<xs:attributeGroup name="memrange_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="type" type="memtype" use="required"/>
+  <xs:attribute name="address" type="xs:string" use="required"/>
+  <xs:attribute name="size" type="xs:string" use="required"/>
+</xs:attributeGroup>
+
+<xs:complexType name="memrange_type">
+  <xs:attributeGroup ref="memrange_attr"/>
+</xs:complexType>
+
+<!-- REGISTERS -->
+<xs:complexType name="regs_type">
+  <xs:sequence>
+     <xs:element name="register" type="reg_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:simpleType name="rtype">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="msr" />
+    <xs:enumeration value="mmio" />
+    <xs:enumeration value="io" />
+    <xs:enumeration value="iobar" />
+    <xs:enumeration value="pcicfg" />
+    <xs:enumeration value="mmcfg" />
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="regaccess_type">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value="RW" />
+    <xs:enumeration value="RW1C" />
+    <xs:enumeration value="RW0C" />
+    <xs:enumeration value="RW1S" />
+    <xs:enumeration value="RWS" />
+    <xs:enumeration value="RW-O" />
+    <xs:enumeration value="RO" />
+    <xs:enumeration value="W1S" />
+    <xs:enumeration value="RW-L" />
+  </xs:restriction>
+</xs:simpleType>
+		
+<xs:attributeGroup name="reg_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="type" type="rtype" use="required"/>
+  <xs:attribute name="access" type="regaccess_type" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+  <xs:attribute name="size" type="xs:string" use="optional"/>
+  <xs:attribute name="bus" type="xs:string" use="optional"/>
+  <xs:attribute name="dev" type="xs:string" use="optional"/>
+  <xs:attribute name="fun" type="xs:string" use="optional"/>
+  <xs:attribute name="bar" type="xs:string" use="optional"/>
+  <xs:attribute name="msr" type="xs:string" use="optional"/>
+  <xs:attribute name="offset" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:complexType name="reg_type">
+  <xs:sequence>
+     <xs:element name="field" type="field_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+  <xs:attributeGroup ref="reg_attr"/>
+</xs:complexType>
+
+<xs:attributeGroup name="field_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="bit" type="xs:string" use="required"/>
+  <xs:attribute name="size" type="xs:string" use="required"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+  <xs:attribute name="access" type="regaccess_type" use="optional"/>
+</xs:attributeGroup>
+
+<xs:complexType name="field_type">
+  <xs:attributeGroup ref="field_attr"/>
+</xs:complexType>
+
+<!-- Controls -->
+<xs:complexType name="controls_type">
+  <xs:sequence>
+     <xs:element name="control" type="control_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="control_type">
+  <xs:attributeGroup ref="control_attr"/>
+</xs:complexType>
+
+<xs:attributeGroup name="control_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="register" type="xs:string" use="required"/>
+  <xs:attribute name="field" type="xs:string" use="required"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<!-- configuration -->
+<xs:element name="configuration">
+  <xs:complexType>
+    <xs:all>
+      <xs:element name="pci" type="pci_type" minOccurs="0"/>
+      <xs:element name="mmio" type="mmio_type" minOccurs="0"/>
+      <xs:element name="io" type="io_type" minOccurs="0"/>
+      <xs:element name="memory" type="memory_type" minOccurs="0"/>
+      <xs:element name="registers" type="regs_type" minOccurs="0"/>
+      <xs:element name="controls" type="controls_type" minOccurs="0"/>
+    </xs:all>
+    <xs:attribute name="platform" type="xs:string" use="optional"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

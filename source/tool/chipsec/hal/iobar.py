@@ -27,20 +27,17 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-#
-#
-## \addtogroup hal
-# chipsec/hal/iobar.py
-# ==================================
-# I/O BAR access (dump, read/write)
-#~~~
-# #usage:
-#     get_IO_BAR_base_address( bar_name )
-#     read_IO_BAR_reg( bar_name, offset, size )
-#     write_IO_BAR_reg( bar_name, offset, size, value )
-#     dump_IO_BAR( bar_name )
-#~~~
-#
+
+"""
+I/O BAR access (dump, read/write)
+
+usage:
+    >>> get_IO_BAR_base_address( bar_name )
+    >>> read_IO_BAR_reg( bar_name, offset, size )
+    >>> write_IO_BAR_reg( bar_name, offset, size, value )
+    >>> dump_IO_BAR( bar_name )
+"""
+
 __version__ = '1.0'
 
 import struct

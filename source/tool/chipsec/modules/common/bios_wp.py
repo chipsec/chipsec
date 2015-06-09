@@ -20,10 +20,15 @@
 
 
 
+"""
+Black Hat USA 2013 
+`BIOS Security <https://www.blackhat.com/us-13/briefings.html#Butterworth>`_ by MITRE (Kovah, Butterworth, Kallenberg)
 
-## \addtogroup modules
-# __chipsec/modules/common/bios.py__ - checks if BIOS Write Protection HW mechanisms are enabled
-#
+NoSuchCon 2013 
+`BIOS Chronomancy: Fixing the Static Root of Trust for Measurement <http://www.nosuchcon.org/talks/D2_01_Butterworth_BIOS_Chronomancy.pdf>`_ by MITRE (Kovah, Butterworth, Kallenberg)
+
+Checks if BIOS Write Protection HW mechanisms are enabled
+"""
 
 from chipsec.module_common import *
 TAGS = [MTAG_BIOS]
@@ -50,11 +55,12 @@ class bios_wp(BaseModule):
         # BIOS Control Register
         #
         reg_value = chipsec.chipset.read_register(self.cs, 'BC')
-        ble = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
-        bioswe = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE')
-        smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
         chipsec.chipset.print_register(self.cs, 'BC', reg_value)
 
+        ble    = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
+        bioswe = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE')
+        smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
+        #control_smmbwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
 
         # Is the BIOS flash region write protected?
         write_protected = 0

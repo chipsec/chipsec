@@ -21,27 +21,6 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util mmio
-#------
-#~~~
-#chipsec_util mmio list
-#chipsec_util mmio dump <MMIO_BAR_name>
-#chipsec_util mmio read|write <MMIO_BAR_name> <offset> <width> [value]
-#''
-#    Examples:
-#''
-#        chipsec_util mmio list
-#        chipsec_util mmio dump MCHBAR
-#        chipsec_util mmio read SPIBAR 0x74 0x4
-#        chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000
-#~~~
-
-
 __version__ = '1.0'
 
 import os
@@ -57,29 +36,29 @@ from chipsec.file       import *
 from chipsec.hal.mmio   import *
 
 
-
-usage = "chipsec_util mmio list\n" + \
-        "chipsec_util mmio dump <MMIO_BAR_name>\n" + \
-        "chipsec_util mmio read <MMIO_BAR_name> <offset> <width>\n" + \
-        "chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>\n" + \
-        "Examples:\n" + \
-        "  chipsec_util mmio list\n" + \
-        "  chipsec_util mmio dump MCHBAR\n" + \
-        "  chipsec_util mmio read SPIBAR 0x74 0x4\n" + \
-        "  chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000\n\n"
-
-
 # ###################################################################
 #
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 #
 # ###################################################################
 def mmio(argv):
+    """
+    >>> chipsec_util mmio list
+    >>> chipsec_util mmio dump <MMIO_BAR_name>
+    >>> chipsec_util mmio read <MMIO_BAR_name> <offset> <width>
+    >>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>
 
+    Examples:
+    
+    >>> chipsec_util mmio list
+    >>> chipsec_util mmio dump MCHBAR
+    >>> chipsec_util mmio read SPIBAR 0x74 0x4
+    >>> chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000
+    """
     t = time.time()
 
     if 3 > len(argv):
-        print usage
+        print mmio.__doc__
         return
 
     op = argv[2]
@@ -106,14 +85,14 @@ def mmio(argv):
             logger().log( "[CHIPSEC] Write %s + 0x%X: 0x%08X" % (bar,off,reg) )
             write_MMIO_BAR_reg( chipsec_util._cs, bar, off, reg, width )
         else:
-            print usage
+            print mmio.__doc__
             return
     else:
         logger().error( "unknown command-line option '%.32s'" % op )
-        print usage
+        print mmio.__doc__
         return
 
     logger().log( "[CHIPSEC] (mmio) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['mmio'] = {'func' : mmio ,    'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['mmio'] = {'func' : mmio , 'start_driver' : True, 'help' : mmio.__doc__  }

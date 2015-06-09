@@ -1325,7 +1325,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
     } 
 
-case IOCTL_RDMMIO:
+    case IOCTL_RDMMIO:
 	{
         unsigned long addr, first, second;
         char *ioaddr;
@@ -1366,7 +1366,7 @@ case IOCTL_RDMMIO:
 		break;
 	}
 
-case IOCTL_WRMMIO:
+        case IOCTL_WRMMIO:
 	{
         unsigned long addr, value;
         char *ioaddr;
@@ -1406,7 +1406,29 @@ case IOCTL_WRMMIO:
 			return -EFAULT;
 		break;
 	}
-    
+ 
+	case IOCTL_VA2PA:
+	{
+		//IN  params: va
+		//OUT params: pa
+#ifdef CONFIG_X86
+		PHYSICAL_ADDRESS pa;
+		numargs = 1;
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+
+		pa.quadpart = virt_to_phys((void*)ptr[0]);
+                ptr[0] = pa.quadpart;
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+			return -EFAULT;
+		break;
+#else
+		return -EFAULT;
+#endif
+	}
+
+   
 	default:
 		return -EFAULT;
 	}

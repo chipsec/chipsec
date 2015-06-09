@@ -27,15 +27,14 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/cpuid.py
-# ======================
-# CPUID information
-# ~~~
-# #usage:
-#     cpuid(0)
-# ~~~
-#
+
+"""
+CPUID information
+
+usage:
+    >>> cpuid(0)
+"""
+
 __version__ = '1.0'
 
 import struct

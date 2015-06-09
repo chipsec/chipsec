@@ -20,20 +20,14 @@
 
 
 
-## \addtogroup modules
-# __chipsec/modules/common/bios_kbrd_buffer.py__ - checks for BIOS/HDD password exposure thorugh BIOS keyboard buffer
-#
+"""
+DEFCON 16: `Bypassing Pre-boot Authentication Passwords by Instrumenting the BIOS Keyboard Buffer <http://www.slideshare.net/endrazine/defcon-16-bypassing-preboot-authentication-passwords-by-instrumenting-the-bios-keyboard-buffer-practical-low-level-attacks-against-x86-preboot-authentication-software>`_ by Jonathan Brossard
 
-## \file
-# checks for exposure of pre-boot passwords (BIOS/HDD/pre-bot authentication SW) in the BIOS keyboard buffer
-#
-# __chipsec/modules/common/bios_kbrd_buffer.py__
-# This vulnerability is disclosed by Jonathan Brossard in
-# 'Bypassing pre-boot authentication passwords by instrumenting the BIOS keyboard buffer'
-#
+Checks for BIOS/HDD password exposure through BIOS keyboard buffer.
 
+Checks for exposure of pre-boot passwords (BIOS/HDD/pre-bot authentication SW) in the BIOS keyboard buffer.
 
-
+"""
 
 from chipsec.hal.mmio import *
 from chipsec.hal.spi import *

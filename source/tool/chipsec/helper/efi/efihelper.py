@@ -25,17 +25,20 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2015 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup helpers
-# __chipsec/helper/efi/efihelper.py__ -- On UEFI use the efi package functions
-#
-#
+
+"""
+On UEFI use the efi package functions
+"""
+
 __version__ = '1.0'
 
 import struct
 import sys
+import uuid
+
 try:
     import edk2        # for Python 2.7 on UEFI
 except ImportError:
@@ -45,6 +48,9 @@ from chipsec.logger import logger
 
 class EfiHelperError (RuntimeError):
     pass
+
+status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+
 
 class EfiHelper:
 
@@ -173,7 +179,7 @@ class EfiHelper:
     def write_io_port( self, io_port, value, size ):
         return edk2.writeio( io_port, size, value )
 
-    def send_sw_smi( self, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         return edk2.swsmi(SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
 
     def read_cr(self, cpu_thread_id, cr_number):
@@ -190,9 +196,91 @@ class EfiHelper:
         return os.getcwd()
 
     def EFI_supported( self ):
-        # @TODO
-        return False
+        return True
 
+        
+
+    def get_EFI_variable_full(self, name, guidstr):
+        guid = uuid.UUID(guidstr)
+        
+        size = 100
+        (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
+        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        
+        if Status == 5:
+            size = DataSize+1
+            (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size) 
+        
+        return (Status, newdata, Attributes)
+        
+
+    def get_EFI_variable(self, name, guidstr):
+        (status, data, attrs) = self.get_EFI_variable_full(name, guidstr)
+        return data
+        
+    def set_EFI_variable(self, name, guidstr, data, attrs=0x7):
+        
+        guid = uuid.UUID(guidstr)
+        
+        if not attrs: attrs = int(7)        
+        if not data: 
+            size = 0
+            data = '\0'*4
+        else: size = len(data)
+
+        (Status, DataSize, guidbytes) = edk2.SetVariable(unicode(name),  guid.bytes, int(attrs), data, size)
+        
+        return Status
+        
+    def delete_EFI_variable(self, name, guid):
+        return self.set_EFI_variable(name, guid, "")
+    
+    def list_EFI_variables(self):   
+                
+        off = 0
+        buf = list()
+        hdr = 0
+        attr = 0
+        variables = dict()
+
+        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        
+        name = '\0'*200
+        
+        randguid = uuid.uuid4()
+        
+        (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), randguid.bytes)     
+        
+        if status == 5:
+            if logger().VERBOSE: logger().log("size was too small increasing to %d" % size)
+            name = '\0'*size
+            (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), randguid.bytes)
+
+        
+#        while status != 14:
+        while status == 0:
+            guid =  uuid.UUID(bytes=guidbytes)  
+            name = name.encode('ascii','ignore')
+            (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
+            
+            if logger().VERBOSE: logger().log("%d: Found variable %s" % (len(variables), name))
+
+            var = (off, buf, hdr, data, guid, attr)
+            if name in variables: 
+                if logger().VERBOSE: logger().log("WARNING: found a second instance of name %s." % name)
+
+            else: variables[name] = []
+            if data != "" or guid != 0 or attr != 0:
+                variables[name].append(var)
+
+            (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), guid.bytes)
+            if logger().VERBOSE: logger().log("returned %s. status is %s" % (name, status_dict[status]))
+
+            if status == 5:
+                if logger().VERBOSE: logger().log("size was too small increasing to %d" % size)
+                (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), guid.bytes)
+        return variables        
+        
     def get_ACPI_SDT( self ):
         logger().error( "[efi] ACPI is not supported yet" )
         return 0        
@@ -201,6 +289,23 @@ class EfiHelper:
         logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
         return 0
+        
+    def cpuid(self, eax, ecx):
+        logger().log_warning("EFI helper has not implemented cpuid yet")
+        return 0
+    
+    def alloc_phys_mem( length, max_pa ):
+        logger().log_warning("EFI helper has not implemented alloc_phys_mem yet")
+        return 0
 
+    def get_descriptor_table( cpu_thread_id, desc_table_code ):
+        logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
+        return 0
+
+    def va2pa( self, va ):
+        pa = va # UEFI shell has identity mapping
+        if logger().VERBOSE: logger().log( "[helper] VA (0X%016x) -> PA (0X%016x)" % (va,pa) )
+        return pa
+        
 def get_helper():
     return EfiHelper( )

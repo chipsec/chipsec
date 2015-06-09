@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <configuration>
+<!-- Common xml configuration file
+-->
 
   <!-- #################################### -->
   <!--                                      -->
@@ -58,8 +60,12 @@
     <bar name="SPIBAR"   parent="RCBA" offset="0x3800" desc="SPI Controller Register Range"/>
     -->
     <bar name="RCBA_RTC"  bus="0" dev="0x1F" fun="0" reg="0xF0" width="4" mask="0xFFFFC000"   size="0x200"  enable_bit="0" desc="General Control Register Range" offset="0x3400"/>
-
+    <!-- VT-d BARs -->
+    <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
+    <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/>
   </mmio>
+
+
 
   <!-- #################################### -->
   <!--                                      -->
@@ -208,7 +214,7 @@
     <register name="FDATA13" type="mmio" bar="SPIBAR" offset="0x44" size="4" desc="Flash Data 13"/>
     <register name="FDATA14" type="mmio" bar="SPIBAR" offset="0x48" size="4" desc="Flash Data 14"/>
     <register name="FDATA15" type="mmio" bar="SPIBAR" offset="0x4C" size="4" desc="Flash Data 15"/>
-    <register name="FRAP" type="mmio" bar="SPIBAR" offset="0x50" size="4" desc="SPI Flash Regions Access Permisions Register">
+    <register name="FRAP" type="mmio" bar="SPIBAR" offset="0x50" size="4" desc="SPI Flash Regions Access Permissions Register">
       <field name="BRRA"  bit="0"  size="8" desc="BIOS Region Read Access"/>
       <field name="BRWA"  bit="8"  size="8" desc="BIOS Region Write Access"/>
       <field name="BMRAG" bit="16" size="8" desc="BIOS Master Read Access Grant"/>
@@ -346,7 +352,7 @@
     <!-- PCH Root Complex Register Base MMIO registers -->
     <register name="GCS" type="mmio" bar="RCBA" offset="0x3410" size="4" desc="General Control and Status">
       <field name="BILD" bit="0"  size="1" desc="BIOS Interface Lock Down"/>
-      <field name="BBS"  bit="10" size="2"/>
+      <field name="BBS"  bit="10" size="2" desc="Boot BIOS Straps"/>
     </register>   
     <register name="RC" type="mmio" bar="RCBA" offset="0x3400" size="4" desc="RTC Configuration">
       <field name="UE" bit="2" size="1" desc="Upper 128 Byte Enable"/>
@@ -359,14 +365,31 @@
 
     <!-- PCH ABASE (PMBASE) I/O registers -->
     <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
-      <field name="GBL_SMI_EN"  bit="0"     size="1"/>
-      <field name="TCO_EN"      bit="13"    size="1"/>
+      <field name="GBL_SMI_EN"         bit="0"  size="1"/>
+      <field name="EOS"                bit="1"  size="1"/>
+      <field name="BIOS_EN"            bit="2"  size="1"/>
+      <field name="LEGACY_USB_EN"      bit="3"  size="1"/>
+      <field name="SLP_SMI_EN"         bit="4"  size="1"/>
+      <field name="APMC_EN"            bit="5"  size="1"/>
+      <field name="SWSMI_TMR_EN"       bit="6"  size="1"/>
+      <field name="BIOS_RLS"           bit="7"  size="1"/>
+      <field name="MCSMI_EN"           bit="11" size="1"/>
+      <field name="TCO_EN"             bit="13" size="1"/>
+      <field name="PERIODIC_EN"        bit="14" size="1"/>
+      <field name="LEGACY_USB2_EN"     bit="17" size="1"/>
+      <field name="INTEL_USB2_EN"      bit="18" size="1"/>
+      <field name="GPIO_UNLOCK_SMI_EN" bit="27" size="1"/>
+      <field name="ME_SMI_EN"          bit="30" size="1"/>
+      <field name="xHCI_SMI_EN"        bit="31" size="1"/>
     </register>
     <register name="TCO1_CNT" type="iobar" bar="ABASE" offset="0x68" size="2" desc="TCO1 Control">
       <field name="TCO_LOCK"    bit="12"    size="1"/>
     </register>
 
     <!-- CPU Model Specific Registers -->
+    <register name="IA32_BIOS_SIGN_ID"    type="msr" msr="0x8B" desc="Microcode Update Signature Register">
+      <field name="Microcode" bit="32" size="32" desc="Microcode update signature" />
+    </register>
     <register name="IA32_SMRR_PHYSBASE"   type="msr" msr="0x1F2" desc="SMRR Base Address MSR">
       <field name="Type"     bit="0"  size="8"  desc="SMRR memory type" />
       <field name="PhysBase" bit="12" size="20" desc="SMRR physical base address" />
@@ -380,6 +403,21 @@
     </register>
     <register name="IA32_FEATURE_CONTROL" type="msr" msr="0x3A"  desc="Feature Control MSR"/>
        
+
   </registers>
+
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+    <control name="SmmBiosWriteProtection" register="BC"   field="SMM_BWP" desc="SMM BIOS Write Protection"/>
+    <control name="BiosLockEnable"         register="BC"   field="BLE"     desc="BIOS Lock Enable"/>
+    <control name="BiosWriteEnable"        register="BC"   field="BIOSWE"  desc="BIOS Write Enable"/>
+    <control name="FlashLockDown"          register="HSFS" field="FLOCKDN" desc="Flash Configuration Lock-Down"/>
+    <control name="BiosInterfaceLockDown"  register="GCS"  field="BILD"    desc="BIOS Interface Lock-Down"/>
+  </controls>
 
 </configuration>

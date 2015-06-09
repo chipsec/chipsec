@@ -21,15 +21,14 @@
 
 
 
-#THIS FILE WAS GENERATED
+"""
+.. note:: THIS FILE WAS GENERATED
 
+Auto generated from:
 
-## \addtogroup hal
-# chipsec/hal/pcidb.py
-# ==============================================
-# Auto generated from:
-# http://www.pcidatabase.com/vendors.php?sort=id
-# http://www.pcidatabase.com/reports.php?type=csv
+http://www.pcidatabase.com/vendors.php?sort=id
+http://www.pcidatabase.com/reports.php?type=csv
+"""
 
 VENDORS = {
 

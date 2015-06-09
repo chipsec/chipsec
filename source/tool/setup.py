@@ -21,14 +21,10 @@
 
 
 
+"""
+Components for auxiliar tasks. Setup module for installing chipsec with distutils as a package
+"""
 
-## \addtogroup aux Auxiliary Components
-# Components for auxiliar tasks
-
-## \addtogroup aux
-# setup.py -- setup module for installing chipsec with distutils as a package
-#
-#
 import os
 from distutils.core import setup
 from distutils import dir_util
@@ -69,7 +65,7 @@ for current, dirs, files in os.walk(tool_dir ):
 setup(
         name            = 'chipsec',
         description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.1.9',
+        version         = '1.2.0',
         author          = 'chipsec developers',
         author_email    = '',
         url             = 'https://github.com/chipsec/chipsec',

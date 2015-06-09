@@ -19,7 +19,3 @@
 #
 
 
-
-
-##\defgroup  modules Test Modules
-# Chipsec test modules

@@ -28,11 +28,10 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup helpers
-#@{
-# __chipsec/helper/linux/helper.py__ -- Linux helper
-#@}
-#
+
+"""
+Linux helper
+"""
 
 __version__ = '1.0'
 
@@ -72,6 +71,7 @@ def IOCTL_RDCR():	return _IOCTL_BASE + 0x10
 def IOCTL_WRCR():	return _IOCTL_BASE + 0x11
 def IOCTL_RDMMIO():       return _IOCTL_BASE + 0x12
 def IOCTL_WRMMIO():       return _IOCTL_BASE + 0x13
+def IOCTL_VA2PA():      return _IOCTL_BASE + 0x14
 
 class LinuxHelper:
 
@@ -179,6 +179,12 @@ class LinuxHelper:
         if(ret == None): return None
         return ret
 
+    def va2pa( self, va ):
+        in_buf = struct.pack( _PACK, va )
+        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_VA2PA(), in_buf )
+        pa = struct.unpack( _PACK, out_buf )[0]
+        return pa
+
     #DEPRECATED: Pass-through
     def read_pci( self, bus, device, function, address ):
         return self.read_pci_reg(bus, device, function, address)
@@ -271,6 +277,7 @@ class LinuxHelper:
         return
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
+        self.set_affinity(cpu_thread_id)
         in_buf = struct.pack( "5"+_PACK, cpu_thread_id, desc_table_code, 0 , 0, 0)
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_GET_CPU_DESCRIPTOR_TABLE(), in_buf)
         (limit,base_hi,base_lo,pa_hi,pa_lo) = struct.unpack( "5"+_PACK, out_buf )
@@ -286,7 +293,7 @@ class LinuxHelper:
 
     def cpuid(self, eax, ecx):
         # add ecx
-        in_buf = struct.pack( "4"+_PACK, eax, 0, 0, 0)
+        in_buf = struct.pack( "4"+_PACK, eax, 0, ecx, 0)
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_CPUID(), in_buf)
         return struct.unpack( "4"+_PACK, out_buf )
 
@@ -348,15 +355,15 @@ class LinuxHelper:
                 stat = fcntl.ioctl(_DEV_FH, IOCTL_GET_EFIVAR(), buffer, True)
             except IOError:
                 logger().error("IOError IOCTL GetUEFIvar\n")
-                return None                    
+                return (off, buf, hdr, None, guid, attr)                    
             new_size, status = struct.unpack( "2I", buffer[:8])
             
         if (new_size > data_size):
-            print "[chipsec] ERROR: incorrect size returned from driver\n"
-            return None
+            logger().error( "Incorrect size returned from driver" )
+            return (off, buf, hdr, None, guid, attr)
             
         if (status > 0):
-            logger().error("GET_VARIABLE ERROR: " + status_dict[status])
+            logger().error( "Reading variable (GET_EFIVAR) did not succeed: %s" % status_dict[status])
             data = ""
             guid = 0
             attr = 0
@@ -396,11 +403,8 @@ class LinuxHelper:
             if name and name is not None:
                 variables[name] = []
                 var = self.kern_get_EFI_variable_full(name, guid)
-                # did we get something real back?
-                if var:
-                    (off, buf, hdr, data, guid, attr) = var
-                    if data != "" or guid != 0 or attr != 0:
-                        variables[name].append(var)
+                (off, buf, hdr, data, guid, attr) = var
+                variables[name].append(var)
         return variables
     
     def kern_set_EFI_variable(self, name, guid, value, attr=0x7):
@@ -430,11 +434,11 @@ class LinuxHelper:
         size, status = struct.unpack( "2I", buffer[:8])
 
         if (status != 0):
-            logger().error("[chipsec] ERROR in SET_VARIABLE: " + status_dict[status])
+            logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
         return status
         
     def get_ACPI_SDT( self ):
-        logger().error( "[efi] ACPI is not supported yet" )
+        logger().error( "ACPI is not supported yet" )
         return 0  
         
     def get_affinity(self):
@@ -695,22 +699,48 @@ class LinuxHelper:
     # End UEFI Variable API
 ##############
 
-
     #
     # Interrupts
     #
-    def send_sw_smi( self, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+        self.set_affinity(cpu_thread_id)
         #print "Sending SW SMI 0x%x with rax = 0x%x, rbx = 0x%x, rcx = 0x%x, rdx = 0x%x, rsi = 0x%x, rdi = 0x%x" % (SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         in_buf = struct.pack( "7"+_PACK, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         fcntl.ioctl( _DEV_FH, IOCTL_SWSMI(), in_buf )
         return
 
-    #########
 
+    #
+    # File system
+    #
+    def get_tools_path( self ):
+        return os.path.join('..','..','tools','edk2','linux')
 
+    def get_compression_tool_path( self, compression_type ):
+        tool = None
+        if   1 == compression_type:
+             tool = os.path.join( self.get_tools_path(), 'TianoCompress.bin')
+        elif 2 == compression_type:
+             tool = os.path.join( self.get_tools_path(), 'LzmaCompress.bin' )
+        else:
+             logger().error( "Don't have a tool for compression type 0x%X" % compression_type )
+             return None
+
+        if not os.path.exists( tool ):
+           err = "Couldn't find compression tool '%s'" % exe
+           logger().error( err )
+           #raise OsHelperError(err, 0)
+           return None
+
+        return exe
+  
     def getcwd( self ):
         return os.getcwd()
 
+
+    #
+    # Logical CPU count
+    #
     def get_threads_count ( self ):
         import subprocess
         return int(subprocess.check_output("grep -c process /proc/cpuinfo", shell=True))

@@ -27,15 +27,10 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/smbus.py
-# ================================
-# Access to SMBus Controller
-#
-#
-#
 
-
+"""
+Access to SMBus Controller
+"""
 
 from chipsec.logger import *
 #from chipsec.cfg.common import *
@@ -98,9 +93,12 @@ class SMBus:
         for i in range(1000):
             sts = self.cs.io.read_port_byte( smbus_io_base )
             if   (sts & 0x02): break
-            elif (sts & 0x04): logger().error( "SMBus cycle failed: Device error" )
-            elif (sts & 0x08): logger().error( "SMBus cycle failed: Bus Error" )
-            elif (sts & 0x10): logger().error( "SMBus cycle failed: Unknown Error" )
+            elif (sts & 0x04): 
+                if logger().VERBOSE: logger().error( "SMBus cycle failed: Device error" )
+            elif (sts & 0x08):
+                if logger().VERBOSE: logger().error( "SMBus cycle failed: Bus Error" )
+            elif (sts & 0x10):
+                if logger().VERBOSE: logger().error( "SMBus cycle failed: Unknown Error" )
         return ((sts & 0x02) > 0)
 
     def _read_byte( self, smbus_io_base, target_address, offset ):

@@ -27,22 +27,22 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/msr.py
-# ============================================
-# Access to CPU resources (for each CPU thread): Model Specific Registers (MSR), IDT/GDT
-# usage:
-#     read_msr( 0x8B )
-#     write_msr( 0x79, 0x12345678 )
-#     get_IDTR( 0 )
-#     get_GDTR( 0 )
-#     dump_Descriptor_Table( 0, DESCRIPTOR_TABLE_CODE_IDTR )
-#     IDT( 0 )
-#     GDT( 0 )
-#     IDT_all()
-#     GDT_all()
-#
-#
+
+"""
+Access to CPU resources (for each CPU thread): Model Specific Registers (MSR), IDT/GDT
+
+usage:
+    >>> read_msr( 0x8B )
+    >>> write_msr( 0x79, 0x12345678 )
+    >>> get_IDTR( 0 )
+    >>> get_GDTR( 0 )
+    >>> dump_Descriptor_Table( 0, DESCRIPTOR_TABLE_CODE_IDTR )
+    >>> IDT( 0 )
+    >>> GDT( 0 )
+    >>> IDT_all()
+    >>> GDT_all()
+"""
+
 __version__ = '1.0'
 
 import struct

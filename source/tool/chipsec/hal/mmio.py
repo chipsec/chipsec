@@ -27,42 +27,45 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/mmio.py
-# =============================================
-# Access to MMIO (Memory Mapped IO) BARs and Memory-Mapped PCI Configuration Space (MMCFG)
-# ~~~
-# #usage:
-#     read_MMIO_reg(cs, bar_base, 0x0, 4 )
-#     write_MMIO_reg(cs, bar_base, 0x0, 0xFFFFFFFF, 4 )
-#     read_MMIO( cs, bar_base, 0x1000 )
-#     dump_MMIO( cs, bar_base, 0x1000 )
-#
-#     Access MMIO by BAR name:
-#     read_MMIO_BAR_reg( cs, 'MCHBAR', 0x0, 4 )
-#     write_MMIO_BAR_reg( cs, 'MCHBAR', 0x0, 0xFFFFFFFF, 4 )
-#     get_MMIO_BAR_base_address( cs, 'MCHBAR' )
-#     is_MMIO_BAR_enabled( cs, 'MCHBAR' )
-#     is_MMIO_BAR_programmed( cs, 'MCHBAR' )
-#     dump_MMIO_BAR( cs, 'MCHBAR' )
-#     list_MMIO_BARs( cs )
-#
-#     DEPRECATED: Access MMIO by BAR id:
-#     read_MMIOBAR_reg( cs, mmio.MMIO_BAR_MCHBAR, 0x0 )
-#     write_MMIOBAR_reg( cs, mmio.MMIO_BAR_MCHBAR, 0xFFFFFFFF )
-#     get_MMIO_base_address( cs, mmio.MMIO_BAR_MCHBAR )
-#
-#     Access Memory Mapped Config Space:
-#     get_MMCFG_base_address(cs)
-#     read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4 )
-#     read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF )
-# ~~~
-#
+
+"""
+Access to MMIO (Memory Mapped IO) BARs and Memory-Mapped PCI Configuration Space (MMCFG)
+
+usage:
+    >>> read_MMIO_reg(cs, bar_base, 0x0, 4 )
+    >>> write_MMIO_reg(cs, bar_base, 0x0, 0xFFFFFFFF, 4 )
+    >>> read_MMIO( cs, bar_base, 0x1000 )
+    >>> dump_MMIO( cs, bar_base, 0x1000 )
+
+    Access MMIO by BAR name:
+    
+    >>> read_MMIO_BAR_reg( cs, 'MCHBAR', 0x0, 4 )
+    >>> write_MMIO_BAR_reg( cs, 'MCHBAR', 0x0, 0xFFFFFFFF, 4 )
+    >>> get_MMIO_BAR_base_address( cs, 'MCHBAR' )
+    >>> is_MMIO_BAR_enabled( cs, 'MCHBAR' )
+    >>> is_MMIO_BAR_programmed( cs, 'MCHBAR' )
+    >>> dump_MMIO_BAR( cs, 'MCHBAR' )
+    >>> list_MMIO_BARs( cs )
+
+    Access Memory Mapped Config Space:
+    
+    >>> get_MMCFG_base_address(cs)
+    >>> read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4 )
+    >>> read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF )
+    
+    DEPRECATED: Access MMIO by BAR id:
+    
+    >>> read_MMIOBAR_reg( cs, mmio.MMIO_BAR_MCHBAR, 0x0 )
+    >>> write_MMIOBAR_reg( cs, mmio.MMIO_BAR_MCHBAR, 0xFFFFFFFF )
+    >>> get_MMIO_base_address( cs, mmio.MMIO_BAR_MCHBAR )
+"""
+
 __version__ = '1.0'
 
 import struct
 import sys
 
+import chipsec.chipset
 from chipsec.logger import logger
 #from chipsec.pci import PCI_BDF
 
@@ -273,6 +276,8 @@ def dump_MMIO( cs, bar_base, size ):
 # Access to MMIO BAR defined by XML configuration files (chipsec/cfg/*.xml)
 ###############################################################################
 
+DEFAULT_MMIO_BAR_SIZE = 0x1000
+
 #
 # Check if MMIO BAR with bar_name has been defined in XML config
 # Use this function to fall-back to hardcoded config in case XML config is not available
@@ -291,25 +296,30 @@ def get_MMIO_BAR_base_address( cs, bar_name ):
     bar = cs.Cfg.MMIO_BARS[ bar_name ]
     if bar is None or bar == {}: return -1,-1
 
-    b = int(bar['bus'],16)
-    d = int(bar['dev'],16)
-    f = int(bar['fun'],16)
-    r = int(bar['reg'],16)
-    width = int(bar['width'],16)
-    if 8 == width:
-        base_lo = cs.pci.read_dword( b, d, f, r )
-        base_hi = cs.pci.read_dword( b, d, f, r + 4 )
-        base = (base_hi << 32) | base_lo
+    if 'register' in bar:
+        bar_reg   = bar['register']
+        if 'base_field' in bar:
+            base_field = bar['base_field']
+            base = chipsec.chipset.read_register_field( cs, bar_reg, base_field, True )
+        else:
+            base = chipsec.chipset.read_register( cs, bar_reg )
     else:
-        base = cs.pci.read_dword( b, d, f, r )
+        # this method is not preferred (less flexible)
+        b = int(bar['bus'],16)
+        d = int(bar['dev'],16)
+        f = int(bar['fun'],16)
+        r = int(bar['reg'],16)
+        width = int(bar['width'],16)
+        if 8 == width:
+            base_lo = cs.pci.read_dword( b, d, f, r )
+            base_hi = cs.pci.read_dword( b, d, f, r + 4 )
+            base = (base_hi << 32) | base_lo
+        else:
+            base = cs.pci.read_dword( b, d, f, r )
 
-    if 'enable_bit' in bar:
-        en_mask = 1 << int(bar['enable_bit'])
-        if ( 0 == base & en_mask ): logger().warn('%s is disabled' % bar_name)
     if 'mask' in bar: base &= int(bar['mask'],16)
     if 'offset' in bar: base = base + int(bar['offset'],16)
-
-    size = int(bar['size'],16) if ('size' in bar) else 0x1000
+    size = int(bar['size'],16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
     if logger().VERBOSE: logger().log( '[mmio] %s: 0x%016X (size = 0x%X)' % (bar_name,base,size) )
     return base, size
@@ -319,40 +329,58 @@ def get_MMIO_BAR_base_address( cs, bar_name ):
 #
 def is_MMIO_BAR_enabled( cs, bar_name ):
     bar = cs.Cfg.MMIO_BARS[ bar_name ]
-    b = int(bar['bus'],16)
-    d = int(bar['dev'],16)
-    f = int(bar['fun'],16)
-    r = int(bar['reg'],16)
-    width = int(bar['width'],16)
-    if 8 == width:
-        base_lo = cs.pci.read_dword( b, d, f, r )
-        base_hi = cs.pci.read_dword( b, d, f, r + 4 )
-        base = (base_hi << 32) | base_lo
+    is_enabled = True
+    if 'register' in bar:
+        bar_reg   = bar['register']
+        if 'enable_field' in bar:
+            bar_en_field = bar['enable_field']
+            is_enabled = (1 == chipsec.chipset.read_register_field( cs, bar_reg, bar_en_field ))
     else:
-        base = cs.pci.read_dword( b, d, f, r )
+        # this method is not preferred (less flexible)
+        b = int(bar['bus'],16)
+        d = int(bar['dev'],16)
+        f = int(bar['fun'],16)
+        r = int(bar['reg'],16)
+        width = int(bar['width'],16)
+        if 8 == width:
+            base_lo = cs.pci.read_dword( b, d, f, r )
+            base_hi = cs.pci.read_dword( b, d, f, r + 4 )
+            base = (base_hi << 32) | base_lo
+        else:
+            base = cs.pci.read_dword( b, d, f, r )
 
-    if 'enable_bit' in bar:
-        en_mask = 1 << int(bar['enable_bit'])
-        return (0 != base & en_mask)
-    else:
-        return True
+        if 'enable_bit' in bar:
+            en_mask = 1 << int(bar['enable_bit'])
+            is_enabled = (0 != base & en_mask)
+
+    return is_enabled
 
 #
 # Check if MMIO range is programmed by MMIO BAR name
 #
 def is_MMIO_BAR_programmed( cs, bar_name ):
     bar = cs.Cfg.MMIO_BARS[ bar_name ]
-    b = int(bar['bus'],16)
-    d = int(bar['dev'],16)
-    f = int(bar['fun'],16)
-    r = int(bar['reg'],16)
-    width = int(bar['width'],16)
-    if 8 == width:
-        base_lo = cs.pci.read_dword( b, d, f, r )
-        base_hi = cs.pci.read_dword( b, d, f, r + 4 )
-        base = (base_hi << 32) | base_lo
+
+    if 'register' in bar:
+        bar_reg   = bar['register']
+        if 'base_field' in bar:
+            base_field = bar['base_field']
+            base = chipsec.chipset.read_register_field( cs, bar_reg, base_field, True )
+        else:
+            base = chipsec.chipset.read_register( cs, bar_reg )
     else:
-        base = cs.pci.read_dword( b, d, f, r )
+        # this method is not preferred (less flexible)
+        b = int(bar['bus'],16)
+        d = int(bar['dev'],16)
+        f = int(bar['fun'],16)
+        r = int(bar['reg'],16)
+        width = int(bar['width'],16)
+        if 8 == width:
+            base_lo = cs.pci.read_dword( b, d, f, r )
+            base_hi = cs.pci.read_dword( b, d, f, r + 4 )
+            base = (base_hi << 32) | base_lo
+        else:
+            base = cs.pci.read_dword( b, d, f, r )
 
     #if 'mask' in bar: base &= int(bar['mask'],16)
     return (0 != base)
@@ -382,14 +410,16 @@ def dump_MMIO_BAR( cs, bar_name ):
 
 def list_MMIO_BARs( cs ):
     logger().log('')
-    logger().log( '-------------------------------------------------------------------------------' )
-    logger().log( ' MMIO Range   | BAR          | Base             | Size     | En? | Description' )
-    logger().log( '-------------------------------------------------------------------------------' )
+    logger().log( '--------------------------------------------------------------------------------' )
+    logger().log( ' MMIO Range   | BAR            | Base             | Size     | En? | Description' )
+    logger().log( '--------------------------------------------------------------------------------' )
     for _bar_name in cs.Cfg.MMIO_BARS:
         _bar = cs.Cfg.MMIO_BARS[ _bar_name ]
         (_base,_size) = get_MMIO_BAR_base_address( cs, _bar_name )
         _en = is_MMIO_BAR_enabled( cs, _bar_name )
-        logger().log( ' %-12s | %02X:%02X.%01X + %02X | %016X | %08X | %d   | %s' % (_bar_name, int(_bar['bus'],16), int(_bar['dev'],16), int(_bar['fun'],16), int(_bar['reg'],16), _base, _size, _en, _bar['desc']) )
+        if 'register' in _bar: _s = _bar['register']
+        else: _s = '%02X:%02X.%01X + %s' % ( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
+        logger().log( ' %-12s | %-14s | %016X | %08X | %d   | %s' % (_bar_name, _s, _base, _size, _en, _bar['desc']) )
 
 
 
@@ -406,7 +436,7 @@ def get_MMCFG_base_address(cs):
     #    bar_base &= ~Cfg.PCI_PCIEXBAR_REG_ADMSK64
     ##elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
     ##   pass
-    if logger().VERBOSE: logger().log( '[mmcfg] Memory Mapped CFG Base: 0x%016X' % bar_base )
+    if logger().HAL: logger().log( '[mmcfg] Memory Mapped CFG Base: 0x%016X' % bar_base )
     return bar_base
 
 def read_mmcfg_reg( cs, bus, dev, fun, off, size ):

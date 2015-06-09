@@ -20,6 +20,10 @@
 
 
 
+"""
+Base for HAL Components
+"""
+
 import chipsec.logger
 import chipsec.chipset
 

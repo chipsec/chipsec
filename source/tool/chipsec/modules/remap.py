@@ -20,9 +20,11 @@
 
 
 
-## \addtogroup modules
-# __chipsec/modules/remap.py__ - check Memory Remapping Configuration
-#
+"""
+`Preventing & Detecting Xen Hypervisor Subversions <http://www.invisiblethingslab.com/resources/bh08/part2-full.pdf>`_ by Joanna Rutkowska & Rafal Wojtczuk
+
+Check Memory Remapping Configuration
+"""
 
 from chipsec.module_common import *
 import chipsec.chipset

@@ -28,15 +28,15 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup helpers
-# __chipsec/helper/win/win32helper.py__ -- Management and communication with Windows kernel mode driver
-#                   which provides access to hardware resources
 
+"""
+Management and communication with Windows kernel mode driver which provides access to hardware resources
 
-# NOTE: on Windows you need to install pywin32 Python extension corresponding to your Python version:
-# http://sourceforge.net/projects/pywin32/
-#
-#
+.. note:: 
+    On Windows you need to install pywin32 Python extension corresponding to your Python version:
+    http://sourceforge.net/projects/pywin32/
+"""
+
 __version__ = '1.0'
 
 import os.path
@@ -117,6 +117,7 @@ WRITE_PCI_CFG_REGISTER         = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x808, METHOD_BUF
 IOCTL_READ_PHYSMEM             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x809, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRITE_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80a, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_ALLOC_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x812, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_GET_PHYSADDR             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x815, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_LOAD_UCODE_PATCH         = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80b, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRMSR                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80c, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_RDMSR                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80d, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
@@ -164,6 +165,15 @@ def packl_ctypes( lnum, bitlength ):
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
     return a.raw
 
+#
+# Firmware Table Provider Signatures
+#
+FirmwareTableProviderSignature_ACPI = 0x41435049 # 'ACPI' - The ACPI firmware table provider
+FirmwareTableProviderSignature_FIRM = 0x4649524D # 'FIRM' - The raw firmware table provider
+FirmwareTableProviderSignature_RSMB = 0x52534D42 # 'RSMB' - The raw SMBIOS firmware table provider
+
+FirmwareTableID_RSDT = 0x54445352
+FirmwareTableID_XSDT = 0x54445358
 
 #
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
@@ -231,27 +241,15 @@ class Win32Helper:
         if "windows" == self.os_system.lower():
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
-            """
-            if ("8" == self.os_release.lower()):
-                win_ver = "win7_" + self.os_machine.lower()
-            #elif ("post2008server" == self.os_release.lower()):
-            elif ("2008server" in self.os_release.lower()):
-                win_ver = "win7_" + self.os_machine.lower()
-            elif ("7" == self.os_release.lower()):
-                win_ver = "win7_" + self.os_machine.lower()
-            else:
-                logger().warn( "Unknown OS release: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
-                win_ver = "win7_" + self.os_machine.lower()
-            """
-            logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
-            logger().log( "[helper] Using 'helper/win/%s' path for driver" % win_ver )
+            if logger().HAL: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
+            if logger().HAL: logger().log( "[helper] Using 'helper/win/%s' path for driver" % win_ver )
 
         self.hs             = None
         self.driver_path    = None
         self.win_ver        = win_ver
         self.driver_handle  = None
         #self.device_file    =  u"%s" % DEVICE_FILE
-        self.device_file = pywintypes.Unicode(DEVICE_FILE)
+        self.device_file    = pywintypes.Unicode(DEVICE_FILE)
 
         c_int_p = POINTER(c_int)
 
@@ -373,9 +371,11 @@ class Win32Helper:
     def create( self ):
 
         logger().log( "" )
+        logger().warn( "*******************************************************************" )
         logger().warn( "Chipsec should only be used on test systems!" )
         logger().warn( "It should not be installed/deployed on production end-user systems." )
         logger().warn( "See WARNING.txt" )
+        logger().warn( "*******************************************************************" )
         logger().log( "" )
 
         try:
@@ -590,6 +590,16 @@ class Win32Helper:
         #except: logger().error( 'DeviceIoControl(ALLOC_PHYSMEM) did not return 4 DWORD values' )
         return (va, pa)
 
+    def va2pa( self, va ):
+        in_length  = 8
+        out_length = 8
+        out_buf = (c_char * out_length)()
+        in_buf = struct.pack( 'Q', va )
+        out_buf = self._ioctl( IOCTL_GET_PHYSADDR, in_buf, out_length )
+        pa = struct.unpack( 'Q', out_buf )[0]
+        return pa
+
+
     def read_msr( self, cpu_thread_id, msr_addr ):
         (eax,edx) = (0,0)
         out_length = 8
@@ -685,26 +695,34 @@ class Win32Helper:
     # EFI Variable API
     #
     def EFI_supported( self):
+        # @TODO: use GetFirmwareType ?
         return ((self.GetFirmwareEnvironmentVariable is not None) or (self.GetFirmwareEnvironmentVariableEx is not None))
 
-    def get_EFI_variable( self, name, guid, attrs=None ):
+    def get_EFI_variable_full( self, name, guid, attrs=None ):
+        status = 0 # EFI_SUCCESS
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         if attrs is None:
             if self.GetFirmwareEnvironmentVariable is not None:
-                if logger().VERBOSE: logger().log( "[helper] calling GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
+                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
                 length = self.GetFirmwareEnvironmentVariable( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE )
         else:
             if self.GetFirmwareEnvironmentVariableEx is not None:
                 pattrs = c_int(attrs)
-                if logger().VERBOSE: logger().log( "[helper] calling GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
+                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
-            if logger().VERBOSE or logger().UTIL_TRACE:
-                logger().error( 'GetFirmwareEnvironmentVariable[Ex] failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
-                print WinError()
-            return None
+            status = kernel32.GetLastError()
+            logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
+            efi_var_data = None
             #raise WinError(errno.EIO,"Unable to get EFI variable")
-        return efi_var[:length]
+        else:
+            efi_var_data = efi_var[:length]
+
+        return (status, efi_var_data, attrs)
+
+    def get_EFI_variable( self, name, guid, attrs=None ):
+        (status, data, attributes) = self.get_EFI_variable_full( name, guid, attrs )
+        return data
 
     def set_EFI_variable( self, name, guid, var, attrs=None ):
         var_len = 0
@@ -712,22 +730,22 @@ class Win32Helper:
         else: var_len = len(var)
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
-                if logger().VERBOSE: logger().log( "[helper] calling SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
-                success = self.SetFirmwareEnvironmentVariable( name, "{%s}" % guid, var, var_len )
+                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
+                ntsts = self.SetFirmwareEnvironmentVariable( name, "{%s}" % guid, var, var_len )
         else:
             if self.SetFirmwareEnvironmentVariableEx is not None:
-                if logger().VERBOSE: logger().log( "[helper] calling SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
-                success = self.SetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, var, var_len, attrs )
-        if 0 == success:
-            err = kernel32.GetLastError()
-            if logger().VERBOSE or logger().UTIL_TRACE:
-                logger().error( 'SetFirmwareEnvironmentVariable failed (GetLastError = 0x%x)' % err )
-                print WinError()
+                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
+                ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, var, var_len, attrs )
+        if 0 != ntsts:
+            status = 0 # EFI_SUCCESS
+        else:
+            status = kernel32.GetLastError()
+            logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
-        return success
+        return status
 
     def list_EFI_variables( self, infcls=2 ):
-        if logger().VERBOSE: logger().log( '[helper] calling NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
+        if logger().HAL: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         length = packl_ctypes( long(EFI_VAR_MAX_BUFFER_SIZE), 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
@@ -738,7 +756,7 @@ class Win32Helper:
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
             logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
-            logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot. To use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
+            logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
             logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
@@ -753,7 +771,7 @@ class Win32Helper:
     #
     # Interrupts
     #
-    def send_sw_smi( self, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         out_length = 0
         out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
@@ -776,24 +794,49 @@ class Win32Helper:
         xsdt = True
         table_size = 36
         tBuffer = create_string_buffer( table_size )
-        tName = 0x54445358
-        
-        retVal = self.GetSystemFirmwareTbl(  0x41435049, tName, tBuffer, table_size )
-        
-        if retVal == 0:
-            tName = 0x54445352
-            retVal = self.GetSystemFirmwareTbl(  0x41435049, tName, tBuffer, table_size )
+        tName = FirmwareTableID_XSDT
+      
+        retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
+        if 0 == retVal:
+            tName = FirmwareTableID_RSDT
+            retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
             xsdt = False
-            if retVal == 0:
-                logger().error( "[Helper] No ACPI system description table found" )
-                return 0, xsdt
+            if 0 == retVal:
+                logger().error( "[helper] No ACPI System Description Table (SDT) found" )
+                return None, xsdt
             
         if retVal > table_size:
             table_size = retVal
-            tBuffer = create_string_buffer( table_size )
-            retVal = self.GetSystemFirmwareTbl(  0x41435049, tName, tBuffer, table_size )
+            tBuffer    = create_string_buffer( table_size )
+            retVal     = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
         
         return tBuffer[:retVal], xsdt
+
+
+    #
+    # File system
+    #
+    def get_tools_path( self ):
+        return os.path.join('..','..','tools','edk2','win')
+
+    def get_compression_tool_path( self, compression_type ):
+        tool = None
+        if   1 == compression_type:
+             tool = os.path.join( self.get_tools_path(), 'TianoCompress.exe')
+        elif 2 == compression_type:
+             tool = os.path.join( self.get_tools_path(), 'LzmaCompress.exe' )
+        else:
+             logger().error( "Don't have a tool for compression type 0x%X" % compression_type )
+             return None
+
+        if not os.path.exists( tool ):
+           err = "Couldn't find compression tool '%s'" % tool
+           logger().error( err )
+           #raise OsHelperError(err, 0)
+           return None
+
+        return tool
+
 
 #
 # Get instance of this OS helper

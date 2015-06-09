@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="[PLATFORM_CODE]">
-
+<!-- Template for XML configuration file, this first comment will show in the documentation
+-->
   <!-- #################################### -->
   <!--                                      -->
   <!-- Integrated devices                   -->
@@ -16,6 +17,8 @@
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
+    <bar name="[BAR NAME]" reg="[BAR REGISTER NAME]" base_field="[BAR BASE BIT FIELD]" enable_field="[BAR ENABLE BIT FIELD]" size="[BAR SIZE]" desc="[BAR DESCRIPTION]"/>
+    <!-- or -->
     <bar name="[BAR NAME]" bus="[BUS#]" dev="[DEVICE#]" fun="[FUNCTION#]" reg="[BAR REGISTER OFFSET]" width="[BAR REGISTER WIDTH]" mask="[BAR REGISTER MASK]" size="[BAR SIZE]" enable_bit="[BAR ENABLE BIT POSITION]" desc="[BAR DESCRIPTION]"/>
   </mmio>
 
@@ -45,5 +48,14 @@
   <registers>
     <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg" desc="[REGISTER DESCRIPTION]" />
   </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Controls                             -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+    <control name="[UNIQUE CONTROL NAME]" register="[REGISTER NAME WITH THIS CONTROL]" field="[CONTROL FIELD NAME WITHIN REGISTER]" desc="[CONTROL DESCRIPTION]" />
+  </controls>
 
 </configuration>

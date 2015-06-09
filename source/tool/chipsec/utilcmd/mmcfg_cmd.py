@@ -21,25 +21,9 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util mmcfg
-#------
-#~~~
-#chipsec_util mmcfg
-#chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]
-#''
-#    Examples:
-#''
-#        chipsec_util mmcfg
-#        chipsec_util mmcfg 0 0 0 0x88 4
-#        chipsec_util mmcfg 0 0 0 0x88 byte 0x1A
-#        chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1
-#        chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040
-#~~~
+"""
+The mmcfg command allows direct access to memory mapped config space.
+"""
 
 
 __version__ = '1.0'
@@ -57,22 +41,18 @@ from chipsec.file       import *
 from chipsec.hal.mmio   import *
 
 
-
-usage = "chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util mmcfg 0 0 0 0x88 4\n" + \
-        "  chipsec_util mmcfg 0 0 0 0x88 byte 0x1A\n" + \
-        "  chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1\n" + \
-        "  chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040\n\n"
-
-
-# ###################################################################
-#
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
-#
-# ###################################################################
 def mmcfg(argv):
+    """
+    >>> chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]
 
+    Examples:
+
+    >>> chipsec_util mmcfg 0 0 0 0x88 4
+    >>> chipsec_util mmcfg 0 0 0 0x88 byte 0x1A
+    >>> chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1
+    >>> chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040
+    """
     t = time.time()
 
     if 2 == len(argv):
@@ -81,7 +61,7 @@ def mmcfg(argv):
         logger().log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
         return
     elif 6 > len(argv):
-        print usage
+        print mmcfg.__doc__
         return
 
     try:
@@ -103,7 +83,7 @@ def mmcfg(argv):
                 width = int(argv[6])
 
     except Exception as e :
-        print usage
+        print mmcfg.__doc__
         return
 
     if 8 == len(argv):
@@ -119,4 +99,4 @@ def mmcfg(argv):
     logger().log( "[CHIPSEC] (mmcfg) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['mmcfg'] = {'func' : mmcfg ,    'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['mmcfg'] = {'func' : mmcfg , 'start_driver' : True, 'help' : mmcfg.__doc__  }

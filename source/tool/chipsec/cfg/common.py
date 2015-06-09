@@ -42,6 +42,7 @@ class Cfg:
         self.MMIO_BARS     = {}
         self.IO_BARS       = {}
         self.MEMORY_RANGES = {}
+        self.CONTROLS      = {}
         self.XML_CONFIG_LOADED = False
         #pass
 

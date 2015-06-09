@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 # 
@@ -21,11 +21,11 @@
 
 
 
-#
-## \addtogroup core
-# __chipsec_main.py__ -- main application logic and automation functions
-#
-__version__ = '1.1.9'
+"""
+Main application logic and automation functions
+"""
+
+__version__ = '1.2.0'
 
 ## These are for debugging imports
 import inspect
@@ -172,15 +172,16 @@ class ChipsecMain:
         return "%s"% (__version__)
 
     def print_banner(self):
-        logger().log( '' )
+        """
+        Prints chipsec banner
+        """
         logger().log( "################################################################\n"
                       "##                                                            ##\n"
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "Version %s" % self.get_chipsec_version() )
-        logger().log('')
-        logger().log( "Arguments: \n%s"% " ".join(self.argv) )
+        logger().log( "[CHIPSEC] Version %s" % self.get_chipsec_version() )
+        logger().log( "[CHIPSEC] Arguments: %s"% " ".join(self.argv) )
 
     ##################################################################################
     # Module API
@@ -476,7 +477,7 @@ class ChipsecMain:
                 logger().log( "[CHIPSEC] Modules with Exceptions %d:" % len(exceptions) )
                 for fmod in exceptions: logger().error( str(fmod) )
             logger().log( "[CHIPSEC] *****************************************************************" )
-            logger().log( "[CHIPSEC] Version:   %s"% self.get_chipsec_version() )
+            #logger().log( "[CHIPSEC] Version:   %s"% self.get_chipsec_version() )
         else:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    %s"%at)
@@ -513,33 +514,37 @@ class ChipsecMain:
 
     def usage(self):
         from chipsec.chipset import Chipset_Code
-        print "\nUSAGE: %.65s [options]" % sys.argv[0]
-        print "OPTIONS:"
-        print "-m --module             specify module to run (example: -m common.bios)"
+        print "\n- Command Line Usage\n\t``# %.65s [options]``\n" % sys.argv[0]
+        print "Options\n-------"
+        print "====================== =============================================================="
+        print "-m --module             specify module to run (example: -m common.bios_wp)"
         print "-a --module_args        additional module arguments, format is 'arg0,arg1..'"
         print "-v --verbose            verbose mode"
         print "-l --log                output to log file"
-        print "\nADVANCED OPTIONS:"
-        print "-p --platform           explicitly specify platform code. Should be among the supported platforms:"
-        print "                        [ %s ]" % (" | ".join( ["%.4s" % c for c in Chipset_Code]))
-        print "-n --no_driver          chipsec won't need kernel mode functions so don't load chipsec driver"
-        print "-i --ignore_platform    run chipsec even if the platform is not recognized"
-        print "-e --exists             chipsec service has already been manually installed and started (driver loaded)."
-        print "-x --xml                specify filename for xml output (JUnit style)."
-        print "-t --moduletype         run tests of a specific type (tag)."
-        print "   --list_tags          list all the available options for -t,--moduletype"
-        print "-I --include            specify additional path to load modules from"
-        print "   --failfast           fail on any exception and exit (don't mask exceptions)"
-        print "   --no_time            don't log timestamps"
+        print "====================== =============================================================="
+        print "\nAdvanced Options\n----------------"
+        print "======================== " + "="*(7*len(Chipset_Code))
+        print "-p --platform             explicitly specify platform code. Should be among the supported platforms:"
+        print "                          [ %s ]" % (" | ".join( ["%.4s" % c for c in Chipset_Code]))
+        print "-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver"
+        print "-i --ignore_platform      run chipsec even if the platform is not recognized"
+        print "-e --exists               chipsec service has already been manually installed and started (driver loaded)."
+        print "-x --xml                  specify filename for xml output (JUnit style)."
+        print "-t --moduletype           run tests of a specific type (tag)."
+        print "   --list_tags            list all the available options for -t,--moduletype"
+        print "-I --include              specify additional path to load modules from"
+        print "   --failfast             fail on any exception and exit (don't mask exceptions)"
+        print "   --no_time              don't log timestamps"
+        print "======================== " + "="*(7*len(Chipset_Code))
         print "\n"
-        print "EXIT CODE:"
-        print "    CHIPSEC returns an integer where each bit means the following:"
-        print "        Bit 0: SKIPPED    at least one module was skipped"
-        print "        Bit 1: WARNING    at least one module had a warning"
-        print "        Bit 2: DEPRECATED at least one module uses deprecated API"
-        print "        Bit 3: FAIL       at least one module failed"
-        print "        Bit 4: ERROR      at least one module wasn't able to run"
-        print "        Bit 5: EXCEPTION  at least one module thrown an unexpected exceptions"
+        print "Exit Code\n---------"
+        print "CHIPSEC returns an integer where each bit means the following:"
+        print "    - Bit 0: SKIPPED    at least one module was skipped"
+        print "    - Bit 1: WARNING    at least one module had a warning"
+        print "    - Bit 2: DEPRECATED at least one module uses deprecated API"
+        print "    - Bit 3: FAIL       at least one module failed"
+        print "    - Bit 4: ERROR      at least one module wasn't able to run"
+        print "    - Bit 5: EXCEPTION  at least one module thrown an unexpected exceptions"
 
 
     def parse_args(self):
@@ -637,10 +642,9 @@ class ChipsecMain:
 
 
         _ver = self.get_chipsec_version()
-        logger().log( " " )
-        logger().log( "OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log( "Platform: %s\n          VID: %04X\n          DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
-        logger().log( "CHIPSEC : %s"% _ver )
+        logger().log( "[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
+        logger().log( "[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        #logger().log( "[*] CHIPSEC : %s"% _ver )
         logger().xmlAux.add_test_suite_property( "OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().xmlAux.add_test_suite_property( "Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did) )
         logger().xmlAux.add_test_suite_property( "CHIPSEC", "%s" % _ver )

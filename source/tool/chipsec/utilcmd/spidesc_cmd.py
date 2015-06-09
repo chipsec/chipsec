@@ -21,20 +21,6 @@
 
 
 
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util spidesc
-#--------
-#~~~
-#chipsec_util spidesc [rom]
-#''
-#    Examples:
-#''
-#        chipsec_util spidesc spi.bin
-#~~~
-
 __version__ = '1.0'
 
 import os
@@ -48,15 +34,16 @@ from chipsec.file       import *
 
 from chipsec.hal.spi_descriptor import *
 
-usage = "chipsec_util spidesc [rom]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util spidesc spi.bin\n\n"
-
-
 def spidesc(argv):
+    """
+    >>> chipsec_util spidesc [rom]
 
+    Examples:
+
+    >>> chipsec_util spidesc spi.bin
+    """
     if 3 > len(argv):
-        print usage
+        print spidesc.__doc__
         return
 
     fd_file = argv[2]
@@ -68,4 +55,4 @@ def spidesc(argv):
     logger().log( "\n[CHIPSEC] (spidesc) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['spidesc'] = {'func' : spidesc,     'start_driver' : False, 'help' : usage  }
+chipsec_util.commands['spidesc'] = {'func' : spidesc, 'start_driver' : False, 'help' : spidesc.__doc__ }

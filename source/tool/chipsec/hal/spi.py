@@ -27,17 +27,30 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/spi.py
-# =========================
-# Access to SPI Flash parts
-# ~~~
-# #usage:
-#     read_spi( spi_fla, length )
-#     write_spi( spi_fla, buf )
-#     erase_spi_block( spi_fla )
-# ~~~
-#
+
+"""
+Access to SPI Flash parts
+
+usage:
+    >>> read_spi( spi_fla, length )
+    >>> write_spi( spi_fla, buf )
+    >>> erase_spi_block( spi_fla )
+    
+.. note::
+    !! IMPORTANT:
+    Size of the data chunk used in SPI read cycle (in bytes)
+    default = maximum 64 bytes (remainder is read in 4 byte chunks)
+
+    If you want to change logic to read SPI Flash in 4 byte chunks:
+    SPI_READ_WRITE_MAX_DBC = 4
+
+    SPI write cycles operate on 4 byte chunks (not optimized yet)
+
+    Approximate performance (on 2 core HT Sandy Bridge CPU 2.6GHz):
+    SPI read:  ~25 sec per 1MB (DBC=64)
+    SPI write: ~140 sec per 1MB (DBC=4)
+"""
+
 __version__ = '1.0'
 
 import struct
@@ -49,20 +62,6 @@ from chipsec.file import *
 from chipsec.hal.hal_base import HALBase
 from chipsec.hal.mmio import *
 
-#
-# !! IMPORTANT:
-# Size of the data chunk used in SPI read cycle (in bytes)
-# default = maximum 64 bytes (remainder is read in 4 byte chunks)
-#
-# If you want to change logic to read SPI Flash in 4 byte chunks:
-# SPI_READ_WRITE_MAX_DBC = 4
-#
-# SPI write cycles operate on 4 byte chunks (not optimized yet)
-#
-# Approximate performance (on 2 core HT Sandy Bridge CPU 2.6GHz):
-#   SPI read:  ~25 sec per 1MB (DBC=64)
-#   SPI write: ~140 sec per 1MB (DBC=4)
-#
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
 
@@ -366,8 +365,7 @@ class SPI:
         logger().log('')
         logger().log( "BIOS Region Write Protection" )
         logger().log( "------------------------------------------------------------" )
-        (BC, val) = self.get_BIOS_Control()
-        logger().log( BC )
+        self.display_BIOS_write_protection()
         self.display_SPI_Protected_Ranges()
         logger().log('')
 
@@ -376,6 +374,40 @@ class SPI:
     # BIOS Write Protection
     ##############################################################################################################
 
+    def display_BIOS_write_protection( self ):
+        if chipsec.chipset.is_register_defined( self.cs, 'BC' ):
+             reg_value = chipsec.chipset.read_register( self.cs, 'BC' )
+             chipsec.chipset.print_register( self.cs, 'BC', reg_value )
+        else:
+            if logger().HAL: logger().error( "Could not locate the definition of 'BIOS Control' register.." )
+
+
+    def disable_BIOS_write_protection( self ):
+        if logger().VERBOSE: self.display_BIOS_write_protection()
+        ble    = chipsec.chipset.get_control( self.cs, 'BiosLockEnable' )
+        bioswe = chipsec.chipset.get_control( self.cs, 'BiosWriteEnable' )
+        if ble and (not bioswe):
+            if logger().HAL: logger().log( "[spi] BIOS write protection is enabled" )
+            return False
+        elif bioswe:
+            if logger().HAL: logger().log( "[spi] BIOS write protection is not enabled" )
+            return True
+        else:
+            if logger().HAL: logger().log( "[spi] BIOS write protection is enabled but not locked. Disabling.." )
+
+        # @TODO: hack - update to use write_register_field
+        reg_value = chipsec.chipset.read_register( self.cs, 'BC' )
+        reg_value |= 0x1
+        chipsec.chipset.write_register( self.cs, 'BC', reg_value )
+
+        # read BiosWriteEnable back to check if BIOS writes are enabled
+        bioswe = chipsec.chipset.get_control( self.cs, 'BiosWriteEnable' )
+        if logger().VERBOSE: self.display_BIOS_write_protection()
+        if logger().HAL: logger().log_important( "BIOS write protection is %s" % ('disabled' if bioswe else 'still enabled') )
+        return bioswe
+
+
+    """
     def get_BIOS_Control_fallback( self ):
         #
         # BIOS Control (BC) 0:31:0 PCIe CFG register
@@ -396,10 +428,10 @@ class SPI:
                 chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE') )
             return (BcRegister, reg_value)
         else:
+            if logger().HAL: logger().error( "Could not locate the definition of 'BIOS Control' register. Using hardcoded location (results may be incorrect).." )
             return self.get_BIOS_Control_fallback()
 
-
-    def disable_BIOS_write_protection( self ):
+    def disable_BIOS_write_protection_OLD( self ):
         (BcRegister, reg_value) = self.get_BIOS_Control()
         if logger().VERBOSE: logger().log( BcRegister )
 
@@ -421,7 +453,7 @@ class SPI:
             return True
         else:
             return False
-
+    """
 
 
     ##############################################################################################################

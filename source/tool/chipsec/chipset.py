@@ -27,10 +27,10 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup core
-# __chipsec/chipset.py__ -- Contains platform identification functions
-#
-#
+
+"""
+Contains platform identification functions
+"""
 
 __version__ = '1.0'
 
@@ -91,6 +91,7 @@ CHIPSET_ID_BYT     = 6
 CHIPSET_ID_BDW     = 7
 CHIPSET_ID_QRK     = 8
 CHIPSET_ID_AVN     = 9
+CHIPSET_ID_HSX     = 10
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -104,8 +105,9 @@ CHIPSET_CODE_BYT     = 'BYT'
 CHIPSET_CODE_BDW     = 'BDW'
 CHIPSET_CODE_QRK     = 'QRK'
 CHIPSET_CODE_AVN     = 'AVN'
+CHIPSET_CODE_HSX     = 'HSX'
 
-CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT]
+CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
@@ -122,6 +124,7 @@ Chipset_Dictionary = {
 0x0104 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : CHIPSET_CODE_SNB,  'longname' : 'Mobile 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)' },
 0x0108 : {'name' : 'Sandy Bridge',   'id' : CHIPSET_ID_SNB , 'code' : CHIPSET_CODE_SNB,  'longname' : 'Intel Xeon Processor E3-1200 (Sandy Bridge CPU, C200 Series PCH)' },
 
+# Xeon v1 Processor (Jaketown/Sandy Bridge - EP)
 0x3C00 : {'name' : 'Jaketown',       'id' : CHIPSET_ID_JKT,  'code' : CHIPSET_CODE_JKT,  'longname' : 'Server 2nd Generation Core Processor (Jaketown CPU / Patsburg PCH)'},
 
 # 3rd Generation Core Processor Family (Ivy Bridge)
@@ -129,6 +132,7 @@ Chipset_Dictionary = {
 0x0154 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : CHIPSET_CODE_IVB,  'longname' : 'Mobile 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)' },
 0x0158 : {'name' : 'Ivy Bridge',     'id' : CHIPSET_ID_IVB , 'code' : CHIPSET_CODE_IVB,  'longname' : 'Intel Xeon Processor E3-1200 v2 (Ivy Bridge CPU, C200/C216 Series PCH)' },
 
+# Xeon v2 Processor (Ivy Town/Ivy Bridge - EP)
 0x0E00 : {'name' : 'Ivytown',        'id' : CHIPSET_ID_IVT,  'code' : CHIPSET_CODE_IVT,  'longname' : 'Server 3rd Generation Core Procesor (Ivytown CPU / Patsburg PCH)'},
 
 # 4th Generation Core Processor Family (Haswell)
@@ -141,6 +145,9 @@ Chipset_Dictionary = {
 0x0A00 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 0x0A04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 0x0A08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
+
+# Xeon v3 Processor (Haswell Server)
+0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
 
 # Bay Trail SoC
 0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail' },
@@ -266,7 +273,7 @@ class Chipset:
         return self.longname
 
     def print_chipset(self):
-        logger().log( "Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
+        logger().log( "[*] Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
 
 
     ##################################################################################
@@ -298,9 +305,9 @@ class Chipset:
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
-                logger().log( "[*] loading common platform config from '%s'.." % fxml )
+                if logger().HAL: logger().log( "[*] loading common platform config from '%s'.." % fxml )
             elif code == _cfg.attrib['platform'].lower():
-                logger().log( "[*] loading '%s' platform config from '%s'.." % (code,fxml) )
+                if logger().HAL: logger().log( "[*] loading '%s' platform config from '%s'.." % (code,fxml) )
             else: continue
 
             if logger().VERBOSE: logger().log( "[*] loading integrated devices/controllers.." )
@@ -348,6 +355,13 @@ class Chipset:
                         _register.attrib['FIELDS'] = reg_fields
                     self.Cfg.REGISTERS[ _name ] = _register.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _register.attrib) )
+            if logger().VERBOSE: logger().log( "[*] loading controls.." )
+            for _controls in _cfg.iter('controls'):
+                for _control in _controls.iter('control'):
+                    _name = _control.attrib['name']
+                    del _control.attrib['name']
+                    self.Cfg.CONTROLS[ _name ] = _control.attrib
+                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _control.attrib) )
 
     #
     # Load chipsec/cfg/<code>.py configuration file for platform <code>
@@ -399,6 +413,30 @@ class Chipset:
 
 class RegisterNotFoundError (RuntimeError):
     pass
+
+
+
+##################################################################################
+#
+# Main functionality to read/write configuration registers
+# based on their XML configuration
+#
+# is_register_defined
+#   checks if register is defined in the XML config
+# read_register/write_register
+#   reads/writes configuration register (by name)
+# get_register_field (set_register_field)
+#   reads/writes the value of the field (by name) of configuration register (by register value)
+# read_register_field (write_register_field)
+#   reads/writes the value of the field (by name) of configuration register (by register name)
+# register_has_field
+#   checks if the register has specific field
+# print_register
+#   prints configuration register
+# get_control/set_control
+#   reads/writes some control field (by name) 
+#
+##################################################################################
 
 
 def is_register_defined( _cs, reg_name ):
@@ -489,18 +527,29 @@ def read_register_dict( _cs, reg_name):
 
 def get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position=False ):
     field_attrs = get_register_def( _cs, reg_name )['FIELDS'][field_name]
-    field_bit = int(field_attrs['bit'])
-    field_size = int(field_attrs['size'])
-    field_mask = 0
-    for i in range(field_size):
-        field_mask = (field_mask << 1) | 1
+    field_bit   = int(field_attrs['bit'])
+    field_mask  = (1 << int(field_attrs['size'])) - 1
     if preserve_field_position: return reg_value & (field_mask << field_bit)
     else:                       return (reg_value >> field_bit) & field_mask
 
-def read_register_field( _cs, reg_name, field_name):
+def set_register_field( _cs, reg_name, reg_value, field_name, field_value ):
+    field_attrs = get_register_def( _cs, reg_name )['FIELDS'][field_name]
+    field_bit   = int(field_attrs['bit'])
+    field_mask  = (1 << int(field_attrs['size'])) - 1
+    reg_value &= ~(field_mask << field_bit)
+    reg_value |= ((field_value & field_mask) << field_bit)
+    return reg_value
+    
+# @TODO: add cpu_thread!
+def read_register_field( _cs, reg_name, field_name, preserve_field_position=False ):
     reg_value = read_register( _cs, reg_name )
-    return get_register_field( _cs, reg_name, reg_value, field_name )
+    return get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position )
 
+def write_register_field( _cs, reg_name, field_name, field_value, cpu_thread=0 ):
+    reg_value = read_register( _cs, reg_name, cpu_thread )
+    reg_value_new = set_register_field( _cs, reg_name, reg_value, field_name, field_value )
+    #logger().log("set register %s (0x%x) field %s = 0x%x ==> 0x%x" % (reg_name, reg_value, field_name, field_value, reg_value_new))
+    return write_register( _cs, reg_name, reg_value_new, cpu_thread )
 
 def register_has_field( _cs, reg_name, field_name ):
     reg_def = get_register_def( _cs, reg_name )
@@ -554,6 +603,20 @@ def print_register( _cs, reg_name, reg_val ):
     return reg_str
 
 
+
+def get_control( _cs, control_name, cpu_thread=0 ):
+    control = _cs.Cfg.CONTROLS[ control_name ]
+    reg     = control['register']
+    field   = control['field']
+    return chipsec.chipset.read_register_field( _cs, reg, field )    
+
+def set_control( _cs, control_name, control_value, cpu_thread=0 ):
+    control = _cs.Cfg.CONTROLS[ control_name ]
+    reg     = control['register']
+    field   = control['field']
+    return chipsec.chipset.write_register_field( _cs, reg, field, control_value, cpu_thread )    
+
+    
 _chipset = None
 
 def cs():

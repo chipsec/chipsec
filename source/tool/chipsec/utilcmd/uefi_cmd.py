@@ -21,27 +21,10 @@
 
 
 
+"""
+The uefi command provides access to UEFI variables, both on the live system and in a SPI flash image file.
+"""
 
-## \addtogroup standalone
-#chipsec_util uefi
-#------
-#~~~
-#chipsec_util uefi var-list [output_file] [infcls]
-#chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
-#chipsec_util uefi nvram[-auth] <fw_type> [rom_file]
-#chipsec_util uefi keys <keyvar_file>
-#''
-#    Examples:
-#''
-#        chipsec_util uefi var-list nvram.bin
-#        chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
-#        chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
-#        chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
-#        chipsec_util uefi nvram fwtype bios.rom
-#        chipsec_util uefi nvram-auth fwtype bios.rom
-#        chipsec_util uefi decode uefi.bin fwtype
-#        chipsec_util uefi keys db.bin
-#~~~
 __version__ = '1.0'
 
 import os
@@ -55,41 +38,48 @@ from chipsec.file       import *
 
 from chipsec.hal.uefi          import *
 from chipsec.hal.spi_uefi      import *
-#from chipsec.hal.uefi_platform import fw_types
 
-_uefi = UEFI( chipsec_util._cs.helper )
+_uefi = UEFI( chipsec_util._cs )
 
 
-usage = "chipsec_util uefi var-list\n" + \
-        "chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>\n" + \
-        "chipsec_util uefi nvram[-auth] <fw_type> [rom_file]\n" + \
-        "                  <fw_type> should be in [ %s ]\n" % (" | ".join( ["%s" % t for t in fw_types])) + \
+# Unified Extensible Firmware Interface (UEFI)
+def uefi(argv):
+    """
+    >>> chipsec_util uefi var-list
+    >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
+    >>> chipsec_util uefi nvram[-auth] <fw_type> [rom_file]
+    >>> chipsec_util uefi tables
+    >>> chipsec_util uefi s3bootscript [script_address]
+
+    For a list of fw types run:
+
+    >>> chipsec_util uefi types
+    
+    Examples:
+
+    >>> chipsec_util uefi var-list
+    >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
+    >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
+    >>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
+    >>> chipsec_util uefi nvram fwtype bios.rom
+    >>> chipsec_util uefi nvram-auth fwtype bios.rom
+    >>> chipsec_util uefi decode uefi.bin fwtype
+    >>> chipsec_util uefi keys db.bin
+    >>> chipsec_util uefi tables
+    >>> chipsec_util uefi s3bootscript
+    """
+       
+    if 3 > len(argv):
+        print uefi.__doc__
+        return
+    
+    if argv[2] == "types":
+        print "\n<fw_type> should be in [ %s ]\n" % (" | ".join( ["%s" % t for t in fw_types])) + \
         "chipsec_util uefi keys <keyvar_file>\n" + \
         "                  <keyvar_file> should be one of the following EFI variables\n" + \
-        "                  [ %s ]\n" % (" | ".join( ["%s" % var for var in SECURE_BOOT_VARIABLES])) + \
-        "Examples:\n" + \
-        "  chipsec_util uefi var-list\n" + \
-        "  chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin\n" + \
-        "  chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin\n" + \
-        "  chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F\n" + \
-        "  chipsec_util uefi nvram fwtype bios.rom\n" + \
-        "  chipsec_util uefi nvram-auth fwtype bios.rom\n" + \
-        "  chipsec_util uefi decode uefi.bin fwtype\n" + \
-        "  chipsec_util uefi keys db.bin\n\n"
-
-
-
-# ###################################################################
-#
-# Unified Extensible Firmware Interface (UEFI)
-#
-# ###################################################################
-def uefi(argv):
-
-    if 3 > len(argv):
-        print usage
+        "                  [ %s ]\n" % (" | ".join( ["%s" % var for var in SECURE_BOOT_KEY_VARIABLES]))
         return
-
+        
     op = argv[2]
     t = time.time()
 
@@ -110,10 +100,11 @@ def uefi(argv):
             guid = argv[4]
             filename = argv[5]
         else:
-            print usage
+            print uefi.__doc__
             return
-        logger().log( "[CHIPSEC] Writing EFI variable Name='%s' GUID={%s} from '%s' via Variable API.." % (name, guid, filename) )
+        logger().log( "[CHIPSEC] writing EFI variable Name='%s' GUID={%s} from '%s' via Variable API.." % (name, guid, filename) )
         status = _uefi.set_EFI_variable_from_file( name, guid, filename )
+        logger().log("[CHIPSEC] status: %s" % chipsec.hal.uefi_common.EFI_STATUS_DICT[status])
         if status == 0:
             logger().log( "[CHIPSEC] set_EFI_variable return SUCCESS status" )
         else:
@@ -125,11 +116,12 @@ def uefi(argv):
             name = argv[3]
             guid = argv[4]
         else:
-            print usage
+            print uefi.__doc__
             return
         logger().log( "[CHIPSEC] Deleting EFI variable Name='%s' GUID={%s} via Variable API.." % (name, guid) )
         status = _uefi.delete_EFI_variable( name, guid )
-        if status: logger().log( "[CHIPSEC] delete_EFI_variable return SUCCESS status" )
+        logger().log("Returned %s" % chipsec.hal.uefi_common.EFI_STATUS_DICT[status])
+        if status == 0: logger().log( "[CHIPSEC] delete_EFI_variable return SUCCESS status" )
         else:      logger().error( "delete_EFI_variable wasn't able to delete variable" )
 
     elif ( 'var-list' == op ):
@@ -190,13 +182,13 @@ def uefi(argv):
         _uefi.parse_EFI_variables( romfilename, rom, authvars, efi_nvram_format )
         logger().set_log_file( _orig_logname )
 
-    elif ( 'decode' == op):
+    elif ( 'decode' == op ):
 
         if (4 < len(argv)):
             filename = argv[3]
             fwtype = argv[4]
         else:
-            print usage
+            print uefi.__doc__
             return
         logger().log( "[CHIPSEC] Parsing EFI volumes from '%s'.." % filename )
         _orig_logname = logger().LOG_FILE_NAME
@@ -205,17 +197,36 @@ def uefi(argv):
         decode_uefi_region(_uefi, cur_dir, filename, fwtype)
         logger().set_log_file( _orig_logname )
 
-    elif ( 'keys' == op):
+    elif ( 'keys' == op ):
 
         if (3 < len(argv)):
             var_filename = argv[ 3 ]
         else:
-            print usage
+            print uefi.__doc__
             return
         logger().log( "[CHIPSEC] Parsing EFI variable from '%s'.." % var_filename )
         parse_efivar_file( var_filename )
 
+    elif ( 'tables' == op ):
+        logger().log( "[CHIPSEC] Searching memory for and dumping EFI tables (this may take a minute)..\n" )
+        _uefi.dump_EFI_tables()
+
+    elif ( 's3bootscript' == op ):
+        logger().log( "[CHIPSEC] Searching for and parsing S3 resume bootscripts.." )
+        if len(argv) > 3:
+            bootscript_pa = int(argv[3],16)
+            logger().log( '[*] Reading S3 boot-script from memory at 0x%016X..' % bootscript_pa )
+            script_all = chipsec_util._cs.mem.read_physical_mem( bootscript_pa, 0x100000 )
+            logger().log( '[*] Decoding S3 boot-script opcodes..' )
+            script_entries = chipsec.hal.uefi.parse_script( script_all, True )               
+        else:
+            (bootscript_PAs,parsed_scripts) = _uefi.get_s3_bootscript( True )
+
+    else:
+        logger().error( "Unknown uefi command '%s'" % op )
+        print uefi.__doc__
+        return
+
     logger().log( "[CHIPSEC] (uefi) time elapsed %.3f" % (time.time()-t) )
 
-
-chipsec_util.commands['uefi'] = {'func' : uefi, 'start_driver' : False, 'help' : usage }
+chipsec_util.commands['uefi'] = {'func' : uefi, 'start_driver' : True, 'help' : uefi.__doc__ }

@@ -20,10 +20,12 @@
 
 
 
+"""
+CanSecWest 2006
+`Security Issues Related to Pentium System Management Mode <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/cansecwest2006-duflot.pdf>`_ by Duflot 
 
-## \addtogroup modules
-# __chipsec/modules/common/smm.py__ - common checks for protection of compatible System Management Mode (SMM) memory (SMRAM)
-#
+Common checks for protection of compatible System Management Mode (SMM) memory (SMRAM)
+"""
 from collections import namedtuple
 from chipsec.module_common import *
 TAGS = [MTAG_BIOS,MTAG_SMM]

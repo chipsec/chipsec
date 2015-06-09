@@ -21,21 +21,10 @@
 
 
 
+"""
+The msr command allows direct access to read and write MSRs.
+"""
 
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util msr
-#-----
-#~~~
-#chipsec_util msr <msr> [eax] [edx] [cpu_id]
-#''
-#    Examples:
-#''
-#        chipsec_util msr 0x3A
-#        chipsec_util msr 0x8B 0x0 0x0 0
-#~~~
 __version__ = '1.0'
 
 import os
@@ -51,21 +40,18 @@ from chipsec.file       import *
 from chipsec.hal.msr    import Msr
 
 
-usage = "chipsec_util msr <msr> [eax] [edx] [cpu_id]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util msr 0x3A\n" + \
-        "  chipsec_util msr 0x8B 0x0 0x0 0\n\n"
-
-
-# ###################################################################
-#
 # CPU Model Specific Registers
-#
-# ###################################################################
 def msr(argv):
+    """
+    >>> chipsec_util msr <msr> [eax] [edx] [cpu_id]
 
+    Examples:
+
+    >>> chipsec_util msr 0x3A
+    >>> chipsec_util msr 0x8B 0x0 0x0 0
+    """
     if 3 > len(argv):
-        print usage
+        print msr.__doc__
         return
 
     #msr = Msr( os_helper )
@@ -94,4 +80,4 @@ def msr(argv):
             logger().log( "[CHIPSEC] CPU%d: WRMSR( 0x%x ) = %016X" % (cpu_thread_id, msr_addr, val64) )
             chipsec_util._cs.msr.write_msr( cpu_thread_id, msr_addr, eax, edx )
 
-chipsec_util.commands['msr'] = {'func' : msr ,    'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['msr'] = {'func' : msr , 'start_driver' : True, 'help' : msr.__doc__ }

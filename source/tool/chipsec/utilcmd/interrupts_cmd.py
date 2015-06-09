@@ -21,22 +21,6 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util smi / chipsec_util nmi
-#-----------
-#~~~
-#chipsec_util smi <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]
-#chipsec_util nmi
-#''
-#    Examples:
-#''
-#        chipsec_util smi 0xDE 0x0
-#        chipsec_util nmi
-#~~~
 __version__ = '1.0'
 
 import os
@@ -50,21 +34,20 @@ from chipsec.file       import *
 
 from chipsec.hal.interrupts import Interrupts
 
-usage = "chipsec_util smi <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]\n\n" + \
-        "chipsec_util nmi\n" + \
-        "Examples:\n" + \
-        "  chipsec_util smi 0xDE 0x0\n" + \
-        "  chipsec_util smi 0xDE 0x0 0xAAAAAAAAAAAAAAAA ..\n" + \
-        "  chipsec_util nmi\n\n"
-
-
-
 # ###################################################################
 #
 # CPU Interrupts
 #
 # ###################################################################
 def smi(argv):
+    """
+    >>> chipsec_util smi <thread_id> <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]
+
+    Examples:
+
+    >>> chipsec_util smi 0x0 0xDE 0x0
+    >>> chipsec_util smi 0x0 0xDE 0x0 0xAAAAAAAAAAAAAAAA ..
+    """
     try:
         interrupts = Interrupts( chipsec_util._cs )
     except RuntimeError, msg:
@@ -74,34 +57,42 @@ def smi(argv):
     SMI_code_port_value = 0xF
     SMI_data_port_value = 0x0
     if (2 == len(argv)):
-        print usage
-    elif (3 < len(argv)):
-        SMI_code_port_value = int(argv[2],16)
-        SMI_data_port_value = int(argv[3],16)
+        print smi.__doc__
+    elif (4 < len(argv)):
+        thread_id = int(argv[2],16)
+        SMI_code_port_value = int(argv[3],16)
+        SMI_data_port_value = int(argv[4],16)
         logger().log( "[CHIPSEC] Sending SW SMI (code: 0x%02X, data: 0x%02X).." % (SMI_code_port_value, SMI_data_port_value) )
-        if (4 == len(argv)):
+        if (5 == len(argv)):
             interrupts.send_SMI_APMC( SMI_code_port_value, SMI_data_port_value )
-        elif (10 == len(argv)):
-            _rax = int(argv[4],16)
-            _rbx = int(argv[5],16)
-            _rcx = int(argv[6],16)
-            _rdx = int(argv[7],16)
-            _rsi = int(argv[8],16)
-            _rdi = int(argv[9],16)
+        elif (11 == len(argv)):
+            _rax = int(argv[5],16)
+            _rbx = int(argv[6],16)
+            _rcx = int(argv[7],16)
+            _rdx = int(argv[8],16)
+            _rsi = int(argv[9],16)
+            _rdi = int(argv[10],16)
             logger().log( "          RAX: 0x%016X (AX will be overwridden with values of SW SMI ports B2/B3)" % _rax )
             logger().log( "          RBX: 0x%016X" % _rbx )
             logger().log( "          RCX: 0x%016X" % _rcx )
             logger().log( "          RDX: 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
             logger().log( "          RSI: 0x%016X" % _rsi )
             logger().log( "          RDI: 0x%016X" % _rdi )
-            interrupts.send_SW_SMI( SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-        else: print usage
-    else: print usage
+            interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+        else: print smi.__doc__
+    else: print smi.__doc__
 
 
 def nmi(argv):
+    """
+    >>> chipsec_util nmi
+
+    Examples:
+
+    >>> chipsec_util nmi
+    """
     if 2 < len(argv):
-        print usage
+        print nmi.__doc__
 
     try:
         interrupts = Interrupts( chipsec_util._cs )
@@ -113,5 +104,5 @@ def nmi(argv):
     interrupts.send_NMI()
 
 
-chipsec_util.commands['nmi'] = {'func' : nmi,     'start_driver' : True, 'help' : usage  }
-chipsec_util.commands['smi'] = {'func' : smi,     'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['nmi'] = {'func' : nmi,     'start_driver' : True, 'help' : nmi.__doc__  }
+chipsec_util.commands['smi'] = {'func' : smi,     'start_driver' : True, 'help' : smi.__doc__  }

@@ -22,6 +22,7 @@
 #define IOCTL_WRCR _IOWR(0, 0x11, int*) 
 #define IOCTL_RDMMIO  _IOWR(0, 0x12, int*)
 #define IOCTL_WRMMIO  _IOWR(0, 0x13, int*)
+#define IOCTL_VA2PA   _IOWR(0, 0x14, int*)
 
 /// if defined debug is enabled
 #define DEBUG
@@ -40,16 +41,6 @@
 typedef u64 physaddr_t;
 #else
 typedef __u32 physaddr_t;
-#endif
-
-#ifdef __x86_64__
-#define PUSH_REGS asm volatile ("push %rax\n\t" "push %rbx\n\t" "push %rcx\n\t" "push %rdx\n\t" "push %rsi\n\t" "push %rdi\n\t" );
-#define POP_REGS asm volatile ("pop %rdi\n\t" "pop %rsi\n\t" "pop %rdx\n\t" "pop %rcx\n\t" "pop %rbx\n\t" "pop %rax\n\t");
-#define GET_RETURN_VALUE asm volatile ( "mov %%rax, %%rbx" : "=b"(ret) : );
-#else
-#define PUSH_REGS asm volatile ("push %eax\n\t" "push %ebx\n\t" "push %ecx\n\t" "push %edx\n\t" "push %esi\n\t" "push %edi\n\t" );
-#define POP_REGS asm volatile ("pop %edi\n\t" "pop %esi\n\t" "pop %edx\n\t" "pop %ecx\n\t" "pop %ebx\n\t" "pop %eax\n\t");
-#define GET_RETURN_VALUE asm volatile ( "mov %%eax, %%ebx" : "=b"(ret) : );
 #endif
 
 typedef enum {

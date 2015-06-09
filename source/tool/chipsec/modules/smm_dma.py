@@ -20,9 +20,11 @@
 
 
 
-## \addtogroup modules
-# __chipsec/modules/smm_dma.py__ - check SMM memory (SMRAM) is properly configured to protect from DMA attacks
-#
+"""
+`Programmed I/O accesses: a threat to Virtual Machine Monitors? <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/pacsec2007-duflot-papier.pdf>`_ by Lioc Duflot & Laurent Absil
+
+Check SMM memory (SMRAM) is properly configured to protect from DMA attacks.
+"""
 
 from chipsec.module_common import *
 import chipsec.chipset
@@ -113,16 +115,28 @@ class smm_dma(BaseModule):
         else:  self.logger.log_bad( "  TSEGMB is not 8MB aligned" )
 
         self.logger.log( "[*] checking TSEG covers entire SMRR range.." )
-        ok = (tsegmb <= smrrbase) and (smrrlimit <= tseg_limit)
-        smram_dma_ok = smram_dma_ok and ok
-        if ok: self.logger.log_good( "  TSEG covers entire SMRAM" )
-        else:  self.logger.log_bad( "  TSEG doesn't cover entire SMRAM" )
+        is_smrr_setup = (0 != smrrmask)
+        if is_smrr_setup:
+            ok = (tsegmb <= smrrbase) and (smrrlimit <= tseg_limit)
+            smram_dma_ok = smram_dma_ok and ok
+            if ok: self.logger.log_good( "  TSEG covers entire SMRAM" )
+            else:  self.logger.log_bad( "  TSEG doesn't cover entire SMRAM" )
+        else:
+            self.logger.log_bad( "  SMRR range is not setup" )
 
         self.logger.log('')
-        if smram_dma_ok: self.logger.log_passed_check( "TSEG is properly configured. SMRAM is protected from DMA attacks" )
-        else:            self.logger.log_failed_check( "TSEG is not properly configured. SMRAM is vulnerable to DMA attacks" )
+        if smram_dma_ok:
+            if is_smrr_setup:
+                res = ModuleResult.PASSED
+                self.logger.log_passed_check( "TSEG is properly configured. SMRAM is protected from DMA attacks" )
+            else:
+                res = ModuleResult.WARNING
+                self.logger.log_warn_check( "TSEG is properly configured but can't determine if it covers entire SMRAM" )
+        else:
+            res = ModuleResult.FAILED
+            self.logger.log_failed_check( "TSEG is not properly configured. SMRAM is vulnerable to DMA attacks" )
 
-        return smram_dma_ok
+        return res
 
     # --------------------------------------------------------------------------
     # run( module_argv )

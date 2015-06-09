@@ -22,17 +22,6 @@
 
 
 
-## \addtogroup standalone
-#chipsec_util cpuid
-#------
-#~~~
-#chipsec_util cpuid [eax]
-#''
-#    Examples:
-#''
-#         chipsec_util cpuid 40000000
-#~~~
-
 __version__ = '1.0'
 
 import os
@@ -45,22 +34,21 @@ from chipsec.logger             import *
 from chipsec.file               import *
 #_cs = cs()
 
-usage = "chipsec_util cpuid <eax> [ecx]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util cpuid 40000000\n\n"
-
-
-
-
 # ###################################################################
 #
 # CPUid
 #
 # ###################################################################
 def cpuid(argv):
+    """
+    >>> chipsec_util cpuid <eax> [ecx]
 
+    Examples:
+
+    >>> chipsec_util cpuid 40000000
+    """
     if 3 > len(argv):
-        print usage
+        print cpuid.__doc__
         return
 
     eax = int(argv[2],16)
@@ -77,4 +65,4 @@ def cpuid(argv):
     logger().log( "[CHIPSEC]         EDX: 0x%08X" % (val[3]) )
 
 
-chipsec_util.commands['cpuid'] = {'func' : cpuid ,    'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['cpuid'] = {'func' : cpuid , 'start_driver' : True, 'help' : cpuid.__doc__  }

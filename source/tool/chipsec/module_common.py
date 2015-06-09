@@ -29,10 +29,9 @@
 # -------------------------------------------------------------------------------
 
 
-## \addtogroup core
-# __chipsec/module_common.py__ -- common include file for modules
-#
-#
+"""
+Common include file for modules
+"""
 
 import platform
 import string
@@ -49,12 +48,15 @@ class BaseModule( object ):
         self.cs = chipsec.chipset.cs()
         self.logger = chipsec.logger.logger()
 
-    # This method should be overwritten by the module returning True or False
-    # depending wether or not this module is supported in the currently running
-    # platform.
-    # To access the currently running platform use
-    #    self.cs.get_chipset_id()
     def is_supported(self):
+        """
+        This method should be overwritten by the module returning True or False
+        depending whether or not this module is supported in the currently running
+        platform.
+        To access the currently running platform use
+            
+        >>> self.cs.get_chipset_id()
+        """
         return True
 
     def run( self, module_argv ):
@@ -86,3 +88,9 @@ class ModuleResult:
     SKIPPED = 3
     DEPRECATED = 4
     ERROR   = -1
+
+
+#
+# Common module command line options
+#
+OPT_MODIFY = 'modify'

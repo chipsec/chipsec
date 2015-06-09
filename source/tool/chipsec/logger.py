@@ -27,10 +27,9 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup core
-# __chipsec/logger.py__ - logging functions
-#
-#
+"""
+Logging functions
+"""
 
 import platform
 import string
@@ -83,7 +82,9 @@ if "windows" == platform.system().lower():
                   }
 
         def log_color( fg_color, text ):
-            # Store current attribute settings
+            """
+            Store current attribute settings
+            """
             old_setting = WConio.gettextinfo()[4] & 0x00FF
             WConio.textattr( COLOR_ID[ fg_color ] )
             print text
@@ -127,8 +128,7 @@ class Logger:
         self.xmlAux.set_xml_file(name)
 
     def saveXML(self):
-        text = self.xmlAux.saveXML()
-        self.log(text)
+        self.xmlAux.saveXML()
 
     def set_log_file( self, name=None ):
         """Sets the log file for the output."""
@@ -341,15 +341,6 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        """
-           #with open( filename, 'a+' ) as f:
-           #    print >> f, text
-           f = open( filename, 'a+' )
-           try:
-               print >> f, text
-           finally:
-               f.close()
-        """
         print >> self.logfile, text
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected

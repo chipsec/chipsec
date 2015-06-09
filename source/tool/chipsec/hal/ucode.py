@@ -27,18 +27,17 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/ucode.py
-# =============
-# Microcode update specific functionality (for each CPU thread)
-# ~~~
-# #usage:
-#     ucode_update_id( 0 )
-#     load_ucode_update( 0, ucode_buf )
-#     update_ucode_all_cpus( 'ucode.pdb' )
-#     dump_ucode_update_header( 'ucode.pdb' )
-# ~~~
-#
+
+"""
+Microcode update specific functionality (for each CPU thread)
+
+usage:
+    >>> ucode_update_id( 0 )
+    >>> load_ucode_update( 0, ucode_buf )
+    >>> update_ucode_all_cpus( 'ucode.pdb' )
+    >>> dump_ucode_update_header( 'ucode.pdb' )
+"""
+
 __version__ = '1.0'
 
 import struct

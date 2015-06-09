@@ -27,15 +27,14 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/spi_uefi.py
-# =============================
-# SPI UEFI Region parsing
-# ~~~
-# #usage:
-#   parse_uefi_region_from_file( filename )
-# ~~~
-#
+
+"""
+SPI UEFI Region parsing
+
+usage:
+   >>> parse_uefi_region_from_file( filename )
+"""
+
 __version__ = '1.0'
 
 import os
@@ -86,6 +85,12 @@ def save_section_info( cur_offset, Name, Type, file_path ):
            ("\t\tType           : 0x%02X\n" % (Type))
     logger().log( info )
 
+def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_data, compression_type ):
+    compressed_name = os.path.join(section_dir_path, "%s.gz" % sec_fs_name)
+    uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
+    write_file(compressed_name, compressed_data)
+    return _uefi.decompress_EFI_binary( compressed_name, uncompressed_name, compression_type )
+
 def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, parent_path, decode_log_path ):
     sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, offset, polarity)
     secn = 0
@@ -119,11 +124,7 @@ def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, pare
                 os.makedirs( section_dir_path )
                 if   (SecType == EFI_SECTION_COMPRESSION):
                     UncompressedLength, CompressionType = struct.unpack(EFI_COMPRESSION_SECTION, SecBody[SecHeaderSize:SecHeaderSize+EFI_COMPRESSION_SECTION_size])
-                    compressed_name = os.path.join(section_dir_path, "%s.gz" % sec_fs_name)
-                    uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
-                    write_file(compressed_name, SecBody[SecHeaderSize+EFI_COMPRESSION_SECTION_size:])
-                    # TODO: decompress section
-                    decompressed = DecompressSection(compressed_name, uncompressed_name, CompressionType)
+                    decompressed = decompress_section_data(_uefi, section_dir_path, sec_fs_name, SecBody[SecHeaderSize+EFI_COMPRESSION_SECTION_size:], CompressionType)
                     if decompressed:
                         parse_uefi_section(_uefi, decompressed, len(decompressed), 0, polarity, 0, section_dir_path, decode_log_path)
                         pass
@@ -132,8 +133,16 @@ def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, pare
                     # Only CRC32 guided sectioni can be decoded for now
                     guid0, guid1, guid2, guid3, DataOffset, Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, SecBody[SecHeaderSize:SecHeaderSize+EFI_GUID_DEFINED_SECTION_size])
                     sguid = guid_str(guid0, guid1, guid2, guid3)
+                    logger().log("\t\t\tDefinition guid: %s\n" % sguid +\
+                                 "\t\t\tData offset    : 0x%04X\n" % DataOffset +\
+                                 "\t\t\tAttributes     : 0x%04X\n" % Attributes \
+                                 )
                     if (sguid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID):
                         parse_uefi_section(_uefi, SecBody[DataOffset:], Size - DataOffset, 0, polarity, 0, section_dir_path, decode_log_path)
+                    elif (sguid == LZMA_CUSTOM_DECOMPRESS_GUID):
+                        decompressed = decompress_section_data(_uefi, section_dir_path, sec_fs_name, SecBody[DataOffset:], 2)
+                        if decompressed:
+                            parse_uefi_section(_uefi, decompressed, len(decompressed), 0, polarity, 0, section_dir_path, decode_log_path)
                     #else:
                     #   write_file( os.path.join(section_dir_path, "%s-%04X" % (sguid, Attributes)), SecBody[DataOffset:] )
                     pass
@@ -180,7 +189,7 @@ def parse_uefi_region( _uefi, data, uefi_region_path ):
                             nvram_fname = os.path.join(file_dir_path, 'SHADOW_NVRAM')
                             _uefi.parse_EFI_variables( nvram_fname, FvImage, False, 'nvar' )
                 cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, next_offset, polarity)
-        FvOffset, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(data, FvOffset+FvLength)
+        FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(data, FvOffset+FvLength)
         voln = voln + 1
 
 def parse_uefi_region_from_file( _uefi, filename, outpath = None):

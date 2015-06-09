@@ -27,19 +27,17 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/uefi_platform.py
-# ==================================
-# Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsules, etc.)
-#
-#
+
+"""
+Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsules, etc.)
+"""
+
 __version__ = '1.0'
 
 import struct
 from collections import namedtuple
 
 from chipsec.hal.uefi_common import *
-
 
 
 #################################################################################################3
@@ -70,6 +68,7 @@ NVRAM_ATTR_AUTHWR     = 0x40
 NVRAM_ATTR_HER        = 0x20
 NVRAM_ATTR_VLD        = 0x80
 
+VARIABLE_STORE_FV_GUID = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
 
 #################################################################################################3
 # This Variable header is defined by UEFI
@@ -98,9 +97,6 @@ VAR_ADDED                     = 0x7f  # Variable has been completely added
 #IS_VARIABLE_STATE(_c, _Mask)  (BOOLEAN) (((~_c) & (~_Mask)) != 0)
 def IS_VARIABLE_STATE(_c, _Mask):
     return ( ( ((~_c)&0xFF) & ((~_Mask)&0xFF) ) != 0 )
-
-
-
 
 #
 #typedef struct {
@@ -136,9 +132,68 @@ DataSize   : 0x%08X
 VendorGuid : {0x%08X-0x%04X-0x%04X-0x%08X}
 """ % ( self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.VendorGuid0, self.VendorGuid1, self.VendorGuid2, self.VendorGuid3 )
 
+
+UEFI_VARIABLE_STORE_HEADER = "<IHH8sIBBHI"
+UEFI_VARIABLE_STORE_HEADER_SIZE = struct.calcsize(UEFI_VARIABLE_STORE_HEADER)
+
+EFI_VARIABLE_HEADER = "<HBBI28sIIIHH8s"
+EFI_VARIABLE_HEADER_SIZE = struct.calcsize(EFI_VARIABLE_HEADER)
+
+VARIABLE_STORE_FORMATTED = 0x5a
+VARIABLE_STORE_HEALTHY   = 0xfe
+VARIABLE_DATA            = 0x55aa
+
+def getNVstore_EFI( nvram_buf ):
+    l = (-1, -1, None)
+    FvOffset = 0
+    FvLength = 0
+    while True:
+        FvOffset, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf, FvOffset+FvLength)
+        if (FvOffset == None): break
+        if (FsGuid != VARIABLE_STORE_FV_GUID): continue
+        nvram_start = HeaderLength
+        StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
+            struct.unpack(UEFI_VARIABLE_STORE_HEADER, FvImage[nvram_start:nvram_start + UEFI_VARIABLE_STORE_HEADER_SIZE])
+        if ((Format == VARIABLE_STORE_FORMATTED) and (State == VARIABLE_STORE_HEALTHY)):
+            l = (FvOffset + nvram_start, FvLength - nvram_start, None)
+            break
+    return l
+
 def getEFIvariables_UEFI( nvram_buf ):
-    logger().error( 'Well, implement getEFIvariables_UEFI finally, would you??' )
-    return 0
+    dof = 0
+    length = len(nvram_buf)
+    storen = 0
+    variables = dict()
+    while ((dof+UEFI_VARIABLE_STORE_HEADER_SIZE) < length):  
+        store_start = dof
+        StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
+            struct.unpack(UEFI_VARIABLE_STORE_HEADER, nvram_buf[dof:dof + UEFI_VARIABLE_STORE_HEADER_SIZE])
+        dof = align(dof + UEFI_VARIABLE_STORE_HEADER_SIZE, 4)
+        if ((Format != VARIABLE_STORE_FORMATTED) or (State != VARIABLE_STORE_HEALTHY)):
+            break
+        if ((store_start + Size) >= length): break
+        while ((dof + EFI_VARIABLE_HEADER_SIZE) <= (store_start + Size)):
+            StartId, State, R0, Attributes, Auth, NameSize, DataSize, VendorGuid0, VendorGuid1, VendorGuid2, VendorGuid3 = \
+                struct.unpack(EFI_VARIABLE_HEADER, nvram_buf[dof:dof+EFI_VARIABLE_HEADER_SIZE]);
+            if (StartId != VARIABLE_DATA): break
+            dof += EFI_VARIABLE_HEADER_SIZE
+            if ((State == 0xff) and (DataSize == 0xffffffff) and (NameSize == 0xffffffff) and (Attributes == 0xffffffff)):
+                NameSize = 0
+                DataSize = 0
+                # just skip variable with empty name and data for now
+            else:
+                guid = guid_str(VendorGuid0, VendorGuid1, VendorGuid2, VendorGuid3)
+                Name = nvram_buf[dof:dof+NameSize]
+                NameStr = unicode(Name, "utf-16-le").split('\x00')[0]
+                VarData = nvram_buf[dof+NameSize:dof+NameSize+DataSize]
+                if NameStr not in variables.keys():
+                    variables[NameStr] = []
+                #                          off, buf,  hdr,  data,    guid, attrs
+                variables[NameStr].append((dof, None, None, VarData, guid, Attributes))
+            dof = align(dof+NameSize+DataSize, 4)
+        dof = store_start + Size
+        storen += 1
+    return variables
 
 ##################################################################################################
 #
@@ -418,6 +473,8 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype ):
         efi_var_name = "<not defined>"
 
         next_var_offset = start + hdr_size + name_size + data_size
+        if (next_var_offset > nvsize):
+            break
         efi_var_buf  = nvram_buf[ start : next_var_offset ]
 
         name_offset = hdr_size
@@ -452,7 +509,6 @@ def getEFIvariables_VSS_NEW( nvram_buf ):
 #
 #
 VARIABLE_STORE_SIGNATURE_EVSA = 'EVSA'
-VARIABLE_STORE_FV_GUID = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
 ADDITIONAL_NV_STORE_GUID = '00504624-8A59-4EEB-BD0F-6B36E96128E0'
 
 TLV_HEADER = "<BBH"
@@ -831,7 +887,7 @@ def id_s3bootscript_type( script, log_script=False ):
 #
 EFI_VAR_DICT = {
 # UEFI
-FWType.EFI_FW_TYPE_UEFI    : {'name' : 'UEFI',    'func_getefivariables' : getEFIvariables_UEFI },
+FWType.EFI_FW_TYPE_UEFI    : {'name' : 'UEFI',    'func_getefivariables' : getEFIvariables_UEFI,    'func_getnvstore' : getNVstore_EFI  },
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
 #FWType.EFI_FW_TYPE_WIN     : {'name' : 'WIN',     'func_getefivariables' : getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2, 'func_getnvstore' : None },
 # NVAR format

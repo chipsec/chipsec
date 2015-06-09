@@ -29,17 +29,14 @@
 #
 # -------------------------------------------------------------------------------
 
-## \addtogroup core
-#@{
-# __chipsec/file.py__ -- reading from/writing to files
-#@}
+"""
+Reading from/writing to files
 
-## file.py
-# usage:
-#     read_file( filename )
-#     write_file( filename, buffer )
-#
-#
+usage:
+    >>> read_file( filename )
+    >>> write_file( filename, buffer )
+"""
+
 __version__ = '1.0'
 
 import struct

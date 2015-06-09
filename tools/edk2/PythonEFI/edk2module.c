@@ -22,6 +22,9 @@
 #include  <stdlib.h>
 #include  <wchar.h>
 #include  <sys/syslimits.h>
+#include  <Uefi.h>
+#include  <Library/UefiLib.h>
+#include  <Library/UefiRuntimeServicesTableLib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,6 +43,8 @@ PyDoc_STRVAR(edk2__doc__,
 #ifndef CHIPSEC
   #define CHIPSEC 1
 
+  PyTypeObject EfiGuidType;
+  
   // -- Access to CPU MSRs
   extern void _rdmsr( unsigned int msr_num, unsigned int* msr_lo, unsigned int* msr_hi );
   extern void _wrmsr( unsigned int msr_num, unsigned int  msr_hi, unsigned int  msr_lo );
@@ -7107,52 +7112,137 @@ posix_writemem_dword(PyObject *self, PyObject *args)
   return Py_None;
 }
 
-/*
-static char efi_rdtsc__doc__[] =
-"rdtsc() -> (edx:eax)\n\
-Read the TSC counter from the CPU.";
 
-static PyObject *
-efi_rdtsc(PyObject *self, PyObject *args)
+
+/* #########################   Runtime Methods  ############################ */
+/*  VARIABLE Services  ##################################################### */
+PyDoc_STRVAR(MiscRT_GetVariable__doc__,
+"(Status, Attributes, DataSize) = GetVariable(uName, GUID, InitialSize, Data)\n\n\
+Returns the value of a variable.");
+
+static
+PyObject *
+MiscRT_GetVariable(PyObject *self, PyObject *args)
 {
-	unsigned int veax, vedx;
+  CHAR16       *VariableName;
+//  PyObject     *GuidObj;
+  EFI_GUID      VendorGuid;
+  UINT32        guidsize;
+  UINT32        Attributes;
+  UINT64        DataSize;         // UINTN on the EFI side
+  char         *Data;             // Efi expects void*
+  EFI_STATUS    Status;
+/*  UINT32        guid1;
+  UINT16        guid2, guid3;
+  UINT8         guid4[8]; */
+  UINT8         i;
+  char          *guidptr, *VendorGuidPtr;
+  
+  if(!PyArg_ParseTuple(args, "us#K", &VariableName, &guidptr, &guidsize, &DataSize))
+  {
+    return NULL;
+  }
+  
+  VendorGuidPtr = (char *)&VendorGuid;
+  for (i=0; i<sizeof(VendorGuid); i++)
+    VendorGuidPtr[i] = guidptr[i];
+    
+  Data = malloc(DataSize);
+  if (!Data)
+    return NULL;
 
-	_asm {
-		rdtsc
-		mov vedx, edx
-		mov veax, eax
-	}
-	
-	return Py_BuildValue("(kk)",
-	    (unsigned long)vedx,
-	    (unsigned long)veax);
+
+  // Call the UEFI Service
+  Py_BEGIN_ALLOW_THREADS
+  Status = gRT->GetVariable(VariableName, &VendorGuid, &Attributes, (UINTN *)&DataSize, (void*)Data);
+  Py_END_ALLOW_THREADS
+
+  return Py_BuildValue("(IIs#K)", (UINT32)Status, Attributes, Data, DataSize, DataSize);
 }
 
-static char efi_cpuid__doc__[] =
-"cpuid(eax) -> (eax:ebx:ecx:edx)\n\
-Read the CPUID.";
+PyDoc_STRVAR(MiscRT_GetNextVariableName__doc__,
+"(Status, VariableNameSize, VariableName, VendorGuid) = GetNextVariableName(NameSize, VariableName, VendorGuid)\n\n\
+Enumerates the current variable names.");
 
-static PyObject *
-efi_cpuid(PyObject *self, PyObject *args)
+static
+PyObject *
+MiscRT_GetNextVariableName(PyObject *self, PyObject *args)
 {
-	unsigned int veax, vebx, vecx, vedx;
+  CHAR16        *VariableName, *oldname;           // EFI expects CHAR16*
+  UINT64        NameSize;               // UINTN on the EFI side
+//  UINT32        guid1;
+//  UINT16        guid2, guid3;
+//  UINT8         guid4[8];
+  EFI_STATUS    Status;
+  EFI_GUID      VendorGuid;
+  UINT32        i, guidsize;
+  char          *guidptr, *VendorGuidPtr;    
 
-	if (!PyArg_Parse(args, "I", &veax))
-		return NULL;
-	
-	_asm {
-		mov eax, veax
-		cpuid
-		mov veax, eax
-		mov vebx, ebx
-		mov vecx, ecx
-		mov vedx, edx
-	}	
+  if(!PyArg_ParseTuple(args, "Kus#", &NameSize, &oldname, &guidptr, &guidsize))
+  {
+    return NULL;
+  }
+  
+  VendorGuidPtr = (char *)&VendorGuid;
+  for (i=0; i<sizeof(VendorGuid); i++)
+    VendorGuidPtr[i] = guidptr[i];
+  
+  VariableName = malloc(NameSize); 
+  if (!VariableName)
+    return NULL;
+  for (i=0; i<NameSize && oldname[i] != (CHAR16)0; i++)
+    VariableName[i] = oldname[i];
+  VariableName[i] = oldname[i];
+    
 
-	return Py_BuildValue("(kkkk)",
-	    (unsigned long)veax,(unsigned long)vebx,(unsigned long)vecx,(unsigned long)vedx);
+    // Call the UEFI Service
+    Py_BEGIN_ALLOW_THREADS
+    Status = gRT->GetNextVariableName((UINTN *)&NameSize, (CHAR16*)VariableName, &VendorGuid);
+    Py_END_ALLOW_THREADS
+  
+
+  // Return the new Data Size and Vendor Guid
+  return Py_BuildValue("(IuKs#)", (UINT32) Status, VariableName, NameSize, &VendorGuid, 16);
 }
-*/
+
+PyDoc_STRVAR(MiscRT_SetVariable__doc__,
+"(Status, DataSize) = SetVariable(uName, GUID, Attributes, InitialSize, Data)\n\n\
+Sets the value of a variable.");
+
+static
+PyObject *
+MiscRT_SetVariable(PyObject *self, PyObject *args)
+{
+  CHAR16       *VariableName;
+//  UINT32        guid1;
+//  UINT16        guid2, guid3;
+//  UINT8         guid4[8];
+  UINT64        DataSize;       // UINTN on the EFI side
+  char         *Data, *guidptr, *VendorGuidPtr;           // EFI expects void*
+  EFI_STATUS    Status;
+  EFI_GUID      VendorGuid;
+  UINT32        Attributes;
+  UINT32        i, guidsize, strdatasize;
+
+  if(!PyArg_ParseTuple(args, "us#Is#I", &VariableName, &guidptr, &guidsize, &Attributes, &Data, &strdatasize, &DataSize))
+  {
+    return NULL;
+  }
+  
+  VendorGuidPtr = (char *)&VendorGuid;
+  for (i=0; i<sizeof(VendorGuid); i++)
+    VendorGuidPtr[i] = guidptr[i];
+
+
+  // Call the UEFI Service
+  Py_BEGIN_ALLOW_THREADS
+  Status = gRT->SetVariable(VariableName, &VendorGuid, Attributes, (UINTN)DataSize, (void*)Data);
+  Py_END_ALLOW_THREADS
+
+  return Py_BuildValue("(IKs#)", (UINT32) Status, DataSize, &VendorGuid, sizeof(VendorGuid));
+}
+
+
 
 #endif // CHIPSEC
 
@@ -7484,6 +7574,13 @@ static PyMethodDef posix_methods[] = {
   {"writeio",           posix_writeio, 0, efi_writeio__doc__},
   {"readio",            posix_readio, 0, efi_readio__doc__},
   {"swsmi",             posix_swsmi, 0, efi_swsmi__doc__},
+
+    // Variable Services
+  {"GetVariable",                   MiscRT_GetVariable,           METH_VARARGS, MiscRT_GetVariable__doc__           },
+  {"GetNextVariableName",           MiscRT_GetNextVariableName,   METH_VARARGS, MiscRT_GetNextVariableName__doc__   },
+  {"SetVariable",                   MiscRT_SetVariable,           METH_VARARGS, MiscRT_SetVariable__doc__           },
+
+  
   //  {"rdtsc",             posix_rdtsc, 0, efi_rdtsc__doc__},
 //  {"cpuid",             posix_cpuid, 0, efi_cpuid__doc__},
 #endif

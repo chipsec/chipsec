@@ -21,22 +21,6 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util cr
-#----
-#~~~
-#chipsec_util cr <cpu_id> <cr_number> [value]
-#''
-#    Examples:
-#''
-#        chipsec_util cr 0 0
-#        chipsec_util cr 0 4 0x0
-#~~~
-
 __version__ = '1.0'
 
 import os
@@ -48,20 +32,22 @@ import chipsec_util
 from chipsec.logger     import *
 from chipsec.file       import *
 
-usage = "chipsec_util cr <cpu_id> <cr_number> [value]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util cr 0 0\n" + \
-        "  chipsec_util cr 0 4 0x0\n\n"
-
 # ###################################################################
 #
 # Crs
 #
 # ###################################################################
 def crx(argv):
+    """
+    >>> chipsec_util cr <cpu_id> <cr_number> [value]
 
+    Examples:
+
+    >>> chipsec_util cr 0 0
+    >>> chipsec_util cr 0 4 0x0
+    """
     if 4 > len(argv):
-        print usage
+        print crx.__doc__
         return
 
     try:
@@ -69,14 +55,14 @@ def crx(argv):
         cr_number = int(argv[3],16)
        
     except:
-        print usage
+        print crx.__doc__
         return
 
     if 5 == len(argv):
         try:
             value = int(argv[4], 16)
         except:
-            print usage
+            print crx.__doc__
             return
 
         logger().log( "[CHIPSEC] CPU: %d write CR%d <- 0x%08X" % (cpu_thread_id, cr_number, value) )
@@ -91,5 +77,5 @@ def crx(argv):
         except:
             logger().error( "Read CR failed.")
 
-chipsec_util.commands['cr'] = {'func' : crx, 'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['cr'] = {'func' : crx, 'start_driver' : True, 'help' : crx.__doc__  }
 

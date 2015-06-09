@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <configuration platform="BYT">
-<!-- Reference: Intel(R) Atom(TM) Processor E3800 Product Family Datasheet September 2014, Revision 3.5 -->
-
+<!-- XML configuration for Baytrail
+    Reference: Intel(R) Atom(TM) Processor E3800 Product Family Datasheet September 2014, Revision 3.5
+-->
   <!-- #################################### -->
   <!--                                      -->
   <!-- Memory Mapped I/O spaces (MMIO BARs) -->
@@ -15,7 +16,7 @@
     <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0xFFFFFFF0FFC00000"  desc="Graphics Translation Table Range"/>
 
   </mmio>
-
+  
   <!-- #################################### -->
   <!--                                      -->
   <!-- Configuration registers              -->

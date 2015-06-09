@@ -27,21 +27,19 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-#
-# chipsec/hal/io.py
-# ========================
-# Access to Port I/O
-# ~~~
-# #usage:
-#     read_port_byte( 0x61 )
-#     read_port_word( 0x61 )
-#     read_port_dword( 0x61 )
-#     write_port_byte( 0x71, 0 )
-#     write_port_word( 0x71, 0 )
-#     write_port_dword( 0x71, 0 )
-# ~~~
-#
+
+"""
+Access to Port I/O
+
+usage:
+    >>> read_port_byte( 0x61 )
+    >>> read_port_word( 0x61 )
+    >>> read_port_dword( 0x61 )
+    >>> write_port_byte( 0x71, 0 )
+    >>> write_port_word( 0x71, 0 )
+    >>> write_port_dword( 0x71, 0 )
+"""
+
 __version__ = '1.0'
 
 import struct

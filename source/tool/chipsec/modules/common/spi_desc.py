@@ -20,10 +20,11 @@
 
 
 
-## \addtogroup modules
-# __chipsec/modules/common/spi_desc.py__ -  checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
+"""
+Parsing of SPI descriptor access permissions is implemented in "ich_descriptors_tool" which is part of open source `flashrom <http://www.flashrom.org/>`_
 
-
+Checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
+"""
 
 from chipsec.module_common import *
 import chipsec.hal.spi

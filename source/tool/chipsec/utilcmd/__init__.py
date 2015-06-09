@@ -19,7 +19,3 @@
 #
 
 
-
-
-## \defgroup standalone Chipsec standalone utility
-# chipsec_util.py -- Run chipsec_util as a standalone tool

@@ -21,22 +21,17 @@
 
 
 
+"""
+CHIPSEC can parse an image file containing data from the SPI flash (such as the result of chipsec_util spi dump). This can be critical in forensic analysis.
 
-#
-# usage as a standalone utility:
-#
-# chipsec_util decode spi.bin
-#
-## \addtogroup standalone
-#chipsec_util decode
-#--------
-#~~~
-#chipsec_util decode <rom> [fw_type]
-#''
-#    Examples:
-#''
-#        chipsec_util decode spi.bin vss
-#~~~
+Examples:
+
+chipsec_util decode spi.bin vss
+
+This will create multiple log files, binaries, and directories that correspond to the sections, firmware volumes, files, variables, etc. stored in the SPI flash.
+
+.. note: It may be necessary to try various options for fw_type in order to correctly parse NVRAM variables. Currently, CHIPSEC does not autodetect the correct format. If the nvram directory does not appear and the list of nvram variables is empty, try again with another type.
+"""
 
 __version__ = '1.0'
 
@@ -55,21 +50,29 @@ import chipsec.hal.spi_uefi       as spi_uefi
 import chipsec.hal.uefi           as uefi
 
 
-_uefi = uefi.UEFI( chipsec_util._cs.helper )
-
-
-usage = "chipsec_util decode <rom> [fw_type]\n" + \
-        "             <fw_type> should be in [ %s ]\n" % (" | ".join( ["%s" % t for t in uefi.fw_types])) + \
-        "Examples:\n" + \
-        "  chipsec_util decode spi.bin vss\n\n"
-
+_uefi = uefi.UEFI( chipsec_util._cs )
 
 def decode(argv):
+    """
+    >>> chipsec_util decode <rom> [fw_type]
 
+    For a list of fw types run:
+
+    >>> chipsec_util decode types
+
+    Examples:
+
+    >>> chipsec_util decode spi.bin vss
+    """
+        
     if 3 > len(argv):
-        print usage
+        print decode.__doc__
         return
-
+    
+    if argv[2] == "types":
+        print "\n<fw_type> should be in [ %s ]\n" % ( " | ".join( ["%s" % t for t in uefi.fw_types] ) )
+        return
+        
     rom_file = argv[2]
 
     fwtype = ''
@@ -127,4 +130,4 @@ def decode(argv):
     logger().log( "[CHIPSEC] (decode) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['decode'] = {'func' : decode,     'start_driver' : False, 'help' : usage  }
+chipsec_util.commands['decode'] = {'func' : decode,     'start_driver' : False, 'help' : decode.__doc__  }

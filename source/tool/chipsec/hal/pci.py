@@ -27,15 +27,15 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/pci.py
-# ===============================================
-# Access to PCIe configuration spaces of I/O devices
-# usage:
-#     read_pci_dword( 0, 0, 0, 0x88 )
-#     write_pci_dword( 0, 0, 0, 0x88, 0x1A )
-#
-#
+
+"""
+Access to PCIe configuration spaces of I/O devices
+
+usage:
+    >>> read_pci_dword( 0, 0, 0, 0x88 )
+    >>> write_pci_dword( 0, 0, 0, 0x88, 0x1A )
+"""
+
 __version__ = '1.0'
 
 import struct
@@ -180,7 +180,7 @@ class Pci:
         return True
 
 
-"""
+'''
     ##################################################################################
     # PCIEXBAR - technically not MMIO but Memory-mapped CFG space (MMCFG)
     # but defined by BAR similarly to MMIO BARs
@@ -227,4 +227,4 @@ class Pci:
         if logger().VERBOSE:
            logger().log( "[mmcfg] writing B/D/F %d/%d/%d + %02X (PCIEXBAR + %08X): 0x%08X" % (bus, dev, fun, off, pciexbar_off, value) )
         return
-"""
+'''

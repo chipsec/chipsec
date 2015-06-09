@@ -21,23 +21,6 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util ucode
-#------
-#~~~
-#chipsec_util ucode id|load|decode [ucode_update_file (in .PDB or .BIN format)] [cpu_id]
-#''
-#    Examples:
-#''
-#        chipsec_util ucode id
-#        chipsec_util ucode load ucode.bin 0
-#        chipsec_util ucode decode ucode.pdb
-#~~~
-
 __version__ = '1.0'
 
 import os
@@ -51,25 +34,23 @@ from chipsec.file       import *
 
 from chipsec.hal.ucode  import Ucode, dump_ucode_update_header
 
-
-
-usage = "chipsec_util ucode id|load|decode [ucode_update_file (in .PDB or .BIN format)] [cpu_id]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util ucode id\n" + \
-        "  chipsec_util ucode load ucode.bin 0\n" + \
-        "  chipsec_util ucode decode ucode.pdb\n\n"
-
-
-
 # ###################################################################
 #
 # Microcode patches
 #
 # ###################################################################
 def ucode(argv):
+    """
+    >>> chipsec_util ucode id|load|decode [ucode_update_file (in .PDB or .BIN format)] [cpu_id]
 
+    Examples:
+
+    >>> chipsec_util ucode id
+    >>> chipsec_util ucode load ucode.bin 0
+    >>> chipsec_util ucode decode ucode.pdb
+    """
     if 3 > len(argv):
-        print usage
+        print ucode.__doc__
         return
 
     ucode_op = argv[2]
@@ -86,7 +67,7 @@ def ucode(argv):
             logger().log( "[CHIPSEC] Loading Microcode update on CPU%d from '%s'" % (cpu_thread_id, ucode_filename) )
             chipsec_util._cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
         else:
-            print usage
+            print ucode.__doc__
             return
     elif ( 'decode' == ucode_op ):
         if (4 == len(argv)):
@@ -108,11 +89,11 @@ def ucode(argv):
             logger().log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
     else:
         logger().error( "unknown command-line option '%.32s'" % ucode_op )
-        print usage
+        print ucode.__doc__
         return
 
     logger().log( "[CHIPSEC] (ucode) time elapsed %.3f" % (time.time()-t) )
 
 
 
-chipsec_util.commands['ucode'] = {'func' : ucode,   'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['ucode'] = {'func' : ucode, 'start_driver' : True, 'help' : ucode.__doc__  }

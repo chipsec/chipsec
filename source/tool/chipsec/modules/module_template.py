@@ -20,9 +20,9 @@
 
 
 
-## \addtogroup modules
-# __chipsec/modules/module_template.py__ - template for a new module
-
+"""
+Template for a new module
+"""
 
 from chipsec.module_common import *
 

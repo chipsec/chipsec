@@ -21,22 +21,10 @@
 
 
 
+"""
+The mem command provides direct access to read and write physical memory.
+"""
 
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util mem
-#-------
-#~~~
-#chipsec_util mem <phys_addr_hi> <phys_addr_lo> <length> [value]
-#''
-#    Examples:
-#''
-#        chipsec_util mem 0x0 0x41E 0x20
-#        chipsec_util mem 0x0 0xA0000 4 0x9090CCCC
-#        chipsec_util mem 0x0 0xFED40000 0x4
-#~~~
 __version__ = '1.0'
 
 import os
@@ -48,32 +36,27 @@ import chipsec_util
 from chipsec.logger     import *
 from chipsec.file       import *
 
-#from chipsec.hal.physmem    import Memory
-
-#_cs = cs()
-
-usage = "chipsec_util mem <phys_addr_hi> <phys_addr_lo> <length> [value]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util mem 0x0 0x41E 0x20\n" + \
-        "  chipsec_util mem 0x0 0xA0000 4 0x9090CCCC\n" + \
-        "  chipsec_util mem 0x0 0xFED40000 0x4\n" + \
-        "  chipsec_util mem allocate 0x1000\n\n"
 
 
-
-# ###################################################################
-#
 # Physical Memory
-#
-# ###################################################################
 def mem(argv):
+    """
+    >>> chipsec_util mem <phys_addr_hi> <phys_addr_lo> <length> [value]
+
+    Examples:
+
+    >>> chipsec_util mem 0x0 0x41E 0x20
+    >>> chipsec_util mem 0x0 0xA0000 4 0x9090CCCC
+    >>> chipsec_util mem 0x0 0xFED40000 0x4
+    >>> chipsec_util mem allocate 0x1000
+    """
     phys_address_hi = 0
     phys_address_lo = 0
     phys_address    = 0
     size = 0x100
 
     if 3 > len(argv):
-        print usage
+        print mem.__doc__
         return
 
     op = argv[2]
@@ -86,7 +69,7 @@ def mem(argv):
         return
 
     if 4 > len(argv):
-        print usage
+        print mem.__doc__
         return
     else:
         phys_address_hi = int(argv[2],16)
@@ -105,4 +88,4 @@ def mem(argv):
 
     logger().log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
 
-chipsec_util.commands['mem'] = {'func' : mem,     'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['mem'] = {'func' : mem, 'start_driver' : True, 'help' : mem.__doc__  }

@@ -20,11 +20,13 @@
 
 
 
+"""
+`Attacking SMM Memory via Intel CPU Cache Poisoning <http://www.invisiblethingslab.com/resources/misc09/smm_cache_fun.pdf>`_ by ITL (Rutkowska, Wojtczuk)
 
-## \addtogroup modules
-# __chipsec/modules/common/smrr.py__ - checks for SMRR configuration to protect from SMRAM cache attack
-#
+`Getting into the SMRAM: SMM Reloaded <http://cansecwest.com/csw09/csw09-duflot.pdf>`_ by Duflot, Levillain, Morin, Grumelard
 
+Checks for SMRR configuration to protect from SMRAM cache attack
+"""
 
 from chipsec.module_common import *
 from chipsec.hal.msr import *
@@ -48,9 +50,7 @@ class smrr(BaseModule):
         smrr = chipsec.chipset.get_register_field( self.cs, 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
 
-    def check_SMRR(self):
-        self.logger.start_test( "CPU SMM Cache Poisoning / System Management Range Registers" )
-
+    def check_SMRR(self, do_modify):
         if not chipsec.chipset.is_register_defined( self.cs, 'MTRRCAP' ) or \
            not chipsec.chipset.is_register_defined( self.cs, 'IA32_SMRR_PHYSBASE' ) or \
            not chipsec.chipset.is_register_defined( self.cs, 'IA32_SMRR_PHYSMASK' ):
@@ -125,34 +125,44 @@ class smrr(BaseModule):
 
         if smrr_ok: self.logger.log_good( "OK so far. SMRR range base/mask match on all logical CPUs" )
 
-        """
-        Don't want invasive action in this test
         
         #
         # 5. Reading from & writing to SMRR_BASE physical address
         # writes should be dropped, reads should return all F's
         #
-        self.logger.log( "[*] Trying to read/modify memory at SMRR_BASE address 0x%08X.." % smrrbase )
-        smram_buf = self.cs.mem.read_physical_mem( smrrbase, 0x10 )
-        #self.logger.log( "Contents at 0x%08X:\n%s" % (smrrbase, repr(smram_buf.raw)) )
-        self.cs.mem.write_physical_mem_dword( smrrbase, 0x90909090 )
-        if ( 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword( smrrbase ) ):
-            self.logger.log_good( "OK. Memory at SMRR_BASE contains all F's and is not modifiable" )
-        else:
-            smrr_ok = False
-            self.logger.log_bad( "Contents of memory at SMRR_BASE are modifiable" )
-        """
+        
+        self.logger.log( "[*] Trying to read memory at SMRR base 0x%08X.." % smrrbase )
 
+        ok = ( 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword( smrrbase ) )
+        smrr_ok = smrr_ok and ok 
+        if ok: self.logger.log_passed_check( "SMRR reads are blocked in non-SMM mode" ) #return all F's
+        else:  self.logger.log_failed_check( "SMRR reads are not blocked in non-SMM mode" ) #all F's are not returned
+
+        if (do_modify):
+            self.logger.log( "[*] Trying to modify memory at SMRR base 0x%08X.." % smrrbase )
+            self.cs.mem.write_physical_mem_dword( smrrbase, 0x90909090 )
+            ok = ( 0x90909090 != self.cs.mem.read_physical_mem_dword( smrrbase ) )
+            smrr_ok = smrr_ok and ok 
+            if ok: self.logger.log_good( "SMRR writes are blocked in non-SMM mode" )
+            else:  self.logger.log_bad( "SMRR writes are not blocked in non-SMM mode" )
+        
 
         self.logger.log( '' )
-        if not smrr_ok: self.logger.log_failed_check( "SMRR protection against cache attack is not configured properly" )
-        else:           self.logger.log_passed_check( "SMRR protection against cache attack is properly configured" )
+        if not smrr_ok:
+            res = ModuleResult.FAILED
+            self.logger.log_failed_check( "SMRR protection against cache attack is not configured properly" )
+        else:
+            res = ModuleResult.PASSED
+            self.logger.log_passed_check( "SMRR protection against cache attack is properly configured" )
 
-        return smrr_ok
+        return res
 
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_SMRR()
+        self.logger.start_test( "CPU SMM Cache Poisoning / System Management Range Registers" )
+        do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
+        return self.check_SMRR( do_modify )
+        

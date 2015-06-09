@@ -27,19 +27,17 @@
 # (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-#
-# chipsec/hal/interrupts.py
-# ===============================================
-# Functionality encapsulating interrupt generation
-# CPU Interrupts specific functions (SMI, NMI)
-# ~~~
-# #usage:
-#     send_SMI_APMC( 0xDE )
-#     send_NMI()
-# ~~~
-# \TODO IPIs through Local APIC??
-#
+
+"""
+Functionality encapsulating interrupt generation
+CPU Interrupts specific functions (SMI, NMI)
+
+usage:
+    >>> send_SMI_APMC( 0xDE )
+    >>> send_NMI()
+"""
+
+#TODO IPIs through Local APIC??
 
 __version__ = '1.0'
 
@@ -59,9 +57,9 @@ class Interrupts:
     def __init__( self, cs ):
         self.cs = cs
 
-    def send_SW_SMI( self, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+    def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[intr] sending SW SMI: code port 0x%02X <- 0x%02X, data port 0x%02X <- 0x%02X (0x%04X)" % (SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT+1, SMI_data_port_value, SMI_code_data) )
             logger().log( "       RAX = 0x%016X (AX will be overwridden with values of SW SMI ports B2/B3)" % _rax )
             logger().log( "       RBX = 0x%016X" % _rbx )
@@ -69,12 +67,11 @@ class Interrupts:
             logger().log( "       RDX = 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
             logger().log( "       RSI = 0x%016X" % _rsi )
             logger().log( "       RDI = 0x%016X" % _rdi )
-        return self.cs.helper.send_sw_smi( SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+        return self.cs.helper.send_sw_smi( thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
     def send_SMI_APMC( self, SMI_code_port_value, SMI_data_port_value ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().VERBOSE:
-            logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x%02X, data 0xB3 <- 0x%02X (0x%04X)" % (SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
+        if logger().HAL: logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x%02X, data 0xB3 <- 0x%02X (0x%04X)" % (SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
         return self.cs.io.write_port_word( SMI_APMC_PORT, SMI_code_data )
 
 
@@ -86,7 +83,6 @@ class Interrupts:
 
 
     def send_NMI( self ):
-        if logger().VERBOSE:
-            logger().log( "[intr] sending NMI# through TCO1_CTL[NMI_NOW]" )
+        if logger().HAL: logger().log( "[intr] sending NMI# through TCO1_CTL[NMI_NOW]" )
         tcobase = self.get_TCOBASE()
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )

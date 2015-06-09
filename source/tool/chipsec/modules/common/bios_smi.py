@@ -20,14 +20,11 @@
 
 
 
-## \addtogroup modules
-# __chipsec/modules/common/bios_smi.py__ - checks for SMI events configuration
-#
+"""
+`Setup for Failure: Defeating SecureBoot <http://syscan.org/index.php/download/get/6e597f6067493dd581eed737146f3afb/SyScan2014_CoreyKallenberg_SetupforFailureDefeatingSecureBoot.zip>`_ by Corey Kallenberg, Xeno Kovah, John Butterworth, Sam Cornwell
 
-## \file
-# checks for SMI locks
-#
-# __chipsec/modules/common/bios_smi.py__ - checks for SMI events configuration
+Checks for SMI events configuration
+"""
 
 from chipsec.module_common import *
 from chipsec.hal.iobar import * 
@@ -68,10 +65,13 @@ class bios_smi(BaseModule):
         #
         # Checking if global SMI and TCO SMI are enabled (GBL_SMI_EN and TCO_EN bits in SMI_EN register)
         #
+        self.logger.log( "[*] Checking SMI enables.." )
         smi_en_reg = chipsec.chipset.read_register( self.cs, 'SMI_EN' )
-        chipsec.chipset.print_register( self.cs, 'SMI_EN', smi_en_reg )
+        #chipsec.chipset.print_register( self.cs, 'SMI_EN', smi_en_reg )
         tco_en     = chipsec.chipset.get_register_field( self.cs, 'SMI_EN', smi_en_reg, 'TCO_EN' )
         gbl_smi_en = chipsec.chipset.get_register_field( self.cs, 'SMI_EN', smi_en_reg, 'GBL_SMI_EN' )
+        self.logger.log( "    Global SMI enable: %d" % gbl_smi_en )
+        self.logger.log( "    TCO SMI enable   : %d" % tco_en )
 
         if gbl_smi_en != 1:
             ok = False
@@ -84,6 +84,7 @@ class bios_smi(BaseModule):
         #
         # Checking TCO_LOCK
         #
+        self.logger.log( "[*] Checking SMI configuration locks.." )
         tco1_cnt_reg = chipsec.chipset.read_register( self.cs, 'TCO1_CNT')
         chipsec.chipset.print_register( self.cs, 'TCO1_CNT', tco1_cnt_reg )
         tco_lock = chipsec.chipset.get_register_field( self.cs, 'TCO1_CNT', tco1_cnt_reg, 'TCO_LOCK' )
@@ -92,7 +93,6 @@ class bios_smi(BaseModule):
             ok = False
             self.logger.log_bad( "TCO SMI event configuration is not locked. TCO SMI events can be disabled" )
         else: self.logger.log_good( "TCO SMI configuration is locked" )
-        self.logger.log('')
 
         #
         # Checking SMI_LOCK

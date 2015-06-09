@@ -21,21 +21,9 @@
 
 
 
-
-#
-# usage as a standalone utility:
-#
-## \addtogroup standalone
-#chipsec_util io
-#----
-#~~~
-#chipsec_util io <ioport> <width> [value]
-#''
-#    Examples:
-#''
-#        chipsec_util io 0x61 1
-#        chipsec_util io 0x430 byte 0x0
-#~~~
+"""
+The io command allows direct access to read and write I/O port space.
+"""
 
 __version__ = '1.0'
 
@@ -49,21 +37,18 @@ from chipsec.logger     import *
 from chipsec.file       import *
 
 
-usage = "chipsec_util io <io_port> <width> [value]\n" + \
-        "Examples:\n" + \
-        "  chipsec_util io 0x61 1\n" + \
-        "  chipsec_util io 0x430 byte 0x0\n\n"
-
-
-# ###################################################################
-#
 # Port I/O
-#
-# ###################################################################
 def port_io(argv):
+    """
+    >>> chipsec_util io <io_port> <width> [value]
 
+    Examples:
+
+    >>> chipsec_util io 0x61 1
+    >>> chipsec_util io 0x430 byte 0x0
+    """
     if 3 > len(argv):
-        print usage
+        print port_io.__doc__
         return
 
     try:
@@ -81,7 +66,7 @@ def port_io(argv):
             else:
                 width = int(argv[3])
     except:
-        print usage
+        print port_io.__doc__
         return
 
     if 5 == len(argv):
@@ -108,4 +93,4 @@ def port_io(argv):
             return
         logger().log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
 
-chipsec_util.commands['io'] = {'func' : port_io, 'start_driver' : True, 'help' : usage  }
+chipsec_util.commands['io'] = {'func' : port_io, 'start_driver' : True, 'help' : port_io.__doc__  }
