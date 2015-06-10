@@ -19,7 +19,7 @@ Upcoming Events
 Announcements
 -------------
 
-May 2015: Version 1.2.0 released! This version enhances the platform configuration format with the "controls" abstraction, adds support for UEFI variable access in UEFI shell, and upgrades to new, [sphinx](sphinx-doc.org)-based documentation.
+May 2015: Version 1.2.0 released! This version enhances the platform configuration format with the "controls" abstraction, adds support for UEFI variable access in UEFI shell, and upgrades to new, [sphinx](http://sphinx-doc.org)-based documentation.
 
 March 2015: [A New Class of Vulnerabilities in SMI Handlers](https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf) and release of smm_ptr tool. 
 
