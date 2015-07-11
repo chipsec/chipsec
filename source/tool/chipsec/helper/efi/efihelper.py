@@ -291,8 +291,8 @@ class EfiHelper:
         return 0
         
     def cpuid(self, eax, ecx):
-        logger().log_warning("EFI helper has not implemented cpuid yet")
-        return 0
+        (reax, rebx, recx, redx)=edk2.cpuid(eax,ecx)
+        return (reax, rebx, recx, redx)
     
     def alloc_phys_mem( length, max_pa ):
         logger().log_warning("EFI helper has not implemented alloc_phys_mem yet")

@@ -49,6 +49,7 @@ PyDoc_STRVAR(edk2__doc__,
   extern void _rdmsr( unsigned int msr_num, unsigned int* msr_lo, unsigned int* msr_hi );
   extern void _wrmsr( unsigned int msr_num, unsigned int  msr_hi, unsigned int  msr_lo );
   extern void _swsmi( unsigned int smi_code_data, unsigned int rax_value, unsigned int rbx_value, unsigned int rcx_value, unsigned int rdx_value, unsigned int rsi_value, unsigned int rdi_value );
+  extern unsigned int  AsmCpuidEx( unsigned int  RegisterInEax, unsigned int  RegisterInEcx, unsigned int* RegisterOutEax, unsigned int* RegisterOutEbx, unsigned int* RegisterOutEcx, unsigned int* RegisterOutEdx);
   // -- Access to PCI CFG space
   extern void WritePCIByte          ( unsigned int pci_reg, unsigned short cfg_data_port, unsigned char  byte_value );
   extern void WritePCIWord          ( unsigned int pci_reg, unsigned short cfg_data_port, unsigned short word_value );
@@ -6927,6 +6928,22 @@ posix_swsmi(PyObject *self, PyObject *args)
   return Py_None;
 }
 
+PyDoc_STRVAR(efi_cpuid__doc__,
+"cpuid(eax) -> (eax:ebx:ecx:edx)\n\
+Read the CPUID.";);
+
+static PyObject *
+posix_cpuid(PyObject *self, PyObject *args)
+{
+	unsigned int eax, ecx, rax_value, rbx_value, rcx_value, rdx_value;
+    if (!PyArg_Parse(args, "(II)",  &eax,&ecx))return NULL;
+	Py_BEGIN_ALLOW_THREADS
+    AsmCpuidEx( eax, ecx, &rax_value, &rbx_value, &rcx_value, &rdx_value);
+    Py_END_ALLOW_THREADS
+    return Py_BuildValue("(kkkk)",  (unsigned long)rax_value,  (unsigned long)rbx_value,  (unsigned long)rcx_value,  (unsigned long)rdx_value);
+}
+
+
 
 PyDoc_STRVAR(efi_readio__doc__,
 "readio(addr, size) -> (int)\n\
@@ -7580,7 +7597,7 @@ static PyMethodDef posix_methods[] = {
   {"GetNextVariableName",           MiscRT_GetNextVariableName,   METH_VARARGS, MiscRT_GetNextVariableName__doc__   },
   {"SetVariable",                   MiscRT_SetVariable,           METH_VARARGS, MiscRT_SetVariable__doc__           },
 
-  
+  {"cpuid",  posix_cpuid,0,efi_cpuid__doc__},
   //  {"rdtsc",             posix_rdtsc, 0, efi_rdtsc__doc__},
 //  {"cpuid",             posix_cpuid, 0, efi_cpuid__doc__},
 #endif

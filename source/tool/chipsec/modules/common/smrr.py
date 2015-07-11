@@ -21,11 +21,9 @@
 
 
 """
-`Attacking SMM Memory via Intel CPU Cache Poisoning <http://www.invisiblethingslab.com/resources/misc09/smm_cache_fun.pdf>`_ by ITL (Rutkowska, Wojtczuk)
+Researchers demonstrated a way to use CPU cache to effectively change values in SMRAM in `Attacking SMM Memory via Intel CPU Cache Poisoning <http://www.invisiblethingslab.com/resources/misc09/smm_cache_fun.pdf>`_ and `Getting into the SMRAM: SMM Reloaded <http://cansecwest.com/csw09/csw09-duflot.pdf>`_ . If ring 0 software can make SMRAM cacheable and then populate cache lines at SMBASE with exploit code, then when an SMI is triggered, the CPU could execute the exploit code from cache. System Management Mode Range Registers (SMRRs) force non-cachable behavior and block access to SMRAM when the CPU is not in SMM. These registers need to be enabled/configured by the BIOS.
 
-`Getting into the SMRAM: SMM Reloaded <http://cansecwest.com/csw09/csw09-duflot.pdf>`_ by Duflot, Levillain, Morin, Grumelard
-
-Checks for SMRR configuration to protect from SMRAM cache attack
+This module checks to see that SMRRs are enabled and configured.
 """
 
 from chipsec.module_common import *

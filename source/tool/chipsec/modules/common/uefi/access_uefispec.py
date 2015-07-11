@@ -150,18 +150,25 @@ class access_uefispec(BaseModule):
             if name is None: pass
             if vars[name] is None:
                 pass
-            self.logger.log('[*] Variable %s' % name)
+
             if len(vars[name]) > 1:
                 self.logger.log_important( 'Found two instances of the variable %s.' % name )
             for (off, buf, hdr, data, guid, attrs) in vars[name]:
+                self.logger.log('[*] Variable %s (%s)' % (name,get_attr_string(attrs)))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
                     #self.logger.log(' UEFI Spec Var %s' % name)
                     if perms != attrs:
+                        attr_diffs = (perms ^ attrs)
+                        extra_attr = attr_diffs &  attrs
+                        missing_attr = attr_diffs & ~extra_attr
                         uefispec_concern.append(name)
-                        self.logger.log_important( '  Unexpected attributes:' + get_attr_string(perms ^ attrs) + ' ' + get_auth_attr_string(perms ^ attrs))
-                        if ((perms ^ attrs) & ~(EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_APPEND_WRITE) != 0):  res = ModuleResult.FAILED
-                        else: res = ModuleResult.WARNING
+                        if extra_attr != 0:
+                            self.logger.log_important( '  Extra attributes:' + get_attr_string(extra_attr) )
+                            if (extra_attr & ~(EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_APPEND_WRITE) != 0):  res = ModuleResult.FAILED
+                        if missing_attr != 0:
+                            self.logger.log_important( '  Missing attributes:' + get_attr_string(missing_attr) )
+                        if res != ModuleResult.FAILED: res = ModuleResult.WARNING
 
                 if do_modify:
                     #self.logger.log('uefispec_ro_vars')

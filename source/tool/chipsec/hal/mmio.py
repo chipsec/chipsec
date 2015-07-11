@@ -244,12 +244,39 @@ def read_MMIO_reg(cs, bar_base, offset, size=4 ):
     if logger().VERBOSE: logger().log( '[mmio] 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, reg_value) )
     return reg_value
 
+def read_MMIO_reg_byte(cs, bar_base, offset ):
+    reg_value = cs.helper.read_mmio_reg( bar_base + offset, 1 )
+    if logger().VERBOSE: logger().log( '[mmio] 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, reg_value) )
+    return reg_value
+    
+def read_MMIO_reg_word(cs, bar_base, offset ):
+    reg_value = cs.helper.read_mmio_reg( bar_base + offset, 2 )
+    if logger().VERBOSE: logger().log( '[mmio] 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, reg_value) )
+    return reg_value
+    
+def read_MMIO_reg_dword(cs, bar_base, offset ):
+    reg_value = cs.helper.read_mmio_reg( bar_base + offset, 4 )
+    if logger().VERBOSE: logger().log( '[mmio] 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, reg_value) )
+    return reg_value
+    
 #
 # Write MMIO register as an offset off of MMIO range base address
 #
 def write_MMIO_reg(cs, bar_base, offset, value, size=4 ):
     if logger().VERBOSE: logger().log( '[mmio] write 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, value) )
     cs.helper.write_mmio_reg( bar_base + offset, size, value )
+    
+def write_MMIO_reg_byte(cs, bar_base, offset, value ):
+    if logger().VERBOSE: logger().log( '[mmio] write 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, value) )
+    cs.helper.write_mmio_reg( bar_base + offset, 1, value )
+    
+def write_MMIO_reg_word(cs, bar_base, offset, value ):
+    if logger().VERBOSE: logger().log( '[mmio] write 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, value) )
+    cs.helper.write_mmio_reg( bar_base + offset, 2, value )
+    
+def write_MMIO_reg_dword(cs, bar_base, offset, value ):
+    if logger().VERBOSE: logger().log( '[mmio] write 0x%08X + 0x%08X = 0x%08X' % (bar_base, offset, value) )
+    cs.helper.write_mmio_reg( bar_base + offset, 4, value )
 
 #
 # Read MMIO registers as offsets off of MMIO range base address
@@ -283,11 +310,22 @@ DEFAULT_MMIO_BAR_SIZE = 0x1000
 # Use this function to fall-back to hardcoded config in case XML config is not available
 #
 def is_MMIO_BAR_defined( cs, bar_name ):
+    is_bar_defined = False
     try:
-        return (cs.Cfg.MMIO_BARS[ bar_name ] is not None)
+        _bar = cs.Cfg.MMIO_BARS[ bar_name ]
+        if _bar is not None:
+            if 'register' in _bar:
+                is_bar_defined = chipsec.chipset.is_register_defined( cs, _bar['register'] )
+            elif ('bus' in _bar) and ('dev' in _bar) and ('fun' in _bar) and ('reg' in _bar):
+                # old definition
+                is_bar_defined = True
     except KeyError:
-        if logger().VERBOSE: logger().warn( "'%s' MMIO BAR definition not found in XML config" % bar_name)
-        return False
+        pass
+
+    if not is_bar_defined:
+        if logger().VERBOSE: logger().warn( "'%s' MMIO BAR definition not found/correct in XML config" % bar_name )
+    return is_bar_defined
+
 
 #
 # Get base address of MMIO range by MMIO BAR name
@@ -411,12 +449,15 @@ def dump_MMIO_BAR( cs, bar_name ):
 def list_MMIO_BARs( cs ):
     logger().log('')
     logger().log( '--------------------------------------------------------------------------------' )
-    logger().log( ' MMIO Range   | BAR            | Base             | Size     | En? | Description' )
+    logger().log( ' MMIO Range   | BAR Register   | Base             | Size     | En? | Description' )
     logger().log( '--------------------------------------------------------------------------------' )
     for _bar_name in cs.Cfg.MMIO_BARS:
+        if not is_MMIO_BAR_defined( cs, _bar_name ): continue
         _bar = cs.Cfg.MMIO_BARS[ _bar_name ]
         (_base,_size) = get_MMIO_BAR_base_address( cs, _bar_name )
         _en = is_MMIO_BAR_enabled( cs, _bar_name )
+
+
         if 'register' in _bar: _s = _bar['register']
         else: _s = '%02X:%02X.%01X + %s' % ( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
         logger().log( ' %-12s | %-14s | %016X | %08X | %d   | %s' % (_bar_name, _s, _base, _size, _en, _bar['desc']) )

@@ -21,10 +21,11 @@
 
 
 """
-CanSecWest 2006
-`Security Issues Related to Pentium System Management Mode <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/cansecwest2006-duflot.pdf>`_ by Duflot 
+In 2006, `Security Issues Related to Pentium System Management Mode <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/cansecwest2006-duflot.pdf>`_ outlined a configuration issue where compatibility SMRAM was not locked on some platforms. This means that ring 0 software was able to modify System Management Mode (SMM) code and data that should have been protected.
 
-Common checks for protection of compatible System Management Mode (SMM) memory (SMRAM)
+In Compatability SMRAM (CSEG), access to memory is defined by the SMRAMC register. When SMRAMC[D_LCK] is not set by the BIOS, SMRAM can be accessed even when the CPU is not in SMM. Such attacks were also described in `Using CPU SMM to Circumvent OS Security Functions <http://fawlty.cs.usfca.edu/~cruse/cs630f06/duflot.pdf>`_ and `Using SMM for Other Purposes <http://phrack.org/issues/65/7.html>`_.
+
+This CHIPSEC module simply reads SMRAMC and checks that D_LCK is set.
 """
 from collections import namedtuple
 from chipsec.module_common import *

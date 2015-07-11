@@ -1103,8 +1103,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
     
 	case IOCTL_GET_EFIVAR:
 	{
-		//IN  params: name, guid
-		//OUT params: data
+		//IN  params: data_size, guid, namelen, name
+		//OUT params: var_size, stat, data
  
 		uint32_t *kbuf;
 		static efi_char16_t *name;
@@ -1128,7 +1128,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		data_size = (unsigned long)data_size_u32;
 
 		// check that this is enough memory 
-		if (data_size < sizeof(uint32_t) * 12)
+		if (data_size < sizeof(uint32_t) * 13)
 		{
 			printk(KERN_ALERT "[chipsec] ERROR: INVALID SIZE PARAMETER\n");
 			return -EFAULT;
@@ -1152,17 +1152,23 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         
 		GUID = EFI_GUID( kbuf[1], kbuf[2], kbuf[3], kbuf[4], kbuf[5], kbuf[6], kbuf[7], kbuf[8], kbuf[9], kbuf[10], kbuf[11]);
         
-		cptr = (char *)&kbuf[12];
-		namelen = strnlen(cptr, data_size - (sizeof(uint32_t) * 12));
+		namelen = kbuf[12]; 
+                cptr = (char *)&kbuf[13];
 
-		// if name overflowed, we only work with the part that fit in kbuf
-		name = kzalloc((namelen+1)*sizeof(efi_char16_t), GFP_KERNEL);
-		if (!name)
+                if (namelen > (data_size - sizeof(uint32_t) * 13))
 		{
-            kfree(kbuf);
-			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+			printk(KERN_ALERT "[chipsec] ERROR: INVALID SIZE PARAMETER (namelen %u too big for data_size %lu)\n", namelen, data_size);
 			return -EFAULT;
 		}
+        
+        // if name overflowed, we only work with the part that fit in kbuf
+        name = kzalloc((namelen+1)*sizeof(efi_char16_t), GFP_KERNEL);
+        if (!name)
+        {
+            kfree(kbuf);
+            printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+            return -EFAULT;
+        }
 
 		for(index=0; index < namelen; index++)
 		{
@@ -1224,7 +1230,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
     
         printk( KERN_INFO "[chipsec] > IOCTL_SET_EFIVAR\n");
         
-        // size, guid, attr, name, data
+        //IN  params: data_size, guid, attr, namelen, datalen, name, data
+        //OUT params: data_size, status
 
         // get the size (a uint32_t)
         if(copy_from_user((void*)&data_size_u32, (void*)ioctl_param, sizeof(uint32_t)) > 0)
@@ -1260,12 +1267,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         GUID = EFI_GUID( kbuf[1], kbuf[2], kbuf[3], kbuf[4], kbuf[5], kbuf[6], kbuf[7], kbuf[8], kbuf[9], kbuf[10], kbuf[11]);
 
         attr = kbuf[12];
-        datalen = kbuf[13];
-        cptr = (char *)&kbuf[14];
-        namelen = strnlen(cptr, (data_size - (sizeof(uint32_t) * 14)));
-        
+        namelen = kbuf[13];
+        datalen = kbuf[14];
+        cptr = (char *)&kbuf[15];
+                
         // check for namelen underflow
-        if (data_size - (namelen+1) > data_size)
+        if (data_size - (namelen) > data_size)
         { 
             printk(KERN_ALERT "[chipsec] ERROR: INVALID name PARAMETER (namelen = %u)\n", namelen);
             kfree(kbuf);
@@ -1273,7 +1280,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         }
         
         // make sure size that was passed in actually fits
-        if (data_size - (namelen+1) - sizeof(uint32_t)*14 != datalen)
+        if (data_size - (namelen) - sizeof(uint32_t)*15 != datalen)
         {
             printk(KERN_ALERT "[chipsec] ERROR: INVALID datalen PARAMETER (%u != %lu)\n", datalen, data_size - namelen - sizeof(uint32_t)*14);
             kfree(kbuf);
@@ -1292,11 +1299,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         for(index=0; index < namelen; index++)
         {
             // upper byte is 0x0 (for ASCII), the lower byte is ASCII char
-            name[index] = (efi_char16_t)(cptr[index] & 0xFF);
+            name[index] = ((efi_char16_t)cptr[index] & 0xFF);
         }
         name[index] = (efi_char16_t)(0);
         
-        data = (char *) &cptr[index+1];
+        data = (char *) &cptr[namelen];
 
         stat = myefi->set_variable(name, &GUID, attr, datalen, data);
         
@@ -1465,8 +1472,8 @@ static int memory_open(struct inode * inode, struct file * filp)
 		case 1:
 			filp->f_op = &mem_fops;
 
-//Older kernels (<19) does not have directly_mappable_cdev_bdi
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19)
+//Older kernels (<2.619) and New 4.X do not have directly_mappable_cdev_bdi
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) || LINUX_VERSION_CODE > KERNEL_VERSION(4,0,0)
 #else
 			filp->f_mapping->backing_dev_info =
 				&directly_mappable_cdev_bdi;

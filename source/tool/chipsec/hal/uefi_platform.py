@@ -676,12 +676,13 @@ class S3BootScriptType:
 
 
 def decode_s3bs_opcode( data ):
-    opcode = None
-    size   = None
-    width  = None
-    count  = None
-    value  = None
-    mask   = None
+    opcode  = None
+    size    = None
+    width   = None
+    unknown = None
+    count   = None
+    value   = None
+    mask    = None
 
     op = None
     opcode, = struct.unpack( '<B', data[ : 1 ] )
@@ -693,32 +694,32 @@ def decode_s3bs_opcode( data ):
         frmt = '<BBHIQ'
         size = struct.calcsize( frmt )
         opcode, width, address, alignment, count = struct.unpack( frmt, data[ : size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, data[ size : ], value, mask )
+        op = op_io_pci_mem( opcode, size, width, address, unknown, count, data[ size : ], value, mask )
     elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQ'
         size = struct.calcsize( frmt )
         opcode, width, address, alignment, value, mask = struct.unpack( frmt, data[ : size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, None, value, mask )
+        op = op_io_pci_mem( opcode, size, width, address, unknown, count, None, value, mask )
     elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQ'
         size = struct.calcsize( frmt )
-        opcode, width, alignment1, alignment2, address, count = struct.unpack( frmt, data[ : size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, data[ size : ], value, mask )
+        opcode, width, unknown, alignment, address, count = struct.unpack( frmt, data[ : size ] )
+        op = op_io_pci_mem( opcode, size, width, address, unknown, count, data[ size : ], value, mask )
     elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQQ'
         size = struct.calcsize( frmt )
-        opcode, width, alignment1, alignment2, address, value, mask = struct.unpack( frmt, data[ : size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, None, value, mask )
+        opcode, width, unknown, alignment, address, value, mask = struct.unpack( frmt, data[ : size ] )
+        op = op_io_pci_mem( opcode, size, width, address, unknown, count, None, value, mask )
     elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQ'
         size = struct.calcsize( frmt )
-        opcode, width, alignment1, alignment2, address, count = struct.unpack( frmt, data[ : size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, data[ size : ], value, mask )
+        opcode, width, unknown, alignment, address, count = struct.unpack( frmt, data[ : size ] )
+        op = op_io_pci_mem( opcode, size, width, address, unknown, count, data[ size : ], value, mask )
     elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQQ'
         size = struct.calcsize( frmt )
-        opcode, width, alignment1, alignment2, address, value, mask = struct.unpack( frmt, data[ : size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, None, value, mask )
+        opcode, width, unknown, alignment, address, value, mask = struct.unpack( frmt, data[ : size ] )
+        op = op_io_pci_mem( opcode, size, width, address, unknown, count, None, value, mask )
     elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
         frmt = '<BBQBB'
         size = struct.calcsize( frmt )
@@ -745,6 +746,49 @@ def decode_s3bs_opcode( data ):
 
     return op
 
+#
+# @TODO: encode functions are not fully implemented
+#
+def encode_s3bs_opcode( op ):
+    encoded_opcode = None
+
+    if S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == op.opcode:
+        encoded_hdr = struct.pack( '<BBHIQ', op.opcode, op.width, op.address, 0x0, op.count )
+        if op.values is None: encoded_opcode = encoded_hdr + op.buffer
+        else: encoded_opcode = encoded_hdr + struct.pack(  script_width_formats[op.width] * op.count, *op.values )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE == op.opcode:
+        encoded_opcode = struct.pack( '<BBHIQQ', op.opcode, op.width, op.address, 0x0, op.value, op.mask )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == op.opcode or \
+         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == op.opcode:
+        encoded_hdr = struct.pack( '<BBHIQQ', op.opcode, op.width, op.unknown, 0x0, op.address, op.count )
+        if op.values is None: encoded_opcode = encoded_hdr + op.buffer
+        else: encoded_opcode = encoded_hdr + struct.pack(  script_width_formats[op.width] * op.count, *op.values )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode:
+        frmt = '<BBHIQQQ'
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == op.opcode:
+        encoded_opcode = struct.pack( '<BBHIQQQ', op.opcode, op.width, op.unknown, 0x0, op.address, op.value, op.mask )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
+        frmt = '<BBQBB'
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE == op.opcode:
+        frmt = '<BBQ'
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
+        encoded_opcode = struct.pack( '<BBHIQ', op.opcode, 0x0, 0x0, 0x0, op.entrypoint )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:
+        frmt = '<B'
+
+    else:
+        if logger().VERBOSE: logger().warn( 'Unrecognized opcode %X' % op.opcode )
+
+    return encoded_opcode
+
 
 def decode_s3bs_opcode_AA( data ):
     opcode = None
@@ -754,8 +798,6 @@ def decode_s3bs_opcode_AA( data ):
     mask   = None
 
     op = None
-    #opcode, = struct.unpack( '<B', data[ : 1 ] )
-    #if not (S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode):
 
     hdr_frmt = '<BBB'
     header_size = struct.calcsize( hdr_frmt )
@@ -810,6 +852,43 @@ def decode_s3bs_opcode_AA( data ):
 
     return op
 
+#
+# @TODO: encode functions are not fully implemented
+#
+def encode_s3bs_opcode_AA( op ):
+    encoded_opcode = None
+    
+    if   S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE                == opcode or \
+         S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE        == opcode or \
+         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE               == opcode:
+        
+        frmt = '<IIQ'
+        encoded_hdr = struct.pack( frmt, op.width, op.count, op.address )
+        if op.values is None: encoded_opcode = encoded_hdr + op.buffer
+        else: encoded_opcode = encoded_hdr + struct.pack(  script_width_formats[op.width] * op.count, *op.values )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE         == opcode or \
+         S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode or \
+         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == opcode:
+
+        frmt = '<IQ2%c' % script_width_formats[op.width]
+        encoded_opcode = struct.pack( frmt, op.width, op.address, op.value, op.mask )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
+        pass
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
+        frmt = '<Q'
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == opcode:
+        encoded_opcode = struct.pack( '<Q', op.entrypoint )
+
+    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
+        pass
+
+    return encoded_opcode
+
+
 
 def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False ):
     entry_index  = None
@@ -829,7 +908,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
             logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x%X)' % entry_length )
             return None
 
-        s3script_entry                = S3BOOTSCRIPT_ENTRY( entry_index, off, entry_length, entry_data )
+        s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
         #s3script_entry.header_length  = hdr_length
         s3script_entry.decoded_opcode = decode_s3bs_opcode_AA( s3script_entry.data )
 
@@ -848,12 +927,35 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
             logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x%X)' % entry_length )
             return None
 
-        s3script_entry                = S3BOOTSCRIPT_ENTRY( entry_index, off, entry_length, entry_data )
+        s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
         s3script_entry.header_length  = hdr_length
         s3script_entry.decoded_opcode = decode_s3bs_opcode( s3script_entry.data )
 
     if log_script: logger().log( s3script_entry )
     return (opcode,s3script_entry)
+
+
+def encode_s3bootscript_entry( entry ):
+    s3bootscript_type = entry.script_type
+
+    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_AA == s3bootscript_type:
+        fhdr = '<BBB'
+        dummy = 0x0
+        entry_hdr_buf = struct.pack( fhdr, entry.decoded_opcode.opcode, dummy, entry.length )
+        entry_val_buf = encode_s3bs_opcode_AA( entry.decoded_opcode )
+
+    else: # S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
+        fhdr       = '<II' 
+        entry_hdr_buf = struct.pack( fhdr, entry.index, entry.length )
+        entry_val_buf = encode_s3bs_opcode( entry.decoded_opcode )
+
+    entry_buf = None
+    if entry_val_buf is not None:
+        entry_buf = entry_hdr_buf + entry_val_buf
+    else:
+        logger().warn( 'Could not encode opcode of boot script entry (type 0x%X)' % s3bootscript_type )
+
+    return entry_buf
 
 
 def id_s3bootscript_type( script, log_script=False ):

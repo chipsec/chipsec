@@ -336,7 +336,7 @@ class OsHelper:
         try:
             call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName) )
         except BaseException, msg:
-            logger().error( msg )
+            logger().error( str(msg) )
             if logger().VERBOSE: logger().log_bad( traceback.format_exc() )
             return None
 

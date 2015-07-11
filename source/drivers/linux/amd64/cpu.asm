@@ -188,9 +188,9 @@ _wrmsr:
     ; move msr_num to rcx 
     mov rcx, rdi
     ; move msr_lo from rdx to rax
-    mov rax, rdx
+    mov rax, rsi
     ; move msr_hi to rdx
-    mov rdx, rsi
+    mov rdx, rdx
     wrmsr
 
     pop rdx

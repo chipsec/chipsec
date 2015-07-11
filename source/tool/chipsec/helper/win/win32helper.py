@@ -591,13 +591,14 @@ class Win32Helper:
         return (va, pa)
 
     def va2pa( self, va ):
+        error_code = 0
         in_length  = 8
         out_length = 8
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( 'Q', va )
         out_buf = self._ioctl( IOCTL_GET_PHYSADDR, in_buf, out_length )
         pa = struct.unpack( 'Q', out_buf )[0]
-        return pa
+        return (pa,error_code)
 
 
     def read_msr( self, cpu_thread_id, msr_addr ):
@@ -745,7 +746,7 @@ class Win32Helper:
         return status
 
     def list_EFI_variables( self, infcls=2 ):
-        if logger().HAL: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
+        if logger().VERBOSE: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         length = packl_ctypes( long(EFI_VAR_MAX_BUFFER_SIZE), 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )

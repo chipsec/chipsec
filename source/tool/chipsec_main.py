@@ -25,7 +25,7 @@
 Main application logic and automation functions
 """
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 ## These are for debugging imports
 import inspect
@@ -536,9 +536,10 @@ class ChipsecMain:
         print "   --failfast             fail on any exception and exit (don't mask exceptions)"
         print "   --no_time              don't log timestamps"
         print "======================== " + "="*(7*len(Chipset_Code))
-        print "\n"
-        print "Exit Code\n---------"
-        print "CHIPSEC returns an integer where each bit means the following:"
+        print "\nExit Code\n---------"
+        print "CHIPSEC returns an integer exit code:\n"
+        print "- Exit code is 0:       all modules ran successfully and passed"
+        print "- Exit code is not 0:   each bit means the following:\n"
         print "    - Bit 0: SKIPPED    at least one module was skipped"
         print "    - Bit 1: WARNING    at least one module had a warning"
         print "    - Bit 2: DEPRECATED at least one module uses deprecated API"
@@ -595,7 +596,7 @@ class ChipsecMain:
                 logger().set_xml_file(a)
             elif o in ("--list_tags"):
                 self._list_tags = True
-            elif o in ("-I","--import"):
+            elif o in ("-I","--include"):
                 self.IMPORT_PATHS.append(a)
             elif o in ("--failfast"):
                 self.failfast = True

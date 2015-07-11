@@ -21,10 +21,12 @@
 
 
 """
-FLOCKDN is in `flashrom <http://www.flashrom.org/>`_ and `MITRE's Copernicus <http://www.mitre.org/capabilities/cybersecurity/overview/cybersecurity-blog/copernicus-question-your-assumptions-about>`_
+The configuration of the SPI controller, including protected ranges (PR0-PR4), is locked by HSFS[FLOCKDN] until reset. If not locked, the controller configuration may be bypassed by reprogramming these registers. 
 
-Checks that the SPI Flash Controller configuration is locked.
-If it is not locked other Flash Program Registers could be written.
+This vulnerability (not setting FLOCKDN) is also checked by other tools, including  `flashrom <http://www.flashrom.org/>`_ and `MITRE's Copernicus <http://www.mitre.org/capabilities/cybersecurity/overview/cybersecurity-blog/copernicus-question-your-assumptions-about>`_
+
+This module checks that the SPI Flash Controller configuration is locked.
+
 """
 from chipsec.module_common import *
 TAGS = [MTAG_BIOS]

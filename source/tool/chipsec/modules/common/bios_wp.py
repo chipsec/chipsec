@@ -21,13 +21,17 @@
 
 
 """
-Black Hat USA 2013 
-`BIOS Security <https://www.blackhat.com/us-13/briefings.html#Butterworth>`_ by MITRE (Kovah, Butterworth, Kallenberg)
+The BIOS region in flash can be protected either using SMM-based protection or using configuration in the SPI controller. However, the SPI controller configuration is set once and locked, which would prevent writes later.
 
-NoSuchCon 2013 
-`BIOS Chronomancy: Fixing the Static Root of Trust for Measurement <http://www.nosuchcon.org/talks/D2_01_Butterworth_BIOS_Chronomancy.pdf>`_ by MITRE (Kovah, Butterworth, Kallenberg)
+This module does check both mechanisms. In order to pass this test using SPI controller configuration, the SPI Protected Range registers (PR0-4) will need to cover the entire BIOS region. Often, if this configuration is used at all, it is used only to protect part of the BIOS region (usually the boot block). If other important data (eg. NVRAM) is not protected, however, some vulnerabilities may be possible.
 
-Checks if BIOS Write Protection HW mechanisms are enabled
+`A Tale of One Software Bypass of Windows 8 Secure Boot <http://www.c7zero.info/stuff/Windows8SecureBoot_Bulygin-Furtak-Bazhniuk_BHUSA2013.pdf>`_ described just such an attack. In a system where certain BIOS data was not protected, malware may be able to write to the Platform Key stored on the flash, thereby disabling secure boot. 
+
+SMM based write protection is controlled from the BIOS Control Register. When the BIOS Write Protect Disable bit is set (sometimes called BIOSWE or BIOS Write Enable), then writes are allowed. When cleared, it can also be locked with the BIOS Lock Enable (BLE) bit. When locked, attempts to change the WPD bit will result in generation of an SMI. This way, the SMI handler can decide whether to perform the write.
+
+As demonstrated in the `Speed Racer <https://bromiumlabs.files.wordpress.com/2015/01/speed_racer_whitepaper.pdf>`_ issue, a race condition may exist between the outstanding write and processing of the SMI that is generated. For this reason, the EISS bit (sometimes called SMM_BWP or SMM BIOS Write Protection) must be set to ensure that only SMM can write to the SPI flash.
+
+This module common.bios_wp will fail if SMM-based protection is not correctly configured and SPI protected ranges (PR registers) do not protect the entire BIOS region. 
 """
 
 from chipsec.module_common import *

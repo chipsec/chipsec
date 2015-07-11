@@ -21,10 +21,7 @@
 
 
 """
-CanSecWest 2015 
-`A New Class of Vulnerability in SMI Handlers of BIOS/UEFI Firmware <https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf>`_
-
-A tool to test SMI handlers for pointer validation vulnerabilities
+As described in `A New Class of Vulnerability in SMI Handlers of BIOS/UEFI Firmware <https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf>`_ at CanSecWest 2015, the interface to SMI handlers may be used to pass pointer inputs to the SMI handler. If an SMI handler does not carefully check the value of this pointer input, it may read or write arbitrary memory. This module provides a tool to test SMI handlers for pointer such vulnerabilities.
 
 **Usage**
 

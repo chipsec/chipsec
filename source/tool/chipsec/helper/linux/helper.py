@@ -44,7 +44,6 @@ import ctypes
 import fnmatch
 from chipsec.helper.oshelper import OsHelperError
 from chipsec.logger import logger, print_buffer
-from chipsec.hal.uefi_common import *
 import errno
 import array
 import chipsec.file
@@ -180,10 +179,18 @@ class LinuxHelper:
         return ret
 
     def va2pa( self, va ):
+        error_code = 0
+
         in_buf = struct.pack( _PACK, va )
         out_buf = fcntl.ioctl( _DEV_FH, IOCTL_VA2PA(), in_buf )
         pa = struct.unpack( _PACK, out_buf )[0]
-        return pa
+
+        #Check if PA > max physical address
+        max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
+        if pa > 1<<max_pa:
+            print "[helper] Error in va2pa: PA higher that max physical address: VA (0x%016X) -> PA (0x%016X)"% (va, pa) 
+            error_code = 1
+        return (pa,error_code)
 
     #DEPRECATED: Pass-through
     def read_pci( self, bus, device, function, address ):
@@ -324,11 +331,13 @@ class LinuxHelper:
     def kern_get_EFI_variable_full(self, name, guid):
         status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
         off = 0
+        data = ""
+        attr = 0
         buf = list()
         hdr = 0
         base = 12
         namelen = len(name)
-        header_size = 48
+        header_size = 52
         data_size = header_size + namelen
         guid0 = int(guid[:8] , 16)
         guid1 = int(guid[9:13], 16)
@@ -342,14 +351,14 @@ class LinuxHelper:
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
         
-        in_buf = struct.pack('12I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, name)
+        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
         buffer = array.array("c", in_buf)
         stat = fcntl.ioctl(_DEV_FH, IOCTL_GET_EFIVAR(), buffer, True)
         new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (status == 0x5):
             data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
-            in_buf = struct.pack('12I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, name)
+            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
             buffer = array.array("c", in_buf)
             try:
                 stat = fcntl.ioctl(_DEV_FH, IOCTL_GET_EFIVAR(), buffer, True)
@@ -409,11 +418,13 @@ class LinuxHelper:
     
     def kern_set_EFI_variable(self, name, guid, value, attr=0x7):
         status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
-        namelen = len(name)+1
-        name += '\0'
-        header_size = 56
+        
+        header_size = 60 # 4*15
+        namelen = len(name)
         if value: datalen = len(value)
-        else: datalen = 0
+        else: 
+            datalen = 0
+            value = '\0'
         data_size = header_size + namelen + datalen
         guid0 = int(guid[:8] , 16)
         guid1 = int(guid[9:13], 16)
@@ -427,14 +438,15 @@ class LinuxHelper:
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
         
-        if (not value): value = '\0'
-        in_buf = struct.pack('14I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, datalen, name, value)
+        in_buf = struct.pack('15I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
         buffer = array.array("c", in_buf)        
         stat = fcntl.ioctl(_DEV_FH, IOCTL_SET_EFIVAR(), buffer, True)
         size, status = struct.unpack( "2I", buffer[:8])
 
         if (status != 0):
             logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
+        else:
+            os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
         return status
         
     def get_ACPI_SDT( self ):
@@ -442,29 +454,43 @@ class LinuxHelper:
         return 0  
         
     def get_affinity(self):
-        CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))
-        CORES.sched_getaffinity.argtypes = [ctypes.c_int, ctypes.c_int, POINTER(ctypes.c_int)]
-        CORES.sched_getaffinity.restype = ctypes.c_int
-        pid = ctypes.c_int(0)
-        leng = ctypes.c_int(CPU_MASK_LEN)
-        cpu_mask = ctypes.c_int(0)
-        if (CORES.sched_getaffinity(pid, leng, byref(cpu_mask)) == 0):
-            return cpu_mask.value
+        CORES = ctypes.cdll.LoadLibrary( os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/cores.so' ) )
+        CORES.getaffinity.argtypes = [ ctypes.c_int, POINTER( ( ctypes.c_long * 128 ) ),POINTER( ctypes.c_int ) ]
+        CORES.getaffinity.restype = ctypes.c_int
+        mask = ( ctypes.c_long * 128 )( )
+        try:
+            numCpus = 0
+            f = open('/proc/cpuinfo', 'r')
+            for line in f:
+                if "processor" in line:
+                    numCpus += 1
+            f.close()
+        except:
+            numCpus = 1;
+            pass
+        errno = ctypes.c_int( 0 )
+        if 0 == CORES.getaffinity( numCpus,byref( mask ),byref( errno ) ):
+            AffinityString = " GetAffinity: "
+            for i in range( 0, numCpus ):
+                if mask[i] == 1:
+                    AffinityString += "%s " % i
+            logger().log( AffinityString )
+            return 1
         else:
+            AffinityString = " Get_affinity errno::%s"%( errno.value )
+            logger().log( AffinityString )
             return None
-
 
     def set_affinity(self, thread_id):
         CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))
-        pid = ctypes.c_int(0)
-        leng = ctypes.c_int(CPU_MASK_LEN)
-        cpu_mask = ctypes.c_int(thread_id)
-        ret = CORES.setaffinity(thread_id)
-        if(ret == 0):
+        CORES.setaffinity.argtypes=[ctypes.c_int,POINTER(ctypes.c_int)]
+        CORES.setaffinity.restype=ctypes.c_int
+        errno= ctypes.c_int(0)
+        if 0 == CORES.setaffinity(ctypes.c_int(thread_id),byref(errno)) :
             return thread_id
         else:
-            #CORES.geterror.restype = ctypes.c_int
-            print "set_affinity error: %s" % os.strerror(ret)
+            AffinityString= " Set_affinity errno::%s"%(errno.value)
+            logger().log( AffinityString )
             return None
 
 ##############
@@ -727,12 +753,12 @@ class LinuxHelper:
              return None
 
         if not os.path.exists( tool ):
-           err = "Couldn't find compression tool '%s'" % exe
+           err = "Couldn't find compression tool '%s'" % tool
            logger().error( err )
            #raise OsHelperError(err, 0)
            return None
 
-        return exe
+        return tool
   
     def getcwd( self ):
         return os.getcwd()

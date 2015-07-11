@@ -25,7 +25,7 @@
 Standalone utility
 """
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 #import glob
 import re
@@ -51,6 +51,21 @@ logger().HAL        = False
 # If you want to specify a different platform change this line to a string from chipset.py
 # _Platform = 'SNB'
 _Platform = None
+
+
+#CMD_OPTS_WIDTH = [ 'byte', 'word', 'dword', 'qword' ]
+CMD_OPTS_WIDTH = [ 'byte', 'word', 'dword' ]
+def is_option_valid_width( width_op ):
+    return (width_op.lower() in CMD_OPTS_WIDTH)
+
+def get_option_width( width_op ):
+    width_op = width_op.lower()
+    if   'byte'  == width_op: return 0x1
+    elif 'word'  == width_op: return 0x2
+    elif 'dword' == width_op: return 0x4
+    #elif 'qword' == width_op: return 0x8
+    else:               return 0x0
+
 
 commands = {}
 

@@ -21,9 +21,10 @@
 
 
 """
-Parsing of SPI descriptor access permissions is implemented in "ich_descriptors_tool" which is part of open source `flashrom <http://www.flashrom.org/>`_
+The SPI Flash Descriptor indicates read/write permissions for devices to access regions of the flash memory. This module simply reads the Flash Descriptor and checks that software cannot modify the Flash Descriptor itself. If software can write to the Flash Descriptor, then software could bypass any protection defined by it. While often used for debugging, this should not be the case on production systems.
 
-Checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
+This module checks that software cannot write to the flash descriptor.
+
 """
 
 from chipsec.module_common import *

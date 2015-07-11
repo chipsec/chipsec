@@ -21,9 +21,11 @@
 
 
 """
-`Programmed I/O accesses: a threat to Virtual Machine Monitors? <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/pacsec2007-duflot-papier.pdf>`_ by Lioc Duflot & Laurent Absil
+Just like SMRAM needs to be protected from software executing on the CPU, it also needs to be protected from devices that have direct access to DRAM (DMA). Protection from DMA is configured through proper programming of SMRAM memory range. If BIOS does not correctly configure and lock the configuration, then malware could reprogram configuration and open SMRAM area to DMA access, allowing manipulation of memory that should have been protected.
 
-Check SMM memory (SMRAM) is properly configured to protect from DMA attacks.
+DMA attacks were discussed in `Programmed I/O accesses: a threat to Virtual Machine Monitors? <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/pacsec2007-duflot-papier.pdf>`_ and `System Management Mode Design and Security Issues <http://www.ssi.gouv.fr/uploads/IMG/pdf/IT_Defense_2010_final.pdf>`_. This is also discussed in `Summary of Attack against BIOS and Secure Boot <https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf>`_ .
+
+This module examines the configuration and locking of SMRAM range configuration protecting from DMA attacks. If it fails, then DMA protection may not be securely configured to protect SMRAM.
 """
 
 from chipsec.module_common import *

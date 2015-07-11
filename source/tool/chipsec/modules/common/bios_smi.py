@@ -93,6 +93,7 @@ class bios_smi(BaseModule):
             ok = False
             self.logger.log_bad( "TCO SMI event configuration is not locked. TCO SMI events can be disabled" )
         else: self.logger.log_good( "TCO SMI configuration is locked" )
+        self.logger.log('')
 
         #
         # Checking SMI_LOCK

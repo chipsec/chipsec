@@ -126,8 +126,11 @@ class Memory:
         return (va, pa)
 
     def va2pa( self, va ):
-        pa = self.helper.va2pa( va )
+        (pa, error_code) = self.helper.va2pa( va )
         if logger().VERBOSE: logger().log( '[mem] VA (0x%016X) -> PA (0x%016X)' % (va, pa) )
+        if error_code:
+            logger().log( '[mem] Looks like VA (0x%016X) not mapped' % (va) )
+            return 
         return pa
 
 

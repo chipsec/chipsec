@@ -559,6 +559,10 @@ NVRAM: EFI Variable Store
             else:
                 logger().log( "[uefi] UEFI appears to be in Runtime mode" )
                 ect_pa = self.cs.mem.va2pa( est.ConfigurationTable )
+                if not ect_pa:
+                    print "[uefi] Cann't find UEFI ConfigurationTable"
+                    return (None,ect_pa,ect,ect_buf)
+
         logger().log( "[uefi] EFI Configuration Table (%d entries): VA = 0x%016X, PA = 0x%016X" % (est.NumberOfTableEntries,est.ConfigurationTable,ect_pa) )
 
         found = (ect_pa is not None)

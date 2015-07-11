@@ -146,6 +146,10 @@ Chipset_Dictionary = {
 0x0A04 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 0x0A08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 
+# 5th Generation Core Processor Family (Broadwell)
+0x1600 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
+0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
+
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
 
@@ -234,18 +238,23 @@ class Chipset:
 
     def init( self, platform_code, start_svc ):
 
+        _unknown_platform = False
         if start_svc: self.helper.start()
 
-        if not platform_code:
+        if platform_code is None:
             vid_did  = self.pci.read_dword( 0, 0, 0, 0 )
             self.vid = vid_did & 0xFFFF
             self.did = (vid_did >> 16) & 0xFFFF
-            if VID_INTEL != self.vid: raise UnknownChipsetError, ('UnsupportedPlatform: Vendor ID = 0x%04X' % self.vid)
+            if VID_INTEL != self.vid:
+                _unknown_platform = True
         else:
-            if Chipset_Code.has_key( platform_code ): self.code = platform_code.lower()
-            else: raise UnknownChipsetError, ('UnsupportedPlatform: code: %s' % platform_code)
-            self.vid      = VID_INTEL
-            self.did      = Chipset_Code[ platform_code ]
+            self.vid = VID_INTEL
+            self.code = platform_code.lower()
+            if Chipset_Code.has_key( platform_code ):
+                self.did = Chipset_Code[ platform_code ]
+            else:
+                _unknown_platform = True
+                self.did = 0xFFFF
 
         if Chipset_Dictionary.has_key( self.did ):
             data_dict       = Chipset_Dictionary[ self.did ]
@@ -253,8 +262,15 @@ class Chipset:
             self.longname   = data_dict['longname']
             self.id         = data_dict['id']
         else:
-            raise UnknownChipsetError, ('UnsupportedPlatform: Device ID = 0x%04X' % self.did)
+            _unknown_platform = True
+            self.longname   = 'UnknownPlatform'
+
         self.init_cfg()
+        if _unknown_platform:
+            msg = 'Unsupported Platform: VID = 0x%04X, DID = 0x%04X' % (self.vid,self.did)
+            logger().error( msg )
+            raise UnknownChipsetError, msg
+
 
     def destroy( self, start_svc ):
         self.stop( start_svc )

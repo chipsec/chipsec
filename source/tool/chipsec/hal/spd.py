@@ -381,7 +381,7 @@ class SPD:
 
 
     def decode( self, device=SPD_SMBUS_ADDRESS ):
-
+        spd = None
         device_type = self.getDRAMDeviceType( device )
         spd_buffer = ''.join(self.dump())
 
@@ -396,6 +396,6 @@ class SPD:
         else:
             logger().warn( "[spd] Unsupported SPD format" )
 
-        logger().log( spd )
+        if spd is not None: logger().log( spd )
        
 

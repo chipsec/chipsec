@@ -46,6 +46,7 @@ _uefi = UEFI( chipsec_util._cs )
 def uefi(argv):
     """
     >>> chipsec_util uefi var-list
+    >>> chipsec_util uefi var-find <name>|<GUID>
     >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
     >>> chipsec_util uefi nvram[-auth] <fw_type> [rom_file]
     >>> chipsec_util uefi tables
@@ -149,6 +150,37 @@ def uefi(argv):
         #logger().set_log_file( (filename + '.nv.lst') )
         #_uefi.parse_EFI_variables( filename, efi_vars, False, FWType.EFI_FW_TYPE_WIN )
         #logger().set_log_file( _orig_logname )
+
+        logger().log( "[CHIPSEC] Variables are in efi_variables.lst log and efi_variables.dir directory" )
+
+    elif ( 'var-find' == op ):
+
+        _vars = _uefi.list_EFI_variables()
+        if _vars is None:
+            logger().log_warn( 'Could not enumerate UEFI variables (non-UEFI OS?)' )
+            return
+
+        _input_var = argv[3]
+        if ('-' in _input_var):
+            logger().log( "[*] Searching for UEFI variable with GUID {%s}.." % _input_var )
+            for name in _vars:
+                n = 0
+                for (off, buf, hdr, data, guid, attrs) in _vars[name]:
+                    if _input_var == guid:
+                        var_fname = '%s_%s_%s_%d.bin' % (name,guid,get_attr_string(attrs).strip(),n)
+                        logger().log_good( "Found UEFI variable %s:%s. Dumped to '%s'" % (guid,name,var_fname) )
+                        write_file( var_fname, data )
+                    n += 1
+        else:
+            logger().log( "[*] Searching for UEFI variable with name %s.." % _input_var )
+            for name,_v in _vars.iteritems():
+                n = 0
+                for (off, buf, hdr, data, guid, attrs) in _v:
+                    if _input_var == name:
+                        var_fname = '%s_%s_%s_%d.bin' % (name,guid,get_attr_string(attrs).strip(),n)
+                        logger().log_good( "Found UEFI variable %s:%s. Dumped to '%s'" % (guid,name,var_fname) )
+                        write_file( var_fname, data )
+                    n += 1
 
     elif ( 'nvram' == op or 'nvram-auth' == op ):
 

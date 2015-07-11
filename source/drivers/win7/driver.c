@@ -410,11 +410,11 @@ DriverDeviceControl(
             DbgPrint( "[chipsec] > IOCTL_READ_PHYSMEM\n" );
             if( !Irp->AssociatedIrp.SystemBuffer ||
                 IrpSp->Parameters.DeviceIoControl.InputBufferLength < 3*sizeof(UINT32))
-            {
-               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
-               Status = STATUS_INVALID_PARAMETER;
-               break;
-            }
+              {
+                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n" );
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+              }
 
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             pOutBuf = Irp->AssociatedIrp.SystemBuffer;
@@ -425,19 +425,29 @@ DriverDeviceControl(
             if( !len ) len = 4;
 
             if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < len )
-            {
-               DbgPrint( "[chipsec] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
-               Status = STATUS_BUFFER_TOO_SMALL;
-               break;
-            }
+              {
+                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
+                Status = STATUS_BUFFER_TOO_SMALL;
+                break;
+              }
 
-            Status = _read_phys_mem( phys_addr, len, pOutBuf );
-            if (NT_SUCCESS(Status))
-            {
+            __try
+              {
+                Status = _read_phys_mem( phys_addr, len, pOutBuf );
+              }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+              {
+                Status = GetExceptionCode();
+                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] ERROR: exception code 0x%X\n", Status );
+                break;
+              }
+
+            if( NT_SUCCESS(Status) )
+              {
                 DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] Contents:\n" );
                 _dump_buffer( (unsigned char *)pOutBuf, min(len,0x100) );
-               dwBytesWritten = len;
-            }
+                dwBytesWritten = len;
+              }
             break;
           }
         case IOCTL_WRITE_PHYSMEM:
@@ -454,7 +464,7 @@ DriverDeviceControl(
 
                 if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < 3*sizeof(UINT32) )
                   {
-                    DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+                    DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n" );
                     Status = STATUS_INVALID_PARAMETER;
                     break;
                   }
@@ -466,16 +476,25 @@ DriverDeviceControl(
 
                 if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3*sizeof(UINT32) )
                   {
-                    DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+                    DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n" );
                     Status = STATUS_INVALID_PARAMETER;
                     break;
                   }
 
                 DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] Writing contents:\n" );
                 _dump_buffer( (unsigned char *)pInBuf, min(len,0x100) );
-                Status = _write_phys_mem( phys_addr, len, pInBuf );
 
-                Status = STATUS_SUCCESS;
+                __try
+                  {
+                    Status = _write_phys_mem( phys_addr, len, pInBuf );
+                  }
+                __except (EXCEPTION_EXECUTE_HANDLER)
+                  {
+                    Status = GetExceptionCode();
+                    DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: exception code 0x%X\n", Status );
+                    break;
+                  }
+
                 break;
               }
           }
@@ -667,13 +686,13 @@ DriverDeviceControl(
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	        DbgPrint( "[chipsec] ERROR: NO data provided\n" );
+	        DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
             if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + 3*sizeof(UINT32) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < sizeof(BYTE) + 3*sizeof(UINT32))\n" );
+                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: STATUS_INVALID_PARAMETER (input buffer size < sizeof(BYTE) + 3*sizeof(UINT32))\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -692,12 +711,16 @@ DriverDeviceControl(
             // --
             // -- write MSR
             // --
-            __try {
-              _wrmsr( _msr_addr, _edx, _eax );
-            } __except (EXCEPTION_EXECUTE_HANDLER) {
-             Status = GetExceptionCode();
-             break;
-            }
+            __try
+              {
+                _wrmsr( _msr_addr, _edx, _eax );
+              }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+              {
+                Status = GetExceptionCode();
+                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: exception code 0x%X\n", Status );
+                break;
+              }
 
             // --
             // -- read MSR to check if it was written
@@ -747,6 +770,7 @@ DriverDeviceControl(
             __except( EXCEPTION_EXECUTE_HANDLER )
               {
                 Status = GetExceptionCode();
+                DbgPrint( "[chipsec][IOCTL_RDMSR] ERROR: exception code 0x%X\n", Status );
                 break;
               }
             DbgPrint( "[chipsec][IOCTL_RDMSR] RDMSR( 0x%x ) --> 0x%08x%08x\n", _msr_addr, _edx, _eax );
@@ -779,11 +803,22 @@ DriverDeviceControl(
             RtlCopyBytes( &size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(WORD), sizeof(BYTE) );
             if( 1 != size && 2 != size && 4 != size)
               {
-              DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+              DbgPrint( "[chipsec][READ_IO_PORT] ERROR: STATUS_INVALID_PARAMETER\n" );
               Status = STATUS_INVALID_PARAMETER;
               break;
               }
-            value = ReadIOPort( io_port, size );             
+
+            __try
+              {
+                value = ReadIOPort( io_port, size );             
+              }
+            __except( EXCEPTION_EXECUTE_HANDLER )
+              {
+                Status = GetExceptionCode();
+                DbgPrint( "[chipsec][READ_IO_PORT] ERROR: exception code 0x%X\n", Status );
+                break;
+              }
+
             IrpSp->Parameters.Read.Length = size;
             RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (VOID*)&value, size );
             DbgPrint( "[chipsec][READ_IO_PORT] I/O Port %#04x, value = %#010x (size = %#02x)\n", io_port, value, size );
@@ -803,7 +838,18 @@ DriverDeviceControl(
             RtlCopyBytes( &value, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(WORD), sizeof(DWORD) );
             RtlCopyBytes( &size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(WORD) + sizeof(DWORD), sizeof(BYTE) );
             DbgPrint( "[chipsec][WRITE_IO_PORT] I/O Port %#04x, value = %#010x (size = %#02x)\n", io_port, value, size );
-            WriteIOPort( value, io_port, size );
+
+            __try
+              {
+                WriteIOPort( value, io_port, size );
+              }
+            __except( EXCEPTION_EXECUTE_HANDLER )
+              {
+                Status = GetExceptionCode();
+                DbgPrint( "[chipsec][WRITE_IO_PORT] ERROR: exception code 0x%X\n", Status );
+                break;
+              }
+
             Status = STATUS_SUCCESS;
             break;
           }
