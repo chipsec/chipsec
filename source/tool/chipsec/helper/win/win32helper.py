@@ -272,7 +272,7 @@ class Win32Helper:
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
-            self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
+            self.NtEnumerateSystemEnvironmentValuesEx.restype = c_uint
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
         except AttributeError, msg:
             logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
