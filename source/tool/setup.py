@@ -30,21 +30,12 @@ from setuptools import setup, find_packages
 from distutils import dir_util
 from chipsec import __version__
 
-WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
+data_files = []
 
 tool_dir = os.path.dirname(os.path.abspath(__file__))
-
-data_files = [
-              #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
-              (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
-              #(WIN_DRIVER_INSTALL_PATH + "/win7_x86"  , ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys'])
-              #(WIN_DRIVER_INSTALL_PATH + "/winxp", ['chipsec/helper/win/winxp/chipsec_hlpr.sys'])
-             ]
-
 build_dir = os.path.join(tool_dir, "build")
 if os.path.exists( build_dir ):
     dir_util.remove_tree( build_dir )
-
 
 setup(
         name            = 'chipsec',
