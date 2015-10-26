@@ -25,8 +25,6 @@
 Main application logic and automation functions
 """
 
-__version__ = '1.2.1'
-
 ## These are for debugging imports
 import inspect
 import __builtin__
@@ -58,6 +56,7 @@ except ImportError:
     _importlib = False
 #import zipfile
 
+from chipsec import __version__
 from chipsec.logger import logger
 
 class ExitCode:
@@ -158,18 +157,13 @@ class ChipsecMain:
         self._no_driver      = False
         self._unkownPlatform = True
         self._list_tags      = False
-        self.version="    "
-        self.VERSION_FILE = os.path.join( self.CHIPSEC_FOLDER , "VERSION" )
-        if os.path.exists( self.VERSION_FILE ):
-            with open(self.VERSION_FILE, "r") as verFile:
-                self.version = verFile.read()
         self.argv = argv
         self.parse_args()
         from chipsec.chipset import cs
         self._cs = cs()
 
     def get_chipsec_version(self):
-        return "%s"% (__version__)
+        return "%s" % (__version__)
 
     def print_banner(self):
         """

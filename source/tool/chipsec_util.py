@@ -25,8 +25,6 @@
 Standalone utility
 """
 
-__version__ = '1.2.1'
-
 #import glob
 import re
 import os
@@ -34,6 +32,7 @@ import sys
 import time
 import importlib
 
+from chipsec import __version__
 from chipsec.logger     import *
 from chipsec.file       import *
 from chipsec.helper.oshelper   import helper

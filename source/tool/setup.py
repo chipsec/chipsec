@@ -28,6 +28,7 @@ Components for auxiliar tasks. Setup module for installing chipsec with distutil
 import os
 from distutils.core import setup
 from distutils import dir_util
+from chipsec import __version__
 
 WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
 
@@ -36,16 +37,9 @@ tool_dir = os.path.dirname(os.path.abspath(__file__))
 data_files = [
               #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
               (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
-              ("Lib/site-packages"                    , ['VERSION']),
               #(WIN_DRIVER_INSTALL_PATH + "/win7_x86"  , ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys'])
               #(WIN_DRIVER_INSTALL_PATH + "/winxp", ['chipsec/helper/win/winxp/chipsec_hlpr.sys'])
              ]
-
-version      = ""
-VERSION_FILE = os.path.join( os.path.dirname( __file__ ),'VERSION' )
-if os.path.exists( VERSION_FILE ):
-    with open(VERSION_FILE, "r") as verFile:
-        version = "." + verFile.read()
 
 build_dir = os.path.join(tool_dir, "build")
 if os.path.exists( build_dir ):
@@ -65,7 +59,7 @@ for current, dirs, files in os.walk(tool_dir ):
 setup(
         name            = 'chipsec',
         description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.2.1',
+        version         = __version__,
         author          = 'chipsec developers',
         author_email    = '',
         url             = 'https://github.com/chipsec/chipsec',
