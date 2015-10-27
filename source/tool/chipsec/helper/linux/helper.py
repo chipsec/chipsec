@@ -74,6 +74,8 @@ def IOCTL_VA2PA():      return _IOCTL_BASE + 0x14
 
 class LinuxHelper:
 
+    DEVICE_NAME = "/dev/chipsec"
+
     def __init__(self):
         import platform
         self.os_system  = platform.system()
@@ -117,7 +119,6 @@ class LinuxHelper:
 
     def init( self ):
         x64 = True if sys.maxsize > 2**32 else False
-        global DEVICE_NAME
         global _DEV_FH
         _DEV_FH = None
 
@@ -125,10 +126,9 @@ class LinuxHelper:
         if(_DEV_FH != None): return
 
         logger().log("\n****** Chipsec Linux Kernel module is licensed under GPL 2.0\n")
-        DEVICE_NAME="/dev/chipsec"
 
         try:
-            _DEV_FH = open(DEVICE_NAME, "r+")
+            _DEV_FH = open(self.DEVICE_NAME, "r+")
         except IOError as e:
             raise OsHelperError("Unable to open chipsec device. %s"%str(e),e.errno)
         except BaseException as be:
