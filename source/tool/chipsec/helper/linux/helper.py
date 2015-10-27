@@ -134,9 +134,6 @@ class LinuxHelper:
         global _IOCTL_BASE
         _IOCTL_BASE = fcntl.ioctl(self.dev_fh, IOCTL_BASE()) << 4
 
-        global CPU_MASK_LEN
-        CPU_MASK_LEN = 8 if x64 else 4
-
 
     def close():
         close(self.dev_fh)
