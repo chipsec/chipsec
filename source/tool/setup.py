@@ -26,11 +26,17 @@ Components for auxiliar tasks. Setup module for installing chipsec with distutil
 """
 
 import os
+import platform
 from setuptools import setup, find_packages
 from distutils import dir_util
+from distutils.core import Extension
 from chipsec import __version__
 
-data_files = []
+extensions = []
+if platform.system().lower() == "linux":
+    cores = Extension('chipsec.helper.linux.cores',
+                    sources = ['chipsec/helper/linux/cores.c'])
+    extensions.append(cores)
 
 tool_dir = os.path.dirname(os.path.abspath(__file__))
 build_dir = os.path.join(tool_dir, "build")
@@ -44,8 +50,8 @@ setup(
         author          = 'chipsec developers',
         author_email    = '',
         url             = 'https://github.com/chipsec/chipsec',
-
-        data_files      = data_files,
+        package_data    = { '': ['*.xml'] },
         packages        = find_packages(exclude=['build']),
-
+        scripts         = [ 'chipsec_main.py', 'chipsec_util.py' ],
+        ext_modules     = extensions,
 )
