@@ -91,7 +91,7 @@ class OsHelper:
         if chipsec.file.main_is_frozen():
             self.loadHelpersFromEXE()
         else:
-            self.loadHelpersFromFileSystem()
+            self.loadHelpersFromPkg()
 
     def loadHelpersFromEXE(self):
         import zipfile
@@ -102,23 +102,17 @@ class OsHelper:
             self.importModule(h)
             if self.helper : break
 
-    def loadHelpersFromFileSystem(self):
-        mydir = os.path.dirname(__file__)
-        dirs = os.listdir(mydir)
-        for adir in dirs:
-            if self.helper :
-                break
-            mypath = os.path.join(mydir,adir)
-            if os.path.isdir(mypath):
-                for afile in os.listdir(mypath):
-                    if fnmatch.fnmatch(afile, '__init__.py') or not fnmatch.fnmatch(afile, '*.py') :
-                        continue
-#                    print os.path.join(adir,afile)
-                    mod_shortname = adir + "." + os.path.splitext(afile)[0]
-                    mod_fullname = "chipsec.helper." + mod_shortname
-                    if logger().VERBOSE:  logger().log("trying to load %s" % mod_fullname)
-                    self.importModule(mod_fullname)
-                    if self.helper : break
+    def loadHelpersFromPkg(self):
+        import pkg_resources
+        helpers = []
+        helper_dirs = pkg_resources.resource_listdir('chipsec', 'helper')
+        for dir_name in helper_dirs:
+            if pkg_resources.resource_isdir('chipsec', os.path.join('helper', dir_name)):
+                # Note we add helper stub here to let importModule work, it ignores it.
+                helpers.append('chipsec.helper.%s.helper_stub' % dir_name)
+        for h in helpers:
+            self.importModule(h)
+            if self.helper: break
 
     def importModule(self, mod_fullname):
         try:

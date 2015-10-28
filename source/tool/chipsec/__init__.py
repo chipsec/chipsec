@@ -18,6 +18,7 @@
 #chipsec@intel.com
 #
 
+__version__ = '1.2.1'
 
 
 ###\defgroup  core Core Components

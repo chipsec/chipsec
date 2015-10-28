@@ -39,6 +39,7 @@ import collections
 import os
 import fnmatch
 import re
+import pkg_resources
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal.pci         import Pci
@@ -299,17 +300,14 @@ class Chipset:
     ##################################################################################
 
     def init_xml_configuration( self ):
-        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
         # Load chipsec/cfg/common.xml configuration XML file common for all platforms if it exists
-        self.init_cfg_xml( os.path.join(_cfg_path,'common.xml'), self.code )
+        common_xml = pkg_resources.resource_filename('chipsec', 'cfg/common.xml')
+        self.init_cfg_xml(common_xml, self.code)
         # Load chipsec/cfg/<code>.xml configuration XML file if it exists for platform <code>
         if self.code and '' != self.code:
-            self.init_cfg_xml( os.path.join(_cfg_path,('%s.xml'%self.code)), self.code )
-        # Load configuration from all other XML files recursively (if any)
-        for dirname, subdirs, xml_fnames in os.walk( _cfg_path ):
-            for _xml in xml_fnames:
-                if fnmatch.fnmatch( _xml, '*.xml' ) and not fnmatch.fnmatch( _xml, 'common.xml' ) and not (_xml in ['%s.xml' % c.lower() for c in Chipset_Code]):
-                    self.init_cfg_xml( os.path.join(dirname,_xml), self.code )
+            if pkg_resources.resource_exists('chipsec', 'cfg/%s.xml' % self.code):
+                code_xml = pkg_resources.resource_filename('chipsec', 'cfg/%s.xml' % self.code)
+                self.init_cfg_xml(code_xml, self.code)
         self.Cfg.XML_CONFIG_LOADED = True
 
 

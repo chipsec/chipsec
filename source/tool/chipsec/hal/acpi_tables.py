@@ -585,7 +585,7 @@ ACPI Table Entries:
 
 
 class TABLE_NULL():
-    def __init(self, table_content):
+    def __init__(self, table_content):
         self.table_content=table_content
     __slots__ = ()
     def __str__(self):

@@ -25,8 +25,6 @@
 Standalone utility
 """
 
-__version__ = '1.2.1'
-
 #import glob
 import re
 import os
@@ -34,6 +32,7 @@ import sys
 import time
 import importlib
 
+from chipsec import __version__
 from chipsec.logger     import *
 from chipsec.file       import *
 from chipsec.helper.oshelper   import helper
@@ -126,9 +125,9 @@ class ChipsecUtil:
             cmds = map( self.map_modname_zip, filter(self.f_mod_zip, myzip.namelist()) )
         else:
             #traceback.print_stack()
-            mydir = os.path.dirname(__file__)
-            cmds_dir = os.path.join(mydir,os.path.join("chipsec","utilcmd"))
-            cmds = map( self.map_modname, filter(self.f_mod, os.listdir(cmds_dir)) )
+            import pkg_resources
+            cmds_dirs = pkg_resources.resource_listdir('chipsec', 'utilcmd')
+            cmds = map( self.map_modname, filter(self.f_mod, cmds_dirs) )
 
         if logger().VERBOSE:
             logger().log( '[CHIPSEC] Loaded command-line extensions:' )
