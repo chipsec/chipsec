@@ -27,21 +27,10 @@ The idt and gdt commands print the IDT and GDT, respectively.
 
 __version__ = '1.0'
 
-import os
-import sys
-import time
-
-import chipsec_util
-
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
-#from chipsec.hal.msr        import Msr
-
+from chipsec.command import BaseCommand
 
 # CPU descriptor tables
-def idt(argv):
+class IDTCommand(BaseCommand):
     """
     >>> chipsec_util idt|gdt|ldt [cpu_id]
 
@@ -50,14 +39,19 @@ def idt(argv):
     >>> chipsec_util idt 0
     >>> chipsec_util gdt
     """
-    if (2 == len(argv)):
-        logger().log( "[CHIPSEC] Dumping IDT of %d CPU threads" % chipsec_util._cs.msr.get_cpu_thread_count() )
-        chipsec_util._cs.msr.IDT_all( 4 )
-    elif (3 == len(argv)):
-        tid = int(argv[2],16)
-        chipsec_util._cs.msr.IDT( tid, 4 )
 
-def gdt(argv):
+    def requires_driver(self):
+        return True
+
+    def run(self):
+        if (2 == len(self.argv)):
+            self.logger.log( "[CHIPSEC] Dumping IDT of %d CPU threads" % self.cs.msr.get_cpu_thread_count() )
+            self.cs.msr.IDT_all( 4 )
+        elif (3 == len(self.argv)):
+            tid = int(self.argv[2],16)
+            self.cs.msr.IDT( tid, 4 )
+
+class GDTCommand(BaseCommand):
     """
     >>> chipsec_util idt|gdt|ldt [cpu_id]
 
@@ -66,14 +60,19 @@ def gdt(argv):
     >>> chipsec_util idt 0
     >>> chipsec_util gdt
     """
-    if (2 == len(argv)):
-        logger().log( "[CHIPSEC] Dumping GDT of %d CPU threads" % chipsec_util._cs.msr.get_cpu_thread_count() )
-        chipsec_util._cs.msr.GDT_all( 4 )
-    elif (3 == len(argv)):
-        tid = int(argv[2],16)
-        chipsec_util._cs.msr.GDT( tid, 4 )
 
-def ldt(argv):
+    def requires_driver(self):
+        return True
+
+    def run(self):
+        if (2 == len(self.argv)):
+            self.logger.log( "[CHIPSEC] Dumping GDT of %d CPU threads" % self.cs.msr.get_cpu_thread_count() )
+            self.cs.msr.GDT_all( 4 )
+        elif (3 == len(self.argv)):
+            tid = int(self.argv[2],16)
+            self.cs.msr.GDT( tid, 4 )
+
+class LDTCommand(BaseCommand):
     """
     >>> chipsec_util idt|gdt|ldt [cpu_id]
 
@@ -82,8 +81,10 @@ def ldt(argv):
     >>> chipsec_util idt 0
     >>> chipsec_util gdt
     """
-    logger().error( "[CHIPSEC] ldt not implemented" )
+    def requires_driver(self):
+        return True
 
+    def run(self):
+        self.logger.error( "[CHIPSEC] ldt not implemented" )
 
-chipsec_util.commands['idt'] = {'func' : idt, 'start_driver' : True, 'help' : idt.__doc__ }
-chipsec_util.commands['gdt'] = {'func' : gdt, 'start_driver' : True, 'help' : gdt.__doc__ }
+commands = { 'idt': IDTCommand, 'gdt': GDTCommand }
