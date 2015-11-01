@@ -24,19 +24,12 @@
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
-import chipsec_util
-
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command    import BaseCommand
 from chipsec.hal.cmos   import CMOS, CmosRuntimeError
 
-def cmos(argv):
+class CMOSCommand(BaseCommand):
     """
     >>> chipsec_util cmos dump
     >>> chipsec_util cmos readl|writel|readh|writeh <byte_offset> [byte_val]
@@ -47,46 +40,53 @@ def cmos(argv):
     >>> chipsec_util cmos rl 0x0
     >>> chipsec_util cmos wh 0x0 0xCC
     """
-    if 3 > len(argv):
-        print cmos.__doc__
-        return
 
-    try:
-        _cmos = CMOS(  )
-    except CmosRuntimeError, msg:
-        print msg
-        return
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    op = argv[2]
-    t = time.time()
+    def run(self):
+        if len(self.argv) < 3:
+            print CMOSCommand.__doc__
+            return
 
-    if ( 'dump' == op ):
-        logger().log( "[CHIPSEC] Dumping CMOS memory.." )
-        _cmos.dump()
-    elif ( 'readl' == op ):
-        off = int(argv[3],16)
-        val = _cmos.read_cmos_low( off )
-        logger().log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
-    elif ( 'writel' == op ):
-        off = int(argv[3],16)
-        val = int(argv[4],16)
-        logger().log( "[CHIPSEC] Writing CMOS low byte 0x%X <- 0x%X " % (off, val) )
-        _cmos.write_cmos_low( off, val )
-    elif ( 'readh' == op ):
-        off = int(argv[3],16)
-        val = _cmos.read_cmos_high( off )
-        logger().log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
-    elif ( 'writeh' == op ):
-        off = int(argv[3],16)
-        val = int(argv[4],16)
-        logger().log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
-        _cmos.write_cmos_high( off, val )
-    else:
-        logger().error( "unknown command-line option '%.32s'" % op )
-        print usage
-        return
+        try:
+            _cmos = CMOS(  )
+        except CmosRuntimeError, msg:
+            print msg
+            return
 
-    logger().log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
+        op = self.argv[2]
+        t = time.time()
 
+        if ( 'dump' == op ):
+            self.logger.log( "[CHIPSEC] Dumping CMOS memory.." )
+            _cmos.dump()
+        elif ( 'readl' == op ):
+            off = int(self.argv[3],16)
+            val = _cmos.read_cmos_low( off )
+            self.logger.log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
+        elif ( 'writel' == op ):
+            off = int(self.argv[3],16)
+            val = int(self.argv[4],16)
+            self.logger.log( "[CHIPSEC] Writing CMOS low byte 0x%X <- 0x%X " % (off, val) )
+            _cmos.write_cmos_low( off, val )
+        elif ( 'readh' == op ):
+            off = int(self.argv[3],16)
+            val = _cmos.read_cmos_high( off )
+            self.logger.log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
+        elif ( 'writeh' == op ):
+            off = int(self.argv[3],16)
+            val = int(self.argv[4],16)
+            self.logger.log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
+            _cmos.write_cmos_high( off, val )
+        else:
+            self.logger.error( "unknown command-line option '%.32s'" % op )
+            print CMOSCommand.__doc__
+            return
 
-chipsec_util.commands['cmos'] = {'func' : cmos,    'start_driver' : True, 'help' : cmos.__doc__  }
+        self.logger.log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
+
+commands = { 'cmos': CMOSCommand }
