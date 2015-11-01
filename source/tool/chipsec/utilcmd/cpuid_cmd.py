@@ -24,22 +24,14 @@
 
 __version__ = '1.0'
 
-import os
-import sys
-import time
-
-import chipsec_util
-
-from chipsec.logger             import *
-from chipsec.file               import *
-#_cs = cs()
+from chipsec.command import BaseCommand
 
 # ###################################################################
 #
 # CPUid
 #
 # ###################################################################
-def cpuid(argv):
+class CPUIDCommand(BaseCommand):
     """
     >>> chipsec_util cpuid <eax> [ecx]
 
@@ -47,22 +39,29 @@ def cpuid(argv):
 
     >>> chipsec_util cpuid 40000000
     """
-    if 3 > len(argv):
-        print cpuid.__doc__
-        return
 
-    eax = int(argv[2],16)
-    ecx = int(argv[3],16) if 4 == len(argv) else 0
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    logger().log( "[CHIPSEC] CPUID < EAX: 0x%08X" % eax)
-    logger().log( "[CHIPSEC]         ECX: 0x%08X" % ecx)
+    def run(self):
+        if len(self.argv) < 3:
+            print CPUIDCommand.__doc__
+            return
 
-    val = chipsec_util._cs.cpuid.cpuid( eax, ecx )
+        eax = int(self.argv[2],16)
+        ecx = int(self.argv[3],16) if 4 == len(self.argv) else 0
 
-    logger().log( "[CHIPSEC] CPUID > EAX: 0x%08X" % (val[0]) )
-    logger().log( "[CHIPSEC]         EBX: 0x%08X" % (val[1]) )
-    logger().log( "[CHIPSEC]         ECX: 0x%08X" % (val[2]) )
-    logger().log( "[CHIPSEC]         EDX: 0x%08X" % (val[3]) )
+        self.logger.log( "[CHIPSEC] CPUID < EAX: 0x%08X" % eax)
+        self.logger.log( "[CHIPSEC]         ECX: 0x%08X" % ecx)
 
+        val = self.cs.cpuid.cpuid( eax, ecx )
 
-chipsec_util.commands['cpuid'] = {'func' : cpuid , 'start_driver' : True, 'help' : cpuid.__doc__  }
+        self.logger.log( "[CHIPSEC] CPUID > EAX: 0x%08X" % (val[0]) )
+        self.logger.log( "[CHIPSEC]         EBX: 0x%08X" % (val[1]) )
+        self.logger.log( "[CHIPSEC]         ECX: 0x%08X" % (val[2]) )
+        self.logger.log( "[CHIPSEC]         EDX: 0x%08X" % (val[3]) )
+
+commands = { 'cpuid': CPUIDCommand }
