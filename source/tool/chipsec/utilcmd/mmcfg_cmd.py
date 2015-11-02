@@ -28,21 +28,14 @@ The mmcfg command allows direct access to memory mapped config space.
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
-import chipsec_util
-
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command    import BaseCommand
 from chipsec.hal.mmio   import *
 
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
-def mmcfg(argv):
+class MMCfgCommand(BaseCommand):
     """
     >>> chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]
 
@@ -53,50 +46,54 @@ def mmcfg(argv):
     >>> chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1
     >>> chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040
     """
-    t = time.time()
 
-    if 2 == len(argv):
-        #pciexbar = get_PCIEXBAR_base_address( chipsec_util._cs )
-        pciexbar = get_MMCFG_base_address( chipsec_util._cs )
-        logger().log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
-        return
-    elif 6 > len(argv):
-        print mmcfg.__doc__
-        return
+    def requires_driver(self):
+        return True
 
-    try:
-        bus         = int(argv[2],16)
-        device      = int(argv[3],16)
-        function    = int(argv[4],16)
-        offset      = int(argv[5],16)
+    def run(self):
+        t = time.time()
 
-        if 6 == len(argv):
-            width = 1
-        else:
-            if 'byte' == argv[6]:
+        if 2 == len(self.argv):
+            #pciexbar = get_PCIEXBAR_base_address( self.cs )
+            pciexbar = get_MMCFG_base_address( self.cs )
+            self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
+            return
+        elif 6 > len(self.argv):
+            print MMCfgCommand.__doc__
+            return
+
+        try:
+            bus         = int(self.argv[2],16)
+            device      = int(self.argv[3],16)
+            function    = int(self.argv[4],16)
+            offset      = int(self.argv[5],16)
+
+            if 6 == len(self.argv):
                 width = 1
-            elif 'word' == argv[6]:
-                width = 2
-            elif 'dword' == argv[6]:
-                width = 4
             else:
-                width = int(argv[6])
+                if 'byte' == self.argv[6]:
+                    width = 1
+                elif 'word' == self.argv[6]:
+                    width = 2
+                elif 'dword' == self.argv[6]:
+                    width = 4
+                else:
+                    width = int(self.argv[6])
 
-    except Exception as e :
-        print mmcfg.__doc__
-        return
+        except Exception as e :
+            print MMCfgCommand.__doc__
+            return
 
-    if 8 == len(argv):
-        value = int(argv[7], 16)
-        write_mmcfg_reg( chipsec_util._cs, bus, device, function, offset, width, value )
-        #_cs.pci.write_mmcfg_reg( bus, device, function, offset, width, value )
-        logger().log( "[CHIPSEC] writing MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
-    else:
-        value = read_mmcfg_reg( chipsec_util._cs, bus, device, function, offset, width )
-        #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
-        logger().log( "[CHIPSEC] reading MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
+        if 8 == len(self.argv):
+            value = int(self.argv[7], 16)
+            write_mmcfg_reg( self.cs, bus, device, function, offset, width, value )
+            #_cs.pci.write_mmcfg_reg( bus, device, function, offset, width, value )
+            self.logger.log( "[CHIPSEC] writing MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
+        else:
+            value = read_mmcfg_reg( self.cs, bus, device, function, offset, width )
+            #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
+            self.logger.log( "[CHIPSEC] reading MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
 
-    logger().log( "[CHIPSEC] (mmcfg) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (mmcfg) time elapsed %.3f" % (time.time()-t) )
 
-
-chipsec_util.commands['mmcfg'] = {'func' : mmcfg , 'start_driver' : True, 'help' : mmcfg.__doc__  }
+commands = { 'mmcfg': MMCfgCommand }
