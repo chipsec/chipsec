@@ -23,15 +23,10 @@
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
-import chipsec_util
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command    import BaseCommand
+from chipsec.file       import read_file
 from chipsec.hal.ucode  import Ucode, dump_ucode_update_header
 
 # ###################################################################
@@ -39,7 +34,7 @@ from chipsec.hal.ucode  import Ucode, dump_ucode_update_header
 # Microcode patches
 #
 # ###################################################################
-def ucode(argv):
+class UCodeCommand(BaseCommand):
     """
     >>> chipsec_util ucode id|load|decode [ucode_update_file (in .PDB or .BIN format)] [cpu_id]
 
@@ -49,51 +44,56 @@ def ucode(argv):
     >>> chipsec_util ucode load ucode.bin 0
     >>> chipsec_util ucode decode ucode.pdb
     """
-    if 3 > len(argv):
-        print ucode.__doc__
-        return
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    ucode_op = argv[2]
-    t = time.time()
-
-    if ( 'load' == ucode_op ):
-        if (4 == len(argv)):
-            ucode_filename = argv[3]
-            logger().log( "[CHIPSEC] Loading Microcode update on all cores from '%s'" % ucode_filename )
-            chipsec_util._cs.ucode.update_ucode_all_cpus( ucode_filename )
-        elif (5 == len(argv)):
-            ucode_filename = argv[3]
-            cpu_thread_id = int(argv[4],16)
-            logger().log( "[CHIPSEC] Loading Microcode update on CPU%d from '%s'" % (cpu_thread_id, ucode_filename) )
-            chipsec_util._cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
-        else:
-            print ucode.__doc__
+    def run(self):
+        if len(self.argv) < 3:
+            print UCodeCommand.__doc__
             return
-    elif ( 'decode' == ucode_op ):
-        if (4 == len(argv)):
-            ucode_filename = argv[3]
-            if (not ucode_filename.endswith('.pdb')):
-                logger().log( "[CHIPSEC] Ucode update file is not PDB file: '%s'" % ucode_filename )
+
+        ucode_op = self.argv[2]
+        t = time.time()
+
+        if ( 'load' == ucode_op ):
+            if (4 == len(self.argv)):
+                ucode_filename = self.argv[3]
+                self.logger.log( "[CHIPSEC] Loading Microcode update on all cores from '%s'" % ucode_filename )
+                self.cs.ucode.update_ucode_all_cpus( ucode_filename )
+            elif (5 == len(self.argv)):
+                ucode_filename = self.argv[3]
+                cpu_thread_id = int(self.argv[4],16)
+                self.logger.log( "[CHIPSEC] Loading Microcode update on CPU%d from '%s'" % (cpu_thread_id, ucode_filename) )
+                self.cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
+            else:
+                print UCodeCommand.__doc__
                 return
-            pdb_ucode_buffer = read_file( ucode_filename )
-            logger().log( "[CHIPSEC] Decoding Microcode Update header of PDB file: '%s'" % ucode_filename )
-            dump_ucode_update_header( pdb_ucode_buffer )
-    elif ( 'id' == ucode_op ):
-        if (3 == len(argv)):
-            for tid in range(chipsec_util._cs.msr.get_cpu_thread_count()):
-                ucode_update_id = chipsec_util._cs.ucode.ucode_update_id( tid )
-                logger().log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (tid, ucode_update_id) )
-        elif (4 == len(argv)):
-            cpu_thread_id = int(argv[3],16)
-            ucode_update_id = chipsec_util._cs.ucode.ucode_update_id( cpu_thread_id )
-            logger().log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
-    else:
-        logger().error( "unknown command-line option '%.32s'" % ucode_op )
-        print ucode.__doc__
-        return
+        elif ( 'decode' == ucode_op ):
+            if (4 == len(self.argv)):
+                ucode_filename = self.argv[3]
+                if (not ucode_filename.endswith('.pdb')):
+                    self.logger.log( "[CHIPSEC] Ucode update file is not PDB file: '%s'" % ucode_filename )
+                    return
+                pdb_ucode_buffer = read_file( ucode_filename )
+                self.logger.log( "[CHIPSEC] Decoding Microcode Update header of PDB file: '%s'" % ucode_filename )
+                dump_ucode_update_header( pdb_ucode_buffer )
+        elif ( 'id' == ucode_op ):
+            if (3 == len(self.argv)):
+                for tid in range(self.cs.msr.get_cpu_thread_count()):
+                    ucode_update_id = self.cs.ucode.ucode_update_id( tid )
+                    self.logger.log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (tid, ucode_update_id) )
+            elif (4 == len(self.argv)):
+                cpu_thread_id = int(self.argv[3],16)
+                ucode_update_id = self.cs.ucode.ucode_update_id( cpu_thread_id )
+                self.logger.log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
+        else:
+            self.logger.error( "unknown command-line option '%.32s'" % ucode_op )
+            print UCodeCommand.__doc__
+            return
 
-    logger().log( "[CHIPSEC] (ucode) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (ucode) time elapsed %.3f" % (time.time()-t) )
 
-
-
-chipsec_util.commands['ucode'] = {'func' : ucode, 'start_driver' : True, 'help' : ucode.__doc__  }
+commands = { 'ucode': UCodeCommand }
