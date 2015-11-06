@@ -50,29 +50,30 @@ import chipsec.file
 
 from ctypes import *
 
-_IOCTL_BASE = 0
-def IOCTL_BASE():       return 0x0
-def IOCTL_RDIO():       return _IOCTL_BASE + 0x1
-def IOCTL_WRIO():       return _IOCTL_BASE + 0x2
-def IOCTL_RDPCI():      return _IOCTL_BASE + 0x3
-def IOCTL_WRPCI():      return _IOCTL_BASE + 0x4
-def IOCTL_RDMSR():      return _IOCTL_BASE + 0x5
-def IOCTL_WRMSR():      return _IOCTL_BASE + 0x6
-def IOCTL_CPUID():      return _IOCTL_BASE + 0x7
-def IOCTL_GET_CPU_DESCRIPTOR_TABLE():   return _IOCTL_BASE + 0x8
-def IOCTL_HYPERCALL():  return _IOCTL_BASE + 0x9
-def IOCTL_SWSMI():      return _IOCTL_BASE + 0xA
-def IOCTL_LOAD_UCODE_PATCH():   return _IOCTL_BASE + 0xB
-def IOCTL_ALLOC_PHYSMEM(): return _IOCTL_BASE + 0xC
-def IOCTL_GET_EFIVAR(): return _IOCTL_BASE + 0xD
-def IOCTL_SET_EFIVAR(): return _IOCTL_BASE + 0xE
-def IOCTL_RDCR():	return _IOCTL_BASE + 0x10
-def IOCTL_WRCR():	return _IOCTL_BASE + 0x11
-def IOCTL_RDMMIO():       return _IOCTL_BASE + 0x12
-def IOCTL_WRMMIO():       return _IOCTL_BASE + 0x13
-def IOCTL_VA2PA():      return _IOCTL_BASE + 0x14
+IOCTL_BASE                     = 0x0
+IOCTL_RDIO                     = 0x1
+IOCTL_WRIO                     = 0x2
+IOCTL_RDPCI                    = 0x3
+IOCTL_WRPCI                    = 0x4
+IOCTL_RDMSR                    = 0x5
+IOCTL_WRMSR                    = 0x6
+IOCTL_CPUID                    = 0x7
+IOCTL_GET_CPU_DESCRIPTOR_TABLE = 0x8
+IOCTL_HYPERCALL                = 0x9
+IOCTL_SWSMI                    = 0xA
+IOCTL_LOAD_UCODE_PATCH         = 0xB
+IOCTL_ALLOC_PHYSMEM            = 0xC
+IOCTL_GET_EFIVAR               = 0xD
+IOCTL_SET_EFIVAR               = 0xE
+IOCTL_RDCR                     = 0x10
+IOCTL_WRCR                     = 0x11
+IOCTL_RDMMIO                   = 0x12
+IOCTL_WRMMIO                   = 0x13
+IOCTL_VA2PA                    = 0x14
 
 class LinuxHelper:
+
+    DEVICE_NAME = "/dev/chipsec"
 
     def __init__(self):
         import platform
@@ -117,56 +118,45 @@ class LinuxHelper:
 
     def init( self ):
         x64 = True if sys.maxsize > 2**32 else False
-        global DEVICE_NAME
-        global _DEV_FH
-        _DEV_FH = None
-
-        #already initialized?
-        if(_DEV_FH != None): return
+        self._pack = 'Q' if x64 else 'I'
+        self.dev_fh = None
 
         logger().log("\n****** Chipsec Linux Kernel module is licensed under GPL 2.0\n")
-        DEVICE_NAME="/dev/chipsec"
 
         try:
-            _DEV_FH = open(DEVICE_NAME, "r+")
+            self.dev_fh = open(self.DEVICE_NAME, "r+")
         except IOError as e:
             raise OsHelperError("Unable to open chipsec device. %s"%str(e),e.errno)
         except BaseException as be:
             raise OsHelperError("Unable to open chipsec device. %s"%str(be),errno.ENXIO)
 
-        #decode the arg size
-        global _PACK
-        _PACK = 'Q' if x64 else 'I'
-
-        global _IOCTL_BASE
-        _IOCTL_BASE = fcntl.ioctl(_DEV_FH, IOCTL_BASE()) << 4
-
-        global CPU_MASK_LEN
-        CPU_MASK_LEN = 8 if x64 else 4
+        self._ioctl_base = fcntl.ioctl(self.dev_fh, IOCTL_BASE) << 4
 
 
-    def close():
-        global _DEV_FH
-        close(_DEV_FH)
-        _DEV_FH = None
+    def close(self):
+        close(self.dev_fh)
+        self.dev_fh = None
+
+    def ioctl(self, nr, args, *mutate_flag):
+        return fcntl.ioctl(self.dev_fh, self._ioctl_base + nr, args)
 
 ###############################################################################################
 # Actual API functions to access HW resources
 ###############################################################################################
     def __mem_block(self, sz, newval = None):
         if(newval == None):
-            return _DEV_FH.read(sz)
+            return self.dev_fh.read(sz)
         else:
-            _DEV_FH.write(newval)
-            _DEV_FH.flush()
+            self.dev_fh.write(newval)
+            self.dev_fh.flush()
         return 1
 
     def mem_read_block(self, addr, sz):
-        if(addr != None): _DEV_FH.seek(addr)
+        if(addr != None): self.dev_fh.seek(addr)
         return self.__mem_block(sz)
 
     def mem_write_block(self, addr, sz, newval):
-        if(addr != None): _DEV_FH.seek(addr)
+        if(addr != None): self.dev_fh.seek(addr)
         return self.__mem_block(sz, newval)
 
     def write_phys_mem(self, phys_address_hi, phys_address_lo, sz, newval):
@@ -181,9 +171,9 @@ class LinuxHelper:
     def va2pa( self, va ):
         error_code = 0
 
-        in_buf = struct.pack( _PACK, va )
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_VA2PA(), in_buf )
-        pa = struct.unpack( _PACK, out_buf )[0]
+        in_buf = struct.pack( self._pack, va )
+        out_buf = self.ioctl(IOCTL_VA2PA, in_buf)
+        pa = struct.unpack( self._pack, out_buf )[0]
 
         #Check if PA > max physical address
         max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
@@ -198,24 +188,24 @@ class LinuxHelper:
 
     def read_pci_reg( self, bus, device, function, offset, size = 4 ):
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
-        d = struct.pack("5"+_PACK, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
+        d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
         try:
-            ret = fcntl.ioctl(_DEV_FH, IOCTL_RDPCI(), d)
+            ret = self.ioctl(IOCTL_RDPCI, d)
         except IOError:
             print "IOError\n"
             return None
-        x = struct.unpack("5"+_PACK, ret)
+        x = struct.unpack("5"+self._pack, ret)
         return x[4]
 
     def write_pci_reg( self, bus, device, function, offset, value, size = 4 ):
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
-        d = struct.pack("5"+_PACK, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, value)
+        d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, value)
         try:
-            ret = fcntl.ioctl(_DEV_FH, IOCTL_WRPCI(), d)
+            ret = self.ioctl(IOCTL_WRPCI, d)
         except IOError:
             print "IOError\n"
             return None
-        x = struct.unpack("5"+_PACK, ret)
+        x = struct.unpack("5"+self._pack, ret)
         return x[4]
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf):
@@ -227,7 +217,7 @@ class LinuxHelper:
         out_length=0
         out_buf=(c_char * out_length)()
         try:
-            out_buf = fcntl.ioctl(_DEV_FH, IOCTL_LOAD_UCODE_PATCH(), in_buf_final, True)
+            out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
             print "IOError IOCTL Load Patch\n"
             return None
@@ -236,82 +226,82 @@ class LinuxHelper:
 
 
     def read_io_port(self, io_port, size):
-        in_buf = struct.pack( "3"+_PACK, io_port, size, 0 )
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDIO(), in_buf )
+        in_buf = struct.pack( "3"+self._pack, io_port, size, 0 )
+        out_buf = self.ioctl(IOCTL_RDIO, in_buf)
         try:
             #print_buffer(out_buf)
             if 1 == size:
-                value = struct.unpack("3"+_PACK, out_buf)[2] & 0xff
+                value = struct.unpack("3"+self._pack, out_buf)[2] & 0xff
             elif 2 == size:
-                value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffff
+                value = struct.unpack("3"+self._pack, out_buf)[2] & 0xffff
             else:
-                value = struct.unpack("3"+_PACK, out_buf)[2] & 0xffffffff
+                value = struct.unpack("3"+self._pack, out_buf)[2] & 0xffffffff
         except:
             logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
 
         return value
 
     def write_io_port( self, io_port, value, size ):
-        in_buf = struct.pack( "3"+_PACK, io_port, size, value )
-        return fcntl.ioctl( _DEV_FH, IOCTL_WRIO(), in_buf)
+        in_buf = struct.pack( "3"+self._pack, io_port, size, value )
+        return self.ioctl(IOCTL_WRIO, in_buf)
 
     def read_cr(self, cpu_thread_id, cr_number):
         self.set_affinity(cpu_thread_id)
         cr = 0
-        in_buf = struct.pack( "3"+_PACK, cpu_thread_id, cr_number, cr)
-        unbuf = struct.unpack("3"+_PACK, fcntl.ioctl( _DEV_FH, IOCTL_RDCR(), in_buf ))
+        in_buf = struct.pack( "3"+self._pack, cpu_thread_id, cr_number, cr)
+        unbuf = struct.unpack("3"+self._pack, self.ioctl(IOCTL_RDCR, in_buf))
         return (unbuf[2])
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         self.set_affinity(cpu_thread_id)
         print "Writing CR 0x%x with value = 0x%x" % (cr_number, value)
-        in_buf = struct.pack( "3"+_PACK, cpu_thread_id, cr_number, value )
-        fcntl.ioctl( _DEV_FH, IOCTL_WRCR(), in_buf )
+        in_buf = struct.pack( "3"+self._pack, cpu_thread_id, cr_number, value )
+        self.ioctl(IOCTL_WRCR, in_buf)
         return
 
     def read_msr(self, thread_id, msr_addr):
         self.set_affinity(thread_id)
         edx = eax = 0
-        in_buf = struct.pack( "4"+_PACK, thread_id, msr_addr, edx, eax)
-        unbuf = struct.unpack("4"+_PACK, fcntl.ioctl( _DEV_FH, IOCTL_RDMSR(), in_buf ))
+        in_buf = struct.pack( "4"+self._pack, thread_id, msr_addr, edx, eax)
+        unbuf = struct.unpack("4"+self._pack, self.ioctl(IOCTL_RDMSR, in_buf))
         return (unbuf[3], unbuf[2])
 
     def write_msr(self, thread_id, msr_addr, eax, edx):
         self.set_affinity(thread_id)
         print "Writing msr 0x%x with eax = 0x%x, edx = 0x%x" % (msr_addr, eax, edx)
-        in_buf = struct.pack( "4"+_PACK, thread_id, msr_addr, edx, eax )
-        fcntl.ioctl( _DEV_FH, IOCTL_WRMSR(), in_buf )
+        in_buf = struct.pack( "4"+self._pack, thread_id, msr_addr, edx, eax )
+        self.ioctl(IOCTL_WRMSR, in_buf)
         return
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
         self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack( "5"+_PACK, cpu_thread_id, desc_table_code, 0 , 0, 0)
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_GET_CPU_DESCRIPTOR_TABLE(), in_buf)
-        (limit,base_hi,base_lo,pa_hi,pa_lo) = struct.unpack( "5"+_PACK, out_buf )
+        in_buf = struct.pack( "5"+self._pack, cpu_thread_id, desc_table_code, 0 , 0, 0)
+        out_buf = self.ioctl(IOCTL_GET_CPU_DESCRIPTOR_TABLE, in_buf)
+        (limit,base_hi,base_lo,pa_hi,pa_lo) = struct.unpack( "5"+self._pack, out_buf )
         pa = (pa_hi << 32) + pa_lo
         base = (base_hi << 32) + base_lo
         return (limit,base,pa)
 
     def do_hypercall(self, vector, arg1, arg2, arg3, arg4, arg5, use_peach):
-        in_buf = struct.pack( "7"+_PACK, vector, arg1, arg2, arg3, arg4, arg5, use_peach)
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_HYPERCALL(), in_buf)
-        regs = struct.unpack( "7"+_PACK, out_buf )
+        in_buf = struct.pack( "7"+self._pack, vector, arg1, arg2, arg3, arg4, arg5, use_peach)
+        out_buf = self.ioctl(IOCTL_HYPERCALL, in_buf)
+        regs = struct.unpack( "7"+self._pack, out_buf )
         return regs
 
     def cpuid(self, eax, ecx):
         # add ecx
-        in_buf = struct.pack( "4"+_PACK, eax, 0, ecx, 0)
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_CPUID(), in_buf)
-        return struct.unpack( "4"+_PACK, out_buf )
+        in_buf = struct.pack( "4"+self._pack, eax, 0, ecx, 0)
+        out_buf = self.ioctl(IOCTL_CPUID, in_buf)
+        return struct.unpack( "4"+self._pack, out_buf )
 
     def alloc_phys_mem(self, num_bytes, max_addr):
-        in_buf = struct.pack( "2"+_PACK, num_bytes, max_addr)
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_ALLOC_PHYSMEM(), in_buf)
-        return struct.unpack( "2"+_PACK, out_buf )
+        in_buf = struct.pack( "2"+self._pack, num_bytes, max_addr)
+        out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
+        return struct.unpack( "2"+self._pack, out_buf )
 
     def read_mmio_reg(self, phys_address, size):
-        in_buf = struct.pack( "2"+_PACK, phys_address, size)
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_RDMMIO(), in_buf)
+        in_buf = struct.pack( "2"+self._pack, phys_address, size)
+        out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
         if size == 8:
             value = struct.unpack( '=Q', out_buf[:size] )[0]
         elif size == 4:
@@ -324,8 +314,8 @@ class LinuxHelper:
         return value
 
     def write_mmio_reg(self, phys_address, size, value):
-        in_buf = struct.pack( "3"+_PACK, phys_address, size, value )
-        out_buf = fcntl.ioctl( _DEV_FH, IOCTL_WRMMIO(), in_buf )
+        in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
+        out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
         return
         
     def kern_get_EFI_variable_full(self, name, guid):
@@ -353,7 +343,7 @@ class LinuxHelper:
         
         in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
         buffer = array.array("c", in_buf)
-        stat = fcntl.ioctl(_DEV_FH, IOCTL_GET_EFIVAR(), buffer, True)
+        stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
         new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (status == 0x5):
@@ -361,7 +351,7 @@ class LinuxHelper:
             in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
             buffer = array.array("c", in_buf)
             try:
-                stat = fcntl.ioctl(_DEV_FH, IOCTL_GET_EFIVAR(), buffer, True)
+                stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
             except IOError:
                 logger().error("IOError IOCTL GetUEFIvar\n")
                 return (off, buf, hdr, None, guid, attr)                    
@@ -440,7 +430,7 @@ class LinuxHelper:
         
         in_buf = struct.pack('15I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
         buffer = array.array("c", in_buf)        
-        stat = fcntl.ioctl(_DEV_FH, IOCTL_SET_EFIVAR(), buffer, True)
+        stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
         size, status = struct.unpack( "2I", buffer[:8])
 
         if (status != 0):
@@ -731,8 +721,8 @@ class LinuxHelper:
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         self.set_affinity(cpu_thread_id)
         #print "Sending SW SMI 0x%x with rax = 0x%x, rbx = 0x%x, rcx = 0x%x, rdx = 0x%x, rsi = 0x%x, rdi = 0x%x" % (SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
-        in_buf = struct.pack( "7"+_PACK, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-        fcntl.ioctl( _DEV_FH, IOCTL_SWSMI(), in_buf )
+        in_buf = struct.pack( "7"+self._pack, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+        self.ioctl(IOCTL_SWSMI, in_buf)
         return
 
 
