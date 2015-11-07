@@ -17,40 +17,40 @@ Oct 2015: Version 1.2.2 released!
 
 This version includes the following new or updated modules:
 
-#. Updated tools.smm.smm_ptr to perform exhaustive fuzzing of SMI handler for insufficient input validation pointer vulnerabilities
-#. Updated smm_dma to remove TSEGMB 8MB alignment check and to use XML "controls". Please recheck failures in smm_dma.py with the new version.
-#. Updated common.bios_smi, common.spi_lock, and common.bios_wp to use XML "controls"
-#. Updated common.uefi.s3bootscript which automatically tests protections of UEFI S3 Resume Boot Script table
-#. Updated tools.uefi.s3script_modify which allows further manual testing of protections of UEFI S3 Resume Boot Script table
-#. Added the following VMM security testing modules:
+1. Updated tools.smm.smm_ptr to perform exhaustive fuzzing of SMI handler for insufficient input validation pointer vulnerabilities
+2. Updated smm_dma to remove TSEGMB 8MB alignment check and to use XML "controls". Please recheck failures in smm_dma.py with the new version.
+3. Updated common.bios_smi, common.spi_lock, and common.bios_wp to use XML "controls"
+4. Updated common.uefi.s3bootscript which automatically tests protections of UEFI S3 Resume Boot Script table
+5. Updated tools.uefi.s3script_modify which allows further manual testing of protections of UEFI S3 Resume Boot Script table
+6. Added the following VMM security testing modules:
     * tools.vmm.cpuid_fuzz to test CPUID instruction emulation by VMMs
     * tools.vmm.iofuzz to test port I/O emulation by VMMs
     * tools.vmm.msr_fuzz to test CPU Model Specific Registers (MSR) emulation by VMMs
     * tools.vmm.pcie_fuzz to test PCIe device memory-mapped I/O (MMIO) and I/O ranges emulation by VMMs
     * tools.vmm.pcie_overlap_fuzz to test handling of overlapping PCIe device MMIO ranges by VMMs
-#. Added tools.vmm.venom to test for VENOM vulnerability
+7. Added tools.vmm.venom to test for VENOM vulnerability
 
 This version includes the following new functionality:
 
-#. Added hal.cpu component to access x86 CPU functionality. Removed hal.cr which merged to hal.cpu
-#. Added ``chipsec_util cpu`` utility, removed ``chipsec_util cr``
-#. Added S3 boot script opcodes encoding functionality in hal.uefi_platform
-#. Added hal.iommu, cfg/iommu.xml and ``chipsec_util iommu`` to access IOMMU/VT-d hardware
-#. Added ``chipsec_util io list`` to list predefined I/O BARs
-#. Added support for Broadwell, Skylake, IvyTown, Jaketown and Haswell Server CPU families
-#. Added ability to define I/O BARs in XML configuration using ``register`` attriute similarly to MMIO BARs
-#. Added UEFI firmware volume assembling functionality in hal.uefi
-#. Implemented alloc_phys_mem in EFI helper
+1. Added hal.cpu component to access x86 CPU functionality. Removed hal.cr which merged to hal.cpu
+2. Added ``chipsec_util cpu`` utility, removed ``chipsec_util cr``
+3. Added S3 boot script opcodes encoding functionality in hal.uefi_platform
+4. Added hal.iommu, cfg/iommu.xml and ``chipsec_util iommu`` to access IOMMU/VT-d hardware
+5. Added ``chipsec_util io list`` to list predefined I/O BARs
+6. Added support for Broadwell, Skylake, IvyTown, Jaketown and Haswell Server CPU families
+7. Added ability to define I/O BARs in XML configuration using ``register`` attriute similarly to MMIO BARs
+8. Added UEFI firmware volume assembling functionality in hal.uefi
+9. Implemented alloc_phys_mem in EFI helper
 
 This version includes the following fixes:
 
-#. When calling alloc_phys_mem, the argument to set maximum physical address (max_pa) for allocation is ignored on linux. A message will be printed in dmesg if the allocation is above the max_pa that is passed in, but the call will return anyway.
+1. When calling alloc_phys_mem, the argument to set maximum physical address (max_pa) for allocation is ignored on linux. A message will be printed in dmesg if the allocation is above the max_pa that is passed in, but the call will return anyway.
 
 This version has the following known issues:
 
-#. Decompression of images in SPI flash parsing is not available in UEFI shell.
-#. UEFI Shell environment does not support ``cpuid`` or ``get_thread_count``. There are functions that simply warn that they are not supported.
-#. Size of PCIEXBAR (MMCFG) is calculated incorrectly
+1. Decompression of images in SPI flash parsing is not available in UEFI shell.
+2. UEFI Shell environment does not support ``cpuid`` or ``get_thread_count``. There are functions that simply warn that they are not supported.
+3. Size of PCIEXBAR (MMCFG) is calculated incorrectly
 
 
 
