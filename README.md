@@ -58,51 +58,51 @@ June 2015: Version 1.2.0 released!
 
 This version includes the following new or updated modules:
 
-#. Merged common.secureboot.keys module into common.secureboot.variables
+1. Merged common.secureboot.keys module into common.secureboot.variables
 module
-#. Updated tools.secureboot.te module to be able to test PE/TE issue on
+2. Updated tools.secureboot.te module to be able to test PE/TE issue on
 Linux or UEFI shell
-#. Updated tools.smm.smm_ptr module
+3. Updated tools.smm.smm_ptr module
 
 This version includes the following updates:
 
-#. Added the *controls* abstraction. Modules are encouraged to use
+1. Added the *controls* abstraction. Modules are encouraged to use
 ``get_control`` and ``set_control`` when interacting with platform
 registers. This permits greater flexibility in case the register that
 controls a given feature or configuration changes between platform
 generations. The controls are defined in the platform XML file. At this
 time, only a small number of controls are defined. We plan to move
 existing modules over to this new mechanism.
-#. Added XML Schema for the XML configuration files
-#. Support for reading, writing, and listing UEFI variables from the
+2. Added XML Schema for the XML configuration files
+3. Support for reading, writing, and listing UEFI variables from the
 UEFI Shell environment has been added.
-#. Added support for decompression while SPI flash parsing via
+4. Added support for decompression while SPI flash parsing via
 ``decode`` or ``uefi decode`` commands in Linux
-#. Added basic ACPI table parsing to HAL (RSDP, RSDT/XSDT, APIC, DMAR)
-#. Added UEFI tables searching and parsing to HAL (EFI system table,
+5. Added basic ACPI table parsing to HAL (RSDP, RSDT/XSDT, APIC, DMAR)
+6. Added UEFI tables searching and parsing to HAL (EFI system table,
 runtime services table, boot services table, DXE services table, EFI
 configuration table)
-#. Added DIMM Serial Presence Detect (SPD) ROM dumping and parsing to
+7. Added DIMM Serial Presence Detect (SPD) ROM dumping and parsing to
 HAL
-#. Added ``uefi s3bootscript`` command parsing the S3 boot script to
+8. Added ``uefi s3bootscript`` command parsing the S3 boot script to
 chipsec_util.py
 #. Added virtual-to-physical address translation function to
 Linux/EFI/Windows helpers
-#. Added support of server platforms (Haswell server and Ivy Town) to
+9. Added support of server platforms (Haswell server and Ivy Town) to
 chipset.py
 
 This version has the following known issues:
 
-#. Decompression of images in SPI flash parsing is not available in UEFI
+1. Decompression of images in SPI flash parsing is not available in UEFI
 shell.
-#. When calling alloc_phys_mem, the argument to set maximum physical
+2. When calling alloc_phys_mem, the argument to set maximum physical
 address (max_pa) for allocation is ignored on linux. A message will be
 printed in dmesg if the allocation is above the max_pa that is passed
 in, but the call will return anyway.
-#. UEFI Shell environment does not support ``cpuid`` or
+3. UEFI Shell environment does not support ``cpuid`` or
 ``get_thread_count``. There are functions that simply warn that they are
 not supported.
-#. Size of PCIEXBAR (MMCFG) is calculated incorrectly
+4. Size of PCIEXBAR (MMCFG) is calculated incorrectly
 
 
 March 2015: [A New Class of Vulnerabilities in SMI Handlers](https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf) and release of smm_ptr tool. 
