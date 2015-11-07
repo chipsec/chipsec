@@ -57,6 +57,9 @@
 
 <xs:attributeGroup name="iobar_attr">
   <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="register" type="xs:string" use="optional"/>
+  <xs:attribute name="base_field" type="xs:string" use="optional"/>
+  <xs:attribute name="enable_field" type="xs:string" use="optional"/>
   <xs:attribute name="bus" type="xs:string" use="optional"/>
   <xs:attribute name="dev" type="xs:string" use="optional"/>
   <xs:attribute name="fun" type="xs:string" use="optional"/>

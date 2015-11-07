@@ -41,12 +41,22 @@ from time import localtime, strftime
 
 import chipsec.logger
 import chipsec.chipset
+import chipsec.defines
 
+class ModuleResult:
+    FAILED  = 0
+    PASSED  = 1
+    WARNING = 2
+    SKIPPED = 3
+    DEPRECATED = 4
+    ERROR   = -1
 
+    
 class BaseModule( object ):
     def __init__(self):
         self.cs = chipsec.chipset.cs()
         self.logger = chipsec.logger.logger()
+        self.res = ModuleResult.PASSED
 
     def is_supported(self):
         """
@@ -59,6 +69,17 @@ class BaseModule( object ):
         """
         return True
 
+    def update_res(self, value):
+        if self.res == ModuleResult.WARNING:
+            if value == ModuleResult.FAILED \
+            or value == ModuleResult.ERROR:
+                self.res = value
+        elif self.res == ModuleResult.FAILED:
+            if value == ModuleResult.ERROR:
+                self.res = value
+        else: # PASSED or SKIPPED or DEPRECATED
+            self.res = value
+        
     def run( self, module_argv ):
         raise NotImplementedError('sub class should overwrite the run() method')
 
@@ -81,13 +102,6 @@ MTAG_METAS = {
 MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])
 
 
-class ModuleResult:
-    FAILED  = 0
-    PASSED  = 1
-    WARNING = 2
-    SKIPPED = 3
-    DEPRECATED = 4
-    ERROR   = -1
 
 
 #

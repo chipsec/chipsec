@@ -183,17 +183,14 @@ _rdmsr:
 _wrmsr: 
     push rax
     push rcx
-    push rdx
 
     ; move msr_num to rcx 
     mov rcx, rdi
     ; move msr_lo from rdx to rax
     mov rax, rsi
     ; move msr_hi to rdx
-    mov rdx, rdx
     wrmsr
 
-    pop rdx
     pop rcx
     pop rax
     ret

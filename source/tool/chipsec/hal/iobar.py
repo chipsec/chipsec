@@ -48,6 +48,7 @@ import chipsec.chipset
 #from chipsec.hal.hal_base import HALBase
 from chipsec.logger import logger
 
+DEFAULT_IO_BAR_SIZE = 0x100
 
 class IOBARRuntimeError (RuntimeError):
     pass
@@ -76,21 +77,28 @@ class iobar:
     # Get base address of I/O range by IO BAR name
     #
     def get_IO_BAR_base_address( self, bar_name ):
-        if self.is_IO_BAR_defined( bar_name):
-            bar = self.cs.Cfg.IO_BARS[ bar_name ]
-        else:
+        bar = self.cs.Cfg.IO_BARS[ bar_name ]
+        if bar is None or bar == {}:
             raise IOBARNotFoundError, ('IOBARNotFound: %s' % bar_name)
 
-        base = self.cs.pci.read_word( int(bar['bus'],16), int(bar['dev'],16), int(bar['fun'],16), int(bar['reg'],16) )
-        if 'enable_bit' in bar:
-            en_mask = 1 << int(bar['enable_bit'])
-            if ( 0 == base & en_mask ): logger().warn('%s is disabled' % bar_name)
+        if 'register' in bar:
+            bar_reg   = bar['register']
+            if 'base_field' in bar:
+                base_field = bar['base_field']
+                base = chipsec.chipset.read_register_field( self.cs, bar_reg, base_field, preserve_field_position=True )
+            else:
+                base = chipsec.chipset.read_register( self.cs, bar_reg )
+        else:
+            # this method is not preferred
+            base = self.cs.pci.read_word( int(bar['bus'],16), int(bar['dev'],16), int(bar['fun'],16), int(bar['reg'],16) )
+
         if 'mask'   in bar: base = base & int(bar['mask'],16)
         if 'offset' in bar: base = base + int(bar['offset'],16)
-        size = int(bar['size'],16) if ('size' in bar) else 0x100
+        size = int(bar['size'],16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
-        if logger().VERBOSE: logger().log( '[iobar] %s: 0x%016X (size = 0x%X)' % (bar_name,base,size) )
+        if logger().VERBOSE: logger().log( '[iobar] %s: 0x%04X (size = 0x%X)' % (bar_name,base,size) )
         return base, size
+
 
     #
     # Read I/O register from I/O range defined by I/O BAR name
@@ -113,6 +121,41 @@ class iobar:
         io_port = bar_base + offset
         if offset > bar_size: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
         return self.cs.io._write_port( io_port, value, size )
+
+
+    #
+    # Check if I/O range is enabled by BAR name
+    #
+    def is_IO_BAR_enabled( self, bar_name ):
+        bar = self.cs.Cfg.IO_BARS[ bar_name ]
+        is_enabled = True
+        if 'register' in bar:
+            bar_reg = bar['register']
+            if 'enable_field' in bar:
+                bar_en_field = bar['enable_field']
+                is_enabled = (1 == chipsec.chipset.read_register_field( self.cs, bar_reg, bar_en_field ))
+        return is_enabled
+
+
+    def list_IO_BARs( self ):
+        logger().log('')
+        logger().log( '--------------------------------------------------------------------------------' )
+        logger().log( ' I/O Range    | BAR Register   | Base             | Size     | En? | Description' )
+        logger().log( '--------------------------------------------------------------------------------' )
+        for _bar_name in self.cs.Cfg.IO_BARS:
+            if not self.is_IO_BAR_defined( _bar_name ): continue
+            _bar = self.cs.Cfg.IO_BARS[ _bar_name ]
+            (_base,_size) = self.get_IO_BAR_base_address( _bar_name )
+            _en = self.is_IO_BAR_enabled( _bar_name )
+
+            if 'register' in _bar:
+                _s = _bar['register']
+                if 'offset' in _bar: _s += (' + 0x%X' % int(_bar['offset'],16))
+            else:
+                _s = '%02X:%02X.%01X + %s' % ( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
+
+            logger().log( ' %-12s | %-14s | %016X | %08X | %d   | %s' % (_bar_name, _s, _base, _size, _en, _bar['desc']) )
+
 
     #
     # Dump I/O range by I/O BAR name

@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<configuration platform="IVT">
+<!-- XML configuration file for Ivytown
+-->
+  <registers>
+
+    <!-- B:D.F 00:12.6 -->
+    <register name="PCI0.0.0_SMRAMC" type="pcicfg" bus="0" dev="12" fun="6" offset="0x4c" size="1" desc="System Management RAM Control">
+        <field name="D_OPEN"    bit="6"     size="1"/>
+        <field name="D_CLS"     bit="5"     size="1"/>
+        <field name="D_LCK"     bit="4"     size="1"/>
+        <field name="G_SMRAME"  bit="3"     size="1"/>
+        <field name="C_BASE_SEG" bit="0"    size="3"/>
+    </register>
+
+    <register name="VTBAR"     type="pcicfg" bus="0" dev="5" fun="0" offset="0x180" size="4" desc="VT BAR Register">
+      <field name="Enable" bit="0"  size="1"  desc="Enable"/>
+      <field name="Base"   bit="13" size="19" desc="VTD Base Address"/>
+    </register>
+    
+    <register name="TSEG" type="pcicfg" bus="0" dev="5" fun="0" offset="0xA8" size="8" desc="TSEG Memory Base">
+      <field name="base"  bit="20" size="12" desc="Base address"/>
+      <field name="limit" bit="52" size="12" desc="Limit address"/>
+    </register>
+    <register name="TSEG_BASE" type="pcicfg" bus="0" dev="5" fun="0" offset="0xA8" size="4" desc="TSEG Memory Base">
+      <field name="base"  bit="20" size="12" desc="Base address"/>
+    </register>
+    <register name="TSEG_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0xAC" size="4" desc="TSEG Memory Limit">
+      <field name="limit" bit="20" size="12" desc="Limit address"/>
+    </register>
+    
+  </registers>
+  
+</configuration>

@@ -35,14 +35,13 @@ This module common.bios_wp will fail if SMM-based protection is not correctly co
 """
 
 from chipsec.module_common import *
-TAGS = [MTAG_BIOS]
-
 from chipsec.hal.mmio import *
 from chipsec.hal.spi import *
 
 import fnmatch
 import os
 
+TAGS = [MTAG_BIOS]
 
 class bios_wp(BaseModule):
 
@@ -58,13 +57,15 @@ class bios_wp(BaseModule):
         #
         # BIOS Control Register
         #
-        reg_value = chipsec.chipset.read_register(self.cs, 'BC')
-        chipsec.chipset.print_register(self.cs, 'BC', reg_value)
+        #reg_value = chipsec.chipset.read_register(self.cs, 'BC')
+        #chipsec.chipset.print_register(self.cs, 'BC', reg_value)
 
-        ble    = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
-        bioswe = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE')
-        smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
-        #control_smmbwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
+        #ble    = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
+        ble = chipsec.chipset.get_control(self.cs, 'BiosLockEnable', with_print=True)
+        #bioswe = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE')
+        bioswe = chipsec.chipset.get_control(self.cs, 'BiosWriteEnable')
+        #smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
+        smmbwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
 
         # Is the BIOS flash region write protected?
         write_protected = 0

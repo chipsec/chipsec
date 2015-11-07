@@ -294,11 +294,13 @@ class EfiHelper:
         (reax, rebx, recx, redx)=edk2.cpuid(eax,ecx)
         return (reax, rebx, recx, redx)
     
-    def alloc_phys_mem( length, max_pa ):
-        logger().log_warning("EFI helper has not implemented alloc_phys_mem yet")
-        return 0
+    def alloc_phys_mem( self, length, max_pa ):
+        # temporary WA using malloc
+        va = edk2.allocphysmem(length, max_pa)
+        pa = self.va2pa(va[0])
+        return (va[0], pa)
 
-    def get_descriptor_table( cpu_thread_id, desc_table_code ):
+    def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
         logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
         return 0
 

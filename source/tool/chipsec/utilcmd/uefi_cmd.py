@@ -51,6 +51,8 @@ def uefi(argv):
     >>> chipsec_util uefi nvram[-auth] <fw_type> [rom_file]
     >>> chipsec_util uefi tables
     >>> chipsec_util uefi s3bootscript [script_address]
+    >>> chipsec_util uefi assemble <GUID> freeform none|lzma|tiano <raw_file> <uefi_file>
+    >>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <bios_rom> <modified_bios_rom> <uefi_file>
 
     For a list of fw types run:
 
@@ -59,6 +61,7 @@ def uefi(argv):
     Examples:
 
     >>> chipsec_util uefi var-list
+    >>> chipsec_util uefi var-find PK
     >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
     >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
     >>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
@@ -68,6 +71,8 @@ def uefi(argv):
     >>> chipsec_util uefi keys db.bin
     >>> chipsec_util uefi tables
     >>> chipsec_util uefi s3bootscript
+    >>> chipsec_util uefi assemble AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE freeform lzma uefi_file.raw uefi_file.bin
+    >>> chipsec_util uefi replace  AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE bios.bin modified_bios.bin uefi_file.bin
     """
        
     if 3 > len(argv):
@@ -157,7 +162,7 @@ def uefi(argv):
 
         _vars = _uefi.list_EFI_variables()
         if _vars is None:
-            logger().log_warn( 'Could not enumerate UEFI variables (non-UEFI OS?)' )
+            logger().log_warning( 'Could not enumerate UEFI variables (non-UEFI OS?)' )
             return
 
         _input_var = argv[3]
@@ -253,6 +258,95 @@ def uefi(argv):
             script_entries = chipsec.hal.uefi.parse_script( script_all, True )               
         else:
             (bootscript_PAs,parsed_scripts) = _uefi.get_s3_bootscript( True )
+
+    elif op in ['insert_before', 'insert_after', 'replace']:
+
+        if len(argv) < 7:
+            print uefi.__doc__
+            return
+
+        (guid, rom_file, new_file, efi_file) = argv[3:7]
+
+        commands = {
+            'insert_before' :  CMD_UEFI_FILE_INSERT_BEFORE,
+            'insert_after'  :  CMD_UEFI_FILE_INSERT_AFTER,
+            'replace'       :  CMD_UEFI_FILE_REPLACE
+        }
+
+        if get_guid_bin(guid) == '':
+            print '*** Error *** Invalid GUID: %s' % guid
+            return
+
+        if not os.path.isfile(rom_file):
+            print '*** Error *** File doesn\'t exist: %s' % rom_file
+            return
+
+        if not os.path.isfile(efi_file):
+            print '*** Error *** File doesn\'t exist: %s' % efi_file
+            return
+
+        rom_image = chipsec.file.read_file(rom_file)
+        efi_image = chipsec.file.read_file(efi_file)
+        new_image = modify_uefi_region(rom_image, commands[op], guid, efi_image)
+        chipsec.file.write_file(new_file, new_image)
+
+    elif op == 'remove':
+
+        if len(argv) < 6:
+            print uefi.__doc__
+            return
+
+        (guid, rom_file, new_file) = argv[3:6]
+
+        if get_guid_bin(guid) == '':
+            print '*** Error *** Invalid GUID: %s' % guid
+            return
+
+        if not os.path.isfile(rom_file):
+            print '*** Error *** File doesn\'t exist: %s' % rom_file
+            return
+
+        rom_image = chipsec.file.read_file(rom_file)
+        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REMOVE, guid)
+        chipsec.file.write_file(new_file, new_image)
+
+    elif op == 'assemble':
+
+        compression = {'none': 0, 'tiano': 1, 'lzma': 2}
+
+        if len(argv) < 8:
+            print uefi.__doc__
+            return
+
+        (guid, file_type, comp, raw_file, efi_file) = argv[3:8]
+
+        if get_guid_bin(guid) == '':
+            print '*** Error *** Invalid GUID: %s' % guid
+            return
+
+        if not os.path.isfile(raw_file):
+            print '*** Error *** File doesn\'t exist: %s' % raw_file
+            return
+
+        if comp not in compression:
+            print '*** Error *** Unknown compression: %s' % comp
+            return
+
+        compression_type = compression[comp]
+
+        if file_type == 'freeform':
+            raw_image  = chipsec.file.read_file(raw_file)
+            wrap_image = assemble_uefi_raw(raw_image)
+            if compression_type > 0:
+                comp_image = compress_image(_uefi, wrap_image, compression_type)
+                wrap_image = assemble_uefi_section(comp_image, len(wrap_image), compression_type)
+            uefi_image = assemble_uefi_file(guid, wrap_image)
+            chipsec.file.write_file(efi_file, uefi_image)
+        else:
+            print '*** Error *** Unknow file type: %s' % file_type
+            return
+
+        logger().log( "[CHIPSEC]  UEFI file was successfully assembled! Binary file size: %d, compressed UEFI file size: %d" % (len(raw_image), len(uefi_image)) )
 
     else:
         logger().error( "Unknown uefi command '%s'" % op )

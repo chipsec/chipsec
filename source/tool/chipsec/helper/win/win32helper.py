@@ -780,6 +780,38 @@ class Win32Helper:
         out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
         return
 
+    def _get_handle_for_pid( self, pid=0, ro=True ):
+        if pid == 0:
+            pHandle = win32process.GetCurrentProcess()
+        else:
+            flags = win32con.PROCESS_QUERY_INFORMATION
+            if not ro:
+                flags |= wn32con.PROCESS_SET_INFORMATION
+            try:
+                pHandle = win32api.OpenProcess(flags, 0, pid)
+            except pywintypes.error, e:
+                print "unable to open a process handle"
+                raise ValueError, e
+        return pHandle
+
+    def set_affinity( self, value ):
+        pHandle = self._get_handle_for_pid(0, False)
+        current = win32process.GetProcessAffinityMask(pHandle)[0]
+        try:
+            win32process.SetProcessAffinityMask(pHandle, current)
+        except win32process.error, e:
+            print "unable to set process affinity"
+            raise ValueError, e
+        return current
+
+    def get_affinity( self ):
+        pHandle = self._get_handle_for_pid()
+        try:
+            return win32process.GetProcessAffinityMask(pHandle)[0]
+        except win32process.error, e:
+            print "unable to get the running cpu"
+            raise ValueError, e
+            
     #
     # CPUID
     #

@@ -46,9 +46,10 @@ from chipsec.hal.physmem     import Memory
 from chipsec.hal.msr         import Msr
 from chipsec.hal.ucode       import Ucode
 from chipsec.hal.io          import PortIO
-from chipsec.hal.cr          import CrRegs
+#from chipsec.hal.cr          import CrRegs
 from chipsec.hal.cpuid       import CpuID
 #from chipsec.hal.mmio        import *
+import chipsec.hal.cpu
 
 import chipsec.hal.mmio as mmio
 import chipsec.hal.iobar as iobar 
@@ -92,6 +93,7 @@ CHIPSET_ID_BDW     = 7
 CHIPSET_ID_QRK     = 8
 CHIPSET_ID_AVN     = 9
 CHIPSET_ID_HSX     = 10
+CHIPSET_ID_SKL     = 11
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -106,9 +108,10 @@ CHIPSET_CODE_BDW     = 'BDW'
 CHIPSET_CODE_QRK     = 'QRK'
 CHIPSET_CODE_AVN     = 'AVN'
 CHIPSET_CODE_HSX     = 'HSX'
+CHIPSET_CODE_SKL     = 'SKL'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX]
-CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW]
+CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_CODE_SKL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
@@ -150,11 +153,15 @@ Chipset_Dictionary = {
 0x1600 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
 0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
 
+# 6th Generation Core Processor Family (Skylake)
+0x190F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : 'SKL',  'longname' : 'Desktop 6th Generation Core Processor Dual Core (Skylake CPU / Sunrise Point PCH)' },
+0x191F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : 'SKL',  'longname' : 'Desktop 6th Generation Core Processor Quad Core (Skylake CPU / Sunrise Point PCH)' },
+
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
 
 # Bay Trail SoC
-0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail' },
+0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail SoC' },
 
 #
 # Atom based SoC platforms
@@ -224,7 +231,8 @@ class Chipset:
         self.msr        = Msr      ( self )
         self.ucode      = Ucode    ( self )
         self.io         = PortIO   ( self )
-        self.cr         = CrRegs   ( self )
+        self.cpu        = chipsec.hal.cpu.CPU( self )
+        #self.cr         = CrRegs   ( self )
         self.cpuid      = CpuID    ( self )
         #
         # All HAL components which use above 'basic primitive' HAL components
@@ -291,6 +299,17 @@ class Chipset:
     def print_chipset(self):
         logger().log( "[*] Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
 
+    def is_core(self):
+        if self.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE: return True
+        else: return False
+    
+    def is_server(self):
+        if self.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_XEON: return True
+        else: return False
+        
+    def is_atom(self):
+        if self.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_ATOM: return True
+        else: return False
 
     ##################################################################################
     #
@@ -556,8 +575,7 @@ def set_register_field( _cs, reg_name, reg_value, field_name, field_value ):
     reg_value |= ((field_value & field_mask) << field_bit)
     return reg_value
     
-# @TODO: add cpu_thread!
-def read_register_field( _cs, reg_name, field_name, preserve_field_position=False ):
+def read_register_field( _cs, reg_name, field_name, preserve_field_position=False, cpu_thread=0 ):
     reg_value = read_register( _cs, reg_name )
     return get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position )
 
@@ -620,11 +638,13 @@ def print_register( _cs, reg_name, reg_val ):
 
 
 
-def get_control( _cs, control_name, cpu_thread=0 ):
+def get_control( _cs, control_name, cpu_thread=0, with_print=0 ):
     control = _cs.Cfg.CONTROLS[ control_name ]
     reg     = control['register']
     field   = control['field']
-    return chipsec.chipset.read_register_field( _cs, reg, field )    
+    reg_data = chipsec.chipset.read_register(_cs, reg)
+    if with_print: chipsec.chipset.print_register(_cs, reg, reg_data)
+    return chipsec.chipset.get_register_field( _cs, reg, reg_data, field )    
 
 def set_control( _cs, control_name, control_value, cpu_thread=0 ):
     control = _cs.Cfg.CONTROLS[ control_name ]

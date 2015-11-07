@@ -37,6 +37,7 @@ import os
 import fnmatch
 import re
 import errno
+import shutil
 
 import chipsec.file
 from chipsec.logger import *
@@ -173,6 +174,8 @@ class OsHelper:
     def destroy( self ):
         self.helper.delete()
 
+    def is_efi( self ):
+        return self.os_system.lower().startswith('efi')
     def is_linux( self ):
         return ('linux' == self.os_system.lower())
     def is_windows( self ):
@@ -307,7 +310,16 @@ class OsHelper:
     #
     def cpuid( self, eax, ecx ):
         return self.helper.cpuid( eax, ecx )
-
+        
+    #
+    # Affinity
+    #
+    def get_affinity( self ):
+        return self.helper.get_affinity()
+        
+    def set_affinity( self, value ):
+        return self.helper.set_affinity( value )
+        
     #
     # Logical CPU count
     #
@@ -331,18 +343,38 @@ class OsHelper:
     #
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
         from subprocess import call
-        exe = self.helper.get_compression_tool_path( CompressionType )
-        if exe is None: return None 
-        try:
+        if (CompressionType == 0): # not compressed
+          shutil.copyfile(CompressedFileName, OutputFileName)
+        else:
+          exe = self.helper.get_compression_tool_path( CompressionType )
+          if exe is None: return None 
+          try:
             call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName) )
-        except BaseException, msg:
+          except BaseException, msg:
             logger().error( str(msg) )
             if logger().VERBOSE: logger().log_bad( traceback.format_exc() )
             return None
 
         return chipsec.file.read_file( OutputFileName )
 
+    #
+    # Compress binary with OS specific tools
+    #
+    def compress_file( self, FileName, OutputFileName, CompressionType ):
+        from subprocess import call
+        if (CompressionType == 0): # not compressed
+          shutil.copyfile(FileName, OutputFileName)
+        else:
+          exe = self.helper.get_compression_tool_path( CompressionType )
+          if exe is None: return None 
+          try:
+            call( '%s -e -o %s %s' % (exe,OutputFileName,FileName) )
+          except BaseException, msg:
+            logger().error( str(msg) )
+            if logger().VERBOSE: logger().log_bad( traceback.format_exc() )
+            return None
 
+        return chipsec.file.read_file( OutputFileName )
 
 _helper = None
 

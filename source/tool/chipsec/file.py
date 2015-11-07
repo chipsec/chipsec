@@ -46,13 +46,12 @@ import os
 from chipsec.logger import logger
 
 def read_file( filename, size=0 ):
-    # @TODO: this is Python 2.5+ syntax -- chipsec for UEFI uses Python 2.4
     #with open( filename, 'rb' ) as f:
     #  _file = f.read()
     #f.closed
 
     try:
-        f = open(filename, "rb")
+        f = open(filename, 'rb')
     except:
         logger().error( "Unable to open file '%.256s' for read access" % filename )
         return 0
@@ -63,18 +62,14 @@ def read_file( filename, size=0 ):
         _file = f.read()
     f.close()
 
-    if logger().VERBOSE:
-        logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
+    if logger().VERBOSE: logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
     return _file
 
 def write_file( filename, buffer, append=False ):
-    # @TODO: this is Python 2.5+ syntax -- chipsec for UEFI uses Python 2.4
     #with open( filename, 'wb' ) as f:
     #  f.write( buffer )
     #f.closed
-    perm = "wb"
-    if (append): perm = "ab"
-
+    perm = 'ab' if append else 'wb'
     try:
         f = open(filename, perm)
     except:
@@ -83,16 +78,12 @@ def write_file( filename, buffer, append=False ):
     f.write( buffer )
     f.close()
 
-    if logger().VERBOSE:
-        logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
+    if logger().VERBOSE: logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
     return True
 
 
-def read_chunk( f, size=1024 ):
+def read_chunk( f, size=0x1000 ):
     return f.read( size )
-# intended usage
-#for piece in iter(read1k, ''):
-#    process_data(piece)
 
 # determine if CHIPSEC is loaded as chipsec.exe or in python
 def main_is_frozen():

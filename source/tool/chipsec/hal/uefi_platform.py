@@ -671,11 +671,24 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 #################################################################################################3
 
 class S3BootScriptType:
-    EFI_BOOT_SCRIPT_TYPE_DEFAULT = 0x00
-    EFI_BOOT_SCRIPT_TYPE_AA      = 0xAA
+    EFI_BOOT_SCRIPT_TYPE_DEFAULT   = 0x00
+    EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT = 0xAA
 
 
-def decode_s3bs_opcode( data ):
+def decode_s3bs_opcode( s3bootscript_type, script_data ):
+    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == s3bootscript_type:
+       return decode_s3bs_opcode_edkcompat( script_data )
+    else:
+       return decode_s3bs_opcode_def( script_data )
+
+def encode_s3bs_opcode( s3bootscript_type, op ):
+    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == s3bootscript_type:
+       return encode_s3bs_opcode_edkcompat( op )
+    else:
+       return encode_s3bs_opcode_def( op )
+
+
+def decode_s3bs_opcode_def( data ):
     opcode  = None
     size    = None
     width   = None
@@ -690,52 +703,57 @@ def decode_s3bs_opcode( data ):
         if logger().VERBOSE: logger().log( script_opcodes[opcode] )
     except:
         pass
-    if S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == opcode:
+    if S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == opcode:
         frmt = '<BBHIQ'
         size = struct.calcsize( frmt )
         opcode, width, address, alignment, count = struct.unpack( frmt, data[ : size ] )
         op = op_io_pci_mem( opcode, size, width, address, unknown, count, data[ size : ], value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQ'
         size = struct.calcsize( frmt )
         opcode, width, address, alignment, value, mask = struct.unpack( frmt, data[ : size ] )
         op = op_io_pci_mem( opcode, size, width, address, unknown, count, None, value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQ'
         size = struct.calcsize( frmt )
         opcode, width, unknown, alignment, address, count = struct.unpack( frmt, data[ : size ] )
         op = op_io_pci_mem( opcode, size, width, address, unknown, count, data[ size : ], value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQQ'
         size = struct.calcsize( frmt )
         opcode, width, unknown, alignment, address, value, mask = struct.unpack( frmt, data[ : size ] )
         op = op_io_pci_mem( opcode, size, width, address, unknown, count, None, value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQ'
         size = struct.calcsize( frmt )
         opcode, width, unknown, alignment, address, count = struct.unpack( frmt, data[ : size ] )
         op = op_io_pci_mem( opcode, size, width, address, unknown, count, data[ size : ], value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == opcode:
         frmt = '<BBHIQQQ'
         size = struct.calcsize( frmt )
         opcode, width, unknown, alignment, address, value, mask = struct.unpack( frmt, data[ : size ] )
         op = op_io_pci_mem( opcode, size, width, address, unknown, count, None, value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
         frmt = '<BBQBB'
         size = struct.calcsize( frmt )
         opcode, slave_address, command, operation, peccheck = struct.unpack( frmt, data[ : size ] )
         op = op_smbus_execute( opcode, size, width, address, count, data[ size : ], value, mask )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<BBQ'
         size = struct.calcsize( frmt )
         opcode, dummy, duration = struct.unpack( frmt, data[ : size ] )
         op = op_stall( opcode, size, duration )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == opcode:
         frmt = '<BBHIQ'
         size = struct.calcsize( frmt )
         opcode, dummy1, dummy2, dummy3, entrypoint = struct.unpack( frmt, data[ : size ] )
         op = op_dispatch( opcode, size, entrypoint )
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE == opcode:
+        frmt = '<BBHIQQ'
+        size = struct.calcsize( frmt )
+        opcode, dummy1, dummy2, dummy3, entrypoint, context = struct.unpack( frmt, data[ : size ] )
+        op = op_dispatch( opcode, size, entrypoint, context )
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
         frmt = '<B'
         size = struct.calcsize( frmt )
         opcode, = struct.unpack( frmt, data[ : size ] )
@@ -749,39 +767,42 @@ def decode_s3bs_opcode( data ):
 #
 # @TODO: encode functions are not fully implemented
 #
-def encode_s3bs_opcode( op ):
+def encode_s3bs_opcode_def( op ):
     encoded_opcode = None
 
-    if S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == op.opcode:
+    if S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == op.opcode:
         encoded_hdr = struct.pack( '<BBHIQ', op.opcode, op.width, op.address, 0x0, op.count )
         if op.values is None: encoded_opcode = encoded_hdr + op.buffer
         else: encoded_opcode = encoded_hdr + struct.pack(  script_width_formats[op.width] * op.count, *op.values )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE == op.opcode:
         encoded_opcode = struct.pack( '<BBHIQQ', op.opcode, op.width, op.address, 0x0, op.value, op.mask )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == op.opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == op.opcode or \
+         S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == op.opcode:
         encoded_hdr = struct.pack( '<BBHIQQ', op.opcode, op.width, op.unknown, 0x0, op.address, op.count )
         if op.values is None: encoded_opcode = encoded_hdr + op.buffer
         else: encoded_opcode = encoded_hdr + struct.pack(  script_width_formats[op.width] * op.count, *op.values )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode:
         frmt = '<BBHIQQQ'
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE == op.opcode:
         encoded_opcode = struct.pack( '<BBHIQQQ', op.opcode, op.width, op.unknown, 0x0, op.address, op.value, op.mask )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
         frmt = '<BBQBB'
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_STALL_OPCODE == op.opcode:
         frmt = '<BBQ'
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
         encoded_opcode = struct.pack( '<BBHIQ', op.opcode, 0x0, 0x0, 0x0, op.entrypoint )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE == op.opcode:
+        encoded_opcode = struct.pack( '<BBHIQQ', op.opcode, 0x0, 0x0, 0x0, op.entrypoint, op.context )
+
+    elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:
         frmt = '<B'
 
     else:
@@ -790,7 +811,7 @@ def encode_s3bs_opcode( op ):
     return encoded_opcode
 
 
-def decode_s3bs_opcode_AA( data ):
+def decode_s3bs_opcode_edkcompat( data ):
     opcode = None
     width  = None
     count  = None
@@ -799,51 +820,57 @@ def decode_s3bs_opcode_AA( data ):
 
     op = None
 
-    hdr_frmt = '<BBB'
+    hdr_frmt = '<HB'
     header_size = struct.calcsize( hdr_frmt )
-    opcode, dummy, size = struct.unpack( hdr_frmt, data[ : header_size ] )
+    opcode, size = struct.unpack( hdr_frmt, data[ : header_size ] )
     opcode_data = data[ header_size : ]
     try:
         if logger().VERBOSE: logger().log( script_opcodes[opcode] )
     except:
         pass
     
-    if   S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE                == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE        == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE               == opcode:
+    if   S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE                == opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE        == opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE               == opcode:
         
         frmt = '<IIQ'
         op_size = struct.calcsize( frmt )
         width, count, address = struct.unpack( frmt, opcode_data[ : op_size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, opcode_data[ op_size : ], value, mask )
+        op = op_io_pci_mem( opcode, size, width, address, None, count, opcode_data[ op_size : ], value, mask )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE         == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE         == opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == opcode:
         frmt = '<IQ'
         sz = struct.calcsize( frmt )
         width, address = struct.unpack( frmt, opcode_data[ : sz ] )
         frmt = 2*script_width_formats[width]
         op_size = sz + struct.calcsize( frmt )
         value, mask = struct.unpack( frmt, opcode_data[ sz : op_size ] )
-        op = op_io_pci_mem( opcode, size, width, address, count, None, value, mask )
+        op = op_io_pci_mem( opcode, size, width, address, None, count, None, value, mask )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
         if logger().UTIL_TRACE or logger().VERBOSE: logger().warn( 'Cannot parse opcode %X yet' % opcode )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<Q'
         op_size = struct.calcsize( frmt )
         duration, = struct.unpack( frmt, opcode_data[ : op_size ] )
         op = op_stall( opcode, size, duration )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == opcode:
         frmt = '<Q'
         op_size = struct.calcsize( frmt )
         entrypoint, = struct.unpack( frmt, opcode_data[ : op_size ] )
         op = op_dispatch( opcode, size, entrypoint )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE == opcode:
+        frmt = '<IQQQ'
+        op_size = struct.calcsize( frmt )
+        width, address, duration, looptimes = struct.unpack( frmt, opcode_data[ : op_size ] )
+        op = op_mem_poll( opcode, size, width, address, duration, looptimes )
+
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
         op = op_terminate( opcode, size )
 
     else:
@@ -855,35 +882,37 @@ def decode_s3bs_opcode_AA( data ):
 #
 # @TODO: encode functions are not fully implemented
 #
-def encode_s3bs_opcode_AA( op ):
+def encode_s3bs_opcode_edkcompat( op ):
     encoded_opcode = None
     
-    if   S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE                == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE        == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE               == opcode:
+    if   S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE         == op.opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == op.opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == op.opcode:
         
-        frmt = '<IIQ'
-        encoded_hdr = struct.pack( frmt, op.width, op.count, op.address )
+        encoded_hdr = struct.pack( '<IIQ', op.width, op.count, op.address )
         if op.values is None: encoded_opcode = encoded_hdr + op.buffer
         else: encoded_opcode = encoded_hdr + struct.pack(  script_width_formats[op.width] * op.count, *op.values )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE         == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == opcode or \
-         S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE         == op.opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode or \
+         S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == op.opcode:
 
         frmt = '<IQ2%c' % script_width_formats[op.width]
         encoded_opcode = struct.pack( frmt, op.width, op.address, op.value, op.mask )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
         pass
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_STALL_OPCODE == op.opcode:
         frmt = '<Q'
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
         encoded_opcode = struct.pack( '<Q', op.entrypoint )
 
-    elif S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE == opcode:
+        encoded_opcode = struct.pack( '<IQQQ', op.width, op.address, op.duration, op.looptimes )
+
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:
         pass
 
     return encoded_opcode
@@ -896,11 +925,11 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
     opcode       = None
     entry_data   = None
 
-    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_AA == s3bootscript_type:
-        fhdr = '<BBB'
+    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == s3bootscript_type:
+        fhdr = '<HB'
         hdr_length = struct.calcsize(fhdr)
-        opcode, dummy, entry_length = struct.unpack( fhdr, script[ off : off + hdr_length ] )
-        if S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
+        opcode, entry_length = struct.unpack( fhdr, script[ off : off + hdr_length ] )
+        if S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
             entry_length = hdr_length
         entry_data = script[ off : off + entry_length ]
 
@@ -908,9 +937,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
             logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x%X)' % entry_length )
             return None
 
-        s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
-        #s3script_entry.header_length  = hdr_length
-        s3script_entry.decoded_opcode = decode_s3bs_opcode_AA( s3script_entry.data )
+        s3script_entry = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
 
     else: # S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
 
@@ -918,7 +945,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         hdr_length = struct.calcsize(fhdr)
         f          = fhdr + 'B'
         entry_index, entry_length, opcode = struct.unpack(f, script[ off : off + hdr_length + 1 ])
-        if S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
+        if S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == opcode:
             entry_length = hdr_length + 1
             entry_index  = -1
         entry_data = script[ off + hdr_length : off + entry_length ]
@@ -929,43 +956,49 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
 
         s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
         s3script_entry.header_length  = hdr_length
-        s3script_entry.decoded_opcode = decode_s3bs_opcode( s3script_entry.data )
+
+    s3script_entry.decoded_opcode = decode_s3bs_opcode( s3bootscript_type, s3script_entry.data )
 
     if log_script: logger().log( s3script_entry )
     return (opcode,s3script_entry)
 
 
 def encode_s3bootscript_entry( entry ):
-    s3bootscript_type = entry.script_type
-
-    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_AA == s3bootscript_type:
-        fhdr = '<BBB'
-        dummy = 0x0
-        entry_hdr_buf = struct.pack( fhdr, entry.decoded_opcode.opcode, dummy, entry.length )
-        entry_val_buf = encode_s3bs_opcode_AA( entry.decoded_opcode )
-
+    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == entry.script_type:
+        entry_hdr_buf = struct.pack( '<HB', entry.decoded_opcode.opcode, entry.length )
     else: # S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
-        fhdr       = '<II' 
-        entry_hdr_buf = struct.pack( fhdr, entry.index, entry.length )
-        entry_val_buf = encode_s3bs_opcode( entry.decoded_opcode )
+        entry_hdr_buf = struct.pack( '<II', entry.index, entry.length )
 
-    entry_buf = None
+    entry_val_buf = encode_s3bs_opcode( entry.script_type, entry.decoded_opcode )
+    entry_buf     = None
     if entry_val_buf is not None:
         entry_buf = entry_hdr_buf + entry_val_buf
     else:
-        logger().warn( 'Could not encode opcode of boot script entry (type 0x%X)' % s3bootscript_type )
+        logger().warn( 'Could not encode opcode of boot script entry (type 0x%X)' % entry.script_type )
 
     return entry_buf
 
 
-def id_s3bootscript_type( script, log_script=False ):
+def create_s3bootscript_entry_buffer( script_type, op, index = None ):
+    entry_val_buf = encode_s3bs_opcode( script_type, op )
+    length = len(entry_val_buf);    
+    if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == script_type:
+        length += struct.calcsize('<HB')
+        entry_hdr_buf = struct.pack( '<HB', op.opcode, length )
+    else: # S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
+        length += struct.calcsize('<II')
+        entry_hdr_buf = struct.pack( '<II', index, length )
+    
+    return (entry_hdr_buf + entry_val_buf)
 
+
+def id_s3bootscript_type( script, log_script=False ):
     script_header_length = 0
 
     start_op, = struct.unpack('<B', script[ : 1 ])
-    if S3BootScriptOpcode.EFI_BOOT_SCRIPT_TABLE_OPCODE == start_op:
+    if S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TABLE_OPCODE == start_op:
         if logger().VERBOSE: logger().log('S3 Boot Script AA Parser')
-        script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_AA
+        script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT
         if log_script: logger().log( '[uefi] Start opcode 0x%X' % start_op )
         script_header_length = 1 # skip start opcode
         script_header_length += 0x34

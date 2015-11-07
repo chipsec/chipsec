@@ -26,21 +26,35 @@ Components for auxiliar tasks. Setup module for installing chipsec with distutil
 """
 
 import os
-from distutils.core import setup
+from distutils.core import setup, Extension
 from distutils import dir_util
-
-WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
+import platform
 
 tool_dir = os.path.dirname(os.path.abspath(__file__))
+cfgFiles = os.listdir( 'chipsec/cfg' )
+for cfgFile in cfgFiles:
+    cfgFiles[cfgFiles.index( cfgFile )] = 'chipsec/cfg/' + cfgFile
 
-data_files = [
-              #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
-              (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
-              ("Lib/site-packages"                    , ['VERSION']),
-              #(WIN_DRIVER_INSTALL_PATH + "/win7_x86"  , ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys'])
-              #(WIN_DRIVER_INSTALL_PATH + "/winxp", ['chipsec/helper/win/winxp/chipsec_hlpr.sys'])
-             ]
+if platform.system().lower() == "windows":
+    WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
 
+    data_files = [
+                  #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
+                  (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
+                  ("Lib/site-packages", ['VERSION']),
+                  #(WIN_DRIVER_INSTALL_PATH + "/win7_x86"  , ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys'])
+                  #(WIN_DRIVER_INSTALL_PATH + "/winxp", ['chipsec/helper/win/winxp/chipsec_hlpr.sys'])
+                  ("Lib/site-packages/chipsec/cfg", cfgFiles)
+                 ]
+    extensions = []
+     
+if platform.system().lower() == "linux":
+    data_files = [("Lib/site-packages", ['VERSION']),
+                  ("Lib/site-packages/chipsec/cfg", cfgFiles)
+                 ]
+    extensions = [ Extension('cores', sources=['chipsec/helper/linux/cores.c']) ]
+    
+                 
 version      = ""
 VERSION_FILE = os.path.join( os.path.dirname( __file__ ),'VERSION' )
 if os.path.exists( VERSION_FILE ):
@@ -65,12 +79,12 @@ for current, dirs, files in os.walk(tool_dir ):
 setup(
         name            = 'chipsec',
         description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.2.1',
+        version         = '1.2.2',
         author          = 'chipsec developers',
         author_email    = '',
         url             = 'https://github.com/chipsec/chipsec',
 
         data_files      = data_files,
-        packages        = mypackages
-
+        packages        = mypackages,
+        ext_modules     = extensions
 )

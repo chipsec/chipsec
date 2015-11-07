@@ -126,9 +126,9 @@ class LinuxHelper:
         try:
             self.dev_fh = open(self.DEVICE_NAME, "r+")
         except IOError as e:
-            raise OsHelperError("Unable to open chipsec device. %s"%str(e),e.errno)
+            raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(e),e.errno)
         except BaseException as be:
-            raise OsHelperError("Unable to open chipsec device. %s"%str(be),errno.ENXIO)
+            raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(be),errno.ENXIO)
 
         self._ioctl_base = fcntl.ioctl(self.dev_fh, IOCTL_BASE) << 4
 

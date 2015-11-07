@@ -4,28 +4,31 @@ KERNEL_SRC_DIR = /lib/modules/`uname -r`/build
 EXTRA_CFLAGS = 
 VERSION=
 
-obj-m += chipsec$(VERSION).o
+#obj-m += chipsec.o
 
-ifeq ($(shell uname -m),x86_64)
-	chipsec$(VERSION)-objs := chipsec_km.o amd64/cpu.o
+
+#ifeq ($(shell uname -m),x86_64)
+ifeq ($(ARCH),i386)
+obj-m += chipsec.o
+chipsec-objs := chipsec_ko.o i386/cpu.o
+all:	clean chipsec32
 else
-	chipsec$(VERSION)-objs := chipsec_km.o i386/cpu.o
-	#chipsec$(VERSION)-objs := chipsec_km.o 
+obj-m += chipsec.o
+chipsec-objs := chipsec_km.o amd64/cpu.o
+all:	clean chipsec64
 endif
 
-all:	clean chipsec$(VERSION)
-
-ifeq ($(shell uname -m),x86_64)
-chipsec$(VERSION) : clean
+chipsec64 : clean 
+	echo $(ARCH)
+	echo $(obj-m)
+	echo $(chipsec-objs)
 	nasm -f elf64 -o amd64/cpu.o amd64/cpu.asm;
 	make -C $(KERNEL_SRC_DIR) SUBDIRS=`pwd` modules
 	cd ../../tool/chipsec/helper/linux; make
-else
-chipsec$(VERSION) : clean
+chipsec32 : clean
 	nasm -f elf32 -o i386/cpu.o i386/cpu.asm;
 	make -C $(KERNEL_SRC_DIR) SUBDIRS=`pwd` modules
 	cd ../../tool/chipsec/helper/linux; make
-endif
 
 install:
 	./run.sh

@@ -53,6 +53,11 @@ from chipsec.cfg.common import *
 from chipsec.hal.uefi_common import *
 from chipsec.hal.uefi_platform import *
 
+CMD_UEFI_FILE_REMOVE        = 0
+CMD_UEFI_FILE_INSERT_BEFORE = 1
+CMD_UEFI_FILE_INSERT_AFTER  = 2
+CMD_UEFI_FILE_REPLACE       = 3
+
 def save_vol_info( FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, file_path, CalcSum ):
     schecksum = ''
     if (CalcSum != FvChecksum): schecksum = ' *** checksum mismatch ***'
@@ -90,6 +95,16 @@ def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_da
     uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
     write_file(compressed_name, compressed_data)
     return _uefi.decompress_EFI_binary( compressed_name, uncompressed_name, compression_type )
+
+def compress_image( _uefi, image, compression_type ):
+    precomress_file = 'uefi_file.raw.comp'
+    compressed_file = 'uefi_file.raw.comp.gz'
+    write_file(precomress_file, image)
+    compressed_image = _uefi.compress_EFI_binary(precomress_file, compressed_file, compression_type)
+    write_file(compressed_file, compressed_image)
+    os.remove(precomress_file)
+    os.remove(compressed_file)
+    return compressed_image
 
 def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, parent_path, decode_log_path ):
     sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, offset, polarity)
@@ -150,6 +165,62 @@ def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, pare
                     parse_uefi_region(_uefi, SecBody[SecHeaderSize:], section_dir_path)
         sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, next_sec_offset, polarity)
         secn = secn + 1
+
+
+def modify_uefi_region(data, command, guid, uefi_file = ''):
+    RgLengthChange = 0
+    FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(data)
+    while FvOffset != None:
+        FvLengthChange = 0
+        polarity = bit_set(FvAttributes, EFI_FVB2_ERASE_POLARITY)
+        if ((FsGuid == EFI_FIRMWARE_FILE_SYSTEM2_GUID) or (FsGuid == EFI_FIRMWARE_FILE_SYSTEM_GUID)):
+            cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, FvHeaderLength, polarity)
+            while next_offset != None:
+                if (Name == guid):
+                    uefi_file_size = (len(uefi_file) + 7) & 0xFFFFFFF8
+                    CurFileOffset  = FvOffset + cur_offset  + FvLengthChange
+                    NxtFileOffset  = FvOffset + next_offset + FvLengthChange
+                    if command == CMD_UEFI_FILE_REMOVE:
+                        FvLengthChange -= (next_offset - cur_offset)
+                        logger().log( "Removing UEFI file with GUID=%s at offset=%08X, size change: %d bytes" % (Name, CurFileOffset, FvLengthChange) )
+                        data = data[:CurFileOffset] + data[NxtFileOffset:]
+                    elif command == CMD_UEFI_FILE_INSERT_BEFORE:
+                        FvLengthChange += uefi_file_size
+                        logger().log( "Inserting UEFI file before file with GUID=%s at offset=%08X, size change: %d bytes" % (Name, CurFileOffset, FvLengthChange) )
+                        data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[CurFileOffset:]
+                    elif command == CMD_UEFI_FILE_INSERT_AFTER:
+                        FvLengthChange += uefi_file_size
+                        logger().log( "Inserting UEFI file after file with GUID=%s at offset=%08X, size change: %d bytes" % (Name, CurFileOffset, FvLengthChange) )
+                        data = data[:NxtFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[NxtFileOffset:]
+                    elif command == CMD_UEFI_FILE_REPLACE:
+                        FvLengthChange += uefi_file_size - (next_offset - cur_offset)
+                        logger().log( "Replacing UEFI file with GUID=%s at offset=%08X, new size: %d, old size: %d, size change: %d bytes" % (Name, CurFileOffset, len(uefi_file), Size, FvLengthChange) )
+                        data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[NxtFileOffset:]
+                    else:
+                        raise Exception('Invalid command')
+
+                if next_offset - cur_offset >= 24:
+                    FvEndOffset = FvOffset + next_offset + FvLengthChange
+
+                cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, next_offset, polarity)
+
+            if FvLengthChange >= 0:
+                data = data[:FvEndOffset] + data[FvEndOffset + FvLengthChange:]
+            else:
+                data = data[:FvEndOffset] + (abs(FvLengthChange) * '\xFF') + data[FvEndOffset:]
+
+            FvLengthChange = 0
+
+            #if FvLengthChange != 0:
+            #    logger().log( "Rebuilding Firmware Volume with GUID=%s at offset=%08X" % (FsGuid, FvOffset) )
+            #    FvHeader = data[FvOffset: FvOffset + FvHeaderLength]
+            #    FvHeader = FvHeader[:0x20] + struct.pack('<Q', FvLength) + FvHeader[0x28:]
+            #    NewChecksum = FvChecksum16(FvHeader[:0x32] + '\x00\x00' + FvHeader[0x34:])
+            #    FvHeader = FvHeader[:0x32] + struct.pack('<H', NewChecksum) + FvHeader[0x34:]
+            #    data = data[:FvOffset] + FvHeader + data[FvOffset + FvHeaderLength:]
+
+        FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(data, FvOffset + FvLength)
+    return data
 
 def parse_uefi_region( _uefi, data, uefi_region_path ):
     voln = 0

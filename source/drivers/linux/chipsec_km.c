@@ -943,7 +943,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		
 		dt_pa.quadpart = virt_to_phys((void*)dtr.base);
 		ptr[0] = dtr.limit;
+        #ifdef __x86_64__
 		ptr[1] = (uint32_t)(dtr.base >> 32);
+        #else
+        ptr[1] = 0
+        #endif
 		ptr[2] = (uint32_t)dtr.base;
 
 		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.high
@@ -1360,10 +1364,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 				ptr[0] = ioread32(ioaddr);
 				break;
             case 8:
+            #ifdef __x86_64__
                 first = ioread32(ioaddr);
                 second = ioread32( ioaddr + 4 );
                 ptr[0] = first | (second << 32);
                 break;
+            #endif
 		}
 
 		my_unxlate_dev_mem_ptr(addr, ioaddr);
@@ -1402,8 +1408,10 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 				iowrite32(value, ioaddr);
 				break;
             case 8:
+            #ifdef __x86_64__
                 iowrite32( ( value >> 32 ) & 0xFFFFFFFF, ioaddr );
                 iowrite32( value & 0xFFFFFFFF, ioaddr + 4 );
+            #endif
                 break;
 		}
 
@@ -1578,8 +1586,7 @@ init_module (void)
 }
 
 /// Function executed when unloading module
-void __exit
-cleanup_module (void)
+void cleanup_module (void)
 {
 	dbgprint ("Destroying chipsec device");
 	unregister_chrdev(chipsec_mem_major, "chipsec");

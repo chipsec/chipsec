@@ -364,9 +364,10 @@ LZMA_CUSTOM_DECOMPRESS_GUID = "EE4E5898-3914-4259-9D6E-DC7BD79403CF"
 #
 # Compression Types
 #
+COMPRESSION_TYPE_NONE = 0
 COMPRESSION_TYPE_TIANO = 1
 COMPRESSION_TYPE_LZMA  = 2
-COMPRESSION_TYPES = [COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA]
+COMPRESSION_TYPES = [COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA]
 
 
 ################################################################################################
@@ -431,9 +432,54 @@ def guid_str(guid0, guid1, guid2, guid3):
 
 # #################################################################################################
 #
-# UEFI Firmware Volume Parsing Functionality
+# UEFI Firmware Volume Parsing/Modification Functionality
 #
 # #################################################################################################
+
+def align_image(image, size=8, fill='\x00'):
+    return image.ljust(((len(image) + size - 1) / size) * size, fill)
+
+def get_guid_bin(guid):
+    values = guid.split('-')
+    if [len(x) for x in values] == [8, 4, 4, 4, 12]:
+        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in xrange(0, 12, 2)]
+        values = [int(x, 16) for x in values]
+        return struct.pack('<LHHBBBBBBBB', *tuple(values))
+    return ''
+
+def assemble_uefi_file(guid, image):
+    EFI_FFS_FILE_HEADER = "<16sHBBL"
+    FileHeaderSize      = struct.calcsize(EFI_FFS_FILE_HEADER)
+
+    Type       = EFI_FV_FILETYPE_FREEFORM
+    CheckSum   = 0x0000;
+    Attributes = 0x40
+    Size       = FileHeaderSize + len(image)
+    State      = 0xF8
+
+    SizeState  = (Size & 0x00FFFFFF) | (State << 24)
+    FileHeader = struct.pack(EFI_FFS_FILE_HEADER, get_guid_bin(guid), CheckSum, Type, Attributes, (Size & 0x00FFFFFF))
+
+    hsum = FvChecksum8(FileHeader)
+    if (Attributes & FFS_ATTRIB_CHECKSUM):
+        fsum = FvChecksum8(image)
+    else:
+        fsum = FFS_FIXED_CHECKSUM
+    CheckSum = (hsum | (fsum << 8))
+
+    return struct.pack(EFI_FFS_FILE_HEADER, get_guid_bin(guid), CheckSum, Type, Attributes, SizeState) + image
+
+def assemble_uefi_section(image, uncomressed_size, compression_type):
+    EFI_COMPRESSION_SECTION_HEADER = "<LLB"
+    SectionType   = EFI_SECTION_COMPRESSION
+    SectionSize   = struct.calcsize(EFI_COMPRESSION_SECTION_HEADER) + len(image)
+    SectionHeader = struct.pack(EFI_COMPRESSION_SECTION_HEADER, (SectionSize & 0x00FFFFFF) | (SectionType << 24), uncomressed_size, compression_type)
+    return SectionHeader + image
+
+def assemble_uefi_raw(image):
+    return align_image(struct.pack('<L', ((len(image) + 4) & 0x00FFFFFF) + (EFI_SECTION_RAW << 24)) + image)
+
+
 
 def FvSum8(buffer):
     sum8 = 0
@@ -725,23 +771,29 @@ S3_BOOTSCRIPT_VARIABLES          = [ 'AcpiGlobalVariable' ]
 MAX_S3_BOOTSCRIPT_ENTRY_LENGTH   = 0x200
 
 
-#define EFI_BOOT_SCRIPT_IO_WRITE_OPCODE 0x00
-#define EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE 0x01
-#define EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE 0x02
-#define EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE 0x03
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE 0x04
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE 0x05
-#define EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE 0x06
-#define EFI_BOOT_SCRIPT_STALL_OPCODE 0x07
-#define EFI_BOOT_SCRIPT_DISPATCH_OPCODE 0x08
-#define EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE 0x09
-#define EFI_BOOT_SCRIPT_INFORMATION_OPCODE 0x0A
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE 0x0B
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE 0x0C
-#define EFI_BOOT_SCRIPT_IO_POLL_OPCODE 0x0D
-#define EFI_BOOT_SCRIPT_MEM_POLL_OPCODE 0x0E
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE 0x0F
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE 0x10
+#
+# MdePkg\Include\Pi\PiS3BootScript.h
+#
+#//*******************************************
+#// EFI Boot Script Opcode definitions
+#//*******************************************
+#define EFI_BOOT_SCRIPT_IO_WRITE_OPCODE                 0x00
+#define EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE            0x01
+#define EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE                0x02
+#define EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE           0x03
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE         0x04
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE    0x05
+#define EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE            0x06
+#define EFI_BOOT_SCRIPT_STALL_OPCODE                    0x07
+#define EFI_BOOT_SCRIPT_DISPATCH_OPCODE                 0x08
+#define EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE               0x09
+#define EFI_BOOT_SCRIPT_INFORMATION_OPCODE              0x0A
+#define EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE        0x0B
+#define EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE   0x0C
+#define EFI_BOOT_SCRIPT_IO_POLL_OPCODE                  0x0D
+#define EFI_BOOT_SCRIPT_MEM_POLL_OPCODE                 0x0E
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE          0x0F
+#define EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE         0x10
 
 class S3BootScriptOpcode:
   EFI_BOOT_SCRIPT_IO_WRITE_OPCODE               = 0x00
@@ -753,6 +805,19 @@ class S3BootScriptOpcode:
   EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE          = 0x06
   EFI_BOOT_SCRIPT_STALL_OPCODE                  = 0x07
   EFI_BOOT_SCRIPT_DISPATCH_OPCODE               = 0x08
+  #EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE             = 0x09
+  #EFI_BOOT_SCRIPT_INFORMATION_OPCODE            = 0x0A
+  #EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      = 0x0B
+  #EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE = 0x0C
+  #EFI_BOOT_SCRIPT_IO_POLL_OPCODE                = 0x0D
+  #EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x0E
+  #EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE        = 0x0F
+  #EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE       = 0x10
+  #EFI_BOOT_SCRIPT_TABLE_OPCODE                  = 0xAA
+  EFI_BOOT_SCRIPT_TERMINATE_OPCODE              = 0xFF
+
+
+class S3BootScriptOpcode_MDE (S3BootScriptOpcode):
   EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE             = 0x09
   EFI_BOOT_SCRIPT_INFORMATION_OPCODE            = 0x0A
   EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      = 0x0B
@@ -761,9 +826,41 @@ class S3BootScriptOpcode:
   EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x0E
   EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE        = 0x0F
   EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE       = 0x10
-  EFI_BOOT_SCRIPT_TABLE_OPCODE                  = 0xAA
-  EFI_BOOT_SCRIPT_TERMINATE_OPCODE              = 0xFF
 
+#
+# EdkCompatibilityPkg\Foundation\Framework\Include\EfiBootScript.h
+#
+#define EFI_BOOT_SCRIPT_IO_WRITE_OPCODE               0x00
+#define EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE          0x01
+#define EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE              0x02
+#define EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE         0x03
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE       0x04
+#define EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE  0x05
+#define EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE          0x06
+#define EFI_BOOT_SCRIPT_STALL_OPCODE                  0x07
+#define EFI_BOOT_SCRIPT_DISPATCH_OPCODE               0x08
+#
+#//
+#// Extensions to boot script definitions
+#//
+#define EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               0x09
+#define EFI_BOOT_SCRIPT_INFORMATION_OPCODE            0x0A
+#define EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      0x0B
+#define EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE 0x0C
+#
+#define EFI_BOOT_SCRIPT_TABLE_OPCODE                  0xAA
+#define EFI_BOOT_SCRIPT_TERMINATE_OPCODE              0xFF
+
+class S3BootScriptOpcode_EdkCompat (S3BootScriptOpcode):
+  EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x09
+  EFI_BOOT_SCRIPT_INFORMATION_OPCODE            = 0x0A
+  EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      = 0x0B
+  EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE = 0x0C
+  EFI_BOOT_SCRIPT_TABLE_OPCODE                  = 0xAA
+
+#
+# Names of S3 Boot Script Opcodes
+#
 script_opcodes = {
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE:               "S3_BOOTSCRIPT_IO_WRITE",
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE:          "S3_BOOTSCRIPT_IO_READ_WRITE",
@@ -774,15 +871,15 @@ script_opcodes = {
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE:          "S3_BOOTSCRIPT_SMBUS_EXECUTE",
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_STALL_OPCODE:                  "S3_BOOTSCRIPT_STALL",
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE:               "S3_BOOTSCRIPT_DISPATCH",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE:             "S3_BOOTSCRIPT_DISPATCH_2_OPCODE",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_INFORMATION_OPCODE:            "S3_BOOTSCRIPT_INFORMATION",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE:      "S3_BOOTSCRIPT_PCI_CONFIG2_WRITE",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE: "S3_BOOTSCRIPT_PCI_CONFIG2_READ_WRITE",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_POLL_OPCODE:                "S3_BOOTSCRIPT_IO_POLL",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE:               "S3_BOOTSCRIPT_MEM_POLL", 
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE:        "S3_BOOTSCRIPT_PCI_CONFIG_POLL_OPCODE",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE:       "S3_BOOTSCRIPT_PCI_CONFIG2_POLL_OPCODE",
-    S3BootScriptOpcode.EFI_BOOT_SCRIPT_TABLE_OPCODE:                  "S3_BOOTSCRIPT_TABLE",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE:             "S3_BOOTSCRIPT_DISPATCH_2",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_INFORMATION_OPCODE:            "S3_BOOTSCRIPT_INFORMATION",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE:      "S3_BOOTSCRIPT_PCI_CONFIG2_WRITE",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE: "S3_BOOTSCRIPT_PCI_CONFIG2_READ_WRITE",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_POLL_OPCODE:                "S3_BOOTSCRIPT_IO_POLL",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE:               "S3_BOOTSCRIPT_MEM_POLL", 
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE:        "S3_BOOTSCRIPT_PCI_CONFIG_POLL",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE:       "S3_BOOTSCRIPT_PCI_CONFIG2_POLL",
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_TABLE_OPCODE:                  "S3_BOOTSCRIPT_TABLE",
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE:              "S3_BOOTSCRIPT_TERMINATE"
 }
 
@@ -819,6 +916,14 @@ script_width_sizes = {
   S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32  : 4,
   S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64  : 8
 }
+
+script_width_values = {
+  1 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8,
+  2 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16,
+  4 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32,
+  8 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64 
+}
+
 script_width_formats = {
   S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8   : 'B',
   S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16  : 'H',
@@ -869,37 +974,41 @@ class S3BootScriptSmbusOperation:
   PROCESS_CALL      = 0x0A
   BWBR_PROCESS_CALL = 0x0B
 
+
 class op_io_pci_mem():
-    def __init__(self, opcode, size, width, address, count, buffer, value=None, mask=None):
+    def __init__(self, opcode, size, width, address, unknown, count, buffer, value=None, mask=None):
         self.opcode  = opcode
         self.size    = size
         self.width   = width
         self.address = address
+        self.unknown = unknown
         self.count   = count
         self.value   = value
         self.mask    = mask
         self.name    = script_opcodes[ opcode ] 
         self.buffer  = buffer # data[ self.size : ]
         self.values  = None
-        if self.count is not None and self.count > 0:
+        if self.count is not None and self.count > 0 and self.buffer is not None:
             sz = self.count * script_width_sizes[ self.width ]
             if len(self.buffer) != sz:
                 logger().log( '[?] buffer size (0x%X) != Width x Count (0x%X)' % (len(self.buffer), sz) )
             else:
-                self.values = struct.unpack( ( '%d%c' % (self.count, script_width_formats[self.width]) ), self.buffer )
+                self.values = list( struct.unpack( ('<%d%c' % (self.count,script_width_formats[self.width])), self.buffer ) )
     def __str__(self):
-        str_r =          "  Opcode : %s (0x%02X)\n" % (self.name, self.opcode)
-        str_r = str_r +  "  Width  : 0x%02X (%X bytes)\n" % (self.width, script_width_sizes[self.width])
-        str_r = str_r +  "  Address: 0x%08X\n" % self.address
-        if self.value  is not None: str_r = str_r +  "  Value  : 0x%08X\n" % self.value
-        if self.mask   is not None: str_r = str_r +  "  Mask   : 0x%08X\n" % self.mask
-        if self.count  is not None: str_r = str_r +  "  Count  : 0x%X\n" % self.count
-        if self.values is not None:
+        str_r =  "  Opcode : %s (0x%04X)\n" % (self.name, self.opcode)
+        str_r += "  Width  : 0x%02X (%X bytes)\n" % (self.width, script_width_sizes[self.width])
+        str_r += "  Address: 0x%08X\n" % self.address
+        if self.value   is not None: str_r += "  Value  : 0x%08X\n" % self.value
+        if self.mask    is not None: str_r += "  Mask   : 0x%08X\n" % self.mask
+        if self.unknown is not None: str_r += "  Unknown: 0x%04X\n" % self.unknown
+        if self.count   is not None: str_r += "  Count  : 0x%X\n" % self.count
+        if self.values  is not None:
             fmt = '0x%0' + ( '%dX' % (script_width_sizes[self.width]*2) )
-            str_r = str_r + "  Values : %s\n" % ("  ".join( [fmt % v for v in self.values] ))
+            str_r += "  Values : %s\n" % ("  ".join( [fmt % v for v in self.values] ))
         elif self.buffer is not None:
-            str_r = str_r + ("  Buffer (size = 0x%X):\n" % len(self.buffer)) + dump_buffer( self.buffer, 16 )
+            str_r += ("  Buffer (size = 0x%X):\n" % len(self.buffer)) + dump_buffer( self.buffer, 16 )
         return str_r
+
 
 class op_smbus_execute():
     def __init__(self, opcode, size, slave_address, command, operation, peccheck):
@@ -911,14 +1020,18 @@ class op_smbus_execute():
         self.peccheck      = peccheck
         self.name          = script_opcodes[ opcode ] 
     def __str__(self):
-        str_r =          "  Opcode       : %s (0x%02X)\n" % (self.name, self.opcode)
-        str_r = str_r +  "  Slave Address: 0x%02X\n" % self.slave_address
-        str_r = str_r +  "  Command      : 0x%08X\n" % self.command
-        str_r = str_r +  "  Operation    : 0x%02X\n" % self.operation
-        str_r = str_r +  "  PEC Check    : %d\n" % self.peccheck
+        str_r =  "  Opcode       : %s (0x%04X)\n" % (self.name, self.opcode)
+        str_r += "  Slave Address: 0x%02X\n" % self.slave_address
+        str_r += "  Command      : 0x%08X\n" % self.command
+        str_r += "  Operation    : 0x%02X\n" % self.operation
+        str_r += "  PEC Check    : %d\n" % self.peccheck
         return str_r
 
-
+#typedef struct {
+#  UINT16  OpCode;
+#  UINT8   Length;
+#  UINT64  Duration;
+#} EFI_BOOT_SCRIPT_STALL;
 class op_stall():
     def __init__(self, opcode, size, duration):
         self.opcode   = opcode
@@ -926,21 +1039,57 @@ class op_stall():
         self.duration = duration
         self.name     = script_opcodes[ self.opcode ] 
     def __str__(self):
-        str_r =          "  Opcode  : %s (0x%02X)\n" % (self.name, self.opcode)
-        str_r = str_r +  "  Duration: 0x%08X (us)\n" % self.duration
+        str_r =  "  Opcode  : %s (0x%04X)\n" % (self.name, self.opcode)
+        str_r += "  Duration: 0x%08X (us)\n" % self.duration
         return str_r
 
+#typedef struct {
+#  UINT16                OpCode;
+#  UINT8                 Length;
+#  EFI_PHYSICAL_ADDRESS  EntryPoint;
+#} EFI_BOOT_SCRIPT_DISPATCH;
 class op_dispatch():
-    def __init__(self, opcode, size, entrypoint):
+    def __init__(self, opcode, size, entrypoint, context=None):
         self.opcode     = opcode
         self.size       = size
         self.entrypoint = entrypoint
+        self.context    = context
         self.name       = script_opcodes[ self.opcode ] 
     def __str__(self):
-        str_r =          "  Opcode     : %s (0x%02X)\n" % (self.name, self.opcode)
-        str_r = str_r +  "  Entry Point: 0x%08X\n" % self.entrypoint
+        str_r =  "  Opcode     : %s (0x%04X)\n" % (self.name, self.opcode)
+        str_r += "  Entry Point: 0x%016X\n" % self.entrypoint
+        if self.context is not None: str_r += "  Context    : 0x%016X\n" % self.context
         return str_r
 
+#typedef struct {
+#  UINT16  OpCode;
+#  UINT8   Length;
+#  UINT32  Width;
+#  UINT64  Address;
+#  UINT64  Duration;
+#  UINT64  LoopTimes;
+#} EFI_BOOT_SCRIPT_MEM_POLL;
+class op_mem_poll():
+    def __init__(self, opcode, size, width, address, duration, looptimes):
+        self.opcode    = opcode
+        self.size      = size
+        self.width     = width
+        self.address   = address
+        self.duration  = duration
+        self.looptimes = looptimes
+        self.name      = 'S3_BOOTSCRIPT_MEM_POLL' 
+    def __str__(self):
+        str_r =  "  Opcode    : %s (0x%04X)\n" % (self.name, self.opcode)
+        str_r += "  Width     : 0x%02X (%X bytes)\n" % (self.width, script_width_sizes[self.width])
+        str_r += "  Address   : 0x%016X\n" % self.address
+        str_r += "  Duration? : 0x%016X\n" % self.duration
+        str_r += "  LoopTimes?: 0x%016X\n" % self.looptimes
+        return str_r
+
+#typedef struct {
+#  UINT16  OpCode;
+#  UINT8   Length;
+#} EFI_BOOT_SCRIPT_TERMINATE;
 class op_terminate():
     def __init__(self, opcode, size):
         self.opcode     = opcode

@@ -25,7 +25,7 @@
 Main application logic and automation functions
 """
 
-__version__ = '1.2.1'
+__version__ = '1.2.2'
 
 ## These are for debugging imports
 import inspect

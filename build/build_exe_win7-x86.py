@@ -81,7 +81,8 @@ version=""
 if os.path.exists(VERSION_FILE):
     data_files.append(('.',['VERSION']))
     with open(VERSION_FILE, "r") as verFile:
-        version = "." + verFile.read()
+        version = verFile.read()
+print "VERSION: %s"%version 
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
@@ -103,7 +104,7 @@ includes = []
 setup(
         name            = 'chipsec',
         description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.0'+version,
+        version         = version,
         console         = [ 'chipsec_main.py', 'chipsec_util.py' ],
         #zipfile         = None,
         data_files      =  data_files,

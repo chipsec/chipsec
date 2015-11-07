@@ -1,0 +1,357 @@
+<?xml version="1.0"?>
+<configuration>
+<!-- XML configuration file for Intel VT-d
+     Ref: Section 10 of Intel Virtualization Technology for Directed I/O (http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/vt-directed-io-spec.pdf)
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- VT-d Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+
+    <!-- VTBAR -->
+    <register name="VTBAR_VER" type="mmio" bar="VTBAR" offset="0x00" size="4" desc="Version">
+      <field name="MIN" bit="0" size="4" desc="Minor Version Number"/>
+      <field name="MAX" bit="4" size="4" desc="Major Version Number"/>
+    </register>
+    <register name="VTBAR_CAP" type="mmio" bar="VTBAR" offset="0x08" size="4" desc="Capability">
+      <field name="ND"    bit="0"  size="2"  desc="Number of Domains Supported"/>
+      <field name="AFL"   bit="3"  size="1"  desc="Advanced Fault Logging"/>
+      <field name="RWBF"  bit="4"  size="1"  desc="Required Write-Buffer Flushing"/>
+      <field name="PLMR"  bit="5"  size="1"  desc="Protected Low-Memory Region"/>
+      <field name="PHMR"  bit="6"  size="1"  desc="Protected High-Memory Region"/>
+      <field name="CM"    bit="7"  size="1"  desc="Caching Mode"/>
+      <field name="SAGAW" bit="8"  size="5"  desc="Supported Adjusted Guest Address Width"/>
+      <field name="R0"    bit="13" size="3"  desc="Reserved"/>
+      <field name="MGAW"  bit="16" size="6"  desc="Maximum Guest Address Width"/>
+      <field name="ZLR"   bit="22" size="1"  desc="Zero Length Read"/>
+      <field name="R1"    bit="23" size="1"  desc="Reserved"/>
+      <field name="FRO"   bit="24" size="10" desc="Fault-Recording Registrer Offset"/>
+      <field name="SLLPS" bit="34" size="4"  desc="Second Level Large Page Support"/>
+      <field name="R2"    bit="38" size="1"  desc="Reserved"/>
+      <field name="PSI"   bit="39" size="1"  desc="Page Selective Invalidation"/>
+      <field name="NFR"   bit="40" size="8"  desc="Number of Fault-Recording Registers"/>
+      <field name="MAMV"  bit="48" size="6"  desc="Maximum Address Mask Value"/>
+      <field name="DWD"   bit="54" size="1"  desc="Write Draining"/>
+      <field name="DRD"   bit="55" size="1"  desc="Read Draining"/>
+      <field name="FL1GP" bit="56" size="1"  desc="First Level 1-GB Page Support"/>
+      <field name="R3"    bit="57" size="2"  desc="Reserved"/>
+      <field name="PI"    bit="59" size="1"  desc="Posted Interrupts Support"/>
+      <field name="R4"    bit="60" size="4"  desc="Reserved"/>
+    </register>
+    <register name="VTBAR_ECAP" type="mmio" bar="VTBAR" offset="0x10" size="8" desc="Global Command">
+      <field name="C"     bit="0"  size="1"  desc="Page-walk Coherency"/>
+      <field name="QI"    bit="1"  size="1"  desc="Queued Invalidation Support"/>
+      <field name="DT"    bit="2"  size="1"  desc="Device-TLB Support"/>
+      <field name="IR"    bit="3"  size="1"  desc="Interrupt Remapping Support"/>
+      <field name="EIM"   bit="4"  size="1"  desc="Extended Interrupt Mode"/>
+      <field name="R0"    bit="5"  size="1"  desc="Reserved"/>
+      <field name="PT"    bit="6"  size="1"  desc="Pass Through"/>
+      <field name="SC"    bit="7"  size="1"  desc="Snoop Control"/>
+      <field name="IRO"   bit="8"  size="10" desc="IOTLB Register Offset"/>
+      <field name="R1"    bit="18" size="2"  desc="Reserved"/>
+      <field name="MHMV"  bit="20" size="4"  desc="Maximum Handle Mask Value"/>
+      <field name="ECS"   bit="24" size="1"  desc="Extended Context Support"/>
+      <field name="MTS"   bit="25" size="1"  desc="Memory Type Support"/>
+      <field name="NEST"  bit="26" size="1"  desc="Nested Translation Support"/>
+      <field name="DIS"   bit="27" size="1"  desc="Deferred Invalidate Support"/>
+      <field name="PASID" bit="28" size="1"  desc="Process Address Space ID Support"/>
+      <field name="PRS"   bit="29" size="1"  desc="Page Request Support"/>
+      <field name="ERS"   bit="30" size="1"  desc="Execute Request Support"/>
+      <field name="SRS"   bit="31" size="1"  desc="Supervisor Request Support"/>
+      <field name="R2"    bit="32" size="1"  desc="Reserved"/>
+      <field name="NWFS"  bit="33" size="1"  desc="No Write Flag Support"/>
+      <field name="EAFS"  bit="34" size="1"  desc="Extended Accessed Flag Support"/>
+      <field name="PSS"   bit="35" size="5"  desc="PASID Size Supported"/>
+      <field name="R3"    bit="40" size="24" desc="Reserved"/>
+    </register>
+    <register name="VTBAR_GCMD" type="mmio" bar="VTBAR" offset="0x18" size="4" desc="Global Command">
+      <field name="Rsvd"  bit="0"  size="23" desc="Reserved"/>
+      <field name="CFI"   bit="23" size="1"  desc="Compatibility Format Interrupt"/>
+      <field name="SIRTP" bit="24" size="1"  desc="Set Interrupt Remap Table Pointer"/>
+      <field name="IRE"   bit="25" size="1"  desc="Interrupt Remapping Enable"/>
+      <field name="QIE"   bit="26" size="1"  desc="Queued Invalidation Enable"/>
+      <field name="WBF"   bit="27" size="1"  desc="Write Buffer Flush"/>
+      <field name="EAFL"  bit="28" size="1"  desc="Enable Advanced Fault Logging"/>
+      <field name="SFL"   bit="29" size="1"  desc="Set Fault Log"/>
+      <field name="SRTP"  bit="30" size="1"  desc="Set Root Table Pointer"/>
+      <field name="TE"    bit="31" size="1"  desc="Translation Enable"/>
+    </register>
+    <register name="VTBAR_GSTS" type="mmio" bar="VTBAR" offset="0x1C" size="4" desc="Global Status">
+      <field name="Rsvd"  bit="0"  size="23" desc="Reserved"/>
+      <field name="CFIS"  bit="23" size="1"  desc="Compatibility Format Interrupt Status"/>
+      <field name="IRTPS" bit="24" size="1"  desc="Interrupt Remap Table Pointer Status"/>
+      <field name="IRES"  bit="25" size="1"  desc="Interrupt Remapping Enable Status"/>
+      <field name="QIES"  bit="26" size="1"  desc="Queued Invalidation Enable Status"/>
+      <field name="WBFS"  bit="27" size="1"  desc="Write Buffer Flush Status"/>
+      <field name="AFLS"  bit="28" size="1"  desc="Advanced Fault Logging Status"/>
+      <field name="FLS"   bit="29" size="1"  desc="Fault Log Status"/>
+      <field name="RTPS"  bit="30" size="1"  desc="Root Table Pointer Status"/>
+      <field name="TES"   bit="31" size="1"  desc="Translation Enable Status"/>
+    </register>
+    <register name="VTBAR_RTADDR" type="mmio" bar="VTBAR" offset="0x20" size="8" desc="Root-Entry Table Address">
+      <field name="R"   bit="0" size="11"  desc="Reserved"/>
+      <field name="RTT" bit="11" size="1"  desc="Root Table Type"/>
+      <field name="RTA" bit="12" size="52" desc="Root Table Address"/>
+    </register>
+    <register name="VTBAR_CCMD" type="mmio" bar="VTBAR" offset="0x28" size="8" desc="Context Command">
+      <field name="DID"  bit="0"  size="16" desc="Device ID"/>
+      <field name="SID"  bit="16" size="16" desc="Source ID"/>
+      <field name="FM"   bit="32" size="2"  desc="Function Mask"/>
+      <field name="R"    bit="34" size="25" desc="Reserved"/>
+      <field name="CAIG" bit="59" size="2"  desc="Context Actual Invalidation Granularity"/>
+      <field name="CIRG" bit="61" size="2"  desc="Context Invalidation Request Granularity"/>
+      <field name="ICC"  bit="63" size="1"  desc="Invalidate Context-Cache"/>
+    </register>
+    <!-- TODO: variable/relative register offsets -->
+    <register name="VTBAR_IVA"   type="mmio" bar="VTBAR" offset="0x0" size="8" desc="Invalidate Address"/>
+    <register name="VTBAR_IOTLB" type="mmio" bar="VTBAR" offset="0x8" size="8" desc="IOTLB Invalidate"/>
+    <register name="VTBAR_FSTS" type="mmio" bar="VTBAR" offset="0x34" size="4" desc="Fault Status">
+      <field name="PFO" bit="0" size="1" desc="Primary Fault Overflow"/>
+      <field name="PPF" bit="1" size="1" desc="Primary Pending Fault"/>
+      <field name="AFO" bit="2" size="1" desc="Advanced Fault Overflow"/>
+      <field name="APF" bit="3" size="1" desc="Advanced Pending Fault"/>
+      <field name="IQE" bit="4" size="1" desc="Invalidation Queue Error"/>
+      <field name="ICE" bit="5" size="1" desc="Invalidation Completion Error"/>
+      <field name="ITE" bit="6" size="1" desc="Invalidation Time-out Error"/>
+      <field name="PRO" bit="7" size="1" desc="Page Request Overflow"/>
+      <field name="FRI" bit="8" size="7" desc="Fault Record Index"/>
+    </register>
+    <register name="VTBAR_FECTL" type="mmio" bar="VTBAR" offset="0x38" size="4" desc="Fault Event Control">
+      <field name="R"  bit="0"  size="30" desc="Reserved"/>
+      <field name="IP" bit="30" size="1"  desc="Interrupt Pending"/>
+      <field name="IM" bit="31" size="1"  desc="Interrupt Mask"/>
+    </register>
+    <register name="VTBAR_FEDATA" type="mmio" bar="VTBAR" offset="0x3C" size="4" desc="Fault Event Data">
+      <field name="IMD"  bit="0"  size="16" desc="Interrupt Message Data"/>
+      <field name="EIMD" bit="16" size="16" desc="Extended Interrupt Message Data"/>
+    </register>
+    <register name="VTBAR_FEADDR" type="mmio" bar="VTBAR" offset="0x40" size="4" desc="Fault Event Address">
+      <field name="R"  bit="0" size="2"  desc="Reserved"/>
+      <field name="MA" bit="2" size="30" desc="Message Address"/>
+    </register>
+    <register name="VTBAR_FEUADDR" type="mmio" bar="VTBAR" offset="0x44" size="4" desc="Fault Event Upper Address">
+      <field name="MUA" bit="0" size="32" desc="Message Upper Address"/>
+    </register>
+    <register name="VTBAR_FRCDL" type="mmio" bar="VTBAR" offset="0x0" size="8" desc="Fault Recording (Low)"/>
+    <register name="VTBAR_FRCDH" type="mmio" bar="VTBAR" offset="0x8" size="8" desc="Fault Recording (High)"/>
+    <register name="VTBAR_AFL" type="mmio" bar="VTBAR" offset="0x58" size="8" desc="Advanced Fault Log">
+      <field name="R"   bit="0" size="9"  desc="Reserved"/>
+      <field name="FLS" bit="9" size="3"  desc="Fault Log Size"/>
+      <field name="FLA" bit="0" size="52" desc="Fault Log Address"/>
+    </register>
+    <register name="VTBAR_PMEN" type="mmio" bar="VTBAR" offset="0x64" size="4" desc="Protected Memory Enable">
+      <field name="PRS" bit="0"  size="1"  desc="Protected Region Status"/>
+      <field name="EPM" bit="31" size="1"  desc="Enable Protected Memory"/>
+    </register>
+    <register name="VTBAR_PLMBASE" type="mmio" bar="VTBAR" offset="0x68" size="4" desc="Protected Memory Low Base">
+      <field name="PLMB" bit="12" size="20" desc="Protected Low-Memory Base"/>
+    </register>
+    <register name="VTBAR_PLMLIMIT" type="mmio" bar="VTBAR" offset="0x6C" size="4" desc="Protected Memory Low Limit">
+      <field name="PLML" bit="12" size="20" desc="Protected Low-Memory Limit"/>
+    </register>
+    <register name="VTBAR_PHMBASE" type="mmio" bar="VTBAR" offset="0x70" size="8" desc="Protected Memory High Base">
+      <field name="PHMB" bit="12" size="52" desc="Protected High-Memory Base"/>
+    </register>
+    <register name="VTBAR_PHMLIMIT" type="mmio" bar="VTBAR" offset="0x78" size="8" desc="Protected Memory High Limit">
+      <field name="PHML" bit="12" size="52" desc="Protected High-Memory Limit"/>
+    </register>
+    <register name="VTBAR_IQH" type="mmio" bar="VTBAR" offset="0x80" size="8" desc="Invalidation Queue Head">
+      <field name="QH" bit="4" size="15" desc="Queue Head"/>
+    </register>
+    <register name="VTBAR_IQT" type="mmio" bar="VTBAR" offset="0x88" size="8" desc="Invalidation Queue Tail">
+      <field name="QT" bit="4" size="15" desc="Queue Tail"/>
+    </register>
+    <register name="VTBAR_IQA" type="mmio" bar="VTBAR" offset="0x90" size="8" desc="Invalidation Queue Address">
+      <field name="QS"  bit="0"  size="3"  desc="Queue Size"/>
+      <field name="IQA" bit="12" size="52" desc="Invalidation Queue Base Address"/>
+    </register>
+    <register name="VTBAR_ICS" type="mmio" bar="VTBAR" offset="0x9C" size="4" desc="Invalidation Completion Status">
+      <field name="IWC"  bit="0" size="1" desc="Invalidation Wait Descriptor Complete"/>
+    </register>
+    <register name="VTBAR_IECTL"   type="mmio" bar="VTBAR" offset="0xA0" size="4" desc="Invalidation Event Control"/>
+    <register name="VTBAR_IEDATA"  type="mmio" bar="VTBAR" offset="0xA4" size="4" desc="Invalidation Event Data"/>
+    <register name="VTBAR_IEADDR"  type="mmio" bar="VTBAR" offset="0xA8" size="4" desc="Invalidation Event Address"/>
+    <register name="VTBAR_IEUADDR" type="mmio" bar="VTBAR" offset="0xAC" size="4" desc="Invalidation Event Address"/>
+    <register name="VTBAR_IRTA"    type="mmio" bar="VTBAR" offset="0xB8" size="4" desc="Invalidation Event Upper Address">
+      <field name="S"    bit="0"  size="4"  desc="Size"/>
+      <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
+      <field name="IRTA" bit="12" size="52" desc="Interrupt Remapping Table Address"/>
+    </register>
+
+    <!-- GFXVTBAR -->
+
+    <register name="GFXVTBAR_VER" type="mmio" bar="GFXVTBAR" offset="0x00" size="4" desc="Version">
+      <field name="MIN" bit="0" size="4" desc="Minor Version Number"/>
+      <field name="MAX" bit="4" size="4" desc="Major Version Number"/>
+    </register>
+    <register name="GFXVTBAR_CAP" type="mmio" bar="GFXVTBAR" offset="0x08" size="4" desc="Capability">
+      <field name="ND"    bit="0"  size="2"  desc="Number of Domains Supported"/>
+      <field name="AFL"   bit="3"  size="1"  desc="Advanced Fault Logging"/>
+      <field name="RWBF"  bit="4"  size="1"  desc="Required Write-Buffer Flushing"/>
+      <field name="PLMR"  bit="5"  size="1"  desc="Protected Low-Memory Region"/>
+      <field name="PHMR"  bit="6"  size="1"  desc="Protected High-Memory Region"/>
+      <field name="CM"    bit="7"  size="1"  desc="Caching Mode"/>
+      <field name="SAGAW" bit="8"  size="5"  desc="Supported Adjusted Guest Address Width"/>
+      <field name="R0"    bit="13" size="3"  desc="Reserved"/>
+      <field name="MGAW"  bit="16" size="6"  desc="Maximum Guest Address Width"/>
+      <field name="ZLR"   bit="22" size="1"  desc="Zero Length Read"/>
+      <field name="R1"    bit="23" size="1"  desc="Reserved"/>
+      <field name="FRO"   bit="24" size="10" desc="Fault-Recording Registrer Offset"/>
+      <field name="SLLPS" bit="34" size="4"  desc="Second Level Large Page Support"/>
+      <field name="R2"    bit="38" size="1"  desc="Reserved"/>
+      <field name="PSI"   bit="39" size="1"  desc="Page Selective Invalidation"/>
+      <field name="NFR"   bit="40" size="8"  desc="Number of Fault-Recording Registers"/>
+      <field name="MAMV"  bit="48" size="6"  desc="Maximum Address Mask Value"/>
+      <field name="DWD"   bit="54" size="1"  desc="Write Draining"/>
+      <field name="DRD"   bit="55" size="1"  desc="Read Draining"/>
+      <field name="FL1GP" bit="56" size="1"  desc="First Level 1-GB Page Support"/>
+      <field name="R3"    bit="57" size="2"  desc="Reserved"/>
+      <field name="PI"    bit="59" size="1"  desc="Posted Interrupts Support"/>
+      <field name="R4"    bit="60" size="4"  desc="Reserved"/>
+    </register>
+    <register name="GFXVTBAR_ECAP" type="mmio" bar="GFXVTBAR" offset="0x10" size="8" desc="Global Command">
+      <field name="C"     bit="0"  size="1"  desc="Page-walk Coherency"/>
+      <field name="QI"    bit="1"  size="1"  desc="Queued Invalidation Support"/>
+      <field name="DT"    bit="2"  size="1"  desc="Device-TLB Support"/>
+      <field name="IR"    bit="3"  size="1"  desc="Interrupt Remapping Support"/>
+      <field name="EIM"   bit="4"  size="1"  desc="Extended Interrupt Mode"/>
+      <field name="R0"    bit="5"  size="1"  desc="Reserved"/>
+      <field name="PT"    bit="6"  size="1"  desc="Pass Through"/>
+      <field name="SC"    bit="7"  size="1"  desc="Snoop Control"/>
+      <field name="IRO"   bit="8"  size="10" desc="IOTLB Register Offset"/>
+      <field name="R1"    bit="18" size="2"  desc="Reserved"/>
+      <field name="MHMV"  bit="20" size="4"  desc="Maximum Handle Mask Value"/>
+      <field name="ECS"   bit="24" size="1"  desc="Extended Context Support"/>
+      <field name="MTS"   bit="25" size="1"  desc="Memory Type Support"/>
+      <field name="NEST"  bit="26" size="1"  desc="Nested Translation Support"/>
+      <field name="DIS"   bit="27" size="1"  desc="Deferred Invalidate Support"/>
+      <field name="PASID" bit="28" size="1"  desc="Process Address Space ID Support"/>
+      <field name="PRS"   bit="29" size="1"  desc="Page Request Support"/>
+      <field name="ERS"   bit="30" size="1"  desc="Execute Request Support"/>
+      <field name="SRS"   bit="31" size="1"  desc="Supervisor Request Support"/>
+      <field name="R2"    bit="32" size="1"  desc="Reserved"/>
+      <field name="NWFS"  bit="33" size="1"  desc="No Write Flag Support"/>
+      <field name="EAFS"  bit="34" size="1"  desc="Extended Accessed Flag Support"/>
+      <field name="PSS"   bit="35" size="5"  desc="PASID Size Supported"/>
+      <field name="R3"    bit="40" size="24" desc="Reserved"/>
+    </register>
+    <register name="GFXVTBAR_GCMD" type="mmio" bar="GFXVTBAR" offset="0x18" size="4" desc="Global Command">
+      <field name="Rsvd"  bit="0"  size="23" desc="Reserved"/>
+      <field name="CFI"   bit="23" size="1"  desc="Compatibility Format Interrupt"/>
+      <field name="SIRTP" bit="24" size="1"  desc="Set Interrupt Remap Table Pointer"/>
+      <field name="IRE"   bit="25" size="1"  desc="Interrupt Remapping Enable"/>
+      <field name="QIE"   bit="26" size="1"  desc="Queued Invalidation Enable"/>
+      <field name="WBF"   bit="27" size="1"  desc="Write Buffer Flush"/>
+      <field name="EAFL"  bit="28" size="1"  desc="Enable Advanced Fault Logging"/>
+      <field name="SFL"   bit="29" size="1"  desc="Set Fault Log"/>
+      <field name="SRTP"  bit="30" size="1"  desc="Set Root Table Pointer"/>
+      <field name="TE"    bit="31" size="1"  desc="Translation Enable"/>
+    </register>
+    <register name="GFXVTBAR_GSTS" type="mmio" bar="GFXVTBAR" offset="0x1C" size="4" desc="Global Status">
+      <field name="Rsvd"  bit="0"  size="23" desc="Reserved"/>
+      <field name="CFIS"  bit="23" size="1"  desc="Compatibility Format Interrupt Status"/>
+      <field name="IRTPS" bit="24" size="1"  desc="Interrupt Remap Table Pointer Status"/>
+      <field name="IRES"  bit="25" size="1"  desc="Interrupt Remapping Enable Status"/>
+      <field name="QIES"  bit="26" size="1"  desc="Queued Invalidation Enable Status"/>
+      <field name="WBFS"  bit="27" size="1"  desc="Write Buffer Flush Status"/>
+      <field name="AFLS"  bit="28" size="1"  desc="Advanced Fault Logging Status"/>
+      <field name="FLS"   bit="29" size="1"  desc="Fault Log Status"/>
+      <field name="RTPS"  bit="30" size="1"  desc="Root Table Pointer Status"/>
+      <field name="TES"   bit="31" size="1"  desc="Translation Enable Status"/>
+    </register>
+    <register name="GFXVTBAR_RTADDR" type="mmio" bar="GFXVTBAR" offset="0x20" size="8" desc="Root-Entry Table Address">
+      <field name="R"   bit="0" size="11"  desc="Reserved"/>
+      <field name="RTT" bit="11" size="1"  desc="Root Table Type"/>
+      <field name="RTA" bit="12" size="52" desc="Root Table Address"/>
+    </register>
+    <register name="GFXVTBAR_CCMD" type="mmio" bar="GFXVTBAR" offset="0x28" size="8" desc="Context Command">
+      <field name="DID"  bit="0"  size="16" desc="Device ID"/>
+      <field name="SID"  bit="16" size="16" desc="Source ID"/>
+      <field name="FM"   bit="32" size="2"  desc="Function Mask"/>
+      <field name="R"    bit="34" size="25" desc="Reserved"/>
+      <field name="CAIG" bit="59" size="2"  desc="Context Actual Invalidation Granularity"/>
+      <field name="CIRG" bit="61" size="2"  desc="Context Invalidation Request Granularity"/>
+      <field name="ICC"  bit="63" size="1"  desc="Invalidate Context-Cache"/>
+    </register>
+    <!-- TODO: variable/relative register offsets -->
+    <register name="GFXVTBAR_IVA"   type="mmio" bar="GFXVTBAR" offset="0x0" size="8" desc="Invalidate Address"/>
+    <register name="GFXVTBAR_IOTLB" type="mmio" bar="GFXVTBAR" offset="0x8" size="8" desc="IOTLB Invalidate"/>
+    <register name="GFXVTBAR_FSTS" type="mmio" bar="GFXVTBAR" offset="0x34" size="4" desc="Fault Status">
+      <field name="PFO" bit="0" size="1" desc="Primary Fault Overflow"/>
+      <field name="PPF" bit="1" size="1" desc="Primary Pending Fault"/>
+      <field name="AFO" bit="2" size="1" desc="Advanced Fault Overflow"/>
+      <field name="APF" bit="3" size="1" desc="Advanced Pending Fault"/>
+      <field name="IQE" bit="4" size="1" desc="Invalidation Queue Error"/>
+      <field name="ICE" bit="5" size="1" desc="Invalidation Completion Error"/>
+      <field name="ITE" bit="6" size="1" desc="Invalidation Time-out Error"/>
+      <field name="PRO" bit="7" size="1" desc="Page Request Overflow"/>
+      <field name="FRI" bit="8" size="7" desc="Fault Record Index"/>
+    </register>
+    <register name="GFXVTBAR_FECTL" type="mmio" bar="GFXVTBAR" offset="0x38" size="4" desc="Fault Event Control">
+      <field name="R"  bit="0"  size="30" desc="Reserved"/>
+      <field name="IP" bit="30" size="1"  desc="Interrupt Pending"/>
+      <field name="IM" bit="31" size="1"  desc="Interrupt Mask"/>
+    </register>
+    <register name="GFXVTBAR_FEDATA" type="mmio" bar="GFXVTBAR" offset="0x3C" size="4" desc="Fault Event Data">
+      <field name="IMD"  bit="0"  size="16" desc="Interrupt Message Data"/>
+      <field name="EIMD" bit="16" size="16" desc="Extended Interrupt Message Data"/>
+    </register>
+    <register name="GFXVTBAR_FEADDR" type="mmio" bar="GFXVTBAR" offset="0x40" size="4" desc="Fault Event Address">
+      <field name="R"  bit="0" size="2"  desc="Reserved"/>
+      <field name="MA" bit="2" size="30" desc="Message Address"/>
+    </register>
+    <register name="GFXVTBAR_FEUADDR" type="mmio" bar="GFXVTBAR" offset="0x44" size="4" desc="Fault Event Upper Address">
+      <field name="MUA" bit="0" size="32" desc="Message Upper Address"/>
+    </register>
+    <register name="GFXVTBAR_FRCDL" type="mmio" bar="GFXVTBAR" offset="0x0" size="8" desc="Fault Recording (Low)"/>
+    <register name="GFXVTBAR_FRCDH" type="mmio" bar="GFXVTBAR" offset="0x8" size="8" desc="Fault Recording (High)"/>
+    <register name="GFXVTBAR_AFL" type="mmio" bar="GFXVTBAR" offset="0x58" size="8" desc="Advanced Fault Log">
+      <field name="R"   bit="0" size="9"  desc="Reserved"/>
+      <field name="FLS" bit="9" size="3"  desc="Fault Log Size"/>
+      <field name="FLA" bit="0" size="52" desc="Fault Log Address"/>
+    </register>
+    <register name="GFXVTBAR_PMEN" type="mmio" bar="GFXVTBAR" offset="0x64" size="4" desc="Protected Memory Enable">
+      <field name="PRS" bit="0"  size="1"  desc="Protected Region Status"/>
+      <field name="EPM" bit="31" size="1"  desc="Enable Protected Memory"/>
+    </register>
+    <register name="GFXVTBAR_PLMBASE" type="mmio" bar="GFXVTBAR" offset="0x68" size="4" desc="Protected Memory Low Base">
+      <field name="PLMB" bit="12" size="20" desc="Protected Low-Memory Base"/>
+    </register>
+    <register name="GFXVTBAR_PLMLIMIT" type="mmio" bar="GFXVTBAR" offset="0x6C" size="4" desc="Protected Memory Low Limit">
+      <field name="PLML" bit="12" size="20" desc="Protected Low-Memory Limit"/>
+    </register>
+    <register name="GFXVTBAR_PHMBASE" type="mmio" bar="GFXVTBAR" offset="0x70" size="8" desc="Protected Memory High Base">
+      <field name="PHMB" bit="12" size="52" desc="Protected High-Memory Base"/>
+    </register>
+    <register name="GFXVTBAR_PHMLIMIT" type="mmio" bar="GFXVTBAR" offset="0x78" size="8" desc="Protected Memory High Limit">
+      <field name="PHML" bit="12" size="52" desc="Protected High-Memory Limit"/>
+    </register>
+    <register name="GFXVTBAR_IQH" type="mmio" bar="GFXVTBAR" offset="0x80" size="8" desc="Invalidation Queue Head">
+      <field name="QH" bit="4" size="15" desc="Queue Head"/>
+    </register>
+    <register name="GFXVTBAR_IQT" type="mmio" bar="GFXVTBAR" offset="0x88" size="8" desc="Invalidation Queue Tail">
+      <field name="QT" bit="4" size="15" desc="Queue Tail"/>
+    </register>
+    <register name="GFXVTBAR_IQA" type="mmio" bar="GFXVTBAR" offset="0x90" size="8" desc="Invalidation Queue Address">
+      <field name="QS"  bit="0"  size="3"  desc="Queue Size"/>
+      <field name="IQA" bit="12" size="52" desc="Invalidation Queue Base Address"/>
+    </register>
+    <register name="GFXVTBAR_ICS" type="mmio" bar="GFXVTBAR" offset="0x9C" size="4" desc="Invalidation Completion Status">
+      <field name="IWC"  bit="0" size="1" desc="Invalidation Wait Descriptor Complete"/>
+    </register>
+    <register name="GFXVTBAR_IECTL"   type="mmio" bar="GFXVTBAR" offset="0xA0" size="4" desc="Invalidation Event Control"/>
+    <register name="GFXVTBAR_IEDATA"  type="mmio" bar="GFXVTBAR" offset="0xA4" size="4" desc="Invalidation Event Data"/>
+    <register name="GFXVTBAR_IEADDR"  type="mmio" bar="GFXVTBAR" offset="0xA8" size="4" desc="Invalidation Event Address"/>
+    <register name="GFXVTBAR_IEUADDR" type="mmio" bar="GFXVTBAR" offset="0xAC" size="4" desc="Invalidation Event Address"/>
+    <register name="GFXVTBAR_IRTA"    type="mmio" bar="GFXVTBAR" offset="0xB8" size="4" desc="Invalidation Event Upper Address">
+      <field name="S"    bit="0"  size="4"  desc="Size"/>
+      <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
+      <field name="IRTA" bit="12" size="52" desc="Interrupt Remapping Table Address"/>
+    </register>
+
+  </registers>
+
+</configuration>

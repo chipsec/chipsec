@@ -38,6 +38,14 @@ __version__ = '0.1'
 import struct
 from collections import namedtuple
 
+class ACPI_TABLE():
+    def parse( self, table_content ):
+        return
+    def __str__( self ):
+        return """------------------------------------------------------------------
+  Table Content
+------------------------------------------------------------------
+"""
 
 ########################################################################################################
 #
@@ -48,27 +56,29 @@ from collections import namedtuple
 ACPI_TABLE_FORMAT_DMAR = '=BB10s'
 ACPI_TABLE_SIZE_DMAR   = struct.calcsize(ACPI_TABLE_FORMAT_DMAR)
 #class ACPI_TABLE_DMAR( namedtuple('ACPI_TABLE_DMAR', 'HostAddrWidth Flags Reserved dmar_structures') ):
-class DMAR():
-    __slots__ = ()
-    def __init__(self,table_content):
+class DMAR (ACPI_TABLE):
+    def __init__(self):
         self.dmar_structures=[]
+        self.DMAR_TABLE_FORMAT={
+          'DeviceScope_FORMAT': '=BBHBB',
+          'DRHD_FORMAT'       : '=HHBBHQ',
+          'RMRR_FORMAT'       : '=HHHHQQ',
+          'ATSR_FORMAT'       : '=HHBBH',
+          'RHSA_FORMAT'       : '=HHIQI',
+          'ANDD_FORMAT'       : 'HH3sB'
+        }
+
+    def parse(self , table_content):
         off = ACPI_TABLE_SIZE_DMAR
         struct_fmt = '=HH'
-        self.DMAR_TABLE_FORMAT={
-        'DeviceScope_FORMAT': '=BBHBB',
-        'DRHD_FORMAT' :'=HHBBHQ',
-        'RMRR_FORMAT' : '=HHHHQQ',
-        'ATSR_FORMAT' : '=HHBBH' ,
-        'RHSA_FORMAT' : '=HHIQI' ,
-        'ANDD_FORMAT' : 'HH3sB'
-        }
         while off < len(table_content) - 1:
             (_type,length) = struct.unpack( struct_fmt, table_content[ off : off + struct.calcsize(struct_fmt) ] )
             if 0 == length: break
             self.dmar_structures.append( self._get_structure_DMAR( _type, table_content[ off : off + length ] ) )
             off += length
-        (self.HostAddrWidth, self.Flags, self.Reserved)=struct.unpack( ACPI_TABLE_FORMAT_DMAR, table_content ) 
-    
+        (self.HostAddrWidth, self.Flags, self.Reserved) = struct.unpack_from( ACPI_TABLE_FORMAT_DMAR, table_content ) 
+        return
+
     def __str__(self):
         _str = """------------------------------------------------------------------
   DMAR Table Contents
@@ -87,7 +97,7 @@ class DMAR():
         elif 0x02 == _type: return self._get_DMAR_structure_ATSR( DataStructure )
         elif 0x03 == _type: return self._get_DMAR_structure_RHSA( DataStructure )
         elif 0x04 == _type: return self._get_DMAR_structure_ANDD( DataStructure )
-        else:                              return ("\n  Unknown DMAR structure 0x%02X\n" % _type)
+        else:               return ("\n  Unknown DMAR structure 0x%02X\n" % _type)
 
     def _get_DMAR_structure_DRHD(self, structure ):  
         device_scope = []
@@ -139,15 +149,29 @@ class DMAR():
         length = struct.unpack( '=H', structure[sz:sz+sz] )[0]
         f = self.DMAR_TABLE_FORMAT["ANDD_FORMAT"] + ('%ds' % (length - struct.calcsize(self.DMAR_TABLE_FORMAT["ANDD_FORMAT"])))
         return ACPI_TABLE_DMAR_ANDD( *struct.unpack_from( f, structure ) )
+
 #
 # DMAR Device Scope
 #
 
-class ACPI_TABLE_DMAR_DeviceScope( namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Type Length Reserved EnumerationID StartBusNum Path DMAR_DS_TYPE') ):
+DMAR_DS_TYPE_PCI_ENDPOINT     = 0x1
+DMAR_DS_TYPE_PCIPCI_BRIDGE    = 0x2
+DMAR_DS_TYPE_IOAPIC           = 0x3
+DMAR_DS_TYPE_MSI_CAPABLE_HPET = 0x4
+DMAR_DS_TYPE_ACPI_NAMESPACE   = 0x5
+DMAR_DS_TYPE ={
+  DMAR_DS_TYPE_PCI_ENDPOINT     : 'PCI Endpoint Device',
+  DMAR_DS_TYPE_PCIPCI_BRIDGE    : 'PCI-PCI Bridge',
+  DMAR_DS_TYPE_IOAPIC           : 'I/O APIC Device',
+  DMAR_DS_TYPE_MSI_CAPABLE_HPET : 'MSI Capable HPET',
+  DMAR_DS_TYPE_ACPI_NAMESPACE   : 'ACPI Namaspace Device'
+}
+
+class ACPI_TABLE_DMAR_DeviceScope( namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Type Length Reserved EnumerationID StartBusNum Path') ):
     __slots__ = ()
     def __str__(self):
         return """      %s (%02X): Len: 0x%02X, Rsvd: 0x%04X, Enum ID: 0x%02X, Start Bus#: 0x%02X, Path: %s
-""" % ( self.DMAR_DS_TYPE[self.Type], self.Type, self.Length, self.Reserved, self.EnumerationID, self.StartBusNum, ''.join('%02x ' % ord(c) for c in self.Path) )
+""" % ( DMAR_DS_TYPE[self.Type], self.Type, self.Length, self.Reserved, self.EnumerationID, self.StartBusNum, ''.join('%02x ' % ord(c) for c in self.Path) )
 
 #
 # DMAR DMA Remapping Hardware Unit Definition (DRHD) Structure
@@ -241,38 +265,40 @@ class ACPI_TABLE_DMAR_ANDD( namedtuple('ACPI_TABLE_DMAR_ANDD', 'Type Length Rese
 ACPI_TABLE_FORMAT_APIC = '=II'
 ACPI_TABLE_SIZE_APIC   = struct.calcsize(ACPI_TABLE_FORMAT_APIC)
 #class ACPI_TABLE_APIC( namedtuple('ACPI_TABLE_APIC', 'LAPICBase Flags apic_structures') ):
-class APIC():
-    __slots__ = ()
-    def __init__(self , table_content):
+class APIC (ACPI_TABLE):
+    def __init__(self):
         self.apic_structs = []
-        (self.LAPICBase,self.Flags) = struct.unpack( '=II', table_content[ 0 : 8 ] )
         self.ACPI_TABLE_FORMAT={}
         
         # APIC Table Structures
         self.APIC_TABLE_FORMAT={
-       "PROCESSOR_LAPIC"            : '<BBBBI',
-       "IOAPIC"                     : '<BBBBII',
-       "INTERRUPT_SOURSE_OVERRIDE"  : '<BBBBIH', 
-       "NMI_SOURCE"                 : '<BBHI',
-       "LAPIC_NMI"                  : '<BBBHB',
-       "LAPIC_ADDRESS_OVERRIDE"     : '<BBHQ',
-       "IOSAPIC"                    : '<BBBBIQ',
-       "PROCESSOR_LSAPIC"           : '<BBBBBHII',
-       "PLATFORM_INTERRUPT_SOURCES" : '<BBHBBBII',
-       "PROCESSOR_Lx2APIC"          : '<BBHIII',
-       "Lx2APIC_NMI"                : '<BBHIB3s',
-       "GICC_CPU"                   : '<BBHIIIIIQQQQIQQ',
-       "GIC_DISTRIBUTOR"            : '<BBHIQII',
-       "GIC_MSI"                    : '<BBHIQIHH',
-       "GIC_REDISTRIBUTOR"          : '<BBHQI'
+          "PROCESSOR_LAPIC"            : '<BBBBI',
+          "IOAPIC"                     : '<BBBBII',
+          "INTERRUPT_SOURSE_OVERRIDE"  : '<BBBBIH', 
+          "NMI_SOURCE"                 : '<BBHI',
+          "LAPIC_NMI"                  : '<BBBHB',
+          "LAPIC_ADDRESS_OVERRIDE"     : '<BBHQ',
+          "IOSAPIC"                    : '<BBBBIQ',
+          "PROCESSOR_LSAPIC"           : '<BBBBBHII',
+          "PLATFORM_INTERRUPT_SOURCES" : '<BBHBBBII',
+          "PROCESSOR_Lx2APIC"          : '<BBHIII',
+          "Lx2APIC_NMI"                : '<BBHIB3s',
+          "GICC_CPU"                   : '<BBHIIIIIQQQQIQQ',
+          "GIC_DISTRIBUTOR"            : '<BBHIQII',
+          "GIC_MSI"                    : '<BBHIQIHH',
+          "GIC_REDISTRIBUTOR"          : '<BBHQI'
         }
+    
+    def parse(self , table_content):
+        (self.LAPICBase,self.Flags) = struct.unpack( '=II', table_content[ 0 : 8 ] )
         cont = 8
         while cont < len(table_content) - 1:
             (value,length) = struct.unpack( '=BB', table_content[ cont : cont + 2 ] )
             if 0 == length: break
             self.apic_structs.append( self.get_structure_APIC( value, table_content[ cont : cont + length ] ) )
             cont += length
-            
+        return
+
     def __str__(self):
         apic_str = """------------------------------------------------------------------
   APIC Table Contents
@@ -515,49 +541,20 @@ class ACPI_TABLE_APIC_GIC_REDISTRIBUTOR(namedtuple('ACPI_TABLE_APIC_GIC_REDISTRI
 
 ########################################################################################################
 #
-# RSDP Table
-#
-########################################################################################################
-
-class RSDP():
-    __slots__ = ()
-    def __init__(self, table_content):
-        self.ACPI_RSDP_FORMAT = '=8sB6sBIIQB3s'
-        (self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress, self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved) = struct.unpack( self.ACPI_RSDP_FORMAT, table_content )
-        
-    def __str__(self):
-        return """==================================================================
-  Root System Description Pointer (RSDP)
-==================================================================
-  Signature        : %s
-  Checksum         : 0x%02X
-  OEM ID           : %s
-  Revision         : 0x%02X
-  RSDT Address     : 0x%08X
-  Length           : 0x%08X
-  XSDT Address     : 0x%016X
-  Extended Checksum: 0x%02X
-  Reserved         : %s
-""" % ( self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress, self.Length, self.XsdtAddress, self.ExtChecksum, self.HEX_STRING(self.Reserved) )
-    
-    def HEX_STRING(self, _str):
-        return (''.join('%02x ' % ord(c) for c in _str))
-
-    # some sanity checking on RSDP
-    def is_RSDP_valid(self ):
-        return (0 != self.Checksum and (0x0 == self.Revision or 0x2 == self.Revision) )
-
-########################################################################################################
-#
 # XSDT Table
 #
 ########################################################################################################
 
-class XSDT():
-    def __init__( self, table_content ):
+class XSDT (ACPI_TABLE):
+    def __init__( self ):
+        self.Entries = []
+
+    def parse( self, table_content ):
         num_of_tables = len(table_content) / 8
         self.Entries= struct.unpack( ('=%dQ' % num_of_tables), table_content )
-    def __str__(self):
+        return
+
+    def __str__( self ):
         return """==================================================================
   Extended System Description Table (XSDT)
 ==================================================================
@@ -571,25 +568,19 @@ ACPI Table Entries:
 #
 ########################################################################################################
 
-class RSDT():
-    def __init__( self, table_content ):
+class RSDT (ACPI_TABLE):
+    def __init__( self ):
+        self.Entries = []
+
+    def parse( self, table_content ):
         num_of_tables = len(table_content) / 8
         self.Entries= struct.unpack( ('=%dQ' % num_of_tables), table_content )
-    def __str__(self):
+        return
+
+    def __str__( self ):
         return """==================================================================
   Root System Description Table (RSDT)
 ==================================================================
 ACPI Table Entries:
 %s
 """ %( ''.join( ['0x%016X\n' % addr for addr in self.Entries]))
-
-
-class TABLE_NULL():
-    def __init__(self, table_content):
-        self.table_content=table_content
-    __slots__ = ()
-    def __str__(self):
-        return """------------------------------------------------------------------
-  Table Content
-------------------------------------------------------------------
-"""

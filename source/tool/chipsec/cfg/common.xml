@@ -60,6 +60,7 @@
     <bar name="SPIBAR"   parent="RCBA" offset="0x3800" desc="SPI Controller Register Range"/>
     -->
     <bar name="RCBA_RTC"  bus="0" dev="0x1F" fun="0" reg="0xF0" width="4" mask="0xFFFFC000"   size="0x200"  enable_bit="0" desc="General Control Register Range" offset="0x3400"/>
+
     <!-- VT-d BARs -->
     <bar name="VTBAR"    register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
     <bar name="GFXVTBAR" register="GFXVTBAR" base_field="Base" size="0x1000" enable_field="Enable" desc="Intel Processor Graphics VT-d Register Range"/>
@@ -73,10 +74,14 @@
   <!--                                      -->
   <!-- #################################### -->
   <io>
+    <bar name="ABASE"      register="ABASE"    base_field="Base" size="0x80" desc="ACPI Base Address"/>
+    <bar name="PMBASE"     register="ABASE"    base_field="Base" size="0x80" desc="ACPI Base Address"/>
+    <bar name="TCOBASE"    register="ABASE"    base_field="Base" size="0x80" desc="TCO Base Address" offset="0x60"/>
+    <bar name="GPIOBASE"   register="GPIOBASE" base_field="Base" size="0x80" desc="GPIO Base Address"/>
+
+    <!-- old definition -->
     <bar name="SMBUS_BASE" bus="0" dev="0x1F" fun="3" reg="0x20" mask="0xFFE0" size="0x20" desc="SMBus Base Address"/>
-    <bar name="ABASE"      bus="0" dev="0x1F" fun="0" reg="0x40" mask="0xFF80" size="0x80" desc="ACPI Base Address"/>
-    <bar name="PMBASE"     bus="0" dev="0x1F" fun="0" reg="0x40" mask="0xFF80" size="0x80" desc="ACPI Base Address"/>
-    <bar name="TCOBASE"    bus="0" dev="0x1F" fun="0" reg="0x40" mask="0xFF80" size="0x80" desc="TCO Base Address" offset="0x60"/>
+
   </io>
 
   <!-- #################################### -->
@@ -96,6 +101,8 @@
   <!--                                      -->
   <!-- #################################### -->
   <registers>
+
+    <!-- PCIe Configuration (CFG) Registers -->
 
     <!-- Host Controller -->
     <register name="PCI0.0.0_VID"        type="pcicfg" bus="0" dev="0" fun="0" offset="0x0"  size="2" desc="Vendor ID"/>
@@ -163,6 +170,12 @@
     <register name="PCI0.0.0_CAPID0_B"   type="pcicfg" bus="0" dev="0" fun="0" offset="0xE8" size="4" desc="Capabilities B"/>
 
     <!-- LPC Interface Bridge -->
+    <register name="ABASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x40" size="4" desc="ACPI Base Address">
+      <field  name="Base"  bit="7" size="9"   desc="Base Address"/>
+    </register>
+    <register name="GPIOBASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x48" size="4" desc="GPIO Base Address">
+      <field  name="Base"  bit="7" size="9"   desc="Base Address"/>
+    </register>
     <register name="GC" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x4C" size="1" desc="GPIO Control">
       <field name="GLE" bit="0" size="1"/>
       <field name="EN"  bit="4" size="1"/>
@@ -178,7 +191,22 @@
       <field name="SMM_BWP" bit="5" size="1" desc="SMM BIOS Write Protection"/>
     </register>
 
-    <!-- SPI Flash Controller MMIO registers -->
+    <!-- SMBus Host Controller -->
+    <register name="SMBUS_VID"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x00" size="2" desc="VID" />
+    <register name="SMBUS_DID"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x02" size="2" desc="DID" />
+    <register name="SMBUS_CMD"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x04" size="2" desc="CMD" />
+    <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x40" size="1" desc="Host Configuration">
+      <field name="HST_EN"     bit="0" size="1"/>
+      <field name="SMB_SMI_EN" bit="1" size="1"/>
+      <field name="I2C_EN"     bit="2" size="2"/>
+      <field name="SSRESET"    bit="3" size="1"/>
+      <field name="SPD_WD"     bit="4" size="1"/>
+    </register>
+
+
+    <!-- Memory-Mapped I/O (MMIO) Registers -->
+
+    <!-- SPI Flash Controller -->
     <register name="BFPR" type="mmio" bar="SPIBAR" offset="0x00" size="4" desc="BIOS Flash Primary Region Register (= FREG1)">
       <field name="PRB"  bit="0"  size="12" desc="BIOS Flash Primary Region Base"/>
       <field name="PRL"  bit="16" size="12" desc="BIOS Flash Primary Region Limit"/>
@@ -339,19 +367,7 @@
       <field name="UEO"   bit="8"  size="8" desc="Upper Erase Opcode"/>
     </register>
 
-    <!-- SMBus Host Controller -->
-    <register name="SMBUS_VID"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x00" size="2" desc="VID" />
-    <register name="SMBUS_DID"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x02" size="2" desc="DID" />
-    <register name="SMBUS_CMD"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x04" size="2" desc="CMD" />
-    <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x40" size="1" desc="Host Configuration">
-      <field name="HST_EN"     bit="0" size="1"/>
-      <field name="SMB_SMI_EN" bit="1" size="1"/>
-      <field name="I2C_EN"     bit="2" size="2"/>
-      <field name="SSRESET"    bit="3" size="1"/>
-      <field name="SPD_WD"     bit="4" size="1"/>
-    </register>
-
-    <!-- PCH Root Complex Register Base MMIO registers -->
+    <!-- PCH Root Complex Register Base -->
     <register name="GCS" type="mmio" bar="RCBA" offset="0x3410" size="4" desc="General Control and Status">
       <field name="BILD" bit="0"  size="1" desc="BIOS Interface Lock Down"/>
       <field name="BBS"  bit="10" size="2" desc="Boot BIOS Straps"/>
@@ -365,7 +381,21 @@
       <field name="TS" bit="0" size="1" desc="Top Swap"/>
     </register>       
 
-    <!-- PCH ABASE (PMBASE) I/O registers -->
+    <!-- MCHBAR -->
+    <!-- Sections 7.40 - 7.41 6th Generation Intel Processor Datasheet -->
+    <register name="GFXVTBAR" type="mmio" bar="MCHBAR" offset="0x5400" size="8" desc="Processor Graphics VT-d MMIO Base Address">
+      <field name="Enable" bit="0"  size="1" desc="Enable"/>
+      <field name="Base"   bit="12" size="27" desc="GFX VTD Base Address"/>
+    </register>
+    <register name="VTBAR" type="mmio" bar="MCHBAR" offset="0x5410" size="8" desc="VT-d MMIO Base Address">
+      <field name="Enable" bit="0"  size="1"  desc="Enable"/>
+      <field name="Base"   bit="12" size="27" desc="VTD Base Address"/>
+    </register>
+
+
+    <!-- Port I/O Registers -->
+
+    <!-- PCH ABASE (PMBASE) -->
     <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
       <field name="GBL_SMI_EN"         bit="0"  size="1"/>
       <field name="EOS"                bit="1"  size="1"/>
@@ -388,7 +418,8 @@
       <field name="TCO_LOCK"    bit="12"    size="1"/>
     </register>
 
-    <!-- CPU Model Specific Registers -->
+    <!-- CPU Model Specific Registers (MSR) -->
+
     <register name="IA32_BIOS_SIGN_ID"    type="msr" msr="0x8B" desc="Microcode Update Signature Register">
       <field name="Microcode" bit="32" size="32" desc="Microcode update signature" />
     </register>
@@ -404,8 +435,13 @@
       <field name="SMRR" bit="11" size="1" desc="SMRR Supported" />
     </register>
     <register name="IA32_FEATURE_CONTROL" type="msr" msr="0x3A"  desc="Feature Control MSR"/>
+    <register name="IA32_APIC_BASE" type="msr" msr="0x1B"  desc="Local APIC Base">
+      <field name="BSP"       bit="8"  size="1"  desc="Bootstrap Processor" />
+      <field name="x2APICEn"  bit="10" size="1"  desc="Enable x2APIC mode" />
+      <field name="En"        bit="11" size="1"  desc="APIC Global Enable" />
+      <field name="APICBase"  bit="12" size="20" desc="APIC Base" />
+    </register>
        
-
   </registers>
 
 
@@ -415,11 +451,19 @@
   <!--                                      -->
   <!-- #################################### -->
   <controls>
-    <control name="SmmBiosWriteProtection" register="BC"   field="SMM_BWP" desc="SMM BIOS Write Protection"/>
-    <control name="BiosLockEnable"         register="BC"   field="BLE"     desc="BIOS Lock Enable"/>
-    <control name="BiosWriteEnable"        register="BC"   field="BIOSWE"  desc="BIOS Write Enable"/>
-    <control name="FlashLockDown"          register="HSFS" field="FLOCKDN" desc="Flash Configuration Lock-Down"/>
-    <control name="BiosInterfaceLockDown"  register="GCS"  field="BILD"    desc="BIOS Interface Lock-Down"/>
+    <control name="SmmBiosWriteProtection" register="BC"              field="SMM_BWP"            desc="SMM BIOS Write Protection"/>
+    <control name="BiosLockEnable"         register="BC"              field="BLE"                desc="BIOS Lock Enable"/>
+    <control name="BiosWriteEnable"        register="BC"              field="BIOSWE"             desc="BIOS Write Enable"/>
+    <control name="FlashLockDown"          register="HSFS"            field="FLOCKDN"            desc="Flash Configuration Lock-Down"/>
+    <control name="BiosInterfaceLockDown"  register="GCS"             field="BILD"               desc="BIOS Interface Lock-Down"/>
+    <control name="GlobalSMIEnable"        register="SMI_EN"          field="GBL_SMI_EN"         desc="Global SMI Enable"/>
+    <control name="GPIOSMIEnable"          register="SMI_EN"          field="GPIO_UNLOCK_SMI_EN" desc="GPIO Config SMI Enable"/>
+    <control name="SMILock"                register="GEN_PMCON_1"     field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
+    <control name="TCOSMIEnable"           register="SMI_EN"          field="TCO_EN"             desc="TCO SMI Enable"/>
+    <control name="TCOSMILock"             register="TCO1_CNT"        field="TCO_LOCK"           desc="TCO SMI Lock"/>
+    <control name="SMRAMDLock"             register="PCI0.0.0_SMRAMC" field="D_LCK"              desc="SMRAM D_LCK"/>
+    <control name="TSEGBaseLock"           register="PCI0.0.0_TSEGMB" field="LOCK"               desc="TSEG Base Lock"/>
+    <control name="TSEGLimitLock"          register="PCI0.0.0_BGSM"   field="LOCK"               desc="TSEG Limit Lock"/>
   </controls>
 
 </configuration>

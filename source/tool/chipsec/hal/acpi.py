@@ -71,8 +71,6 @@ class ACPI_TABLE_HEADER( namedtuple('ACPI_TABLE_HEADER', 'Signature Length Revis
 """ % ( self.Signature, self.Length, self.Revision, self.Checksum, self.OEMID, self.OEMTableID, self.OEMRevision, self.CreatorID, self.CreatorRevision )
 
 
-
-
 ACPI_TABLE_SIG_SIZE = 0x4
 
 ACPI_TABLE_SIG_ROOT = 'ROOT' 
@@ -114,44 +112,49 @@ ACPI_TABLE_SIG_BATB = 'BATB'
 ACPI_TABLE_SIG_BGRT = 'BGRT'
 
 ACPI_TABLES = {
-  ACPI_TABLE_SIG_ROOT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_RSDP: chipsec.hal.acpi_tables.RSDP,
+  ACPI_TABLE_SIG_ROOT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_RSDT: chipsec.hal.acpi_tables.RSDT,
   ACPI_TABLE_SIG_XSDT: chipsec.hal.acpi_tables.XSDT,
-  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_FACS: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_DSDT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_SSDT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_PSDT: chipsec.hal.acpi_tables.TABLE_NULL,
+  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_FACS: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_DSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_PSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_APIC: chipsec.hal.acpi_tables.APIC,
-  ACPI_TABLE_SIG_SBST: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_ECDT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_SRAT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_SLIC: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_SLIT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_BOOT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_CPEP: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_DBGP: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_ETDT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_HPET: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_MCFG: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_SPCR: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_SPMI: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_TCPA: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_WDAT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_WDRT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_WSPT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_WDDT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_ASF : chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_MSEG: chipsec.hal.acpi_tables.TABLE_NULL,
+  ACPI_TABLE_SIG_SBST: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ECDT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SRAT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SLIC: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SLIT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BOOT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_CPEP: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_DBGP: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ETDT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_HPET: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MCFG: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SPCR: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SPMI: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_TCPA: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WDAT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WDRT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WSPT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WDDT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ASF : chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MSEG: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_DMAR: chipsec.hal.acpi_tables.DMAR,
-  ACPI_TABLE_SIG_UEFI: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_FPDT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_PCCT: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_MSDM: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_BATB: chipsec.hal.acpi_tables.TABLE_NULL,
-  ACPI_TABLE_SIG_BGRT: chipsec.hal.acpi_tables.TABLE_NULL
+  ACPI_TABLE_SIG_UEFI: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_FPDT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_PCCT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MSDM: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BATB: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BGRT: chipsec.hal.acpi_tables.ACPI_TABLE
 }
+
+########################################################################################################
+#
+# RSDP
+#
+########################################################################################################
 
 RSDP_GUID_ACPI2_0 = '8868E871-E4F1-11D3-BC22-0080C73C8881'
 RSDP_GUID_ACPI1_0 = 'EB9D2D31-2D88-11D3-9A16-0090273FC14D'
@@ -162,6 +165,34 @@ ACPI_RSDP_SIG = 'RSD PTR '
 ACPI_RSDP_FORMAT = '=8sB6sBIIQB3s'
 ACPI_RSDP_SIZE   = struct.calcsize(ACPI_RSDP_FORMAT)
 assert( 36 == ACPI_RSDP_SIZE )
+
+class RSDP():
+    __slots__ = ()
+    def __init__( self, table_content ):
+        self.ACPI_RSDP_FORMAT = '=8sB6sBIIQB3s'
+        (self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress, self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved) = struct.unpack( self.ACPI_RSDP_FORMAT, table_content )
+    def __str__( self ):
+        return """==================================================================
+  Root System Description Pointer (RSDP)
+==================================================================
+  Signature        : %s
+  Checksum         : 0x%02X
+  OEM ID           : %s
+  Revision         : 0x%02X
+  RSDT Address     : 0x%08X
+  Length           : 0x%08X
+  XSDT Address     : 0x%016X
+  Extended Checksum: 0x%02X
+  Reserved         : %s
+""" % ( self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress, self.Length, self.XsdtAddress, self.ExtChecksum, self.HEX_STRING(self.Reserved) )
+    
+    def HEX_STRING( self, _str ):
+        return (''.join('%02x ' % ord(c) for c in _str))
+
+    # some sanity checking on RSDP
+    def is_RSDP_valid(self ):
+        return (0 != self.Checksum and (0x0 == self.Revision or 0x2 == self.Revision) )
+
 
 ########################################################################################################
 #
@@ -192,7 +223,7 @@ class ACPI:
         if ACPI_RSDP_SIG == sig:
             rsdp_pa  = rsdptr_ebda
             rsdp_buf = self.cs.mem.read_physical_mem( rsdp_pa, ACPI_RSDP_SIZE )
-            rsdp     = ACPI_TABLES[ACPI_TABLE_SIG_RSDP](rsdp_buf) 
+            rsdp     = RSDP(rsdp_buf) 
             if rsdp.is_RSDP_valid(): logger().log( "[acpi] found RSDP in EBDA at: 0x%016X" % rsdp_pa )
             else: rsdp_pa = None
         else:
@@ -205,7 +236,7 @@ class ACPI:
             if -1 != pos:
                 rsdp_pa  = pos
                 rsdp_buf = self.cs.mem.read_physical_mem( rsdp_pa, ACPI_RSDP_SIZE )
-                rsdp     = ACPI_TABLES[ACPI_TABLE_SIG_RSDP](rsdp_buf) 
+                rsdp     = RSDP(rsdp_buf) 
                 if rsdp.is_RSDP_valid(): logger().log( "[acpi] found RSDP in the first 1kB: 0x%016X" % rsdp_pa )
                 else: rsdp_pa = None
             else:
@@ -217,7 +248,7 @@ class ACPI:
                 if -1 != pos:
                     rsdp_pa  = pos
                     rsdp_buf = self.cs.mem.read_physical_mem( rsdp_pa, ACPI_RSDP_SIZE )
-                    rsdp     = ACPI_TABLES[ACPI_TABLE_SIG_RSDP](rsdp_buf) 
+                    rsdp     = RSDP(rsdp_buf) 
                     if rsdp.is_RSDP_valid(): logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x%016X" % rsdp_pa )
                     else: rsdp_pa = None
                 else:
@@ -235,7 +266,7 @@ class ACPI:
                             logger().log( '[acpi] ACPI 1.0 RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI1_0,rsdp_pa) )
 
                         rsdp_buf = self.cs.mem.read_physical_mem( rsdp_pa, ACPI_RSDP_SIZE )
-                        rsdp     = ACPI_TABLES[ACPI_TABLE_SIG_RSDP](rsdp_buf) 
+                        rsdp     = RSDP(rsdp_buf) 
                         if rsdp.is_RSDP_valid(): logger().log( "[acpi] found RSDP in EFI Config Table: 0x%016X" % rsdp_pa )
                         else: rsdp_pa = None
 
@@ -245,7 +276,8 @@ class ACPI:
 
         if logger().HAL: logger().log( "[acpi] searching all EFI memory for RSDP (this may take a minute).." )
         CHUNK_SZ = 1024*1024 # 1MB
-        pa = self.uefi.get_SMRAM_base() - CHUNK_SZ
+        (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRAM()
+        pa = smram_base - CHUNK_SZ
         while pa > CHUNK_SZ:
             membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
             pos = membuf.find( ACPI_RSDP_SIG )
@@ -253,7 +285,7 @@ class ACPI:
                 rsdp_pa  = pa + pos
                 if logger().VERBOSE: logger().log( "[acpi] found '%s' signature at 0x%016X. Checking if valid RSDP.." % (ACPI_RSDP_SIG,rsdp_pa) )
                 rsdp_buf = self.cs.mem.read_physical_mem( rsdp_pa, ACPI_RSDP_SIZE )
-                rsdp     = ACPI_TABLES[ACPI_TABLE_SIG_RSDP](rsdp_buf) 
+                rsdp     = RSDP(rsdp_buf) 
                 if rsdp.is_RSDP_valid():
                     logger().log( "[acpi] found RSDP in EFI memory: 0x%016X" % rsdp_pa )
                     break
@@ -285,8 +317,8 @@ class ACPI:
             sdt_header = self._parse_table_header( sdt_buf[ :ACPI_TABLE_HEADER_SIZE] )
 
         sdt_contents = sdt_buf[ ACPI_TABLE_HEADER_SIZE : ]
-        if is_xsdt: sdt = ACPI_TABLES[ACPI_TABLE_SIG_XSDT]( sdt_contents )
-        else:       sdt = ACPI_TABLES[ACPI_TABLE_SIG_RSDT]( sdt_contents ) 
+        sdt = ACPI_TABLES[ACPI_TABLE_SIG_XSDT if is_xsdt else ACPI_TABLE_SIG_RSDT]()
+        sdt.parse( sdt_contents )
         return (is_xsdt,sdt_pa,sdt,sdt_header)
 
 
@@ -387,6 +419,7 @@ class ACPI:
     def _parse_table_contents( self, signature, contents ):
         table = None
         if ACPI_TABLES.__contains__(signature):
-            table = (ACPI_TABLES[signature])(contents) 
+            table = (ACPI_TABLES[signature])() 
+            table.parse( contents )
         return table
         

@@ -36,7 +36,7 @@ _MODULE_NAME = 'smm_dma'
 TAGS = [MTAG_SMM,MTAG_HWCONFIG]
 
 
-ALIGNED_8MB   = 0x7FFFFF
+_TSEG_MASK  = 0xFFF00000
 
 class smm_dma(BaseModule):
 
@@ -44,99 +44,45 @@ class smm_dma(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE:
-            return True
-        return False
+        if self.cs.is_atom(): return False
+        if self.cs.is_server(): return False
+        else: return True
 
+    def check_tseg_locks(self):
+        tseg_base_lock = chipsec.chipset.get_control(self.cs, 'TSEGBaseLock')
+        tseg_limit_lock = chipsec.chipset.get_control(self.cs, 'TSEGLimitLock')
+        
+        if tseg_base_lock and tseg_limit_lock:
+            self.logger.log_good( "TSEG range is locked" )
+            return ModuleResult.PASSED
+        else:
+            self.logger.log_bad( "TSEG range is not locked" )
+            return ModuleResult.FAILED
+        
     def check_tseg_config(self):
-        self.logger.start_test( "SMRAM DMA Protection" )
-
-        if not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_TSEGMB' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_BGSM' ):
-            self.logger.error( "Couldn't find definition of required registers (TSEG, BGSM)" )
-            return ModuleResult.ERROR
-
-        tolud_reg  = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TOLUD' )
-        bgsm_reg   = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_BGSM' )
-        tsegmb_reg = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TSEGMB' )
-        smrr_base  = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSBASE' )
-        smrr_mask  = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSMASK' )
-
-        self.logger.log( "[*] Registers:" )
-        chipsec.chipset.print_register( self.cs, 'PCI0.0.0_TOLUD', tolud_reg )
-        chipsec.chipset.print_register( self.cs, 'PCI0.0.0_BGSM', bgsm_reg )
-        chipsec.chipset.print_register( self.cs, 'PCI0.0.0_TSEGMB', tsegmb_reg )
-        chipsec.chipset.print_register( self.cs, 'IA32_SMRR_PHYSBASE', smrr_base )
-        chipsec.chipset.print_register( self.cs, 'IA32_SMRR_PHYSMASK', smrr_mask )
-        #self.logger.log( "[*]   TOLUD             : 0x%08X" % tolud )
-        #self.logger.log( "[*]   BGSM              : 0x%08X" % bgsm )
-        #self.logger.log( "[*]   TSEGMB            : 0x%08X" % tsegmb )
-        #self.logger.log( "[*]   IA32_SMRR_PHYSBASE: 0x%016X" % smrr_base )
-        #self.logger.log( "[*]   IA32_SMRR_PHYSMASK: 0x%016X\n" % smrr_mask )
-
-        tolud_lock  = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_TOLUD'    , tolud_reg , 'LOCK' )
-        bgsm_lock   = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_BGSM'     , bgsm_reg  , 'LOCK' )
-        tsegmb_lock = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_TSEGMB'   , tsegmb_reg, 'LOCK' )
-        tolud       = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_TOLUD'    , tolud_reg , 'TOLUD'   , True )
-        bgsm        = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_BGSM'     , bgsm_reg  , 'BGSM'    , True )
-        tsegmb      = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_TSEGMB'   , tsegmb_reg, 'TSEGMB'  , True )
-        smrrbase    = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSBASE', smrr_base , 'PhysBase', True )
-        smrrmask    = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSMASK', smrr_mask , 'PhysMask', True )
-
-        tseg_size = bgsm - tsegmb
-        tseg_limit = tsegmb + tseg_size - 1
-
-        # Actual SMRR Base = SMRR_BASE & SMRR_MASK
-        smrrbase &= smrrmask
-        smrrsize = ((~smrrmask)&0xFFFFFFFF) + 1
-        smrrlimit = smrrbase + smrrsize - 1
-
-        self.logger.log( '' )
-        self.logger.log( "[*] Memory Map:" )
-        self.logger.log( "[*]   Top Of Low Memory             : 0x%08X" % tolud )
-        self.logger.log( "[*]   TSEG Range (TSEGMB-BGSM)      : [0x%08X-0x%08X]" % (tsegmb,tseg_limit) )
-        self.logger.log( "[*]   SMRR Range (size = 0x%08X): [0x%08X-0x%08X]\n" % (smrrsize,smrrbase,smrrlimit) )
-
-        smram_dma_ok = True
-
-        self.logger.log( "[*] checking locks.." )
-        ok = (0 != tsegmb_lock)
-        smram_dma_ok = smram_dma_ok and ok
-        if ok: self.logger.log_good( "  TSEGMB is locked" )
-        else:  self.logger.log_bad( "  TSEGMB is not locked" )
-
-        ok = (0 != bgsm_lock)
-        smram_dma_ok = smram_dma_ok and ok
-        if ok: self.logger.log_good( "  BGSM is locked" )
-        else:  self.logger.log_bad( "  BGSM is not locked" )
-
-        self.logger.log( "[*] checking TSEG alignment.." )
-        ok = (0 == tsegmb & ALIGNED_8MB)
-        smram_dma_ok = smram_dma_ok and ok
-        if ok: self.logger.log_good( "  TSEGMB is 8MB aligned" )
-        else:  self.logger.log_bad( "  TSEGMB is not 8MB aligned" )
-
-        self.logger.log( "[*] checking TSEG covers entire SMRR range.." )
-        is_smrr_setup = (0 != smrrmask)
-        if is_smrr_setup:
-            ok = (tsegmb <= smrrbase) and (smrrlimit <= tseg_limit)
-            smram_dma_ok = smram_dma_ok and ok
-            if ok: self.logger.log_good( "  TSEG covers entire SMRAM" )
-            else:  self.logger.log_bad( "  TSEG doesn't cover entire SMRAM" )
-        else:
-            self.logger.log_bad( "  SMRR range is not setup" )
-
-        self.logger.log('')
-        if smram_dma_ok:
-            if is_smrr_setup:
-                res = ModuleResult.PASSED
-                self.logger.log_passed_check( "TSEG is properly configured. SMRAM is protected from DMA attacks" )
+        res = ModuleResult.FAILED
+        (tseg_base,  tseg_limit,  tseg_size ) = self.cs.cpu.get_TSEG()
+        (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
+        self.logger.log("[*] TSEG      : 0x%016X - 0x%016X (size = 0x%08X)"   % (tseg_base,  tseg_limit,  tseg_size ))      
+        self.logger.log("[*] SMRR range: 0x%016X - 0x%016X (size = 0x%08X)\n" % (smram_base, smram_limit, smram_size))
+        
+        self.logger.log( "[*] checking TSEG range configuration.." )
+        if (0 == smram_base) and (0 == smram_limit):
+            res = ModuleResult.WARNING
+            self.logger.log_warn_check( "TSEG is properly configured but can't determine if it covers entire SMRAM" )
+            
+        else:            
+            if (tseg_base <= smram_base) and (smram_limit <= tseg_limit):
+            #if (tseg_base == smram_base) and (tseg_size == smram_size):
+                self.logger.log_good( "TSEG range covers entire SMRAM" )
+                if self.check_tseg_locks() == ModuleResult.PASSED:                    
+                    res = ModuleResult.PASSED
+                    self.logger.log_passed_check( "TSEG is properly configured. SMRAM is protected from DMA attacks" )
+                else:
+                    self.logger.log_failed_check( "TSEG is properly configured, but the configuration is not locked." )
             else:
-                res = ModuleResult.WARNING
-                self.logger.log_warn_check( "TSEG is properly configured but can't determine if it covers entire SMRAM" )
-        else:
-            res = ModuleResult.FAILED
-            self.logger.log_failed_check( "TSEG is not properly configured. SMRAM is vulnerable to DMA attacks" )
+                self.logger.log_bad( "TSEG range doesn't cover entire SMRAM" )
+                self.logger.log_failed_check( "TSEG is not properly configured. Portions of SMRAM may be vulnerable to DMA attacks" )
 
         return res
 
@@ -145,4 +91,7 @@ class smm_dma(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_tseg_config()
+        self.logger.start_test( "SMM TSEG Range Configuration Check" )
+        self.res = self.check_tseg_config()
+        return self.res
+        

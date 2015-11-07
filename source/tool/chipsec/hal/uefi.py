@@ -357,6 +357,14 @@ NVRAM: EFI Variable Store
             logger().error( 'Unknown EFI compression type 0x%X' % compression_type )
             return None
 
+    def compress_EFI_binary( self, uncompressed_name, compressed_name, compression_type ):
+        if logger().HAL: logger().log( "[uefi] compressing EFI binary (type = 0x%X)\n       %s ->\n       %s" % (compression_type,uncompressed_name,compressed_name) )
+        if compression_type in COMPRESSION_TYPES:
+            return self.cs.helper.compress_file( uncompressed_name, compressed_name, compression_type )
+        else: 
+            logger().error( 'Unknown EFI compression type 0x%X' % compression_type )
+            return None
+
     ######################################################################
     # S3 Resume Boot-Script Parsing Functions
     ######################################################################
@@ -380,7 +388,7 @@ NVRAM: EFI Variable Store
         for efivar_name in efivars:
             (off, buf, hdr, data, guid, attrs) = efivars[efivar_name][0]
             if efivar_name in S3_BOOTSCRIPT_VARIABLES:
-                if logger().HAL: logger().log( "[uefi] found: '%s' {%s} %s variable" % (efivar_name,guid,get_attr_string(attrs)) )
+                if logger().HAL: logger().log( "[uefi] found: %s {%s} %s variable" % (efivar_name,guid,get_attr_string(attrs)) )
                 if logger().VERBOSE:
                     logger().log('[uefi] %s variable data:' % efivar_name)
                     print_buffer( data )
@@ -392,7 +400,9 @@ NVRAM: EFI Variable Store
                     logger().error( "Unrecognized format of '%s' UEFI variable (data size = 0x%X)" % (efivar_name,varsz) )
                     break
                 AcpiGlobalAddr = struct.unpack_from( AcpiGlobalAddr_fmt, data )[0]
-
+                if 0 == AcpiGlobalAddr:
+                    logger().error( "Pointer to ACPI Global Data structure in %s variable is 0" % efivar_name )
+                    break
                 if logger().HAL: logger().log( "[uefi] Pointer to ACPI Global Data structure: 0x%016X" % ( AcpiGlobalAddr ) )
                 if logger().HAL: logger().log( "[uefi] Decoding ACPI Global Data structure.." )
                 AcpiVariableSet = self.helper.read_physical_mem( AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE )
@@ -479,21 +489,12 @@ NVRAM: EFI Variable Store
     # UEFI System Tables
     ######################################################################
 
-    def get_SMRAM( self ):
-        smrrbase = chipsec.chipset.read_register_field( self.cs, 'IA32_SMRR_PHYSBASE', 'PhysBase', True )
-        smrrmask  = chipsec.chipset.read_register_field( self.cs, 'IA32_SMRR_PHYSMASK', 'PhysMask', True )
-        return (smrrbase, smrrmask)
-
-    def get_SMRAM_base( self ):
-        (smrrbase, smrrmask) = self.get_SMRAM()
-        return (smrrbase & smrrmask)
-
     def find_EFI_Table( self, table_sig ):
-        (smrrbase,smrrmask) = self.get_SMRAM()
+        (smram_base,smram_limit,smram_size) = self.cs.cpu.get_SMRAM()
         CHUNK_SZ = 1024*1024 # 1MB
         if logger().HAL: logger().log( "[uefi] searching memory for EFI table with signature '%s' .." % table_sig )
         table,table_buf = None,None
-        pa = (smrrbase & smrrmask) - CHUNK_SZ
+        pa = smram_base - CHUNK_SZ
         isFound = False
         while pa > CHUNK_SZ:
             if logger().VERBOSE: logger().log( '[uefi] reading 0x%016X..' % pa )

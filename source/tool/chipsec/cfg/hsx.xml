@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<configuration platform="HSX" >
+<!-- XML configuration file for Haswell Server
+-->
+  <pci>
+  </pci>
+
+  <mmio>
+  </mmio>
+
+  <io>
+  </io>
+
+  <memory>
+  </memory>
+
+  <registers>
+    <!-- Host Controller -->
+    <register name="DMIRCBAR" type="pcicfg" bus="0" dev="0" fun="0" offset="0x50" size="4" desc="DMI Root Complex Register Block Base Address">
+      <field name="dmircbaren" bit="0"  size="1"  desc="Enable DMIRCBAR"/>
+      <field name="dmircbar"   bit="12" size="20" desc="Base address DMI Root Complex register space"/>
+    </register>
+
+    <register name="TSEG" type="pcicfg" bus="0" dev="5" fun="0" offset="0xA8" size="8" desc="TSEG Memory">
+      <field name="base"  bit="20" size="12" desc="Base address"/>
+      <field name="limit" bit="52" size="12" desc="Limit address"/>
+    </register>
+    <register name="TSEG_BASE" type="pcicfg" bus="0" dev="5" fun="0" offset="0xA8" size="4" desc="TSEG Memory Base">
+      <field name="base"  bit="20" size="12" desc="Base address"/>
+    </register>
+    <register name="TSEG_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0xAC" size="4" desc="TSEG Memory Limit">
+      <field name="limit" bit="20" size="12" desc="Limit address"/>
+    </register>
+
+    <register name="VTBAR" type="pcicfg" bus="0" dev="5" fun="0" offset="0x180" size="4" desc="VT BAR Register">
+      <field name="Enable" bit="0"  size="1"  desc="Enable"/>
+      <field name="Base"   bit="13" size="19" desc="VTD Base Address"/>
+    </register>
+    <register name="LTDPR" type="pcicfg" bus="0" dev="5" fun="0" offset="0x290" size="4" desc="Intel TXT DMA Protected Range Register">
+      <field name="lock"       bit="0"  size="1"  desc="Lock LTDPR register"/>
+      <field name="protregsts" bit="1"  size="1"  desc="Protection enabled in HW"/>
+      <field name="commandbit" bit="2"  size="1"  desc="Command bit"/>
+      <field name="size"       bit="4"  size="8"  desc="Size of memory"/>
+      <field name="topofdpr"   bit="20" size="12" desc="Top address +1 of DPR"/>
+    </register>    
+    
+
+    <!-- GENPROTRANGE Registers -->   
+    <register name="GENPROTRANGE1_BASE" type="pcicfg" bus="0" dev="5" fun="0" offset="0xB0" size="8" desc="Generic Protected Memory Range 1 Base Address">
+      <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 1 base address"/>
+    </register>  
+    <register name="GENPROTRANGE1_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0xB8" size="8" desc="Generic Protected Memory Range 1 Limit Address">
+      <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 1 limit address"/>
+    </register>      
+    <register name="GENPROTRANGE2_BASE" type="pcicfg" bus="0" dev="5" fun="0" offset="0xC0" size="8" desc="Generic Protected Memory Range 2 Base Address">
+      <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 2 base address"/>
+    </register>      
+    <register name="GENPROTRANGE2_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0xC8" size="8" desc="Generic Protected Memory Range 2 Limit Address">
+      <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 2 limit address"/>
+    </register>       
+    <register name="GENPROTRANGE0_BASE" type="pcicfg" bus="0" dev="5" fun="0" offset="0x120" size="8" desc="Generic Protected Memory Range 0 Base Address">
+      <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 0 base address"/>
+    </register>      
+    <register name="GENPROTRANGE0_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0x128" size="8" desc="Generic Protected Memory Range 0 Limit Address">
+      <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 0 limit address"/>
+    </register>
+    
+    <!-- LPC Interface Bridge -->
+    <register name="GEN_PMCON_LOCK" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0xA6" size="1" desc="General Power Management Configuration Lock">
+      <field name="ACPI_BASE_LOCK"   bit="1" size="1" desc="Lock down ACPI Base Address (ABASE)"/>
+      <field name="SLP_STR_POL_LOCK" bit="2" size="1" desc="SLP Stretching Policy Lock-Down"/>
+    </register>
+    
+    <!-- PCH Root Complex Register Base MMIO registers -->
+
+    <!-- PCH ABASE (PMBASE) I/O registers -->
+    <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
+      <field name="GBL_SMI_EN"         bit="0"  size="1"/>
+      <field name="EOS"                bit="1"  size="1"/>
+      <field name="BIOS_EN"            bit="2"  size="1"/>
+      <field name="LEGACY_USB_EN"      bit="3"  size="1"/>
+      <field name="SLP_SMI_EN"         bit="4"  size="1"/>
+      <field name="APMC_EN"            bit="5"  size="1"/>
+      <field name="SWSMI_TMR_EN"       bit="6"  size="1"/>
+      <field name="BIOS_RLS"           bit="7"  size="1"/>
+      <field name="MCSMI_EN"           bit="11" size="1"/>
+      <field name="TCO_EN"             bit="13" size="1"/>
+      <field name="PERIODIC_EN"        bit="14" size="1"/>
+      <field name="LEGACY_USB2_EN"     bit="17" size="1"/>
+      <field name="INTEL_USB2_EN"      bit="18" size="1"/>
+      <field name="GPIO_UNLOCK_SMI_EN" bit="27" size="1"/>
+      <field name="ME_SMI_EN"          bit="30" size="1"/>
+      <field name="xHCI_SMI_EN"        bit="31" size="1"/>
+    </register>
+    
+    <!-- CPU Model Specific Registers -->
+    
+  </registers>
+  
+</configuration>

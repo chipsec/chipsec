@@ -10,13 +10,34 @@
   <!-- #################################### -->
   <mmio>
   
-    <!-- See BC - Section 31.5.45 -->
-    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>  
     <!-- Section 14.9.5-14.9.6 -->
     <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0xFFFFFFF0FFC00000"  desc="Graphics Translation Table Range"/>
 
+    <!-- Section 35.6 -->
+    <bar name="PMBASE"  register="PBASE"  base_field="Base" size="0x200"    enable_field="Enable" desc="PM Base"/>
+    <bar name="IOBASE"  register="IOBASE" base_field="Base" size="0x2000"   enable_field="Enable" desc="I/O Controller Base"/>
+    <bar name="IBASE"   register="IBASE"  base_field="Base" size="0x200"    enable_field="Enable" desc="iLB Base"/>
+    <bar name="MPBASE"  register="MPBASE" base_field="Base" size="0x100000" enable_field="Enable" desc="MPHY Base"/>
+    <bar name="PUBASE"  register="PUBASE" base_field="Base" size="0x800"    enable_field="Enable" desc="PUnit Base"/>
+
+    <!-- new definition -->
+    <!-- <bar name="SPIBAR"  register="SBASE"  base_field="Base" size="0x200"  enable_field="Enable" desc="SPI Base"/> -->
+    <!-- old definition: to be removed -->
+    <bar name="SPIBAR"  bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>  
+
   </mmio>
   
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+    <!-- Section 35.6 -->
+    <bar name="ABASE" register="ABASE" base_field="Base" size="0x1000" enable_field="Enable" desc="ACPI Base Address"/>
+    <bar name="GBASE" register="GBASE" base_field="Base" size="0x100"  enable_field="Enable" desc="GPIO Base Address"/>
+  </io>
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- Configuration registers              -->
@@ -49,6 +70,62 @@
       <field name="BGSM"      bit="20" size="12" desc="GFx Base of GTT Stolen Memory"/>
     </register>
 
+    <!-- iLB LPC Bridge -->
+
+    <!-- Section 35.6 -->
+    <register name="ABASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x40" size="4" desc="ACPI Base Address">
+      <field  name="MEMI"   bit="0" size="1"   desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1" size="1"   desc="Enable"/>
+      <field  name="Base"   bit="7" size="9"   desc="Base Address"/>
+    </register>
+    <register name="PBASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x44" size="4" desc="PMC Base Address">
+      <field  name="MEMI"   bit="0" size="1"   desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1" size="1"   desc="Enable"/>
+      <field  name="ADDRNG" bit="2" size="1"   desc="Address Range"/>
+      <field  name="PREF"   bit="3" size="1"   desc="Prefetchable"/>
+      <field  name="Base"   bit="9" size="23"  desc="Base Address"/>
+    </register>
+    <register name="GBASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x48" size="4" desc="GPIO Base Address">
+      <field  name="MEMI"   bit="0" size="1"   desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1" size="1"   desc="Enable"/>
+      <field  name="Base"   bit="8" size="8"   desc="Base Address"/>
+    </register>
+    <register name="IOBASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x4C" size="4" desc="I/O Controller Base Address">
+      <field  name="MEMI"   bit="0"  size="1"  desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1"  size="1"  desc="Enable"/>
+      <field  name="ADDRNG" bit="2"  size="1"  desc="Address Range"/>
+      <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
+      <field  name="Base"   bit="14" size="18" desc="Base Address"/>
+    </register>
+    <register name="IBASE"  type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x50" size="4" desc="ILB Base Address">
+      <field  name="MEMI"   bit="0"  size="1"  desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1"  size="1"  desc="Enable"/>
+      <field  name="ADDRNG" bit="2"  size="1"  desc="Address Range"/>
+      <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
+      <field  name="Base"   bit="9"  size="23" desc="Base Address"/>
+    </register>
+    <register name="SBASE"  type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x54" size="4" desc="SPI Base Address">
+      <field  name="MEMI"   bit="0"  size="1"  desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1"  size="1"  desc="Enable"/>
+      <field  name="ADDRNG" bit="2"  size="1"  desc="Address Range"/>
+      <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
+      <field  name="Base"   bit="9"  size="23" desc="Base Address"/>
+    </register>
+    <register name="MPBASE"  type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x58" size="4" desc="MPHY Base Address">
+      <field  name="MEMI"   bit="0"  size="1"  desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1"  size="1"  desc="Enable"/>
+      <field  name="ADDRNG" bit="2"  size="1"  desc="Address Range"/>
+      <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
+      <field  name="Base"   bit="20" size="12" desc="Base Address"/>
+    </register>
+    <register name="PUBASE" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x5C" size="4" desc="PUnit Base Address">
+      <field  name="MEMI"   bit="0"  size="1"  desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1"  size="1"  desc="Enable"/>
+      <field  name="ADDRNG" bit="2"  size="1"  desc="Address Range"/>
+      <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
+      <field  name="Base"   bit="11" size="21" desc="Base Address"/>
+    </register>
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -59,6 +136,41 @@
       <field name="BLE"     bit="1" size="1" desc="BIOS Lock Enable"/>
       <field name="SRC"     bit="2" size="2" desc="SPI Read Configuration"/>
       <field name="SMM_BWP" bit="5" size="1" desc="SMM BIOS Write Protect"/>
+    </register>
+
+    <!-- PMBASE MMIO registers -->
+
+    <!-- Section 30.6 -->
+    <register name="GEN_PMCON2" type="mmio" bar="PMBASE" offset="0x24" size="4" desc="General PM Configuration 2">
+      <field name="PER_SMI_SEL" bit="0" size="2" desc="Period SMI Select"/>
+      <field name="SMI_LOCK"    bit="4" size="1" desc="SMI Lock"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- I/O registers                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- ABASE I/O registers -->
+
+    <!-- Section 30.8.6 -->
+    <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
+      <field name="GBL_SMI_EN"    bit="0"  size="1"/>
+      <field name="EOS"           bit="1"  size="1"/>
+      <field name="BIOS_EN"       bit="2"  size="1"/>
+      <field name="SLP_SMI_EN"    bit="4"  size="1"/>
+      <field name="APMC_EN"       bit="5"  size="1"/>
+      <field name="SWSMI_TMR_EN"  bit="6"  size="1"/>
+      <field name="BIOS_RLS"      bit="7"  size="1"/>
+      <field name="TCO_EN"        bit="13" size="1"/>
+      <field name="PERIODIC_EN"   bit="14" size="1"/>
+      <field name="USB_SMI_EN"    bit="17" size="1"/>
+      <field name="USB_IS_SMI_EN" bit="18" size="1"/>
+    </register>
+    <!-- Section 30.8.14 -->
+    <register name="TCO1_CNT" type="iobar" bar="ABASE" offset="0x68" size="4" desc="TCO Timer Control">
+      <field name="TCO_TMR_HALT" bit="11" size="1" desc="TCO Timre Halt"/>
+      <field name="TCO_LOCK"     bit="12" size="1" desc="TCO Lock"      />
+      <field name="OS_POLICY"    bit="20" size="2" desc="OS Policy"     />
     </register>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

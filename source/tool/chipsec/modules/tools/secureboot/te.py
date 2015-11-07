@@ -454,7 +454,7 @@ def confirm():
     logger.warn("* enforce Secure Boot checks on TE EFI executables")
     logger.warn("*")
     logger.warn("* If TE executable doesn't run then the firmware correctly blocked it.")
-    logger.warn("* To restore OS boot loader in this case you may use one of the follwoing:")
+    logger.warn("* To restore OS boot loader in this case you may use one of the following:")
     logger.warn("* - Disable Secure Boot in BIOS, boot to external drive (e.g. Linux or UEFI shell)")
     logger.warn("*   then restore original boot loader executables from .bak files")
     logger.warn("* - On Windows, use recovery mode which should automatically restore correct executables")

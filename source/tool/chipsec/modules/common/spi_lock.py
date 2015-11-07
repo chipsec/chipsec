@@ -43,9 +43,10 @@ class spi_lock(BaseModule):
         self.logger.start_test( "SPI Flash Controller Configuration Lock" )
 
         spi_lock_res = ModuleResult.FAILED
-        hsfs_reg = chipsec.chipset.read_register( self.cs, 'HSFS' )
-        chipsec.chipset.print_register( self.cs, 'HSFS', hsfs_reg )
-        flockdn = chipsec.chipset.get_register_field( self.cs, 'HSFS', hsfs_reg, 'FLOCKDN' )
+        #hsfs_reg = chipsec.chipset.read_register( self.cs, 'HSFS' )
+        #chipsec.chipset.print_register( self.cs, 'HSFS', hsfs_reg )
+        #flockdn = chipsec.chipset.get_register_field( self.cs, 'HSFS', hsfs_reg, 'FLOCKDN' )
+        flockdn = chipsec.chipset.get_control(self.cs, 'FlashLockDown', with_print=True)
 
         if 1 == flockdn:
             spi_lock_res = ModuleResult.PASSED

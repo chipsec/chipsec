@@ -6944,6 +6944,22 @@ posix_cpuid(PyObject *self, PyObject *args)
 }
 
 
+PyDoc_STRVAR(efi_allocphysmem__doc__,
+"allocphysmem(length, max_pa) -> (va)\n\
+Use malloc to allocate space in memory.";);
+
+static PyObject *
+posix_allocphysmem(PyObject *self, PyObject *args)
+{
+	unsigned int length, max_pa;
+    void *va;
+    if (!PyArg_Parse(args, "(KK)",  &length,&max_pa))return NULL;
+	Py_BEGIN_ALLOW_THREADS
+    va = malloc(length);
+    Py_END_ALLOW_THREADS
+    return Py_BuildValue("(K)",  (unsigned long)va);
+}
+
 
 PyDoc_STRVAR(efi_readio__doc__,
 "readio(addr, size) -> (int)\n\
@@ -7219,7 +7235,7 @@ MiscRT_GetNextVariableName(PyObject *self, PyObject *args)
   
 
   // Return the new Data Size and Vendor Guid
-  return Py_BuildValue("(IuKs#)", (UINT32) Status, VariableName, NameSize, &VendorGuid, 16);
+  return Py_BuildValue("(IuKs#)", (UINT32) Status, VariableName, NameSize, &VendorGuid, sizeof(VendorGuid));
 }
 
 PyDoc_STRVAR(MiscRT_SetVariable__doc__,
@@ -7591,6 +7607,8 @@ static PyMethodDef posix_methods[] = {
   {"writeio",           posix_writeio, 0, efi_writeio__doc__},
   {"readio",            posix_readio, 0, efi_readio__doc__},
   {"swsmi",             posix_swsmi, 0, efi_swsmi__doc__},
+  {"allocphysmem",      posix_allocphysmem, 0, efi_allocphysmem__doc__},
+  
 
     // Variable Services
   {"GetVariable",                   MiscRT_GetVariable,           METH_VARARGS, MiscRT_GetVariable__doc__           },

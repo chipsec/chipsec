@@ -96,10 +96,55 @@ if "windows" == platform.system().lower():
             print text
 
 elif "linux" == platform.system().lower():
-    def log_color( fg_color, text ):
-        #_text = "\033[%dm" + text + "\033[0m" % (fg_color + 30) #FIXME:     _text = "\033[%dm" + text + "\033[0m" % (fg_color + 30) \n TypeError: not all arguments converted during string formatting
 
-        print text #_text
+    class ColorLogger:
+        ENDC = '\033[0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
+        END = 0
+        LIGHT = 90
+        DARK  = 30
+        BACKGROUND = 40
+        LIGHT_BACKGROUND = 100
+        GRAY   = 0
+        RED    = 1
+        GREEN  = 2
+        YELLOW = 3
+        BLUE   = 4
+        PURPLE = 5
+        CYAN   = 6
+        WHITE  = 7
+        NORMAL = 8
+    
+        def log_test(self):
+            print ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC
+            print ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC
+            for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
+                for code in xrange(ColorLogger.GRAY, ColorLogger.NORMAL+1):
+                    self.log(color_type+code, color_type, code )
+    
+        
+        def log(self,msg, color_type=LIGHT,color=8):
+            print ColorLogger.format(msg, color_type, color)
+        
+        @staticmethod
+        def format(msg, color_type=LIGHT,color=8):
+            return ( '\033[%im%s%s'%(color_type+color,str(msg),ColorLogger.ENDC)) 
+    
+    COLOR_ID = {
+      BLACK  : ColorLogger.NORMAL,
+      RED    : ColorLogger.RED,
+      GREEN  : ColorLogger.GREEN,
+      YELLOW : ColorLogger.YELLOW,
+      BLUE   : ColorLogger.BLUE,
+      MAGENTA: ColorLogger.PURPLE,
+      CYAN   : ColorLogger.CYAN,
+      WHITE  : ColorLogger.WHITE
+      }
+    
+    def log_color( fg_color, text ):
+        _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ]) 
+        print _text
 
 else:
     def log_color( fg_color, text ):

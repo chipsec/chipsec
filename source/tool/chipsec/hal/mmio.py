@@ -338,7 +338,7 @@ def get_MMIO_BAR_base_address( cs, bar_name ):
         bar_reg   = bar['register']
         if 'base_field' in bar:
             base_field = bar['base_field']
-            base = chipsec.chipset.read_register_field( cs, bar_reg, base_field, True )
+            base = chipsec.chipset.read_register_field( cs, bar_reg, base_field, preserve_field_position=True )
         else:
             base = chipsec.chipset.read_register( cs, bar_reg )
     else:
@@ -403,7 +403,7 @@ def is_MMIO_BAR_programmed( cs, bar_name ):
         bar_reg   = bar['register']
         if 'base_field' in bar:
             base_field = bar['base_field']
-            base = chipsec.chipset.read_register_field( cs, bar_reg, base_field, True )
+            base = chipsec.chipset.read_register_field( cs, bar_reg, base_field, preserve_field_position=True )
         else:
             base = chipsec.chipset.read_register( cs, bar_reg )
     else:
@@ -457,9 +457,12 @@ def list_MMIO_BARs( cs ):
         (_base,_size) = get_MMIO_BAR_base_address( cs, _bar_name )
         _en = is_MMIO_BAR_enabled( cs, _bar_name )
 
+        if 'register' in _bar:
+            _s = _bar['register']
+            if 'offset' in _bar: _s += (' + 0x%X' % int(_bar['offset'],16))
+        else:
+            _s = '%02X:%02X.%01X + %s' % ( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
 
-        if 'register' in _bar: _s = _bar['register']
-        else: _s = '%02X:%02X.%01X + %s' % ( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
         logger().log( ' %-12s | %-14s | %016X | %08X | %d   | %s' % (_bar_name, _s, _base, _size, _en, _bar['desc']) )
 
 

@@ -70,7 +70,7 @@ def mmio(argv):
         bar = argv[3].upper()
         logger().log( "[CHIPSEC] Dumping %s MMIO space.." % bar )
         dump_MMIO_BAR( chipsec_util._cs, bar )
-    elif ( 'read' == op or 'write' == op ):
+    elif ( 'read' == op ):
         bar   = argv[3].upper()
         off   = int(argv[4],16)
         width = int(argv[5],16) if len(argv) == 6 else 4

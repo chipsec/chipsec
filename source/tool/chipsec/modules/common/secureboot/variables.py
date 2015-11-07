@@ -96,6 +96,7 @@ class variables(BaseModule):
         not_found = 0
         not_auth  = 0
         not_wp    = 0
+        is_secureboot_enabled = False
 
         sbvars = self._uefi.list_EFI_variables()
         if sbvars is None:
@@ -110,6 +111,11 @@ class variables(BaseModule):
                     return ModuleResult.FAILED
                 for (off, buf, hdr, data, guid, attrs) in sbvars[name]:
                     self.logger.log( "[*] Checking protections of UEFI variable %s:%s" % (guid,name) )
+
+                    # check the status of Secure Boot
+                    if EFI_VAR_NAME_SecureBoot == name:
+                        is_secureboot_enabled = (data is not None and len(data) == 1 and ord(data) == 0x1)
+
                     #
                     # Verify if the Secure Boot key/database variable is authenticated
                     #
@@ -121,6 +127,7 @@ class variables(BaseModule):
                         else:
                             not_auth += 1
                             self.logger.log_bad( 'Variable %s:%s is not authenticated' % (guid,name) )
+
                     #
                     # Attempt to modify contents of the variables
                     #
@@ -133,6 +140,8 @@ class variables(BaseModule):
                 continue
 
         self.logger.log( '' )
+        self.logger.log( '[*] Secure Boot appears to be %sabled' % ('en' if is_secureboot_enabled else 'dis') )
+
         if len(SECURE_BOOT_VARIABLES) == not_found:
             # None of Secure Boot variables were not found
             self.logger.log_skipped_check( 'None of required Secure Boot variables found. Secure Boot is not enabled' )
@@ -144,8 +153,14 @@ class variables(BaseModule):
                 if not_found > 0: self.logger.log_bad( "Some required Secure Boot variables are missing" )
                 if not_auth  > 0: self.logger.log_bad( 'Some Secure Boot keying variables are not authenticated' )
                 if not_wp    > 0: self.logger.log_bad( 'Some Secure Boot variables can be modified' )
-                self.logger.log_failed_check( 'Not all Secure Boot UEFI variables are protected' )
-                return ModuleResult.FAILED
+
+                if is_secureboot_enabled:
+                    self.logger.log_failed_check( 'Not all Secure Boot UEFI variables are protected' )
+                    return ModuleResult.FAILED
+                else:
+                    self.logger.log_warn_check( 'Not all Secure Boot UEFI variables are protected' )
+                    return ModuleResult.WARNING
+
             else:
                 self.logger.log_passed_check( 'All Secure Boot UEFI variables are protected' )
                 return ModuleResult.PASSED
