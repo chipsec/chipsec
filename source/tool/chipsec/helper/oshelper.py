@@ -32,7 +32,6 @@
 Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
 """
 
-import sys
 import os
 import fnmatch
 import re
@@ -341,5 +340,5 @@ def helper():
         except BaseException, msg:
             logger().error( str(msg) )
             if logger().VERBOSE: logger().log_bad(traceback.format_exc())
-            sys.exit()
+            raise
     return _helper
