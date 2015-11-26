@@ -49,6 +49,7 @@ class FWType:
 #    EFI_FW_TYPE_WIN      = 'win'     # Windows 8 GetFirmwareEnvironmentVariable format
     EFI_FW_TYPE_VSS      = 'vss'     # NVRAM using format with '$VSS' signature
     EFI_FW_TYPE_VSS_NEW  = 'vss_new' # NVRAM using format with '$VSS' signature (Newer one?)
+    EFI_FW_TYPE_VSS_APPLE = 'vss_apple'
     EFI_FW_TYPE_NVAR     = 'nvar'    # 'NVAR' NVRAM format
     EFI_FW_TYPE_EVSA     = 'evsa'    # 'EVSA' NVRAM format
 
@@ -439,6 +440,22 @@ NameSize   : 0x%08X
 DataSize   : 0x%08X
 """ % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.wtf1, self.wtf2, self.wtf3, self.wtf4, self.NameSize, self.DataSize )
 
+HDR_FMT_VSS_APPLE  = '<HBBIIIIHH8sI'
+class EFI_HDR_VSS_APPLE( namedtuple('EFI_HDR_VSS_APPLE', 'StartId State Reserved Attributes NameSize DataSize guid0 guid1 guid2 guid3 unknown') ):
+    __slots__ = ()
+    def __str__(self):
+        return """
+Header (VSS)
+------------
+VendorGuid : {%08X-%04X-%04X-%04s-%06s}
+StartId    : 0x%04X
+State      : 0x%02X
+Reserved   : 0x%02X
+Attributes : 0x%08X
+NameSize   : 0x%08X
+DataSize   : 0x%08X
+Unknown    : 0x%08X
+""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.DataOffset, self.DataSize, self.Attributes, self.unknown)
 
 
 def getNVstore_VSS( nvram_buf ):
@@ -454,6 +471,8 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype ):
         hdr_fmt  = HDR_FMT_VSS
     elif (FWType.EFI_FW_TYPE_VSS_NEW == _fwtype):
         hdr_fmt  = HDR_FMT_VSS_NEW
+    elif (FWType.EFI_FW_TYPE_VSS_APPLE == _fwtype):
+        hdr_fmt  = HDR_FMT_VSS_APPLE
     hdr_size = struct.calcsize( hdr_fmt )
     variables = dict()
     start    = nvram_buf.find( VARIABLE_SIGNATURE_VSS )
@@ -465,6 +484,8 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype ):
             efi_var_hdr = EFI_HDR_VSS( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
         elif (FWType.EFI_FW_TYPE_VSS_NEW == _fwtype):
             efi_var_hdr = EFI_HDR_VSS_NEW( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
+        elif (FWType.EFI_FW_TYPE_VSS_APPLE == _fwtype):
+            efi_var_hdr = EFI_HDR_VSS_APPLE( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
 
         if (efi_var_hdr.StartId != 0x55AA): break
 
@@ -502,6 +523,9 @@ def getEFIvariables_VSS( nvram_buf ):
 
 def getEFIvariables_VSS_NEW( nvram_buf ):
     return _getEFIvariables_VSS( nvram_buf, FWType.EFI_FW_TYPE_VSS_NEW )
+
+def getEFIvariables_VSS_APPLE( nvram_buf ):
+    return _getEFIvariables_VSS( nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE )
 
 #######################################################################
 #
@@ -1031,6 +1055,8 @@ FWType.EFI_FW_TYPE_NVAR    : {'name' : 'NVAR',    'func_getefivariables' : getEF
 FWType.EFI_FW_TYPE_VSS     : {'name' : 'VSS',     'func_getefivariables' : getEFIvariables_VSS,     'func_getnvstore' : getNVstore_VSS },
 # $VSS New NVRAM format
 FWType.EFI_FW_TYPE_VSS_NEW : {'name' : 'VSS_NEW', 'func_getefivariables' : getEFIvariables_VSS_NEW, 'func_getnvstore' : getNVstore_VSS },
+# Apple $VSS formart
+FWType.EFI_FW_TYPE_VSS_APPLE: {'name' : 'VSS_APPLE', 'func_getefivariables' : getEFIvariables_VSS_APPLE, 'func_getnvstore' : getNVstore_VSS },
 # EVSA
 FWType.EFI_FW_TYPE_EVSA    : {'name' : 'EVSA',    'func_getefivariables' : EFIvar_EVSA,             'func_getnvstore' : getNVstore_EVSA },
 }
