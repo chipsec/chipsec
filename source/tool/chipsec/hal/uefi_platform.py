@@ -417,7 +417,7 @@ Reserved   : 0x%02X
 Attributes : 0x%08X
 NameSize   : 0x%08X
 DataSize   : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.DataOffset, self.DataSize, self.Attributes )
+""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
 
 
 HDR_FMT_VSS_AUTH  = '<HBBIQQQIIIIHH8s'
@@ -447,7 +447,7 @@ class EFI_HDR_VSS_APPLE( namedtuple('EFI_HDR_VSS_APPLE', 'StartId State Reserved
     __slots__ = ()
     def __str__(self):
         return """
-Header (VSS)
+Header (VSS_APPLE)
 ------------
 VendorGuid : {%08X-%04X-%04X-%04s-%06s}
 StartId    : 0x%04X
@@ -457,7 +457,7 @@ Attributes : 0x%08X
 NameSize   : 0x%08X
 DataSize   : 0x%08X
 Unknown    : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.DataOffset, self.DataSize, self.Attributes, self.unknown)
+""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
 
 
 def getNVstore_VSS( nvram_buf ):
