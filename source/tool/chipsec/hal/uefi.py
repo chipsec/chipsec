@@ -409,11 +409,18 @@ NVRAM: EFI Variable Store
                 if logger().VERBOSE:
                     logger().log('[uefi] AcpiVariableSet structure:')
                     print_buffer( AcpiVariableSet )
-                AcpiVariableSet_fmt = '<6Q'
                 #if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
                 #    logger().error( 'Unrecognized format of AcpiVariableSet structure' )
                 #    return (False,0)
-                AcpiReservedMemoryBase, AcpiReservedMemorySize, S3ReservedLowMemoryBase, AcpiBootScriptTable, RuntimeScriptTableBase, AcpiFacsTable = struct.unpack_from( AcpiVariableSet_fmt, AcpiVariableSet )
+                #TODO: improve this
+                if efivar_name==S3_BOOTSCRIPT_VARIABLES[0]:
+                    #AcpiGlobalVariable
+                    AcpiVariableSet_fmt = '<6Q'
+                    AcpiReservedMemoryBase, AcpiReservedMemorySize, S3ReservedLowMemoryBase, AcpiBootScriptTable, RuntimeScriptTableBase, AcpiFacsTable = struct.unpack_from( AcpiVariableSet_fmt, AcpiVariableSet )
+                else:
+                    #S3SS
+                    AcpiVariableSet_fmt = '<QQ'
+                    AcpiBootScriptTable, AcpiBootScriptTableEnd  =  struct.unpack_from( AcpiVariableSet_fmt, AcpiVariableSet )
                 if logger().HAL: logger().log( '[uefi] ACPI Boot-Script table base = 0x%016X' % AcpiBootScriptTable )
                 found   = True
                 BootScript_addresses.append( AcpiBootScriptTable )
