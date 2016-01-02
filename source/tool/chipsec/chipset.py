@@ -156,6 +156,8 @@ Chipset_Dictionary = {
 # 6th Generation Core Processor Family (Skylake)
 0x190F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : 'SKL',  'longname' : 'Desktop 6th Generation Core Processor Dual Core (Skylake CPU / Sunrise Point PCH)' },
 0x191F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : 'SKL',  'longname' : 'Desktop 6th Generation Core Processor Quad Core (Skylake CPU / Sunrise Point PCH)' },
+0x1904 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake-U)' },
+0x190C : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake-Y)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
