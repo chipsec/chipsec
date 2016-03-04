@@ -20,7 +20,6 @@ chipsec@intel.com
 */ 
 
 #include <linux/module.h>
-#include <linux/device.h>
 #include <linux/highmem.h>
 #include <linux/kallsyms.h>
 #include <linux/tty.h>
@@ -28,10 +27,11 @@ chipsec@intel.com
 #include <linux/version.h>
 #include <linux/slab.h>
 #include <asm/io.h>
-#include "include/chipsec.h"
 #include <linux/smp.h>
 #include <linux/efi.h>
-#include <linux/proc_fs.h>
+#include <linux/miscdevice.h>
+
+#include "include/chipsec.h"
 
 #define _GNU_SOURCE 
 #define CHIPSEC_VER_ 		1
@@ -40,21 +40,13 @@ chipsec@intel.com
 
 MODULE_LICENSE("GPL");
 
-int chipsec_mem_major = -1;
-
 // function page_is_ram is not exported 
 // for modules, but is available in kallsyms.
 // So we need determine this address using dirty tricks
 int (*guess_page_is_ram)(unsigned long pagenr);
-int (*guess_raw_pci_read)(unsigned int domain, unsigned int bus, unsigned int devfn, int reg, int len, uint32_t *val);
-int (*guess_raw_pci_write)(unsigned int domain, unsigned int bus, unsigned int devfn, int reg, int len, uint32_t val);
 
 unsigned long a1=0;
 module_param(a1,ulong,0); //a1 is addr of page_is_ram function
-unsigned long a2=0;
-module_param(a2,ulong,0); //a2 is addr of raw_pci_read function
-unsigned long a3=0;
-module_param(a3,ulong,0); //a3 is addr of raw_pci_write function
 
 /// Char we show before each debug print
 const char program_name[] = "chipsec";
@@ -1455,107 +1447,33 @@ static int open_port(struct inode * inode, struct file * filp)
 	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
 }
 
-#define full_lseek      null_lseek
-#define read_full       read_zero
-#define open_mem	open_port
-#define open_fmem	open_port
-
 static const struct file_operations mem_fops = {
 	.llseek		= memory_lseek,
 	.read		= read_mem,
 	.write		= write_mem,
 	.mmap		= mmap_mem,
-	.open		= open_mem,
+	.open		= open_port,
 	.unlocked_ioctl	= d_ioctl,
 	.get_unmapped_area = get_unmapped_area_mem,
 };
 
-static int memory_open(struct inode * inode, struct file * filp)
-{
-	// no more kernel locking,
-	// let's hope it is safe;)
-	int ret = 0;
-
-	switch (iminor(inode)) {
-		case 1:
-			filp->f_op = &mem_fops;
-
-//Older kernels (<2.619) and New 4.X do not have directly_mappable_cdev_bdi
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19) || LINUX_VERSION_CODE > KERNEL_VERSION(4,0,0)
-#else
-			filp->f_mapping->backing_dev_info =
-				&directly_mappable_cdev_bdi;
-#endif 
-			break;
-
-		default:
-			return -ENXIO;
-	}
-	if (filp->f_op && filp->f_op->open)
-		ret = filp->f_op->open(inode,filp);
-	return ret;
-}
-
-static const struct file_operations memory_fops = {
-	.open		= memory_open,	/* just a selector for the real open */
+static struct miscdevice chipsec_dev = {
+    .minor = MISC_DYNAMIC_MINOR,
+    .name = "chipsec",
+    .fops = &mem_fops
 };
-
-static const struct {
-	unsigned int		minor;
-	char			*name;
-	umode_t			mode;
-	const struct file_operations	*fops;
-} devlist[] = { /* list of minor devices */
-	{1, "chipsec",     S_IRUSR | S_IWUSR | S_IRGRP, &mem_fops},
-};
-
-static struct class *mem_class;
-
-
-// This function actually creates device itself.
-static int __init chr_dev_init(void)
-{
-	int i;
-
-	// get dynamic major num
-	chipsec_mem_major = register_chrdev(0, "chipsec", &memory_fops);
-	if(chipsec_mem_major < 0){
-		printk(KERN_ALERT "Registering chipsec dev failed with %d\n", chipsec_mem_major);
-		return chipsec_mem_major;
-	}
-
-	mem_class = class_create(THIS_MODULE, "chipsec");
-	for (i = 0; i < ARRAY_SIZE(devlist); i++){
-
-//Older kernels have one less parameter
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,26)
-		device_create(mem_class, NULL,MKDEV(chipsec_mem_major, devlist[i].minor), devlist[i].name);
-#else
-		device_create(mem_class, NULL,MKDEV(chipsec_mem_major, devlist[i].minor), NULL, devlist[i].name);
-#endif 
-	}
-
-	return 0;
-}
-
 
 int find_symbols(void) 
 {
 	//Older kernels don't have kallsyms_lookup_name. Use FMEM method (pass from run.sh)
 	#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
-		printk("Chipsec warning: Using function addresses provided by run.sh");
+		printk("Chipsec warning: Using function address provided by run.sh");
 		guess_page_is_ram=(void *)a1;
 		dbgprint ("set guess_page_is_ram: %p\n",guess_page_is_ram);
-		guess_raw_pci_read=(void *)a2;
-		printk ("set guess_raw_pci_read: %p\n",guess_raw_pci_read);
-		guess_raw_pci_write=(void *)a3;
-		printk ("set guess_raw_pci_write: %p\n",guess_raw_pci_write);
 	#else
-		guess_page_is_ram   = (void *)kallsyms_lookup_name("page_is_ram");
-		guess_raw_pci_read  = (void *)kallsyms_lookup_name("raw_pci_read");
-		guess_raw_pci_write = (void *)kallsyms_lookup_name("raw_pci_write");
+		guess_page_is_ram = (void *)kallsyms_lookup_name("page_is_ram");
 
-		if(guess_page_is_ram == 0 || guess_raw_pci_read == 0 || guess_raw_pci_write == 0)
+		if(guess_page_is_ram == 0)
 		{
 			printk("Chipsec find_symbols failed. Unloading module");
 			return -1;
@@ -1568,20 +1486,25 @@ int find_symbols(void)
 int __init
 init_module (void)
 {
-	int sym_status = 0;
+	int ret = 0;
 	printk(KERN_ALERT "Chipsec module loaded \n");
 	printk(KERN_ALERT "** This module exposes hardware & memory access, **\n");
 	printk(KERN_ALERT "** which can effect the secure operation of      **\n");
 	printk(KERN_ALERT "** production systems!! Use for research only!   **\n");
 
-	sym_status = find_symbols();
-	chr_dev_init();  
-	if(sym_status) 
+	ret = find_symbols();
+	if (ret)
 	{
 		printk("Chipsec symbol lookup failed\n");
-		cleanup_module();
 		return -1;
 	}
+	ret = misc_register(&chipsec_dev);
+	if (ret)
+	{
+		printk("Unable to register the chipsec device\n");
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -1589,8 +1512,6 @@ init_module (void)
 void cleanup_module (void)
 {
 	dbgprint ("Destroying chipsec device");
-	unregister_chrdev(chipsec_mem_major, "chipsec");
-	device_destroy(mem_class, MKDEV(chipsec_mem_major, 1));
-	class_destroy(mem_class);
+	misc_deregister(&chipsec_dev);
 	dbgprint ("exit");
 }
