@@ -160,7 +160,7 @@ class ChipsecUtil:
                         logger().warn("*******************************************************************")
                     except (None,Exception) , msg:
                         logger().error(str(msg))
-                        exit(-1)
+                        sys.exit(-1)
 
                 logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,argv[2:]) )
                 self.commands[ cmd ]['func']( argv )
