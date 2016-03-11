@@ -573,8 +573,8 @@ class RSDT (ACPI_TABLE):
         self.Entries = []
 
     def parse( self, table_content ):
-        num_of_tables = len(table_content) / 8
-        self.Entries= struct.unpack( ('=%dQ' % num_of_tables), table_content )
+        num_of_tables = len(table_content) / 4
+        self.Entries= struct.unpack( ('=%dI' % num_of_tables), table_content )
         return
 
     def __str__( self ):

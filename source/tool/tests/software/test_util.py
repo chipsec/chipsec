@@ -1,4 +1,5 @@
 import os
+import struct
 import tempfile
 import unittest
 
@@ -36,6 +37,76 @@ class TestChipsec(unittest.TestCase):
         logger.logger().close()
         self.log = open(self.log_file).read()
         self.assertEqual(err_code, 0)
+
+    def test_acpi_xsdt_list(self):
+
+        class ACPIHelper(mock_helper.TestHelper):
+
+            RSDP_DESCRIPTOR = ("RSD PTR " +               # Signature
+                               struct.pack("<B", 0x1) +   # Checksum
+                               "TEST00" +                 # OEMID
+                               struct.pack("<B", 0x2) +   # Revision
+                               struct.pack("<I", 0x200) + # RSDT Address
+                               struct.pack("<I", 0x0) +   # Length
+                               struct.pack("<Q", 0x100) + # XSDT Address
+                               struct.pack("<B", 0x0) +   # Extended Checksum
+                               "AAA")                     # Reserved
+
+            XSDT_DESCRIPTOR = ("XSDT" +                  # Signature
+                               struct.pack("<I", 0x32) + # Length
+                               struct.pack("<B", 0x1) +  # Revision
+                               struct.pack("<B", 0x1) +  # Checksum
+                               "OEMIDT" +                # OEMID
+                               "OEMTBLID" +              # OEM Table ID
+                               "OEMR" +                  # OEM Revision
+                               "CRID" +                  # Creator ID
+                               "CRRV" +                  # Creator Revision
+                               struct.pack("<Q", 0x400)) # Address of table
+
+            def read_phys_mem(self, pa_hi, pa_lo, length):
+                if pa_lo == 0x40E:
+                    return self.RSDP_DESCRIPTOR[:length]
+                elif pa_lo == 0x100:
+                    return self.XSDT_DESCRIPTOR[:length]
+                elif pa_lo == 0x400:
+                    return "EFGH"
+
+        self._chipsec_util("acpi list", ACPIHelper)
+        self.assertIn("EFGH: 0x0000000000000400", self.log)
+
+    def test_acpi_rsdt_list(self):
+
+        class ACPIHelper(mock_helper.TestHelper):
+
+            RSDP_DESCRIPTOR = ("RSD PTR " +               # Signature
+                               struct.pack("<B", 0x1) +   # Checksum
+                               "TEST00" +                 # OEMID
+                               struct.pack("<B", 0x0) +   # Revision
+                               struct.pack("<I", 0x200))  # RSDT Address
+
+            RSDT_DESCRIPTOR = ("RSDT" +                  # Signature
+                               struct.pack("<I", 0x28) + # Length
+                               struct.pack("<B", 0x1) +  # Revision
+                               struct.pack("<B", 0x1) +  # Checksum
+                               "OEMIDT" +                # OEMID
+                               "OEMTBLID" +              # OEM Table ID
+                               "OEMR" +                  # OEM Revision
+                               "CRID" +                  # Creator ID
+                               "CRRV" +                  # Creator Revision
+                               struct.pack("<I", 0x300)) # Address of table
+
+            def read_phys_mem(self, pa_hi, pa_lo, length):
+                if pa_lo == 0xE0000:
+                    return self.RSDP_DESCRIPTOR[:length]
+                elif pa_lo == 0x200:
+                    return self.RSDT_DESCRIPTOR[:length]
+                elif pa_lo == 0x300:
+                    return "ABCD"
+                else:
+                    return "\xFF" * length
+
+        self._chipsec_util("acpi list", ACPIHelper)
+        self.assertIn("ABCD: 0x0000000000000300", self.log)
 
     def test_platform(self):
         self._chipsec_util("platform")
