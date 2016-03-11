@@ -82,6 +82,7 @@ class LinuxHelper(Helper):
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
+        self.dev_fh = None
 
     def __del__(self):
         try:
@@ -117,7 +118,6 @@ class LinuxHelper(Helper):
     def init( self ):
         x64 = True if sys.maxsize > 2**32 else False
         self._pack = 'Q' if x64 else 'I'
-        self.dev_fh = None
 
         logger().log("\n****** Chipsec Linux Kernel module is licensed under GPL 2.0\n")
 
@@ -132,7 +132,8 @@ class LinuxHelper(Helper):
 
 
     def close(self):
-        close(self.dev_fh)
+        if self.dev_fh:
+            self.dev_fh.close()
         self.dev_fh = None
 
     def ioctl(self, nr, args, *mutate_flag):
