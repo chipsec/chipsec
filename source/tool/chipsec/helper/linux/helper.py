@@ -42,7 +42,7 @@ import fcntl
 import platform
 import ctypes
 import fnmatch
-from chipsec.helper.oshelper import OsHelperError
+from chipsec.helper.oshelper import OsHelperError, Helper
 from chipsec.logger import logger, print_buffer
 import errno
 import array
@@ -71,7 +71,7 @@ IOCTL_RDMMIO                   = 0x12
 IOCTL_WRMMIO                   = 0x13
 IOCTL_VA2PA                    = 0x14
 
-class LinuxHelper:
+class LinuxHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
 

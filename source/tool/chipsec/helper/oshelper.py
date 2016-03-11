@@ -65,6 +65,16 @@ class OsHelperError (RuntimeError):
 class HWAccessViolationError (OsHelperError):
     pass
 
+# Base class for the helpers
+class Helper(object):
+    class __metaclass__(type):
+        def __init__(cls, name, bases, attrs):
+            if not hasattr(cls, 'registry'):
+                cls.registry = []
+            else:
+                cls.registry.append((name, cls))
+
+import chipsec.helper.helpers
 
 ## OS Helper
 #
@@ -86,70 +96,15 @@ class OsHelper:
             self.os_version = self.helper.os_version
             self.os_machine = self.helper.os_machine
 
-
     def loadHelpers(self):
-        if logger().VERBOSE: logger().log("======== Load Helper for %s ==========="%platform.system().lower())
-        if chipsec.file.main_is_frozen():
-            self.loadHelpersFromEXE()
-        else:
-            self.loadHelpersFromFileSystem()
-
-    def loadHelpersFromEXE(self):
-        import zipfile
-        myzip = zipfile.ZipFile(os.path.join(chipsec.file.get_main_dir(),"library.zip"))
-        helpers = map( map_modname_zip, filter(f_mod_zip, myzip.namelist()) )
-        #print helpers
-        for h in helpers:
-            self.importModule(h)
-            if self.helper : break
-
-    def loadHelpersFromFileSystem(self):
-        mydir = os.path.dirname(__file__)
-        dirs = os.listdir(mydir)
-        for adir in dirs:
-            if self.helper :
+        for name, cls in Helper.registry:
+            try:
+                self.helper = cls()
                 break
-            mypath = os.path.join(mydir,adir)
-            if os.path.isdir(mypath):
-                for afile in os.listdir(mypath):
-                    if fnmatch.fnmatch(afile, '__init__.py') or not fnmatch.fnmatch(afile, '*.py') :
-                        continue
-#                    print os.path.join(adir,afile)
-                    mod_shortname = adir + "." + os.path.splitext(afile)[0]
-                    mod_fullname = "chipsec.helper." + mod_shortname
-                    if logger().VERBOSE:  logger().log("trying to load %s" % mod_fullname)
-                    self.importModule(mod_fullname)
-                    if self.helper : break
-
-    def importModule(self, mod_fullname):
-        try:
-            mod_path = mod_fullname.rpartition('.')[0]
-            #mod_path, mod_name = os.path.splitext(mod_fullname)
-
-            if _importlib:
-                module = importlib.import_module( mod_path )
-                module__all__    = getattr( module, '__all__' )
-
-                for sHelper in module__all__:
-                    if logger().VERBOSE: logger().log('[helper] Importing OS helper: %s.%s' % (mod_path,sHelper) )
-                    mHelper = importlib.import_module( '%s.%s' % (mod_path,sHelper) )
-                    result = getattr( mHelper, 'get_helper' )(  )
-                    self.helper = result
-                    if result is not None and logger().HAL: logger().log('[helper] Loaded OS helper: %s.%s' % (mod_path,sHelper) )
-
-            # Support for older Python < 2.5
-            #else:
-            #    exec 'import ' + mod_fullname
-            #    exec 'self.helper = ' + mod_fullname + ".get_helper()"
-        except ImportError, msg:
-            logger().error( 'Failed to import %s: %s' % (mod_fullname,str(msg)) )
-            pass
-        except BaseException, msg:
-            logger().error( str(msg) + ' ' + mod_fullname )
-            logger().log_bad( traceback.format_exc() )
-            #raise OsHelperError( "Could not import OS helper %s (%s)" % (mod_fullname, str(msg)) )
-            pass
-
+            except OsHelperError:
+                raise
+            except:
+                pass
 
     def __del__(self):
         try:
