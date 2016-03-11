@@ -83,8 +83,6 @@ class LinuxHelper(Helper):
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
 
-        self.init()
-
     def __del__(self):
         try:
             destroy()
