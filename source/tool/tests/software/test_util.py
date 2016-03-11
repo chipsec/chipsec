@@ -63,9 +63,18 @@ class TestChipsec(unittest.TestCase):
                                "CRRV" +                  # Creator Revision
                                struct.pack("<Q", 0x400)) # Address of table
 
+            EBDA_ADDRESS = 0x96000
+            EBDA_PADDING = 0x100
+            RSDP_ADDRESS = EBDA_ADDRESS + EBDA_PADDING
+
             def read_phys_mem(self, pa_hi, pa_lo, length):
                 if pa_lo == 0x40E:
-                    return self.RSDP_DESCRIPTOR[:length]
+                    return struct.pack("<H", self.EBDA_ADDRESS >> 4)
+                elif pa_lo >= self.EBDA_ADDRESS and \
+                     pa_lo < self.RSDP_ADDRESS + len(self.RSDP_DESCRIPTOR):
+                    mem = "\x00" * self.EBDA_PADDING + self.RSDP_DESCRIPTOR
+                    offset = pa_lo - self.EBDA_ADDRESS
+                    return mem[offset:offset+length]
                 elif pa_lo == 0x100:
                     return self.XSDT_DESCRIPTOR[:length]
                 elif pa_lo == 0x400:

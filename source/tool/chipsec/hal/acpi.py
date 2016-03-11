@@ -221,72 +221,61 @@ class ACPI:
             rsdp_buf = self.cs.mem.read_physical_mem( rsdp_pa, ACPI_RSDP_EXT_SIZE)
             rsdp = RSDP(rsdp_buf)
         return rsdp
+
     #
     # Searches for Root System Description Pointer (RSDP) in various locations for legacy/EFI systems
     #
     def find_RSDP( self ):
         rsdp_pa  = None
         rsdp     = None
-        rsdp_buf = None
         #
         # Check RSDP in Extended BIOS Data Area first
         #
-        if logger().HAL: logger().log( "[acpi] searching RSDP in EBDA address 0x4E0.." )
-        rsdptr_ebda = 0x40E
-        sig = self.cs.mem.read_physical_mem( rsdptr_ebda, 8 )
-        if ACPI_RSDP_SIG == sig:
-            rsdp_pa  = rsdptr_ebda
-            rsdp     = self.read_RSDP(rsdp_pa)
-            if rsdp.is_RSDP_valid():
-                logger().log( "[acpi] found RSDP in EBDA at: 0x%016X" % rsdp_pa )
-            else:
-                rsdp_pa = None
-        else:
-            #
-            # Search RSDP in the first 1kB of physical memory (legacy DoS area)
-            #
-            if logger().HAL: logger().log( "[acpi] searching RSDP in the first 1kB.." )
-            membuf = self.cs.mem.read_physical_mem( 0x0, 0x400 )
+        if logger().HAL: logger().log( "[acpi] searching RSDP in EBDA.." )
+        ebda_ptr_addr = 0x40E
+        ebda_addr = struct.unpack('<H', self.cs.mem.read_physical_mem( ebda_ptr_addr, 2 ))[0] << 4
+        if ebda_addr > 0x400 and ebda_addr < 0xA0000:
+            membuf = self.cs.mem.read_physical_mem(ebda_addr, 0xA0000 - ebda_addr)
             pos = membuf.find( ACPI_RSDP_SIG )
             if -1 != pos:
-                rsdp_pa  = pos
+                rsdp_pa = ebda_addr + pos
                 rsdp = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    logger().log( "[acpi] found RSDP in the first 1kB: 0x%016X" % rsdp_pa )
+                    logger().log( "[acpi] found RSDP in EBDA at: 0x%016X" % rsdp_pa )
+                else:
+                    rsdp_pa = None
+        else:
+            #
+            # Search RSDP in legacy BIOS E/F segments (0xE0000 - 0xFFFFF)
+            #
+            membuf = self.cs.mem.read_physical_mem( 0xE0000, 0x20000 )
+            pos = membuf.find( ACPI_RSDP_SIG )
+            if -1 != pos:
+                rsdp_pa  = 0xE0000 + pos
+                rsdp     = self.read_RSDP(rsdp_pa)
+                if rsdp.is_RSDP_valid():
+                    logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x%016X" % rsdp_pa )
                 else:
                     rsdp_pa = None
             else:
                 #
-                # Search RSDP in legacy BIOS E/F segments (0xE0000 - 0xFFFFF)
+                # Search for RSDP in the EFI memory (EFI Configuration Table)
                 #
-                membuf = self.cs.mem.read_physical_mem( 0xE0000, 0x20000 )
-                pos = membuf.find( ACPI_RSDP_SIG )
-                if -1 != pos:
-                    rsdp_pa  = 0xE0000 + pos
+                if logger().HAL: logger().log( '[acpi] searching RSDP pointers in EFI Configuration Table..' )
+                (isFound,ect_pa,ect,ect_buf) = self.uefi.find_EFI_Configuration_Table()
+                if isFound:
+                    if RSDP_GUID_ACPI2_0 in ect.VendorTables:
+                        rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI2_0 ]
+                        logger().log( '[acpi] ACPI 2.0+ RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI2_0,rsdp_pa) )
+                    elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
+                        rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
+                        logger().log( '[acpi] ACPI 1.0 RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI1_0,rsdp_pa) )
+
                     rsdp     = self.read_RSDP(rsdp_pa)
                     if rsdp.is_RSDP_valid():
-                        logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x%016X" % rsdp_pa )
+                        logger().log( "[acpi] found RSDP in EFI Config Table: 0x%016X" % rsdp_pa )
                     else:
                         rsdp_pa = None
-                else:
-                    #
-                    # Search for RSDP in the EFI memory (EFI Configuration Table)
-                    #
-                    if logger().HAL: logger().log( '[acpi] searching RSDP pointers in EFI Configuration Table..' )
-                    (isFound,ect_pa,ect,ect_buf) = self.uefi.find_EFI_Configuration_Table()
-                    if isFound:
-                        if RSDP_GUID_ACPI2_0 in ect.VendorTables:
-                            rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI2_0 ]
-                            logger().log( '[acpi] ACPI 2.0+ RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI2_0,rsdp_pa) )
-                        elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
-                            rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
-                            logger().log( '[acpi] ACPI 1.0 RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI1_0,rsdp_pa) )
-
-                        rsdp     = self.read_RSDP(rsdp_pa)
-                        if rsdp.is_RSDP_valid():
-                            logger().log( "[acpi] found RSDP in EFI Config Table: 0x%016X" % rsdp_pa )
-                        else:
-                            rsdp_pa = None
 
         if rsdp_pa is not None and rsdp is not None:
             logger().log( rsdp )
