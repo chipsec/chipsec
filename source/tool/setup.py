@@ -31,9 +31,10 @@ from distutils import dir_util
 import platform
 
 tool_dir = os.path.dirname(os.path.abspath(__file__))
-cfgFiles = os.listdir( 'chipsec/cfg' )
-for cfgFile in cfgFiles:
-    cfgFiles[cfgFiles.index( cfgFile )] = 'chipsec/cfg/' + cfgFile
+
+package_data = { "chipsec.cfg": ["*.xml", "*.xsd"],
+                 ".": ["VERSION"]
+               }
 
 if platform.system().lower() == "windows":
     WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
@@ -41,20 +42,15 @@ if platform.system().lower() == "windows":
     data_files = [
                   #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
                   (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
-                  ("Lib/site-packages", ['VERSION']),
                   #(WIN_DRIVER_INSTALL_PATH + "/win7_x86"  , ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys'])
                   #(WIN_DRIVER_INSTALL_PATH + "/winxp", ['chipsec/helper/win/winxp/chipsec_hlpr.sys'])
-                  ("Lib/site-packages/chipsec/cfg", cfgFiles)
                  ]
     extensions = []
-     
+
 if platform.system().lower() == "linux":
-    data_files = [("Lib/site-packages", ['VERSION']),
-                  ("Lib/site-packages/chipsec/cfg", cfgFiles)
-                 ]
+    data_files = []
     extensions = [ Extension('cores', sources=['chipsec/helper/linux/cores.c']) ]
-    
-                 
+
 version      = ""
 VERSION_FILE = os.path.join( os.path.dirname( __file__ ),'VERSION' )
 if os.path.exists( VERSION_FILE ):
@@ -86,5 +82,6 @@ setup(
 
         data_files      = data_files,
         packages        = mypackages,
+        package_data    = package_data,
         ext_modules     = extensions
 )
