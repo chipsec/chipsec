@@ -42,7 +42,7 @@ import fcntl
 import platform
 import ctypes
 import fnmatch
-from chipsec.helper.oshelper import OsHelperError
+from chipsec.helper.oshelper import OsHelperError, Helper
 from chipsec.logger import logger, print_buffer
 import errno
 import array
@@ -71,7 +71,7 @@ IOCTL_RDMMIO                   = 0x12
 IOCTL_WRMMIO                   = 0x13
 IOCTL_VA2PA                    = 0x14
 
-class LinuxHelper:
+class LinuxHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
 
@@ -82,8 +82,7 @@ class LinuxHelper:
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
-
-        self.init()
+        self.dev_fh = None
 
     def __del__(self):
         try:
@@ -119,7 +118,6 @@ class LinuxHelper:
     def init( self ):
         x64 = True if sys.maxsize > 2**32 else False
         self._pack = 'Q' if x64 else 'I'
-        self.dev_fh = None
 
         logger().log("\n****** Chipsec Linux Kernel module is licensed under GPL 2.0\n")
 
@@ -134,7 +132,8 @@ class LinuxHelper:
 
 
     def close(self):
-        close(self.dev_fh)
+        if self.dev_fh:
+            self.dev_fh.close()
         self.dev_fh = None
 
     def ioctl(self, nr, args, *mutate_flag):

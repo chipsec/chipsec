@@ -48,7 +48,7 @@ import platform
 import re
 from collections import namedtuple
 
-from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError
+from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Helper
 import errno
 
 
@@ -229,7 +229,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 
 
 
-class Win32Helper:
+class Win32Helper(Helper):
 
     def __init__(self):
         import platform

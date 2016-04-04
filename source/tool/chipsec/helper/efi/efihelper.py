@@ -45,6 +45,7 @@ except ImportError:
     import efi as edk2 # for Python 2.4 on EFI 1.10
 
 from chipsec.logger import logger
+from chipsec.helper.oshelper import Helper
 
 class EfiHelperError (RuntimeError):
     pass
@@ -52,7 +53,7 @@ class EfiHelperError (RuntimeError):
 status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
 
 
-class EfiHelper:
+class EfiHelper(Helper):
 
     def __init__(self):
         if sys.platform.startswith('EFI'):
