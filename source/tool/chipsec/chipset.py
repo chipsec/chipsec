@@ -111,7 +111,7 @@ CHIPSET_CODE_HSX     = 'HSX'
 CHIPSET_CODE_SKL     = 'SKL'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX]
-CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_CODE_SKL]
+CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
@@ -154,8 +154,10 @@ Chipset_Dictionary = {
 0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
 
 # 6th Generation Core Processor Family (Skylake)
-0x190F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : 'SKL',  'longname' : 'Desktop 6th Generation Core Processor Dual Core (Skylake CPU / Sunrise Point PCH)' },
-0x191F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : 'SKL',  'longname' : 'Desktop 6th Generation Core Processor Quad Core (Skylake CPU / Sunrise Point PCH)' },
+0x1904 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake U)' },
+0x190C : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake Y)' },
+0x190F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Desktop 6th Generation Core Processor Dual Core (Skylake CPU / Sunrise Point PCH)' },
+0x191F : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Desktop 6th Generation Core Processor Quad Core (Skylake CPU / Sunrise Point PCH)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
@@ -300,16 +302,13 @@ class Chipset:
         logger().log( "[*] Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
 
     def is_core(self):
-        if self.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE: return True
-        else: return False
+        return  self.get_chipset_id() in CHIPSET_FAMILY_CORE
     
     def is_server(self):
-        if self.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_XEON: return True
-        else: return False
+        return  self.get_chipset_id() in CHIPSET_FAMILY_XEON
         
     def is_atom(self):
-        if self.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_ATOM: return True
-        else: return False
+        return self.get_chipset_id() in CHIPSET_FAMILY_ATOM
 
     ##################################################################################
     #
