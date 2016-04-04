@@ -766,7 +766,7 @@ def parse_efivar_file( fname, var=None ):
 BOOTSCRIPT_TABLE_OFFSET          = 24
 RUNTIME_SCRIPT_TABLE_BASE_OFFSET = 32
 ACPI_VARIABLE_SET_STRUCT_SIZE    = 0x48
-S3_BOOTSCRIPT_VARIABLES          = [ 'AcpiGlobalVariable' ]
+S3_BOOTSCRIPT_VARIABLES          = [ 'AcpiGlobalVariable', 'S3SS' ]
 
 MAX_S3_BOOTSCRIPT_ENTRY_LENGTH   = 0x200
 

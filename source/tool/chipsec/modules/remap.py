@@ -43,9 +43,7 @@ class remap(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE:
-            return True
-        return False
+        return self.cs.is_core()
 
     def check_remap_config(self):
         self.logger.start_test( "Memory Remapping Configuration" )
