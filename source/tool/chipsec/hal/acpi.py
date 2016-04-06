@@ -362,7 +362,7 @@ class ACPI:
             logger().error("Couldn't get list of ACPI tables")
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
-            for tableName in self.tableList.keys():
+            for tableName in sorted(self.tableList.keys()):
                 logger().log( " - %s: 0x%016X" % (tableName,self.tableList[tableName]) )
 
     #
