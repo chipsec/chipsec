@@ -10,9 +10,18 @@ from chipsec import logger
 from chipsec import chipset
 from chipsec.helper import oshelper
 
-class TestChipsec(unittest.TestCase):
+class TestChipsecUtil(unittest.TestCase):
+    """Test the commands exposed by chipsec_utils.
+
+    Each test may define its virtual helper and then call the _chipsec_util
+    method with the command line arguments.
+    """
 
     def setUp(self):
+        """Setup the environment for the utils tests.
+
+        We mock the helper registry to only contain our emulated helper.
+        """
         fileno, self.log_file = tempfile.mkstemp()
         os.close(fileno)
         self.old_registry = oshelper.Helper.registry
@@ -28,6 +37,13 @@ class TestChipsec(unittest.TestCase):
         oshelper.Helper.registry = self.old_registry
 
     def _chipsec_util(self, arg, helper_class=mock_helper.TestHelper):
+        """Run the chipsec_util command with the arguments.
+
+        Each test may setup a virtual helper to emulate the expected behaviour
+        from the hardware. If no helper is provided, TestHelper will be used.
+        It verifies that no error is being reported. self.log will be populated
+        with the output.
+        """
         oshelper.Helper.registry = [(helper_class.__name__, helper_class)]
         chipsec_util._cs = chipset.cs()
         util = chipsec_util.ChipsecUtil()
@@ -149,3 +165,51 @@ class TestChipsec(unittest.TestCase):
         self._chipsec_util("gdt 0", GDTHelper)
         self.assertIn("# of entries    : 4", self.log)
 
+
+    def test_spi_info(self):
+        """Test to verify the ouput of 'spi info'.
+
+        Validates that BC and FRAP are correctly read.
+        """
+
+        class SPIHelper(mock_helper.TestHelper):
+
+            RCBA_ADDR = 0xFED0000
+            SPIBAR_ADDR = RCBA_ADDR + 0x3800
+            SPIBAR_END = SPIBAR_ADDR + 0x200
+            FRAP = SPIBAR_ADDR + 0x50
+            FREG0 = SPIBAR_ADDR + 0x54
+            LPC_BRIDGE_DEVICE = (0, 0x1F, 0)
+
+            def read_pci_reg(self, bus, device, function, address, size):
+                if (bus, device, function) == self.LPC_BRIDGE_DEVICE:
+                    if address == 0xF0:
+                        return self.RCBA_ADDR
+                    elif address == 0xDC:
+                        return 0xDEADBEEF
+                    else:
+                        raise Exception("Unexpected PCI read")
+                else:
+                    return super(SPIHelper, self).read_pci_reg(bus, device,
+                                                               function,
+                                                               address, size)
+
+            def read_mmio_reg(self, pa, size):
+                if pa == self.FREG0:
+                    return 0x11111111
+                elif pa == self.FREG0 + 4:
+                    return 0x22222222
+                elif pa == self.FRAP:
+                    return 0xEEEEEEEE
+                elif pa >= self.SPIBAR_ADDR and pa < self.SPIBAR_END:
+                    return 0x0
+                else:
+                    raise Exception("Unexpected address")
+
+            def write_mmio_reg(self, pa, size, value):
+                if pa < self.SPIBAR_ADDR or pa > self.SPIBAR_END:
+                    raise Exception("Write to outside of SPIBAR")
+
+        self._chipsec_util("spi info", SPIHelper)
+        self.assertIn("BC = 0xDEADBEEF", self.log)
+        self.assertIn("FRAP = 0xEEEEEEEE", self.log)
