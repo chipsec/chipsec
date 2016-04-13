@@ -19,11 +19,5 @@ class Z420UbuntuTest(test_ubuntu.GenericUbuntuTest):
                "chipsec.modules.remap",
                "chipsec.modules.module_template"]
 
-    def setUp(self):
-        super(Z420UbuntuTest, self).setUp()
-
-    def tearDown(self):
-        super(Z420UbuntuTest, self).tearDown()
-
     def test_main(self):
         self._generic_main()

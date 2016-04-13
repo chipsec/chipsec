@@ -19,8 +19,5 @@ class EliteBook1040UbuntuTest(test_ubuntu.GenericUbuntuTest):
                "chipsec.modules.common.uefi.access_uefispec",
                "chipsec.modules.module_template"]
 
-    def setUp(self):
-        super(EliteBook1040UbuntuTest, self).setUp()
-
     def test_main(self):
         self._generic_main()
