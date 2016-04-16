@@ -136,6 +136,25 @@ class TestChipsecUtil(unittest.TestCase):
     def test_platform(self):
         self._chipsec_util("platform")
 
+
+    def test_cmos_dump(self):
+        """Test to verify the output of 'cmos dump'.
+
+        Check that we only access CMOS IO ports.
+        """
+
+        class CMOSHelper(mock_helper.TestHelper):
+            def read_io_port(self, io_port, size):
+                if io_port < 0x70 or io_port > 0x73:
+                    raise Exception("Reading outside CMOS IO port")
+                return io_port
+
+            def write_io_port(self, io_port, value, size):
+                if io_port < 0x70 or io_port > 0x73:
+                    raise Exception("Writing outside CMOS IO port")
+
+        self._chipsec_util("cmos dump", CMOSHelper)
+
     def test_msr(self):
 
         class MSRHelper(mock_helper.TestHelper):
