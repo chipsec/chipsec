@@ -191,44 +191,21 @@ class TestChipsecUtil(unittest.TestCase):
         Validates that BC and FRAP are correctly read.
         """
 
-        class SPIHelper(mock_helper.TestHelper):
-
-            RCBA_ADDR = 0xFED0000
-            SPIBAR_ADDR = RCBA_ADDR + 0x3800
-            SPIBAR_END = SPIBAR_ADDR + 0x200
-            FRAP = SPIBAR_ADDR + 0x50
-            FREG0 = SPIBAR_ADDR + 0x54
-            LPC_BRIDGE_DEVICE = (0, 0x1F, 0)
-
-            def read_pci_reg(self, bus, device, function, address, size):
-                if (bus, device, function) == self.LPC_BRIDGE_DEVICE:
-                    if address == 0xF0:
-                        return self.RCBA_ADDR
-                    elif address == 0xDC:
-                        return 0xDEADBEEF
-                    else:
-                        raise Exception("Unexpected PCI read")
-                else:
-                    return super(SPIHelper, self).read_pci_reg(bus, device,
-                                                               function,
-                                                               address, size)
-
-            def read_mmio_reg(self, pa, size):
-                if pa == self.FREG0:
-                    return 0x11111111
-                elif pa == self.FREG0 + 4:
-                    return 0x22222222
-                elif pa == self.FRAP:
-                    return 0xEEEEEEEE
-                elif pa >= self.SPIBAR_ADDR and pa < self.SPIBAR_END:
-                    return 0x0
-                else:
-                    raise Exception("Unexpected address")
-
-            def write_mmio_reg(self, pa, size, value):
-                if pa < self.SPIBAR_ADDR or pa > self.SPIBAR_END:
-                    raise Exception("Write to outside of SPIBAR")
-
-        self._chipsec_util("spi info", SPIHelper)
+        self._chipsec_util("spi info", mock_helper.SPIHelper)
         self.assertIn("BC = 0xDEADBEEF", self.log)
         self.assertIn("FRAP = 0xEEEEEEEE", self.log)
+
+    def test_spi_dump(self):
+        """Test to verify the ouput of 'spi dump'.
+
+        Validates that the flash size is correctly calculated (based on the
+        assumption that the BIOS region is last) and match it with the output
+        file size.
+        """
+
+        fileno, rom_file = tempfile.mkstemp()
+        os.close(fileno)
+        self._chipsec_util("spi dump %s" % rom_file, mock_helper.SPIHelper)
+        self.assertIn("Dumping 0x00003000 bytes", self.log)
+        self.assertEqual(os.stat(rom_file).st_size, 0x3000)
+        os.remove(rom_file)
