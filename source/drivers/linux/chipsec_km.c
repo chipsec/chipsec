@@ -37,6 +37,22 @@ chipsec@intel.com
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
 
+#ifndef EFI_NOT_READY
+#define EFI_NOT_READY ( 6 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_DEVICE_ERROR
+#define EFI_DEVICE_ERROR ( 7 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_WRITE_PROTECTED
+#define EFI_WRITE_PROTECTED ( 8 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_OUT_OF_RESOURCES
+#define EFI_OUT_OF_RESOURCES ( 9 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_SECURITY_VIOLATION
+#define EFI_SECURITY_VIOLATION ( 26 | (1UL << (BITS_PER_LONG-1)))
+#endif
+
 
 MODULE_LICENSE("GPL");
 
@@ -950,8 +966,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         #endif
 		ptr[2] = (uint32_t)dtr.base;
 
-		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.high
-		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.low
+		//#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.high
+		//#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.low
 		ptr[3] = dt_pa.u.high;
 		ptr[4] = dt_pa.u.low;
 
