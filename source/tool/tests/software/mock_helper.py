@@ -59,9 +59,6 @@ class ACPIHelper(TestHelper):
     XSDT_ADDRESS = 0x100
     RSDT_ADDRESS = 0x200
 
-    RSDT_ENTRIES = []
-    XSDT_ENTRIES = []
-
     def _create_rsdp(self):
         rsdp = None
         if self.USE_RSDP_REV_0:
@@ -96,39 +93,96 @@ class ACPIHelper(TestHelper):
                 "CRRV")                     # Creator Revision
 
     def _create_rsdt(self):
-        rsdt_length = 36 + 4 * len(self.RSDT_ENTRIES) # 36 : ACPI table header size
+        rsdt_length = 36 + 4 * len(self.rsdt_entries) # 36 : ACPI table header size
         rsdt = self._create_generic_acpi_table_header("RSDT", rsdt_length)
-        for rsdt_entry in self.RSDT_ENTRIES:
+        for rsdt_entry in self.rsdt_entries:
             rsdt += struct.pack("<I", rsdt_entry)
         return rsdt
 
     def _create_xsdt(self):
-        xsdt_length = 36 + 8 * len(self.XSDT_ENTRIES) # 36 : ACPI table header size
+        xsdt_length = 36 + 8 * len(self.xsdt_entries) # 36 : ACPI table header size
         xsdt = self._create_generic_acpi_table_header("XSDT", xsdt_length)
-        for xsdt_entry in self.XSDT_ENTRIES:
+        for xsdt_entry in self.xsdt_entries:
             xsdt += struct.pack("<Q", xsdt_entry)
         return xsdt
 
+    def _add_entry_to_rsdt(self, entry):
+        self.rsdt_entries.append(entry)
+        self.rsdt_descriptor = self._create_rsdt()
+
+    def _add_entry_to_xsdt(self, entry):
+        self.xsdt_entries.append(entry)
+        self.xsdt_descriptor = self._create_xsdt()
+
     def __init__(self):
         super(ACPIHelper, self).__init__()
-        self.RSDP_DESCRIPTOR = self._create_rsdp()
-        self.RSDT_DESCRIPTOR = self._create_rsdt()
-        self.XSDT_DESCRIPTOR = self._create_xsdt()
+        self.rsdt_entries = []
+        self.xsdt_entries = []
+        self.rsdp_descriptor = self._create_rsdp()
+        self.rsdt_descriptor = self._create_rsdt()
+        self.xsdt_descriptor = self._create_xsdt()
 
     def read_phys_mem(self, pa_hi, pa_lo, length):
         if pa_lo == 0x40E:
             return struct.pack("<H", self.EBDA_ADDRESS >> 4)
         elif pa_lo >= self.EBDA_ADDRESS and \
-            pa_lo < self.RSDP_ADDRESS + len(self.RSDP_DESCRIPTOR):
-            mem = "\x00" * self.EBDA_PADDING + self.RSDP_DESCRIPTOR
+            pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor):
+            mem = "\x00" * self.EBDA_PADDING + self.rsdp_descriptor
             offset = pa_lo - self.EBDA_ADDRESS
             return mem[offset:offset+length]
         elif pa_lo == self.RSDT_ADDRESS:
-            return self.RSDT_DESCRIPTOR[:length]
+            return self.rsdt_descriptor[:length]
         elif pa_lo == self.XSDT_ADDRESS:
-            return self.XSDT_DESCRIPTOR[:length]
+            return self.xsdt_descriptor[:length]
         else:
             return "\xFF" * length
+
+class DSDTParsingHelper(ACPIHelper):
+    """Test helper containing generic descriptor for RSDP, RSDT, and FADT to parse DSDT
+
+    Default entry for DSDT and X_DSDT inside FADT is 0x0
+
+    One additional region is defined:
+      * FADT table [0x400, 0x514]
+    """
+    USE_FADT_WITH_X_DSDT = True
+
+    FADT_ADDRESS = 0x400
+    DSDT_ADDRESS = 0x0
+    X_DSDT_ADDRESS = 0x0
+
+    def _add_fadt_to_sdt_entries(self):
+        if self.USE_RSDP_REV_0:
+            self._add_entry_to_rsdt(self.FADT_ADDRESS)
+        else:
+            self._add_entry_to_xsdt(self.FADT_ADDRESS)
+
+    def _create_fadt(self):
+        fadt = ""
+        if self.USE_FADT_WITH_X_DSDT:
+            fadt = self._create_generic_acpi_table_header("FACP", 0x10C)
+            fadt += struct.pack("<I", 0x500)                # Address of FACS
+            fadt += struct.pack("<I", self.DSDT_ADDRESS)    # 32-bit address of DSDT
+            fadt += struct.pack("<B", 0x1) * 96             # Bits between DSDT and X_DSDT
+            fadt += struct.pack("<Q", self.X_DSDT_ADDRESS)  # X_DSDT
+            fadt += struct.pack("<B", 0x1) * 120            # Remaining fields
+        else:
+            fadt = self._create_generic_acpi_table_header("FACP", 0x74)
+            fadt += struct.pack("<I", 0x500)                # Address of FACS
+            fadt += struct.pack("<I", self.DSDT_ADDRESS)    # 32-bit address of DSDT
+            fadt += struct.pack("<B", 0x1) * 72             # Remaining fields
+        return fadt
+
+    def __init__(self):
+        super(DSDTParsingHelper, self).__init__()
+        self._add_fadt_to_sdt_entries()
+        self.fadt_descriptor = self._create_fadt()
+
+    def read_phys_mem(self, pa_hi, pa_lo, length):
+        if pa_lo == self.FADT_ADDRESS:
+            return self.fadt_descriptor[:length]
+        else:
+            return super(DSDTParsingHelper, self).read_phys_mem(pa_hi, pa_lo, length)
 
 class SPIHelper(TestHelper):
     """Generic SPI emulation
