@@ -133,6 +133,105 @@ class TestChipsecUtil(unittest.TestCase):
         self._chipsec_util("acpi list", ACPIHelper)
         self.assertIn("ABCD: 0x0000000000000300", self.log)
 
+    def test_acpi_facp_list(self):
+        self._chipsec_util("acpi table FACP", mock_helper.FADTParsingHelper)
+        self.assertIn("DSDT: 0x00000000", self.log)
+        self.assertIn("X_DSDT: 0x0000000000000000", self.log)
+
+    def test_mismatch_dsdt_x_dsdt_error(self):
+
+        class FADTParsingHelper(mock_helper.FADTParsingHelper):
+
+            FADT_DESCRIPTOR = ("FACP" +                       # Signature
+                               struct.pack("<I", 0x114) +     # Length
+                               struct.pack("<B", 0x1) +       # Revision
+                               struct.pack("<B", 0x1) +       # Checksum
+                               "OEMIDT" +                     # OEMID
+                               "OEMTBLID" +                   # OEM Table ID
+                               "OEMR" +                       # OEM Revision
+                               "CRID" +                       # Creator ID
+                               "CRRV" +                       # Creator Revision
+                               struct.pack("<I", 0x500) +     # Address of FACS
+                               struct.pack("<I", 0x400) +     # 32-bit address of DSDT
+                               struct.pack("<B", 0x1) * 96 +  # Bits between DSDT and X_DSDT
+                               struct.pack("<Q", 0x312) +     # X_DSDT
+                               struct.pack("<B", 0x1) * 128)  # Remaining fields
+
+        self._chipsec_util("acpi table FACP", FADTParsingHelper)
+        self.assertIn("DSDT: 0x00000400", self.log)
+        self.assertIn("X_DSDT: 0x0000000000000312", self.log)
+        self.assertIn("Unable to determine the correct DSDT address", self.log)
+
+    def test_mismatch_dsdt_x_dsdt_ok_dsdt_zero(self):
+
+        class FADTParsingHelper(mock_helper.FADTParsingHelper):
+
+            FADT_DESCRIPTOR = ("FACP" +                       # Signature
+                               struct.pack("<I", 0x114) +     # Length
+                               struct.pack("<B", 0x1) +       # Revision
+                               struct.pack("<B", 0x1) +       # Checksum
+                               "OEMIDT" +                     # OEMID
+                               "OEMTBLID" +                   # OEM Table ID
+                               "OEMR" +                       # OEM Revision
+                               "CRID" +                       # Creator ID
+                               "CRRV" +                       # Creator Revision
+                               struct.pack("<I", 0x500) +     # Address of FACS
+                               struct.pack("<I", 0x0) +       # 32-bit address of DSDT
+                               struct.pack("<B", 0x1) * 96 +  # Bits between DSDT and X_DSDT
+                               struct.pack("<Q", 0x400) +     # X_DSDT
+                               struct.pack("<B", 0x1) * 128)  # Remaining fields
+
+        self._chipsec_util("acpi table FACP", FADTParsingHelper)
+        self.assertIn("DSDT: 0x00000000", self.log)
+        self.assertIn("X_DSDT: 0x0000000000000400", self.log)
+        self.assertNotIn("Unable to determine the correct DSDT address", self.log)
+
+    def test_mismatch_dsdt_x_dsdt_ok_x_dsdt_zero(self):
+
+        class FADTParsingHelper(mock_helper.FADTParsingHelper):
+
+            FADT_DESCRIPTOR = ("FACP" +                       # Signature
+                               struct.pack("<I", 0x114) +     # Length
+                               struct.pack("<B", 0x1) +       # Revision
+                               struct.pack("<B", 0x1) +       # Checksum
+                               "OEMIDT" +                     # OEMID
+                               "OEMTBLID" +                   # OEM Table ID
+                               "OEMR" +                       # OEM Revision
+                               "CRID" +                       # Creator ID
+                               "CRRV" +                       # Creator Revision
+                               struct.pack("<I", 0x500) +     # Address of FACS
+                               struct.pack("<I", 0x400) +     # 32-bit address of DSDT
+                               struct.pack("<B", 0x1) * 96 +  # Bits between DSDT and X_DSDT
+                               struct.pack("<Q", 0x0) +       # X_DSDT
+                               struct.pack("<B", 0x1) * 128)  # Remaining fields
+
+        self._chipsec_util("acpi table FACP", FADTParsingHelper)
+        self.assertIn("DSDT: 0x00000400", self.log)
+        self.assertIn("X_DSDT: 0x0000000000000000", self.log)
+        self.assertNotIn("Unable to determine the correct DSDT address", self.log)
+
+    def test_no_x_dsdt(self):
+
+        class FADTParsingHelper(mock_helper.FADTParsingHelper):
+
+            FADT_DESCRIPTOR = ("FACP" +                       # Signature
+                               struct.pack("<I", 0x74) +      # Length
+                               struct.pack("<B", 0x1) +       # Revision
+                               struct.pack("<B", 0x1) +       # Checksum
+                               "OEMIDT" +                     # OEMID
+                               "OEMTBLID" +                   # OEM Table ID
+                               "OEMR" +                       # OEM Revision
+                               "CRID" +                       # Creator ID
+                               "CRRV" +                       # Creator Revision
+                               struct.pack("<I", 0x500) +     # Address of FACS
+                               struct.pack("<I", 0x400) +     # 32-bit address of DSDT
+                               struct.pack("<B", 0x1) * 72)   # Remaining fields
+
+        self._chipsec_util("acpi table FACP", FADTParsingHelper)
+        self.assertIn("DSDT: 0x00000400", self.log)
+        self.assertIn("X_DSDT: Not found", self.log)
+        self.assertIn("Cannot find X_DSDT entry in FADT.", self.log)
+
     def test_platform(self):
         self._chipsec_util("platform")
 
