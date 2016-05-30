@@ -38,6 +38,8 @@ __version__ = '0.1'
 import struct
 from collections import namedtuple
 
+from chipsec.logger import *
+
 class ACPI_TABLE():
     def parse( self, table_content ):
         return
@@ -584,3 +586,30 @@ class RSDT (ACPI_TABLE):
 ACPI Table Entries:
 %s
 """ %( ''.join( ['0x%016X\n' % addr for addr in self.Entries]))
+
+########################################################################################################
+#
+# FADT Table
+#
+########################################################################################################
+
+class FADT (ACPI_TABLE):
+    def __init__( self ):
+        self.dsdt = None
+        self.x_dsdt = None
+
+    def parse( self, table_content ):
+        self.dsdt = struct.unpack('<I', table_content[4:8])[0]
+        try:
+            self.x_dsdt = struct.unpack('<Q', table_content[104:112])[0]
+        except struct.error:
+            logger().log( 'Cannot find X_DSDT entry in FADT.' )
+
+    def __str__( self ):
+        return """==================================================================
+  Fixed ACPI Description Table
+==================================================================
+DSDT: %s
+X_DSDT: %s
+""" % ( ('0x%08X' % self.dsdt), ('0x%016X' % self.x_dsdt) if self.x_dsdt is not None else 'Not found')
+

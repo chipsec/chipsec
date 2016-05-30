@@ -115,7 +115,7 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_ROOT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_RSDT: chipsec.hal.acpi_tables.RSDT,
   ACPI_TABLE_SIG_XSDT: chipsec.hal.acpi_tables.XSDT,
-  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.FADT,
   ACPI_TABLE_SIG_FACS: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_DSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_SSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
