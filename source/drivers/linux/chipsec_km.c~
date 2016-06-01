@@ -37,6 +37,23 @@ chipsec@intel.com
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
 
+#ifndef EFI_NOT_READY
+#define EFI_NOT_READY ( 6 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_DEVICE_ERROR
+#define EFI_DEVICE_ERROR ( 7 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_WRITE_PROTECTED
+#define EFI_WRITE_PROTECTED ( 8 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_OUT_OF_RESOURCES
+#define EFI_OUT_OF_RESOURCES ( 9 | (1UL << (BITS_PER_LONG-1)))
+#endif
+#ifndef EFI_SECURITY_VIOLATION
+#define EFI_SECURITY_VIOLATION ( 26 | (1UL << (BITS_PER_LONG-1)))
+#endif
+
+
 MODULE_LICENSE("GPL");
 
 int chipsec_mem_major = -1;
@@ -598,10 +615,8 @@ void * patch_read_msr(void * CPUInfo)
 	return NULL;
 }
 
-
 void print_stat(efi_status_t stat)
 {
-#ifdef EFI_NOT_READY
     switch (stat) {
         case EFI_SUCCESS:
             printk( KERN_DEBUG "EFI_SUCCESS\n");
@@ -643,7 +658,6 @@ void print_stat(efi_status_t stat)
             printk( KERN_DEBUG "Unknown status\n");
             break;
     }
-#endif
 }
 
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
@@ -1106,12 +1120,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 	}
-   
-#ifdef EFI_NOT_READY
+    
 	case IOCTL_GET_EFIVAR:
 	{
 		//IN  params: data_size, guid, namelen, name
 		//OUT params: var_size, stat, data
+	if(!EFI_UNSUPPORTED){ 
 		uint32_t *kbuf;
 		static efi_char16_t *name;
 		char *cptr, *var;
@@ -1219,9 +1233,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         
 		break;
 	}
+	}
 
     case IOCTL_SET_EFIVAR:
     {
+    if(!EFI_UNSUPPORTED){
         uint32_t *kbuf;
         static efi_char16_t *name;
         char *cptr, *data;
@@ -1334,8 +1350,9 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         kfree(kbuf);
         
         break;
+
     }
-#endif
+    } 
 
     case IOCTL_RDMMIO:
 	{
