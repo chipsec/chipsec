@@ -1125,7 +1125,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	{
 		//IN  params: data_size, guid, namelen, name
 		//OUT params: var_size, stat, data
- 
+	if(!EFI_UNSUPPORTED){ 
 		uint32_t *kbuf;
 		static efi_char16_t *name;
 		char *cptr, *var;
@@ -1233,10 +1233,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         
 		break;
 	}
+	}
 
     case IOCTL_SET_EFIVAR:
     {
-    
+    if(!EFI_UNSUPPORTED){
         uint32_t *kbuf;
         static efi_char16_t *name;
         char *cptr, *data;
@@ -1350,6 +1351,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         
         break;
 
+    }
     } 
 
     case IOCTL_RDMMIO:

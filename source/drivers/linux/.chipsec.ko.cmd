@@ -1,0 +1,1 @@
+cmd_/home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec.ko := cp /home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec.ko.unsigned /home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec.ko

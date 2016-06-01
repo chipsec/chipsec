@@ -1,0 +1,1 @@
+cmd_/home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec.o := ld -m elf_x86_64   -r -o /home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec.o /home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec_km.o /home/centoslive/Desktop/chipsec/source/drivers/linux/amd64/cpu.o ; scripts/mod/modpost /home/centoslive/Desktop/chipsec/source/drivers/linux/chipsec.o
