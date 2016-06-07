@@ -38,6 +38,7 @@ __version__ = '0.1'
 import struct
 import sys
 
+from collections import defaultdict
 from collections import namedtuple
 
 from chipsec.logger import *
@@ -211,7 +212,7 @@ class ACPI:
     def __init__( self, cs ):
         self.cs     = cs
         self.uefi   = chipsec.hal.uefi.UEFI( self.cs )
-        self.tableList = {}
+        self.tableList = defaultdict(list)
         self.get_ACPI_table_list()
 
     def read_RSDP(self, rsdp_pa):
@@ -337,14 +338,14 @@ class ACPI:
         (is_xsdt,sdt_pa,sdt,sdt_header) = self.get_SDT()
 
         # cache RSDT/XSDT in the list of ACPI tables
-        if sdt_pa is not None: self.tableList[ sdt_header.Signature ] = sdt_pa
+        if sdt_pa is not None: self.tableList[ sdt_header.Signature ].append(sdt_pa)
 
         # cache other ACPI tables in the list
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             if _sig not in ACPI_TABLES.keys():
                 logger().warn( 'Unknown ACPI table signature: %s' % _sig )
-            self.tableList[ _sig ] = a
+            self.tableList[ _sig ].append(a)
 
         return self.tableList
 
@@ -363,48 +364,58 @@ class ACPI:
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):
-                logger().log( " - %s: 0x%016X" % (tableName,self.tableList[tableName]) )
+                logger().log( " - %s: %s" % (tableName, ", ".join([("0x%016X" % addr) for addr in self.tableList[tableName]])) )
 
     #
     # Retrieves contents of ACPI table from memory or from file
     #
     def get_parse_ACPI_table( self, name, isfile = False ):
-        (table_header_blob,table_blob)=self.get_ACPI_table(name,isfile)
-        if table_header_blob is not None:
-            return self._parse_table( name, table_header_blob, table_blob )
-        
+        acpi_tables = self.get_ACPI_table(name, isfile)
+        return [self._parse_table( name, table_header_blob, table_blob ) for (table_header_blob, table_blob) in acpi_tables if table_header_blob is not None]
+
     def get_ACPI_table( self, name, isfile = False ):
-        table_header_blob  = None
-        table_blob = None
-        t_data = None
-        if isfile == True:
-            t_data = chipsec.file.read_file( name )
+        acpi_tables_data = []
+        if isfile:
+            acpi_tables_data.append(chipsec.file.read_file( name ))
         else:
-            t_size = self.cs.mem.read_physical_mem_dword( self.tableList[name] + 4 )
-            t_data = self.cs.mem.read_physical_mem( self.tableList[name], t_size )
+            for table_address in self.tableList[name]:
+                t_data = None
+                t_size = self.cs.mem.read_physical_mem_dword( table_address + 4 )
+                t_data = self.cs.mem.read_physical_mem( table_address, t_size )
 
-        if t_data is not None:
-            table_header_blob  = t_data[ : ACPI_TABLE_HEADER_SIZE ]
-            table_blob         = t_data[ ACPI_TABLE_HEADER_SIZE : ]
+                acpi_tables_data.append( t_data )
 
-        return (table_header_blob,table_blob)
+        acpi_tables = []
+        for t_data in acpi_tables_data:
+            table_header_blob  = None
+            table_blob = None
+
+            if t_data is not None:
+                table_header_blob  = t_data[ : ACPI_TABLE_HEADER_SIZE ]
+                table_blob         = t_data[ ACPI_TABLE_HEADER_SIZE : ]
+
+            acpi_tables.append((table_header_blob, table_blob))
+
+        return acpi_tables
     
     #
     # Dumps contents of ACPI table
     #
     def dump_ACPI_table( self, name, isfile = False ):
-        (table_header,table,table_header_blob,table_blob) = self.get_parse_ACPI_table( name, isfile )
-        logger().log( "==================================================================" )
-        logger().log( "ACPI Table: %s" % name )
-        logger().log( "==================================================================" )
-        # print table header
-        logger().log( table_header )
-        print_buffer( table_header_blob )
-        # print table contents
-        logger().log( '' )
-        logger().log( table )
-        print_buffer( table_blob )
-        logger().log( '' )
+        acpi_tables = self.get_parse_ACPI_table( name, isfile )
+        for acpi_table in acpi_tables:
+            (table_header,table,table_header_blob,table_blob) = acpi_table
+            logger().log( "==================================================================" )
+            logger().log( "ACPI Table: %s" % name )
+            logger().log( "==================================================================" )
+            # print table header
+            logger().log( table_header )
+            print_buffer( table_header_blob )
+            # print table contents
+            logger().log( '' )
+            logger().log( table )
+            print_buffer( table_blob )
+            logger().log( '' )
 
     # --------------------------------------------------------------------
     # Internal ACPI table parsing functions
