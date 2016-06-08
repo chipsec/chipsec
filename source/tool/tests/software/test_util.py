@@ -168,3 +168,69 @@ class TestChipsecUtil(unittest.TestCase):
         self.assertIn("Dumping 0x00003000 bytes", self.log)
         self.assertEqual(os.stat(rom_file).st_size, 0x3000)
         os.remove(rom_file)
+
+    def test_parse_multi_table(self):
+        """Test to verify that tables with same signature are parsed correctly.
+
+        Since usually there are several SSDT tables with the same signature, we test SSDT parsing.
+        """
+
+        class SSDTParsingHelper(mock_helper.ACPIHelper):
+            """Test helper containing generic descriptor for SSDT to parse SSDT
+
+            Three regions are defined:
+              * SSDT table [0x400, 0x430]
+              * SSDT table [0x600, 0x630]
+              * SSDT table [0x800, 0x830]
+            """
+            RSDT_ENTRIES = [0x400, 0x600, 0x800]
+
+            SSDT1_DESCRIPTOR = ("SSDT" +                  # Signature
+                                struct.pack("<I", 0x30) + # Length
+                                struct.pack("<B", 0x1) +  # Revision
+                                struct.pack("<B", 0x1) +  # Checksum
+                                "OEMSS1" +                # OEMID
+                                "OEMTBLID" +              # OEM Table ID
+                                "OEMR" +                  # OEM Revision
+                                "CRID" +                  # Creator ID
+                                "CRRV" +                  # Creator Revision
+                                struct.pack("<Q", 0x129)) # AML code
+
+            SSDT2_DESCRIPTOR = ("SSDT" +                  # Signature
+                                struct.pack("<I", 0x30) + # Length
+                                struct.pack("<B", 0x1) +  # Revision
+                                struct.pack("<B", 0x1) +  # Checksum
+                                "OEMSS2" +                # OEMID
+                                "OEMTBLID" +              # OEM Table ID
+                                "OEMR" +                  # OEM Revision
+                                "CRID" +                  # Creator ID
+                                "CRRV" +                  # Creator Revision
+                                struct.pack("<Q", 0x929)) # AML code
+
+            SSDT3_DESCRIPTOR = ("SSDT" +                  # Signature
+                                struct.pack("<I", 0x30) + # Length
+                                struct.pack("<B", 0x1) +  # Revision
+                                struct.pack("<B", 0x1) +  # Checksum
+                                "OEMSS3" +                # OEMID
+                                "OEMTBLID" +              # OEM Table ID
+                                "OEMR" +                  # OEM Revision
+                                "CRID" +                  # Creator ID
+                                "CRRV" +                  # Creator Revision
+                                struct.pack("<Q", 0x199)) # AML code
+
+            def read_phys_mem(self, pa_hi, pa_lo, length):
+                if pa_lo == 0x400:
+                    return self.SSDT1_DESCRIPTOR[:length]
+                elif pa_lo == 0x600:
+                    return self.SSDT2_DESCRIPTOR[:length]
+                elif pa_lo == 0x800:
+                    return self.SSDT3_DESCRIPTOR[:length]
+                else:
+                    return super(SSDTParsingHelper, self).read_phys_mem(pa_hi, pa_lo, length)
+
+        self._chipsec_util("acpi list", SSDTParsingHelper)
+        self.assertIn("SSDT: 0x0000000000000400, 0x0000000000000600, 0x0000000000000800", self.log)
+        self._chipsec_util("acpi table SSDT", SSDTParsingHelper)
+        self.assertIn("OEMSS1", self.log)
+        self.assertIn("OEMSS2", self.log)
+        self.assertIn("OEMSS3", self.log)
