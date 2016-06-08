@@ -232,3 +232,92 @@ class TestChipsecUtil(unittest.TestCase):
         self._chipsec_util("spi info", SPIHelper)
         self.assertIn("BC = 0xDEADBEEF", self.log)
         self.assertIn("FRAP = 0xEEEEEEEE", self.log)
+
+    def test_parse_multi_table(self):
+        """Test to verify that tables with same signature are parsed correctly.
+
+        Since usually there are several SSDT tables with the same signature, we test SSDT parsing.
+        """
+
+        class SSDTParsingHelper(mock_helper.TestHelper):
+            """Test helper containing generic descriptor for RSDP, RSDT, and SSDT to parse SSDT
+
+              Five regions are defined:
+                * RSDP table [0xE0000, 0xE0014]
+                * RSDT table [0x200, 0x228]
+                * SSDT table [0x400, 0x514]
+                * SSDT table [0x600, 0x714]
+                * SSDT table [0x800, 0x914]
+            """
+            RSDP_DESCRIPTOR = ("RSD PTR " +               # Signature
+                               struct.pack("<B", 0x1) +   # Checksum
+                               "TEST00" +                 # OEMID
+                               struct.pack("<B", 0x0) +   # Revision
+                               struct.pack("<I", 0x200))  # RSDT Address
+
+            RSDT_DESCRIPTOR = ("RSDT" +                   # Signature
+                               struct.pack("<I", 0x30) +  # Length
+                               struct.pack("<B", 0x1) +   # Revision
+                               struct.pack("<B", 0x1) +   # Checksum
+                               "OEMIDT" +                 # OEMID
+                               "OEMTBLID" +               # OEM Table ID
+                               "OEMR" +                   # OEM Revision
+                               "CRID" +                   # Creator ID
+                               "CRRV" +                   # Creator Revision
+                               struct.pack("<I", 0x400) + # Address of table
+                               struct.pack("<I", 0x600) + # Address of table
+                               struct.pack("<I", 0x800))  # Address of table
+
+            SSDT1_DESCRIPTOR = ("SSDT" +                  # Signature
+                                struct.pack("<I", 0x30) + # Length
+                                struct.pack("<B", 0x1) +  # Revision
+                                struct.pack("<B", 0x1) +  # Checksum
+                                "OEMSS1" +                # OEMID
+                                "OEMTBLID" +              # OEM Table ID
+                                "OEMR" +                  # OEM Revision
+                                "CRID" +                  # Creator ID
+                                "CRRV" +                  # Creator Revision
+                                struct.pack("<Q", 0x129)) # AML code
+
+            SSDT2_DESCRIPTOR = ("SSDT" +                  # Signature
+                                struct.pack("<I", 0x30) + # Length
+                                struct.pack("<B", 0x1) +  # Revision
+                                struct.pack("<B", 0x1) +  # Checksum
+                                "OEMSS2" +                # OEMID
+                                "OEMTBLID" +              # OEM Table ID
+                                "OEMR" +                  # OEM Revision
+                                "CRID" +                  # Creator ID
+                                "CRRV" +                  # Creator Revision
+                                struct.pack("<Q", 0x929)) # AML code
+
+            SSDT3_DESCRIPTOR = ("SSDT" +                  # Signature
+                                struct.pack("<I", 0x30) + # Length
+                                struct.pack("<B", 0x1) +  # Revision
+                                struct.pack("<B", 0x1) +  # Checksum
+                                "OEMSS3" +                # OEMID
+                                "OEMTBLID" +              # OEM Table ID
+                                "OEMR" +                  # OEM Revision
+                                "CRID" +                  # Creator ID
+                                "CRRV" +                  # Creator Revision
+                                struct.pack("<Q", 0x199)) # AML code
+
+            def read_phys_mem(self, pa_hi, pa_lo, length):
+                if pa_lo == 0xE0000:
+                    return self.RSDP_DESCRIPTOR[:length]
+                elif pa_lo == 0x200:
+                    return self.RSDT_DESCRIPTOR[:length]
+                elif pa_lo == 0x400:
+                    return self.SSDT1_DESCRIPTOR[:length]
+                elif pa_lo == 0x600:
+                    return self.SSDT2_DESCRIPTOR[:length]
+                elif pa_lo == 0x800:
+                    return self.SSDT3_DESCRIPTOR[:length]
+                else:
+                    return "\xFF" * length
+
+        self._chipsec_util("acpi list", SSDTParsingHelper)
+        self.assertIn("SSDT: 0x0000000000000400, 0x0000000000000600, 0x0000000000000800", self.log)
+        self._chipsec_util("acpi table SSDT", SSDTParsingHelper)
+        self.assertIn("OEMSS1", self.log)
+        self.assertIn("OEMSS2", self.log)
+        self.assertIn("OEMSS3", self.log)
