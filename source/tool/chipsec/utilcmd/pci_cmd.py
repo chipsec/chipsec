@@ -49,6 +49,7 @@ def pci(argv):
     Examples:
 
     >>> chipsec_util pci enumerate
+    >>> chipsec_util pci xrom_enumerate
     >>> chipsec_util pci 0 0 0 0x88 4
     >>> chipsec_util pci 0 0 0 0x88 byte 0x1A
     >>> chipsec_util pci 0 0x1F 0 0xDC 1 0x1
@@ -64,6 +65,13 @@ def pci(argv):
     if ( 'enumerate' == op ):
         logger().log( "[CHIPSEC] Enumerating available PCIe devices.." )
         print_pci_devices( chipsec_util._cs.pci.enumerate_devices() )
+        logger().log( "[CHIPSEC] (pci) time elapsed %.3f" % (time.time()-t) )
+        return
+
+    if ( 'xrom_enumerate' == op ):
+        logger().log( "[CHIPSEC] Enumerating PCIe device XROM's..." )
+	pci = Pci(chipsec_util._cs)
+        pci.enumerate_xroms()
         logger().log( "[CHIPSEC] (pci) time elapsed %.3f" % (time.time()-t) )
         return
 
