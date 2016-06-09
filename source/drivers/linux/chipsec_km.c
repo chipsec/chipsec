@@ -37,7 +37,6 @@ chipsec@intel.com
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
 
-
 MODULE_LICENSE("GPL");
 
 int chipsec_mem_major = -1;
@@ -599,8 +598,10 @@ void * patch_read_msr(void * CPUInfo)
 	return NULL;
 }
 
+
 void print_stat(efi_status_t stat)
 {
+#ifdef EFI_NOT_READY
     switch (stat) {
         case EFI_SUCCESS:
             printk( KERN_DEBUG "EFI_SUCCESS\n");
@@ -642,6 +643,7 @@ void print_stat(efi_status_t stat)
             printk( KERN_DEBUG "Unknown status\n");
             break;
     }
+#endif
 }
 
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
@@ -950,8 +952,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         #endif
 		ptr[2] = (uint32_t)dtr.base;
 
-		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.high
-		#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.low
+		//#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.high
+		//#pragma GCC diagnostic ignored "-Wuninitialized" dt_pa.u.low
 		ptr[3] = dt_pa.u.high;
 		ptr[4] = dt_pa.u.low;
 
@@ -1104,12 +1106,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 	}
-    
+   
+#ifdef EFI_NOT_READY
 	case IOCTL_GET_EFIVAR:
 	{
 		//IN  params: data_size, guid, namelen, name
 		//OUT params: var_size, stat, data
- 
 		uint32_t *kbuf;
 		static efi_char16_t *name;
 		char *cptr, *var;
@@ -1220,7 +1222,6 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
     case IOCTL_SET_EFIVAR:
     {
-    
         uint32_t *kbuf;
         static efi_char16_t *name;
         char *cptr, *data;
@@ -1333,8 +1334,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         kfree(kbuf);
         
         break;
-
-    } 
+    }
+#endif
 
     case IOCTL_RDMMIO:
 	{
