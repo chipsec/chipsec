@@ -23,19 +23,13 @@
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
-import chipsec_util
-
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command     import BaseCommand
+from chipsec.logger      import print_buffer
 from chipsec.hal.smbus   import *
 
-def smbus(argv):
+class SMBusCommand(BaseCommand):
     """
     >>> chipsec_util smbus read <device_addr> <start_offset> [size]
     >>> chipsec_util smbus write <device_addr> <offset> <byte_val>
@@ -44,48 +38,55 @@ def smbus(argv):
 
     >>> chipsec_util smbus read  0xA0 0x0 0x100
     """
-    if 3 > len(argv):
-        print smbus.__doc__
-        return
 
-    try:
-        _smbus = SMBus( chipsec_util._cs )
-    except BaseException, msg:
-        print msg
-        return
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    op = argv[2]
-    t = time.time()
+    def run(self):
+        if len(self.argv) < 3:
+            print SMBusCommand.__doc__
+            return
 
-    if not _smbus.is_SMBus_supported():
-        logger().log( "[CHIPSEC] SMBus controller is not supported" )
-        return
+        try:
+            _smbus = SMBus( self.cs )
+        except BaseException, msg:
+            print msg
+            return
 
-    _smbus.display_SMBus_info()
+        op = self.argv[2]
+        t = time.time()
 
-    if ( 'read' == op ):
-        dev_addr  = int(argv[3],16)
-        start_off = int(argv[4],16)
-        if len(argv) > 5:
-            size   = int(argv[5],16)
-            buf = _smbus.read_range( dev_addr, start_off, size )
-            logger().log( "[CHIPSEC] SMBus read: device 0x%X offset 0x%X size 0x%X" % (dev_addr, start_off, size) )
-            print_buffer( buf )
+        if not _smbus.is_SMBus_supported():
+            self.logger.log( "[CHIPSEC] SMBus controller is not supported" )
+            return
+
+        _smbus.display_SMBus_info()
+
+        if ( 'read' == op ):
+            dev_addr  = int(self.argv[3],16)
+            start_off = int(self.argv[4],16)
+            if len(self.argv) > 5:
+                size   = int(self.argv[5],16)
+                buf = _smbus.read_range( dev_addr, start_off, size )
+                self.logger.log( "[CHIPSEC] SMBus read: device 0x%X offset 0x%X size 0x%X" % (dev_addr, start_off, size) )
+                print_buffer( buf )
+            else:
+                val = _smbus.read_byte( dev_addr, start_off )
+                self.logger.log( "[CHIPSEC] SMBus read: device 0x%X offset 0x%X = 0x%X" % (dev_addr, start_off, val) )
+        elif ( 'write' == op ):
+            dev_addr = int(self.argv[3],16)
+            off      = int(self.argv[4],16)
+            val      = int(self.argv[5],16)
+            self.logger.log( "[CHIPSEC] SMBus write: device 0x%X offset 0x%X = 0x%X" % (dev_addr, off, val) )
+            _smbus.write_byte( dev_addr, off, val )
         else:
-            val = _smbus.read_byte( dev_addr, start_off )
-            logger().log( "[CHIPSEC] SMBus read: device 0x%X offset 0x%X = 0x%X" % (dev_addr, start_off, val) )
-    elif ( 'write' == op ):
-        dev_addr = int(argv[3],16)
-        off      = int(argv[4],16)
-        val      = int(argv[5],16)
-        logger().log( "[CHIPSEC] SMBus write: device 0x%X offset 0x%X = 0x%X" % (dev_addr, off, val) )
-        _smbus.write_byte( dev_addr, off, val )
-    else:
-        logger().error( "unknown command-line option '%.32s'" % op )
-        print smbus.__doc__
-        return
+            self.logger.error( "unknown command-line option '%.32s'" % op )
+            print SMBusCommand.__doc__
+            return
 
-    logger().log( "[CHIPSEC] (smbus) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (smbus) time elapsed %.3f" % (time.time()-t) )
 
-
-chipsec_util.commands['smbus'] = {'func' : smbus, 'start_driver' : True, 'help' : smbus.__doc__ }
+commands = { 'smbus': SMBusCommand }

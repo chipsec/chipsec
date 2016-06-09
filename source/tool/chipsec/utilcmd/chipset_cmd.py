@@ -28,16 +28,7 @@ usage as a standalone utility:
 
 __version__ = '1.0'
 
-import os
-import sys
-import time
-
-import chipsec_util
-
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command    import BaseCommand
 from chipsec.chipset    import UnknownChipsetError, print_supported_chipsets
 
 # ###################################################################
@@ -45,15 +36,20 @@ from chipsec.chipset    import UnknownChipsetError, print_supported_chipsets
 # Chipset/CPU Detection
 #
 # ###################################################################
-def platform(argv):
+class PlatformCommand(BaseCommand):
     """
     chipsec_util platform
     """
-    try:
-        print_supported_chipsets()
-        logger().log("")
-        chipsec_util._cs.print_chipset()
-    except UnknownChipsetError, msg:
-        logger().error( msg )
 
-chipsec_util.commands['platform'] = {'func' : platform, 'start_driver' : True , 'help' : platform.__doc__ }
+    def requires_driver(self):
+        return True
+
+    def run(self):
+        try:
+            print_supported_chipsets()
+            self.logger.log("")
+            self.cs.print_chipset()
+        except UnknownChipsetError, msg:
+            self.logger.error( msg )
+
+commands = { 'platform': PlatformCommand }

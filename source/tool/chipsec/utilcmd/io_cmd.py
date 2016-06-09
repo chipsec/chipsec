@@ -27,20 +27,14 @@ The io command allows direct access to read and write I/O port space.
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
 import chipsec_util
-
 import chipsec.hal.iobar
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command import BaseCommand
 
 # Port I/O
-def port_io(argv):
+class PortIOCommand(BaseCommand):
     """
     >>> chipsec_util io list
     >>> chipsec_util io <io_port> <width> [value]
@@ -51,46 +45,54 @@ def port_io(argv):
     >>> chipsec_util io 0x61 1
     >>> chipsec_util io 0x430 byte 0x0
     """
-    if 3 > len(argv):
-        print port_io.__doc__
-        return
 
-    try:
-        _iobar = chipsec.hal.iobar.iobar( chipsec_util._cs )
-    except chipsec.hal.iobar.IOBARRuntimeError, msg:
-        print msg
-        return
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    op = argv[2]
-    if ( 'list' == op ):
-        _iobar.list_IO_BARs()
-        return
+    def run(self):
+        if len(self.argv) < 3:
+            print PortIOCommand.__doc__
+            return
 
-    t = time.time()
+        try:
+            _iobar = chipsec.hal.iobar.iobar( self.cs )
+        except chipsec.hal.iobar.IOBARRuntimeError, msg:
+            print msg
+            return
 
-    if len(argv) < 3:
-        print port_io.__doc__
-        return
+        op = self.argv[2]
+        if ( 'list' == op ):
+            _iobar.list_IO_BARs()
+            return
 
-    io_port = int(argv[2],16)
+        t = time.time()
 
-    width = 0x1
-    if len(argv) > 3: 
-        width = chipsec_util.get_option_width(argv[3]) if chipsec_util.is_option_valid_width(argv[3]) else int(argv[3],16)
+        if len(self.argv) < 3:
+            print PortIOCommand.__doc__
+            return
 
-    if 5 == len(argv):
-        value = int(argv[4], 16)
-        logger().log( "[CHIPSEC] OUT 0x%04X <- 0x%08X (size = 0x%02x)" % (io_port, value, width) )
-        if   0x1 == width: chipsec_util._cs.io.write_port_byte( io_port, value )
-        elif 0x2 == width: chipsec_util._cs.io.write_port_word( io_port, value )
-        elif 0x4 == width: chipsec_util._cs.io.write_port_dword( io_port, value )
-    else:
-        if   0x1 == width: value = chipsec_util._cs.io.read_port_byte( io_port )
-        elif 0x2 == width: value = chipsec_util._cs.io.read_port_word( io_port )
-        elif 0x4 == width: value = chipsec_util._cs.io.read_port_dword( io_port )
-        logger().log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+        io_port = int(self.argv[2],16)
 
-    logger().log( "[CHIPSEC] (io) time elapsed %.3f" % (time.time()-t) )
+        width = 0x1
+        if len(self.argv) > 3: 
+            width = chipsec_util.get_option_width(self.argv[3]) if chipsec_util.is_option_valid_width(self.argv[3]) else int(self.argv[3],16)
+
+        if 5 == len(self.argv):
+            value = int(self.argv[4], 16)
+            self.logger.log( "[CHIPSEC] OUT 0x%04X <- 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+            if   0x1 == width: self.cs.io.write_port_byte( io_port, value )
+            elif 0x2 == width: self.cs.io.write_port_word( io_port, value )
+            elif 0x4 == width: self.cs.io.write_port_dword( io_port, value )
+        else:
+            if   0x1 == width: value = self.cs.io.read_port_byte( io_port )
+            elif 0x2 == width: value = self.cs.io.read_port_word( io_port )
+            elif 0x4 == width: value = self.cs.io.read_port_dword( io_port )
+            self.logger.log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+
+        self.logger.log( "[CHIPSEC] (io) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['io'] = {'func' : port_io, 'start_driver' : True, 'help' : port_io.__doc__  }
+commands = { 'io': PortIOCommand }

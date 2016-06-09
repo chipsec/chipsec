@@ -27,8 +27,6 @@ Command-line utility providing access to IOMMU engines
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
 import chipsec_util
@@ -37,10 +35,11 @@ from chipsec.logger     import *
 from chipsec.file       import *
 from chipsec.hal.iommu  import *
 import chipsec.hal.acpi
+from chipsec.command    import BaseCommand
 
 
 # I/O Memory Management Unit (IOMMU), e.g. Intel VT-d
-def iommu_cmd(argv):
+class IOMMUCommand(BaseCommand):
     """
     >>> chipsec_util iommu list
     >>> chipsec_util iommu config [iommu_engine]
@@ -54,54 +53,63 @@ def iommu_cmd(argv):
     >>> chipsec_util iommu status GFXVTD
     >>> chipsec_util iommu enable VTD
     """
-    if len(argv) < 3:
-        print iommu_cmd.__doc__
-        return
-    op = argv[2]
-    t = time.time()
-    
-    try:
-        _iommu = iommu( chipsec_util._cs )
-    except IOMMUError, msg:
-        print msg
-        return
+
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
+
+    def run(self):
+        if len(self.argv) < 3:
+            print IOMMUCommand.__doc__
+            return
+        op = self.argv[2]
+        t = time.time()
         
-    if ( 'list' == op ):
-        logger().log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
-        logger().log( IOMMU_ENGINES.keys() )
-    elif ( 'config' == op or 'status' == op or 'enable' == op or 'disable' == op ):
-        if len(argv) > 3:
-            if argv[3] in IOMMU_ENGINES.keys():
-                _iommu_engines = [ argv[3] ]
+        try:
+            _iommu = iommu( self.cs )
+        except IOMMUError, msg:
+            print msg
+            return
+            
+        if ( 'list' == op ):
+            self.logger.log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
+            self.logger.log( IOMMU_ENGINES.keys() )
+        elif ( 'config' == op or 'status' == op or 'enable' == op or 'disable' == op ):
+            if len(self.argv) > 3:
+                if self.argv[3] in IOMMU_ENGINES.keys():
+                    _iommu_engines = [ self.argv[3] ]
+                else:
+                    self.logger.error( "IOMMU name %s not recognized. Run 'iommu list' command for supported IOMMU names" % self.argv[3] )
+                    return
             else:
-                logger().error( "IOMMU name %s not recognized. Run 'iommu list' command for supported IOMMU names" % argv[3] )
-                return
+                _iommu_engines = IOMMU_ENGINES.keys()
+
+            if 'config' == op:
+
+                try:
+                    _acpi  = chipsec.hal.acpi.ACPI( self.cs )
+                except chipsec.hal.acpi.AcpiRuntimeError, msg:
+                    print msg
+                    return      
+
+                if _acpi.is_ACPI_table_present( chipsec.hal.acpi.ACPI_TABLE_SIG_DMAR ):
+                    self.logger.log( "[CHIPSEC] Dumping contents of DMAR ACPI table..\n" )
+                    _acpi.dump_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_DMAR )
+                else:
+                    self.logger.log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
+
+            for e in _iommu_engines:
+               if   'config'  == op: _iommu.dump_IOMMU_configuration( e )
+               elif 'status'  == op: _iommu.dump_IOMMU_status( e )
+               elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
+               elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )
         else:
-            _iommu_engines = IOMMU_ENGINES.keys()
+            print IOMMUCommand.__doc__
+            return
+        
+        self.logger.log( "[CHIPSEC] (iommu) time elapsed %.3f" % (time.time()-t) )
 
-        if 'config' == op:
 
-            try:
-                _acpi  = chipsec.hal.acpi.ACPI( chipsec_util._cs )
-            except chipsec.hal.acpi.AcpiRuntimeError, msg:
-                print msg
-                return      
-
-            if _acpi.is_ACPI_table_present( chipsec.hal.acpi.ACPI_TABLE_SIG_DMAR ):
-                logger().log( "[CHIPSEC] Dumping contents of DMAR ACPI table..\n" )
-                _acpi.dump_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_DMAR )
-            else:
-                logger().log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
-
-        for e in _iommu_engines:
-           if   'config'  == op: _iommu.dump_IOMMU_configuration( e )
-           elif 'status'  == op: _iommu.dump_IOMMU_status( e )
-           elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
-           elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )
-    else:
-        print iommu_cmd.__doc__
-        return
-    
-    logger().log( "[CHIPSEC] (iommu) time elapsed %.3f" % (time.time()-t) )
-
-chipsec_util.commands['iommu'] = {'func' : iommu_cmd, 'start_driver' : True, 'help' : iommu.__doc__ }
+commands = { 'iommu': IOMMUCommand }

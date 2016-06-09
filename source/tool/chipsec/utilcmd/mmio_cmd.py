@@ -23,8 +23,6 @@
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
 import chipsec_util
@@ -34,6 +32,7 @@ from chipsec.logger     import *
 from chipsec.file       import *
 
 from chipsec.hal.mmio   import *
+from chipsec.command    import BaseCommand
 
 
 # ###################################################################
@@ -41,7 +40,7 @@ from chipsec.hal.mmio   import *
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 #
 # ###################################################################
-def mmio(argv):
+class MMIOCommand(BaseCommand):
     """
     >>> chipsec_util mmio list
     >>> chipsec_util mmio dump <MMIO_BAR_name>
@@ -55,44 +54,52 @@ def mmio(argv):
     >>> chipsec_util mmio read SPIBAR 0x74 0x4
     >>> chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000
     """
-    t = time.time()
 
-    if 3 > len(argv):
-        print mmio.__doc__
-        return
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    op = argv[2]
-    t = time.time()
+    def run(self):
+        t = time.time()
 
-    if ( 'list' == op ):
-        list_MMIO_BARs( chipsec_util._cs )
-    elif ( 'dump' == op ):
-        bar = argv[3].upper()
-        logger().log( "[CHIPSEC] Dumping %s MMIO space.." % bar )
-        dump_MMIO_BAR( chipsec_util._cs, bar )
-    elif ( 'read' == op ):
-        bar   = argv[3].upper()
-        off   = int(argv[4],16)
-        width = int(argv[5],16) if len(argv) == 6 else 4
-        reg = read_MMIO_BAR_reg( chipsec_util._cs, bar, off, width )
-        logger().log( "[CHIPSEC] Read %s + 0x%X: 0x%08X" % (bar,off,reg) )
-    elif ( 'write' == op ):
-        bar   = argv[3].upper()
-        off   = int(argv[4],16)
-        width = int(argv[5],16) if len(argv) == 6 else 4
-        if len(argv) == 7:
-            reg = int(argv[6],16)
-            logger().log( "[CHIPSEC] Write %s + 0x%X: 0x%08X" % (bar,off,reg) )
-            write_MMIO_BAR_reg( chipsec_util._cs, bar, off, reg, width )
-        else:
-            print mmio.__doc__
+        if len(self.argv) < 3:
+            print MMIOCommand.__doc__
             return
-    else:
-        logger().error( "unknown command-line option '%.32s'" % op )
-        print mmio.__doc__
-        return
 
-    logger().log( "[CHIPSEC] (mmio) time elapsed %.3f" % (time.time()-t) )
+        op = self.argv[2]
+        t = time.time()
+
+        if ( 'list' == op ):
+            list_MMIO_BARs( self.cs )
+        elif ( 'dump' == op ):
+            bar = self.argv[3].upper()
+            self.logger.log( "[CHIPSEC] Dumping %s MMIO space.." % bar )
+            dump_MMIO_BAR( self.cs, bar )
+        elif ( 'read' == op ):
+            bar   = self.argv[3].upper()
+            off   = int(self.argv[4],16)
+            width = int(self.argv[5],16) if len(self.argv) == 6 else 4
+            reg = read_MMIO_BAR_reg( self.cs, bar, off, width )
+            self.logger.log( "[CHIPSEC] Read %s + 0x%X: 0x%08X" % (bar,off,reg) )
+        elif ( 'write' == op ):
+            bar   = self.argv[3].upper()
+            off   = int(self.argv[4],16)
+            width = int(self.argv[5],16) if len(self.argv) == 6 else 4
+            if len(self.argv) == 7:
+                reg = int(self.argv[6],16)
+                self.logger.log( "[CHIPSEC] Write %s + 0x%X: 0x%08X" % (bar,off,reg) )
+                write_MMIO_BAR_reg( self.cs, bar, off, reg, width )
+            else:
+                print MMIOCommand.__doc__
+                return
+        else:
+            self.logger.error( "unknown command-line option '%.32s'" % op )
+            print MMIOCommand.__doc__
+            return
+
+        self.logger.log( "[CHIPSEC] (mmio) time elapsed %.3f" % (time.time()-t) )
 
 
-chipsec_util.commands['mmio'] = {'func' : mmio , 'start_driver' : True, 'help' : mmio.__doc__  }
+commands = { 'mmio': MMIOCommand }

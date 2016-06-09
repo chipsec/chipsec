@@ -23,18 +23,13 @@
 
 __version__ = '1.0'
 
-import os
-import sys
 import time
 
-import chipsec_util
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command            import BaseCommand
+from chipsec.file               import read_file
 from chipsec.hal.spi_descriptor import *
 
-def spidesc(argv):
+class SPIDescCommand(BaseCommand):
     """
     >>> chipsec_util spidesc [rom]
 
@@ -42,17 +37,20 @@ def spidesc(argv):
 
     >>> chipsec_util spidesc spi.bin
     """
-    if 3 > len(argv):
-        print spidesc.__doc__
-        return
+    def requires_driver(self):
+        return False
 
-    fd_file = argv[2]
-    logger().log( "[CHIPSEC] Parsing SPI Flash Descriptor from file '%s'\n" % fd_file )
+    def run(self):
+        if len(self.argv) < 3:
+            print SPIDescCommand.__doc__
+            return
 
-    t = time.time()
-    fd = read_file( fd_file )
-    if type(fd) == str: parse_spi_flash_descriptor( fd )
-    logger().log( "\n[CHIPSEC] (spidesc) time elapsed %.3f" % (time.time()-t) )
+        fd_file = self.argv[2]
+        self.logger.log( "[CHIPSEC] Parsing SPI Flash Descriptor from file '%s'\n" % fd_file )
 
+        t = time.time()
+        fd = read_file( fd_file )
+        if type(fd) == str: parse_spi_flash_descriptor( fd )
+        self.logger.log( "\n[CHIPSEC] (spidesc) time elapsed %.3f" % (time.time()-t) )
 
-chipsec_util.commands['spidesc'] = {'func' : spidesc, 'start_driver' : False, 'help' : spidesc.__doc__ }
+commands = { 'spidesc': SPIDescCommand }

@@ -28,14 +28,10 @@ Command-line utility providing access to ACPI tables
 __version__ = '1.0'
 
 import os
-import sys
 import time
 
-import chipsec_util
-
-from chipsec.logger     import *
-from chipsec.file       import *
 from chipsec.hal.acpi   import *
+from chipsec.command    import BaseCommand
 
 # ###################################################################
 #
@@ -43,7 +39,7 @@ from chipsec.hal.acpi   import *
 #
 # ###################################################################
 
-def acpi(argv):
+class ACPICommand(BaseCommand):
     """
     >>> chipsec_util acpi list
     >>> chipsec_util acpi table <name>|<file_path>
@@ -54,44 +50,51 @@ def acpi(argv):
     >>> chipsec_util acpi table XSDT
     >>> chipsec_util acpi table acpi_table.bin
     """
-    if len(argv) < 3:
-        print acpi.__doc__
-        return
-    op = argv[2]
-    t = time.time()
-    
-    try:
-        _acpi = ACPI( chipsec_util._cs )
-    except AcpiRuntimeError, msg:
-        print msg
-        return
-      
-    if ( 'list' == op ):
-        logger().log( "[CHIPSEC] Enumerating ACPI tables.." )
-        _acpi.print_ACPI_table_list()      
-    elif ( 'table' == op ):
-        if len(argv) < 4:
-            print acpi.__doc__
+
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
+
+    def run(self):
+        if len(self.argv) < 3:
+            print ACPICommand.__doc__
             return
-        name = argv[ 3 ]
-        if name in ACPI_TABLES:
-            if _acpi.is_ACPI_table_present( name ):
-                logger().log( "[CHIPSEC] reading ACPI table '%s'" % name )
-                _acpi.dump_ACPI_table( name )
+        op = self.argv[2]
+        t = time.time()
+
+        try:
+            _acpi = ACPI(self.cs)
+        except AcpiRuntimeError, msg:
+            print msg
+            return
+
+        if ( 'list' == op ):
+            self.logger.log( "[CHIPSEC] Enumerating ACPI tables.." )
+            _acpi.print_ACPI_table_list()
+        elif ( 'table' == op ):
+            if len(self.argv) < 4:
+                print ACPICommand.__doc__
+                return
+            name = self.argv[ 3 ]
+            if name in ACPI_TABLES:
+                if _acpi.is_ACPI_table_present( name ):
+                    self.logger.log( "[CHIPSEC] reading ACPI table '%s'" % name )
+                    _acpi.dump_ACPI_table( name )
+                else:
+                    self.logger.log( "[CHIPSEC] ACPI table '%s' wasn't found" % name )
+            elif os.path.exists( name ):
+                self.logger.log( "[CHIPSEC] reading ACPI table from file '%s'" % name )
+                _acpi.dump_ACPI_table( name, True )
             else:
-                logger().log( "[CHIPSEC] ACPI table '%s' wasn't found" % name )
-        elif os.path.exists( name ):
-            logger().log( "[CHIPSEC] reading ACPI table from file '%s'" % name )
-            _acpi.dump_ACPI_table( name, True )
+                self.logger.error( "Please specify table name or path to a file.\nTable name must be in %s" % ACPI_TABLES.keys() )
+                print ACPICommand.__doc__
+                return
         else:
-            logger().error( "Please specify table name or path to a file.\nTable name must be in %s" % ACPI_TABLES.keys() )
-            print acpi.__doc__
+            print ACPICommand.__doc__
             return
-    else:
-        print acpi.__doc__
-        return
-    
-    logger().log( "[CHIPSEC] (acpi) time elapsed %.3f" % (time.time()-t) )
 
+        self.logger.log( "[CHIPSEC] (acpi) time elapsed %.3f" % (time.time()-t) )
 
-chipsec_util.commands['acpi'] = {'func' : acpi, 'start_driver' : True, 'help' : acpi.__doc__ }
+commands = { 'acpi': ACPICommand }

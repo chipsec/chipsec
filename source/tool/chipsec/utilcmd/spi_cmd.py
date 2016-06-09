@@ -35,21 +35,14 @@ The file rom.bin will contain the full binary of the SPI flash. It can then be p
 
 __version__ = '1.0'
 
-
-import os
-import sys
 import time
 
-import chipsec_util
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
+from chipsec.command    import BaseCommand
 from chipsec.hal.spi    import *
 
 
 # SPI Flash Controller
-def spi(argv):
+class SPICommand(BaseCommand):
     """
     >>> chipsec_util spi info|dump|read|write|erase|disable-wp [flash_address] [length] [file]
 
@@ -61,81 +54,86 @@ def spi(argv):
     >>> chipsec_util spi write 0x0 flash_descriptor.bin
     >>> chipsec_util spi disable-wp
     """
-    if 3 > len(argv):
-        print spi.__doc__
-        return
+    def requires_driver(self):
+        # No driver required when printing the util documentation
+        if len(self.argv) < 3:
+            return False
+        return True
 
-    try:
-        _spi = SPI( chipsec_util._cs )
-    except SpiRuntimeError, msg:
-        print msg
-        return
+    def run(self):
+        if len(self.argv) < 3:
+            print SPICommand.__doc__
+            return
 
-    spi_op = argv[2]
+        try:
+            _spi = SPI( self.cs )
+        except SpiRuntimeError, msg:
+            print msg
+            return
 
-    t = time.time()
+        spi_op = self.argv[2]
 
-    if ( 'erase' == spi_op ):
-        spi_fla = int(argv[3],16)
-        logger().log( "[CHIPSEC] Erasing SPI Flash block at FLA = 0x%X" % spi_fla )
-        #if not _spi.disable_BIOS_write_protection():
-        #    logger().error( "Could not disable SPI Flash protection. Still trying.." )
+        t = time.time()
 
-        ok = _spi.erase_spi_block( spi_fla )
-        if ok: logger().log_result( "SPI Flash erase done" )
-        else:  logger().warn( "SPI Flash erase returned error (turn on VERBOSE)" )
-    elif ( 'write' == spi_op and 5 == len(argv) ):
-        spi_fla = int(argv[3],16)
-        filename = argv[4]
-        logger().log( "[CHIPSEC] Writing to SPI Flash at FLA = 0x%X from '%.64s'" % (spi_fla, filename) )
-        #if not _spi.disable_BIOS_write_protection():
-        #    logger().error( "Could not disable SPI Flash protection. Still trying.." )
+        if ( 'erase' == spi_op ):
+            spi_fla = int(self.argv[3],16)
+            self.logger.log( "[CHIPSEC] Erasing SPI Flash block at FLA = 0x%X" % spi_fla )
+            #if not _spi.disable_BIOS_write_protection():
+            #    self.logger.error( "Could not disable SPI Flash protection. Still trying.." )
 
-        ok = _spi.write_spi_from_file( spi_fla, filename )
-        if ok: logger().log_result( "SPI Flash write done" )
-        else:  logger().warn( "SPI Flash write returned error (turn on VERBOSE)" )
-    elif ( 'read' == spi_op ):
-        spi_fla = int(argv[3],16)
-        length = int(argv[4],16)
-        logger().log( "[CHIPSEC] Reading 0x%x bytes from SPI Flash starting at FLA = 0x%X" % (length, spi_fla) )
-        out_file = None
-        if 6 == len(argv):
-            out_file = argv[5]
-        buf = _spi.read_spi_to_file( spi_fla, length, out_file )
-        if (buf is None): logger().error( "SPI Flash read didn't return any data (turn on VERBOSE)" )
-        else: logger().log_result( "SPI Flash read done" )
-    elif ( 'info' == spi_op ):
-        logger().log( "[CHIPSEC] SPI Flash Info\n" )
-        ok = _spi.display_SPI_map()
-    elif ( 'dump' == spi_op ):
-        out_file = 'rom.bin'
-        if 4 == len(argv):
-            out_file = argv[3]
-        logger().log( "[CHIPSEC] Dumping entire SPI Flash to '%s'" % out_file )
-        # @TODO: don't assume SPI Flash always ends with BIOS region
-        (base,limit,freg) = _spi.get_SPI_region( BIOS )
-        spi_size = limit + 1
-        logger().log( "[CHIPSEC] BIOS Region: Base = 0x%08X, Limit = 0x%08X" % (base,limit) )
-        logger().log( "[CHIPSEC] Dumping 0x%08X bytes (to the end of BIOS region)" % spi_size )
-        buf = _spi.read_spi_to_file( 0, spi_size, out_file )
-        if (buf is None): logger().error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
-        else: logger().log_result( "Done dumping SPI Flash" )
+            ok = _spi.erase_spi_block( spi_fla )
+            if ok: self.logger.log_result( "SPI Flash erase done" )
+            else:  self.logger.warn( "SPI Flash erase returned error (turn on VERBOSE)" )
+        elif ( 'write' == spi_op and 5 == len(self.argv) ):
+            spi_fla = int(self.argv[3],16)
+            filename = self.argv[4]
+            self.logger.log( "[CHIPSEC] Writing to SPI Flash at FLA = 0x%X from '%.64s'" % (spi_fla, filename) )
+            #if not _spi.disable_BIOS_write_protection():
+            #    self.logger.error( "Could not disable SPI Flash protection. Still trying.." )
 
-    elif ( 'disable-wp' == spi_op ):
-        logger().log( "[CHIPSEC] Trying to disable BIOS write protection.." )
-        #
-        # This write protection only matters for BIOS range in SPI flash memory
-        #
-        if _spi.disable_BIOS_write_protection():
-            logger().log_good( "BIOS region write protection is disabled in SPI flash" )
+            ok = _spi.write_spi_from_file( spi_fla, filename )
+            if ok: self.logger.log_result( "SPI Flash write done" )
+            else:  self.logger.warn( "SPI Flash write returned error (turn on VERBOSE)" )
+        elif ( 'read' == spi_op ):
+            spi_fla = int(self.argv[3],16)
+            length = int(self.argv[4],16)
+            self.logger.log( "[CHIPSEC] Reading 0x%x bytes from SPI Flash starting at FLA = 0x%X" % (length, spi_fla) )
+            out_file = None
+            if 6 == len(self.argv):
+                out_file = self.argv[5]
+            buf = _spi.read_spi_to_file( spi_fla, length, out_file )
+            if (buf is None): self.logger.error( "SPI Flash read didn't return any data (turn on VERBOSE)" )
+            else: self.logger.log_result( "SPI Flash read done" )
+        elif ( 'info' == spi_op ):
+            self.logger.log( "[CHIPSEC] SPI Flash Info\n" )
+            ok = _spi.display_SPI_map()
+        elif ( 'dump' == spi_op ):
+            out_file = 'rom.bin'
+            if 4 == len(self.argv):
+                out_file = self.argv[3]
+            self.logger.log( "[CHIPSEC] Dumping entire SPI Flash to '%s'" % out_file )
+            # @TODO: don't assume SPI Flash always ends with BIOS region
+            (base,limit,freg) = _spi.get_SPI_region( BIOS )
+            spi_size = limit + 1
+            self.logger.log( "[CHIPSEC] BIOS Region: Base = 0x%08X, Limit = 0x%08X" % (base,limit) )
+            self.logger.log( "[CHIPSEC] Dumping 0x%08X bytes (to the end of BIOS region)" % spi_size )
+            buf = _spi.read_spi_to_file( 0, spi_size, out_file )
+            if (buf is None): self.logger.error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
+            else: self.logger.log_result( "Done dumping SPI Flash" )
+
+        elif ( 'disable-wp' == spi_op ):
+            self.logger.log( "[CHIPSEC] Trying to disable BIOS write protection.." )
+            #
+            # This write protection only matters for BIOS range in SPI flash memory
+            #
+            if _spi.disable_BIOS_write_protection():
+                self.logger.log_good( "BIOS region write protection is disabled in SPI flash" )
+            else:
+                self.logger.log_bad( "Couldn't disable BIOS region write protection in SPI flash" )
         else:
-            logger().log_bad( "Couldn't disable BIOS region write protection in SPI flash" )
-    else:
-        print spi.__doc__
-        return
+            print SPICommand.__doc__
+            return
 
-    logger().log( "[CHIPSEC] (spi %s) time elapsed %.3f" % (spi_op, time.time()-t) )
+        self.logger.log( "[CHIPSEC] (spi %s) time elapsed %.3f" % (spi_op, time.time()-t) )
 
-
-
-chipsec_util.commands['spi'] = {'func' : spi, 'start_driver' : True, 'help' : spi.__doc__ }
+commands = { 'spi': SPICommand }

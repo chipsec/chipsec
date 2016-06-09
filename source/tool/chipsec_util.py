@@ -76,7 +76,6 @@ class ChipsecUtil:
                    "All numeric values are in hex\n" + \
                    "<width> is in {1, byte, 2, word, 4, dword}\n\n"
         self.commands = {}
-        self.commands['help'] = {'func' : self.chipsec_util_help, 'start_driver' : False,  'help' : 'chipsec_util help <command>'}
         # determine if CHIPSEC is loaded as chipsec_*.exe or in python
         self.CHIPSEC_LOADED_AS_EXE = True if (hasattr(sys, "frozen") or hasattr(sys, "importers")) else False
 
@@ -87,14 +86,14 @@ class ChipsecUtil:
         """
         if len(argv) <= 2:
             logger().log(  '\n[CHIPSEC] chipsec_util command-line extensions should be one of the following:' )
-            for cmd in self.commands.keys():
+            for cmd in sorted(self.commands.keys() + ['help']):
                 logger().log( '    %s' % cmd )
                 #logger().log( chipsec_util_commands[cmd]['help'] )
 
         else:
             print self.global_usage
             print "\nHelp for %s command:\n" % argv[2]
-            print self.commands[argv[2]]['help']
+            print self.commands[argv[2]].__doc__
 
     def f_mod_zip(self, x):
         ZIP_UTILCMD_RE = re.compile("^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
@@ -140,8 +139,8 @@ class ChipsecUtil:
                 #exec 'from chipsec.utilcmd.' + cmd + ' import *'
                 cmd_path = 'chipsec.utilcmd.' + cmd
                 module = importlib.import_module( cmd_path )
-                cu = getattr(module, 'chipsec_util')
-                self.commands.update(cu.commands)
+                cu = getattr(module, 'commands')
+                self.commands.update(cu)
             except ImportError, msg:
                 logger().error( "Couldn't import util command extension '%s'" % cmd )
                 raise ImportError, msg
@@ -149,7 +148,8 @@ class ChipsecUtil:
         if 1 < len(argv):
             cmd = argv[ 1 ]
             if self.commands.has_key( cmd ):
-                if self.commands[ cmd ]['start_driver']:
+                comm = self.commands[cmd](argv, cs = _cs)
+                if comm.requires_driver():
                     try:
                         _cs.init( _Platform, True )
                     except UnknownChipsetError, msg:
@@ -163,15 +163,17 @@ class ChipsecUtil:
                         sys.exit(-1)
 
                 logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,argv[2:]) )
-                self.commands[ cmd ]['func']( argv )
+                comm.run()
+                if comm.requires_driver():
+                    _cs.destroy(True)
 
-                if self.commands[ cmd ]['start_driver']: _cs.destroy( True )
+            elif cmd == 'help':
+                self.chipsec_util_help(argv)
             else:
                 logger().error( "Unknown command '%.32s'" % cmd )
         else:
             logger().error( "Not enough parameters" )
             self.chipsec_util_help([])
-            del _cs
             exit_code = 32
         return exit_code
 
