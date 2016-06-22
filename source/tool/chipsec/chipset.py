@@ -248,10 +248,10 @@ class Chipset:
         #   spi = SPI( chipsec_util._cs )
         #
 
-    def init( self, platform_code, start_svc ):
+    def init( self, platform_code, start_driver ):
 
         _unknown_platform = False
-        if start_svc: self.helper.start()
+        self.helper.start(start_driver)
 
         if platform_code is None:
             vid_did  = self.pci.read_dword( 0, 0, 0, 0 )
@@ -278,7 +278,7 @@ class Chipset:
             self.longname   = 'UnknownPlatform'
 
         self.init_cfg()
-        if _unknown_platform:
+        if _unknown_platform and start_driver:
             msg = 'Unsupported Platform: VID = 0x%04X, DID = 0x%04X' % (self.vid,self.did)
             logger().error( msg )
             raise UnknownChipsetError, msg

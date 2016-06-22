@@ -149,18 +149,18 @@ class ChipsecUtil:
             cmd = argv[ 1 ]
             if self.commands.has_key( cmd ):
                 comm = self.commands[cmd](argv, cs = _cs)
-                if comm.requires_driver():
-                    try:
-                        _cs.init( _Platform, True )
-                    except UnknownChipsetError, msg:
-                        logger().warn("*******************************************************************")
-                        logger().warn("* Unknown platform!")
-                        logger().warn("* Platform dependent functionality will likely be incorrect")
-                        logger().warn("* Error Message: \"%s\"" % str(msg))
-                        logger().warn("*******************************************************************")
-                    except (None,Exception) , msg:
-                        logger().error(str(msg))
-                        sys.exit(-1)
+
+                try:
+                    _cs.init( _Platform, comm.requires_driver())
+                except UnknownChipsetError, msg:
+                    logger().warn("*******************************************************************")
+                    logger().warn("* Unknown platform!")
+                    logger().warn("* Platform dependent functionality will likely be incorrect")
+                    logger().warn("* Error Message: \"%s\"" % str(msg))
+                    logger().warn("*******************************************************************")
+                except (None,Exception) , msg:
+                    logger().error(str(msg))
+                    sys.exit(-1)
 
                 logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,argv[2:]) )
                 comm.run()
