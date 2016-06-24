@@ -10,6 +10,9 @@ How to
 2. Turn the System Integrity Protection off: see https://developer.apple.com/library/mac/documentation/Security/Conceptual/System_Integrity_Protection_Guide/ConfiguringSystemIntegrityProtection/ConfiguringSystemIntegrityProtection.html
 3. Reboot and load the driver
    # kextutil chipsec.kext
-4. Within the source/tool directory, run: 
-   # python chipsec_utils.py spi info
-
+4. Within the source/tool directory, run:
+   # python chipsec_util.py spi info
+   # python chipsec_util.py spi dump rom.bin
+5. Unload the driver
+   # kextunload -b com.google.chipsec
+6. Don't forget to re enable the System Integrity Protection (see step 2)
