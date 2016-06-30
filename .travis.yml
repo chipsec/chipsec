@@ -7,4 +7,4 @@ python:
   - "3.4"
   - "3.5"
 # command to run tests
-script: python source/tool/tests/software/test_util.py
+script: python source/tool/test_util.py
