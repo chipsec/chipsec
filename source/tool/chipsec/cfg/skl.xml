@@ -9,7 +9,7 @@
   <!--                                      -->
   <!-- #################################### -->
   <register name="PCI0.0.0_PAVPC"      type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Configuration">
-    <field name="LOCK"       bit="2" size="1" desc="Lock"/>
+    <field name="PAVPLCK"       bit="2" size="1" desc="Lock"/>
   </register>
     
   <!-- #################################### -->
@@ -41,7 +41,7 @@
   <io>
     <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
     <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
-    <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address" offset="0x60"/>
+    <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
 
     <!-- old definition -->
     <bar name="SMBUS_BASE" bus="0" dev="0x1F" fun="4" reg="0x20" mask="0xFFE0"     size="0x80"  desc="SMBus Base Address"/>
@@ -69,7 +69,7 @@
     <!-- Power Management Controller -->
     <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x40" size="4" desc="ACPI Base Address">
       <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
-      <field name="BA"  bit="8" size="24" desc="Base Address"/>
+      <field name="BA"    bit="8" size="8" desc="Base Address"/>
     </register>
     <register name="ACTL" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x44" size="4" desc="ACPI Control">
       <field name="SCIS"    bit="0" size="2" desc="SCI IRQ Select"/>
@@ -104,19 +104,13 @@
     <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="4" desc="BIOS Control">
       <field name="BIOSWE"   bit="0" size="1" desc="BIOS Write Enable" />
       <field name="BLE"      bit="1" size="1" desc="BIOS Lock Enable" />
-      <field name="SRC"      bit="2" size="2"/>
+      <field name="SRC"      bit="2" size="2" desc="SPI Read Configuration" />
       <field name="TSS"      bit="4" size="1" desc="Top Swap Status" />
       <field name="SMM_BWP"  bit="5" size="1" desc="SMM BIOS Write Protection" />
-      <field name="BBS"      bit="6" size="1"/>
+      <field name="BBS"      bit="6" size="1" desc="Boot BIOS Strap" />
       <field name="BILD"     bit="7" size="1" desc="BIOS Interface Lock Down"/>
     </register>
 
-    <!-- This is actually BIOS Control BIOS_SPI_BC -->
-    <register name="GCS" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="4" desc="General Control and Status - Actually BIOS Control">
-      <field name="BILD"    bit="7"  size="1" desc="BIOS Interface Lock Down" />
-      <field name="BBS"     bit="6" size="1"/>
-    </register>
-       
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -185,6 +179,15 @@
       <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
     </register>
 
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+    <control name="BiosInterfaceLockDown"  register="BC"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+  </controls>
     
   </registers>
 

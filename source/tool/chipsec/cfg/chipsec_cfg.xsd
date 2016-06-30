@@ -114,6 +114,7 @@
     <xs:enumeration value="iobar" />
     <xs:enumeration value="pcicfg" />
     <xs:enumeration value="mmcfg" />
+    <xs:enumeration value="msgbus" />
   </xs:restriction>
 </xs:simpleType>
 
@@ -143,6 +144,7 @@
   <xs:attribute name="bar" type="xs:string" use="optional"/>
   <xs:attribute name="msr" type="xs:string" use="optional"/>
   <xs:attribute name="offset" type="xs:string" use="optional"/>
+  <xs:attribute name="port" type="xs:string" use="optional"/>
 </xs:attributeGroup>
 
 <xs:complexType name="reg_type">

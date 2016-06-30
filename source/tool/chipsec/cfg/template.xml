@@ -50,7 +50,7 @@
   <!--                                      -->
   <!-- #################################### -->
   <registers>
-    <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg" desc="[REGISTER DESCRIPTION]" />
+    <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg|msgbus" desc="[REGISTER DESCRIPTION]" />
   </registers>
 
   <!-- #################################### -->

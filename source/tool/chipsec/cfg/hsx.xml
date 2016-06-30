@@ -3,9 +3,13 @@
 <!-- XML configuration file for Haswell Server
 -->
   <pci>
+    <device name="IMC0_MAIN_SMBUS" bus="1" dev="19" fun="0" vid="0x8086" />
+    <device name="IMC1_MAIN_SMBUS" bus="1" dev="22" fun="0" vid="0x8086" />
   </pci>
 
   <mmio>
+    <bar name="MMCFG"  bus="0" dev="5"    fun="0" reg="0x90" width="8" mask="0x7FFFFFC000000" size="0x1000" desc="PCI Express Register Range"/>
+    <bar name="DMIBAR" bus="0" dev="0"    fun="0" reg="0x50" width="4" mask="0xFFFFF000"      size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
   </mmio>
 
   <io>
@@ -58,13 +62,103 @@
     <register name="GENPROTRANGE2_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0xC8" size="8" desc="Generic Protected Memory Range 2 Limit Address">
       <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 2 limit address"/>
     </register>       
-    <register name="GENPROTRANGE0_BASE" type="pcicfg" bus="0" dev="5" fun="0" offset="0x120" size="8" desc="Generic Protected Memory Range 0 Base Address">
+    <register name="GENPROTRANGE0_BASE" type="mmcfg" bus="0" dev="5" fun="0" offset="0x120" size="8" desc="Generic Protected Memory Range 0 Base Address">
       <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 0 base address"/>
     </register>      
-    <register name="GENPROTRANGE0_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0x128" size="8" desc="Generic Protected Memory Range 0 Limit Address">
+    <register name="GENPROTRANGE0_LIMIT" type="mmcfg" bus="0" dev="5" fun="0" offset="0x128" size="8" desc="Generic Protected Memory Range 0 Limit Address">
       <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 0 limit address"/>
     </register>
     
+    <!-- Integrated Memory Controller 0 -->
+    <register name="IMC0_SMBSTAT_0" type="mmcfg" bus="1" dev="19" fun="0" offset="0x180" size="4" desc="SMBus Host Status">
+      <field name="RDATA"        bit="0"  size="16" desc="Read Data" />
+      <field name="TSOD_SA"      bit="24" size="4" desc="Last Issued TSOD Slave Address" />
+      <field name="BUSY"         bit="28" size="1" desc="SMBus Busy" />
+      <field name="SBE"          bit="29" size="1" desc="SMBus Error/Failed" />
+      <field name="WOD"          bit="30" size="1" desc="Write Operation Done" />
+      <field name="RDO"          bit="31" size="1" desc="Read Data Valid" />
+    </register>
+    <register name="IMC0_SMBCMD_0" type="mmcfg" bus="1" dev="19" fun="0" offset="0x184" size="4" desc="SMBus Host Command">
+      <field name="WDATA"        bit="0"  size="16" desc="Write Data" />
+      <field name="BA"           bit="16" size="8"  desc="Bus Transaction Address" />
+      <field name="SA"           bit="24" size="3"  desc="Slave Address" />
+      <field name="WRT_CMD"      bit="27" size="1"  desc="Read/Write Command" />
+      <field name="WRT_PNTR"     bit="28" size="1"  desc="Write Pointer" />
+      <field name="WORD_ACCESS"  bit="29" size="1"  desc="Word Access" />
+      <field name="PNTR_SEL"     bit="30" size="1"  desc="Pointer Select" />
+      <field name="CMD_TRIGGER"  bit="31" size="1"  desc="Start/Trigger" />
+    </register>
+    <register name="IMC0_SMBCNTL_0" type="mmcfg" bus="1" dev="19" fun="0" offset="0x188" size="4" desc="SMBus Host Control">
+      <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
+    </register>
+    <register name="IMC0_SMBSTAT_1" type="mmcfg" bus="1" dev="19" fun="0" offset="0x190" size="4" desc="SMBus Host Status 1">
+      <field name="RDATA"        bit="0"  size="16" desc="Read Data" />
+      <field name="TSOD_SA"      bit="24" size="4" desc="Last Issued TSOD Slave Address" />
+      <field name="BUSY"         bit="28" size="1" desc="SMBus Busy" />
+      <field name="SBE"          bit="29" size="1" desc="SMBus Error/Failed" />
+      <field name="WOD"          bit="30" size="1" desc="Write Operation Done" />
+      <field name="RDO"          bit="31" size="1" desc="Read Data Valid" />
+    </register>
+    <register name="IMC0_SMBCMD_1" type="mmcfg" bus="1" dev="19" fun="0" offset="0x194" size="4" desc="SMBus Host Command 1">
+      <field name="WDATA"        bit="0"  size="16" desc="Write Data" />
+      <field name="BA"           bit="16" size="8"  desc="Bus Transaction Address" />
+      <field name="SA"           bit="24" size="3"  desc="Slave Address" />
+      <field name="WRT_CMD"      bit="27" size="1"  desc="Read/Write Command" />
+      <field name="WRT_PNTR"     bit="28" size="1"  desc="Write Pointer" />
+      <field name="WORD_ACCESS"  bit="29" size="1"  desc="Word Access" />
+      <field name="PNTR_SEL"     bit="30" size="1"  desc="Pointer Select" />
+      <field name="CMD_TRIGGER"  bit="31" size="1"  desc="Start/Trigger" />
+    </register>
+    <register name="IMC0_SMBCNTL_1" type="mmcfg" bus="1" dev="19" fun="0" offset="0x198" size="4" desc="SMBus Host Control 1">
+      <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
+    </register>
+
+    <!-- Integrated Memory Controller 1 -->
+    <register name="IMC1_SMBSTAT_0" type="mmcfg" bus="1" dev="22" fun="0" offset="0x180" size="4" desc="SMBus Host Status">
+      <field name="RDATA"        bit="0"  size="16" desc="Read Data" />
+      <field name="TSOD_SA"      bit="24" size="4" desc="Last Issued TSOD Slave Address" />
+      <field name="BUSY"         bit="28" size="1" desc="SMBus Busy" />
+      <field name="SBE"          bit="29" size="1" desc="SMBus Error/Failed" />
+      <field name="WOD"          bit="30" size="1" desc="Write Operation Done" />
+      <field name="RDO"          bit="31" size="1" desc="Read Data Valid" />
+    </register>
+    <register name="IMC1_SMBCMD_0" type="mmcfg" bus="1" dev="22" fun="0" offset="0x184" size="4" desc="SMBus Host Command">
+      <field name="WDATA"        bit="0"  size="16" desc="Write Data" />
+      <field name="BA"           bit="16" size="8"  desc="Bus Transaction Address" />
+      <field name="SA"           bit="24" size="3"  desc="Slave Address" />
+      <field name="WRT_CMD"      bit="27" size="1"  desc="Read/Write Command" />
+      <field name="WRT_PNTR"     bit="28" size="1"  desc="Write Pointer" />
+      <field name="WORD_ACCESS"  bit="29" size="1"  desc="Word Access" />
+      <field name="PNTR_SEL"     bit="30" size="1"  desc="Pointer Select" />
+      <field name="CMD_TRIGGER"  bit="31" size="1"  desc="Start/Trigger" />
+    </register>
+    <register name="IMC1_SMBCNTL_0" type="mmcfg" bus="1" dev="22" fun="0" offset="0x188" size="4" desc="SMBus Host Control">
+      <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
+    </register>
+    <register name="IMC1_SMBSTAT_1" type="mmcfg" bus="1" dev="22" fun="0" offset="0x190" size="4" desc="SMBus Host Status 1">
+      <field name="RDATA"        bit="0"  size="16" desc="Read Data" />
+      <field name="TSOD_SA"      bit="24" size="4" desc="Last Issued TSOD Slave Address" />
+      <field name="BUSY"         bit="28" size="1" desc="SMBus Busy" />
+      <field name="SBE"          bit="29" size="1" desc="SMBus Error/Failed" />
+      <field name="WOD"          bit="30" size="1" desc="Write Operation Done" />
+      <field name="RDO"          bit="31" size="1" desc="Read Data Valid" />
+    </register>
+    <register name="IMC1_SMBCMD_1" type="mmcfg" bus="1" dev="22" fun="0" offset="0x194" size="4" desc="SMBus Host Command 1">
+      <field name="WDATA"        bit="0"  size="16" desc="Write Data" />
+      <field name="BA"           bit="16" size="8"  desc="Bus Transaction Address" />
+      <field name="SA"           bit="24" size="3"  desc="Slave Address" />
+      <field name="WRT_CMD"      bit="27" size="1"  desc="Read/Write Command" />
+      <field name="WRT_PNTR"     bit="28" size="1"  desc="Write Pointer" />
+      <field name="WORD_ACCESS"  bit="29" size="1"  desc="Word Access" />
+      <field name="PNTR_SEL"     bit="30" size="1"  desc="Pointer Select" />
+      <field name="CMD_TRIGGER"  bit="31" size="1"  desc="Start/Trigger" />
+    </register>
+    <register name="IMC1_SMBCNTL_1" type="mmcfg" bus="1" dev="22" fun="0" offset="0x198" size="4" desc="SMBus Host Control 1">
+      <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
+    </register>
+
+
+
     <!-- LPC Interface Bridge -->
     <register name="GEN_PMCON_LOCK" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0xA6" size="1" desc="General Power Management Configuration Lock">
       <field name="ACPI_BASE_LOCK"   bit="1" size="1" desc="Lock down ACPI Base Address (ABASE)"/>

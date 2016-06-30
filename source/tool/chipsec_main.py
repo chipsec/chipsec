@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@
 Main application logic and automation functions
 """
 
-__version__ = '1.2.2'
+__version__ = '1.2.3'
 
 ## These are for debugging imports
 import inspect
@@ -203,15 +203,9 @@ class ChipsecMain:
         else:
             try:
                 module = importlib.import_module( module_path )
-                # Support for older Python < 2.5
-                #if _importlib:
-                #    module = importlib.import_module( module_path )
-                #else:
-                #    #module = __import__(module_path)
-                #    exec 'import ' + module_path
             except BaseException, msg:
                 logger().error( "Exception occurred during import of %s: '%s'" % (module_path, str(msg)) )
-                if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+                if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
         return module
 
@@ -238,15 +232,10 @@ class ChipsecMain:
             module_tags=[]
             try:
                 module_tags = getattr( module, 'TAGS' )
-                # Support for older Python < 2.5
-                #if _importlib:
-                #    module_tags = getattr( module, 'TAGS' )
-                #else:
-                #    exec ('module_tags = ' +module_path + '.TAGS')
             except:
-                #logger().log(module_path)
-                #logger().log_bad(traceback.format_exc())
-                pass
+                if logger().DEBUG:
+                    logger().log(module_path)
+                    logger().log_bad(traceback.format_exc())
             for mt in module_tags:
                 if self._list_tags:
                     if mt not in self.AVAILABLE_TAGS: self.AVAILABLE_TAGS.append(mt)
@@ -264,14 +253,9 @@ class ChipsecMain:
             try:
                 result = False
                 result = getattr( module, 'run' )( module_argv )
-                # Support for older Python < 2.5
-                #if _importlib:
-                #    result = getattr( module, 'run' )( module_argv )
-                #else:
-                #    exec ('result = ' + module_path + '.run(module_argv)')
                 return result
             except (None,Exception) , msg:
-                if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+                if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (module_path, str(msg)) )
                 raise
         else:
@@ -292,7 +276,7 @@ class ChipsecMain:
             else:
                 return ModuleResult.SKIPPED
         except BaseException , msg:
-            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+            if logger().DEBUG: logger().log_bad(traceback.format_exc())
             logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (modx.get_name(), str(msg)) )
             raise msg
         return result
@@ -423,8 +407,7 @@ class ChipsecMain:
                 exceptions.append( modx )
                 exit_code.exception()
                 result = ModuleResult.ERROR
-                # @TODO: check if we need stack trace here
-                #if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+                if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise
             # Module uses the old API  display warning and try to run anyways
             if result == ModuleResult.DEPRECATED:
@@ -436,7 +419,7 @@ class ChipsecMain:
                     exceptions.append( modx )
                     exit_code.exception()
                     result = ModuleResult.ERROR
-                    if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+                    if logger().DEBUG: logger().log_bad(traceback.format_exc())
                     if self.failfast: raise
 
             if not self._list_tags: logger().end_module( modx.get_name() )
@@ -520,6 +503,7 @@ class ChipsecMain:
         print "-m --module             specify module to run (example: -m common.bios_wp)"
         print "-a --module_args        additional module arguments, format is 'arg0,arg1..'"
         print "-v --verbose            verbose mode"
+        print "-d --debug              show debug output"
         print "-l --log                output to log file"
         print "====================== =============================================================="
         print "\nAdvanced Options\n----------------"
@@ -551,9 +535,9 @@ class ChipsecMain:
     def parse_args(self):
         import getopt
         try:
-            opts, args = getopt.getopt(self.argv, "ip:m:ho:vea:nl:t:x:I:",
+            opts, args = getopt.getopt(self.argv, "ip:m:ho:vdea:nl:t:x:I:",
             ["ignore_platform", "platform=", "module=", "help", "output=",
-              "verbose", "exists", "module_args=", "no_driver", "log=",
+              "verbose", "debug", "exists", "module_args=", "no_driver", "log=",
               "moduletype=", "xml=","list_tags", "include", "failfast","no_time"])
         except getopt.GetoptError, err:
             print str(err)
@@ -564,7 +548,9 @@ class ChipsecMain:
             if o in ("-v", "--verbose"):
                 logger().VERBOSE = True
                 logger().HAL     = True
-                #logger().log( "[*] Verbose mode is ON" )
+                logger().DEBUG   = True
+            elif o in ("-d", "--debug"):
+                logger().DEBUG   = True
             elif o in ("-h", "--help"):
                 self.usage()
                 sys.exit(0)
@@ -627,13 +613,13 @@ class ChipsecMain:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
-                if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+                if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
                 return  ExitCode.EXCEPTION
             logger().warn("Platform dependent functionality is likely to be incorrect")
         except OsHelperError as os_helper_error:
             logger().error(str(os_helper_error))
-            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+            if logger().DEBUG: logger().log_bad(traceback.format_exc())
             if self.failfast: raise os_helper_error
             return ExitCode.EXCEPTION
         except BaseException, be:
@@ -645,6 +631,8 @@ class ChipsecMain:
         _ver = self.get_chipsec_version()
         logger().log( "[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().log( "[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        #logger().log( "[CHIPSEC] CPU affinity: 0x%X" % self._cs.helper.get_affinity() )
+
         #logger().log( "[*] CHIPSEC : %s"% _ver )
         logger().xmlAux.add_test_suite_property( "OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().xmlAux.add_test_suite_property( "Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did) )

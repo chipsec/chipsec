@@ -78,10 +78,7 @@
     <bar name="PMBASE"     register="ABASE"    base_field="Base" size="0x80" desc="ACPI Base Address"/>
     <bar name="TCOBASE"    register="ABASE"    base_field="Base" size="0x80" desc="TCO Base Address" offset="0x60"/>
     <bar name="GPIOBASE"   register="GPIOBASE" base_field="Base" size="0x80" desc="GPIO Base Address"/>
-
-    <!-- old definition -->
-    <bar name="SMBUS_BASE" bus="0" dev="0x1F" fun="3" reg="0x20" mask="0xFFE0" size="0x20" desc="SMBus Base Address"/>
-
+    <bar name="SMBUS_BASE" register="SMB_BASE" base_field="Base" size="0x20" desc="SMBus Base Address"/>
   </io>
 
   <!-- #################################### -->
@@ -113,8 +110,12 @@
       <field name="GGCLOCK"    bit="0" size="1" desc="GGC Lock"/>
     </register>
     <register name="PCI0.0.0_DEVEN"      type="pcicfg" bus="0" dev="0" fun="0" offset="0x54" size="4" desc="Device Enables"/>
-    <register name="PCI0.0.0_PAVPC"      type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Configuration"/>
-    <register name="PCI0.0.0_DPR"        type="pcicfg" bus="0" dev="0" fun="0" offset="0x5C" size="4" desc="DMA Protected Range"/>
+    <register name="PCI0.0.0_PAVPC"      type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Configuration">
+      <field name="PAVPLCK"    bit="2" size="1" desc="Lock"/>
+    </register>
+    <register name="PCI0.0.0_DPR"        type="pcicfg" bus="0" dev="0" fun="0" offset="0x5C" size="4" desc="DMA Protected Range">
+      <field name="LOCK"       bit="0" size="1" desc="Lock"/>
+    </register>
     <register name="PCI0.0.0_PCIEXBAR"   type="pcicfg" bus="0" dev="0" fun="0" offset="0x60" size="8" desc="PCIe MMCFG Base Address"/>
     <register name="PCI0.0.0_DMIBAR"     type="pcicfg" bus="0" dev="0" fun="0" offset="0x68" size="8" desc="DMI Base Address"/>
     <register name="PCI0.0.0_MESEG_BASE" type="pcicfg" bus="0" dev="0" fun="0" offset="0x70" size="8" desc="Manageability Engine Base Address Register"/>
@@ -177,8 +178,8 @@
       <field  name="Base"  bit="7" size="9"   desc="Base Address"/>
     </register>
     <register name="GC" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x4C" size="1" desc="GPIO Control">
-      <field name="GLE" bit="0" size="1"/>
-      <field name="EN"  bit="4" size="1"/>
+      <field name="GLE" bit="0" size="1" desc="GPIO Lockdown Enable" />
+      <field name="EN"  bit="4" size="1" desc="GPIO Enable" />
     </register>
     <register name="GEN_PMCON_1" type="pcicfg" bus="0" dev="0x1f" fun="0" offset="0xA0" size="2" desc="General PM Configuration 1">
       <field name="SMI_LOCK"    bit="4"     size="1"/>
@@ -195,6 +196,9 @@
     <register name="SMBUS_VID"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x00" size="2" desc="VID" />
     <register name="SMBUS_DID"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x02" size="2" desc="DID" />
     <register name="SMBUS_CMD"  type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x04" size="2" desc="CMD" />
+    <register name="SMB_BASE"   type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x20" size="4" desc="SMBus Base Address">
+      <field  name="Base"      bit="5" size="11"   desc="Base Address"/>
+    </register>
     <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="3" offset="0x40" size="1" desc="Host Configuration">
       <field name="HST_EN"     bit="0" size="1"/>
       <field name="SMB_SMI_EN" bit="1" size="1"/>
@@ -368,6 +372,11 @@
     </register>
 
     <!-- PCH Root Complex Register Base -->
+    <register name="RC" type="mmio" bar="RCBA" offset="0x3400" size="4" desc="RTC Configuration">
+      <field name="UE"  bit="2" size="1" desc="Upper 128 Byte Enable"/>
+      <field name="LL"  bit="3" size="1" desc="Lower 128 Byte Lock"/>
+      <field name="UL"  bit="4" size="1" desc="Upper 128 Byte Lock"/>
+    </register>   
     <register name="GCS" type="mmio" bar="RCBA" offset="0x3410" size="4" desc="General Control and Status">
       <field name="BILD" bit="0"  size="1" desc="BIOS Interface Lock Down"/>
       <field name="BBS"  bit="10" size="2" desc="Boot BIOS Straps"/>
@@ -395,27 +404,94 @@
 
     <!-- Port I/O Registers -->
 
+    <register name="RST_CNT" type="io" port="0xCF9" size="1" desc="Reset Control">
+      <field name="SYS_RST"            bit="1"  size="1"  desc="System Reset"/>
+      <field name="RST_CPU"            bit="2"  size="1"  desc="Reset Processor"/>
+      <field name="FULL_RST"           bit="3"  size="1"  desc="Full Reset"/>
+    </register>
+
     <!-- PCH ABASE (PMBASE) -->
+    <register name="PM1_STS" type="iobar" bar="ABASE" offset="0x0" size="2" desc="PM1 Status">
+      <field name="WAK_STS"            bit="15"  size="1"  desc="Wake Status"/>
+      <field name="PCIEXPWAK_STS"      bit="14"  size="1"  desc="PCI Express Wake Status"/>
+      <field name="PWRBTNOR_STS"       bit="11"  size="1"  desc="Power Button Override Status"/>
+      <field name="RTC_STS"            bit="10"  size="1"  desc="RTC Status"/>
+      <field name="PWRBTN_STS"         bit="8"   size="1"  desc="Power Button Status"/>
+      <field name="GBL_STS"            bit="5"   size="1"  desc="Global Status"/>
+      <field name="BM_STS"             bit="4"   size="1"  desc="Bus Master Status"/>
+      <field name="TMROF_STS"          bit="0"   size="1"  desc="Timer Overflow Status"/>
+    </register>
+    <register name="PM1_EN" type="iobar" bar="ABASE" offset="0x2" size="2" desc="PM1 Enable">
+      <field name="PCIEXPWAK_DIS"      bit="14"  size="1"  desc="PCI Express Wake Disable"/>
+      <field name="RTC_EN"             bit="10"  size="1"  desc="RTC Event Enable"/>
+      <field name="PWRBTN_EN"          bit="8"   size="1"  desc="Power Button Enable"/>
+      <field name="GBL_EN"             bit="5"   size="1"  desc="Global Enable"/>
+      <field name="TMROF_EN"           bit="0"   size="1"  desc="Timer Overflow Interrupt Enable"/>
+    </register>
+    <register name="PM1_CNT" type="iobar" bar="ABASE" offset="0x4" size="4" desc="PM1 Control">
+      <field name="SLP_EN"             bit="13"  size="1"  desc="Sleep Enable"/>
+      <field name="SLP_TYP"            bit="10"  size="3"  desc="Sleep Type"/>
+      <field name="GBL_RLS"            bit="2"   size="1"  desc="Global Release"/>
+      <field name="BM_RLD"             bit="1"   size="1"  desc="Bus Master Reload"/>
+      <field name="SCI_EN"             bit="0"   size="1"  desc="SCI Enable"/>
+    </register>
+    <register name="PM1_TMR" type="iobar" bar="ABASE" offset="0x8" size="4" desc="PM1 Timer">
+      <field name="TMR_VAL"            bit="0"   size="24" desc="Timer Value"/>
+    </register>
     <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
-      <field name="GBL_SMI_EN"         bit="0"  size="1"/>
-      <field name="EOS"                bit="1"  size="1"/>
-      <field name="BIOS_EN"            bit="2"  size="1"/>
-      <field name="LEGACY_USB_EN"      bit="3"  size="1"/>
-      <field name="SLP_SMI_EN"         bit="4"  size="1"/>
-      <field name="APMC_EN"            bit="5"  size="1"/>
-      <field name="SWSMI_TMR_EN"       bit="6"  size="1"/>
-      <field name="BIOS_RLS"           bit="7"  size="1"/>
-      <field name="MCSMI_EN"           bit="11" size="1"/>
-      <field name="TCO_EN"             bit="13" size="1"/>
-      <field name="PERIODIC_EN"        bit="14" size="1"/>
-      <field name="LEGACY_USB2_EN"     bit="17" size="1"/>
-      <field name="INTEL_USB2_EN"      bit="18" size="1"/>
-      <field name="GPIO_UNLOCK_SMI_EN" bit="27" size="1"/>
-      <field name="ME_SMI_EN"          bit="30" size="1"/>
-      <field name="xHCI_SMI_EN"        bit="31" size="1"/>
+      <field name="GBL_SMI_EN"         bit="0"   size="1"/>
+      <field name="EOS"                bit="1"   size="1"/>
+      <field name="BIOS_EN"            bit="2"   size="1"/>
+      <field name="LEGACY_USB_EN"      bit="3"   size="1"/>
+      <field name="SLP_SMI_EN"         bit="4"   size="1"/>
+      <field name="APMC_EN"            bit="5"   size="1"/>
+      <field name="SWSMI_TMR_EN"       bit="6"   size="1"/>
+      <field name="BIOS_RLS"           bit="7"   size="1"/>
+      <field name="MCSMI_EN"           bit="11"  size="1"/>
+      <field name="TCO_EN"             bit="13"  size="1"/>
+      <field name="PERIODIC_EN"        bit="14"  size="1"/>
+      <field name="LEGACY_USB2_EN"     bit="17"  size="1"/>
+      <field name="INTEL_USB2_EN"      bit="18"  size="1"/>
+      <field name="GPIO_UNLOCK_SMI_EN" bit="27"  size="1"/>
+      <field name="ME_SMI_EN"          bit="30"  size="1"/>
+      <field name="xHCI_SMI_EN"        bit="31"  size="1"/>
     </register>
     <register name="TCO1_CNT" type="iobar" bar="ABASE" offset="0x68" size="2" desc="TCO1 Control">
-      <field name="TCO_LOCK"    bit="12"    size="1"/>
+      <field name="TCO_LOCK"           bit="12"  size="1"/>
+    </register>
+
+
+    <!-- SMBUS BASE -->
+    <register name="SMBUS_HST_STS" type="iobar" bar="SMBUS_BASE" offset="0x00" size="1" desc="SMBus Host Status">
+      <field name="BUSY"         bit="0" size="1" desc="SMBus Busy" />
+      <field name="INTR"         bit="1" size="1" desc="Interrupt" />
+      <field name="DEV_ERR"      bit="2" size="1" desc="Device Error" />
+      <field name="BUS_ERR"      bit="3" size="1" desc="Bus Error" />
+      <field name="FAILED"       bit="4" size="1" desc="SMBus Error/Failed" />
+      <field name="SMBALERT_STS" bit="5" size="1" desc="SMBALERT# Signal Status" />
+      <field name="INUSE_STS"    bit="6" size="1" desc="InUse Semaphore Status" />
+      <field name="DS"           bit="7" size="1" desc="Done Status" />
+    </register>
+    <register name="SMBUS_HST_CNT" type="iobar" bar="SMBUS_BASE" offset="0x02" size="1" desc="SMBus Host Control">
+      <field name="INTREN"       bit="0" size="1" desc="Interrupt Enable" />
+      <field name="KILL"         bit="1" size="1" desc="Kill" />
+      <field name="SMB_CMD"      bit="2" size="3" desc="Command" />
+      <field name="LAST_BYTE"    bit="5" size="1" desc="Last Byte (for Block Read commands)" />
+      <field name="START"        bit="6" size="1" desc="Start/Trigger" />
+      <field name="PEC_EN"       bit="7" size="1" desc="Packet Error Checking Enable" />
+    </register>
+    <register name="SMBUS_HST_CMD" type="iobar" bar="SMBUS_BASE" offset="0x03" size="1" desc="SMBus Host Command">
+      <field name="DataOffset"   bit="0" size="8" desc="Command Data" />
+    </register>
+    <register name="SMBUS_HST_SLVA" type="iobar" bar="SMBUS_BASE" offset="0x04" size="1" desc="SMBus Host Slave Address">
+      <field name="RW"           bit="0" size="1" desc="Read/Write Command" />
+      <field name="Address"      bit="1" size="7" desc="Slave Address" />
+    </register>
+    <register name="SMBUS_HST_D0" type="iobar" bar="SMBUS_BASE" offset="0x05" size="1" desc="SMBus Host Data 0">
+      <field name="Data"         bit="0" size="8" desc="Data0/Count" />
+    </register>
+    <register name="SMBUS_HST_D1" type="iobar" bar="SMBUS_BASE" offset="0x06" size="1" desc="SMBus Host Data 1">
+      <field name="Data"         bit="0" size="8" desc="Data1" />
     </register>
 
     <!-- CPU Model Specific Registers (MSR) -->
@@ -434,7 +510,16 @@
     <register name="MTRRCAP"              type="msr" msr="0xFE"  desc="MTRR Capabilities MSR">
       <field name="SMRR" bit="11" size="1" desc="SMRR Supported" />
     </register>
-    <register name="IA32_FEATURE_CONTROL" type="msr" msr="0x3A"  desc="Feature Control MSR"/>
+    <register name="IA32_FEATURE_CONTROL" type="msr" msr="0x3A"  desc="Processor Feature Control">
+      <field name="LOCK"                 bit="0"  size="1"  desc="Lock" />
+      <field name="EN_VMX_INSIDE_SMX"    bit="1"  size="1"  desc="Enable VMX inside SMX operation" />
+      <field name="EN_VMX_OUTSIDE_SMX"   bit="2"  size="1"  desc="Enable VMX outside SMX operation" />
+      <field name="Reserved0"            bit="3"  size="5"  desc="Reserved" />
+      <field name="SENTER_LOCAL_EN"      bit="8"  size="7"  desc="SENTER Local Functions Enable" />
+      <field name="SENTER_GLOBAL_EN"     bit="15" size="1"  desc="SENTER Global Enable" />
+      <field name="Reserved1"            bit="16" size="4"  desc="Reserved" />
+      <field name="LMCE_ON"              bit="20" size="1"  desc="Turn Local Machine Check On" />
+    </register>
     <register name="IA32_APIC_BASE" type="msr" msr="0x1B"  desc="Local APIC Base">
       <field name="BSP"       bit="8"  size="1"  desc="Bootstrap Processor" />
       <field name="x2APICEn"  bit="10" size="1"  desc="Enable x2APIC mode" />
@@ -451,19 +536,22 @@
   <!--                                      -->
   <!-- #################################### -->
   <controls>
-    <control name="SmmBiosWriteProtection" register="BC"              field="SMM_BWP"            desc="SMM BIOS Write Protection"/>
-    <control name="BiosLockEnable"         register="BC"              field="BLE"                desc="BIOS Lock Enable"/>
-    <control name="BiosWriteEnable"        register="BC"              field="BIOSWE"             desc="BIOS Write Enable"/>
-    <control name="FlashLockDown"          register="HSFS"            field="FLOCKDN"            desc="Flash Configuration Lock-Down"/>
-    <control name="BiosInterfaceLockDown"  register="GCS"             field="BILD"               desc="BIOS Interface Lock-Down"/>
-    <control name="GlobalSMIEnable"        register="SMI_EN"          field="GBL_SMI_EN"         desc="Global SMI Enable"/>
-    <control name="GPIOSMIEnable"          register="SMI_EN"          field="GPIO_UNLOCK_SMI_EN" desc="GPIO Config SMI Enable"/>
-    <control name="SMILock"                register="GEN_PMCON_1"     field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
-    <control name="TCOSMIEnable"           register="SMI_EN"          field="TCO_EN"             desc="TCO SMI Enable"/>
-    <control name="TCOSMILock"             register="TCO1_CNT"        field="TCO_LOCK"           desc="TCO SMI Lock"/>
-    <control name="SMRAMDLock"             register="PCI0.0.0_SMRAMC" field="D_LCK"              desc="SMRAM D_LCK"/>
-    <control name="TSEGBaseLock"           register="PCI0.0.0_TSEGMB" field="LOCK"               desc="TSEG Base Lock"/>
-    <control name="TSEGLimitLock"          register="PCI0.0.0_BGSM"   field="LOCK"               desc="TSEG Limit Lock"/>
+    <control name="SmmBiosWriteProtection" register="BC"                   field="SMM_BWP"            desc="SMM BIOS Write Protection"/>
+    <control name="BiosLockEnable"         register="BC"                   field="BLE"                desc="BIOS Lock Enable"/>
+    <control name="BiosWriteEnable"        register="BC"                   field="BIOSWE"             desc="BIOS Write Enable"/>
+    <control name="TopSwapStatus"          register="BC"                   field="TSS"                desc="Top Swap Status"/>
+    <control name="TopSwap"                register="BUC"                  field="TS"                 desc="Top Swap"/>
+    <control name="FlashLockDown"          register="HSFS"                 field="FLOCKDN"            desc="Flash Configuration Lock-Down"/>
+    <control name="BiosInterfaceLockDown"  register="GCS"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+    <control name="GlobalSMIEnable"        register="SMI_EN"               field="GBL_SMI_EN"         desc="Global SMI Enable"/>
+    <control name="GPIOSMIEnable"          register="SMI_EN"               field="GPIO_UNLOCK_SMI_EN" desc="GPIO Config SMI Enable"/>
+    <control name="SMILock"                register="GEN_PMCON_1"          field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
+    <control name="TCOSMIEnable"           register="SMI_EN"               field="TCO_EN"             desc="TCO SMI Enable"/>
+    <control name="TCOSMILock"             register="TCO1_CNT"             field="TCO_LOCK"           desc="TCO SMI Lock"/>
+    <control name="SMRAMDLock"             register="PCI0.0.0_SMRAMC"      field="D_LCK"              desc="SMRAM D_LCK"/>
+    <control name="TSEGBaseLock"           register="PCI0.0.0_TSEGMB"      field="LOCK"               desc="TSEG Base Lock"/>
+    <control name="TSEGLimitLock"          register="PCI0.0.0_BGSM"        field="LOCK"               desc="TSEG Limit Lock"/>
+    <control name="Ia32FeatureControlLock" register="IA32_FEATURE_CONTROL" field="LOCK"               desc="Lock IA32 Feature Control"/>
   </controls>
 
 </configuration>

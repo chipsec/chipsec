@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<configuration platform="QRK">
+<!-- XML configuration for Quark
+-->
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+
+    <bar name="MMCFG" register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
+  
+  </mmio>
+  
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- PCIe Configuration registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+   
+    <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0xD8" size="1" desc="BIOS Control"/>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MMIO registers               -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- I/O registers                -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- CPU MSRs                     -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <register name="MTRRCAP"              type="msr" msr="0x40"  desc="MTRR Capabilities MSR"/>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Message Bus registers        -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- B-unit -->
+    <register name="BECREG" type="msgbus" port="0x3" offset="0x9" size="4" desc="Extended Configuration Space Base" >
+      <field name="ECENABLE" bit="0"  size="1" desc="EC Enable"/>
+      <field name="ECBASE"   bit="28" size="4" desc="EC Boundary"/>
+    </register>
+    
+  </registers>
+
+</configuration>

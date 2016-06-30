@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="BYT">
 <!-- XML configuration for Baytrail
-    Reference: Intel(R) Atom(TM) Processor E3800 Product Family Datasheet September 2014, Revision 3.5
+     Reference: Intel(R) Atom(TM) Processor E3800 Product Family Datasheet, May 2016, Revision 4.0
+     http://www.intel.com/content/www/us/en/embedded/products/bay-trail/atom-e3800-family-datasheet.html
 -->
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- Memory Mapped I/O spaces (MMIO BARs) -->
@@ -24,6 +26,8 @@
     <!-- <bar name="SPIBAR"  register="SBASE"  base_field="Base" size="0x200"  enable_field="Enable" desc="SPI Base"/> -->
     <!-- old definition: to be removed -->
     <bar name="SPIBAR"  bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>  
+
+    <bar name="MMCFG"   register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
 
   </mmio>
   
@@ -49,6 +53,20 @@
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
    
+    <!-- Sections 3.6 and 13.4.6 - 13.4.8 -->
+    <register name="MSG_CTRL_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD0" desc="Message Bus Control Register">
+      <field name="MESSAGE_WR_BYTE_ENABLES" bit="4"  size="4" desc="Message write byte enable" />
+      <field name="MESSAGE_ADDRESS_OFFSET"  bit="8"  size="8" desc="Message register address" />
+      <field name="MESSAGE_PORT"            bit="16" size="8" desc="Message port" />
+      <field name="MESSAGE_OPCODE"          bit="24" size="8" desc="Message opcode" />
+    </register>
+    <register name="MSG_DATA_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD4" desc="Message Bus Data Register">
+      <field name="MESSAGE_DATA" bit="0" size="32" desc="Message data" />
+    </register>
+    <register name="MSG_CTRL_REG_EXT" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD8" desc="Message Bus Control Register Extension">
+      <field name="MESSAGE_ADDRESS_OFFSET_EXT"  bit="8"  size="24" desc="Message register address extension" />
+    </register>
+
     <!-- Graphics -->
      
     <!-- Section 14.9.13 -->
@@ -126,6 +144,14 @@
       <field  name="Base"   bit="11" size="21" desc="Base Address"/>
     </register>
 
+    <!-- Section 35.7 -->
+    <register name="GCS"    type="mmio" bar="RCBA" offset="0x0" size="4" desc="General Control and Status">
+      <field name="BILD"    bit="0"  size="1" desc="BIOS Interface Lock Down"/>
+      <field name="TS"      bit="1"  size="1" desc="Top Swap"/>
+      <field name="BBS"     bit="10" size="2" desc="Boot BIOS Straps"/>
+      <field name="BBSize"  bit="29" size="2" desc="Boot Block Size"/>
+    </register>   
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -177,6 +203,27 @@
     <!-- CPU MSRs                     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Message Bus registers        -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- B-unit -->
+    <register name="BECREG" type="msgbus" port="0x3" offset="0x27" size="4" desc="Extended Configuration Space Base" >
+      <field name="ECENABLE" bit="0"  size="1" desc="EC Enable"/>
+      <field name="ECBASE"   bit="28" size="4" desc="EC Boundary"/>
+    </register>
+
   </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+    <control name="TopSwapStatus"          register="GCS"                  field="TS"                 desc="Top Swap Status"/>
+    <control name="TopSwap"                register="GCS"                  field="TS"                 desc="Top Swap"/>
+    <control name="BiosInterfaceLockDown"  register="GCS"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+  </controls>
 
 </configuration>
