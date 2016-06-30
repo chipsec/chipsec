@@ -73,6 +73,9 @@ class Helper(object):
             else:
                 cls.registry.append((name, cls))
 
+    def __init__(self):
+        self.driver_loaded = False
+
 import chipsec.helper.helpers
 
 ## OS Helper
@@ -111,10 +114,10 @@ class OsHelper:
         except NameError:
             pass
 
-    def start( self ):
+    def start(self, start_driver):
         try:
-            self.helper.create()
-            self.helper.start()
+            self.helper.create(start_driver)
+            self.helper.start(start_driver)
         except (None,Exception) , msg:
             if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
@@ -127,6 +130,9 @@ class OsHelper:
 
     def destroy( self ):
         self.helper.delete()
+
+    def is_driver_loaded(self):
+        return self.helper.driver_loaded
 
     def is_efi( self ):
         return self.os_system.lower().startswith('efi')

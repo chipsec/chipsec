@@ -76,6 +76,7 @@ class LinuxHelper(Helper):
     DEVICE_NAME = "/dev/chipsec"
 
     def __init__(self):
+        super(LinuxHelper, self).__init__()
         import platform
         self.os_system  = platform.system()
         self.os_release = platform.release()
@@ -94,12 +95,12 @@ class LinuxHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def create( self ):
-        self.init()
+    def create(self, start_driver):
+        self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper created")
 
-    def start( self ):
+    def start(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper started/loaded")
 
@@ -115,20 +116,22 @@ class LinuxHelper(Helper):
         self.stop()
         self.delete()
 
-    def init( self ):
+    def init(self, start_driver):
         x64 = True if sys.maxsize > 2**32 else False
         self._pack = 'Q' if x64 else 'I'
 
-        logger().log("\n****** Chipsec Linux Kernel module is licensed under GPL 2.0\n")
+        if start_driver:
+            logger().log("****** Chipsec Linux Kernel module is licensed under GPL 2.0")
 
-        try:
-            self.dev_fh = open(self.DEVICE_NAME, "r+")
-        except IOError as e:
-            raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(e),e.errno)
-        except BaseException as be:
-            raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(be),errno.ENXIO)
+            try:
+                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.driver_loaded = True
+            except IOError as e:
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(e),e.errno)
+            except BaseException as be:
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(be),errno.ENXIO)
 
-        self._ioctl_base = fcntl.ioctl(self.dev_fh, IOCTL_BASE) << 4
+            self._ioctl_base = fcntl.ioctl(self.dev_fh, IOCTL_BASE) << 4
 
 
     def close(self):
@@ -186,6 +189,8 @@ class LinuxHelper(Helper):
         return self.read_pci_reg(bus, device, function, address)
 
     def read_pci_reg( self, bus, device, function, offset, size = 4 ):
+        if not self.driver_loaded:
+            return 0xFFFF
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
         d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
         try:

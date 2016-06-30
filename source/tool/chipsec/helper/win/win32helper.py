@@ -232,6 +232,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 class Win32Helper(Helper):
 
     def __init__(self):
+        super(Win32Helper, self).__init__()
         import platform
         self.os_system  = platform.system()
         self.os_release = platform.release()
@@ -338,7 +339,10 @@ class Win32Helper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def start( self ):
+    def start(self, start_driver):
+
+        if not start_driver:
+            return
 
         (type, state, ca, exitcode, svc_exitcode, checkpoint, waithint) = win32service.QueryServiceStatus( self.hs )
         if logger().VERBOSE: logger().log( "[helper] starting chipsec service: handle = 0x%x, type = 0x%x, state = 0x%x" % (self.hs, type, state) )
@@ -353,6 +357,7 @@ class Win32Helper(Helper):
                     time.sleep( 1 )
                     state = win32service.QueryServiceStatus( self.hs )[1]
                 if win32service.SERVICE_RUNNING == state:
+                    self.driver_loaded = True
                     if logger().VERBOSE: logger().log( "[helper] chipsec service started (SERVICE_RUNNING)" )
             except win32service.error, (hr, fn, msg):
                 if logger().VERBOSE: logger().log_bad(traceback.format_exc())
@@ -368,7 +373,10 @@ class Win32Helper(Helper):
         #if logger().VERBOSE:
         #   logger().log( "[helper] chipsec service handle = 0x%08x" % self.hs )
 
-    def create( self ):
+    def create(self, start_driver):
+
+        if not start_driver:
+            return
 
         logger().log( "" )
         logger().warn( "*******************************************************************" )
@@ -620,6 +628,8 @@ class Win32Helper(Helper):
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
+        if not self.driver_loaded:
+            return 0xFFFF
         value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         out_length = size

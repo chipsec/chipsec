@@ -14,10 +14,10 @@ class TestHelper(oshelper.Helper):
         self.os_machine = "test"
         self.driver_loaded = True
 
-    def create(self):
+    def create(self, start_driver):
         pass
 
-    def start(self):
+    def start(self, start_driver):
         pass
 
     def stop(self):

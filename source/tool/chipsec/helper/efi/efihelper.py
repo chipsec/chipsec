@@ -56,6 +56,7 @@ status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 
 class EfiHelper(Helper):
 
     def __init__(self):
+        super(EfiHelper, self).__init__()
         if sys.platform.startswith('EFI'):
             self.os_system = sys.platform
             self.os_release = "0.0"
@@ -79,11 +80,14 @@ class EfiHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def create( self ):
+    def create(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper created")
 
-    def start( self ):
+    def start(self, start_driver):
+        # The driver is part of the modified version of edk2.
+        # It is always considered as loaded.
+        self.driver_loaded = True
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper started/loaded")
 
