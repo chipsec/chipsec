@@ -99,7 +99,7 @@ class CPU:
     def get_number_threads_from_APIC_table(self):
         _acpi = chipsec.hal.acpi.ACPI( self.cs )    
         dACPIID = {}
-        (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_APIC )
+        (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_APIC )[0]
         for structure in APIC_object.apic_structs:
             if 0x00 == structure.Type:
                 if dACPIID.has_key( structure.APICID ) == False:
@@ -174,4 +174,4 @@ class CPU:
         if logger().VERBOSE: chipsec.chipset.print_register( self.cs, 'MTRRCAP', mtrrcap_msr_reg )
         smrr = chipsec.chipset.get_register_field( self.cs, 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
-    
+
