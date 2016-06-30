@@ -63,6 +63,22 @@ extern void _store_gdtr( void* desc_address );
 extern void _store_ldtr( void* desc_address );
 // -- Interrupts
 extern void _swsmi( UINT32 smi_code_data, CPU_REG_TYPE rax_value, CPU_REG_TYPE rbx_value, CPU_REG_TYPE rcx_value, CPU_REG_TYPE rdx_value, CPU_REG_TYPE rsi_value, CPU_REG_TYPE rdi_value );
+// -- Hypercalls
+extern CPU_REG_TYPE hypercall (
+    CPU_REG_TYPE rcx_val,
+    CPU_REG_TYPE rdx_val,
+    CPU_REG_TYPE r8_val,
+    CPU_REG_TYPE r9_val,
+    CPU_REG_TYPE r10_val,
+    CPU_REG_TYPE r11_val,
+    CPU_REG_TYPE rax_val,
+    CPU_REG_TYPE rbx_val,
+    CPU_REG_TYPE rdi_val,
+    CPU_REG_TYPE rsi_val,
+    CPU_REG_TYPE xmm_buffer,
+    void*  hypercall_page
+);
+extern CPU_REG_TYPE hypercall_page(void);
 
 // --
 // -- MSR definitions

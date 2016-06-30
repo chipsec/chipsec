@@ -32,6 +32,8 @@ PUBLIC WriteCR2
 PUBLIC WriteCR3
 PUBLIC WriteCR4
 PUBLIC WriteCR8
+PUBLIC hypercall
+PUBLIC hypercall_page
 
 
 ;------------------------------------------------------------------------------
@@ -593,5 +595,65 @@ WriteCR8 PROC
     mov cr8, rcx
     ret
 WriteCR8 ENDP
+
+;------------------------------------------------------------------------------
+;  CPU_REG_TYPE
+;  hypercall(
+;    CPU_REG_TYPE    rcx_val,                // rcx      +08h
+;    CPU_REG_TYPE    rdx_val,                // rdx      +10h
+;    CPU_REG_TYPE    r8_val,                 // r8       +18h
+;    CPU_REG_TYPE    r9_val,                 // r9       +20h
+;    CPU_REG_TYPE    r10_val,                // on stack +28h
+;    CPU_REG_TYPE    r11_val,                // on stack +30h
+;    CPU_REG_TYPE    rax_val,                // on stack +38h
+;    CPU_REG_TYPE    rbx_val,                // on stack +40h
+;    CPU_REG_TYPE    rdi_val,                // on stack +48h 
+;    CPU_REG_TYPE    rsi_val,                // on stack +50h
+;    CPU_REG_TYPE    xmm_buffer,             // on stack +58h
+;    CPU_REG_TYPE    hypercall_page          // on stack +60h
+;    )
+;------------------------------------------------------------------------------
+
+hypercall PROC
+    push   rsi
+    push   rdi
+    push   rbx
+    mov    r11, qword ptr [rsp + 18h + 58h]
+    test   r11, r11
+    jz     hypercall_skip_xmm
+    pinsrq xmm0, qword ptr [r11 + 000h], 00h
+    pinsrq xmm0, qword ptr [r11 + 008h], 01h
+    pinsrq xmm1, qword ptr [r11 + 010h], 00h
+    pinsrq xmm1, qword ptr [r11 + 018h], 01h
+    pinsrq xmm2, qword ptr [r11 + 020h], 00h
+    pinsrq xmm2, qword ptr [r11 + 028h], 01h
+    pinsrq xmm3, qword ptr [r11 + 030h], 00h
+    pinsrq xmm3, qword ptr [r11 + 038h], 01h
+    pinsrq xmm4, qword ptr [r11 + 040h], 00h
+    pinsrq xmm4, qword ptr [r11 + 048h], 01h
+    pinsrq xmm5, qword ptr [r11 + 050h], 00h
+    pinsrq xmm5, qword ptr [r11 + 058h], 01h
+  hypercall_skip_xmm:
+    mov    r10, qword ptr [rsp + 18h + 28h]
+    mov    r11, qword ptr [rsp + 18h + 30h]
+    mov    rax, qword ptr [rsp + 18h + 38h]
+    mov    rbx, qword ptr [rsp + 18h + 40h]
+    mov    rdi, qword ptr [rsp + 18h + 48h]
+    mov    rsi, qword ptr [rsp + 18h + 50h]
+    call   qword ptr [rsp + 18h + 60h]
+    pop    rbx
+    pop    rdi                         
+    pop    rsi
+    ret
+hypercall ENDP
+
+;------------------------------------------------------------------------------
+;  CPU_REG_TYPE hypercall_page ( )
+;------------------------------------------------------------------------------
+
+hypercall_page PROC
+    vmcall
+    ret
+hypercall_page ENDP
 
 END

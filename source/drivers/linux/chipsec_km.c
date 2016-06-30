@@ -561,7 +561,7 @@ void * patch_apply_ucode(void * ucode_buf)
 
 	printk(KERN_INFO "[chipsec] [patch_apply_ucode] Applying patch in the processor id: %d", smp_processor_id());
 
-	ucode_start=(unsigned long long) ucode_buf;
+	ucode_start = (unsigned long long)ucode_buf;
 	asm volatile("wrmsr" :  : "c"(MSR_IA32_BIOS_UPDT_TRIG),"d"((unsigned int)((ucode_start >> 32) & 0xffffffff)),"a"((unsigned int)(ucode_start & 0xffffffff))); // lo is in eax
 
 
@@ -940,7 +940,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         #ifdef __x86_64__
 		ptr[1] = (uint32_t)(dtr.base >> 32);
         #else
-        ptr[1] = 0
+        ptr[1] = 0;
         #endif
 		ptr[2] = (uint32_t)dtr.base;
 
@@ -1435,6 +1435,48 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		return -EFAULT;
 #endif
 	}
+
+    case IOCTL_MSGBUS_SEND_MESSAGE:
+    {
+        //IN  params: direction, mcr, mcrx, mdr
+        //OUT params: mdr_out
+#ifdef CONFIG_X86
+        uint32_t direction, mcr, mcrx, mdr, mdr_out;
+        numargs = 5;
+        printk( KERN_INFO "[chipsec] > IOCTL_MSGBUS_SEND_MESSAGE\n");
+
+        if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+            return -EFAULT;
+
+        mdr_out   = 0;		
+        direction = ptr[0];
+        mcr       = ptr[1];
+        mcrx      = ptr[2];
+        mdr       = ptr[3];
+
+        if (direction & MSGBUS_MDR_IN_MASK)
+            // Write data to MDR register
+            WritePCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MDR, 4, mdr );
+
+        // Write extended address to MCRX register if address is > 0xFF
+        if (mcrx != 0)
+            WritePCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MCRX, 4, mcrx );
+
+        // Write to MCR register to send the message on the message bus
+        WritePCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MCR, 4, mcr );
+
+        if (direction & MSGBUS_MDR_OUT_MASK)
+            // Read data from MDR register
+            mdr_out = ReadPCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MDR, 4 );
+            ptr[4] = mdr_out;	
+
+        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+          return -EFAULT;	
+        break;
+#else
+        return -EFAULT;
+#endif
+    }
 
    
 	default:

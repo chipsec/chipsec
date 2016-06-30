@@ -602,6 +602,46 @@ DriverDeviceControl(
             break;
           }
 
+        case IOCTL_MAP_IO_SPACE:
+          {
+            PVOID va  = 0x0;
+            PHYSICAL_ADDRESS pa = { 0x0, 0x0 };
+            unsigned int len = 0;
+            unsigned int cache_type = 0;
+
+            pInBuf  = Irp->AssociatedIrp.SystemBuffer;
+            pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+
+            DbgPrint( "[chipsec] > IOCTL_MAP_IO_SPACE\n" );
+            if( !Irp->AssociatedIrp.SystemBuffer ||
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength != 3*8)
+            {
+               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+               Status = STATUS_INVALID_PARAMETER;
+               break;
+            }
+
+            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINT64))
+            {
+               DbgPrint( "[chipsec] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
+               Status = STATUS_BUFFER_TOO_SMALL;
+               break;
+            }
+
+            RtlCopyBytes( &pa,         (BYTE*)Irp->AssociatedIrp.SystemBuffer + 0x00, 0x8 );
+            RtlCopyBytes( &len,        (BYTE*)Irp->AssociatedIrp.SystemBuffer + 0x08, 0x4 );
+            RtlCopyBytes( &cache_type, (BYTE*)Irp->AssociatedIrp.SystemBuffer + 0x10, 0x4 );
+
+            va = MmMapIoSpace(pa, len, cache_type);
+
+            DbgPrint( "[chipsec][IOCTL_MAP_IO_SPACE] Mapping physical address 0x%016llX to virtual 0x%016llX\n", pa, va);
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&va, sizeof(va) );
+            IrpSp->Parameters.Read.Length = sizeof(va);
+            dwBytesWritten = sizeof(va);
+            Status = STATUS_SUCCESS;
+            break;
+          }
+
         case IOCTL_LOAD_UCODE_PATCH:
           {
             PVOID ucode_buf = NULL;
@@ -1110,6 +1150,65 @@ DriverDeviceControl(
             break;
 
           }
+        case IOCTL_HYPERCALL:
+          {
+            CPU_REG_TYPE regs[11] = {0};
+            CPU_REG_TYPE result = 0;
+
+            DbgPrint("[chipsec] > IOCTL_HYPERCALL\n");
+            pInBuf = Irp->AssociatedIrp.SystemBuffer;
+
+            if( !Irp->AssociatedIrp.SystemBuffer ||
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(regs))
+            {
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(result))
+            {
+               DbgPrint( "[chipsec] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
+               Status = STATUS_BUFFER_TOO_SMALL;
+               break;
+            }
+
+            RtlCopyBytes( regs, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(regs) );
+            DbgPrint( "[chipsec][IOCTL_HYPERCALL] HYPERCALL:\n" );
+            #if defined(_M_AMD64)
+            DbgPrint( "    RCX = 0x%016llX  RDX = 0x%016llX\n", regs[0], regs[1] );
+            DbgPrint( "    R8  = 0x%016llX  R9  = 0x%016llX\n", regs[2], regs[3] );
+            DbgPrint( "    R10 = 0x%016llX  R11 = 0x%016llX\n", regs[4], regs[5] );
+            DbgPrint( "    RAX = 0x%016llX  RBX = 0x%016llX\n", regs[6], regs[7] );
+            DbgPrint( "    RDI = 0x%016llX  RSI = 0x%016llX\n", regs[8], regs[9] );
+            #endif
+            #if defined(_M_IX86)
+            DbgPrint( "    EAX = 0x%08X  EBX = 0x%08X  ECX = 0x%08X\n", regs[6], regs[7], regs[0] );
+            DbgPrint( "    EDX = 0x%08X  ESI = 0x%08X  EDI = 0x%08X\n", regs[1], regs[8], regs[9] );
+            #endif
+            DbgPrint( "    XMM0-XMM5 buffer VA = 0x%016llX\n", regs[9] );
+
+            __try
+              {
+                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], &hypercall_page);
+              }
+            __except( EXCEPTION_EXECUTE_HANDLER )
+              {
+                Status = GetExceptionCode();
+                DbgPrint( "[chipsec][IOCTL_HYPERCALL] ERROR: exception code 0x%X\n", Status );
+                break;
+              }
+
+            DbgPrint( "[chipsec][IOCTL_HYPERCALL] returned: 0x%016llX\n", result);
+
+            IrpSp->Parameters.Read.Length = sizeof(result);
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&result, sizeof(result) );
+
+            dwBytesWritten = IrpSp->Parameters.Read.Length;
+            Status = STATUS_SUCCESS;
+            break;
+          }
+
         default:
             DbgPrint( "[chipsec] ERROR: invalid IOCTL\n");
             Status = STATUS_NOT_IMPLEMENTED;

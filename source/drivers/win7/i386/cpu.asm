@@ -423,6 +423,77 @@ cPublicProc _WriteCR4, 1
     stdRET _WriteCR4
 stdENDP _WriteCR4
 
+;------------------------------------------------------------------------------
+;  CPU_REG_TYPE
+;  hypercall(
+;    CPU_REG_TYPE    ecx_val,                // on stack +04h
+;    CPU_REG_TYPE    edx_val,                // on stack +08h
+;    CPU_REG_TYPE    reserved1,              // on stack +0Ch
+;    CPU_REG_TYPE    reserved2,              // on stack +10h
+;    CPU_REG_TYPE    reserved3,              // on stack +14h
+;    CPU_REG_TYPE    reserved4,              // on stack +18h
+;    CPU_REG_TYPE    eax_val,                // on stack +1Ch
+;    CPU_REG_TYPE    ebx_val,                // on stack +20h
+;    CPU_REG_TYPE    edi_val,                // on stack +24h 
+;    CPU_REG_TYPE    esi_val,                // on stack +28h
+;    CPU_REG_TYPE    xmm_buffer,             // on stack +2Ch
+;    CPU_REG_TYPE    hypercall_page          // on stack +30h
+;    )
+;------------------------------------------------------------------------------
+cPublicProc _hypercall, 12
+    push   ebx
+    push   esi
+    push   edi
+    mov    eax, dword ptr [esp + 12 + 2Ch]
+    test   eax, eax
+    jz     hypercall_skip_xmm
+    pinsrd xmm0, dword ptr [eax + 000h], 00h
+    pinsrd xmm0, dword ptr [eax + 004h], 01h
+    pinsrd xmm0, dword ptr [eax + 008h], 02h
+    pinsrd xmm0, dword ptr [eax + 00Ch], 03h
+    pinsrd xmm1, dword ptr [eax + 010h], 00h
+    pinsrd xmm1, dword ptr [eax + 014h], 01h
+    pinsrd xmm1, dword ptr [eax + 018h], 02h
+    pinsrd xmm1, dword ptr [eax + 01Ch], 03h
+    pinsrd xmm2, dword ptr [eax + 020h], 00h
+    pinsrd xmm2, dword ptr [eax + 024h], 01h
+    pinsrd xmm2, dword ptr [eax + 028h], 02h
+    pinsrd xmm2, dword ptr [eax + 02Ch], 03h
+    pinsrd xmm3, dword ptr [eax + 030h], 00h
+    pinsrd xmm3, dword ptr [eax + 034h], 01h
+    pinsrd xmm3, dword ptr [eax + 038h], 02h
+    pinsrd xmm3, dword ptr [eax + 03Ch], 03h
+    pinsrd xmm4, dword ptr [eax + 040h], 00h
+    pinsrd xmm4, dword ptr [eax + 044h], 01h
+    pinsrd xmm4, dword ptr [eax + 048h], 02h
+    pinsrd xmm4, dword ptr [eax + 04Ch], 03h
+    pinsrd xmm5, dword ptr [eax + 050h], 00h
+    pinsrd xmm5, dword ptr [eax + 054h], 01h
+    pinsrd xmm5, dword ptr [eax + 058h], 02h
+    pinsrd xmm5, dword ptr [eax + 05Ch], 03h
+  hypercall_skip_xmm:
+    mov    ecx,  dword ptr [esp + 12 + 04h]
+    mov    edx,  dword ptr [esp + 12 + 08h]
+    mov    eax,  dword ptr [esp + 12 + 1Ch]
+    mov    ebx,  dword ptr [esp + 12 + 20h]
+    mov    edi,  dword ptr [esp + 12 + 24h]
+    mov    esi,  dword ptr [esp + 12 + 28h]
+    call   dword ptr [esp + 12 + 30h]
+    pop    edi
+    pop    esi
+    pop    ebx
+    stdRET _hypercall
+stdENDP _hypercall ENDP
+
+;------------------------------------------------------------------------------
+;  UINT64 hypercall_page ( )
+;------------------------------------------------------------------------------
+
+cPublicProc _hypercall_page
+    vmcall
+    stdRET _hypercall_page
+stdENDP _hypercall_page
+
 _TEXT    ENDS
 
 END

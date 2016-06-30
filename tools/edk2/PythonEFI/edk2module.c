@@ -37,8 +37,7 @@ PyDoc_STRVAR(edk2__doc__,
              corresponding UEFI Specification entries for more information on calls.");
 
 //
-// Original CHIPSEC extension for Python 2.4 port on EFI x86 - Jeff Forristal
-// CHIPSEC extension for Python 2.7.2 port on UEFI/UDK2010 x64 - Yuriy Bulygin
+// CHIPSEC extension for Python 2.7.2 port on UEFI/UDK2010 x64
 //
 #ifndef CHIPSEC
   #define CHIPSEC 1
