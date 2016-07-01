@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -173,7 +173,7 @@ def fuzz_pcie_device( b, d, f ):
                 if CALC_MMIO_SIZE:
                     size = get_mmio_range_size( b, d, f, bar_off )
                     logger.log( "[*] + 0x%02X (%X): MMIO BAR at 0x%016X (64-bit? %d) with size: 0x%08X. Fuzzing.." % (bar_off,bar_reg,bar,is64bit,size) )
-                    if ACTIVE_RANGE and size > 0x1000: #Vbox GT MMIO size = 0x02000000
+                    if ACTIVE_RANGE and size > 0x1000:
                         list = []
                         list = find_active_range(bar, size)
                         if len(list) > 0:

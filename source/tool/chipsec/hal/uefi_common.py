@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -551,7 +551,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
     next_offset = None
     res = None
     update_or_deleted = False
-    if (fof + file_header_size) < FvLength:
+    if (fof + file_header_size) <= len(FvImage[fof:]):
         fheader = FvImage[fof:fof+file_header_size]
         Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, fheader)
         fsize = get_3b_size(Size);

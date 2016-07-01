@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -32,6 +32,7 @@
 # __chipsec/defines.py__ - common defines
 __version__ = '1.0'
 
+import struct
 
 BIT0 = 0x0001
 BIT1 = 0x0002
@@ -98,10 +99,15 @@ BIT61 = 0x2000000000000000
 BIT62 = 0x4000000000000000
 BIT63 = 0x8000000000000000
 
-
+BOUNDARY_1KB   = 0x400
+BOUNDARY_2KB   = 0x800
 BOUNDARY_4KB   = 0x1000
 BOUNDARY_1MB   = 0x100000
+BOUNDARY_2MB   = 0x200000
+BOUNDARY_4MB   = 0x400000
 BOUNDARY_8MB   = 0x800000
+BOUNDARY_16MB  = 0x1000000
+BOUNDARY_32MB  = 0x2000000
 BOUNDARY_64MB  = 0x4000000
 BOUNDARY_128MB = 0x8000000
 BOUNDARY_256MB = 0x10000000
@@ -117,7 +123,13 @@ ALIGNED_64MB  = 0x3FFFFFF
 ALIGNED_128MB = 0x7FFFFFF
 ALIGNED_256MB = 0xFFFFFFF
 
-def scan_single_bit_mask(self,mask):
+MASK_8b  = 0xFF
+MASK_16b = 0xFFFF
+MASK_32b = 0xFFFFFFFF
+MASK_64b = 0xFFFFFFFFFFFFFFFF
+
+
+def scan_single_bit_mask(mask):
     for bit in range(0,7):
         if mask>>bit  == 1:
             return bit
@@ -129,3 +141,12 @@ COMPRESSION_TYPE_NONE = 0
 COMPRESSION_TYPE_TIANO = 1
 COMPRESSION_TYPE_LZMA  = 2
 COMPRESSION_TYPES = [COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA]
+
+def DB(val):
+    return struct.pack('<B', val)
+def DW(value):
+    return struct.pack('<H', val)
+def DD(val):
+    return struct.pack('<L', val)
+def DQ(val):
+    return struct.pack('<Q', val)

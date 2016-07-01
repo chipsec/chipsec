@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -46,9 +46,8 @@ from chipsec.hal.physmem     import Memory
 from chipsec.hal.msr         import Msr
 from chipsec.hal.ucode       import Ucode
 from chipsec.hal.io          import PortIO
-#from chipsec.hal.cr          import CrRegs
-from chipsec.hal.cpuid       import CpuID
-#from chipsec.hal.mmio        import *
+#from chipsec.hal.cpuid       import CpuID
+from chipsec.hal.msgbus      import MsgBus
 import chipsec.hal.cpu
 
 import chipsec.hal.mmio as mmio
@@ -65,8 +64,6 @@ import traceback
 #try:                import importlib
 #except ImportError: _importlib = False
 
-#
-
 
 class RegisterType:
     PCICFG = 'pcicfg'
@@ -75,6 +72,7 @@ class RegisterType:
     MSR    = 'msr'
     PORTIO = 'io'
     IOBAR  = 'iobar'
+    MSGBUS = 'msgbus'
 
 
 ##################################################################################
@@ -94,6 +92,7 @@ CHIPSET_ID_QRK     = 8
 CHIPSET_ID_AVN     = 9
 CHIPSET_ID_HSX     = 10
 CHIPSET_ID_SKL     = 11
+CHIPSET_ID_BSW     = 12
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -109,10 +108,11 @@ CHIPSET_CODE_QRK     = 'QRK'
 CHIPSET_CODE_AVN     = 'AVN'
 CHIPSET_CODE_HSX     = 'HSX'
 CHIPSET_CODE_SKL     = 'SKL'
+CHIPSET_CODE_BSW     = 'BSW'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL]
-CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN]
+CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_CODE_BSW]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
 
@@ -150,8 +150,8 @@ Chipset_Dictionary = {
 0x0A08 : {'name' : 'Haswell',        'id' : CHIPSET_ID_HSW , 'code' : CHIPSET_CODE_HSW,  'longname' : '4th Generation Core Processor (Haswell U/Y)' },
 
 # 5th Generation Core Processor Family (Broadwell)
-0x1600 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
-0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : 'BDW',  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
+0x1600 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
+0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
 
 # 6th Generation Core Processor Family (Skylake)
 0x1904 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake U)' },
@@ -213,7 +213,6 @@ class DeviceNotFoundError (RuntimeError):
 class Chipset:
 
     def __init__(self, helper=None):
-        if logger().VERBOSE: logger().log("[Chipset] __init__")
         if helper is None:
             self.helper = OsHelper()
         else:
@@ -237,7 +236,8 @@ class Chipset:
         self.io         = PortIO   ( self )
         self.cpu        = chipsec.hal.cpu.CPU( self )
         #self.cr         = CrRegs   ( self )
-        self.cpuid      = CpuID    ( self )
+        #self.cpuid      = CpuID    ( self )
+        self.msgbus     = MsgBus   ( self )
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -273,6 +273,7 @@ class Chipset:
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
             self.id         = data_dict['id']
+
         else:
             _unknown_platform = True
             self.longname   = 'UnknownPlatform'
@@ -512,8 +513,11 @@ def read_register( _cs, reg_name, cpu_thread=0 ):
         size = int(reg['size'],16)
         reg_value = _cs.io._read_port( port, size )
     elif RegisterType.IOBAR == rtype:
-        iobar = chipsec.hal.iobar.iobar( _cs )
-        reg_value = iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
+        _iobar = chipsec.hal.iobar.iobar( _cs )
+        reg_value = _iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
+    elif RegisterType.MSGBUS == rtype:
+        reg_value = _cs.msgbus.message_reg_read( int(reg['port'],16), int(reg['offset'],16) ) 
+
     return reg_value
 
 def write_register( _cs, reg_name, reg_value, cpu_thread=0 ):
@@ -539,13 +543,15 @@ def write_register( _cs, reg_name, reg_value, cpu_thread=0 ):
         eax = (reg_value & 0xFFFFFFFF)
         edx = ((reg_value >> 32) & 0xFFFFFFFF)
         _cs.msr.write_msr( cpu_thread, int(reg['msr'],16), eax, edx )
-    elif RegisterType.PORT == rtype:
+    elif RegisterType.PORTIO == rtype:
         port = int(reg['port'],16)
         size = int(reg['size'],16)
         _cs.io._write_port( port, reg_value, size )
     elif RegisterType.IOBAR == rtype:
-        iobar = chipsec.hal.iobar( _cs )
-        iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), reg_value )
+        _iobar = chipsec.hal.iobar.iobar( _cs )
+        _iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16), reg_value )
+    elif RegisterType.MSGBUS == rtype:
+        _cs.msgbus.message_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value ) 
 
 def read_register_dict( _cs, reg_name):
     reg_value = read_register( _cs, reg_name)
@@ -568,21 +574,22 @@ def get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_pos
     if preserve_field_position: return reg_value & (field_mask << field_bit)
     else:                       return (reg_value >> field_bit) & field_mask
 
-def set_register_field( _cs, reg_name, reg_value, field_name, field_value ):
+def set_register_field( _cs, reg_name, reg_value, field_name, field_value, preserve_field_position=False ):
     field_attrs = get_register_def( _cs, reg_name )['FIELDS'][field_name]
     field_bit   = int(field_attrs['bit'])
     field_mask  = (1 << int(field_attrs['size'])) - 1
-    reg_value &= ~(field_mask << field_bit)
-    reg_value |= ((field_value & field_mask) << field_bit)
+    reg_value  &= ~(field_mask << field_bit) # keep other fields
+    if preserve_field_position: reg_value |= (field_value & (field_mask << field_bit))
+    else:                       reg_value |= ((field_value & field_mask) << field_bit)
     return reg_value
     
 def read_register_field( _cs, reg_name, field_name, preserve_field_position=False, cpu_thread=0 ):
     reg_value = read_register( _cs, reg_name )
     return get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position )
 
-def write_register_field( _cs, reg_name, field_name, field_value, cpu_thread=0 ):
+def write_register_field( _cs, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
     reg_value = read_register( _cs, reg_name, cpu_thread )
-    reg_value_new = set_register_field( _cs, reg_name, reg_value, field_name, field_value )
+    reg_value_new = set_register_field( _cs, reg_name, reg_value, field_name, field_value, preserve_field_position )
     #logger().log("set register %s (0x%x) field %s = 0x%x ==> 0x%x" % (reg_name, reg_value, field_name, field_value, reg_value_new))
     return write_register( _cs, reg_name, reg_value_new, cpu_thread )
 
@@ -632,6 +639,8 @@ def print_register( _cs, reg_name, reg_val ):
         reg_str = "[*] %s = %s << %s (I/O port 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
     elif RegisterType.IOBAR == rtype:
         reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+    elif RegisterType.MSGBUS == rtype:
+        reg_str = "[*] %s = %s << %s (msgbus port 0x%X, off 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
 
     reg_str += _register_fields_str( reg, reg_val )
     logger().log( reg_str )
@@ -652,6 +661,12 @@ def set_control( _cs, control_name, control_value, cpu_thread=0 ):
     reg     = control['register']
     field   = control['field']
     return chipsec.chipset.write_register_field( _cs, reg, field, control_value, cpu_thread )    
+
+def is_control_defined( _cs, control_name ):
+    try:
+        return (_cs.Cfg.CONTROLS[ control_name ] is not None)
+    except KeyError:
+        return False
 
     
 _chipset = None

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -30,6 +30,7 @@ from chipsec.logger import *
 
 import chipsec.hal.iobar
 import chipsec.hal.mmio
+import chipsec.hal.paging
 
 IOMMU_ENGINE_DEFAULT = 'VTD'
 IOMMU_ENGINE_GFX     = 'GFXVTD'
@@ -90,7 +91,7 @@ class iommu:
         logger().log( "Engine enabled            : %d" % enabled )
         te      = self.is_IOMMU_Translation_Enabled( iommu_engine )
         logger().log( "Translation enabled       : %d" % te )
-        rtaddr_rta = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTA' )
+        rtaddr_rta = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTA', True )
         logger().log( "Root Table Address        : 0x%016X" % rtaddr_rta )
         irta = chipsec.chipset.read_register_field( self.cs, vtd + '_IRTA', 'IRTA' )
         logger().log( "Interrupt Remapping Table : 0x%016X" % irta )
@@ -115,6 +116,38 @@ class iommu:
         ecap_reg = chipsec.chipset.read_register( self.cs, vtd + '_ECAP' )
         chipsec.chipset.print_register( self.cs, vtd + '_ECAP', ecap_reg )
         logger().log( '' )
+
+
+    def dump_IOMMU_page_tables( self, iommu_engine ):
+        vtd = IOMMU_ENGINES[ iommu_engine ]
+        te  = self.is_IOMMU_Translation_Enabled( iommu_engine )
+        logger().log( "[iommu] Translation enabled    : %d" % te )
+        rtaddr_reg = chipsec.chipset.read_register( self.cs, vtd + '_RTADDR' )
+        rtaddr_rta = chipsec.chipset.get_register_field( self.cs, vtd + '_RTADDR', rtaddr_reg, 'RTA', True )
+        rtaddr_rtt = chipsec.chipset.get_register_field( self.cs, vtd + '_RTADDR', rtaddr_reg, 'RTT' )
+        #rtaddr_rta = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTA', True )
+        #rtaddr_rtt = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTT' )
+        logger().log( "[iommu] Root Table Address/Type: 0x%016X/%X" % (rtaddr_rta,rtaddr_rtt) )
+
+        ecap_reg   = chipsec.chipset.read_register( self.cs, vtd + '_ECAP' )
+        ecs        = chipsec.chipset.get_register_field( self.cs, vtd + '_ECAP', ecap_reg, 'ECS' )
+        pasid      = chipsec.chipset.get_register_field( self.cs, vtd + '_ECAP', ecap_reg, 'PASID' )
+        logger().log( '[iommu] PASID / ECS            : %x / %x' % (pasid, ecs))
+
+        if 0xFFFFFFFFFFFFFFFF != rtaddr_reg:
+            if te:
+                logger().log( '[iommu] dumping VT-d page table hierarchy at 0x%016X (vtd_context_%08x)..' % (rtaddr_rta,rtaddr_rta) )
+                paging_vtd = chipsec.hal.paging.c_vtd_page_tables( self.cs )
+                paging_vtd.read_vtd_context('vtd_context_%08x' % rtaddr_rta, rtaddr_rta)
+                logger().log( '[iommu] total VTd domains: %d' % len(paging_vtd.domains))
+                for domain in paging_vtd.domains:
+                    paging_vtd.read_pt_and_show_status('vtd_%08x' % domain, 'VTd', domain)
+                    #if paging_vtd.failure: logger().error( "couldn't dump VT-d page tables" )    
+            else:
+                logger().log( "[iommu] translation via VT-d engine '%s' is not enabled" % iommu_engine )
+        else:
+            logger().error( "cannot access VT-d registers" )
+
 
     def dump_IOMMU_status( self, iommu_engine ):
         vtd = IOMMU_ENGINES[ iommu_engine ]

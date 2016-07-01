@@ -111,6 +111,8 @@ ACPI_TABLE_SIG_PCCT = 'PCCT'
 ACPI_TABLE_SIG_MSDM = 'MSDM'
 ACPI_TABLE_SIG_BATB = 'BATB'
 ACPI_TABLE_SIG_BGRT = 'BGRT'
+ACPI_TABLE_SIG_LPIT = 'LPIT'
+ACPI_TABLE_SIG_ASPT = 'ASPT'
 
 ACPI_TABLES = {
   ACPI_TABLE_SIG_ROOT: chipsec.hal.acpi_tables.ACPI_TABLE,
@@ -148,7 +150,9 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_PCCT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_MSDM: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_BATB: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_BGRT: chipsec.hal.acpi_tables.ACPI_TABLE
+  ACPI_TABLE_SIG_BGRT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_LPIT: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ASPT: chipsec.hal.acpi_tables.ACPI_TABLE
 }
 
 ########################################################################################################
@@ -239,7 +243,7 @@ class ACPI:
                 rsdp_pa = ebda_addr + pos
                 rsdp = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    logger().log( "[acpi] found RSDP in EBDA at: 0x%016X" % rsdp_pa )
+                    if logger().HAL: logger().log( "[acpi] found RSDP in EBDA at: 0x%016X" % rsdp_pa )
                 else:
                     rsdp_pa = None
         return rsdp, rsdp_pa
@@ -256,7 +260,7 @@ class ACPI:
             rsdp_pa  = 0xE0000 + pos
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
-                logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x%016X" % rsdp_pa )
+                if logger().HAL: logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x%016X" % rsdp_pa )
             else:
                 rsdp_pa = None
         return rsdp, rsdp_pa
@@ -272,14 +276,14 @@ class ACPI:
         if isFound:
             if RSDP_GUID_ACPI2_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI2_0 ]
-                logger().log( '[acpi] ACPI 2.0+ RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI2_0,rsdp_pa) )
+                if logger().HAL: logger().log( '[acpi] ACPI 2.0+ RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI2_0,rsdp_pa) )
             elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
-                logger().log( '[acpi] ACPI 1.0 RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI1_0,rsdp_pa) )
+                if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI1_0,rsdp_pa) )
 
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
-                logger().log( "[acpi] found RSDP in EFI Config Table: 0x%016X" % rsdp_pa )
+                if logger().HAL: logger().log( "[acpi] found RSDP in EFI Config Table: 0x%016X" % rsdp_pa )
             else:
                 rsdp_pa = None
         return rsdp, rsdp_pa
@@ -302,7 +306,7 @@ class ACPI:
                 if logger().VERBOSE: logger().log( "[acpi] found '%s' signature at 0x%016X. Checking if valid RSDP.." % (ACPI_RSDP_SIG,rsdp_pa) )
                 rsdp     = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    logger().log( "[acpi] found RSDP in EFI memory: 0x%016X" % rsdp_pa )
+                    if logger().HAL: logger().log( "[acpi] found RSDP in EFI memory: 0x%016X" % rsdp_pa )
                     break
             pa -= CHUNK_SZ
         return rsdp, rsdp_pa
@@ -322,7 +326,9 @@ class ACPI:
         if rsdp_pa is None:
             rsdp, rsdp_pa = self._find_RSDP_in_EFI()
 
-        if rsdp_pa is not None: logger().log( rsdp )
+        if rsdp_pa is not None:
+            if logger().HAL: logger().log( rsdp )
+
         return (rsdp_pa, rsdp)
 
     #
@@ -339,12 +345,12 @@ class ACPI:
                 is_xsdt = True
             else:
                 return (False,None,None,None)
-            logger().log( "[acpi] found %s at PA: 0x%016X" % ('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
+            if logger().HAL: logger().log( "[acpi] found %s at PA: 0x%016X" % ('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
             sdt_header_buf = self.cs.mem.read_physical_mem( sdt_pa, ACPI_TABLE_HEADER_SIZE )
             sdt_header     = self._parse_table_header( sdt_header_buf )
             sdt_buf        = self.cs.mem.read_physical_mem( sdt_pa, sdt_header.Length )
         else:
-            logger().log( "[acpi] reading RSDT/XSDT using OS API.." )
+            if logger().HAL: logger().log( "[acpi] reading RSDT/XSDT using OS API.." )
             (sdt_buf, is_xsdt) = self.cs.helper.get_ACPI_SDT()
             sdt_header = self._parse_table_header( sdt_buf[ :ACPI_TABLE_HEADER_SIZE] )
 

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -134,7 +134,7 @@ def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, pare
                     if efi_file != None:
                         os.rename(os.path.join(parent_path, efi_file), os.path.join(parent_path, ui_string))
                         efi_file = None
-            if (SecType in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE)):
+            if (SecType in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW)):
                 section_dir_path = "%s.dir" % section_path
                 os.makedirs( section_dir_path )
                 if   (SecType == EFI_SECTION_COMPRESSION):
@@ -161,7 +161,7 @@ def parse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, pare
                     #else:
                     #   write_file( os.path.join(section_dir_path, "%s-%04X" % (sguid, Attributes)), SecBody[DataOffset:] )
                     pass
-                elif (SecType == EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
+                elif (SecType == EFI_SECTION_FIRMWARE_VOLUME_IMAGE or SecType == EFI_SECTION_RAW):
                     parse_uefi_region(_uefi, SecBody[SecHeaderSize:], section_dir_path)
         sec_offset, next_sec_offset, SecName, SecType, SecBody, SecHeaderSize = NextFwFileSection(data, Size, next_sec_offset, polarity)
         secn = secn + 1

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -104,7 +104,7 @@ class iobar:
     # Read I/O register from I/O range defined by I/O BAR name
     #
     def read_IO_BAR_reg( self, bar_name, offset, size ):
-        if logger().VERBOSE: logger().log('[iobar] read %s + %u (%u)' % (bar_name, offset, size))
+        if logger().VERBOSE: logger().log('[iobar] read %s + 0x%X (%u)' % (bar_name, offset, size))
         (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
         io_port = bar_base + offset
         if offset > bar_size: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
@@ -117,7 +117,7 @@ class iobar:
     #
     def write_IO_BAR_reg( self, bar_name, offset, size, value ):
         (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
-        if logger().VERBOSE: logger().log( '[iobar] write IO reg 0x%X from %s (0x%X): 0x%X' % (bar_name,bar_base,offset,value) )
+        if logger().VERBOSE: logger().log( '[iobar] write %s + 0x%X (%u): 0x%X' % (bar_name,offset,size,value) )
         io_port = bar_base + offset
         if offset > bar_size: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
         return self.cs.io._write_port( io_port, value, size )

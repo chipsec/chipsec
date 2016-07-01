@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -23,32 +23,54 @@
 """
 .. note:: This module will attempt to modify the S3 Boot Script on the platform. Doing this could cause the platform to malfunction. Use with care!
 
+ Usage:
+    Replacing existing opcode:
+    chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,<reg_opcode>,<address>,<value>
+       <reg_opcode> = pci_wr|mmio_wr|io_wr|pci_rw|mmio_rw|io_rw
+    chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,mem[,<address>,<value>]
+    chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch
+    chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch_ep
+
+    Adding new opcode:
+    chipsec_main.py -m tools.uefi.s3script_modify -a add_op,<reg_opcode>,<address>,<value>,<width>
+       <reg_opcode> = pci_wr|mmio_wr|io_wr
+    chipsec_main.py -m tools.uefi.s3script_modify -a add_op,dispatch[,<entrypoint>]
+
  Examples:
-   ``chipsec_main.py -m tools.uefi.s3script_modify -a <reg_opcode>,<address>,<value>``
+   ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,<reg_opcode>,<address>,<value>``
        <reg_opcode> = pci_wr|mmio_wr|io_wr|pci_rw|mmio_rw|io_rw
        The option will look for a script opcode that writes to PCI config, MMIO or I/O
        registers and modify the opcode to write the given value to the register with
        the given address.
        After executing this, if the system is vulnerable to boot script modification, 
        the hardware configuration will have changed according to given <reg_opcode>.
-   ``chipsec_main.py -m tools.uefi.s3script_modify -a mem``
+   ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,mem``
        The option will look for a script opcode that writes to memory and
        modify the opcode to write the given value to the given address.
        By default this test will allocate memory and write write 0xB007B007 that location.
        After executing this, if the system is vulnerable to boot script modification, you 
        should find the given value in the allocated memory location.
-   ``chipsec_main.py -m tools.uefi.s3script_modify -a dispatch``
-       The modify_dispatch option will look for a dispatch opcode in the script and
+   ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch``
+       The option will look for a dispatch opcode in the script and
        modify the opcode to point to a different entry point. The new entry point will
        contain a HLT instruction. 
        After executing this, if the system is vulnerable to boot script modification, 
        the system should hang on resume from S3.
-   ``chipsec_main.py -m tools.uefi.s3script_modify -a dispatch_ep``
-       The modify_dispatch_ep option will look for a dispatch opcode in the script and
+   ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch_ep``
+       The option will look for a dispatch opcode in the script and
        will modify memory at the entry point for that opcode. The modified instructions 
        will contain a HLT instruction. 
        After executing this, if the system is vulnerable to dispatch opcode entry point 
        modification, the system should hang on resume from S3.
+
+   ``chipsec_main.py -m tools.uefi.s3script_modify -a add_op,<reg_opcode>,<address>,<value>,<width>``
+       <reg_opcode> = pci_wr|mmio_wr|io_wr
+       The option will add a new opcode which writes to PCI config, MMIO or I/O
+       registers with specified values.
+   ``chipsec_main.py -m tools.uefi.s3script_modify -a add_op,dispatch``
+       The option will add a new DISPATCH opcode to the script with entry point to 
+       either existing or newly allocated memory.
+
 """
 
 examples_str = """  Examples:

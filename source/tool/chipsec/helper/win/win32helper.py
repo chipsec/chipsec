@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -116,8 +116,6 @@ READ_PCI_CFG_REGISTER          = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x807, METHOD_BUF
 WRITE_PCI_CFG_REGISTER         = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x808, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_READ_PHYSMEM             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x809, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRITE_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80a, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
-IOCTL_ALLOC_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x812, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
-IOCTL_GET_PHYSADDR             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x815, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_LOAD_UCODE_PATCH         = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80b, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRMSR                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80c, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_RDMSR                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80d, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
@@ -125,9 +123,15 @@ IOCTL_READ_IO_PORT             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80e, METHOD_BUF
 IOCTL_WRITE_IO_PORT            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x80f, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_GET_CPU_DESCRIPTOR_TABLE = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x810, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_SWSMI                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x811, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_ALLOC_PHYSMEM            = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x812, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_CPUID                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x813, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_HYPERCALL                = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x814, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_GET_PHYSADDR             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x815, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_MAP_IO_SPACE             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x816, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_FREE_PHYSMEM             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x817, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x818, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_RDCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
 #
 # NT Errors
@@ -273,7 +277,7 @@ class Win32Helper(Helper):
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
-            self.NtEnumerateSystemEnvironmentValuesEx.restype = c_uint
+            self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
         except AttributeError, msg:
             logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
@@ -608,6 +612,41 @@ class Win32Helper(Helper):
         pa = struct.unpack( 'Q', out_buf )[0]
         return (pa,error_code)
 
+    #
+    # HYPERCALL
+    #
+    def hypercall( self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
+        if self.os_machine == 'AMD64':
+            arg_type = 'Q'
+            out_length = 8
+        else:
+            arg_type = 'D'
+            out_length = 4
+        out_buf = (c_char * out_length)()
+        in_buf  = struct.pack( '<11' + arg_type, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
+        out_buf = self._ioctl( IOCTL_HYPERCALL, in_buf, out_length )
+        return struct.unpack( '<' + arg_type, out_buf )[0]
+
+    #
+    # MAP_IO_SPACE
+    #
+    def map_io_space( self, physical_address, length, cache_type ):
+        out_length = 8
+        out_buf = (c_char * out_length)()
+        in_buf  = struct.pack( '<3Q', physical_address, length, cache_type )
+        out_buf = self._ioctl( IOCTL_MAP_IO_SPACE, in_buf, out_length )
+        virtual_address = struct.unpack( '<Q', out_buf )[0]
+        return virtual_address
+
+    #
+    # FREE_PHYS_MEM
+    #
+    def free_phys_mem( self, physical_address ):
+        out_length = 8
+        out_buf = (c_char * out_length)()
+        in_buf  = struct.pack( '<Q', physical_address )
+        out_buf = self._ioctl( IOCTL_FREE_PHYSMEM, in_buf, out_length )
+        return
 
     def read_msr( self, cpu_thread_id, msr_addr ):
         (eax,edx) = (0,0)
@@ -735,10 +774,10 @@ class Win32Helper(Helper):
         (status, data, attributes) = self.get_EFI_variable_full( name, guid, attrs )
         return data
 
-    def set_EFI_variable( self, name, guid, var, attrs=None ):
-        var_len = 0
-        if var is None: var = bytes(0)
-        else: var_len = len(var)
+    def set_EFI_variable( self, name, guid, data, datasize, attrs ):
+        var     = bytes(0) if data     is None else data
+        var_len = len(var) if datasize is None else datasize
+
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
                 if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
@@ -754,6 +793,9 @@ class Win32Helper(Helper):
             logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
+
+    def delete_EFI_variable(self, name, guid):
+        return self.set_EFI_variable( name, guid, None, datasize=0, attrs=None )
 
     def list_EFI_variables( self, infcls=2 ):
         if logger().VERBOSE: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
@@ -855,6 +897,22 @@ class Win32Helper(Helper):
         
         return tBuffer[:retVal], xsdt
 
+
+    #
+    # IOSF Message Bus access
+    #
+
+    def msgbus_send_read_message( self, mcr, mcrx ):
+        logger().error( "[helper] Message Bus is not supported yet" )
+        return None        
+
+    def msgbus_send_write_message( self, mcr, mcrx, mdr ):
+        logger().error( "[helper] Message Bus is not supported yet" )
+        return None        
+
+    def msgbus_send_message( self, mcr, mcrx, mdr=None ):
+        logger().error( "[helper] Message Bus is not supported yet" )
+        return None       
 
     #
     # File system

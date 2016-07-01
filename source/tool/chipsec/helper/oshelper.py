@@ -174,6 +174,10 @@ class OsHelper:
         return self.helper.alloc_phys_mem( length, (max_pa_hi<<32|max_pa_lo) )
     def va2pa( self, va ):
         return self.helper.va2pa( va )
+    def map_io_space(self, physical_address, length, cache_type):
+        return self.helper.map_io_space(physical_address, length, cache_type)
+    def free_physical_mem(self, physical_address):
+        return self.helper.free_phys_mem(physical_address)
 
     #
     # read/write mmio
@@ -244,8 +248,11 @@ class OsHelper:
     def get_EFI_variable( self, name, guid ):
         return self.helper.get_EFI_variable( name, guid )
 
-    def set_EFI_variable( self, name, guid, var, attrs=None ):
-        return self.helper.set_EFI_variable( name, guid, var, attrs )
+    def set_EFI_variable( self, name, guid, data, datasize=None, attrs=None ):
+        return self.helper.set_EFI_variable( name, guid, data, datasize, attrs )
+
+    def delete_EFI_variable( self, name, guid ):
+        return self.helper.delete_EFI_variable( name, guid )
 
     def list_EFI_variables( self ):
         return self.helper.list_EFI_variables()
@@ -260,17 +267,24 @@ class OsHelper:
         return self.helper.get_ACPI_table_list()
     
     #
-    # Hypervisor
-    #
-    def do_hypercall( self, vector, arg1=0, arg2=0, arg3=0, arg4=0, arg5=0, use_peach=0 ):
-        return self.helper.do_hypercall( vector, arg1, arg2, arg3, arg4, arg5, use_peach)
-
-    #
     # CPUID
     #
     def cpuid( self, eax, ecx ):
         return self.helper.cpuid( eax, ecx )
         
+    #
+    # IOSF Message Bus access
+    #
+
+    def msgbus_send_read_message( self, mcr, mcrx ):
+        return self.helper.msgbus_send_read_message( mcr, mcrx )
+
+    def msgbus_send_write_message( self, mcr, mcrx, mdr ):
+        return self.helper.msgbus_send_write_message( mcr, mcrx, mdr )
+
+    def msgbus_send_message( self, mcr, mcrx, mdr ):
+        return self.helper.msgbus_send_message( mcr, mcrx, mdr )
+
     #
     # Affinity
     #
@@ -291,6 +305,12 @@ class OsHelper:
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         return self.helper.send_sw_smi( cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+
+    #
+    # Hypercall
+    #
+    def hypercall( self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0 ):
+        return self.helper.hypercall( rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
 
     #
     # File system

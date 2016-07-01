@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -138,7 +138,8 @@ class s3bootscript(BaseModule):
         else:
             found,bootscript_PAs = self._uefi.find_s3_bootscript()
             if not found:
-                self.logger.log_good( "S3 Boot-Script wasn't found in EFI variables (BIOS may still be using some other mechanism to locate it)" )
+                self.logger.log_good( "Didn't find any S3 boot-scripts in EFI variables" )
+                self.logger.log_warn_check( "S3 Boot-Script was not found. Firmware may be using other ways to store/locate it" )
                 return ModuleResult.WARNING
 
             self.logger.log_important( 'Found %d S3 boot-script(s) in EFI variables' % len(bootscript_PAs) )
@@ -165,7 +166,7 @@ class s3bootscript(BaseModule):
         else:
             # BOOTSCRIPT_INSIDE_SMRAM
             status = ModuleResult.WARNING
-            self.logger.log( "S3 Boot-Script is inside SMRAM. The script is protected but Dispatch opcodes cannot be inspected" )
+            self.logger.log_warn_check( "S3 Boot-Script is inside SMRAM. The script is protected but Dispatch opcodes cannot be inspected" )
 
         self.logger.log_important( "Additional testing of the S3 boot-script can be done using tools.uefi.s3script_modify" )
 
@@ -183,14 +184,15 @@ class s3bootscript(BaseModule):
             script_pa = int(module_argv[0],16)
             self.logger.log( '[*] Using manually assigned S3 Boot-Script table base: 0x%016X' % script_pa )
         (self.smrambase, self.smramlimit, self.smramsize) = self.cs.cpu.get_SMRAM()
-        self.logger.log( '[*] SMRAM: Base = 0x%016X, Limit = 0x%016X, Size = 0x%08X' % (self.smrambase, self.smramlimit, self.smramsize) )
+        if self.smrambase is not None and self.smramlimit is not None:
+            self.logger.log( '[*] SMRAM: Base = 0x%016X, Limit = 0x%016X, Size = 0x%08X' % (self.smrambase, self.smramlimit, self.smramsize) )
 
         try:
             if script_pa is not None: return self.check_s3_bootscripts( script_pa )
             else:                     return self.check_s3_bootscripts( )
         except:
-            logger().error("The module was not able to recognize the S3 resume boot script on this platform.")
-            if logger().VERBOSE: raise
+            self.logger.error("The module was not able to recognize the S3 resume boot script on this platform.")
+            if self.logger.VERBOSE: raise
             return ModuleResult.ERROR
             
 

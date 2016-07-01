@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,6 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -33,14 +32,33 @@ Access to SMBus Controller
 """
 
 from chipsec.logger import *
-#from chipsec.cfg.common import *
 
 import chipsec.hal.iobar
+
+SMBUS_COMMAND_QUICK         = 0
+SMBUS_COMMAND_BYTE          = 1
+SMBUS_COMMAND_BYTE_DATA     = 2
+SMBUS_COMMAND_WORD_DATA     = 3
+SMBUS_COMMAND_PROCESS_CALL  = 4
+SMBUS_COMMAND_BLOCK         = 5
+SMBUS_COMMAND_I2C_READ      = 6
+SMBUS_COMMAND_BLOCK_PROCESS = 7
+
+SMBUS_POLL_COUNT = 1000
+
+SMBUS_COMMAND_WRITE = 0
+SMBUS_COMMAND_READ  = 1
 
 class SMBus:
     def __init__( self, cs ):
         self.cs = cs
         self.iobar = chipsec.hal.iobar.iobar( self.cs )
+        self.smb_reg_status  = 'SMBUS_HST_STS'
+        self.smb_reg_command = 'SMBUS_HST_CMD'
+        self.smb_reg_address = 'SMBUS_HST_SLVA'
+        self.smb_reg_control = 'SMBUS_HST_CNT'
+        self.smb_reg_data0   = 'SMBUS_HST_D0'
+        self.smb_reg_data1   = 'SMBUS_HST_D1'
 
     def get_SMBus_Base_Address( self ):
         if self.iobar.is_IO_BAR_defined( 'SMBUS_BASE' ):
@@ -66,7 +84,7 @@ class SMBus:
 
     def is_SMBus_supported( self ):
         (did,vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
-        if logger().VERBOSE: logger().log( "[*] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
+        if logger().VERBOSE: logger().log( "[smbus] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
         if (0x8086 == vid): return True
         else:
             logger().error( "Unknown SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
@@ -87,82 +105,120 @@ class SMBus:
         if 0 == (cmd & 0x1): chipsec.chipset.write_register( self.cs, 'SMBUS_CMD', (cmd|0x1) )
 
 
-    def _wait_for_cycle( self, smbus_io_base ):
-        # wait for cycle to complete
-        #while True:
-        for i in range(1000):
-            sts = self.cs.io.read_port_byte( smbus_io_base )
-            if   (sts & 0x02): break
-            elif (sts & 0x04): 
-                if logger().VERBOSE: logger().error( "SMBus cycle failed: Device error" )
-            elif (sts & 0x08):
-                if logger().VERBOSE: logger().error( "SMBus cycle failed: Bus Error" )
-            elif (sts & 0x10):
-                if logger().VERBOSE: logger().error( "SMBus cycle failed: Unknown Error" )
-        return ((sts & 0x02) > 0)
+    #
+    # SMBus commands
+    # 
 
-    def _read_byte( self, smbus_io_base, target_address, offset ):
-        self.cs.io.write_port_byte( smbus_io_base + 0x0, 0xFF )                   # Clear status bits
-        ##self.cs.io.write_port_byte( smbus_io_base + 0x1, 0x1F )
-        #for i in range(100):
-        #    self.cs.io.write_port_byte( smbus_io_base + 0x0, 0xFF )                   # Clear status bits
-        #    sts = self.cs.io.read_port_byte( smbus_io_base )
-        #    if (0 == (sts & 0x9F)): break
-        #if (sts & 0x9F):
-        #    logger().error( "SMBus is not ready for whatever reason" )
-        #    return 0xFF
+    # waits for SMBus to become ready
+    def _is_smbus_ready( self ):
+        for i in range(SMBUS_POLL_COUNT):
+            #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
+            busy = chipsec.chipset.read_register_field( self.cs, self.smb_reg_status, 'BUSY' )
+            if 0 == busy: return True
+        return (0 == busy)
 
-        self.cs.io.write_port_byte( smbus_io_base + 0x4, (target_address | 0x1) ) # Byte Read from SMBus device at target_address
-        self.cs.io.write_port_byte( smbus_io_base + 0x3, offset )                 # Byte offset
-        self.cs.io.write_port_byte( smbus_io_base + 0x2, 0x48 )                   # Send command
-        # wait for cycle to complete
-        if not self._wait_for_cycle( smbus_io_base ): return 0xFF
-        # read the data
-        value = self.cs.io.read_port_byte( smbus_io_base + 0x5 )
-        # Clear status bits
-        self.cs.io.write_port_byte( smbus_io_base + 0x0, 0xFF )
-        return value
-
-    def _write_byte( self, smbus_io_base, target_address, offset, value ):
-        self.cs.io.write_port_byte( smbus_io_base + 0x0, 0xFF )            # Clear status bits
-        self.cs.io.write_port_byte( smbus_io_base + 0x4, target_address )  # Byte Write to SMBus device at target_address
-        self.cs.io.write_port_byte( smbus_io_base + 0x3, offset )          # Byte offset
-        self.cs.io.write_port_byte( smbus_io_base + 0x5, value )           # Byte data to write
-        self.cs.io.write_port_byte( smbus_io_base + 0x2, 0x48 )            # Send command
-        # wait for cycle to complete
-        if not self._wait_for_cycle( smbus_io_base ): return False
-        # Clear status bits
-        self.cs.io.write_port_byte( smbus_io_base + 0x0, 0xFF )
-        return True
+    # waits for SMBus transaction to complete
+    def _wait_for_cycle( self ):
+        for i in range(SMBUS_POLL_COUNT):
+            #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
+            sts    = chipsec.chipset.read_register( self.cs, self.smb_reg_status )
+            busy   = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'BUSY' )
+            failed = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'FAILED' )
+            if 0 == busy:
+                #if logger().VERBOSE:
+                #    intr = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'INTR' )
+                #    logger().log( "[smbus]: INTR = %d" % intr )
+                break
+            elif 1 == failed:
+                #kill = 0
+                #if chipsec.chipset.register_has_field( self.cs, self.smb_reg_control, 'KILL' ):
+                #    kill = chipsec.chipset.read_register_field( self.cs, self.smb_reg_control, 'KILL' )
+                if logger().HAL: logger().error( "SMBus transaction failed (FAILED/ERROR bit = 1)" )
+                return False
+            else:
+                if chipsec.chipset.register_has_field( self.cs, self.smb_reg_status, 'DEV_ERR' ):
+                    if 1 == chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'DEV_ERR' ): 
+                        if logger().HAL: logger().error( "SMBus device error (invalid cmd, unclaimed cycle or time-out error)" )
+                        return False
+                if chipsec.chipset.register_has_field( self.cs, self.smb_reg_status, 'BUS_ERR' ):
+                    if 1 == chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'BUS_ERR' ):
+                        if logger().HAL: logger().error( "SMBus bus error" )
+                        return False
+        return (0 == busy)
 
     def read_byte( self, target_address, offset ):
-        smbus_io_base = self.get_SMBus_Base_Address()
-        value = self._read_byte( smbus_io_base, target_address, offset )
+        # clear status bits
+        chipsec.chipset.write_register( self.cs, self.smb_reg_status, 0xFF )
+
+        # SMBus txn RW direction = Read, SMBus slave address = target_address
+        hst_sa = 0x0
+        hst_sa = chipsec.chipset.set_register_field( self.cs, self.smb_reg_address, hst_sa, 'RW', SMBUS_COMMAND_READ )
+        hst_sa = chipsec.chipset.set_register_field( self.cs, self.smb_reg_address, hst_sa, 'Address', target_address, True )
+        chipsec.chipset.write_register( self.cs, self.smb_reg_address, hst_sa )
+        # command data = byte offset (bus txn address)
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_command, 'DataOffset', offset )
+        # command = Byte Data
+        #if chipsec.chipset.register_has_field( self.cs, self.smb_reg_control, 'SMB_CMD' ):
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_control, 'SMB_CMD', SMBUS_COMMAND_BYTE_DATA )
+        # send SMBus txn
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_control, 'START', 1 )
+
+        # wait for cycle to complete
+        if not self._wait_for_cycle(): return 0xFF
+        # read the data
+        value = chipsec.chipset.read_register_field( self.cs, self.smb_reg_data0, 'Data' )
+        # clear status bits
+        chipsec.chipset.write_register( self.cs, self.smb_reg_status, 0xFF )
+        # clear address/offset registers
+        #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
+        #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
         if logger().VERBOSE: logger().log( "[smbus] read device %X off %X = %X" % (target_address, offset, value) )
         return value
 
     def write_byte( self, target_address, offset, value ):
-        smbus_io_base = self.get_SMBus_Base_Address()
-        sts = self._write_byte( smbus_io_base, target_address, offset, value )
+        # clear status bits
+        chipsec.chipset.write_register( self.cs, self.smb_reg_status, 0xFF )
+
+        # SMBus txn RW direction = Write, SMBus slave address = target_address
+        hst_sa = 0x0
+        hst_sa = chipsec.chipset.set_register_field( self.cs, self.smb_reg_address, hst_sa, 'RW', SMBUS_COMMAND_WRITE )
+        hst_sa = chipsec.chipset.set_register_field( self.cs, self.smb_reg_address, hst_sa, 'Address', target_address, True )
+        chipsec.chipset.write_register( self.cs, self.smb_reg_address, hst_sa )
+        # command data = byte offset (bus txn address)
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_command, 'DataOffset', offset )
+        # write the data
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_data0, 'Data', value )
+        # command = Byte Data
+        #if chipsec.chipset.register_has_field( self.cs, self.smb_reg_control, 'SMB_CMD' ):
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_control, 'SMB_CMD', SMBUS_COMMAND_BYTE_DATA )
+        # send SMBus txn
+        chipsec.chipset.write_register_field( self.cs, self.smb_reg_control, 'START', 1 )
+
+        # wait for cycle to complete
+        if not self._wait_for_cycle(): return False
+        # clear status bits
+        chipsec.chipset.write_register( self.cs, self.smb_reg_status, 0xFF )
+        # clear address/offset registers
+        #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
+        #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
         if logger().VERBOSE: logger().log( "[smbus] write to device %X off %X = %X" % (target_address, offset, value) )
-        return sts
+        return True
+
 
     def read_range( self, target_address, start_offset, size ):
         buffer = [chr(0xFF)]*size
-        smbus_io_base = self.get_SMBus_Base_Address()
         for i in range (size):
-            buffer[i] = chr( self._read_byte( smbus_io_base, target_address, start_offset + i ) )
-        if logger().VERBOSE:
-            logger().log( "[smbus] read device %X from offset %X size %X:" % (target_address, start_offset, size) )
-            print_buffer( buffer )
+            buffer[i] = chr( self.read_byte( target_address, start_offset + i ) )
+        if logger().HAL:
+            logger().log( "[smbus] reading %u bytes from device 0x%X at offset %X" % (size, target_address, start_offset) )
+            #print_buffer( buffer )
         return buffer
 
     def write_range( self, target_address, start_offset, buffer ):
         size = len(buffer)
-        smbus_io_base = self.get_SMBus_Base_Address()
         for i in range(size):
-            self._write_byte( smbus_io_base, target_address, start_offset + i, ord(buffer[i]) )
-        if logger().VERBOSE:
-            logger().log( "[smbus] write device %X to offset %X size %X:" % (target_address, start_offset, size) )
-            print_buffer( buffer )
+            self.write_byte( target_address, start_offset + i, ord(buffer[i]) )
+        if logger().HAL:
+            logger().log( "[smbus] writing %u bytes to device 0x%X at offset %X" % (size, target_address, start_offset) )
+            #print_buffer( buffer )
         return True

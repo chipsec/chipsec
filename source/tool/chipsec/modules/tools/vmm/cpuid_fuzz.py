@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -74,12 +74,12 @@ class cpuid_fuzz (BaseModule):
                 self.logger.log( "[*] CPUID EAX: 0x%08X" % eax )
                 if _FUZZ_ECX_RANDOM:
                     ecx = random.randint( 0, 0xFFFFFFFF )
-                    (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpuid.cpuid( eax, ecx )
+                    (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid( eax, ecx )
                 else:
                     for ecx in range( _MAX_ECX ):
                         logger.log( "  > ECX: 0x%08X" % ecx )
                         if _FLUSH_LOG_EACH_ITER: self.logger.flush()
-                        (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpuid.cpuid( eax, ecx )
+                        (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid( eax, ecx )
                         if _LOG_OUT_RESULTS: logger.log( "    Out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (r_eax,r_ebx,r_ecx,r_edx) )
             it += 1
         return True

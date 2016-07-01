@@ -223,22 +223,19 @@ class EfiHelper(Helper):
         (status, data, attrs) = self.get_EFI_variable_full(name, guidstr)
         return data
         
-    def set_EFI_variable(self, name, guidstr, data, attrs=0x7):
+    def set_EFI_variable(self, name, guidstr, data, datasize=None, attrs=0x7):
         
         guid = uuid.UUID(guidstr)
         
-        if not attrs: attrs = int(7)        
-        if not data: 
-            size = 0
-            data = '\0'*4
-        else: size = len(data)
+        if data     is None: data = '\0'*4
+        if datasize is None: datasize = len(data)
 
-        (Status, DataSize, guidbytes) = edk2.SetVariable(unicode(name),  guid.bytes, int(attrs), data, size)
+        (Status, datasize, guidbytes) = edk2.SetVariable(unicode(name), guid.bytes, int(attrs), data, datasize)
         
         return Status
         
     def delete_EFI_variable(self, name, guid):
-        return self.set_EFI_variable(name, guid, "")
+        return self.set_EFI_variable(name, guid, None, 0)
     
     def list_EFI_variables(self):   
                 
@@ -290,6 +287,23 @@ class EfiHelper(Helper):
         logger().error( "[efi] ACPI is not supported yet" )
         return 0        
 
+    #
+    # IOSF Message Bus access
+    #
+
+    def msgbus_send_read_message( self, mcr, mcrx ):
+        logger().error( "[efi] Message Bus is not supported yet" )
+        return None        
+
+    def msgbus_send_write_message( self, mcr, mcrx, mdr ):
+        logger().error( "[efi] Message Bus is not supported yet" )
+        return None        
+
+    def msgbus_send_message( self, mcr, mcrx, mdr=None ):
+        logger().error( "[efi] Message Bus is not supported yet" )
+        return None        
+
+
     def get_threads_count ( self ):
         logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
@@ -302,8 +316,8 @@ class EfiHelper(Helper):
     def alloc_phys_mem( self, length, max_pa ):
         # temporary WA using malloc
         va = edk2.allocphysmem(length, max_pa)
-        pa = self.va2pa(va[0])
-        return (va[0], pa)
+        pa = self.va2pa(va)
+        return (va, pa)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
         logger().log_warning("EFI helper has not implemented get_descriptor_table yet")

@@ -83,7 +83,7 @@ class remap(BaseModule):
         self.logger.log( "[*]   Top Of Upper Memory: 0x%016X" % touud )
         self.logger.log( "[*]   Remap Limit Address: 0x%016X" % (remaplimit|0xFFFFF) )
         self.logger.log( "[*]   Remap Base Address : 0x%016X" % remapbase )
-        self.logger.log( "[*]   4GB                : 0x%016X" % self.cs.Cfg.BIT32 )
+        self.logger.log( "[*]   4GB                : 0x%016X" % chipsec.defines.BIT32 )
         self.logger.log( "[*]   Top Of Low Memory  : 0x%016X" % tolud )
         self.logger.log( "[*]   TSEG (SMRAM) Base  : 0x%016X\n" % tsegmb )
 
@@ -100,10 +100,10 @@ class remap(BaseModule):
             if ok: self.logger.log_good( "  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD" )
             else:  self.logger.log_bad( "  Remap window configuration is not correct" )
 
-        ok = (0 == tolud & self.cs.Cfg.ALIGNED_1MB)     and \
-             (0 == touud & self.cs.Cfg.ALIGNED_1MB)     and \
-             (0 == remapbase & self.cs.Cfg.ALIGNED_1MB) and \
-             (0 == remaplimit & self.cs.Cfg.ALIGNED_1MB)
+        ok = (0 == tolud & chipsec.defines.ALIGNED_1MB)     and \
+             (0 == touud & chipsec.defines.ALIGNED_1MB)     and \
+             (0 == remapbase & chipsec.defines.ALIGNED_1MB) and \
+             (0 == remaplimit & chipsec.defines.ALIGNED_1MB)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good( "  All addresses are 1MB aligned" )
         else:  self.logger.log_bad( "  Not all addresses are 1MB aligned" )

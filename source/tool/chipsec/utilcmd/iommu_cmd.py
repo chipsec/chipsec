@@ -45,6 +45,7 @@ class IOMMUCommand(BaseCommand):
     >>> chipsec_util iommu config [iommu_engine]
     >>> chipsec_util iommu status [iommu_engine]
     >>> chipsec_util iommu enable|disable <iommu_engine>
+    >>> chipsec_util iommu pt
 
     Examples:
 
@@ -52,6 +53,7 @@ class IOMMUCommand(BaseCommand):
     >>> chipsec_util iommu config VTD
     >>> chipsec_util iommu status GFXVTD
     >>> chipsec_util iommu enable VTD
+    >>> chipsec_util iommu pt
     """
 
     def requires_driver(self):
@@ -102,6 +104,7 @@ class IOMMUCommand(BaseCommand):
 
             for e in _iommu_engines:
                if   'config'  == op: _iommu.dump_IOMMU_configuration( e )
+               elif 'pt'      == op: _iommu.dump_IOMMU_page_tables( e )
                elif 'status'  == op: _iommu.dump_IOMMU_status( e )
                elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
                elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )

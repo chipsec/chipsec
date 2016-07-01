@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -44,11 +44,10 @@ usage:
     If you want to change logic to read SPI Flash in 4 byte chunks:
     SPI_READ_WRITE_MAX_DBC = 4
 
-    SPI write cycles operate on 4 byte chunks (not optimized yet)
+    @TBD: SPI write cycles operate on 4 byte chunks (not optimized yet)
 
-    Approximate performance (on 2 core HT Sandy Bridge CPU 2.6GHz):
-    SPI read:  ~25 sec per 1MB (DBC=64)
-    SPI write: ~140 sec per 1MB (DBC=4)
+    Approximate performance (on 2-core SMT Intel Core i5-4300U (Haswell) CPU 1.9GHz):
+    SPI read: ~7 sec per 1MB (with DBC=64)
 """
 
 __version__ = '1.0'
@@ -57,6 +56,7 @@ import struct
 import sys
 import time
 
+import chipsec.defines
 import chipsec.chipset
 from chipsec.file import *
 from chipsec.hal.hal_base import HALBase
@@ -309,7 +309,7 @@ class SPI:
         logger().log( "BFPREG = %08X:" % bfpreg )
         logger().log( "  Base  : %08X" % ((bfpreg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << 12) )
         logger().log( "  Limit : %08X" % ((bfpreg & Cfg.PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4) )
-        logger().log( "  Shadowed BIOS Select: %d" % ((bfpreg & Cfg.BIT31)>>31) )
+        logger().log( "  Shadowed BIOS Select: %d" % ((bfpreg & chipsec.defines.BIT31)>>31) )
 
 
     def display_SPI_Ranges_Access_Permissions( self ):
@@ -386,74 +386,29 @@ class SPI:
         if logger().VERBOSE: self.display_BIOS_write_protection()
         ble    = chipsec.chipset.get_control( self.cs, 'BiosLockEnable' )
         bioswe = chipsec.chipset.get_control( self.cs, 'BiosWriteEnable' )
-        if ble and (not bioswe):
-            if logger().HAL: logger().log( "[spi] BIOS write protection is enabled" )
-            return False
-        elif bioswe:
-            if logger().HAL: logger().log( "[spi] BIOS write protection is not enabled" )
-            return True
-        else:
-            if logger().HAL: logger().log( "[spi] BIOS write protection is enabled but not locked. Disabling.." )
+        smmbwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
 
-        # @TODO: hack - update to use write_register_field
-        reg_value = chipsec.chipset.read_register( self.cs, 'BC' )
-        reg_value |= 0x1
-        chipsec.chipset.write_register( self.cs, 'BC', reg_value )
+        if smmbwp == 1:
+            if logger().HAL: logger().log( "[spi] SMM BIOS write protection (SmmBiosWriteProtection) is enabled" )
+
+        if bioswe == 1:
+            if logger().HAL: logger().log( "[spi] BIOS write protection (BiosWriteEnable) is not enabled" )
+            return True
+        elif ble == 0:
+            if logger().HAL: logger().log( "[spi] BIOS write protection is enabled but not locked. Disabling.." )
+        else: # bioswe == 0 and ble == 1
+            if logger().HAL: logger().log( "[spi] BIOS write protection is enabled. Attempting to disable.." )
+
+        # Set BiosWriteEnable control bit
+        chipsec.chipset.set_control( self.cs, 'BiosWriteEnable', 1 )
 
         # read BiosWriteEnable back to check if BIOS writes are enabled
         bioswe = chipsec.chipset.get_control( self.cs, 'BiosWriteEnable' )
+
         if logger().VERBOSE: self.display_BIOS_write_protection()
-        if logger().HAL: logger().log_important( "BIOS write protection is %s" % ('disabled' if bioswe else 'still enabled') )
-        return bioswe
+        if logger().HAL: logger().log_important( "BIOS write protection is %s (BiosWriteEnable = %d)" % ('disabled' if bioswe else 'still enabled', bioswe) )
 
-
-    """
-    def get_BIOS_Control_fallback( self ):
-        #
-        # BIOS Control (BC) 0:31:0 PCIe CFG register
-        #
-        reg_value = self.cs.pci.read_byte( 0, 31, 0, Cfg.LPC_BC_REG_OFF )
-        BcRegister = Cfg.LPC_BC_REG( reg_value, (reg_value>>5)&0x1, (reg_value>>4)&0x1, (reg_value>>2)&0x3, (reg_value>>1)&0x1, reg_value&0x1 )
-        return (BcRegister, reg_value)
-
-    def get_BIOS_Control( self ):
-        if chipsec.chipset.is_register_defined( self.cs, 'BC' ):
-            reg_value = chipsec.chipset.read_register( self.cs, 'BC' )
-            
-            BcRegister = Cfg.LPC_BC_REG( reg_value, \
-                chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP'), \
-                chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'TSS'), \
-                chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SRC'), \
-                chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE'), \
-                chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE') )
-            return (BcRegister, reg_value)
-        else:
-            if logger().HAL: logger().error( "Could not locate the definition of 'BIOS Control' register. Using hardcoded location (results may be incorrect).." )
-            return self.get_BIOS_Control_fallback()
-
-    def disable_BIOS_write_protection_OLD( self ):
-        (BcRegister, reg_value) = self.get_BIOS_Control()
-        if logger().VERBOSE: logger().log( BcRegister )
-
-        if BcRegister.BLE and (not BcRegister.BIOSWE):
-            logger().log( "[spi] BIOS write protection enabled" )
-            return False
-        elif BcRegister.BIOSWE:
-            logger().log( "[spi] BIOS write protection not enabled" )
-            return True
-        else:
-            logger().log( "[spi] BIOS write protection enabled but not locked. Disabling.." )
-
-        reg_value |= 0x1
-        chipsec.chipset.write_register( self.cs, 'BC', reg_value )
-        (BcRegister, reg_value) = self.get_BIOS_Control()
-        if logger().VERBOSE: logger().log( BcRegister )
-        if BcRegister.BIOSWE:
-            logger().log_important( "BIOS write protection is disabled" )
-            return True
-        else:
-            return False
-    """
+        return (bioswe==1)
 
 
     ##############################################################################################################
@@ -552,7 +507,7 @@ class SPI:
 
         n = data_byte_count / dbc
         r = data_byte_count % dbc
-        if logger().UTIL_TRACE or logger().VERBOSE:
+        if logger().UTIL_TRACE or logger().DEBUG:
             logger().log( "[spi] reading 0x%x bytes from SPI at FLA = 0x%X (in %d 0x%x-byte chunks + 0x%x-byte remainder)" % (data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
@@ -561,7 +516,7 @@ class SPI:
             return None
 
         for i in range(n):
-            if logger().UTIL_TRACE or logger().VERBOSE:
+            if logger().DEBUG:
                 logger().log( "[spi] reading chunk %d of 0x%x bytes from 0x%X" % (i, dbc, spi_fla + i*dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, dbc-1, spi_fla + i*dbc ):
                 logger().error( "SPI flash read failed" )
@@ -573,7 +528,7 @@ class SPI:
                     buf += [ chr((dword_value>>(8*j))&0xff) for j in range(4) ]
                     #buf += tuple( struct.pack("I", dword_value) )
         if (0 != r):
-            if logger().UTIL_TRACE or logger().VERBOSE:
+            if logger().DEBUG:
                 logger().log( "[spi] reading remaining 0x%x bytes from 0x%X" % (r, spi_fla + n*dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, r-1, spi_fla + n*dbc ):
                 logger().error( "SPI flash read failed" )
