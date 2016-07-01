@@ -494,7 +494,7 @@ NVRAM: EFI Variable Store
         (smram_base,smram_limit,smram_size) = self.cs.cpu.get_SMRAM()
         CHUNK_SZ = 1024*1024 # 1MB
         if logger().HAL: logger().log( "[uefi] searching memory for EFI table with signature '%s' .." % table_sig )
-        table,table_buf = None,None
+        table_pa,table_header,table,table_buf = None,None,None,None
         pa = smram_base - CHUNK_SZ
         isFound = False
         while pa > CHUNK_SZ:
@@ -503,7 +503,7 @@ NVRAM: EFI Variable Store
             pos = membuf.find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
-                if logger().VERBOSE: logger().log( '[uefi] found EFI table signature at 0x%016X..' % table_pa )
+                if logger().VERBOSE: logger().log( "[uefi] found '%s' at 0x%016X.." % (table_sig,table_pa) )
                 if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE):
                     hdr = membuf[ pos : pos + EFI_TABLE_HEADER_SIZE ]
                 else:
@@ -515,7 +515,7 @@ NVRAM: EFI Variable Store
                    table_header.Revision not in EFI_REVISIONS or \
                    table_header.HeaderSize > MAX_EFI_TABLE_SIZE:
                     if logger().VERBOSE:
-                        logger().log( "[uefi] Found '%s' at 0x%016X but doesn't look like an actual table. keep searching.." % (table_sig,table_pa) )
+                        logger().log( "[uefi] found '%s' at 0x%016X but doesn't look like an actual table. keep searching.." % (table_sig,table_pa) )
                         logger().log( table_header )
                 else:
                     isFound = True
