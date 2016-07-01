@@ -134,16 +134,16 @@ class Pci:
        	pci_devices = self.enumerate_devices()
         xrom_devices = [] #will be filled with tuples of: VID, DID, and XROM_BAR for the XROM that is found
         for device in pci_devices:
-                #read at an offset of 0x30 (the location of the XROM BAR
-                xrom_bar = self.read_dword(device[0], device[1], device[2], 0x30)
-                if logger().HAL: logger().log("BAR at B,D,F of %d, %d, %d:   0x%08x" % (device[0], device[1], device[2], xrom_bar))
-		#use the logging below if you want to read the contents of the place where the XROM's are mapped
-                #mem_addr = xrom_bar & 0xFFFFFFF0
-                #logger().log("Memory contents at address 0x%08x: 0x%08x" % (mem_addr, self.cs.mem.read_physical_mem_dword(mem_addr)))
-                if((xrom_bar & 0x00000001) == 0x01): #if the LSB is 1
-                        if logger().HAL: logger().log("PCI XROM found")
-                        xrom_devices.append(device.vid, device.did, xrom_bar)
-	logger().log("\n%d total XROM's found. You can modify hal/pci.py to print the contents of the XROM(s) if any were found.\n" % len(xrom_devices))
+            #read at an offset of 0x30 (the location of the XROM BAR
+            xrom_bar = self.read_dword(device[0], device[1], device[2], 0x30)
+            if logger().HAL: logger().log("BAR at B,D,F of %d, %d, %d:   0x%08x" % (device[0], device[1], device[2], xrom_bar))
+	    #use the logging below if you want to read the contents of the place where the XROM's are mapped
+            #mem_addr = xrom_bar & 0xFFFFFFF0
+            #logger().log("Memory contents at address 0x%08x: 0x%08x" % (mem_addr, self.cs.mem.read_physical_mem_dword(mem_addr)))
+            if((xrom_bar & 0x00000001) == 0x01): #if the LSB is 1
+                if logger().HAL: logger().log("PCI XROM found")
+                xrom_devices.append(device.vid, device.did, xrom_bar)
+	logger().log("%d total XROM's found. You can modify hal/pci.py to print the contents of the XROM(s) if any were found." % len(xrom_devices))
         return xrom_devices
 
     #

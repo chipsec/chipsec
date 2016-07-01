@@ -70,8 +70,8 @@ def pci(argv):
 
     if ( 'xrom_enumerate' == op ):
         logger().log( "[CHIPSEC] Enumerating PCIe device XROM's..." )
-	pci = Pci(chipsec_util._cs)
-        pci.enumerate_xroms()
+        pci = Pci(chipsec_util._cs)
+	pci.enumerate_xroms()
         logger().log( "[CHIPSEC] (pci) time elapsed %.3f" % (time.time()-t) )
         return
 
