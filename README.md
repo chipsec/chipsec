@@ -15,6 +15,49 @@ Announcements
 
 June 2016: Version 1.2.3 released! 
 
+This version includes the following new or updated modules:
+
+1. tools.vmm.vbox_crash_apicbase -- test for CVE-2015-0377
+2. udated common.bios_ts, common.uefi.s3bootscript, remap
+3. added template config file smm_config.ini for tools.smm.smm_ptr SMI fuzzer
+4. added template config file te.cfg for tools.secureboot.te tool
+
+This version includes the following new functionality:
+
+1. Added basic TPM access and TPM 1.2 support
+   * hal/tpm.py and hal/tpm12_commands.py HAL components
+2. Added basic Embedded Controller (EC) support
+   * hal/ec.py HAL component and ``chipsec_util ec`` util
+3. Added processing of x86 paging hierarchy
+   * hal/paging.py and hal/cpu.py HAL components and ``chipsec_util cpu pt`` util 
+4. Added processing of Second Level Address Translation paging hierarchy (EPT)
+   * hal/vmm.py HAL component and ``chipsec_util vmm pt`` util 
+5. Added processing of IOMMU (VT-d) paging hierarchy
+   * hal/iommu.py HAL component and ``chipsec_util iommu pt`` util 
+6. Basic support for hypervisor hypercall interfaces
+   * hal/vmm.py HAL component and ``chipsec_util vmm hypercall`` util
+7. Added message bus interface for Atom SoC (Linux)
+   * hal/msgbus.py HAL component and ``chipsec_util msgbus`` util
+8. CPUID functionality moved from hal/cpuid.py to hal/cpu.py HAL component
+   * Use ``chipsec_util cpu cpuid`` util
+9. Added parsing of RAW images in UEFI firmware volumes
+10. Updated smbus and SPD HAL components to use XML config
+11. Added qrk.xml configuration file for Quark CPUs, updated configuration for Haswell Server (hsx.xml)
+
+This version includes the following fixes:
+
+1. Fixed location of MMCFG in server platforms. Results from prior versions may need to be recollected on server platforms.
+
+This version has the following known issues/litimations:
+
+1. Decompression of images in SPI flash parsing is not available in UEFI shell.
+2. UEFI shell environment does not support ``get_thread_count``. There are functions that simply warn that they are not supported.
+3. Size of MMCFG (PCIEXBAR) is calculated incorrectly
+4. ``chipsec_util mmcfg`` and calculation of MMCFG (ECBASE) does not work on Atom SoCs
+5. Atom SoC message bus interface is not implemented on Windows and in UEFI shell
+6. Hypercall support is not implemented on Linux and UEFI shell
+
+
 
 Oct 2015: Version 1.2.2 released! 
 
