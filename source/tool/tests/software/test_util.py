@@ -212,6 +212,5 @@ class TestChipsecUtil(unittest.TestCase):
         fileno, rom_file = tempfile.mkstemp()
         os.close(fileno)
         self._chipsec_util("spi dump %s" % rom_file, mock_helper.SPIHelper)
-        self.assertIn("Dumping 0x00003000 bytes", self.log)
         self.assertEqual(os.stat(rom_file).st_size, 0x3000)
         os.remove(rom_file)
