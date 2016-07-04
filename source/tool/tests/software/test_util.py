@@ -56,85 +56,38 @@ class TestChipsecUtil(unittest.TestCase):
 
     def test_acpi_xsdt_list(self):
 
-        class ACPIHelper(mock_helper.TestHelper):
+        class ACPIHelper(mock_helper.ACPIHelper):
 
-            RSDP_DESCRIPTOR = ("RSD PTR " +               # Signature
-                               struct.pack("<B", 0x1) +   # Checksum
-                               "TEST00" +                 # OEMID
-                               struct.pack("<B", 0x2) +   # Revision
-                               struct.pack("<I", 0x200) + # RSDT Address
-                               struct.pack("<I", 0x0) +   # Length
-                               struct.pack("<Q", 0x100) + # XSDT Address
-                               struct.pack("<B", 0x0) +   # Extended Checksum
-                               "AAA")                     # Reserved
+            USE_RSDP_REV_0 = False
 
-            XSDT_DESCRIPTOR = ("XSDT" +                  # Signature
-                               struct.pack("<I", 0x32) + # Length
-                               struct.pack("<B", 0x1) +  # Revision
-                               struct.pack("<B", 0x1) +  # Checksum
-                               "OEMIDT" +                # OEMID
-                               "OEMTBLID" +              # OEM Table ID
-                               "OEMR" +                  # OEM Revision
-                               "CRID" +                  # Creator ID
-                               "CRRV" +                  # Creator Revision
-                               struct.pack("<Q", 0x400)) # Address of table
-
-            EBDA_ADDRESS = 0x96000
-            EBDA_PADDING = 0x100
-            RSDP_ADDRESS = EBDA_ADDRESS + EBDA_PADDING
+            XSDT_ENTRIES = [0x400]
 
             def read_phys_mem(self, pa_hi, pa_lo, length):
-                if pa_lo == 0x40E:
-                    return struct.pack("<H", self.EBDA_ADDRESS >> 4)
-                elif pa_lo >= self.EBDA_ADDRESS and \
-                     pa_lo < self.RSDP_ADDRESS + len(self.RSDP_DESCRIPTOR):
-                    mem = "\x00" * self.EBDA_PADDING + self.RSDP_DESCRIPTOR
-                    offset = pa_lo - self.EBDA_ADDRESS
-                    return mem[offset:offset+length]
-                elif pa_lo == 0x100:
-                    return self.XSDT_DESCRIPTOR[:length]
-                elif pa_lo == 0x400:
+                if pa_lo == 0x400:
                     return "EFGH"
+                else:
+                    return super(ACPIHelper, self).read_phys_mem(pa_hi, pa_lo, length)
 
         self._chipsec_util("acpi list", ACPIHelper)
         self.assertIn("EFGH: 0x0000000000000400", self.log)
 
     def test_acpi_rsdt_list(self):
 
-        class ACPIHelper(mock_helper.TestHelper):
+        class ACPIHelper(mock_helper.ACPIHelper):
 
-            RSDP_DESCRIPTOR = ("RSD PTR " +               # Signature
-                               struct.pack("<B", 0x1) +   # Checksum
-                               "TEST00" +                 # OEMID
-                               struct.pack("<B", 0x0) +   # Revision
-                               struct.pack("<I", 0x200))  # RSDT Address
-
-            RSDT_DESCRIPTOR = ("RSDT" +                  # Signature
-                               struct.pack("<I", 0x28) + # Length
-                               struct.pack("<B", 0x1) +  # Revision
-                               struct.pack("<B", 0x1) +  # Checksum
-                               "OEMIDT" +                # OEMID
-                               "OEMTBLID" +              # OEM Table ID
-                               "OEMR" +                  # OEM Revision
-                               "CRID" +                  # Creator ID
-                               "CRRV" +                  # Creator Revision
-                               struct.pack("<I", 0x300)) # Address of table
-
-            EBDA_ADDRESS = 0x99000
+            RSDT_ENTRIES = [0x300]
 
             def read_phys_mem(self, pa_hi, pa_lo, length):
-                if pa_lo == 0x40E:
-                    return struct.pack("<H", self.EBDA_ADDRESS >> 4)
-                elif pa_lo >= self.EBDA_ADDRESS and pa_lo < 0xA0000:
+                if pa_lo >= self.EBDA_ADDRESS and \
+                    pa_lo < self.RSDP_ADDRESS + len(self.RSDP_DESCRIPTOR):
+                    # Simulate a condition where there is no RSDP in EBDA
                     return "\xFF" * length
                 elif pa_lo == 0xE0000:
                     return self.RSDP_DESCRIPTOR[:length]
-                elif pa_lo == 0x200:
-                    return self.RSDT_DESCRIPTOR[:length]
                 elif pa_lo == 0x300:
                     return "ABCD"
                 else:
-                    return "\xFF" * length
+                    return super(ACPIHelper, self).read_phys_mem(pa_hi, pa_lo, length)
 
         self._chipsec_util("acpi list", ACPIHelper)
         self.assertIn("ABCD: 0x0000000000000300", self.log)
