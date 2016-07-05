@@ -33,7 +33,7 @@ import platform
 tool_dir = os.path.dirname(os.path.abspath(__file__))
 
 package_data = { "chipsec.cfg": ["*.xml", "*.xsd"],
-                 ".": ["VERSION"]
+                 "chipsec": ["VERSION"]
                }
 
 if platform.system().lower() == "windows":
@@ -49,10 +49,10 @@ if platform.system().lower() == "windows":
 
 if platform.system().lower() == "linux":
     data_files = []
-    extensions = [ Extension('cores', sources=['chipsec/helper/linux/cores.c']) ]
+    extensions = [ Extension('chipsec.helper.linux.cores', sources=['chipsec/helper/linux/cores.c']) ]
 
 version      = ""
-VERSION_FILE = os.path.join( os.path.dirname( __file__ ),'VERSION' )
+VERSION_FILE = os.path.join(os.path.dirname(__file__), 'chipsec', 'VERSION')
 if os.path.exists( VERSION_FILE ):
     with open(VERSION_FILE, "r") as verFile:
         version = "." + verFile.read()
@@ -61,15 +61,14 @@ build_dir = os.path.join(tool_dir, "build")
 if os.path.exists( build_dir ):
     dir_util.remove_tree( build_dir )
 
-mypackages = ['.']
-for current, dirs, files in os.walk(tool_dir ):
+#TODO: Replace with setuptools find_packages()
+mypackages = []
+for current, dirs, files in os.walk(tool_dir):
     for file in files:
         if file == "__init__.py":
             pkg = current.replace(tool_dir+os.path.sep,"")
             pkg = pkg.replace(os.path.sep,'.')
             mypackages.append(pkg)
-
-#print mypackages
 
 
 setup(
@@ -81,6 +80,7 @@ setup(
         url             = 'https://github.com/chipsec/chipsec',
 
         data_files      = data_files,
+        scripts         = ['chipsec_main.py', 'chipsec_util.py'],
         packages        = mypackages,
         package_data    = package_data,
         ext_modules     = extensions
