@@ -51,23 +51,23 @@ module_param(a1,ulong,0); //a1 is addr of page_is_ram function
 const char program_name[] = "chipsec";
 
 typedef struct tagCONTEXT {
-   unsigned int a;   // rax - 0x00; eax - 0x0
-   unsigned int b;   // rbx - 0x08; ebx - 0x4
-   unsigned int c;   // rcx - 0x10; ecx - 0x8
-   unsigned int d;   // rdx - 0x18; edx - 0xc
+   unsigned long a;   // rax - 0x00; eax - 0x0
+   unsigned long b;   // rbx - 0x08; ebx - 0x4
+   unsigned long c;   // rcx - 0x10; ecx - 0x8
+   unsigned long d;   // rdx - 0x18; edx - 0xc
 } CONTEXT, *PCONTEXT;
 typedef CONTEXT CPUID_CTX, *PCPUID_CTX;
 
   void __cpuid__(CPUID_CTX * ctx);
 
 typedef struct tagSMI_CONTEXT {
-   unsigned int c;     // rcx - 0x00;
-   unsigned int d;     // rdx - 0x08;
-   unsigned int r8;     // r8 - 0x10;
-   unsigned int r9;     // r9 - 0x18;
-   unsigned int r10;   // r10 - 0x20;
-   unsigned int r11;   // r11 - 0x28;
-   unsigned int r12;   // r12 - 0x30;
+   unsigned long c;     // rcx - 0x00;
+   unsigned long d;     // rdx - 0x08;
+   unsigned long r8;     // r8 - 0x10;
+   unsigned long r9;     // r9 - 0x18;
+   unsigned long r10;   // r10 - 0x20;
+   unsigned long r11;   // r11 - 0x28;
+   unsigned long r12;   // r12 - 0x30;
 } SMI_CONTEXT, *SMI_PCONTEXT;
 
 typedef SMI_CONTEXT SMI_CTX, *PSMI_CTX; 
@@ -158,20 +158,20 @@ typedef SMI_CONTEXT SMI_CTX, *PSMI_CTX;
     unsigned short	cfg_data_port    // rsi
     );
 
-    unsigned int ReadCR0(void);
-    unsigned int ReadCR2(void);
-    unsigned int ReadCR3(void);
-    unsigned int ReadCR4(void);
+    unsigned long ReadCR0(void);
+    unsigned long ReadCR2(void);
+    unsigned long ReadCR3(void);
+    unsigned long ReadCR4(void);
 #ifdef __x86_64__
-    unsigned int ReadCR8(void);
+    unsigned long ReadCR8(void);
 #endif
 
-    void WriteCR0( unsigned int );
-    void WriteCR2( unsigned int );
-    void WriteCR3( unsigned int );
-    void WriteCR4( unsigned int );
+    void WriteCR0( unsigned long );
+    void WriteCR2( unsigned long );
+    void WriteCR3( unsigned long );
+    void WriteCR4( unsigned long );
 #ifdef __x86_64__
-    void WriteCR8( unsigned int );
+    void WriteCR8( unsigned long );
 #endif
 
     void __cpuid__(CPUID_CTX * ctx);
@@ -576,16 +576,16 @@ void * patch_bios_sign(void * ucode_buf)
 
 void * patch_cpuid_0(void * CPUInfo)
 {
-	int *pointer;
-	pointer=(int *) CPUInfo;
+	unsigned long *pointer;
+	pointer=(unsigned long *) CPUInfo;
 	asm volatile( "cpuid" : "=a"(pointer[0]),"=b"(pointer[1]),"=c"(pointer[2]),"=d"(pointer[3]) : "a"((unsigned int)(1)));
 	return NULL;
 }
 
 void * patch_read_msr(void * CPUInfo)
 {
-	int *pointer;
-	pointer=(int *) CPUInfo;
+	unsigned long *pointer;
+	pointer=(unsigned long *) CPUInfo;
 	asm volatile("rdmsr" : "=a"(pointer[0]), "=d"(pointer[3]) : "c"(MSR_IA32_BIOS_SIGN_ID));
 	return NULL;
 }
@@ -641,14 +641,14 @@ void print_stat(efi_status_t stat)
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	int numargs = 0;
-	long ptrbuf[16];
-	long *ptr = ptrbuf;
+	unsigned long ptrbuf[16];
+	unsigned long *ptr = ptrbuf;
 	unsigned short ucode_size;
 	unsigned short thread_id;
 	char *ucode_buf;
 	//unsigned int counter;
 	char small_buffer[6]; //32 bits + char + \0
-	int CPUInfo[4]={-1};
+	unsigned long CPUInfo[4]={-1};
 	void (*apply_ucode_patch_p)(void *info);
 
 	switch(ioctl_num)
