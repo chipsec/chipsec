@@ -322,17 +322,17 @@ class OsHelper:
     # Decompress binary with OS specific tools
     #
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
-        from subprocess import call
+        import subprocess
         if (CompressionType == 0): # not compressed
           shutil.copyfile(CompressedFileName, OutputFileName)
         else:
           exe = self.helper.get_compression_tool_path( CompressionType )
           if exe is None: return None 
           try:
-            call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName) )
+            subprocess.call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName), stdout=open(os.devnull, 'wb') )
           except BaseException, msg:
             logger().error( str(msg) )
-            if logger().VERBOSE: logger().log_bad( traceback.format_exc() )
+            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
             return None
 
         return chipsec.file.read_file( OutputFileName )
@@ -341,17 +341,17 @@ class OsHelper:
     # Compress binary with OS specific tools
     #
     def compress_file( self, FileName, OutputFileName, CompressionType ):
-        from subprocess import call
+        import subprocess
         if (CompressionType == 0): # not compressed
           shutil.copyfile(FileName, OutputFileName)
         else:
           exe = self.helper.get_compression_tool_path( CompressionType )
           if exe is None: return None 
           try:
-            call( '%s -e -o %s %s' % (exe,OutputFileName,FileName) )
+            subprocess.call( '%s -e -o %s %s' % (exe,OutputFileName,FileName), stdout=open(os.devnull, 'wb') )
           except BaseException, msg:
             logger().error( str(msg) )
-            if logger().VERBOSE: logger().log_bad( traceback.format_exc() )
+            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
             return None
 
         return chipsec.file.read_file( OutputFileName )
@@ -365,6 +365,6 @@ def helper():
             _helper  = OsHelper()
         except BaseException, msg:
             logger().error( str(msg) )
-            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+            if logger().DEBUG: logger().log_bad(traceback.format_exc())
             raise
     return _helper

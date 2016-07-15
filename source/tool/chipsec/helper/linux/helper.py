@@ -762,7 +762,8 @@ class LinuxHelper(Helper):
     # File system
     #
     def get_tools_path( self ):
-        return os.path.join('..','..','tools','edk2','linux')
+        p = os.path.join(chipsec.file.get_main_dir(), "..", "..", 'tools','edk2','linux')
+        return os.path.normpath(p)
 
     def get_compression_tool_path( self, compression_type ):
         tool = None
