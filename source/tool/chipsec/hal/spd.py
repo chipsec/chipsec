@@ -310,7 +310,7 @@ class SPD:
 
     def read_range( self, start_offset, size, device=SPD_SMBUS_ADDRESS ):
         buffer = [chr(0xFF)]*size
-        for i in range (size):
+        for i in xrange(size):
             buffer[i] = chr( self.read_byte( start_offset + i, device ) )
         return buffer
 
@@ -320,18 +320,8 @@ class SPD:
             self.write_byte( start_offset + i, ord(buffer[i]), device )
         return True
 
-    def dump( self, device=SPD_SMBUS_ADDRESS ):
-        buf = self.read_range( 0, 0x100, device )
-        if logger().HAL: 
-            logger().log( "[spd][0x%02X] Serial Presence Detect (SPD) EEPROM contents:" % device )
-            logger().log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F." )
-        _str = ['']
-        for n in range(len(buf)):
-            if not n%16: _str += ['\n%02X..' % n]
-            _str += ['%02X  ' % ord(buf[n])]
-
-        if logger().HAL: logger().log( ''.join(_str) )
-        return buf
+    def dump_spd_rom( self, device=SPD_SMBUS_ADDRESS ):
+        return self.read_range( 0x0, 0x100, device )
      
 
     #
@@ -389,7 +379,10 @@ class SPD:
     def decode( self, device=SPD_SMBUS_ADDRESS ):
         spd = None
         device_type = self.getDRAMDeviceType( device )
-        spd_buffer = ''.join(self.dump( device ))
+        spd_rom = self.dump_spd_rom( device )
+        logger().log( "[spd][0x%02X] Serial Presence Detect (SPD) EEPROM contents:" % device )
+        print_buffer( spd_rom )
+        spd_buffer = ''.join(spd_rom)
 
         if   DRAM_DEVICE_TYPE_DDR  == device_type:
             spd = SPD_DDR ( *struct.unpack_from( SPD_DDR_FORMAT,  spd_buffer ) )

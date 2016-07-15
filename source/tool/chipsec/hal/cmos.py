@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,6 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -32,9 +31,13 @@
 CMOS memory specific functions (dump, read/write)
 
 usage:
-    >>> dump()
-    >>> read_byte( offset )
-    >>> write_byte( offset, value )
+    >>> cmos.dump_low()
+    >>> cmos.dump_high()
+    >>> cmos.dump()
+    >>> cmos.read_cmos_low( offset )
+    >>> cmos.write_cmos_low( offset, value )
+    >>> cmos.read_cmos_high( offset )
+    >>> cmos.write_cmos_high( offset, value )
 """
 
 __version__ = '1.0'
@@ -44,7 +47,7 @@ import sys
 import time
 
 from chipsec.hal.hal_base import HALBase
-
+import chipsec.logger
 
 class CmosRuntimeError (RuntimeError):
     pass
@@ -76,37 +79,23 @@ class CMOS(HALBase):
         self.cs.io.write_port_byte( CMOS_DATA_PORT_LOW, value );
 
     def dump_low( self ):
+        cmos_buf = [0xFF]*0x80
         orig = self.cs.io.read_port_byte( CMOS_ADDR_PORT_LOW );
-        self.logger.log( "Low CMOS contents:" )
-        self.logger.log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
-        cmos_str = []
-        cmos_str += ["00.."]
-        for n in range(1, 129):
-            val = self.read_cmos_low( n-1 )
-            cmos_str += ["%02X  " % val]
-            if ( (0 == n%16) and n < 125 ):
-                cmos_str += ["\n%0X.." % n]
-
+        for off in xrange(0x80):
+            cmos_buf[off] = self.read_cmos_low( off )
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_LOW, orig );
-        self.logger.log( "".join(cmos_str) )
-        return
+        return cmos_buf
 
     def dump_high( self ):
+        cmos_buf = [0xFF]*0x80
         orig = self.cs.io.read_port_byte( CMOS_ADDR_PORT_HIGH );
-        self.logger.log( "High CMOS contents:" )
-        self.logger.log( "....0...1...2...3...4...5...6...7...8...9...A...B...C...D...E...F" )
-        cmos_str = []
-        cmos_str += ["00.."]
-        for n in range(1, 129):
-            val = self.read_cmos_high( n-1 )
-            cmos_str += ["%02X  " % val]
-            if ( (0 == n%16) and n < 125 ):
-                cmos_str += ["\n%0X.." % n]
-
+        for off in xrange(0x80):
+            cmos_buf[off] = self.read_cmos_high( off )
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_HIGH, orig );
-        self.logger.log( "".join(cmos_str) )
-        return
+        return cmos_buf
 
     def dump( self ):
-        self.dump_low()
-        self.dump_high()
+        self.logger.log( "Low CMOS memory contents:" )
+        chipsec.logger.pretty_print_hex_buffer( self.dump_low() )
+        self.logger.log( "\nHigh CMOS memory contents:" )
+        chipsec.logger.pretty_print_hex_buffer( self.dump_high() )

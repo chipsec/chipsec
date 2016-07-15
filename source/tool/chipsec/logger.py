@@ -1,6 +1,6 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2016, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -480,3 +480,13 @@ def print_buffer( arr, length = 16 ):
         tmp+=tmp_str
         tmp_s = "".join(tmp)
         logger().log( tmp_s )
+
+
+def pretty_print_hex_buffer( arr, length = 16 ):
+    _str = ["    _"]
+    for n in xrange(length):
+        _str += ["%02X__" % n]
+    for n in xrange(len(arr)):
+        if n%length == 0: _str += ["\n%02X | " % n]
+        _str += ["%02X  " % arr[n]]
+    logger().log( ''.join(_str) )
