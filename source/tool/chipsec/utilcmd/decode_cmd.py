@@ -74,10 +74,7 @@ class DecodeCommand(BaseCommand):
             return
             
         rom_file = self.argv[2]
-
-        fwtype = ''
-        if 4 == len(self.argv):
-            fwtype = self.argv[3]
+        fwtype   = self.argv[3] if len(self.argv) == 4 else None      
 
         self.logger.log( "[CHIPSEC] Decoding SPI ROM image from a file '%s'" % rom_file )
         t = time.time()

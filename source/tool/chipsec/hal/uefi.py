@@ -237,6 +237,17 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
             n = n+1
 
 
+def identify_EFI_NVRAM( buffer ):
+    b = "".join( buffer )
+    for fw_type in fw_types:
+    #for t in EFI_VAR_DICT.keys():            
+        if EFI_VAR_DICT[ fw_type ]['func_getnvstore']:
+            (offset, size, hdr) = EFI_VAR_DICT[ fw_type ]['func_getnvstore']( b )
+            if offset != -1: return fw_type
+
+    return None
+
+
 ########################################################################################################
 #
 # UEFI HAL Component
@@ -350,6 +361,7 @@ NVRAM: EFI Variable Store
             return False
 
         return True
+
 
     def decompress_EFI_binary( self, compressed_name, uncompressed_name, compression_type ):
         if logger().HAL: logger().log( "[uefi] decompressing EFI binary (type = 0x%X)\n       %s ->\n       %s" % (compression_type,compressed_name,uncompressed_name) )
@@ -503,7 +515,7 @@ NVRAM: EFI Variable Store
             pos = membuf.find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
-                if logger().VERBOSE: logger().log( "[uefi] found '%s' at 0x%016X.." % (table_sig,table_pa) )
+                if logger().VERBOSE: logger().log( "[uefi] found signature '%s' at 0x%016X.." % (table_sig,table_pa) )
                 if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE):
                     hdr = membuf[ pos : pos + EFI_TABLE_HEADER_SIZE ]
                 else:

@@ -54,6 +54,7 @@ from chipsec.file import *
 from chipsec.cfg.common import *
 from chipsec.hal.uefi_common import *
 from chipsec.hal.uefi_platform import *
+from chipsec.hal.uefi import identify_EFI_NVRAM
 
 CMD_UEFI_FILE_REMOVE        = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -87,12 +88,12 @@ def compress_image( _uefi, image, compression_type ):
 def modify_uefi_region(data, command, guid, uefi_file = ''):
     RgLengthChange = 0
     FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(data)
-    while FvOffset != None:
+    while FvOffset is not None:
         FvLengthChange = 0
         polarity = bit_set(FvAttributes, EFI_FVB2_ERASE_POLARITY)
         if ((FsGuid == EFI_FIRMWARE_FILE_SYSTEM2_GUID) or (FsGuid == EFI_FIRMWARE_FILE_SYSTEM_GUID)):
             cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, FvHeaderLength, polarity)
-            while next_offset != None:
+            while next_offset is not None:
                 if (Name == guid):
                     uefi_file_size = (len(uefi_file) + 7) & 0xFFFFFFF8
                     CurFileOffset  = FvOffset + cur_offset  + FvLengthChange
@@ -340,16 +341,16 @@ def check_match_criteria( efi, match_criteria ):
     return bfound
 
 
-def traverse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, printall=True, dumpall=True, parent_path='', match_criteria=None ):
+def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_offset, printall=True, dumpall=True, parent_path='', match_criteria=None ):
     secn, efi_file, section_dir_path = 0, None, ''
     found = False
     bsearch = (match_criteria is not None)
 
     _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, offset, polarity )
-    sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
-    sec.indent = DEF_INDENT*2
-    #add_hashes( sec )
     while next_offset is not None:
+        sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
+        sec.indent = DEF_INDENT*2
+        #add_hashes( sec )
         sec_fs_name = "%02d_%s" % (secn, sec.Name)
         if sec.Type == EFI_SECTION_USER_INTERFACE:
             sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le")[:-1]
@@ -364,27 +365,24 @@ def traverse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, p
                 ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
                 d = decompress_section_data( _uefi, section_dir_path, sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], ct, True )
                 if d:
-                    found = traverse_uefi_section( _uefi, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria )
+                    found = traverse_uefi_section( _uefi, fwtype, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria )
                     if bsearch and found: return True
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
                 guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
                 if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
-                    found = traverse_uefi_section( _uefi, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity, 0, printall, dumpall, section_dir_path,match_criteria )
+                    found = traverse_uefi_section( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity, 0, printall, dumpall, section_dir_path,match_criteria )
                     if bsearch and found: return True
                 elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
                     d = decompress_section_data( _uefi, section_dir_path, sec_fs_name, sec.Image[sec.DataOffset:], 2, True )
                     if d:
-                        found = traverse_uefi_section( _uefi, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria )
+                        found = traverse_uefi_section( _uefi, fwtype, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria )
                         if bsearch and found: return True
             elif sec.Type in (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
-                found = traverse_uefi_region( _uefi, sec.Image[sec.HeaderSize:], section_dir_path, printall, dumpall, match_criteria )
+                found = traverse_uefi_region( _uefi, sec.Image[sec.HeaderSize:], fwtype, section_dir_path, printall, dumpall, match_criteria )
                 if bsearch and found: return True
 
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
-        sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
-        sec.indent = DEF_INDENT*2
-        #add_hashes( sec )
         secn += 1
     return found
 
@@ -399,61 +397,71 @@ def traverse_uefi_section( _uefi, data, Size, offset, polarity, parent_offset, p
 #   uefi_path      - root path for EFI hierarchy (used if dumpall==True)
 #   match_criteria - criteria to search for sepecific node in EFI hierarchy (Name, GUID, hash, etc.)
 #
-def traverse_uefi_region( _uefi, data, uefi_path='', printall=True, dumpall=True, match_criteria=None ):
+def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dumpall=True, match_criteria=None ):
     voln, fwbin_dir = 0, ''
     found = False
     bsearch = (match_criteria is not None)
 
     fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum = NextFwVolume( data )
-    fv = EFI_FV( fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum )
-    add_hashes( fv )
-    while fv.Offset is not None:
+    while fv_off is not None:
+        fv = EFI_FV( fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum )
+        add_hashes( fv )
+
         if printall: logger().log( fv )
         if dumpall: volume_path = dump_fv( fv, voln, uefi_path )
         if bsearch and check_match_criteria( fv, match_criteria ): return True
 
         polarity = bit_set( fv.Attributes, EFI_FVB2_ERASE_POLARITY )
-        if fv.Guid == ADDITIONAL_NV_STORE_GUID:
-            if dumpall: _uefi.parse_EFI_variables( os.path.join(volume_path, 'SHADOW_NVRAM'), fv.Image, False, FWType.EFI_FW_TYPE_EVSA )
-        elif fv.Guid == EFI_FIRMWARE_FILE_SYSTEM2_GUID or fv.Guid == EFI_FIRMWARE_FILE_SYSTEM_GUID:
+        #
+        # Detect File System firmware volumes
+        #
+        if fv.Guid == EFI_FIRMWARE_FILE_SYSTEM2_GUID or fv.Guid == EFI_FIRMWARE_FILE_SYSTEM_GUID:
             foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, fv.HeaderSize, polarity )
-            fwbin = EFI_FILE( foff, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum )
-            fwbin.indent = DEF_INDENT
-            add_hashes( fwbin )
-            while next_offset is not None:
-                if fwbin.Name is not None:
+            while (next_offset is not None):
+                if fname is not None:
+                    fwbin = EFI_FILE( foff, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum )
+                    fwbin.indent = DEF_INDENT
+                    add_hashes( fwbin )
+
                     if printall: logger().log( fwbin )
                     if dumpall: fwbin_dir = dump_fw_file( fwbin, volume_path )
                     if bsearch and check_match_criteria( fwbin, match_criteria ): return True
 
                     if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
                         if dumpall: os.makedirs( fwbin_dir )
-                        found = traverse_uefi_section( _uefi, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity, fv.Offset + fwbin.Offset, printall, dumpall, fwbin_dir, match_criteria )
+                        found = traverse_uefi_section( _uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity, fv.Offset + fwbin.Offset, printall, dumpall, fwbin_dir, match_criteria )
                         if bsearch and found:
                             #logger().log( "[uefi] " + str(fwbin) )
                             #logger().log( "[uefi] " + str(fv) )
                             return True
                     elif fwbin.Type == EFI_FV_FILETYPE_RAW:
                         if fwbin.Name == NVAR_NVRAM_FS_FILE and fwbin.UD:
-                            if dumpall: _uefi.parse_EFI_variables( os.path.join(file_dir_path, 'SHADOW_NVRAM'), FvImage, False, FWType.EFI_FW_TYPE_NVAR )
+                            if dumpall: _uefi.parse_EFI_variables( os.path.join(file_dir_path, 'DEFAULT_NVRAM'), FvImage, False, FWType.EFI_FW_TYPE_NVAR )
 
                 foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, next_offset, polarity )
-                fwbin = EFI_FILE( foff, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum )
-                fwbin.indent = DEF_INDENT
-                add_hashes( fwbin )
+        #
+        # Detect NVRAM firmware volumes
+        #
+        elif fv.Guid in EFI_NVRAM_GUIDS: # == VARIABLE_STORE_FV_GUID:
+            if dumpall:
+                try:
+                    t = identify_EFI_NVRAM( fv.Image ) if fwtype is None else fwtype
+                    if t is not None: _uefi.parse_EFI_variables( os.path.join(volume_path, 'NVRAM'), fv.Image, False, t )
+                except: logger().error( "[uefi] couldn't parse NVRAM firmware volume {%s}" % fv.Guid )
+        #elif fv.Guid == ADDITIONAL_NV_STORE_GUID:
+        #    if dumpall: _uefi.parse_EFI_variables( os.path.join(volume_path, 'DEFAULT_NVRAM'), fv.Image, False, FWType.EFI_FW_TYPE_EVSA )
 
         fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum = NextFwVolume( data, fv.Offset + fv.Size )
-        fv = EFI_FV( fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum )
-        add_hashes( fv )
         voln += 1
+
     return found
 
-def parse_uefi_region_from_file( _uefi, filename, outpath = None):
+def parse_uefi_region_from_file( _uefi, filename, fwtype, outpath = None):
 
     if outpath is None: outpath = os.path.join( helper().getcwd(), filename + ".dir" )
     if not os.path.exists( outpath ): os.makedirs( outpath )
     rom = read_file( filename )
-    traverse_uefi_region( _uefi, rom, outpath, True, True )
+    traverse_uefi_region( _uefi, rom, fwtype, outpath, True, True )
 
 
 def decode_uefi_region(_uefi, pth, fname, fwtype):
@@ -466,10 +474,16 @@ def decode_uefi_region(_uefi, pth, fname, fwtype):
         os.makedirs( fv_pth )
 
     # Decoding UEFI Firmware Volumes
-    parse_uefi_region_from_file( _uefi, fname, fv_pth )
+    parse_uefi_region_from_file( _uefi, fname, fwtype, fv_pth )
 
     # Decoding EFI Variables NVRAM
     region_data = read_file( fname )
+    if fwtype is None:
+        fwtype = identify_EFI_NVRAM( region_data )
+        if fwtype is None: return
+    elif fwtype not in fw_types:
+        if logger().HAL: logger().error( "unrecognized NVRAM type %s" % fwtype )
+        return
     nvram_fname = os.path.join( bios_pth, ('nvram_%s' % fwtype) )
     logger().set_log_file( (nvram_fname + '.nvram.lst') )
     _uefi.parse_EFI_variables( nvram_fname, region_data, False, fwtype )

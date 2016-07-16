@@ -71,7 +71,14 @@ NVRAM_ATTR_AUTHWR     = 0x40
 NVRAM_ATTR_HER        = 0x20
 NVRAM_ATTR_VLD        = 0x80
 
-VARIABLE_STORE_FV_GUID = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
+#
+# Known GUIDs of NVRAM stored in EFI firmware volumes, FS files etc. of various firmware implementations
+#
+VARIABLE_STORE_FV_GUID   = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
+ADDITIONAL_NV_STORE_GUID = '00504624-8A59-4EEB-BD0F-6B36E96128E0'
+NVAR_NVRAM_FS_FILE       = "CEF5B9A3-476D-497F-9FDC-E98143E0422C"
+
+EFI_NVRAM_GUIDS = [VARIABLE_STORE_FV_GUID, ADDITIONAL_NV_STORE_GUID, NVAR_NVRAM_FS_FILE]
 
 #################################################################################################3
 # This Variable header is defined by UEFI
@@ -248,7 +255,6 @@ State      : 0x%02X
 """ % ( self.StartId, self.TotalSize, self.Reserved1, self.Reserved2, self.Reserved3, self.Attributes, self.State )
 
 NVAR_EFIvar_signature   = 'NVAR'
-NVAR_NVRAM_FS_FILE      = "CEF5B9A3-476D-497F-9FDC-E98143E0422C"
 
 def getNVstore_NVAR( nvram_buf ):
     l = (-1, -1, None)
@@ -539,7 +545,6 @@ def getEFIvariables_VSS_APPLE( nvram_buf ):
 #
 #
 VARIABLE_STORE_SIGNATURE_EVSA = 'EVSA'
-ADDITIONAL_NV_STORE_GUID = '00504624-8A59-4EEB-BD0F-6B36E96128E0'
 
 TLV_HEADER = "<BBH"
 tlv_h_size = struct.calcsize(TLV_HEADER)

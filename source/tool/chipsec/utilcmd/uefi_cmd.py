@@ -44,34 +44,33 @@ from chipsec.command    import BaseCommand
 # Unified Extensible Firmware Interface (UEFI)
 class UEFICommand(BaseCommand):
     """
+    >>> chipsec_util uefi types
     >>> chipsec_util uefi var-list
     >>> chipsec_util uefi var-find <name>|<GUID>
     >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
-    >>> chipsec_util uefi nvram[-auth] <fw_type> [rom_file]
+    >>> chipsec_util uefi decode <rom_file> [fwtype]
+    >>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
+    >>> chipsec_util uefi keys <keyvar_file>
     >>> chipsec_util uefi tables
     >>> chipsec_util uefi s3bootscript [script_address]
     >>> chipsec_util uefi assemble <GUID> freeform none|lzma|tiano <raw_file> <uefi_file>
-    >>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <bios_rom> <modified_bios_rom> <uefi_file>
-
-    For a list of fw types run:
-
-    >>> chipsec_util uefi types
+    >>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <rom> <new_rom> <uefi_file>
     
     Examples:
 
+    >>> chipsec_util uefi types
     >>> chipsec_util uefi var-list
     >>> chipsec_util uefi var-find PK
     >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
     >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
     >>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
-    >>> chipsec_util uefi nvram fwtype bios.rom
-    >>> chipsec_util uefi nvram-auth fwtype bios.rom
-    >>> chipsec_util uefi decode uefi.bin fwtype
+    >>> chipsec_util uefi decode uefi.rom
+    >>> chipsec_util uefi nvram uefi.rom vss_auth
     >>> chipsec_util uefi keys db.bin
     >>> chipsec_util uefi tables
     >>> chipsec_util uefi s3bootscript
-    >>> chipsec_util uefi assemble AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE freeform lzma uefi_file.raw uefi_file.bin
-    >>> chipsec_util uefi replace  AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE bios.bin modified_bios.bin uefi_file.bin
+    >>> chipsec_util uefi assemble AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE freeform lzma uefi.raw mydriver.efi
+    >>> chipsec_util uefi replace  AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE bios.bin new_bios.bin mydriver.efi
     """
 
     def requires_driver(self):
@@ -86,18 +85,14 @@ class UEFICommand(BaseCommand):
             print UEFICommand.__doc__
             return
         
-        if self.argv[2] == "types":
-            print "\n<fw_type> should be in [ %s ]\n" % (" | ".join( ["%s" % t for t in fw_types])) + \
-            "chipsec_util uefi keys <keyvar_file>\n" + \
-            "                  <keyvar_file> should be one of the following EFI variables\n" + \
-            "                  [ %s ]\n" % (" | ".join( ["%s" % var for var in SECURE_BOOT_KEY_VARIABLES]))
-            return
-            
-        op = self.argv[2]
-        t = time.time()
-
+        op       = self.argv[2]
+        t        = time.time()
         filename = None
-        if ( 'var-read' == op ):
+
+        if ( 'types' == op ):
+            self.logger.log( "<fwtype> should be in [ %s ]" % (" | ".join( ["%s" % tp for tp in fw_types])) )
+
+        elif ( 'var-read' == op ):
             if (4 < len(self.argv)):
                 name = self.argv[3]
                 guid = self.argv[4]
@@ -197,43 +192,44 @@ class UEFICommand(BaseCommand):
         elif ( 'nvram' == op or 'nvram-auth' == op ):
 
             authvars = ('nvram-auth' == op)
-            efi_nvram_format = self.argv[3]
-            if (4 == len(self.argv)):
-                self.logger.log( "[CHIPSEC] Extracting EFI Variables directly in SPI ROM.." )
-                try:
-                    self.cs.init( True )
-                    _spi = SPI( self.cs )
-                except UnknownChipsetError, msg:
-                    print ("ERROR: Unknown chipset vendor (%s)" % str(msg))
-                    raise
-                except SpiRuntimeError, msg:
-                    print ("ERROR: SPI initialization error" % str(msg))
-                    raise
+            if len(self.argv) == 3:
+                self.logger.log( "<fw_type> should be in [ %s ]\n" % (" | ".join( ["%s" % tp for tp in fw_types])) )
+                return
 
-                (bios_base,bios_limit,freg) = _spi.get_SPI_region( BIOS )
-                bios_size = bios_limit - bios_base + 1
-                self.logger.log( "[CHIPSEC] Reading BIOS: base = 0x%08X, limit = 0x%08X, size = 0x%08X" % (bios_base,bios_limit,bios_size) )
-                rom = _spi.read_spi( bios_base, bios_size )
-                self.cs.stop( True )
-                del _spi
-            elif (5 == len(self.argv)):
-                romfilename = self.argv[4]
-                self.logger.log( "[CHIPSEC] Extracting EFI Variables from ROM file '%s'" % romfilename )
-                rom = read_file( romfilename )
+            romfilename = self.argv[3]
+            fwtype      = self.argv[4] if len(self.argv) == 5 else None
+            self.logger.log( "[CHIPSEC] Extracting EFI Variables from ROM file '%s'" % romfilename )
+            if not os.path.exists( romfilename ):
+                self.logger.error( "Could not find file '%s'" % romfilename )
+                return
+
+            rom = read_file( romfilename )
+            if fwtype is None:
+                fwtype = identify_EFI_NVRAM( rom )
+                if fwtype is None:
+                    self.logger.error( "Could not automatically identify EFI NVRAM type" )
+                    return
+            elif fwtype not in fw_types:
+                self.logger.error( "Unrecognized EFI NVRAM type '%s'" % fwtype )
+                return
 
             _orig_logname = self.logger.LOG_FILE_NAME
             self.logger.set_log_file( (romfilename + '.nv.lst') )
-            _uefi.parse_EFI_variables( romfilename, rom, authvars, efi_nvram_format )
+            _uefi.parse_EFI_variables( romfilename, rom, authvars, fwtype )
             self.logger.set_log_file( _orig_logname )
 
         elif ( 'decode' == op ):
 
-            if (4 < len(self.argv)):
-                filename = self.argv[3]
-                fwtype = self.argv[4]
-            else:
+            if len(self.argv) < 4:
                 print UEFICommand.__doc__
                 return
+
+            filename = self.argv[3]
+            fwtype   = self.argv[4] if len(self.argv) > 4 else None
+            if not os.path.exists( filename ):
+                self.logger.error( "Could not find file '%s'" % filename )
+                return
+
             self.logger.log( "[CHIPSEC] Parsing EFI volumes from '%s'.." % filename )
             _orig_logname = self.logger.LOG_FILE_NAME
             self.logger.set_log_file( filename + '.efi_fv.log' )
@@ -244,10 +240,15 @@ class UEFICommand(BaseCommand):
         elif ( 'keys' == op ):
 
             if (3 < len(self.argv)):
-                var_filename = self.argv[ 3 ]
+                var_filename = self.argv[3]
+                if not os.path.exists( var_filename ):
+                    self.logger.error( "Could not find file '%s'" % var_filename )
+                    return
             else:
                 print UEFICommand.__doc__
+                self.logger.log( "<keyvar_file> should contain one of the following EFI variables\n[ %s ]" % (" | ".join( ["%s" % var for var in SECURE_BOOT_KEY_VARIABLES]))  )
                 return
+
             self.logger.log( "[CHIPSEC] Parsing EFI variable from '%s'.." % var_filename )
             parse_efivar_file( var_filename )
 
@@ -363,4 +364,5 @@ class UEFICommand(BaseCommand):
         self.logger.log( "[CHIPSEC] (uefi) time elapsed %.3f" % (time.time()-t) )
 
 
-commands = { 'uefi': UEFICommand }
+commands = { 'uefi': UEFICommand }
+

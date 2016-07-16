@@ -542,26 +542,24 @@ def NextFwVolume(buffer, off = 0):
         return res
     return res
 
+EFI_FFS_FILE_HEADER = "<IHH8sHBB3sB"
+file_header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
 def NextFwFile(FvImage, FvLength, fof, polarity):
-    EFI_FFS_FILE_HEADER = "<IHH8sHBB3sB"
-    file_header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
     fof = align(fof, 8)
     cur_offset = fof
-#    polarity = True
     next_offset = None
     res = None
     update_or_deleted = False
-    if (fof + file_header_size) <= len(FvImage[fof:]):
-        fheader = FvImage[fof:fof+file_header_size]
-        Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, fheader)
+    if (fof + file_header_size) <= (FvLength - fof):
+        if ('\xff\xff\xff\xff' == FvImage[fof+file_header_size-4:fof+file_header_size]):
+            next_offset = fof + 8
+            return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
+
+        Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, FvImage[fof:fof+file_header_size])
         fsize = get_3b_size(Size);
         update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
         if   (not bit_set(State, EFI_FILE_HEADER_VALID, polarity))   or (bit_set(State, EFI_FILE_HEADER_INVALID, polarity)):
             next_offset = align(fof + 1, 8)
-        #elif  (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity)):
-        #  if fsize == 0: fsize = 1
-        #  next_offset = align(fof + fsize, 8)
-            update_or_deleted = True
         elif (not bit_set(State, EFI_FILE_DATA_VALID, polarity)):
             next_offset = align(fof + 1, 8)
         elif fsize == 0:
@@ -578,7 +576,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
                 fsum = FFS_FIXED_CHECKSUM
             CalcSum = (hsum | (fsum << 8))
             res = (cur_offset, next_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[fof:fof+fsize], file_header_size, update_or_deleted, CalcSum)
-    if res == None: return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
+    if res is None: return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
     else:           return res
 
 EFI_COMMON_SECTION_HEADER = "<3sB"
