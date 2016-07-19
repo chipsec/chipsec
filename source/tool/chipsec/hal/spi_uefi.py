@@ -45,6 +45,7 @@ import time
 import collections
 import hashlib
 import re
+import random
 #import phex
 
 from chipsec.helper.oshelper import helper
@@ -191,7 +192,7 @@ class EFI_FILE(EFI_MODULE):
 
     def __str__(self):
         schecksum = ('%04Xh (%04Xh) *** checksum mismatch ***' % (self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('%04Xh' % self.Checksum)
-        _s = "\n%s%s +%08Xh {%s}: Type %02Xh, Attr %08Xh, State %02Xh, Size %06Xh, Checksum %s" % (self.indent,self.clsname,self.Offset,self.Guid,self.Type,self.Attributes,self.State,self.Size,schecksum)
+        _s = "\n%s%s +%08Xh {%s}\n%sType %02Xh, Attr %08Xh, State %02Xh, Size %06Xh, Checksum %s" % (self.indent,self.clsname,self.Offset,self.Guid,self.indent*2,self.Type,self.Attributes,self.State,self.Size,schecksum)
         _s += ("\n" + super(EFI_FILE, self).__str__())
         return _s
 
@@ -232,12 +233,12 @@ def dump_fv( fv, voln, uefi_region_path ):
     if not os.path.exists( volume_path ): os.makedirs( volume_path )
     return volume_path
 
+type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pic', EFI_SECTION_COMPATIBILITY16: 'c16'}
 def dump_section( sec, secn, parent_path, efi_file ):
     if sec.Name is not None:
         sec_fs_name = "%02d_%s" % (secn, sec.Name)
         section_path = os.path.join(parent_path, sec_fs_name)
         if sec.Type in (EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16):
-            type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pic', EFI_SECTION_COMPATIBILITY16: 'c16'}
             sec_fs_name = "%02d_%s.%s.efi" % (secn, sec.Name, type2ext[sec.Type])
             efi_file = sec_fs_name
             section_path = os.path.join(parent_path, sec_fs_name)
@@ -273,14 +274,14 @@ def add_hashes( efi ):
 #
 # Example:
 #  {
-#    "rule00": { "name": "module0", "guid": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" }
-#    "rule01": { "md5": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "sha1": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "sha256": "", "regexp": "" }
+#    "rule00": { "guid": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" }
+#    "rule01": { "name": "module0", "md5": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "sha1": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "sha256": "", "regexp": "" }
 #  }
 #
 # Above search configuration will result in a match if the following EFI module is found:
-# - module with name "module0" AND guid "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+# - module with guid "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 # OR
-# - module with md5 hash "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" AND sha1 hash "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+# - module with name "module0" AND md5 hash "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" AND sha1 hash "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 #
 MATCH_NAME        = 0x1
 MATCH_GUID        = (0x1 << 1)
@@ -337,13 +338,12 @@ def check_match_criteria( efi, match_criteria ):
             if (match_result & MATCH_HASH_SHA1  ) == MATCH_HASH_SHA1  : logger().log( "%s has SHA-1 = %s" % (_s,rule['sha1']) )
             if (match_result & MATCH_HASH_SHA256) == MATCH_HASH_SHA256: logger().log( "%s has SHA-256 = %s" % (_s,rule['sha256']) )
 
-    if bfound: logger().log( "[uefi] matching EFI module:\n%s" % efi )
+    if bfound: logger().log( "[uefi] matching EFI module:\n%s\n" % efi )
     return bfound
 
-
-def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_offset, printall=True, dumpall=True, parent_path='', match_criteria=None ):
-    secn, efi_file, section_dir_path = 0, None, ''
-    found = False
+def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_offset, printall=True, dumpall=True, parent_path='', match_criteria=None, findall=True ):
+    found, secn, efi_file, section_dir_path = False, 0, None, ''
+    # caller specified non-empty matching rules so we'll need to look for specific EFI modules as we parse FVs
     bsearch = (match_criteria is not None)
 
     _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, offset, polarity )
@@ -351,13 +351,17 @@ def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_o
         sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
         sec.indent = DEF_INDENT*2
         #add_hashes( sec )
-        sec_fs_name = "%02d_%s" % (secn, sec.Name)
+        # pick random file name in case dumpall=False - we'll need it to decompress the section
+        sec_fs_name = "sect%02d_%s" % (secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
         if sec.Type == EFI_SECTION_USER_INTERFACE:
             sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le")[:-1]
 
         if printall: logger().log( sec )
         if dumpall: sec_fs_name,section_dir_path,efi_file = dump_section( sec, secn, parent_path, efi_file )
-        if bsearch and check_match_criteria( sec, match_criteria ): return True
+        # only check the match rules if we need to find specific EFI module
+        if bsearch and check_match_criteria( sec, match_criteria ):
+            if findall: found = True
+            else: return True
 
         if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
             if dumpall: os.makedirs( section_dir_path )
@@ -365,22 +369,30 @@ def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_o
                 ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
                 d = decompress_section_data( _uefi, section_dir_path, sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], ct, True )
                 if d:
-                    found = traverse_uefi_section( _uefi, fwtype, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria )
-                    if bsearch and found: return True
+                    f = traverse_uefi_section( _uefi, fwtype, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria, findall )
+                    if bsearch and f:
+                        if findall: found = True
+                        else: return True
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
                 guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
                 if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
-                    found = traverse_uefi_section( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity, 0, printall, dumpall, section_dir_path,match_criteria )
-                    if bsearch and found: return True
+                    f = traverse_uefi_section( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity, 0, printall, dumpall, section_dir_path,match_criteria, findall )
+                    if bsearch and f:
+                        if findall: found = True
+                        else: return True
                 elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
                     d = decompress_section_data( _uefi, section_dir_path, sec_fs_name, sec.Image[sec.DataOffset:], 2, True )
                     if d:
-                        found = traverse_uefi_section( _uefi, fwtype, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria )
-                        if bsearch and found: return True
+                        f = traverse_uefi_section( _uefi, fwtype, d, len(d), 0, polarity, 0, printall, dumpall, section_dir_path, match_criteria, findall )
+                        if bsearch and f:
+                            if findall: found = True
+                            else: return True
             elif sec.Type in (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
-                found = traverse_uefi_region( _uefi, sec.Image[sec.HeaderSize:], fwtype, section_dir_path, printall, dumpall, match_criteria )
-                if bsearch and found: return True
+                f = traverse_uefi_region( _uefi, sec.Image[sec.HeaderSize:], fwtype, section_dir_path, printall, dumpall, match_criteria, findall )
+                if bsearch and f:
+                    if findall: found = True
+                    else: return True
 
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
         secn += 1
@@ -392,14 +404,15 @@ def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_o
 #   Input arguments:
 #   _uefi          - instance of chipsec.hal.uefi.UEFI class  
 #   data           - an image containing UEFI firmware volumes
-#   printall       - print EFI binaries hierarchy
-#   dumpall        - dump all EFI binaries onto the file system
+#   printall       - a bool flag that tells to print EFI binaries hierarchy
+#   dumpall        - a bool flag that tells to dump all EFI binaries onto the file system
 #   uefi_path      - root path for EFI hierarchy (used if dumpall==True)
 #   match_criteria - criteria to search for sepecific node in EFI hierarchy (Name, GUID, hash, etc.)
+#   findall        - a bool flag that tells to find all matching EFI modules in the image (rather than returning upon the first match)
 #
-def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dumpall=True, match_criteria=None ):
-    voln, fwbin_dir = 0, ''
-    found = False
+def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dumpall=True, match_criteria=None, findall=True ):
+    found, voln, fwbin_dir = False, 0, ''
+    # caller specified non-empty matching rules so we'll need to look for specific EFI modules as we parse FVs
     bsearch = (match_criteria is not None)
 
     fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum = NextFwVolume( data )
@@ -409,7 +422,10 @@ def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dump
 
         if printall: logger().log( fv )
         if dumpall: volume_path = dump_fv( fv, voln, uefi_path )
-        if bsearch and check_match_criteria( fv, match_criteria ): return True
+        # only check the match rules if we need to find specific EFI module
+        if bsearch and check_match_criteria( fv, match_criteria ):
+            if findall: found = True
+            else: return True
 
         polarity = bit_set( fv.Attributes, EFI_FVB2_ERASE_POLARITY )
         #
@@ -425,15 +441,17 @@ def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dump
 
                     if printall: logger().log( fwbin )
                     if dumpall: fwbin_dir = dump_fw_file( fwbin, volume_path )
-                    if bsearch and check_match_criteria( fwbin, match_criteria ): return True
+                    # only check the match rules if we need to find specific EFI module
+                    if bsearch and check_match_criteria( fwbin, match_criteria ):
+                        if findall: found = True
+                        else: return True
 
                     if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
                         if dumpall: os.makedirs( fwbin_dir )
-                        found = traverse_uefi_section( _uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity, fv.Offset + fwbin.Offset, printall, dumpall, fwbin_dir, match_criteria )
-                        if bsearch and found:
-                            #logger().log( "[uefi] " + str(fwbin) )
-                            #logger().log( "[uefi] " + str(fv) )
-                            return True
+                        f = traverse_uefi_section( _uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity, fv.Offset + fwbin.Offset, printall, dumpall, fwbin_dir, match_criteria, findall )
+                        if bsearch and f:
+                            if findall: found = True
+                            else: return True
                     elif fwbin.Type == EFI_FV_FILETYPE_RAW:
                         if fwbin.Name == NVAR_NVRAM_FS_FILE and fwbin.UD:
                             if dumpall: _uefi.parse_EFI_variables( os.path.join(file_dir_path, 'DEFAULT_NVRAM'), FvImage, False, FWType.EFI_FW_TYPE_NVAR )
