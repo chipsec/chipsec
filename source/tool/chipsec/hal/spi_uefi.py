@@ -46,6 +46,7 @@ import collections
 import hashlib
 import re
 import random
+import binascii
 #import phex
 
 from chipsec.helper.oshelper import helper
@@ -308,7 +309,7 @@ def check_match_criteria( efi, match_criteria ):
         if ('sha1'   in rule) and (rule['sha1']   != ''): match_mask |= MATCH_HASH_SHA1
         if ('sha256' in rule) and (rule['sha256'] != ''): match_mask |= MATCH_HASH_SHA256
 
-        _s = "[uefi] found match %s: %s" % (k,efi.clsname)
+        _s = "[uefi] found matching %s (rule '%s'):" % (efi.clsname,k)
         #
         # Check criteria defined in the current rule against the current EFI module
         #
@@ -320,7 +321,7 @@ def check_match_criteria( efi, match_criteria ):
             m = re.compile(rule['regexp']).search( efi.Image )
             if m:
                 match_result |= MATCH_REGEXP
-                _log = "%s contains '%s' at [%Xh:%Xh] matching regexp '%s' " % (_s,m.group(0),m.start(),m.end(),rule['regexp'])
+                _log = "       + regexp: bytes '%s' at offset %Xh" % (binascii.hexlify(m.group(0)),m.start())
         if (match_mask & MATCH_HASH_MD5) == MATCH_HASH_MD5:
             if efi.MD5 == rule['md5']: match_result |= MATCH_HASH_MD5
         if (match_mask & MATCH_HASH_SHA1) == MATCH_HASH_SHA1:
@@ -331,14 +332,15 @@ def check_match_criteria( efi, match_criteria ):
         brule_match = ((match_result & match_mask) == match_mask)
         bfound = bfound or brule_match
         if brule_match:
-            if (match_result & MATCH_NAME       ) == MATCH_NAME       : logger().log( "%s with name = '%s'" % (_s,rule['name']) )
-            if (match_result & MATCH_GUID       ) == MATCH_GUID       : logger().log( "%s with GUID = {%s}" % (_s,rule['guid']) )
+            logger().log( _s )
+            if (match_result & MATCH_NAME       ) == MATCH_NAME       : logger().log( "       + name  : '%s'" % rule['name'] )
+            if (match_result & MATCH_GUID       ) == MATCH_GUID       : logger().log( "       + GUID  : {%s}" % rule['guid'] )
             if (match_result & MATCH_REGEXP     ) == MATCH_REGEXP     : logger().log( _log )
-            if (match_result & MATCH_HASH_MD5   ) == MATCH_HASH_MD5   : logger().log( "%s has MD5 = %s" % (_s,rule['md5']) )
-            if (match_result & MATCH_HASH_SHA1  ) == MATCH_HASH_SHA1  : logger().log( "%s has SHA-1 = %s" % (_s,rule['sha1']) )
-            if (match_result & MATCH_HASH_SHA256) == MATCH_HASH_SHA256: logger().log( "%s has SHA-256 = %s" % (_s,rule['sha256']) )
+            if (match_result & MATCH_HASH_MD5   ) == MATCH_HASH_MD5   : logger().log( "       + MD5   : %s" % rule['md5'] )
+            if (match_result & MATCH_HASH_SHA1  ) == MATCH_HASH_SHA1  : logger().log( "       + SHA1  : %s" % rule['sha1'] )
+            if (match_result & MATCH_HASH_SHA256) == MATCH_HASH_SHA256: logger().log( "       + SHA256: %s" % rule['sha256'] )
+            logger().log( efi )
 
-    if bfound: logger().log( "[uefi] matching EFI module:\n%s\n" % efi )
     return bfound
 
 def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_offset, printall=True, dumpall=True, parent_path='', match_criteria=None, findall=True ):
@@ -350,7 +352,6 @@ def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_o
     while next_offset is not None:
         sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
         sec.indent = DEF_INDENT*2
-        #add_hashes( sec )
         # pick random file name in case dumpall=False - we'll need it to decompress the section
         sec_fs_name = "sect%02d_%s" % (secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
         if sec.Type == EFI_SECTION_USER_INTERFACE:
