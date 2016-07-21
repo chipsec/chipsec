@@ -118,7 +118,7 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_ROOT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_RSDT: chipsec.hal.acpi_tables.RSDT,
   ACPI_TABLE_SIG_XSDT: chipsec.hal.acpi_tables.XSDT,
-  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.FADT,
   ACPI_TABLE_SIG_FACS: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_DSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_SSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
@@ -371,14 +371,45 @@ class ACPI:
         # cache RSDT/XSDT in the list of ACPI tables
         if sdt_pa is not None: self.tableList[ sdt_header.Signature ].append(sdt_pa)
 
-        # cache other ACPI tables in the list
+        self.get_table_list_from_SDT(sdt, is_xsdt)
+        self.get_DSDT_from_FADT()
+
+        return self.tableList
+
+    #
+    # Gets table list from entries in RSDT/XSDT
+    #
+    def get_table_list_from_SDT(self, sdt, is_xsdt):
+        logger().log( 'Getting table list from entries in %s' % ('XSDT' if is_xsdt else 'RSDT') )
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             if _sig not in ACPI_TABLES.keys():
                 logger().warn( 'Unknown ACPI table signature: %s' % _sig )
             self.tableList[ _sig ].append(a)
 
-        return self.tableList
+    #
+    # Gets DSDT from FADT
+    #
+    def get_DSDT_from_FADT(self):
+        logger().log( 'Getting DSDT from FADT' )
+
+        if ACPI_TABLE_SIG_FACP in self.tableList:
+            (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
+        else:
+            logger().warn( 'Cannot find FADT in %s' % ('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
+            return
+
+        dsdt_address_to_use = parsed_fadt_content.get_DSDT_address_to_use()
+
+        if dsdt_address_to_use is None:
+            dsdt_address = parsed_fadt_content.dsdt
+            x_dsdt_address = parsed_fadt_content.x_dsdt
+            logger().error( 'Unable to determine the correct DSDT address' )
+            logger().error( '  DSDT   address = %s' % ('0x%08X' % dsdt_address) )
+            logger().error( '  X_DSDT address = %s' % (('0x%016X' % x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
+            return
+
+        self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
 
     #
     # Checks is ACPI table with <name> is available on the system
