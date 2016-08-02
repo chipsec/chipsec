@@ -46,6 +46,8 @@ from chipsec.helper.oshelper import OsHelperError, Helper
 from chipsec.logger import logger, print_buffer
 import errno
 import array
+import subprocess
+import os.path
 import chipsec.file
 
 from ctypes import *
@@ -78,6 +80,8 @@ IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 class LinuxHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
+    MODULE_NAME = "chipsec"
+    GET_PAGE_IS_RAM = True
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -99,7 +103,30 @@ class LinuxHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
+    # This function load CHIPSEC driver. (implement functionality from run.sh)
+    def load_chipsec_module(self):
+        page_is_ram = ""
+        if self.GET_PAGE_IS_RAM:
+            page_is_ram = self.get_page_is_ram()
+            if not page_is_ram:
+                if logger().VERBOSE:
+                    logger().log("Cannot find symbol 'page_is_ram'")
+        driver_path = os.path.join(chipsec.file.get_main_dir(), ".." , "drivers" ,"linux", "chipsec.ko" )
+        subprocess.check_output( "insmod " + driver_path + " a1=0x%s"%page_is_ram     , shell=True)
+        subprocess.check_output( "chown root:root " + self.DEVICE_NAME            , shell=True)
+        subprocess.check_output( "chmod 600 "       + self.DEVICE_NAME            , shell=True)
+        if os.path.exists(self.DEVICE_NAME):
+            if logger().VERBOSE:
+                logger().log("Module %s loaded successfully"%self.DEVICE_NAME)
+        else:
+            logger().error( "Fail to load module: %s" % driver_path )
+
+
     def create(self, start_driver):
+        if start_driver:
+            if os.path.exists(self.DEVICE_NAME):
+                subprocess.call(["rmmod", self.MODULE_NAME])
+            self.load_chipsec_module()
         self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper created")
@@ -109,15 +136,17 @@ class LinuxHelper(Helper):
             logger().log("[helper] Linux Helper started/loaded")
 
     def stop( self ):
+        self.close()
+        subprocess.call(["rmmod", self.MODULE_NAME])
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper stopped/unloaded")
 
     def delete( self ):
+        self.stop()
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper deleted")
 
     def destroy( self ):
-        self.stop()
         self.delete()
 
     def init(self, start_driver):
@@ -142,6 +171,7 @@ class LinuxHelper(Helper):
         if self.dev_fh:
             self.dev_fh.close()
         self.dev_fh = None
+
 
     def ioctl(self, nr, args, *mutate_flag):
         return fcntl.ioctl(self.dev_fh, self._ioctl_base + nr, args)
@@ -786,7 +816,12 @@ class LinuxHelper(Helper):
     def getcwd( self ):
         return os.getcwd()
 
-
+    def get_page_is_ram( self ):
+        PROC_KALLSYMS = "/proc/kallsyms"
+        symarr = chipsec.file.read_file(PROC_KALLSYMS).split("\n")
+        for i in symarr:
+            if i.find("page_is_ram") != -1:
+               return i.split(" ")[0]
     #
     # Logical CPU count
     #
