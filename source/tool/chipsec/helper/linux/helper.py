@@ -112,7 +112,7 @@ class LinuxHelper(Helper):
                 if logger().VERBOSE:
                     logger().log("Cannot find symbol 'page_is_ram'")
         driver_path = os.path.join(chipsec.file.get_main_dir(), ".." , "drivers" ,"linux", "chipsec.ko" )
-        subprocess.check_output( "insmod " + driver_path + " a1=0x%s"%page_is_ram     , shell=True)
+        subprocess.check_output( [ "insmod", driver_path,"a1=0x%s" % page_is_ram ] )
         os.chown(self.DEVICE_NAME, int(os.getenv('SUDO_UID')), int(os.getenv('SUDO_GID')))
         os.chmod(self.DEVICE_NAME, 600)
         if os.path.exists(self.DEVICE_NAME):
@@ -818,10 +818,10 @@ class LinuxHelper(Helper):
 
     def get_page_is_ram( self ):
         PROC_KALLSYMS = "/proc/kallsyms"
-        symarr = chipsec.file.read_file(PROC_KALLSYMS).split("\n")
-        for i in symarr:
-            if i.find("page_is_ram") != -1:
-               return i.split(" ")[0]
+        symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
+        for line in symarr:
+            if "page_is_ram" in line:
+               return line.split(" ")[0]
     #
     # Logical CPU count
     #
