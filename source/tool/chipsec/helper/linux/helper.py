@@ -199,7 +199,7 @@ class LinuxHelper(Helper):
             self.dev_fh.close()
         self.dev_fh = None
         if self.dev_mem:
-            self.dev_mem.close()
+            os.close(self.dev_mem)
         self.dev_mem = None
 
 
