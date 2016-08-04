@@ -113,7 +113,10 @@ class LinuxHelper(Helper):
                     logger().log("Cannot find symbol 'page_is_ram'")
         driver_path = os.path.join(chipsec.file.get_main_dir(), ".." , "drivers" ,"linux", "chipsec.ko" )
         subprocess.check_output( [ "insmod", driver_path,"a1=0x%s" % page_is_ram ] )
-        os.chown(self.DEVICE_NAME, int(os.getenv('SUDO_UID')), int(os.getenv('SUDO_GID')))
+        uid = os.getenv('SUDO_UID')
+        gid = os.getenv('SUDO_GID')
+        if uid and gid:
+            os.chown(self.DEVICE_NAME, int(uid), int(gid))
         os.chmod(self.DEVICE_NAME, 600)
         if os.path.exists(self.DEVICE_NAME):
             if logger().VERBOSE:
@@ -123,15 +126,15 @@ class LinuxHelper(Helper):
 
 
     def create(self, start_driver):
+        if logger().VERBOSE:
+            logger().log("[helper] Linux Helper created")
+
+    def start(self, start_driver):
         if start_driver:
             if os.path.exists(self.DEVICE_NAME):
                 subprocess.call(["rmmod", self.MODULE_NAME])
             self.load_chipsec_module()
         self.init(start_driver)
-        if logger().VERBOSE:
-            logger().log("[helper] Linux Helper created")
-
-    def start(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper started/loaded")
 
@@ -142,11 +145,11 @@ class LinuxHelper(Helper):
             logger().log("[helper] Linux Helper stopped/unloaded")
 
     def delete( self ):
-        self.stop()
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper deleted")
 
     def destroy( self ):
+        self.stop()
         self.delete()
 
     def init(self, start_driver):
