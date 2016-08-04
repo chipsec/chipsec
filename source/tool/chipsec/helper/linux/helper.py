@@ -92,7 +92,6 @@ class LinuxHelper(Helper):
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
         self.dev_fh = None
-        self.driver_loaded = False
 
     def __del__(self):
         try:
@@ -120,7 +119,6 @@ class LinuxHelper(Helper):
             os.chown(self.DEVICE_NAME, int(uid), int(gid))
         os.chmod(self.DEVICE_NAME, 600)
         if os.path.exists(self.DEVICE_NAME):
-            self.driver_loaded = True
             if logger().VERBOSE:
                 logger().log("Module %s loaded successfully"%self.DEVICE_NAME)
         else:
