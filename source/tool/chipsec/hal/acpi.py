@@ -380,7 +380,7 @@ class ACPI:
     # Gets table list from entries in RSDT/XSDT
     #
     def get_table_list_from_SDT(self, sdt, is_xsdt):
-        logger().log( 'Getting table list from entries in %s' % ('XSDT' if is_xsdt else 'RSDT') )
+        if logger().HAL: logger().log( '[acpi] Getting table list from entries in %s' % ('XSDT' if is_xsdt else 'RSDT') )
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             if _sig not in ACPI_TABLES.keys():
@@ -391,7 +391,7 @@ class ACPI:
     # Gets DSDT from FADT
     #
     def get_DSDT_from_FADT(self):
-        logger().log( 'Getting DSDT from FADT' )
+        if logger().HAL: logger().log( '[acpi] Getting DSDT from FADT' )
 
         if ACPI_TABLE_SIG_FACP in self.tableList:
             (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
@@ -422,7 +422,7 @@ class ACPI:
     #
     def print_ACPI_table_list(self):
         if len( self.tableList ) == 0:
-            logger().error("Couldn't get list of ACPI tables")
+            logger().error("Couldn't get a list of ACPI tables")
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):

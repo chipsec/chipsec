@@ -80,6 +80,7 @@ IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 class LinuxHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
+    DEV_MEM = "/dev/mem"
     MODULE_NAME = "chipsec"
     GET_PAGE_IS_RAM = True
 
@@ -92,6 +93,7 @@ class LinuxHelper(Helper):
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
         self.dev_fh = None
+        self.dev_mem = None
 
     def __del__(self):
         try:
@@ -170,11 +172,35 @@ class LinuxHelper(Helper):
 
             self._ioctl_base = fcntl.ioctl(self.dev_fh, IOCTL_BASE) << 4
 
+    def devmem_available(self):
+        """Check if /dev/mem is usable.
+
+           In case the driver is not loaded, we might be able to perform the
+           requested operation via /dev/mem. Returns True if /dev/mem is
+           accessible.
+        """
+        if self.dev_mem:
+            return True
+        if not self.driver_loaded:
+            logger().log("[helper] Trying /dev/mem instead of the Chipsec driver.")
+            try:
+                self.dev_mem = os.open(self.DEV_MEM, os.O_RDWR)
+                return True
+            except IOError as err:
+                raise OsHelperError("Unable to open /dev/mem.\n"
+                                    "This command requires either the Chipsec"
+                                    "driver or access to /dev/mem.\n"
+                                    "Are you running this command as root?\n"
+                                    "%s" % str(err), err.errno)
+        return False
 
     def close(self):
         if self.dev_fh:
             self.dev_fh.close()
         self.dev_fh = None
+        if self.dev_mem:
+            self.dev_mem.close()
+        self.dev_mem = None
 
 
     def ioctl(self, nr, args, *mutate_flag):
@@ -192,12 +218,22 @@ class LinuxHelper(Helper):
         return 1
 
     def mem_read_block(self, addr, sz):
-        if(addr != None): self.dev_fh.seek(addr)
-        return self.__mem_block(sz)
+        if self.driver_loaded:
+            if(addr != None): self.dev_fh.seek(addr)
+            return self.__mem_block(sz)
+        elif self.devmem_available():
+            os.lseek(self.dev_mem, addr, os.SEEK_SET)
+            return os.read(self.dev_mem, sz)
 
     def mem_write_block(self, addr, sz, newval):
-        if(addr != None): self.dev_fh.seek(addr)
-        return self.__mem_block(sz, newval)
+        if self.driver_loaded:
+            if(addr != None): self.dev_fh.seek(addr)
+            return self.__mem_block(sz, newval)
+        elif self.devmem_available():
+            os.lseek(self.dev_mem, addr, os.SEEK_SET)
+            written = os.write(self.dev_mem, newval)
+            if written != sz:
+                logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, sz))
 
     def write_phys_mem(self, phys_address_hi, phys_address_lo, sz, newval):
         if(newval == None): return None
@@ -226,10 +262,29 @@ class LinuxHelper(Helper):
     def read_pci( self, bus, device, function, address ):
         return self.read_pci_reg(bus, device, function, address)
 
+    def read_pci_reg_from_sys(self, bus, device, function, offset, size, domain=0):
+        device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
+                      domain=domain, bus=bus, device=device, function=function)
+        device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
+        try:
+            config = open(device_path, "rb")
+        except IOError as err:
+            raise OsHelperError("Unable to open {}".format(device_path), err.errno)
+        config.seek(offset)
+        reg = config.read(size)
+        config.close()
+        if size == 4:
+          reg = struct.unpack("=I", reg)[0]
+        elif size == 2:
+          reg = struct.unpack("=H", reg)[0]
+        elif size == 1:
+          reg = struct.unpack("=B", reg)[0]
+        return reg
+
     def read_pci_reg( self, bus, device, function, offset, size = 4 ):
-        if not self.driver_loaded:
-            return 0xFFFF
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
+        if not self.driver_loaded:
+            return self.read_pci_reg_from_sys(bus, device, function, offset, size, domain=_PCI_DOM)
         d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
@@ -340,24 +395,42 @@ class LinuxHelper(Helper):
         return struct.unpack( "2"+self._pack, out_buf )
 
     def read_mmio_reg(self, phys_address, size):
-        in_buf = struct.pack( "2"+self._pack, phys_address, size)
-        out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
+        if self.driver_loaded:
+            in_buf = struct.pack( "2"+self._pack, phys_address, size)
+            out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
+            reg = out_buf[:size]
+        elif self.devmem_available():
+            os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
+            reg = os.read(self.dev_mem, size)
+
         if size == 8:
-            value = struct.unpack( '=Q', out_buf[:size] )[0]
+            value = struct.unpack( '=Q', reg)[0]
         elif size == 4:
-            value = struct.unpack( '=I', out_buf[:size] )[0]
+            value = struct.unpack( '=I', reg)[0]
         elif size == 2:
-            value = struct.unpack( '=H', out_buf[:size] )[0]
+            value = struct.unpack( '=H', reg)[0]
         elif size == 1:
-            value = struct.unpack( '=B', out_buf[:size] )[0]
-        else: value = 0
+            value = struct.unpack( '=B', reg)[0]
+        else:
+            value = 0
         return value
 
     def write_mmio_reg(self, phys_address, size, value):
-        in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
-        out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
-        return
-        
+        if self.driver_loaded:
+            in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
+            out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
+        elif self.devmem_available():
+            if size == 4:
+                reg = struct.pack("=I", value)
+            elif size == 2:
+                reg = struct.pack("=H", value)
+            elif size == 1:
+                reg = struct.pack("=B", value)
+            os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
+            written = os.write(self.dev_mem, reg)
+            if written != size:
+                logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
+
     def kern_get_EFI_variable_full(self, name, guid):
         status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
         off = 0
