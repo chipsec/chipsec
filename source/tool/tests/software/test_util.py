@@ -48,11 +48,21 @@ class TestChipsecUtil(unittest.TestCase):
         chipsec_util._cs = chipset.cs()
         util = chipsec_util.ChipsecUtil()
         util.VERBOSE = True
+        logger.logger().HAL = True
         util.set_logfile(self.log_file)
         err_code = util.main(["chipsec_utils.py"] + arg.split())
         logger.logger().close()
         self.log = open(self.log_file).read()
         self.assertEqual(err_code, 0)
+
+    def _assertLogValue(self, name, value):
+        """Shortcut to validate the output.
+
+        Assert that at least one line exists within the log which matches the
+        expression: name [:=] value.
+        """
+        self.assertRegexpMatches(self.log,
+                                 r'(^|\W){}\s*[:=]\s*{}($|\W)'.format(name, value))
 
     def test_acpi_xsdt_list(self):
 
@@ -71,7 +81,7 @@ class TestChipsecUtil(unittest.TestCase):
                     return super(ACPIHelper, self).read_phys_mem(pa_hi, pa_lo, length)
 
         self._chipsec_util("acpi list", ACPIHelper)
-        self.assertIn("EFGH: 0x0000000000000400", self.log)
+        self._assertLogValue("EFGH", "0x0000000000000400")
 
     def test_acpi_rsdt_list(self):
 
@@ -94,12 +104,12 @@ class TestChipsecUtil(unittest.TestCase):
                     return super(ACPIHelper, self).read_phys_mem(pa_hi, pa_lo, length)
 
         self._chipsec_util("acpi list", ACPIHelper)
-        self.assertIn("ABCD: 0x0000000000000300", self.log)
+        self._assertLogValue("ABCD", "0x0000000000000300")
 
     def test_acpi_facp_list(self):
         self._chipsec_util("acpi table FACP", mock_helper.DSDTParsingHelper)
-        self.assertIn("DSDT: 0x00000000", self.log)
-        self.assertIn("X_DSDT: 0x0000000000000000", self.log)
+        self._assertLogValue("DSDT", "0x00000000")
+        self._assertLogValue("X_DSDT", "0x0000000000000000")
 
     def test_mismatch_dsdt_x_dsdt_error(self):
 
@@ -109,8 +119,8 @@ class TestChipsecUtil(unittest.TestCase):
             X_DSDT_ADDRESS = 0x312
 
         self._chipsec_util("acpi table FACP", DSDTParsingHelper)
-        self.assertIn("DSDT: 0x00000400", self.log)
-        self.assertIn("X_DSDT: 0x0000000000000312", self.log)
+        self._assertLogValue("DSDT", "0x00000400")
+        self._assertLogValue("X_DSDT", "0x0000000000000312")
         self.assertIn("Unable to determine the correct DSDT address", self.log)
 
     def test_mismatch_dsdt_x_dsdt_ok_dsdt_zero(self):
@@ -121,8 +131,8 @@ class TestChipsecUtil(unittest.TestCase):
             X_DSDT_ADDRESS = 0x400
 
         self._chipsec_util("acpi table FACP", DSDTParsingHelper)
-        self.assertIn("DSDT: 0x00000000", self.log)
-        self.assertIn("X_DSDT: 0x0000000000000400", self.log)
+        self._assertLogValue("DSDT", "0x00000000")
+        self._assertLogValue("X_DSDT", "0x0000000000000400")
         self.assertNotIn("Unable to determine the correct DSDT address", self.log)
 
     def test_mismatch_dsdt_x_dsdt_ok_x_dsdt_zero(self):
@@ -133,8 +143,8 @@ class TestChipsecUtil(unittest.TestCase):
             X_DSDT_ADDRESS = 0x0
 
         self._chipsec_util("acpi table FACP", DSDTParsingHelper)
-        self.assertIn("DSDT: 0x00000400", self.log)
-        self.assertIn("X_DSDT: 0x0000000000000000", self.log)
+        self._assertLogValue("DSDT", "0x00000400")
+        self._assertLogValue("X_DSDT", "0x0000000000000000")
         self.assertNotIn("Unable to determine the correct DSDT address", self.log)
 
     def test_no_x_dsdt(self):
@@ -145,8 +155,8 @@ class TestChipsecUtil(unittest.TestCase):
             DSDT_ADDRESS = 0x400
 
         self._chipsec_util("acpi table FACP", DSDTParsingHelper)
-        self.assertIn("DSDT: 0x00000400", self.log)
-        self.assertIn("X_DSDT: Not found", self.log)
+        self._assertLogValue("DSDT", "0x00000400")
+        self._assertLogValue("X_DSDT", "Not found")
         self.assertIn("Cannot find X_DSDT entry in FADT.", self.log)
 
     def test_show_dsdt(self):
@@ -210,7 +220,8 @@ class TestChipsecUtil(unittest.TestCase):
                     return [0x0, 0x0]
 
         self._chipsec_util("msr 0x2FF", MSRHelper)
-        self.assertIn("EAX=00001234, EDX=0000CDEF", self.log)
+        self._assertLogValue("EAX", "00001234")
+        self._assertLogValue("EDX", "0000CDEF")
 
     def test_gdt(self):
 
@@ -233,8 +244,8 @@ class TestChipsecUtil(unittest.TestCase):
         """
 
         self._chipsec_util("spi info", mock_helper.SPIHelper)
-        self.assertIn("BC = 0xDEADBEEF", self.log)
-        self.assertIn("FRAP = 0xEEEEEEEE", self.log)
+        self._assertLogValue("BC", "0xDEADBEEF")
+        self._assertLogValue("FRAP", "0xEEEEEEEE")
 
     def test_spi_dump(self):
         """Test to verify the ouput of 'spi dump'.
@@ -314,7 +325,9 @@ class TestChipsecUtil(unittest.TestCase):
                     return super(SSDTParsingHelper, self).read_phys_mem(pa_hi, pa_lo, length)
 
         self._chipsec_util("acpi list", SSDTParsingHelper)
-        self.assertIn("SSDT: 0x0000000000000400, 0x0000000000000600, 0x0000000000000800", self.log)
+        self._assertLogValue("SSDT", ("0x0000000000000400, "
+                                      "0x0000000000000600, "
+                                      "0x0000000000000800"))
         self._chipsec_util("acpi table SSDT", SSDTParsingHelper)
         self.assertIn("OEMSS1", self.log)
         self.assertIn("OEMSS2", self.log)
