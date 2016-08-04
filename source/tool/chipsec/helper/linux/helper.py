@@ -115,10 +115,8 @@ class LinuxHelper(Helper):
                     logger().log("Cannot find symbol 'page_is_ram'")
         driver_path = os.path.join(chipsec.file.get_main_dir(), ".." , "drivers" ,"linux", "chipsec.ko" )
         subprocess.check_output( [ "insmod", driver_path,"a1=0x%s" % page_is_ram ] )
-        uid = os.getenv('SUDO_UID')
-        gid = os.getenv('SUDO_GID')
-        if uid and gid:
-            os.chown(self.DEVICE_NAME, int(uid), int(gid))
+        uid = gid = 0
+        os.chown(self.DEVICE_NAME, uid, gid)
         os.chmod(self.DEVICE_NAME, 600)
         if os.path.exists(self.DEVICE_NAME):
             if logger().VERBOSE:
