@@ -82,7 +82,7 @@ class LinuxHelper(Helper):
     DEVICE_NAME = "/dev/chipsec"
     DEV_MEM = "/dev/mem"
     MODULE_NAME = "chipsec"
-    GET_PAGE_IS_RAM = True
+    SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -108,13 +108,16 @@ class LinuxHelper(Helper):
     # This function load CHIPSEC driver. (implement functionality from run.sh)
     def load_chipsec_module(self):
         page_is_ram = ""
-        if self.GET_PAGE_IS_RAM:
+        a1 = ""
+        if self.SUPPORT_KERNEL26_GET_PAGE_IS_RAM:
             page_is_ram = self.get_page_is_ram()
             if not page_is_ram:
                 if logger().VERBOSE:
                     logger().log("Cannot find symbol 'page_is_ram'")
+            else:
+                a1 = "a1=0x%s" % page_is_ram 
         driver_path = os.path.join(chipsec.file.get_main_dir(), ".." , "drivers" ,"linux", "chipsec.ko" )
-        subprocess.check_output( [ "insmod", driver_path,"a1=0x%s" % page_is_ram ] )
+        subprocess.check_output( [ "insmod", driver_path, a1 ] )
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)
         os.chmod(self.DEVICE_NAME, 600)
