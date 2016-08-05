@@ -4,6 +4,8 @@ OSX Driver for Chipsec
 This driver is currently in alpha release. It is not signed and you
 will need to disable the System Integrity Protection to load it.
 
+It is only compatible with x86_64 kernels, that is any release >= 10.7.
+
 How to
 ------
 1. (optional) Build the Driver using Xcode (chipsec.xcodeproj)
