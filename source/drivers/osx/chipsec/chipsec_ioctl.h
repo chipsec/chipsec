@@ -45,7 +45,7 @@ typedef struct _mmio_msg_t {
 
 typedef struct _cr_msg_t {
     int  register_number; // 0, 2, 3, 4 or 8
-    unsigned int value;
+    unsigned long value;
 } cr_msg_t;
 
 #define CHIPSEC_IOCTL_BASE 'p'

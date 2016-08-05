@@ -27,17 +27,17 @@ uint8_t  ReadPCIByte(uint32_t pci_reg,  uint16_t data_port);
 uint16_t ReadPCIWord(uint32_t pci_reg,  uint16_t data_port);
 uint32_t ReadPCIDword(uint32_t pci_reg, uint16_t data_port);
 
-unsigned int ReadCR0(void);
-unsigned int ReadCR2(void);
-unsigned int ReadCR3(void);
-unsigned int ReadCR4(void);
-unsigned int ReadCR8(void);
+unsigned long ReadCR0(void);
+unsigned long ReadCR2(void);
+unsigned long ReadCR3(void);
+unsigned long ReadCR4(void);
+unsigned long ReadCR8(void);
 
-void WriteCR0(unsigned int);
-void WriteCR2(unsigned int);
-void WriteCR3(unsigned int);
-void WriteCR4(unsigned int);
-void WriteCR8(unsigned int);
-    
+void WriteCR0(unsigned long);
+void WriteCR2(unsigned long);
+void WriteCR3(unsigned long);
+void WriteCR4(unsigned long);
+void WriteCR8(unsigned long);
+
 }
 #endif /* _CPU_H */
