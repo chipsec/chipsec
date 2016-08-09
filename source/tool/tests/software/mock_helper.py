@@ -19,10 +19,10 @@ class TestHelper(oshelper.Helper):
     def create(self, start_driver):
         pass
 
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
         pass
 
-    def stop(self):
+    def stop(self, start_driver):
         pass
 
      # This will be used to probe the device, fake a Broadwell CPU
