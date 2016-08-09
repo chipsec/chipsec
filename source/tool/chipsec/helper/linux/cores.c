@@ -11,7 +11,6 @@
 #include <asm/types.h>
 #include <linux/types.h>
 #define u64 uint64_t
-#include "../../../../drivers/linux/include/chipsec.h"
 
 #define BUF_LEN 4096
 

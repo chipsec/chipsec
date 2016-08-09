@@ -159,7 +159,7 @@ class ChipsecMain:
         self._unkownPlatform = True
         self._list_tags      = False
         self.version="    "
-        self.VERSION_FILE = os.path.join( self.CHIPSEC_FOLDER , "VERSION" )
+        self.VERSION_FILE = os.path.join( self.CHIPSEC_FOLDER , "chipsec", "VERSION" )
         if os.path.exists( self.VERSION_FILE ):
             with open(self.VERSION_FILE, "r") as verFile:
                 self.version = verFile.read()
