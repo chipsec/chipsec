@@ -350,6 +350,7 @@ class ACPI:
             sdt_header     = self._parse_table_header( sdt_header_buf )
             sdt_buf        = self.cs.mem.read_physical_mem( sdt_pa, sdt_header.Length )
         else:
+            sdt_pa = None
             if logger().HAL: logger().log( "[acpi] reading RSDT/XSDT using OS API.." )
             (sdt_buf, is_xsdt) = self.cs.helper.get_ACPI_SDT()
             sdt_header = self._parse_table_header( sdt_buf[ :ACPI_TABLE_HEADER_SIZE] )
@@ -364,15 +365,20 @@ class ACPI:
     # Populates a list of ACPI tables available on the system
     #
     def get_ACPI_table_list( self ):
-        addresses = []
-        # find RSDT/XSDT table
-        (is_xsdt,sdt_pa,sdt,sdt_header) = self.get_SDT()
 
-        # cache RSDT/XSDT in the list of ACPI tables
-        if sdt_pa is not None: self.tableList[ sdt_header.Signature ].append(sdt_pa)
+        if self.cs.helper.use_native_api():
+            for t in ACPI_TABLES.keys():
+                table = self.cs.helper.get_ACPI_table( t )
+                if table: self.tableList[ t ].append( 0 )
+        else:
+            # find RSDT/XSDT table
+            (is_xsdt,sdt_pa,sdt,sdt_header) = self.get_SDT()
 
-        self.get_table_list_from_SDT(sdt, is_xsdt)
-        self.get_DSDT_from_FADT()
+            # cache RSDT/XSDT in the list of ACPI tables
+            if sdt_pa is not None: self.tableList[ sdt_header.Signature ].append(sdt_pa)
+
+            self.get_table_list_from_SDT(sdt, is_xsdt)
+            self.get_DSDT_from_FADT()
 
         return self.tableList
 
@@ -440,11 +446,14 @@ class ACPI:
         if isfile:
             acpi_tables_data.append(chipsec.file.read_file( name ))
         else:
-            for table_address in self.tableList[name]:
+            if self.cs.helper.use_native_api():
+                t_data = self.cs.helper.get_ACPI_table( name )
+                acpi_tables_data.append( t_data )
+            else:
+              for table_address in self.tableList[name]:
                 t_data = None
                 t_size = self.cs.mem.read_physical_mem_dword( table_address + 4 )
                 t_data = self.cs.mem.read_physical_mem( table_address, t_size )
-
                 acpi_tables_data.append( t_data )
 
         acpi_tables = []

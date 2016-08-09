@@ -91,17 +91,17 @@ class EfiHelper(Helper):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper started/loaded")
 
-    def stop( self ):
+    def stop(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper stopped/unloaded")
 
-    def delete( self ):
+    def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper deleted")
 
-    def destroy( self ):
-        self.stop()
-        self.delete()
+    #def destroy( self ):
+    #    self.stop()
+    #    self.delete()
 
 ###############################################################################################
 # Actual API functions to access HW resources

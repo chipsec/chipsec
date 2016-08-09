@@ -64,6 +64,14 @@ class OsHelperError (RuntimeError):
 class HWAccessViolationError (OsHelperError):
     pass
 
+class UnimplementedAPIError (OsHelperError):
+    def __init__(self,api_name):
+        super(OsHelperError,self).__init__("'%s' is not implemented" % api_name)
+
+class UnimplementedNativeAPIError (UnimplementedAPIError):
+    def __init__(self,api_name):
+        super(UnimplementedAPIError,self).__init__(api_name)
+
 # Base class for the helpers
 class Helper(object):
     class __metaclass__(type):
@@ -75,6 +83,9 @@ class Helper(object):
 
     def __init__(self):
         self.driver_loaded = False
+
+    def use_native_api(self):
+        return (not self.driver_loaded)
 
 import chipsec.helper.helpers
 
@@ -108,16 +119,10 @@ class OsHelper:
             except:
                 pass
 
-    def __del__(self):
-        try:
-            destroy()
-        except NameError:
-            pass
-
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
         try:
             self.helper.create(start_driver)
-            self.helper.start(start_driver)
+            self.helper.start(start_driver, driver_exists)
         except (None,Exception) , msg:
             if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
@@ -125,14 +130,27 @@ class OsHelper:
                 error_no = msg.errorcode
             raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"%s\"" % msg,error_no)
 
-    def stop( self ):
-        self.helper.stop()
-
-    def destroy( self ):
-        self.helper.delete()
+    def stop( self, start_driver ):
+        self.helper.stop( start_driver )
+        #self.helper.delete( start_driver )
 
     def is_driver_loaded(self):
         return self.helper.driver_loaded
+
+    #
+    # use_native_api
+    # Defines if CHIPSEC should use its own API or native environment/OS API
+    #
+    # Returns:
+    #   True  if CHIPSEC needs to use native OS/environment API
+    #   False if CHIPSEC needs to use its own (OS agnostic) implementation of helper API
+    #
+    # Currently, CHIPSEC will use native API only if CHIPSEC driver wasn't loaded
+    # (e.g. when --no_driver command-line option is specified).
+    # In future, it can can more conditions
+    # 
+    def use_native_api(self):
+        return self.helper.use_native_api()
 
     def is_efi( self ):
         return self.os_system.lower().startswith('efi')
@@ -172,12 +190,7 @@ class OsHelper:
         return self.helper.write_phys_mem( phys_address_hi, phys_address_lo, length, buf )
     def alloc_phys_mem( self, length, max_pa_hi, max_pa_lo ):
         return self.helper.alloc_phys_mem( length, (max_pa_hi<<32|max_pa_lo) )
-    def va2pa( self, va ):
-        return self.helper.va2pa( va )
-    def map_io_space(self, physical_address, length, cache_type):
-        return self.helper.map_io_space(physical_address, length, cache_type)
-    def free_physical_mem(self, physical_address):
-        return self.helper.free_phys_mem(physical_address)
+
 
     #
     # read/write mmio
@@ -193,12 +206,26 @@ class OsHelper:
     #
     def read_physical_mem( self, phys_address, length ):
         return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
+        # alternative implementation in OSHelper when most helpers will implement native OS API
+        #if self.use_native_api():
+        #    return self.helper.native_read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
+        #else:
+        #    return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
 
     def write_physical_mem( self, phys_address, length, buf ):
         return self.helper.write_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length, buf )
 
     def alloc_physical_mem( self, length, max_phys_address ):
         return self.helper.alloc_phys_mem( length, max_phys_address )
+
+    def free_physical_mem(self, physical_address):
+        return self.helper.free_phys_mem(physical_address)
+
+    def va2pa( self, va ):
+        return self.helper.va2pa( va )
+
+    def map_io_space(self, physical_address, length, cache_type):
+        return self.helper.map_io_space(physical_address, length, cache_type)
 
     #
     # Read/Write I/O port
@@ -262,10 +289,11 @@ class OsHelper:
     #
     def get_ACPI_SDT(self):
         return self.helper.get_ACPI_SDT()
+
+    def get_ACPI_table( self, table_name ):
+        return self.helper.get_ACPI_table( table_name )
         
-    def get_ACPI_table_list(self):
-        return self.helper.get_ACPI_table_list()
-    
+   
     #
     # CPUID
     #
@@ -311,6 +339,7 @@ class OsHelper:
     #
     def hypercall( self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0 ):
         return self.helper.hypercall( rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
+
 
     #
     # File system

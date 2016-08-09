@@ -95,12 +95,6 @@ class LinuxHelper(Helper):
         self.dev_fh = None
         self.dev_mem = None
 
-    def __del__(self):
-        try:
-            destroy()
-        except NameError:
-            pass
-
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
@@ -141,20 +135,16 @@ class LinuxHelper(Helper):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper started/loaded")
 
-    def stop( self ):
+    def stop(self, start_driver):
         self.close()
         if self.driver_loaded:
             subprocess.call(["rmmod", self.MODULE_NAME])
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper stopped/unloaded")
 
-    def delete( self ):
+    def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper deleted")
-
-    def destroy( self ):
-        self.stop()
-        self.delete()
 
     def init(self, start_driver):
         x64 = True if sys.maxsize > 2**32 else False

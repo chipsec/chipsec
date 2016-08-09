@@ -154,7 +154,7 @@ class ChipsecMain:
         self._module         = None
         self._module_argv    = None
         self._platform       = None
-        self._start_svc      = True
+        self._driver_exists  = False
         self._no_driver      = False
         self._unkownPlatform = True
         self._list_tags      = False
@@ -565,7 +565,7 @@ class ChipsecMain:
             elif o in ("-a", "--module_args"):
                 self._module_argv = a.split(',')
             elif o in ("-e", "--exists"):
-                self._start_svc = False
+                self._driver_exists = True
             elif o in ("-i", "--ignore_platform"):
                 logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
                 self._unkownPlatform = False
@@ -603,12 +603,13 @@ class ChipsecMain:
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath( import_path ) )
 
-        # If no driver needed, we won't start/stop service
-        if self._no_driver: _start_svc = False
+        if self._no_driver and self._driver_exists:
+            logger().error( "incompatible options: --no_driver and --exists" )
+            return ExitCode.EXCEPTION
 
+        start_driver = (not self._no_driver) and (not self._driver_exists)
         try:
-            # If no driver needed, we won't initialize chipset with automatic platform detection
-            if not self._no_driver: self._cs.init( self._platform, self._start_svc )
+            self._cs.init( self._platform, start_driver, self._driver_exists )
         except UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
@@ -633,7 +634,6 @@ class ChipsecMain:
         logger().log( "[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
         #logger().log( "[CHIPSEC] CPU affinity: 0x%X" % self._cs.helper.get_affinity() )
 
-        #logger().log( "[*] CHIPSEC : %s"% _ver )
         logger().xmlAux.add_test_suite_property( "OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().xmlAux.add_test_suite_property( "Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did) )
         logger().xmlAux.add_test_suite_property( "CHIPSEC", "%s" % _ver )
@@ -651,7 +651,7 @@ class ChipsecMain:
 
         logger().saveXML()
 
-        self._cs.destroy( self._start_svc )
+        self._cs.destroy( start_driver )
         del self._cs
         logger().disable()
         return modules_failed

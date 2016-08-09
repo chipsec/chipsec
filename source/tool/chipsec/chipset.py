@@ -235,23 +235,20 @@ class Chipset:
         self.ucode      = Ucode    ( self )
         self.io         = PortIO   ( self )
         self.cpu        = chipsec.hal.cpu.CPU( self )
-        #self.cr         = CrRegs   ( self )
-        #self.cpuid      = CpuID    ( self )
         self.msgbus     = MsgBus   ( self )
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
         # Examples:
-        # - initializing SPI HAL component in a module:
+        # - initializing SPI HAL component in a module or util extension:
         #   self.spi = SPI( self.cs )
-        # - initializing second order UEFI HAL component in utilcmd extension:
-        #   spi = SPI( chipsec_util._cs )
         #
 
-    def init( self, platform_code, start_driver ):
+    def init( self, platform_code, start_driver, driver_exists=False ):
 
         _unknown_platform = False
-        self.helper.start(start_driver)
+        self.helper.start(start_driver, driver_exists)
+        logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.helper.use_native_api() else 'using CHIPSEC kernel module API') )
 
         if platform_code is None:
             vid_did  = self.pci.read_dword( 0, 0, 0, 0 )
@@ -285,12 +282,11 @@ class Chipset:
             raise UnknownChipsetError, msg
 
 
-    def destroy( self, start_svc ):
-        self.stop( start_svc )
-        #self.helper.destroy()
+    def destroy( self, start_driver ):
+        self.stop( start_driver )
 
-    def stop( self, start_svc ):
-        if start_svc: self.helper.stop()
+    def stop( self, start_driver ):
+        self.helper.stop( start_driver )
 
     def get_chipset_id(self):
         return self.id
