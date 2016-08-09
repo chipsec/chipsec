@@ -126,7 +126,7 @@ class LinuxHelper(Helper):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper created")
 
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
         if start_driver:
             if os.path.exists(self.DEVICE_NAME):
                 subprocess.call(["rmmod", self.MODULE_NAME])
