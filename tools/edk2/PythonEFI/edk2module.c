@@ -2697,7 +2697,10 @@ async_system(const char *command)
     if (strlen(shell) + 3 + strlen(command) >= 1024)
         return ERROR_NOT_ENOUGH_MEMORY
 
-    args[0] = '\0';
+    for(int i = 0; i<1024; i++)
+    {
+    	args[i] = '\0';
+    }
     strcat(args, shell);
     strcat(args, "/c ");
     strcat(args, command);
