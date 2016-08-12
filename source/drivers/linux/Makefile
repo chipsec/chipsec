@@ -19,10 +19,12 @@ endif
 chipsec64: clean
 	nasm -f elf64 -o amd64/cpu.o amd64/cpu.asm;
 	make -C $(KERNEL_SRC_DIR) SUBDIRS=`pwd` modules
+	make -C ../../tool/chipsec/helper/linux
 
 chipsec32: clean
 	nasm -f elf32 -o i386/cpu.o i386/cpu.asm;
 	make -C $(KERNEL_SRC_DIR) SUBDIRS=`pwd` modules
+	make -C ../../tool/chipsec/helper/linux
 
 install:
 	./run.sh
