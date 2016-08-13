@@ -71,8 +71,8 @@ class sinkhole(BaseModule):
         self.logger.log( "[*] SMRR Base      : 0x%016X" % smrr_base )
 
         self.logger.log( "[*] Attempting to overlap Local APIC page with SMRR region" )
-		self.logger.log( "NOTE: The system may hang or process may crash when running this test. In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
         self.logger.log( "    writing 0x%X to IA32_APIC_BASE[APICBase].." % smrrbase )
+        self.logger.log_important( "NOTE: The system may hang or process may crash when running this test. In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
         try:
             chipsec.chipset.write_register_field( self.cs, 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
             ex = False
