@@ -1,0 +1,16 @@
+[
+    { "vector": "0x02", "status": "HV_STATUS_SUCCESS",       "data": "00 00 00 ca f2 00 00 00 05" },
+    { "vector": "0x03", "status": "HV_STATUS_SUCCESS",       "data": "00 00 ae 00 00 00 21 00 07" },
+    { "vector": "0x08", "status": "HV_STATUS_SUCCESS",       "data": "00 00 ac 3a 00 00 00 4b 00" },
+    { "vector": "0x0b", "status": "HV_STATUS_SUCCESS",       "data": "10 00 00 00 00 00 00 00" },
+    { "vector": "0x50", "status": "HV_STATUS_SUCCESS",       "data": "0e 00 00 00 00 00 00 00 00 00 00 00" },
+    { "vector": "0x5c", "status": "HV_STATUS_SUCCESS",       "data": "CONNECTION_ID_MESSAGE_TYPE 00 00 00 00 08" },
+    { "vector": "0x5d", "status": "HV_STATUS_SUCCESS",       "data": "CONNECTION_ID_EVENT_TYPE   00 00 00 00 00" },
+    { "vector": "0x78", "status": "HV_STATUS_SUCCESS",       "data": "00 00 00 00 00 00 4d 00 00" },
+    { "vector": "0x51", "status": "HV_STATUS_ACCESS_DENIED", "data": "00 00 f0 00 0a 00 00 00 1f" },
+    { "vector": "0x52", "status": "HV_STATUS_ACCESS_DENIED", "data": "00 00 00 00 00 00 eb 00 00 c8 00 00 00 00 00 00 09" },
+    { "vector": "0x53", "status": "HV_STATUS_ACCESS_DENIED", "data": "00 00 00 00 a1 00 00 00 00 00 00 1a 0f" },
+    { "vector": "0x54", "status": "HV_STATUS_ACCESS_DENIED", "data": "00 00 00 00 00 00 62 00 00 00 00 b8 0e" },
+    { "vector": "0x60", "status": "HV_STATUS_ACCESS_DENIED", "data": "00 75 00 00 ed 00 00 00 fa" },
+    { "vector": "0x87", "status": "HV_STATUS_ACCESS_DENIED", "data": "01 00 00 00 00 84 00 00 00 85" }
+]
