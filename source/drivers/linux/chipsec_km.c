@@ -526,6 +526,8 @@ static loff_t memory_lseek(struct file * file, loff_t offset, int orig)
 //Older kernels (<20) uses f_dentry instead of f_path.dentry
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
 	mutex_lock(&file->f_dentry->d_inode->i_mutex);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
+	inode_lock(file->f_path.dentry->d_inode);
 #else
 	mutex_lock(&file->f_path.dentry->d_inode->i_mutex);
 #endif 
@@ -547,6 +549,8 @@ static loff_t memory_lseek(struct file * file, loff_t offset, int orig)
 //Older kernels (<20) uses f_dentry instead of f_path.dentry
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
 	mutex_unlock(&file->f_dentry->d_inode->i_mutex);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
+	inode_unlock(file->f_path.dentry->d_inode);
 #else
 	mutex_unlock(&file->f_path.dentry->d_inode->i_mutex);
 #endif 
