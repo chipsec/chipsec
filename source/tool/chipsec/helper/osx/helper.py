@@ -54,12 +54,12 @@ class OSXHelper(Helper):
         except NameError:
             pass
 
-    def create(self):
-        self.init()
+    def create(self, start_driver):
+        self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper created")
 
-    def start(self):
+    def start(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper started/loaded")
 
@@ -75,7 +75,7 @@ class OSXHelper(Helper):
         self.stop()
         self.delete()
 
-    def init(self):
+    def init(self, start_driver):
         try:
             self.dev_fh = open(self.DEVICE_NAME, "r+")
         except IOError as e:
@@ -141,6 +141,53 @@ class OSXHelper(Helper):
     def getcwd(self):
         return os.getcwd()
 
+    def read_io_port(self):
+        raise NotImplementedError()
+
+    def write_io_port(self):
+        raise NotImplementedError()
+
+    def read_cr(self, cpu_thread_id, cr_number):
+        raise NotImplementedError()
+
+    def write_cr(self, cpu_thread_id, cr_number, value):
+        raise NotImplementedError()
+
+    def read_msr(self, thread_id, msr_addr):
+        raise NotImplementedError()
+
+    def write_msr(self, thread_id, msr_addr, eax, edx):
+        raise NotImplementedError()
+
+    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
+        raise NotImplementedError()
+
+    def do_hypercall(self, vector, arg1, arg2, arg3, arg4, arg5, use_peach):
+        raise NotImplementedError()
+
+    def cpuid(self, eax, ecx):
+        raise NotImplementedError()
+
+    def alloc_phys_mem(self, num_bytes, max_addr):
+        raise NotImplementedError()
+
+    def msgbus_send_read_message( self, mcr, mcrx ):
+        raise NotImplementedError()
+
+    def msgbus_send_write_message( self, mcr, mcrx, mdr):
+        raise NotImplementedError()
+
+    def msgbus_send_message( self, mcr, mcrx, mdr=None):
+        raise NotImplementedError()
+
+    def get_affinity(self):
+        raise NotImplementedError()
+
+    def set_affinity(self, thread_id):
+        raise NotImplementedError()
+
+    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+        raise NotImplementedError()
 
 def get_helper():
     return OSXHelper()
