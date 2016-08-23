@@ -131,8 +131,9 @@ class ChipsecUtil:
             cmds = map( self.map_modname_zip, filter(self.f_mod_zip, myzip.namelist()) )
         else:
             #traceback.print_stack()
-            mydir = os.path.dirname(__file__)
-            cmds_dir = os.path.join(mydir,os.path.join("chipsec","utilcmd"))
+            import imp
+            mydir = imp.find_module('chipsec')[1]
+            cmds_dir = os.path.join(mydir,os.path.join("utilcmd"))
             cmds = map( self.map_modname, filter(self.f_mod, os.listdir(cmds_dir)) )
 
         if logger().VERBOSE:
