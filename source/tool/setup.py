@@ -22,66 +22,85 @@
 
 
 """
-Components for auxiliar tasks. Setup module for installing chipsec with distutils as a package
+Setup module to install chipsec package via setuptools
 """
 
+import io
 import os
-from distutils.core import setup, Extension
-from distutils import dir_util
 import platform
+from setuptools import setup, find_packages, Extension
 
-tool_dir = os.path.dirname(os.path.abspath(__file__))
+here = os.path.abspath(os.path.dirname(__file__))
 
-package_data = { "chipsec.cfg": ["*.xml", "*.xsd"],
+def long_description():
+    with io.open(os.path.join(here, '../../README.md'), encoding='utf-8') as f:
+        return f.read()
+
+def version():
+    with io.open(os.path.join(here, 'chipsec', 'VERSION')) as f:
+        return f.read()
+
+package_data = { "": ["*.ini","*.cfg","*.json"],
+                 "chipsec.cfg": ["*.xml", "*.xsd"],
                  "chipsec": ["VERSION"]
                }
 
 if platform.system().lower() == "windows":
-    WIN_DRIVER_INSTALL_PATH = "Lib/site-packages/chipsec/helper/win"
-
-    data_files = [
-                  #(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/win/win7_amd64/chipsec_hlpr.sys','chipsec/win/win7_amd64/chipsec_amd64.cat','chipsec/win/win7_amd64/chipsec.inf']),
-                  (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
-                  #(WIN_DRIVER_INSTALL_PATH + "/win7_x86"  , ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys'])
-                  #(WIN_DRIVER_INSTALL_PATH + "/winxp", ['chipsec/helper/win/winxp/chipsec_hlpr.sys'])
-                 ]
-    extensions = []
+    package_data[ "chipsec.helper.win"] = ['win7_amd64/*.sys']
+    install_requires=['pywin32']
+    kw = dict(ext_modules = [])
 
 if platform.system().lower() == "linux":
-    data_files = []
-    extensions = [ Extension('chipsec.helper.linux.cores', sources=['chipsec/helper/linux/cores.c']) ]
-
-version      = ""
-VERSION_FILE = os.path.join(os.path.dirname(__file__), 'chipsec', 'VERSION')
-if os.path.exists( VERSION_FILE ):
-    with open(VERSION_FILE, "r") as verFile:
-        version = "." + verFile.read()
-
-build_dir = os.path.join(tool_dir, "build")
-if os.path.exists( build_dir ):
-    dir_util.remove_tree( build_dir )
-
-#TODO: Replace with setuptools find_packages()
-mypackages = []
-for current, dirs, files in os.walk(tool_dir):
-    for file in files:
-        if file == "__init__.py":
-            pkg = current.replace(tool_dir+os.path.sep,"")
-            pkg = pkg.replace(os.path.sep,'.')
-            mypackages.append(pkg)
-
+    package_data["chipsec.helper.linux"] = ["*.c","Makefile"]
+    install_requires=[]
+    kw = dict(
+        ext_modules = [
+            Extension("chipsec.helper.linux.cores", ["chipsec/helper/linux/cores.c"]),
+        ],
+    )
 
 setup(
-        name            = 'chipsec',
-        description     = 'CHIPSEC: Platform Security Assessment Framework',
-        version         = '1.2.4',
-        author          = 'chipsec developers',
-        author_email    = '',
-        url             = 'https://github.com/chipsec/chipsec',
 
-        data_files      = data_files,
-        scripts         = ['chipsec_main.py', 'chipsec_util.py'],
-        packages        = mypackages,
-        package_data    = package_data,
-        ext_modules     = extensions
+    name = 'chipsec',
+    version = version(),
+    description = 'CHIPSEC: Platform Security Assessment Framework',
+    author = 'CHIPSEC Team',
+    author_email = 'chipsec@intel.com',
+    url = 'https://github.com/chipsec/chipsec',
+    download_url="https://github.com/chipsec/chipsec",
+    license = 'GNU General Public License v2 (GPLv2)',
+    platforms=['any'],
+    long_description = long_description(),
+
+    classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'Natural Language :: English',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Topic :: Security',
+        'Topic :: System :: Hardware'
+    ],
+
+    packages = find_packages(exclude=["tests.*", "tests"]),
+    py_modules=['chipsec_main', 'chipsec_util'],
+
+    install_requires = install_requires, 
+
+    package_data = package_data,
+
+    entry_points = {
+        'console_scripts': [
+            'chipsec_util=chipsec_util:main',
+            'chipsec_main=chipsec_main:main',
+        ],
+    },
+    #scripts         = ['chipsec_main.py', 'chipsec_util.py'],
+
+    **kw
 )
