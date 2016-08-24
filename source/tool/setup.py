@@ -33,7 +33,7 @@ from setuptools import setup, find_packages, Extension
 here = os.path.abspath(os.path.dirname(__file__))
 
 def long_description():
-    with io.open(os.path.join(here, '../../README.md'), encoding='utf-8') as f:
+    with io.open(os.path.join(here, "..", "..", "README.md"), encoding='utf-8') as f:
         return f.read()
 
 def version():
