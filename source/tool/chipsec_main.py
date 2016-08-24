@@ -656,7 +656,9 @@ class ChipsecMain:
         logger().disable()
         return modules_failed
 
-if __name__ == "__main__":
+def main():
     chipsecMain = ChipsecMain(sys.argv[1:])
-    ec = chipsecMain.main()
-    sys.exit(ec)
+    return chipsecMain.main()
+
+if __name__ == "__main__":
+    sys.exit( main() )
