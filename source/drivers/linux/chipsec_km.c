@@ -1102,6 +1102,27 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 	}
+
+    case IOCTL_FREE_PHYSMEM:
+    {
+        // IN params : physical address
+        // OUT params :
+        phys_addr_t pa;
+        void *va;
+
+        numargs = 1;
+        if (copy_from_user((void*) ptrbuf, (void*) ioctl_param, (sizeof(long) * numargs)) > 0) {
+            printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+            return -EFAULT;
+        }
+
+        pa = ptr[0];
+        va = phys_to_virt(pa);
+        printk(KERN_INFO "[chipsec] freeing pa = 0x%llx, va = %p\n", pa, va);
+        kfree(va);
+
+        break;
+    }
    
 #ifdef EFI_NOT_READY
 	case IOCTL_GET_EFIVAR:

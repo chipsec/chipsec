@@ -76,6 +76,7 @@ IOCTL_RDMMIO                   = 0x12
 IOCTL_WRMMIO                   = 0x13
 IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
+IOCTL_FREE_PHYSMEM             = 0x16
 
 class LinuxHelper(Helper):
 
@@ -394,6 +395,10 @@ class LinuxHelper(Helper):
         in_buf = struct.pack( "2"+self._pack, num_bytes, max_addr)
         out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
         return struct.unpack( "2"+self._pack, out_buf )
+
+    def free_phys_mem(self, physmem):
+        in_buf = struct.pack( "1"+self._pack, physmem)
+        out_buf = self.ioctl(IOCTL_FREE_PHYSMEM, in_buf)
 
     def read_mmio_reg(self, phys_address, size):
         if self.driver_loaded:
