@@ -84,3 +84,8 @@ typedef struct _DESCRIPTOR_TABLE_RECORD {
 } DESCRIPTOR_TABLE_RECORD, *PDESCRIPTOR_TABLE_RECORD;
 #pragma pack()
 
+struct allocated_mem_list {
+  physaddr_t pa;
+  void *va;
+  struct list_head list;
+};

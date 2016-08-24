@@ -399,6 +399,7 @@ class LinuxHelper(Helper):
     def free_phys_mem(self, physmem):
         in_buf = struct.pack( "1"+self._pack, physmem)
         out_buf = self.ioctl(IOCTL_FREE_PHYSMEM, in_buf)
+        return struct.unpack( "1"+self._pack, out_buf)[0]
 
     def read_mmio_reg(self, phys_address, size):
         if self.driver_loaded:
