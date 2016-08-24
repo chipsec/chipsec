@@ -1472,8 +1472,9 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         if (direction & MSGBUS_MDR_OUT_MASK) {
             // Read data from MDR register
             mdr_out = ReadPCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MDR, 4 );
-            ptr[4] = mdr_out;
         }
+        
+        ptr[4] = mdr_out;
 
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
           return -EFAULT;	
