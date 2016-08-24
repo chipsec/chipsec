@@ -207,10 +207,12 @@ class ChipsecUtil:
                       "################################################################" )
         logger().log( "[CHIPSEC] Version %s" % __version__ )
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     chipsecUtil = ChipsecUtil()
     chipsecUtil.print_banner()
-    return chipsecUtil.main(sys.argv)
+    return chipsecUtil.main(argv)
 
        
 if __name__ == "__main__":

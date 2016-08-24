@@ -656,8 +656,10 @@ class ChipsecMain:
         logger().disable()
         return modules_failed
 
-def main():
-    chipsecMain = ChipsecMain(sys.argv[1:])
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    chipsecMain = ChipsecMain(argv)
     return chipsecMain.main()
 
 if __name__ == "__main__":
