@@ -366,7 +366,7 @@ class ACPI:
     #
     def get_ACPI_table_list( self ):
 
-        if self.cs.helper.use_native_api():
+        if self.cs.use_native_api():
             for t in ACPI_TABLES.keys():
                 table = self.cs.helper.get_ACPI_table( t )
                 if table: self.tableList[ t ].append( 0 )
@@ -446,7 +446,7 @@ class ACPI:
         if isfile:
             acpi_tables_data.append(chipsec.file.read_file( name ))
         else:
-            if self.cs.helper.use_native_api():
+            if self.cs.use_native_api():
                 t_data = self.cs.helper.get_ACPI_table( name )
                 acpi_tables_data.append( t_data )
             else:

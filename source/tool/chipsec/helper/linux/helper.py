@@ -49,6 +49,7 @@ import array
 import subprocess
 import os.path
 import chipsec.file
+import chipsec.defines
 
 from ctypes import *
 
@@ -172,17 +173,16 @@ class LinuxHelper(Helper):
         """
         if self.dev_mem:
             return True
-        if not self.driver_loaded:
-            logger().log("[helper] Trying /dev/mem instead of the Chipsec driver.")
-            try:
-                self.dev_mem = os.open(self.DEV_MEM, os.O_RDWR)
-                return True
-            except IOError as err:
-                raise OsHelperError("Unable to open /dev/mem.\n"
-                                    "This command requires either the Chipsec"
-                                    "driver or access to /dev/mem.\n"
-                                    "Are you running this command as root?\n"
-                                    "%s" % str(err), err.errno)
+
+        try:
+            self.dev_mem = os.open(self.DEV_MEM, os.O_RDWR)
+            return True
+        except IOError as err:
+            raise OsHelperError("Unable to open /dev/mem.\n"
+                                "This command requires either the Chipsec"
+                                "driver or access to /dev/mem.\n"
+                                "Are you running this command as root?\n"
+                                "%s" % str(err), err.errno)
         return False
 
     def close(self):
@@ -208,32 +208,56 @@ class LinuxHelper(Helper):
             self.dev_fh.flush()
         return 1
 
-    def mem_read_block(self, addr, sz):
-        if self.driver_loaded:
-            if(addr != None): self.dev_fh.seek(addr)
-            return self.__mem_block(sz)
-        elif self.devmem_available():
-            os.lseek(self.dev_mem, addr, os.SEEK_SET)
-            return os.read(self.dev_mem, sz)
+    #def mem_read_block(self, addr, sz):
+    #    if(addr != None): self.dev_fh.seek(addr)
+    #    return self.__mem_block(sz)
+    #
+    #def native_mem_read_block(self, addr, sz):
+    #    if self.devmem_available():
+    #        os.lseek(self.dev_mem, addr, os.SEEK_SET)
+    #        return os.read(self.dev_mem, sz)
+    #
+    #def mem_write_block(self, addr, sz, newval):
+    #    if(addr != None): self.dev_fh.seek(addr)
+    #    return self.__mem_block(sz, newval)
+    #
+    #def native_mem_write_block(self, addr, sz, newval):
+    #    if self.devmem_available():
+    #        os.lseek(self.dev_mem, addr, os.SEEK_SET)
+    #        written = os.write(self.dev_mem, newval)
+    #        if written != sz:
+    #            logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, sz))
 
-    def mem_write_block(self, addr, sz, newval):
-        if self.driver_loaded:
-            if(addr != None): self.dev_fh.seek(addr)
-            return self.__mem_block(sz, newval)
-        elif self.devmem_available():
+    def write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
+        if newval is None: return None
+        #return self.mem_write_block((phys_address_hi << 32) | phys_address_lo, sz, newval)
+        addr = (phys_address_hi << 32) | phys_address_lo
+        self.dev_fh.seek(addr)
+        return self.__mem_block(length, newval)
+
+    def native_write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
+        if newval is None: return None
+        #return self.native_mem_write_block((phys_address_hi << 32) | phys_address_lo, sz, newval)
+        if self.devmem_available():
+            addr = (phys_address_hi << 32) | phys_address_lo
             os.lseek(self.dev_mem, addr, os.SEEK_SET)
             written = os.write(self.dev_mem, newval)
-            if written != sz:
-                logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, sz))
+            if written != length:
+                logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, length))
 
-    def write_phys_mem(self, phys_address_hi, phys_address_lo, sz, newval):
-        if(newval == None): return None
-        return self.mem_write_block((phys_address_hi << 32) | phys_address_lo, sz, newval)
 
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
-        ret = self.mem_read_block((phys_address_hi << 32) | phys_address_lo, length)
-        if(ret == None): return None
-        return ret
+        #return self.mem_read_block((phys_address_hi << 32) | phys_address_lo, length)
+        addr = (phys_address_hi << 32) | phys_address_lo
+        self.dev_fh.seek(addr)
+        return self.__mem_block(length)
+
+    def native_read_phys_mem(self, phys_address_hi, phys_address_lo, length):
+        #return self.native_mem_read_block((phys_address_hi << 32) | phys_address_lo, length)
+        if self.devmem_available():
+            addr = (phys_address_hi << 32) | phys_address_lo
+            os.lseek(self.dev_mem, addr, os.SEEK_SET)
+            return os.read(self.dev_mem, length)
 
     def va2pa( self, va ):
         error_code = 0
@@ -249,11 +273,21 @@ class LinuxHelper(Helper):
             error_code = 1
         return (pa,error_code)
 
-    #DEPRECATED: Pass-through
-    def read_pci( self, bus, device, function, address ):
-        return self.read_pci_reg(bus, device, function, address)
 
-    def read_pci_reg_from_sys(self, bus, device, function, offset, size, domain=0):
+    def read_pci_reg( self, bus, device, function, offset, size = 4 ):
+        _PCI_DOM = 0 #Change PCI domain, if there is more than one.
+        #if not self.driver_loaded:
+        #    return self.read_pci_reg_from_sys(bus, device, function, offset, size, domain=_PCI_DOM)
+        d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
+        try:
+            ret = self.ioctl(IOCTL_RDPCI, d)
+        except IOError:
+            print "IOError\n"
+            return None
+        x = struct.unpack("5"+self._pack, ret)
+        return x[4]
+
+    def native_read_pci_reg(self, bus, device, function, offset, size, domain=0):
         device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
                       domain=domain, bus=bus, device=device, function=function)
         device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
@@ -264,26 +298,8 @@ class LinuxHelper(Helper):
         config.seek(offset)
         reg = config.read(size)
         config.close()
-        if size == 4:
-          reg = struct.unpack("=I", reg)[0]
-        elif size == 2:
-          reg = struct.unpack("=H", reg)[0]
-        elif size == 1:
-          reg = struct.unpack("=B", reg)[0]
+        reg = struct.unpack(('=%c' % chipsec.defines.SIZE2FORMAT[size]), reg)[0]
         return reg
-
-    def read_pci_reg( self, bus, device, function, offset, size = 4 ):
-        _PCI_DOM = 0 #Change PCI domain, if there is more than one.
-        if not self.driver_loaded:
-            return self.read_pci_reg_from_sys(bus, device, function, offset, size, domain=_PCI_DOM)
-        d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
-        try:
-            ret = self.ioctl(IOCTL_RDPCI, d)
-        except IOError:
-            print "IOError\n"
-            return None
-        x = struct.unpack("5"+self._pack, ret)
-        return x[4]
 
     def write_pci_reg( self, bus, device, function, offset, value, size = 4 ):
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
@@ -368,12 +384,6 @@ class LinuxHelper(Helper):
         base = (base_hi << 32) + base_lo
         return (limit,base,pa)
 
-    def do_hypercall(self, vector, arg1, arg2, arg3, arg4, arg5, use_peach):
-        in_buf = struct.pack( "7"+self._pack, vector, arg1, arg2, arg3, arg4, arg5, use_peach)
-        out_buf = self.ioctl(IOCTL_HYPERCALL, in_buf)
-        regs = struct.unpack( "7"+self._pack, out_buf )
-        return regs
-
     def cpuid(self, eax, ecx):
         # add ecx
         in_buf = struct.pack( "4"+self._pack, eax, 0, ecx, 0)
@@ -386,41 +396,29 @@ class LinuxHelper(Helper):
         return struct.unpack( "2"+self._pack, out_buf )
 
     def read_mmio_reg(self, phys_address, size):
-        if self.driver_loaded:
-            in_buf = struct.pack( "2"+self._pack, phys_address, size)
-            out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
-            reg = out_buf[:size]
-        elif self.devmem_available():
+        in_buf = struct.pack( "2"+self._pack, phys_address, size)
+        out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
+        reg = out_buf[:size]
+        return struct.unpack( ('=%c' % chipsec.defines.SIZE2FORMAT[size]), reg)[0]
+
+    def native_read_mmio_reg(self, phys_address, size):
+        if self.devmem_available():
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             reg = os.read(self.dev_mem, size)
-
-        if size == 8:
-            value = struct.unpack( '=Q', reg)[0]
-        elif size == 4:
-            value = struct.unpack( '=I', reg)[0]
-        elif size == 2:
-            value = struct.unpack( '=H', reg)[0]
-        elif size == 1:
-            value = struct.unpack( '=B', reg)[0]
-        else:
-            value = 0
-        return value
+        return struct.unpack( ('=%c' % chipsec.defines.SIZE2FORMAT[size]), reg)[0]
 
     def write_mmio_reg(self, phys_address, size, value):
-        if self.driver_loaded:
-            in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
-            out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
-        elif self.devmem_available():
-            if size == 4:
-                reg = struct.pack("=I", value)
-            elif size == 2:
-                reg = struct.pack("=H", value)
-            elif size == 1:
-                reg = struct.pack("=B", value)
+        in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
+        out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
+
+    def native_write_mmio_reg(self, phys_address, size, value):
+        if self.devmem_available():
+            reg = struct.pack(('=%c' % chipsec.defines.SIZE2FORMAT[size]), value)
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             written = os.write(self.dev_mem, reg)
             if written != size:
                 logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
+
 
     def kern_get_EFI_variable_full(self, name, guid):
         status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
@@ -480,10 +478,10 @@ class LinuxHelper(Helper):
         (off, buf, hdr, data, guid, attr) = self.kern_get_EFI_variable_full(name, guid)
         return data
 
-    def kern_delete_EFI_variable(self, name, guid):
-        return self.kern_set_EFI_variable(name, guid, "")
+    #def kern_delete_EFI_variable(self, name, guid):
+    #    return self.kern_set_EFI_variable(name, guid, "")
     
-    def kern_list_EFI_variables(self, infcls):
+    def kern_list_EFI_variables(self):
         varlist = []
         off = 0
         buf = list()
@@ -626,9 +624,6 @@ class LinuxHelper(Helper):
 #        return (int(major) >= 3) and (int(minor) >= 10)
         return os.path.exists("/sys/firmware/efi/efivars/")
  
-    def use_kernvars(self):
-        return True
-
     def EFI_supported( self):
         return os.path.exists("/sys/firmware/efi/vars/") or os.path.exists("/sys/firmware/efi/efivars/")
 
@@ -677,7 +672,7 @@ class LinuxHelper(Helper):
         finally:
             return (off, buf, hdr, data, guid, attr)
 
-    def VARS_list_EFI_variables ( self, infcls=2 ):
+    def VARS_list_EFI_variables (self):
         varlist = []
         try:
             varlist = os.listdir('/sys/firmware/efi/vars')
@@ -750,7 +745,7 @@ class LinuxHelper(Helper):
             return (off, buf, hdr, data, guid, attr)
 
 
-    def EFIVARS_list_EFI_variables ( self, infcls=2 ):
+    def EFIVARS_list_EFI_variables (self):
         varlist = []
         try:
             varlist = os.listdir('/sys/firmware/efi/efivars')
@@ -821,25 +816,28 @@ class LinuxHelper(Helper):
 # UEFI API entry points
 #
 
-
     def delete_EFI_variable(self, name, guid):
-        if self.use_kernvars(): return self.kern_delete_EFI_variable(name, guid)
-        elif self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, None)
+        return self.kern_set_EFI_variable(name, guid, "")
+    def native_delete_EFI_variable(self, name, guid):
+        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, None)
 
-    def list_EFI_variables (self, infcls=2):
-        if      self.use_kernvars(): return self.kern_list_EFI_variables(infcls)
-        elif self.use_efivars():  return self.EFIVARS_list_EFI_variables(infcls)
-        else:                        return self.VARS_list_EFI_variables(infcls)
+    def list_EFI_variables(self):
+        return self.kern_list_EFI_variables()
+    def native_list_EFI_variables(self):
+        if self.use_efivars(): return self.EFIVARS_list_EFI_variables()
+        else:                  return self.VARS_list_EFI_variables()
 
     def get_EFI_variable(self, name, guid, attrs=None):
-        if self.use_kernvars():    return self.kern_get_EFI_variable(name, guid)
-        elif self.use_efivars():  return self.EFIVARS_get_EFI_variable(name, guid)
-        else:                      return self.VARS_get_EFI_variable(name, guid)
+        return self.kern_get_EFI_variable(name, guid)
+    def native_get_EFI_variable(self, name, guid, attrs=None):
+        if self.use_efivars(): return self.EFIVARS_get_EFI_variable(name, guid)
+        else:                  return self.VARS_get_EFI_variable(name, guid)
 
     def set_EFI_variable(self, name, guid, value, attrs=None):
-        if self.use_kernvars(): return self.kern_set_EFI_variable(name, guid, value)
-        if self.use_efivars():  return self.EFIVARS_set_EFI_variable(name, guid, value, attrs)
-        else:                      return self.VARS_set_EFI_variable(name, guid, value)
+        return self.kern_set_EFI_variable(name, guid, value)
+    def native_set_EFI_variable(self, name, guid, value, attrs=None):
+        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, value, attrs)
+        else:                  return self.VARS_set_EFI_variable(name, guid, value)
 
 
 ##############

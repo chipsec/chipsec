@@ -244,6 +244,12 @@ class Chipset:
         #   self.spi = SPI( self.cs )
         #
 
+    ##################################################################################
+    #
+    # Iitialization
+    #
+    ##################################################################################
+
     def init( self, platform_code, start_driver, driver_exists=False ):
 
         _unknown_platform = False
@@ -308,6 +314,9 @@ class Chipset:
         
     def is_atom(self):
         return self.get_chipset_id() in CHIPSET_FAMILY_ATOM
+
+    def use_native_api(self):
+        return self.helper.use_native_api()
 
     ##################################################################################
     #

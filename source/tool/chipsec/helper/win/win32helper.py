@@ -48,7 +48,7 @@ import platform
 import re
 from collections import namedtuple
 
-from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Helper, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Helper
 import errno
 
 
@@ -845,29 +845,6 @@ class Win32Helper(Helper):
         (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )
         return (eax, ebx, ecx, edx)
 
-    """
-    def get_ACPI_SDT( self ):
-        xsdt = True
-        table_size = 36
-        tBuffer = create_string_buffer( table_size )
-        tName = FirmwareTableID_XSDT
-      
-        retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
-        if 0 == retVal:
-            tName = FirmwareTableID_RSDT
-            retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
-            xsdt = False
-            if 0 == retVal:
-                logger().error( "[helper] No ACPI System Description Table (SDT) found" )
-                return None, xsdt
-            
-        if retVal > table_size:
-            table_size = retVal
-            tBuffer    = create_string_buffer( table_size )
-            retVal     = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
-        
-        return tBuffer[:retVal], xsdt
-    """
 
     def get_ACPI_SDT( self ):
         sdt  = self.native_get_ACPI_table( 'XSDT' ) # FirmwareTableID_XSDT
@@ -888,11 +865,6 @@ class Win32Helper(Helper):
             retVal     = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         return tBuffer[:retVal]
 
-    def get_ACPI_table( self, table_name ):
-        if self.use_native_api():
-            return self.native_get_ACPI_table( table_name )
-        else:
-            raise UnimplementedAPIError('get_ACPI_table')
 
 
     #

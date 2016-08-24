@@ -36,11 +36,6 @@ usage:
     >>> write_physical_mem( 0xf0000, 0x100, buffer )
     >>> write_physical_mem_dowrd( 0xf0000, 0xdeadbeef )
     >>> read_physical_mem_dowrd( 0xfed40000 )
-
-DEPRECATED
-    >>> read_phys_mem( 0xf0000, 0x100 )
-    >>> write_phys_mem_dword( 0xf0000, 0xdeadbeef )
-    >>> read_phys_mem_dword( 0xfed40000 )
 """
 
 __version__ = '1.0'
