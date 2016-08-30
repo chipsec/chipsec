@@ -77,7 +77,8 @@ class UEFICommand(BaseCommand):
         # No driver required when printing the util documentation
         if len(self.argv) < 3:
             return False
-        return True
+        op = self.argv[2]
+        return (op in ('tables','s3bootscript'))
 
     def run(self):
         _uefi = UEFI( self.cs )

@@ -506,13 +506,15 @@ def FvSum16(buffer):
 def FvChecksum16(buffer):
     return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
-def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, CalcSum):
+def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size):
     zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-    #fs_guid = (FsGuid in (EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, 'FFF12B8D-7696-4C8B-A985-2747075B4F50'))
-    fv_len = (FvLength > HeaderLength)
-    fv_header_len = (ExtHeaderOffset == 0) or ((HeaderLength <= ExtHeaderOffset) and ((ExtHeaderOffset % 4) == 0))
+    fv_rsvd = (Reserved == 0)
+    fs_guid = (FsGuid in (EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, 'FFF12B8D-7696-4C8B-A985-2747075B4F50'))
+    fv_len = (FvLength <= size) and (FvLength > HeaderLength)
+    # ExtHeaderOffset < 4 - Apple workaround
+    fv_header_len = (ExtHeaderOffset == 0) or (ExtHeaderOffset < 4) or ((HeaderLength > ExtHeaderOffset) and ((ExtHeaderOffset % 4) == 0))
     #sum = (Checksum == CalcSum)
-    return (fv_len and fv_header_len and zero_vector)
+    return fv_rsvd and fv_len and fv_header_len
 
 def NextFwVolume(buffer, off = 0):
     fof = off
@@ -536,6 +538,7 @@ def NextFwVolume(buffer, off = 0):
         print "\tChecksum:         0x%04X" % Checksum
         print "\tRevision:         0x%02X" % Revision
         print "\tExtHeaderOffset:  0x%02X" % ExtHeaderOffset
+        print "\tReserved:         0x%02X" % Reserved
         '''
         #print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
         #print "FV Checksum:  0x%04X (0x%04X)" % (Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
@@ -550,7 +553,7 @@ def NextFwVolume(buffer, off = 0):
             fvh = fvh + tail
         CalcSum = FvChecksum16(fvh)
         FsGuid = guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3)
-        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, CalcSum)):
+        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size)):
             res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
             return res
         else:

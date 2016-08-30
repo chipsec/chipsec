@@ -278,6 +278,8 @@ NVAR_EFIvar_signature   = 'NVAR'
 def getNVstore_NVAR( nvram_buf ):
     l = (-1, -1, None)
     FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf)
+    if (FvOffset is None):
+        return l
     if (FvOffset >= len(nvram_buf)):
         return l
     if (FvOffset + FvLength) > len(nvram_buf):
