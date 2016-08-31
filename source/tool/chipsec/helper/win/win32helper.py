@@ -42,15 +42,13 @@ __version__ = '1.0'
 import os.path
 import struct
 import sys
-from ctypes import *
-from threading import Lock
 import platform
 import re
-from collections import namedtuple
-
-from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Helper
 import errno
-
+import traceback
+from threading import Lock
+from collections import namedtuple
+from ctypes import *
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -58,10 +56,9 @@ import winerror
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
 import win32api, win32process, win32security, win32file
 
-
+from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.logger import logger, print_buffer
 import chipsec.file
-import traceback
 
 
 
@@ -539,12 +536,18 @@ class Win32Helper(Helper):
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
         return out_buf
 
+    def native_read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
+        raise UnimplementedNativeAPIError( "native_read_phys_mem" )
+
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         in_length = length + 12
         out_buf = (c_char * 4)()
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
+
+    def native_write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
+        raise UnimplementedNativeAPIError( "native_write_phys_mem" )
     
     # @TODO: Temporarily the same as read_phys_mem for compatibility 
     def read_mmio_reg( self, phys_address, size ):
@@ -864,6 +867,10 @@ class Win32Helper(Helper):
             tBuffer    = create_string_buffer( table_size )
             retVal     = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         return tBuffer[:retVal]
+
+    # ACPI access is implemented through ACPI HAL rather than through kernel module
+    def get_ACPI_table( self ):
+        raise UnimplementedAPIError( "get_ACPI_table" )
 
 
 
