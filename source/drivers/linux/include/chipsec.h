@@ -25,6 +25,7 @@
 #define IOCTL_WRMMIO                   _IOWR(0, 0x13, int*)
 #define IOCTL_VA2PA                    _IOWR(0, 0x14, int*)
 #define IOCTL_MSGBUS_SEND_MESSAGE      _IOWR(0, 0x15, int*)
+#define IOCTL_FREE_PHYSMEM             _IOWR(0, 0x16, int*)
 
 //
 // SoC IOSF Message Bus constants
@@ -83,3 +84,8 @@ typedef struct _DESCRIPTOR_TABLE_RECORD {
 } DESCRIPTOR_TABLE_RECORD, *PDESCRIPTOR_TABLE_RECORD;
 #pragma pack()
 
+struct allocated_mem_list {
+  physaddr_t pa;
+  void *va;
+  struct list_head list;
+};
