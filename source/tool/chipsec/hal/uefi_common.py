@@ -510,9 +510,8 @@ def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLengt
     zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
     fv_rsvd = (Reserved == 0)
     fs_guid = (FsGuid in (EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, 'FFF12B8D-7696-4C8B-A985-2747075B4F50'))
-    fv_len = (FvLength <= size) and (FvLength > HeaderLength)
-    # ExtHeaderOffset < 4 - Apple workaround
-    fv_header_len = (ExtHeaderOffset == 0) or (ExtHeaderOffset < 4) or ((HeaderLength > ExtHeaderOffset) and ((ExtHeaderOffset % 4) == 0))
+    fv_len = (FvLength <= size)
+    fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
     #sum = (Checksum == CalcSum)
     return fv_rsvd and fv_len and fv_header_len
 
