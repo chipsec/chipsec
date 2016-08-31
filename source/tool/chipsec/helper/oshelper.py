@@ -66,11 +66,11 @@ class HWAccessViolationError (OsHelperError):
 
 class UnimplementedAPIError (OsHelperError):
     def __init__(self,api_name):
-        super(OsHelperError,self).__init__("'%s' is not implemented" % api_name)
+        super(UnimplementedAPIError,self).__init__("'%s' is not implemented" % api_name, 0)
 
 class UnimplementedNativeAPIError (UnimplementedAPIError):
     def __init__(self,api_name):
-        super(UnimplementedAPIError,self).__init__(api_name)
+        super(UnimplementedNativeAPIError,self).__init__(api_name)
 
 # Base class for the helpers
 class Helper(object):

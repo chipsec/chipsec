@@ -46,6 +46,7 @@ from chipsec.file import *
 
 import chipsec.hal.acpi_tables
 import chipsec.hal.uefi
+import chipsec.helper.oshelper
 
 class AcpiRuntimeError (RuntimeError):
     pass
@@ -365,12 +366,11 @@ class ACPI:
     # Populates a list of ACPI tables available on the system
     #
     def get_ACPI_table_list( self ):
-
-        if self.cs.use_native_api():
-            for t in ACPI_TABLES.keys():
-                table = self.cs.helper.get_ACPI_table( t )
-                if table: self.tableList[ t ].append( 0 )
-        else:
+        try:
+            # 1. Try to extract ACPI table(s) from physical memory
+            #    read_physical_mem can be implemented using both
+            #    CHIPSEC kernel module and OS native API
+            if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables from physical memory..." )
             # find RSDT/XSDT table
             (is_xsdt,sdt_pa,sdt,sdt_header) = self.get_SDT()
 
@@ -379,6 +379,14 @@ class ACPI:
 
             self.get_table_list_from_SDT(sdt, is_xsdt)
             self.get_DSDT_from_FADT()
+        except chipsec.helper.oshelper.UnimplementedNativeAPIError:
+            # 2. If didn't work, try using get_ACPI_table if a helper implemented
+            #    reading ACPI tables via native API which some OS may provide
+            if self.cs.use_native_api():
+                if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables using get_ACPI_table..." )
+                for t in ACPI_TABLES.keys():
+                    table = self.cs.helper.get_ACPI_table( t )
+                    if table: self.tableList[ t ].append( 0 )
 
         return self.tableList
 
@@ -443,29 +451,30 @@ class ACPI:
 
     def get_ACPI_table( self, name, isfile = False ):
         acpi_tables_data = []
+        t_data = None
         if isfile:
-            acpi_tables_data.append(chipsec.file.read_file( name ))
+            t_data = chipsec.file.read_file( name )
         else:
-            if self.cs.use_native_api():
-                t_data = self.cs.helper.get_ACPI_table( name )
-                acpi_tables_data.append( t_data )
-            else:
-              for table_address in self.tableList[name]:
-                t_data = None
-                t_size = self.cs.mem.read_physical_mem_dword( table_address + 4 )
-                t_data = self.cs.mem.read_physical_mem( table_address, t_size )
-                acpi_tables_data.append( t_data )
+            try:
+                # 1. Try to extract ACPI table(s) from physical memory
+                #    read_physical_mem can be implemented using both
+                #    CHIPSEC kernel module and OS native API
+                if logger().HAL: logger().log( "[acpi] trying to extract ACPI table from physical memory..." )
+                for table_address in self.tableList[name]:
+                    t_size = self.cs.mem.read_physical_mem_dword( table_address + 4 )
+                    t_data = self.cs.mem.read_physical_mem( table_address, t_size )
+            except chipsec.helper.oshelper.UnimplementedNativeAPIError:
+                # 2. If didn't work, try using get_ACPI_table if a helper implemented
+                #    reading ACPI tables via native API which some OS may provide
+                if self.cs.use_native_api():
+                    if logger().HAL: logger().log( "[acpi] trying to extract ACPI table using get_ACPI_table..." )
+                    t_data = self.cs.helper.get_ACPI_table( name )
+
+        if t_data: acpi_tables_data.append( t_data )
 
         acpi_tables = []
-        for t_data in acpi_tables_data:
-            table_header_blob  = None
-            table_blob = None
-
-            if t_data is not None:
-                table_header_blob  = t_data[ : ACPI_TABLE_HEADER_SIZE ]
-                table_blob         = t_data[ ACPI_TABLE_HEADER_SIZE : ]
-
-            acpi_tables.append((table_header_blob, table_blob))
+        for data in acpi_tables_data:
+            acpi_tables.append((data[ : ACPI_TABLE_HEADER_SIZE ], data[ ACPI_TABLE_HEADER_SIZE : ]))
 
         return acpi_tables
     

@@ -42,16 +42,16 @@ import fcntl
 import platform
 import ctypes
 import fnmatch
-from chipsec.helper.oshelper import OsHelperError, Helper
-from chipsec.logger import logger, print_buffer
 import errno
 import array
 import subprocess
 import os.path
+from ctypes import *
+
+from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.logger import logger, print_buffer
 import chipsec.file
 import chipsec.defines
-
-from ctypes import *
 
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
@@ -100,7 +100,7 @@ class LinuxHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    # This function load CHIPSEC driver. (implement functionality from run.sh)
+    # This function load CHIPSEC driver
     def load_chipsec_module(self):
         page_is_ram = ""
         a1 = ""
@@ -179,8 +179,7 @@ class LinuxHelper(Helper):
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/mem.\n"
-                                "This command requires either the Chipsec"
-                                "driver or access to /dev/mem.\n"
+                                "This command requires access to /dev/mem.\n"
                                 "Are you running this command as root?\n"
                                 "%s" % str(err), err.errno)
         return False
@@ -201,43 +200,21 @@ class LinuxHelper(Helper):
 # Actual API functions to access HW resources
 ###############################################################################################
     def __mem_block(self, sz, newval = None):
-        if(newval == None):
+        if newval is None:
             return self.dev_fh.read(sz)
         else:
             self.dev_fh.write(newval)
             self.dev_fh.flush()
         return 1
 
-    #def mem_read_block(self, addr, sz):
-    #    if(addr != None): self.dev_fh.seek(addr)
-    #    return self.__mem_block(sz)
-    #
-    #def native_mem_read_block(self, addr, sz):
-    #    if self.devmem_available():
-    #        os.lseek(self.dev_mem, addr, os.SEEK_SET)
-    #        return os.read(self.dev_mem, sz)
-    #
-    #def mem_write_block(self, addr, sz, newval):
-    #    if(addr != None): self.dev_fh.seek(addr)
-    #    return self.__mem_block(sz, newval)
-    #
-    #def native_mem_write_block(self, addr, sz, newval):
-    #    if self.devmem_available():
-    #        os.lseek(self.dev_mem, addr, os.SEEK_SET)
-    #        written = os.write(self.dev_mem, newval)
-    #        if written != sz:
-    #            logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, sz))
-
     def write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
         if newval is None: return None
-        #return self.mem_write_block((phys_address_hi << 32) | phys_address_lo, sz, newval)
         addr = (phys_address_hi << 32) | phys_address_lo
         self.dev_fh.seek(addr)
         return self.__mem_block(length, newval)
 
     def native_write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
         if newval is None: return None
-        #return self.native_mem_write_block((phys_address_hi << 32) | phys_address_lo, sz, newval)
         if self.devmem_available():
             addr = (phys_address_hi << 32) | phys_address_lo
             os.lseek(self.dev_mem, addr, os.SEEK_SET)
@@ -245,15 +222,12 @@ class LinuxHelper(Helper):
             if written != length:
                 logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, length))
 
-
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
-        #return self.mem_read_block((phys_address_hi << 32) | phys_address_lo, length)
         addr = (phys_address_hi << 32) | phys_address_lo
         self.dev_fh.seek(addr)
         return self.__mem_block(length)
 
     def native_read_phys_mem(self, phys_address_hi, phys_address_lo, length):
-        #return self.native_mem_read_block((phys_address_hi << 32) | phys_address_lo, length)
         if self.devmem_available():
             addr = (phys_address_hi << 32) | phys_address_lo
             os.lseek(self.dev_mem, addr, os.SEEK_SET)
@@ -541,9 +515,15 @@ class LinuxHelper(Helper):
             os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
         return status
         
+
     def get_ACPI_SDT( self ):
-        logger().error( "ACPI is not supported yet" )
-        return 0  
+        raise UnimplementedAPIError( "get_ACPI_SDT" )
+    # @TODO: implement ACPI access in native mode through file system
+    def native_get_ACPI_table( self ):
+        raise UnimplementedNativeAPIError( "native_get_ACPI_table" )
+    # ACPI access is implemented through ACPI HAL rather than through kernel module
+    def get_ACPI_table( self ):
+        raise UnimplementedAPIError( "get_ACPI_table" )
         
     #
     # IOSF Message Bus access
@@ -833,11 +813,11 @@ class LinuxHelper(Helper):
         if self.use_efivars(): return self.EFIVARS_get_EFI_variable(name, guid)
         else:                  return self.VARS_get_EFI_variable(name, guid)
 
-    def set_EFI_variable(self, name, guid, value, attrs=None):
-        return self.kern_set_EFI_variable(name, guid, value)
-    def native_set_EFI_variable(self, name, guid, value, attrs=None):
-        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, value, attrs)
-        else:                  return self.VARS_set_EFI_variable(name, guid, value)
+    def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        return self.kern_set_EFI_variable(name, guid, data)
+    def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, data, attrs)
+        else:                  return self.VARS_set_EFI_variable(name, guid, data)
 
 
 ##############

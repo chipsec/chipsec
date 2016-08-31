@@ -254,7 +254,7 @@ class Chipset:
 
         _unknown_platform = False
         self.helper.start(start_driver, driver_exists)
-        logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.helper.use_native_api() else 'using CHIPSEC kernel module API') )
+        logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         if platform_code is None:
             vid_did  = self.pci.read_dword( 0, 0, 0, 0 )
