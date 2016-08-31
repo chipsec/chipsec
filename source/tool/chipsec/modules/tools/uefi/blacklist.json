@@ -1,0 +1,7 @@
+{
+  "HT_rkloader"      : { "guid": "F50248A9-2F4D-4DE9-86AE-BDA84D07A41C" },
+  "HT_rkloader_name" : { "name": "rkloader" },
+  "HT_Ntfs"          : { "guid": "F50258A9-2F4D-4DA9-861E-BDA84D07A44C" },
+  "HT_Ntfs_name"     : { "name": "Ntfs" },
+  "HT_app"           : { "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0B" }
+}

@@ -25,7 +25,7 @@
 Standalone utility
 """
 
-__version__ = '1.2.3'
+__version__ = '1.2.4'
 
 #import glob
 import re
@@ -33,6 +33,7 @@ import os
 import sys
 import time
 import importlib
+import imp
 
 from chipsec.logger     import *
 from chipsec.file       import *
@@ -131,8 +132,8 @@ class ChipsecUtil:
             cmds = map( self.map_modname_zip, filter(self.f_mod_zip, myzip.namelist()) )
         else:
             #traceback.print_stack()
-            mydir = os.path.dirname(__file__)
-            cmds_dir = os.path.join(mydir,os.path.join("chipsec","utilcmd"))
+            mydir = imp.find_module('chipsec')[1]
+            cmds_dir = os.path.join(mydir,os.path.join("utilcmd"))
             cmds = map( self.map_modname, filter(self.f_mod, os.listdir(cmds_dir)) )
 
         if logger().VERBOSE:
@@ -206,12 +207,14 @@ class ChipsecUtil:
                       "################################################################" )
         logger().log( "[CHIPSEC] Version %s" % __version__ )
 
-        
-if __name__ == "__main__":
-    argv = sys.argv
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     chipsecUtil = ChipsecUtil()
     chipsecUtil.print_banner()
-    ec = chipsecUtil.main(argv)
-    sys.exit(ec)
+    return chipsecUtil.main(argv)
 
+       
+if __name__ == "__main__":
+    sys.exit( main() )
 

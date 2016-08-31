@@ -50,6 +50,9 @@ module_param(a1,ulong,0); //a1 is addr of page_is_ram function
 /// Char we show before each debug print
 const char program_name[] = "chipsec";
 
+// list of allocated memory
+struct allocated_mem_list allocated_mem_list;
+
 typedef struct tagCONTEXT {
    unsigned long a;   // rax - 0x00; eax - 0x0
    unsigned long b;   // rbx - 0x08; ebx - 0x4
@@ -526,6 +529,8 @@ static loff_t memory_lseek(struct file * file, loff_t offset, int orig)
 //Older kernels (<20) uses f_dentry instead of f_path.dentry
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
 	mutex_lock(&file->f_dentry->d_inode->i_mutex);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
+	inode_lock(file->f_path.dentry->d_inode);
 #else
 	mutex_lock(&file->f_path.dentry->d_inode->i_mutex);
 #endif 
@@ -547,6 +552,8 @@ static loff_t memory_lseek(struct file * file, loff_t offset, int orig)
 //Older kernels (<20) uses f_dentry instead of f_path.dentry
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,20)
 	mutex_unlock(&file->f_dentry->d_inode->i_mutex);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
+	inode_unlock(file->f_path.dentry->d_inode);
 #else
 	mutex_unlock(&file->f_path.dentry->d_inode->i_mutex);
 #endif 
@@ -1059,7 +1066,9 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         //IN params: size
         //OUT params: physical address
         uint32_t NumberOfBytes = 0;
-        void *va, *pa, *max_pa;
+        void *va;
+        phys_addr_t pa, max_pa;
+        struct allocated_mem_list *tmp = NULL;
         
         numargs = 2;
         if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
@@ -1069,7 +1078,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         }
         
         NumberOfBytes = ptr[0];
-        max_pa = (void *)ptr[1];
+        max_pa = ptr[1];
         
         va = kmalloc(NumberOfBytes, GFP_KERNEL );
         if( !va )
@@ -1079,25 +1088,74 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         }
          
         memset(va, 0, NumberOfBytes);
-        pa = (void*)virt_to_phys(va);
+        pa = virt_to_phys(va);
 
         if (pa > max_pa)
         {
-            //printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory below max_pa (%p > %p)\n", pa, max_pa );
-            //kfree(va);
-            //return -EFAULT;
-            printk(KERN_ALERT "[chipsec] WARNING: allocated memory (%p) is not below max_pa (%p) (ignoring)", pa, max_pa);
+            printk(KERN_ALERT "[chipsec] WARNING: allocated memory (0x%llx) is not below max_pa (0x%llx) (ignoring)", pa, max_pa);
         }
-        //else
-        //{
-            ptr[0] = (unsigned long)va;
-            ptr[1] = (unsigned long)pa;
-        //}
+
+        tmp = kmalloc(sizeof(struct allocated_mem_list), GFP_KERNEL);
+        if (tmp == NULL) {
+            printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n");
+            return -EFAULT;
+        }
+
+        tmp->va = va;
+        tmp->pa = pa;
+        list_add(&(tmp->list), &(allocated_mem_list.list));
+
+        ptr[0] = (unsigned long)va;
+        ptr[1] = pa;
 		
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 		break;
 	}
+
+    case IOCTL_FREE_PHYSMEM:
+    {
+        // IN params : physical address
+        // OUT params : 0 not freed, 1 freed
+        phys_addr_t pa = 0;
+        void *va = NULL;
+        struct list_head *pos, *q;
+        struct allocated_mem_list *element;
+
+        numargs = 1;
+        if (copy_from_user((void*) ptrbuf, (void*) ioctl_param, (sizeof(long) * numargs)) > 0) {
+            printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+            return -EFAULT;
+        }
+
+        pa = ptr[0];
+
+        // look for va inside allocated mem list
+        list_for_each_safe(pos, q, &allocated_mem_list.list) {
+            element = list_entry(pos, struct allocated_mem_list, list);
+            if (element->pa == pa) {
+                va = element->va;
+                list_del(pos);
+                kfree(element);
+                break;
+            }
+        }
+
+        if (va != NULL) {
+            // freeing
+            printk(KERN_INFO "[chipsec] freeing pa = 0x%llx, va = %p\n", pa, va);
+            kfree(va);
+            ptr[0] = 1;
+        } else {
+            ptr[0] = 0;
+        }
+
+        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0) {
+            return -EFAULT;
+        }
+
+        break;
+    }
    
 #ifdef EFI_NOT_READY
 	case IOCTL_GET_EFIVAR:
@@ -1465,10 +1523,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         // Write to MCR register to send the message on the message bus
         WritePCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MCR, 4, mcr );
 
-        if (direction & MSGBUS_MDR_OUT_MASK)
+        if (direction & MSGBUS_MDR_OUT_MASK) {
             // Read data from MDR register
             mdr_out = ReadPCICfg( MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MDR, 4 );
-            ptr[4] = mdr_out;	
+            ptr[4] = mdr_out;
+        }
 
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
           return -EFAULT;	
@@ -1548,13 +1607,28 @@ init_module (void)
 		return ret;
 	}
 
+    // initialize allocated mem list
+    INIT_LIST_HEAD(&allocated_mem_list.list);
+
 	return 0;
 }
 
 /// Function executed when unloading module
 void cleanup_module (void)
 {
+    struct list_head *pos, *q;
+    struct allocated_mem_list *element;
+
 	dbgprint ("Destroying chipsec device");
 	misc_deregister(&chipsec_dev);
 	dbgprint ("exit");
+
+    // freeing
+    list_for_each_safe(pos, q, &allocated_mem_list.list) {
+        element = list_entry(pos, struct allocated_mem_list, list);
+        printk(KERN_INFO "auto freeing allocated memory (va = %p, pa = 0x%llx)\n", element->va, element->pa);
+        kfree(element->va);
+        list_del(pos);
+        kfree(element);
+    }
 }

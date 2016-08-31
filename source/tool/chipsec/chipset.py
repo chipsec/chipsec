@@ -164,14 +164,23 @@ Chipset_Dictionary = {
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
 
-# Bay Trail SoC
-0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail SoC' },
-
 #
 # Atom based SoC platforms
 #
+
+# Bay Trail SoC
+0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail SoC' },
+
+# Avoton
 0x1F07 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 0x1F01 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+
+# Braswell
+0x2280 : {'name' : 'Braswell',       'id' : CHIPSET_ID_BSW , 'code' : CHIPSET_CODE_BSW,  'longname' : 'N-series Pentium/Celeron Processor (Braswell SoC)' },
+
+#
+# Quark based SoC platforms
+#
 
 # Galileo Board
 0x0958 : {'name' : 'Galileo ',       'id' : CHIPSET_ID_QRK , 'code' : CHIPSET_CODE_QRK,  'longname' : 'Intel Quark SoC X1000' },
