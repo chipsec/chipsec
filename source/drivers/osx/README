@@ -1,0 +1,20 @@
+OSX Driver for Chipsec
+======================
+
+This driver is currently in alpha release. It is not signed and you
+will need to disable the System Integrity Protection to load it.
+
+It is only compatible with x86_64 kernels, that is any release >= 10.7.
+
+How to
+------
+1. (optional) Build the Driver using Xcode (chipsec.xcodeproj)
+2. Turn the System Integrity Protection off: see https://developer.apple.com/library/mac/documentation/Security/Conceptual/System_Integrity_Protection_Guide/ConfiguringSystemIntegrityProtection/ConfiguringSystemIntegrityProtection.html
+3. Reboot and load the driver
+   # kextutil chipsec.kext
+4. Within the source/tool directory, run:
+   # python chipsec_util.py spi info
+   # python chipsec_util.py spi dump rom.bin
+5. Unload the driver
+   # kextunload -b com.google.chipsec
+6. Don't forget to re enable the System Integrity Protection (see step 2)
