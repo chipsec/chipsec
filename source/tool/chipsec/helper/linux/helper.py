@@ -394,126 +394,6 @@ class LinuxHelper(Helper):
                 logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
 
 
-    def kern_get_EFI_variable_full(self, name, guid):
-        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
-        off = 0
-        data = ""
-        attr = 0
-        buf = list()
-        hdr = 0
-        base = 12
-        namelen = len(name)
-        header_size = 52
-        data_size = header_size + namelen
-        guid0 = int(guid[:8] , 16)
-        guid1 = int(guid[9:13], 16)
-        guid2 = int(guid[14:18], 16)
-        guid3 = int(guid[19:21], 16)
-        guid4 = int(guid[21:23], 16)
-        guid5 = int(guid[24:26], 16)
-        guid6 = int(guid[26:28], 16)
-        guid7 = int(guid[28:30], 16)
-        guid8 = int(guid[30:32], 16)
-        guid9 = int(guid[32:34], 16)
-        guid10 = int(guid[34:], 16)
-        
-        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-        buffer = array.array("c", in_buf)
-        stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
-        new_size, status = struct.unpack( "2I", buffer[:8])
-
-        if (status == 0x5):
-            data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
-            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-            buffer = array.array("c", in_buf)
-            try:
-                stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
-            except IOError:
-                logger().error("IOError IOCTL GetUEFIvar\n")
-                return (off, buf, hdr, None, guid, attr)                    
-            new_size, status = struct.unpack( "2I", buffer[:8])
-            
-        if (new_size > data_size):
-            logger().error( "Incorrect size returned from driver" )
-            return (off, buf, hdr, None, guid, attr)
-            
-        if (status > 0):
-            logger().error( "Reading variable (GET_EFIVAR) did not succeed: %s" % status_dict[status])
-            data = ""
-            guid = 0
-            attr = 0
-        else:
-            data = buffer[base:base+new_size].tostring()
-            attr = struct.unpack( "I", buffer[8:12])[0]
-        return (off, buf, hdr, data, guid, attr)
-
-        
-    def kern_get_EFI_variable(self, name, guid):
-        (off, buf, hdr, data, guid, attr) = self.kern_get_EFI_variable_full(name, guid)
-        return data
-
-    #def kern_delete_EFI_variable(self, name, guid):
-    #    return self.kern_set_EFI_variable(name, guid, "")
-    
-    def kern_list_EFI_variables(self):
-        varlist = []
-        off = 0
-        buf = list()
-        hdr = 0
-        attr = 0
-        try:
-            if os.path.isdir('/sys/firmware/efi/efivars'):
-                varlist = os.listdir('/sys/firmware/efi/efivars')
-            elif os.path.isdir('/sys/firmware/efi/vars'):
-                varlist = os.listdir('/sys/firmware/efi/vars')
-            else:
-                return None
-        except Exception:
-            logger().error('Failed to read /sys/firmware/efi/[vars|efivars]. Folder does not exist')
-            return None
-        variables = dict()
-        for v in varlist:
-            name = v[:-37]
-            guid = v[len(name)+1:]
-            if name and name is not None:
-                variables[name] = []
-                var = self.kern_get_EFI_variable_full(name, guid)
-                (off, buf, hdr, data, guid, attr) = var
-                variables[name].append(var)
-        return variables
-    
-    def kern_set_EFI_variable(self, name, guid, value, attr=0x7):
-        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
-        
-        header_size = 60 # 4*15
-        namelen = len(name)
-        if value: datalen = len(value)
-        else: 
-            datalen = 0
-            value = '\0'
-        data_size = header_size + namelen + datalen
-        guid0 = int(guid[:8] , 16)
-        guid1 = int(guid[9:13], 16)
-        guid2 = int(guid[14:18], 16)
-        guid3 = int(guid[19:21], 16)
-        guid4 = int(guid[21:23], 16)
-        guid5 = int(guid[24:26], 16)
-        guid6 = int(guid[26:28], 16)
-        guid7 = int(guid[28:30], 16)
-        guid8 = int(guid[30:32], 16)
-        guid9 = int(guid[32:34], 16)
-        guid10 = int(guid[34:], 16)
-        
-        in_buf = struct.pack('15I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
-        buffer = array.array("c", in_buf)        
-        stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
-        size, status = struct.unpack( "2I", buffer[:8])
-
-        if (status != 0):
-            logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
-        else:
-            os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
-        return status
         
 
     def get_ACPI_SDT( self ):
@@ -592,23 +472,166 @@ class LinuxHelper(Helper):
             logger().log( AffinityString )
             return None
 
-##############
-    # UEFI Variable API
-##############
+
+    #########################################################
+    # (U)EFI Variable API
+    #########################################################
 
     def use_efivars(self):
-#        rel = platform.release()
-#        ind = rel.find('.')
-#        major = rel[:ind]
-#        minor = rel[ind+1:rel.find('.', ind+1)]
-#        return (int(major) >= 3) and (int(minor) >= 10)
         return os.path.exists("/sys/firmware/efi/efivars/")
  
     def EFI_supported( self):
         return os.path.exists("/sys/firmware/efi/vars/") or os.path.exists("/sys/firmware/efi/efivars/")
 
+    def delete_EFI_variable(self, name, guid):
+        return self.kern_set_EFI_variable(name, guid, "")
+    def native_delete_EFI_variable(self, name, guid):
+        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, None)
+
+    def list_EFI_variables(self):
+        return self.kern_list_EFI_variables()
+    def native_list_EFI_variables(self):
+        if self.use_efivars(): return self.EFIVARS_list_EFI_variables()
+        else: return self.VARS_list_EFI_variables()
+
+    def get_EFI_variable(self, name, guid, attrs=None):
+        return self.kern_get_EFI_variable(name, guid)
+    def native_get_EFI_variable(self, name, guid, attrs=None):
+        if self.use_efivars(): return self.EFIVARS_get_EFI_variable(name, guid)
+        else: return self.VARS_get_EFI_variable(name, guid)
+
+    def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        return self.kern_set_EFI_variable(name, guid, data)
+    def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, data, attrs)
+        else: return self.VARS_set_EFI_variable(name, guid, data)
+
     #
-    # Legacy /efi/vars methods
+    # Internal (U)EFI Variable API functions via CHIPSEC kernel module
+    # Invoked when use_native_api() is False
+    #
+
+    def kern_get_EFI_variable_full(self, name, guid):
+        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        off = 0
+        data = ""
+        attr = 0
+        buf = list()
+        hdr = 0
+        base = 12
+        namelen = len(name)
+        header_size = 52
+        data_size = header_size + namelen
+        guid0 = int(guid[:8] , 16)
+        guid1 = int(guid[9:13], 16)
+        guid2 = int(guid[14:18], 16)
+        guid3 = int(guid[19:21], 16)
+        guid4 = int(guid[21:23], 16)
+        guid5 = int(guid[24:26], 16)
+        guid6 = int(guid[26:28], 16)
+        guid7 = int(guid[28:30], 16)
+        guid8 = int(guid[30:32], 16)
+        guid9 = int(guid[32:34], 16)
+        guid10 = int(guid[34:], 16)
+        
+        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
+        buffer = array.array("c", in_buf)
+        stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
+        new_size, status = struct.unpack( "2I", buffer[:8])
+
+        if (status == 0x5):
+            data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
+            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
+            buffer = array.array("c", in_buf)
+            try:
+                stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
+            except IOError:
+                logger().error("IOError IOCTL GetUEFIvar\n")
+                return (off, buf, hdr, None, guid, attr)                    
+            new_size, status = struct.unpack( "2I", buffer[:8])
+            
+        if (new_size > data_size):
+            logger().error( "Incorrect size returned from driver" )
+            return (off, buf, hdr, None, guid, attr)
+            
+        if (status > 0):
+            logger().error( "Reading variable (GET_EFIVAR) did not succeed: %s" % status_dict[status])
+            data = ""
+            guid = 0
+            attr = 0
+        else:
+            data = buffer[base:base+new_size].tostring()
+            attr = struct.unpack( "I", buffer[8:12])[0]
+        return (off, buf, hdr, data, guid, attr)
+
+        
+    def kern_get_EFI_variable(self, name, guid):
+        (off, buf, hdr, data, guid, attr) = self.kern_get_EFI_variable_full(name, guid)
+        return data
+
+    def kern_list_EFI_variables(self):
+        varlist = []
+        off = 0
+        buf = list()
+        hdr = 0
+        attr = 0
+        try:
+            if os.path.isdir('/sys/firmware/efi/efivars'):
+                varlist = os.listdir('/sys/firmware/efi/efivars')
+            elif os.path.isdir('/sys/firmware/efi/vars'):
+                varlist = os.listdir('/sys/firmware/efi/vars')
+            else:
+                return None
+        except Exception:
+            logger().error('Failed to read /sys/firmware/efi/[vars|efivars]. Folder does not exist')
+            return None
+        variables = dict()
+        for v in varlist:
+            name = v[:-37]
+            guid = v[len(name)+1:]
+            if name and name is not None:
+                variables[name] = []
+                var = self.kern_get_EFI_variable_full(name, guid)
+                (off, buf, hdr, data, guid, attr) = var
+                variables[name].append(var)
+        return variables
+    
+    def kern_set_EFI_variable(self, name, guid, value, attr=0x7):
+        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        
+        header_size = 60 # 4*15
+        namelen = len(name)
+        if value: datalen = len(value)
+        else: 
+            datalen = 0
+            value = '\0'
+        data_size = header_size + namelen + datalen
+        guid0 = int(guid[:8] , 16)
+        guid1 = int(guid[9:13], 16)
+        guid2 = int(guid[14:18], 16)
+        guid3 = int(guid[19:21], 16)
+        guid4 = int(guid[21:23], 16)
+        guid5 = int(guid[24:26], 16)
+        guid6 = int(guid[26:28], 16)
+        guid7 = int(guid[28:30], 16)
+        guid8 = int(guid[30:32], 16)
+        guid9 = int(guid[32:34], 16)
+        guid10 = int(guid[34:], 16)
+        
+        in_buf = struct.pack('15I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
+        buffer = array.array("c", in_buf)        
+        stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
+        size, status = struct.unpack( "2I", buffer[:8])
+
+        if (status != 0):
+            logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
+        else:
+            os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
+        return status
+
+    #
+    # Internal (U)EFI Variable API functions via legacy /sys/firmware/efi/vars/
+    # Invoked when use_native_api() is True
     #
 
     def VARS_get_efivar_from_sys( self, filename ):
@@ -681,28 +704,25 @@ class LinuxHelper(Helper):
                 return data
 
     def VARS_set_EFI_variable(self,  name, guid, value ):
-        ret = True
-        if not name:
-            name = '*'
-        if not guid:
-            guid = '*'
+        ret = 21 # EFI_ABORTED
+        if not name: name = '*'
+        if not guid: guid = '*'
         for var in os.listdir('/sys/firmware/efi/vars'):
             if fnmatch.fnmatch(var, '%s-%s' % (name,guid)):
                 try:
                     f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
                     f.write(value)
+                    ret = 0 # EFI_SUCCESS
                 except Exception, err:
                     logger().error('Failed to write EFI variable. %s' % err)
-                    ret = False
-                finally:
-                    pass
         return ret
 
 
+    #
+    # Internal (U)EFI Variable API functions via /sys/firmware/efi/efivars/ on Linux (kernel 3.10+)
+    # Invoked when use_native_api() is True
+    #
 
-#
-# New (kernel 3.10+) /efi/efivars methods
-#
     def EFIVARS_get_efivar_from_sys( self, filename ):
         guid = filename[filename.find('-')+1:]
         off = 0
@@ -762,67 +782,35 @@ class LinuxHelper(Helper):
 
 
     def EFIVARS_set_EFI_variable(self, name, guid, value, attrs=None):
-        if not name:
-            name = '*'
-        if not guid:
-            guid = '*'
+        ret = 21 # EFI_ABORTED
+        if not name: name = '*'
+        if not guid: guid = '*'
 
         path = '/sys/firmware/efi/efivars/%s-%s' % (name, guid)
-        if value != None:
+        if value is not None:
             try:
                 if os.path.isfile(path):
-                    #Variable already exists
+                    # Variable already exists
                     if attrs is not None: logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
                     f = open(path, 'r')
                     sattrs = f.read(4)
                 else:
-                    #Create new variable with attributes NV+BS+RT if attrs were not passed in
+                    # Create new variable with attributes NV+BS+RT if attrs were not passed in
                     sattrs = struct.pack("I", 0x7) if attrs is None else struct.pack("I",attrs)
                 f = open(path, 'w')
                 f.write(sattrs + value)
                 f.close()
-                return True
+                ret = 0 # EFI_SUCCESS
             except Exception, err:
                 logger().error('Failed to write EFI variable. %s' % err)
-                return False
         else:
             try:
                 os.remove(path)
-                return True
+                ret = 0 # EFI_SUCCESS
             except Exception, err:
                 logger().error('Failed to delete EFI variable. %s' % err)
 
-#
-# UEFI API entry points
-#
-
-    def delete_EFI_variable(self, name, guid):
-        return self.kern_set_EFI_variable(name, guid, "")
-    def native_delete_EFI_variable(self, name, guid):
-        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, None)
-
-    def list_EFI_variables(self):
-        return self.kern_list_EFI_variables()
-    def native_list_EFI_variables(self):
-        if self.use_efivars(): return self.EFIVARS_list_EFI_variables()
-        else:                  return self.VARS_list_EFI_variables()
-
-    def get_EFI_variable(self, name, guid, attrs=None):
-        return self.kern_get_EFI_variable(name, guid)
-    def native_get_EFI_variable(self, name, guid, attrs=None):
-        if self.use_efivars(): return self.EFIVARS_get_EFI_variable(name, guid)
-        else:                  return self.VARS_get_EFI_variable(name, guid)
-
-    def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
-        return self.kern_set_EFI_variable(name, guid, data)
-    def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
-        if self.use_efivars(): return self.EFIVARS_set_EFI_variable(name, guid, data, attrs)
-        else:                  return self.VARS_set_EFI_variable(name, guid, data)
-
-
-##############
-    # End UEFI Variable API
-##############
+        return ret
 
     #
     # Interrupts

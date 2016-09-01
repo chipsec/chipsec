@@ -457,9 +457,6 @@ class Win32Helper(Helper):
             self.hs = None
         return True
 
-    #def destroy( self ):
-    #    self.stop()
-    #    self.delete()
 
     def get_driver_handle( self ):
         # This is bad but DeviceIoControl fails ocasionally if new device handle is not opened every time ;(

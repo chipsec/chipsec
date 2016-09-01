@@ -99,9 +99,6 @@ class EfiHelper(Helper):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper deleted")
 
-    #def destroy( self ):
-    #    self.stop()
-    #    self.delete()
 
 ###############################################################################################
 # Actual API functions to access HW resources
