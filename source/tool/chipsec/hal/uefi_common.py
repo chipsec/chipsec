@@ -250,7 +250,9 @@ Reserved1 : 0x%08X
 #
 # Variable data start flag.
 #
-VARIABLE_DATA_SIGNATURE    = struct.pack('=H', 0x55AA )
+VARIABLE_DATA              = 0x55aa
+VARIABLE_DATA_SIGNATURE    = struct.pack('=H', VARIABLE_DATA )
+
 
 #
 # Variable Attributes
@@ -358,6 +360,7 @@ EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID = "FC1BCDB0-7D31-49AA-936A-A46
 
 EFI_FIRMWARE_FILE_SYSTEM_GUID  = "7A9354D9-0468-444A-81CE-0BF617D890DF"
 EFI_FIRMWARE_FILE_SYSTEM2_GUID = "8C8CE578-8A3D-4F1C-9935-896185C32DD3"
+EFI_FIRMWARE_FILE_SYSTEM3_GUID = "5473C07A-3DCB-4DCA-BD6F-1E9689E7349A"
 
 LZMA_CUSTOM_DECOMPRESS_GUID = "EE4E5898-3914-4259-9D6E-DC7BD79403CF"
 
@@ -503,6 +506,15 @@ def FvSum16(buffer):
 def FvChecksum16(buffer):
     return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
+def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size):
+    zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    fv_rsvd = (Reserved == 0)
+    fs_guid = (FsGuid in (EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, 'FFF12B8D-7696-4C8B-A985-2747075B4F50'))
+    fv_len = (FvLength <= size)
+    fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
+    #sum = (Checksum == CalcSum)
+    return fv_rsvd and fv_len and fv_header_len
+
 def NextFwVolume(buffer, off = 0):
     fof = off
     EFI_FIRMWARE_VOLUME_HEADER = "<16sIHH8sQIIHHHBB"
@@ -510,7 +522,7 @@ def NextFwVolume(buffer, off = 0):
     EFI_FV_BLOCK_MAP_ENTRY = "<II"
     size = len(buffer)
     res = (None, None, None, None, None, None, None, None, None)
-    if (fof + vf_header_size) < size:
+    while ((fof + vf_header_size) < size):
         fof =  buffer.find("_FVH", fof)
         if fof < 0x28: return res
         fof = fof - 0x28
@@ -524,6 +536,8 @@ def NextFwVolume(buffer, off = 0):
         print "\tHeaderLength:     0x%04X" % HeaderLength
         print "\tChecksum:         0x%04X" % Checksum
         print "\tRevision:         0x%02X" % Revision
+        print "\tExtHeaderOffset:  0x%02X" % ExtHeaderOffset
+        print "\tReserved:         0x%02X" % Reserved
         '''
         #print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
         #print "FV Checksum:  0x%04X (0x%04X)" % (Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
@@ -538,8 +552,11 @@ def NextFwVolume(buffer, off = 0):
             fvh = fvh + tail
         CalcSum = FvChecksum16(fvh)
         FsGuid = guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3)
-        res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
-        return res
+        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size)):
+            res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
+            return res
+        else:
+            fof += 0x2C
     return res
 
 EFI_FFS_FILE_HEADER = "<IHH8sHBB3sB"

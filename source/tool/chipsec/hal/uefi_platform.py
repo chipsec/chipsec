@@ -35,6 +35,7 @@ Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsu
 __version__ = '1.0'
 
 import struct
+import string
 from collections import namedtuple
 
 from chipsec.hal.uefi_common import *
@@ -45,15 +46,16 @@ from chipsec.hal.uefi_common import *
 #################################################################################################3
 
 class FWType:
-    EFI_FW_TYPE_UEFI     = 'uefi'
-#    EFI_FW_TYPE_WIN      = 'win'     # Windows 8 GetFirmwareEnvironmentVariable format
-    EFI_FW_TYPE_VSS      = 'vss'     # NVRAM using format with '$VSS' signature
-    EFI_FW_TYPE_VSS_AUTH  = 'vss_auth' # NVRAM using format with '$VSS' signature with extra fields
-                                       # See "A Tour Beyond BIOS Implementing UEFI Authenticated
-                                       # Variables in SMM with EDKII"
+    EFI_FW_TYPE_UEFI      = 'uefi'
+    EFI_FW_TYPE_UEFI_AUTH = 'uefi_auth'
+#    EFI_FW_TYPE_WIN       = 'win'      # Windows 8 GetFirmwareEnvironmentVariable format
+    EFI_FW_TYPE_VSS       = 'vss'       # NVRAM using format with '$VSS' signature
+    EFI_FW_TYPE_VSS_AUTH  = 'vss_auth'  # NVRAM using format with '$VSS' signature with extra fields
+                                        # See "A Tour Beyond BIOS Implementing UEFI Authenticated
+                                        # Variables in SMM with EDKII"
     EFI_FW_TYPE_VSS_APPLE = 'vss_apple'
-    EFI_FW_TYPE_NVAR     = 'nvar'    # 'NVAR' NVRAM format
-    EFI_FW_TYPE_EVSA     = 'evsa'    # 'EVSA' NVRAM format
+    EFI_FW_TYPE_NVAR      = 'nvar'      # 'NVAR' NVRAM format
+    EFI_FW_TYPE_EVSA      = 'evsa'      # 'EVSA' NVRAM format
 
 
 fw_types = []
@@ -145,15 +147,17 @@ VendorGuid : {0x%08X-0x%04X-0x%04X-0x%08X}
 
 UEFI_VARIABLE_STORE_HEADER = "<IHH8sIBBHI"
 UEFI_VARIABLE_STORE_HEADER_SIZE = struct.calcsize(UEFI_VARIABLE_STORE_HEADER)
+'''
+EFI_VARIABLE_HEADER_AUTH = "<HBBI28sIIIHH8s"
+EFI_VARIABLE_HEADER_AUTH_SIZE = struct.calcsize(EFI_VARIABLE_HEADER_AUTH)
 
-EFI_VARIABLE_HEADER = "<HBBI28sIIIHH8s"
+EFI_VARIABLE_HEADER = "<HBBIIIIHH8s"
 EFI_VARIABLE_HEADER_SIZE = struct.calcsize(EFI_VARIABLE_HEADER)
-
+'''
 VARIABLE_STORE_FORMATTED = 0x5a
 VARIABLE_STORE_HEALTHY   = 0xfe
-VARIABLE_DATA            = 0x55aa
 
-def getNVstore_EFI( nvram_buf ):
+def _getNVstore_EFI( nvram_buf, efi_type ):
     l = (-1, -1, None)
     FvOffset = 0
     FvLength = 0
@@ -165,11 +169,26 @@ def getNVstore_EFI( nvram_buf ):
         StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
             struct.unpack(UEFI_VARIABLE_STORE_HEADER, FvImage[nvram_start:nvram_start + UEFI_VARIABLE_STORE_HEADER_SIZE])
         if ((Format == VARIABLE_STORE_FORMATTED) and (State == VARIABLE_STORE_HEALTHY)):
-            l = (FvOffset + nvram_start, FvLength - nvram_start, None)
+            if (isCorrectVSStype(FvImage[nvram_start:], efi_type)):
+                l = (FvOffset + nvram_start, FvLength - nvram_start, None)
             break
     return l
 
+def getNVstore_EFI( nvram_buf ):
+    return _getNVstore_EFI( nvram_buf, FWType.EFI_FW_TYPE_VSS )
+
+def getNVstore_EFI_AUTH( nvram_buf ):
+    return _getNVstore_EFI( nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH )
+
 def getEFIvariables_UEFI( nvram_buf ):
+    return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS)
+
+def getEFIvariables_UEFI_AUTH( nvram_buf ):
+    return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
+
+
+'''
+def getEFIvariables_UEFI_Ex( nvram_buf, auth = False ):
     dof = 0
     length = len(nvram_buf)
     storen = 0
@@ -204,7 +223,7 @@ def getEFIvariables_UEFI( nvram_buf ):
         dof = store_start + Size
         storen += 1
     return variables
-
+'''
 ##################################################################################################
 #
 # Platform/Vendor Specific EFI NVRAM Parsing Functions
@@ -259,6 +278,8 @@ NVAR_EFIvar_signature   = 'NVAR'
 def getNVstore_NVAR( nvram_buf ):
     l = (-1, -1, None)
     FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf)
+    if (FvOffset is None):
+        return l
     if (FvOffset >= len(nvram_buf)):
         return l
     if (FvOffset + FvLength) > len(nvram_buf):
@@ -470,14 +491,87 @@ Unknown    : 0x%08X
 """ % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
 
 
-def getNVstore_VSS( nvram_buf ):
+def _getNVstore_VSS( nvram_buf, vss_type ):
     nvram_start = nvram_buf.find( VARIABLE_STORE_SIGNATURE_VSS )
     if -1 == nvram_start:
         return (-1, 0, None)
-    nvram_hdr = VARIABLE_STORE_HEADER_VSS( *struct.unpack_from( VARIABLE_STORE_HEADER_FMT_VSS, nvram_buf[nvram_start:] ) )
+    buf = nvram_buf[nvram_start:]
+    if (not isCorrectVSStype(buf, vss_type)):
+        return (-1, 0, None)
+    nvram_hdr = VARIABLE_STORE_HEADER_VSS( *struct.unpack_from( VARIABLE_STORE_HEADER_FMT_VSS, buf ) )
     return (nvram_start, nvram_hdr.Size, nvram_hdr)
 
-def _getEFIvariables_VSS( nvram_buf, _fwtype ):
+def getNVstore_VSS( nvram_buf ):
+    return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS)
+
+def getNVstore_VSS_AUTH( nvram_buf ):
+    return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
+
+def getNVstore_VSS_APPLE( nvram_buf):
+    return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE)
+
+def IsPrintable(name):
+    printset = set(string.printable)
+    return set(name).issubset(printset)
+
+VSS_TYPES = (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS_APPLE)
+MAX_VSS_VAR_ALIGNMENT = 8
+
+def isCorrectVSStype(nvram_buf, vss_type):
+    if (vss_type not in VSS_TYPES):
+        return False
+
+    buf_size = len(nvram_buf)
+    start    = nvram_buf.find( VARIABLE_SIGNATURE_VSS )
+    if (-1 == start):
+        return False
+
+    next_var = nvram_buf.find( VARIABLE_SIGNATURE_VSS, start+struct.calcsize( HDR_FMT_VSS ) ) # skip the minimun bytes required for the header
+    if (-1 == next_var):
+        next_var = buf_size
+
+    buf_size -= start
+
+    if   (vss_type == FWType.EFI_FW_TYPE_VSS):
+        hdr_fmt  = HDR_FMT_VSS
+        efi_var_hdr = EFI_HDR_VSS( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
+    elif (vss_type == FWType.EFI_FW_TYPE_VSS_AUTH):
+        hdr_fmt  = HDR_FMT_VSS_AUTH
+        efi_var_hdr = EFI_HDR_VSS_AUTH( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
+    elif (vss_type == FWType.EFI_FW_TYPE_VSS_APPLE):
+        hdr_fmt  = HDR_FMT_VSS_APPLE
+        efi_var_hdr = EFI_HDR_VSS_APPLE( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
+
+    hdr_size = struct.calcsize( hdr_fmt )
+    # check NameSize and DataSize
+    name_offset = start + hdr_size
+    if ((name_offset < next_var) and ((name_offset + efi_var_hdr.NameSize) < next_var)):
+        valid_name = False
+        if (efi_var_hdr.NameSize > 0):
+            name = nvram_buf[name_offset: name_offset + efi_var_hdr.NameSize]
+            try:
+                name = unicode(name, "utf-16-le").split('\x00')[0]
+                valid_name = IsPrintable(name)
+            except Exception as e:
+                pass
+        if (valid_name):
+            end_var_offset = name_offset + efi_var_hdr.NameSize + efi_var_hdr.DataSize
+            off_diff = next_var - end_var_offset
+            if (off_diff == 0):
+                return True
+            elif (off_diff > 0):
+                if (next_var == len(nvram_buf)) or (off_diff <= (MAX_VSS_VAR_ALIGNMENT - 1)):
+                    return True
+            else:
+                if (next_var < len(nvram_buf)):
+                    new_nex_var = nvram_buf.find(VARIABLE_SIGNATURE_VSS, next_var, next_var + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
+                    if (new_nex_var <> -1):
+                        return True
+
+    return False
+    
+def _getEFIvariables_VSS( nvram_buf, _fwtype):
+    variables = dict()
     nvsize = len(nvram_buf)
     if (FWType.EFI_FW_TYPE_VSS == _fwtype):
         hdr_fmt  = HDR_FMT_VSS
@@ -485,8 +579,9 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype ):
         hdr_fmt  = HDR_FMT_VSS_AUTH
     elif (FWType.EFI_FW_TYPE_VSS_APPLE == _fwtype):
         hdr_fmt  = HDR_FMT_VSS_APPLE
+    else:
+        return variables
     hdr_size = struct.calcsize( hdr_fmt )
-    variables = dict()
     start    = nvram_buf.find( VARIABLE_SIGNATURE_VSS )
     if -1 == start:
         return variables
@@ -499,30 +594,39 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype ):
         elif (FWType.EFI_FW_TYPE_VSS_APPLE == _fwtype):
             efi_var_hdr = EFI_HDR_VSS_APPLE( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
 
-        if (efi_var_hdr.StartId != 0x55AA): break
+        if (efi_var_hdr.StartId != VARIABLE_DATA): break
+        
+        if ((efi_var_hdr.State == 0xff) and (efi_var_hdr.DataSize == 0xffffffff) and (efi_var_hdr.NameSize == 0xffffffff) and (efi_var_hdr.Attributes == 0xffffffff)):
+             name_size = 0
+             data_size = 0
+             # just skip variable with empty name and data for now
+             next_var_offset = nvram_buf.find( VARIABLE_SIGNATURE_VSS, start + hdr_size, start + hdr_size + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
+             if (next_var_offset == -1) or (next_var_offset > nvsize):
+                break
+        else:
+            name_size = efi_var_hdr.NameSize
+            data_size = efi_var_hdr.DataSize
+            efi_var_name = "<not defined>"
 
-        name_size = efi_var_hdr.NameSize
-        data_size = efi_var_hdr.DataSize
-        efi_var_name = "<not defined>"
+            end_var_offset = start + hdr_size + name_size + data_size
+            # deal with different alignments (1-8)
+            next_var_offset = nvram_buf.find( VARIABLE_SIGNATURE_VSS, end_var_offset, end_var_offset + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
+            if (next_var_offset == -1) or (next_var_offset > nvsize):
+                break
+            efi_var_buf  = nvram_buf[ start : end_var_offset ]
 
-        next_var_offset = start + hdr_size + name_size + data_size
-        if (next_var_offset > nvsize):
-            break
-        efi_var_buf  = nvram_buf[ start : next_var_offset ]
+            name_offset = hdr_size
+            #if not IS_VARIABLE_ATTRIBUTE( efi_var_hdr.Attributes, EFI_VARIABLE_HARDWARE_ERROR_RECORD ):
+            #efi_var_name = "".join( efi_var_buf[ NAME_OFFSET_IN_VAR_VSS : NAME_OFFSET_IN_VAR_VSS + name_size ] )
+            Name = efi_var_buf[ name_offset : name_offset + name_size ]
+            efi_var_name = unicode(Name, "utf-16-le").split('\x00')[0]
 
-        name_offset = hdr_size
-        #if not IS_VARIABLE_ATTRIBUTE( efi_var_hdr.Attributes, EFI_VARIABLE_HARDWARE_ERROR_RECORD ):
-        #efi_var_name = "".join( efi_var_buf[ NAME_OFFSET_IN_VAR_VSS : NAME_OFFSET_IN_VAR_VSS + name_size ] )
-        str_fmt = "%ds" % name_size
-        s, = struct.unpack( str_fmt, efi_var_buf[ name_offset : name_offset + name_size ] )
-        efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
-
-        efi_var_data = efi_var_buf[ name_offset + name_size : next_var_offset ]
-        guid = guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3)
-        if efi_var_name not in variables.keys():
-            variables[efi_var_name] = []
-        #                                off,   buf,         hdr,         data,         guid, attrs
-        variables[efi_var_name].append( (start, efi_var_buf, efi_var_hdr, efi_var_data, guid, efi_var_hdr.Attributes) )
+            efi_var_data = efi_var_buf[ name_offset + name_size : name_offset + name_size + data_size ]
+            guid = guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3)
+            if efi_var_name not in variables.keys():
+                variables[efi_var_name] = []
+            #                                off,   buf,         hdr,         data,         guid, attrs
+            variables[efi_var_name].append( (start, efi_var_buf, efi_var_hdr, efi_var_data, guid, efi_var_hdr.Attributes) )
 
         if start >= next_var_offset: break
         start = next_var_offset
@@ -580,17 +684,17 @@ def EFIvar_EVSA(nvram_buf):
         fof = nvram_buf.find("EVSA", fof)
         if fof == -1: break
         if fof < tlv_h_size:
-            fof = fof + 1
+            fof = fof + 4
             continue
         start = fof - tlv_h_size
         Tag0, Tag1, Size = struct.unpack(TLV_HEADER, nvram_buf[start: start + tlv_h_size])
         if Tag0 != 0xEC: # Wrong EVSA block
-            fof = fof + 1
+            fof = fof + 4
             continue
         value = nvram_buf[start + tlv_h_size:start + Size]
         Signature, Unkwn0, Length, Unkwn1 = struct.unpack(EVSA_RECORD, value)
         if start + Length > image_size: # Wrong EVSA record
-            fof = fof + 1
+            fof = fof + 4
             continue
         # NV storage EVSA found
         bof = 0
@@ -599,6 +703,8 @@ def EFIvar_EVSA(nvram_buf):
         value_list = dict()
         while (bof + tlv_h_size) < Length:
             Tag0, Tag1, Size = struct.unpack(TLV_HEADER, nvram_buf[start + bof: start + bof + tlv_h_size])
+            if (Size < tlv_h_size):
+                break
             value = nvram_buf[start + bof + tlv_h_size:start + bof + Size]
             bof = bof + Size
             if   (Tag0 == 0xED) or (Tag0 == 0xE1):  # guid
@@ -1067,17 +1173,18 @@ def id_s3bootscript_type( script, log_script=False ):
 #
 EFI_VAR_DICT = {
 # UEFI
-FWType.EFI_FW_TYPE_UEFI    : {'name' : 'UEFI',    'func_getefivariables' : getEFIvariables_UEFI,    'func_getnvstore' : getNVstore_EFI  },
+FWType.EFI_FW_TYPE_UEFI      : {'name' : 'UEFI',      'func_getefivariables' : getEFIvariables_UEFI,      'func_getnvstore' : getNVstore_EFI  },
+FWType.EFI_FW_TYPE_UEFI_AUTH : {'name' : 'UEFI_AUTH', 'func_getefivariables' : getEFIvariables_UEFI_AUTH, 'func_getnvstore' : getNVstore_EFI_AUTH  },
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
 #FWType.EFI_FW_TYPE_WIN     : {'name' : 'WIN',     'func_getefivariables' : getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2, 'func_getnvstore' : None },
 # NVAR format
-FWType.EFI_FW_TYPE_NVAR    : {'name' : 'NVAR',    'func_getefivariables' : getEFIvariables_NVAR,    'func_getnvstore' : getNVstore_NVAR },
+FWType.EFI_FW_TYPE_NVAR      : {'name' : 'NVAR',      'func_getefivariables' : getEFIvariables_NVAR,      'func_getnvstore' : getNVstore_NVAR },
 # $VSS NVRAM format
-FWType.EFI_FW_TYPE_VSS     : {'name' : 'VSS',     'func_getefivariables' : getEFIvariables_VSS,     'func_getnvstore' : getNVstore_VSS },
+FWType.EFI_FW_TYPE_VSS       : {'name' : 'VSS',       'func_getefivariables' : getEFIvariables_VSS,       'func_getnvstore' : getNVstore_VSS },
 # $VSS Authenticated NVRAM format
-FWType.EFI_FW_TYPE_VSS_AUTH : {'name' : 'VSS_AUTH', 'func_getefivariables' : getEFIvariables_VSS_AUTH, 'func_getnvstore' : getNVstore_VSS },
+FWType.EFI_FW_TYPE_VSS_AUTH  : {'name' : 'VSS_AUTH',  'func_getefivariables' : getEFIvariables_VSS_AUTH,  'func_getnvstore' : getNVstore_VSS_AUTH },
 # Apple $VSS formart
-FWType.EFI_FW_TYPE_VSS_APPLE: {'name' : 'VSS_APPLE', 'func_getefivariables' : getEFIvariables_VSS_APPLE, 'func_getnvstore' : getNVstore_VSS },
+FWType.EFI_FW_TYPE_VSS_APPLE : {'name' : 'VSS_APPLE', 'func_getefivariables' : getEFIvariables_VSS_APPLE, 'func_getnvstore' : getNVstore_VSS_APPLE },
 # EVSA
-FWType.EFI_FW_TYPE_EVSA    : {'name' : 'EVSA',    'func_getefivariables' : EFIvar_EVSA,             'func_getnvstore' : getNVstore_EVSA },
+FWType.EFI_FW_TYPE_EVSA      : {'name' : 'EVSA',      'func_getefivariables' : EFIvar_EVSA,               'func_getnvstore' : getNVstore_EVSA },
 }
