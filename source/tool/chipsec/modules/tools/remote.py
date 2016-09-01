@@ -20,7 +20,7 @@
 
 """
  Usage:
-   ``chipsec_main.py -i -m remote [ -a <ipaddr:port> ]``
+   ``chipsec_main.py -i -m tools.remote [ -a <ipaddr:port> ]``
 
 """
 
