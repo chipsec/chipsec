@@ -115,9 +115,9 @@ class UEFICommand(BaseCommand):
             status = _uefi.set_EFI_variable_from_file( name, guid, filename )
             self.logger.log("[CHIPSEC] status: %s" % chipsec.hal.uefi_common.EFI_STATUS_DICT[status])
             if status == 0:
-                self.logger.log( "[CHIPSEC] set_EFI_variable return SUCCESS status" )
+                self.logger.log( "[CHIPSEC] writing EFI variable was successful" )
             else:
-                self.logger.error( "set_EFI_variable wasn't able to modify variable" )
+                self.logger.error( "writing EFI variable failed" )
 
         elif ( 'var-delete' == op ):
 
@@ -130,8 +130,8 @@ class UEFICommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Deleting EFI variable Name='%s' GUID={%s} via Variable API.." % (name, guid) )
             status = _uefi.delete_EFI_variable( name, guid )
             self.logger.log("Returned %s" % chipsec.hal.uefi_common.EFI_STATUS_DICT[status])
-            if status == 0: self.logger.log( "[CHIPSEC] delete_EFI_variable return SUCCESS status" )
-            else:      self.logger.error( "delete_EFI_variable wasn't able to delete variable" )
+            if status == 0: self.logger.log( "[CHIPSEC] deleting EFI variable was successful" )
+            else: self.logger.error( "deleting EFI variable failed" )
 
         elif ( 'var-list' == op ):
 
