@@ -42,15 +42,13 @@ __version__ = '1.0'
 import os.path
 import struct
 import sys
-from ctypes import *
-from threading import Lock
 import platform
 import re
-from collections import namedtuple
-
-from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Helper
 import errno
-
+import traceback
+from threading import Lock
+from collections import namedtuple
+from ctypes import *
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -58,10 +56,9 @@ import winerror
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
 import win32api, win32process, win32security, win32file
 
-
+from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.logger import logger, print_buffer
 import chipsec.file
-import traceback
 
 
 
@@ -253,7 +250,6 @@ class Win32Helper(Helper):
         self.driver_path    = None
         self.win_ver        = win_ver
         self.driver_handle  = None
-        #self.device_file    =  u"%s" % DEVICE_FILE
         self.device_file    = pywintypes.Unicode(DEVICE_FILE)
 
         c_int_p = POINTER(c_int)
@@ -283,8 +279,6 @@ class Win32Helper(Helper):
             logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
             pass
 
-        #self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableW
-        #self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableW
         try:
             self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
             self.GetFirmwareEnvironmentVariableEx.restype = c_int
@@ -310,23 +304,7 @@ class Win32Helper(Helper):
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
         except AttributeError, msg:
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
-            pass        
-        try:
-            self.GetLastErr = kernel32.GetLastError
-            self.GetLastErr.restype = c_int
-        except AttributeError, msg:
-            logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
-            pass
-        """
-        CPUInfo = c_int * 4
-        try:
-            self.cpuid = win32api.__cpuidex
-            self.cpuid.restype = c_int
-            self.cpuid.argtypes = [CPUInfo, c_int, c_int]
-        except AttributeError, msg:
-            logger().warn( "__cpuidex function doesn't seem to exist" )
-            pass
-        """
+
 
     def __del__(self):
         try:
@@ -343,9 +321,10 @@ class Win32Helper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
 
         if not start_driver:
+            if driver_exists: self.driver_loaded = True
             return
 
         (type, state, ca, exitcode, svc_exitcode, checkpoint, waithint) = win32service.QueryServiceStatus( self.hs )
@@ -450,7 +429,7 @@ class Win32Helper(Helper):
         finally:
             win32service.CloseServiceHandle( hscm )
 
-    def stop( self ):
+    def stop( self, start_driver ):
         state = 0
         if (self.hs is not None):
             if logger().VERBOSE: logger().log( "[helper] stopping service (handle = 0x%08x).." % self.hs )
@@ -469,7 +448,7 @@ class Win32Helper(Helper):
 
         return state
 
-    def delete( self ):
+    def delete( self, start_driver ):
         if (self.hs is not None):
             if logger().VERBOSE:
                 logger().log( "[helper] deleting service (handle = 0x%08x).." % self.hs )
@@ -478,9 +457,6 @@ class Win32Helper(Helper):
             self.hs = None
         return True
 
-    def destroy( self ):
-        self.stop()
-        self.delete()
 
     def get_driver_handle( self ):
         # This is bad but DeviceIoControl fails ocasionally if new device handle is not opened every time ;(
@@ -541,11 +517,9 @@ class Win32Helper(Helper):
                 logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
-                #err_msg = "%s ('%s')" % (_err[1],_err[2])
                 err_msg = "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2])
                 logger().error( err_msg )
                 raise OsHelperError( err_msg, err_status )
-            #return None
         return out_buf
 
 ###############################################################################################
@@ -559,12 +533,18 @@ class Win32Helper(Helper):
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
         return out_buf
 
+    def native_read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
+        raise UnimplementedNativeAPIError( "native_read_phys_mem" )
+
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         in_length = length + 12
         out_buf = (c_char * 4)()
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
+
+    def native_write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
+        raise UnimplementedNativeAPIError( "native_write_phys_mem" )
     
     # @TODO: Temporarily the same as read_phys_mem for compatibility 
     def read_mmio_reg( self, phys_address, size ):
@@ -597,9 +577,7 @@ class Win32Helper(Helper):
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( 'QI', max_pa, length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
-        #try:
         (va, pa) = struct.unpack( '2Q', out_buf )
-        #except: logger().error( 'DeviceIoControl(ALLOC_PHYSMEM) did not return 4 DWORD values' )
         return (va, pa)
 
     def va2pa( self, va ):
@@ -654,9 +632,7 @@ class Win32Helper(Helper):
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=BI', cpu_thread_id, msr_addr )
         out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
-        #try:
         (eax, edx) = struct.unpack( '2I', out_buf )
-        #except: logger().error( 'DeviceIoControl(READ_MSR) did not return 2 DWORD values' )
         return (eax, edx)
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
@@ -675,14 +651,12 @@ class Win32Helper(Helper):
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '4HB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, size )
         out_buf = self._ioctl( READ_PCI_CFG_REGISTER, in_buf, out_length )
-        #try:
         if 1 == size:
             value = struct.unpack( 'B', out_buf )[0]
         elif 2 == size:
             value = struct.unpack( 'H', out_buf )[0]
         else:
             value = struct.unpack( 'I', out_buf )[0]
-        #except: logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf.raw) )
         return value
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
@@ -698,7 +672,6 @@ class Win32Helper(Helper):
         out_length = 0
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=BH', cpu_thread_id, len(ucode_update_buf) ) + ucode_update_buf
-        #print_buffer( in_buf )
         out_buf = self._ioctl( IOCTL_LOAD_UCODE_PATCH, in_buf, out_length )
         return True
 
@@ -815,9 +788,6 @@ class Win32Helper(Helper):
             logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
             logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
             raise WinError()
-        # for debug purposes (in case NtEnumerateSystemEnvironmentValuesEx changes format of the output binary)
-        #from chipsec.file import write_file
-        #write_file( 'list_EFI_variables.bin', efi_vars )
         if logger().VERBOSE: logger().log( '[helper] len(efi_vars) = 0x%X (should be 0x20000)' % len(efi_vars) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
 
@@ -875,27 +845,30 @@ class Win32Helper(Helper):
         (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )
         return (eax, ebx, ecx, edx)
 
+
     def get_ACPI_SDT( self ):
-        xsdt = True
+        sdt  = self.native_get_ACPI_table( 'XSDT' ) # FirmwareTableID_XSDT
+        xsdt = sdt is not None
+        if not xsdt:
+            sdt = self.native_get_ACPI_table( 'RSDT' ) # FirmwareTableID_RSDT
+        return sdt, xsdt
+
+    def native_get_ACPI_table( self, table_name ):
         table_size = 36
         tBuffer = create_string_buffer( table_size )
-        tName = FirmwareTableID_XSDT
-      
-        retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
-        if 0 == retVal:
-            tName = FirmwareTableID_RSDT
-            retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
-            xsdt = False
-            if 0 == retVal:
-                logger().error( "[helper] No ACPI System Description Table (SDT) found" )
-                return None, xsdt
-            
+        tbl = struct.unpack("<I", table_name)[0]
+        retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
+        if retVal == 0: return None
         if retVal > table_size:
             table_size = retVal
             tBuffer    = create_string_buffer( table_size )
-            retVal     = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tName, tBuffer, table_size )
-        
-        return tBuffer[:retVal], xsdt
+            retVal     = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
+        return tBuffer[:retVal]
+
+    # ACPI access is implemented through ACPI HAL rather than through kernel module
+    def get_ACPI_table( self ):
+        raise UnimplementedAPIError( "get_ACPI_table" )
+
 
 
     #

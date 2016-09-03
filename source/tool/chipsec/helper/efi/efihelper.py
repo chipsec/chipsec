@@ -84,24 +84,21 @@ class EfiHelper(Helper):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper created")
 
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
         # The driver is part of the modified version of edk2.
         # It is always considered as loaded.
         self.driver_loaded = True
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper started/loaded")
 
-    def stop( self ):
+    def stop(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper stopped/unloaded")
 
-    def delete( self ):
+    def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper deleted")
 
-    def destroy( self ):
-        self.stop()
-        self.delete()
 
 ###############################################################################################
 # Actual API functions to access HW resources

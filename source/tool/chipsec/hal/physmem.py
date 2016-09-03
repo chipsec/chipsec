@@ -36,11 +36,6 @@ usage:
     >>> write_physical_mem( 0xf0000, 0x100, buffer )
     >>> write_physical_mem_dowrd( 0xf0000, 0xdeadbeef )
     >>> read_physical_mem_dowrd( 0xfed40000 )
-
-DEPRECATED
-    >>> read_phys_mem( 0xf0000, 0x100 )
-    >>> write_phys_mem_dword( 0xf0000, 0xdeadbeef )
-    >>> read_phys_mem_dword( 0xfed40000 )
 """
 
 __version__ = '1.0'
@@ -137,9 +132,9 @@ class Memory:
     # Free physical memory buffer
 
     def free_physical_mem(self, pa):
-        self.helper.free_physical_mem(pa)
+        ret = self.helper.free_physical_mem(pa)
         if logger().HAL: logger().log( '[mem] Deallocated : PA = 0x%016X' % pa )
-        return
+        return True if ret == 1 else False
 
     def set_mem_bit(self, addr, bit):
         addr += bit >> 3
