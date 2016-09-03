@@ -48,39 +48,36 @@ class OSXHelper(Helper):
         self.os_uname   = platform.uname()
         self.dev_fh = None
 
-    def __del__(self):
-        try:
-            destroy()
-        except NameError:
-            pass
-
     def create(self, start_driver):
-        self.init(start_driver)
+        #self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper created")
 
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
+        if start_driver:
+            pass
+        self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper started/loaded")
 
-    def stop(self):
+    def stop(self, start_driver):
+        if self.driver_loaded:
+            pass
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper stopped/unloaded")
 
-    def delete(self):
+    def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper deleted")
 
-    def destroy(self):
-        self.stop()
-        self.delete()
-
     def init(self, start_driver):
-        try:
-            self.dev_fh = open(self.DEVICE_NAME, "r+")
-        except IOError as e:
-            raise OsHelperError("Unable to open the Chipsec device.\n"
-                                "%s" % str(e), e.errno)
+        if start_driver:
+            try:
+                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.driver_loaded = True
+            except IOError as e:
+                raise OsHelperError("Unable to open the Chipsec device.\n"
+                                    "%s" % str(e), e.errno)
 
     def close(self):
         if self.dev_fh:
