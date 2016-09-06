@@ -447,19 +447,16 @@ def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dump
                         if findall: found = True
                         else: return True
 
+                    if dumpall: os.makedirs( fwbin_dir )
+
                     if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
-                        if dumpall: os.makedirs( fwbin_dir )
                         f = traverse_uefi_section( _uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity, fv.Offset + fwbin.Offset, printall, dumpall, fwbin_dir, match_criteria, findall )
                         if bsearch and f:
                             if findall: found = True
                             else: return True
-                    elif fwbin.Type == EFI_FV_FILETYPE_RAW:
-                        if fwbin.Name == NVAR_NVRAM_FS_FILE: 
+                    elif fwbin.Type == EFI_FV_FILETYPE_RAW and fwbin.Name == NVAR_NVRAM_FS_FILE: 
                             if dumpall:
-                                if fwbin.UD:
-                                    _uefi.parse_EFI_variables( os.path.join(fwbin_dir, 'NVRAM.UD'), fv.Image, False, FWType.EFI_FW_TYPE_NVAR )
-                                else:
-                                    _uefi.parse_EFI_variables( os.path.join(fwbin_dir, 'NVRAM'), fv.Image, False, FWType.EFI_FW_TYPE_NVAR )
+                                _uefi.parse_EFI_variables( os.path.join(fwbin_dir, 'NVRAM%s' % ('.UD' if fwbin.UD else '')), fv.Image, False, FWType.EFI_FW_TYPE_NVAR )  
 
                 foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, next_offset, polarity )
         #
