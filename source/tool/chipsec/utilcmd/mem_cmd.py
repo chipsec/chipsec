@@ -216,4 +216,4 @@ class MemCommand(BaseCommand):
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
 
-commands = { 'mem': MemCommand }
+commands = { 'mem': MemCommand }
