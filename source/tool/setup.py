@@ -29,8 +29,14 @@ import io
 import os
 import platform
 from setuptools import setup, find_packages, Extension
+import subprocess
+
+from setuptools.command.install import install as _install
+from setuptools.command.build_ext import build_ext as _build_ext
 
 here = os.path.abspath(os.path.dirname(__file__))
+
+build_driver = False
 
 def long_description():
     with io.open(os.path.join(here, "..", "..", "README.md"), encoding='utf-8') as f:
@@ -40,18 +46,43 @@ def version():
     with io.open(os.path.join(here, 'chipsec', 'VERSION')) as f:
         return f.read()
 
+def package_files(directory):
+    paths = []
+    for (path, directories, filenames) in os.walk(directory):
+        for filename in filenames:
+            paths.append(os.path.join('..', path, filename))
+    return paths
+
+class build_ext(_build_ext):
+    def run(self):
+        global build_driver
+        if platform.system().lower() == "linux" and build_driver:
+            bl = os.path.realpath(self.distribution.command_obj['build'].build_lib)
+            subprocess.check_output( "make -C "+ bl +"/drivers/linux/", shell=True )
+        _build_ext.run(self)
+
+class FullInstall(_install):
+    description = 'Build CHIPSEC Driver. Install CHIPSEC with Driver.'
+    def run(self):
+        if platform.system().lower() == "linux":
+            global build_driver
+            build_driver = True
+            _install.do_egg_install(self)
+
 package_data = { "": ["*.ini","*.cfg","*.json"],
                  "chipsec.cfg": ["*.xml", "*.xsd"],
                  "chipsec": ["VERSION"]
                }
 
 if platform.system().lower() == "windows":
-    package_data[ "chipsec.helper.win"] = ['win7_amd64/*.sys']
+    package_data[ "chipsec.helper.win" ] = [ 'win7_amd64/*.sys' ]
     install_requires=['pywin32']
     kw = dict(ext_modules = [])
 
 if platform.system().lower() == "linux":
-    package_data["chipsec.helper.linux"] = ["*.c","Makefile"]
+    extra_files = package_files('drivers/linux')
+    package_data[ "chipsec.helper.linux" ] = [ "*.c","Makefile" ] 
+    package_data['']                       = extra_files
     install_requires=[]
     kw = dict(
         ext_modules = [
@@ -101,6 +132,9 @@ setup(
         ],
     },
     #scripts         = ['chipsec_main.py', 'chipsec_util.py'],
-
+    cmdclass={
+        'full_install': FullInstall,
+        'build_ext'   : build_ext,
+    },
     **kw
 )
