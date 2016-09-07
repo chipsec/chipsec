@@ -95,4 +95,4 @@ class PortIOCommand(BaseCommand):
         self.logger.log( "[CHIPSEC] (io) time elapsed %.3f" % (time.time()-t) )
 
 
-commands = { 'io': PortIOCommand }
+commands = { 'io': PortIOCommand }

@@ -102,4 +102,4 @@ class MMIOCommand(BaseCommand):
         self.logger.log( "[CHIPSEC] (mmio) time elapsed %.3f" % (time.time()-t) )
 
 
-commands = { 'mmio': MMIOCommand }
+commands = { 'mmio': MMIOCommand }
