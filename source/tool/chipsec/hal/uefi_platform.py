@@ -290,7 +290,8 @@ def getNVstore_NVAR( nvram_buf ):
         while next_offset != None:
             if (Type == EFI_FV_FILETYPE_RAW) and (Name == NVAR_NVRAM_FS_FILE):
                 l = ((FvOffset + cur_offset + HeaderSize), Size - HeaderSize, None)
-                if (not UD): break
+                if (not UD):
+                    return l
             cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, next_offset, polarity)
         FvOffset, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf, FvOffset+FvLength)
     return l
