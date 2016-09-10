@@ -480,6 +480,13 @@ class SPI:
 
         return cycle_done
 
+    def check_hardware_sequencing(self):
+        # Test if the flash decriptor is valid (and hardware sequencing enabled)
+        fdv = chipsec.chipset.read_register_field(self.cs, 'HSFS', 'FDV')
+        if fdv == 0:
+            logger().error("HSFS.FDV is 0, hardware sequencing is disabled")
+            raise SpiRuntimeError("Chipset does not support hardware sequencing")
+
     #
     # SPI Flash operations
     #
@@ -500,6 +507,9 @@ class SPI:
         #return self.write_spi( spi_fla, struct.unpack('B'*len(buf), buf) )
 
     def read_spi(self, spi_fla, data_byte_count ):
+
+        self.check_hardware_sequencing()
+	
         buf = []
         dbc = SPI_READ_WRITE_DEF_DBC
         if (data_byte_count >= SPI_READ_WRITE_MAX_DBC):
@@ -550,6 +560,9 @@ class SPI:
         return buf
 
     def write_spi(self, spi_fla, buf ):
+	
+        self.check_hardware_sequencing()
+
         write_ok = True
         data_byte_count = len(buf)
         dbc = 4
@@ -590,6 +603,9 @@ class SPI:
         return write_ok
 
     def erase_spi_block(self, spi_fla ):
+
+        self.check_hardware_sequencing()
+
         if logger().UTIL_TRACE or logger().VERBOSE:
             logger().log( "[spi] Erasing SPI Flash block @ 0x%X" % spi_fla )
 
