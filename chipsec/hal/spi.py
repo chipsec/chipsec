@@ -58,9 +58,9 @@ import time
 
 import chipsec.defines
 from chipsec.file import *
-from chipsec.hal import hal_base, mmio
-
 from chipsec.cfg.common import *
+from chipsec.hal import hal_base, mmio
+from chipsec.helper import oshelper
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -151,8 +151,10 @@ def get_SPI_region(flreg):
 
 class SpiRuntimeError (RuntimeError):
     pass
+
 class SpiAccessError (RuntimeError):
     pass
+
 
 class SPI(hal_base.HALBase):
 
@@ -160,6 +162,12 @@ class SPI(hal_base.HALBase):
         super(SPI, self).__init__(cs)
         self.mmio = mmio.MMIO(cs)
         self.rcba_spi_base = self.get_SPI_MMIO_base()
+        # We try to map SPIBAR in the process memory, this will increase the
+        # speed of MMIO access later on.
+        try:
+            self.cs.helper.map_io_space(self.rcba_spi_base, Cfg.SPI_MMIO_BASE_LENGTH, None)
+        except oshelper.UnimplementedAPIError:
+            pass
 
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons

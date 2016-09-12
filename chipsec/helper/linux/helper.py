@@ -35,18 +35,19 @@ Linux helper
 
 __version__ = '1.0'
 
-import struct
-import sys
-import os
-import fcntl
-import platform
-import ctypes
-import fnmatch
-import errno
 import array
-import subprocess
+import ctypes
+import errno
+import fcntl
+import fnmatch
+import mmap
+import os
 import os.path
-from ctypes import *
+import platform
+import resource
+import struct
+import subprocess
+import sys
 
 from chipsec import defines
 from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
@@ -84,6 +85,16 @@ _tools = {
   defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.bin'
 }
 
+class MemoryMapping(mmap.mmap):
+    """Memory mapping based on Python's mmap.
+
+    This subclass keeps tracks of the start and end of the mapping.
+    """
+    def __init__(self, fileno, length, flags, prot, offset):
+        super(MemoryMapping, self).__init__(self, fileno, length, flags, prot,
+                                            offset=offset)
+        self.start = offset
+        self.end = offset + length
 
 class LinuxHelper(Helper):
 
@@ -94,7 +105,6 @@ class LinuxHelper(Helper):
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
-        import platform
         self.os_system  = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
@@ -102,6 +112,11 @@ class LinuxHelper(Helper):
         self.os_uname   = platform.uname()
         self.dev_fh = None
         self.dev_mem = None
+
+        # A list of all the mappings allocated via map_io_space. When using
+        # read/write MMIO, if the region is already mapped in the process's
+        # memory, simply read/write from there.
+        self.mappings   = []
 
 ###############################################################################################
 # Driver/service management functions
@@ -210,6 +225,31 @@ class LinuxHelper(Helper):
 ###############################################################################################
 # Actual API functions to access HW resources
 ###############################################################################################
+    def memory_mapping(self, base, size):
+        """Returns the mmap region that fully encompasses this area.
+
+        Returns None if no region matches.
+        """
+        for region in self.mappings:
+            if region.start <= base and region.end >= base + size:
+                return region
+        return None
+
+    def native_map_io_space(self, base, size, unused_cache_type):
+        """Map to memory a specific region."""
+        if self.devmem_available() and not self.memory_mapping(base, size):
+            if logger().VERBOSE:
+                logger().log("[helper] Mapping 0x%x to memory" % (base))
+            length = max(size, resource.getpagesize())
+            page_aligned_base = base - (base % resource.getpagesize())
+            mapping = MemoryMapping(self.dev_mem, length, mmap.MAP_SHARED,
+                                mmap.PROT_READ | mmap.PROT_WRITE,
+                                offset=page_aligned_base)
+            self.mappings.append(mapping)
+
+    def map_io_space(self, base, size, cache_type):
+        raise UnimplementedAPIError("map_io_space")
+
     def __mem_block(self, sz, newval = None):
         if newval is None:
             return self.dev_fh.read(sz)
@@ -316,7 +356,7 @@ class LinuxHelper(Helper):
         in_buf_final = array.array("c", in_buf)
         #print_buffer(in_buf)
         out_length=0
-        out_buf=(c_char * out_length)()
+        out_buf=(ctypes.c_char * out_length)()
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
@@ -405,9 +445,14 @@ class LinuxHelper(Helper):
 
     def native_read_mmio_reg(self, phys_address, size):
         if self.devmem_available():
-            os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
-            reg = os.read(self.dev_mem, size)
-        return defines.unpack1(reg, size)
+            region = self.memory_mapping(phys_address, size)
+            if not region:
+                os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
+                reg = os.read(self.dev_mem, size)
+            else:
+                region.seek(phys_address - region.start)
+                reg = region.read(size)
+            return defines.unpack1(reg, size)
 
     def write_mmio_reg(self, phys_address, size, value):
         in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
@@ -416,10 +461,15 @@ class LinuxHelper(Helper):
     def native_write_mmio_reg(self, phys_address, size, value):
         if self.devmem_available():
             reg = defines.pack1(value, size)
-            os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
-            written = os.write(self.dev_mem, reg)
-            if written != size:
-                logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
+            region = self.memory_mapping(phys_address, size)
+            if not region:
+                os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
+                written = os.write(self.dev_mem, reg)
+                if written != size:
+                    logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
+            else:
+                region.seek(phys_address - region.start)
+                region.write(reg)
 
     def get_ACPI_SDT( self ):
         raise UnimplementedAPIError( "get_ACPI_SDT" )
