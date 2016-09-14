@@ -5,15 +5,6 @@
     
   <!-- #################################### -->
   <!--                                      -->
-  <!-- Host Controller                      -->
-  <!--                                      -->
-  <!-- #################################### -->
-  <register name="PCI0.0.0_PAVPC"      type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Configuration">
-    <field name="PAVPLCK"       bit="2" size="1" desc="Lock"/>
-  </register>
-    
-  <!-- #################################### -->
-  <!--                                      -->
   <!-- Integrated devices                   -->
   <!--                                      -->
   <!-- #################################### -->
@@ -178,6 +169,8 @@
     <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="2" desc="TCO1 Control">
       <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
     </register>
+  
+  </registers>
 
 
   <!-- #################################### -->
@@ -188,7 +181,5 @@
   <controls>
     <control name="BiosInterfaceLockDown"  register="BC"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
   </controls>
-    
-  </registers>
 
 </configuration>
