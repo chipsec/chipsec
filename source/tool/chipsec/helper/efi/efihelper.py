@@ -140,7 +140,10 @@ class EfiHelper(Helper):
     def write_mmio_reg(self, phys_address, size, value):
         if logger().VERBOSE:
             logger().log( '[efi] helper does not support 64b PA' )
-        return self._write_phys_mem( phys_address, size, value )
+        if size == 4:
+            return edk2.writemem_dword( phys_address, value )
+        else:
+            logger().error( '[efi] unsupported size %d by write_mmio_reg' % size )
         
     def _write_phys_mem( self, phys_address, length, buf ):
         # temp hack
