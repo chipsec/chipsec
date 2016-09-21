@@ -25,13 +25,16 @@ which can be EFI firmware volumes, EFI executable binaries (PEI modules, DXE dri
 The module can find EFI binaries by their UI names, EFI GUIDs, MD5/SHA-1/SHA-256 hashes
 or contents matching specified regular expressions.
 
+Important! This module can only detect what it knows about from its config file.
+If a bad or vulnerable binary is not detected then its 'signature' needs to be added to the config.
+
 Usage:
     chipsec_main.py -i -m tools.uefi.blacklist [-a <fw_image>,<blacklist>]
 
       fw_image  : Full file path to UEFI firmware image
-                  If <fw_image> is not specified, the module will dump firmware image directly from flash memory device
-      blacklist : File name of JSON file with configuration of black-listed EFI binaries (default = blacklist.json)
-                  Config file should be located in the same directory as blacklist.py module
+                  If not specified, the module will dump firmware image directly from ROM
+      blacklist : JSON file with configuration of black-listed EFI binaries (default = blacklist.json)
+                  Config file should be located in the same directory as this module
     
 Examples:
 
@@ -65,9 +68,9 @@ Usage:
     chipsec_main.py -i -m tools.uefi.blacklist [-a <fw_image>,<blacklist>]
 
       fw_image  : Full file path to UEFI firmware image
-                  If <fw_image> is not specified, the module will dump firmware image directly from flash memory device
-      blacklist : File name of JSON file with configuration of black-listed EFI binaries (default = blacklist.json)
-                  Config file should be located in the same directory as blacklist.py module
+                  If not specified, the module will dump firmware image directly from ROM
+      blacklist : JSON file with configuration of black-listed EFI binaries (default = blacklist.json)
+                  Config file should be located in the same directory as this module
     
 Examples:
 
@@ -82,6 +85,10 @@ Examples:
       checks for black-listed EFI modules defined in 'blacklist.json' config
       None: -i and --no_driver arguments can be used in this case because the test
       does not depend on the platform and no kernel driver is required when firmware image is specified
+
+Important! This module can only detect what it knows about from its config file.
+If a bad or vulnerable binary is not detected then its 'signature' needs to be added to the config.
+
 '''
 
 
@@ -100,7 +107,7 @@ class blacklist(BaseModule):
     def check_blacklist( self ):
         res = ModuleResult.PASSED
 
-        self.logger.log( "[CHIPSEC] looking for black-listed EFI binaries defined in '%s'..." % self.cfg_name )
+        self.logger.log( "[*] looking for black-listed EFI binaries defined in '%s'..." % self.cfg_name )
         #self.logger.log( self.efi_blacklist )
 
         # no need to output the entire hierarchy of EFI modules
@@ -141,13 +148,13 @@ class blacklist(BaseModule):
             self.spi = chipsec.hal.spi.SPI( self.cs )
             (base,limit,freg) = self.spi.get_SPI_region( chipsec.hal.spi.BIOS )
             image_size = limit + 1 - base
-            self.logger.log( "[CHIPSEC] dumping FW image from ROM to %s: 0x%08X bytes at [0x%08X:0x%08X]" % (image_file,base,limit,image_size) )
-            self.logger.log( "[CHIPSEC] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
+            self.logger.log( "[*] dumping FW image from ROM to %s: 0x%08X bytes at [0x%08X:0x%08X]" % (image_file,base,limit,image_size) )
+            self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
             self.spi.read_spi_to_file( base, image_size, image_file )
         elif len(module_argv) > 0:
             # Use provided firmware image 
             image_file = module_argv[0]
-            self.logger.log( "[CHIPSEC] reading FW image from file: %s" % image_file )
+            self.logger.log( "[*] reading FW image from file: %s" % image_file )
 
         self.image = chipsec.file.read_file( image_file )
 
