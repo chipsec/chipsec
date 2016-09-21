@@ -3,5 +3,11 @@
   "HT_rkloader_name" : { "name": "rkloader" },
   "HT_Ntfs"          : { "guid": "F50258A9-2F4D-4DA9-861E-BDA84D07A44C" },
   "HT_Ntfs_name"     : { "name": "Ntfs" },
-  "HT_app"           : { "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0B" }
+  "HT_app"           : { "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0B" },
+
+  "ThinkPwn_SmmRuntimeProtGuid"      : { "regexp": "\\xA1\\x97\\x68\\xA5\\x7F\\xA7\\x00\\x46\\x84\\xDB\\x22\\xB0\\xA8\\x01\\xFA\\x9A" },
+  "ThinkPwn_SystemSmmRuntimeRt_name" : { "name": "SystemSmmRuntimeRt.efi" },
+  "ThinkPwn_SystemSmmRuntimeRt"      : { "guid": "7C79AC8C-5E6C-4E3D-BA6F-C260EE7C172E" },
+  "ThinkPwn_SmmRuntime_name"         : { "name": "SmmRuntime" },
+  "ThinkPwn_SmmRuntime"              : { "guid": "A56897A1-A77F-4600-84DB-22B0A801FA9A" }
 }
