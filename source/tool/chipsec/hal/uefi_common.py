@@ -623,7 +623,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
     next_offset = None
     res = None
     update_or_deleted = False
-    if (fof + file_header_size) <= (FvLength - fof):
+    if (fof + file_header_size) <= FvLength:
         if ('\xff\xff\xff\xff' == FvImage[fof+file_header_size-4:fof+file_header_size]):
             next_offset = fof + 8
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)

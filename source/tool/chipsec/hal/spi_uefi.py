@@ -454,9 +454,12 @@ def traverse_uefi_region( _uefi, data, fwtype, uefi_path='', printall=True, dump
                         if bsearch and f:
                             if findall: found = True
                             else: return True
-                    elif fwbin.Type == EFI_FV_FILETYPE_RAW and fwbin.Name == NVAR_NVRAM_FS_FILE: 
-                            if dumpall:
-                                _uefi.parse_EFI_variables( os.path.join(fwbin_dir, 'NVRAM%s' % ('.UD' if fwbin.UD else '')), fv.Image, False, FWType.EFI_FW_TYPE_NVAR )  
+                    elif fwbin.Type == EFI_FV_FILETYPE_RAW:
+                        if (fwbin.Name == NVAR_NVRAM_FS_FILE) and dumpall:
+                            _uefi.parse_EFI_variables( os.path.join(fwbin_dir, 'NVRAM%s' % ('.UD' if fwbin.UD else '')), fv.Image, False, FWType.EFI_FW_TYPE_NVAR )  
+                        else:
+                            f = traverse_uefi_region( _uefi, fwbin.Image, fwtype, fwbin_dir, printall, dumpall, match_criteria, findall )
+
 
                 foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, next_offset, polarity )
         #
