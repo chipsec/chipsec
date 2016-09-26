@@ -40,6 +40,13 @@
       <field name="Enable" bit="0"  size="1"  desc="Enable"/>
       <field name="Base"   bit="13" size="19" desc="VTD Base Address"/>
     </register>
+
+    <register name="VTGENCTRL" type="mmcfg" bus="0" dev="5" fun="0" offset="0x184" size="4" desc="VTGENCTRL Register">
+      <field name="gpa_limit" bit="0"  size="4" desc="Guest virtual addressing limit"/>
+      <field name="hpa_limit" bit="4"  size="4" desc="Host processor addressing limit"/>
+      <field name="lockvtd"   bit="15" size="1" desc="lockvtd"/>
+    </register>
+    
     <register name="LTDPR" type="mmcfg" bus="0" dev="5" fun="0" offset="0x290" size="4" desc="Intel TXT DMA Protected Range Register">
       <field name="lock"       bit="0"  size="1"  desc="Lock LTDPR register"/>
       <field name="protregsts" bit="1"  size="1"  desc="Protection enabled in HW"/>
