@@ -19,10 +19,10 @@ class TestHelper(oshelper.Helper):
     def create(self, start_driver):
         pass
 
-    def start(self, start_driver):
+    def start(self, start_driver, driver_exists=False):
         pass
 
-    def stop(self):
+    def stop(self, start_driver):
         pass
 
      # This will be used to probe the device, fake a Broadwell CPU
@@ -194,6 +194,7 @@ class SPIHelper(TestHelper):
     RCBA_ADDR = 0xFED0000
     SPIBAR_ADDR = RCBA_ADDR + 0x3800
     SPIBAR_END = SPIBAR_ADDR + 0x200
+    HSFS = SPIBAR_ADDR + 0x4
     FRAP = SPIBAR_ADDR + 0x50
     FREG0 = SPIBAR_ADDR + 0x54
     LPC_BRIDGE_DEVICE = (0, 0x1F, 0)
@@ -218,6 +219,8 @@ class SPIHelper(TestHelper):
             return 0x00020002
         elif pa == self.FRAP:
             return 0xEEEEEEEE
+        elif pa == self.HSFS:
+            return (1 << 14) # FDV = 1, the flash descriptor is valid
         elif pa >= self.SPIBAR_ADDR and pa < self.SPIBAR_END:
             return 0x0
         else:

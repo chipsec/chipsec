@@ -52,11 +52,13 @@ import struct
 import sys
 import os.path
 from collections import namedtuple
+import itertools
 
 from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
 from chipsec.cfg.common import *
 from chipsec.hal.pcidb import *
+from chipsec.helper import oshelper
 
 
 class PciRuntimeError (RuntimeError):
@@ -266,15 +268,16 @@ class Pci:
 
     def enumerate_devices( self ):
         devices = []
-        for b in range(256):
-            for d in range(32):
-                for f in range(8):
-                    did_vid = self.read_dword( b, d, f, 0x0 )
-                    #didvid = read_mmcfg_reg( cs, b, d, f, 0x0 )
-                    if 0xFFFFFFFF != did_vid:
-                        vid = did_vid&0xFFFF
-                        did = (did_vid >> 16)&0xFFFF
-                        devices.append( (b, d, f, vid, did) )
+        for b, d, f in itertools.product(range(256), range(32), range(8)):
+            try:
+                did_vid = self.read_dword(b, d, f, 0x0)
+                if 0xFFFFFFFF != did_vid:
+                    vid = did_vid & 0xFFFF
+                    did = (did_vid >> 16) & 0xFFFF
+                    devices.append((b, d, f, vid, did))
+            except oshelper.OsHelperError:
+                if logger().VERBOSE:
+                    logger().log("[pci] unable to access B/D/F: %d/%d/%d" % (b, d, f))
         return devices
 
     def dump_pci_config( self, bus, device, function ):

@@ -150,3 +150,10 @@ def DD(val):
     return struct.pack('<L', val)
 def DQ(val):
     return struct.pack('<Q', val)
+
+SIZE2FORMAT = {
+    1: 'B',
+    2: 'H',
+    4: 'I',
+    8: 'Q'
+}

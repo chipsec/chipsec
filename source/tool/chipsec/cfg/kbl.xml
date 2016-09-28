@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<configuration platform="SKL">
-<!-- XML configuration file for Skylake
+<configuration platform="KBL">
+<!-- XML configuration file for Kaby Lake
 -->
     
   <!-- #################################### -->
@@ -169,8 +169,7 @@
     <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="2" desc="TCO1 Control">
       <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
     </register>
-
-   
+  
   </registers>
 
 

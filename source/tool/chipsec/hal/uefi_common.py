@@ -250,7 +250,9 @@ Reserved1 : 0x%08X
 #
 # Variable data start flag.
 #
-VARIABLE_DATA_SIGNATURE    = struct.pack('=H', 0x55AA )
+VARIABLE_DATA              = 0x55aa
+VARIABLE_DATA_SIGNATURE    = struct.pack('=H', VARIABLE_DATA )
+
 
 #
 # Variable Attributes
@@ -358,6 +360,7 @@ EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID = "FC1BCDB0-7D31-49AA-936A-A46
 
 EFI_FIRMWARE_FILE_SYSTEM_GUID  = "7A9354D9-0468-444A-81CE-0BF617D890DF"
 EFI_FIRMWARE_FILE_SYSTEM2_GUID = "8C8CE578-8A3D-4F1C-9935-896185C32DD3"
+EFI_FIRMWARE_FILE_SYSTEM3_GUID = "5473C07A-3DCB-4DCA-BD6F-1E9689E7349A"
 
 LZMA_CUSTOM_DECOMPRESS_GUID = "EE4E5898-3914-4259-9D6E-DC7BD79403CF"
 
@@ -378,34 +381,90 @@ COMPRESSION_TYPES = [COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_TIANO, COMPRESSION_
 
 #
 # Status codes
+# edk2: MdePkg/Include/Base.h
 #
+
+# @TODO
+#define ENCODE_ERROR(StatusCode)     ((RETURN_STATUS)(MAX_BIT | (StatusCode)))
+#define ENCODE_WARNING(a)            (a)
+
 class StatusCode:
-  EFI_SUCCESS            = 0
-  EFI_LOAD_ERROR         = 1
-  EFI_INVALID_PARAMETER  = 2
-  EFI_UNSUPPORTED        = 3
-  EFI_BAD_BUFFER_SIZE    = 4
-  EFI_BUFFER_TOO_SMALL   = 5
-  EFI_NOT_READY          = 6
-  EFI_DEVICE_ERROR       = 7
-  EFI_WRITE_PROTECTED    = 8
-  EFI_OUT_OF_RESOURCES   = 9
-  EFI_NOT_FOUND          = 14
-  EFI_SECURITY_VIOLATION = 26
+  EFI_SUCCESS              = 0
+  EFI_LOAD_ERROR           = 1
+  EFI_INVALID_PARAMETER    = 2
+  EFI_UNSUPPORTED          = 3
+  EFI_BAD_BUFFER_SIZE      = 4
+  EFI_BUFFER_TOO_SMALL     = 5
+  EFI_NOT_READY            = 6
+  EFI_DEVICE_ERROR         = 7
+  EFI_WRITE_PROTECTED      = 8
+  EFI_OUT_OF_RESOURCES     = 9
+  EFI_VOLUME_CORRUPTED     = 10
+  EFI_VOLUME_FULL          = 11
+  EFI_NO_MEDIA             = 12
+  EFI_MEDIA_CHANGED        = 13
+  EFI_NOT_FOUND            = 14
+  EFI_ACCESS_DENIED        = 15
+  EFI_NO_RESPONSE          = 16
+  EFI_NO_MAPPING           = 17
+  EFI_TIMEOUT              = 18
+  EFI_NOT_STARTED          = 19
+  EFI_ALREADY_STARTED      = 20
+  EFI_ABORTED              = 21
+  EFI_ICMP_ERROR           = 22
+  EFI_TFTP_ERROR           = 23
+  EFI_PROTOCOL_ERROR       = 24
+  EFI_INCOMPATIBLE_VERSION = 25
+  EFI_SECURITY_VIOLATION   = 26
+  EFI_CRC_ERROR            = 27
+  EFI_END_OF_MEDIA         = 28
+  EFI_END_OF_FILE          = 31
+  EFI_INVALID_LANGUAGE     = 32
+  EFI_COMPROMISED_DATA     = 33
+  EFI_HTTP_ERROR           = 35
+  '''
+  EFI_WARN_UNKNOWN_GLYPH    = 1   
+  EFI_WARN_DELETE_FAILURE   = 2  
+  EFI_WARN_WRITE_FAILURE    = 3   
+  EFI_WARN_BUFFER_TOO_SMALL = 4
+  EFI_WARN_STALE_DATA       = 5
+  EFI_WARN_FILE_SYSTEM      = 6
+  '''
 
 EFI_STATUS_DICT = { 
-  StatusCode.EFI_SUCCESS           :"EFI_SUCCESS",
-  StatusCode.EFI_LOAD_ERROR        :"EFI_LOAD_ERROR",
-  StatusCode.EFI_INVALID_PARAMETER :"EFI_INVALID_PARAMETER",
-  StatusCode.EFI_UNSUPPORTED       :"EFI_UNSUPPORTED",
-  StatusCode.EFI_BAD_BUFFER_SIZE   :"EFI_BAD_BUFFER_SIZE",
-  StatusCode.EFI_BUFFER_TOO_SMALL  :"EFI_BUFFER_TOO_SMALL",
-  StatusCode.EFI_NOT_READY         :"EFI_NOT_READY",
-  StatusCode.EFI_DEVICE_ERROR      :"EFI_DEVICE_ERROR",
-  StatusCode.EFI_WRITE_PROTECTED   :"EFI_WRITE_PROTECTED",
-  StatusCode.EFI_OUT_OF_RESOURCES  :"EFI_OUT_OF_RESOURCES",
-  StatusCode.EFI_NOT_FOUND         :"EFI_NOT_FOUND",
-  StatusCode.EFI_SECURITY_VIOLATION:"EFI_SECURITY_VIOLATION"
+  StatusCode.EFI_SUCCESS             :"EFI_SUCCESS",
+  StatusCode.EFI_LOAD_ERROR          :"EFI_LOAD_ERROR",
+  StatusCode.EFI_INVALID_PARAMETER   :"EFI_INVALID_PARAMETER",
+  StatusCode.EFI_UNSUPPORTED         :"EFI_UNSUPPORTED",
+  StatusCode.EFI_BAD_BUFFER_SIZE     :"EFI_BAD_BUFFER_SIZE",
+  StatusCode.EFI_BUFFER_TOO_SMALL    :"EFI_BUFFER_TOO_SMALL",
+  StatusCode.EFI_NOT_READY           :"EFI_NOT_READY",
+  StatusCode.EFI_DEVICE_ERROR        :"EFI_DEVICE_ERROR",
+  StatusCode.EFI_WRITE_PROTECTED     :"EFI_WRITE_PROTECTED",
+  StatusCode.EFI_OUT_OF_RESOURCES    :"EFI_OUT_OF_RESOURCES",
+  StatusCode.EFI_VOLUME_CORRUPTED    :"EFI_VOLUME_CORRUPTED",
+  StatusCode.EFI_VOLUME_FULL         :"EFI_VOLUME_FULL",
+  StatusCode.EFI_NO_MEDIA            :"EFI_NO_MEDIA",
+  StatusCode.EFI_MEDIA_CHANGED       :"EFI_MEDIA_CHANGED",
+  StatusCode.EFI_NOT_FOUND           :"EFI_NOT_FOUND",
+  StatusCode.EFI_ACCESS_DENIED       :"EFI_ACCESS_DENIED",
+  StatusCode.EFI_NO_RESPONSE         :"EFI_NO_RESPONSE",
+  StatusCode.EFI_NO_MAPPING          :"EFI_NO_MAPPING",
+  StatusCode.EFI_TIMEOUT             :"EFI_TIMEOUT",
+  StatusCode.EFI_NOT_STARTED         :"EFI_NOT_STARTED",
+  StatusCode.EFI_ALREADY_STARTED     :"EFI_ALREADY_STARTED",
+  StatusCode.EFI_ABORTED             :"EFI_ABORTED",
+  StatusCode.EFI_ICMP_ERROR          :"EFI_ICMP_ERROR",
+  StatusCode.EFI_TFTP_ERROR          :"EFI_TFTP_ERROR",
+  StatusCode.EFI_PROTOCOL_ERROR      :"EFI_PROTOCOL_ERROR",
+  StatusCode.EFI_INCOMPATIBLE_VERSION:"EFI_INCOMPATIBLE_VERSION",
+  StatusCode.EFI_SECURITY_VIOLATION  :"EFI_SECURITY_VIOLATION",
+  StatusCode.EFI_CRC_ERROR           :"EFI_CRC_ERROR",
+  StatusCode.EFI_END_OF_MEDIA        :"EFI_END_OF_MEDIA",
+  StatusCode.EFI_END_OF_FILE         :"EFI_END_OF_FILE",
+  StatusCode.EFI_INVALID_LANGUAGE    :"EFI_INVALID_LANGUAGE",
+  StatusCode.EFI_COMPROMISED_DATA    :"EFI_COMPROMISED_DATA",
+  StatusCode.EFI_HTTP_ERROR          :"EFI_HTTP_ERROR"
 }
 
 
@@ -503,6 +562,15 @@ def FvSum16(buffer):
 def FvChecksum16(buffer):
     return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
+def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size):
+    zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    fv_rsvd = (Reserved == 0)
+    fs_guid = (FsGuid in (EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM3_GUID, 'FFF12B8D-7696-4C8B-A985-2747075B4F50'))
+    fv_len = (FvLength <= size)
+    fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
+    #sum = (Checksum == CalcSum)
+    return fv_rsvd and fv_len and fv_header_len
+
 def NextFwVolume(buffer, off = 0):
     fof = off
     EFI_FIRMWARE_VOLUME_HEADER = "<16sIHH8sQIIHHHBB"
@@ -510,7 +578,7 @@ def NextFwVolume(buffer, off = 0):
     EFI_FV_BLOCK_MAP_ENTRY = "<II"
     size = len(buffer)
     res = (None, None, None, None, None, None, None, None, None)
-    if (fof + vf_header_size) < size:
+    while ((fof + vf_header_size) < size):
         fof =  buffer.find("_FVH", fof)
         if fof < 0x28: return res
         fof = fof - 0x28
@@ -524,6 +592,8 @@ def NextFwVolume(buffer, off = 0):
         print "\tHeaderLength:     0x%04X" % HeaderLength
         print "\tChecksum:         0x%04X" % Checksum
         print "\tRevision:         0x%02X" % Revision
+        print "\tExtHeaderOffset:  0x%02X" % ExtHeaderOffset
+        print "\tReserved:         0x%02X" % Reserved
         '''
         #print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
         #print "FV Checksum:  0x%04X (0x%04X)" % (Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
@@ -538,8 +608,11 @@ def NextFwVolume(buffer, off = 0):
             fvh = fvh + tail
         CalcSum = FvChecksum16(fvh)
         FsGuid = guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3)
-        res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
-        return res
+        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size)):
+            res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
+            return res
+        else:
+            fof += 0x2C
     return res
 
 EFI_FFS_FILE_HEADER = "<IHH8sHBB3sB"
@@ -550,7 +623,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
     next_offset = None
     res = None
     update_or_deleted = False
-    if (fof + file_header_size) <= (FvLength - fof):
+    if (fof + file_header_size) <= FvLength:
         if ('\xff\xff\xff\xff' == FvImage[fof+file_header_size-4:fof+file_header_size]):
             next_offset = fof + 8
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
