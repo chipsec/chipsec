@@ -11,7 +11,7 @@
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-  
+
     <!-- Section 14.9.5-14.9.6 -->
     <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0xFFFFFFF0FFC00000"  desc="Graphics Translation Table Range"/>
 
@@ -25,12 +25,12 @@
     <!-- new definition -->
     <!-- <bar name="SPIBAR"  register="SBASE"  base_field="Base" size="0x200"  enable_field="Enable" desc="SPI Base"/> -->
     <!-- old definition: to be removed -->
-    <bar name="SPIBAR"  bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>  
+    <bar name="SPIBAR"  bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>
 
     <bar name="MMCFG"   register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
 
   </mmio>
-  
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- I/O spaces (I/O BARs)                -->
@@ -52,7 +52,7 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-   
+
     <!-- Sections 3.6 and 13.4.6 - 13.4.8 -->
     <register name="MSG_CTRL_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD0" desc="Message Bus Control Register">
       <field name="MESSAGE_WR_BYTE_ENABLES" bit="4"  size="4" desc="Message write byte enable" />
@@ -68,7 +68,7 @@
     </register>
 
     <!-- Graphics -->
-     
+
     <!-- Section 14.9.13 -->
     <register name="GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
       <field name="GGCLCK"      bit="0"  size="1" desc="GGC Lock"/>
@@ -76,7 +76,7 @@
       <field name="GMS"         bit="3"  size="7" desc="Graphics Mode Select"/>
       <field name="GGMS"        bit="8"  size="2" desc="GTT Graphics Memory Size"/>
       <field name="VAMEN"       bit="14" size="1" desc="Versatile Acceleration"/>
-    </register> 
+    </register>
     <!-- Section 14.9.14 -->
     <register name="BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
       <field name="BDSM_LOCK" bit="0"  size="1" desc="BDSM Lock"/>
@@ -150,7 +150,7 @@
       <field name="TS"      bit="1"  size="1" desc="Top Swap"/>
       <field name="BBS"     bit="10" size="2" desc="Boot BIOS Straps"/>
       <field name="BBSize"  bit="29" size="2" desc="Boot Block Size"/>
-    </register>   
+    </register>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
@@ -202,7 +202,7 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- CPU MSRs                     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Message Bus registers        -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -224,6 +224,7 @@
     <control name="TopSwapStatus"          register="GCS"                  field="TS"                 desc="Top Swap Status"/>
     <control name="TopSwap"                register="GCS"                  field="TS"                 desc="Top Swap"/>
     <control name="BiosInterfaceLockDown"  register="GCS"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+    <control name="SMILock"                register="GEN_PMCON2"           field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
   </controls>
 
 </configuration>
