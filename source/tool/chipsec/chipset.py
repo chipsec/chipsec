@@ -184,7 +184,7 @@ Chipset_Dictionary = {
 0x1F01 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 
 # Cherry Trail SoC
-0x2280 : {'name' : 'Cherry Trail',       'id' : CHIPSET_ID_CHT , 'code' : CHIPSET_CODE_CHT,  'longname' : 'Cherry Trail SoC' },
+0x2280 : {'name' : 'Braswell/Cherry Trail',       'id' : CHIPSET_ID_CHT , 'code' : CHIPSET_CODE_CHT,  'longname' : 'Braswell/Cherry Trail SoC' },
 
 #
 # Quark based SoC platforms
