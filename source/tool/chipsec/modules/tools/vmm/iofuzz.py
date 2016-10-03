@@ -24,7 +24,7 @@
 Simple port I/O VMM emulation fuzzer
 
  Usage:
-   ``chipsec_main.py -i -m tools.vmm.iofuzz [ -a <mode>,<count>,<iterations> ] -l iofuzz.log``
+   ``chipsec_main.py -i -m tools.vmm.iofuzz [-a <mode>,<count>,<iterations>] -l log.txt``
 """
 import random
 

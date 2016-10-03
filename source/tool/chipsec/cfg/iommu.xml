@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <configuration>
-<!-- XML configuration file for Intel VT-d
-     Ref: Section 10 of Intel Virtualization Technology for Directed I/O (http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/vt-directed-io-spec.pdf)
+<!-- XML configuration file for Intel Virtualization Technology for Directed I/O (VT-d)
+     Reference: Section 10 of Intel Virtualization Technology for Directed I/O (http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/vt-directed-io-spec.pdf)
 -->
 
   <!-- #################################### -->

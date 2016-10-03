@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <configuration platform="IVT">
-<!-- XML configuration file for Ivytown
+<!-- XML configuration file for Ivytown (Ivy Bridge-E) based platforms
 -->
   <registers>
 

@@ -22,13 +22,17 @@
 """
 Hyper-V VMBus synthetic device generic fuzzer
 
- Usage:
-   ``chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info``
-   ``  print channel offers``
-   ``chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>``
-   ``  fuzzing device with specified relid``
+Usage:
 
-Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys
+  Print channel offers:
+
+  ``chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info``
+
+  Fuzzing device with specified relid:
+
+  ``chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid> -l log.txt``
+
+Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 import time
 from struct    import *

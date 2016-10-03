@@ -1,36 +1,25 @@
-TODO: Test UEFI functionality
-      Fully test on 64 and 32-bit platforms 	
+Chipsec Linux kernel module
+===========================
 
+This module was originally built on/adapted from fmem 1.5.0 and LoLA (Low Level Access) (https://code.google.com/archive/p/lola-linux/)
 
-========================
-| Chipsec linux driver |
-========================
+To install CHIPSEC framework with the kernel module, please see "Linux Installation" section of chipsec-manual.pdf
+When installed, CHIPSEC framework automatically loads and unloads kernel module. 
 
-This module is built on/adapted from fmem 1.5.0 and LOLA (Low Level Access)
-
-NOTE:
-You may need run apt-get install python-dev for the Python.h header (needed for switching cpu affinity). 
-If you already have this in a non-standard location (i.e. any other than /usr/include/python-2.7), you can manually edit the path in source/driver/linux/Makefile
-
+However, if you want to manually build/install the kernel module, please follow instructions below.
 
 To build:
 	make
 
 To load kernel module:
 	make install
-	- or -
-	./run.sh
 
 To remove kernel module:
 	make uninstall
-	- or -
-	rmmod chipsec
 
-
-TESTED ON:
-	Linux 3.2.6 x32 (Mint/Ubuntu)
-	Linux 2.6.32 x32 (Ubuntu)
-	Fedora 20 LXDE 64bit
+NOTE:
+You may need run apt-get install python-dev for the Python.h header (needed for switching cpu affinity). 
+If you already have this in a non-standard location (i.e. any other than /usr/include/python-2.7), you can manually edit the path in drivers/linux/Makefile
 
 
 -------------

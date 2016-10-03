@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <configuration platform="HSX" >
-<!-- XML configuration file for Haswell Server
+<!-- XML configuration file for Haswell Server based platforms
 -->
   <pci>
     <device name="IMC0_MAIN_SMBUS" bus="1" dev="19" fun="0" vid="0x8086" />

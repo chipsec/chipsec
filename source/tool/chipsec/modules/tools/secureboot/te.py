@@ -25,23 +25,30 @@ Tool to test for 'TE Header' vulnerability in Secure Boot implementations as des
 `All Your Boot Are Belong To Us <https://cansecwest.com/slides/2014/AllYourBoot_csw14-intel-final.pdf>`_
 
 Usage:
-  chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]
-      <mode>
-        generate_te        - (default) convert PE EFI binary <efi_file> to TE binary
-        replace_bootloader - replace bootloader files listed in <cfg_file> on ESP with modified <efi_file>
-        restore_bootloader - restore original bootloader files from .bak files
-      <cfg_file>           - path to config file listing paths to bootloader files to replace
-      <efi_file>           - path to EFI binary to convert to TE binary
-                             If no file path is provided, the tool will look for Shell.efi
+  ``chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]``
+      - ``<mode>``
+
+          * ``generate_te``		(default) convert PE EFI binary ``<efi_file>`` to TE binary
+          * ``replace_bootloader``	replace bootloader files listed in ``<cfg_file>`` on ESP with modified ``<efi_file>``
+          * ``restore_bootloader``	restore original bootloader files from ``.bak`` files
+
+      - ``<cfg_file>``	path to config file listing paths to bootloader files to replace
+      - ``<efi_file>``	path to EFI binary to convert to TE binary. If no file path is provided, the tool will look for Shell.efi
 
 Examples:
 
 Convert Shell.efi PE/COFF EFI executable to TE executable:
-  chipsec_main.py -m tools.secureboot.te -a generate_te,Shell.efi
+
+  ``chipsec_main.py -m tools.secureboot.te -a generate_te,Shell.efi``
+
 Replace bootloaders listed in te.cfg file with TE version of Shell.efi executable:
-  chipsec_main.py -m tools.secureboot.te -a replace_bootloader,te.cfg,Shell.efi
+
+  ``chipsec_main.py -m tools.secureboot.te -a replace_bootloader,te.cfg,Shell.efi``
+
 Restore bootloaders listed in te.cfg file:
-  chipsec_main.py -m tools.secureboot.te -a restore_bootloader,te.cfg
+
+  ``chipsec_main.py -m tools.secureboot.te -a restore_bootloader,te.cfg``
+
 """
 
 import os

@@ -22,10 +22,10 @@
 """
 Hyper-V VMBus synthetic keyboard fuzzer. Fuzzes inbound ring buffer in VMBus virtual keyboard device.
 
- Usage:
-   ``chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz``
+Usage:
+  ``chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz -l log.txt``
 
-Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys
+Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from struct  import *
 from random  import *

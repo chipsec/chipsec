@@ -24,7 +24,7 @@
 Simple CPU Module Specific Register (MSR) VMM emulation fuzzer
 
  Usage:
-   chipsec_main.py -i -m tools.vmm.msr_fuzz [-a random] -l msr_fuzz.log
+   ``chipsec_main.py -i -m tools.vmm.msr_fuzz [-a random] -l log.txt``
 """
 
 import random
