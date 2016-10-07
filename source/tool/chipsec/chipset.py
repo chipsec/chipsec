@@ -94,6 +94,7 @@ CHIPSET_ID_HSX     = 10
 CHIPSET_ID_SKL     = 11
 CHIPSET_ID_BSW     = 12
 CHIPSET_ID_KBL     = 13
+CHIPSET_ID_CHT     = 14
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -111,10 +112,11 @@ CHIPSET_CODE_HSX     = 'HSX'
 CHIPSET_CODE_SKL     = 'SKL'
 CHIPSET_CODE_BSW     = 'BSW'
 CHIPSET_CODE_KBL     = 'KBL'
+CHIPSET_CODE_CHT     = 'CHT'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL]
-CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_CODE_BSW]
+CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_CODE_BSW,CHIPSET_CODE_CHT]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
 
@@ -181,8 +183,8 @@ Chipset_Dictionary = {
 0x1F07 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 0x1F01 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 
-# Braswell
-0x2280 : {'name' : 'Braswell',       'id' : CHIPSET_ID_BSW , 'code' : CHIPSET_CODE_BSW,  'longname' : 'N-series Pentium/Celeron Processor (Braswell SoC)' },
+# Cherry Trail SoC
+0x2280 : {'name' : 'Braswell/Cherry Trail',       'id' : CHIPSET_ID_CHT , 'code' : CHIPSET_CODE_CHT,  'longname' : 'Braswell/Cherry Trail SoC' },
 
 #
 # Quark based SoC platforms
