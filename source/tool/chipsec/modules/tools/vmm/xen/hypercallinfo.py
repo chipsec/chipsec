@@ -18,17 +18,16 @@
 #chipsec@intel.com
 #
 
+"""
+Xen hypercall information tool
+
+Usage:
+  ``chipsec_main.py -i -m tools.vmm.xen.hypercallinfo``
+"""
 
 from define                           import *
 from chipsec.modules.tools.vmm.common import *
 from chipsec.hal.vmm                  import *
-
-"""
-Xen hypercall information tool
-
- Usage:
-   ``chipsec_main.py -i -m tools.vmm.xen.hypercallinfo``
-"""
 
 class HypercallInfo(BaseModuleDebug):
     def __init__(self):

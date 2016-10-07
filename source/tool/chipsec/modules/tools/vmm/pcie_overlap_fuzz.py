@@ -25,7 +25,7 @@ PCIe device Memory-Mapped I/O (MMIO) ranges VMM emulation fuzzer which first ove
 then fuzzes them by writing garbage if corresponding option is enabled
 
  Usage:
-   ``chipsec_main.py -i -m tools.vmm.pcie_overlap_fuzz -l pcie_overlap_fuzz.log``
+   ``chipsec_main.py -i -m tools.vmm.pcie_overlap_fuzz -l log.txt``
 """
 
 from chipsec.module_common import *

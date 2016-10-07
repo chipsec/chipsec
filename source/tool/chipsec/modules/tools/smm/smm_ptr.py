@@ -27,21 +27,20 @@ CanSecWest 2015
 A tool to test SMI handlers for pointer validation vulnerabilities
 
 Usage:
-
-``chipsec_main -m tools.smm.smm_ptr [ -a <mode>,<config_file>|<smic_start:smic_end>,<size>,<address> ]``
+``chipsec_main -m tools.smm.smm_ptr -l log.txt \``
+``[-a <mode>,<config_file>|<smic_start:smic_end>,<size>,<address>]``
 
 - ``mode``: SMI fuzzing mode
 
     * ``config`` = use SMI configuration file <config_file>
     * ``fuzz`` = fuzz all SMI handlers with code in the range <smic_start:smic_end>
     * ``fuzzmore`` = fuzz mode + pass 2nd-order pointers within buffer to SMI handlers
-    
 - ``size``: size of the memory buffer (in Hex)
 - ``address``: physical address of memory buffer to pass in GP regs to SMI handlers (in Hex)
 
     * ``smram`` = option passes address of SMRAM base (system may hang in this mode!)
 
-In 'config' mode, SMI configuration file should have the following format
+In ``config`` mode, SMI configuration file should have the following format
 
 ::
 

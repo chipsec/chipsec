@@ -22,17 +22,19 @@
 """
 Hyper-V hypercall fuzzer
 
- Usage:
-   ``chipsec_main.py -i -m tools.vmm.hv.hypercall -a mode[,vector,iterations]``
-   ``  mode                fuzzing mode``
-   ``    = status-fuzzing  finding parameters with hypercall success status``
-   ``    = params-info     shows input parameters valid ranges``
-   ``    = params-fuzzing  parameters fuzzing based on their valid ranges``
-   ``    = custom-fuzzing  fuzzing of known hypercalls``
-   ``  vector              hypercall vector``
-   ``  iterations          number of hypercall iterations``
+Usage:
+  ``chipsec_main.py -i -m tools.vmm.hv.hypercall -a <mode>[,<vector>,<iterations>] -l log.txt``
 
-Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys
+    - ``mode``			fuzzing mode
+
+        * ``= status-fuzzing``	finding parameters with hypercall success status
+        * ``= params-info``	shows input parameters valid ranges
+        * ``= params-fuzzing``	parameters fuzzing based on their valid ranges
+        * ``= custom-fuzzing``	fuzzing of known hypercalls
+    - ``vector``		hypercall vector
+    - ``iterations``		number of hypercall iterations
+
+Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from define                 import *
 from hypercall              import *

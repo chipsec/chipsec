@@ -22,14 +22,16 @@
 """
 Pretty simple VMM hypercall fuzzer
 
- Usage:
-   ``chipsec_main.py -i -m tools.vmm.hypercallfuzz [ -a <mode>,<vector_reg>,<maxval>,<iterations> ] -l hypercallfuzz.log``
-   ``  mode            hypercall fuzzing mode``
-   ``    = exhaustive  fuzz all arguments exhaustively in range [0:<maxval>] (default)``
-   ``    = random      send random values in all registers in range [0:<maxval>]``
-   ``  vector_reg      hypercall vector register``
-   ``  maxval          maximum value of each register``
-   ``  iterations      number of iterations in random mode``
+Usage:
+  ``chipsec_main.py -i -m tools.vmm.hypercallfuzz \``
+  ``[-a <mode>,<vector_reg>,<maxval>,<iterations>] -l log.txt``
+
+    - ``mode``			hypercall fuzzing mode
+        * ``= exhaustive``	fuzz all arguments exhaustively in range ``[0:<maxval>]`` (default)
+        * ``= random``		send random values in all registers in range ``[0:<maxval>]``
+    - ``vector_reg``		hypercall vector register
+    - ``maxval``		maximum value of each register
+    - ``iterations``		number of iterations in random mode
 """
 import random
 import time

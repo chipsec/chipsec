@@ -22,15 +22,17 @@
 """
 Hyper-V VMBus generic fuzzer
 
- Usage:
-   ``chipsec_main.py -i -m tools.vmm.hv.vmbusfuzz -a fuzz,<parameters>``
-   ``  parameters:'
-   ``    all          fuzzing all bytes'
-   ``    hv           fuzzing HyperV message header'
-   ``    vmbus        fuzzing HyperV message body / VMBUS message'
-   ``    <pos>,<size> fuzzing number of bytes at specific position'
+Usage:
+    ``chipsec_main.py -i -m tools.vmm.hv.vmbusfuzz -a fuzz,<parameters> -l log.txt``
 
-Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys
+    Parameters:
+
+    - ``all``          fuzzing all bytes
+    - ``hv``           fuzzing HyperV message header
+    - ``vmbus``        fuzzing HyperV message body / VMBUS message
+    - ``<pos>,<size>`` fuzzing number of bytes at specific position
+
+Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from struct import *
 from random import *

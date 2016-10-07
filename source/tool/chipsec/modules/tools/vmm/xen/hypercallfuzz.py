@@ -23,8 +23,8 @@
 """
 Xen hypercall fuzzer
 
- Usage:
-   ``chipsec_main -m tools.vmm.xen.hypercallfuzz [ -a <function>,<arg1>,<arg2>... ] -l hypercallfuzz.log``
+Usage:
+  ``chipsec_main -m tools.vmm.xen.hypercallfuzz [-a <function>,<arg1>...] -l log.txt``
 """
 
 from chipsec.module_common import *
@@ -273,7 +273,7 @@ class HypercallFuzz (BaseModule):
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
         self.logger.start_test( "Xen Hypercall Fuzzer" )
-        self.logger.log( "Usage: chipsec_main -m tools.vmm.xen.hypercallfuzz [ -a <function>,<arg1>,<arg2>... ]" )
+        self.logger.log( "Usage: chipsec_main -m tools.vmm.xen.hypercallfuzz [ -a <function>,<arg1>,... ]" )
         
         # Argument 0 is the function to call. Remove it
         function_argv = module_argv[1:]

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <configuration  platform="JKT">
-<!-- XML configuration file for Jaketown
+<!-- XML configuration file for Jaketown (Sandy Bridge-E) based platforms
 -->
   <registers>
 

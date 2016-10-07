@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <configuration platform="AVN">
-<!-- Reference: Intel(R) Atom(TM) Processor C2000 Product Family for Microserver, September 2014 
-    URL: http://www.intel.com/content/www/us/en/processors/atom/atom-c2000-microserver-datasheet.html
+<!-- XML configuration for Avoton based platforms
+    Reference: Intel(R) Atom(TM) Processor C2000 Product Family for Microserver, September 2014 
+    http://www.intel.com/content/www/us/en/processors/atom/atom-c2000-microserver-datasheet.html
 -->
   <mmio>
     <!-- 24.5.1 -->

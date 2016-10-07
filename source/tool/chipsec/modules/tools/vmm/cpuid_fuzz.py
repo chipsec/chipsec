@@ -24,7 +24,7 @@
 Simple CPUID VMM emulation fuzzer
 
  Usage:
-   ``chipsec_main.py -i -m tools.vmm.cpuid_fuzz -l cpuid_fuzz.log``
+   ``chipsec_main.py -i -m tools.vmm.cpuid_fuzz -l log.txt``
 """
 
 import random

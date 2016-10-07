@@ -29,26 +29,21 @@ Important! This module can only detect what it knows about from its config file.
 If a bad or vulnerable binary is not detected then its 'signature' needs to be added to the config.
 
 Usage:
-    chipsec_main.py -i -m tools.uefi.blacklist [-a <fw_image>,<blacklist>]
-
-      fw_image  : Full file path to UEFI firmware image
-                  If not specified, the module will dump firmware image directly from ROM
-      blacklist : JSON file with configuration of black-listed EFI binaries (default = blacklist.json)
-                  Config file should be located in the same directory as this module
+  ``chipsec_main.py -i -m tools.uefi.blacklist [-a <fw_image>,<blacklist>]``
+    - ``fw_image``	Full file path to UEFI firmware image. If not specified, the module will dump firmware image directly from ROM
+    - ``blacklist``	JSON file with configuration of black-listed EFI binaries (default = ``blacklist.json``). Config file should be located in the same directory as this module
     
 Examples:
 
-    >>> chipsec_main.py -m tools.uefi.blacklist 
+>>> chipsec_main.py -m tools.uefi.blacklist 
 
-    Dumps UEFI firmware image from flash memory device, decodes it and
-    checks for black-listed EFI modules defined in the default config 'blacklist.json'
+Dumps UEFI firmware image from flash memory device, decodes it and checks for black-listed EFI modules defined in the default config ``blacklist.json``
 
-    >>> chipsec_main.py -i --no_driver -m tools.uefi.blacklist -a uefi.rom,blacklist.json
+>>> chipsec_main.py -i --no_driver -m tools.uefi.blacklist -a uefi.rom,blacklist.json
 
-    Decodes 'uefi.rom' binary with UEFI firmware image and
-    checks for black-listed EFI modules defined in 'blacklist.json' config
-    None: -i and --no_driver arguments can be used in this case because the test
-    does not depend on the platform and no kernel driver is required when firmware image is specified
+Decodes ``uefi.rom`` binary with UEFI firmware image and checks for black-listed EFI modules defined in ``blacklist.json`` config
+
+Note: ``-i`` and ``--no_driver`` arguments can be used in this case because the test does not depend on the platform and no kernel driver is required when firmware image is specified
 """
 import json
 

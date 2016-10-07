@@ -18,6 +18,9 @@
 #chipsec@intel.com
 #
 
+"""
+Common functionality for VMM related modules/tools
+"""
 
 import sys
 import socket
