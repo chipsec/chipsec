@@ -21,12 +21,7 @@
     <bar name="IBASE"   register="IBASE"  base_field="Base" size="0x200"    enable_field="Enable" desc="iLB Base"/>
     <bar name="MPBASE"  register="MPBASE" base_field="Base" size="0x100000" enable_field="Enable" desc="MPHY Base"/>
     <bar name="PUBASE"  register="PUBASE" base_field="Base" size="0x800"    enable_field="Enable" desc="PUnit Base"/>
-
-    <!-- new definition -->
-    <!-- <bar name="SPIBAR"  register="SBASE"  base_field="Base" size="0x200"  enable_field="Enable" desc="SPI Base"/> -->
-    <!-- old definition: to be removed -->
-    <bar name="SPIBAR"  bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>
-
+    <bar name="SPIBAR"  register="SBASE"  base_field="Base" size="0x200"  enable_field="Enable" desc="SPI Base"/>
     <bar name="MMCFG"   register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
 
   </mmio>

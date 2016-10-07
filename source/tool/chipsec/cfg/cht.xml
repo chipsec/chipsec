@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <configuration platform="CHT">
-<!-- XML configuration for Cherry Trail SoC
-     Reference: Intel(R) Atom(TM) Processor Z8000 series datasheet
+<!-- XML configuration for Cherry Trail and Braswell SoCs
+     Reference:
+     Intel(R) Atom(TM) Processor Z8000 series datasheet
      http://www.intel.com/content/www/us/en/processors/atom/atom-z8000-datasheet-vol-2.html
+     N-series Intel(R) Pentium(R) and Celeron(R) Processors Datasheet
+     http://www.intel.com/content/dam/www/public/us/en/documents/datasheets/pentium-celeron-n-series-datasheet-vol-2.pdf
 -->
 
   <!-- #################################### -->
@@ -21,9 +24,7 @@
     <bar name="IBASE"   register="IBASE"  base_field="Base" size="0x200"    enable_field="Enable" desc="iLB Base"/>
     <bar name="MPBASE"  register="MPBASE" base_field="Base" size="0x100000" enable_field="Enable" desc="MPHY Base"/>
     <bar name="PUBASE"  register="PUBASE" base_field="Base" size="0x800"    enable_field="Enable" desc="PUnit Base"/>
-
     <bar name="SPIBAR"  register="SBASE"  base_field="Base" size="0x200"  enable_field="Enable" desc="SPI Base"/>
-
     <bar name="MMCFG"   register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
 
   </mmio>
@@ -140,6 +141,22 @@
       <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
       <field  name="Base"   bit="11" size="21" desc="Base Address"/>
     </register>
+    <register name="BIOS_DECODE_EN" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0xD8" size="2" desc="BIOS Decode Enable">
+      <field  name="E40"    bit="0"   size="1"  desc="40-4F Enable"/>
+      <field  name="E50"    bit="1"   size="1"  desc="50-5F Enable"/>
+      <field  name="E60"    bit="2"   size="1"  desc="60-6F Enable"/>
+      <field  name="E70"    bit="3"   size="1"  desc="70-7F Enable"/>
+      <field  name="LEE"    bit="6"   size="1"  desc="Legacy E Segment Enable"/>
+      <field  name="LFE"    bit="7"   size="1"  desc="Legacy F Segment Enable"/>
+      <field  name="EC0"    bit="8"   size="1"  desc="C0-C8 Enable"/>
+      <field  name="EC8"    bit="9"   size="1"  desc="C8-CF Enable"/>
+      <field  name="ED0"    bit="10"  size="1"  desc="D0-D8 Enable"/>
+      <field  name="ED8"    bit="11"  size="1"  desc="D8-DF Enable"/>
+      <field  name="EE0"    bit="12"  size="1"  desc="E0-E8 Enable"/>
+      <field  name="EE8"    bit="13"  size="1"  desc="E8-EF Enable"/>
+      <field  name="EF0"    bit="14"  size="1"  desc="F0-F8 Enable"/>
+      <field  name="EF8"    bit="15"  size="1"  desc="F8-FF Enable"/>
+    </register>
 
     <!-- Section 10.12.1 -->
     <register name="GCS"    type="mmio" bar="RCBA" offset="0x0" size="4" desc="General Control and Status">
@@ -221,6 +238,7 @@
     <control name="TopSwapStatus"          register="GCS"                  field="TS"                 desc="Top Swap Status"/>
     <control name="TopSwap"                register="GCS"                  field="TS"                 desc="Top Swap"/>
     <control name="BiosInterfaceLockDown"  register="GCS"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+    <control name="SMILock"                register="GEN_PMCON2"           field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
   </controls>
 
 </configuration>
