@@ -121,8 +121,10 @@ class OsHelper:
 
     def start(self, start_driver, driver_exists=False):
         try:
-            self.helper.create(start_driver)
-            self.helper.start(start_driver, driver_exists)
+            if not self.helper.create( start_driver ):
+                raise OsHelperError("failed to create OS helper")
+            if not self.helper.start( start_driver, driver_exists ):
+                raise OsHelperError("failed to start OS helper")
         except (None,Exception) , msg:
             if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
@@ -131,8 +133,11 @@ class OsHelper:
             raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"%s\"" % msg,error_no)
 
     def stop( self, start_driver ):
-        self.helper.stop( start_driver )
-        #self.helper.delete( start_driver )
+        if not self.helper.stop( start_driver ):
+            logger().warn("failed to stop OS helper") 
+        else:
+            if not self.helper.delete( start_driver ):
+                logger().warn("failed to delete OS helper")
 
     #
     # use_native_api

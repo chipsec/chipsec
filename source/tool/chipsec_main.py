@@ -25,7 +25,7 @@
 Main application logic and automation functions
 """
 
-__version__ = '1.2.4'
+__version__ = '1.2.5'
 
 ## These are for debugging imports
 import inspect
@@ -221,7 +221,8 @@ class ChipsecMain:
                     run_it = True
         return run_it
 
-
+    """
+    # DEPRECATED
     def old_run_module( self, module_path, module_argv ):
         module_path = module_path.replace( os.sep, '.' )
         module = self.import_module(module_path)
@@ -261,7 +262,7 @@ class ChipsecMain:
         else:
             from chipsec.module_common import ModuleResult
             return ModuleResult.SKIPPED
-
+    """
 
 
     def run_module( self, modx, module_argv ):
@@ -413,6 +414,7 @@ class ChipsecMain:
             if result == ModuleResult.DEPRECATED:
                 exit_code.deprecated()
                 logger().log_warning( 'Module %s does not inherit BaseModule class. Attempting to locate run function..' % str(modx) )
+                """
                 try:
                     result = self.old_run_module( modx.get_name(), modx_argv )
                 except BaseException:
@@ -421,7 +423,7 @@ class ChipsecMain:
                     result = ModuleResult.ERROR
                     if logger().DEBUG: logger().log_bad(traceback.format_exc())
                     if self.failfast: raise
-
+                """
             if not self._list_tags: logger().end_module( modx.get_name() )
 
             if None == result or ModuleResult.ERROR == result:
@@ -512,7 +514,7 @@ class ChipsecMain:
         print "                          [ %s ]" % (" | ".join( ["%.4s" % c for c in Chipset_Code]))
         print "-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver"
         print "-i --ignore_platform      run chipsec even if the platform is not recognized"
-        print "-e --exists               chipsec service has already been manually installed and started (driver loaded)."
+        #print "-e --exists               chipsec service has already been manually installed and started (driver loaded)."
         print "-x --xml                  specify filename for xml output (JUnit style)."
         print "-t --moduletype           run tests of a specific type (tag)."
         print "   --list_tags            list all the available options for -t,--moduletype"
@@ -529,7 +531,7 @@ class ChipsecMain:
         print "    - Bit 2: DEPRECATED at least one module uses deprecated API"
         print "    - Bit 3: FAIL       at least one module failed"
         print "    - Bit 4: ERROR      at least one module wasn't able to run"
-        print "    - Bit 5: EXCEPTION  at least one module thrown an unexpected exceptions"
+        print "    - Bit 5: EXCEPTION  at least one module thrown an unexpected exception"
 
 
     def parse_args(self):
@@ -564,8 +566,10 @@ class ChipsecMain:
                 self._module = a
             elif o in ("-a", "--module_args"):
                 self._module_argv = a.split(',')
+            # DEPRECATED
             elif o in ("-e", "--exists"):
                 self._driver_exists = True
+                logger().warn( "Deprecated 'exists' option: if chipsec service is running, chipsec will attempt to connect to it" )
             elif o in ("-i", "--ignore_platform"):
                 logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
                 self._unkownPlatform = False
@@ -607,9 +611,8 @@ class ChipsecMain:
             logger().error( "incompatible options: --no_driver and --exists" )
             return ExitCode.EXCEPTION
 
-        start_driver = (not self._no_driver) and (not self._driver_exists)
         try:
-            self._cs.init( self._platform, start_driver, self._driver_exists )
+            self._cs.init( self._platform, (not self._no_driver), self._driver_exists )
         except UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
@@ -651,7 +654,7 @@ class ChipsecMain:
 
         logger().saveXML()
 
-        self._cs.destroy( start_driver )
+        self._cs.destroy( (not self._no_driver) )
         del self._cs
         logger().disable()
         return modules_failed

@@ -304,9 +304,6 @@ class Chipset:
 
 
     def destroy( self, start_driver ):
-        self.stop( start_driver )
-
-    def stop( self, start_driver ):
         self.helper.stop( start_driver )
 
     def get_chipset_id(self):
