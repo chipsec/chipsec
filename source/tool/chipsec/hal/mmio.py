@@ -283,7 +283,7 @@ def write_MMIO_reg_dword(cs, bar_base, offset, value ):
 #
 def read_MMIO( cs, bar_base, size ):
     regs = []
-    size = size - size%4
+    size -= size%4
     for offset in range(0,size,4):
         regs.append( read_MMIO_reg( cs, bar_base, offset ) )
     return regs
@@ -292,11 +292,10 @@ def read_MMIO( cs, bar_base, size ):
 # Dump MMIO range
 #
 def dump_MMIO( cs, bar_base, size ):
-    regs = read_MMIO( cs, bar_base, size )
-    off = 0
-    for r in regs:
-        logger().log( '0x%04x: %08x' % (off, r) )
-        off = off + 4
+    logger().log("[mmio] MMIO register range [0x%016X:0x%016X+%08X]:" % (bar_base,bar_base,size))
+    size -= size%4
+    for offset in range(0,size,4):
+        logger().log( '+%08X: %08X' % (offset, read_MMIO_reg( cs, bar_base, offset )) )
 
 
 ###############################################################################

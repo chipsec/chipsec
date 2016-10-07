@@ -26,6 +26,7 @@ __version__ = '1.0'
 import os
 import sys
 import time
+import re
 
 import chipsec_util
 from chipsec.command    import BaseCommand
@@ -34,16 +35,21 @@ from chipsec.logger     import *
 from chipsec.file       import *
 from chipsec.hal.vmm    import *
 
+import chipsec.hal.pci
+
 class VMMCommand(BaseCommand):
     """
     >>> chipsec_util vmm hypercall <rax> <rbx> <rcx> <rdx> <rdi> <rsi> [r8] [r9] [r10] [r11]
     >>> chipsec_util vmm hypercall <eax> <ebx> <ecx> <edx> <edi> <esi>
     >>> chipsec_util vmm pt|ept <ept_pointer>
+    >>> chipsec_util vmm virtio [<bus>:<device>.<function>]
 
     Examples:
 
     >>> chipsec_util vmm hypercall 32 0 0 0 0 0
     >>> chipsec_util vmm pt 0x524B01E
+    >>> chipsec_util vmm virtio
+    >>> chipsec_util vmm virtio 0:6.0
 
     """
 
@@ -52,6 +58,36 @@ class VMMCommand(BaseCommand):
         if len(self.argv) < 3:
             return False
         return True
+
+
+    def virtio(self):
+        if len(self.argv) > 3:
+            bdf = self.argv[3]
+            match = re.search(r"^([0-9a-f]{1,2}):([0-1]?[0-9a-f]{1})\.([0-7]{1})$", bdf)
+            if match:
+                _bus = int(match.group(1), 16) & 0xFF
+                _dev = int(match.group(2), 16) & 0x1F
+                _fun = int(match.group(3), 16) & 0x07 
+                vid  = self.cs.pci.read_word(_bus, _dev, _fun, 0)
+                did  = self.cs.pci.read_word(_bus, _dev, _fun, 2)
+                dev  = (_bus, _dev, _fun, vid, did)
+                virt_dev = [dev]
+            else:
+                self.logger.error("invalid B:D.F (%s)" % bdf)
+                print VMMCommand.__doc__
+                return
+        else:
+            self.logger.log("[CHIPSEC] enumerating VirtIO devices..")
+            virt_dev = get_virtio_devices( self.cs.pci.enumerate_devices() )
+
+        if len(virt_dev) > 0:
+            self.logger.log("[CHIPSEC] Available VirtIO devices:")
+            chipsec.hal.pci.print_pci_devices( virt_dev )
+            for (b, d, f, vid, did) in virt_dev:
+                VirtIO_Device(self.cs, b, d, f).dump_device()
+        else:
+            self.logger.log("[CHIPSEC] No VirtIO devices found")
+
 
     def run(self):
 
@@ -111,6 +147,10 @@ class VMMCommand(BaseCommand):
                 self.logger.log( "[CHIPSEC] finding EPT hierarchy in memory is not implemented yet" )
                 print VMMCommand.__doc__
                 return
+
+        elif op == 'virtio':
+
+            self.virtio()
 
         else:
             self.logger.log( "Unknown command: %s" % op )

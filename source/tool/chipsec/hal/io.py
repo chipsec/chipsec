@@ -103,3 +103,24 @@ class PortIO:
             logger().log( "[io] writing dword to I/O port 0x%04X <- 0x%08X" % (io_port, value) )
         self.helper.write_io_port( io_port, value, 4 )
         return
+
+    #
+    # Read registers from I/O range
+    #
+    def read_IO( self, range_base, range_size, size=1 ):
+        n = range_size/size
+        io_ports = []
+        for i in xrange(n):
+            io_ports.append( self._read_port( range_base + i*size, size ) )
+        return io_ports
+
+    #
+    # Dump I/O range
+    #
+    def dump_IO( self, range_base, range_size, size=1 ):
+        n = range_size/size
+        fmt = '%0' + ( '%dX' % (size*2) )
+        logger().log("[io] I/O register range [0x%04X:0x%04X+%04X]:" % (range_base,range_base,range_size))
+        for i in xrange(n):
+            reg = self._read_port( range_base + i*size, size )
+            logger().log( ('+%04X: ' + fmt) % (i*size,reg) )
