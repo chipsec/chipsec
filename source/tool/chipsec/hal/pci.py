@@ -194,7 +194,7 @@ def get_vendor_name_by_vid( vid ):
     return ''
 
 def get_device_name_by_didvid( vid, did ):
-    if vid in VENDORS:
+    if vid in DEVICES:
         if did in DEVICES[vid]:
             return DEVICES[vid][did]
     return ''
@@ -400,7 +400,7 @@ class Pci:
         off = 0x10
         while (off < 0x28):
             reg = self.read_dword( bus, dev, fun, off )
-            if reg:
+            if reg and reg != 0xFFFFFFFF:
                 # BAR is initialized
                 isMMIO = (0 == (reg & 0x1))
                 if isMMIO:
@@ -422,8 +422,8 @@ class Pci:
                         base = (reg & 0xFFFFFFF0)
                         _bars.append( (base, isMMIO, False, off, reg) )
                 else:
-                    # I/O BAR
-                    base = (reg & 0xFFFFFFFE)
+                    # 16-bit I/O BAR
+                    base = (reg & 0xFFFE)
                     _bars.append( ( base, isMMIO, False, off, reg) )
             off += 4
         return _bars
@@ -439,53 +439,3 @@ class Pci:
         if (0xFFFF == vid) or (0xFFFF == did):
             return False
         return True
-
-
-'''
-    ##################################################################################
-    # PCIEXBAR - technically not MMIO but Memory-mapped CFG space (MMCFG)
-    # but defined by BAR similarly to MMIO BARs
-    ##################################################################################
-
-    def get_PCIEXBAR_base_address( self ):
-        base_lo = self.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF )
-        base_hi = self.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF + 4 )
-        if (0 == base_lo & 0x1):
-           logger().warn('PCIEXBAR is disabled')
-
-        base_lo &= Cfg.PCI_PCIEXBAR_REG_ADMSK256
-        if (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-           base_lo |= Cfg.PCI_PCIEXBAR_REG_ADMSK128
-        elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-           base_lo |= (Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
-        base = (base_hi << 32) | base_lo
-        if logger().VERBOSE:
-           logger().log( '[mmio] PCIEXBAR (MMCFG): 0x%016X' % base )
-        return base
-
-    ##################################################################################
-    # Read/write memory mapped PCIe configuration registers
-    ##################################################################################
-
-    def read_mmcfg_reg( self, bus, dev, fun, off, size ):
-        pciexbar = self.get_PCIEXBAR_base_address()
-        pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        #value = read_MMIO_reg( cs, pciexbar, pciexbar_off )
-        value = self.helper.read_physical_mem_dword( pciexbar + pciexbar_off )
-        if logger().VERBOSE:
-           logger().log( "[mmcfg] reading B/D/F %d/%d/%d + %02X (PCIEXBAR + %08X): 0x%08X" % (bus, dev, fun, off, pciexbar_off, value) )
-        if 1 == size:
-           return (value & 0xFF)
-        elif 2 == size:
-           return (value & 0xFFFF)
-        return value
-
-    def write_mmcfg_reg( self, bus, dev, fun, off, size, value ):
-        pciexbar = self.get_PCIEXBAR_base_address()
-        pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        #write_MMIO_reg( cs, pciexbar, pciexbar_off, (value&0xFFFFFFFF) )
-        self.helper.write_physical_mem_dword( pciexbar + pciexbar_off, value )
-        if logger().VERBOSE:
-           logger().log( "[mmcfg] writing B/D/F %d/%d/%d + %02X (PCIEXBAR + %08X): 0x%08X" % (bus, dev, fun, off, pciexbar_off, value) )
-        return
-'''

@@ -27,15 +27,15 @@
 # (c) 2010-2016 Intel Corporation
 #
 # -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/vmm.py
-# ====================
-# VMM specific functionality
-# 1. Hypercall interfaces
-# 2. Second-level Address Translation (SLAT)
-# 3. ..
-#
-# ~~~
+
+"""
+VMM specific functionality
+1. Hypervisor hypercall interfaces
+2. Second-level Address Translation (SLAT)
+3. VirtIO devices
+4. ...
+
+"""
 
 __version__ = '1.0'
 
@@ -43,10 +43,12 @@ import struct
 import sys
 import os.path
 
-from chipsec.logger import logger
+from chipsec.logger import logger, pretty_print_hex_buffer
+import chipsec.hal.pcidb
 
 class VMMRuntimeError (RuntimeError):
     pass
+
 
 class VMM:
 
@@ -56,6 +58,10 @@ class VMM:
         self.output = ''
         (self.membuf0_va, self.membuf0_pa) = (0, 0)
         (self.membuf1_va, self.membuf1_pa) = (0, 0)
+
+        chipsec.hal.pcidb.VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
+        chipsec.hal.pcidb.DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
+
 
     def __del__(self):
         if self.membuf0_va <> 0:
@@ -106,3 +112,61 @@ class VMM:
         paging_ept.read_pt_and_show_status( pt_fname, 'EPT', eptp )
         logger().set_log_file( _orig_logname )
         if paging_ept.failure: logger().error( 'could not dump EPT page tables' )
+
+
+################################################################################
+#
+# VirtIO functions
+#
+################################################################################
+
+VIRTIO_VID          = 0x1AF4
+VIRTIO_VENDOR_NAME  = 'Red Hat, Inc.'
+VIRTIO_VENDORS      = [VIRTIO_VID]
+VIRTIO_DEVICES      = {
+    0x1000: 'VirtIO Network',
+    0x1001: 'VirtIO Block',
+    0x1002: 'VirtIO Baloon',
+    0x1003: 'VirtIO Console',
+    0x1004: 'VirtIO SCSI',
+    0x1005: 'VirtIO RNG',
+    0x1009: 'VirtIO filesystem',
+    0x1041: 'VirtIO network (1.0)',
+    0x1042: 'VirtIO block (1.0)',
+    0x1043: 'VirtIO console (1.0)',
+    0x1044: 'VirtIO RNG (1.0)',
+    0x1045: 'VirtIO memory balloon (1.0)',
+    0x1046: 'VirtIO SCSI (1.0)',
+    0x1049: 'VirtIO filesystem (1.0)',
+    0x1050: 'VirtIO GPU (1.0)',
+    0x1052: 'VirtIO input (1.0)',
+    0x1110: 'VirtIO Inter-VM shared memory'
+}
+
+def get_virtio_devices( devices ):
+    virtio_devices = []
+    for (b, d, f, vid, did) in devices:
+        if vid in VIRTIO_VENDORS:
+            virtio_devices.append((b, d, f, vid, did))
+    return virtio_devices
+
+class VirtIO_Device():
+
+    def __init__(self, cs, b, d, f):
+        self.cs  = cs
+        self.bus = b
+        self.dev = d
+        self.fun = f
+
+    def dump_device(self):
+        logger().log("\n[vmm] VirtIO device %02x:%02x.%01x" % (self.bus, self.dev, self.fun))
+        dev_cfg = self.cs.pci.dump_pci_config(self.bus, self.dev, self.fun)
+        pretty_print_hex_buffer( dev_cfg )
+        bars = self.cs.pci.get_device_bars(self.bus, self.dev, self.fun)
+        for (bar, isMMIO, is64bit, bar_off, bar_reg) in bars:
+            if isMMIO:
+                chipsec.hal.mmio.dump_MMIO( self.cs, bar, 0x1000 )
+            else:
+                self.cs.io.dump_IO( bar, 0x100, 4 )
+
+

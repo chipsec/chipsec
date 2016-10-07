@@ -109,7 +109,6 @@ class iobar:
         io_port = bar_base + offset
         if offset > bar_size: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
         value = self.cs.io._read_port( io_port, size )
-#        if logger().VERBOSE: logger().log( '[iobar] read IO reg 0x%X from %s (0x%X): 0x%X' % (bar_name,bar_base,offset,value) )
         return value
 
     #
@@ -158,10 +157,26 @@ class iobar:
 
 
     #
+    # Read I/O range by I/O BAR name
+    #
+    def read_IO_BAR( self, bar_name, size=1 ):
+        (range_base,range_size) = self.get_IO_BAR_base_address( bar_name )
+        n = range_size/size
+        io_ports = []
+        for i in xrange(n):
+            io_ports.append( self.cs.io._read_port( range_base + i*size, size ) )
+            #io_ports.append( self.read_IO_BAR_reg( bar_name, i*size, size ) )
+        return io_ports
+
+    #
     # Dump I/O range by I/O BAR name
     #
-    def dump_IO_BAR( self, bar_name ):
-        (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
-        # @TODO
-        #dump_IO( bar_base, bar_size )
-        return
+    def dump_IO_BAR( self, bar_name, size=1 ):
+        (range_base,range_size) = self.get_IO_BAR_base_address( bar_name )
+        n = range_size/size
+        fmt = '%0' + ( '%dX' % (size*2) )
+        logger().log("[iobar] I/O BAR %s:" % bar_name)
+        for i in xrange(n):
+            reg = self.cs.io._read_port( range_base + i*size, size )
+            logger().log( ('+%04X: ' + fmt) % (i*size,r) )
+
