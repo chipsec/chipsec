@@ -111,10 +111,27 @@ class BaseModuleSupport(BaseModuleDebug):
         self.path = os.path.dirname(os.path.realpath(__file__)) + "\\"
         with open(self.path + "hv\\initial_data.json", "r") as json_file:
             self.initial_data = json.load(json_file)
+        self.statistics = {}
 
     def __del__(self):
         #self.dump_initial_data("initial_data_auto_generated.json")
         BaseModuleDebug.__del__(self)
+
+    def stats_reset(self):
+        self.statistics = {}
+        return
+
+    def stats_event(self, name):
+        self.statistics[name] = self.statistics.get(name, 0) + 1
+        return
+
+    def stats_print(self, title):
+        self.msg('')
+        self.msg((' %s ' % title).center(72 - len(self.promt), '*'))
+        for name in sorted(self.statistics, key=self.statistics.get, reverse=True):
+            self.msg('%50s : %d' % (name, self.statistics[name]) )
+        self.msg('')
+        return
 
     def get_initial_data(self, statuses, vector, size, padding = '\x00'):
         connectionid_message = [(' '.join(["%02x" % ord(x) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 1]

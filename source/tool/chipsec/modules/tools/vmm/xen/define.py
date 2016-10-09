@@ -79,6 +79,7 @@ def get_hypercall_name(vector, defvalue = ''):
     return hypercall_names[vector].upper() if vector in hypercall_names else defvalue
 
 hypercall_status_codes = {
+          0:     ['XEN_STATUS_SUCCESS',      'Status success'                                ],
           1:     ['XEN_ERRNO_EPERM',         'Operation not permitted'                       ],
           2:     ['XEN_ERRNO_ENOENT',        'No such file or directory'                     ],
           3:     ['XEN_ERRNO_ESRCH',         'No such process'                               ],
@@ -124,15 +125,118 @@ hypercall_status_codes = {
         110:     ['XEN_ERRNO_ETIMEDOUT',     'Connection timed out'                          ]
 }
 
-def get_iverr(status):
-    return 0x10000000000000000 - (status & 0xFFFFFFFFFFFFFFFF)
+def get_iverr(status, bits = 64):
+    mask = (1 << bits) - 1
+    return (mask - status + 1) & mask
 
-def get_hypercall_status(code, defvalue = ''):
-    code = get_iverr(code)
-    return "%s '%s'" % (hypercall_status_codes[code][0], hypercall_status_codes[code][1]) if code in hypercall_status_codes else defvalue
+def get_hypercall_status(code, brief = False):
+    defstatus = ['0x%016X' % code, 'Status 0x%016X' % code]
+    if (code >> 32) == 0xFFFFFFFF:
+        code = get_iverr(code)
+        defstatus = ['XEN_ERRNO_%04X' % code, 'Unknown error 0x%04X' % code]
+    desc = hypercall_status_codes.get(code, defstatus)
+    return desc[0] if brief else desc[1]
+
+def get_hypercall_status_extended(code):
+    return '%s - %s' % (get_hypercall_status(code, False), get_hypercall_status(code, True))
 
 def get_invalid_hypercall_code():
     return XEN_ERRNO_ENOSYS
 
-for i in hypercall_status_codes:
-    exec("%s=%s" % (hypercall_status_codes[i][0], get_iverr(i)))
+xenmem_commands = {
+          0:     'XENMEM_INCREASE_RESERVATION',
+          1:     'XENMEM_DECREASE_RESERVATION',
+          2:     'XENMEM_MAXIMUM_RAM_PAGE',
+          3:     'XENMEM_CURRENT_RESERVATION',
+          4:     'XENMEM_MAXIMUM_RESERVATION',
+          5:     'XENMEM_MACHPHYS_MFN_LIST',
+          6:     'XENMEM_POPULATE_PHYSMAP',
+          7:     'XENMEM_ADD_TO_PHYSMAP',
+          8:     'XENMEM_TRANSLATE_GPFN_LIST',
+          9:     'XENMEM_MEMORY_MAP',
+         10:     'XENMEM_MACHINE_MEMORY_MAP',
+         11:     'XENMEM_EXCHANGE',
+         12:     'XENMEM_MACHPHYS_MAPPING',
+         15:     'XENMEM_REMOVE_FROM_PHYSMAP',
+         23:     'XENMEM_ADD_TO_PHYSMAP_RANGE'
+}
+
+xen_version_commands = {
+          0:     'XENVER_VERSION',
+          1:     'XENVER_EXTRAVERSION',
+          2:     'XENVER_COMPILE_INFO',
+          3:     'XENVER_CAPABILITIES',
+          4:     'XENVER_CHANGESET',
+          5:     'XENVER_PLATFORM_PARAMETERS',
+          6:     'XENVER_GET_FEATURES',
+          7:     'XENVER_PAGESIZE',
+          8:     'XENVER_GUEST_HANDLE',
+          9:     'XENVER_COMMANDLINE'
+}
+
+console_io_commands = {
+          0:     'CONSOLEIO_WRITE',
+          1:     'CONSOLEIO_READ'
+}
+
+schedop_commands = {
+          0:     'SCHEDOP_YIELD',
+          1:     'SCHEDOP_BLOCK',
+          2:     'SCHEDOP_SHUTDOWN',
+          3:     'SCHEDOP_POLL',
+          4:     'SCHEDOP_REMOTE_SHUTDOWN',
+          5:     'SCHEDOP_SHUTDOWN_CODE',
+          6:     'SCHEDOP_WATCHDOG'
+}
+
+evtchop_commands = {
+          0:     'EVTCHOP_BIND_INTERDOMAIN',
+          1:     'EVTCHOP_BIND_VIRQ',
+          2:     'EVTCHOP_BIND_PIRQ',
+          3:     'EVTCHOP_CLOSE',
+          4:     'EVTCHOP_SEND',
+          5:     'EVTCHOP_STATUS',
+          6:     'EVTCHOP_ALLOC_UNBOUND',
+          7:     'EVTCHOP_BIND_IPI',
+          8:     'EVTCHOP_BIND_VCPU',
+          9:     'EVTCHOP_UNMASK',
+         10:     'EVTCHOP_RESET',
+         11:     'EVTCHOP_INIT_CONTROL',
+         12:     'EVTCHOP_EXPAND_ARRAY',
+         13:     'EVTCHOP_SET_PRIORITY'
+}
+
+hvmop_commands = {
+          0:     'HVMOP_SET_PARAM',
+          1:     'HVMOP_GET_PARAM',
+          9:     'HVMOP_PAGETABLE_DYING',
+         15:     'HVMOP_GET_MEMTYPE'
+}
+
+xenpmuop_commands = {
+          0:     'XENPMU_MODE_GET',
+          1:     'XENPMU_MODE_SET',
+          2:     'XENPMU_FEATURE_GET',
+          3:     'XENPMU_FEATURE_SET',
+          4:     'XENPMU_INIT',
+          5:     'XENPMU_FINISH',
+          6:     'XENPMU_LVTPC_SET',
+          7:     'XENPMU_FLUSH'
+}
+
+def set_variables(varlist):
+    import re
+    for i in varlist:
+        var = re.sub(r"([a-z])([A-Z]+)", r"\1_\2", varlist[i])
+        var = var.upper()
+        exec("global %s; %s=%d" % (var, var, i))
+
+set_variables(hypercall_names)
+set_variables(xenmem_commands)
+set_variables(xen_version_commands)
+set_variables(console_io_commands)
+set_variables(schedop_commands)
+set_variables(evtchop_commands)
+set_variables(hvmop_commands)
+set_variables(xenpmuop_commands)
+set_variables({get_iverr(i) : hypercall_status_codes[i][0] for i in hypercall_status_codes.keys()})
