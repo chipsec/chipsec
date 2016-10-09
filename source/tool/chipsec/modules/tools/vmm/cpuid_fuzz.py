@@ -77,10 +77,10 @@ class cpuid_fuzz (BaseModule):
                     (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid( eax, ecx )
                 else:
                     for ecx in range( _MAX_ECX ):
-                        logger.log( "  > ECX: 0x%08X" % ecx )
+                        self.logger.log( "  > ECX: 0x%08X" % ecx )
                         if _FLUSH_LOG_EACH_ITER: self.logger.flush()
                         (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid( eax, ecx )
-                        if _LOG_OUT_RESULTS: logger.log( "    Out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (r_eax,r_ebx,r_ecx,r_edx) )
+                        if _LOG_OUT_RESULTS: self.logger.log( "    Out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (r_eax,r_ebx,r_ecx,r_edx) )
             it += 1
         return True
 
