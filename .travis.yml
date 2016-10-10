@@ -3,7 +3,7 @@ python:
   - "2.7"
 
 before_install:
-  - export PYTHONPATH=./source/tool
+  - export PYTHONPATH=./
 
 script:
-  - python -m unittest discover source/tool/tests/software/
+  - python -m unittest discover tests/software/

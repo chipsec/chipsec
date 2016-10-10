@@ -5,7 +5,7 @@ CHIPSEC: Platform Security Assessment Framework
 
 CHIPSEC is a framework for analyzing the security of PC platforms including hardware, system firmware (BIOS/UEFI), and platform components. It includes a security test suite, tools for accessing various low level interfaces, and forensic capabilities. It can be run on Windows, Linux, Mac OS X and UEFI shell. Instructions for installing and using CHIPSEC can be found in the [manual](chipsec-manual.pdf).
 
-NOTE: This software is for security testing purposes. Use at your own risk. Read [WARNING.txt](source/tool/WARNING.txt) before using.
+NOTE: This software is for security testing purposes. Use at your own risk. Read [WARNING.txt](chipsec/WARNING.txt) before using.
 
 Questions? Enter a new issue labeled as question, or e-mail chipsec@intel.com.
 
