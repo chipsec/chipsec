@@ -31,6 +31,8 @@
  global WriteCR2
  global WriteCR3
  global WriteCR4
+ global hypercall
+ global hypercall_page
  
  global __cpuid__
  global __swsmi__
@@ -488,5 +490,78 @@ __swsmi__:
 
  WriteCR4:
     mov cr4, eax
+    ret
+
+;------------------------------------------------------------------------------
+;  UINT32
+;  hypercall(
+;    UINT32    ecx_val,                // on stack +08h
+;    UINT32    edx_val,                // on stack +0Ch
+;    UINT32    reserved1,              // on stack +10h
+;    UINT32    reserved2,              // on stack +14h
+;    UINT32    reserved3,              // on stack +18h
+;    UINT32    reserved4,              // on stack +1Ch
+;    UINT32    eax_val,                // on stack +20h
+;    UINT32    ebx_val,                // on stack +24h
+;    UINT32    edi_val,                // on stack +28h 
+;    UINT32    esi_val,                // on stack +2Ch
+;    UINT32    xmm_buffer,             // on stack +30h
+;    UINT32    hypercall_page          // on stack +34h
+;    )
+;------------------------------------------------------------------------------
+
+ hypercall:
+    push   ebp
+    mov    ebp, esp
+    push   ebx
+    push   esi
+    push   edi
+    mov    eax, dword [ebp + 30h]
+    test   eax, eax
+    jz     hypercall_skip_xmm
+    pinsrd xmm0, dword [eax + 000h], 00h
+    pinsrd xmm0, dword [eax + 004h], 01h
+    pinsrd xmm0, dword [eax + 008h], 02h
+    pinsrd xmm0, dword [eax + 00Ch], 03h
+    pinsrd xmm1, dword [eax + 010h], 00h
+    pinsrd xmm1, dword [eax + 014h], 01h
+    pinsrd xmm1, dword [eax + 018h], 02h
+    pinsrd xmm1, dword [eax + 01Ch], 03h
+    pinsrd xmm2, dword [eax + 020h], 00h
+    pinsrd xmm2, dword [eax + 024h], 01h
+    pinsrd xmm2, dword [eax + 028h], 02h
+    pinsrd xmm2, dword [eax + 02Ch], 03h
+    pinsrd xmm3, dword [eax + 030h], 00h
+    pinsrd xmm3, dword [eax + 034h], 01h
+    pinsrd xmm3, dword [eax + 038h], 02h
+    pinsrd xmm3, dword [eax + 03Ch], 03h
+    pinsrd xmm4, dword [eax + 040h], 00h
+    pinsrd xmm4, dword [eax + 044h], 01h
+    pinsrd xmm4, dword [eax + 048h], 02h
+    pinsrd xmm4, dword [eax + 04Ch], 03h
+    pinsrd xmm5, dword [eax + 050h], 00h
+    pinsrd xmm5, dword [eax + 054h], 01h
+    pinsrd xmm5, dword [eax + 058h], 02h
+    pinsrd xmm5, dword [eax + 05Ch], 03h
+  hypercall_skip_xmm:
+    mov    ecx,  dword [ebp + 08h]
+    mov    edx,  dword [ebp + 0Ch]
+    mov    eax,  dword [ebp + 20h]
+    mov    ebx,  dword [ebp + 24h]
+    mov    edi,  dword [ebp + 28h]
+    mov    esi,  dword [ebp + 2Ch]
+    call   dword [ebp + 34h]
+    pop    edi
+    pop    esi
+    pop    ebx
+    pop    ebp
+    ret
+
+;------------------------------------------------------------------------------
+;  UINT32 hypercall_page ( )
+;------------------------------------------------------------------------------
+
+ hypercall_page:
+    vmcall
     ret
 
