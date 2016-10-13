@@ -83,6 +83,7 @@ class EfiHelper(Helper):
     def create(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper created")
+        return True
 
     def start(self, start_driver, driver_exists=False):
         # The driver is part of the modified version of edk2.
@@ -90,14 +91,17 @@ class EfiHelper(Helper):
         self.driver_loaded = True
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper started/loaded")
+        return True
 
     def stop(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper stopped/unloaded")
+        return True
 
     def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] UEFI Helper deleted")
+        return True
 
 
 ###############################################################################################

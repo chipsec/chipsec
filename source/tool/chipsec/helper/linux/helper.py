@@ -127,6 +127,7 @@ class LinuxHelper(Helper):
     def create(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper created")
+        return True
 
     def start(self, start_driver, driver_exists=False):
         if start_driver:
@@ -136,6 +137,7 @@ class LinuxHelper(Helper):
         self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper started/loaded")
+        return True
 
     def stop(self, start_driver):
         self.close()
@@ -143,10 +145,12 @@ class LinuxHelper(Helper):
             subprocess.call(["rmmod", self.MODULE_NAME])
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper stopped/unloaded")
+        return True
 
     def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] Linux Helper deleted")
+        return True
 
     def init(self, start_driver):
         x64 = True if sys.maxsize > 2**32 else False

@@ -46,6 +46,7 @@ import platform
 import re
 import errno
 import traceback
+import time
 from threading import Lock
 from collections import namedtuple
 from ctypes import *
@@ -54,7 +55,7 @@ import pywintypes
 import win32service #win32serviceutil, win32api, win32con
 import winerror
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
-import win32api, win32process, win32security, win32file
+import win32api, win32process, win32security, win32file, win32serviceutil
 
 from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.logger import logger, print_buffer
@@ -228,6 +229,11 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 
 
 
+def _handle_winerror(fn, msg, hr):
+    _handle_error( ("%s failed: %s (%d)" % (fn, msg, hr)), hr )
+def _handle_error( err, hr=0 ):
+    logger().error( err )
+    raise OsHelperError( err, hr )
 
 
 class Win32Helper(Helper):
@@ -246,7 +252,8 @@ class Win32Helper(Helper):
             if logger().HAL: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
             if logger().HAL: logger().log( "[helper] Using 'helper/win/%s' path for driver" % win_ver )
 
-        self.hs             = None
+        self.use_existing_service = False
+
         self.driver_path    = None
         self.win_ver        = win_ver
         self.driver_handle  = None
@@ -307,60 +314,17 @@ class Win32Helper(Helper):
 
 
     def __del__(self):
-        try:
-        ##kernel32.CloseHandle( self.driver_handle )
-        #win32api.CloseHandle( self.driver_handle )
-            del self.driver_handle
-            del self.device_file
-            #self.delete()
-        except NameError:
-            pass
+        if self.driver_handle:
+            win32api.CloseHandle( self.driver_handle )
+            self.driver_handle = None
+
 
 
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
 
-    def start(self, start_driver, driver_exists=False):
-
-        if not start_driver:
-            if driver_exists: self.driver_loaded = True
-            return
-
-        (type, state, ca, exitcode, svc_exitcode, checkpoint, waithint) = win32service.QueryServiceStatus( self.hs )
-        if logger().VERBOSE: logger().log( "[helper] starting chipsec service: handle = 0x%x, type = 0x%x, state = 0x%x" % (self.hs, type, state) )
-
-        if win32service.SERVICE_RUNNING == state:
-            if logger().VERBOSE: logger().log( "[helper] chipsec service already running" )
-        else:
-            try:
-                win32service.StartService( self.hs, None );
-                state = win32service.QueryServiceStatus( self.hs )[1]
-                while win32service.SERVICE_START_PENDING == state:
-                    time.sleep( 1 )
-                    state = win32service.QueryServiceStatus( self.hs )[1]
-                if win32service.SERVICE_RUNNING == state:
-                    self.driver_loaded = True
-                    if logger().VERBOSE: logger().log( "[helper] chipsec service started (SERVICE_RUNNING)" )
-            except win32service.error, (hr, fn, msg):
-                if logger().VERBOSE: logger().log_bad(traceback.format_exc())
-                if (winerror.ERROR_ALREADY_EXISTS == hr or winerror.ERROR_SERVICE_ALREADY_RUNNING == hr):
-                    if logger().VERBOSE: logger().log( "[helper] chipsec service already exists: %s (%d)" % (msg, hr) )
-                else:
-                    win32service.CloseServiceHandle( self.hs )
-                    self.hs = None
-                    string  = "StartService failed: %s (%d)" % (msg, hr)
-                    logger().error( string )
-                    raise OsHelperError(string,hr)
-
-        #if logger().VERBOSE:
-        #   logger().log( "[helper] chipsec service handle = 0x%08x" % self.hs )
-
-    def create(self, start_driver):
-
-        if not start_driver:
-            return
-
+    def show_warning(self):
         logger().log( "" )
         logger().warn( "*******************************************************************" )
         logger().warn( "Chipsec should only be used on test systems!" )
@@ -369,20 +333,23 @@ class Win32Helper(Helper):
         logger().warn( "*******************************************************************" )
         logger().log( "" )
 
+    #
+    # Create (register/install) chipsec service
+    #           
+    def create(self, start_driver):
+
+        if not start_driver: return True
+        self.show_warning()
+
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
         except win32service.error, (hr, fn, msg):
-            string = "OpenSCManager failed: %s (%d)" % (msg, hr)
-            logger().error( string )
-            raise OsHelperError(string,hr)
+            handle_winerror(fn, msg, hr)
 
-        if logger().VERBOSE: logger().log( "[helper] SC Manager opened (handle = 0x%08x)" % hscm )
+        if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
 
-
-        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec" , "helper" ,"win" )
-        driver_path = os.path.join( driver_path, self.win_ver , DRIVER_FILE_NAME )
-
-        if os.path.exists( driver_path ) and os.path.isfile( driver_path ):
+        driver_path = os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "win", self.win_ver, DRIVER_FILE_NAME )
+        if os.path.isfile( driver_path ):
             self.driver_path = driver_path
             if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
         else:
@@ -390,72 +357,108 @@ class Win32Helper(Helper):
             return False
 
         try:
-            self.hs = win32service.CreateService( hscm,
-                     SERVICE_NAME,
-                     DISPLAY_NAME,
-                     (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP), # SERVICE_ALL_ACCESS, STANDARD_RIGHTS_REQUIRED, DELETE
-                     win32service.SERVICE_KERNEL_DRIVER,
-                     win32service.SERVICE_DEMAND_START,
-                     win32service.SERVICE_ERROR_NORMAL,
-                     os.path.abspath(driver_path),
-                     None, 0, u"", None, None )
-            if not self.hs:
-                raise win32service.error, (0, None, "hs is None")
-
-            if logger().VERBOSE: logger().log( "[helper] service created (handle = 0x%08x)" % self.hs )
-
+            hs = win32service.CreateService(
+                 hscm,
+                 SERVICE_NAME,
+                 DISPLAY_NAME,
+                 (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP),
+                 win32service.SERVICE_KERNEL_DRIVER,
+                 win32service.SERVICE_DEMAND_START,
+                 win32service.SERVICE_ERROR_NORMAL,
+                 os.path.abspath(driver_path),
+                 None, 0, u"", None, None )
+            if hs:
+                if logger().VERBOSE: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )
         except win32service.error, (hr, fn, msg):
-            #if (winerror.ERROR_SERVICE_EXISTS == hr) or (winerror.ERROR_DUPLICATE_SERVICE_NAME == hr):
             if (winerror.ERROR_SERVICE_EXISTS == hr):
-                if logger().VERBOSE: logger().log( "[helper] chipsec service already exists: %s (%d)" % (msg, hr) )
+                if logger().VERBOSE: logger().log( "[helper] service '%s' already exists: %s (%d)" % (SERVICE_NAME, msg, hr) )
                 try:
-                    self.hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
+                    hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
                 except win32service.error, (hr, fn, msg):
-                    self.hs = None
-                    string = "OpenService failed: %s (%d)" % (msg, hr)
-                    logger().error( string )
-                    raise OsHelperError(string,hr)
+                    handle_winerror(fn, msg, hr)
             else:
-                self.hs     = None
-                string      = "CreateService failed: %s (%d)" % (msg, hr)
-                logger().error( string )
-                raise OsHelperError(string,hr)
-
-            #(type, state, ca, exitcode, svc_exitcode, checkpoint, waithint) = win32service.QueryServiceStatus( self.hs )
-            #if logger().VERBOSE:
-            #   logger().log( "[helper] chipsec service: handle = 0x%x, type = 0x%x, state = 0x%x (SERVICE_RUNNING is 0x%x)" % (self.hs, type, state, win32service.SERVICE_RUNNING) )
-            return True
+                handle_winerror(fn, msg, hr)
 
         finally:
+            win32service.CloseServiceHandle( hs )
             win32service.CloseServiceHandle( hscm )
 
-    def stop( self, start_driver ):
-        state = 0
-        if (self.hs is not None):
-            if logger().VERBOSE: logger().log( "[helper] stopping service (handle = 0x%08x).." % self.hs )
-            try:
-                state = win32service.ControlService( self.hs, win32service.SERVICE_CONTROL_STOP )
-                #state = win32serviceutil.StopService( name, machine )[1]
-            except win32service.error, (hr, fn, msg):
-                logger().error( "StopService failed: %s (%d)" % (msg, hr) )
-            state = win32service.QueryServiceStatus( self.hs )[1]
-            #while win32service.SERVICE_STOP_PENDING == state:
-            #   time.sleep( 1 )
-            #   state = win32service.QueryServiceStatus( self.hs )[1]
-
-        # Close the driver handle - should do that in __del__ rather than here
-        #kernel32.CloseHandle( self.driver_handle )
-
-        return state
-
-    def delete( self, start_driver ):
-        if (self.hs is not None):
-            if logger().VERBOSE:
-                logger().log( "[helper] deleting service (handle = 0x%08x).." % self.hs )
-            win32service.DeleteService( self.hs )
-            win32service.CloseServiceHandle( self.hs )
-            self.hs = None
         return True
+
+    #
+    # Remove (detele/unregister/uninstall) chipsec service
+    #
+    def delete( self, start_driver ):
+        if not start_driver: return True
+        if self.use_existing_service: return True
+
+        if win32serviceutil.QueryServiceStatus( SERVICE_NAME )[1] != win32service.SERVICE_STOPPED:
+            logger().warn( "cannot delete service '%s' (not stopped)" % SERVICE_NAME )
+            return False
+
+        if logger().VERBOSE: logger().log( "[helper] deleting service '%s'..." % SERVICE_NAME )
+        try:
+            win32serviceutil.RemoveService( SERVICE_NAME )
+            if logger().VERBOSE: logger().log( "[helper] service '%s' deleted" % SERVICE_NAME )
+        except win32service.error, (hr, fn, msg):
+            logger().warn( "RemoveService failed: %s (%d)" % (msg, hr) )
+            return False
+
+        return True
+
+    #
+    # Start chipsec service
+    #           
+    def start(self, start_driver, driver_exists=False):
+        # we are in native API mode so not starting the service/driver
+        if not start_driver: return True
+
+        self.use_existing_service = (win32serviceutil.QueryServiceStatus( SERVICE_NAME )[1] == win32service.SERVICE_RUNNING)
+
+        if self.use_existing_service:
+            self.driver_loaded = True
+            if logger().VERBOSE: logger().log( "[helper] service '%s' already running" % SERVICE_NAME )
+            if logger().VERBOSE: logger().log( "[helper] trying to connect to existing '%s' service..." % SERVICE_NAME )
+        else:
+            #if self.use_existing_service:
+            #    _handle_error( "connecting to existing '%s' service failed (service is not running)" % SERVICE_NAME )
+            try:
+                win32serviceutil.StartService( SERVICE_NAME )
+                win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
+                self.driver_loaded = True
+                if logger().VERBOSE: logger().log( "[helper] service '%s' started" % SERVICE_NAME )
+            except pywintypes.error, (hr, fn, msg):
+                _handle_error( "service '%s' didn't start: %s (%d)" % (SERVICE_NAME, msg, hr), hr )
+
+        return True
+
+    #
+    # Stop chipsec service
+    #           
+    def stop( self, start_driver ):
+        if not start_driver: return True
+        if self.use_existing_service: return True
+
+        if logger().VERBOSE: logger().log( "[helper] stopping service '%s'.." % SERVICE_NAME )
+        try:
+            win32api.CloseHandle( self.driver_handle )
+            self.driver_handle = None
+            win32serviceutil.StopService( SERVICE_NAME )
+        except pywintypes.error, (hr, fn, msg):
+            logger().error( "StopService failed: %s (%d)" % (msg, hr) )
+            return False
+        finally:
+            self.driver_loaded = False
+
+        try:
+            win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
+            if logger().VERBOSE: logger().log( "[helper] service '%s' stopped" % SERVICE_NAME )
+        except pywintypes.error, (hr, fn, msg):
+            logger().warn( "service '%s' didn't stop: %s (%d)" % (SERVICE_NAME, msg, hr) )
+            return False
+
+        return True
+
 
 
     def get_driver_handle( self ):
@@ -463,14 +466,9 @@ class Win32Helper(Helper):
         if (self.driver_handle is not None) and (INVALID_HANDLE_VALUE != self.driver_handle):
             return self.driver_handle
 
-        #self.driver_handle = win32file.CreateFile( device_file, 0, win32file.FILE_SHARE_READ, None, win32file.OPEN_EXISTING, 0, None)
-        #self.driver_handle = kernel32.CreateFileW( self.device_file, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None )
-        #self.driver_handle = kernel32.CreateFileW( self.device_file, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, None, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, None )
-
         self.driver_handle = win32file.CreateFile( self.device_file, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, None, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, None )
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
-            logger().error( drv_hndl_error_msg )
-            raise OsHelperError(drv_hndl_error_msg,errno.ENXIO)
+            _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
             if logger().VERBOSE: logger().log( "[helper] opened device '%.64s' (handle: %08x)" % (DEVICE_FILE, self.driver_handle) )
         return self.driver_handle
@@ -484,7 +482,6 @@ class Win32Helper(Helper):
             logger().warn( "Invalid handle (wtf?): re-opened device '%.64s' (new handle: %08x)" % (self.device_file, self.driver_handle) )
             return False
         return True
-
 
     #
     # Auxiliary functions
@@ -504,9 +501,12 @@ class Win32Helper(Helper):
     # Generic IOCTL call function
     #
     def _ioctl( self, ioctl_code, in_buf, out_length ):
+
+        if not self.driver_loaded:
+           _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
+
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
-        #ret = kernel32.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, len(in_buf), byref(out_buf), out_length, byref(out_size), None )
         if logger().VERBOSE: print_buffer( in_buf )
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
@@ -517,9 +517,8 @@ class Win32Helper(Helper):
                 logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
-                err_msg = "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2])
-                logger().error( err_msg )
-                raise OsHelperError( err_msg, err_status )
+                _handle_error( "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2]), err_status )
+
         return out_buf
 
 ###############################################################################################

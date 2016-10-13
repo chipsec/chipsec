@@ -53,10 +53,6 @@ class Module():
             try:
                 if _importlib:
                     self.module = importlib.import_module( self.name )
-                # Support for older Python < 2.5
-                #else:
-                #    #module = __import__(module_path)
-                #    exec ('import ' + self.name)
                 loaded = True
                 if self.logger.VERBOSE: self.logger.log_good( "imported: %s" % self.name )
             except BaseException, msg:
@@ -101,15 +97,6 @@ class Module():
                                     self.mod_obj = iref()
                     if self.mod_obj == None:
                         result = ModuleResult.DEPRECATED
-                # Support for older Python < 2.5
-                #else:
-                #    exec ('import ' + self.name)
-                #    exec ( 'pkg = ' + self.name + '.__package__')
-                #    exec ( 'class_name = ' + self.name + '.__name__')
-                #    if pkg:
-                #        class_name = class_name.replace(pkg,'')
-                #    if class_name.startswith('.'): class_name = class_name.replace('.','')
-                #    exec ('self.mod_obj = ' + self.name + '.' + class_name + '()')
             except (AttributeError, TypeError) as ae:
                 result = ModuleResult.DEPRECATED
         return result
@@ -119,10 +106,6 @@ class Module():
         try:
             if _importlib:
                 myfile = getattr( self.module, "__file__" )
-            # Support for older Python < 2.5
-            #else:
-            #    exec ('import ' + self.name)
-            #    exec ( 'file = ' + self.name + '.__file__')
         except :
             pass
         return myfile
@@ -133,9 +116,6 @@ class Module():
         try:
             if _importlib:
                 module_tags = getattr( self.module, 'TAGS' )
-            # Support for older Python < 2.5
-            #else:
-            #    exec ('module_tags = ' +self.get_name() + '.TAGS')
         except:
             #self.logger.log(module_path)
             #self.logger.log_bad(traceback.format_exc())

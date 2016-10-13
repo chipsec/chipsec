@@ -17,13 +17,16 @@ class TestHelper(oshelper.Helper):
         self.driver_loaded = True
 
     def create(self, start_driver):
-        pass
+        return True
+
+    def delete(self, start_driver):
+        return True
 
     def start(self, start_driver, driver_exists=False):
-        pass
+        return True
 
     def stop(self, start_driver):
-        pass
+        return True
 
      # This will be used to probe the device, fake a Broadwell CPU
     def read_pci_reg(self, bus, device, function, address, size):

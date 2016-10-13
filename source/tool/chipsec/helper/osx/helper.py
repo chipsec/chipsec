@@ -52,6 +52,7 @@ class OSXHelper(Helper):
         #self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper created")
+        return True
 
     def start(self, start_driver, driver_exists=False):
         if start_driver:
@@ -59,16 +60,19 @@ class OSXHelper(Helper):
         self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper started/loaded")
+        return True
 
     def stop(self, start_driver):
         if self.driver_loaded:
             pass
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper stopped/unloaded")
+        return True
 
     def delete(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper deleted")
+        return True
 
     def init(self, start_driver):
         if start_driver:
