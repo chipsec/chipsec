@@ -177,6 +177,24 @@ typedef SMI_CONTEXT SMI_CTX, *PSMI_CTX;
     void WriteCR8( unsigned long );
 #endif
 
+  unsigned long
+  hypercall(
+    unsigned long    rcx_val,
+    unsigned long    rdx_val,
+    unsigned long    r8_val,
+    unsigned long    r9_val,
+    unsigned long    r10_val,
+    unsigned long    r11_val,
+    unsigned long    rax_val,
+    unsigned long    rbx_val,
+    unsigned long    rdi_val,
+    unsigned long    rsi_val,
+    unsigned long    xmm_buffer,
+    unsigned long    hypercall_page
+    );
+
+  unsigned long hypercall_page(void);
+
     void __cpuid__(CPUID_CTX * ctx);
    
   void _store_idtr(
@@ -1493,6 +1511,39 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		return -EFAULT;
 #endif
 	}
+
+        case IOCTL_HYPERCALL:
+        {
+		numargs = 11;
+		printk( KERN_INFO "[chipsec] > IOCTL_HYPERCALL\n");
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(ptrbuf[0]) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			return -EFAULT;
+		}
+
+		printk( KERN_INFO "[chipsec][IOCTL_HYPERCALL] HYPERCALL:\n" );
+		#ifdef __x86_64__
+		printk( KERN_INFO "    RCX = 0x%016lX  RDX = 0x%016lX\n", ptrbuf[0], ptrbuf[1] );
+		printk( KERN_INFO "    R8  = 0x%016lX  R9  = 0x%016lX\n", ptrbuf[2], ptrbuf[3] );
+		printk( KERN_INFO "    R10 = 0x%016lX  R11 = 0x%016lX\n", ptrbuf[4], ptrbuf[5] );
+		printk( KERN_INFO "    RAX = 0x%016lX  RBX = 0x%016lX\n", ptrbuf[6], ptrbuf[7] );
+		printk( KERN_INFO "    RDI = 0x%016lX  RSI = 0x%016lX\n", ptrbuf[8], ptrbuf[9] );
+		#else
+		printk( KERN_INFO "    EAX = 0x%08lX  EBX = 0x%08lX  ECX = 0x%08lX\n", ptrbuf[6], ptrbuf[7], ptrbuf[0] );
+		printk( KERN_INFO "    EDX = 0x%08lX  ESI = 0x%08lX  EDI = 0x%08lX\n", ptrbuf[1], ptrbuf[8], ptrbuf[9] );
+		#endif
+		printk( KERN_INFO "    XMM0-XMM5 buffer VA = 0x%016lX\n", ptrbuf[10] );
+
+		ptrbuf[11] = (unsigned long)&hypercall_page;
+		printk( KERN_INFO "[chipsec][IOCTL_HYPERCALL] Hypercall Page: 0x%016lX\n", ptrbuf[11]);
+		ptrbuf[0]  = hypercall(ptrbuf[0], ptrbuf[1], ptrbuf[2], ptrbuf[3], ptrbuf[4], ptrbuf[5], ptrbuf[6], ptrbuf[7], ptrbuf[8], ptrbuf[9], ptrbuf[10], ptrbuf[11]);
+		printk( KERN_INFO "[chipsec][IOCTL_HYPERCALL] returned: 0x%016lX\n", ptrbuf[0]);
+
+		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, sizeof(ptrbuf[0])) > 0)
+			return -EFAULT;
+		break;
+        }
 
     case IOCTL_MSGBUS_SEND_MESSAGE:
     {

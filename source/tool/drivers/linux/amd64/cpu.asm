@@ -34,6 +34,8 @@
  global WriteCR3
  global WriteCR4
  global WriteCR8
+ global hypercall
+ global hypercall_page
 
  global __cpuid__
  global __swsmi__
@@ -615,4 +617,64 @@ WriteCR8:
     mov cr8, rdi
     ret
 
+;------------------------------------------------------------------------------
+;  UINT64
+;  hypercall(
+;    UINT64    rcx_val,                // rdi
+;    UINT64    rdx_val,                // rsi
+;    UINT64    r8_val,                 // rdx
+;    UINT64    r9_val,                 // rcx
+;    UINT64    r10_val,                // r8
+;    UINT64    r11_val,                // r9
+;    UINT64    rax_val,                // on stack +10h
+;    UINT64    rbx_val,                // on stack +18h
+;    UINT64    rdi_val,                // on stack +20h 
+;    UINT64    rsi_val,                // on stack +28h
+;    UINT64    xmm_buffer,             // on stack +30h
+;    UINT64    hypercall_page          // on stack +38h
+;    )
+;------------------------------------------------------------------------------
+
+hypercall:
+    push   rbp
+    mov    rbp, rsp
+    push   rbx
+    mov    rax, qword [rbp + 30h]
+    test   rax, rax
+    jz     hypercall_skip_xmm
+    pinsrq xmm0, qword [rax + 000h], 00h
+    pinsrq xmm0, qword [rax + 008h], 01h
+    pinsrq xmm1, qword [rax + 010h], 00h
+    pinsrq xmm1, qword [rax + 018h], 01h
+    pinsrq xmm2, qword [rax + 020h], 00h
+    pinsrq xmm2, qword [rax + 028h], 01h
+    pinsrq xmm3, qword [rax + 030h], 00h
+    pinsrq xmm3, qword [rax + 038h], 01h
+    pinsrq xmm4, qword [rax + 040h], 00h
+    pinsrq xmm4, qword [rax + 048h], 01h
+    pinsrq xmm5, qword [rax + 050h], 00h
+    pinsrq xmm5, qword [rax + 058h], 01h
+  hypercall_skip_xmm:
+    mov    r11, r9
+    mov    r10, r8
+    mov    r9,  rcx
+    mov    r8,  rdx
+    mov    rdx, rsi
+    mov    rcx, rdi
+    mov    rdi, qword [rbp + 20h]
+    mov    rsi, qword [rbp + 28h]
+    mov    rax, qword [rbp + 10h]
+    mov    rbx, qword [rbp + 18h]
+    call   qword [rbp + 38h]
+    pop    rbx
+    pop    rbp
+    ret
+
+;------------------------------------------------------------------------------
+;  UINT64 hypercall_page ( )
+;------------------------------------------------------------------------------
+
+hypercall_page:
+    vmcall
+    ret
 

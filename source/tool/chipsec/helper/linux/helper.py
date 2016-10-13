@@ -819,6 +819,14 @@ class LinuxHelper(Helper):
         return ret
 
     #
+    # Hypercalls
+    #
+    def hypercall( self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
+        in_buf  = struct.pack('<11' + self._pack, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
+        out_buf = self.ioctl(IOCTL_HYPERCALL, in_buf)
+        return struct.unpack('<11' + self._pack, out_buf)[0]
+
+    #
     # Interrupts
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
