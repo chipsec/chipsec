@@ -1515,30 +1515,35 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         case IOCTL_HYPERCALL:
         {
 		numargs = 11;
-		printk( KERN_INFO "[chipsec] > IOCTL_HYPERCALL\n");
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(ptrbuf[0]) * numargs)) > 0)
 		{
 			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
 			return -EFAULT;
 		}
 
-		printk( KERN_INFO "[chipsec][IOCTL_HYPERCALL] HYPERCALL:\n" );
-		#ifdef __x86_64__
-		printk( KERN_INFO "    RCX = 0x%016lX  RDX = 0x%016lX\n", ptrbuf[0], ptrbuf[1] );
-		printk( KERN_INFO "    R8  = 0x%016lX  R9  = 0x%016lX\n", ptrbuf[2], ptrbuf[3] );
-		printk( KERN_INFO "    R10 = 0x%016lX  R11 = 0x%016lX\n", ptrbuf[4], ptrbuf[5] );
-		printk( KERN_INFO "    RAX = 0x%016lX  RBX = 0x%016lX\n", ptrbuf[6], ptrbuf[7] );
-		printk( KERN_INFO "    RDI = 0x%016lX  RSI = 0x%016lX\n", ptrbuf[8], ptrbuf[9] );
-		#else
-		printk( KERN_INFO "    EAX = 0x%08lX  EBX = 0x%08lX  ECX = 0x%08lX\n", ptrbuf[6], ptrbuf[7], ptrbuf[0] );
-		printk( KERN_INFO "    EDX = 0x%08lX  ESI = 0x%08lX  EDI = 0x%08lX\n", ptrbuf[1], ptrbuf[8], ptrbuf[9] );
-		#endif
-		printk( KERN_INFO "    XMM0-XMM5 buffer VA = 0x%016lX\n", ptrbuf[10] );
-
 		ptrbuf[11] = (unsigned long)&hypercall_page;
-		printk( KERN_INFO "[chipsec][IOCTL_HYPERCALL] Hypercall Page: 0x%016lX\n", ptrbuf[11]);
+
+		#ifdef HYPERCALL_DEBUG
+		printk( KERN_DEBUG "[chipsec] > IOCTL_HYPERCALL\n");
+		#ifdef __x86_64__
+		printk( KERN_DEBUG "    RAX = 0x%016lX  RBX = 0x%016lX\n", ptrbuf[6], ptrbuf[7] );
+		printk( KERN_DEBUG "    RCX = 0x%016lX  RDX = 0x%016lX\n", ptrbuf[0], ptrbuf[1] );
+		printk( KERN_DEBUG "    RDI = 0x%016lX  RSI = 0x%016lX\n", ptrbuf[8], ptrbuf[9] );
+		printk( KERN_DEBUG "    R8  = 0x%016lX  R9  = 0x%016lX\n", ptrbuf[2], ptrbuf[3] );
+		printk( KERN_DEBUG "    R10 = 0x%016lX  R11 = 0x%016lX\n", ptrbuf[4], ptrbuf[5] );
+		#else
+		printk( KERN_DEBUG "    EAX = 0x%08lX  EBX = 0x%08lX  ECX = 0x%08lX\n", ptrbuf[6], ptrbuf[7], ptrbuf[0] );
+		printk( KERN_DEBUG "    EDX = 0x%08lX  ESI = 0x%08lX  EDI = 0x%08lX\n", ptrbuf[1], ptrbuf[8], ptrbuf[9] );
+		#endif
+		printk( KERN_DEBUG "    XMM0-XMM5 buffer VA = 0x%016lX\n", ptrbuf[10] );
+		printk( KERN_DEBUG "    Hypercall page VA   = 0x%016lX\n", ptrbuf[11]);
+		#endif
+
 		ptrbuf[0]  = hypercall(ptrbuf[0], ptrbuf[1], ptrbuf[2], ptrbuf[3], ptrbuf[4], ptrbuf[5], ptrbuf[6], ptrbuf[7], ptrbuf[8], ptrbuf[9], ptrbuf[10], ptrbuf[11]);
-		printk( KERN_INFO "[chipsec][IOCTL_HYPERCALL] returned: 0x%016lX\n", ptrbuf[0]);
+
+		#ifdef HYPERCALL_DEBUG
+		printk( KERN_DEBUG "    Hypercall status    = 0x%016lX\n", ptrbuf[0]);
+		#endif
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, sizeof(ptrbuf[0])) > 0)
 			return -EFAULT;

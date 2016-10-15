@@ -597,7 +597,7 @@ class Win32Helper(Helper):
             arg_type = 'Q'
             out_length = 8
         else:
-            arg_type = 'D'
+            arg_type = 'I'
             out_length = 4
         out_buf = (c_char * out_length)()
         in_buf  = struct.pack( '<11' + arg_type, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )

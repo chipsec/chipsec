@@ -108,8 +108,8 @@ class BaseModuleSupport(BaseModuleDebug):
     def __init__(self):
         BaseModuleDebug.__init__(self)
         self.initial_data        = []
-        self.path = os.path.dirname(os.path.realpath(__file__)) + "\\"
-        with open(self.path + "hv\\initial_data.json", "r") as json_file:
+        self.path = os.path.dirname(os.path.realpath(__file__))
+        with open(os.path.join(self.path, 'hv', 'initial_data.json'), "r") as json_file:
             self.initial_data = json.load(json_file)
         self.statistics = {}
 

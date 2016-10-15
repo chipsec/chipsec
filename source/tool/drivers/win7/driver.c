@@ -1186,7 +1186,7 @@ DriverDeviceControl(
             DbgPrint( "    EAX = 0x%08X  EBX = 0x%08X  ECX = 0x%08X\n", regs[6], regs[7], regs[0] );
             DbgPrint( "    EDX = 0x%08X  ESI = 0x%08X  EDI = 0x%08X\n", regs[1], regs[8], regs[9] );
             #endif
-            DbgPrint( "    XMM0-XMM5 buffer VA = 0x%016llX\n", regs[9] );
+            DbgPrint( "    XMM0-XMM5 buffer VA = 0x%016llX\n", regs[10] );
 
             __try
               {
