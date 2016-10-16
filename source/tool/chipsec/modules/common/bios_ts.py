@@ -23,7 +23,7 @@
 """
 Checks for BIOS Interface Lock including Top Swap Mode
 
-`BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ - Sun Bing
+`BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ by Bing Sun
 """
 
 from chipsec.module_common import *

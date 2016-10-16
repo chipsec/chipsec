@@ -22,8 +22,7 @@
 
 """
 QEMU VENOM vulnerability DoS PoC test
-Module is based on http://bluereader.org/article/41518389
-which is based on PoC by Marcus Meissner (https://marc.info/?l=oss-security&m=143155206320935&w=2)
+Module is based on PoC by Marcus Meissner (https://marc.info/?l=oss-security&m=143155206320935&w=2)
 
  Usage:
    ``chipsec_main.py -i -m tools.vmm.venom``

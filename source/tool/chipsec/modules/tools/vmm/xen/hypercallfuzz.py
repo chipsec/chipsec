@@ -24,12 +24,24 @@
 Xen hypercall fuzzer
 
 Usage:
-  ``chipsec_main.py -m tools.vmm.xen.hypercallfuzz [-a command,hypercall,tests]``
-  ``chipsec_main.py -m tools.vmm.xen.hypercallfuzz [-a <function>,<arg1>,<arg2>... ] -l log.txt``
+  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz \``
+  ``-a <mode>[,<vector>,<iterations>] -l log.txt``
 
-    chipsec_main.py -m tools.vmm.xen_hypercalls_fuzz -a sched_op,10
-    chipsec_main.py -m tools.vmm.xen_hypercalls_fuzz -a xen_version,50
-    chipsec_main.py -m tools.vmm.xen_hypercalls_fuzz -a set_timer_op,10,0x10000000
+    - ``mode``				fuzzing mode
+
+        * ``= help``			prints this help
+        * ``= info``			hypervisor information
+        * ``= fuzzing``			fuzzing specified hypercall
+        * ``= fuzzing-all``		fuzzing all hypercalls
+        * ``= fuzzing-all-randomly``	fuzzing random hypercalls
+    - ``vector``			code or name of a hypercall to be fuzzed (use info)
+    - ``iterations``			number of fuzzing iterations
+
+Examples:
+
+  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a sched_op,10 -l log.txt``
+  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a xen_version,50 -l log.txt``
+  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a set_timer_op,10,0x10000000 -l log.txt``
 """
 
 from define                           import *
@@ -42,15 +54,16 @@ class HypercallFuzz (BaseModule):
 
     def usage(self):
         self.logger.log('')
-        self.logger.log('  Usage:')
-        self.logger.log('    chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz [-a parameters]' )
-        self.logger.log('      examples:'                                                       )
-        self.logger.log('        -a help                         - prints usage and examples'   )
-        self.logger.log('        -a info                         - hypervisor information'      )
-        self.logger.log('        -a fuzzing,<hypercall>,<tests>  - hypercall fuzzing'           )
-        self.logger.log('        -a fuzzing-all,<tests>          - all hypercall fuzzing'       )
-        self.logger.log('        -a fuzzing-all-randomly,<tests> - fuzz random hypercalls'      )
-        self.logger.log('      NOTE: no spaces allowed! parameters must be comma separated!'    )
+        self.logger.log('  Usage:' )
+        self.logger.log('    chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a <mode>[,<hypercall>,<iterations>] -l log.txt' )
+        self.logger.log('      <mode>			fuzzing mode' )
+        self.logger.log('        = help			prints this help' )
+        self.logger.log('        = info			hypervisor information' )
+        self.logger.log('        = fuzzing		fuzzing hypercall specified with <vector>' )
+        self.logger.log('        = fuzzing-all		fuzzing all hypercalls' )
+        self.logger.log('        = fuzzing-all-randomly	fuzzing random hypercalls' )
+        self.logger.log('      <vector>			code or name of a hypercall to be fuzzed (use info)' )
+        self.logger.log('      <iterations>		number of fuzzing iterations' )
         return
 
     def get_int(self, arg, base = 10, defvalue = 10000):

@@ -26,8 +26,10 @@ The module checks that SMI events configuration is locked down
 - TCO SMI Enable/TCO Lock
 
 References:
+
 `Setup for Failure: Defeating SecureBoot <http://syscan.org/index.php/download/get/6e597f6067493dd581eed737146f3afb/SyScan2014_CoreyKallenberg_SetupforFailureDefeatingSecureBoot.zip>`_ by Corey Kallenberg, Xeno Kovah, John Butterworth, Sam Cornwell
-`Summary of Attacks Against BIOS and Secure Boot <https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf>`_
+
+`Summary of Attacks Against BIOS and Secure Boot` (https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf)
 """
 
 from chipsec.module_common import *

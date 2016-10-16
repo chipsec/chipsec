@@ -18,6 +18,11 @@
 #chipsec@intel.com
 #
 
+
+"""
+Xen specific hypercall functionality
+"""
+
 import binascii
 import collections
 from define                           import *

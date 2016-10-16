@@ -21,7 +21,7 @@
 
 
 """
-DEFCON 16: `Bypassing Pre-boot Authentication Passwords by Instrumenting the BIOS Keyboard Buffer <http://www.slideshare.net/endrazine/defcon-16-bypassing-preboot-authentication-passwords-by-instrumenting-the-bios-keyboard-buffer-practical-low-level-attacks-against-x86-preboot-authentication-software>`_ by Jonathan Brossard
+DEFCON 16: `Bypassing Pre-boot Authentication Passwords by Instrumenting the BIOS Keyboard Buffer <https://www.defcon.org/images/defcon-16/dc16-presentations/brossard/defcon-16-brossard-wp.pdf>`_ by Jonathan Brossard
 
 Checks for BIOS/HDD password exposure through BIOS keyboard buffer.
 
