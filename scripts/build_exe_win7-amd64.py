@@ -57,7 +57,7 @@ build_dir = os.getcwd()
 root_dir = os.path.abspath(os.pardir)
 bin_dir = os.path.join(root_dir,"bin")
 source_dir = os.path.join(root_dir,"source")
-tool_dir   = os.path.join(source_dir,"tool")
+tool_dir   = root_dir
 cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
 
 win_7_amd64 = os.path.join(bin_dir,'win7-amd64');
