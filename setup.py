@@ -30,16 +30,17 @@ import os
 import platform
 from setuptools import setup, find_packages, Extension
 import subprocess
+import shutil
 
 from setuptools.command.install import install as _install
 from setuptools.command.build_ext import build_ext as _build_ext
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-build_driver = False
+build_driver = True
 
 def long_description():
-    with io.open(os.path.join(here, "..", "..", "README.md"), encoding='utf-8') as f:
+    with io.open(os.path.join(here, "README"), encoding='utf-8') as f:
         return f.read()
 
 def version():
@@ -56,20 +57,22 @@ def package_files(directory):
 class build_ext(_build_ext):
     def run(self):
         global build_driver
+        bl = os.path.realpath(self.distribution.command_obj['build'].build_lib)
         if platform.system().lower() == "linux" and build_driver:
-            bl = os.path.realpath(self.distribution.command_obj['build'].build_lib)
             subprocess.check_output( "make -C "+ bl +"/drivers/linux/", shell=True )
+        if platform.system().lower() == "linux":
+            shutil.rmtree(bl +"/drivers")
         _build_ext.run(self)
 
-class FullInstall(_install):
-    description = 'Build CHIPSEC Driver. Install CHIPSEC with Driver.'
+class install_no_driver(_install):
+    description = 'Install CHIPSEC without driver.'
     def run(self):
         if platform.system().lower() == "linux":
             global build_driver
-            build_driver = True
+            build_driver = False
             _install.do_egg_install(self)
 
-package_data = { "": ["*.ini","*.cfg","*.json"],
+package_data = { 
                  "chipsec.cfg": ["*.xml", "*.xsd"],
                  "chipsec": ["VERSION"]
                }
@@ -79,16 +82,22 @@ if platform.system().lower() == "windows":
     install_requires=['pywin32']
     kw = dict(ext_modules = [])
 
+extra_files = []
+
 if platform.system().lower() == "linux":
     extra_files = package_files('drivers/linux')
     package_data[ "chipsec.helper.linux" ] = [ "*.c","Makefile" ] 
-    package_data['']                       = extra_files
     install_requires=[]
     kw = dict(
         ext_modules = [
             Extension("chipsec.helper.linux.cores", ["chipsec/helper/linux/cores.c"]),
         ],
     )
+
+extra_files.append(os.path.join("..", "chipsec-manual.pdf"))
+extra_files.append("WARNING.txt")
+extra_files.extend(["*.ini","*.cfg","*.json"])
+package_data['']                       = extra_files
 
 setup(
 
@@ -133,7 +142,7 @@ setup(
     },
     #scripts         = ['chipsec_main.py', 'chipsec_util.py'],
     cmdclass={
-        'full_install': FullInstall,
+        'install_no_driver': install_no_driver,
         'build_ext'   : build_ext,
     },
     **kw
