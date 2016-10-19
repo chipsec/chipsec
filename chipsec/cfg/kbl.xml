@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="KBL">
 <!-- XML configuration file for Kaby Lake based platforms
+     References:
+     7th Generation Intel(R) Processor Families for U/Y-Platforms
+     7th Generation Intel(R) Processor Families I/O for U/Y-Platforms
+     http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 -->
     
   <!-- #################################### -->
@@ -22,6 +26,7 @@
     <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000"                     desc="Graphics Translation Table Range"/>
     <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/> 
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
+    <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" desc="Power Management Register Range"/>
   </mmio>
 
   <!-- #################################### -->
@@ -66,6 +71,10 @@
       <field name="SCIS"    bit="0" size="2" desc="SCI IRQ Select"/>
       <field name="EN"      bit="7" size="1" desc="ACPI Enable"/>
       <field name="PWRM_EN" bit="8" size="1" desc="PWRM Enable"/>
+    </register>
+    <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x48" size="4" desc="PM Base Address">
+      <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
+      <field name="BA"    bit="12" size="20" desc="Base Address"/>
     </register>
     <register name="GEN_PMCON_1" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0xA0" size="2" desc="General PM Configuration A">
       <field name="SMI_LOCK"    bit="4"     size="1"/>
@@ -160,6 +169,9 @@
       <field name="UL"   bit="4"  size="1" desc="Upper 128 Byte Lock"/>
       <field name="BILD" bit="31" size="1" desc="BIOS Interface Lock-Down"/>
     </register>       
+
+    <!-- PMC MMIO registers (7th Generation Intel(R) Processor Families I/O for U/Y-Platforms, Vol. 2, section 4.3) -->
+    <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x18" size="4" desc="Power Management Configuration Reg 1"/>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- I/O registers (I/O ports)    -->
