@@ -6,60 +6,12 @@ This module was originally built on/adapted from fmem 1.5.0 and LoLA (Low Level 
 To install CHIPSEC framework with the kernel module, please see "Linux Installation" section of chipsec-manual.pdf
 When installed, CHIPSEC framework automatically loads and unloads kernel module. 
 
-However, if you want to manually build/install the kernel module, please follow instructions below.
+However, if you want to manually build the kernel module, please follow instructions below.
 
-To build:
-	make
+To build driver run:
+	$ make
 
-To load kernel module:
-	make install
-
-To remove kernel module:
-	make uninstall
 
 NOTE:
 You may need run apt-get install python-dev for the Python.h header (needed for switching cpu affinity). 
 If you already have this in a non-standard location (i.e. any other than /usr/include/python-2.7), you can manually edit the path in drivers/linux/Makefile
-
-
--------------
-
-
-fmem 1.5.0
-
-This module creates /dev/fmem device,
-that can be used for dumping physical memory,
-without limits of /dev/mem (1MB/1GB, depending on distribution)
-  
-Tested on i386 and x64, feel free to test it on 
-different architectures. (and send report please)
- 
-Cloned from linux/drivers/char/mem.c 
-(so GPL license apply)
-
-Original name of this tool was fdump, 
-which was conflict with already existing tool,
-so name was changed to fmem  
-
-Bug reports and patches welcome.
-
-2009,2010 niekt0@hysteria.sk
-
------
-Usage:
-
-$ make
-
-# ./run.sh
-
-# dd if=/dev/fmem of=... bs=1MB count=... 
-
------
-BUGS: if you do something like # dd if=/dev/fmem of=dump 
-      dd will never stop, even if there is no more physical RAM
-      on the system. This is more a feature, because Linux kernel
-      don't have stable API, and detection of mapped areas can be 
-      tricky on older kernels. Because primary usage for fmem is 
-      memory forensic, I think it is safer to specify 
-      amount of RAM by hand.
------
