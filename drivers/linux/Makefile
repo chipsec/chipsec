@@ -28,14 +28,8 @@ chipsec32: clean
 	make -C ../../chipsec/helper/linux/
 	cp chipsec.ko ../../chipsec/helper/linux/
 
-install:
-	./run.sh
-
-uninstall:
-	rmmod chipsec
-
 clean:
 	rm -f *.o *.ko *.mod.c Module.symvers Module.markers modules.order \.*.o.cmd \.*.ko.cmd \.*.o.d
 	rm -rf \.tmp_versions
 	rm -rf amd64/cpu.o i386/cpu.o
-
+	make clean -C ../../chipsec/helper/linux
