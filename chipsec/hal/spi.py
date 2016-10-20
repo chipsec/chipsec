@@ -222,6 +222,8 @@ class SPI:
 
         base = (pr_j & Cfg.PCH_RCBA_SPI_PR0_PRB_MASK) << 12
         limit = (pr_j & Cfg.PCH_RCBA_SPI_PR0_PRL_MASK) >> 4
+        if limit != 0:
+          limit = limit | 0xFFF	
         wpe = ((pr_j & Cfg.PCH_RCBA_SPI_PR0_WPE) != 0)
         rpe = ((pr_j & Cfg.PCH_RCBA_SPI_PR0_RPE) != 0)
 
