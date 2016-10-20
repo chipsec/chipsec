@@ -22,7 +22,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-1. Build chipsec_hlpr.sys on Windows 32bit and 64bit
+1. Build CHIPSEC kernel driver
 ----------------------------------------------------
 
 - Install WDK 7600
@@ -30,20 +30,22 @@
 - Open WDK build environment command prompt:
   "x86 Free Build Environment" or "x64 Free Build Environment" (for release build)
   "x86 Checked Build Environment" or "x64 Checked Build Environment" (for debug build)
-- cd <PATH_TO_CHIPSEC>\source\drivers\win7
+- cd <CHIPSEC_ROOT_DIR>\drivers\win7
 - build -cZg
-- If build complete without errors the driver binary (chipsec_hlpr.sys) will be in source\drivers\win7\sys\i386 or source\drivers\win7\sys\amd64 directory
+- If build process completed without errors, the driver binary ("chipsec_hlpr.sys") will be in <CHIPSEC_ROOT_DIR>\drivers\win7\sys\amd64 (or i386) directory
 
 
-2. Sign driver on Windows 64bit
+2. (Windows x64 only) Sign the driver
 ----------------------------------------------------
 
 - As Administrator, run in "x64 Free Build Environment" (or "x64 Checked Build Environment"):
   makecert -r -n "CN=Chipsec" -ss ChipsecCertStore -sr LocalMachine
-- cd sign
-- Run "sign64_sys.bat" to sign .sys file and have CHIPSEC install the driver automatically  
+- cd <CHIPSEC_ROOT_DIR>\drivers\win7\sign
+- Run "sign64_sys.bat" to sign "chipsec_hlpr.sys" file  
 - If any error/warning returned, create a new certificate store and modify "sign64_sys.bat" accordingly
-- copy the signed *.sys file to source/tool/chipsec/helper/win/win7_amd64/ or source/tool/chipsec/helper/win/win7_x86/ 
-- You'll need to enable loading test-signed kernel mode drivers
+- You'll need to enable loading of test-signed kernel mode drivers (see chipsec-manual.pdf for details)
 
-
+3. Copy the driver to CHIPSEC framework
+----------------------------------------------------
+- On Windows x64, copy signed "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 directory
+- On Windows x86, copy "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_x86 directory
