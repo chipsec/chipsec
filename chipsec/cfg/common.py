@@ -137,9 +137,9 @@ class Cfg:
 
     # Protected Range Registers
     PCH_RCBA_SPI_PR0_WPE             = BIT31                         # Write Protection Enable
-    PCH_RCBA_SPI_PR0_PRL_MASK        = 0x7FFF0000                    # Protected Range Limit Mask
+    PCH_RCBA_SPI_PR0_PRL_MASK        = 0x1FFF0000                    # Protected Range Limit Mask
     PCH_RCBA_SPI_PR0_RPE             = BIT15                         # Read Protection Enable
-    PCH_RCBA_SPI_PR0_PRB_MASK        = 0x00007FFF                    # Protected Range Base Mask
+    PCH_RCBA_SPI_PR0_PRB_MASK        = 0x00001FFF                    # Protected Range Base Mask
 
     PCH_RCBA_SPI_OPTYPE_RDNOADDR     = 0x00
     PCH_RCBA_SPI_OPTYPE_WRNOADDR     = 0x01
