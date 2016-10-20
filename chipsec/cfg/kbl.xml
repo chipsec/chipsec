@@ -1,10 +1,13 @@
 <?xml version="1.0"?>
 <configuration platform="KBL">
 <!-- XML configuration file for Kaby Lake based platforms
-     References:
-     7th Generation Intel(R) Processor Families for U/Y-Platforms
-     7th Generation Intel(R) Processor Families I/O for U/Y-Platforms
-     http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+
+* 7th Generation Intel(R) Processor Families for U/Y-Platforms
+
+* 7th Generation Intel(R) Processor Families I/O for U/Y-Platforms
+
+* http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+
 -->
     
   <!-- #################################### -->

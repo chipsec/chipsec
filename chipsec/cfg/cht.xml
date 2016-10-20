@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
 <configuration platform="CHT">
 <!-- XML configuration for Cherry Trail and Braswell SoCs
-     Reference:
-     Intel(R) Atom(TM) Processor Z8000 series datasheet
-     http://www.intel.com/content/www/us/en/processors/atom/atom-z8000-datasheet-vol-2.html
-     N-series Intel(R) Pentium(R) and Celeron(R) Processors Datasheet
-     http://www.intel.com/content/dam/www/public/us/en/documents/datasheets/pentium-celeron-n-series-datasheet-vol-2.pdf
+
+* Intel(R) Atom(TM) Processor Z8000 series datasheet
+  http://www.intel.com/content/www/us/en/processors/atom/atom-z8000-datasheet-vol-2.html
+
+* N-series Intel(R) Pentium(R) and Celeron(R) Processors Datasheet
+  http://www.intel.com/content/dam/www/public/us/en/documents/datasheets/pentium-celeron-n-series-datasheet-vol-2.pdf
 -->
 
   <!-- #################################### -->

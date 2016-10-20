@@ -660,9 +660,7 @@ class ChipsecMain:
         return modules_failed
 
 def main(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
-    chipsecMain = ChipsecMain(argv)
+    chipsecMain = ChipsecMain( argv if argv else sys.argv[1:] )
     return chipsecMain.main()
 
 if __name__ == "__main__":
