@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -20,12 +20,10 @@
 #
 
 
-
 """
 Setup module to install chipsec package via setuptools
 """
 
-import io
 import os
 import platform
 from setuptools import setup, find_packages, Extension
@@ -35,17 +33,11 @@ import shutil
 from setuptools.command.install import install as _install
 from setuptools.command.build_ext import build_ext as _build_ext
 
-here = os.path.abspath(os.path.dirname(__file__))
-
-build_driver = True
-
 def long_description():
-    with io.open(os.path.join(here, "README"), encoding='utf-8') as f:
-        return f.read()
+    return open("README").read()
 
 def version():
-    with io.open(os.path.join(here, 'chipsec', 'VERSION')) as f:
-        return f.read()
+    return open(os.path.join("chipsec", "VERSION")).read()
 
 def package_files(directory):
     paths = []
@@ -54,55 +46,70 @@ def package_files(directory):
             paths.append(os.path.join('..', path, filename))
     return paths
 
+skip_driver_opt = [("skip-driver", None,
+                    ("Do not build the Chipsec kernel driver. "
+                     "Only available on Linux."))
+]
+
 class build_ext(_build_ext):
+    user_options = _build_ext.user_options + skip_driver_opt
+    boolean_options = _build_ext.boolean_options + ["skip-driver"]
+
+    def initialize_options(self):
+        _build_ext.initialize_options(self)
+        self.skip_driver = None
+
+    def finalize_options(self):
+        _build_ext.finalize_options(self)
+        # Get the value of the skip-driver parameter from the install command.
+        self.set_undefined_options("install", ("skip_driver", "skip_driver"))
+
     def run(self):
-        global build_driver
         bl = os.path.realpath(self.distribution.command_obj['build'].build_lib)
-        if platform.system().lower() == "linux" and build_driver:
-            subprocess.check_output( "make -C "+ bl +"/drivers/linux/", shell=True )
         if platform.system().lower() == "linux":
-            shutil.rmtree(bl +"/drivers")
+            if not self.skip_driver:
+                subprocess.check_output(["make", "-C",
+                                        os.path.join(bl, "drivers", "linux")])
+            shutil.rmtree(os.path.join(bl, "drivers"))
         _build_ext.run(self)
 
-class install_no_driver(_install):
-    description = 'Install CHIPSEC without driver.'
-    def run(self):
-        if platform.system().lower() == "linux":
-            global build_driver
-            build_driver = False
-            _install.do_egg_install(self)
+class install(_install):
+    user_options = _install.user_options + skip_driver_opt
+    boolean_options = _install.boolean_options + ["skip-driver"]
 
-package_data = { 
-                 "chipsec.cfg": ["*.xml", "*.xsd"],
-                 "chipsec": ["VERSION"]
-               }
+    def initialize_options(self):
+        _install.initialize_options(self)
+        self.skip_driver = None
 
-extra_files = []
+
+package_data = {
+    "chipsec.cfg": ["*.xml", "*.xsd"],
+    "chipsec": ["VERSION"]
+}
+
+install_requires = []
+extra_files = [os.path.join("..", "chipsec-manual.pdf"), "WARNING.txt",
+               "*.ini","*.cfg","*.json"
+]
+extra_kw = {}
 
 if platform.system().lower() == "windows":
-    package_data[ "chipsec.helper.win" ] = [ 'win7_amd64/*.sys' ]
-    extra_files.append( os.path.join( ".." , "chipsec_tools", "compression", "win" , "*"  ))
-    install_requires=['pywin32']
-    kw = dict(ext_modules = [])
+    package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
+    extra_files.append(os.path.join("..", "chipsec_tools", "compression", "win" , "*"))
+    install_requires.extend(['pywin32'])
 
 if platform.system().lower() == "linux":
-    extra_files = package_files('drivers/linux')
-    extra_files.append( os.path.join( ".." , "chipsec_tools", "compression", "linux", "*" ))
-    package_data[ "chipsec.helper.linux" ] = [ "*.c","Makefile" ] 
-    install_requires=[]
-    kw = dict(
-        ext_modules = [
-            Extension("chipsec.helper.linux.cores", ["chipsec/helper/linux/cores.c"]),
-        ],
-    )
+    extra_files.extend(package_files('drivers/linux'))
+    extra_files.append(os.path.join("..", "chipsec_tools", "compression", "linux", "*"))
+    package_data["chipsec.helper.linux"] = ["*.c","Makefile"]
+    extra_kw["ext_modules"] = [
+        Extension("chipsec.helper.linux.cores",
+                  ["chipsec/helper/linux/cores.c"])
+    ]
 
-extra_files.append(os.path.join("..", "chipsec-manual.pdf"))
-extra_files.append("WARNING.txt")
-extra_files.extend(["*.ini","*.cfg","*.json"])
-package_data['']                       = extra_files
+package_data[''] = extra_files
 
 setup(
-
     name = 'chipsec',
     version = version(),
     description = 'CHIPSEC: Platform Security Assessment Framework',
@@ -130,22 +137,19 @@ setup(
     ],
 
     packages = find_packages(exclude=["tests.*", "tests"]),
-    py_modules=['chipsec_main', 'chipsec_util'],
-
-    install_requires = install_requires, 
-
     package_data = package_data,
+    install_requires = install_requires,
 
+    py_modules=['chipsec_main', 'chipsec_util'],
     entry_points = {
         'console_scripts': [
             'chipsec_util=chipsec_util:main',
             'chipsec_main=chipsec_main:main',
         ],
     },
-    #scripts         = ['chipsec_main.py', 'chipsec_util.py'],
-    cmdclass={
-        'install_no_driver': install_no_driver,
+    cmdclass = {
+        'install': install,
         'build_ext'   : build_ext,
     },
-    **kw
+    **extra_kw
 )
