@@ -15,24 +15,6 @@ class GenericUbuntuTest(test_generic.GenericHardwareTest):
     BIOS_VERSION_PATH = "/sys/class/dmi/id/bios_version"
     BOOT_MODE_PATH = "/sys/firmware/efi"
 
-    def setUp(self):
-        super(GenericUbuntuTest, self).setUp()
-        self.load_driver()
-
-    def tearDown(self):
-        self.unload_driver()
-        super(GenericUbuntuTest, self).tearDown()
-
-    def load_driver(self):
-        subprocess.call(["insmod",
-                         os.path.join(os.path.dirname(__file__),
-                                      "..", "..", "..",
-                                      "drivers", "linux", "chipsec.ko")])
-
-    def unload_driver(self):
-        oshelper.helper().helper.close()
-        subprocess.call(["rmmod", "chipsec"])
-
     def product_name(self):
         try:
             product_name = open(self.PRODUCT_NAME_PATH).read().strip()
