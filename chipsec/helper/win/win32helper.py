@@ -890,7 +890,7 @@ class Win32Helper(Helper):
     # File system
     #
     def get_tools_path( self ):
-        p = os.path.join(chipsec.file.get_main_dir(), 'tools','edk2','win')
+        p = os.path.join(chipsec.file.get_main_dir(), 'chipsec_tools','compression','win')
         return os.path.normpath(p)
 
     def get_compression_tool_path( self, compression_type ):

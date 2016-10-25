@@ -77,15 +77,17 @@ package_data = {
                  "chipsec": ["VERSION"]
                }
 
+extra_files = []
+
 if platform.system().lower() == "windows":
     package_data[ "chipsec.helper.win" ] = [ 'win7_amd64/*.sys' ]
+    extra_files.append( os.path.join( ".." , "chipsec_tools", "compression", "win" , "*"  ))
     install_requires=['pywin32']
     kw = dict(ext_modules = [])
 
-extra_files = []
-
 if platform.system().lower() == "linux":
     extra_files = package_files('drivers/linux')
+    extra_files.append( os.path.join( ".." , "chipsec_tools", "compression", "linux", "*" ))
     package_data[ "chipsec.helper.linux" ] = [ "*.c","Makefile" ] 
     install_requires=[]
     kw = dict(
