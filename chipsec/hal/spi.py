@@ -65,6 +65,9 @@ from chipsec.hal.mmio import *
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
 
+SPI_MAX_PR_COUNT  = 5
+SPI_FLA_SHIFT     = 12
+SPI_FLA_PAGE_MASK = chipsec.defines.ALIGNED_4KB
 
 # agregated SPI Flash commands
 HSFCTL_READ_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_READ<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
@@ -144,11 +147,11 @@ class SpiRuntimeError (RuntimeError):
 class SpiAccessError (RuntimeError):
     pass
 
-
+# @TODO: DEPRECATED
 def get_SPI_region( flreg ):
-    range_base  = (flreg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << 12
+    range_base  = (flreg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
     range_limit = ((flreg & Cfg.PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
-    range_limit = range_limit + 0xFFF # + 4kB
+    range_limit |= SPI_FLA_PAGE_MASK
     return (range_base, range_limit)
 
 # Fallback option when XML config is not available: using hardcoded config
@@ -192,13 +195,14 @@ class SPI:
 
 
     def get_SPI_region( self, spi_region_id ):
-        freg = chipsec.chipset.read_register( self.cs, SPI_REGION[ spi_region_id ] )
-        #range_base  = (freg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << 12
-        #range_limit = ((freg & Cfg.PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
-        #range_limit = range_limit + 0xFFF # + 4kB
-        ##if range_limit >= range_base:
-        ##   range_limit = range_limit + 0xFFF # + 4kB
-        (range_base, range_limit) = get_SPI_region( freg )
+        freg_name = SPI_REGION[ spi_region_id ]
+        freg = chipsec.chipset.read_register( self.cs, freg_name )
+        # Region Base corresponds to FLA bits 24:12
+        range_base  = chipsec.chipset.get_register_field( self.cs, freg_name, freg, 'RB' ) << SPI_FLA_SHIFT
+        # Region Limit corresponds to FLA bits 24:12
+        range_limit = chipsec.chipset.get_register_field( self.cs, freg_name, freg, 'RL' ) << SPI_FLA_SHIFT
+        # FLA bits 11:0 are assumed to be FFFh for the limit comparison
+        range_limit |= SPI_FLA_PAGE_MASK
         return (range_base, range_limit, freg)
 
     # all_regions = True : return all SPI regions
@@ -213,18 +217,22 @@ class SPI:
         return spi_regions
 
     def get_SPI_Protected_Range( self, pr_num ):
-        if ( pr_num > 5 ):
+        if pr_num > SPI_MAX_PR_COUNT:
             return None
 
         pr_name = 'PR%x'%pr_num
         pr_j_reg = int(chipsec.chipset.get_register_def( self.cs, pr_name )['offset'],16)
         pr_j = chipsec.chipset.read_register( self.cs, pr_name )
 
-        base = (pr_j & Cfg.PCH_RCBA_SPI_PR0_PRB_MASK) << 12
-        limit = (pr_j & Cfg.PCH_RCBA_SPI_PR0_PRL_MASK) >> 4
-        wpe = ((pr_j & Cfg.PCH_RCBA_SPI_PR0_WPE) != 0)
-        rpe = ((pr_j & Cfg.PCH_RCBA_SPI_PR0_RPE) != 0)
+        # Protected Range Base corresponds to FLA bits 24:12
+        base  = chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'PRB' ) << SPI_FLA_SHIFT
+        # Protected Range Limit corresponds to FLA bits 24:12
+        limit = chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'PRL' ) << SPI_FLA_SHIFT
+        # FLA bits 11:0 are assumed to be FFFh for the limit comparison
+        limit |= SPI_FLA_PAGE_MASK
 
+        wpe = (0 != chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'WPE' ))
+        rpe = (0 != chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'RPE' ))
         return (base,limit,wpe,rpe,pr_j_reg,pr_j)
 
     ##############################################################################################################
@@ -304,13 +312,14 @@ class SPI:
 
     def display_BIOS_region( self ):
         bfpreg = chipsec.chipset.read_register( self.cs, 'BFPR' )
+        base  = chipsec.chipset.get_register_field( self.cs, 'BFPR', bfpreg, 'PRB' ) << SPI_FLA_SHIFT
+        limit = chipsec.chipset.get_register_field( self.cs, 'BFPR', bfpreg, 'PRL' ) << SPI_FLA_SHIFT
+        limit |= SPI_FLA_PAGE_MASK
         logger().log( "BIOS Flash Primary Region" )
         logger().log( "------------------------------------------------------------" )
         logger().log( "BFPREG = %08X:" % bfpreg )
-        logger().log( "  Base  : %08X" % ((bfpreg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << 12) )
-        logger().log( "  Limit : %08X" % ((bfpreg & Cfg.PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4) )
-        logger().log( "  Shadowed BIOS Select: %d" % ((bfpreg & chipsec.defines.BIT31)>>31) )
-
+        logger().log( "  Base  : %08X" % base )
+        logger().log( "  Limit : %08X" % limit )
 
     def display_SPI_Ranges_Access_Permissions( self ):
         logger().log( "SPI Flash Region Access Permissions" )
@@ -366,6 +375,7 @@ class SPI:
         logger().log( "BIOS Region Write Protection" )
         logger().log( "------------------------------------------------------------" )
         self.display_BIOS_write_protection()
+        logger().log('')
         self.display_SPI_Protected_Ranges()
         logger().log('')
 
