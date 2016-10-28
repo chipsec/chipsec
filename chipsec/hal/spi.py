@@ -228,11 +228,15 @@ class SPI:
         base  = chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'PRB' ) << SPI_FLA_SHIFT
         # Protected Range Limit corresponds to FLA bits 24:12
         limit = chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'PRL' ) << SPI_FLA_SHIFT
-        # FLA bits 11:0 are assumed to be FFFh for the limit comparison
-        limit |= SPI_FLA_PAGE_MASK
-
+        
         wpe = (0 != chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'WPE' ))
         rpe = (0 != chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'RPE' ))
+
+        # Check if this is a valid PRx config
+        if wpe or rpe:
+            # FLA bits 11:0 are assumed to be FFFh for the limit comparison
+            limit |= SPI_FLA_PAGE_MASK
+
         return (base,limit,wpe,rpe,pr_j_reg,pr_j)
 
     ##############################################################################################################
