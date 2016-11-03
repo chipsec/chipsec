@@ -142,6 +142,9 @@ class OSXHelper(Helper):
     def getcwd(self):
         return os.getcwd()
 
+    def get_tool_info( self, tool_type ):
+        raise NotImplementedError()
+
     def read_io_port(self):
         raise NotImplementedError()
 

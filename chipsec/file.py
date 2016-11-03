@@ -45,6 +45,8 @@ import os
 
 from chipsec.logger import logger
 
+TOOLS_DIR = 'chipsec_tools'
+
 def read_file( filename, size=0 ):
     #with open( filename, 'rb' ) as f:
     #  _file = f.read()

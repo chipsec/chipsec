@@ -157,3 +157,7 @@ SIZE2FORMAT = {
     4: 'I',
     8: 'Q'
 }
+
+class ToolType:
+  TIANO_COMPRESS = 1
+  LZMA_COMPRESS  = 2

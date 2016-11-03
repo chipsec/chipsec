@@ -37,10 +37,10 @@ import fnmatch
 import re
 import errno
 import shutil
+import traceback
 
 import chipsec.file
 from chipsec.logger import *
-import traceback
 
 _importlib = True
 try:
@@ -71,6 +71,9 @@ class UnimplementedAPIError (OsHelperError):
 class UnimplementedNativeAPIError (UnimplementedAPIError):
     def __init__(self,api_name):
         super(UnimplementedNativeAPIError,self).__init__(api_name)
+
+def get_tools_path():
+    return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
 
 # Base class for the helpers
 class Helper(object):
@@ -433,6 +436,25 @@ class OsHelper:
     def getcwd( self ):
         return self.helper.getcwd()
 
+    def get_tool_path( self, tool_type ):
+        tool_name, tool_pathdef = self.helper.get_tool_info( tool_type )
+        tool_path = tool_pathdef
+
+        try:
+            import pkg_resources
+            tool_path = pkg_resources.resource_filename( '%s.%s' % (chipsec.file.TOOLS_DIR,self.helper.os_system.lower()), tool_name )
+        except ImportError:
+            pass
+
+        if not os.path.isfile( tool_path ):
+            tool_path = os.path.join( tool_pathdef, tool_name )
+            if not os.path.isfile( tool_path ): logger().error( "Couldn't find %s" % tool_path )
+
+        return tool_path
+
+    def get_compression_tool_path( self, compression_type ):
+        return self.get_tool_path( compression_type )
+
     #
     # Decompress binary with OS specific tools
     #
@@ -441,7 +463,7 @@ class OsHelper:
         if (CompressionType == 0): # not compressed
           shutil.copyfile(CompressedFileName, OutputFileName)
         else:
-          exe = self.helper.get_compression_tool_path( CompressionType )
+          exe = self.get_compression_tool_path( CompressionType )
           if exe is None: return None 
           try:
             subprocess.call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName), stdout=open(os.devnull, 'wb') )
@@ -460,7 +482,7 @@ class OsHelper:
         if (CompressionType == 0): # not compressed
           shutil.copyfile(FileName, OutputFileName)
         else:
-          exe = self.helper.get_compression_tool_path( CompressionType )
+          exe = self.get_compression_tool_path( CompressionType )
           if exe is None: return None 
           try:
             subprocess.call( '%s -e -o %s %s' % (exe,OutputFileName,FileName), stdout=open(os.devnull, 'wb') )
