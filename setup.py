@@ -43,7 +43,7 @@ def package_files(directory):
     paths = []
     for (path, directories, filenames) in os.walk(directory):
         for filename in filenames:
-            paths.append(os.path.join('..', path, filename))
+            paths.append(os.path.join(path, filename))
     return paths
 
 skip_driver_opt = [("skip-driver", None,
@@ -65,13 +65,31 @@ class build_ext(_build_ext):
         self.set_undefined_options("install", ("skip_driver", "skip_driver"))
 
     def run(self):
-        bl = os.path.realpath(self.distribution.command_obj['build'].build_lib)
-        if platform.system().lower() == "linux":
-            if not self.skip_driver:
-                subprocess.check_output(["make", "-C",
-                                        os.path.join(bl, "drivers", "linux")])
-            shutil.rmtree(os.path.join(bl, "drivers"))
+        # First, we build the regular extensions.
         _build_ext.run(self)
+        # Then, we build the driver if required.
+        if platform.system().lower() == "linux" and not self.skip_driver:
+            build_lib = os.path.realpath(self.build_lib)
+            build_driver = os.path.join(build_lib, "drivers", "linux")
+            ko_ext = os.path.join(build_driver, "chipsec.ko")
+            # We copy the drivers extension to the build directory.
+            self.copy_tree(os.path.join("drivers", "linux"), build_driver)
+            # Run the makefile there.
+            subprocess.check_output(["make", "-C", build_driver])
+            # And copy the resulting .ko to the right place.
+            # That is to the source directory if we are in "develop" mode,
+            # otherwise to the helper subdirectory in the build directory.
+            root_dst = "" if self.inplace else build_lib
+            dst = os.path.join(root_dst, "chipsec", "helper", "linux")
+            self.copy_file(ko_ext, dst)
+            # Finally, we clean up the build directory.
+            shutil.rmtree(os.path.join(build_lib, "drivers"))
+
+    def get_source_files(self):
+        files = _build_ext.get_source_files(self)
+        if platform.system().lower() == "linux":
+          files.extend(package_files(os.path.join("drivers", "linux")))
+        return files
 
 class install(_install):
     user_options = _install.user_options + skip_driver_opt
@@ -83,31 +101,28 @@ class install(_install):
 
 
 package_data = {
+    # Include any configuration file.
+    "": ["*.ini", "*.cfg", "*.json"],
+    "chipsec": ["VERSION", "WARNING.txt"],
     "chipsec.cfg": ["*.xml", "*.xsd"],
-    "chipsec": ["VERSION"]
 }
-
+data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
-extra_files = [os.path.join("..", "chipsec-manual.pdf"), "WARNING.txt",
-               "*.ini","*.cfg","*.json"
-]
 extra_kw = {}
 
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
-    extra_files.append(os.path.join("..", "chipsec_tools", "compression", "win" , "*"))
-    install_requires.extend(['pywin32'])
+    data_files.append(("chipsec_tools/compression/win",
+                       package_files(os.path.join("chipsec_tools", "compression", "win"))))
+    install_requires.append("pywin32")
 
-if platform.system().lower() == "linux":
-    extra_files.extend(package_files('drivers/linux'))
-    extra_files.append(os.path.join("..", "chipsec_tools", "compression", "linux", "*"))
-    package_data["chipsec.helper.linux"] = ["*.c","Makefile"]
+elif platform.system().lower() == "linux":
+    data_files.append(("chipsec_tools/compression/linux",
+                       package_files(os.path.join("chipsec_tools", "compression", "linux"))))
     extra_kw["ext_modules"] = [
         Extension("chipsec.helper.linux.cores",
                   ["chipsec/helper/linux/cores.c"])
     ]
-
-package_data[''] = extra_files
 
 setup(
     name = 'chipsec',
@@ -136,6 +151,7 @@ setup(
         'Topic :: System :: Hardware'
     ],
 
+    data_files = data_files,
     packages = find_packages(exclude=["tests.*", "tests"]),
     package_data = package_data,
     install_requires = install_requires,
