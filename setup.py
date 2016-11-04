@@ -106,9 +106,7 @@ package_data = {
     "chipsec": ["VERSION", "WARNING.txt"],
     "chipsec.cfg": ["*.xml", "*.xsd"],
 }
-# temporary workaround
-data_files = []
-#data_files = [("", ["chipsec-manual.pdf"])]
+data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
 extra_kw = {}
 
@@ -119,6 +117,7 @@ if platform.system().lower() == "windows":
 
 elif platform.system().lower() == "linux":
     package_data["chipsec_tools.linux"] = ['*']
+    data_files = [(os.path.join("share","doc","chipsec"), ["chipsec-manual.pdf"])]
     extra_kw["ext_modules"] = [
         Extension("chipsec.helper.linux.cores",
                   ["chipsec/helper/linux/cores.c"])
