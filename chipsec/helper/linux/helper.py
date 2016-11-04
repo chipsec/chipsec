@@ -48,7 +48,7 @@ import subprocess
 import os.path
 from ctypes import *
 
-from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
 from chipsec.logger import logger, print_buffer
 import chipsec.file
 import chipsec.defines
@@ -78,6 +78,12 @@ IOCTL_WRMMIO                   = 0x13
 IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
+
+_tools = {
+  chipsec.defines.ToolType.TIANO_COMPRESS: 'TianoCompress.bin',
+  chipsec.defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.bin'
+}
+
 
 class LinuxHelper(Helper):
 
@@ -843,27 +849,10 @@ class LinuxHelper(Helper):
     #
     # File system
     #
-    def get_tools_path( self ):
-        p = os.path.join(chipsec.file.get_main_dir(), 'chipsec_tools','compression','linux')
-        return os.path.normpath(p)
-
-    def get_compression_tool_path( self, compression_type ):
-        tool = None
-        if   1 == compression_type:
-             tool = os.path.join( self.get_tools_path(), 'TianoCompress.bin')
-        elif 2 == compression_type:
-             tool = os.path.join( self.get_tools_path(), 'LzmaCompress.bin' )
-        else:
-             logger().error( "Don't have a tool for compression type 0x%X" % compression_type )
-             return None
-
-        if not os.path.exists( tool ):
-           err = "Couldn't find compression tool '%s'" % tool
-           logger().error( err )
-           #raise OsHelperError(err, 0)
-           return None
-
-        return tool
+    def get_tool_info( self, tool_type ):
+        tool_name = _tools[ tool_type ] if tool_type in _tools else None
+        tool_path = os.path.join( get_tools_path(), self.os_system.lower() )
+        return tool_name,tool_path
   
     def getcwd( self ):
         return os.getcwd()

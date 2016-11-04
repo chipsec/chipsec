@@ -112,13 +112,12 @@ extra_kw = {}
 
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
-    data_files.append(("chipsec_tools/compression/win",
-                       package_files(os.path.join("chipsec_tools", "compression", "win"))))
+    package_data["chipsec_tools.windows"] = ['*']
     install_requires.append("pywin32")
 
 elif platform.system().lower() == "linux":
-    data_files.append(("chipsec_tools/compression/linux",
-                       package_files(os.path.join("chipsec_tools", "compression", "linux"))))
+    package_data["chipsec_tools.linux"] = ['*']
+    data_files = [(os.path.join("share","doc","chipsec"), ["chipsec-manual.pdf"])]
     extra_kw["ext_modules"] = [
         Extension("chipsec.helper.linux.cores",
                   ["chipsec/helper/linux/cores.c"])

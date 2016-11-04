@@ -57,10 +57,10 @@ import winerror
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
 import win32api, win32process, win32security, win32file, win32serviceutil
 
-from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
 from chipsec.logger import logger, print_buffer
 import chipsec.file
-
+import chipsec.defines
 
 
 class PCI_BDF(Structure):
@@ -235,6 +235,11 @@ def _handle_error( err, hr=0 ):
     logger().error( err )
     raise OsHelperError( err, hr )
 
+
+_tools = {
+  chipsec.defines.ToolType.TIANO_COMPRESS: 'TianoCompress.exe',
+  chipsec.defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.exe'
+}
 
 class Win32Helper(Helper):
 
@@ -889,28 +894,10 @@ class Win32Helper(Helper):
     #
     # File system
     #
-    def get_tools_path( self ):
-        p = os.path.join(chipsec.file.get_main_dir(), 'chipsec_tools','compression','win')
-        return os.path.normpath(p)
-
-    def get_compression_tool_path( self, compression_type ):
-        tool = None
-        if   1 == compression_type:
-             tool = os.path.join( self.get_tools_path(), 'TianoCompress.exe')
-        elif 2 == compression_type:
-             tool = os.path.join( self.get_tools_path(), 'LzmaCompress.exe' )
-        else:
-             logger().error( "Don't have a tool for compression type 0x%X" % compression_type )
-             return None
-
-        if not os.path.exists( tool ):
-           err = "Couldn't find compression tool '%s'" % tool
-           logger().error( err )
-           #raise OsHelperError(err, 0)
-           return None
-
-        return tool
-
+    def get_tool_info( self, tool_type ):
+        tool_name = _tools[ tool_type ] if tool_type in _tools else None
+        tool_path = os.path.join( get_tools_path(), self.os_system.lower() )
+        return tool_name,tool_path
 
 #
 # Get instance of this OS helper
