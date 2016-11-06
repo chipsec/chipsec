@@ -162,6 +162,7 @@ setup(
             'chipsec_main=chipsec_main:main',
         ],
     },
+    test_suite="tests",
     cmdclass = {
         'install': install,
         'build_ext'   : build_ext,
