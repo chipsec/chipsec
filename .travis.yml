@@ -2,8 +2,11 @@ language: python
 python:
   - "2.7"
 
-before_install:
-  - export PYTHONPATH=./
+sudo: required
+install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y linux-headers-$(uname -r) nasm
+  - sudo ln -s /usr/src/$(uname -r) /lib/modules/$(uname -r)/build
 
 script:
-  - python -m unittest discover tests/software/
+  - python setup.py test
