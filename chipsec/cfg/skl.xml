@@ -190,7 +190,11 @@
     <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="2" desc="TCO1 Control">
       <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
     </register>
-
+    
+    <!-- Private to Sideband Bridge Registers -->
+    <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="4" desc="P2SB Control">
+      <field  name="Hide"  bit="8" size="1"   desc="Hide Device"/>
+    </register>
    
   </registers>
 
@@ -201,7 +205,8 @@
   <!--                                      -->
   <!-- #################################### -->
   <controls>
-    <control name="BiosInterfaceLockDown"  register="BC"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+    <control name="BiosInterfaceLockDown" register="BC" field="BILD" desc="BIOS Interface Lock-Down"/>
+    <control name="P2sbHide" register="P2SBC" field="Hide" desc="Hide Primary to Sideband Bridge"/>
   </controls>
 
 </configuration>
