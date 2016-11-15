@@ -1,68 +1,9 @@
-import os
 import struct
-import tempfile
-import unittest
 
-from tests.software import mock_helper
+from tests.software import mock_helper, util
 
-import chipsec_util
-from chipsec import logger
-from chipsec import chipset
-from chipsec.helper import oshelper
-
-class TestChipsecUtil(unittest.TestCase):
-    """Test the commands exposed by chipsec_utils.
-
-    Each test may define its virtual helper and then call the _chipsec_util
-    method with the command line arguments.
-    """
-
-    def setUp(self):
-        """Setup the environment for the utils tests.
-
-        We mock the helper registry to only contain our emulated helper.
-        """
-        fileno, self.log_file = tempfile.mkstemp()
-        os.close(fileno)
-        self.old_registry = oshelper.Helper.registry
-        oshelper.Helper.registry = []
-        oshelper._helper = None
-        chipset._chipset = None
-
-    def tearDown(self):
-        os.remove(self.log_file)
-        oshelper._helper = None
-        chipset._chipset = None
-        chipsec_util._cs = None
-        oshelper.Helper.registry = self.old_registry
-
-    def _chipsec_util(self, arg, helper_class=mock_helper.TestHelper):
-        """Run the chipsec_util command with the arguments.
-
-        Each test may setup a virtual helper to emulate the expected behaviour
-        from the hardware. If no helper is provided, TestHelper will be used.
-        It verifies that no error is being reported. self.log will be populated
-        with the output.
-        """
-        oshelper.Helper.registry = [(helper_class.__name__, helper_class)]
-        chipsec_util._cs = chipset.cs()
-        util = chipsec_util.ChipsecUtil()
-        util.VERBOSE = True
-        logger.logger().HAL = True
-        util.set_logfile(self.log_file)
-        err_code = util.main(["chipsec_utils.py"] + arg.split())
-        logger.logger().close()
-        self.log = open(self.log_file).read()
-        self.assertEqual(err_code, 0)
-
-    def _assertLogValue(self, name, value):
-        """Shortcut to validate the output.
-
-        Assert that at least one line exists within the log which matches the
-        expression: name [:=] value.
-        """
-        self.assertRegexpMatches(self.log,
-                                 r'(^|\W){}\s*[:=]\s*{}($|\W)'.format(name, value))
+class TestACPIChipsecUtil(util.TestChipsecUtil):
+    """Test the ACPI commands exposed by chipsec_utils."""
 
     def test_acpi_xsdt_list(self):
 
@@ -184,82 +125,6 @@ class TestChipsecUtil(unittest.TestCase):
 
         self._chipsec_util("acpi table DSDT", DSDTParsingHelper)
         self.assertIn("OEMDSD", self.log)
-
-    def test_platform(self):
-        self._chipsec_util("platform")
-
-    def test_cmos_dump(self):
-        """Test to verify the output of 'cmos dump'.
-
-        Check that we only access CMOS IO ports.
-        """
-
-        class CMOSHelper(mock_helper.TestHelper):
-            def read_io_port(self, io_port, size):
-                if io_port < 0x70 or io_port > 0x73:
-                    raise Exception("Reading outside CMOS IO port")
-                return io_port
-
-            def write_io_port(self, io_port, value, size):
-                if io_port < 0x70 or io_port > 0x73:
-                    raise Exception("Writing outside CMOS IO port")
-
-        self._chipsec_util("cmos dump", CMOSHelper)
-
-    def test_msr(self):
-
-        class MSRHelper(mock_helper.TestHelper):
-
-            def get_threads_count(self):
-                return 1
-
-            def read_msr(self, thread_id, msr_addr):
-                if msr_addr == 0x2FF:
-                    return [0x1234, 0xcdef]
-                else:
-                    return [0x0, 0x0]
-
-        self._chipsec_util("msr 0x2FF", MSRHelper)
-        self._assertLogValue("EAX", "00001234")
-        self._assertLogValue("EDX", "0000CDEF")
-
-    def test_gdt(self):
-
-        class GDTHelper(mock_helper.TestHelper):
-
-            def get_descriptor_table(self, cpu_thread_id, desc_table_code):
-                return (63, 0x1000, 0x0)
-
-            def read_phys_mem(self, pa_hi, pa_lo, length):
-                return "\xff" * length
-
-        self._chipsec_util("gdt 0", GDTHelper)
-        self.assertIn("# of entries    : 4", self.log)
-
-
-    def test_spi_info(self):
-        """Test to verify the ouput of 'spi info'.
-
-        Validates that BC and FRAP are correctly read.
-        """
-
-        self._chipsec_util("spi info", mock_helper.SPIHelper)
-        self._assertLogValue("BC", "0xDEADBEEF")
-        self._assertLogValue("FRAP", "0xEEEEEEEE")
-
-    def test_spi_dump(self):
-        """Test to verify the ouput of 'spi dump'.
-
-        Validates that the flash size is correctly calculated (based on the
-        assumption that the BIOS region is last) and match it with the output
-        file size.
-        """
-
-        fileno, rom_file = tempfile.mkstemp()
-        os.close(fileno)
-        self._chipsec_util("spi dump %s" % rom_file, mock_helper.SPIHelper)
-        self.assertEqual(os.stat(rom_file).st_size, 0x3000)
-        os.remove(rom_file)
 
     def test_parse_multi_table(self):
         """Test to verify that tables with same signature are parsed correctly.
