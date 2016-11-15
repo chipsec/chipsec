@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -44,6 +44,7 @@ Usage:
 
 """
 
+from chipsec.hal import hal_base
 from chipsec.logger import *
 from chipsec.cfg.common import *
 
@@ -76,10 +77,7 @@ EC_COMMAND_ACPI_QUERY       = 0x084  # Query EC event
 EC_COMMAND_ACPI_READ_EXT    = 0x0F0  # Read EC ACPI extended memory
 EC_COMMAND_ACPI_WRITE_EXT   = 0x0F1  # Write EC ACPI extended memory
 
-class EC:
-    def __init__( self, cs ):
-        self.cs = cs
-
+class EC(hal_base.HALBase):
 
     #
     # EC ACPI memory access

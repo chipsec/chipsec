@@ -35,23 +35,23 @@ class ia32cfg(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.res = ModuleResult.PASSED
-    
+
     def is_supported(self):
         if self.cs.is_atom(): return False
         else: return True
-        
+
     def check_ia32feature_control(self):
         self.logger.start_test( "IA32 Feature Control Lock" )
         self.logger.log( "[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs.." )
-        
+
         ok = True
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             #feature_cntl = chipsec.chipset.read_register( self.cs, 'IA32_FEATURE_CONTROL', tid )
             #chipsec.chipset.print_register( self.cs, 'IA32_FEATURE_CONTROL', feature_cntl )
-            feature_cntl_lock = chipsec.chipset.get_control( self.cs, 'Ia32FeatureControlLock' )
+            feature_cntl_lock = self.cs.get_control('Ia32FeatureControlLock' )
             self.logger.log( "[*] cpu%d: IA32_Feature_Control Lock = %d" % (tid,feature_cntl_lock) )
             if 0 == feature_cntl_lock: ok = False
-        
+
         if ok:
            self.res = ModuleResult.PASSED
            self.logger.log_passed_check( "IA32_FEATURE_CONTROL MSR is locked on all logical CPUs" )

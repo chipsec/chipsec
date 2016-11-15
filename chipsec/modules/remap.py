@@ -27,7 +27,6 @@ Check Memory Remapping Configuration
 """
 
 from chipsec.module_common import *
-import chipsec.chipset
 
 _MODULE_NAME = 'remap'
 
@@ -48,19 +47,19 @@ class remap(BaseModule):
     def check_remap_config(self):
         self.logger.start_test( "Memory Remapping Configuration" )
 
-        if not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_REMAPBASE'  ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_REMAPLIMIT' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_TOUUD'      ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_TOLUD'      ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_TSEGMB'     ):
+        if not self.cs.is_register_defined( 'PCI0.0.0_REMAPBASE'  ) or \
+           not self.cs.is_register_defined( 'PCI0.0.0_REMAPLIMIT' ) or \
+           not self.cs.is_register_defined( 'PCI0.0.0_TOUUD'      ) or \
+           not self.cs.is_register_defined( 'PCI0.0.0_TOLUD'      ) or \
+           not self.cs.is_register_defined( 'PCI0.0.0_TSEGMB'     ):
             self.logger.error( "Couldn't find definition of required registers (REMAP*, TOLUD, TOUUD, TSEGMB)" )
             return ModuleResult.ERROR
 
-        remapbase  = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_REMAPBASE' )
-        remaplimit = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_REMAPLIMIT' )
-        touud      = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TOUUD' )
-        tolud      = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TOLUD' )
-        tsegmb     = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_TSEGMB' )
+        remapbase  = self.cs.read_register( 'PCI0.0.0_REMAPBASE' )
+        remaplimit = self.cs.read_register( 'PCI0.0.0_REMAPLIMIT' )
+        touud      = self.cs.read_register( 'PCI0.0.0_TOUUD' )
+        tolud      = self.cs.read_register( 'PCI0.0.0_TOLUD' )
+        tsegmb     = self.cs.read_register( 'PCI0.0.0_TSEGMB' )
         self.logger.log( "[*] Registers:" )
         self.logger.log( "[*]   TOUUD     : 0x%016X" % touud )
         self.logger.log( "[*]   REMAPLIMIT: 0x%016X" % remaplimit )

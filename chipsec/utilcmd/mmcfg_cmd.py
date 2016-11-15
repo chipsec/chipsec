@@ -31,7 +31,7 @@ __version__ = '1.0'
 import time
 
 from chipsec.command    import BaseCommand
-from chipsec.hal.mmio   import *
+from chipsec.hal import mmio
 
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
@@ -52,10 +52,11 @@ class MMCfgCommand(BaseCommand):
 
     def run(self):
         t = time.time()
+        _mmio = mmio.MMIO(self.cs)
 
         if 2 == len(self.argv):
-            #pciexbar = get_PCIEXBAR_base_address( self.cs )
-            pciexbar = get_MMCFG_base_address( self.cs )
+            #pciexbar = _mmio.get_PCIEXBAR_base_address()
+            pciexbar = _mmio.get_MMCFG_base_address()
             self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
             return
         elif 6 > len(self.argv):
@@ -86,11 +87,11 @@ class MMCfgCommand(BaseCommand):
 
         if 8 == len(self.argv):
             value = int(self.argv[7], 16)
-            write_mmcfg_reg( self.cs, bus, device, function, offset, width, value )
+            _mmio.write_mmcfg_reg(bus, device, function, offset, width, value )
             #_cs.pci.write_mmcfg_reg( bus, device, function, offset, width, value )
             self.logger.log( "[CHIPSEC] writing MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
         else:
-            value = read_mmcfg_reg( self.cs, bus, device, function, offset, width )
+            value = _mmio.read_mmcfg_reg(bus, device, function, offset, width )
             #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
             self.logger.log( "[CHIPSEC] reading MMCFG register (%02d:%02d.%d + 0x%02X): 0x%X" % (bus, device, function, offset, value) )
 

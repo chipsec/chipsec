@@ -35,14 +35,14 @@ class rtclock(BaseModule):
 
     def is_supported(self):
         return (self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE)
-        
+
     def check_rtclock(self):
         self.logger.start_test( "Protected RTC memory locations" )
 
-        rc_reg = chipsec.chipset.read_register( self.cs, 'RC' )
-        chipsec.chipset.print_register( self.cs, 'RC', rc_reg )
-        ll = chipsec.chipset.get_register_field( self.cs, 'RC', rc_reg, 'LL' )
-        ul = chipsec.chipset.get_register_field( self.cs, 'RC', rc_reg, 'UL' )
+        rc_reg = self.cs.read_register( 'RC' )
+        self.cs.print_register( 'RC', rc_reg )
+        ll = self.cs.get_register_field( 'RC', rc_reg, 'LL' )
+        ul = self.cs.get_register_field( 'RC', rc_reg, 'UL' )
 
         if ll == 1: self.logger.log_good( "Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are locked" )
         else:  self.logger.log_bad( "Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are not locked" )

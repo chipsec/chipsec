@@ -51,7 +51,8 @@ __version__ = '1.0'
 import struct
 import sys
 import os.path
-import chipsec.chipset
+
+from chipsec.hal import hal_base
 from chipsec.logger import logger
 
 #
@@ -97,41 +98,38 @@ class MessageBusPort_Quark:
   UNIT_SOC   = 0x31
 
 
-def MB_MESSAGE_MCR( _cs, port, reg, opcode ):
-    mcr = 0x0
-    mcr = chipsec.chipset.set_register_field( _cs, 'MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF )
-    mcr = chipsec.chipset.set_register_field( _cs, 'MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg )
-    mcr = chipsec.chipset.set_register_field( _cs, 'MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port )
-    mcr = chipsec.chipset.set_register_field( _cs, 'MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode )
-    return mcr
-
-def MB_MESSAGE_MCRX( _cs, reg ):
-    mcrx = 0x0
-    mcrx = chipsec.chipset.set_register_field( _cs, 'MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', reg, preserve_field_position=True )
-    return mcrx
-
-def MB_MESSAGE_MDR( _cs, data ):
-    mdr = 0x0
-    mdr = chipsec.chipset.set_register_field( _cs, 'MSG_DATA_REG', mdr, 'MESSAGE_DATA', data )
-    return mdr
-
-
 class MsgBusRuntimeError (RuntimeError):
     pass
 
-class MsgBus:
+class MsgBus(hal_base.HALBase):
 
-    def __init__( self, cs ):
+    def __init__(self, cs):
+        super(MsgBus, self).__init__(cs)
         self.helper = cs.helper
-        self.cs     = cs
 
+    def MB_MESSAGE_MCR(self, port, reg, opcode):
+        mcr = 0x0
+        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF )
+        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg )
+        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port )
+        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode )
+        return mcr
 
+    def MB_MESSAGE_MCRX(self, reg):
+        mcrx = 0x0
+        mcrx = self.cs.set_register_field( 'MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', reg, preserve_field_position=True )
+        return mcrx
+
+    def MB_MESSAGE_MDR(self, data):
+        mdr = 0x0
+        mdr = self.cs.set_register_field( 'MSG_DATA_REG', mdr, 'MESSAGE_DATA', data )
+        return mdr
     #
     # Issues read message on the message bus
     #
     def msgbus_read_message( self, port, register, opcode ):
-        mcr  = MB_MESSAGE_MCR (self.cs, port, register, opcode)
-        mcrx = MB_MESSAGE_MCRX(self.cs, register)
+        mcr  = self.MB_MESSAGE_MCR (port, register, opcode)
+        mcrx = self.MB_MESSAGE_MCRX(register)
 
         if logger().HAL: logger().log( "[msgbus] read: port 0x%02X + 0x%08X (op = 0x%02X)" % (port, register, opcode) )
         if logger().VERBOSE: logger().log( "[msgbus]       MCR = 0x%08X, MCRX = 0x%08X" % (mcr, mcrx) )
@@ -146,9 +144,9 @@ class MsgBus:
     # Issues write message on the message bus
     #
     def msgbus_write_message( self, port, register, opcode, data ):
-        mcr  = MB_MESSAGE_MCR (self.cs, port, register, opcode)
-        mcrx = MB_MESSAGE_MCRX(self.cs, register)
-        mdr  = MB_MESSAGE_MDR (self.cs, data)
+        mcr  = self.MB_MESSAGE_MCR(port, register, opcode)
+        mcrx = self.MB_MESSAGE_MCRX(register)
+        mdr  = self.MB_MESSAGE_MDR (data)
 
         if logger().HAL: logger().log( "[msgbus] write: port 0x%02X + 0x%08X (op = 0x%02X) < data = 0x%08X" % (port, register, opcode, data) )
         if logger().VERBOSE: logger().log( "[msgbus]        MCR = 0x%08X, MCRX = 0x%08X, MDR = 0x%08X" % (mcr, mcrx, mdr) )
@@ -159,9 +157,9 @@ class MsgBus:
     # Issues generic message on the message bus
     #
     def msgbus_send_message( self, port, register, opcode, data=None ):
-        mcr  = MB_MESSAGE_MCR(self.cs, port, register, opcode)
-        mcrx = MB_MESSAGE_MCRX(self.cs, register)
-        mdr  = None if data is None else MB_MESSAGE_MDR(self.cs, data)
+        mcr  = self.MB_MESSAGE_MCR(port, register, opcode)
+        mcrx = self.MB_MESSAGE_MCRX(register)
+        mdr  = None if data is None else self.MB_MESSAGE_MDR(data)
 
         if logger().HAL:
             logger().log( "[msgbus] message: port 0x%02X + 0x%08X (op = 0x%02X)" % (port, register, opcode) )

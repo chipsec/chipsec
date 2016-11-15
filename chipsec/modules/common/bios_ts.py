@@ -41,19 +41,19 @@ class bios_ts(chipsec.module_common.BaseModule):
         self.logger.start_test( "BIOS Interface Lock (including Top Swap Mode)" )
 
         bild = 0
-        if chipsec.chipset.is_control_defined( self.cs, 'BiosInterfaceLockDown' ):
-            bild = chipsec.chipset.get_control( self.cs, 'BiosInterfaceLockDown' )
+        if self.cs.is_control_defined( 'BiosInterfaceLockDown' ):
+            bild = self.cs.get_control( 'BiosInterfaceLockDown' )
             self.logger.log( "[*] BiosInterfaceLockDown (BILD) control = %d" % bild )
         else:
             self.logger.error( "BiosInterfaceLockDown (BILD) control is not defined" )
             return ModuleResult.ERROR
 
-        if chipsec.chipset.is_control_defined( self.cs, 'TopSwapStatus' ):
-            tss = chipsec.chipset.get_control( self.cs, 'TopSwapStatus' )
+        if self.cs.is_control_defined( 'TopSwapStatus' ):
+            tss = self.cs.get_control( 'TopSwapStatus' )
             self.logger.log( "[*] BIOS Top Swap mode is %s (TSS = %d)" % ('enabled' if (1==tss) else 'disabled', tss) )
 
-        if chipsec.chipset.is_control_defined( self.cs, 'TopSwap' ):
-            ts  = chipsec.chipset.get_control( self.cs, 'TopSwap' )
+        if self.cs.is_control_defined( 'TopSwap' ):
+            ts  = self.cs.get_control( 'TopSwap' )
             self.logger.log( "[*] RTC TopSwap control (TS) = %x" % ts )
 
         if 0 == bild:

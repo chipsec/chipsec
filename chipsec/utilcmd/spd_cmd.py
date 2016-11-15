@@ -26,9 +26,7 @@ __version__ = '1.0'
 import time
 
 from chipsec.command     import BaseCommand
-from chipsec.hal.smbus   import *
-from chipsec.hal.spd     import *
-
+from chipsec.hal import smbus, spd
 
 class SPDCommand(BaseCommand):
     """
@@ -57,8 +55,8 @@ class SPDCommand(BaseCommand):
             return
 
         try:
-            _smbus = SMBus( self.cs )
-            _spd   = SPD( _smbus )
+            _smbus = smbus.SMBus( self.cs )
+            _spd   = spd.SPD( _smbus )
         except BaseException, msg:
             print msg
             return
@@ -71,7 +69,7 @@ class SPDCommand(BaseCommand):
             return
         #smbus.display_SMBus_info()
 
-        dev_addr = SPD_SMBUS_ADDRESS
+        dev_addr = spd.SPD_SMBUS_ADDRESS
 
         if( 'detect' == op ):
 
@@ -82,7 +80,7 @@ class SPDCommand(BaseCommand):
 
             if len(self.argv) > 3:
                 dev = self.argv[3].upper()
-                dev_addr = chipsec.hal.spd.SPD_DIMM_ADDRESSES[ dev ] if dev in chipsec.hal.spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
+                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
                 if not _spd.isSPDPresent( dev_addr ):
                     self.logger.log( "[CHIPSEC] SPD for DIMM 0x%X is not found" % dev_addr )
                     return
@@ -95,7 +93,7 @@ class SPDCommand(BaseCommand):
 
             if len(self.argv) > 3:
                 dev = self.argv[3].upper()
-                dev_addr = chipsec.hal.spd.SPD_DIMM_ADDRESSES[ dev ] if dev in chipsec.hal.spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
+                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
             if not _spd.isSPDPresent( dev_addr ):
                 self.logger.log( "[CHIPSEC] SPD for DIMM 0x%X is not found" % dev_addr )
                 return

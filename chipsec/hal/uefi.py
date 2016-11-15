@@ -41,12 +41,9 @@ import sys
 from collections import namedtuple
 import collections
 
+from chipsec.hal import hal_base, mmio, spi, uefi_platform
 from chipsec.hal.uefi_common import *
-from chipsec.hal.uefi_platform import *
-
 from chipsec.logger import *
-from chipsec.hal.mmio import *
-from chipsec.hal.spi import *
 from chipsec.file import *
 
 
@@ -254,16 +251,16 @@ def identify_EFI_NVRAM( buffer ):
 #
 ########################################################################################################
 
-class UEFI:
-    def __init__( self, cs ):
-        self.cs = cs
+class UEFI(hal_base.HALBase):
+    def __init__(self, cs):
+        super(UEFI, self).__init__(cs)
         self.helper = cs.helper
         #if cs is not None:
         #    self.cs = cs
         #    self.helper = cs.helper
         #else:
         #    self.helper = helper
-        self._FWType = FWType.EFI_FW_TYPE_UEFI
+        self._FWType = uefi_platform.FWType.EFI_FW_TYPE_UEFI
 
     ######################################################################
     # FWType defines platform/BIOS dependent formats like

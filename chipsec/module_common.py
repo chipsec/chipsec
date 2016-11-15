@@ -51,8 +51,8 @@ class ModuleResult:
     DEPRECATED = 4
     ERROR   = -1
 
-    
-class BaseModule( object ):
+
+class BaseModule(object):
     def __init__(self):
         self.cs = chipsec.chipset.cs()
         self.logger = chipsec.logger.logger()
@@ -64,7 +64,7 @@ class BaseModule( object ):
         depending whether or not this module is supported in the currently running
         platform.
         To access the currently running platform use
-            
+
         >>> self.cs.get_chipset_id()
         """
         return True
@@ -79,8 +79,8 @@ class BaseModule( object ):
                 self.res = value
         else: # PASSED or SKIPPED or DEPRECATED
             self.res = value
-        
-    def run( self, module_argv ):
+
+    def run(self, module_argv):
         raise NotImplementedError('sub class should overwrite the run() method')
 
 
@@ -88,7 +88,6 @@ MTAG_BIOS       = "BIOS"
 MTAG_SMM        = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
 MTAG_HWCONFIG   = "HWCONFIG"
-
 
 
 ##! [Available Tags]

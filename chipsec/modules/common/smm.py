@@ -39,20 +39,20 @@ class smm(BaseModule):
     def is_supported(self):
         chipset = self.cs.get_chipset_id()
         return (chipset not in chipsec.chipset.CHIPSET_FAMILY_ATOM) and (chipset not in chipsec.chipset.CHIPSET_FAMILY_XEON)
-  
+
     def check_SMRAMC(self):
         self.logger.start_test( "Compatible SMM memory (SMRAM) Protection" )
-        
-        if not chipsec.chipset.is_register_defined( self.cs, 'PCI0.0.0_SMRAMC'  ) :
+
+        if not self.cs.is_register_defined( 'PCI0.0.0_SMRAMC'  ) :
             self.logger.error( "Couldn't find definition of required registers (PCI0.0.0_SMRAMC)" )
             return ModuleResult.ERROR
-        
-        regval = chipsec.chipset.read_register( self.cs, 'PCI0.0.0_SMRAMC' )
-        g_smrame = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_SMRAMC', regval, 'G_SMRAME' )
-        d_open   = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_SMRAMC', regval, 'D_OPEN' )
-        d_lock   = chipsec.chipset.get_register_field( self.cs, 'PCI0.0.0_SMRAMC', regval, 'D_LCK' )
-      
-        chipsec.chipset.print_register( self.cs, 'PCI0.0.0_SMRAMC', regval )
+
+        regval = self.cs.read_register( 'PCI0.0.0_SMRAMC' )
+        g_smrame = self.cs.get_register_field( 'PCI0.0.0_SMRAMC', regval, 'G_SMRAME' )
+        d_open   = self.cs.get_register_field( 'PCI0.0.0_SMRAMC', regval, 'D_OPEN' )
+        d_lock   = self.cs.get_register_field( 'PCI0.0.0_SMRAMC', regval, 'D_LCK' )
+
+        self.cs.print_register( 'PCI0.0.0_SMRAMC', regval )
 
         res = ModuleResult.ERROR
         if 1 == g_smrame:

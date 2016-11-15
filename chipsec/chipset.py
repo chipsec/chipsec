@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -41,20 +41,10 @@ import fnmatch
 import re
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
-from chipsec.hal.pci         import Pci
-from chipsec.hal.physmem     import Memory
-from chipsec.hal.msr         import Msr
-from chipsec.hal.ucode       import Ucode
-from chipsec.hal.io          import PortIO
-#from chipsec.hal.cpuid       import CpuID
-from chipsec.hal.msgbus      import MsgBus
-import chipsec.hal.cpu
+from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode
 
-import chipsec.hal.mmio as mmio
-import chipsec.hal.iobar as iobar 
-
-from chipsec.cfg.common      import Cfg
-from chipsec.logger          import logger
+from chipsec.cfg.common import Cfg
+from chipsec.logger import logger
 
 import chipsec.file
 
@@ -220,12 +210,15 @@ def map_xmlname(self, x):
     return x.split('.')[0]
 
 
-
-class UnknownChipsetError (RuntimeError):
+class UnknownChipsetError(RuntimeError):
     pass
 
-class DeviceNotFoundError (RuntimeError):
+class DeviceNotFoundError(RuntimeError):
     pass
+
+class RegisterNotFoundError(RuntimeError):
+    pass
+
 
 class Chipset:
 
@@ -246,13 +239,15 @@ class Chipset:
         # Initializing 'basic primitive' HAL components
         # (HAL components directly using native OS helper functionality)
         #
-        self.pci        = Pci      ( self )
-        self.mem        = Memory   ( self )
-        self.msr        = Msr      ( self )
-        self.ucode      = Ucode    ( self )
-        self.io         = PortIO   ( self )
-        self.cpu        = chipsec.hal.cpu.CPU( self )
-        self.msgbus     = MsgBus   ( self )
+        self.pci        = pci.Pci(self)
+        self.mem        = physmem.Memory(self)
+        self.msr        = msr.Msr(self)
+        self.ucode      = ucode.Ucode(self)
+        self.io         = io.PortIO(self)
+        self.cpu        = cpu.CPU(self)
+        self.msgbus     = msgbus.MsgBus(self)
+        self.mmio       = mmio.MMIO(self)
+        self.iobar      = iobar.IOBAR(self)
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -322,10 +317,10 @@ class Chipset:
 
     def is_core(self):
         return  self.get_chipset_id() in CHIPSET_FAMILY_CORE
-    
+
     def is_server(self):
         return  self.get_chipset_id() in CHIPSET_FAMILY_XEON
-        
+
     def is_atom(self):
         return self.get_chipset_id() in CHIPSET_FAMILY_ATOM
 
@@ -466,12 +461,6 @@ class Chipset:
         return self.pci.is_enabled( b, d, f )
 
 
-
-class RegisterNotFoundError (RuntimeError):
-    pass
-
-
-
 ##################################################################################
 #
 # Main functionality to read/write configuration registers
@@ -495,203 +484,201 @@ class RegisterNotFoundError (RuntimeError):
 ##################################################################################
 
 
-def is_register_defined( _cs, reg_name ):
-    try:
-        return (_cs.Cfg.REGISTERS[ reg_name ] is not None)
-    except KeyError:
-        #if logger().VERBOSE: logger().error( "'%s' register definition not found in XML config" % reg_name)
-        #raise RegisterNotFoundError, ('RegisterNotFound: %s' % reg_name)
-        return False
+    def is_register_defined(self, reg_name):
+        try:
+            return (self.Cfg.REGISTERS[reg_name] is not None)
+        except KeyError:
+            #if logger().VERBOSE: logger().error( "'%s' register definition not found in XML config" % reg_name)
+            #raise RegisterNotFoundError, ('RegisterNotFound: %s' % reg_name)
+            return False
 
-def get_register_def( _cs, reg_name ):
-    return _cs.Cfg.REGISTERS[ reg_name ]
-        
-def read_register( _cs, reg_name, cpu_thread=0 ):
-    reg = _cs.Cfg.REGISTERS[ reg_name ]
-    rtype = reg['type']
-    reg_value = 0
-    if RegisterType.PCICFG == rtype:
-        b = int(reg['bus'],16)
-        d = int(reg['dev'],16)
-        f = int(reg['fun'],16)
-        o = int(reg['offset'],16)
-        size = int(reg['size'],16)
-        if   1 == size: reg_value = _cs.pci.read_byte ( b, d, f, o )
-        elif 2 == size: reg_value = _cs.pci.read_word ( b, d, f, o )
-        elif 4 == size: reg_value = _cs.pci.read_dword( b, d, f, o )
-        elif 8 == size: reg_value = (_cs.pci.read_dword( b, d, f, o+4 ) << 32) | _cs.pci.read_dword( b, d, f, o )
-    elif RegisterType.MMCFG == rtype:
-        reg_value = mmio.read_mmcfg_reg( _cs, int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16) )
-    elif RegisterType.MMIO == rtype:
-        reg_value = mmio.read_MMIO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16), int(reg['size'],16) )
-    elif RegisterType.MSR == rtype:
-        (eax, edx) = _cs.msr.read_msr( cpu_thread, int(reg['msr'],16) )
-        reg_value = (edx << 32) | eax
-    elif RegisterType.PORTIO == rtype:
-        port = int(reg['port'],16)
-        size = int(reg['size'],16)
-        reg_value = _cs.io._read_port( port, size )
-    elif RegisterType.IOBAR == rtype:
-        _iobar = chipsec.hal.iobar.iobar( _cs )
-        reg_value = _iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
-    elif RegisterType.MSGBUS == rtype:
-        reg_value = _cs.msgbus.message_reg_read( int(reg['port'],16), int(reg['offset'],16) ) 
+    def get_register_def(self, reg_name):
+        return self.Cfg.REGISTERS[reg_name]
 
-    return reg_value
+    def read_register(self, reg_name, cpu_thread=0):
+        reg = self.Cfg.REGISTERS[ reg_name ]
+        rtype = reg['type']
+        reg_value = 0
+        if RegisterType.PCICFG == rtype:
+            b = int(reg['bus'], 16)
+            d = int(reg['dev'], 16)
+            f = int(reg['fun'], 16)
+            o = int(reg['offset'], 16)
+            size = int(reg['size'], 16)
+            if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
+            elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
+            elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
+            elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o+4 ) << 32) | self.pci.read_dword(b, d, f, o)
+        elif RegisterType.MMCFG == rtype:
+            reg_value = self.mmio.read_mmcfg_reg(int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16) )
+        elif RegisterType.MMIO == rtype:
+            reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'],16), int(reg['size'],16) )
+        elif RegisterType.MSR == rtype:
+            (eax, edx) = self.msr.read_msr( cpu_thread, int(reg['msr'],16) )
+            reg_value = (edx << 32) | eax
+        elif RegisterType.PORTIO == rtype:
+            port = int(reg['port'],16)
+            size = int(reg['size'],16)
+            reg_value = self.io._read_port( port, size )
+        elif RegisterType.IOBAR == rtype:
+            reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
+        elif RegisterType.MSGBUS == rtype:
+            reg_value = self.msgbus.message_reg_read( int(reg['port'],16), int(reg['offset'],16) ) 
 
-def write_register( _cs, reg_name, reg_value, cpu_thread=0 ):
-    reg = _cs.Cfg.REGISTERS[ reg_name ]
-    rtype = reg['type']
-    if RegisterType.PCICFG == rtype:
-        b = int(reg['bus'],16)
-        d = int(reg['dev'],16)
-        f = int(reg['fun'],16)
-        o = int(reg['offset'],16)
-        size = int(reg['size'],16)
-        if   1 == size: _cs.pci.write_byte( b, d, f, o, reg_value )
-        elif 2 == size: _cs.pci.write_word( b, d, f, o, reg_value )
-        elif 4 == size: _cs.pci.write_dword( b, d, f, o, reg_value )
-        elif 8 == size:
-            _cs.pci.write_dword( b, d, f, o, (reg_value & 0xFFFFFFFF) )
-            _cs.pci.write_dword( b, d, f, o + 4, (reg_value>>32 & 0xFFFFFFFF) )
-    elif RegisterType.MMCFG == rtype:
-        mmio.write_mmcfg_reg( _cs, int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16), reg_value )
-    elif RegisterType.MMIO == rtype:
-        mmio.write_MMIO_BAR_reg( _cs, reg['bar'], int(reg['offset'],16), reg_value, int(reg['size'],16) )
-    elif RegisterType.MSR == rtype:
-        eax = (reg_value & 0xFFFFFFFF)
-        edx = ((reg_value >> 32) & 0xFFFFFFFF)
-        _cs.msr.write_msr( cpu_thread, int(reg['msr'],16), eax, edx )
-    elif RegisterType.PORTIO == rtype:
-        port = int(reg['port'],16)
-        size = int(reg['size'],16)
-        _cs.io._write_port( port, reg_value, size )
-    elif RegisterType.IOBAR == rtype:
-        _iobar = chipsec.hal.iobar.iobar( _cs )
-        _iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16), reg_value )
-    elif RegisterType.MSGBUS == rtype:
-        _cs.msgbus.message_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value ) 
+        return reg_value
 
-def read_register_dict( _cs, reg_name):
-    reg_value = read_register( _cs, reg_name)
-    reg_def = get_register_def( _cs, reg_name)
-    result = reg_def
-    result['value'] = reg_value
-    for f in reg_def['FIELDS']:
-        result['FIELDS'][f]['bit'] = field_bit = int(reg_def['FIELDS'][f]['bit'])
-        result['FIELDS'][f]['size'] = field_size = int(reg_def['FIELDS'][f]['size'])
-        field_mask = 0
-        for i in range(field_size):
-            field_mask = (field_mask << 1) | 1
-        result['FIELDS'][f]['value'] = (reg_value >> field_bit) & field_mask
-    return result
+    def write_register(self, reg_name, reg_value, cpu_thread=0):
+        reg = self.Cfg.REGISTERS[ reg_name ]
+        rtype = reg['type']
+        if RegisterType.PCICFG == rtype:
+            b = int(reg['bus'],16)
+            d = int(reg['dev'],16)
+            f = int(reg['fun'],16)
+            o = int(reg['offset'],16)
+            size = int(reg['size'],16)
+            if   1 == size: self.pci.write_byte( b, d, f, o, reg_value )
+            elif 2 == size: self.pci.write_word( b, d, f, o, reg_value )
+            elif 4 == size: self.pci.write_dword( b, d, f, o, reg_value )
+            elif 8 == size:
+                self.pci.write_dword( b, d, f, o, (reg_value & 0xFFFFFFFF) )
+                self.pci.write_dword( b, d, f, o + 4, (reg_value>>32 & 0xFFFFFFFF) )
+        elif RegisterType.MMCFG == rtype:
+            self.mmio.write_mmcfg_reg(int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16), reg_value )
+        elif RegisterType.MMIO == rtype:
+            self.mmio.write_MMIO_BAR_reg(reg['bar'], int(reg['offset'],16), reg_value, int(reg['size'],16) )
+        elif RegisterType.MSR == rtype:
+            eax = (reg_value & 0xFFFFFFFF)
+            edx = ((reg_value >> 32) & 0xFFFFFFFF)
+            self.msr.write_msr( cpu_thread, int(reg['msr'],16), eax, edx )
+        elif RegisterType.PORTIO == rtype:
+            port = int(reg['port'],16)
+            size = int(reg['size'],16)
+            self.io._write_port( port, reg_value, size )
+        elif RegisterType.IOBAR == rtype:
+            self.iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16), reg_value )
+        elif RegisterType.MSGBUS == rtype:
+            self.msgbus.message_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value ) 
 
-def get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position=False ):
-    field_attrs = get_register_def( _cs, reg_name )['FIELDS'][field_name]
-    field_bit   = int(field_attrs['bit'])
-    field_mask  = (1 << int(field_attrs['size'])) - 1
-    if preserve_field_position: return reg_value & (field_mask << field_bit)
-    else:                       return (reg_value >> field_bit) & field_mask
+    def read_register_dict( self, reg_name):
+        reg_value = self.read_register(reg_name)
+        reg_def = self.get_register_def(reg_name)
+        result = reg_def
+        result['value'] = reg_value
+        for f in reg_def['FIELDS']:
+            result['FIELDS'][f]['bit'] = field_bit = int(reg_def['FIELDS'][f]['bit'])
+            result['FIELDS'][f]['size'] = field_size = int(reg_def['FIELDS'][f]['size'])
+            field_mask = 0
+            for i in range(field_size):
+                field_mask = (field_mask << 1) | 1
+            result['FIELDS'][f]['value'] = (reg_value >> field_bit) & field_mask
+        return result
 
-def set_register_field( _cs, reg_name, reg_value, field_name, field_value, preserve_field_position=False ):
-    field_attrs = get_register_def( _cs, reg_name )['FIELDS'][field_name]
-    field_bit   = int(field_attrs['bit'])
-    field_mask  = (1 << int(field_attrs['size'])) - 1
-    reg_value  &= ~(field_mask << field_bit) # keep other fields
-    if preserve_field_position: reg_value |= (field_value & (field_mask << field_bit))
-    else:                       reg_value |= ((field_value & field_mask) << field_bit)
-    return reg_value
-    
-def read_register_field( _cs, reg_name, field_name, preserve_field_position=False, cpu_thread=0 ):
-    reg_value = read_register( _cs, reg_name )
-    return get_register_field( _cs, reg_name, reg_value, field_name, preserve_field_position )
+    def get_register_field(self, reg_name, reg_value, field_name,
+                           preserve_field_position=False):
+        field_attrs = self.get_register_def(reg_name)['FIELDS'][field_name]
+        field_bit   = int(field_attrs['bit'])
+        field_mask  = (1 << int(field_attrs['size'])) - 1
+        if preserve_field_position: return reg_value & (field_mask << field_bit)
+        else:                       return (reg_value >> field_bit) & field_mask
 
-def write_register_field( _cs, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
-    reg_value = read_register( _cs, reg_name, cpu_thread )
-    reg_value_new = set_register_field( _cs, reg_name, reg_value, field_name, field_value, preserve_field_position )
-    #logger().log("set register %s (0x%x) field %s = 0x%x ==> 0x%x" % (reg_name, reg_value, field_name, field_value, reg_value_new))
-    return write_register( _cs, reg_name, reg_value_new, cpu_thread )
+    def set_register_field(self, reg_name, reg_value, field_name,
+                           field_value, preserve_field_position=False):
+        field_attrs = self.get_register_def(reg_name)['FIELDS'][field_name]
+        field_bit   = int(field_attrs['bit'])
+        field_mask  = (1 << int(field_attrs['size'])) - 1
+        reg_value  &= ~(field_mask << field_bit) # keep other fields
+        if preserve_field_position: reg_value |= (field_value & (field_mask << field_bit))
+        else:                       reg_value |= ((field_value & field_mask) << field_bit)
+        return reg_value
 
-def register_has_field( _cs, reg_name, field_name ):
-    reg_def = get_register_def( _cs, reg_name )
-    return (field_name in reg_def['FIELDS'])
+    def read_register_field( self, reg_name, field_name, preserve_field_position=False, cpu_thread=0 ):
+        reg_value = self.read_register(reg_name)
+        return self.get_register_field(reg_name, reg_value, field_name, preserve_field_position)
 
-def _register_fields_str( reg_def, reg_val ):
-    reg_fields_str = ''
-    if 'FIELDS' in reg_def:
-      reg_fields_str += '\n'
-      # sort fields by their bit position in the register
-      sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
-      for f in sorted_fields:
-        field_attrs = f[1]
-        field_bit = int(field_attrs['bit'])
-        field_size = int(field_attrs['size'])
-        field_mask = 0
-        for i in range(field_size):
-            field_mask = (field_mask << 1) | 1
-        field_value = (reg_val >> field_bit) & field_mask
-        field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
-        reg_fields_str += ("    [%02d] %-16s = %X%s\n" % (field_bit,f[0],field_value,field_desc))
+    def write_register_field( self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
+        reg_value = self.read_register(reg_name, cpu_thread)
+        reg_value_new = self.set_register_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
+        #logger().log("set register %s (0x%x) field %s = 0x%x ==> 0x%x" % (reg_name, reg_value, field_name, field_value, reg_value_new))
+        return self.write_register(reg_name, reg_value_new, cpu_thread)
 
-    if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
-    return reg_fields_str
+    def register_has_field( self, reg_name, field_name ):
+        reg_def = self.get_register_def(reg_name )
+        return (field_name in reg_def['FIELDS'])
 
-def print_register( _cs, reg_name, reg_val ):
-    reg = _cs.Cfg.REGISTERS[ reg_name ]
-    rtype = reg['type']
-    reg_str = ''
-    reg_val_str = ("0x%0" + ("%dX" % (int(reg['size'],16)*2))) % reg_val
-    if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
-        b = int(reg['bus'],16)
-        d = int(reg['dev'],16)
-        f = int(reg['fun'],16)
-        o = int(reg['offset'],16)
-        mmcfg_off_str =  ''
-        if RegisterType.MMCFG == rtype:
-            mmcfg_off_str += ", MMCFG + 0x%X" % ((b*32*8 + d*8 + f) * 0x1000 + o)
-        reg_str = "[*] %s = %s << %s (b:d.f %02d:%02d.%d + 0x%X%s)" % (reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
-    elif RegisterType.MMIO == rtype:
-        reg_str = "[*] %s = %s << %s (%s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
-    elif RegisterType.MSR == rtype:
-        reg_str = "[*] %s = %s << %s (MSR 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['msr'],16))
-    elif RegisterType.PORTIO == rtype:
-        reg_str = "[*] %s = %s << %s (I/O port 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
-    elif RegisterType.IOBAR == rtype:
-        reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
-    elif RegisterType.MSGBUS == rtype:
-        reg_str = "[*] %s = %s << %s (msgbus port 0x%X, off 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
+    def _register_fields_str(self, reg_def, reg_val):
+        reg_fields_str = ''
+        if 'FIELDS' in reg_def:
+          reg_fields_str += '\n'
+          # sort fields by their bit position in the register
+          sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
+          for f in sorted_fields:
+            field_attrs = f[1]
+            field_bit = int(field_attrs['bit'])
+            field_size = int(field_attrs['size'])
+            field_mask = 0
+            for i in range(field_size):
+                field_mask = (field_mask << 1) | 1
+            field_value = (reg_val >> field_bit) & field_mask
+            field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
+            reg_fields_str += ("    [%02d] %-16s = %X%s\n" % (field_bit,f[0],field_value,field_desc))
 
-    reg_str += _register_fields_str( reg, reg_val )
-    logger().log( reg_str )
-    return reg_str
+        if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
+        return reg_fields_str
 
+    def print_register(self, reg_name, reg_val):
+        reg = self.Cfg.REGISTERS[ reg_name ]
+        rtype = reg['type']
+        reg_str = ''
+        reg_val_str = ("0x%0" + ("%dX" % (int(reg['size'],16)*2))) % reg_val
+        if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
+            b = int(reg['bus'],16)
+            d = int(reg['dev'],16)
+            f = int(reg['fun'],16)
+            o = int(reg['offset'],16)
+            mmcfg_off_str =  ''
+            if RegisterType.MMCFG == rtype:
+                mmcfg_off_str += ", MMCFG + 0x%X" % ((b*32*8 + d*8 + f) * 0x1000 + o)
+            reg_str = "[*] %s = %s << %s (b:d.f %02d:%02d.%d + 0x%X%s)" % (reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
+        elif RegisterType.MMIO == rtype:
+            reg_str = "[*] %s = %s << %s (%s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+        elif RegisterType.MSR == rtype:
+            reg_str = "[*] %s = %s << %s (MSR 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['msr'],16))
+        elif RegisterType.PORTIO == rtype:
+            reg_str = "[*] %s = %s << %s (I/O port 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
+        elif RegisterType.IOBAR == rtype:
+            reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+        elif RegisterType.MSGBUS == rtype:
+            reg_str = "[*] %s = %s << %s (msgbus port 0x%X, off 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
 
+        reg_str += self._register_fields_str(reg, reg_val)
+        logger().log( reg_str )
+        return reg_str
 
-def get_control( _cs, control_name, cpu_thread=0, with_print=0 ):
-    control = _cs.Cfg.CONTROLS[ control_name ]
-    reg     = control['register']
-    field   = control['field']
-    reg_data = chipsec.chipset.read_register(_cs, reg)
-    if with_print: chipsec.chipset.print_register(_cs, reg, reg_data)
-    return chipsec.chipset.get_register_field( _cs, reg, reg_data, field )    
+    def get_control(self, control_name, cpu_thread=0, with_print=0):
+        control = self.Cfg.CONTROLS[ control_name ]
+        reg     = control['register']
+        field   = control['field']
+        reg_data = self.read_register(reg)
+        if with_print: self.print_register(reg, reg_data)
+        return self.get_register_field(reg, reg_data, field)
 
-def set_control( _cs, control_name, control_value, cpu_thread=0 ):
-    control = _cs.Cfg.CONTROLS[ control_name ]
-    reg     = control['register']
-    field   = control['field']
-    return chipsec.chipset.write_register_field( _cs, reg, field, control_value, cpu_thread )    
+    def set_control(self, control_name, control_value, cpu_thread=0):
+        control = self.Cfg.CONTROLS[control_name]
+        reg     = control['register']
+        field   = control['field']
+        return self.write_register_field(reg, field, control_value, cpu_thread)
 
-def is_control_defined( _cs, control_name ):
-    try:
-        return (_cs.Cfg.CONTROLS[ control_name ] is not None)
-    except KeyError:
-        return False
+    def is_control_defined(self, control_name):
+        try:
+            return (self.Cfg.CONTROLS[ control_name ] is not None)
+        except KeyError:
+            return False
 
-    
 _chipset = None
 
 def cs():
     global _chipset
     from chipsec.helper.oshelper import helper
-    if _chipset is None: _chipset = Chipset( helper() )
+    if _chipset is None:
+        _chipset = Chipset(helper())
     return _chipset

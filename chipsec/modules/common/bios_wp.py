@@ -61,11 +61,11 @@ class bios_wp(BaseModule):
         #chipsec.chipset.print_register(self.cs, 'BC', reg_value)
 
         #ble    = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
-        ble = chipsec.chipset.get_control(self.cs, 'BiosLockEnable', with_print=True)
-        #bioswe = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BIOSWE')
-        bioswe = chipsec.chipset.get_control(self.cs, 'BiosWriteEnable')
+        ble = self.cs.get_control('BiosLockEnable', with_print=True)
+        #bioswe = self.cs.get_register_field('BC', reg_value, 'BIOSWE')
+        bioswe = self.cs.get_control('BiosWriteEnable')
         #smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
-        smmbwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
+        smmbwp = self.cs.get_control( 'SmmBiosWriteProtection' )
 
         # Is the BIOS flash region write protected?
         write_protected = 0

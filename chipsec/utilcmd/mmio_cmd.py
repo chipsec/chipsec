@@ -31,7 +31,7 @@ import chipsec_util
 from chipsec.logger     import *
 from chipsec.file       import *
 
-from chipsec.hal.mmio   import *
+from chipsec.hal import mmio
 from chipsec.command    import BaseCommand
 
 
@@ -63,6 +63,7 @@ class MMIOCommand(BaseCommand):
 
     def run(self):
         t = time.time()
+        _mmio = mmio.MMIO(self.cs)
 
         if len(self.argv) < 3:
             print MMIOCommand.__doc__
@@ -72,16 +73,16 @@ class MMIOCommand(BaseCommand):
         t = time.time()
 
         if ( 'list' == op ):
-            list_MMIO_BARs( self.cs )
+            _mmio.list_MMIO_BARs()
         elif ( 'dump' == op ):
             bar = self.argv[3].upper()
             self.logger.log( "[CHIPSEC] Dumping %s MMIO space.." % bar )
-            dump_MMIO_BAR( self.cs, bar )
+            _mmio.dump_MMIO_BAR(bar)
         elif ( 'read' == op ):
             bar   = self.argv[3].upper()
             off   = int(self.argv[4],16)
             width = int(self.argv[5],16) if len(self.argv) == 6 else 4
-            reg = read_MMIO_BAR_reg( self.cs, bar, off, width )
+            reg = _mmio.read_MMIO_BAR_reg(bar, off, width)
             self.logger.log( "[CHIPSEC] Read %s + 0x%X: 0x%08X" % (bar,off,reg) )
         elif ( 'write' == op ):
             bar   = self.argv[3].upper()
@@ -90,7 +91,7 @@ class MMIOCommand(BaseCommand):
             if len(self.argv) == 7:
                 reg = int(self.argv[6],16)
                 self.logger.log( "[CHIPSEC] Write %s + 0x%X: 0x%08X" % (bar,off,reg) )
-                write_MMIO_BAR_reg( self.cs, bar, off, reg, width )
+                _mmio.write_MMIO_BAR_reg(bar, off, reg, width)
             else:
                 print MMIOCommand.__doc__
                 return

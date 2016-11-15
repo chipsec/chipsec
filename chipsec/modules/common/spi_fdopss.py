@@ -36,13 +36,13 @@ class spi_fdopss(BaseModule):
     def check_fd_security_override_strap(self):
         self.logger.start_test( "SPI Flash Descriptor Security Override Pin-Strap" )
 
-        if not chipsec.chipset.is_register_defined( self.cs, 'HSFS' ):
+        if not self.cs.is_register_defined( 'HSFS' ):
             self.logger.error( "Couldn't find definition of required configuration registers (HSFS)" )
             return ModuleResult.ERROR
 
-        hsfs_reg = chipsec.chipset.read_register( self.cs, 'HSFS' )
-        chipsec.chipset.print_register( self.cs, 'HSFS', hsfs_reg )
-        fdopss = chipsec.chipset.get_register_field( self.cs, 'HSFS', hsfs_reg, 'FDOPSS' )
+        hsfs_reg = self.cs.read_register( 'HSFS' )
+        self.cs.print_register( 'HSFS', hsfs_reg )
+        fdopss = self.cs.get_register_field( 'HSFS', hsfs_reg, 'FDOPSS' )
 
         if 0 != fdopss:
             self.logger.log_passed_check( "SPI Flash Descriptor Security Override is disabled" )

@@ -41,16 +41,17 @@ import struct
 import sys
 import os.path
 
+from chipsec.hal import hal_base
 from chipsec.logger import logger
 
 class CpuIDRuntimeError (RuntimeError):
     pass
 
-class CpuID:
+class CpuID(hal_base.HALBase):
 
-    def __init__( self, cs ):
+    def __init__(self, cs):
+        super(CpuID, self).__init__(cs)
         self.helper = cs.helper
-        self.cs = cs
 
     def cpuid(self, eax, ecx ):
         if logger().VERBOSE: logger().log( "[cpuid] in: EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )

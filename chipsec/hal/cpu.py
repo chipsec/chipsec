@@ -38,10 +38,10 @@ __version__ = '1.0'
 import struct
 import sys
 import os.path
-
 from collections import namedtuple
+
+from chipsec.hal import acpi, hal_base
 from chipsec.logger import logger
-import chipsec.hal.acpi
 
 
 class CPURuntimeError (RuntimeError):
@@ -53,11 +53,11 @@ class CPURuntimeError (RuntimeError):
 #
 ########################################################################################################
 
-class CPU:
-    def __init__( self, cs ):
+class CPU(hal_base.HALBase):
+    def __init__(self, cs):
+        super(CPU, self).__init__(cs)
         self.helper = cs.helper
-        self.cs     = cs
-        
+
     def read_cr(self, cpu_thread_id, cr_number ):
         value = self.helper.read_cr( cpu_thread_id, cr_number )
         if logger().VERBOSE: logger().log( "[cpu%d] read CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
@@ -97,7 +97,7 @@ class CPU:
     
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self):
-        _acpi = chipsec.hal.acpi.ACPI( self.cs )    
+        _acpi = acpi.ACPI( self.cs )
         dACPIID = {}
         (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_APIC )
         for structure in APIC_object.apic_structs:
@@ -117,8 +117,8 @@ class CPU:
     # Return SMRR MSR physical base and mask
     #
     def get_SMRR( self ):
-        smrambase = chipsec.chipset.read_register_field( self.cs, 'IA32_SMRR_PHYSBASE', 'PhysBase', True )
-        smrrmask  = chipsec.chipset.read_register_field( self.cs, 'IA32_SMRR_PHYSMASK', 'PhysMask', True )
+        smrambase = self.cs.read_register_field( 'IA32_SMRR_PHYSBASE', 'PhysBase', True )
+        smrrmask  = self.cs.read_register_field( 'IA32_SMRR_PHYSMASK', 'PhysMask', True )
         return (smrambase, smrrmask)
 
     #
@@ -137,15 +137,15 @@ class CPU:
     def get_TSEG( self ):
         if self.cs.is_server():
             # tseg register has base and limit
-            tseg_base  = chipsec.chipset.read_register_field( self.cs, 'TSEG_BASE',  'base',  preserve_field_position=True ) 
-            tseg_limit = chipsec.chipset.read_register_field( self.cs, 'TSEG_LIMIT', 'limit', preserve_field_position=True )
+            tseg_base  = self.cs.read_register_field( 'TSEG_BASE',  'base',  preserve_field_position=True )
+            tseg_limit = self.cs.read_register_field( 'TSEG_LIMIT', 'limit', preserve_field_position=True )
             tseg_limit += 0xFFFFF
         else:
             # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
-            tseg_base  = chipsec.chipset.read_register_field( self.cs, 'PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True )
-            bgsm       = chipsec.chipset.read_register_field( self.cs, 'PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True )
-            tseg_limit =  bgsm - 1 
-            
+            tseg_base  = self.cs.read_register_field( 'PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True )
+            bgsm       = self.cs.read_register_field( 'PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True )
+            tseg_limit =  bgsm - 1
+
         tseg_size = tseg_limit - tseg_base + 1
         return (tseg_base, tseg_limit, tseg_size)
 
@@ -172,9 +172,9 @@ class CPU:
     # Check that SMRR is supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
     def check_SMRR_supported( self ):
-        mtrrcap_msr_reg = chipsec.chipset.read_register( self.cs, 'MTRRCAP' )
-        if logger().VERBOSE: chipsec.chipset.print_register( self.cs, 'MTRRCAP', mtrrcap_msr_reg )
-        smrr = chipsec.chipset.get_register_field( self.cs, 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
+        mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
+        if logger().VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
+        smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
 
     #
