@@ -20,8 +20,10 @@ import fcntl
 import os
 import platform
 import struct
+import subprocess
 import sys
 
+import chipsec
 from chipsec.helper.oshelper import OsHelperError, Helper
 from chipsec.logger import logger, print_buffer
 
@@ -39,6 +41,7 @@ _mmio_msg_t_fmt = "QQB"
 class OSXHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
+    DRIVER_NAME = "chipsec.kext"
 
     def __init__(self):
         self.os_system  = platform.system()
@@ -48,6 +51,23 @@ class OSXHelper(Helper):
         self.os_uname   = platform.uname()
         self.dev_fh = None
 
+    def load_driver(self):
+        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
+                                   "helper", "osx", self.DRIVER_NAME)
+        # Make sure the driver image and its subdirectories are owned by root.
+        s = os.stat(driver_path)
+        if s.st_uid != 0 or s.st_gid != 0:
+            os.chown(driver_path, 0, 0)
+            for root, dirs, files in os.walk(driver_path):
+                for f in dirs + files:
+                    os.chown(os.path.join(root, f), 0, 0)
+        subprocess.check_call(["kextload", driver_path])
+        if os.path.exists(self.DEVICE_NAME):
+            if logger().VERBOSE:
+                logger().log("Module %s loaded successfully" % self.DRIVER_NAME)
+        else:
+            logger().error("Failed to load the module %s" % self.DRIVER_NAME)
+
     def create(self, start_driver):
         #self.init(start_driver)
         if logger().VERBOSE:
@@ -56,7 +76,7 @@ class OSXHelper(Helper):
 
     def start(self, start_driver, driver_exists=False):
         if start_driver:
-            pass
+            self.load_driver()
         self.init(start_driver)
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper started/loaded")
