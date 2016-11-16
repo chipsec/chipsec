@@ -49,10 +49,3 @@ int setaffinity(int thread_id, int *errno_var){
     }
 }
    
- void print_cpu_set_t(cpu_set_t mask){
-    int i=0;
-    for(i;i<sizeof(mask);i++){
-        printf("%lu ",(unsigned long)mask.__bits[i]);
-    }
-    printf("\n\n");
-}
