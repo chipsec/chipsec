@@ -28,9 +28,7 @@ Access to IOMMU engines
 
 from chipsec.logger import *
 
-import chipsec.hal.iobar
-import chipsec.hal.mmio
-import chipsec.hal.paging
+from chipsec.hal import hal_base, mmio, paging
 
 IOMMU_ENGINE_DEFAULT = 'VTD'
 IOMMU_ENGINE_GFX     = 'GFXVTD'
@@ -45,32 +43,33 @@ IOMMU_ENGINES = {
 class IOMMUError (RuntimeError):
     pass
 
-class iommu:
-    def __init__( self, cs ):
-        self.cs = cs
+class IOMMU(hal_base.HALBase):
+
+    def __init__(self, cs):
+        super(IOMMU, self).__init__(cs)
+        self.mmio = mmio.MMIO(cs)
 
     def get_IOMMU_Base_Address( self, iommu_engine ):
         if iommu_engine in IOMMU_ENGINES: vtd_base_name = IOMMU_ENGINES[iommu_engine]
         else: raise IOMMUError, ('IOMMUError: unknown IOMMU engine 0x%X' % iommu_engine )
 
-        if chipsec.hal.mmio.is_MMIO_BAR_defined( self.cs, vtd_base_name ):
-            (base, size) = chipsec.hal.mmio.get_MMIO_BAR_base_address( self.cs, vtd_base_name )
+        if self.mmio.is_MMIO_BAR_defined(vtd_base_name):
+            (base, size) = self.mmio.get_MMIO_BAR_base_address(vtd_base_name)
         else:
-            raise IOMMUError, ('IOMMUError: IOMMU BAR %s is not defined in the config' % vtd_base_name )
-        
+            raise IOMMUError, ('IOMMUError: IOMMU BAR %s is not defined in the config' % vtd_base_name)
         return base
 
     def is_IOMMU_Engine_Enabled( self, iommu_engine ):
         if iommu_engine in IOMMU_ENGINES: vtd_base_name = IOMMU_ENGINES[iommu_engine]
         else: raise IOMMUError, ('IOMMUError: unknown IOMMU engine 0x%X' % iommu_engine )
-        return chipsec.hal.mmio.is_MMIO_BAR_defined( self.cs, vtd_base_name ) and chipsec.hal.mmio.is_MMIO_BAR_enabled( self.cs, vtd_base_name )
+        return self.mmio.is_MMIO_BAR_defined(vtd_base_name) and self.mmio.is_MMIO_BAR_enabled(vtd_base_name)
 
     def is_IOMMU_Translation_Enabled( self, iommu_engine ):
-        tes = chipsec.chipset.read_register_field( self.cs, IOMMU_ENGINES[ iommu_engine ] + '_GSTS', 'TES' )
+        tes = self.cs.read_register_field( IOMMU_ENGINES[ iommu_engine ] + '_GSTS', 'TES' )
         return (1==tes)
 
     def set_IOMMU_Translation( self, iommu_engine, te ):
-        return chipsec.chipset.write_register_field( self.cs, IOMMU_ENGINES[ iommu_engine ] + '_GCMD', 'TE', te )
+        return self.cs.write_register_field( IOMMU_ENGINES[ iommu_engine ] + '_GCMD', 'TE', te )
 
 
     def dump_IOMMU_configuration( self, iommu_engine ):
@@ -79,42 +78,42 @@ class iommu:
         logger().log( "[iommu] %s IOMMU Engine Configuration" % iommu_engine )
         logger().log( "==================================================================" )
         logger().log( "Base register (BAR)       : %s" % vtd )
-        reg = chipsec.chipset.read_register( self.cs, vtd )
+        reg = self.cs.read_register( vtd )
         logger().log( "BAR register value        : 0x%X" % reg )
         base    = self.get_IOMMU_Base_Address( iommu_engine )
         logger().log( "MMIO base                 : 0x%016X" % base )
         logger().log( "------------------------------------------------------------------" )
-        ver_min = chipsec.chipset.read_register_field( self.cs, vtd + '_VER', 'MIN' )
-        ver_max = chipsec.chipset.read_register_field( self.cs, vtd + '_VER', 'MAX' )
+        ver_min = self.cs.read_register_field( vtd + '_VER', 'MIN' )
+        ver_max = self.cs.read_register_field( vtd + '_VER', 'MAX' )
         logger().log( "Version                   : %X.%X" % (ver_max,ver_min) )
         enabled = self.is_IOMMU_Engine_Enabled( iommu_engine )
         logger().log( "Engine enabled            : %d" % enabled )
         te      = self.is_IOMMU_Translation_Enabled( iommu_engine )
         logger().log( "Translation enabled       : %d" % te )
-        rtaddr_rta = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTA', True )
+        rtaddr_rta = self.cs.read_register_field( vtd + '_RTADDR', 'RTA', True )
         logger().log( "Root Table Address        : 0x%016X" % rtaddr_rta )
-        irta = chipsec.chipset.read_register_field( self.cs, vtd + '_IRTA', 'IRTA' )
+        irta = self.cs.read_register_field( vtd + '_IRTA', 'IRTA' )
         logger().log( "Interrupt Remapping Table : 0x%016X" % irta )
         logger().log( "------------------------------------------------------------------" )
         logger().log( "Protected Memory:" )
-        pmen_epm = chipsec.chipset.read_register_field( self.cs, vtd + '_PMEN', 'EPM' )
-        pmen_prs = chipsec.chipset.read_register_field( self.cs, vtd + '_PMEN', 'PRS' )
+        pmen_epm = self.cs.read_register_field( vtd + '_PMEN', 'EPM' )
+        pmen_prs = self.cs.read_register_field( vtd + '_PMEN', 'PRS' )
         logger().log( "  Enabled                 : %d" % pmen_epm )
         logger().log( "  Status                  : %d" % pmen_prs )
-        plmbase  = chipsec.chipset.read_register_field( self.cs, vtd + '_PLMBASE', 'PLMB' )
-        plmlimit = chipsec.chipset.read_register_field( self.cs, vtd + '_PLMLIMIT', 'PLML' )
-        phmbase  = chipsec.chipset.read_register_field( self.cs, vtd + '_PHMBASE', 'PHMB' )
-        phmlimit = chipsec.chipset.read_register_field( self.cs, vtd + '_PHMLIMIT', 'PHML' )
+        plmbase  = self.cs.read_register_field( vtd + '_PLMBASE', 'PLMB' )
+        plmlimit = self.cs.read_register_field( vtd + '_PLMLIMIT', 'PLML' )
+        phmbase  = self.cs.read_register_field( vtd + '_PHMBASE', 'PHMB' )
+        phmlimit = self.cs.read_register_field( vtd + '_PHMLIMIT', 'PHML' )
         logger().log( "  Low Memory Base         : 0x%016X" % plmbase )
         logger().log( "  Low Memory Limit        : 0x%016X" % plmlimit )
         logger().log( "  High Memory Base        : 0x%016X" % phmbase )
         logger().log( "  High Memory Limit       : 0x%016X" % phmlimit )
         logger().log( "------------------------------------------------------------------" )
         logger().log( "Capabilities:\n" )
-        cap_reg = chipsec.chipset.read_register( self.cs, vtd + '_CAP' )
-        chipsec.chipset.print_register( self.cs, vtd + '_CAP', cap_reg )
-        ecap_reg = chipsec.chipset.read_register( self.cs, vtd + '_ECAP' )
-        chipsec.chipset.print_register( self.cs, vtd + '_ECAP', ecap_reg )
+        cap_reg = self.cs.read_register( vtd + '_CAP' )
+        self.cs.print_register( vtd + '_CAP', cap_reg )
+        ecap_reg = self.cs.read_register( vtd + '_ECAP' )
+        self.cs.print_register( vtd + '_ECAP', ecap_reg )
         logger().log( '' )
 
 
@@ -122,22 +121,22 @@ class iommu:
         vtd = IOMMU_ENGINES[ iommu_engine ]
         te  = self.is_IOMMU_Translation_Enabled( iommu_engine )
         logger().log( "[iommu] Translation enabled    : %d" % te )
-        rtaddr_reg = chipsec.chipset.read_register( self.cs, vtd + '_RTADDR' )
-        rtaddr_rta = chipsec.chipset.get_register_field( self.cs, vtd + '_RTADDR', rtaddr_reg, 'RTA', True )
-        rtaddr_rtt = chipsec.chipset.get_register_field( self.cs, vtd + '_RTADDR', rtaddr_reg, 'RTT' )
-        #rtaddr_rta = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTA', True )
-        #rtaddr_rtt = chipsec.chipset.read_register_field( self.cs, vtd + '_RTADDR', 'RTT' )
+        rtaddr_reg = self.cs.read_register( vtd + '_RTADDR' )
+        rtaddr_rta = self.cs.get_register_field( vtd + '_RTADDR', rtaddr_reg, 'RTA', True )
+        rtaddr_rtt = self.cs.get_register_field( vtd + '_RTADDR', rtaddr_reg, 'RTT' )
+        #rtaddr_rta = self.cs.read_register_field( vtd + '_RTADDR', 'RTA', True )
+        #rtaddr_rtt = self.cs.read_register_field( vtd + '_RTADDR', 'RTT' )
         logger().log( "[iommu] Root Table Address/Type: 0x%016X/%X" % (rtaddr_rta,rtaddr_rtt) )
 
-        ecap_reg   = chipsec.chipset.read_register( self.cs, vtd + '_ECAP' )
-        ecs        = chipsec.chipset.get_register_field( self.cs, vtd + '_ECAP', ecap_reg, 'ECS' )
-        pasid      = chipsec.chipset.get_register_field( self.cs, vtd + '_ECAP', ecap_reg, 'PASID' )
+        ecap_reg   = self.cs.read_register( vtd + '_ECAP' )
+        ecs        = self.cs.get_register_field( vtd + '_ECAP', ecap_reg, 'ECS' )
+        pasid      = self.cs.get_register_field( vtd + '_ECAP', ecap_reg, 'PASID' )
         logger().log( '[iommu] PASID / ECS            : %x / %x' % (pasid, ecs))
 
         if 0xFFFFFFFFFFFFFFFF != rtaddr_reg:
             if te:
                 logger().log( '[iommu] dumping VT-d page table hierarchy at 0x%016X (vtd_context_%08x)..' % (rtaddr_rta,rtaddr_rta) )
-                paging_vtd = chipsec.hal.paging.c_vtd_page_tables( self.cs )
+                paging_vtd = paging.c_vtd_page_tables( self.cs )
                 paging_vtd.read_vtd_context('vtd_context_%08x' % rtaddr_rta, rtaddr_rta)
                 logger().log( '[iommu] total VTd domains: %d' % len(paging_vtd.domains))
                 for domain in paging_vtd.domains:
@@ -154,13 +153,13 @@ class iommu:
         logger().log( "==================================================================" )
         logger().log( "[iommu] %s IOMMU Engine Status:" % iommu_engine )
         logger().log( "==================================================================" )
-        gsts_reg = chipsec.chipset.read_register( self.cs, vtd + '_GSTS' )
-        chipsec.chipset.print_register( self.cs, vtd + '_GSTS', gsts_reg )
-        fsts_reg = chipsec.chipset.read_register( self.cs, vtd + '_FSTS' )
-        chipsec.chipset.print_register( self.cs, vtd + '_FSTS', fsts_reg )
-        frcdl_reg = chipsec.chipset.read_register( self.cs, vtd + '_FRCDL' )
-        chipsec.chipset.print_register( self.cs, vtd + '_FRCDL', frcdl_reg )
-        frcdh_reg = chipsec.chipset.read_register( self.cs, vtd + '_FRCDH' )
-        chipsec.chipset.print_register( self.cs, vtd + '_FRCDH', frcdh_reg )
-        ics_reg = chipsec.chipset.read_register( self.cs, vtd + '_ICS' )
-        chipsec.chipset.print_register( self.cs, vtd + '_ICS', ics_reg )
+        gsts_reg = self.cs.read_register( vtd + '_GSTS' )
+        self.cs.print_register( vtd + '_GSTS', gsts_reg )
+        fsts_reg = self.cs.read_register( vtd + '_FSTS' )
+        self.cs.print_register( vtd + '_FSTS', fsts_reg )
+        frcdl_reg = self.cs.read_register( vtd + '_FRCDL' )
+        self.cs.print_register( vtd + '_FRCDL', frcdl_reg )
+        frcdh_reg = self.cs.read_register( vtd + '_FRCDH' )
+        self.cs.print_register( vtd + '_FRCDH', frcdh_reg )
+        ics_reg = self.cs.read_register( vtd + '_ICS' )
+        self.cs.print_register( vtd + '_ICS', ics_reg )

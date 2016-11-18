@@ -45,10 +45,10 @@ class spi_desc(BaseModule):
         self.logger.start_test( "SPI Flash Region Access Control" )
 
         res = ModuleResult.PASSED
-        frap = chipsec.chipset.read_register( self.cs, 'FRAP' )
-        chipsec.chipset.print_register( self.cs, 'FRAP', frap )
-        brra = chipsec.chipset.get_register_field( self.cs, 'FRAP', frap, 'BRRA' )
-        brwa = chipsec.chipset.get_register_field( self.cs, 'FRAP', frap, 'BRWA' )
+        frap = self.cs.read_register( 'FRAP' )
+        self.cs.print_register( 'FRAP', frap )
+        brra = self.cs.get_register_field( 'FRAP', frap, 'BRRA' )
+        brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
 
         self.logger.log("[*] Software access to SPI flash regions: read = 0x%02X, write = 0x%02X" % (brra, brwa) )
         if brwa & (1 << chipsec.hal.spi.FLASH_DESCRIPTOR):

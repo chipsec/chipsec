@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -44,6 +44,7 @@ __version__ = '1.0'
 import struct
 import sys
 
+from chipsec.hal import hal_base
 from chipsec.logger import *
 from chipsec.cfg.common import *
 
@@ -53,9 +54,7 @@ NMI_TCO1_CTL = 0x8 # NMI_NOW is bit [8] in TCO1_CTL (or bit [1] in TCO1_CTL + 1)
 NMI_NOW      = 0x1
 
 
-class Interrupts:
-    def __init__( self, cs ):
-        self.cs = cs
+class Interrupts(hal_base.HALBase):
 
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)

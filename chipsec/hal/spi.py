@@ -57,10 +57,10 @@ import sys
 import time
 
 import chipsec.defines
-import chipsec.chipset
 from chipsec.file import *
-from chipsec.hal.hal_base import HALBase
-from chipsec.hal.mmio import *
+from chipsec.hal import hal_base, mmio
+
+from chipsec.cfg.common import *
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -142,65 +142,67 @@ SPI_MASTER_NAMES = {
 }
 
 
-class SpiRuntimeError (RuntimeError):
-    pass
-class SpiAccessError (RuntimeError):
-    pass
-
 # @TODO: DEPRECATED
-def get_SPI_region( flreg ):
+def get_SPI_region(flreg):
     range_base  = (flreg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
     range_limit = ((flreg & Cfg.PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
     range_limit |= SPI_FLA_PAGE_MASK
     return (range_base, range_limit)
 
-# Fallback option when XML config is not available: using hardcoded config
-def get_SPI_MMIO_base_fallback( cs ):
-    reg_value = cs.pci.read_dword( Cfg.SPI_MMIO_BUS, Cfg.SPI_MMIO_DEV, Cfg.SPI_MMIO_FUN, Cfg.SPI_MMIO_REG_OFFSET )
-    spi_base = ((reg_value >> Cfg.SPI_BASE_ADDR_SHIFT) << Cfg.SPI_BASE_ADDR_SHIFT) + Cfg.SPI_MMIO_BASE_OFFSET
-    if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
-    return spi_base
+class SpiRuntimeError (RuntimeError):
+    pass
+class SpiAccessError (RuntimeError):
+    pass
 
-def get_SPI_MMIO_base( cs ):
-    if is_MMIO_BAR_defined( cs, 'SPIBAR' ):
-        (spi_base,spi_size) = get_MMIO_BAR_base_address( cs, 'SPIBAR' )
-    else:
-        spi_base = get_SPI_MMIO_base_fallback( cs )
-    if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
-    return spi_base
+class SPI(hal_base.HALBase):
 
-class SPI:
-    def __init__( self, cs ):
-        self.cs = cs
-        self.rcba_spi_base = get_SPI_MMIO_base( self.cs )
+    def __init__(self, cs):
+        super(SPI, self).__init__(cs)
+        self.mmio = mmio.MMIO(cs)
+        self.rcba_spi_base = self.get_SPI_MMIO_base()
 
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
-        self.hsfs_off   = int(chipsec.chipset.get_register_def( self.cs, "HSFS" )['offset'],16)
-        self.hsfc_off   = int(chipsec.chipset.get_register_def( self.cs, "HSFC" )['offset'],16)
-        self.faddr_off  = int(chipsec.chipset.get_register_def( self.cs, "FADDR" )['offset'],16)
-        self.fdata0_off = int(chipsec.chipset.get_register_def( self.cs, "FDATA0" )['offset'],16)
-        if logger().VERBOSE: 
+        self.hsfs_off   = int(self.cs.get_register_def("HSFS")['offset'],16)
+        self.hsfc_off   = int(self.cs.get_register_def("HSFC")['offset'],16)
+        self.faddr_off  = int(self.cs.get_register_def("FADDR")['offset'],16)
+        self.fdata0_off = int(self.cs.get_register_def("FDATA0")['offset'],16)
+        if logger().VERBOSE:
             logger().log( "[spi] Reading SPI flash controller registers definitions:" )
             logger().log( "      HSFC   offset = 0x%04X" % self.hsfc_off )
             logger().log( "      HSFS   offset = 0x%04X" % self.hsfs_off )
             logger().log( "      FADDR  offset = 0x%04X" % self.faddr_off )
             logger().log( "      FDATA0 offset = 0x%04X" % self.fdata0_off )
 
+    # Fallback option when XML config is not available: using hardcoded config
+    def get_SPI_MMIO_base_fallback(self):
+        reg_value = self.cs.pci.read_dword( Cfg.SPI_MMIO_BUS, Cfg.SPI_MMIO_DEV, Cfg.SPI_MMIO_FUN, Cfg.SPI_MMIO_REG_OFFSET )
+        spi_base = ((reg_value >> Cfg.SPI_BASE_ADDR_SHIFT) << Cfg.SPI_BASE_ADDR_SHIFT) + Cfg.SPI_MMIO_BASE_OFFSET
+        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
+        return spi_base
+
+    def get_SPI_MMIO_base(self):
+        if self.mmio.is_MMIO_BAR_defined('SPIBAR'):
+            (spi_base,spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
+        else:
+            spi_base = self.get_SPI_MMIO_base_fallback()
+        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
+        return spi_base
+
     def spi_reg_read( self, reg, size=4 ):
-        return read_MMIO_reg( self.cs, self.rcba_spi_base, reg, size )
+        return self.mmio.read_MMIO_reg(self.rcba_spi_base, reg, size)
 
     def spi_reg_write( self, reg, value, size=4 ):
-        return write_MMIO_reg( self.cs, self.rcba_spi_base, reg, value, size )
+        return self.mmio.write_MMIO_reg(self.rcba_spi_base, reg, value, size)
 
 
     def get_SPI_region( self, spi_region_id ):
         freg_name = SPI_REGION[ spi_region_id ]
-        freg = chipsec.chipset.read_register( self.cs, freg_name )
+        freg = self.cs.read_register(freg_name)
         # Region Base corresponds to FLA bits 24:12
-        range_base  = chipsec.chipset.get_register_field( self.cs, freg_name, freg, 'RB' ) << SPI_FLA_SHIFT
+        range_base  = self.cs.get_register_field(freg_name, freg, 'RB' ) << SPI_FLA_SHIFT
         # Region Limit corresponds to FLA bits 24:12
-        range_limit = chipsec.chipset.get_register_field( self.cs, freg_name, freg, 'RL' ) << SPI_FLA_SHIFT
+        range_limit = self.cs.get_register_field(freg_name, freg, 'RL' ) << SPI_FLA_SHIFT
         # FLA bits 11:0 are assumed to be FFFh for the limit comparison
         range_limit |= SPI_FLA_PAGE_MASK
         return (range_base, range_limit, freg)
@@ -221,16 +223,16 @@ class SPI:
             return None
 
         pr_name = 'PR%x'%pr_num
-        pr_j_reg = int(chipsec.chipset.get_register_def( self.cs, pr_name )['offset'],16)
-        pr_j = chipsec.chipset.read_register( self.cs, pr_name )
+        pr_j_reg = int(self.cs.get_register_def(pr_name)['offset'],16)
+        pr_j = self.cs.read_register(pr_name)
 
         # Protected Range Base corresponds to FLA bits 24:12
-        base  = chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'PRB' ) << SPI_FLA_SHIFT
+        base  = self.cs.get_register_field(pr_name, pr_j, 'PRB' ) << SPI_FLA_SHIFT
         # Protected Range Limit corresponds to FLA bits 24:12
-        limit = chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'PRL' ) << SPI_FLA_SHIFT
+        limit = self.cs.get_register_field(pr_name, pr_j, 'PRL' ) << SPI_FLA_SHIFT
         
-        wpe = (0 != chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'WPE' ))
-        rpe = (0 != chipsec.chipset.get_register_field( self.cs, pr_name, pr_j, 'RPE' ))
+        wpe = (0 != self.cs.get_register_field(pr_name, pr_j, 'WPE' ))
+        rpe = (0 != self.cs.get_register_field(pr_name, pr_j, 'RPE' ))
 
         # Check if this is a valid PRx config
         if wpe or rpe:
@@ -249,26 +251,26 @@ class SPI:
         logger().log( "------------------------------------------------------------" )
         logger().log( "\nFlash Signature and Descriptor Map:" )
         for j in range(5):
-            chipsec.chipset.write_register( self.cs, 'FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_FSDM|(j<<2)) )
-            fdod = chipsec.chipset.read_register( self.cs, 'FDOD' )
+            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_FSDM|(j<<2)))
+            fdod = self.cs.read_register('FDOD')
             logger().log( "%08X" % fdod )
 
         logger().log( "\nComponents:" )
         for j in range(3):
-            chipsec.chipset.write_register( self.cs, 'FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_COMP|(j<<2)) )
-            fdod = chipsec.chipset.read_register( self.cs, 'FDOD' )
+            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_COMP|(j<<2)))
+            fdod = self.cs.read_register('FDOD')
             logger().log( "%08X" % fdod )
 
         logger().log( "\nRegions:" )
         for j in range(5):
-            chipsec.chipset.write_register( self.cs, 'FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_REGN|(j<<2)) )
-            fdod = chipsec.chipset.read_register( self.cs, 'FDOD' )
+            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_REGN|(j<<2)))
+            fdod = self.cs.read_register('FDOD')
             logger().log( "%08X" % fdod )
 
         logger().log( "\nMasters:" )
         for j in range(3):
-            chipsec.chipset.write_register( self.cs, 'FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_MSTR|(j<<2)) )
-            fdod = chipsec.chipset.read_register( self.cs, 'FDOD' )
+            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_MSTR|(j<<2)))
+            fdod = self.cs.read_register('FDOD')
             logger().log( "%08X" % fdod )
 
 
@@ -276,12 +278,12 @@ class SPI:
         logger().log( "============================================================" )
         logger().log( "SPI Opcode Info" )
         logger().log( "------------------------------------------------------------" )
-        preop = chipsec.chipset.read_register( self.cs, 'PREOP' )
+        preop = self.cs.read_register( 'PREOP' )
         logger().log( "PREOP : 0x%04X" % preop )
-        optype = chipsec.chipset.read_register( self.cs, 'OPTYPE' )
+        optype = self.cs.read_register('OPTYPE' )
         logger().log( "OPTYPE: 0x%04X" % optype )
-        opmenu_lo = chipsec.chipset.read_register( self.cs, 'OPMENU_LO' )
-        opmenu_hi = chipsec.chipset.read_register( self.cs, 'OPMENU_HI' )
+        opmenu_lo = self.cs.read_register('OPMENU_LO' )
+        opmenu_hi = self.cs.read_register('OPMENU_HI' )
         opmenu = ((opmenu_hi << 32)|opmenu_lo)
         logger().log( "OPMENU: 0x%016X" % opmenu )
         logger().log('')
@@ -315,9 +317,9 @@ class SPI:
 
 
     def display_BIOS_region( self ):
-        bfpreg = chipsec.chipset.read_register( self.cs, 'BFPR' )
-        base  = chipsec.chipset.get_register_field( self.cs, 'BFPR', bfpreg, 'PRB' ) << SPI_FLA_SHIFT
-        limit = chipsec.chipset.get_register_field( self.cs, 'BFPR', bfpreg, 'PRL' ) << SPI_FLA_SHIFT
+        bfpreg = self.cs.read_register('BFPR' )
+        base  = self.cs.get_register_field('BFPR', bfpreg, 'PRB' ) << SPI_FLA_SHIFT
+        limit = self.cs.get_register_field('BFPR', bfpreg, 'PRL' ) << SPI_FLA_SHIFT
         limit |= SPI_FLA_PAGE_MASK
         logger().log( "BIOS Flash Primary Region" )
         logger().log( "------------------------------------------------------------" )
@@ -328,12 +330,12 @@ class SPI:
     def display_SPI_Ranges_Access_Permissions( self ):
         logger().log( "SPI Flash Region Access Permissions" )
         logger().log( "------------------------------------------------------------" )
-        fracc = chipsec.chipset.read_register( self.cs, 'FRAP' )
-        chipsec.chipset.print_register( self.cs, 'FRAP', fracc )
-        brra  = chipsec.chipset.get_register_field( self.cs, 'FRAP', fracc, 'BRRA' )
-        brwa  = chipsec.chipset.get_register_field( self.cs, 'FRAP', fracc, 'BRWA' )
-        bmrag = chipsec.chipset.get_register_field( self.cs, 'FRAP', fracc, 'BMRAG' )
-        bmwag = chipsec.chipset.get_register_field( self.cs, 'FRAP', fracc, 'BMWAG' )
+        fracc = self.cs.read_register('FRAP')
+        self.cs.print_register('FRAP', fracc)
+        brra  = self.cs.get_register_field('FRAP', fracc, 'BRRA' )
+        brwa  = self.cs.get_register_field('FRAP', fracc, 'BRWA' )
+        bmrag = self.cs.get_register_field('FRAP', fracc, 'BMRAG' )
+        bmwag = self.cs.get_register_field('FRAP', fracc, 'BMWAG' )
         logger().log( '' )
         logger().log( "BIOS Region Write Access Grant (%02X):" % bmwag )
         for freg in (BIOS, ME, GBE):
@@ -389,18 +391,18 @@ class SPI:
     ##############################################################################################################
 
     def display_BIOS_write_protection( self ):
-        if chipsec.chipset.is_register_defined( self.cs, 'BC' ):
-             reg_value = chipsec.chipset.read_register( self.cs, 'BC' )
-             chipsec.chipset.print_register( self.cs, 'BC', reg_value )
+        if self.cs.is_register_defined('BC'):
+             reg_value = self.cs.read_register('BC')
+             self.cs.print_register('BC', reg_value )
         else:
             if logger().HAL: logger().error( "Could not locate the definition of 'BIOS Control' register.." )
 
 
     def disable_BIOS_write_protection( self ):
         if logger().VERBOSE: self.display_BIOS_write_protection()
-        ble    = chipsec.chipset.get_control( self.cs, 'BiosLockEnable' )
-        bioswe = chipsec.chipset.get_control( self.cs, 'BiosWriteEnable' )
-        smmbwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
+        ble    = self.cs.get_control('BiosLockEnable' )
+        bioswe = self.cs.get_control('BiosWriteEnable' )
+        smmbwp = self.cs.get_control('SmmBiosWriteProtection' )
 
         if smmbwp == 1:
             if logger().HAL: logger().log( "[spi] SMM BIOS write protection (SmmBiosWriteProtection) is enabled" )
@@ -414,10 +416,10 @@ class SPI:
             if logger().HAL: logger().log( "[spi] BIOS write protection is enabled. Attempting to disable.." )
 
         # Set BiosWriteEnable control bit
-        chipsec.chipset.set_control( self.cs, 'BiosWriteEnable', 1 )
+        self.cs.set_control('BiosWriteEnable', 1 )
 
         # read BiosWriteEnable back to check if BIOS writes are enabled
-        bioswe = chipsec.chipset.get_control( self.cs, 'BiosWriteEnable' )
+        bioswe = self.cs.get_control('BiosWriteEnable' )
 
         if logger().VERBOSE: self.display_BIOS_write_protection()
         if logger().HAL: logger().log_important( "BIOS write protection is %s (BiosWriteEnable = %d)" % ('disabled' if bioswe else 'still enabled', bioswe) )
@@ -496,7 +498,7 @@ class SPI:
 
     def check_hardware_sequencing(self):
         # Test if the flash decriptor is valid (and hardware sequencing enabled)
-        fdv = chipsec.chipset.read_register_field(self.cs, 'HSFS', 'FDV')
+        fdv = self.cs.read_register_field('HSFS', 'FDV')
         if fdv == 0:
             logger().error("HSFS.FDV is 0, hardware sequencing is disabled")
             raise SpiRuntimeError("Chipset does not support hardware sequencing")

@@ -29,7 +29,6 @@ Returns failure if variable attributes are not as defined in `table 11 "Global V
 from chipsec.module_common import *
 from chipsec.file          import *
 from chipsec.hal.uefi      import *
-import chipsec.chipset
 
 TAGS = [MTAG_BIOS]
 TAGS += [MTAG_SECUREBOOT]

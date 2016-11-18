@@ -29,7 +29,7 @@ The Memory Sinkhole by Christopher Domas: https://www.blackhat.com/docs/us-15/ma
 """
 
 from chipsec.module_common import *
-import chipsec.hal.cpu
+from chipsec.hal import cpu
 import chipsec.helper.oshelper
 
 TAGS = [MTAG_SMM]
@@ -38,7 +38,7 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self._cpu = chipsec.hal.cpu.CPU( self.cs )
+        self._cpu = cpu.CPU(self.cs)
 
 
     def is_supported(self):
@@ -46,9 +46,9 @@ class sinkhole(BaseModule):
         return (self.cs.helper.is_windows() or self.cs.helper.is_linux())
 
     def check_LAPIC_SMRR_overlap( self ):
-        if not chipsec.chipset.is_register_defined( self.cs, 'IA32_APIC_BASE' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'IA32_SMRR_PHYSBASE' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'IA32_SMRR_PHYSMASK' ):
+        if not self.cs.is_register_defined( 'IA32_APIC_BASE' ) or \
+           not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
+           not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
 
@@ -58,15 +58,15 @@ class sinkhole(BaseModule):
             self.logger.log_skipped_check("CPU does not support SMRR range protection of SMRAM")
             return ModuleResult.SKIPPED
 
-        smrr_physbase_msr = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSBASE', 0 )
-        apic_base_msr     = chipsec.chipset.read_register( self.cs, 'IA32_APIC_BASE', 0 )
-        chipsec.chipset.print_register( self.cs, 'IA32_APIC_BASE', apic_base_msr )
-        chipsec.chipset.print_register( self.cs, 'IA32_SMRR_PHYSBASE', smrr_physbase_msr )
+        smrr_physbase_msr = self.cs.read_register( 'IA32_SMRR_PHYSBASE', 0 )
+        apic_base_msr     = self.cs.read_register( 'IA32_APIC_BASE', 0 )
+        self.cs.print_register( 'IA32_APIC_BASE', apic_base_msr )
+        self.cs.print_register( 'IA32_SMRR_PHYSBASE', smrr_physbase_msr )
 
-        smrrbase  = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase' )
-        smrr_base = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase', True )
-        apicbase  = chipsec.chipset.get_register_field( self.cs, 'IA32_APIC_BASE', apic_base_msr, 'APICBase' )
-        apic_base = chipsec.chipset.get_register_field( self.cs, 'IA32_APIC_BASE', apic_base_msr, 'APICBase', True )
+        smrrbase  = self.cs.get_register_field( 'IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase' )
+        smrr_base = self.cs.get_register_field( 'IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase', True )
+        apicbase  = self.cs.get_register_field( 'IA32_APIC_BASE', apic_base_msr, 'APICBase' )
+        apic_base = self.cs.get_register_field( 'IA32_APIC_BASE', apic_base_msr, 'APICBase', True )
 
         self.logger.log( "[*] Local APIC Base: 0x%016X" % apic_base )
         self.logger.log( "[*] SMRR Base      : 0x%016X" % smrr_base )
@@ -75,22 +75,22 @@ class sinkhole(BaseModule):
         self.logger.log( "    writing 0x%X to IA32_APIC_BASE[APICBase].." % smrrbase )
         self.logger.log_important( "NOTE: The system may hang or process may crash when running this test. In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
         try:
-            chipsec.chipset.write_register_field( self.cs, 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
+            self.cs.write_register_field( 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
             ex = False
             self.logger.log_bad( "Was able to modify IA32_APIC_BASE" )
         except chipsec.helper.oshelper.HWAccessViolationError:
             ex = True
             self.logger.log_good( "Could not modify IA32_APIC_BASE" )
 
-        apic_base_msr_new = chipsec.chipset.read_register( self.cs, 'IA32_APIC_BASE', 0 )
+        apic_base_msr_new = self.cs.read_register( 'IA32_APIC_BASE', 0 )
         self.logger.log( "[*] new IA32_APIC_BASE: 0x%016X" % apic_base_msr_new )
-        #chipsec.chipset.print_register( self.cs, 'IA32_APIC_BASE', apic_base_msr_new )
-        
+        #self.cs.print_register( 'IA32_APIC_BASE', apic_base_msr_new )
+
         if apic_base_msr_new == apic_base_msr and ex:
             res = ModuleResult.PASSED
             self.logger.log_passed_check( "CPU does not seem to have SMM memory sinkhole vulnerability" )
         else:
-            chipsec.chipset.write_register( self.cs, 'IA32_APIC_BASE', apic_base_msr, 0 )
+            self.cs.write_register( 'IA32_APIC_BASE', apic_base_msr, 0 )
             self.logger.log( "[*] Restored original value 0x%016X" % apic_base_msr )
             res = ModuleResult.FAILED
             self.logger.log_failed_check( "CPU is succeptible to SMM memory sinkhole vulnerability" )
@@ -104,4 +104,4 @@ class sinkhole(BaseModule):
     def run( self, module_argv ):
         self.logger.start_test( "x86 SMM Memory Sinkhole" )
         return self.check_LAPIC_SMRR_overlap()
-        
+

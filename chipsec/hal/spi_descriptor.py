@@ -47,7 +47,7 @@ from chipsec.logger import *
 from chipsec.file import *
 
 from chipsec.cfg.common import *
-from chipsec.hal.spi import *
+from chipsec.hal import spi
 
 SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A )
 SPI_FLASH_DESCRIPTOR_SIZE      = 0x1000
@@ -80,13 +80,13 @@ def get_spi_regions( fd ):
     # Number of Regions (bits [26:24])
     nr   = ( ((flmap0 & 0xFF000000) >> 24) & 0x7 )
 
-    flregs = [None]*SPI_REGION_NUMBER_IN_FD
-    for r in range( SPI_REGION_NUMBER_IN_FD ):
+    flregs = [None] * spi.SPI_REGION_NUMBER_IN_FD
+    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
         flreg_off = frba + r*4
         flreg = struct.unpack_from( '=I', fd[flreg_off:flreg_off + 0x4] )[0]
-        (base,limit) = get_SPI_region( flreg )
+        (base,limit) = spi.get_SPI_region(flreg)
         notused = (base > limit)
-        flregs[r] = (r,SPI_REGION_NAMES[r],flreg,base,limit,notused)
+        flregs[r] = (r, spi.SPI_REGION_NAMES[r],flreg,base,limit,notused)
 
     fd_size    = flregs[FLASH_DESCRIPTOR][4] - flregs[FLASH_DESCRIPTOR][3] + 1
     fd_notused = flregs[FLASH_DESCRIPTOR][5]
@@ -184,11 +184,11 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( '+ 0x%04X Region Section:' % frba )
     logger().log( '========================================================' )
 
-    flregs = [None]*SPI_REGION_NUMBER_IN_FD
-    for r in range( SPI_REGION_NUMBER_IN_FD ):
+    flregs = [None] * spi.SPI_REGION_NUMBER_IN_FD
+    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
         flreg_off = frba + r*4
         flreg = struct.unpack_from( '=I', fd[flreg_off:flreg_off + 0x4] )[0]
-        (base,limit) = get_SPI_region( flreg )
+        (base,limit) = spi.get_SPI_region( flreg )
         notused = ''
         if base > limit:
             notused = '(not used)'
@@ -200,8 +200,8 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( '--------------------------------------------------------' )
     logger().log( ' Region                | FLREGx    | Base     | Limit   ' )
     logger().log( '--------------------------------------------------------' )
-    for r in range( SPI_REGION_NUMBER_IN_FD ):
-        logger().log( '%d %-020s | %08X  | %08X | %08X %s' % (r,SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
+    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
+        logger().log( '%d %-020s | %08X  | %08X | %08X %s' % (r, spi.SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
 
     #
     # Flash Descriptor Master Section
@@ -210,8 +210,8 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( '+ 0x%04X Master Section:' % fmba )
     logger().log( '========================================================' )
 
-    flmstrs = [None]*SPI_MASTER_NUMBER_IN_FD
-    for m in range( SPI_MASTER_NUMBER_IN_FD ):
+    flmstrs = [None] * spi.SPI_MASTER_NUMBER_IN_FD
+    for m in range( spi.SPI_MASTER_NUMBER_IN_FD ):
         flmstr_off = fmba + m*4
         flmstr = struct.unpack_from( '=I', fd[flmstr_off:flmstr_off + 0x4] )[0]
         (requester_id, master_region_ra, master_region_wa) = get_SPI_master( flmstr )
@@ -222,13 +222,13 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( 'Master Read/Write Access to Flash Regions' )
     logger().log( '--------------------------------------------------------' )
     s = ' Region                '
-    for m in range( SPI_MASTER_NUMBER_IN_FD ):
-        s = s + '| ' + ('%-9s' % SPI_MASTER_NAMES[m])
+    for m in range( spi.SPI_MASTER_NUMBER_IN_FD ):
+        s = s + '| ' + ('%-9s' % spi.SPI_MASTER_NAMES[m])
     logger().log( s )
     logger().log( '--------------------------------------------------------' )
-    for r in range( SPI_REGION_NUMBER_IN_FD ):
-        s = '%d %-020s ' % (r,SPI_REGION_NAMES[r])
-        for m in range( SPI_MASTER_NUMBER_IN_FD ):
+    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
+        s = '%d %-020s ' % (r, spi.SPI_REGION_NAMES[r])
+        for m in range( spi.SPI_MASTER_NUMBER_IN_FD ):
             access_s = ''
             mask = (0x1 << r) & 0xFF
             if (flmstrs[m][2] & mask):

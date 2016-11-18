@@ -33,7 +33,7 @@ References:
 """
 
 from chipsec.module_common import *
-from chipsec.hal.iobar import * 
+from chipsec.hal import iobar
 
 
 TAGS = [MTAG_BIOS,MTAG_SMM]
@@ -42,7 +42,7 @@ class bios_smi(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.iobar = iobar( self.cs )
+        self.iobar = iobar.IOBAR(self.cs)
 
     def is_supported(self):
         return (self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM)
@@ -51,16 +51,16 @@ class bios_smi(BaseModule):
 
         self.logger.start_test( "SMI Events Configuration" )
         
-        if not chipsec.chipset.is_register_defined( self.cs, 'TCO1_CNT' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'GEN_PMCON_1' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'SMI_EN' ):
+        if not self.cs.is_register_defined( 'TCO1_CNT' ) or \
+           not self.cs.is_register_defined( 'GEN_PMCON_1' ) or \
+           not self.cs.is_register_defined( 'SMI_EN' ):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
         
         #
         # Checking SMM_BWP first in BIOS control to warn if SMM write-protection of the BIOS is not enabled
         #
-        smm_bwp = chipsec.chipset.get_control( self.cs, 'SmmBiosWriteProtection' )
+        smm_bwp = self.cs.get_control( 'SmmBiosWriteProtection' )
         if 0 == smm_bwp: self.logger.log_bad( "SMM BIOS region write protection has not been enabled (SMM_BWP is not used)\n" )
         else:            self.logger.log_good( "SMM BIOS region write protection is enabled (SMM_BWP is used)\n" )
 
@@ -70,12 +70,8 @@ class bios_smi(BaseModule):
         # Checking if global SMI and TCO SMI are enabled (GBL_SMI_EN and TCO_EN bits in SMI_EN register)
         #
         self.logger.log( "[*] Checking SMI enables.." )
-        #smi_en_reg = chipsec.chipset.read_register( self.cs, 'SMI_EN' )
-        ##chipsec.chipset.print_register( self.cs, 'SMI_EN', smi_en_reg )
-        #tco_en     = chipsec.chipset.get_register_field( self.cs, 'SMI_EN', smi_en_reg, 'TCO_EN' )
-        #gbl_smi_en = chipsec.chipset.get_register_field( self.cs, 'SMI_EN', smi_en_reg, 'GBL_SMI_EN' )
-        tco_en     = chipsec.chipset.get_control( self.cs, 'TCOSMIEnable' )
-        gbl_smi_en = chipsec.chipset.get_control( self.cs, 'GlobalSMIEnable' )
+        tco_en     = self.cs.get_control( 'TCOSMIEnable' )
+        gbl_smi_en = self.cs.get_control( 'GlobalSMIEnable' )
         self.logger.log( "    Global SMI enable: %d" % gbl_smi_en )
         self.logger.log( "    TCO SMI enable   : %d" % tco_en )
 
@@ -92,7 +88,7 @@ class bios_smi(BaseModule):
         #
         # Checking TCO_LOCK
         #
-        tco_lock = chipsec.chipset.get_control( self.cs, 'TCOSMILock')
+        tco_lock = self.cs.get_control( 'TCOSMILock')
         if tco_lock != 1:
             ok = False
             self.logger.log_bad( "TCO SMI event configuration is not locked. TCO SMI events can be disabled" )
@@ -101,7 +97,7 @@ class bios_smi(BaseModule):
         #
         # Checking SMI_LOCK
         #
-        smi_lock = chipsec.chipset.get_control( self.cs, 'SMILock' )
+        smi_lock = self.cs.get_control( 'SMILock' )
         if smi_lock != 1:
             ok = False
             self.logger.log_bad( "SMI events global configuration is not locked. SMI events can be disabled" )
