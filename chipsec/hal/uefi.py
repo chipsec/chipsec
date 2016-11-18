@@ -60,11 +60,11 @@ def parse_script( script, log_script=False ):
     len_s                  = len(script)
 
     if log_script: logger().log( '[uefi] +++ S3 Resume Boot-Script +++\n' )
-    script_type,script_header_length = id_s3bootscript_type( script, log_script )
+    script_type,script_header_length = uefi_platform.id_s3bootscript_type( script, log_script )
     off += script_header_length
 
     while (off < len_s) and (entry_type != S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE):
-        entry_type,s3script_entry = parse_s3bootscript_entry( script_type, script, off, log_script )
+        entry_type,s3script_entry = uefi_platform.parse_s3bootscript_entry( script_type, script, off, log_script )
         # couldn't parse the next entry - return what has been parsed so far
         if s3script_entry is None: return s3_boot_script_entries
         s3_boot_script_entries.append( s3script_entry )
