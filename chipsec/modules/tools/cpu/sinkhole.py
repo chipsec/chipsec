@@ -38,7 +38,6 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self._cpu = cpu.CPU(self.cs)
 
 
     def is_supported(self):
@@ -52,7 +51,7 @@ class sinkhole(BaseModule):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
 
-        if self._cpu.check_SMRR_supported():
+        if self.cs.cpu.check_SMRR_supported():
             self.logger.log_good( "SMRR range protection is supported" )
         else:
             self.logger.log_skipped_check("CPU does not support SMRR range protection of SMRAM")
