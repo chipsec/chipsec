@@ -43,15 +43,15 @@ class smrr(BaseModule):
     # Check that SMRR are supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
     def check_SMRR_supported(self):
-        mtrrcap_msr_reg = chipsec.chipset.read_register( self.cs, 'MTRRCAP' )
-        if self.logger.VERBOSE: chipsec.chipset.print_register( self.cs, 'MTRRCAP', mtrrcap_msr_reg )
-        smrr = chipsec.chipset.get_register_field( self.cs, 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
+        mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
+        if self.logger.VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
+        smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
 
     def check_SMRR(self, do_modify):
-        if not chipsec.chipset.is_register_defined( self.cs, 'MTRRCAP' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'IA32_SMRR_PHYSBASE' ) or \
-           not chipsec.chipset.is_register_defined( self.cs, 'IA32_SMRR_PHYSMASK' ):
+        if not self.cs.is_register_defined( 'MTRRCAP' ) or \
+           not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
+           not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
 
@@ -72,10 +72,10 @@ class smrr(BaseModule):
         #
         self.logger.log( '' )
         self.logger.log( "[*] Checking SMRR range base programming.." )
-        msr_smrrbase = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSBASE' )
-        chipsec.chipset.print_register( self.cs, 'IA32_SMRR_PHYSBASE', msr_smrrbase )
-        smrrbase = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSBASE', msr_smrrbase, 'PhysBase', True )
-        smrrtype = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type' )
+        msr_smrrbase = self.cs.read_register( 'IA32_SMRR_PHYSBASE' )
+        self.cs.print_register( 'IA32_SMRR_PHYSBASE', msr_smrrbase )
+        smrrbase = self.cs.get_register_field( 'IA32_SMRR_PHYSBASE', msr_smrrbase, 'PhysBase', True )
+        smrrtype = self.cs.get_register_field( 'IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type' )
         self.logger.log( "[*] SMRR range base: 0x%016X" % smrrbase )
 
         if smrrtype in self.cs.Cfg.MemType:
@@ -95,10 +95,10 @@ class smrr(BaseModule):
         #
         self.logger.log( '' )
         self.logger.log( "[*] Checking SMRR range mask programming.." )
-        msr_smrrmask = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSMASK' )
-        chipsec.chipset.print_register( self.cs, 'IA32_SMRR_PHYSMASK', msr_smrrmask )
-        smrrmask  = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True )
-        smrrvalid = chipsec.chipset.get_register_field( self.cs, 'IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid' )
+        msr_smrrmask = self.cs.read_register( 'IA32_SMRR_PHYSMASK' )
+        self.cs.print_register( 'IA32_SMRR_PHYSMASK', msr_smrrmask )
+        smrrmask  = self.cs.get_register_field( 'IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True )
+        smrrvalid = self.cs.get_register_field( 'IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid' )
         self.logger.log( "[*] SMRR range mask: 0x%016X" % smrrmask )
 
         if not ( smrrvalid and (0 != smrrmask) ):
@@ -113,8 +113,8 @@ class smrr(BaseModule):
         self.logger.log( '' )
         self.logger.log( "[*] Verifying that SMRR range base & mask are the same on all logical CPUs.." )
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            msr_base = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSBASE', tid )
-            msr_mask = chipsec.chipset.read_register( self.cs, 'IA32_SMRR_PHYSMASK', tid)
+            msr_base = self.cs.read_register( 'IA32_SMRR_PHYSBASE', tid )
+            msr_mask = self.cs.read_register( 'IA32_SMRR_PHYSMASK', tid)
             self.logger.log( "[CPU%d] SMRR_PHYSBASE = %016X, SMRR_PHYSMASK = %016X"% (tid, msr_base, msr_mask) )
             if (msr_base != msr_smrrbase) or (msr_mask != msr_smrrmask):
                 smrr_ok = False

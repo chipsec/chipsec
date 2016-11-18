@@ -44,8 +44,7 @@ import struct
 import sys
 import time
 
-import chipsec.chipset
-#from chipsec.hal.hal_base import HALBase
+from chipsec.hal import hal_base
 from chipsec.logger import logger
 
 DEFAULT_IO_BAR_SIZE = 0x100
@@ -55,11 +54,10 @@ class IOBARRuntimeError (RuntimeError):
 class IOBARNotFoundError (RuntimeError):
     pass
 
+class IOBAR(hal_base.HALBase):
 
-class iobar:
-
-    def __init__( self, cs ):
-        self.cs = cs
+    def __init__(self, cs):
+        super(IOBAR, self).__init__(cs)
 
     #
     # Check if I/O BAR with bar_name has been defined in XML config
@@ -85,9 +83,9 @@ class iobar:
             bar_reg   = bar['register']
             if 'base_field' in bar:
                 base_field = bar['base_field']
-                base = chipsec.chipset.read_register_field( self.cs, bar_reg, base_field, preserve_field_position=True )
+                base = self.cs.read_register_field( bar_reg, base_field, preserve_field_position=True )
             else:
-                base = chipsec.chipset.read_register( self.cs, bar_reg )
+                base = self.cs.read_register( bar_reg )
         else:
             # this method is not preferred
             base = self.cs.pci.read_word( int(bar['bus'],16), int(bar['dev'],16), int(bar['fun'],16), int(bar['reg'],16) )
@@ -132,7 +130,7 @@ class iobar:
             bar_reg = bar['register']
             if 'enable_field' in bar:
                 bar_en_field = bar['enable_field']
-                is_enabled = (1 == chipsec.chipset.read_register_field( self.cs, bar_reg, bar_en_field ))
+                is_enabled = (1 == self.cs.read_register_field( bar_reg, bar_en_field ))
         return is_enabled
 
 

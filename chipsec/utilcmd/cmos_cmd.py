@@ -53,7 +53,7 @@ class CMOSCommand(BaseCommand):
             return
 
         try:
-            _cmos = CMOS(  )
+            _cmos = CMOS(self.cs)
         except CmosRuntimeError, msg:
             print msg
             return

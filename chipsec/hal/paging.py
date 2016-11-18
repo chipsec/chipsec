@@ -93,7 +93,7 @@ class c_translation(object):
     def get_address_space(self):
         total = 0
         mem_range = self.get_mem_range()
-        for i in mem_range:                                                         
+        for i in mem_range:
             total += i[1] - i[0]
         return total
 

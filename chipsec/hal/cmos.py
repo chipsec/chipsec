@@ -46,7 +46,7 @@ import struct
 import sys
 import time
 
-from chipsec.hal.hal_base import HALBase
+from chipsec.hal import hal_base
 import chipsec.logger
 
 class CmosRuntimeError (RuntimeError):
@@ -60,7 +60,10 @@ CMOS_ADDR_PORT_HIGH = 0x72
 CMOS_DATA_PORT_HIGH = 0x73
 
 
-class CMOS(HALBase):
+class CMOS(hal_base.HALBase):
+
+    def __init__(self, cs):
+        super(CMOS, self).__init__(cs)
 
     def read_cmos_high( self, offset ):
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_HIGH, offset );

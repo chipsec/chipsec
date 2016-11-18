@@ -29,7 +29,6 @@ This module examines the configuration and locking of SMRAM range configuration 
 """
 
 from chipsec.module_common import *
-import chipsec.chipset
 
 _MODULE_NAME = 'smm_dma'
 
@@ -49,29 +48,29 @@ class smm_dma(BaseModule):
         else: return True
 
     def check_tseg_locks(self):
-        tseg_base_lock = chipsec.chipset.get_control(self.cs, 'TSEGBaseLock')
-        tseg_limit_lock = chipsec.chipset.get_control(self.cs, 'TSEGLimitLock')
-        
+        tseg_base_lock = self.cs.get_control('TSEGBaseLock')
+        tseg_limit_lock = self.cs.get_control('TSEGLimitLock')
+
         if tseg_base_lock and tseg_limit_lock:
             self.logger.log_good( "TSEG range is locked" )
             return ModuleResult.PASSED
         else:
             self.logger.log_bad( "TSEG range is not locked" )
             return ModuleResult.FAILED
-        
+
     def check_tseg_config(self):
         res = ModuleResult.FAILED
         (tseg_base,  tseg_limit,  tseg_size ) = self.cs.cpu.get_TSEG()
         (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
         self.logger.log("[*] TSEG      : 0x%016X - 0x%016X (size = 0x%08X)"   % (tseg_base,  tseg_limit,  tseg_size ))      
         self.logger.log("[*] SMRR range: 0x%016X - 0x%016X (size = 0x%08X)\n" % (smram_base, smram_limit, smram_size))
-        
+
         self.logger.log( "[*] checking TSEG range configuration.." )
         if (0 == smram_base) and (0 == smram_limit):
             res = ModuleResult.WARNING
             self.logger.log_warn_check( "TSEG is properly configured but can't determine if it covers entire SMRAM" )
-            
-        else:            
+
+        else:
             if (tseg_base <= smram_base) and (smram_limit <= tseg_limit):
             #if (tseg_base == smram_base) and (tseg_size == smram_size):
                 self.logger.log_good( "TSEG range covers entire SMRAM" )

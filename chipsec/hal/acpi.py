@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -44,9 +44,8 @@ from collections import namedtuple
 from chipsec.logger import *
 from chipsec.file import *
 
-import chipsec.hal.acpi_tables
-import chipsec.hal.uefi
-import chipsec.helper.oshelper
+from chipsec.hal import acpi_tables, hal_base, uefi
+from chipsec.helper import oshelper
 
 class AcpiRuntimeError (RuntimeError):
     pass
@@ -116,44 +115,44 @@ ACPI_TABLE_SIG_LPIT = 'LPIT'
 ACPI_TABLE_SIG_ASPT = 'ASPT'
 
 ACPI_TABLES = {
-  ACPI_TABLE_SIG_ROOT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_RSDT: chipsec.hal.acpi_tables.RSDT,
-  ACPI_TABLE_SIG_XSDT: chipsec.hal.acpi_tables.XSDT,
-  ACPI_TABLE_SIG_FACP: chipsec.hal.acpi_tables.FADT,
-  ACPI_TABLE_SIG_FACS: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_DSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_SSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_PSDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_APIC: chipsec.hal.acpi_tables.APIC,
-  ACPI_TABLE_SIG_SBST: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_ECDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_SRAT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_SLIC: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_SLIT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_BOOT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_CPEP: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_DBGP: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_ETDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_HPET: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_MCFG: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_SPCR: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_SPMI: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_TCPA: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_WDAT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_WDRT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_WSPT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_WDDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_ASF : chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_MSEG: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_DMAR: chipsec.hal.acpi_tables.DMAR,
-  ACPI_TABLE_SIG_UEFI: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_FPDT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_PCCT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_MSDM: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_BATB: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_BGRT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_LPIT: chipsec.hal.acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_ASPT: chipsec.hal.acpi_tables.ACPI_TABLE
+  ACPI_TABLE_SIG_ROOT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_RSDT: acpi_tables.RSDT,
+  ACPI_TABLE_SIG_XSDT: acpi_tables.XSDT,
+  ACPI_TABLE_SIG_FACP: acpi_tables.FADT,
+  ACPI_TABLE_SIG_FACS: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_DSDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SSDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_PSDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_APIC: acpi_tables.APIC,
+  ACPI_TABLE_SIG_SBST: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ECDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SRAT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SLIC: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SLIT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BOOT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_CPEP: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_DBGP: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ETDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_HPET: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MCFG: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SPCR: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_SPMI: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_TCPA: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WDAT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WDRT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WSPT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WDDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ASF : acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MSEG: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_DMAR: acpi_tables.DMAR,
+  ACPI_TABLE_SIG_UEFI: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_FPDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_PCCT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MSDM: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BATB: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BGRT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_LPIT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ASPT: acpi_tables.ACPI_TABLE
 }
 
 ########################################################################################################
@@ -213,10 +212,10 @@ class RSDP():
 #
 ########################################################################################################
 
-class ACPI:
-    def __init__( self, cs ):
-        self.cs     = cs
-        self.uefi   = chipsec.hal.uefi.UEFI( self.cs )
+class ACPI(hal_base.HALBase):
+    def __init__(self, cs):
+        super(ACPI, self).__init__(cs)
+        self.uefi = uefi.UEFI(self.cs)
         self.tableList = defaultdict(list)
         self.get_ACPI_table_list()
 

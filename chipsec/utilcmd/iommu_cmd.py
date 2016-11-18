@@ -33,8 +33,7 @@ import chipsec_util
 
 from chipsec.logger     import *
 from chipsec.file       import *
-from chipsec.hal.iommu  import *
-import chipsec.hal.acpi
+from chipsec.hal import acpi, iommu
 from chipsec.command    import BaseCommand
 
 
@@ -68,37 +67,37 @@ class IOMMUCommand(BaseCommand):
             return
         op = self.argv[2]
         t = time.time()
-        
+
         try:
-            _iommu = iommu( self.cs )
+            _iommu = iommu.IOMMU(self.cs)
         except IOMMUError, msg:
             print msg
             return
-            
+
         if ( 'list' == op ):
             self.logger.log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
-            self.logger.log( IOMMU_ENGINES.keys() )
+            self.logger.log( iommu.IOMMU_ENGINES.keys() )
         elif ( 'config' == op or 'status' == op or 'enable' == op or 'disable' == op ):
             if len(self.argv) > 3:
-                if self.argv[3] in IOMMU_ENGINES.keys():
+                if self.argv[3] in iommu.IOMMU_ENGINES.keys():
                     _iommu_engines = [ self.argv[3] ]
                 else:
                     self.logger.error( "IOMMU name %s not recognized. Run 'iommu list' command for supported IOMMU names" % self.argv[3] )
                     return
             else:
-                _iommu_engines = IOMMU_ENGINES.keys()
+                _iommu_engines = iommu.IOMMU_ENGINES.keys()
 
             if 'config' == op:
 
                 try:
-                    _acpi  = chipsec.hal.acpi.ACPI( self.cs )
-                except chipsec.hal.acpi.AcpiRuntimeError, msg:
+                    _acpi  = acpi.ACPI( self.cs )
+                except acpi.AcpiRuntimeError, msg:
                     print msg
-                    return      
+                    return
 
-                if _acpi.is_ACPI_table_present( chipsec.hal.acpi.ACPI_TABLE_SIG_DMAR ):
+                if _acpi.is_ACPI_table_present(acpi.ACPI_TABLE_SIG_DMAR):
                     self.logger.log( "[CHIPSEC] Dumping contents of DMAR ACPI table..\n" )
-                    _acpi.dump_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_DMAR )
+                    _acpi.dump_ACPI_table(acpi.ACPI_TABLE_SIG_DMAR)
                 else:
                     self.logger.log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
 
@@ -111,7 +110,7 @@ class IOMMUCommand(BaseCommand):
         else:
             print IOMMUCommand.__doc__
             return
-        
+
         self.logger.log( "[CHIPSEC] (iommu) time elapsed %.3f" % (time.time()-t) )
 
 

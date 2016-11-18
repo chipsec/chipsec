@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -25,10 +25,8 @@ Base for HAL Components
 """
 
 import chipsec.logger
-import chipsec.chipset
-import chipsec.defines
 
-class HALBase( object ):
-    def __init__(self):
-        self.cs = chipsec.chipset.cs()
+class HALBase(object):
+    def __init__(self, cs):
+        self.cs = cs
         self.logger = chipsec.logger.logger()

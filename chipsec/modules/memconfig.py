@@ -70,9 +70,9 @@ class memconfig(BaseModule):
         all_locked = True
 
         for r in regs:
-            d = chipsec.chipset.get_register_def( self.cs, r )
-            v = chipsec.chipset.read_register( self.cs, r )
-            locked = chipsec.chipset.get_register_field( self.cs, r, v, memmap_registers[r] )
+            d = self.cs.get_register_def( r )
+            v = self.cs.read_register( r )
+            locked = self.cs.get_register_field( r, v, memmap_registers[r] )
             if locked == 1:
                 self.logger.log_good( "%-20s = 0x%016X - LOCKED   - %s" % (r, v, d['desc']) )
             else:

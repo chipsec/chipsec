@@ -30,7 +30,7 @@ __version__ = '1.0'
 import time
 
 import chipsec_util
-import chipsec.hal.iobar
+from chipsec.hal import iobar
 from chipsec.command import BaseCommand
 
 # Port I/O
@@ -58,8 +58,8 @@ class PortIOCommand(BaseCommand):
             return
 
         try:
-            _iobar = chipsec.hal.iobar.iobar( self.cs )
-        except chipsec.hal.iobar.IOBARRuntimeError, msg:
+            _iobar = iobar.IOBAR( self.cs )
+        except iobar.IOBARRuntimeError, msg:
             print msg
             return
 

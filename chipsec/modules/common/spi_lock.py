@@ -34,7 +34,7 @@ TAGS = [MTAG_BIOS]
 class spi_lock(BaseModule):
 
     def __init__(self):
-        BaseModule.__init__(self)
+        super(spi_lock, self).__init__()
 
     def is_supported(self):
         return True
@@ -46,7 +46,7 @@ class spi_lock(BaseModule):
         #hsfs_reg = chipsec.chipset.read_register( self.cs, 'HSFS' )
         #chipsec.chipset.print_register( self.cs, 'HSFS', hsfs_reg )
         #flockdn = chipsec.chipset.get_register_field( self.cs, 'HSFS', hsfs_reg, 'FLOCKDN' )
-        flockdn = chipsec.chipset.get_control(self.cs, 'FlashLockDown', with_print=True)
+        flockdn = self.cs.get_control('FlashLockDown', with_print=True)
 
         if 1 == flockdn:
             spi_lock_res = ModuleResult.PASSED
