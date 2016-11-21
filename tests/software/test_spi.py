@@ -1,7 +1,9 @@
 import os
 import tempfile
+import unittest
 
 from tests.software import mock_helper, util
+
 
 class TestSPIChipsecUtil(util.TestChipsecUtil):
     """Test the SPI commands exposed by chipsec_utils."""
@@ -30,3 +32,6 @@ class TestSPIChipsecUtil(util.TestChipsecUtil):
         self.assertEqual(os.stat(rom_file).st_size, 0x3000)
         os.remove(rom_file)
 
+
+if __name__ == '__main__':
+    unittest.main()

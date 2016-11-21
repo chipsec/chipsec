@@ -1,4 +1,7 @@
+import unittest
+
 from tests.software import mock_helper, util
+
 
 class TestMSRChipsecUtil(util.TestChipsecUtil):
     """Test the MSR commands exposed by chipsec_utils."""
@@ -20,3 +23,5 @@ class TestMSRChipsecUtil(util.TestChipsecUtil):
         self._assertLogValue("EAX", "00001234")
         self._assertLogValue("EDX", "0000CDEF")
 
+if __name__ == '__main__':
+    unittest.main()

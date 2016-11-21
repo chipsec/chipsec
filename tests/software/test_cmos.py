@@ -1,4 +1,7 @@
+import unittest
+
 from tests.software import mock_helper, util
+
 
 class TestCMOSChipsecUtil(util.TestChipsecUtil):
     """Test the CMOS commands exposed by chipsec_utils."""
@@ -21,3 +24,5 @@ class TestCMOSChipsecUtil(util.TestChipsecUtil):
 
         self._chipsec_util("cmos dump", CMOSHelper)
 
+if __name__ == '__main__':
+    unittest.main()
