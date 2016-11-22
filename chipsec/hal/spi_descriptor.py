@@ -88,8 +88,8 @@ def get_spi_regions( fd ):
         notused = (base > limit)
         flregs[r] = (r, spi.SPI_REGION_NAMES[r],flreg,base,limit,notused)
 
-    fd_size    = flregs[FLASH_DESCRIPTOR][4] - flregs[FLASH_DESCRIPTOR][3] + 1
-    fd_notused = flregs[FLASH_DESCRIPTOR][5]
+    fd_size    = flregs[spi.FLASH_DESCRIPTOR][4] - flregs[spi.FLASH_DESCRIPTOR][3] + 1
+    fd_notused = flregs[spi.FLASH_DESCRIPTOR][5]
     if fd_notused or (fd_size != SPI_FLASH_DESCRIPTOR_SIZE):
         return None
 
