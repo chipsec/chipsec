@@ -63,6 +63,11 @@ CMD_UEFI_FILE_INSERT_BEFORE = 1
 CMD_UEFI_FILE_INSERT_AFTER  = 2
 CMD_UEFI_FILE_REPLACE       = 3
 
+#
+# Calculate hashes for all FVs, FW files and sections (PE/COFF or TE executables)
+# and write them on the file system
+#
+WRITE_ALL_HASHES = False
 
 def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_data, compression_type, remove_files=False ):
     compressed_name = os.path.join(section_dir_path, "%s.gz" % sec_fs_name)
@@ -155,14 +160,17 @@ class EFI_MODULE(object):
         self.clsname    = "EFI module"
         self.indent     = ''
 
-        self.MD5        = ''
-        self.SHA1       = ''
-        self.SHA256     = ''
+        self.MD5        = None
+        self.SHA1       = None
+        self.SHA256     = None
 
     def __str__(self):
         _ind = self.indent + DEF_INDENT
-        return "%sMD5   : %s\n%sSHA1  : %s\n%sSHA256: %s\n" % (_ind,self.MD5,_ind,self.SHA1,_ind,self.SHA256)
-
+        _s = ''
+        if self.MD5   : _s  = "\n%sMD5   : %s" % (_ind,self.MD5)
+        if self.SHA1  : _s += "\n%sSHA1  : %s" % (_ind,self.SHA1)
+        if self.SHA256: _s += "\n%sSHA256: %s" % (_ind,self.SHA256)
+        return _s
 
 class EFI_FV(EFI_MODULE):
     def __init__(self, Offset, Guid, Size, Attributes, HeaderSize, Checksum, ExtHeaderOffset, Image, CalcSum):
@@ -176,7 +184,7 @@ class EFI_FV(EFI_MODULE):
     def __str__(self):
         schecksum = ('%04Xh (%04Xh) *** checksum mismatch ***' % (self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('%04Xh' % self.Checksum)
         _s = "\n%s%s +%08Xh {%s}: Size %08Xh, Attr %08Xh, HdrSize %04Xh, ExtHdrOffset %08Xh, Checksum %s" % (self.indent,self.clsname,self.Offset,self.Guid,self.Size,self.Attributes,self.HeaderSize,self.ExtHeaderOffset,schecksum)
-        _s += ("\n" + super(EFI_FV, self).__str__())
+        _s += super(EFI_FV, self).__str__()
         return _s
 
 class EFI_FILE(EFI_MODULE):
@@ -194,7 +202,7 @@ class EFI_FILE(EFI_MODULE):
     def __str__(self):
         schecksum = ('%04Xh (%04Xh) *** checksum mismatch ***' % (self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('%04Xh' % self.Checksum)
         _s = "\n%s%s +%08Xh {%s}\n%sType %02Xh, Attr %08Xh, State %02Xh, Size %06Xh, Checksum %s" % (self.indent,self.clsname,self.Offset,self.Guid,self.indent*2,self.Type,self.Attributes,self.State,self.Size,schecksum)
-        _s += ("\n" + super(EFI_FILE, self).__str__())
+        _s += (super(EFI_FILE, self).__str__() + '\n')
         return _s
 
 class EFI_SECTION(EFI_MODULE):
@@ -212,6 +220,7 @@ class EFI_SECTION(EFI_MODULE):
         if self.Guid: _s += ", GUID {%s}" % self.Guid
         if self.Attributes: _s += ", Attr %04Xh" % self.Attributes
         if self.DataOffset: _s += ", DataOffset %04Xh" % self.DataOffset
+        _s += super(EFI_SECTION, self).__str__()
         return _s
 
 def dump_fw_file( fwbin, volume_path ):
@@ -219,17 +228,19 @@ def dump_fw_file( fwbin, volume_path ):
     pth = os.path.join( volume_path, "%s.%s-%02X" % (fwbin.Name, type_s, fwbin.Type))
     if os.path.exists( pth ): pth += ("_%08X" % fwbin.Offset)
     write_file( pth, fwbin.Image )
-    if fwbin.MD5    != '': write_file( ("%s.md5"    % pth), fwbin.MD5 )
-    if fwbin.SHA1   != '': write_file( ("%s.sha1"   % pth), fwbin.SHA1 )
-    if fwbin.SHA256 != '': write_file( ("%s.sha256" % pth), fwbin.SHA256 )
+    if WRITE_ALL_HASHES:
+        if fwbin.MD5   : write_file( ("%s.md5"    % pth), fwbin.MD5 )
+        if fwbin.SHA1  : write_file( ("%s.sha1"   % pth), fwbin.SHA1 )
+        if fwbin.SHA256: write_file( ("%s.sha256" % pth), fwbin.SHA256 )
     return ("%s.dir" % pth)
 
 def dump_fv( fv, voln, uefi_region_path ):
     fv_pth = os.path.join( uefi_region_path, "%02d_%s" % (voln, fv.Guid) )
     write_file( fv_pth, fv.Image )
-    if fv.MD5    != '': write_file( ("%s.md5"    % fv_pth), fv.MD5 )
-    if fv.SHA1   != '': write_file( ("%s.sha1"   % fv_pth), fv.SHA1 )
-    if fv.SHA256 != '': write_file( ("%s.sha256" % fv_pth), fv.SHA256 )
+    if WRITE_ALL_HASHES:
+        if fv.MD5   : write_file( ("%s.md5"    % fv_pth), fv.MD5 )
+        if fv.SHA1  : write_file( ("%s.sha1"   % fv_pth), fv.SHA1 )
+        if fv.SHA256: write_file( ("%s.sha256" % fv_pth), fv.SHA256 )
     volume_path = os.path.join( uefi_region_path, "%02d_%s.dir" % (voln, fv.Guid) )
     if not os.path.exists( volume_path ): os.makedirs( volume_path )
     return volume_path
@@ -244,6 +255,10 @@ def dump_section( sec, secn, parent_path, efi_file ):
             efi_file = sec_fs_name
             section_path = os.path.join(parent_path, sec_fs_name)
             write_file( section_path, sec.Image[sec.HeaderSize:] )
+            if sec.MD5   : write_file( os.path.join(parent_path, "%s.md5" % sec_fs_name), sec.MD5 )
+            if sec.SHA1  : write_file( os.path.join(parent_path, "%s.sha1" % sec_fs_name), sec.SHA1 )
+            if sec.SHA256: write_file( os.path.join(parent_path, "%s.sha256" % sec_fs_name), sec.SHA256 )
+
         else:
             write_file( section_path, sec.Image[sec.HeaderSize:] )
             if sec.Type == EFI_SECTION_USER_INTERFACE:
@@ -251,21 +266,24 @@ def dump_section( sec, secn, parent_path, efi_file ):
                 if ui_string[-4:] != '.efi': ui_string = "%s.efi" % ui_string
                 if efi_file is not None:
                     os.rename(os.path.join(parent_path, efi_file), os.path.join(parent_path, ui_string))
+                    os.rename(os.path.join(parent_path, "%s.md5" % efi_file), os.path.join(parent_path, "%s.md5" % ui_string))
+                    os.rename(os.path.join(parent_path, "%s.sha1" % efi_file), os.path.join(parent_path, "%s.sha1" % ui_string))
+                    os.rename(os.path.join(parent_path, "%s.sha256" % efi_file), os.path.join(parent_path, "%s.sha256" % ui_string))
                     efi_file = None
 
     section_dir_path = "%s.dir" % section_path
     return sec_fs_name,section_dir_path,efi_file
 
-def add_hashes( efi ):
+def add_hashes( efi, off=0 ):
     if efi.Image is None: return
     hmd5 = hashlib.md5()
-    hmd5.update( efi.Image )
+    hmd5.update( efi.Image[off:] )
     efi.MD5 = hmd5.hexdigest()
     hsha1 = hashlib.sha1()
-    hsha1.update( efi.Image )
+    hsha1.update( efi.Image[off:] )
     efi.SHA1   = hsha1.hexdigest()
     hsha256 = hashlib.sha256()
-    hsha256.update( efi.Image )
+    hsha256.update( efi.Image[off:] )
     efi.SHA256 = hsha256.hexdigest()
 
 #
@@ -352,6 +370,9 @@ def traverse_uefi_section( _uefi, fwtype, data, Size, offset, polarity, parent_o
     while next_offset is not None:
         sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
         sec.indent = DEF_INDENT*2
+        if sec.Type in (EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16):
+            add_hashes( sec, sec.HeaderSize )
+
         # pick random file name in case dumpall=False - we'll need it to decompress the section
         sec_fs_name = "sect%02d_%s" % (secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
         if sec.Type == EFI_SECTION_USER_INTERFACE:
