@@ -1,5 +1,4 @@
 import os
-import struct
 import tempfile
 import unittest
 
@@ -9,6 +8,7 @@ import chipsec_util
 from chipsec import logger
 from chipsec import chipset
 from chipsec.helper import oshelper
+
 
 class TestChipsecUtil(unittest.TestCase):
     """Test the commands exposed by chipsec_utils.
@@ -61,6 +61,5 @@ class TestChipsecUtil(unittest.TestCase):
         Assert that at least one line exists within the log which matches the
         expression: name [:=] value.
         """
-        self.assertRegexpMatches(self.log,
-                                 r'(^|\W){}\s*[:=]\s*{}($|\W)'.format(name, value))
-
+        exp = r'(^|\W){}\s*[:=]\s*{}($|\W)'
+        self.assertRegexpMatches(self.log, exp.format(name, value))
