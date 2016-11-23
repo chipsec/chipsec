@@ -2,10 +2,11 @@ import struct
 
 from chipsec.helper import oshelper
 
+
 class TestHelper(oshelper.Helper):
     """Default test helper that emulates a Broadwell architecture.
 
-    See datasheet for registers definition:
+    See datasheet for registers definition.
     http://www.intel.com/content/www/us/en/chipsets/9-series-chipset-pch-datasheet.html
     """
 
@@ -35,6 +36,7 @@ class TestHelper(oshelper.Helper):
         else:
             raise Exception("Unexpected PCI read")
 
+
 class ACPIHelper(TestHelper):
     """Generic ACPI emulation
 
@@ -54,6 +56,7 @@ class ACPIHelper(TestHelper):
       * RSDT table [0x200, 0x224 + 4 * len(RSDT_ENTRIES)]
     """
     USE_RSDP_REV_0 = True
+    TABLE_HEADER_SIZE = 36
 
     EBDA_ADDRESS = 0x96000
     EBDA_PADDING = 0x100
@@ -85,25 +88,25 @@ class ACPIHelper(TestHelper):
         return rsdp
 
     def _create_generic_acpi_table_header(self, signature, length):
-        return (signature +                 # Signature
-                struct.pack("<I", length) + # Length
-                struct.pack("<B", 0x1) +    # Revision
-                struct.pack("<B", 0x1) +    # Checksum
-                "OEMIDT" +                  # OEMID
-                "OEMTBLID" +                # OEM Table ID
-                "OEMR" +                    # OEM Revision
-                "CRID" +                    # Creator ID
-                "CRRV")                     # Creator Revision
+        return (signature +                  # Signature
+                struct.pack("<I", length) +  # Length
+                struct.pack("<B", 0x1) +     # Revision
+                struct.pack("<B", 0x1) +     # Checksum
+                "OEMIDT" +                   # OEMID
+                "OEMTBLID" +                 # OEM Table ID
+                "OEMR" +                     # OEM Revision
+                "CRID" +                     # Creator ID
+                "CRRV")                      # Creator Revision
 
     def _create_rsdt(self):
-        rsdt_length = 36 + 4 * len(self.rsdt_entries) # 36 : ACPI table header size
+        rsdt_length = self.TABLE_HEADER_SIZE + 4 * len(self.rsdt_entries)
         rsdt = self._create_generic_acpi_table_header("RSDT", rsdt_length)
         for rsdt_entry in self.rsdt_entries:
             rsdt += struct.pack("<I", rsdt_entry)
         return rsdt
 
     def _create_xsdt(self):
-        xsdt_length = 36 + 8 * len(self.xsdt_entries) # 36 : ACPI table header size
+        xsdt_length = self.TABLE_HEADER_SIZE + 8 * len(self.xsdt_entries)
         xsdt = self._create_generic_acpi_table_header("XSDT", xsdt_length)
         for xsdt_entry in self.xsdt_entries:
             xsdt += struct.pack("<Q", xsdt_entry)
@@ -128,8 +131,8 @@ class ACPIHelper(TestHelper):
     def read_phys_mem(self, pa_hi, pa_lo, length):
         if pa_lo == 0x40E:
             return struct.pack("<H", self.EBDA_ADDRESS >> 4)
-        elif pa_lo >= self.EBDA_ADDRESS and \
-            pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor):
+        elif (pa_lo >= self.EBDA_ADDRESS and
+              pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
             mem = "\x00" * self.EBDA_PADDING + self.rsdp_descriptor
             offset = pa_lo - self.EBDA_ADDRESS
             return mem[offset:offset+length]
@@ -140,8 +143,9 @@ class ACPIHelper(TestHelper):
         else:
             return "\xFF" * length
 
+
 class DSDTParsingHelper(ACPIHelper):
-    """Test helper containing generic descriptor for RSDP, RSDT, and FADT to parse DSDT
+    """Test helper containing generic descriptors for RSDP, RSDT and FADT
 
     Default entry for DSDT and X_DSDT inside FADT is 0x0
 
@@ -165,14 +169,14 @@ class DSDTParsingHelper(ACPIHelper):
         if self.USE_FADT_WITH_X_DSDT:
             fadt = self._create_generic_acpi_table_header("FACP", 0x10C)
             fadt += struct.pack("<I", 0x500)                # Address of FACS
-            fadt += struct.pack("<I", self.DSDT_ADDRESS)    # 32-bit address of DSDT
-            fadt += struct.pack("<B", 0x1) * 96             # Bits between DSDT and X_DSDT
+            fadt += struct.pack("<I", self.DSDT_ADDRESS)    # DSDT
+            fadt += struct.pack("<B", 0x1) * 96             # Padding
             fadt += struct.pack("<Q", self.X_DSDT_ADDRESS)  # X_DSDT
             fadt += struct.pack("<B", 0x1) * 120            # Remaining fields
         else:
             fadt = self._create_generic_acpi_table_header("FACP", 0x74)
             fadt += struct.pack("<I", 0x500)                # Address of FACS
-            fadt += struct.pack("<I", self.DSDT_ADDRESS)    # 32-bit address of DSDT
+            fadt += struct.pack("<I", self.DSDT_ADDRESS)    # DSDT
             fadt += struct.pack("<B", 0x1) * 72             # Remaining fields
         return fadt
 
@@ -185,7 +189,9 @@ class DSDTParsingHelper(ACPIHelper):
         if pa_lo == self.FADT_ADDRESS:
             return self.fadt_descriptor[:length]
         else:
-            return super(DSDTParsingHelper, self).read_phys_mem(pa_hi, pa_lo, length)
+            parent = super(DSDTParsingHelper, self)
+            return parent.read_phys_mem(pa_hi, pa_lo, length)
+
 
 class SPIHelper(TestHelper):
     """Generic SPI emulation
@@ -223,7 +229,7 @@ class SPIHelper(TestHelper):
         elif pa == self.FRAP:
             return 0xEEEEEEEE
         elif pa == self.HSFS:
-            return (1 << 14) # FDV = 1, the flash descriptor is valid
+            return (1 << 14)  # FDV = 1, the flash descriptor is valid
         elif pa >= self.SPIBAR_ADDR and pa < self.SPIBAR_END:
             return 0x0
         else:
