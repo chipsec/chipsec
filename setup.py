@@ -27,6 +27,7 @@ Setup module to install chipsec package via setuptools
 import os
 import platform
 from setuptools import setup, find_packages, Extension
+from distutils import log, dir_util
 import subprocess
 import shutil
 
@@ -64,26 +65,51 @@ class build_ext(_build_ext):
         # Get the value of the skip-driver parameter from the install command.
         self.set_undefined_options("install", ("skip_driver", "skip_driver"))
 
+    def _build_linux_driver(self):
+        log.info("building the linux driver")
+        build_driver = os.path.join(self.real_build_lib, "drivers", "linux")
+        ko_ext = os.path.join(build_driver, "chipsec.ko")
+        # We copy the drivers extension to the build directory.
+        self.copy_tree(os.path.join("drivers", "linux"), build_driver)
+        # Run the makefile there.
+        subprocess.check_output(["make", "-C", build_driver])
+        # And copy the resulting .ko to the right place.
+        # That is to the source directory if we are in "develop" mode,
+        # otherwise to the helper subdirectory in the build directory.
+        root_dst = "" if self.inplace else self.real_build_lib
+        dst = os.path.join(root_dst, "chipsec", "helper", "linux")
+        self.copy_file(ko_ext, dst)
+        # Finally, we clean up the build directory.
+        dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
+
+    def _build_darwin_driver(self):
+        log.info("building the OSX driver")
+        build_driver = os.path.join(self.real_build_lib, "drivers", "osx")
+        xcodeproject = os.path.join(build_driver, "chipsec.xcodeproj")
+        # We copy the drivers extension to the build directory.
+        self.copy_tree(os.path.join("drivers", "osx"), build_driver)
+        # Run the command line version of XCode there.
+        subprocess.check_output(["xcodebuild", "-project", xcodeproject,
+                                 "-target", "chipsec"])
+        # And copy the resulting .kext (directory) to the right place.
+        # That is to the source directory if we are in "develop" mode,
+        # otherwise to the helper subdirectory in the build directory.
+        root_dst = "" if self.inplace else self.real_build_lib
+        dst = os.path.join(root_dst, "chipsec", "helper", "osx", "chipsec.kext")
+        self.copy_tree(os.path.join(build_driver, "build", "Release", "chipsec.kext"), dst)
+        # Finally, we clean up the build directory.
+        dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
+
     def run(self):
-        # First, we build the regular extensions.
+        # First, we build the standard extensions.
         _build_ext.run(self)
         # Then, we build the driver if required.
-        if platform.system().lower() == "linux" and not self.skip_driver:
-            build_lib = os.path.realpath(self.build_lib)
-            build_driver = os.path.join(build_lib, "drivers", "linux")
-            ko_ext = os.path.join(build_driver, "chipsec.ko")
-            # We copy the drivers extension to the build directory.
-            self.copy_tree(os.path.join("drivers", "linux"), build_driver)
-            # Run the makefile there.
-            subprocess.check_output(["make", "-C", build_driver])
-            # And copy the resulting .ko to the right place.
-            # That is to the source directory if we are in "develop" mode,
-            # otherwise to the helper subdirectory in the build directory.
-            root_dst = "" if self.inplace else build_lib
-            dst = os.path.join(root_dst, "chipsec", "helper", "linux")
-            self.copy_file(ko_ext, dst)
-            # Finally, we clean up the build directory.
-            shutil.rmtree(os.path.join(build_lib, "drivers"))
+        if not self.skip_driver:
+            self.real_build_lib = os.path.realpath(self.build_lib)
+            if platform.system().lower() == "linux":
+                self._build_linux_driver()
+            elif platform.system().lower() == "darwin":
+                self._build_darwin_driver()
 
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
