@@ -48,10 +48,10 @@ import subprocess
 import os.path
 from ctypes import *
 
+from chipsec import defines
 from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
 from chipsec.logger import logger, print_buffer
 import chipsec.file
-import chipsec.defines
 
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
@@ -80,8 +80,8 @@ IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
 
 _tools = {
-  chipsec.defines.ToolType.TIANO_COMPRESS: 'TianoCompress.bin',
-  chipsec.defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.bin'
+  defines.ToolType.TIANO_COMPRESS: 'TianoCompress.bin',
+  defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.bin'
 }
 
 
@@ -283,7 +283,7 @@ class LinuxHelper(Helper):
         config.seek(offset)
         reg = config.read(size)
         config.close()
-        reg = struct.unpack(('=%c' % chipsec.defines.SIZE2FORMAT[size]), reg)[0]
+        reg = defines.unpack1(reg, size)
         return reg
 
     def write_pci_reg( self, bus, device, function, offset, value, size = 4 ):
@@ -296,6 +296,18 @@ class LinuxHelper(Helper):
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
+
+    def native_write_pci_reg(self, bus, device, function, offset, value, size=4, domain=0):
+        device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
+                      domain=domain, bus=bus, device=device, function=function)
+        device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
+        try:
+            config = open(device_path, "wb")
+        except IOError as err:
+            raise OsHelperError("Unable to open {}".format(device_path), err.errno)
+        config.seek(offset)
+        config.write(defines.pack1(value, size))
+        config.close()
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf):
         cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
@@ -389,13 +401,13 @@ class LinuxHelper(Helper):
         in_buf = struct.pack( "2"+self._pack, phys_address, size)
         out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
         reg = out_buf[:size]
-        return struct.unpack( ('=%c' % chipsec.defines.SIZE2FORMAT[size]), reg)[0]
+        return defines.unpack1(reg, size)
 
     def native_read_mmio_reg(self, phys_address, size):
         if self.devmem_available():
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             reg = os.read(self.dev_mem, size)
-        return struct.unpack( ('=%c' % chipsec.defines.SIZE2FORMAT[size]), reg)[0]
+        return defines.unpack1(reg, size)
 
     def write_mmio_reg(self, phys_address, size, value):
         in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
@@ -403,14 +415,11 @@ class LinuxHelper(Helper):
 
     def native_write_mmio_reg(self, phys_address, size, value):
         if self.devmem_available():
-            reg = struct.pack(('=%c' % chipsec.defines.SIZE2FORMAT[size]), value)
+            reg = defines.pack1(value, size)
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             written = os.write(self.dev_mem, reg)
             if written != size:
                 logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
-
-
-        
 
     def get_ACPI_SDT( self ):
         raise UnimplementedAPIError( "get_ACPI_SDT" )
@@ -420,7 +429,7 @@ class LinuxHelper(Helper):
     # ACPI access is implemented through ACPI HAL rather than through kernel module
     def get_ACPI_table( self ):
         raise UnimplementedAPIError( "get_ACPI_table" )
-        
+
     #
     # IOSF Message Bus access
     #
