@@ -466,7 +466,7 @@ class OsHelper:
           exe = self.get_compression_tool_path( CompressionType )
           if exe is None: return None 
           try:
-            subprocess.call( '%s -d -o %s %s' % (exe,OutputFileName,CompressedFileName), stdout=open(os.devnull, 'wb') )
+            subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
           except BaseException, msg:
             logger().error( str(msg) )
             if logger().DEBUG: logger().log_bad( traceback.format_exc() )
@@ -485,7 +485,7 @@ class OsHelper:
           exe = self.get_compression_tool_path( CompressionType )
           if exe is None: return None 
           try:
-            subprocess.call( '%s -e -o %s %s' % (exe,OutputFileName,FileName), stdout=open(os.devnull, 'wb') )
+            subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
           except BaseException, msg:
             logger().error( str(msg) )
             if logger().DEBUG: logger().log_bad( traceback.format_exc() )
