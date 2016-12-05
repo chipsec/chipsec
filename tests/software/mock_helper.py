@@ -238,3 +238,6 @@ class SPIHelper(TestHelper):
     def write_mmio_reg(self, pa, size, value):
         if pa < self.SPIBAR_ADDR or pa > self.SPIBAR_END:
             raise Exception("Write to outside of SPIBAR")
+
+    def map_io_space(self, base, size, cache_type):
+        raise oshelper.UnimplementedAPIError("Not implemented")
