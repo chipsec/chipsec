@@ -107,16 +107,9 @@ class LinuxHelper(Helper):
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
-    def get_version(self):
-        chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
-        version_file = os.path.join( chipsec_folder , "chipsec", "VERSION" )
-        if os.path.exists( version_file ):
-            with open(version_file, "r") as verFile:
-                version = verFile.read()
-                return version
    
     def get_dkms_module_location(self):
-        version     = self.get_version()
+        version     = defines.get_version()
         return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release, self.os_machine, "module", "chipsec.ko" )
 
 
