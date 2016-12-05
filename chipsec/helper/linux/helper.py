@@ -107,12 +107,6 @@ class LinuxHelper(Helper):
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
-    def get_currect_kernel_version(self):
-        return subprocess.check_output("uname -r", shell=True)
-
-    def get_architecture(self):
-        return subprocess.check_output("uname -m", shell=True)
-
     def get_version(self):
         chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
         version_file = os.path.join( chipsec_folder , "chipsec", "VERSION" )
@@ -122,10 +116,8 @@ class LinuxHelper(Helper):
                 return version
    
     def get_dkms_module_location(self):
-        kernel_dir  = self.get_currect_kernel_version().strip()
-        arch_dir    = self.get_architecture().strip()
         version     = self.get_version()
-        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , kernel_dir, arch_dir, "module", "chipsec.ko" )
+        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release, self.os_machine, "module", "chipsec.ko" )
 
 
     # This function load CHIPSEC driver
