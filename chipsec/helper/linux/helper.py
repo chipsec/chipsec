@@ -129,7 +129,7 @@ class LinuxHelper(Helper):
             #check DKMS modules location
             driver_path = self.get_dkms_module_location()
             if not os.path.exists(driver_path):
-                logger().error("Cannot find chipsec.ko module")
+                raise Exception("Cannot find chipsec.ko module")
         subprocess.check_output( [ "insmod", driver_path, a1 ] )
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)
