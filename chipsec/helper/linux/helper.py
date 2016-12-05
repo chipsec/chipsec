@@ -91,6 +91,7 @@ class LinuxHelper(Helper):
     DEV_MEM = "/dev/mem"
     MODULE_NAME = "chipsec"
     SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
+    DKMS_DIR = "/var/lib/dkms/"
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -106,6 +107,26 @@ class LinuxHelper(Helper):
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
+    def get_currect_kernel_version(self):
+        return subprocess.check_output("uname -r", shell=True)
+
+    def get_architecture(self):
+        return subprocess.check_output("uname -m", shell=True)
+
+    def get_version(self):
+        chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
+        version_file = os.path.join( chipsec_folder , "chipsec", "VERSION" )
+        if os.path.exists( version_file ):
+            with open(version_file, "r") as verFile:
+                version = verFile.read()
+                return version
+   
+    def get_dkms_module_location(self):
+        kernel_dir  = self.get_currect_kernel_version().strip()
+        arch_dir    = self.get_architecture().strip()
+        version     = self.get_version()
+        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , kernel_dir, arch_dir, "module", "chipsec.ko" )
+
 
     # This function load CHIPSEC driver
     def load_chipsec_module(self):
@@ -119,6 +140,11 @@ class LinuxHelper(Helper):
             else:
                 a1 = "a1=0x%s" % page_is_ram 
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper" ,"linux", "chipsec.ko" )
+        if not os.path.exists(driver_path):
+            #check DKMS modules location
+            driver_path = self.get_dkms_module_location()
+            if not os.path.exists(driver_path):
+                logger().error("Cannot find chipsec.ko module")
         subprocess.check_output( [ "insmod", driver_path, a1 ] )
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)
