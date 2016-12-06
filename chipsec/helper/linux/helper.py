@@ -509,7 +509,7 @@ class LinuxHelper(Helper):
 
     def get_affinity(self):
         CORES = ctypes.cdll.LoadLibrary( os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/cores.so' ) )
-        CORES.getaffinity.argtypes = [ ctypes.c_int, POINTER( ( ctypes.c_long * 128 ) ),POINTER( ctypes.c_int ) ]
+        CORES.getaffinity.argtypes = [ ctypes.c_int, ctypes.POINTER( ( ctypes.c_long * 128 ) ),ctypes.POINTER( ctypes.c_int ) ]
         CORES.getaffinity.restype = ctypes.c_int
         mask = ( ctypes.c_long * 128 )( )
         try:
@@ -523,7 +523,7 @@ class LinuxHelper(Helper):
             numCpus = 1;
             pass
         errno = ctypes.c_int( 0 )
-        if 0 == CORES.getaffinity( numCpus,byref( mask ),byref( errno ) ):
+        if 0 == CORES.getaffinity( numCpus,ctypes.byref( mask ),ctypes.byref( errno ) ):
             AffinityString = " GetAffinity: "
             for i in range( 0, numCpus ):
                 if mask[i] == 1:
@@ -537,10 +537,10 @@ class LinuxHelper(Helper):
 
     def set_affinity(self, thread_id):
         CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))
-        CORES.setaffinity.argtypes=[ctypes.c_int,POINTER(ctypes.c_int)]
+        CORES.setaffinity.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
         CORES.setaffinity.restype=ctypes.c_int
         errno= ctypes.c_int(0)
-        if 0 == CORES.setaffinity(ctypes.c_int(thread_id),byref(errno)) :
+        if 0 == CORES.setaffinity(ctypes.c_int(thread_id),ctypes.byref(errno)) :
             return thread_id
         else:
             AffinityString= " Set_affinity errno::%s"%(errno.value)
