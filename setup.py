@@ -110,6 +110,11 @@ class build_ext(_build_ext):
                 self._build_linux_driver()
             elif platform.system().lower() == "darwin":
                 self._build_darwin_driver()
+        if platform.system().lower() == "linux":
+            #make chipsec_tools executable
+            root_dst = "" if self.inplace else self.real_build_lib
+            os.chmod(os.path.join(root_dst,"chipsec_tools","linux","LzmaCompress.bin"),755)
+            os.chmod(os.path.join(root_dst,"chipsec_tools","linux","TianoCompress.bin"),755)
 
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
