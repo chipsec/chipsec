@@ -25,8 +25,6 @@
 Main application logic and automation functions
 """
 
-__version__ = '1.2.5'
-
 ## These are for debugging imports
 import inspect
 import __builtin__
@@ -47,7 +45,7 @@ import sys
 import fnmatch
 import time
 import traceback
-
+import json
 import errno
 
 
@@ -56,9 +54,6 @@ try:
     import importlib
 except ImportError:
     _importlib = False
-#import zipfile
-
-from chipsec.logger import logger
 
 class ExitCode:
     OK         = 0
@@ -126,50 +121,48 @@ class ExitCode:
         self._exception  )
 
 
-
 import chipsec.file
 import chipsec.module
 from chipsec.helper.oshelper import OsHelperError
-
+from chipsec.logger import logger
+from chipsec import defines
 
 class ChipsecMain:
 
 
     def __init__(self, argv):
-        self.VERBOSE = False
-        self.CHIPSEC_FOLDER = os.path.abspath(chipsec.file.get_main_dir())
+        self.VERBOSE               = False
+        self.CHIPSEC_FOLDER        = os.path.abspath(chipsec.file.get_main_dir())
         self.CHIPSEC_LOADED_AS_EXE = chipsec.file.main_is_frozen()
-        self.USER_MODULE_TAGS = []
-        self.ZIP_MODULES_RE = None
-        self.Import_Path             = "chipsec.modules."
-        self.Modules_Path            = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
-        self.IMPORT_PATHS            = []
-        self.Loaded_Modules  = []
-        self._list_tags = False
-        self.AVAILABLE_TAGS = []
-        self.MODPATH_RE      = re.compile("^\w+(\.\w+)*$")
-        self.failfast = False
-        self.no_time = False
-        self._output         = 'chipsec.log'
-        self._module         = None
-        self._module_argv    = None
-        self._platform       = None
-        self._driver_exists  = False
-        self._no_driver      = False
-        self._unkownPlatform = True
-        self._list_tags      = False
-        self.version="    "
-        self.VERSION_FILE = os.path.join( self.CHIPSEC_FOLDER , "chipsec", "VERSION" )
-        if os.path.exists( self.VERSION_FILE ):
-            with open(self.VERSION_FILE, "r") as verFile:
-                self.version = verFile.read()
+        self.USER_MODULE_TAGS      = []
+        self.ZIP_MODULES_RE        = None
+        self.Import_Path           = "chipsec.modules."
+        self.Modules_Path          = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
+        self.IMPORT_PATHS          = []
+        self.Loaded_Modules        = []
+        self._list_tags            = False
+        self.AVAILABLE_TAGS        = []
+        self.MODPATH_RE            = re.compile("^\w+(\.\w+)*$")
+        self.failfast              = False
+        self.no_time               = False
+        self._output               = 'chipsec.log'
+        self._module               = None
+        self._module_argv          = None
+        self._platform             = None
+        self._driver_exists        = False
+        self._no_driver            = False
+        self._unkownPlatform       = True
+        self._list_tags            = False
+        self._json_out             = None
+        self.version               = defines.get_version()
+
         self.argv = argv
         self.parse_args()
         from chipsec.chipset import cs
         self._cs = cs()
 
     def get_chipsec_version(self):
-        return "%s"% (__version__)
+        return self.version
 
     def print_banner(self):
         """
@@ -221,56 +214,13 @@ class ChipsecMain:
                     run_it = True
         return run_it
 
-    """
-    # DEPRECATED
-    def old_run_module( self, module_path, module_argv ):
-        module_path = module_path.replace( os.sep, '.' )
-        module = self.import_module(module_path)
-        if module == None and _importlib: return None
-        run_it = True
-        if len(self.USER_MODULE_TAGS) > 0 or self._list_tags:
-            run_it = False
-            module_tags=[]
-            try:
-                module_tags = getattr( module, 'TAGS' )
-            except:
-                if logger().DEBUG:
-                    logger().log(module_path)
-                    logger().log_bad(traceback.format_exc())
-            for mt in module_tags:
-                if self._list_tags:
-                    if mt not in self.AVAILABLE_TAGS: self.AVAILABLE_TAGS.append(mt)
-                elif mt in  self.USER_MODULE_TAGS:
-                    run_it = True
-
-        if module_argv:
-            logger().log( "[*] Module arguments (%d):" % len(module_argv) )
-            logger().log( module_argv )
-        else:
-            module_argv = []
-
-
-        if run_it:
-            try:
-                result = False
-                result = getattr( module, 'run' )( module_argv )
-                return result
-            except (None,Exception) , msg:
-                if logger().DEBUG: logger().log_bad(traceback.format_exc())
-                logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (module_path, str(msg)) )
-                raise
-        else:
-            from chipsec.module_common import ModuleResult
-            return ModuleResult.SKIPPED
-    """
-
 
     def run_module( self, modx, module_argv ):
         from chipsec.module_common import ModuleResult
         result = None
         try:
             if not modx.do_import(): return ModuleResult.ERROR
-            if not self._list_tags: logger().log( "[*] Module path: %s" % modx.get_location() )
+            if logger().DEBUG and not self._list_tags: logger().log( "[*] Module path: %s" % modx.get_location() )
 
             if self.verify_module_tags( modx ):
                 result = modx.run( module_argv )
@@ -386,14 +336,15 @@ class ChipsecMain:
     def run_loaded_modules(self):
         from chipsec.module_common import ModuleResult
 
-        failed   = []
-        errors   = []
-        warnings = []
-        passed   = []
-        skipped  = []
+        failed     = []
+        errors     = []
+        warnings   = []
+        passed     = []
+        skipped    = []
         exceptions = []
-        executed = 0
-        exit_code = ExitCode()
+        executed   = 0
+        exit_code  = ExitCode()
+        results    = {}
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
@@ -401,6 +352,7 @@ class ChipsecMain:
         for (modx,modx_argv) in self.Loaded_Modules:
             executed += 1
             if not self._list_tags: logger().start_module( modx.get_name( ) )
+
             # Run the module
             try:
                 result = self.run_module( modx, modx_argv )
@@ -410,23 +362,21 @@ class ChipsecMain:
                 result = ModuleResult.ERROR
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise
+
             # Module uses the old API  display warning and try to run anyways
             if result == ModuleResult.DEPRECATED:
                 exit_code.deprecated()
                 logger().log_warning( 'Module %s does not inherit BaseModule class. Attempting to locate run function..' % str(modx) )
-                """
-                try:
-                    result = self.old_run_module( modx.get_name(), modx_argv )
-                except BaseException:
-                    exceptions.append( modx )
-                    exit_code.exception()
-                    result = ModuleResult.ERROR
-                    if logger().DEBUG: logger().log_bad(traceback.format_exc())
-                    if self.failfast: raise
-                """
+
+            # Populate results dictionary to export to JSON
+            r = {}
+            r['result'] = result
+            if modx_argv: r['arg'] = modx_argv
+            results[modx.get_name()] = r
+
             if not self._list_tags: logger().end_module( modx.get_name() )
 
-            if None == result or ModuleResult.ERROR == result:
+            if result is None or ModuleResult.ERROR == result:
                 errors.append( modx )
                 exit_code.error()
             elif False == result or ModuleResult.FAILED == result:
@@ -441,6 +391,9 @@ class ChipsecMain:
                 exit_code.skipped()
                 skipped.append( modx )
 
+        if self._json_out:
+            results_json = json.dumps(results, sort_keys=True, indent=2, separators=(',', ': '))
+            chipsec.file.write_file(self._json_out, results_json)
 
         if not self._list_tags:
             logger().log( "" )
@@ -514,7 +467,7 @@ class ChipsecMain:
         print "                          [ %s ]" % (" | ".join( ["%.4s" % c for c in Chipset_Code]))
         print "-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver"
         print "-i --ignore_platform      run chipsec even if the platform is not recognized"
-        #print "-e --exists               chipsec service has already been manually installed and started (driver loaded)."
+        print "-j --json                 specify filename for JSON output."
         print "-x --xml                  specify filename for xml output (JUnit style)."
         print "-t --moduletype           run tests of a specific type (tag)."
         print "   --list_tags            list all the available options for -t,--moduletype"
@@ -537,10 +490,10 @@ class ChipsecMain:
     def parse_args(self):
         import getopt
         try:
-            opts, args = getopt.getopt(self.argv, "ip:m:ho:vdea:nl:t:x:I:",
+            opts, args = getopt.getopt(self.argv, "ip:m:ho:vda:nl:t:j:x:I:",
             ["ignore_platform", "platform=", "module=", "help", "output=",
-              "verbose", "debug", "exists", "module_args=", "no_driver", "log=",
-              "moduletype=", "xml=","list_tags", "include", "failfast","no_time"])
+              "verbose", "debug", "module_args=", "no_driver", "log=",
+              "moduletype=", "json=", "xml=","list_tags", "include", "failfast","no_time"])
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
@@ -566,10 +519,6 @@ class ChipsecMain:
                 self._module = a
             elif o in ("-a", "--module_args"):
                 self._module_argv = a.split(',')
-            # DEPRECATED
-            elif o in ("-e", "--exists"):
-                self._driver_exists = True
-                logger().warn( "Deprecated 'exists' option: if chipsec service is running, chipsec will attempt to connect to it" )
             elif o in ("-i", "--ignore_platform"):
                 logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
                 self._unkownPlatform = False
@@ -584,6 +533,8 @@ class ChipsecMain:
                 self._no_driver = True
             elif o in ("-x", "--xml"):
                 logger().set_xml_file(a)
+            elif o in ("-j", "--json"):
+                self._json_out = a
             elif o in ("--list_tags"):
                 self._list_tags = True
             elif o in ("-I","--include"):
