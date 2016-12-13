@@ -348,12 +348,17 @@ def update_efi_tree(modules, parent_guid=None):
         if type(m) == EFI_FILE:
            parent_guid = m.Guid
         elif type(m) == EFI_SECTION:
+           # if it's a section update its parent file's GUID
            m.parentGuid = parent_guid
            if m.Type == EFI_SECTION_USER_INTERFACE:
+               # if UI section (leaf), update ui_string in sibling sections including in PE/TE,
+               # and propagate it up untill and including parent EFI file
+               for m1 in modules: m1.ui_string = m.ui_string
                return m.ui_string
-        # update children nodes
+        # update parent file's GUID in all children nodes
         if len(m.children) > 0:
             ui_string = update_efi_tree(m.children, parent_guid)
+            # if it's a EFI file then update its ui_string with ui_string extracted from UI section
             if ui_string and type(m) == EFI_FILE:
                 m.ui_string = ui_string
                 ui_string = None
