@@ -49,9 +49,10 @@ import json
 
 from chipsec.module_common import *
 
-import chipsec.hal.spi_uefi
+from chipsec.hal import spi_uefi
 import chipsec.hal.uefi
 import chipsec.hal.spi
+import chipsec.hal.uefi_search
 
 TAGS = [MTAG_BIOS]
 
@@ -83,7 +84,6 @@ Important! This module can only detect what it knows about from its config file.
 If a bad or vulnerable binary is not detected then its 'signature' needs to be added to the config.
 '''
 
-
 class blacklist(BaseModule):
 
     def __init__(self):
@@ -95,6 +95,9 @@ class blacklist(BaseModule):
 
     def is_supported(self):
         return True
+
+    def blacklist_callback(self, efi_module):
+        return chipsec.hal.uefi_search.check_match_criteria(efi_module, self.efi_blacklist, self.logger)
 
     def check_blacklist( self ):
         res = ModuleResult.PASSED
@@ -109,17 +112,12 @@ class blacklist(BaseModule):
             #    self.logger.log( "[*]   excluding binaries:" )
             #    for c in entry['exclude']: self.logger.log( "[*]   %s" % entry['exclude'][c] )
 
-        # no need to output the entire hierarchy of EFI modules
-        printall       = False
-        # no need to write EFI modules onto the file system
-        dumpall        = False
-        # look for and list all occurrences of matching EFI modules
-        findall        = True
-        # blacklist matching rules
-        match_criteria = self.efi_blacklist
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
-        found = chipsec.hal.spi_uefi.traverse_uefi_region( self.uefi, self.image, None, '', printall, dumpall, match_criteria, findall )
-
+        efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
+        #match_types = (spi_uefi.EFIModuleType.SECTION_EXE|spi_uefi.EFIModuleType.FILE)
+        match_types = spi_uefi.EFIModuleType.SECTION_EXE
+        matching_modules = spi_uefi.search_efi_tree(efi_tree, self.blacklist_callback, match_types)
+        found = len(matching_modules) > 0
         self.logger.log( '' )
         if found:
             res = ModuleResult.WARNING
@@ -164,3 +162,5 @@ class blacklist(BaseModule):
              self.efi_blacklist = json.load( blacklist_json )
 
         return self.check_blacklist()
+
+
