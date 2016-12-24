@@ -34,6 +34,7 @@ __version__ = '1.0'
 
 import struct
 import os
+import string
 
 import chipsec.file
 
