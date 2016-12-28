@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 # 
@@ -125,7 +125,11 @@ class LinuxHelper(Helper):
    
     def get_dkms_module_location(self):
         version     = defines.get_version()
-        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release, self.os_machine, "module", "chipsec.ko" )
+        from os import listdir
+        from os.path import isdir, join
+        p =  os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release)
+        os_machine_dir_name = [f for f in listdir( p ) if isdir(join(p, f))][0]
+        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release, os_machine_dir_name, "module", "chipsec.ko" )
 
 
     # This function load CHIPSEC driver
