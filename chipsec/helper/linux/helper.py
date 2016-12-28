@@ -102,6 +102,7 @@ class LinuxHelper(Helper):
     DEV_MEM = "/dev/mem"
     MODULE_NAME = "chipsec"
     SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
+    DKMS_DIR = "/var/lib/dkms/"
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -121,6 +122,11 @@ class LinuxHelper(Helper):
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
+   
+    def get_dkms_module_location(self):
+        version     = defines.get_version()
+        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release, self.os_machine, "module", "chipsec.ko" )
+
 
     # This function load CHIPSEC driver
     def load_chipsec_module(self):
@@ -134,6 +140,11 @@ class LinuxHelper(Helper):
             else:
                 a1 = "a1=0x%s" % page_is_ram 
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper" ,"linux", "chipsec.ko" )
+        if not os.path.exists(driver_path):
+            #check DKMS modules location
+            driver_path = self.get_dkms_module_location()
+            if not os.path.exists(driver_path):
+                raise Exception("Cannot find chipsec.ko module")
         subprocess.check_output( [ "insmod", driver_path, a1 ] )
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)

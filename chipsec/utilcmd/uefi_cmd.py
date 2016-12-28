@@ -233,7 +233,7 @@ class UEFICommand(BaseCommand):
 
             self.logger.log( "[CHIPSEC] Parsing EFI volumes from '%s'.." % filename )
             _orig_logname = self.logger.LOG_FILE_NAME
-            self.logger.set_log_file( filename + '.efi_fv.log' )
+            self.logger.set_log_file( filename + '.UEFI.lst' )
             cur_dir = self.cs.helper.getcwd()
             decode_uefi_region(_uefi, cur_dir, filename, fwtype)
             self.logger.set_log_file( _orig_logname )

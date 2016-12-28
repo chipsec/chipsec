@@ -165,7 +165,7 @@ class SPI(hal_base.HALBase):
         # We try to map SPIBAR in the process memory, this will increase the
         # speed of MMIO access later on.
         try:
-            self.cs.helper.map_io_space(self.rcba_spi_base, Cfg.SPI_MMIO_BASE_LENGTH, None)
+            self.cs.helper.map_io_space(self.rcba_spi_base, Cfg.SPI_MMIO_BASE_LENGTH, 0)
         except oshelper.UnimplementedAPIError:
             pass
 
