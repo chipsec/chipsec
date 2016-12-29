@@ -307,7 +307,7 @@ def build_efi_tree( _uefi, data, fwtype ):
         polarity = bit_set( fv.Attributes, EFI_FVB2_ERASE_POLARITY )
 
         # Detect File System firmware volumes
-        if fv.Guid in (EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM_GUID):
+        if fv.Guid in (EFI_PLATFORM_FS_GUIDS + EFI_FS_GUIDS):
             foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, fv.HeaderSize, polarity )
             while next_offset is not None:
                 if fname:
@@ -359,9 +359,10 @@ def update_efi_tree(modules, parent_guid=None):
         if len(m.children) > 0:
             ui_string = update_efi_tree(m.children, parent_guid)
             # if it's a EFI file then update its ui_string with ui_string extracted from UI section
-            if ui_string and type(m) == EFI_FILE:
+            if ui_string and (type(m) in (EFI_FILE, EFI_SECTION)):
                 m.ui_string = ui_string
-                ui_string = None
+                if (type(m) == EFI_FILE):
+                    ui_string = None
     return ui_string
 
 def build_efi_model( _uefi, data, fwtype ):
@@ -377,8 +378,12 @@ def FILENAME(mod, parent, modn):
     elif type(mod) == EFI_SECTION:
         fname = "%02d_%s" % (modn,mod.Name)
         if mod.Type in EFI_SECTIONS_EXE:
-            if parent.ui_string: fname = "%s.efi" % parent.ui_string
-            else:                fname = "%s.%s.efi" % (fname,type2ext[mod.Type])
+            if parent.ui_string:
+                if (parent.ui_string.endswith(".efi")):
+                    fname = parent.ui_string
+                else:
+                    fname = "%s.efi" % parent.ui_string
+            else:                fname = "%s.%s" % (fname,type2ext[mod.Type])
     return fname
 
 def dump_efi_module(mod, parent, modn, path):
@@ -437,7 +442,10 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
         # save EFI module image, make sub-directory for children
         if save_modules:
             mod_path = dump_efi_module(m, parent, modn, path)
-            md["file_path"] = os.path.relpath(mod_path[4:] if mod_path.startswith("\\\\?\\") else mod_path)
+            try:
+                md["file_path"] = os.path.relpath(mod_path[4:] if mod_path.startswith("\\\\?\\") else mod_path)
+            except:
+                md["file_path"] = mod_path.split(os.sep)[-1]
             if m.isNVRAM or len(m.children) > 0:
                 mod_dir_path = "%s.dir" % mod_path
                 if not os.path.exists(mod_dir_path): os.makedirs(mod_dir_path)
