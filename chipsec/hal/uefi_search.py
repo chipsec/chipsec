@@ -39,6 +39,7 @@ __version__ = '1.0'
 import re
 import binascii
 
+from chipsec import defines
 from chipsec.hal.spi_uefi import *
 
 #
@@ -116,7 +117,8 @@ def check_rules( efi, rules, entry_name, _log, bLog=True ):
             m = re.compile(rule['regexp']).search( efi.Image )
             if m:
                 match_result |= MATCH_REGEXP
-                what = binascii.hexlify(m.group(0))
+                _str = m.group(0)
+                what = "bytes '%s'%s" % (binascii.hexlify(_str), " ('%s')" % _str if defines.is_printable(_str) else '')
                 offset = m.start()
         if (match_mask & MATCH_HASH_MD5) == MATCH_HASH_MD5:
             if efi.MD5 == rule['md5']: match_result |= MATCH_HASH_MD5

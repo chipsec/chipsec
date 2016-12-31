@@ -48,6 +48,7 @@ import traceback
 import json
 import errno
 
+from chipsec import module_common
 
 _importlib = True
 try:
@@ -366,11 +367,11 @@ class ChipsecMain:
             # Module uses the old API  display warning and try to run anyways
             if result == ModuleResult.DEPRECATED:
                 exit_code.deprecated()
-                logger().log_warning( 'Module %s does not inherit BaseModule class. Attempting to locate run function..' % str(modx) )
+                logger().error( 'Module %s does not inherit BaseModule class' % str(modx) )
 
             # Populate results dictionary to export to JSON
             r = {}
-            r['result'] = result
+            r['result'] = module_common.getModuleResultName(result)
             if modx_argv: r['arg'] = modx_argv
             results[modx.get_name()] = r
 
@@ -425,7 +426,7 @@ class ChipsecMain:
 
 
     ##################################################################################
-    # Running all chipset configuration security checks
+    # Running all relevant modules
     ##################################################################################
 
     def run_all_modules(self):

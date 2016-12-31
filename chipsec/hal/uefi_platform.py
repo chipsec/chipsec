@@ -38,6 +38,7 @@ import struct
 import string
 from collections import namedtuple
 
+from chipsec import defines
 from chipsec.hal.uefi_common import *
 
 
@@ -514,10 +515,6 @@ def getNVstore_VSS_AUTH( nvram_buf ):
 def getNVstore_VSS_APPLE( nvram_buf):
     return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE)
 
-def IsPrintable(name):
-    printset = set(string.printable)
-    return set(name).issubset(printset)
-
 VSS_TYPES = (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS_APPLE)
 MAX_VSS_VAR_ALIGNMENT = 8
 
@@ -555,7 +552,7 @@ def isCorrectVSStype(nvram_buf, vss_type):
             name = nvram_buf[name_offset: name_offset + efi_var_hdr.NameSize]
             try:
                 name = unicode(name, "utf-16-le").split('\x00')[0]
-                valid_name = IsPrintable(name)
+                valid_name = defines.is_printable(name)
             except Exception as e:
                 pass
         if (valid_name):

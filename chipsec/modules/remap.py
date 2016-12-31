@@ -123,11 +123,14 @@ class remap(BaseModule):
         if ok: self.logger.log_good( "  REMAPBASE and REMAPLIMIT are locked" )
         else:  self.logger.log_bad( "  REMAPBASE and REMAPLIMIT are not locked" )
 
-        self.logger.log('')
-        if remap_ok: self.logger.log_passed_check( "Memory Remap is configured correctly and locked" )
-        else:        self.logger.log_failed_check( "Memory Remap is not properly configured/locked. Remaping attack may be possible" )
+        if remap_ok:
+            self.res = ModuleResult.PASSED
+            self.logger.log_passed_check( "Memory Remap is configured correctly and locked" )
+        else:
+            self.res = ModuleResult.FAILED
+            self.logger.log_failed_check( "Memory Remap is not properly configured/locked. Remaping attack may be possible" )
 
-        return remap_ok
+        return self.res
 
     # --------------------------------------------------------------------------
     # run( module_argv )
