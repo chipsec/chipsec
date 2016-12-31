@@ -52,6 +52,17 @@ class ModuleResult:
     ERROR   = -1
 
 
+ModuleResultName = {
+    ModuleResult.FAILED:     "Failed",
+    ModuleResult.PASSED:     "Passed",
+    ModuleResult.WARNING:    "Warning",
+    ModuleResult.SKIPPED:    "Skipped",
+    ModuleResult.DEPRECATED: "Deprecated",
+    ModuleResult.ERROR:      "Error"
+}
+def getModuleResultName(res):
+    return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
+
 class BaseModule(object):
     def __init__(self):
         self.cs = chipsec.chipset.cs()
