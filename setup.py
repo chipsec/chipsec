@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
 #
@@ -32,6 +32,7 @@ import subprocess
 import shutil
 
 from setuptools.command.install import install as _install
+from distutils.command.build import build as _build
 from setuptools.command.build_ext import build_ext as _build_ext
 
 def long_description():
@@ -64,6 +65,7 @@ class build_ext(_build_ext):
         _build_ext.finalize_options(self)
         # Get the value of the skip-driver parameter from the install command.
         self.set_undefined_options("install", ("skip_driver", "skip_driver"))
+        self.set_undefined_options("build", ("skip_driver", "skip_driver"))
 
     def _build_linux_driver(self):
         log.info("building the linux driver")
@@ -125,6 +127,13 @@ class install(_install):
         _install.initialize_options(self)
         self.skip_driver = None
 
+class build(_build):
+    user_options = _build.user_options + skip_driver_opt
+    boolean_options = _build.boolean_options + ["skip-driver"]
+
+    def initialize_options(self):
+        _build.initialize_options(self)
+        self.skip_driver = None
 
 package_data = {
     # Include any configuration file.
@@ -191,6 +200,7 @@ setup(
     test_suite="tests",
     cmdclass = {
         'install': install,
+        'build': build,
         'build_ext'   : build_ext,
     },
     **extra_kw
