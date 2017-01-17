@@ -54,6 +54,7 @@ import os.path
 from collections import namedtuple
 import itertools
 
+from chipsec import defines
 from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
 from chipsec.cfg.common import *
@@ -87,6 +88,21 @@ PCI_HDR_INTRPIN_OFF        = 0x3D
 PCI_HDR_BAR0_LO_OFF        = 0x10
 PCI_HDR_BAR0_HI_OFF        = 0x14
 
+# PCIe BAR register fields
+PCI_HDR_BAR_IOMMIO_MASK    = 0x1
+PCI_HDR_BAR_IOMMIO_MMIO    = 0
+PCI_HDR_BAR_IOMMIO_IO      = 1
+
+PCI_HDR_BAR_TYPE_MASK      = (0x3<<1)
+PCI_HDR_BAR_TYPE_SHIFT     = 1
+PCI_HDR_BAR_TYPE_64B       = 2
+PCI_HDR_BAR_TYPE_1MB       = 1
+PCI_HDR_BAR_TYPE_32B       = 0
+
+PCI_HDR_BAR_BASE_MASK_MMIO64 = 0xFFFFFFFFFFFFFFF0
+PCI_HDR_BAR_BASE_MASK_MMIO   = 0xFFFFFFF0
+PCI_HDR_BAR_BASE_MASK_IO     = 0xFFFC
+
 # Type 0 specific registers
 PCI_HDR_TYPE0_BAR1_LO_OFF  = 0x18
 PCI_HDR_TYPE0_BAR1_HI_OFF  = 0x1C
@@ -109,6 +125,8 @@ PCI_TYPE1                  = 0x1
 
 PCI_HDR_XROM_BAR_EN_MASK   = 0x00000001
 PCI_HDR_XROM_BAR_BASE_MASK = 0xFFFFF000
+
+PCI_HDR_BAR_STEP           = 0x4
 
 
 #
@@ -200,12 +218,12 @@ def get_device_name_by_didvid( vid, did ):
     return ''
 
 def print_pci_devices( _devices ):
-    logger().log( "BDF     | VID:DID   | Vendor                                   | Device" )
-    logger().log( "-------------------------------------------------------------------------------------" )
+    logger().log( "BDF     | VID:DID   | Vendor                       | Device" )
+    logger().log( "-------------------------------------------------------------------------" )
     for (b, d, f, vid, did) in _devices:
         vendor_name = get_vendor_name_by_vid( vid )
         device_name = get_device_name_by_didvid( vid, did )
-        logger().log( "%02X:%02X.%X | %04X:%04X | %-40s | %s" % (b, d, f, vid, did, vendor_name, device_name) )
+        logger().log( "%02X:%02X.%X | %04X:%04X | %-28s | %s" % (b, d, f, vid, did, vendor_name, device_name) )
 
 def print_pci_XROMs( _xroms ):
     if len(_xroms) == 0: return
@@ -392,40 +410,52 @@ class Pci:
     #
 
     #
+    # Calculates actual size of MMIO BAR range
+    # @TODO: for 64-bit BARs need to write both BAR registers for size calculation
+    def calc_bar_size(self, bus, dev, fun, off, reg):
+        self.write_dword(bus, dev, fun, off, defines.MASK_32b)
+        reg1 = self.read_dword(bus, dev, fun, off)
+        self.write_dword(bus, dev, fun, off, reg)
+        size = (~(reg1&PCI_HDR_BAR_BASE_MASK_MMIO) & defines.MASK_32b) + 1
+        return size
+    #
     # Returns all I/O and MMIO BARs defined in the PCIe header of the device
     # Returns array of elements in format (BAR_address, isMMIO, is64bit, BAR_reg_offset, BAR_reg_value)
     # @TODO: need to account for Type 0 vs Type 1 headers
-    def get_device_bars( self, bus, dev, fun ):
+    def get_device_bars( self, bus, dev, fun, bCalcSize=False ):
         _bars = []
-        off = 0x10
-        while (off < 0x28):
-            reg = self.read_dword( bus, dev, fun, off )
-            if reg and reg != 0xFFFFFFFF:
+        off   = PCI_HDR_BAR0_LO_OFF
+        size  = defines.BOUNDARY_4KB
+        while off <= PCI_HDR_TYPE0_BAR2_HI_OFF:
+            reg = self.read_dword(bus, dev, fun, off)
+            if reg and reg != defines.MASK_32b:
                 # BAR is initialized
-                isMMIO = (0 == (reg & 0x1))
+                isMMIO = (PCI_HDR_BAR_IOMMIO_MMIO == (reg & PCI_HDR_BAR_IOMMIO_MASK))
                 if isMMIO:
                     # MMIO BAR
-                    is64bit = ( (reg>>1) & 0x3 )
-                    if 0x2 == is64bit:
+                    _type = (reg&PCI_HDR_BAR_TYPE_MASK) >> PCI_HDR_BAR_TYPE_SHIFT
+                    if PCI_HDR_BAR_TYPE_64B == _type:
                         # 64-bit MMIO BAR
-                        off += 4
+                        if bCalcSize: size = self.calc_bar_size(bus, dev, fun, off, reg)
+                        off += PCI_HDR_BAR_STEP
                         reg_hi = self.read_dword( bus, dev, fun, off )
                         reg |= (reg_hi << 32)
-                        base = (reg & 0xFFFFFFFFFFFFFFF0)
-                        #base = ((base_hi << 32) | (base_lo & 0xFFFFFFF0))
-                        _bars.append( (base, isMMIO, True, off-4, reg) )
-                    elif 1 == is64bit:
+                        base = (reg & PCI_HDR_BAR_BASE_MASK_MMIO64)
+                        _bars.append( (base, isMMIO, True, off-PCI_HDR_BAR_STEP, reg, size) )
+                    elif PCI_HDR_BAR_TYPE_1MB == _type:
                         # MMIO BAR below 1MB - not supported
                         pass
-                    elif 0 == is64bit:
+                    elif PCI_HDR_BAR_TYPE_32B == _type:
                         # 32-bit only MMIO BAR
-                        base = (reg & 0xFFFFFFF0)
-                        _bars.append( (base, isMMIO, False, off, reg) )
+                        base = (reg & PCI_HDR_BAR_BASE_MASK_MMIO)
+                        if bCalcSize: size = self.calc_bar_size(bus, dev, fun, off, reg)
+                        _bars.append( (base, isMMIO, False, off, reg, size) )
                 else:
-                    # 16-bit I/O BAR
-                    base = (reg & 0xFFFE)
-                    _bars.append( ( base, isMMIO, False, off, reg) )
-            off += 4
+                    # I/O BAR
+                    # @TODO: calculate I/O BAR size, hardcoded to 0x100 for now
+                    base = (reg & PCI_HDR_BAR_BASE_MASK_IO)
+                    _bars.append( (base, isMMIO, False, off, reg, 0x100) )
+            off += PCI_HDR_BAR_STEP
         return _bars
 
     def get_DIDVID( self, bus, dev, fun ):
