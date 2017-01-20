@@ -163,10 +163,10 @@ class VirtIO_Device():
         dev_cfg = self.cs.pci.dump_pci_config(self.bus, self.dev, self.fun)
         pretty_print_hex_buffer( dev_cfg )
         bars = self.cs.pci.get_device_bars(self.bus, self.dev, self.fun)
-        for (bar, isMMIO, is64bit, bar_off, bar_reg) in bars:
+        for (bar, isMMIO, is64bit, bar_off, bar_reg, size) in bars:
             if isMMIO:
-                chipsec.hal.mmio.dump_MMIO( self.cs, bar, 0x1000 )
+                chipsec.hal.mmio.dump_MMIO( self.cs, bar, size )
             else:
-                self.cs.io.dump_IO( bar, 0x100, 4 )
+                self.cs.io.dump_IO( bar, size, 4 )
 
 
