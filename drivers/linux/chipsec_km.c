@@ -1432,13 +1432,13 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			case 4:
 				ptr[0] = ioread32(ioaddr);
 				break;
-            case 8:
-            #ifdef __x86_64__
-                first = ioread32(ioaddr);
-                second = ioread32( ioaddr + 4 );
-                ptr[0] = first | (second << 32);
-                break;
-            #endif
+			#ifdef __x86_64__
+			case 8:
+				first = ioread32(ioaddr);
+				second = ioread32( ioaddr + 4 );
+				ptr[0] = first | (second << 32);
+				break;
+			#endif
 		}
 
 		my_unxlate_dev_mem_ptr(addr, ioaddr);
