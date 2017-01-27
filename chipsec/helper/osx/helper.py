@@ -44,6 +44,7 @@ class OSXHelper(Helper):
     DRIVER_NAME = "chipsec.kext"
 
     def __init__(self):
+        super(OSXHelper, self).__init__()
         self.os_system  = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
