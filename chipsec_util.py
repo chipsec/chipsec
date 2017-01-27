@@ -174,9 +174,6 @@ class ChipsecUtil:
                 logger().warn("* Platform dependent functionality will likely be incorrect")
                 logger().warn("* Error Message: \"%s\"" % str(msg))
                 logger().warn("*******************************************************************")
-            except (None,Exception) , msg:
-                logger().error(str(msg))
-                sys.exit(-1)
 
             logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,argv[2:]) )
             comm.run()
