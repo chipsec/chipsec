@@ -147,9 +147,19 @@ class EfiHelper(Helper):
         if logger().VERBOSE: logger().log( "[helper] VA (0X%016x) -> PA (0X%016x)" % (va,pa) )
         return pa
 
+    def pa2va(self, pa):
+        va = pa # UEFI Shell has identity mapping
+        if logger().VERBOSE:
+            logger().log('[helper] PA (0X%016x) -> VA (0X%016x)' % (pa, va))
+        return va
+
+
     #
     # Memory-mapped I/O (MMIO) access
     #
+
+    def map_io_space(self, physical_address, length, cache_type):
+        return self.pa2va(physical_address)
 
     def read_mmio_reg(self, phys_address, size):
         if logger().VERBOSE:
