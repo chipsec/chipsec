@@ -435,44 +435,11 @@ class OsHelper:
     #
     def getcwd( self ):
         return self.helper.getcwd()
-
-    def get_tool_path( self, tool_type ):
-        tool_name, tool_pathdef = self.helper.get_tool_info( tool_type )
-        tool_path = tool_pathdef
-
-        try:
-            import pkg_resources
-            tool_path = pkg_resources.resource_filename( '%s.%s' % (chipsec.file.TOOLS_DIR,self.helper.os_system.lower()), tool_name )
-        except ImportError:
-            pass
-
-        if not os.path.isfile( tool_path ):
-            tool_path = os.path.join( tool_pathdef, tool_name )
-            if not os.path.isfile( tool_path ): logger().error( "Couldn't find %s" % tool_path )
-
-        return tool_path
-
-    def get_compression_tool_path( self, compression_type ):
-        return self.get_tool_path( compression_type )
-
     #
     # Decompress binary with OS specific tools
     #
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
-        import subprocess
-        if (CompressionType == 0): # not compressed
-          shutil.copyfile(CompressedFileName, OutputFileName)
-        else:
-          exe = self.get_compression_tool_path( CompressionType )
-          if exe is None: return None 
-          try:
-            subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
-            logger().error( str(msg) )
-            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
-            return None
-
-        return chipsec.file.read_file( OutputFileName )
+       return self.helper.decompress_file( CompressedFileName, OutputFileName, CompressionType )
 
     #
     # Compress binary with OS specific tools
