@@ -145,18 +145,35 @@ data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
 extra_kw = {}
 
+compression_header_files = []
+
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
     package_data["chipsec_tools.windows"] = ['*']
     install_requires.append("pywin32")
 
 elif platform.system().lower() == "linux":
+    compression_source_files = []
     package_data["chipsec_tools.linux"] = ['*']
     data_files = [(os.path.join("share","doc","chipsec"), ["chipsec-manual.pdf"])]
+    for root, dir, path in os.walk( os.path.join( "chipsec_tools", "compression" ) ):
+        for f in path:
+            if os.path.splitext(f)[1][1:] == 'h':
+                compression_header_files.append(os.path.join(root, f))
+            else:
+                compression_source_files.append(os.path.join(root, f))
     extra_kw["ext_modules"] = [
         Extension("chipsec.helper.linux.cores",
-                  ["chipsec/helper/linux/cores.c"])
+                  ["chipsec/helper/linux/cores.c"]) , 
+        Extension(
+                  'chipsec_tools.efi_compressor',
+                  sources=compression_source_files,
+                  include_dirs=[
+                      os.path.join("chipsec_tools", 'compression', 'Include')
+                  ],
+                  depends=compression_header_files, )
     ]
+
 
 setup(
     name = 'chipsec',

@@ -54,6 +54,8 @@ from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationErro
 from chipsec.logger import logger, print_buffer
 import chipsec.file
 
+from chipsec_tools import efi_compressor
+
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
 
@@ -80,10 +82,10 @@ IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
 
-_tools = {
-  defines.ToolType.TIANO_COMPRESS: 'TianoCompress.bin',
-  defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.bin'
-}
+LZMA  = efi_compressor.LzmaDecompress
+Tiano = efi_compressor.TianoDecompress
+EFI   = efi_compressor.EfiDecompress 
+
 
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
@@ -937,6 +939,34 @@ class LinuxHelper(Helper):
         for line in symarr:
             if "page_is_ram" in line:
                return line.split(" ")[0]
+
+    def decompress_data(self, funcs, cdata):
+        for func in funcs:
+            try:
+                data = func(cdata, len(cdata))
+                return  data
+            except Exception:
+                continue
+        return None
+    #
+    # Decompress binary with efi_compressor from https://github.com/theopolis/uefi-firmware-parser
+    #
+    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+        CompressedFileData = chipsec.file.read_file( CompressedFileName )
+        if CompressionType == 0: # not compressed
+          shutil.copyfile( CompressedFileName, OutputFileName )
+        elif CompressionType == 0x01:
+            data = self.decompress_data( [ EFI, Tiano ], CompressedFileData )
+        elif CompressionType == 0x02:
+            data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData )
+        if CompressionType != 0x00:
+            if data is not None:
+                chipsec.file.write_file( OutputFileName, data )
+            else:
+                logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                return None
+        return chipsec.file.read_file( OutputFileName )
+
     #
     # Logical CPU count
     #
