@@ -262,13 +262,13 @@ class LinuxHelper(Helper):
             return True
 
         try:
+            if 'msr' not in open('/proc/modules').read():
+                os.system('modprobe msr')
             self.dev_msr = dict()
             for cpu in os.listdir("/dev/cpu"):
-                print "found cpu = " + cpu
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
-                    print "Added dev_msr "+str(cpu)
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
