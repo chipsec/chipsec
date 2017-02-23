@@ -45,13 +45,29 @@ class IGD(hal_base.HALBase):
     def __init__(self, cs):
         super(IGD, self).__init__(cs)
         self.helper = cs.helper
-        #self.dev_id = cs.read_register( 'IGD_DID2' ) - not initialized xml config
-        self.dev_id = cs.pci.read_word( 0, 2, 0, 2 )
-        self.is_legacy = (self.dev_id < 0x1600)
+        self.is_legacy = None
+        self.enabled = None
 
+    def __identify_device(self):
+        if self.enabled is None:
+            self.is_legacy = False
+            try:
+                self.dev_id = self.cs.pci.read_word( 0, 2, 0, 2 )
+                self.enabled = (self.dev_id <> 0xFFFF)
+                if (self.enabled):
+                    self.is_legacy = (self.dev_id < 0x1600)
+            except:
+                self.enabled = False
+
+        return (self.enabled, self.is_legacy)
+
+    def is_device_enabled(self):
+        enabled, legacy = self.__identify_device()
+        return enabled
 
     def is_legacy_gen(self):
-        return self.is_legacy
+        enabled, legacy = self.__identify_device()
+        return legacy
 
     def get_GMADR(self):
         base,size = self.cs.mmio.get_MMIO_BAR_base_address('GMADR')

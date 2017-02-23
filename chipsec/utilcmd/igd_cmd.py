@@ -62,6 +62,10 @@ class IgdCommand(BaseCommand):
             print IgdDmaCommand.__doc__
             return
 
+        if not self.cs.igd.is_device_enabled():
+            self.logger.log( '[CHIPSEC] Looks like internal graphics device is not enabled' )
+            return
+
         op = self.argv[2]
         t = time.time()
 
