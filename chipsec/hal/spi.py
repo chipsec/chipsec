@@ -113,10 +113,8 @@ SPI_REGION = {
  ME                 : 'FREG2_ME',
  GBE                : 'FREG3_GBE',
  PLATFORM_DATA      : 'FREG4_PD',
- FREG5              : 'FREG5_RSVD',
- FREG6              : 'FREG6_RSVD',
- FREG7              : 'FREG7_RSVD',
- EMBEDDED_CONTROLLER: 'FREG8_EC'
+ FREG5              : 'FREG5',
+ FREG6              : 'FREG6'
 }
 
 SPI_REGION_NAMES = {
