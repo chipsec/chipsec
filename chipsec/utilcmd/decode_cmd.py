@@ -89,7 +89,7 @@ class DecodeCommand(BaseCommand):
         rom = f[fd_off:]
         # Decoding Flash Descriptor
         #self.logger.LOG_COMPLETE_FILE_NAME = os.path.join( pth, 'flash_descriptor.log' )
-        #parse_spi_flash_descriptor( fd )
+        #parse_spi_flash_descriptor( self.cs, fd )
 
         # Decoding SPI Flash Regions
         # flregs[r] = (r,SPI_REGION_NAMES[r],flreg,base,limit,notused)
@@ -117,7 +117,7 @@ class DecodeCommand(BaseCommand):
                 if spi.FLASH_DESCRIPTOR == idx:
                     # Decoding Flash Descriptor
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )
-                    spi_descriptor.parse_spi_flash_descriptor( region_data )
+                    spi_descriptor.parse_spi_flash_descriptor( self.cs, region_data )
                 elif spi.BIOS == idx:
                     # Decoding EFI Firmware Volumes
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )
