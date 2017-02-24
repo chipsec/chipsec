@@ -52,7 +52,7 @@ class IGD(hal_base.HALBase):
         if self.enabled is None:
             self.is_legacy = False
             try:
-                self.dev_id = self.cs.pci.read_word( 0, 2, 0, 2 )
+                self.dev_id = self.cs.read_register("PCI0.2.0_DID")
                 self.enabled = (self.dev_id <> 0xFFFF)
                 if (self.enabled):
                     self.is_legacy = (self.dev_id < 0x1600)

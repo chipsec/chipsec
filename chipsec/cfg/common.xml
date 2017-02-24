@@ -171,7 +171,7 @@
     <register name="PCI0.0.0_CAPID0_B"   type="pcicfg" bus="0" dev="0" fun="0" offset="0xE8" size="4" desc="Capabilities B"/>
 
     <!-- IGD registers -->
-    <register name="IGD_DID2" type="pcicfg" bus="0" dev="2" fun="0" offset="2" size="2" desc="Device Identification Number">
+    <register name="PCI0.2.0_DID" type="pcicfg" bus="0" dev="2" fun="0" offset="2" size="2" desc="Device Identification Number">
     </register>
 
     <!-- LPC Interface Bridge -->
