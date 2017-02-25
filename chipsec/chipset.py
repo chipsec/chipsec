@@ -41,7 +41,7 @@ import fnmatch
 import re
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
-from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode
+from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 
 from chipsec.cfg.common import Cfg
 from chipsec.logger import logger
@@ -262,6 +262,7 @@ class Chipset:
         self.msgbus     = msgbus.MsgBus(self)
         self.mmio       = mmio.MMIO(self)
         self.iobar      = iobar.IOBAR(self)
+        self.igd        = igd.IGD(self)
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
