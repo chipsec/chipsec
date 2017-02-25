@@ -63,11 +63,11 @@ class TestChipsecUtil(unittest.TestCase):
         """
         oshelper.Helper.registry = [(helper_class.__name__, helper_class)]
         chipsec_util._cs = chipset.cs()
-        util = chipsec_util.ChipsecUtil()
+        util = chipsec_util.ChipsecUtil(arg.split())
         util.VERBOSE = True
         logger.logger().HAL = True
         util.set_logfile(self.log_file)
-        err_code = util.main(["chipsec_utils.py"] + arg.split())
+        err_code = util.main()
         logger.logger().close()
         self.log = open(self.log_file).read()
         self.assertEqual(err_code, 0)
