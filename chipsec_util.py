@@ -27,32 +27,18 @@ Standalone utility
 
 __version__ = '1.2.5'
 
-#import glob
 import re
 import os
 import sys
 import time
 import importlib
 import imp
+import getopt
 
-from chipsec.logger     import *
-from chipsec.file       import *
-from chipsec.helper.oshelper   import helper
+from chipsec.logger  import logger
+from chipsec.chipset import UnknownChipsetError
 
-from chipsec.chipset import cs, UnknownChipsetError
-_cs = cs()
-
-#
-# If you want to turn verbose logging change this line to True
-#
 logger().UTIL_TRACE = True
-logger().VERBOSE    = False
-logger().HAL        = False
-logger().DEBUG      = False
-
-# If you want to specify a different platform change this line to a string from chipset.py
-# _Platform = 'SNB'
-_Platform = None
 
 class ExitCode:
     OK = 0
@@ -76,31 +62,54 @@ commands = {}
 
 class ChipsecUtil:
 
-    def __init__(self):
+    def __init__(self, argv):
         self.global_usage = "CHIPSEC UTILITIES\n\n" + \
                    "All numeric values are in hex\n" + \
                    "<width> is in {1, byte, 2, word, 4, dword}\n\n"
         self.commands = {}
-        self._no_driver = False
         # determine if CHIPSEC is loaded as chipsec_*.exe or in python
         self.CHIPSEC_LOADED_AS_EXE = True if (hasattr(sys, "frozen") or hasattr(sys, "importers")) else False
 
+        self._platform       = None
+        self._unkownPlatform = True
+        self._no_driver      = False
 
-    def chipsec_util_help(self, argv):
+        self.show_help = False
+        self.help_cmd  = None
+
+        # parse command-line arguments
+        self._cmd_args       = None
+        self.argv = argv
+        self.parse_args()
+
+        from chipsec.chipset import cs
+        self._cs = cs()
+
+
+    def chipsec_util_help(self, command=None):
         """
         Shows the list of available command line extensions
         """
-        if len(argv) <= 2:
-            logger().log("[CHIPSEC] chipsec_util command-line extensions "
-                         "should be one of the following:")
+        from chipsec.chipset import Chipset_Code
+        logger().log("\nUsage:"
+                     "\n\nchipsec_util.py [options] <command>"
+                     "\n\nOptions:"
+                     "\n-v --verbose          verbose mode"
+                     "\n-d --debug            show debug output"
+                     "\n-l --log              output to log file"
+                     "\n-p --platform         platform code. Should be among the supported platforms:"
+                     "\n                      %s"
+                     "\n-n --no_driver        don't load chipsec kernel module"
+                     "\n-i --ignore_platform  run chipsec even if the platform is not recognized"  % Chipset_Code.keys())
+        logger().log("\nAll numeric values are in hex. <width> can be one of {1, byte, 2, word, 4, dword}")
+
+        if command is None or command not in self.commands:
+            logger().log("\n<command> can be one of the following:")
             for cmd in sorted(self.commands.keys() + ['help']):
                 logger().log( '    %s' % cmd )
-            logger().log("[CHIPSEC] You can use the option -n to not load "
-                         "the Chipsec driver.")
         else:
-            print self.global_usage
-            print "\nHelp for %s command:\n" % argv[2]
-            print self.commands[argv[2]].__doc__
+            logger().log("\nhelp for '%s' <command>:" % command)
+            logger().log(self.commands[command].__doc__)
 
     def f_mod_zip(self, x):
         ZIP_UTILCMD_RE = re.compile("^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
@@ -115,16 +124,51 @@ class ChipsecUtil:
     def map_modname(self, x):
         return x.split('.')[0]
 
+
+    def parse_args(self):
+        import getopt
+        try:
+            opts, args = getopt.getopt(self.argv, "ip:h:vdnl:", ["ignore_platform", "platform=", "help=", "verbose", "debug", "no_driver", "log="])
+        except getopt.GetoptError, err:
+            logger().error(str(err))
+            self.chipsec_util_help()
+            sys.exit(ExitCode.EXCEPTION)
+        self._cmd_args = args
+        for o, a in opts:
+            if o in ("-v", "--verbose"):
+                logger().VERBOSE = True
+                logger().HAL     = True
+                logger().DEBUG   = True
+            elif o in ("-d", "--debug"):
+                logger().DEBUG   = True
+            elif o in ("-h", "--help"):
+                self.show_help = True
+                self.help_cmd  = a
+            elif o in ("-p", "--platform"):
+                self._platform = a.upper()
+            elif o in ("-i", "--ignore_platform"):
+                self._unkownPlatform = False
+                logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
+            elif o in ("-l", "--log"):
+                self.set_logfile(a)
+            elif o in ("-n", "--no_driver"):
+                self._no_driver = True
+            else:
+                pass
+
+
+
     ##################################################################################
     # Entry point
     ##################################################################################
 
 
-    def main(self, argv):
+    def main(self):
         """
         Receives and executes the commands
         """
-        global _cs
+        self.print_banner()
+
         #import traceback
         if self.CHIPSEC_LOADED_AS_EXE:
             import zipfile
@@ -142,7 +186,6 @@ class ChipsecUtil:
         module = None
         for cmd in cmds:
             try:
-                #exec 'from chipsec.utilcmd.' + cmd + ' import *'
                 cmd_path = 'chipsec.utilcmd.' + cmd
                 module = importlib.import_module( cmd_path )
                 cu = getattr(module, 'commands')
@@ -151,37 +194,40 @@ class ChipsecUtil:
                 logger().error( "Couldn't import util command extension '%s'" % cmd )
                 raise ImportError, msg
 
-        if 1 >= len(argv) or (2 >= len(argv) and argv[1] == "-n"):
-            logger().error("Not enough parameters")
-            self.chipsec_util_help([])
-            return ExitCode.EXCEPTION
+        if self.show_help:
+            self.chipsec_util_help(self.help_cmd)
+            return ExitCode.OK
 
-        #TODO(tweek): Use getopt (similarly to chipsec_main) to parse
-        #             the command line options.
-        if argv[1] == "-n":
-            argv = argv[1:]
-            self._no_driver = True
+        # @TODO: change later
+        # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
+        cmd = self._cmd_args[0]
+        self.argv = ['dummy'] + self._cmd_args
 
-        cmd = argv[ 1 ]
         if self.commands.has_key( cmd ):
-            comm = self.commands[cmd](argv, cs = _cs)
+            comm = self.commands[cmd](self.argv, cs = self._cs)
 
             try:
-                _cs.init( _Platform, comm.requires_driver() and not self._no_driver)
+                self._cs.init( self._platform, comm.requires_driver() and not self._no_driver)
             except UnknownChipsetError, msg:
                 logger().warn("*******************************************************************")
                 logger().warn("* Unknown platform!")
                 logger().warn("* Platform dependent functionality will likely be incorrect")
                 logger().warn("* Error Message: \"%s\"" % str(msg))
                 logger().warn("*******************************************************************")
+            except (None,Exception) , msg:
+                logger().error(str(msg))
+                sys.exit(ExitCode.EXCEPTION)
 
-            logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,argv[2:]) )
+            logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,self.argv[2:]) )
             comm.run()
             if comm.requires_driver():
-                _cs.destroy(True)
+                self._cs.destroy(True)
 
         elif cmd == 'help':
-            self.chipsec_util_help(argv)
+            if len(self.argv) <= 2:
+                self.chipsec_util_help()
+            else:
+                self.chipsec_util_help(self.argv[2])
         else:
             logger().error( "Unknown command '%.32s'" % cmd )
         return ExitCode.OK
@@ -205,11 +251,8 @@ class ChipsecUtil:
         logger().log( "[CHIPSEC] Version %s" % __version__ )
 
 def main(argv=None):
-    if argv and argv[0] != 'chipsec_util.py':
-        argv = ['chipsec_util.py'] + argv
-    chipsecUtil = ChipsecUtil()
-    chipsecUtil.print_banner()
-    return chipsecUtil.main(argv if argv else sys.argv)
+    chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])
+    return chipsecUtil.main()
 
        
 if __name__ == "__main__":
