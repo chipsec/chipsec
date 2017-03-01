@@ -530,6 +530,9 @@
       <field name="En"        bit="11" size="1"  desc="APIC Global Enable" />
       <field name="APICBase"  bit="12" size="20" desc="APIC Base" />
     </register>
+    <register name="MSR_SMI_COUNT" type="msr" msr="0x34" desc="SMI Count">
+      <field name="Count" bit="0"  size="64" />
+    </register>
        
   </registers>
 
