@@ -263,6 +263,8 @@ class LinuxHelper(Helper):
 
         try:
             self.dev_msr = dict()
+            if not os.path.exists("/dev/cpu/0/msr"):
+                os.system("modprobe msr")
             for cpu in os.listdir("/dev/cpu"):
                 print "found cpu = " + cpu
                 if cpu.isdigit():
@@ -274,6 +276,7 @@ class LinuxHelper(Helper):
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
                                 "This command requires access to /dev/cpu/CPUNUM/msr.\n"
                                 "Are you running this command as root?\n"
+                                "Do you have the msr kernel module installed?\n"
                                 "%s" % str(err), err.errno)
 
     def close(self):
