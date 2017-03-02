@@ -277,10 +277,12 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
                 if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
                     sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
-                elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
+                elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
                     d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], 2, True )
                     if d:
                         sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                elif sec.Guid == FIRMWARE_VOLUME_GUID:
+                    sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
             elif sec.Type in (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
                 sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
 
