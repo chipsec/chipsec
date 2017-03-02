@@ -48,6 +48,7 @@ import resource
 import struct
 import subprocess
 import sys
+import shutil
 
 from chipsec import defines
 from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
@@ -954,7 +955,7 @@ class LinuxHelper(Helper):
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
         CompressedFileData = chipsec.file.read_file( CompressedFileName )
         if CompressionType == 0: # not compressed
-          shutil.copyfile( CompressedFileName, OutputFileName )
+            shutil.copyfile( CompressedFileName, OutputFileName )
         elif CompressionType == 0x01:
             data = self.decompress_data( [ EFI, Tiano ], CompressedFileData )
         elif CompressionType == 0x02:
