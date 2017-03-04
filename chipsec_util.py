@@ -200,8 +200,12 @@ class ChipsecUtil:
 
         # @TODO: change later
         # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
-        cmd = self._cmd_args[0]
-        self.argv = ['dummy'] + self._cmd_args
+        if self._cmd_args:
+            cmd = self._cmd_args[0]
+            self.argv = ['dummy'] + self._cmd_args
+        else:
+            cmd = 'help'
+            self.argv = ['dummy']
 
         if self.commands.has_key( cmd ):
             comm = self.commands[cmd](self.argv, cs = self._cs)
