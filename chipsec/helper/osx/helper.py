@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 import chipsec
-from chipsec.helper.oshelper import OsHelperError, Helper
+from chipsec.helper.oshelper import OsHelperError, Helper, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.logger import logger, print_buffer
 
 
@@ -212,6 +212,9 @@ class OSXHelper(Helper):
         raise NotImplementedError()
 
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+        raise NotImplementedError()
+
+    def map_io_space(self, base, size, cache_type):
         raise NotImplementedError()
 
 def get_helper():
