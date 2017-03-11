@@ -244,10 +244,14 @@ class OsHelper:
             return self.helper.va2pa( va )
 
     def map_io_space(self, physical_address, length, cache_type):
-        if self.use_native_api() and hasattr(self.helper, 'native_map_io_space'):
-            return self.helper.native_map_io_space(physical_address, length, cache_type)
-        else:
-            return self.helper.map_io_space(physical_address, length, cache_type)
+        try:
+            if self.use_native_api() and hasattr(self.helper, 'native_map_io_space'):
+                return self.helper.native_map_io_space(physical_address, length, cache_type)
+            elif hasattr(self.helper, 'map_io_space'):
+                return self.helper.map_io_space(physical_address, length, cache_type)
+        except NotImplementedError:
+            pass
+        raise UnimplementedAPIError('map_io_space')
 
     #
     # Read/Write I/O port
