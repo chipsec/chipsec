@@ -1,3 +1,10 @@
+chipsec (1.2.5-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload
+  * Fixed dependencies
+
+ -- Tim Brown <itmb@nth-dimension.org.uk>  Mon, 13 Mar 2017 13:53:54 +0000
+
 chipsec (1.2.5-2) unstable; urgency=medium
 
   * Non-maintainer upload

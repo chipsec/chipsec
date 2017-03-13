@@ -9,12 +9,13 @@ Homepage: https://github.com/chipsec/chipsec
 Package: chipsec
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: chipsec-dkms
 Description: CHIPSEC: Platform Security Assessment Framework 
  CHIPSEC: Platform Security Assessment Framework
 
 Package: chipsec-dkms
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, dkms
 Description: CHIPSEC: Platform Security Assessment Framework - module building source
  This package contains source code for the low-level drivers
  for CHIPSEC: Platform Security Assessment Framework
