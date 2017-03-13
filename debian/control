@@ -2,7 +2,7 @@ Source: chipsec
 Section: python
 Priority: optional
 Maintainer: CHIPSEC Team <chipsec@intel.com>
-Build-Depends: python-setuptools (>= 0.6b3), python (>=2.6), gcc, nasm, linux-headers
+Build-Depends: python-setuptools (>= 0.6b3), python (>=2.6), gcc, nasm, linux-headers, python-dev, dkms
 Standards-Version: 3.9.1
 Homepage: https://github.com/chipsec/chipsec
 
@@ -11,3 +11,10 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: CHIPSEC: Platform Security Assessment Framework 
  CHIPSEC: Platform Security Assessment Framework
+
+Package: chipsec-dkms
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: CHIPSEC: Platform Security Assessment Framework - module building source
+ This package contains source code for the low-level drivers
+ for CHIPSEC: Platform Security Assessment Framework

@@ -8,8 +8,10 @@ include /usr/share/dpkg/pkg-info.mk
 
 PYTHON2_VERSIONS = $(shell pyversions -r)
 
+CVERSION := $(shell dpkg-parsechangelog | grep '^Version:' | cut -d' ' -f2 | cut -d- -f1)
+
 %:
-	dh $@ --with python2
+	dh $@ --with python2 --with dkms
 
 override_dh_auto_clean:
 	dh_auto_clean
@@ -28,3 +30,8 @@ override_dh_auto_install:
 	#	$$python setup.py install --skip-driver --root=$(CURDIR)/debian/$(DEB_SOURCE) --install-layout=deb; \
 	#done
 	python setup.py install --skip-driver --root=$(CURDIR)/debian/$(DEB_SOURCE) --install-layout=deb;
+	install -d debian/$(DEB_SOURCE)-dkms/usr/src/$(DEB_SOURCE)-$(CVERSION)
+	cp -r drivers/linux/* debian/$(DEB_SOURCE)-dkms/usr/src/$(DEB_SOURCE)-$(CVERSION)
+
+override_dh_dkms:
+	dh_dkms -V
