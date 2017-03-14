@@ -9,10 +9,20 @@
     <!-- 24.5.1 -->
     <bar name="RCBA"     bus="0" dev="0x1F" fun="0" reg="0xF0" width="4" mask="0xFFFFC000"   size="0x4000" enable_bit="0" desc="Root Complex Base Address"/>
     <!-- 24.5.1 -->
-    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="0" reg="0x54" width="4" mask="0xFFFFC000"   size="0x200"  enable_bit="0" desc="SPI Controller Register Range" offset="0x0"/>
+    <bar name="SPIBAR" register="SBASE" base_field="Base" enable_field="Enable" size="0x200" desc="SPI Register Range"/>
   </mmio>
   
   <registers>
+
+    <!-- 24.5.1 -->
+    <register name="SBASE"  type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0x54" size="4" desc="SPI Base Address">
+      <field  name="MEMI"   bit="0"  size="1"  desc="Memory Space Indication"/>
+      <field  name="Enable" bit="1"  size="1"  desc="Enable"/>
+      <field  name="ADDRNG" bit="2"  size="1"  desc="Address Range"/>
+      <field  name="PREF"   bit="3"  size="1"  desc="Prefetchable"/>
+      <field  name="Base"   bit="9"  size="23" desc="Base Address"/>
+    </register>
+
     <!-- 22.11.1.1 -->
     <register name="BC" type="mmio" bar="SPIBAR" offset="0xFC" size="1" desc="BIOS Control Register (BCR)">
       <field name="BIOSWE"  bit="0" size="1" desc="BIOS Write Enable"/>

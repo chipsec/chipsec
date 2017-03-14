@@ -118,4 +118,5 @@ class IgdCommand(BaseCommand):
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
 
-commands = { 'igd': IgdCommand }
+commands = { 'igd': IgdCommand }
+

@@ -378,7 +378,7 @@ class ACPI(hal_base.HALBase):
 
             self.get_table_list_from_SDT(sdt, is_xsdt)
             self.get_DSDT_from_FADT()
-        except chipsec.helper.oshelper.UnimplementedNativeAPIError:
+        except oshelper.UnimplementedNativeAPIError:
             # 2. If didn't work, try using get_ACPI_table if a helper implemented
             #    reading ACPI tables via native API which some OS may provide
             if self.cs.use_native_api():
@@ -462,7 +462,7 @@ class ACPI(hal_base.HALBase):
                     t_size = self.cs.mem.read_physical_mem_dword( table_address + 4 )
                     t_data = self.cs.mem.read_physical_mem( table_address, t_size )
                     acpi_tables_data.append( t_data )
-            except chipsec.helper.oshelper.UnimplementedNativeAPIError:
+            except oshelper.UnimplementedNativeAPIError:
                 # 2. If didn't work, try using get_ACPI_table if a helper implemented
                 #    reading ACPI tables via native API which some OS may provide
                 if self.cs.use_native_api():

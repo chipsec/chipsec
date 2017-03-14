@@ -43,6 +43,12 @@ from collections import namedtuple
 from chipsec.hal import acpi, hal_base
 from chipsec.logger import logger
 
+VMM_NONE    = 0
+VMM_XEN     = 0x1
+VMM_HYPER_V = 0x2
+VMM_VMWARE  = 0x3
+VMM_KVM     = 0x4
+
 
 class CPURuntimeError (RuntimeError):
     pass
@@ -73,6 +79,22 @@ class CPU(hal_base.HALBase):
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
         if logger().VERBOSE: logger().log( "[cpu] CPUID out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)
+
+    # Using cpuid check if running under vmm control
+    def check_vmm(self):
+        # check Hypervisor Present
+        (eax, ebx, ecx, edx) = self.cpuid( 0x01, 0 )
+        if (ecx & 0x80000000):
+            (eax, ebx, ecx, edx) = self.cpuid( 0x40000000, 0 )
+            is_xen = ((ebx == 0x566e6558) and (ecx == 0x65584d4d) and (edx == 0x4d4d566e))
+            if is_xen: return VMM_XEN
+            is_hyperv = ((ebx == 0x7263694D) and (ecx == 0x666F736F) and (edx == 0x76482074))
+            if is_hyperv: return VMM_HYPER_V
+            is_vmware = ((ebx == 0x61774d56) and (ecx == 0x4d566572) and (edx == 0x65726177))
+            if is_vmware: return VMM_VMWARE
+            is_kvm = ((ebx == 0x4b4d564b) and (ecx == 0x564b4d56) and (edx == 0x0000004d))
+            if is_kvm: return VMM_KVM
+        return VMM_NONE
 
     # Using CPUID we can determine if Hyper-Threading is enabled in the CPU
     def is_HT_active(self):
@@ -157,7 +179,8 @@ class CPU(hal_base.HALBase):
         smram_limit = None
         smram_size  = 0
         try:
-            (smram_base, smram_limit, smram_size) = self.get_SMRR_SMRAM()
+            if (self.check_SMRR_supported()):
+                (smram_base, smram_limit, smram_size) = self.get_SMRR_SMRAM()
         except:
             pass
 
@@ -172,6 +195,9 @@ class CPU(hal_base.HALBase):
     # Check that SMRR is supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
     def check_SMRR_supported( self ):
+        # MS HyperV workaround. HyperV reports SMRR support but throws and exception on access to SMRR msrs.
+        # Not a problem for chipsec driver but crashes RwDrv.
+        if self.check_vmm() == VMM_HYPER_V: return False
         mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
         if logger().VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
         smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )

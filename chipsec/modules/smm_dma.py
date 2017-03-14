@@ -61,15 +61,19 @@ class smm_dma(BaseModule):
     def check_tseg_config(self):
         res = ModuleResult.FAILED
         (tseg_base,  tseg_limit,  tseg_size ) = self.cs.cpu.get_TSEG()
-        (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
         self.logger.log("[*] TSEG      : 0x%016X - 0x%016X (size = 0x%08X)"   % (tseg_base,  tseg_limit,  tseg_size ))      
-        self.logger.log("[*] SMRR range: 0x%016X - 0x%016X (size = 0x%08X)\n" % (smram_base, smram_limit, smram_size))
+        if (self.cs.cpu.check_SMRR_supported()):
+            (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
+            self.logger.log("[*] SMRR range: 0x%016X - 0x%016X (size = 0x%08X)\n" % (smram_base, smram_limit, smram_size))
+        else:
+            smram_base = 0
+            smram_limit = 0
+            self.logger.log("[*] SMRR is not supported\n")
 
         self.logger.log( "[*] checking TSEG range configuration.." )
         if (0 == smram_base) and (0 == smram_limit):
             res = ModuleResult.WARNING
             self.logger.log_warn_check( "TSEG is properly configured but can't determine if it covers entire SMRAM" )
-
         else:
             if (tseg_base <= smram_base) and (smram_limit <= tseg_limit):
             #if (tseg_base == smram_base) and (tseg_size == smram_size):
