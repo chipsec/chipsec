@@ -300,8 +300,8 @@
 		638A5F901CF6B068007E4A77 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				INFOPLIST_FILE = chipsec/Info.plist;
 				MODULE_NAME = com.google.chipsec;
 				MODULE_START = chipsec_start;
@@ -317,8 +317,8 @@
 		638A5F911CF6B068007E4A77 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "Mac Developer";
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Mac Developer";
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
 				INFOPLIST_FILE = chipsec/Info.plist;
 				MODULE_NAME = com.google.chipsec;
 				MODULE_START = chipsec_start;
@@ -375,6 +375,7 @@
 				63F7B74B1CF830FE00A3B40C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
