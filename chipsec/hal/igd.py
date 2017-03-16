@@ -187,12 +187,14 @@ class IGD(hal_base.HALBase):
         buffer = ''
         pa = address    
         for p in range(N):
-            pa_off = pa % 0x1000
             pte = self.get_GGTT_PTE_from_PA(pa)
             if self.logger.HAL: self.logger.log( '[igd] GFx PTE for address 0x%016X: 0x%08X' % (address,pte) )
             self.write_GGTT_PTE(pte_num, pte)
             if (p == 0):
+                pa_off = off
                 size = h if (pa_off > 0)   else 0x1000
+            else:
+                pa_off = 0
             if (p == N-1):
                 size = r if (r > 0) else 0x1000
             if value is None:
