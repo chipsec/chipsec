@@ -180,7 +180,8 @@ class EfiHelper(Helper):
         if size == 4:
             return edk2.writemem_dword( phys_address, value )
         else:
-            logger().error( '[efi] unsupported size %d by write_mmio_reg' % size )
+            buf = struct.pack(size*"B", value)
+            edk2.writemem( phys_address, buf, size )
         
     #
     # PCIe configuration access

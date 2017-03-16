@@ -48,6 +48,7 @@ import resource
 import struct
 import subprocess
 import sys
+import shutil
 
 from chipsec import defines
 from chipsec.helper.oshelper import Helper, OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
@@ -102,6 +103,7 @@ class LinuxHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
     DEV_MEM = "/dev/mem"
+    DEV_PORT = "/dev/port"
     MODULE_NAME = "chipsec"
     SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
     DKMS_DIR = "/var/lib/dkms/"
@@ -115,6 +117,8 @@ class LinuxHelper(Helper):
         self.os_uname   = platform.uname()
         self.dev_fh = None
         self.dev_mem = None
+        self.dev_port = None
+        self.dev_msr = None
 
         # A list of all the mappings allocated via map_io_space. When using
         # read/write MMIO, if the region is already mapped in the process's
@@ -226,6 +230,55 @@ class LinuxHelper(Helper):
                                 "Are you running this command as root?\n"
                                 "%s" % str(err), err.errno)
         return False
+
+
+    def devport_available(self):
+        """Check if /dev/port is usable.
+
+           In case the driver is not loaded, we might be able to perform the
+           requested operation via /dev/port. Returns True if /dev/port is
+           accessible.
+        """
+        if self.dev_port:
+            return True
+
+        try:
+            self.dev_port = os.open(self.DEV_PORT, os.O_RDWR)
+            return True
+        except IOError as err:
+            raise OsHelperError("Unable to open /dev/port.\n"
+                                "This command requires access to /dev/port.\n"
+                                "Are you running this command as root?\n"
+                                "%s" % str(err), err.errno)
+
+    def devmsr_available(self):
+        """Check if /dev/cpu/CPUNUM/msr is usable.
+
+           In case the driver is not loaded, we might be able to perform the
+           requested operation via /dev/cpu/CPUNUM/msr. This requires loading 
+           the (more standard) msr driver. Returns True if /dev/cpu/CPUNUM/msr 
+           is accessible.
+        """
+        if self.dev_msr:
+            return True
+
+        try:
+            self.dev_msr = dict()
+            if not os.path.exists("/dev/cpu/0/msr"):
+                os.system("modprobe msr")
+            for cpu in os.listdir("/dev/cpu"):
+                print "found cpu = " + cpu
+                if cpu.isdigit():
+                    cpu = int(cpu)
+                    self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
+                    print "Added dev_msr "+str(cpu)
+            return True
+        except IOError as err:
+            raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
+                                "This command requires access to /dev/cpu/CPUNUM/msr.\n"
+                                "Are you running this command as root?\n"
+                                "Do you have the msr kernel module installed?\n"
+                                "%s" % str(err), err.errno)
 
     def close(self):
         if self.dev_fh:
@@ -399,9 +452,21 @@ class LinuxHelper(Helper):
 
         return value
 
+    def native_read_io_port(self, io_port, size):
+        if self.devport_available():
+            os.lseek(self.dev_port, io_port, os.SEEK_SET)
+            return os.read(self.dev_port, size)
+
     def write_io_port( self, io_port, value, size ):
         in_buf = struct.pack( "3"+self._pack, io_port, size, value )
         return self.ioctl(IOCTL_WRIO, in_buf)
+
+    def native_write_io_port(self, io_port, newval, size):
+        if self.devport_available():
+            os.lseek(self.dev_port, addr, os.SEEK_SET)
+            written = os.write(self.dev_port, newval)
+            if written != size:
+                logger().error("Cannot write %s to port %x (wrote %d of %d)" % (newval, io_port, written, size))
 
     def read_cr(self, cpu_thread_id, cr_number):
         self.set_affinity(cpu_thread_id)
@@ -423,11 +488,26 @@ class LinuxHelper(Helper):
         unbuf = struct.unpack("4"+self._pack, self.ioctl(IOCTL_RDMSR, in_buf))
         return (unbuf[3], unbuf[2])
 
+    def native_read_msr(self, thread_id, msr_addr):
+        if self.devmsr_available():
+            os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
+            buf = os.read(self.dev_msr[thread_id], 8)
+            unbuf = struct.unpack("2I", buf)
+            return (unbuf[0], unbuf[1])
+
     def write_msr(self, thread_id, msr_addr, eax, edx):
         self.set_affinity(thread_id)
         in_buf = struct.pack( "4"+self._pack, thread_id, msr_addr, edx, eax )
         self.ioctl(IOCTL_WRMSR, in_buf)
         return
+
+    def native_write_msr(self, thread_id, msr_addr, eax, edx):
+        if self.devport_available():
+            os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
+            buf = struct.pack( "2I", eax, edx)
+            written = os.write(self.dev_msr[thread_id], buf)
+            if written != 8:
+                logger().error("Cannot write %8X to MSR %x" % (buf, msr_addr))
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
         self.set_affinity(cpu_thread_id)
@@ -954,7 +1034,7 @@ class LinuxHelper(Helper):
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
         CompressedFileData = chipsec.file.read_file( CompressedFileName )
         if CompressionType == 0: # not compressed
-          shutil.copyfile( CompressedFileName, OutputFileName )
+            shutil.copyfile( CompressedFileName, OutputFileName )
         elif CompressionType == 0x01:
             data = self.decompress_data( [ EFI, Tiano ], CompressedFileData )
         elif CompressionType == 0x02:

@@ -24,9 +24,10 @@ import subprocess
 import sys
 
 import chipsec
-from chipsec.helper.oshelper import OsHelperError, Helper
+from chipsec.helper.oshelper import OsHelperError, Helper, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.logger import logger, print_buffer
 
+from chipsec_tools import efi_compressor
 
 IOCTL_RDPCI   = 0xc00c7001
 IOCTL_WRPCI   = 0xc00c7002
@@ -37,6 +38,11 @@ IOCTL_WRMMIO  = 0xc0187004
 # definition.
 _pci_msg_t_fmt = "BBBHBI"
 _mmio_msg_t_fmt = "QQB"
+
+
+LZMA  = efi_compressor.LzmaDecompress
+Tiano = efi_compressor.TianoDecompress
+EFI   = efi_compressor.EfiDecompress 
 
 class OSXHelper(Helper):
 
@@ -163,6 +169,35 @@ class OSXHelper(Helper):
     def getcwd(self):
         return os.getcwd()
 
+    def decompress_data(self, funcs, cdata):
+        for func in funcs:
+            try:
+                data = func(cdata, len(cdata))
+                return  data
+            except Exception:
+                continue
+        return None
+    #
+    # Decompress binary with efi_compressor from https://github.com/theopolis/uefi-firmware-parser
+    #
+    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+        CompressedFileData = chipsec.file.read_file( CompressedFileName )
+        if CompressionType == 0: # not compressed
+            shutil.copyfile( CompressedFileName, OutputFileName )
+        elif CompressionType == 0x01:
+            data = self.decompress_data( [ EFI, Tiano ], CompressedFileData )
+        elif CompressionType == 0x02:
+            data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData )
+        if CompressionType != 0x00:
+            if data is not None:
+                chipsec.file.write_file( OutputFileName, data )
+            else:
+                logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                return None
+        return chipsec.file.read_file( OutputFileName )
+
+
+
     def get_tool_info( self, tool_type ):
         raise NotImplementedError()
 
@@ -212,6 +247,9 @@ class OSXHelper(Helper):
         raise NotImplementedError()
 
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+        raise NotImplementedError()
+
+    def map_io_space(self, base, size, cache_type):
         raise NotImplementedError()
 
 def get_helper():

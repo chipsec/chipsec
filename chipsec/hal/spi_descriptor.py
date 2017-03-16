@@ -61,13 +61,11 @@ def get_spi_flash_descriptor( rom ):
     fd = rom[ fd_off : fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
     return (fd_off, fd)
 
-
 def get_SPI_master( flmstr ):
     requester_id  = (flmstr & 0xFFFF)
     master_region_ra = ((flmstr >> 16) & 0xFF)
     master_region_wa = ((flmstr >> 24) & 0xFF)
     return (requester_id, master_region_ra, master_region_wa)
-
 
 def get_spi_regions( fd ):
     pos = fd.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
@@ -97,7 +95,7 @@ def get_spi_regions( fd ):
 
 
 
-def parse_spi_flash_descriptor( rom ):
+def parse_spi_flash_descriptor( cs, rom ):
     if not (type(rom) == str):
         logger().error('Invalid fd object type %s'%type(rom))
         return
@@ -125,43 +123,49 @@ def parse_spi_flash_descriptor( rom ):
     #
     # Flash Descriptor Map Section
     #
-    #parse_spi_flash_descriptor_flmap( fd )
-    logger().log( '' )
-    logger().log( '+ 0x0014 Flash Descriptor Map:' )
-    logger().log( '========================================================' )
-
     flmap0 = struct.unpack_from( '=I', fd[0x14:0x18] )[0]
     flmap1 = struct.unpack_from( '=I', fd[0x18:0x1C] )[0]
     flmap2 = struct.unpack_from( '=I', fd[0x1C:0x20] )[0]
-    logger().log( '+ 0x0014 FLMAP0   : 0x%08X' % flmap0 )
+    cs.print_register('FLMAP0', flmap0)
+    cs.print_register('FLMAP1', flmap1)
+    cs.print_register('FLMAP2', flmap2)
 
-    # Flash Component Base Address (bits [7:0])
-    fcba = ( (flmap0 & 0x000000FF) << 4 )
-    # Number of Components (bits [9:8])
-    nc   = ( ((flmap0 & 0x0000FF00) >> 8) & 0x3 )
-    # Flash Region Base Address (bits [23:16])
-    frba = ( (flmap0 & 0x00FF0000) >> 12 )
-    # Number of Regions (bits [26:24])
-    nr   = ( ((flmap0 & 0xFF000000) >> 24) & 0x7 )
-    logger().log( '  Flash Component Base Address        = 0x%08X' % fcba )
-    logger().log( '  Number of Flash Components          = %d' % nc )
-    logger().log( '  Flash Region Base Address           = 0x%08X' % frba )
-    logger().log( '  Number of Flash Regions             = %d' % nr )
+    fcba = cs.get_register_field('FLMAP0', flmap0, 'FCBA')
+    nc   = cs.get_register_field('FLMAP0', flmap0, 'NC')
+    frba = cs.get_register_field('FLMAP0', flmap0, 'FRBA')
+    fcba = fcba << 4
+    frba = frba << 4
+    nc  += 1
+    logger().log( '' )
+    logger().log( '+ 0x0014 Flash Descriptor Map:' )
+    logger().log( '========================================================' )
+    logger().log( '  Flash Component Base Address: 0x%08X' % fcba )
+    logger().log( '  Flash Region Base Address   : 0x%08X' % frba )
+    logger().log( '  Number of Flash Components  : %d' % nc )
 
-    logger().log( '+ 0x0018 FLMAP1   : 0x%08X' % flmap1 )
+    nr = spi.SPI_REGION_NUMBER_IN_FD
+    if cs.register_has_field('FLMAP0', 'NR'):
+        nr = cs.get_register_field('FLMAP0', flmap0, 'NR')
+        if nr == 0:
+            logger().warn( 'only 1 region (FD) is found. Looks like flash descriptor binary is from Skylake platform or later. Try with option --platform' )
+        nr += 1
+        logger().log( '  Number of Regions           : %d' % nr )
 
-    # Flash Master Base Address (bits [7:0])
-    fmba  = ( (flmap1 & 0x000000FF) << 4 )
-    # Number of Masters (bits [9:8])
-    nm    = ( ((flmap1 & 0x0000FF00) >> 8) & 0x3 )
-    logger().log( '  Flash Master Base Address           = 0x%08X' % fmba )
-    logger().log( '  Number of Masters                   = %d' % nm )
+    fmba  = cs.get_register_field('FLMAP1', flmap1, 'FMBA')
+    nm    = cs.get_register_field('FLMAP1', flmap1, 'NM')
+    fpsba = cs.get_register_field('FLMAP1', flmap1, 'FPSBA')
+    psl   = cs.get_register_field('FLMAP1', flmap1, 'PSL')
+    fmba  = fmba << 4
+    fpsba = fpsba << 4
+    logger().log( '  Flash Master Base Address   : 0x%08X' % fmba )
+    logger().log( '  Number of Masters           : %d' % nm )
+    logger().log( '  Flash PCH Strap Base Address: 0x%08X' % fpsba )
+    logger().log( '  PCH Strap Length            : 0x%X' % psl )
 
-    logger().log( '+ 0x001C FLMAP2   : 0x%08X' % flmap2 )
-
-    # ICC Register Init Base Address (bits [23:16])
-    iccriba = ( (flmap2 & 0x00FF0000) >> 12 )
-    logger().log( '  ICC Register Init Base Address      = 0x%08X' % iccriba )
+    fcpusba = cs.get_register_field('FLMAP2', flmap2, 'FCPUSBA')
+    cpusl   = cs.get_register_field('FLMAP2', flmap2, 'CPUSL')
+    logger().log( '  Flash CPU Strap Base Address: 0x%08X' % fcpusba )
+    logger().log( '  CPU Strap Length            : 0x%X' % cpusl )
 
     #
     # Flash Descriptor Component Section
@@ -184,24 +188,25 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( '+ 0x%04X Region Section:' % frba )
     logger().log( '========================================================' )
 
-    flregs = [None] * spi.SPI_REGION_NUMBER_IN_FD
-    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
+    flregs = [None] * nr
+    for r in range(nr):
         flreg_off = frba + r*4
         flreg = struct.unpack_from( '=I', fd[flreg_off:flreg_off + 0x4] )[0]
-        (base,limit) = spi.get_SPI_region( flreg )
-        notused = ''
-        if base > limit:
-            notused = '(not used)'
+        if not cs.is_register_defined('FLREG%d' % r): continue
+        base  = cs.get_register_field(('FLREG%d' % r), flreg, 'RB' ) << spi.SPI_FLA_SHIFT
+        limit = cs.get_register_field(('FLREG%d' % r), flreg, 'RL' ) << spi.SPI_FLA_SHIFT
+        notused = '(not used)' if base > limit or flreg == 0xFFFFFFFF else ''
         flregs[r] = (flreg,base,limit,notused)
         logger().log( '+ 0x%04X FLREG%d   : 0x%08X %s' % (flreg_off,r,flreg,notused) )
+        #cs.print_register(('FLREG%d' % r), flreg)
 
     logger().log('')
     logger().log( 'Flash Regions' )
     logger().log( '--------------------------------------------------------' )
     logger().log( ' Region                | FLREGx    | Base     | Limit   ' )
     logger().log( '--------------------------------------------------------' )
-    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
-        logger().log( '%d %-020s | %08X  | %08X | %08X %s' % (r, spi.SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
+    for r in range(nr):
+        if flregs[r]: logger().log( '%d %-020s | %08X  | %08X | %08X %s' % (r, spi.SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
 
     #
     # Flash Descriptor Master Section
@@ -210,32 +215,31 @@ def parse_spi_flash_descriptor( rom ):
     logger().log( '+ 0x%04X Master Section:' % fmba )
     logger().log( '========================================================' )
 
-    flmstrs = [None] * spi.SPI_MASTER_NUMBER_IN_FD
-    for m in range( spi.SPI_MASTER_NUMBER_IN_FD ):
+    flmstrs = [None] * nm #spi.SPI_MASTER_NUMBER_IN_FD
+    for m in range(nm):
         flmstr_off = fmba + m*4
         flmstr = struct.unpack_from( '=I', fd[flmstr_off:flmstr_off + 0x4] )[0]
-        (requester_id, master_region_ra, master_region_wa) = get_SPI_master( flmstr )
-        flmstrs[m] = (flmstr, requester_id, master_region_ra, master_region_wa)
+        master_region_ra = cs.get_register_field( 'FLMSTR1', flmstr, 'MRRA' )
+        master_region_wa = cs.get_register_field( 'FLMSTR1', flmstr, 'MRWA' )
+        flmstrs[m] = (master_region_ra, master_region_wa)
         logger().log( '+ 0x%04X FLMSTR%d   : 0x%08X' % (flmstr_off,m,flmstr) )
 
     logger().log('')
     logger().log( 'Master Read/Write Access to Flash Regions' )
     logger().log( '--------------------------------------------------------' )
     s = ' Region                '
-    for m in range( spi.SPI_MASTER_NUMBER_IN_FD ):
-        s = s + '| ' + ('%-9s' % spi.SPI_MASTER_NAMES[m])
+    for m in range(nm):
+        s = s + '| ' + ('%-6s' % spi.SPI_MASTER_NAMES[m])
     logger().log( s )
     logger().log( '--------------------------------------------------------' )
-    for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
+    for r in range(nr):
         s = '%d %-020s ' % (r, spi.SPI_REGION_NAMES[r])
-        for m in range( spi.SPI_MASTER_NUMBER_IN_FD ):
+        for m in range(nm):
             access_s = ''
             mask = (0x1 << r) & 0xFF
-            if (flmstrs[m][2] & mask):
-                access_s = access_s + 'R'
-            if (flmstrs[m][3] & mask):
-                access_s = access_s + 'W'
-            s = s + '| ' + ('%-9s' % access_s)
+            if (flmstrs[m][0] & mask): access_s += 'R'
+            if (flmstrs[m][1] & mask): access_s += 'W'
+            s = s + '| ' + ('%-6s' % access_s)
         logger().log( s )
 
     #

@@ -170,6 +170,7 @@ class IGD(hal_base.HALBase):
             self.logger.log( '[igd] GFx GTT base        : 0x%016X' % self.get_GGTT_base() )
             self.logger.log( '[igd] original GTT PTE%03d: 0x%08X' % (pte_num,pte_orig) )
         
+
         if (h > 0) and (size > h):
             r = (size - h)%0x1000
             pages = 2 + (size - h)//0x1000
