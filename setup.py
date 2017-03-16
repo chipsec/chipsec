@@ -174,6 +174,23 @@ elif platform.system().lower() == "linux":
                   depends=compression_header_files, )
     ]
 
+elif platform.system().lower() == "darwin":
+    compression_source_files = []
+    for root, dir, path in os.walk( os.path.join( "chipsec_tools", "compression" ) ):
+        for f in path:
+            if os.path.splitext(f)[1][1:] == 'h':
+                compression_header_files.append(os.path.join(root, f))
+            else:
+                compression_source_files.append(os.path.join(root, f))
+    extra_kw["ext_modules"] = [
+        Extension(
+                  'chipsec_tools.efi_compressor',
+                  sources=compression_source_files,
+                  include_dirs=[
+                      os.path.join("chipsec_tools", 'compression', 'Include')
+                  ],
+                  depends=compression_header_files, )
+    ]
 
 setup(
     name = 'chipsec',
