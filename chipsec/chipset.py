@@ -245,8 +245,8 @@ class Chipset:
         else:
             self.helper = helper
 
-        self.vid        = 0
-        self.did        = 0
+        self.vid        = 0xFFFF
+        self.did        = 0xFFFF
         self.code       = CHIPSET_CODE_UNKNOWN
         self.longname   = "Unrecognized Platform"
         self.id         = CHIPSET_ID_UNKNOWN
@@ -279,6 +279,16 @@ class Chipset:
     # Iitialization
     #
     ##################################################################################
+    def detect_platform( self ):
+        vid = 0xFFFF
+        did = 0xFFFF
+        try:
+            vid_did = self.pci.read_dword(0, 0, 0, 0)
+            vid = vid_did & 0xFFFF
+            did = (vid_did >> 16) & 0xFFFF
+        except:
+            if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
+        return (vid, did)
 
     def init( self, platform_code, start_driver, driver_exists=False ):
 
@@ -287,9 +297,7 @@ class Chipset:
         logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         if platform_code is None:
-            vid_did  = self.pci.read_dword( 0, 0, 0, 0 )
-            self.vid = vid_did & 0xFFFF
-            self.did = (vid_did >> 16) & 0xFFFF
+            self.vid, self.did = self.detect_platform()
             if VID_INTEL != self.vid:
                 _unknown_platform = True
         else:
