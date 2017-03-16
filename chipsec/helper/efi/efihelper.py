@@ -138,7 +138,7 @@ class EfiHelper(Helper):
 
     def alloc_phys_mem( self, length, max_pa ):
         # temporary WA using malloc
-        va = edk2.allocphysmem(length, max_pa)
+        va = edk2.allocphysmem(length, max_pa)[0]
         pa = self.va2pa(va)
         return (va, pa)
 
