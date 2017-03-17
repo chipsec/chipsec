@@ -647,8 +647,6 @@ class Win32Helper(Helper):
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
-        if not self.driver_loaded:
-            return 0xFFFF
         value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         out_length = size

@@ -668,9 +668,6 @@ class RweHelper(Helper):
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
-        #raise UnimplementedNativeAPIError( "read_pci_reg" )
-        if not self.driver_loaded:
-            return 0xFFFF
         value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         cfg_addr = bdf.cfg_address()
@@ -679,7 +676,6 @@ class RweHelper(Helper):
         return value
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
-        #raise UnimplementedNativeAPIError( "write_pci_reg" )
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         cfg_addr = bdf.cfg_address()
         self.write_io_port( 0xCF8, cfg_addr, 4 )
