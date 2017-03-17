@@ -371,8 +371,6 @@ class LinuxHelper(Helper):
 
     def read_pci_reg( self, bus, device, function, offset, size = 4 ):
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
-        #if not self.driver_loaded:
-        #    return self.read_pci_reg_from_sys(bus, device, function, offset, size, domain=_PCI_DOM)
         d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
