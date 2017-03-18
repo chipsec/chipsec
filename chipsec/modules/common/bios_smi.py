@@ -45,7 +45,10 @@ class bios_smi(BaseModule):
         self.iobar = iobar.IOBAR(self.cs)
 
     def is_supported(self):
-        return (self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM)
+        # @TODO: currently, this module cannot run on macOS
+        if self.cs.helper.is_macos(): return False
+
+        return (not self.cs.is_atom())
 
     def check_SMI_locks(self):
 

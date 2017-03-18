@@ -166,6 +166,8 @@ class OsHelper:
     def is_win8_or_greater( self ):
         win8_or_greater = self.is_windows() and ( self.os_release.startswith('8') or ('2008Server' in self.os_release) or ('2012Server' in self.os_release) )
         return win8_or_greater
+    def is_macos( self ):
+        return ('darwin' == self.os_system.lower())
 
 
     #################################################################################################

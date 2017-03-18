@@ -197,14 +197,48 @@ class OSXHelper(Helper):
         return chipsec.file.read_file( OutputFileName )
 
 
-
     def get_tool_info( self, tool_type ):
         raise NotImplementedError()
 
-    def read_io_port(self):
+    #########################################################
+    # EFI Runtime API
+    #########################################################
+
+    # @TODO: macOS helper doesn't support EFI runtime API yet
+    def EFI_supported(self):
+        return False
+
+    # Placeholders for EFI Variable API
+
+    def delete_EFI_variable(self, name, guid):
+        raise NotImplementedError()
+    def native_delete_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
-    def write_io_port(self):
+    def list_EFI_variables(self):
+        raise NotImplementedError()
+    def native_list_EFI_variables(self):
+        raise NotImplementedError()
+
+    def get_EFI_variable(self, name, guid, attrs=None):
+        raise NotImplementedError()
+    def native_get_EFI_variable(self, name, guid, attrs=None):
+        raise NotImplementedError()
+
+    def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        raise NotImplementedError()
+    def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        raise NotImplementedError()
+
+
+    #########################################################
+    # Port I/O
+    #########################################################
+
+    def read_io_port(self, io_port, size):
+        raise NotImplementedError()
+
+    def write_io_port(self, io_port, value, size):
         raise NotImplementedError()
 
     def read_cr(self, cpu_thread_id, cr_number):
