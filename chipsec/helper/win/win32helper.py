@@ -47,6 +47,7 @@ import re
 import errno
 import traceback
 import time
+import shutil
 from threading import Lock
 from collections import namedtuple
 from ctypes import *
