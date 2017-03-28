@@ -22,6 +22,7 @@ import platform
 import struct
 import subprocess
 import sys
+import shutil
 
 import chipsec
 from chipsec.helper.oshelper import OsHelperError, Helper, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
