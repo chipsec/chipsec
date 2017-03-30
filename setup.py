@@ -155,6 +155,7 @@ if platform.system().lower() == "windows":
 elif platform.system().lower() == "linux":
     compression_source_files = []
     package_data["chipsec_tools.linux"] = ['*']
+    package_data["chipsec_tools.compression"] = ["*.c","*.h"]
     data_files = [(os.path.join("share","doc","chipsec"), ["chipsec-manual.pdf"])]
     for root, dir, path in os.walk( os.path.join( "chipsec_tools", "compression" ) ):
         for f in path:
