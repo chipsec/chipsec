@@ -107,7 +107,7 @@ class MsgBus(hal_base.HALBase):
         super(MsgBus, self).__init__(cs)
         self.helper = cs.helper
 
-    def MB_MESSAGE_MCR(self, port, reg, opcode):
+    def __MB_MESSAGE_MCR(self, port, reg, opcode):
         mcr = 0x0
         mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF )
         mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg )
@@ -115,21 +115,30 @@ class MsgBus(hal_base.HALBase):
         mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode )
         return mcr
 
-    def MB_MESSAGE_MCRX(self, reg):
+    def __MB_MESSAGE_MCRX(self, reg):
         mcrx = 0x0
         mcrx = self.cs.set_register_field( 'MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', reg, preserve_field_position=True )
         return mcrx
 
-    def MB_MESSAGE_MDR(self, data):
+    def __MB_MESSAGE_MDR(self, data):
         mdr = 0x0
         mdr = self.cs.set_register_field( 'MSG_DATA_REG', mdr, 'MESSAGE_DATA', data )
         return mdr
+
+    def __hide_p2sb(self, hide):
+        hidden = self.cs.read_register('P2SBC') == 0xFFFF
+        if hide:
+            self.cs.write_register_field('P2SBC', 'HIDE', 1)
+        else:
+            self.cs.write_register_field('P2SBC', 'HIDE', 0)
+        return hidden
+
     #
     # Issues read message on the message bus
     #
     def msgbus_read_message( self, port, register, opcode ):
-        mcr  = self.MB_MESSAGE_MCR (port, register, opcode)
-        mcrx = self.MB_MESSAGE_MCRX(register)
+        mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
+        mcrx = self.__MB_MESSAGE_MCRX(register)
 
         if logger().HAL: logger().log( "[msgbus] read: port 0x%02X + 0x%08X (op = 0x%02X)" % (port, register, opcode) )
         if logger().VERBOSE: logger().log( "[msgbus]       MCR = 0x%08X, MCRX = 0x%08X" % (mcr, mcrx) )
@@ -144,9 +153,9 @@ class MsgBus(hal_base.HALBase):
     # Issues write message on the message bus
     #
     def msgbus_write_message( self, port, register, opcode, data ):
-        mcr  = self.MB_MESSAGE_MCR(port, register, opcode)
-        mcrx = self.MB_MESSAGE_MCRX(register)
-        mdr  = self.MB_MESSAGE_MDR (data)
+        mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
+        mcrx = self.__MB_MESSAGE_MCRX(register)
+        mdr  = self.__MB_MESSAGE_MDR (data)
 
         if logger().HAL: logger().log( "[msgbus] write: port 0x%02X + 0x%08X (op = 0x%02X) < data = 0x%08X" % (port, register, opcode, data) )
         if logger().VERBOSE: logger().log( "[msgbus]        MCR = 0x%08X, MCRX = 0x%08X, MDR = 0x%08X" % (mcr, mcrx, mdr) )
@@ -157,9 +166,9 @@ class MsgBus(hal_base.HALBase):
     # Issues generic message on the message bus
     #
     def msgbus_send_message( self, port, register, opcode, data=None ):
-        mcr  = self.MB_MESSAGE_MCR(port, register, opcode)
-        mcrx = self.MB_MESSAGE_MCRX(register)
-        mdr  = None if data is None else self.MB_MESSAGE_MDR(data)
+        mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
+        mcrx = self.__MB_MESSAGE_MCRX(register)
+        mdr  = None if data is None else self.__MB_MESSAGE_MDR(data)
 
         if logger().HAL:
             logger().log( "[msgbus] message: port 0x%02X + 0x%08X (op = 0x%02X)" % (port, register, opcode) )
@@ -176,11 +185,31 @@ class MsgBus(hal_base.HALBase):
     # Message bus register read/write
     #
 
-    def msgbus_reg_read( self, port, register ):
-        return self.msgbus_read_message( port, register, MessageBusOpcode.MB_OPCODE_REG_READ )
+    def msgbus_reg_read(self, port, register):
+        if self.cs.mmio.is_MMIO_BAR_defined('SBREGBAR'):
+            was_hidden = False
+            if self.cs.is_register_defined('P2SBC'):
+                was_hidden = self.__hide_p2sb(False)
+            mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
+            reg_val = self.cs.mem.read_physical_mem_dword(mmio_addr)
+            if self.cs.is_register_defined('P2SBC') and was_hidden:
+                self.__hide_p2sb(True)
+            return reg_val
+        else:
+            return self.msgbus_read_message(port, register, MessageBusOpcode.MB_OPCODE_REG_READ)
 
-    def msgbus_reg_write( self, port, register, data ):
-        return self.msgbus_write_message( port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data )
+    def msgbus_reg_write(self, port, register, data):
+        if self.cs.mmio.is_MMIO_BAR_defined('SBREGBAR'):
+            was_hidden = False
+            if self.cs.is_register_defined('P2SBC'):
+                was_hidden = self.__hide_p2sb(False)
+            mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
+            reg_val = self.cs.mem.write_physical_mem_dword(mmio_addr, data)
+            if self.cs.is_register_defined('P2SBC') and was_hidden:
+                self.__hide_p2sb(True)
+            return reg_val
+        else:
+            return self.msgbus_write_message(port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data)
 
     """
     # py implementation of msgbus -- doesn't seem to work properly becaise it's not atomic
