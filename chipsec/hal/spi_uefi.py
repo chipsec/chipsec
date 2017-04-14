@@ -253,40 +253,46 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
 
     _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, offset, polarity )
     while next_offset is not None:
-        sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
-        # pick random file name in case dumpall=False - we'll need it to decompress the section
-        sec_fs_name = "sect%02d_%s" % (secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
+        if _name is not None:
+            sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
+            # pick random file name in case dumpall=False - we'll need it to decompress the section
+            sec_fs_name = "sect%02d_%s" % (secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
 
-        if sec.Type in EFI_SECTIONS_EXE:
-            # "leaf" executable section: update hashes and check against match criteria
-            sec.calc_hashes( sec.HeaderSize )
-        elif sec.Type == EFI_SECTION_USER_INTERFACE:
-            # "leaf" UI section: update section's UI name
-            sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le")[:-1]
-        elif sec.Type == EFI_SECTION_GUID_DEFINED:
-            guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
-            sec.Guid = guid_str(guid0, guid1, guid2, guid3)
-
-        # "container" sections: keep parsing
-        if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
-            if sec.Type == EFI_SECTION_COMPRESSION:
-                ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
-                d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], ct, True )
-                if d:
-                    sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+            if sec.Type in EFI_SECTIONS_EXE:
+                # "leaf" executable section: update hashes and check against match criteria
+                sec.calc_hashes( sec.HeaderSize )
+            elif sec.Type == EFI_SECTION_USER_INTERFACE:
+                # "leaf" UI section: update section's UI name
+                sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le")[:-1]
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
-                if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
-                    sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
-                elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
-                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], 2, True )
+                guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
+                sec.Guid = guid_str(guid0, guid1, guid2, guid3)
+
+            # "container" sections: keep parsing
+            if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
+                if sec.Type == EFI_SECTION_COMPRESSION:
+                    ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
+                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], ct, True )
+                    if (d is None) and (ct == 2) and (len(sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:]) > 4):
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size + 4:], ct, True )
                     if d:
                         sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
-                elif sec.Guid == FIRMWARE_VOLUME_GUID:
+                elif sec.Type == EFI_SECTION_GUID_DEFINED:
+                    if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
+                        sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
+                    elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], 2, True )
+                        if d is None:
+                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], 2, True )
+                        if d:
+                            sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                    #elif sec.Guid == FIRMWARE_VOLUME_GUID:
+                    else:
+                        sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+                elif sec.Type in (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
                     sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
-            elif sec.Type in (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
-                sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
 
-        sections.append(sec)
+            sections.append(sec)
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
         secn += 1
     return sections
@@ -368,7 +374,18 @@ def update_efi_tree(modules, parent_guid=None):
     return ui_string
 
 def build_efi_model( _uefi, data, fwtype ):
-    model = build_efi_tree( _uefi, data, fwtype )
+    # Try PFS first
+    result = ParsePFS(data)
+    if result is not None:
+        model = []
+        for d in result[0]:
+            m = build_efi_tree( _uefi, d, fwtype )
+            model.extend(m)
+        if len(result[1]) > 0:
+            m = build_efi_tree( _uefi, result[1], fwtype )
+            model.extend(m)
+    else:
+        model = build_efi_tree( _uefi, data, fwtype )
     update_efi_tree(model)
     return model
 
