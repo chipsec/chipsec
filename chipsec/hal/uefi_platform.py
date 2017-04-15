@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 # 
@@ -38,6 +38,7 @@ import struct
 import string
 from collections import namedtuple
 
+from chipsec import defines
 from chipsec.hal.uefi_common import *
 
 
@@ -76,11 +77,14 @@ NVRAM_ATTR_VLD        = 0x80
 #
 # Known GUIDs of NVRAM stored in EFI firmware volumes, FS files etc. of various firmware implementations
 #
-VARIABLE_STORE_FV_GUID   = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
 ADDITIONAL_NV_STORE_GUID = '00504624-8A59-4EEB-BD0F-6B36E96128E0'
 NVAR_NVRAM_FS_FILE       = "CEF5B9A3-476D-497F-9FDC-E98143E0422C"
 
-EFI_NVRAM_GUIDS = [VARIABLE_STORE_FV_GUID, ADDITIONAL_NV_STORE_GUID, NVAR_NVRAM_FS_FILE]
+LENOVO_FS1_GUID = "16B45DA2-7D70-4AEA-A58D-760E9ECB841D"
+LENOVO_FS2_GUID = "E360BDBA-C3CE-46BE-8F37-B231E5CB9F35"
+
+EFI_PLATFORM_FS_GUIDS = [LENOVO_FS1_GUID, LENOVO_FS2_GUID]
+EFI_NVRAM_GUIDS       = [VARIABLE_STORE_FV_GUID, ADDITIONAL_NV_STORE_GUID, NVAR_NVRAM_FS_FILE]
 
 #################################################################################################3
 # This Variable header is defined by UEFI
@@ -511,10 +515,6 @@ def getNVstore_VSS_AUTH( nvram_buf ):
 def getNVstore_VSS_APPLE( nvram_buf):
     return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE)
 
-def IsPrintable(name):
-    printset = set(string.printable)
-    return set(name).issubset(printset)
-
 VSS_TYPES = (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS_APPLE)
 MAX_VSS_VAR_ALIGNMENT = 8
 
@@ -552,7 +552,7 @@ def isCorrectVSStype(nvram_buf, vss_type):
             name = nvram_buf[name_offset: name_offset + efi_var_hdr.NameSize]
             try:
                 name = unicode(name, "utf-16-le").split('\x00')[0]
-                valid_name = IsPrintable(name)
+                valid_name = defines.is_printable(name)
             except Exception as e:
                 pass
         if (valid_name):

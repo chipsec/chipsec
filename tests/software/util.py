@@ -1,3 +1,20 @@
+#!/usr/bin/python
+#CHIPSEC: Platform Security Assessment Framework
+#
+#This program is free software; you can redistribute it and/or
+#modify it under the terms of the GNU General Public License
+#as published by the Free Software Foundation; Version 2.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+#
 import os
 import tempfile
 import unittest
@@ -46,11 +63,11 @@ class TestChipsecUtil(unittest.TestCase):
         """
         oshelper.Helper.registry = [(helper_class.__name__, helper_class)]
         chipsec_util._cs = chipset.cs()
-        util = chipsec_util.ChipsecUtil()
+        util = chipsec_util.ChipsecUtil(arg.split())
         util.VERBOSE = True
         logger.logger().HAL = True
         util.set_logfile(self.log_file)
-        err_code = util.main(["chipsec_utils.py"] + arg.split())
+        err_code = util.main()
         logger.logger().close()
         self.log = open(self.log_file).read()
         self.assertEqual(err_code, 0)

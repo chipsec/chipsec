@@ -22,11 +22,13 @@ import platform
 import struct
 import subprocess
 import sys
+import shutil
 
 import chipsec
-from chipsec.helper.oshelper import OsHelperError, Helper
+from chipsec.helper.oshelper import OsHelperError, Helper, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.logger import logger, print_buffer
 
+from chipsec_tools import efi_compressor
 
 IOCTL_RDPCI   = 0xc00c7001
 IOCTL_WRPCI   = 0xc00c7002
@@ -38,12 +40,18 @@ IOCTL_WRMMIO  = 0xc0187004
 _pci_msg_t_fmt = "BBBHBI"
 _mmio_msg_t_fmt = "QQB"
 
+
+LZMA  = efi_compressor.LzmaDecompress
+Tiano = efi_compressor.TianoDecompress
+EFI   = efi_compressor.EfiDecompress 
+
 class OSXHelper(Helper):
 
     DEVICE_NAME = "/dev/chipsec"
     DRIVER_NAME = "chipsec.kext"
 
     def __init__(self):
+        super(OSXHelper, self).__init__()
         self.os_system  = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
@@ -162,13 +170,76 @@ class OSXHelper(Helper):
     def getcwd(self):
         return os.getcwd()
 
+    def decompress_data(self, funcs, cdata):
+        for func in funcs:
+            try:
+                data = func(cdata, len(cdata))
+                return  data
+            except Exception:
+                continue
+        return None
+    #
+    # Decompress binary with efi_compressor from https://github.com/theopolis/uefi-firmware-parser
+    #
+    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+        CompressedFileData = chipsec.file.read_file( CompressedFileName )
+        if CompressionType == 0: # not compressed
+            shutil.copyfile( CompressedFileName, OutputFileName )
+        elif CompressionType == 0x01:
+            data = self.decompress_data( [ EFI, Tiano ], CompressedFileData )
+        elif CompressionType == 0x02:
+            data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData )
+        if CompressionType != 0x00:
+            if data is not None:
+                chipsec.file.write_file( OutputFileName, data )
+            else:
+                logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                return None
+        return chipsec.file.read_file( OutputFileName )
+
+
     def get_tool_info( self, tool_type ):
         raise NotImplementedError()
 
-    def read_io_port(self):
+    #########################################################
+    # EFI Runtime API
+    #########################################################
+
+    # @TODO: macOS helper doesn't support EFI runtime API yet
+    def EFI_supported(self):
+        return False
+
+    # Placeholders for EFI Variable API
+
+    def delete_EFI_variable(self, name, guid):
+        raise NotImplementedError()
+    def native_delete_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
-    def write_io_port(self):
+    def list_EFI_variables(self):
+        raise NotImplementedError()
+    def native_list_EFI_variables(self):
+        raise NotImplementedError()
+
+    def get_EFI_variable(self, name, guid, attrs=None):
+        raise NotImplementedError()
+    def native_get_EFI_variable(self, name, guid, attrs=None):
+        raise NotImplementedError()
+
+    def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        raise NotImplementedError()
+    def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
+        raise NotImplementedError()
+
+
+    #########################################################
+    # Port I/O
+    #########################################################
+
+    def read_io_port(self, io_port, size):
+        raise NotImplementedError()
+
+    def write_io_port(self, io_port, value, size):
         raise NotImplementedError()
 
     def read_cr(self, cpu_thread_id, cr_number):
@@ -211,6 +282,9 @@ class OSXHelper(Helper):
         raise NotImplementedError()
 
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+        raise NotImplementedError()
+
+    def map_io_space(self, base, size, cache_type):
         raise NotImplementedError()
 
 def get_helper():

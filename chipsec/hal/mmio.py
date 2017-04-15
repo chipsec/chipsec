@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 #
@@ -437,6 +437,10 @@ class MMIO(hal_base.HALBase):
         (bar_base,bar_size) = self.get_MMIO_BAR_base_address(bar_name)
         # @TODO: check offset exceeds BAR size
         return self.write_MMIO_reg(bar_base, offset, value, size)
+
+    def read_MMIO_BAR(self, bar_name):
+        (bar_base,bar_size) = self.get_MMIO_BAR_base_address(bar_name)
+        return self.read_MMIO(bar_base, bar_size)
 
     #
     # Dump MMIO range by MMIO BAR name

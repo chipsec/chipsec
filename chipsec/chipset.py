@@ -1,6 +1,6 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2017, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@ import fnmatch
 import re
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
-from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode
+from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 
 from chipsec.cfg.common import Cfg
 from chipsec.logger import logger
@@ -162,6 +162,9 @@ Chipset_Dictionary = {
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
 
+# Xeon v5 Processor (Skylake Server)
+0x1918 : {'name' : 'Skylake Server', 'id' : CHIPSET_ID_SKL,  'code' : CHIPSET_CODE_SKL,  'longname' : 'Intel Xeon Processor E3 v5 (Skylake CPU / Sunrise Point PCH)'},
+
 #
 # Atom based SoC platforms
 #
@@ -169,9 +172,23 @@ Chipset_Dictionary = {
 # Bay Trail SoC
 0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail SoC' },
 
-# Avoton
-0x1F07 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+# Atom C2000 Processor Family (Avoton)
+0x1F00 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 0x1F01 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F02 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F03 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F04 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F05 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F06 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F07 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F08 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F09 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F0A : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F0B : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F0C : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F0D : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F0E : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
+0x1F0F : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
 
 # Cherry Trail SoC
 0x2280 : {'name' : 'Braswell/Cherry Trail',       'id' : CHIPSET_ID_CHT , 'code' : CHIPSET_CODE_CHT,  'longname' : 'Braswell/Cherry Trail SoC' },
@@ -228,8 +245,8 @@ class Chipset:
         else:
             self.helper = helper
 
-        self.vid        = 0
-        self.did        = 0
+        self.vid        = 0xFFFF
+        self.did        = 0xFFFF
         self.code       = CHIPSET_CODE_UNKNOWN
         self.longname   = "Unrecognized Platform"
         self.id         = CHIPSET_ID_UNKNOWN
@@ -248,6 +265,7 @@ class Chipset:
         self.msgbus     = msgbus.MsgBus(self)
         self.mmio       = mmio.MMIO(self)
         self.iobar      = iobar.IOBAR(self)
+        self.igd        = igd.IGD(self)
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -261,6 +279,16 @@ class Chipset:
     # Iitialization
     #
     ##################################################################################
+    def detect_platform( self ):
+        vid = 0xFFFF
+        did = 0xFFFF
+        try:
+            vid_did = self.pci.read_dword(0, 0, 0, 0)
+            vid = vid_did & 0xFFFF
+            did = (vid_did >> 16) & 0xFFFF
+        except:
+            if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
+        return (vid, did)
 
     def init( self, platform_code, start_driver, driver_exists=False ):
 
@@ -269,9 +297,7 @@ class Chipset:
         logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         if platform_code is None:
-            vid_did  = self.pci.read_dword( 0, 0, 0, 0 )
-            self.vid = vid_did & 0xFFFF
-            self.did = (vid_did >> 16) & 0xFFFF
+            self.vid, self.did = self.detect_platform()
             if VID_INTEL != self.vid:
                 _unknown_platform = True
         else:

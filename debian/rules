@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+include /usr/share/dpkg/pkg-info.mk
+
+PYTHON2_VERSIONS = $(shell pyversions -r)
+
+%:
+	dh $@ --with python2 --with dkms
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -rf build
+
+override_dh_auto_build:
+	#dh_auto_build
+	#set -ex; for python in $(PYTHON2_VERSIONS); do \
+        #        $$python setup.py build --skip-driver; \
+        #done
+	python setup.py build --skip-driver;
+
+override_dh_auto_install:
+	#dh_auto_install
+	#set -ex; for python in $(PYTHON3_VERSIONS); do \
+	#	$$python setup.py install --skip-driver --root=$(CURDIR)/debian/$(DEB_SOURCE) --install-layout=deb; \
+	#done
+	python setup.py install --skip-driver --root=$(CURDIR)/debian/$(DEB_SOURCE) --install-layout=deb;
+	install -d debian/$(DEB_SOURCE)-dkms/usr/src/$(DEB_SOURCE)-$(DEB_VERSION_UPSTREAM)
+	cp -r drivers/linux/* debian/$(DEB_SOURCE)-dkms/usr/src/$(DEB_SOURCE)-$(DEB_VERSION_UPSTREAM)
+
+override_dh_dkms:
+	dh_dkms -V

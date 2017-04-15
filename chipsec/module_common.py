@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 # 
@@ -51,6 +51,17 @@ class ModuleResult:
     DEPRECATED = 4
     ERROR   = -1
 
+
+ModuleResultName = {
+    ModuleResult.FAILED:     "Failed",
+    ModuleResult.PASSED:     "Passed",
+    ModuleResult.WARNING:    "Warning",
+    ModuleResult.SKIPPED:    "Skipped",
+    ModuleResult.DEPRECATED: "Deprecated",
+    ModuleResult.ERROR:      "Error"
+}
+def getModuleResultName(res):
+    return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
 
 class BaseModule(object):
     def __init__(self):

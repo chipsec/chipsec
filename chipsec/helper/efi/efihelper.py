@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
 # 
@@ -138,7 +138,7 @@ class EfiHelper(Helper):
 
     def alloc_phys_mem( self, length, max_pa ):
         # temporary WA using malloc
-        va = edk2.allocphysmem(length, max_pa)
+        va = edk2.allocphysmem(length, max_pa)[0]
         pa = self.va2pa(va)
         return (va, pa)
 
@@ -147,9 +147,19 @@ class EfiHelper(Helper):
         if logger().VERBOSE: logger().log( "[helper] VA (0X%016x) -> PA (0X%016x)" % (va,pa) )
         return pa
 
+    def pa2va(self, pa):
+        va = pa # UEFI Shell has identity mapping
+        if logger().VERBOSE:
+            logger().log('[helper] PA (0X%016x) -> VA (0X%016x)' % (pa, va))
+        return va
+
+
     #
     # Memory-mapped I/O (MMIO) access
     #
+
+    def map_io_space(self, physical_address, length, cache_type):
+        return self.pa2va(physical_address)
 
     def read_mmio_reg(self, phys_address, size):
         if logger().VERBOSE:
@@ -170,7 +180,8 @@ class EfiHelper(Helper):
         if size == 4:
             return edk2.writemem_dword( phys_address, value )
         else:
-            logger().error( '[efi] unsupported size %d by write_mmio_reg' % size )
+            buf = struct.pack(size*"B", value)
+            edk2.writemem( phys_address, buf, size )
         
     #
     # PCIe configuration access

@@ -37,16 +37,18 @@ class smrr(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
+        # @TODO: currently, this module cannot run on macOS
+        if self.cs.helper.is_macos(): return False
         return True
 
     #
     # Check that SMRR are supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
-    def check_SMRR_supported(self):
-        mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
-        if self.logger.VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
-        smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
-        return (1 == smrr)
+    #def check_SMRR_supported(self):
+        #mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
+        #if self.logger.VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
+        #smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
+        #return (1 == smrr)
 
     def check_SMRR(self, do_modify):
         if not self.cs.is_register_defined( 'MTRRCAP' ) or \
@@ -55,7 +57,7 @@ class smrr(BaseModule):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
 
-        if self.check_SMRR_supported():
+        if self.cs.cpu.check_SMRR_supported():
             self.logger.log_good( "OK. SMRR range protection is supported" )
         else:
             self.logger.log_important( "CPU does not support SMRR range protection of SMRAM" )

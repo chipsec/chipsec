@@ -7,9 +7,17 @@ CHIPSEC is a framework for analyzing the security of PC platforms including hard
 
 NOTE: This software is for security testing purposes. Use at your own risk. Read [WARNING.txt](chipsec/WARNING.txt) before using.
 
-Questions? Enter a new issue labeled as question, or e-mail chipsec@intel.com.
-
 First version of CHIPSEC was released in March 2014:
-[Announcement at CanSecWest 2014](https://cansecwest.com/slides/2014/Platform%20Firmware%20Security%20Assessment%20wCHIPSEC-csw14-final.pdf) and first public release!
+[Announcement at CanSecWest 2014](https://cansecwest.com/slides/2014/Platform%20Firmware%20Security%20Assessment%20wCHIPSEC-csw14-final.pdf)
+
+
+Contact Us
+----------
+
+Mailing lists:
+
+ * CHIPSEC users: [chipsec-users](https://groups.google.com/forum/#!forum/chipsec-users)
+ * CHIPSEC developers: [chipsec-dev](https://groups.google.com/forum/#!forum/chipsec-dev)
+ * [CHIPSEC discussion list on 01.org](https://lists.01.org/mailman/listinfo/chipsec)
 
 Follow us on [twitter](https://twitter.com/CHIPSEC)

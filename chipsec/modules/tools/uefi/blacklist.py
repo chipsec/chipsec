@@ -49,9 +49,10 @@ import json
 
 from chipsec.module_common import *
 
-import chipsec.hal.spi_uefi
+from chipsec.hal import spi_uefi
 import chipsec.hal.uefi
 import chipsec.hal.spi
+import chipsec.hal.uefi_search
 
 TAGS = [MTAG_BIOS]
 
@@ -78,14 +79,10 @@ Examples:
 
       Decodes 'uefi.rom' binary with UEFI firmware image and
       checks for black-listed EFI modules defined in 'blacklist.json' config
-      None: -i and --no_driver arguments can be used in this case because the test
-      does not depend on the platform and no kernel driver is required when firmware image is specified
 
 Important! This module can only detect what it knows about from its config file.
 If a bad or vulnerable binary is not detected then its 'signature' needs to be added to the config.
-
 '''
-
 
 class blacklist(BaseModule):
 
@@ -94,32 +91,37 @@ class blacklist(BaseModule):
         self.uefi = chipsec.hal.uefi.UEFI( self.cs )
         self.cfg_name = 'blacklist.json'
         self.image = None
-        self.efi_blacklist = {}
+        self.efi_blacklist = None
 
     def is_supported(self):
         return True
 
+    def blacklist_callback(self, efi_module):
+        return chipsec.hal.uefi_search.check_match_criteria(efi_module, self.efi_blacklist, self.logger)
+
     def check_blacklist( self ):
         res = ModuleResult.PASSED
 
-        self.logger.log( "[*] looking for black-listed EFI binaries defined in '%s'..." % self.cfg_name )
-        #self.logger.log( self.efi_blacklist )
+        self.logger.log( "[*] searching for EFI binaries that match criteria from '%s':" % self.cfg_name )
+        for k in self.efi_blacklist.keys():
+            entry = self.efi_blacklist[k]
+            self.logger.log( "    %-16s - %s" % (k,entry['description'] if 'description' in entry else '') )
+            #if 'match' in entry:
+            #    for c in entry['match'].keys(): self.logger.log( "[*]   %s" % entry['match'][c] )
+            #if 'exclude' in entry:
+            #    self.logger.log( "[*]   excluding binaries:" )
+            #    for c in entry['exclude']: self.logger.log( "[*]   %s" % entry['exclude'][c] )
 
-        # no need to output the entire hierarchy of EFI modules
-        printall       = False
-        # no need to write EFI modules onto the file system
-        dumpall        = False
-        # look for and list all occurrences of matching EFI modules
-        findall        = True
-        # blacklist matching rules
-        match_criteria = self.efi_blacklist
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
-        found = chipsec.hal.spi_uefi.traverse_uefi_region( self.uefi, self.image, None, '', printall, dumpall, match_criteria, findall )
-
+        efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
+        #match_types = (spi_uefi.EFIModuleType.SECTION_EXE|spi_uefi.EFIModuleType.FILE)
+        match_types = spi_uefi.EFIModuleType.SECTION_EXE
+        matching_modules = spi_uefi.search_efi_tree(efi_tree, self.blacklist_callback, match_types)
+        found = len(matching_modules) > 0
         self.logger.log( '' )
         if found:
-            res = ModuleResult.FAILED
-            self.logger.log_failed_check("Black-listed EFI binary found in the UEFI firmware image")
+            res = ModuleResult.WARNING
+            self.logger.log_warn_check("Black-listed EFI binary found in the UEFI firmware image")
         else:
             self.logger.log_passed_check("Didn't find any black-listed EFI binary")
         return res
@@ -160,3 +162,5 @@ class blacklist(BaseModule):
              self.efi_blacklist = json.load( blacklist_json )
 
         return self.check_blacklist()
+
+

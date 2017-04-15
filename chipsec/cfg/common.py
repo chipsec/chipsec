@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
 # 
@@ -172,6 +172,7 @@ class Cfg:
     SPI_MMIO_REG_OFFSET   = 0xF0
     SPI_BASE_ADDR_SHIFT   = 14
     SPI_MMIO_BASE_OFFSET  = 0x3800  # Base address of the SPI host interface registers off of RCBA
+    SPI_MMIO_BASE_LENGTH  = 0x200
     #SPI_MMIO_BASE_OFFSET = 0x3020  # Old (ICH8 and older) SPI registers base
 
 

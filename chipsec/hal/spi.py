@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
 # 
@@ -58,9 +58,9 @@ import time
 
 import chipsec.defines
 from chipsec.file import *
-from chipsec.hal import hal_base, mmio
-
 from chipsec.cfg.common import *
+from chipsec.hal import hal_base, mmio
+from chipsec.helper import oshelper
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -94,51 +94,57 @@ SPI_HSFSTS_FDOPSS_MASK  = (1 << 13)
 # Flash Regions
 #
 
-SPI_REGION_NUMBER       = 7
-SPI_REGION_NUMBER_IN_FD = 5
+SPI_REGION_NUMBER       = 9
+SPI_REGION_NUMBER_IN_FD = 9
 
-FLASH_DESCRIPTOR  = 0
-BIOS              = 1
-ME                = 2
-GBE               = 3
-PLATFORM_DATA     = 4
-FREG5             = 5
-FREG6             = 6
+FLASH_DESCRIPTOR    = 0
+BIOS                = 1
+ME                  = 2
+GBE                 = 3
+PLATFORM_DATA       = 4
+FREG5               = 5
+FREG6               = 6
+FREG7               = 7
+EMBEDDED_CONTROLLER = 8
 
 SPI_REGION = {
- FLASH_DESCRIPTOR  : 'FREG0_FLASHD',
- BIOS              : 'FREG1_BIOS',
- ME                : 'FREG2_ME',
- GBE               : 'FREG3_GBE',
- PLATFORM_DATA     : 'FREG4_PD',
- FREG5             : 'FREG5',
- FREG6             : 'FREG6'
+ FLASH_DESCRIPTOR   : 'FREG0_FLASHD',
+ BIOS               : 'FREG1_BIOS',
+ ME                 : 'FREG2_ME',
+ GBE                : 'FREG3_GBE',
+ PLATFORM_DATA      : 'FREG4_PD',
+ FREG5              : 'FREG5',
+ FREG6              : 'FREG6'
 }
 
 SPI_REGION_NAMES = {
- FLASH_DESCRIPTOR  : 'Flash Descriptor',
- BIOS              : 'BIOS',
- ME                : 'Intel ME',
- GBE               : 'GBe',
- PLATFORM_DATA     : 'Platform Data',
- FREG5             : 'Flash Region 5',
- FREG6             : 'Flash Region 6'
+ FLASH_DESCRIPTOR   : 'Flash Descriptor',
+ BIOS               : 'BIOS',
+ ME                 : 'Intel ME',
+ GBE                : 'GBe',
+ PLATFORM_DATA      : 'Platform Data',
+ FREG5              : 'Flash Region 5',
+ FREG6              : 'Flash Region 6',
+ FREG7              : 'Flash Region 7',
+ EMBEDDED_CONTROLLER: 'Embedded Controller'
 }
 
 #
 # Flash Descriptor Master Defines
 #
 
-SPI_MASTER_NUMBER_IN_FD = 3
+SPI_MASTER_NUMBER_IN_FD = 4
 
 MASTER_HOST_CPU_BIOS    = 0
 MASTER_ME               = 1
 MASTER_GBE              = 2
+MASTER_EC               = 3
 
 SPI_MASTER_NAMES = {
- MASTER_HOST_CPU_BIOS : 'CPU/BIOS',
+ MASTER_HOST_CPU_BIOS : 'CPU',
  MASTER_ME            : 'ME',
- MASTER_GBE           : 'GBe'
+ MASTER_GBE           : 'GBe',
+ MASTER_EC            : 'EC'
 }
 
 
@@ -151,8 +157,10 @@ def get_SPI_region(flreg):
 
 class SpiRuntimeError (RuntimeError):
     pass
+
 class SpiAccessError (RuntimeError):
     pass
+
 
 class SPI(hal_base.HALBase):
 
@@ -160,6 +168,12 @@ class SPI(hal_base.HALBase):
         super(SPI, self).__init__(cs)
         self.mmio = mmio.MMIO(cs)
         self.rcba_spi_base = self.get_SPI_MMIO_base()
+        # We try to map SPIBAR in the process memory, this will increase the
+        # speed of MMIO access later on.
+        try:
+            self.cs.helper.map_io_space(self.rcba_spi_base, Cfg.SPI_MMIO_BASE_LENGTH, 0)
+        except oshelper.UnimplementedAPIError:
+            pass
 
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
