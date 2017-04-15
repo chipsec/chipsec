@@ -618,7 +618,7 @@ class Chipset:
         return reg_value
 
     def read_register_field( self, reg_name, field_name, preserve_field_position=False, cpu_thread=0 ):
-        reg_value = self.read_register(reg_name)
+        reg_value = self.read_register(reg_name, cpu_thread)
         return self.get_register_field(reg_name, reg_value, field_name, preserve_field_position)
 
     def write_register_field( self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
