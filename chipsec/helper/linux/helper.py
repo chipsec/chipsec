@@ -1041,8 +1041,16 @@ class LinuxHelper(Helper):
             if data is not None:
                 chipsec.file.write_file( OutputFileName, data )
             else:
-                logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
-                return None
+                if len(CompressedFileData) > 4:
+                    data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData[4:] )
+                    if data is not None:
+                        chipsec.file.write_file( OutputFileName, data )
+                    else:
+                        logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                        return None
+                else:
+                    logger().error( "Cannot decompress file (%s) with Data size (%d) " % ( CompressedFileName, len(CompressedFileData) ) )
+                    return None
         return chipsec.file.read_file( OutputFileName )
 
     #
