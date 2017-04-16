@@ -1,0 +1,40 @@
+.. role:: normal
+
+<?py if title: ?>
+
+.. cssclass:: title
+
+#{title}
+
+<?py #end ?>
+
+<?py if subtitle: ?>
+
+.. cssclass:: subtitle
+
+#{subtitle}
+
+<?py #end ?>
+
+.. raw:: pdf
+
+   Spacer 0 3cm
+
+<?py for author in authors: ?>
+.. cssclass:: author
+
+#{author}
+
+<?py #end ?>
+
+.. raw:: pdf
+
+   Spacer 0 3cm
+
+.. cssclass:: author
+
+:normal:`#{date}`
+
+.. raw:: pdf
+
+   PageBreak cutePage
