@@ -14,7 +14,7 @@
 
 * http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 -->
-    
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- Integrated devices                   -->
@@ -35,6 +35,7 @@
     <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/> 
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
     <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" desc="Power Management Register Range"/>
+    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" desc="Sideband Register Access BAR"/>
   </mmio>
 
   <!-- #################################### -->
@@ -69,6 +70,15 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- Sideband Register Access Registers -->
+    <register name="SBREG_BAR" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x10" size="4" desc="Sideband Register Access BAR">
+      <field name="RBA" bit="24" size="8" desc="Register Base Address"/>
+    </register>
+
+    <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="2" desc="P2SB Configuration Register">
+      <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR"/>
+    </register>
 
     <!-- Power Management Controller -->
     <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x40" size="4" desc="ACPI Base Address">
@@ -171,16 +181,16 @@
     </register>  
 
     <!-- PCH RTC registers -->
-    <register name="RC" type="mmio" bar="RCBA" offset="0x3400" size="4" desc="RTC Configuration">
+    <register name="RC" type="msgbus" port="0xC3" offset="0x3400" size="4" desc="RTC Configuration">
       <field name="UE"   bit="2"  size="1" desc="Upper 128 Byte Enable"/>
       <field name="LL"   bit="3"  size="1" desc="Lower 128 Byte Lock"/>
       <field name="UL"   bit="4"  size="1" desc="Upper 128 Byte Lock"/>
       <field name="BILD" bit="31" size="1" desc="BIOS Interface Lock-Down"/>
-    </register>       
+    </register>
 
     <!-- PMC MMIO registers (6th Generation Intel(R) Processor I/O Datasheet for U/Y-Platforms, Vol. 2, section 4.3) -->
     <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x18" size="4" desc="Power Management Configuration Reg 1"/>
-    
+
     <!-- SPI Flash Descriptor registers -->
     <register name="FLMAP0" type="mmio" bar="FDBAR" offset="0x14" size="4" desc="Flash Map 0 Register">
       <field name="FCBA"    bit="0"  size="8" desc="Flash Component Base Address"/>
@@ -235,7 +245,6 @@
       <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
     </register>
 
-   
   </registers>
 
 
