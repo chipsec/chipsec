@@ -1,12 +1,14 @@
 KERNEL_SRC_DIR ?= /lib/modules/`uname -r`/build
 #KERNEL_SRC_DIR = /usr/src/android/3.0-mid
 
-ifeq ($(ARCH),i386)
-elf-size := elf32
-asm-path := i386
+MACHINE ?= $(shell uname -m)
+
+ifeq (,$(filter %i686 %i386 %i586,$(MACHINE)))
+	elf-size := elf64
+	asm-path := amd64
 else
-elf-size := elf64
-asm-path := amd64
+	elf-size := elf32
+	asm-path := i386
 endif
 
 chipsec-objs := chipsec_km.o $(asm-path)/cpu.o
