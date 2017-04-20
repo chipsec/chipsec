@@ -263,7 +263,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 sec.calc_hashes( sec.HeaderSize )
             elif sec.Type == EFI_SECTION_USER_INTERFACE:
                 # "leaf" UI section: update section's UI name
-                sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le")[:-1]
+                sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le", errors="ignore")[:-1]
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
                 guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
