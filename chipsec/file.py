@@ -84,9 +84,6 @@ def write_file( filename, buffer, append=False ):
     return True
 
 
-def read_chunk( f, size=0x1000 ):
-    return f.read( size )
-
 # determine if CHIPSEC is loaded as chipsec.exe or in python
 def main_is_frozen():
     return (hasattr(sys, "frozen") or  # new py2exe
