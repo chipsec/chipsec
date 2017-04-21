@@ -41,6 +41,83 @@ from collections import namedtuple
 from chipsec import defines
 from chipsec.hal.uefi_common import *
 
+#################################################################################################
+# Dell PFS support,
+# relied heavily on uefi-firmware-parser (https://github.com/theopolis/uefi-firmware-parser)
+#################################################################################################
+
+PFS_SEC_HDR = "<16sIIIIIIIIII16s"
+PFS_SEC_HDR_SIZE = struct.calcsize(PFS_SEC_HDR)
+U1_GUID = '\xf6\xe2\xb3YBN\xf3A\xb1\xf4Dj\x84\xbf\xc6\xd0'
+
+class PfsFileSection:
+    def __init__(self, data):
+        self.data = data
+        self.valid = (len(data) >= PFS_SEC_HDR_SIZE)
+        data_offset = 0
+        if (self.valid):
+            gu1, u1, u2, u3, u4, u5, u6, sec_size, size1, size2, size3, gu2 = struct.unpack(PFS_SEC_HDR, data[:PFS_SEC_HDR_SIZE])
+            self.valid = (len(data) >= (PFS_SEC_HDR_SIZE+sec_size+size1+size2+size3))
+            if gu1 == U1_GUID: data_offset = 0x248
+        if (self.valid):
+            self.body = data[PFS_SEC_HDR_SIZE+data_offset:PFS_SEC_HDR_SIZE+sec_size]
+            self.tail = data[PFS_SEC_HDR_SIZE+sec_size+size1+size2+size3:]
+
+    def parse(self):
+        return self.body
+
+PFS_HDR_SIG = "PFS.HDR."
+PFS_FTR_SIG = "PFS.FTR."
+PFS_HDR_STRUC = "<8sII"
+PFS_HDR_STRUC_SIZE = struct.calcsize(PFS_HDR_STRUC)
+PFS_FTR_STRUC = "<II8s"
+PFS_FTR_STRUC_SIZE = struct.calcsize(PFS_FTR_STRUC)
+
+class PfsFile:
+
+    def __init__(self, data, concat = False):
+        self.data = data
+        self.concat = concat
+        self.valid = (len(data) >= (PFS_HDR_STRUC_SIZE + PFS_FTR_STRUC_SIZE))
+        self.size = 0
+        hdr_sig = ""
+        ver = 0
+        if (self.valid):
+            hdr_sig, ver, self.size = struct.unpack(PFS_HDR_STRUC, data[:PFS_HDR_STRUC_SIZE])
+            self.valid = (PFS_FTR_STRUC_SIZE <= len(data[PFS_HDR_STRUC_SIZE+self.size:]))
+        if (self.valid):
+            ftr_size, u, ftr_sig = struct.unpack(PFS_FTR_STRUC, data[PFS_HDR_STRUC_SIZE+self.size:PFS_HDR_STRUC_SIZE+self.size+PFS_FTR_STRUC_SIZE])
+            self.valid = (hdr_sig == PFS_HDR_SIG) and (ftr_sig == PFS_FTR_SIG) and (self.size == ftr_size) and ((self.size + PFS_HDR_STRUC_SIZE + PFS_FTR_STRUC_SIZE) <= len(data))
+        if (self.valid):
+            self.body = data[PFS_HDR_STRUC_SIZE:PFS_HDR_STRUC_SIZE + self.size + PFS_FTR_STRUC_SIZE]
+            self.tail = data[PFS_HDR_STRUC_SIZE + self.size + PFS_FTR_STRUC_SIZE:]
+
+    def parse(self):
+        pfs_sec = PfsFileSection(self.body)
+        pfs_sec_data = []
+        while pfs_sec.valid:
+            sec_data = pfs_sec.parse()
+            if sec_data[:len(PFS_HDR_SIG)] == PFS_HDR_SIG:
+                sec_data = PfsFile(sec_data, True).parse()
+            if sec_data is not None:
+                pfs_sec_data.append(sec_data)
+            pfs_sec = PfsFileSection(pfs_sec.tail)
+        if self.concat:
+            return ''.join(pfs_sec_data)
+        else:
+            return pfs_sec_data
+
+def ParsePFS(data):
+    pfs_file = PfsFile(data, True)
+    if not pfs_file.valid:
+        return None
+    pfs_file_data = []
+    while pfs_file.valid:
+        pfs_data = pfs_file.parse()
+        if pfs_data is not None:
+            pfs_file_data.append(pfs_data)
+        pfs_file = PfsFile(pfs_file.tail)
+    return (pfs_file_data, pfs_file.data)
 
 #################################################################################################3
 # List of supported types of EFI NVRAM format (platform/vendor specific)
