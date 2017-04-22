@@ -171,7 +171,7 @@ class EFI_MODULE(object):
         self.children   = []
 
     def name(self):
-        return "%s {%s} %s" % (type(self).__name__,self.Guid,self.ui_string if self.ui_string else '')
+        return "%s {%s} %s" % (type(self).__name__.encode('ascii', 'ignore'),self.Guid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
     def __str__(self):
         _ind = self.indent + DEF_INDENT
@@ -236,7 +236,7 @@ class EFI_SECTION(EFI_MODULE):
         self.parentGuid  = None
     
     def name(self):
-        return "%s section of binary {%s} %s" % (self.Name,self.parentGuid,self.ui_string if self.ui_string else '')
+        return "%s section of binary {%s} %s" % (self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
     def __str__(self):
         _s = "%s+%08Xh %s: Type %02Xh" % (self.indent,self.Offset,self.name(),self.Type)
