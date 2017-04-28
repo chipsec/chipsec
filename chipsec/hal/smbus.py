@@ -124,8 +124,9 @@ class SMBus(hal_base.HALBase):
             #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
             sts    = self.cs.read_register( self.smb_reg_status )
             busy   = self.cs.get_register_field( self.smb_reg_status, sts, 'BUSY' )
+            intr   = self.cs.get_register_field( self.smb_reg_status, sts, 'INTR' )
             failed = self.cs.get_register_field( self.smb_reg_status, sts, 'FAILED' )
-            if 0 == busy:
+            if 0 == busy and 1 == intr:
                 #if logger().VERBOSE:
                 #    intr = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'INTR' )
                 #    logger().log( "[smbus]: INTR = %d" % intr )
