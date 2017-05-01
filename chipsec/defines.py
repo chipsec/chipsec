@@ -175,13 +175,16 @@ class ToolType:
     LZMA_COMPRESS  = 2
 
 def get_version():
+    version_files = ["VERSION", "CUSTOM_VERSION"]
+    version_strs = []
     chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
-    version_file = os.path.join(chipsec_folder, "chipsec", "VERSION" )
-    if os.path.exists(version_file):
-        with open(version_file, "r") as verFile:
-            version = verFile.read()
-            return version
-    return ""
+    for fname in version_files:
+        version_file = os.path.join(chipsec_folder, "chipsec", fname)
+        if os.path.exists(version_file):
+            with open(version_file, "r") as verFile:
+                version_strs.append(verFile.read().strip())
+
+    return '-'.join(version_strs)
 
 def is_printable(seq):
     return set(seq).issubset(set(string.printable))
