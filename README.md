@@ -10,6 +10,8 @@ NOTE: This software is for security testing purposes. Use at your own risk. Read
 First version of CHIPSEC was released in March 2014:
 [Announcement at CanSecWest 2014](https://cansecwest.com/slides/2014/Platform%20Firmware%20Security%20Assessment%20wCHIPSEC-csw14-final.pdf)
 
+Recent presentation on how to use CHIPSEC to find vulnerabilities in firmware, hypervisors and hardware configuration, explore low level system assets and even detect firmware implants:
+[Exploring Your System Deeper](https://www.slideshare.net/CanSecWest/csw2017-bazhaniuk-exploringyoursystemdeeperupdated)
 
 Contact Us
 ----------
