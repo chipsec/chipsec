@@ -1,14 +1,23 @@
 CHIPSEC: Platform Security Assessment Framework
 ===============================================
 
+CHIPSEC is a framework for analyzing the security of PC platforms including hardware, system firmware (BIOS/UEFI), and platform components. It includes a security test suite, tools for accessing various low level interfaces, and forensic capabilities. It can be run on Windows, Linux, Mac OS X and UEFI shell. Instructions for installing and using CHIPSEC can be found in the [manual](chipsec-manual.pdf).
 
-CHIPSEC is a framework for analyzing the security of PC platforms including hardware, system firmware (BIOS/UEFI), and platform components. It includes a security test suite, tools for accessing various low level interfaces, and forensic capabilities. It can be run on Windows, Linux, Mac OS X and UEFI shell. Instructions for installing and using CHIPSEC can be found in the manual (chipsec-manual.pdf).
-
-NOTE: This software is for security testing purposes. Use at your own risk. Read chipsec/WARNING.txt before using.
-
-Questions? Enter a new issue labeled as question, or e-mail chipsec@intel.com.
+NOTE: This software is for security testing purposes. Use at your own risk. Read WARNING.txt before using.
 
 First version of CHIPSEC was released in March 2014:
-Announcement at CanSecWest 2014: https://cansecwest.com/slides/2014/Platform%20Firmware%20Security%20Assessment%20wCHIPSEC-csw14-final.pdf and first public release!
+Announcement at CanSecWest 2014: https://cansecwest.com/slides/2014/Platform%20Firmware%20Security%20Assessment%20wCHIPSEC-csw14-final.pdf
 
-Follow us on: https://twitter.com/CHIPSEC
+Recent presentation on how to use CHIPSEC to find vulnerabilities in firmware, hypervisors and hardware configuration, explore low level system assets and even detect firmware implants:
+Exploring Your System Deeper: https://www.slideshare.net/CanSecWest/csw2017-bazhaniuk-exploringyoursystemdeeperupdated
+
+Contact Us
+----------
+
+Mailing lists:
+
+ * CHIPSEC users: https://groups.google.com/forum/#!forum/chipsec-users
+ * CHIPSEC developers: https://groups.google.com/forum/#!forum/chipsec-dev
+ * CHIPSEC discussion list on 01.org: https://lists.01.org/mailman/listinfo/chipsec
+
+Follow us on https://twitter.com/CHIPSEC
