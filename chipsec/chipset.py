@@ -85,6 +85,7 @@ CHIPSET_ID_SKL     = 11
 CHIPSET_ID_BSW     = 12
 CHIPSET_ID_KBL     = 13
 CHIPSET_ID_CHT     = 14
+CHIPSET_ID_BDX     = 15
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -103,8 +104,9 @@ CHIPSET_CODE_SKL     = 'SKL'
 CHIPSET_CODE_BSW     = 'BSW'
 CHIPSET_CODE_KBL     = 'KBL'
 CHIPSET_CODE_CHT     = 'CHT'
+CHIPSET_CODE_BDX     = 'BDX'
 
-CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX]
+CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_CODE_BSW,CHIPSET_CODE_CHT]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
@@ -158,12 +160,23 @@ Chipset_Dictionary = {
 # 7th Generation Core Processor Family (Kabylake)
 0x5904 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake U)' },
 0x590C : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake Y)' },
+0x591F : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Desktop 7th Generation Core Processor (Kabylake S)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
 
+# Xeon v4 Processor (Broadwell Server)
+0x1618 : {'name' : 'Broadwell Server', 'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Intel Xeon Processor E3 v4 (Broadwell CPU)' },
+0x6F00 : {'name' : 'Broadwell Server', 'id' : CHIPSET_ID_BDX,  'code' : CHIPSET_CODE_BDX,  'longname' : 'Intel Xeon Processor E5/E7 v4 (Broadwell Server CPU / Wellsburg PCH)'},
+
 # Xeon v5 Processor (Skylake Server)
 0x1918 : {'name' : 'Skylake Server', 'id' : CHIPSET_ID_SKL,  'code' : CHIPSET_CODE_SKL,  'longname' : 'Intel Xeon Processor E3 v5 (Skylake CPU / Sunrise Point PCH)'},
+
+# Xeon v6 Processor (Kabylake Server)
+0x5900 : {'name' : 'Kabylake','id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Intel Xeon Processor E3 v6 (Kabylake CPU)' },
+0x590F : {'name' : 'Kabylake','id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Intel Xeon Processor E3 v6 (Kabylake CPU)' },
+0x5910 : {'name' : 'Kabylake','id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Intel Xeon Processor E3 v6 (Kabylake CPU)' },
+0x5918 : {'name' : 'Kabylake','id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Intel Xeon Processor E3 v6 (Kabylake CPU)' },
 
 #
 # Atom based SoC platforms
@@ -199,7 +212,6 @@ Chipset_Dictionary = {
 
 # Galileo Board
 0x0958 : {'name' : 'Galileo ',       'id' : CHIPSET_ID_QRK , 'code' : CHIPSET_CODE_QRK,  'longname' : 'Intel Quark SoC X1000' },
-
 
 }
 try:
