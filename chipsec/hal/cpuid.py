@@ -35,8 +35,6 @@ usage:
     >>> cpuid(0)
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import os.path

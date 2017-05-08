@@ -25,8 +25,6 @@
 The mem command provides direct access to read and write physical memory.
 """
 
-__version__ = '1.0'
-
 import os
 import time
 

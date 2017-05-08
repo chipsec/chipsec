@@ -25,8 +25,6 @@
 Command-line utility providing access to IOMMU engines
 """
 
-__version__ = '1.0'
-
 import time
 
 import chipsec_util

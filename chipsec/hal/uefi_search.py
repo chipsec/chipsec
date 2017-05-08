@@ -34,8 +34,6 @@ usage:
    >>> chipsec.hal.uefi_search.check_match_criteria(efi_module, match_criteria, self.logger)
 """
 
-__version__ = '1.0'
-
 import re
 import binascii
 

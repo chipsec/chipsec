@@ -38,8 +38,6 @@ usage:
     >>> read_physical_mem_dowrd( 0xfed40000 )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 

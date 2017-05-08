@@ -30,7 +30,6 @@
 #
 ## \addtogroup
 # __chipsec/defines.py__ - common defines
-__version__ = '1.0'
 
 import struct
 import os

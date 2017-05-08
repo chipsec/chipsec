@@ -25,8 +25,6 @@
 The igd command allows memory read/write operations using igd dma.
 """
 
-__version__ = '1.0'
-
 import time
 
 import chipsec_util

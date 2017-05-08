@@ -32,8 +32,6 @@
 Common UEFI/EFI functionality including UEFI variables, Firmware Volumes, Secure Boot variables, S3 boot-script, UEFI tables, etc.
 """
 
-__version__ = '1.0'
-
 import os
 import struct
 from collections import namedtuple

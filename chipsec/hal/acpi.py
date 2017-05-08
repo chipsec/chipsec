@@ -33,8 +33,6 @@
 HAL component providing access to and decoding of ACPI tables
 """
 
-__version__ = '0.1'
-
 import struct
 import sys
 

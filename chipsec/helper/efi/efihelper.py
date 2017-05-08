@@ -32,8 +32,6 @@
 On UEFI use the efi package functions
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import uuid

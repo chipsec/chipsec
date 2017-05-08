@@ -25,8 +25,6 @@
 The msr command allows direct access to read and write MSRs.
 """
 
-__version__ = '1.0'
-
 from chipsec.command    import BaseCommand
 from chipsec.hal.msr    import Msr
 
