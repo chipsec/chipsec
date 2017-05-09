@@ -35,9 +35,11 @@ from chipsec.hal.msgbus import MsgBus
 # Message Bus
 class MsgBusCommand(BaseCommand):
     """
-    >>> chipsec_util msgbus read    <port> <register>
-    >>> chipsec_util msgbus write   <port> <register> <value>
-    >>> chipsec_util msgbus message <port> <register> <opcode> [value]
+    >>> chipsec_util msgbus read     <port> <register>
+    >>> chipsec_util msgbus write    <port> <register> <value>
+    >>> chipsec_util msgbus mm_read  <port> <register>
+    >>> chipsec_util msgbus mm_write <port> <register> <value>
+    >>> chipsec_util msgbus message  <port> <register> <opcode> [value]
     >>>
     >>> <port>    : message bus port of the target unit
     >>> <register>: message bus register/offset in the target unit port
@@ -46,10 +48,10 @@ class MsgBusCommand(BaseCommand):
 
     Examples:
 
-    >>> chipsec_util msgbus read    0x3 0x2E
-    >>> chipsec_util msgbus write   0x3 0x27 0xE0000001
-    >>> chipsec_util msgbus message 0x3 0x2E 0x10
-    >>> chipsec_util msgbus message 0x3 0x2E 0x11 0x0
+    >>> chipsec_util msgbus read     0x3 0x2E
+    >>> chipsec_util msgbus mm_write 0x3 0x27 0xE0000001
+    >>> chipsec_util msgbus message  0x3 0x2E 0x10
+    >>> chipsec_util msgbus message  0x3 0x2E 0x11 0x0
     """
     def requires_driver(self):
         # No driver required when printing the util documentation
@@ -81,6 +83,16 @@ class MsgBusCommand(BaseCommand):
             val = int(self.argv[5], 16)
             self.logger.log("[CHIPSEC] msgbus write: port 0x%02X + 0x%08X < 0x%08X" % (port, reg, val))
             res = _msgbus.msgbus_reg_write( port, reg, val )
+        elif 'mm_read' == op:
+            self.logger.log("[CHIPSEC] MMIO msgbus read: port 0x%02X + 0x%08X" % (port, reg))
+            res = _msgbus.mm_msgbus_reg_read( port, reg )
+        elif 'mm_write' == op:
+            if len(self.argv) < 6:
+                print msgbuscmd.__doc__
+                return
+            val = int(self.argv[5], 16)
+            self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x%02X + 0x%08X < 0x%08X" % (port, reg, val))
+            res = _msgbus.mm_msgbus_reg_write( port, reg, val )
         elif 'message' == op:
             opcode = int(self.argv[5], 16)
             val = None if len(self.argv) < 7 else int(self.argv[6], 16)

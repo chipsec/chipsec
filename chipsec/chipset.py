@@ -54,13 +54,14 @@ import traceback
 
 
 class RegisterType:
-    PCICFG = 'pcicfg'
-    MMCFG  = 'mmcfg'
-    MMIO   = 'mmio'
-    MSR    = 'msr'
-    PORTIO = 'io'
-    IOBAR  = 'iobar'
-    MSGBUS = 'msgbus'
+    PCICFG    = 'pcicfg'
+    MMCFG     = 'mmcfg'
+    MMIO      = 'mmio'
+    MSR       = 'msr'
+    PORTIO    = 'io'
+    IOBAR     = 'iobar'
+    MSGBUS    = 'msgbus'
+    MM_MSGBUS = 'mm_msgbus'
 
 
 ##################################################################################
@@ -547,7 +548,9 @@ class Chipset:
         elif RegisterType.IOBAR == rtype:
             reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
         elif RegisterType.MSGBUS == rtype:
-            reg_value = self.msgbus.msgbus_reg_read( int(reg['port'],16), int(reg['offset'],16) ) 
+            reg_value = self.msgbus.msgbus_reg_read( int(reg['port'],16), int(reg['offset'],16) )
+        elif RegisterType.MM_MSGBUS == rtype:
+            reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'],16), int(reg['offset'],16))
 
         return reg_value
 
@@ -582,6 +585,8 @@ class Chipset:
             self.iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16), reg_value )
         elif RegisterType.MSGBUS == rtype:
             self.msgbus.msgbus_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value ) 
+        elif RegisterType.MM_MSGBUS == rtype:
+            self.msgbus.mm_msgbus_reg_write(int(reg['port'],16), int(reg['offset'],16), reg_value)
 
     def read_register_dict( self, reg_name):
         reg_value = self.read_register(reg_name)
