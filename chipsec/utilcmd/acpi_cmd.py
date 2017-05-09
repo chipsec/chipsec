@@ -25,8 +25,6 @@
 Command-line utility providing access to ACPI tables 
 """
 
-__version__ = '1.0'
-
 import os
 import time
 

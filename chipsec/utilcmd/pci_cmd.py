@@ -25,8 +25,6 @@
 The pci command can enumerate PCI/PCIe devices, enumerate expansion ROMs and allow direct access to PCI configuration registers via bus/device/function.
 """
 
-__version__ = '1.0'
-
 import time
 
 import chipsec_util

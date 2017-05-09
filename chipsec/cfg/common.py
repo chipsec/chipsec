@@ -29,8 +29,6 @@
 # -------------------------------------------------------------------------------
 #
 
-__version__ = '1.0'
-
 import struct
 from collections import namedtuple
 

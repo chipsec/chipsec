@@ -33,8 +33,6 @@ Management and communication with Windows kernel mode driver which provides acce
     http://sourceforge.net/projects/pywin32/
 """
 
-__version__ = '1.0'
-
 import os.path
 import struct
 import sys

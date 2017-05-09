@@ -33,8 +33,6 @@ A basic forensic operation might be to dump the entire SPI flash to a file. This
 The file rom.bin will contain the full binary of the SPI flash. It can then be parsed using the decode util command.
 """
 
-__version__ = '1.0'
-
 import time
 
 from chipsec.command    import BaseCommand

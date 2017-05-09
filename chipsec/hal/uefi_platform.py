@@ -32,8 +32,6 @@
 Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsules, etc.)
 """
 
-__version__ = '1.0'
-
 import struct
 import string
 from collections import namedtuple

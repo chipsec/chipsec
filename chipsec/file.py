@@ -37,8 +37,6 @@ usage:
     >>> write_file( filename, buffer )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import os

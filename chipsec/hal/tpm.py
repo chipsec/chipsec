@@ -26,8 +26,6 @@ Trusted Platform Module (TPM) HAL component
 https://trustedcomputinggroup.org
 """
 
-__version__ = '0.1'
-
 import struct
 import sys
 import time

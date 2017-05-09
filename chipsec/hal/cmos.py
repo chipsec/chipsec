@@ -40,8 +40,6 @@ usage:
     >>> cmos.write_cmos_high( offset, value )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import time

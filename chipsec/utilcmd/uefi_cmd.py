@@ -25,8 +25,6 @@
 The uefi command provides access to UEFI variables, both on the live system and in a SPI flash image file.
 """
 
-__version__ = '1.0'
-
 import os
 import time
 

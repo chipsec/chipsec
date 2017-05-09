@@ -39,8 +39,6 @@ usage:
 
 #TODO IPIs through Local APIC??
 
-__version__ = '1.0'
-
 import struct
 import sys
 

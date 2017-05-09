@@ -33,8 +33,6 @@
 Linux helper
 """
 
-__version__ = '1.0'
-
 import array
 import ctypes
 import errno

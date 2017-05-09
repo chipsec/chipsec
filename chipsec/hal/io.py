@@ -40,8 +40,6 @@ usage:
     >>> write_port_dword( 0x71, 0 )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import os.path
