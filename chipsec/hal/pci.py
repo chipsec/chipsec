@@ -46,8 +46,6 @@ usage:
     >>> self.cs.pci.is_enabled( 2, 0, 0 )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import os.path

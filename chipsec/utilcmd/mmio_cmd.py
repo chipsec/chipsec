@@ -20,9 +20,6 @@
 #
 
 
-
-__version__ = '1.0'
-
 import time
 
 import chipsec_util

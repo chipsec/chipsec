@@ -25,8 +25,6 @@
 The idt and gdt commands print the IDT and GDT, respectively.
 """
 
-__version__ = '1.0'
-
 from chipsec.command import BaseCommand
 
 # CPU descriptor tables

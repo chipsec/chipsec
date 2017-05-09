@@ -33,8 +33,6 @@ usage:
     >>> parse_uefi_region_from_file(_uefi, filename, fwtype, outpath):
 """
 
-__version__ = '1.0'
-
 import os
 import fnmatch
 import struct

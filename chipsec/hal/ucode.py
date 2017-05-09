@@ -38,8 +38,6 @@ usage:
     >>> dump_ucode_update_header( 'ucode.pdb' )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 

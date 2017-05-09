@@ -33,8 +33,6 @@
 HAL component decoding various ACPI tables
 """
 
-__version__ = '0.1'
-
 import struct
 from collections import namedtuple
 

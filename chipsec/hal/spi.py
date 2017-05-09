@@ -50,8 +50,6 @@ usage:
     SPI read: ~7 sec per 1MB (with DBC=64)
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import time

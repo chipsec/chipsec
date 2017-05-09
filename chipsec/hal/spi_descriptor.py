@@ -37,8 +37,6 @@ usage:
     >>> parse_spi_flash_descriptor( fd )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import time

@@ -26,8 +26,6 @@ usage as a standalone utility:
     >>> chipsec_util platform
 """
 
-__version__ = '1.0'
-
 from chipsec.command    import BaseCommand
 from chipsec.chipset    import UnknownChipsetError, print_supported_chipsets
 

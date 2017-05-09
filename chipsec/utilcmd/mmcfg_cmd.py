@@ -25,9 +25,6 @@
 The mmcfg command allows direct access to memory mapped config space.
 """
 
-
-__version__ = '1.0'
-
 import time
 
 from chipsec.command    import BaseCommand

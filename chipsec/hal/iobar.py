@@ -38,8 +38,6 @@ usage:
     >>> dump_IO_BAR( bar_name )
 """
 
-__version__ = '1.0'
-
 import struct
 import sys
 import time
