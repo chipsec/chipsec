@@ -676,7 +676,7 @@ class Chipset:
             reg_str = "[*] %s = %s << %s (I/O port 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
         elif RegisterType.IOBAR == rtype:
             reg_str = "[*] %s = %s << %s (I/O %s + 0x%X)" % (reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
-        elif RegisterType.MSGBUS == rtype:
+        elif RegisterType.MSGBUS == rtype or RegisterType.MM_MSGBUS == rtype:
             reg_str = "[*] %s = %s << %s (msgbus port 0x%X, off 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
 
         reg_str += self._register_fields_str(reg, reg_val)
