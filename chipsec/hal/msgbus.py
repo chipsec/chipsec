@@ -184,30 +184,30 @@ class MsgBus(hal_base.HALBase):
     #
 
     def msgbus_reg_read(self, port, register):
-        if self.cs.mmio.is_MMIO_BAR_defined('SBREGBAR'):
-            was_hidden = False
-            if self.cs.is_register_defined('P2SBC'):
-                was_hidden = self.__hide_p2sb(False)
-            mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
-            reg_val = self.cs.mem.read_physical_mem_dword(mmio_addr)
-            if self.cs.is_register_defined('P2SBC') and was_hidden:
-                self.__hide_p2sb(True)
-            return reg_val
-        else:
-            return self.msgbus_read_message(port, register, MessageBusOpcode.MB_OPCODE_REG_READ)
+        return self.msgbus_read_message(port, register, MessageBusOpcode.MB_OPCODE_REG_READ)
 
     def msgbus_reg_write(self, port, register, data):
-        if self.cs.mmio.is_MMIO_BAR_defined('SBREGBAR'):
-            was_hidden = False
-            if self.cs.is_register_defined('P2SBC'):
-                was_hidden = self.__hide_p2sb(False)
-            mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
-            reg_val = self.cs.mem.write_physical_mem_dword(mmio_addr, data)
-            if self.cs.is_register_defined('P2SBC') and was_hidden:
-                self.__hide_p2sb(True)
-            return reg_val
-        else:
-            return self.msgbus_write_message(port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data)
+        return self.msgbus_write_message(port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data)
+
+    def mm_msgbus_reg_read(self, port, register):
+        was_hidden = False
+        if self.cs.is_register_defined('P2SBC'):
+            was_hidden = self.__hide_p2sb(False)
+        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
+        reg_val = self.cs.mem.read_physical_mem_dword(mmio_addr)
+        if self.cs.is_register_defined('P2SBC') and was_hidden:
+            self.__hide_p2sb(True)
+        return reg_val
+
+    def mm_msgbus_reg_write(self, port, register, data):
+        was_hidden = False
+        if self.cs.is_register_defined('P2SBC'):
+            was_hidden = self.__hide_p2sb(False)
+        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
+        reg_val = self.cs.mem.write_physical_mem_dword(mmio_addr, data)
+        if self.cs.is_register_defined('P2SBC') and was_hidden:
+            self.__hide_p2sb(True)
+        return reg_val
 
     """
     # py implementation of msgbus -- doesn't seem to work properly becaise it's not atomic
