@@ -50,7 +50,12 @@ class TestHelper(oshelper.Helper):
      # This will be used to probe the device, fake a Broadwell CPU
     def read_pci_reg(self, bus, device, function, address, size):
         if (bus, device, function) == (0, 0, 0):
-            return 0x16008086
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x16008086
         else:
             raise Exception("Unexpected PCI read")
 
