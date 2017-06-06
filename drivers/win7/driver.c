@@ -660,15 +660,15 @@ DriverDeviceControl(
                break;
             }
 
-            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
+            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
 
-            RtlCopyBytes( &ucode_size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE), sizeof(UINT16) );
+            RtlCopyBytes( &ucode_size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT16) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Ucode update size = 0x%X\n", ucode_size );
 
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < ucode_size + sizeof(BYTE) + sizeof(UINT16) )
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < ucode_size + sizeof(UINT32) + sizeof(UINT16) )
               {
                 DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < ucode_size + 3)\n" );
                 Status = STATUS_INVALID_PARAMETER;
@@ -737,12 +737,12 @@ DriverDeviceControl(
                 break;
               }
 
-            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
+            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
 
-            RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE), 3 * sizeof(UINT32) );
+            RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), 3 * sizeof(UINT32) );
             _msr_addr = msrData[0];
             _eax      = msrData[1];
             _edx      = msrData[2];
@@ -795,12 +795,12 @@ DriverDeviceControl(
                 break;
               }
 
-            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
+            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
 
-            RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE), sizeof(UINT32) );
+            RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT32) );
             _msr_addr = msrData[0];
 
             __try
@@ -902,11 +902,11 @@ DriverDeviceControl(
 
             DbgPrint( "[chipsec] > GET_CPU_DESCRIPTOR_TABLE\n" );
 
-            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(BYTE) );
+            RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
-            RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE), sizeof(BYTE) );
+            RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(BYTE) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Descriptor table: %x\n", dt_code );
 
             switch( dt_code )
@@ -1034,7 +1034,7 @@ DriverDeviceControl(
             WORD cr_reg = 0;
             DbgPrint( "[chipsec] > WRITE_CR\n" );
 
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < (sizeof(cr_reg) + sizeof(val64) + sizeof(BYTE)))
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < (sizeof(cr_reg) + sizeof(val64) + sizeof(UINT32)))
             {
                  Status = STATUS_INVALID_PARAMETER;
                  break;
@@ -1093,7 +1093,7 @@ DriverDeviceControl(
             WORD cr_reg = 0;
             DbgPrint( "[chipsec] > READ_CR\n" );
 
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < (sizeof(cr_reg)+sizeof(BYTE))
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < (sizeof(cr_reg)+sizeof(UINT32))
              || IrpSp->Parameters.DeviceIoControl.OutputBufferLength < (sizeof(val64))
               )
             {
