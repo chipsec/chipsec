@@ -371,17 +371,39 @@ class Chipset:
     ##################################################################################
 
     def init_xml_configuration( self ):
+        # Create a sorted config file list (xml only)
+        _cfg_files = []
         _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
-        # Load chipsec/cfg/common.xml configuration XML file common for all platforms if it exists
-        self.init_cfg_xml( os.path.join(_cfg_path,'common.xml'), self.code )
-        # Load chipsec/cfg/<code>.xml configuration XML file if it exists for platform <code>
+        for root, subdirs, files in os.walk(_cfg_path):
+            _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
+        _cfg_files.sort()
+        if logger().VERBOSE:
+            logger().log("[*] Configuration Files:")
+            for _xml in _cfg_files:
+                logger().log("[*] - {}".format(_xml))
+
+        # Locate common (chipsec/cfg/common*.xml) configuration XML files.
+        loaded_files = []
+        for _xml in _cfg_files:
+            if fnmatch.fnmatch(os.path.basename(_xml), 'common*.xml'):
+                loaded_files.append(_xml)
+
+        # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
         if self.code and '' != self.code:
-            self.init_cfg_xml( os.path.join(_cfg_path,('%s.xml'%self.code)), self.code )
-        # Load configuration from all other XML files recursively (if any)
-        for dirname, subdirs, xml_fnames in os.walk( _cfg_path ):
-            for _xml in xml_fnames:
-                if fnmatch.fnmatch( _xml, '*.xml' ) and not fnmatch.fnmatch( _xml, 'common.xml' ) and not (_xml in ['%s.xml' % c.lower() for c in Chipset_Code]):
-                    self.init_cfg_xml( os.path.join(dirname,_xml), self.code )
+            for _xml in _cfg_files:
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code)):
+                    loaded_files.append(_xml)
+
+        # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
+        platform_files = []
+        for plat in [c.lower() for c in Chipset_Code]:
+            platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat))])
+        loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
+
+        # Load all configuration files for this platform.
+        if logger().VERBOSE: logger().log("[*] Loading Configuration Files:")
+        for _xml in loaded_files:
+            self.init_cfg_xml(_xml, self.code)
         self.Cfg.XML_CONFIG_LOADED = True
 
 
