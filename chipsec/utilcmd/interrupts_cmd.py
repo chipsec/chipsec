@@ -48,6 +48,10 @@ class SMICommand(BaseCommand):
         return True
 
     def run(self):
+        if len(self.argv) < 3:
+            print SMICommand.__doc__
+            return
+
         try:
             interrupts = Interrupts( self.cs )
         except RuntimeError, msg:
