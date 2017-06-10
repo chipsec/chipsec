@@ -47,9 +47,14 @@ class RegisterCommand(command.BaseCommand):
                 print RegisterCommand.__doc__
                 return
             reg_name = self.argv[3]
-            value = self.cs.read_register(reg_name)
-            #self.logger.log("[CHIPSEC] %s=0x%X" % (reg_name, value))
-            self.cs.print_register(reg_name, value)
+            if len(self.argv) == 5:
+                field_name = self.argv[4]
+                value = self.cs.read_register_field(reg_name, field_name)
+                self.logger.log("[CHIPSEC] %s.%s=0x%X" % (reg_name, field_name, value))
+            else:
+                value = self.cs.read_register(reg_name)
+                self.logger.log("[CHIPSEC] %s=0x%X" % (reg_name, value))
+                self.cs.print_register(reg_name, value)
         elif ( 'read_field' == op ):
             if len(self.argv) < 5:
                 print RegisterCommand.__doc__
@@ -88,7 +93,7 @@ class RegisterCommand(command.BaseCommand):
             control_name = self.argv[3]
             if self.cs.is_control_defined(control_name):
                 value = self.cs.get_control(control_name)
-                self.logger.log("[CHIPSEC] control %s = 0x%X" % (control_name, value))
+                self.logger.log("[CHIPSEC] %s = 0x%X" % (control_name, value))
             else:
                 self.logger.error("[CHIPSEC] control %s isn't defined" % control_name)
         elif ( 'set_control' == op ):
