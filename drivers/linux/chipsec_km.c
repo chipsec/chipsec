@@ -376,6 +376,7 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 	unsigned long p = *ppos;
 	ssize_t read, sz;
 	char *ptr;
+        void *plb;
         
 	read = 0;
 
@@ -418,8 +419,12 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 			dbgprint ("xlate FAIL, p: %lX",p);
 			return -EFAULT;
 		}
+                
+                plb = kmalloc(sz, GFP_KERNEL );
+                memset(plb, 0, sz);
+                memcpy(plb,(char *)ptr, sz);
 
-		if (copy_to_user(buf, ptr, sz)) {
+		if (copy_to_user(buf, plb, sz)) {
 			dbgprint ("copy_to_user FAIL, ptr: %p",ptr);
 			my_unxlate_dev_mem_ptr(p, ptr);
 			return -EFAULT;
