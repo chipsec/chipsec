@@ -204,27 +204,39 @@
       <field name="FCPUSBA" bit="0"  size="8" desc="Flash CPU Strap Base Address"/>
       <field name="CPUSL"   bit="8"  size="8" desc="CPU Strap Length"/>
     </register>
-    <register name="FLREG0" type="mmio" bar="FRBA" offset="0x0" size="4" desc="Flash Region 0 (Flash Descriptor) Register">
+    <register name="FLREG0" type="mmio" bar="SPIBAR" offset="0x54" size="4" desc="Flash Region 0 (Flash Descriptor) Register">
       <field name="RB"      bit="0"  size="15" desc="Region Base"/>
       <field name="RL"      bit="16" size="15" desc="Region Limit"/>
     </register>
-    <register name="FLREG1" type="mmio" bar="FRBA" offset="0x4" size="4" desc="Flash Region 1 (BIOS) Register">
+    <register name="FLREG1" type="mmio" bar="SPIBAR" offset="0x58" size="4" desc="Flash Region 1 (BIOS) Register">
       <field name="RB"      bit="0"  size="15" desc="Region Base"/>
       <field name="RL"      bit="16" size="15" desc="Region Limit"/>
     </register>
-    <register name="FLREG2" type="mmio" bar="FRBA" offset="0x8" size="4" desc="Flash Region 2 (Intel ME) Register">
+    <register name="FLREG2" type="mmio" bar="SPIBAR" offset="0x5c" size="4" desc="Flash Region 2 (Intel ME) Register">
       <field name="RB"      bit="0"  size="15" desc="Region Base"/>
       <field name="RL"      bit="16" size="15" desc="Region Limit"/>
     </register>
-    <register name="FLREG3" type="mmio" bar="FRBA" offset="0xC" size="4" desc="Flash Region 3 (GBe) Register">
+    <register name="FLREG3" type="mmio" bar="SPIBAR" offset="0x60" size="4" desc="Flash Region 3 (GBe) Register">
       <field name="RB"      bit="0"  size="15" desc="Region Base"/>
       <field name="RL"      bit="16" size="15" desc="Region Limit"/>
     </register>
-    <register name="FLREG4" type="mmio" bar="FRBA" offset="0x10" size="4" desc="Flash Region 4 (Platform Data) Register">
+    <register name="FLREG4" type="mmio" bar="SPIBAR" offset="0x64" size="4" desc="Flash Region 4 (Platform Data) Register">
       <field name="RB"      bit="0"  size="15" desc="Region Base"/>
       <field name="RL"      bit="16" size="15" desc="Region Limit"/>
     </register>
-    <register name="FLREG8" type="mmio" bar="FRBA" offset="0x20" size="4" desc="Flash Region 8 (Embedded Controller) Register">
+    <register name="FLREG5" type="mmio" bar="SPIBAR" offset="0x68" size="4" desc="Flash Region 5 Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG6" type="mmio" bar="SPIBAR" offset="0x6c" size="4" desc="Flash Region 6 Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG7" type="mmio" bar="SPIBAR" offset="0x70" size="4" desc="Flash Region 7 Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG8" type="mmio" bar="SPIBAR" offset="0x74" size="4" desc="Flash Region 8 (Embedded Controller) Register">
       <field name="RB"      bit="0"  size="15" desc="Region Base"/>
       <field name="RL"      bit="16" size="15" desc="Region Limit"/>
     </register>
