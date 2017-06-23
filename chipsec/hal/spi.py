@@ -106,13 +106,13 @@ FREG7               = 7
 EMBEDDED_CONTROLLER = 8
 
 SPI_REGION = {
- FLASH_DESCRIPTOR   : 'FREG0_FLASHD',
- BIOS               : 'FREG1_BIOS',
- ME                 : 'FREG2_ME',
- GBE                : 'FREG3_GBE',
- PLATFORM_DATA      : 'FREG4_PD',
- FREG5              : 'FREG5',
- FREG6              : 'FREG6'
+ FLASH_DESCRIPTOR   : 'FLREG0',
+ BIOS               : 'FLREG1',
+ ME                 : 'FLREG2',
+ GBE                : 'FLREG3',
+ PLATFORM_DATA      : 'FLREG4',
+ FREG5              : 'FLREG5',
+ FREG6              : 'FLREG6'
 }
 
 SPI_REGION_NAMES = {
