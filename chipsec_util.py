@@ -25,8 +25,6 @@
 Standalone utility
 """
 
-__version__ = '1.3.0'
-
 import re
 import os
 import sys
@@ -35,6 +33,7 @@ import importlib
 import imp
 import getopt
 
+from chipsec import defines
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
 
@@ -252,7 +251,7 @@ class ChipsecUtil:
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "[CHIPSEC] Version %s" % __version__ )
+        logger().log( "[CHIPSEC] Version %s" % defines.get_version() )
 
 def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])
