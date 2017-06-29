@@ -533,8 +533,78 @@ static inline int private_mapping_ok(struct vm_area_struct *vma)
 }
 #endif
 
+int __weak phys_mem_access_prot_allowed(struct file *file,
+            unsigned long pfn, unsigned long size, pgprot_t *vma_prot)
+{
+        return 1;
+}
+
+#ifndef ARCH_HAS_VALID_PHYS_ADDR_RANGE
+static inline int valid_phys_addr_range(phys_addr_t addr, size_t count)
+{
+	return addr + count <= __pa(high_memory);
+}
+
+static inline int valid_mmap_phys_addr_range(unsigned long pfn, size_t size)
+{
+	return 1;
+}
+#endif
+
+#ifndef __HAVE_PHYS_MEM_ACCESS_PROT
+static pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
+				     unsigned long size, pgprot_t vma_prot)
+{
+#ifdef pgprot_noncached
+	phys_addr_t offset = pfn << PAGE_SHIFT;
+
+	if (uncached_access(file, offset))
+		return pgprot_noncached(vma_prot);
+#endif
+	return vma_prot;
+}
+#endif
+
+static const struct vm_operations_struct mmap_mem_ops = {
+#ifdef CONFIG_HAVE_IOREMAP_PROT
+	.access = generic_access_phys
+#endif
+};
+
 static int mmap_mem(struct file * file, struct vm_area_struct * vma)
 {
+	size_t size = vma->vm_end - vma->vm_start;
+
+	if (!valid_mmap_phys_addr_range(vma->vm_pgoff, size)) {
+		return -EINVAL;
+	}
+
+	if (!private_mapping_ok(vma)) {
+		return -ENOSYS;
+	}
+
+	if (!phys_mem_access_prot_allowed(file, vma->vm_pgoff, size,
+						&vma->vm_page_prot)) {
+		return -EINVAL;
+	}
+
+	// We skip devmem_is_allowed / range_is_allowed checking here
+	// because we want to be able to mmap MMIO regions
+	
+	vma->vm_page_prot = phys_mem_access_prot(file, vma->vm_pgoff,
+						 size,
+						 vma->vm_page_prot);
+
+	vma->vm_ops = &mmap_mem_ops;
+
+	if (remap_pfn_range(vma,
+			    vma->vm_start,
+			    vma->vm_pgoff,
+			    size,
+			    vma->vm_page_prot)) {
+		return -EAGAIN;
+	}
+
 	return 0;
 }
 
