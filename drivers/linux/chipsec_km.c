@@ -43,9 +43,14 @@ MODULE_LICENSE("GPL");
 // for modules, but is available in kallsyms.
 // So we need determine this address using dirty tricks
 int (*guess_page_is_ram)(unsigned long pagenr);
+// same with phys_mem_accesss_prot
+pgprot_t (*guess_phys_mem_access_prot)(struct file *file, unsigned long pfn,
+				       unsigned long size, pgprot_t vma_prot);
 
 unsigned long a1=0;
+unsigned long a2=0;
 module_param(a1,ulong,0); //a1 is addr of page_is_ram function
+module_param(a2,ulong,0); //a2 is addr of phys_mem_access_prot function
 
 /// Char we show before each debug print
 const char program_name[] = "chipsec";
@@ -552,8 +557,8 @@ static inline int valid_mmap_phys_addr_range(unsigned long pfn, size_t size)
 #endif
 
 #ifndef __HAVE_PHYS_MEM_ACCESS_PROT
-static pgprot_t phys_mem_access_prot(struct file *file, unsigned long pfn,
-				     unsigned long size, pgprot_t vma_prot)
+static pgprot_t cs_phys_mem_access_prot(struct file *file, unsigned long pfn,
+					unsigned long size, pgprot_t vma_prot)
 {
 #ifdef pgprot_noncached
 	phys_addr_t offset = pfn << PAGE_SHIFT;
@@ -591,9 +596,9 @@ static int mmap_mem(struct file * file, struct vm_area_struct * vma)
 	// We skip devmem_is_allowed / range_is_allowed checking here
 	// because we want to be able to mmap MMIO regions
 	
-	vma->vm_page_prot = phys_mem_access_prot(file, vma->vm_pgoff,
-						 size,
-						 vma->vm_page_prot);
+	vma->vm_page_prot = guess_phys_mem_access_prot(file, vma->vm_pgoff,
+						       size,
+						       vma->vm_page_prot);
 
 	vma->vm_ops = &mmap_mem_ops;
 
@@ -1700,13 +1705,24 @@ int find_symbols(void)
 {
 	//Older kernels don't have kallsyms_lookup_name. Use FMEM method (pass from run.sh)
 	#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
-		printk("Chipsec warning: Using function address provided by run.sh");
+		printk("Chipsec warning: Using function addresses provided by run.sh");
 		guess_page_is_ram=(void *)a1;
 		dbgprint ("set guess_page_is_ram: %p\n",guess_page_is_ram);
+		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
+		guess_phys_mem_access_prot=(void *)a2;
+		dbgprint ("set guess_phys_mem_acess_prot: %p\n",guess_phys_mem_access_prot);
+		#else
+		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
+		#endif
 	#else
 		guess_page_is_ram = (void *)kallsyms_lookup_name("page_is_ram");
+		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
+		guess_phys_mem_access_prot = (void *)kallsyms_lookup_name("phys_mem_access_prot");
+		#else
+		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
+		#endif
 
-		if(guess_page_is_ram == 0)
+		if(guess_page_is_ram == 0 || guess_phys_mem_access_prot == 0)
 		{
 			printk("Chipsec find_symbols failed. Unloading module");
 			return -1;
