@@ -95,10 +95,10 @@ class TemperatureCommand(BaseCommand):
 
         self.get_cpu_temperature()
 
-        self.logger.log( "" )
-        self.logger.log( "press Ctrl+C to stop..." )
-
-        self.event = self.read_tmp_sched.enter(inc, 0, self.get_cpu_temperature_period, ())       
+        if os.name != 'edk2':
+            self.logger.log( "" )
+            self.logger.log( "press Ctrl+C to stop..." )
+            self.event = self.read_tmp_sched.enter(inc, 0, self.get_cpu_temperature_period, ())       
 
     def run(self):
         #if len(self.argv) < 3:
