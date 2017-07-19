@@ -77,6 +77,9 @@ class TemperatureCommand(BaseCommand):
         pkg_dis_tjmax = (eax & 0x007F0000) >> 16
 
         self.logger.log( "[CHIPSEC] CPU package: temperature = %d degree C" % (tjmax - pkg_dis_tjmax) )
+        #get package prohot status
+        if (eax & BIT0):
+            self.logger.log( "[CHIPSEC] CPU package prochot is active!!!" )
         self.logger.log( "" )
         
         processor_per_core = self.cs.cpu.get_number_logical_processor_per_core()
@@ -87,6 +90,26 @@ class TemperatureCommand(BaseCommand):
             dis_tjmax = (eax & 0x007F0000) >> 16
             self.logger.log( "[CHIPSEC] CPU core%d: temperature = %d degree C" % (cid, tjmax - dis_tjmax) )
 
+        #!!! CSR bus would be reassigned !!!#
+        #check PCU CR3 is exist
+        if (self.cs.pci.read_word (5, 30, 3, 2) != 0x2083):
+            return
+        
+        #check is fabric sku
+        if (((self.cs.pci.read_byte (5, 30, 3, 0x84) & 0x38) >> 3) != 1):
+            return
+
+        #check PCU CR4 is exist
+        if (self.cs.pci.read_word (5, 30, 4, 2) != 0x2084):
+            return
+        
+        #get MCP temperature
+        self.logger.log( "" )
+        mcp_tmp = self.cs.pci.read_word (5, 30, 4, 0xD8) / 64 
+        self.logger.log( "[CHIPSEC] MCP temperature = %d degree C" % (mcp_tmp) )
+        if (mcp_tmp >= tjmax):
+            self.logger.log( "[CHIPSEC] MCP issued PROCHOT#!!!" )
+        
     def get_cpu_temperature_period(self, inc = 0.5):
         if os.name == 'nt':
             os.system('cls')
