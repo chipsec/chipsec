@@ -21,8 +21,6 @@
 
 import platform, os
 if "windows" == platform.system().lower() and (os.path.isfile(os.path.join("C:\\Windows\\System32\\drivers\\RwDrv.sys")) or os.path.isfile(os.path.join(os.getcwd(), "win7_amd64\RwDrv.sys"))):
-    print "rwe"
     __all__ = [ "rwehelper" ]
 else:
-    print "no rwe"
     __all__ = [ ]
