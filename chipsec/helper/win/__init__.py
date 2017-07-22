@@ -29,7 +29,7 @@
 
 import platform, os
 
-if "windows" == platform.system().lower() and os.path.isfile(os.path.join(os.getcwd(), "win7_amd64\chipsec_hlpr.sys")):
+if "windows" == platform.system().lower():
     __all__ = [ "win32helper" ]
 else:
     __all__ = []

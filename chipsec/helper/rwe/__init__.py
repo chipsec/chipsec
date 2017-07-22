@@ -20,7 +20,8 @@
 #
 
 import platform, os
-if "windows" == platform.system().lower() and (os.path.isfile(os.path.join("C:\\Windows\\System32\\drivers\\RwDrv.sys")) or os.path.isfile(os.path.join(os.getcwd(), "win7_amd64\RwDrv.sys"))):
+
+if "windows" == platform.system().lower():
     __all__ = [ "rwehelper" ]
 else:
     __all__ = [ ]

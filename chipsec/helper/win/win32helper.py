@@ -354,7 +354,7 @@ class Win32Helper(Helper):
 
         driver_path = os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "win", self.win_ver, DRIVER_FILE_NAME )
         if not os.path.isfile( driver_path ):
-            driver_path = os.path.join("C:\\Windows\\System32\\drivers\\RwDrv.sys"
+            driver_path = os.path.join( "C:\\Windows\\System32\\drivers", DRIVER_FILE_NAME)
         if os.path.isfile( driver_path ):
             self.driver_path = driver_path
             if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
