@@ -488,18 +488,17 @@ ReadPCIDword ENDP
 ;    IN   UINT64	rax_value	// rdx
 ;    IN   UINT64	rbx_value	// r8
 ;    IN   UINT64	rcx_value	// r9
-;    IN   UINT64	rdx_value	// r10
-;    IN   UINT64	rsi_value	// r11
-;    IN   UINT64	rdi_value	// r12
+;    IN   UINT64	rdx_value	// rsp + 0x28
+;    IN   UINT64	rsi_value	// rsp + 0x30
+;    IN   UINT64	rdi_value	// rsp + 0x38
 ;    )
 ;------------------------------------------------------------------------------
 _swsmi PROC
-    push rax
     push rbx
-    push rcx
-    push rdx
     push rsi
     push rdi
+
+    ; rsp - 0x18
 
     ; setting up GPR (arguments) to SMI handler call
     ; notes:
@@ -508,24 +507,21 @@ _swsmi PROC
     mov rax, rdx ; rax_value
     mov ax, cx   ; smi_code_data
     mov rdx, r10 ; rdx_value
-    mov dx, 0B2h ; 0xB2
+    mov rdx, [rsp + 040h] ; rsp + 0x28 + 0x18
 
     mov rbx, r8  ; rbx_value
     mov rcx, r9  ; rcx_value
-    mov rsi, r11 ; rsi_value
-    mov rdi, r12 ; rdi_value
+    mov rsi, [rsp + 048h] ; rsi_value
+    mov rdi, [rsp + 050h] ; rdi_value
 
     ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
-    out dx, ax
+    out 0B2h, ax
 
     ; @TODO: some SM handlers return data/errorcode in GPRs, need to return this to the caller
 
     pop rdi
     pop rsi
-    pop rdx
-    pop rcx
     pop rbx
-    pop rax
     ret
 _swsmi ENDP
 
