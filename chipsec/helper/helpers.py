@@ -25,8 +25,6 @@ import chipsec.file
 from chipsec.helper.efi import *
 from chipsec.helper.linux import *
 from chipsec.helper.osx import *
-if os.path.isfile("C:\\Windows\\System32\\drivers\\chipsec_hlpr.sys") or os.path.isfile(os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "win", "win7_" + platform.machine().lower(), "chipsec_hlpr.sys")):
-    from chipsec.helper.win import *
-elif (os.path.isfile(os.path.join("C:\\Windows\\System32\\drivers\\RwDrv.sys")) or os.path.isfile(os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", "win7_" + platform.machine().lower(), "RwDrv.sys" ))):
-    from chipsec.helper.rwe import *
+from chipsec.helper.win import *
+from chipsec.helper.rwe import *
 
