@@ -72,7 +72,7 @@ kernel32 = windll.kernel32
 
 drv_hndl_error_msg = "Cannot open rwe driver handle. Make sure rwe driver is installed and started if you are using option -e (see README)"
 
-DRIVER_FILE_PATHS   = ["C:\\Windows\\System32\\drivers", os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", "win7_" + platform.machine().lower())] 
+DRIVER_FILE_PATHS   = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", "win7_" + platform.machine().lower())] 
 DRIVER_FILE_NAME    = "RwDrv.sys"
 DEVICE_FILE         = "\\\\.\\RwDrv"
 SERVICE_NAME        = "RwDrv"
