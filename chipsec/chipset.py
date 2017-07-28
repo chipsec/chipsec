@@ -247,6 +247,8 @@ class DeviceNotFoundError(RuntimeError):
 class RegisterNotFoundError(RuntimeError):
     pass
 
+class RegisterTypeNotFoundError(RuntimeError):
+    pass
 
 class Chipset:
 
@@ -585,6 +587,8 @@ class Chipset:
             reg_value = self.msgbus.msgbus_reg_read( int(reg['port'],16), int(reg['offset'],16) )
         elif RegisterType.MM_MSGBUS == rtype:
             reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'],16), int(reg['offset'],16))
+        else:
+            raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
         return reg_value
 
@@ -621,6 +625,8 @@ class Chipset:
             self.msgbus.msgbus_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value ) 
         elif RegisterType.MM_MSGBUS == rtype:
             self.msgbus.mm_msgbus_reg_write(int(reg['port'],16), int(reg['offset'],16), reg_value)
+        else:
+            raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
     def read_register_dict( self, reg_name):
         reg_value = self.read_register(reg_name)
