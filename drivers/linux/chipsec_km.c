@@ -1530,7 +1530,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
         case IOCTL_WRMMIO:
 	{
-        unsigned long addr, value;
+        unsigned long addr, value, first, second;
         char *ioaddr;
 		
         numargs = 3;
@@ -1558,8 +1558,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 				break;
             case 8:
             #ifdef __x86_64__
-                iowrite32( ( value >> 32 ) & 0xFFFFFFFF, ioaddr );
-                iowrite32( value & 0xFFFFFFFF, ioaddr + 4 );
+                first = value & 0xFFFFFFFF;
+                second = (value >> 32) & 0xFFFFFFFF;
+
+                iowrite32(first, ioaddr);
+                iowrite32(second, ioaddr + 4);
             #endif
                 break;
 		}
