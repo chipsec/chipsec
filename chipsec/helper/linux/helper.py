@@ -104,6 +104,7 @@ class LinuxHelper(Helper):
     DEV_PORT = "/dev/port"
     MODULE_NAME = "chipsec"
     SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
+    SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT = False
     DKMS_DIR = "/var/lib/dkms/"
 
     def __init__(self):
@@ -139,7 +140,9 @@ class LinuxHelper(Helper):
     # This function load CHIPSEC driver
     def load_chipsec_module(self):
         page_is_ram = ""
+        phys_mem_access_prot = ""
         a1 = ""
+        a2 = ""
         if self.SUPPORT_KERNEL26_GET_PAGE_IS_RAM:
             page_is_ram = self.get_page_is_ram()
             if not page_is_ram:
@@ -147,13 +150,21 @@ class LinuxHelper(Helper):
                     logger().log("Cannot find symbol 'page_is_ram'")
             else:
                 a1 = "a1=0x%s" % page_is_ram 
+        if self.SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT:
+            phys_mem_access_prot = self.get_phys_mem_access_prot()
+            if not phys_mem_access_prot:
+                if logger().VERBOSE:
+                    logger().log("Cannot find symbol 'phys_mem_access_prot'")
+            else:
+                a2 = "a2=0x%s" % phys_mem_access_prot 
+
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper" ,"linux", "chipsec.ko" )
         if not os.path.exists(driver_path):
             #check DKMS modules location
             driver_path = self.get_dkms_module_location()
             if not os.path.exists(driver_path):
                 raise Exception("Cannot find chipsec.ko module")
-        subprocess.check_output( [ "insmod", driver_path, a1 ] )
+        subprocess.check_output( [ "insmod", driver_path, a1, a2 ] )
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)
         os.chmod(self.DEVICE_NAME, 600)
@@ -1014,6 +1025,13 @@ class LinuxHelper(Helper):
         symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
             if "page_is_ram" in line:
+               return line.split(" ")[0]
+
+    def get_phys_mem_access_prot( self ):
+        PROC_KALLSYMS = "/proc/kallsyms"
+        symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
+        for line in symarr:
+            if "phys_mem_access_prot" in line:
                return line.split(" ")[0]
 
     def decompress_data(self, funcs, cdata):
