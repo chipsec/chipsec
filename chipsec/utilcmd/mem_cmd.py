@@ -132,13 +132,14 @@ class MemCommand(BaseCommand):
         elif 'search' == op and len(self.argv) > 5:
             phys_address = int(self.argv[3],16)
             size         = int(self.argv[4],16)
-            target = 0
-            for i in range(0, len(self.argv[5])):
-                target += ord(self.argv[5][i]) << (i * 8)
                       
             buffer = self.cs.mem.read_physical_mem( phys_address, size )
             offset = buffer.find(self.argv[5])
-            self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, target address= 0x%X..' % (phys_address, size, phys_address + offset) )
+
+            if offset != -1:
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, target address= 0x%X..' % (phys_address, size, phys_address + offset) )
+            else:
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, can not find the target in the searched range..' % (phys_address, size) )
 
         elif 'pagedump' == op and len(self.argv) > 3:
             start   = long(self.argv[3],16)
