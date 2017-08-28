@@ -428,6 +428,10 @@ class Chipset:
                 for _device in _pci.iter('device'):
                     _name = _device.attrib['name']
                     del _device.attrib['name']
+                    if 'undef' in _device.attrib and _name in self.Cfg.CONFIG_PCI:
+                        if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _device.attrib['undef']))
+                        self.Cfg.CONFIG_PCI.pop(_name, None)
+                        continue
                     self.Cfg.CONFIG_PCI[ _name ] = _device.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _device.attrib) )
             if logger().VERBOSE: logger().log( "[*] loading MMIO BARs.." )
@@ -435,6 +439,10 @@ class Chipset:
                 for _bar in _mmio.iter('bar'):
                     _name = _bar.attrib['name']
                     del _bar.attrib['name']
+                    if 'undef' in _bar.attrib and _name in self.Cfg.MMIO_BARS:
+                        if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
+                        self.Cfg.MMIO_BARS.pop(_name, None)
+                        continue
                     self.Cfg.MMIO_BARS[ _name ] = _bar.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _bar.attrib) )
             if logger().VERBOSE: logger().log( "[*] loading I/O BARs.." )
@@ -442,6 +450,10 @@ class Chipset:
                 for _bar in _io.iter('bar'):
                     _name = _bar.attrib['name']
                     del _bar.attrib['name']
+                    if 'undef' in _bar.attrib and _name in self.Cfg.IO_BARS:
+                        if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
+                        self.Cfg.IO_BARS.pop(_name, None)
+                        continue
                     self.Cfg.IO_BARS[ _name ] = _bar.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _bar.attrib) )
             if logger().VERBOSE: logger().log( "[*] loading memory ranges.." )
@@ -449,6 +461,10 @@ class Chipset:
                 for _range in _memory.iter('range'):
                     _name = _range.attrib['name']
                     del _range.attrib['name']
+                    if 'undef' in _range.attrib and _name in self.Cfg.MEMORY_RANGES:
+                        if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _range.attrib['undef']))
+                        self.Cfg.MEMORY_RANGES.pop(_name, None)
+                        continue
                     self.Cfg.MEMORY_RANGES[ _name ] = _range.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _range.attrib) )
             if logger().VERBOSE: logger().log( "[*] loading configuration registers.." )
@@ -456,6 +472,10 @@ class Chipset:
                 for _register in _registers.iter('register'):
                     _name = _register.attrib['name']
                     del _register.attrib['name']
+                    if 'undef' in _register.attrib and _name in self.Cfg.REGISTERS:
+                        if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _register.attrib['undef']))
+                        self.Cfg.REGISTERS.pop(_name, None)
+                        continue
                     if 'size' not in _register.attrib: _register.attrib['size'] = "0x4"
                     if 'desc' not in _register.attrib: _register.attrib['desc'] = ''
                     reg_fields = {}
@@ -473,6 +493,10 @@ class Chipset:
                 for _control in _controls.iter('control'):
                     _name = _control.attrib['name']
                     del _control.attrib['name']
+                    if 'undef' in _control.attrib and _name in self.Cfg.CONTROLS:
+                        if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
+                        self.Cfg.CONTROLS.pop(_name, None)
+                        continue
                     self.Cfg.CONTROLS[ _name ] = _control.attrib
                     if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _control.attrib) )
 
