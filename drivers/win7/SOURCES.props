@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <TARGETNAME Condition="'$(OVERRIDE_TARGETNAME)'!='true'">chipsec_hlpr</TARGETNAME>
+    <TARGETPATH Condition="'$(OVERRIDE_TARGETPATH)'!='true'">.\sys</TARGETPATH>
+    <TARGETTYPE Condition="'$(OVERRIDE_TARGETTYPE)'!='true'">DRIVER</TARGETTYPE>
+    <TARGETLIBS Condition="'$(OVERRIDE_TARGETLIBS)'!='true'">$(DDK_LIB_PATH)\wdmsec.lib</TARGETLIBS>
+    <INCLUDES Condition="'$(OVERRIDE_INCLUDES)'!='true'">include</INCLUDES>
+    <AMD64_SOURCES Condition="'$(OVERRIDE_AMD64_SOURCES)'!='true'">amd64\cpu.asm</AMD64_SOURCES>
+    <I386_SOURCES Condition="'$(OVERRIDE_I386_SOURCES)'!='true'">i386\cpu.asm</I386_SOURCES>
+    <SOURCES Condition="'$(OVERRIDE_SOURCES)'!='true'">driver.c chipsec_hlpr.rc</SOURCES>
+    <CoercedMacro_386_ADBGFLAGS Condition="'$(OVERRIDE_CoercedMacro_386_ADBGFLAGS)'!='true'">/Fl$(O)\cpu.lst</CoercedMacro_386_ADBGFLAGS>
+    <LINKER_FLAGS Condition="'$(OVERRIDE_LINKER_FLAGS)'!='true'">$(LINKER_FLAGS)      /VERBOSE      /MAP</LINKER_FLAGS>
+  </PropertyGroup>
+</Project>
