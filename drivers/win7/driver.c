@@ -402,102 +402,100 @@ DriverDeviceControl(
             break;
           }
         case IOCTL_READ_PHYSMEM:
-          {
+        {
             UINT32 len = 0;
             PVOID virt_addr;
             PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
 
-            DbgPrint( "[chipsec] > IOCTL_READ_PHYSMEM\n" );
-            if( !Irp->AssociatedIrp.SystemBuffer ||
-                IrpSp->Parameters.DeviceIoControl.InputBufferLength < 3*sizeof(UINT32))
-              {
-                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n" );
+            DbgPrint("[chipsec] > IOCTL_READ_PHYSMEM\n");
+            if (!Irp->AssociatedIrp.SystemBuffer ||
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(CHIPSEC_IO_PHYSMEM))
+            {
+                DbgPrint("[chipsec][IOCTL_READ_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n");
                 Status = STATUS_INVALID_PARAMETER;
                 break;
-              }
+            }
 
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+            PCHIPSEC_IO_PHYSMEM IoUserData = (PCHIPSEC_IO_PHYSMEM)Irp->AssociatedIrp.SystemBuffer;
 
-            phys_addr.HighPart = ((UINT32*)pInBuf)[0];
-            phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
-            len                = ((UINT32*)pInBuf)[2];
-            if( !len ) len = 4;
+            phys_addr = IoUserData->PhysicalAddress;
+            len = IoUserData->Length;
+            if (!len) len = sizeof(ULONG32);
 
-            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < len )
-              {
-                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
+            if (IrpSp->Parameters.DeviceIoControl.OutputBufferLength < (len + sizeof(CHIPSEC_IO_PHYSMEM)))
+            {
+                DbgPrint("[chipsec][IOCTL_READ_PHYSMEM] ERROR: STATUS_BUFFER_TOO_SMALL\n");
                 Status = STATUS_BUFFER_TOO_SMALL;
                 break;
-              }
+            }
 
             __try
-              {
-                Status = _read_phys_mem( phys_addr, len, pOutBuf );
-              }
+            {
+                Status = _read_phys_mem(phys_addr, len, pOutBuf);
+            }
             __except (EXCEPTION_EXECUTE_HANDLER)
-              {
+            {
                 Status = GetExceptionCode();
-                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] ERROR: exception code 0x%X\n", Status );
+                DbgPrint("[chipsec][IOCTL_READ_PHYSMEM] ERROR: exception code 0x%X\n", Status);
                 break;
-              }
+            }
 
-            if( NT_SUCCESS(Status) )
-              {
-                DbgPrint( "[chipsec][IOCTL_READ_PHYSMEM] Contents:\n" );
-                _dump_buffer( (unsigned char *)pOutBuf, min(len,0x100) );
+            if (NT_SUCCESS(Status))
+            {
+                DbgPrint("[chipsec][IOCTL_READ_PHYSMEM] Contents:\n");
+                _dump_buffer((unsigned char *)pOutBuf, min(len, 0x100));
                 dwBytesWritten = len;
-              }
+            }
             break;
-          }
+        }
         case IOCTL_WRITE_PHYSMEM:
-          {
+        {
             UINT32 len = 0;
             PVOID virt_addr = 0;
             PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
 
-            DbgPrint( "[chipsec] > IOCTL_WRITE_PHYSMEM\n" );
-            if( Irp->AssociatedIrp.SystemBuffer )
-              {
-                pInBuf = Irp->AssociatedIrp.SystemBuffer;
-                pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+            DbgPrint("[chipsec] > IOCTL_WRITE_PHYSMEM\n");
+            if (Irp->AssociatedIrp.SystemBuffer)
+            {
+                PCHIPSEC_IO_PHYSMEM IoUserData = (PCHIPSEC_IO_PHYSMEM)Irp->AssociatedIrp.SystemBuffer;
 
-                if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < 3*sizeof(UINT32) )
-                  {
-                    DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n" );
+                if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(CHIPSEC_IO_PHYSMEM))
+                {
+                    DbgPrint("[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n");
                     Status = STATUS_INVALID_PARAMETER;
                     break;
-                  }
+                }
 
-                phys_addr.HighPart = ((UINT32*)pInBuf)[0];
-                phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
-                len                = ((UINT32*)pInBuf)[2];
-                ((UINT32*)pInBuf) += 3;
+                phys_addr = IoUserData->PhysicalAddress;
+                len = IoUserData->Length;
+                IoUserData++;
 
-                if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3*sizeof(UINT32) )
-                  {
-                    DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n" );
+                if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < (len + sizeof(CHIPSEC_IO_PHYSMEM)))
+                {
+                    DbgPrint("[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: STATUS_INVALID_PARAMETER\n");
                     Status = STATUS_INVALID_PARAMETER;
                     break;
-                  }
+                }
 
-                DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] Writing contents:\n" );
-                _dump_buffer( (unsigned char *)pInBuf, min(len,0x100) );
+                DbgPrint("[chipsec][IOCTL_WRITE_PHYSMEM] Writing contents:\n");
+                _dump_buffer((unsigned char *)IoUserData, min(len, 0x100));
 
                 __try
-                  {
-                    Status = _write_phys_mem( phys_addr, len, pInBuf );
-                  }
+                {
+                    Status = _write_phys_mem(phys_addr, len, IoUserData);
+                }
                 __except (EXCEPTION_EXECUTE_HANDLER)
-                  {
+                {
                     Status = GetExceptionCode();
-                    DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: exception code 0x%X\n", Status );
+                    DbgPrint("[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: exception code 0x%X\n", Status);
                     break;
-                  }
+                }
 
                 break;
-              }
-          }
+            }
+        }
         case IOCTL_ALLOC_PHYSMEM:
           {
             SIZE_T NumberOfBytes = 0;
