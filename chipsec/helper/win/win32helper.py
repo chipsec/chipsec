@@ -73,6 +73,7 @@ kernel32 = windll.kernel32
 
 drv_hndl_error_msg = "Cannot open chipsec driver handle. Make sure chipsec driver is installed and started if you are using option -e (see README)"
 
+DRIVER_FILE_PATHS = [ os.path.join( "C:\\", "Windows", "System32", "drivers"), os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "win", "win7_" + platform.machine().lower()) ]
 DRIVER_FILE_NAME = "chipsec_hlpr.sys"
 DEVICE_FILE      = "\\\\.\\chipsec_hlpr"
 SERVICE_NAME     = "chipsec"
@@ -244,7 +245,8 @@ class Win32Helper(Helper):
 
     def __init__(self):
         super(Win32Helper, self).__init__()
-        import platform
+
+        import platform, os
         self.os_system  = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
@@ -254,14 +256,23 @@ class Win32Helper(Helper):
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
             if logger().HAL: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
-            if logger().HAL: logger().log( "[helper] Using 'helper/win/%s' path for driver" % win_ver )
 
         self.use_existing_service = False
 
-        self.driver_path    = None
         self.win_ver        = win_ver
         self.driver_handle  = None
         self.device_file    = pywintypes.Unicode(DEVICE_FILE)
+
+        # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
+        self.driver_path    = None
+        for path in DRIVER_FILE_PATHS:
+            driver_path = os.path.join(path, DRIVER_FILE_NAME)
+            if os.path.isfile(driver_path): 
+                self.driver_path = driver_path
+                if logger().HAL: logger().log("[helper] found driver in %s" % driver_path)
+        if self.driver_path == None: 
+            if logger().HAL: logger().log("[helper] CHIPSEC Windows Driver Not Found")
+            raise DriverNotFound
 
         c_int_p = POINTER(c_int)
 
@@ -351,14 +362,7 @@ class Win32Helper(Helper):
             handle_winerror(fn, msg, hr)
 
         if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
-
-        driver_path = os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "win", self.win_ver, DRIVER_FILE_NAME )
-        if os.path.isfile( driver_path ):
-            self.driver_path = driver_path
-            if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
-        else:
-            logger().error( "could not locate driver file '%.256s'" % driver_path )
-            return False
+        if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
 
         try:
             hs = win32service.CreateService(
@@ -369,7 +373,7 @@ class Win32Helper(Helper):
                  win32service.SERVICE_KERNEL_DRIVER,
                  win32service.SERVICE_DEMAND_START,
                  win32service.SERVICE_ERROR_NORMAL,
-                 os.path.abspath(driver_path),
+                 os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
                 if logger().VERBOSE: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )

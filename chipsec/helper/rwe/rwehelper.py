@@ -72,10 +72,11 @@ kernel32 = windll.kernel32
 
 drv_hndl_error_msg = "Cannot open rwe driver handle. Make sure rwe driver is installed and started if you are using option -e (see README)"
 
-DRIVER_FILE_NAME = "RwDrv.sys"
-DEVICE_FILE      = "\\\\.\\RwDrv"
-SERVICE_NAME     = "RwDrv"
-DISPLAY_NAME     = "RwDrv"
+DRIVER_FILE_PATHS   = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", "win7_" + platform.machine().lower())] 
+DRIVER_FILE_NAME    = "RwDrv.sys"
+DEVICE_FILE         = "\\\\.\\RwDrv"
+SERVICE_NAME        = "RwDrv"
+DISPLAY_NAME        = "RwDrv"
 
 CHIPSEC_INSTALL_PATH = os.path.join(sys.prefix, "Lib\site-packages\chipsec")
 
@@ -247,7 +248,8 @@ class RweHelper(Helper):
 
     def __init__(self):
         super(RweHelper, self).__init__()
-        import platform
+
+        import platform, os
         self.os_system  = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
@@ -257,14 +259,23 @@ class RweHelper(Helper):
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
             if logger().HAL: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
-            if logger().HAL: logger().log( "[helper] Using 'helper/win/%s' path for driver" % win_ver )
 
         self.use_existing_service = False
 
-        self.driver_path    = None
         self.win_ver        = win_ver
         self.driver_handle  = None
         self.device_file    = pywintypes.Unicode(DEVICE_FILE)
+
+        # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
+        self.driver_path    = None
+        for path in DRIVER_FILE_PATHS:
+            driver_path = os.path.join(path, DRIVER_FILE_NAME)
+            if os.path.isfile(driver_path): 
+                self.driver_path = driver_path
+                if logger().HAL: logger().log("[helper] found driver in %s" % driver_path)
+        if self.driver_path == None: 
+            if logger().HAL: logger().log("[helper] RWE Driver Not Found")
+            raise DriverNotFound
 
         c_int_p = POINTER(c_int)
 
@@ -354,14 +365,7 @@ class RweHelper(Helper):
             handle_winerror(fn, msg, hr)
 
         if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
-
-        driver_path = os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", self.win_ver, DRIVER_FILE_NAME )
-        if os.path.isfile( driver_path ):
-            self.driver_path = driver_path
-            if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
-        else:
-            logger().error( "could not locate driver file '%.256s'" % driver_path )
-            return False
+        if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
 
         try:
             hs = win32service.CreateService(
@@ -372,7 +376,7 @@ class RweHelper(Helper):
                  win32service.SERVICE_KERNEL_DRIVER,
                  win32service.SERVICE_DEMAND_START,
                  win32service.SERVICE_ERROR_NORMAL,
-                 os.path.abspath(driver_path),
+                 os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
                 if logger().VERBOSE: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )
@@ -926,6 +930,48 @@ class RweHelper(Helper):
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
         logger().error( "[helper] Message Bus is not supported yet" )
         return None       
+
+    def get_tool_path( self, tool_type ):
+        tool_name, tool_pathdef = self.get_tool_info( tool_type )
+        tool_path = tool_pathdef
+
+        try:
+            import pkg_resources
+            tool_path = pkg_resources.resource_filename( '%s.%s' % (chipsec.file.TOOLS_DIR,self.os_system.lower()), tool_name )
+        except ImportError:
+            pass
+
+        if not os.path.isfile( tool_path ):
+            tool_path = os.path.join( tool_pathdef, tool_name )
+            if not os.path.isfile( tool_path ): logger().error( "Couldn't find %s" % tool_path )
+
+        return tool_path
+
+
+    def get_compression_tool_path( self, compression_type ):
+        return self.get_tool_path( compression_type )
+
+    #
+    # Decompress binary with OS specific tools
+    #
+    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+        import subprocess
+        if (CompressionType == 0): # not compressed
+          shutil.copyfile(CompressedFileName, OutputFileName)
+        else:
+          exe = self.get_compression_tool_path( CompressionType )
+          if exe is None: return None 
+          try:
+            subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
+          except BaseException, msg:
+            logger().error( str(msg) )
+            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
+            return None
+
+        return chipsec.file.read_file( OutputFileName )
+
+
+
 
     #
     # File system

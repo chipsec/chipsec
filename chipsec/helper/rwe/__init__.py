@@ -20,7 +20,8 @@
 #
 
 import platform, os
-if "windows" == platform.system().lower() and os.environ.has_key("USERWE"):
+
+if "windows" == platform.system().lower():
     __all__ = [ "rwehelper" ]
 else:
     __all__ = [ ]

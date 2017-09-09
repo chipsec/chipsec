@@ -193,8 +193,8 @@ class MsgBus(hal_base.HALBase):
         was_hidden = False
         if self.cs.is_register_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
-        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
-        reg_val = self.cs.mem.read_physical_mem_dword(mmio_addr)
+        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0]
+        reg_val = self.cs.mmio.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
         if self.cs.is_register_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val
@@ -203,8 +203,8 @@ class MsgBus(hal_base.HALBase):
         was_hidden = False
         if self.cs.is_register_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
-        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] | ((port & 0xFF) << 16) | (register & 0xFFFF)
-        reg_val = self.cs.mem.write_physical_mem_dword(mmio_addr, data)
+        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] 
+        reg_val = self.cs.mmio.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
         if self.cs.is_register_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val

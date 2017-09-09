@@ -106,7 +106,7 @@ class bios_wp(BaseModule):
                     # overlap bottom
                     start,end = area
                     if base <= start and limit >= start:
-                        if limit > end:
+                        if limit >= end:
                             areas_to_protect.remove(area)
                         else:
                             areas_to_protect.remove(area)
@@ -115,7 +115,7 @@ class bios_wp(BaseModule):
 
                     # overlap top
                     elif base <= end and limit >= end:
-                        if base < start:
+                        if base <= start:
                             areas_to_protect.remove(area)
                         else:
                             areas_to_protect.remove(area)

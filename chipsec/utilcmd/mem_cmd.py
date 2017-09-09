@@ -96,7 +96,7 @@ class MemCommand(BaseCommand):
 
     Examples:
 
-    >>> chipsec_util mem <op>     <physical_address> <length> [value|file]
+    >>> chipsec_util mem <op>     <physical_address> <length> [value|file]                      
     >>> chipsec_util mem readval  0xFED40000         dword
     >>> chipsec_util mem read     0x41E              0x20     buffer.bin
     >>> chipsec_util mem writeval 0xA0000            dword    0x9090CCCC
@@ -104,6 +104,7 @@ class MemCommand(BaseCommand):
     >>> chipsec_util mem write    0x100000000        0x10     000102030405060708090A0B0C0D0E0F
     >>> chipsec_util mem allocate                    0x1000
     >>> chipsec_util mem pagedump 0xFED00000         0x100000
+    >>> chipsec_util mem search   0xF0000            0x10000  _SM_                        
     """
 
 
@@ -127,6 +128,18 @@ class MemCommand(BaseCommand):
             size = int(self.argv[3],16)
             (va, pa) = self.cs.mem.alloc_physical_mem( size )
             self.logger.log( '[CHIPSEC] Allocated %X bytes of physical memory: VA = 0x%016X, PA = 0x%016X' % (size, va, pa) )
+
+        elif 'search' == op and len(self.argv) > 5:
+            phys_address = int(self.argv[3],16)
+            size         = int(self.argv[4],16)
+                      
+            buffer = self.cs.mem.read_physical_mem( phys_address, size )
+            offset = buffer.find(self.argv[5])
+
+            if offset != -1:
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, target address= 0x%X..' % (phys_address, size, phys_address + offset) )
+            else:
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, can not find the target in the searched range..' % (phys_address, size) )
 
         elif 'pagedump' == op and len(self.argv) > 3:
             start   = long(self.argv[3],16)
@@ -214,4 +227,5 @@ class MemCommand(BaseCommand):
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
 
-commands = { 'mem': MemCommand }
+commands = { 'mem': MemCommand }
+
