@@ -38,7 +38,7 @@ import sys
 import os.path
 from collections import namedtuple
 
-from chipsec.hal import acpi, hal_base
+from chipsec.hal import acpi, hal_base, paging
 from chipsec.logger import logger
 
 VMM_NONE    = 0
@@ -119,7 +119,7 @@ class CPU(hal_base.HALBase):
     def get_number_threads_from_APIC_table(self):
         _acpi = acpi.ACPI( self.cs )
         dACPIID = {}
-        (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( chipsec.hal.acpi.ACPI_TABLE_SIG_APIC )
+        (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( acpi.ACPI_TABLE_SIG_APIC )
         for structure in APIC_object.apic_structs:
             if 0x00 == structure.Type:
                 if dACPIID.has_key( structure.APICID ) == False:
@@ -206,7 +206,7 @@ class CPU(hal_base.HALBase):
     #
     def dump_page_tables( self, cr3, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
-        hpt = chipsec.hal.paging.c_ia32e_page_tables( self.cs )
+        hpt = paging.c_ia32e_page_tables( self.cs )
         if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x%08X...' % cr3 )
         if pt_fname is None: pt_fname = ('pt_%08X' % cr3)
         logger().set_log_file( pt_fname )
