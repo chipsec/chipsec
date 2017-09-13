@@ -30,15 +30,40 @@ from chipsec.logger import logger, print_buffer
 
 from chipsec_tools import efi_compressor
 
-IOCTL_RDPCI   = 0xc00c7001
-IOCTL_WRPCI   = 0xc00c7002
-IOCTL_RDMMIO  = 0xc0187003
-IOCTL_WRMMIO  = 0xc0187004
+MSGBUS_MDR_IN_MASK          = 0x1
+MSGBUS_MDR_OUT_MASK         = 0x2
+
+IOCTL_RDPCI                 = 0xc00c7001
+IOCTL_WRPCI                 = 0xc00c7002
+IOCTL_RDMMIO                = 0xc0187003
+IOCTL_WRMMIO                = 0xc0187004
+IOCTL_RDCR                  = 0xc0107005
+IOCTL_WRCR                  = 0xc0107006
+IOCTL_RDIO                  = 0xc0187007
+IOCTL_WRIO                  = 0xc0187008
+IOCTL_CPUID                 = 0xc0207009
+IOCTL_RDMSR                 = 0xc018700a
+IOCTL_WRMSR                 = 0xc018700b
+IOCTL_SWSMI                 = 0xc038700c
+IOCTL_HYPERCALL             = 0xc060700d
+IOCTL_MSGBUS_SEND_MESSAGE   = 0xc028700e
+IOCTL_CPU_DESCRIPTOR_TABLE  = 0xc038700f
+IOCTL_ALLOC_PHYSMEM         = 0xc0207010
 
 # Format for the IOCTL structures. See chipsec_ioctl.h for the complete
 # definition.
-_pci_msg_t_fmt = "BBBHBI"
-_mmio_msg_t_fmt = "QQB"
+_pci_msg_t_fmt       = "BBBHBI"
+_mmio_msg_t_fmt      = "QQB"
+_io_msg_t_fmt        = "QQQ"
+_cr_msg_t_fmt        = "IQ"
+_msr_msg_t_fmt       = "QQQ"
+_cpuid_msg_t_fmt     = "QQQQ"
+_smi_msg_t_fmt       = "QQQQQQQ"
+_hypercall_msg_t_fmt = "QQQQQQQQQQQQ"
+_msgbus_msg_t_fmt    = "QQQQQ"
+_cpudes_msg_t_fmt    = "QQQQQQQ"
+_ucodeh_msg_t_fmt    = "BH"
+_alloc_mem_msg_t_fmt = "QQQQ"
 
 
 LZMA  = efi_compressor.LzmaDecompress
@@ -117,6 +142,8 @@ class OSXHelper(Helper):
         self.dev_fh = None
 
     def ioctl(self, ioctl_name, args):
+        print "name", hex(ioctl_name)
+        print "args", str(args)
         return fcntl.ioctl(self.dev_fh, ioctl_name, args)
 
     def mem_read_block(self, addr, sz):
@@ -200,7 +227,14 @@ class OSXHelper(Helper):
 
     def get_tool_info( self, tool_type ):
         raise NotImplementedError()
-
+    
+    #
+    # Logical CPU count
+    #
+    def get_threads_count (self):
+        import subprocess
+        return int(subprocess.check_output("sysctl -n hw.ncpu", shell=True))
+    
     #########################################################
     # EFI Runtime API
     #########################################################
@@ -237,43 +271,95 @@ class OSXHelper(Helper):
     #########################################################
 
     def read_io_port(self, io_port, size):
-        raise NotImplementedError()
+        in_buf = struct.pack(_io_msg_t_fmt, io_port, size, 0)
+        out_buf = self.ioctl(IOCTL_RDIO,in_buf)
+        try:
+            if 1 == size:
+                value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xff
+            elif 2 == size:
+                value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffff
+            else:
+                value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffffffff
+        except:
+            logger().error("DeviceIoControl did not return value of proper size %x (value = '%s')" %(size,out_buf))
+        return value
 
     def write_io_port(self, io_port, value, size):
-        raise NotImplementedError()
+        in_buf = struct.pack(_io_msg_t_fmt, io_port, size, value)
+        return self.ioctl(IOCTL_WRIO,in_buf)
 
     def read_cr(self, cpu_thread_id, cr_number):
-        raise NotImplementedError()
+        #self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(_cr_msg_t_fmt,cr_number,0)
+        out_buf = self.ioctl(IOCTL_RDCR,in_buf)
+        value = struct.unpack(_cr_msg_t_fmt,out_buf)[1]
+        return value
 
     def write_cr(self, cpu_thread_id, cr_number, value):
-        raise NotImplementedError()
+        #self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(_cr_msg_t_fmt,cr_number,value)
+        return self.ioctl(IOCTL_WRCR,in_buf)
 
     def read_msr(self, thread_id, msr_addr):
-        raise NotImplementedError()
+        #self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(_msr_msg_t_fmt,msr_addr,0,0)
+        out_buf = self.ioctl(IOCTL_RDMSR,in_buf)
+        value = struct.unpack(_msr_msg_t_fmt,)
+        return (value[1],value[2])
 
     def write_msr(self, thread_id, msr_addr, eax, edx):
-        raise NotImplementedError()
+        #self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(_msr_msg_t_fmt,msr_addr,0,0)
+        return self.ioctl(IOCTL_WRMSR,in_buf)
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
-        raise NotImplementedError()
-
-    def do_hypercall(self, vector, arg1, arg2, arg3, arg4, arg5, use_peach):
-        raise NotImplementedError()
+        #self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(_cpudes_msg_t_fmt,cpu_thread_id, desc_table_code, 0, 0, 0,0,0)
+        out_buf = self.ioctl(IOCTL_CPU_DESCRIPTOR_TABLE, in_buf)
+        (limit,base_hi,base_lo,pa_hi,pa_lo) = struct.unpack(_cpudes_msg_t_fmt,out_buf)[2:]
+        pa = (pa_hi << 32) + pa_lo
+        base = (base_hi << 32) + base_lo
+        return (limit,base,pa)
+    
+    def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
+        in_buf = struct.pack(_hypercall_msg_t_fmt,rcx,rdx,r8,r9,r10,r11,rax,rbx,rdi,rsi,xmm_buffer,0)
+        out_buf = self.ioctl(IOCTL_HYPERCALL,in_buf)
+        return struct.unpack(_hypercall_msg_t_fmt,out_buf)[11]
 
     def cpuid(self, eax, ecx):
-        raise NotImplementedError()
+        in_buf = struct.pack(_cpuid_msg_t_fmt,eax,0,ecx,0)
+        print hex(len(in_buf))
+        print in_buf
+        out_buf = self.ioctl(IOCTL_CPUID,in_buf)
+        return struct.unpack(_cpuid_msg_t_fmt,out_buf)
 
     def alloc_phys_mem(self, num_bytes, max_addr):
-        raise NotImplementedError()
+        in_buf = struct.pack(_alloc_mem_msg_t_fmt,num_bytes,max_addr,0,0)
+        out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, inbuf)
+        return struct.unpack(_alloc_mem_msg_t_fmt, out_buf)[2:]
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        raise NotImplementedError()
-
+        mdr_out = 0
+        in_buf  = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out)
+        out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        mdr_out = struct.unpack( _msgbus_msg_t_fmt, out_buf)[4]
+        return mdr_out
+    
     def msgbus_send_write_message( self, mcr, mcrx, mdr):
-        raise NotImplementedError()
+        mdr_out = 0
+        in_buf  = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, mdr_out)
+        out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        return
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None):
-        raise NotImplementedError()
+        mdr_out = 0
+        if mdr is None:
+            in_buf = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out)
+        else:
+            in_buf = struct.pack(_msgbus_msg_t_fmt, (MSGBUS_MDR_IN_MASK | MSGBUS_MDR_OUT_MASK), mcr, mcrx, mdr, mdr_out)
+        out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        mdr_out = struct.unpack( _msgbus_msg_t_fmt, out_buf)[4]
+        return mdr_out
 
     def get_affinity(self):
         raise NotImplementedError()
@@ -282,10 +368,27 @@ class OSXHelper(Helper):
         raise NotImplementedError()
 
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
-        raise NotImplementedError()
+        #self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(_smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+        out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
+        return
 
     def map_io_space(self, base, size, cache_type):
         raise NotImplementedError()
+
+    def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
+        cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
+        in_buf = struct.pack(_ucodeh_msg_t_fmt, cpu_thread_id,len(ucode_update_buf))+ ucode_update_buf
+        in_buf_final = array.array("c",in_buf)
+        out_len = 0
+        out_buf = (ctypes.c_char * out_length)()
+        try:
+            out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
+        except IOError:
+            print "IOError IOCTL Load Patch\n"
+            return None
+
+        return True
 
 def get_helper():
     return OSXHelper()

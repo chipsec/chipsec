@@ -153,6 +153,39 @@ void WritePCICfg(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t off,
     }
 }
 
+uint32_t ReadIOPort(uint32_t io_port, uint8_t size)
+{
+    uint32_t result = 0;
+    switch (size)
+    {
+        case 1:
+            result = ReadPortByte(io_port);
+            break;
+        case 2:
+            result = ReadPortWord(io_port);
+            break;
+        case 4:
+            result = ReadPortDword(io_port);
+            break;
+    }
+    return result;
+}
+
+void WriteIOPort(uint32_t io_port, uint8_t size, uint32_t value){
+    switch(size)
+    {
+        case 1:
+            WritePortByte(value,io_port);
+            break;
+        case 2:
+            WritePortWord(value,io_port);
+            break;
+        case 4:
+            WritePortDword(value,io_port);
+            break;
+    }
+}
+
 // This function is called whenever a program in user space tries to read from
 // the device file. It will dispatch the appropriate function for the file that
 // is read by inspecting the given minor number.
@@ -374,6 +407,14 @@ static kern_return_t pmem_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
     pci_msg_t kpci;
     mmio_msg_t kmmio;
     cr_msg_t kcr;
+    io_msg_t kio;
+    msr_msg_t kmsr;
+    cpuid_msg_t kcpuid;
+    swsmi_msg_t kswsmi;
+    hypercall_msg_t khypercall;
+    msgbus_msg_t kmsgbus;
+    cpudes_msg_t kcpudes;
+    alloc_pmem_msg_t kalloc_pmem;
 
     pmem_log("cmd = %x", cmd);
 
@@ -479,6 +520,139 @@ static kern_return_t pmem_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
                     break;
             }
             bcopy(&kcr, data, sizeof(cr_msg_t));
+            break;
+            
+        case CHIPSEC_IOC_RDIO:
+            pmem_log("RDIO");
+            bcopy(data,&kio, sizeof(io_msg_t));
+            pmem_log("ReadIO %i from %x", kio.size, kio.port);
+            kio.value = ReadIOPort((uint32_t)kio.port, kio.size);
+            bcopy(&kio,data,sizeof(io_msg_t));
+            break;
+            
+        case CHIPSEC_IOC_WRIO:
+            pmem_log("WRIO");
+            bcopy(data,&kio, sizeof(io_msg_t));
+            pmem_log("WriteIO  %x to %x size %d", kio.value, kio.port,kio.size);
+            WriteIOPort((uint32_t)kio.port, kio.size, (uint32_t)kio.value);
+            break;
+            
+        case CHIPSEC_IOC_RDMSR:
+            pmem_log("RDMSR");
+            bcopy(data,&kmsr, sizeof(msr_msg_t));
+            pmem_log("ReadMSR %x", kmsr.msr_num);
+            ReadMSR(kmsr.msr_num, &kmsr.msr_lo, &kmsr.msr_hi);
+            bcopy(&kmsr,data,sizeof(msr_msg_t));
+            break;
+            
+        case CHIPSEC_IOC_WRMSR:
+            pmem_log("WRMSR");
+            bcopy(data,&kmsr, sizeof(msr_msg_t));
+            pmem_log("WriteMSR  %x with %x%x", kmsr.msr_num, kmsr.msr_hi,kmsr.msr_lo);
+            WriteMSR(kmsr.msr_num, kmsr.msr_lo, kmsr.msr_hi);
+            break;
+            
+        case CHIPSEC_IOC_CPUID:
+            pmem_log("CPUID");
+            bcopy(data,&kcpuid, sizeof(cpuid_msg_t));
+            pmem_log("WriteMSR  rax %x rcx %x", kcpuid.rax, kcpuid.rcx);
+            chipCPUID(&kcpuid);
+            bcopy(&kcpuid, data, sizeof(cpuid_msg_t));
+            break;
+        
+        case CHIPSEC_IOC_SWSMI:
+            pmem_log("SWSMI");
+            bcopy(data,&kswsmi, sizeof(swsmi_msg_t));
+            pmem_log("Blah");
+            SWSMI(&kswsmi);
+            bcopy(&kswsmi, data, sizeof(swsmi_msg_t));
+            break;
+            
+        case CHIPSEC_IOC_HYPERCALL:
+            pmem_log("HYPERCALL");
+            bcopy(data,&khypercall, sizeof(hypercall_msg_t));
+            pmem_log("Hypercall Data");
+            khypercall.hypercall_page = (uint64_t) & hypercall_page;
+            hypercall(khypercall.rdi, khypercall.rsi, khypercall.rdx, khypercall.rcx, khypercall.r8, khypercall.r9, khypercall.rax, khypercall.rbx, khypercall.r10, khypercall.r11, khypercall.xmm_buffer, khypercall.hypercall_page);
+            bcopy(&khypercall,data, sizeof(hypercall_msg_t));
+            break;
+            
+        case CHIPSEC_IOC_MSGBUS_SEND_MESSAGE:
+            pmem_log("MSGBUG SEND MESSAGE");
+            bcopy(data,&kmsgbus, sizeof(msgbus_msg_t));
+            pmem_log("MSGBUS DATA:");
+            if (kmsgbus.direction & MSGBUS_MDR_IN_MASK){
+                //Write data to MDR register
+                WritePCICfg(MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MDR, 4, (uint32_t)kmsgbus.mdr);
+            }
+            //TODO investigate comment (from linux driver)
+            //Write extended address to MCRX register if address is > 0xff
+            if (kmsgbus.mcrx != 0){
+                WritePCICfg(MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MCRX, 4, (uint32_t)kmsgbus.mcrx);
+            }
+            //Write to MCR register to send the message on the message bus
+            WritePCICfg(MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MCR, 4, (uint32_t)kmsgbus.mcr);
+            
+            if (kmsgbus.direction & MSGBUS_MDR_OUT_MASK){
+                //Read data from MDR register
+                kmsgbus.mdr_out = ReadPCICfg(MSGBUS_BUS, MSGBUS_DEV, MSGBUS_FUN, MDR, 4);
+            }
+            bcopy(&kmsgbus, data, sizeof(msgbus_msg_t));
+            break;
+        
+        case CHIPSEC_IOC_CPU_DESCRIPTOR_TABLE:
+            descriptor_table_record kdtr;
+            IOMemoryDescriptor* io_desc;
+            IOMemoryMap* io_map;
+            pmem_log("GET CPU DESCRIPTOR TABLE");
+            bcopy(data, &kcpudes, sizeof(cpudes_msg_t));
+            pmem_log("GET_CPU_DESCRIPTOR TABLE %x thread %d", kcpudes.des_table_code, kcpudes.cpu_thread_id);
+            switch (kcpudes.des_table_code)
+            {
+                case CPU_DT_CODE_GDTR:
+                    store_gdtr(&kdtr);
+                    break;
+                
+                case CPU_DT_CODE_LDTR:
+                    store_ldtr(&kdtr);
+                    break;
+                
+                case CPU_DT_CODE_IDTR:
+                    store_idtr(&kdtr);
+                    break;
+            
+            }
+            xlate_pa_va(kdtr.base, &io_desc, &io_map);
+            kcpudes.limit = kdtr.limit;
+            kcpudes.base_hi = (kdtr.base >> 32);
+            kcpudes.base_lo = (kdtr.base & 0xFFFFFFFF);
+            kcpudes.pa_hi = (io_map->getPhysicalAddress() >> 32);
+            kcpudes.pa_lo = (io_map->getPhysicalAddress() & 0xFFFFFFFF);
+            bcopy(&kcpudes, data, sizeof(cpudes_msg_t));
+            break;
+            
+        case CHIPSEC_IOC_ALLOC_PHYSMEM:
+            void *va;
+            IOMemoryDescriptor* io_desc1;
+            IOMemoryMap* io_map1;
+            pmem_log("ALLOC PHYSMEM");
+            bcopy(data, &kalloc_pmem, sizeof(alloc_pmem_msg_t));
+            pmem_log("Allocating %x memory, with pa limit of %x", kalloc_pmem.num_bytes, kalloc_pmem.max_addr);
+            va = IOMalloc((uint32_t)kalloc_pmem.num_bytes);
+            if (!va){
+                pmem_log("Could not allocate memory");
+                return -EFAULT;
+            }
+            memset(va, 0, kalloc_pmem.num_bytes);
+            
+            if ( xlate_pa_va((addr64_t) va, &io_desc1, &io_map1) ){
+                pmem_log("Could not map memory");
+            }
+            if (io_map1->getPhysicalAddress() > kalloc_pmem.max_addr){
+                pmem_log("Allocate memory is above max_pa");
+            }
+            kalloc_pmem.virt_addr = (uint64_t)va;
+            kalloc_pmem.phys_addr = io_map1->getPhysicalAddress();
             break;
 
         default:
