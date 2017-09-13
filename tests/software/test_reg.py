@@ -37,9 +37,10 @@ class TestRegChipsecUtil(util.TestChipsecUtil):
         self._chipsec_util("reg read_field PCI0.0.0_TOUUD LOCK")
         self._assertLogValue("PCI0.0.0_TOUUD.LOCK", "0x0")
 
-    #def test_reg_get_control(self):
-    #    self._chipsec_util("reg get_control FlashLockDown")
-    #    self._assertLogValue("FlashLockDown", "0x0")
+    def test_reg_get_control(self):
+        self._chipsec_util("reg get_control FlashLockDown",
+                           mock_helper.SPIHelper)
+        self._assertLogValue("FlashLockDown", "0x0")
 
 if __name__ == '__main__':
     unittest.main()
