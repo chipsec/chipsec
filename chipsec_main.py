@@ -161,9 +161,6 @@ class ChipsecMain:
         self.parse_args()
         self._cs = chipset.cs()
 
-    def get_chipsec_version(self):
-        return self.version
-
     def print_banner(self):
         """
         Prints chipsec banner
@@ -173,7 +170,7 @@ class ChipsecMain:
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "[CHIPSEC] Version %s" % self.get_chipsec_version() )
+        logger().log( "[CHIPSEC] Version %s" % self.version )
         logger().log( "[CHIPSEC] Arguments: %s"% " ".join(self.argv) )
 
     ##################################################################################
@@ -406,7 +403,7 @@ class ChipsecMain:
                 logger().log( "[CHIPSEC] Modules with Exceptions %d:" % len(exceptions) )
                 for fmod in exceptions: logger().error( str(fmod) )
             logger().log( "[CHIPSEC] *****************************************************************" )
-            #logger().log( "[CHIPSEC] Version:   %s"% self.get_chipsec_version() )
+            #logger().log( "[CHIPSEC] Version:   %s"% self.version )
         else:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    %s"%at)
@@ -570,14 +567,13 @@ class ChipsecMain:
             return ExitCode.EXCEPTION
 
 
-        _ver = self.get_chipsec_version()
         logger().log( "[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().log( "[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
         #logger().log( "[CHIPSEC] CPU affinity: 0x%X" % self._cs.helper.get_affinity() )
 
         logger().xmlAux.add_test_suite_property( "OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().xmlAux.add_test_suite_property( "Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did) )
-        logger().xmlAux.add_test_suite_property( "CHIPSEC", "%s" % _ver )
+        logger().xmlAux.add_test_suite_property( "CHIPSEC", "%s" % self.version )
         logger().log( " " )
 
         if logger().VERBOSE: logger().log("[*] Running from %s" % os.getcwd())
