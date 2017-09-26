@@ -276,12 +276,6 @@ class ChipsecMain:
             if not self._list_tags: logger().log( "[+] loaded %s" % module.get_name() )
         return True
 
-    # @TODO: Fix it!
-    def unload_module( self, module_path ):
-        if module_path in self.Loaded_Modules:
-            self.Loaded_Modules.remove( module_path )
-        return True
-
     def load_modules_from_path( self, from_path, recursive = True ):
         if logger().VERBOSE: logger().log( "[*] Path: %s" % os.path.abspath( from_path ) )
         for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ) :
@@ -600,7 +594,6 @@ class ChipsecMain:
         if self._module:
             self.load_module( self._module, self._module_argv )
             modules_failed = self.run_loaded_modules()
-            #unload_module( _module );
         else:
             modules_failed = self.run_all_modules()
 
