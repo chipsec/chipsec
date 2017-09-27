@@ -158,7 +158,6 @@ class ChipsecMain:
         self.version               = defines.get_version()
 
         self.argv = argv
-        self.parse_args()
         self._cs = chipset.cs()
 
     def print_banner(self):
@@ -475,6 +474,11 @@ class ChipsecMain:
 
 
     def parse_args(self):
+        """Parse the arguments provided on the command line.
+
+        Returns: a pair (continue, exit_code). If continue is False,
+          the exit_code should be returned.
+        """
         try:
             opts, args = getopt.getopt(self.argv, "ip:m:ho:vda:nl:t:j:x:I:",
             ["ignore_platform", "platform=", "module=", "help", "output=",
@@ -483,7 +487,7 @@ class ChipsecMain:
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
-            return ExitCode.EXCEPTION
+            return (False, ExitCode.EXCEPTION)
 
         for o, a in opts:
             if o in ("-v", "--verbose"):
@@ -494,8 +498,7 @@ class ChipsecMain:
                 logger().DEBUG   = True
             elif o in ("-h", "--help"):
                 self.usage()
-                sys.exit(0)
-                return 0
+                return (False, ExitCode.OK)
             elif o in ("-o", "--output"):
                 self._output = a
             elif o in ("-p", "--platform"):
@@ -531,6 +534,7 @@ class ChipsecMain:
                 self.no_time = True
             else:
                 assert False, "unknown option"
+        return (True, None)
 
     ##################################################################################
     # Entry point for command-line execution
@@ -538,6 +542,10 @@ class ChipsecMain:
 
     def main ( self ):
         self.print_banner()
+
+        (cont, exit_code) = self.parse_args()
+        if not cont:
+          return exit_code
 
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath( import_path ) )
