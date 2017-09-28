@@ -138,7 +138,7 @@ class build(_build):
 package_data = {
     # Include any configuration file.
     "": ["*.ini", "*.cfg", "*.json"],
-    "chipsec": ["VERSION", "WARNING.txt"],
+    "chipsec": ["*VERSION", "WARNING.txt"],
     "chipsec.cfg": ["*.xml", "*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
@@ -149,8 +149,9 @@ compression_header_files = []
 
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
+    package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
     package_data["chipsec_tools.windows"] = ['*']
-    install_requires.append("pywin32")
+    install_requires.append("pypiwin32")
 
 elif platform.system().lower() == "linux":
     compression_source_files = []
