@@ -63,13 +63,15 @@ typedef struct {
   UINT32  mOrigSize;
 
   UINT16  mBadTableFlag;
+  UINT16  mBadAlgorithm;
 
   UINT16  mLeft[2 * NC - 1];
   UINT16  mRight[2 * NC - 1];
   UINT8   mCLen[NC];
   UINT8   mPTLen[NPT];
   UINT16  mCTable[4096];
-  UINT16  mPTTable[256];
+  UINT16  mPTTable[512];
+ 
 } SCRATCH_DATA;
 
 STATIC UINT16 mPbit = EFIPBIT;
@@ -613,14 +615,14 @@ Returns: (VOID)
  --*/
 {
   UINT16  BytesRemain;
-  UINT32  DataIdx;
+  UINT64  DataIdx;
   UINT16  CharC;
 
   BytesRemain = (UINT16) (-1);
 
   DataIdx     = 0;
 
-  for (;;) {
+  while(1) {
     CharC = DecodeC (Sd);
     if (Sd->mBadTableFlag != 0) {
       return ;
@@ -644,24 +646,23 @@ Returns: (VOID)
       BytesRemain = CharC;
 
       DataIdx     = Sd->mOutBuf - DecodeP (Sd) - 1;
-
       // If this is not the correct decompression algorithm, this is an overflow possibility.
       if (DataIdx > Sd->mOrigSize) {
-        return ;
+        Sd->mBadAlgorithm = 1;
+        return;
       }
 
       BytesRemain--;
       while ((INT16) (BytesRemain) >= 0) {
         Sd->mDstBase[Sd->mOutBuf++] = Sd->mDstBase[DataIdx++];
         if (Sd->mOutBuf >= Sd->mOrigSize) {
-          return ;
+          return;
         }
-
         BytesRemain--;
       }
     }
   }
-  return ;
+  return;
 }
 
 EFI_STATUS
@@ -713,7 +714,7 @@ Decompress (
   IN OUT  VOID    *Scratch,
   IN      UINT32  ScratchSize
   )
-/*++
+/*
 
 Routine Description:
 
@@ -770,14 +771,14 @@ Returns:
 
   Src = Src + 8;
 
-  for (Index = 0; Index < sizeof (SCRATCH_DATA); Index++) {
+  for (Index = 0; Index < ScratchSize; Index++) {
     ((UINT8 *) Sd)[Index] = 0;
   }
 
   Sd->mSrcBase  = Src;
   Sd->mDstBase  = Dst;
   Sd->mCompSize = CompSize;
-  Sd->mOrigSize = OrigSize;
+  Sd->mOrigSize = DstSize;
 
   //
   // Fill the first BITBUFSIZ bits
@@ -789,13 +790,12 @@ Returns:
   //
   Decode (Sd);
 
-  if (Sd->mBadTableFlag != 0) {
+  if (Sd->mBadTableFlag != 0 || Sd->mBadAlgorithm != 0) {
     //
     // Something wrong with the source
     //
     Status = EFI_INVALID_PARAMETER;
   }
-
   return Status;
 }
 
