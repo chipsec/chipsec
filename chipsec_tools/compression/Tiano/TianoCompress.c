@@ -1664,7 +1664,7 @@ INT32
 MakeTree (
   IN  INT32            NParm,
   IN  UINT16  FreqParm[],
-  OUT UINT8   LenParm[ ],
+  OUT UINT8   LenParm [],
   OUT UINT16  CodeParm[]
   )
 /*++

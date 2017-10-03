@@ -31,6 +31,9 @@ This includes minor API changes for Tiano and EFI decompressor, as well as LZMA.
 #define TIANO_COMPRESSION 2 //not defined, section type= 0x01
 #define LZMA_COMPRESSION  3 //not defined, section type= 0x02
 
+#define MAX_DSTSZ 40000000 //40MB -- Max destination buffer size allowed. 
+                           //I don't think there is an image to decompress bigger than this. In any case, feel free to change.
+
 EFI_STATUS
 Extract (
   IN      VOID    *Source,
@@ -67,7 +70,7 @@ Extract (
     DecompressFunction = EfiDecompress;
     break;
   case 2:
-    GetInfoFunction = EfiGetInfo;
+    GetInfoFunction = TianoGetInfo;
     DecompressFunction = TianoDecompress;
     break;
   case 3:
@@ -77,21 +80,25 @@ Extract (
   default:
     Status = EFI_INVALID_PARAMETER;
   }
+
   if (GetInfoFunction != NULL) {
     Status = GetInfoFunction(Source, SrcSize, DstSize, &ScratchSize);
     if (Status == EFI_SUCCESS) {
       if (ScratchSize > 0) {
         Scratch = (VOID *)malloc(ScratchSize);
       }
-      *Destination = (VOID *)malloc(*DstSize);
+      if(*DstSize <= MAX_DSTSZ){
+        *Destination = (VOID *)malloc(*DstSize);
+      }
       if (((ScratchSize > 0 && Scratch != NULL) || ScratchSize == 0) && *Destination != NULL) {
         Status = DecompressFunction(Source, SrcSize, *Destination, *DstSize, Scratch, ScratchSize);
       } else {
+        free(*Destination);
+        free(Scratch);
         Status = EFI_OUT_OF_RESOURCES;
       }
     }
   }
-
   return Status;
 }
 
@@ -129,6 +136,21 @@ ParseObject(
   }
 
   return EFI_SUCCESS;
+}
+
+inline void 
+errorHandling(
+  VOID* SrcBuf,
+  VOID* DstBuf
+  )
+{
+  if (SrcBuf != NULL) {
+    free(SrcBuf);
+  }
+
+  if (DstBuf != NULL) {
+    free(DstBuf);
+  }
 }
 
 /*
@@ -169,32 +191,27 @@ UefiDecompress(
   SrcBuf = PyMem_Malloc(SrcDataSize);
   if (SrcBuf == NULL) {
     PyErr_SetString(PyExc_Exception, "Not enough memory\n");
-    goto ERROR;
+    errorHandling(SrcBuf, DstBuf);
+    return NULL;
   }
 
   Status = ParseObject(SrcData, SrcBuf, SrcDataSize);
   if (Status != EFI_SUCCESS) {
     PyErr_SetString(PyExc_Exception, "Buffer segment is not available, or incorrect length\n");
-    goto ERROR;
+    errorHandling(SrcBuf, DstBuf);
+    return NULL;
   }
+
+ 
 
   Status = Extract((VOID *)SrcBuf, SrcDataSize, (VOID **)&DstBuf, &DstDataSize, type);
   if (Status != EFI_SUCCESS) {
     PyErr_SetString(PyExc_Exception, "Failed to decompress\n");
-    goto ERROR;
+    errorHandling(SrcBuf, DstBuf);
+    return NULL;
   }
 
   return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
-
-ERROR:
-  if (SrcBuf != NULL) {
-    free(SrcBuf);
-  }
-
-  if (DstBuf != NULL) {
-    free(DstBuf);
-  }
-  return NULL;
 }
 
 /*
@@ -239,13 +256,15 @@ UefiCompress(
   SrcBuf = PyMem_Malloc(SrcDataSize);
   if (SrcBuf == NULL) {
     PyErr_SetString(PyExc_Exception, "Not enough memory\n");
-    goto ERROR;
+    errorHandling(SrcBuf, DstBuf);
+    return NULL;
   }
 
   Status = ParseObject(SrcData, SrcBuf, SrcDataSize);
   if (Status != EFI_SUCCESS) {
     PyErr_SetString(PyExc_Exception, "Buffer segment is not available, or incorrect length\n");
-    goto ERROR;
+    errorHandling(SrcBuf, DstBuf);
+    return NULL;
   }
 
   if (type == 3) {
@@ -258,7 +277,8 @@ UefiCompress(
     // The first call to compress fills in the expected destination size.
     DstBuf = malloc (DstDataSize);
     if (!DstBuf) {
-      goto ERROR;
+      errorHandling(SrcBuf, DstBuf);
+      return NULL;
     }
     // The second call to compress compresses.
     Status = CompressFunction(SrcBuf, SrcDataSize, DstBuf, &DstDataSize);
@@ -266,20 +286,11 @@ UefiCompress(
 
   if (Status != EFI_SUCCESS) {
     PyErr_SetString(PyExc_Exception, "Failed to compress\n");
-    goto ERROR;
+    errorHandling(SrcBuf, DstBuf);
+    return NULL;
   }
 
   return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
-
-ERROR:
-  if (SrcBuf != NULL) {
-    free(SrcBuf);
-  }
-
-  if (DstBuf != NULL) {
-    free(DstBuf);
-  }
-  return NULL;
 }
 
 /**

@@ -1050,7 +1050,7 @@ class LinuxHelper(Helper):
         if CompressionType == 0: # not compressed
             shutil.copyfile( CompressedFileName, OutputFileName )
         elif CompressionType == 0x01:
-            data = self.decompress_data( [ EFI, Tiano ], CompressedFileData )
+            data = self.decompress_data( [ Tiano, EFI ], CompressedFileData )
         elif CompressionType == 0x02:
             data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData )
         if CompressionType != 0x00:
