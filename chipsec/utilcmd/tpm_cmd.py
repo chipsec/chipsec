@@ -53,22 +53,22 @@ class TPMCommand(BaseCommand):
             if len(self.argv) < 4:
                 print TPMCommand.__doc__
                 return
-            op = argv[2]
+            op = self.argv[2]
             if ( 'parse_log' == op ):
                 log = open(self.argv[3])
                 tpm_eventlog.parse(log)
             elif ('command' == op ):
-                if len(argv) < 5:
+                if len(self.argv) < 5:
                     print TPMCommand.__doc__
                     return
-                tpm.command( argv[3], argv[4], argv[5:] )
+                tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
             elif ('state' == op ):
-                tpm.dump_access ( argv[3] )
-                tpm.dump_status ( argv[3] )
-                tpm.didvid ( argv[3] )
-                tpm.dump_rid ( argv[3] )
-                tpm.dump_intcap ( argv[3] )
-                tpm.dump_intenable( argv[3] )
+                tpm.dump_access ( self.argv[3] )
+                tpm.dump_status ( self.argv[3] )
+                tpm.didvid ( self.argv[3] )
+                tpm.dump_rid ( self.argv[3] )
+                tpm.dump_intcap ( self.argv[3] )
+                tpm.dump_intenable( self.argv[3] )
             else:
                 print TPMCommand.__doc__
                 return
