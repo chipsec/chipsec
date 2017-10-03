@@ -34,7 +34,7 @@ class TestTpmEventLogChipsecUtil(util.TestChipsecUtil):
         for event in events:
             os.write(fileno, event)
         os.close(fileno)
-        self._chipsec_util("tpm parse_eventlog %s" % binary_event_log)
+        self._chipsec_util("tpm parse_log %s" % binary_event_log)
         os.remove(binary_event_log)
 
     def test_tpm_eventlog_basic(self):
