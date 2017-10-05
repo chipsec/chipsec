@@ -33,6 +33,7 @@ from collections import namedtuple
 
 from chipsec.logger import *
 from chipsec.file import *
+from chipsec.hal import hal_base
 
 import chipsec.hal.tpm12_commands
 
@@ -197,7 +198,7 @@ class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSi
         _str += "\n"
         return _str
 
-class TPM():
+class TPM(hal_base.HALBase):
     def __init__( self, cs ):
         self.cs = cs
         self.helper = cs.helper

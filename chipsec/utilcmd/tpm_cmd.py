@@ -46,10 +46,22 @@ class TPMCommand(BaseCommand):
         >>> chipsec_util tpm command pcrread 0 17
         >>> chipsec_util tpm command continueselftest 0
         """
+        no_driver_cmd = ['parse_log']
+
         def requires_driver(self):
-            return False
+            if len(self.argv) < 4:
+                return False
+            if self.argv[2] in self.no_driver_cmd:
+                return False
+            return True
 
         def run(self):
+            try:
+                _tpm = tpm.TPM(self.cs)
+            except TpmRuntimeError, msg:
+                print(msg)
+                return
+
             if len(self.argv) < 4:
                 print TPMCommand.__doc__
                 return
@@ -61,14 +73,14 @@ class TPMCommand(BaseCommand):
                 if len(self.argv) < 5:
                     print TPMCommand.__doc__
                     return
-                tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
+                _tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
             elif ('state' == op ):
-                tpm.dump_access ( self.argv[3] )
-                tpm.dump_status ( self.argv[3] )
-                tpm.didvid ( self.argv[3] )
-                tpm.dump_rid ( self.argv[3] )
-                tpm.dump_intcap ( self.argv[3] )
-                tpm.dump_intenable( self.argv[3] )
+                _tpm.dump_access ( self.argv[3] )
+                _tpm.dump_status ( self.argv[3] )
+                _tpm.dump_didvid ( self.argv[3] )
+                _tpm.dump_rid ( self.argv[3] )
+                _tpm.dump_intcap ( self.argv[3] )
+                _tpm.dump_intenable( self.argv[3] )
             else:
                 print TPMCommand.__doc__
                 return
