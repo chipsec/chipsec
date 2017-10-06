@@ -25,64 +25,64 @@ from chipsec.hal import tpm_eventlog
 from chipsec.hal import tpm
 
 class TPMCommand(BaseCommand):
-        """
-        >>> chipsec_util tpm parse_log <file>
-        >>> chipsec_util tpm state <locality>
-        >>> chipsec_util tpm command <commandName> <locality> <command_parameters>
+    """
+    >>> chipsec_util tpm parse_log <file>
+    >>> chipsec_util tpm state <locality>
+    >>> chipsec_util tpm command <commandName> <locality> <command_parameters>
 
-        locality: 0 | 1 | 2 | 3 | 4
-        commands - parameters:
-        pccrread - pcr number ( 0 - 23 )
-        nvread - Index, Offset, Size
-        startup - startup type ( 1 - 3 )
-        continueselftest
-        getcap - Capabilities Area, Size of Sub-capabilities, Sub-capabilities
-        forceclear
-        
-        Examples:
-                        
-        >>> chipsec_util tpm parse_log binary_bios_measurements
-        >>> chipsec_util tpm state 0
-        >>> chipsec_util tpm command pcrread 0 17
-        >>> chipsec_util tpm command continueselftest 0
-        """
-        no_driver_cmd = ['parse_log']
+    locality: 0 | 1 | 2 | 3 | 4
+    commands - parameters:
+    pccrread - pcr number ( 0 - 23 )
+    nvread - Index, Offset, Size
+    startup - startup type ( 1 - 3 )
+    continueselftest
+    getcap - Capabilities Area, Size of Sub-capabilities, Sub-capabilities
+    forceclear
+    
+    Examples:
 
-        def requires_driver(self):
-            if len(self.argv) < 4:
-                return False
-            if self.argv[2] in self.no_driver_cmd:
-                return False
-            return True
+    >>> chipsec_util tpm parse_log binary_bios_measurements
+    >>> chipsec_util tpm state 0
+    >>> chipsec_util tpm command pcrread 0 17
+    >>> chipsec_util tpm command continueselftest 0
+    """
+    no_driver_cmd = ['parse_log']
 
-        def run(self):
-            try:
-                _tpm = tpm.TPM(self.cs)
-            except TpmRuntimeError, msg:
-                print(msg)
-                return
+    def requires_driver(self):
+        if len(self.argv) < 4:
+            return False
+        if self.argv[2] in self.no_driver_cmd:
+            return False
+        return True
 
-            if len(self.argv) < 4:
-                print TPMCommand.__doc__
-                return
-            op = self.argv[2]
+    def run(self):
+        try:
+            _tpm = tpm.TPM(self.cs)
+        except TpmRuntimeError, msg:
+            print(msg)
+            return
+
+        if len(self.argv) < 4:
+            print TPMCommand.__doc__
+            return
+        op = self.argv[2]
             if ( 'parse_log' == op ):
-                log = open(self.argv[3])
-                tpm_eventlog.parse(log)
-            elif ('command' == op ):
-                if len(self.argv) < 5:
-                    print TPMCommand.__doc__
-                    return
-                _tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
-            elif ('state' == op ):
-                _tpm.dump_access ( self.argv[3] )
-                _tpm.dump_status ( self.argv[3] )
-                _tpm.dump_didvid ( self.argv[3] )
-                _tpm.dump_rid ( self.argv[3] )
-                _tpm.dump_intcap ( self.argv[3] )
-                _tpm.dump_intenable( self.argv[3] )
-            else:
+            log = open(self.argv[3])
+            tpm_eventlog.parse(log)
+        elif ('command' == op ):
+            if len(self.argv) < 5:
                 print TPMCommand.__doc__
                 return
+            _tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
+        elif ('state' == op ):
+            _tpm.dump_access ( self.argv[3] )
+            _tpm.dump_status ( self.argv[3] )
+            _tpm.dump_didvid ( self.argv[3] )
+            _tpm.dump_rid ( self.argv[3] )
+            _tpm.dump_intcap ( self.argv[3] )
+            _tpm.dump_intenable( self.argv[3] )
+        else:
+            print TPMCommand.__doc__
+            return
 
 commands = { 'tpm': TPMCommand }
