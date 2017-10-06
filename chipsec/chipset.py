@@ -85,6 +85,7 @@ CHIPSET_ID_BSW     = 12
 CHIPSET_ID_KBL     = 13
 CHIPSET_ID_CHT     = 14
 CHIPSET_ID_BDX     = 15
+CHIPSET_ID_CFL     = 16
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -104,9 +105,10 @@ CHIPSET_CODE_BSW     = 'BSW'
 CHIPSET_CODE_KBL     = 'KBL'
 CHIPSET_CODE_CHT     = 'CHT'
 CHIPSET_CODE_BDX     = 'BDX'
+CHIPSEC_CODE_CFL     = 'CFL'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX]
-CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL]
+CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_CODE_BSW,CHIPSET_CODE_CHT]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
@@ -164,6 +166,10 @@ Chipset_Dictionary = {
 0x5910 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 0x5914 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 8th Generation Core Processor (Kabylake U-Quad Core)' },
 0x591F : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Desktop 7th Generation Core Processor (Kabylake S)' },
+
+# 8th Generation Core Processor Family (Coffeelake)
+0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSEC_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
+0x3EC2 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSEC_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
