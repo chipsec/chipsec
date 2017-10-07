@@ -32,6 +32,8 @@ Abstract:
 #define THRESHOLD 3
 #define CODE_BIT  16
 #define BAD_TABLE - 1
+#define MPTTABLESIZE 256u
+#define MCTABLESIZE 4096u
 
 //
 // C: Char&Len Set; P: Position Set; T: exTra Set
@@ -49,6 +51,7 @@ Abstract:
 #define NPT MAXNP
 #endif
 
+
 typedef struct {
   UINT8   *mSrcBase;  // Starting address of compressed data
   UINT8   *mDstBase;  // Starting address of decompressed data
@@ -65,12 +68,15 @@ typedef struct {
   UINT16  mBadTableFlag;
   UINT16  mBadAlgorithm;
 
+  size_t mMPTTableSize;
+  size_t mCTableSize;
+
   UINT16  mLeft[2 * NC - 1];
   UINT16  mRight[2 * NC - 1];
   UINT8   mCLen[NC];
   UINT8   mPTLen[NPT];
-  UINT16  mCTable[4096];
-  UINT16  mPTTable[512];
+  UINT16  mCTable[MCTABLESIZE];
+  UINT16  mPTTable[MPTTABLESIZE];
  
 } SCRATCH_DATA;
 
@@ -167,7 +173,8 @@ MakeTable (
   IN  UINT16        NumOfChar,
   IN  UINT8         *BitLen,
   IN  UINT16        TableBits,
-  OUT UINT16        *Table
+  OUT UINT16        *Table,
+  IN  size_t        TableSize 
   )
 /*++
 
@@ -239,6 +246,11 @@ Returns:
   if (Index != 0) {
     Index3 = (UINT16) (1U << TableBits);
     while (Index != Index3) {
+      if(Index > TableSize)
+      {
+        Sd->mBadAlgorithm = 1;
+        return (UINT16) BAD_TABLE;
+      }
       Table[Index++] = 0;
     }
   }
@@ -258,6 +270,11 @@ Returns:
     if (Len <= TableBits) {
 
       for (Index = Start[Len]; Index < NextCode; Index++) {
+        if(Index > TableSize)
+        {
+          Sd->mBadAlgorithm = 1;
+          return (UINT16) BAD_TABLE;
+        }
         Table[Index] = Char;
       }
 
@@ -402,6 +419,8 @@ Returns:
 
   while (Index < Number) {
 
+
+
     CharC = (UINT16) (Sd->mBitBuf >> (BITBUFSIZ - 3));
 
     if (CharC == 7) {
@@ -430,7 +449,7 @@ Returns:
     Sd->mPTLen[Index++] = 0;
   }
 
-  return MakeTable (Sd, nn, Sd->mPTLen, 8, Sd->mPTTable);
+  return MakeTable (Sd, nn, Sd->mPTLen, 8, Sd->mPTTable, Sd->mMPTTableSize);
 }
 
 STATIC
@@ -524,7 +543,7 @@ Returns: (VOID)
     Sd->mCLen[Index++] = 0;
   }
 
-  MakeTable (Sd, NC, Sd->mCLen, 12, Sd->mCTable);
+  MakeTable (Sd, NC, Sd->mCLen, 12, Sd->mCTable, Sd->mCTableSize);
 
   return ;
 }
@@ -779,6 +798,9 @@ Returns:
   Sd->mDstBase  = Dst;
   Sd->mCompSize = CompSize;
   Sd->mOrigSize = DstSize;
+
+  Sd->mMPTTableSize = MPTTABLESIZE;
+  Sd->mCTableSize   = MCTABLESIZE;
 
   //
   // Fill the first BITBUFSIZ bits
