@@ -246,7 +246,7 @@ Returns:
   if (Index != 0) {
     Index3 = (UINT16) (1U << TableBits);
     while (Index != Index3) {
-      if(Index > TableSize)
+      if(Index >= TableSize)
       {
         Sd->mBadAlgorithm = 1;
         return (UINT16) BAD_TABLE;
@@ -270,14 +270,13 @@ Returns:
     if (Len <= TableBits) {
 
       for (Index = Start[Len]; Index < NextCode; Index++) {
-        if(Index > TableSize)
+        if(Index >= TableSize)
         {
           Sd->mBadAlgorithm = 1;
           return (UINT16) BAD_TABLE;
-        }
+        } 
         Table[Index] = Char;
       }
-
     } else {
 
       Index3  = Start[Len];
