@@ -3,6 +3,8 @@
 // Authors: Johannes Stüttgen (johannes.stuettgen@gmail.com)
 //          Thiebaud Weksteen (tweksteen@gmail.com)
 //
+// Copyright (c) 2010-2015, Intel Corporation
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -37,6 +39,7 @@
 #define CHIPSEC_MSGBUS_SEND_MESSAGE     0xe
 #define CHIPSEC_CPU_DESCRIPTOR_TABLE    0xf
 #define CHIPSEC_ALLOC_PHYSMEM           0x10
+#define CHIPSEC_LOAD_UCODE_PATCH        0x11
 
 
 typedef struct _pci_msg_t {

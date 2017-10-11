@@ -1,6 +1,8 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2016, Google
 #
+# Copyright (c) 2010-2015, Intel Corporation
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
@@ -49,6 +51,7 @@ IOCTL_HYPERCALL             = 0xc060700d
 IOCTL_MSGBUS_SEND_MESSAGE   = 0xc028700e
 IOCTL_CPU_DESCRIPTOR_TABLE  = 0xc038700f
 IOCTL_ALLOC_PHYSMEM         = 0xc0207010
+#IOCTL_LOAD_UCODE_PATCH      = 0xc0067011
 
 # Format for the IOCTL structures. See chipsec_ioctl.h for the complete
 # definition.
@@ -62,7 +65,7 @@ _smi_msg_t_fmt       = "QQQQQQQ"
 _hypercall_msg_t_fmt = "QQQQQQQQQQQQ"
 _msgbus_msg_t_fmt    = "QQQQQ"
 _cpudes_msg_t_fmt    = "QQQQQQQ"
-_ucodeh_msg_t_fmt    = "BH"
+#_ucodeh_msg_t_fmt    = "BH"
 _alloc_mem_msg_t_fmt = "QQQQ"
 
 
@@ -109,6 +112,10 @@ class OSXHelper(Helper):
 
     def start(self, start_driver, driver_exists=False):
         if start_driver:
+            if os.path.exists(self.DEVICE_NAME):
+                driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
+                                           "helper", "osx", self.DRIVER_NAME)
+                subprocess.check_call(["kextunload", driver_path])
             self.load_driver()
         self.init(start_driver)
         if logger().VERBOSE:
@@ -116,8 +123,11 @@ class OSXHelper(Helper):
         return True
 
     def stop(self, start_driver):
+        self.close()
         if self.driver_loaded:
-            pass
+            driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
+                                       "helper", "osx", self.DRIVER_NAME)
+            subprocess.check_call(["kextunload", driver_path])
         if logger().VERBOSE:
             logger().log("[helper] OSX Helper stopped/unloaded")
         return True
@@ -142,8 +152,6 @@ class OSXHelper(Helper):
         self.dev_fh = None
 
     def ioctl(self, ioctl_name, args):
-        print "name", hex(ioctl_name)
-        print "args", str(args)
         return fcntl.ioctl(self.dev_fh, ioctl_name, args)
 
     def mem_read_block(self, addr, sz):
@@ -304,7 +312,7 @@ class OSXHelper(Helper):
         #self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_msr_msg_t_fmt,msr_addr,0,0)
         out_buf = self.ioctl(IOCTL_RDMSR,in_buf)
-        value = struct.unpack(_msr_msg_t_fmt,)
+        value = struct.unpack(_msr_msg_t_fmt,out_buf)
         return (value[1],value[2])
 
     def write_msr(self, thread_id, msr_addr, eax, edx):
@@ -328,14 +336,12 @@ class OSXHelper(Helper):
 
     def cpuid(self, eax, ecx):
         in_buf = struct.pack(_cpuid_msg_t_fmt,eax,0,ecx,0)
-        print hex(len(in_buf))
-        print in_buf
         out_buf = self.ioctl(IOCTL_CPUID,in_buf)
         return struct.unpack(_cpuid_msg_t_fmt,out_buf)
 
     def alloc_phys_mem(self, num_bytes, max_addr):
         in_buf = struct.pack(_alloc_mem_msg_t_fmt,num_bytes,max_addr,0,0)
-        out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, inbuf)
+        out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
         return struct.unpack(_alloc_mem_msg_t_fmt, out_buf)[2:]
 
     def msgbus_send_read_message( self, mcr, mcrx ):
@@ -377,7 +383,8 @@ class OSXHelper(Helper):
         raise NotImplementedError()
 
     def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
-        cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
+        raise NotImplementedError()
+        '''cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
         in_buf = struct.pack(_ucodeh_msg_t_fmt, cpu_thread_id,len(ucode_update_buf))+ ucode_update_buf
         in_buf_final = array.array("c",in_buf)
         out_len = 0
@@ -388,7 +395,7 @@ class OSXHelper(Helper):
             print "IOError IOCTL Load Patch\n"
             return None
 
-        return True
+        return True'''
 
 def get_helper():
     return OSXHelper()
