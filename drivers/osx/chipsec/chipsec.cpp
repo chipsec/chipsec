@@ -6,6 +6,8 @@
 // Authors: Thiebaud Weksteen (tweksteen@gmail.com)
 //   (pmem) Johannes Stüttgen (johannes.stuettgen@gmail.com)
 //
+// Copyright (c) 2010-2015, Intel Corporation
+//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -653,6 +655,7 @@ static kern_return_t pmem_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
             }
             kalloc_pmem.virt_addr = (uint64_t)va;
             kalloc_pmem.phys_addr = io_map1->getPhysicalAddress();
+            bcopy(&kalloc_pmem, data, sizeof(alloc_pmem_msg_t));
             break;
 
         default:
