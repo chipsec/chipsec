@@ -68,9 +68,6 @@ typedef struct {
   UINT16  mBadTableFlag;
   UINT16  mBadAlgorithm;
 
-  size_t mMPTTableSize;
-  size_t mCTableSize;
-
   UINT16  mLeft[2 * NC - 1];
   UINT16  mRight[2 * NC - 1];
   UINT8   mCLen[NC];
@@ -173,8 +170,7 @@ MakeTable (
   IN  UINT16        NumOfChar,
   IN  UINT8         *BitLen,
   IN  UINT16        TableBits,
-  OUT UINT16        *Table,
-  IN  size_t        TableSize 
+  OUT UINT16        *Table
   )
 /*++
 
@@ -201,6 +197,7 @@ Returns:
   UINT16  Weight[17];
   UINT16  Start[18];
   UINT16  *Pointer;
+  UINT16  TableSize;
   UINT16  Index3;
   UINT16  Index;
   UINT16  Len;
@@ -209,6 +206,8 @@ Returns:
   UINT16  Avail;
   UINT16  NextCode;
   UINT16  Mask;
+
+  TableSize = (UINT16) (1U << TableBits);
 
   for (Index = 1; Index <= 16; Index++) {
     Count[Index] = 0;
@@ -244,13 +243,7 @@ Returns:
   Index = (UINT16) (Start[TableBits + 1] >> JuBits);
 
   if (Index != 0) {
-    Index3 = (UINT16) (1U << TableBits);
-    while (Index != Index3) {
-      if(Index >= TableSize)
-      {
-        Sd->mBadAlgorithm = 1;
-        return (UINT16) BAD_TABLE;
-      }
+    while (Index != TableSize) {
       Table[Index++] = 0;
     }
   }
@@ -285,7 +278,7 @@ Returns:
 
       while (Index != 0) {
         if (*Pointer == 0) {
-          Sd->mRight[Avail]                     = Sd->mLeft[Avail] = 0;
+          Sd->mRight[Avail] = Sd->mLeft[Avail] = 0;
           *Pointer = Avail++;
         }
 
@@ -448,7 +441,7 @@ Returns:
     Sd->mPTLen[Index++] = 0;
   }
 
-  return MakeTable (Sd, nn, Sd->mPTLen, 8, Sd->mPTTable, Sd->mMPTTableSize);
+  return MakeTable (Sd, nn, Sd->mPTLen, 8, Sd->mPTTable);
 }
 
 STATIC
@@ -542,7 +535,7 @@ Returns: (VOID)
     Sd->mCLen[Index++] = 0;
   }
 
-  MakeTable (Sd, NC, Sd->mCLen, 12, Sd->mCTable, Sd->mCTableSize);
+  MakeTable (Sd, NC, Sd->mCLen, 12, Sd->mCTable);
 
   return ;
 }
@@ -797,9 +790,6 @@ Returns:
   Sd->mDstBase  = Dst;
   Sd->mCompSize = CompSize;
   Sd->mOrigSize = DstSize;
-
-  Sd->mMPTTableSize = MPTTABLESIZE;
-  Sd->mCTableSize   = MCTABLESIZE;
 
   //
   // Fill the first BITBUFSIZ bits
