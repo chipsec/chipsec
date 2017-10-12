@@ -107,6 +107,9 @@ class LinuxHelper(Helper):
     SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT = False
     DKMS_DIR = "/var/lib/dkms/"
 
+    decompression_oder_type1 = [Tiano, EFI]
+    decompression_oder_type2 = [LZMA, Tiano, EFI]
+
     def __init__(self):
         super(LinuxHelper, self).__init__()
         self.os_system  = platform.system()
@@ -1034,13 +1037,26 @@ class LinuxHelper(Helper):
             if "phys_mem_access_prot" in line:
                return line.split(" ")[0]
 
-    def decompress_data(self, funcs, cdata):
+    def rotate_list(self, list, n):
+        return list[n:] + list[:n]
+
+    def rotate_algorithms(self, CompressionType, n):
+        if(CompressionType == 0x01):
+            self.decompression_oder_type1 = self.rotate_list(self.decompression_oder_type1, n)
+        elif(CompressionType == 0x02):
+            self.decompression_oder_type2 = self.rotate_list(self.decompression_oder_type2, n)
+
+    def decompress_data(self, funcs, cdata, CompressionType):
+        failed_times = 0
         for func in funcs:
             try:
                 data = func(cdata, len(cdata))
-                return  data
+                if(failed_times > 0):
+                    self.rotate_algorithms(CompressionType, failed_times)
+                return data
             except Exception:
-                continue
+                failed_times += 1
+                continue      
         return None
     #
     # Decompress binary with efi_compressor from https://github.com/theopolis/uefi-firmware-parser
@@ -1050,15 +1066,15 @@ class LinuxHelper(Helper):
         if CompressionType == 0: # not compressed
             shutil.copyfile( CompressedFileName, OutputFileName )
         elif CompressionType == 0x01:
-            data = self.decompress_data( [ Tiano, EFI ], CompressedFileData )
+            data = self.decompress_data( self.decompression_oder_type1, CompressedFileData, CompressionType)
         elif CompressionType == 0x02:
-            data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData )
+            data = self.decompress_data( self.decompression_oder_type2, CompressedFileData )
         if CompressionType != 0x00:
             if data is not None:
                 chipsec.file.write_file( OutputFileName, data )
             else:
                 if len(CompressedFileData) > 4:
-                    data = self.decompress_data( [ LZMA, Tiano, EFI ] , CompressedFileData[4:] )
+                    data = self.decompress_data( self.decompression_oder_type2, CompressedFileData[4:], CompressionType )
                     if data is not None:
                         chipsec.file.write_file( OutputFileName, data )
                     else:
