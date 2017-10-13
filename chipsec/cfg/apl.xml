@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+<configuration platform="APL">
+<!-- XML configuration for Apollo Lake based SoCs -->
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+    <bar name="SPIBAR"   bus="0" dev="0x0D" fun="2" reg="0x10" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>
+    <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0x7FF000000" desc="Graphics Translation Table Range"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- PCIe Configuration registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- GFx PCI device registers -->
+    <register name="GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
+      <field name="GGCLCK"  bit="0" size="1"/>
+    </register>
+    <register name="BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
+      <field name="BDSM_LOCK"  bit="0" size="1"/>
+    </register>
+    <register name="BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
+      <field name="BGSM_LOCK"  bit="0" size="1"/>
+    </register>
+    <register name="PAVPC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x74" size="4" desc="PAVP Control">
+      <field name="PAVPC_LOCK"  bit="2" size="1"/>
+    </register>
+
+    <!-- Misc PCI registers -->
+    <register name="IADBGCTRL" type="pcicfg" bus="0" dev="0x1A" fun="0" offset="0xB0" desc="Debug Control">
+        <field name="IADBGCTRL_LOCK" bit="30" size="1"/>
+    </register>
+
+    <!-- SPI Controller Registers -->
+    <register name="BC" type="pcicfg" bus="0" dev="0x0D" fun="2" offset="0xDC" size="4" desc="BIOS Control Register (BCR)">
+      <field name="BIOSWE"  bit="0"  size="1" desc="BIOS Write Enable"/>
+      <field name="BLE"     bit="1"  size="1" desc="BIOS Lock Enable"/>
+      <field name="SRC"     bit="2"  size="2" desc="SPI Read Configuration"/>
+      <field name="TSS"     bit="4"  size="1" desc="Top Swap Status" />
+      <field name="SMM_BWP" bit="5"  size="1" desc="SMM BIOS Write Protect"/>
+      <field name="BILD"    bit="7"  size="1" desc="BIOS Interface Lock Down"/>
+      <field name="ASE_BWP" bit="11" size="1" desc="Async SMI Enable WP"/>
+    </register>
+ 
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MMIO registers               -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- SPI Flash Controller MMIO registers -->
+    <register name="HSFS" type="mmio" bar="SPIBAR" offset="0x4" size="2" desc="HW sequencing flash status">
+      <field name="FDONE"   bit="0"  size="1" desc="Flash Cycle Done"/>
+      <field name="FCERR"   bit="1"  size="1" desc="Flash Cycle Error"/>
+      <field name="AEL"     bit="2"  size="1" desc="Access Error Log"/>
+      <field name="SCIP"    bit="5"  size="1" desc="SPI cycle in progress"/>
+      <field name="PR34LKD" bit="12" size="1" desc="PRR3 PRR4 Lock-Down"/>
+      <field name="FDOPSS"  bit="13" size="1" desc="Flash Descriptor Override Pin-Strap Status"/>
+      <field name="FDV"     bit="14" size="1" desc="Flash Descriptor Valid"/>
+      <field name="FLOCKDN" bit="15" size="1" desc="Flash Configuration Lock-Down"/>
+      <field name="FGO"     bit="16" size="1" desc="Flash cycle go"/>
+      <field name="FCYCLE"  bit="17" size="4" desc="Flash Cycle Type"/>
+      <field name="WET"     bit="21" size="1" desc="Write Enable Type"/>
+      <field name="FDBC"    bit="24" size="6" desc="Flash Data Byte Count"/>
+      <field name="FSMIE"   bit="31" size="1" desc="Flash SPI SMI Enable"/>
+    </register>
+    <register name="LOCK" type="mmio" bar="SPIBAR" offset="0x0C" size="4" desc="Individual lock register">
+      <field name="BMWAG"  bit="0"  size="1"/>
+      <field name="BMRAG"  bit="1"  size="1"/>
+      <field name="SBMWAG" bit="2"  size="1"/>
+      <field name="SBMRAG" bit="3"  size="1"/>
+      <field name="PR0"    bit="8"  size="1"/>
+      <field name="PR1"    bit="9"  size="1"/>
+      <field name="PR2"    bit="10" size="1"/>
+      <field name="PR3"    bit="11" size="1"/>
+      <field name="SLD"    bit="16" size="1"/>
+    </register>
+    <register name="PREOP" type="mmio" bar="SPIBAR" offset="0xA4" size="2" desc="Prefix Opcode Configuration Register">
+      <field name="PREOP0" bit="0" size="8" desc="Prefix Opcode 0"/>
+      <field name="PREOP1" bit="8" size="8" desc="Prefix Opcode 1"/>
+    </register>
+    <register name="OPTYPE" type="mmio" bar="SPIBAR" offset="0xA6" size="2" desc="Opcode Type Configuration Register">
+      <field name="OPTYPE0" bit="0"  size="2" desc="Opcode Type 0"/>
+      <field name="OPTYPE1" bit="2"  size="2" desc="Opcode Type 1"/>
+      <field name="OPTYPE2" bit="4"  size="2" desc="Opcode Type 2"/>
+      <field name="OPTYPE3" bit="6"  size="2" desc="Opcode Type 3"/>
+      <field name="OPTYPE4" bit="8"  size="2" desc="Opcode Type 4"/>
+      <field name="OPTYPE5" bit="10" size="2" desc="Opcode Type 5"/>
+      <field name="OPTYPE6" bit="12" size="2" desc="Opcode Type 6"/>
+      <field name="OPTYPE7" bit="14" size="2" desc="Opcode Type 7"/>
+    </register>
+    <register name="OPMENU_LO" type="mmio" bar="SPIBAR" offset="0xA8" size="4" desc="Opcode menu configuration 0">
+      <field name="OPCODE0" bit="0"  size="8" desc="Allowable Opcode 0"/>
+      <field name="OPCODE1" bit="8"  size="8" desc="Allowable Opcode 1"/>
+      <field name="OPCODE2" bit="16" size="8" desc="Allowable Opcode 2"/>
+      <field name="OPCODE3" bit="24" size="8" desc="Allowable Opcode 3"/>
+    </register>
+    <register name="OPMENU_HI" type="mmio" bar="SPIBAR" offset="0xAC" size="4" desc="Opcode menu configuration 1">
+      <field name="OPCODE4" bit="0"  size="8" desc="Allowable Opcode 4"/>
+      <field name="OPCODE5" bit="8"  size="8" desc="Allowable Opcode 5"/>
+      <field name="OPCODE6" bit="16" size="8" desc="Allowable Opcode 6"/>
+      <field name="OPCODE7" bit="24" size="8" desc="Allowable Opcode 7"/>
+    </register>
+    <register name="FDOC" type="mmio" bar="SPIBAR" offset="0xB4" size="4" desc="Flash Descriptor Observability Control Register">
+      <field name="FDSI" bit="2"  size="10" desc="Flash Descriptor Section Index"/>
+      <field name="FDSS" bit="12" size="3"  desc="Flash Descriptor Section Select"/>
+    </register>
+    <register name="FDOD" type="mmio" bar="SPIBAR" offset="0xB8" size="4" desc="Flash Descriptor Observability Data Register">
+      <field name="FDSD" bit="0"  size="32" desc="Flash Descriptor Section Data"/>
+    </register>
+    <register name="LVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Lower vendor specific capabilities">
+      <field name="LWG"          bit="2"  size="1" desc="Lower Write Granularity"/>
+      <field name="LWSR"         bit="3"  size="1" desc="Lower Write Status Required"/>
+      <field name="LWEWS"        bit="4"  size="1" desc="Write Enable on Write Status"/>
+      <field name="EO_4k"        bit="8"  size="8" desc="4k Erase Opcode"/>
+      <field name="EO_64k"       bit="16" size="8" desc="64k Erase Opcode"/>
+      <field name="EO_4k_VALID"  bit="28" size="1" desc="4k Erase Valid"/>
+      <field name="EO_64k_VALID" bit="29" size="1" desc="64k Erase Valid"/>
+      <field name="VCL"          bit="30" size="1" desc="Vendor Component Lock"/>
+      <field name="CPPTV"        bit="31" size="1" desc="Component Property Parameter Table Valid"/>
+    </register>
+    <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC8" size="4" desc="Host Upper Vendor Specific Component Capabilities">
+      <field name="UWG"          bit="2"  size="1" desc="Upper Write Granularity"/>
+      <field name="UWSR"         bit="3"  size="1" desc="Upper Write Status Required"/>
+      <field name="UWEWS"        bit="4"  size="1" desc="Write Enable on Write Status"/>
+      <field name="EO_4k"        bit="8"  size="8" desc="4k Erase Opcode"/>
+      <field name="EO_64k"       bit="16" size="8" desc="64k Erase Opcode"/>
+      <field name="EO_4k_VALID"  bit="28" size="1" desc="4k Erase Valid"/>
+      <field name="EO_64k_VALID" bit="29" size="1" desc="64k Erase Valid"/>
+      <field name="CPPTV"        bit="31" size="1" desc="Component Property Parameter Table Valid"/>
+    </register>
+    <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
+      <field name="PRB" bit="0"  size="15"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 0">
+      <field name="PRB" bit="0"  size="15"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 0">
+      <field name="PRB" bit="0"  size="15"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 0">
+      <field name="PRB" bit="0"  size="15"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 0">
+      <field name="PRB" bit="0"  size="15"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+       
+    <!-- GFx MMIO registers -->
+    <register name="PCBR" type="mmio" bar="GTTMMADR" offset="0x182120" desc="PCBR">
+        <field name="PCBR_LOCK" bit="0" size="1"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- CPU MSRs                     -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <register name="MSR_POWER_MISC" type="msr" msr="0x120" desc="MISC" />
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+      <control name="BiosInterfaceLockDown"  register="BC"    field="BILD"    desc="BIOS Interface Lock-Down"/>
+      <control name="TopSwapStatus"          register="BC"    field="TSS"     desc="Top Swap Status"/>
+      <control name="TopSwap"                register="BC"    field="TSS"     desc="Top Swap Status"/>
+  </controls>
+</configuration>
