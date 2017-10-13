@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2017, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -40,6 +40,7 @@ class PCICommand(BaseCommand):
     >>> chipsec_util pci <bus> <device> <function> <offset> [width] [value]
     >>> chipsec_util pci dump [<bus> <device> <function>]
     >>> chipsec_util pci xrom [<bus> <device> <function>] [xrom_address]
+    >>> chipsec_util pci cmd [mask] [class] [subclass]
 
     Examples:
 
@@ -52,6 +53,8 @@ class PCICommand(BaseCommand):
     >>> chipsec_util pci dump 0 0 0
     >>> chipsec_util pci xrom
     >>> chipsec_util pci xrom 3 0 0 0xFEDF0000
+    >>> chipsec_util pci cmd
+    >>> chipsec_util pci cmd 1
     """
 
     def requires_driver(self):
@@ -117,6 +120,29 @@ class PCICommand(BaseCommand):
                 print PCICommand.__doc__
                 return
 
+        elif ('cmd' == op):
+            cmd_mask = 0xFFFF
+            pci_class = None
+            pci_sub_class = None
+            if len(self.argv) >= 4:
+                cmd_mask = int(self.argv[3],16)
+            if len(self.argv) >= 5:
+                pci_class = int(self.argv[4],16)
+            if len(self.argv) >= 6:
+                pci_sub_class = int(self.argv[5],16)
+            self.logger.log('BDF     | VID:DID   | CMD  | CLS | Sub CLS')
+            self.logger.log('------------------------------------------')
+            for (b, d, f, vid, did) in self.cs.pci.enumerate_devices():
+                dev_cls = self.cs.pci.read_byte(b, d, f, PCI_HDR_CLS_OFF)
+                if pci_class is not None and (dev_cls != pci_class):
+                    continue
+                dev_sub_cls = self.cs.pci.read_byte(b, d, f, PCI_HDR_SUB_CLS_OFF)
+                if pci_sub_class is not None and (dev_sub_cls != pci_sub_class):
+                    continue
+                cmd_reg = self.cs.pci.read_word(b, d, f, PCI_HDR_CMD_OFF)
+                if (cmd_reg & cmd_mask) == 0:
+                    continue
+                self.logger.log('{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:04X} | {:02X}  | {:02X}'.format(b, d, f, vid, did, cmd_reg, dev_cls, dev_sub_cls))
         else:
 
             if len(self.argv) < 6:
