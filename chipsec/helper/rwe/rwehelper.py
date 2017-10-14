@@ -673,15 +673,17 @@ class RweHelper(Helper):
         value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         cfg_addr = bdf.cfg_address()
-        self.write_io_port( 0xCF8, cfg_addr, 4 )
-        value = self.read_io_port( 0xCFC, size )
+        byte_off = address & 0x03
+        self.write_io_port(0xCF8, cfg_addr, 4)
+        value = self.read_io_port(0xCFC + byte_off, size)
         return value
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         cfg_addr = bdf.cfg_address()
-        self.write_io_port( 0xCF8, cfg_addr, 4 )
-        self.write_io_port( 0xCFC, value, size )
+        byte_off = address & 0x03
+        self.write_io_port(0xCF8, cfg_addr, 4)
+        self.write_io_port(0xCFC + byte_off, value, size)
         return True
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
