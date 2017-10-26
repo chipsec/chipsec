@@ -138,7 +138,7 @@ ParseObject(
   return EFI_SUCCESS;
 }
 
-inline void 
+void 
 errorHandling(
   VOID* SrcBuf,
   VOID* DstBuf
