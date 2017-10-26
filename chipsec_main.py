@@ -47,7 +47,10 @@ import re
 import sys
 import time
 import traceback
-import zipfile
+try:
+    import zipfile
+except:
+    pass
 
 import chipsec.file
 import chipsec.module
