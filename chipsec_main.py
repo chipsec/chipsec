@@ -544,11 +544,11 @@ class ChipsecMain:
     ##################################################################################
 
     def main ( self ):
-        self.print_banner()
-
         (cont, exit_code) = self.parse_args()
         if not cont:
           return exit_code
+
+        self.print_banner()
 
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath( import_path ) )
