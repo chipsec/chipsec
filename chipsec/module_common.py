@@ -99,7 +99,7 @@ MTAG_BIOS       = "BIOS"
 MTAG_SMM        = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
 MTAG_HWCONFIG   = "HWCONFIG"
-
+MTAG_CPU        = "CPU" 
 
 ##! [Available Tags]
 MTAG_METAS = {
@@ -107,6 +107,7 @@ MTAG_METAS = {
               MTAG_SMM:        "System Management Mode (SMM) Modules",
               MTAG_SECUREBOOT: "Secure Boot Modules",
               MTAG_HWCONFIG:   "Hardware Configuration Modules",
+              MTAG_CPU:        "CPU Modules",
               }
 ##! [Available Tags]
 MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])
