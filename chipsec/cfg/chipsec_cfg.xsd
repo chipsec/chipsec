@@ -117,6 +117,7 @@
     <xs:enumeration value="pcicfg" />
     <xs:enumeration value="mmcfg" />
     <xs:enumeration value="msgbus" />
+    <xs:enumeration value="mm_msgbus" />
   </xs:restriction>
 </xs:simpleType>
 
