@@ -64,6 +64,7 @@ typedef struct {
   UINT16  mBlockSize;
   UINT32  mCompSize;
   UINT32  mOrigSize;
+  UINT32  mSrcSize;
 
   UINT16  mBadTableFlag;
   UINT16  mBadAlgorithm;
@@ -74,7 +75,7 @@ typedef struct {
   UINT8   mPTLen[NPT];
   UINT16  mCTable[MCTABLESIZE];
   UINT16  mPTTable[MPTTABLESIZE];
- 
+
 } SCRATCH_DATA;
 
 STATIC UINT16 mPbit = EFIPBIT;
@@ -112,6 +113,11 @@ Returns: (VOID)
       //
       Sd->mCompSize--;
       Sd->mSubBitBuf  = 0;
+      if(Sd->mInBuf >= Sd->mSrcSize)
+      {
+        Sd->mBadAlgorithm = 1;
+        return;
+      }
       Sd->mSubBitBuf  = Sd->mSrcBase[Sd->mInBuf++];
       Sd->mBitCount   = 8;
 
@@ -267,7 +273,7 @@ Returns:
         {
           Sd->mBadAlgorithm = 1;
           return (UINT16) BAD_TABLE;
-        } 
+        }
         Table[Index] = Char;
       }
     } else {
@@ -772,7 +778,7 @@ Returns:
   CompSize  = Src[0] + (Src[1] << 8) + (Src[2] << 16) + (Src[3] << 24);
   OrigSize  = Src[4] + (Src[5] << 8) + (Src[6] << 16) + (Src[7] << 24);
 
-  if (SrcSize < CompSize + 8) {
+  if (SrcSize < CompSize + 8 || (CompSize + 8) < 8) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -789,7 +795,8 @@ Returns:
   Sd->mSrcBase  = Src;
   Sd->mDstBase  = Dst;
   Sd->mCompSize = CompSize;
-  Sd->mOrigSize = DstSize;
+  Sd->mOrigSize = OrigSize;
+  Sd->mSrcSize  = SrcSize;
 
   //
   // Fill the first BITBUFSIZ bits
@@ -939,5 +946,3 @@ Returns:
   mPbit = MAXPBIT;
   return Decompress (Source, SrcSize, Destination, DstSize, Scratch, ScratchSize);
 }
-
-
