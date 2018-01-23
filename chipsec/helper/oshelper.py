@@ -256,6 +256,27 @@ class OsHelper:
         raise UnimplementedAPIError('map_io_space')
 
     #
+    # virtual_address is 64 bit integer
+    #
+    def read_virtual_mem( self, virt_address, length ):
+        if self.use_native_api() and hasattr(self.helper, 'native_read_virt_mem'):
+            return self.helper.native_read_virt_mem( (virt_address>>32)&0xFFFFFFFF, virt_address&0xFFFFFFFF, length )
+        else:
+            return self.helper.read_virt_mem( (virt_address>>32)&0xFFFFFFFF, virt_address&0xFFFFFFFF, length )
+
+    def write_virtual_mem( self, virt_address, length, buf ):
+        if self.use_native_api() and hasattr(self.helper, 'native_write_virt_mem'):
+            return self.helper.native_write_virt_mem( (virt_address>>32)&0xFFFFFFFF, virt_address&0xFFFFFFFF, length, buf )
+        else:
+            return self.helper.write_virt_mem( (virt_address>>32)&0xFFFFFFFF, virt_address&0xFFFFFFFF, length, buf )
+
+    def alloc_virtual_mem( self, length, max_virt_address ):
+        if self.use_native_api() and hasattr(self.helper, 'native_alloc_virt_mem'):
+            return self.helper.native_alloc_phys_mem( length, max_virt_address )
+        else:
+            return self.helper.alloc_phys_mem( length, max_virt_address )
+
+    #
     # Read/Write I/O port
     #
     def read_io_port( self, io_port, size ):

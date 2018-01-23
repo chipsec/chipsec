@@ -346,6 +346,13 @@ class LinuxHelper(Helper):
         self.dev_fh.seek(addr)
         return self.__mem_block(length, newval)
 
+    def write_virt_mem(self, phys_address_hi, phys_address_lo, length, newval):
+        if newval is None: return None
+        addr = (phys_address_hi << 32) | phys_address_lo
+        pa,error = self.va2pa(addr)
+        self.dev_fh.seek(pa)
+        return self.__mem_block(length, newval)
+
     def native_write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
         if newval is None: return None
         if self.devmem_available():
@@ -358,6 +365,12 @@ class LinuxHelper(Helper):
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         addr = (phys_address_hi << 32) | phys_address_lo
         self.dev_fh.seek(addr)
+        return self.__mem_block(length)
+
+    def read_virt_mem(self, phys_address_hi, phys_address_lo, length):
+        addr = (phys_address_hi << 32) | phys_address_lo
+        pa,error = self.va2pa(addr)
+        self.dev_fh.seek(pa)
         return self.__mem_block(length)
 
     def native_read_phys_mem(self, phys_address_hi, phys_address_lo, length):

@@ -536,6 +536,17 @@ class Win32Helper(Helper):
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
         out_length = length
         out_buf = (c_char * out_length)()
+        addr = (phys_address_hi << 32) | phys_address_lo
+        pa,error = self.va2pa(addr)
+        phys_address_hi = (addr & FFFFFFFF00000000) >> 32
+        phys_address_lo = addr & 0xFFFFFFFF
+        in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length )
+        out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
+        return out_buf
+
+    def read_virt_mem(self, phys_address_hi, phys_address_lo, length ):
+        out_length = length
+        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length )
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
         return out_buf
@@ -546,6 +557,17 @@ class Win32Helper(Helper):
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         in_length = length + 12
         out_buf = (c_char * 4)()
+        in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
+        out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
+        return out_buf
+
+    def write_virt_mem( self, phys_address_hi, phys_address_lo, length, buf ):
+        in_length = length + 12
+        out_buf = (c_char * 4)()
+        addr = (phys_address_hi << 32) | phys_address_lo
+        pa,error = self.va2pa(addr)
+        phys_address_hi = (addr & FFFFFFFF00000000) >> 32
+        phys_address_lo = addr & 0xFFFFFFFF
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
