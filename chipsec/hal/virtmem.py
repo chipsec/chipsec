@@ -42,6 +42,7 @@ import struct
 import sys
 
 from chipsec.logger import *
+from chipsec.hal import hal_base
 
 class MemoryRuntimeError (RuntimeError):
     pass
