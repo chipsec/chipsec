@@ -576,6 +576,17 @@
     <register name="MSR_SMI_COUNT" type="msr" msr="0x34" desc="SMI Count">
       <field name="Count" bit="0"  size="64" />
     </register>
+    <register name="IA32_ARCH_CAPABILITIES" type="msr" msr="0x10A" desc="Architectural Capabilities MSR">
+      <field name="RDCL_NO"  bit="0" size="1" desc="Processor is not susceptible to RDCL (Rogue Data Cache Load)" />
+      <field name="IBRS_ALL" bit="1" size="1" desc="Processor supports enhanced Indirect Branch Restricted Speculation (IBRS)" />
+    </register>
+    <register name="IA32_SPEC_CTRL" type="msr" msr="0x48" desc="Speculation Control MSR">
+      <field name="IBRS"  bit="0" size="1" desc="Enable Indirect Branch Restricted Speculation (IBRS)" />
+      <field name="STIBP" bit="1" size="1" desc="Enable Single Thread Indirect Branch Predictors (STIBP)" />
+    </register>
+    <register name="IA32_PRED_CMD" type="msr" msr="0x49" desc="Prediction Command MSR">
+      <field name="IBPB"  bit="0" size="1" desc="IBPB Command" />
+    </register>
        
   </registers>
 
