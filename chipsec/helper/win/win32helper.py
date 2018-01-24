@@ -533,7 +533,7 @@ class Win32Helper(Helper):
 # Actual driver IOCTL functions to access HW resources
 ###############################################################################################
 
-    def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
+    def read_virt_mem( self, phys_address_hi, phys_address_lo, length ):
         out_length = length
         out_buf = (c_char * out_length)()
         addr = (phys_address_hi << 32) | phys_address_lo
@@ -544,7 +544,7 @@ class Win32Helper(Helper):
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
         return out_buf
 
-    def read_virt_mem(self, phys_address_hi, phys_address_lo, length ):
+    def read_phys_mem(self, phys_address_hi, phys_address_lo, length ):
         out_length = length
         out_buf = (c_char * out_length)()
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length )
