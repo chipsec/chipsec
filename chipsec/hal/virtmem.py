@@ -42,6 +42,7 @@ import struct
 import sys
 
 from chipsec.logger import *
+from chipsec.hal import hal_base
 
 class MemoryRuntimeError (RuntimeError):
     pass
@@ -49,7 +50,7 @@ class MemoryRuntimeError (RuntimeError):
 class MemoryAccessError (RuntimeError):
     pass
 
-class VirtMemory:
+class VirtMemory(hal_base.HALBase):
     def __init__( self, cs ):
         self.helper = cs.helper
         self.cs = cs
@@ -65,25 +66,25 @@ class VirtMemory:
 
     def read_virtual_mem( self, virt_address, length ):
         if logger().HAL: logger().log("[mem] 0x%016X"%virt_address)
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         return self.helper.read_physical_mem( phys_address, length )
 
     def read_virtual_mem_dword( self, virt_address ):
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         out_buf = self.read_physical_mem( phys_address, 4 )
         value = struct.unpack( '=I', out_buf )[0]
         if logger().HAL: logger().log( '[mem] dword at VA = 0x%016X: 0x%08X' % (virt_address, value) )
         return value
 
     def read_virtual_mem_word( self, virt_address ):
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         out_buf = self.read_physical_mem( phys_address, 2 )
         value = struct.unpack( '=H', out_buf )[0]
         if logger().HAL: logger().log( '[mem] word at VA = 0x%016X: 0x%04X' % (virt_address, value) )
         return value
 
     def read_virtual_mem_byte( self, virt_address ):
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         out_buf = self.read_physical_mem( phys_address, 1 )
         value = struct.unpack( '=B', out_buf )[0]
         if logger().HAL: logger().log( '[mem] byte at VA = 0x%016X: 0x%02X' % (virt_address, value) )
@@ -95,22 +96,22 @@ class VirtMemory:
         if logger().HAL:
             logger().log( '[mem] buffer len = 0x%X to VA = 0x%016X' % (length, virt_address) )
             print_buffer( buf )
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         return self.helper.write_physical_mem( phys_address, length, buf )
 
     def write_virtual_mem_dword( self, virt_address, dword_value ):
         if logger().HAL: logger().log( '[mem] dword to VA = 0x%016X <- 0x%08X' % (virt_address, dword_value) )
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         return self.write_physical_mem( phys_address, 4, struct.pack( 'I', dword_value ) )
 
     def write_virtual_mem_word( self, virt_address, word_value ):
         if logger().HAL: logger().log( '[mem] word to VA = 0x%016X <- 0x%04X' % (virt_address, word_value) )
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         return self.write_physical_mem( phys_address, 2, struct.pack( 'H', word_value ) )
 
     def write_virtual_mem_byte( self, virt_address, byte_value ):
         if logger().HAL: logger().log( '[mem] byte to VA = 0x%016X <- 0x%02X' % (virt_address, byte_value) )
-        phys_address = va2pa(virt_address)
+        phys_address = self.va2pa(virt_address)
         return self.write_physical_mem( phys_address, 1, struct.pack( 'B', byte_value ) )
 
     # Allocate physical memory buffer
@@ -128,23 +129,8 @@ class VirtMemory:
             return 
         return pa
 
-    # Map physical address to virtual
-
-    #def map_io_space(self, pa, length, cache_type):
-    #    va = self.helper.map_io_space(pa, length, cache_type)
-    #    if logger().HAL: logger().log( '[mem] Mapped: PA = 0x%016X, VA = 0x%016X' % (pa, va) )
-    #    return va
-
-    # Free physical memory buffer
-
     def free_physical_mem(self, virt_address):
         pa = va2pa(virt_address)
         ret = self.helper.free_physical_mem(pa)
         if logger().HAL: logger().log( '[mem] Deallocated : VA = 0x%016X' % virt_address )
         return True if ret == 1 else False
-
-    #def set_mem_bit(self, addr, bit):
-    #    addr += bit >> 3
-    #    byte = self.read_physical_mem_byte(addr)
-    #    self.write_physical_mem_byte(addr, (byte | (0x1 << (bit & 0x7))))
-    #    return byte
