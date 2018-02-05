@@ -29,13 +29,13 @@
 # -------------------------------------------------------------------------------
 
 """
-Access to physical memory
+Access to virtual memory
 
 usage:
-    >>> read_physical_mem( 0xf0000, 0x100 )
-    >>> write_physical_mem( 0xf0000, 0x100, buffer )
-    >>> write_physical_mem_dowrd( 0xf0000, 0xdeadbeef )
-    >>> read_physical_mem_dowrd( 0xfed40000 )
+    >>> read_virtual_mem( 0xf0000, 0x100 )
+    >>> write_virtual_mem( 0xf0000, 0x100, buffer )
+    >>> write_virtual_mem_dowrd( 0xf0000, 0xdeadbeef )
+    >>> read_virtual_mem_dowrd( 0xfed40000 )
 """
 
 import struct
@@ -57,12 +57,12 @@ class VirtMemory(hal_base.HALBase):
 
     ####################################################################################
     #
-    # Physical memory API using 64b Physical Address
+    # virtual memory API using 64b virtual Address
     # (Same functions as below just using 64b PA instead of High and Low 32b parts of PA)
     #
     ####################################################################################
 
-    # Reading physical memory
+    # Reading virtual memory
 
     def read_virtual_mem( self, virt_address, length ):
         if logger().HAL: logger().log("[mem] 0x%016X"%virt_address)
@@ -90,7 +90,7 @@ class VirtMemory(hal_base.HALBase):
         if logger().HAL: logger().log( '[mem] byte at VA = 0x%016X: 0x%02X' % (virt_address, value) )
         return value
 
-    # Writing physical memory
+    # Writing virtual memory
 
     def write_virtual_mem( self, virt_address, length, buf ):
         if logger().HAL:
@@ -114,9 +114,9 @@ class VirtMemory(hal_base.HALBase):
         phys_address = self.va2pa(virt_address)
         return self.write_physical_mem( phys_address, 1, struct.pack( 'B', byte_value ) )
 
-    # Allocate physical memory buffer
+    # Allocate virtual memory buffer
 
-    def alloc_physical_mem( self, length, max_phys_address=0xFFFFFFFFFFFFFFFF ):
+    def alloc_virtual_mem( self, length, max_phys_address=0xFFFFFFFFFFFFFFFF ):
         (va, pa) = self.helper.alloc_physical_mem( length, max_phys_address )
         if logger().HAL: logger().log( '[mem] Allocated: PA = 0x%016X, VA = 0x%016X' % (pa, va) )
         return (va, pa)
@@ -129,8 +129,8 @@ class VirtMemory(hal_base.HALBase):
             return 
         return pa
 
-    def free_physical_mem(self, virt_address):
-        pa = va2pa(virt_address)
+    def free_virtual_mem(self, virt_address):
+        pa = self.va2pa(virt_address)
         ret = self.helper.free_physical_mem(pa)
         if logger().HAL: logger().log( '[mem] Deallocated : VA = 0x%016X' % virt_address )
         return True if ret == 1 else False
