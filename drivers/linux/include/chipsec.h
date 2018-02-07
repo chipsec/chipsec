@@ -46,6 +46,8 @@ chipsec@intel.com
 #define IOCTL_VA2PA                    _IOWR(0, 0x14, int*)
 #define IOCTL_MSGBUS_SEND_MESSAGE      _IOWR(0, 0x15, int*)
 #define IOCTL_FREE_PHYSMEM             _IOWR(0, 0x16, int*)
+#define IOCTL_READ_PHYSMEM             _IOWR(0, 0x17, int*)
+#define IOCTL_WRITE_PHYSMEM            _IOWR(0, 0x18, int*)
 
 //
 // SoC IOSF Message Bus constants

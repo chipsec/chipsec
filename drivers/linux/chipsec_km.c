@@ -1254,6 +1254,68 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
         break;
     }
+
+	case IOCTL_READ_PHYSMEM:
+	{
+		// IN params : physical address, length
+		// OUT params : ptr to buffer
+		printk( KERN_INFO "[chipsec] > READMEM\n");
+
+		uint64_t NumberofBytes = 0;
+		phys_addr_t pa;
+		void *va; 
+
+		numargs = 3;
+
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			break;
+		}
+
+		pa = ptr[0];
+		va = phys_to_virt(pa);
+		NumberofBytes = ptr[1];
+		
+		if ( pa == NULL || va == NULL )
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: MEMORY is not allocated");
+			break;
+ 		}
+
+		if ( copy_to_user((void*)ioctl_param,va,NumberofBytes) > 0){
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not read all memory");
+		}
+		break;
+	}
+
+	case IOCTL_WRITE_PHYSMEM:
+	{
+		// IN params : physical address, length, ptr to buffer
+		// OUT params : length
+		printk( KERN_INFO "[chipsec] > WRITEMEM\n");
+
+		uint64_t 	NumberofBytes = 0;
+		phys_addr_t 	pa;
+		void 		*va;
+		void		*buffer; 
+
+		numargs = 3;
+
+		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+		{
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+			break;
+		}
+
+		pa = ptr[0];
+		va = phys_to_virt(pa);
+		NumberofBytes = ptr[1];
+		buffer = ioctl_param + (sizeof(long) * 2);
+		//printk ( KERN_INFO "Buffer %p\n",buffer );
+		copy_from_user( va, buffer, NumberofBytes );
+		break;
+	}
    
 #ifdef EFI_NOT_READY
 	case IOCTL_GET_EFIVAR:
