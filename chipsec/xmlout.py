@@ -384,10 +384,6 @@ class TestSuite(object):
         ts_attributes["time"]          = "%.5f" % sum( [tc.time for tc in self.test_cases if tc.time] )
         ts_attributes["tests"]         = str( len( self.test_cases ) )
 
-        print ts_attributes
-        for tc in self.test_cases:
-            print tc.tcType
-
         xml_element = ET.Element( "testsuite", ts_attributes )
 
         if len(self.properties) > 0:
