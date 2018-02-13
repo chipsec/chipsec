@@ -151,6 +151,8 @@ Chipset_Dictionary = {
 # 5th Generation Core Processor Family (Broadwell)
 0x1600 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
 0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
+0x1610 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Desktop 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)' },
+0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Mobile 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)' },
 
 # 6th Generation Core Processor Family (Skylake)
 0x1904 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake U)' },
@@ -168,6 +170,7 @@ Chipset_Dictionary = {
 0x5910 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 0x5914 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 8th Generation Core Processor (Kabylake U-Quad Core)' },
 0x591F : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Desktop 7th Generation Core Processor (Kabylake S)' },
+0x5918 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 
 # 8th Generation Core Processor Family (Coffeelake)
 0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
