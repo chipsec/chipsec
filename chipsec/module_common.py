@@ -49,6 +49,7 @@ class ModuleResult:
     WARNING = 2
     SKIPPED = 3
     DEPRECATED = 4
+    INFORMATION = 5
     ERROR   = -1
 
 
@@ -58,6 +59,7 @@ ModuleResultName = {
     ModuleResult.WARNING:    "Warning",
     ModuleResult.SKIPPED:    "Skipped",
     ModuleResult.DEPRECATED: "Deprecated",
+    ModuleResult.INFORMATION: "Information",
     ModuleResult.ERROR:      "Error"
 }
 def getModuleResultName(res):
@@ -88,6 +90,8 @@ class BaseModule(object):
         elif self.res == ModuleResult.FAILED:
             if value == ModuleResult.ERROR:
                 self.res = value
+        elif self.res == ModuleResult.INFORMATION:
+            self.res = value
         else: # PASSED or SKIPPED or DEPRECATED
             self.res = value
 
@@ -99,7 +103,8 @@ MTAG_BIOS       = "BIOS"
 MTAG_SMM        = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
 MTAG_HWCONFIG   = "HWCONFIG"
-MTAG_CPU        = "CPU" 
+MTAG_CPU        = "CPU"
+
 
 ##! [Available Tags]
 MTAG_METAS = {

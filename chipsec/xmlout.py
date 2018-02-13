@@ -103,6 +103,13 @@ class xmlAux:
             self.testCase.add_skipped_info( text, None )
             self._end_test()
 
+    def information_check(self, text):
+        if self.useXML == True:
+            self._check_testCase_exist()
+            self.testCase.add_information_info( text, None )
+            self._end_test()
+
+
     def start_test(self, test_name):
         """Starts the test/testcase."""
         self.xmlStdout = ""
@@ -140,11 +147,13 @@ class xmlAux:
         return True
 
 class testCaseType:
-    """Used to represent the types of TestCase that can be assigned (FAILURE, ERROR, SKIPPED, PASS)"""
-    FAILURE = 1
-    ERROR   = 2
-    SKIPPED = 3
-    PASS    = 4
+    """Used to represent the types of TestCase that can be assigned (FAILURE, ERROR, SKIPPED, PASS, INFORMATION)"""
+    FAILURE     = 1
+    ERROR       = 2
+    SKIPPED     = 3
+    INFORMATION = 4
+    PASS        = 5
+    
 
 class xmlTestCase():
     """Represents a JUnit test case with a result and possibly some stdout or stderr"""
@@ -170,6 +179,8 @@ class xmlTestCase():
         self.failure_output  = ""
         self.skipped_message = ""
         self.skipped_output  = ""
+        self.information_message = ""
+        self.information_output = ""
 
         if tcType == testCaseType.ERROR:
             self.error_message = message
@@ -180,6 +191,9 @@ class xmlTestCase():
         elif tcType == testCaseType.SKIPPED:
             self.skipped_message = message
             self.skipped_output  = output
+        elif tcType == testCaseType.INFORMATION:
+            self.information_message = message
+            self.information_output = output
         else:
             #Then it should be PASSED.
             self.tcType = testCaseType.PASS
@@ -207,10 +221,18 @@ class xmlTestCase():
 
     def is_pass(self):
         """Returns True if the testCase is of Type Pass, if not returns False."""
-        if self.tcType not in [testCaseType.ERROR, testCaseType.FAILURE, testCaseType.SKIPPED] or self.tcType == testCaseType.PASS:
+        if self.tcType not in [testCaseType.ERROR, testCaseType.FAILURE, testCaseType.SKIPPED, testCaseType.INFORMATION] or self.tcType == testCaseType.PASS:
             return True
         else:
             False
+
+    def is_information(self):
+        """Returns True if the testCase is of Type Information, if not returns False."""
+        if self.tcType == testCaseType.INFORMATION:
+            return True
+        else:
+            False
+
 
     def add_failure_info(self, message=None, output=None):
         """Sets the values for the corresponding Type Failure."""
@@ -238,6 +260,15 @@ class xmlTestCase():
         #To be compatible with junit_xml
         self.skipped_message = message
         self.skipped_output  = output
+
+    def add_information_info(self, message=None, output=None):
+        """Sets the values for the corresponding Type Information."""
+        self.tcType          = testCaseType.INFORMATION
+        self.tcMessage       = message
+        self.tcOutput        = output
+        #To be compatible with junit_xml
+        self.information_message = message
+        self.information_output  = output
 
     def add_stdout_info(self, text):
         """Adds the text that is going to be part of the stdout for the TestCase."""
@@ -348,9 +379,14 @@ class TestSuite(object):
         ts_attributes['failures']      = str( len( [tc for tc in self.test_cases if tc.is_failure()] ) )
         ts_attributes['errors']        = str( len( [tc for tc in self.test_cases if tc.is_error()] ) )
         ts_attributes['skipped']       = str( len( [tc for tc in self.test_cases if tc.is_skipped()] ) )
+        ts_attributes['information']   = str( len( [tc for tc in self.test_cases if tc.is_information()] ) )
         #ts_attributes["time"]          = str( sum( [tc.time for tc in self.test_cases if tc.time] ) )
         ts_attributes["time"]          = "%.5f" % sum( [tc.time for tc in self.test_cases if tc.time] )
         ts_attributes["tests"]         = str( len( self.test_cases ) )
+
+        print ts_attributes
+        for tc in self.test_cases:
+            print tc.tcType
 
         xml_element = ET.Element( "testsuite", ts_attributes )
 
@@ -375,6 +411,12 @@ class TestSuite(object):
             #For the is_pass() case, just log a 'pass' tag.
             if tc.is_pass():
                 pass_element = ET.SubElement( tc_element, "pass", {'type':'pass'} )
+            elif tc.is_information():
+                information_element = ET.SubElement( tc_element, "information", {'type': 'information'} )
+                if tc.information_message:
+                    information_element.set('message', tc.information_message)
+                if tc.information_output:
+                    information_output = tc.information_output
             elif tc.is_failure():
                 failure_element = ET.SubElement( tc_element, "failure", {'type': 'failure'} )
                 if tc.failure_message:
