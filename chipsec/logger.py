@@ -311,6 +311,12 @@ class Logger:
         self.log_warning(text)
         self.xmlAux.passed_check()
 
+    def log_information_check( self, text ):
+        """Logs a Information test, an information test.
+           Logs a Test as INFORMATION, this is used for XML output."""
+        self.log_information(text)
+        self.xmlAux.information_check(text)
+
 
     def log_passed( self, text ):
         """Logs a passed message."""
@@ -361,6 +367,11 @@ class Logger:
         """Logs a message with a question mark."""
         text = "[?] " + text
         self._log(text, None, None)
+
+    def log_information( self, text):
+        """Logs a message with information message"""
+        text = "[#] INFORMATION: " + text
+        self._log(text, GREEN, None)
 
     def start_test( self, test_name ):
         """Logs the start point of a Test, this is used for XML output.

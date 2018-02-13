@@ -66,27 +66,30 @@ except ImportError:
   pass
 
 class ExitCode:
-    OK         = 0
-    SKIPPED    = 1
-    WARNING    = 2
-    DEPRECATED = 4
-    FAIL       = 8
-    ERROR      = 16
-    EXCEPTION  = 32
+    OK          = 0
+    SKIPPED     = 1
+    WARNING     = 2
+    DEPRECATED  = 4
+    FAIL        = 8
+    ERROR       = 16
+    EXCEPTION   = 32
+    INFORMATION = 64
     def __init__(self):
-        self._skipped    = False
-        self._warning    = False
-        self._deprecated = False
-        self._fail       = False
-        self._error      = False
-        self._exception  = False
+        self._skipped     = False
+        self._warning     = False
+        self._deprecated  = False
+        self._fail        = False
+        self._error       = False
+        self._exception   = False
+        self._information = False
 
-    def skipped(self):     self._skipped = True
-    def warning(self):     self._warning = True
-    def deprecated(self):  self._deprecated = True
-    def fail(self):        self._fail = True
-    def error(self):       self._error = True
-    def exception(self):   self._exception = True
+    def skipped(self):      self._skipped = True
+    def warning(self):      self._warning = True
+    def deprecated(self):   self._deprecated = True
+    def fail(self):         self._fail = True
+    def error(self):        self._error = True
+    def exception(self):    self._exception = True
+    def information(self):  self._information = True
 
     def get_code(self):
         exit_code = ExitCode.OK
@@ -96,6 +99,7 @@ class ExitCode:
         if self._fail:         exit_code = exit_code | ExitCode.FAIL
         if self._error:        exit_code = exit_code | ExitCode.ERROR
         if self._exception:    exit_code = exit_code | ExitCode.EXCEPTION
+        if self._information:  exit_code = exit_code | ExitCode.INFORMATION
         return exit_code
 
     def is_skipped(self):     return self._skipped
@@ -104,31 +108,35 @@ class ExitCode:
     def is_fail(self):        return self._fail
     def is_error(self):       return self._error
     def is_exception(self):   return self._exception
+    def is_informaiton(self): return self._information
 
 
     def parse(self, code):
         code = int(code)
-        self._skipped    = ( code & ExitCode.SKIPPED )    != 0
-        self._warning    = ( code & ExitCode.WARNING )    != 0
-        self._deprecated = ( code & ExitCode.DEPRECATED ) != 0
-        self._fail       = ( code & ExitCode.FAIL )       != 0
-        self._error      = ( code & ExitCode.ERROR )      != 0
-        self._exception  = ( code & ExitCode.EXCEPTION )  != 0
+        self._skipped     = ( code & ExitCode.SKIPPED )     != 0
+        self._warning     = ( code & ExitCode.WARNING )     != 0
+        self._deprecated  = ( code & ExitCode.DEPRECATED )  != 0
+        self._fail        = ( code & ExitCode.FAIL )        != 0
+        self._error       = ( code & ExitCode.ERROR )       != 0
+        self._exception   = ( code & ExitCode.EXCEPTION )   != 0
+        self._information = ( code & ExitCode.INFORMATION ) != 0
 
     def __str__(self):
         return """
-        SKIPPED    = %r
-        WARNING    = %r
-        DEPRECATED = %r
-        FAIL       = %r
-        ERROR      = %r
-        EXCEPTION  = %r"""%(
+        SKIPPED     = %r
+        WARNING     = %r
+        DEPRECATED  = %r
+        FAIL        = %r
+        ERROR       = %r
+        EXCEPTION   = %r
+        INFORMATION = %r"""%(
         self._skipped    ,
         self._warning    ,
         self._deprecated ,
         self._fail       ,
         self._error      ,
-        self._exception  )
+        self._exception  ,
+        self._information)
 
 
 class ChipsecMain:
@@ -326,15 +334,16 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        failed     = []
-        errors     = []
-        warnings   = []
-        passed     = []
-        skipped    = []
-        exceptions = []
-        executed   = 0
-        exit_code  = ExitCode()
-        results    = {}
+        failed      = []
+        errors      = []
+        warnings    = []
+        passed      = []
+        skipped     = []
+        exceptions  = []
+        information = []
+        executed    = 0
+        exit_code   = ExitCode()
+        results     = {}
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
@@ -380,6 +389,8 @@ class ChipsecMain:
             elif module_common.ModuleResult.SKIPPED == result:
                 exit_code.skipped()
                 skipped.append( modx )
+            elif module_common.ModuleResult.INFORMATION == result:
+                information.append( modx )
 
         if self._json_out:
             results_json = json.dumps(results, sort_keys=True, indent=2, separators=(',', ': '))
@@ -395,6 +406,8 @@ class ChipsecMain:
             for mod in errors: logger().error( str(mod) )
             logger().log( "[CHIPSEC] Modules passed        %d:" % len(passed) )
             for fmod in passed: logger().log_passed( str(fmod) )
+            logger().log( "[CHIPSEC] Modules information   %d:" % len(information) )
+            for fmod in information: logger().log_information( str(fmod) )
             logger().log( "[CHIPSEC] Modules failed        %d:" % len(failed) )
             for fmod in failed: logger().log_failed( str(fmod) )
             logger().log( "[CHIPSEC] Modules with warnings %d:" % len(warnings) )
