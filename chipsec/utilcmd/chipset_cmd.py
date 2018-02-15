@@ -47,6 +47,7 @@ class PlatformCommand(BaseCommand):
             print_supported_chipsets()
             self.logger.log("")
             self.cs.print_chipset()
+            self.cs.print_pch()
         except UnknownChipsetError, msg:
             self.logger.error( msg )
 
