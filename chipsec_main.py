@@ -73,6 +73,7 @@ class ExitCode:
     FAIL       = 8
     ERROR      = 16
     EXCEPTION  = 32
+    NOTAPPLICABLE = 128
     def __init__(self):
         self._skipped    = False
         self._warning    = False
@@ -80,6 +81,7 @@ class ExitCode:
         self._fail       = False
         self._error      = False
         self._exception  = False
+        self._notapplicable = False
 
     def skipped(self):     self._skipped = True
     def warning(self):     self._warning = True
@@ -87,6 +89,7 @@ class ExitCode:
     def fail(self):        self._fail = True
     def error(self):       self._error = True
     def exception(self):   self._exception = True
+    def notapplicable(self): self._notapplicable = True
 
     def get_code(self):
         exit_code = ExitCode.OK
@@ -96,6 +99,7 @@ class ExitCode:
         if self._fail:         exit_code = exit_code | ExitCode.FAIL
         if self._error:        exit_code = exit_code | ExitCode.ERROR
         if self._exception:    exit_code = exit_code | ExitCode.EXCEPTION
+        if self._notapplicable: exit_code = exit_code | ExitCode.NOTAPPLICABLE
         return exit_code
 
     def is_skipped(self):     return self._skipped
@@ -104,6 +108,7 @@ class ExitCode:
     def is_fail(self):        return self._fail
     def is_error(self):       return self._error
     def is_exception(self):   return self._exception
+    def is_notapplicable(self): return self._notapplicable
 
 
     def parse(self, code):
@@ -114,21 +119,25 @@ class ExitCode:
         self._fail       = ( code & ExitCode.FAIL )       != 0
         self._error      = ( code & ExitCode.ERROR )      != 0
         self._exception  = ( code & ExitCode.EXCEPTION )  != 0
+        self._notapplicable = ( code & ExitCode.NOTAPPLICABLE ) != 0
 
     def __str__(self):
         return """
         SKIPPED    = %r
+        NOTAPPLICABLE = %r
         WARNING    = %r
         DEPRECATED = %r
         FAIL       = %r
         ERROR      = %r
-        EXCEPTION  = %r"""%(
-        self._skipped    ,
+        EXCEPTION  = %r
+        """%(
+        self._skipped    ,       
         self._warning    ,
         self._deprecated ,
         self._fail       ,
         self._error      ,
-        self._exception  )
+        self._exception  ,
+        self._notapplicable)
 
 
 class ChipsecMain:
@@ -332,6 +341,7 @@ class ChipsecMain:
         passed     = []
         skipped    = []
         exceptions = []
+        notapplicable = []
         executed   = 0
         exit_code  = ExitCode()
         results    = {}
@@ -380,6 +390,9 @@ class ChipsecMain:
             elif module_common.ModuleResult.SKIPPED == result:
                 exit_code.skipped()
                 skipped.append( modx )
+            elif module_common.ModuleResult.NOTAPPLICABLE == result:
+                exit_code.notapplicable()
+                notapplicable.append( modx )
 
         if self._json_out:
             results_json = json.dumps(results, sort_keys=True, indent=2, separators=(',', ': '))
@@ -399,8 +412,10 @@ class ChipsecMain:
             for fmod in failed: logger().log_failed( str(fmod) )
             logger().log( "[CHIPSEC] Modules with warnings %d:" % len(warnings) )
             for fmod in warnings: logger().log_warning( str(fmod) )
-            logger().log( "[CHIPSEC] Modules skipped %d:" % len(skipped) )
+            logger().log( "[CHIPSEC] Modules not implemented %d:" % len(skipped) )
             for fmod in skipped: logger().log_skipped( str(fmod) )
+            logger().log( "[CHIPSEC] Modules not applicable %d:" % len(notapplicable) )
+            for fmod in notapplicable: logger().log_not_applicable( str(fmod) )
             if len(exceptions) > 0:
                 logger().log( "[CHIPSEC] Modules with Exceptions %d:" % len(exceptions) )
                 for fmod in exceptions: logger().error( str(fmod) )

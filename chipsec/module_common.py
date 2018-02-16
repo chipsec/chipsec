@@ -49,6 +49,7 @@ class ModuleResult:
     WARNING = 2
     SKIPPED = 3
     DEPRECATED = 4
+    NOTAPPLICABLE = 6
     ERROR   = -1
 
 
@@ -58,7 +59,8 @@ ModuleResultName = {
     ModuleResult.WARNING:    "Warning",
     ModuleResult.SKIPPED:    "Skipped",
     ModuleResult.DEPRECATED: "Deprecated",
-    ModuleResult.ERROR:      "Error"
+    ModuleResult.ERROR:      "Error",
+    ModuleResult.NOTAPPLICABLE:  "NotApplicable"
 }
 def getModuleResultName(res):
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
@@ -88,7 +90,7 @@ class BaseModule(object):
         elif self.res == ModuleResult.FAILED:
             if value == ModuleResult.ERROR:
                 self.res = value
-        else: # PASSED or SKIPPED or DEPRECATED
+        else: # PASSED or SKIPPED or DEPRECATED or NOTAPPLICABLE
             self.res = value
 
     def run(self, module_argv):
