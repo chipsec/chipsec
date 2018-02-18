@@ -1,0 +1,293 @@
+<?xml version="1.0"?>
+<configuration platform="PCH_1xx">
+<!-- XML configuration file for 100 series PCH based platforms
+* Intel(R) 100 Series Chipset Family Platform Controller Hub (PCH)
+* http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="SMBUS"  bus="0" dev="0x1F" fun="4" vid="0x8086" />
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" vid="0x8086" />
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+    <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/> 
+    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
+    <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" desc="Power Management Register Range"/>
+    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" desc="Sideband Register Access BAR"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
+    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
+    <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
+
+    <!-- old definition -->
+    <bar name="SMBUS_BASE" bus="0" dev="0x1F" fun="4" reg="0x20" mask="0xFFE0"     size="0x80"  desc="SMBus Base Address"/>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- PCIe Configuration registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- Sideband Register Access Registers -->
+    <register name="SBREG_BAR" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x10" size="4" desc="Sideband Register Access BAR">
+      <field name="RBA" bit="24" size="8" desc="Register Base Address"/>
+    </register>
+
+    <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="2" desc="P2SB Configuration Register">
+      <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR"/>
+    </register>
+
+    <!-- Power Management Controller -->
+    <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x40" size="4" desc="ACPI Base Address">
+      <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
+      <field name="BA"    bit="8" size="8" desc="Base Address"/>
+    </register>
+    <register name="ACTL" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x44" size="4" desc="ACPI Control">
+      <field name="SCIS"    bit="0" size="2" desc="SCI IRQ Select"/>
+      <field name="EN"      bit="7" size="1" desc="ACPI Enable"/>
+      <field name="PWRM_EN" bit="8" size="1" desc="PWRM Enable"/>
+    </register>
+    <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x48" size="4" desc="PM Base Address">
+      <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
+      <field name="BA"    bit="12" size="20" desc="Base Address"/>
+    </register>
+    <register name="GEN_PMCON_1" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0xA0" size="2" desc="General PM Configuration A">
+      <field name="SMI_LOCK"    bit="4"     size="1"/>
+    </register>
+
+    <!-- SMBus Host Controller -->
+    <register name="SMBUS_VID"  type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x00" size="2" desc="VID" />
+    <register name="SMBUS_DID"  type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x02" size="2" desc="DID" />
+    <register name="SMBUS_CMD"  type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x04" size="2" desc="CMD" />
+    <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x40" size="1" desc="Host Configuration">
+      <field name="HST_EN"     bit="0" size="1"/>
+      <field name="SMB_SMI_EN" bit="1" size="1"/>
+      <field name="I2C_EN"     bit="2" size="2"/>
+      <field name="SSRESET"    bit="3" size="1"/>
+      <field name="SPD_WD"     bit="4" size="1"/>
+    </register>
+    <register name="TCOBASE"    type="pcicfg" bus="0" dev="0x1f" fun="4" offset="0x50" size="4" desc="TCO Base Address">
+      <field name="IOS"   bit="0" size="1"  desc="I/O space"/>
+      <field name="TCOBA" bit="5" size="11" desc="TCO Base Address"/>
+    </register>
+    <register name="TCOCTL"     type="pcicfg" bus="0" dev="0x1f" fun="4" offset="0x54" size="4" desc="TCO Control">
+      <field name="TCO_BASE_LOCK" bit="0" size="1" desc="TCO Base Lock"/>
+      <field name="TCO_BASE_EN"   bit="8" size="1" desc="TCO Base Enable"/>
+    </register>
+
+    <!-- SPI Interface Controller -->
+    <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="4" desc="BIOS Control">
+      <field name="BIOSWE"   bit="0" size="1" desc="BIOS Write Enable" />
+      <field name="BLE"      bit="1" size="1" desc="BIOS Lock Enable" />
+      <field name="SRC"      bit="2" size="2" desc="SPI Read Configuration" />
+      <field name="TSS"      bit="4" size="1" desc="Top Swap Status" />
+      <field name="SMM_BWP"  bit="5" size="1" desc="SMM BIOS Write Protection" />
+      <field name="BBS"      bit="6" size="1" desc="Boot BIOS Strap" />
+      <field name="BILD"     bit="7" size="1" desc="BIOS Interface Lock Down"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MMIO registers               -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- PCH SPIBAR registers -->
+    <register name="HSFS" type="mmio" bar="SPIBAR" offset="0x04" size="4" desc="Hardware Sequencing Flash Status Register">
+      <field name="FDONE"   bit="0"  size="1" desc="Flash Cycle Done"/>
+      <field name="FCERR"   bit="1"  size="1" desc="Flash Cycle Error"/>
+      <field name="AEL"     bit="2"  size="1" desc="Access Error Log"/>
+      <field name="SCIP"    bit="5"  size="1" desc="SPI cycle in progress"/>
+      <field name="PR34LKD" bit="12" size="1" desc="PRR3 PRR4 Lock-Down"/>
+      <field name="FDOPSS"  bit="13" size="1" desc="Flash Descriptor Override Pin-Strap Status"/>
+      <field name="FDV"     bit="14" size="1" desc="Flash Descriptor Valid"/>
+      <field name="FLOCKDN" bit="15" size="1" desc="Flash Configuration Lock-Down"/>
+      <field name="FGO"     bit="16" size="1" desc="Flash cycle go"/>
+      <field name="FCYCLE"  bit="17" size="4" desc="Flash Cycle Type"/>
+      <field name="WET"     bit="21" size="1" desc="Write Enable Type"/>
+      <field name="FDBC"    bit="24" size="6" desc="Flash Data Byte Count"/>
+      <field name="FSMIE"   bit="31" size="1" desc="Flash SPI SMI# Enable"/>
+    </register>
+    <register name="HSFC" type="mmio" bar="SPIBAR" offset="0x06" size="2" desc="Hardware Sequencing Flash Control Register">
+      <field name="FGO"    bit="0"  size="1" desc="Flash Cycle GO"/>
+      <field name="FCYCLE" bit="1"  size="4" desc="Flash Cycle"/>
+      <field name="WET"    bit="5"  size="1" desc="Write Enable Type"/>
+      <field name="FDBC"   bit="8"  size="6" desc="Flash Data Byte Count, Count = FDBC + 1"/>
+      <field name="FSMIE"  bit="15" size="1" desc="Flash SPI SMI Enable"/>
+    </register>
+    <register name="FREG0_FLASHD" type="mmio" bar="SPIBAR" offset="0x54" size="4" desc="Flash Region 0 (Flash Descriptor)">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FREG1_BIOS" type="mmio" bar="SPIBAR" offset="0x58" size="4" desc="Flash Region 1 (BIOS)">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FREG2_ME" type="mmio" bar="SPIBAR" offset="0x5C" size="4" desc="Flash Region 2 (ME)">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FREG3_GBE" type="mmio" bar="SPIBAR" offset="0x60" size="4" desc="Flash Region 3 (GBe)">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FREG4_PD" type="mmio" bar="SPIBAR" offset="0x64" size="4" desc="Flash Region 4 (Platform Data)">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FREG5" type="mmio" bar="SPIBAR" offset="0x68" size="4" desc="Flash Region 5">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FREG6" type="mmio" bar="SPIBAR" offset="0x6C" size="4" desc="Flash Region 6">
+      <field name="RB" bit="0"  size="15" desc="Region Base"/>
+      <field name="RL" bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
+      <field name="PRB" bit="0"  size="13"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
+      <field name="PRB" bit="0"  size="13"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
+      <field name="PRB" bit="0"  size="13"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
+      <field name="PRB" bit="0"  size="13"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
+      <field name="PRB" bit="0"  size="13"/>
+      <field name="RPE" bit="15" size="1"/>
+      <field name="PRL" bit="16" size="15"/>
+      <field name="WPE" bit="31" size="1"/>
+    </register>
+    <register name="FDOC" type="mmio" bar="SPIBAR" offset="0xB4" size="4" desc="Flash Descriptor Observability Control Register">
+      <field name="FDSI" bit="2"  size="10" desc="Flash Descriptor Section Index"/>
+      <field name="FDSS" bit="12" size="3"  desc="Flash Descriptor Section Select"/>
+    </register>
+    <register name="FDOD" type="mmio" bar="SPIBAR" offset="0xB8" size="4" desc="Flash Descriptor Observability Data Register">
+      <field name="FDSD" bit="0"  size="32" desc="Flash Descriptor Section Data"/>
+    </register>
+    <register name="VSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
+      <field name="LBES"  bit="0"  size="2" desc="Lower Block/Sector Erase Size"/>
+      <field name="LWG"   bit="2"  size="1" desc="Lower Write Granularity"/>
+      <field name="LWSR"  bit="3"  size="1" desc="Lower Write Status Required"/>
+      <field name="LWEWS" bit="4"  size="1" desc="Write Enable on Write Status"/>
+      <field name="LEO"   bit="8"  size="8" desc="Lower Erase Opcode"/>
+      <field name="VCL"   bit="30" size="1" desc="Vendor Component Lock"/>
+    </register>  
+
+    <!-- PCH RTC registers -->
+    <register name="RC" type="mm_msgbus" port="0xC3" offset="0x3400" size="4" desc="RTC Configuration">
+      <field name="UE"   bit="2"  size="1" desc="Upper 128 Byte Enable"/>
+      <field name="LL"   bit="3"  size="1" desc="Lower 128 Byte Lock"/>
+      <field name="UL"   bit="4"  size="1" desc="Upper 128 Byte Lock"/>
+      <field name="BILD" bit="31" size="1" desc="BIOS Interface Lock-Down"/>
+    </register>
+    <register name="BUC" type="mm_msgbus" port="0xC3" offset="0x3414" size="4" desc="Backed Up Control">
+      <field name="TS" bit="0" size="1" desc="Top Swap"/>
+    </register>
+
+    <!-- PMC MMIO registers (6th Generation Intel(R) Processor I/O Datasheet for U/Y-Platforms, Vol. 2, section 4.3) -->
+    <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x18" size="4" desc="Power Management Configuration Reg 1"/>
+
+    <!-- SPI Flash Descriptor registers -->
+    <register name="FLMAP0" type="mmio" bar="FDBAR" offset="0x14" size="4" desc="Flash Map 0 Register">
+      <field name="FCBA"    bit="0"  size="8" desc="Flash Component Base Address"/>
+      <field name="NC"      bit="8"  size="2" desc="Number of Components"/>
+      <field name="FRBA"    bit="16" size="8" desc="Flash Region Base Address"/>
+    </register>
+    <register name="FLMAP1" type="mmio" bar="FDBAR" offset="0x18" size="4" desc="Flash Map 1 Register">
+      <field name="FMBA"    bit="0"  size="8" desc="Flash Master Base Address"/>
+      <field name="NM"      bit="8"  size="3" desc="Number of Masters"/>
+      <field name="FPSBA"   bit="16" size="8" desc="Flash PCH Strap Base Address"/>
+      <field name="PSL"     bit="24" size="8" desc="PCH Strap Length"/>
+    </register>
+    <register name="FLMAP2" type="mmio" bar="FDBAR" offset="0x1C" size="4" desc="Flash Map 2 Register">
+      <field name="FCPUSBA" bit="0"  size="8" desc="Flash CPU Strap Base Address"/>
+      <field name="CPUSL"   bit="8"  size="8" desc="CPU Strap Length"/>
+    </register>
+    <register name="FLREG0" type="mmio" bar="FRBA" offset="0x0" size="4" desc="Flash Region 0 (Flash Descriptor) Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG1" type="mmio" bar="FRBA" offset="0x4" size="4" desc="Flash Region 1 (BIOS) Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG2" type="mmio" bar="FRBA" offset="0x8" size="4" desc="Flash Region 2 (Intel ME) Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG3" type="mmio" bar="FRBA" offset="0xC" size="4" desc="Flash Region 3 (GBe) Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG4" type="mmio" bar="FRBA" offset="0x10" size="4" desc="Flash Region 4 (Platform Data) Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLREG8" type="mmio" bar="FRBA" offset="0x20" size="4" desc="Flash Region 8 (Embedded Controller) Register">
+      <field name="RB"      bit="0"  size="15" desc="Region Base"/>
+      <field name="RL"      bit="16" size="15" desc="Region Limit"/>
+    </register>
+    <register name="FLMSTR1" type="mmio" bar="FMBA" offset="0x0" size="4" desc="Flash Master 1">
+      <field name="MRRA"    bit="8"  size="12" desc="Master Region Read Access"/>
+      <field name="MRWA"    bit="20" size="12" desc="Master Region Write Access"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- I/O registers (I/O ports)    -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
+    <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="2" desc="TCO1 Control">
+      <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
+    </register>
+
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+    <control name="BiosInterfaceLockDown"  register="BC"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+  </controls>
+
+</configuration>
