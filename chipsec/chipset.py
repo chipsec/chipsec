@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2017, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -677,6 +677,21 @@ class Chipset:
                 field_mask = (field_mask << 1) | 1
             result['FIELDS'][f]['value'] = (reg_value >> field_bit) & field_mask
         return result
+
+    def get_register_field_mask(self, reg_name, reg_field=None,
+                                preserve_field_position=False):
+        reg_def = self.get_register_def(reg_name)
+        if reg_field is not None:
+            field_attrs = reg_def['FIELDS'][reg_field]
+            mask_start = int(field_attrs['bit'])
+            mask = (1 << int(field_attrs['size'])) - 1
+        else:
+            mask_start = 0
+            mask = (1 << (int(reg_def['size'],16) * 8)) - 1
+        if preserve_field_position:
+            return mask << mask_start
+        else:
+            return mask
 
     def get_register_field(self, reg_name, reg_value, field_name,
                            preserve_field_position=False):
