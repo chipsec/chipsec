@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -334,12 +334,15 @@ class MMIO(hal_base.HALBase):
         if bar is None or bar == {}: return -1,-1
 
         if 'register' in bar:
-            bar_reg   = bar['register']
+            bar_reg = bar['register']
+            reg_def = self.cs.get_register_def(bar_reg)
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 base = self.cs.read_register_field(bar_reg, base_field, preserve_field_position=True)
+                reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve_field_position=True)
             else:
                 base = self.cs.read_register(bar_reg)
+                reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=True)
         else:
             # this method is not preferred (less flexible)
             b = int(bar['bus'],16)
@@ -347,6 +350,7 @@ class MMIO(hal_base.HALBase):
             f = int(bar['fun'],16)
             r = int(bar['reg'],16)
             width = int(bar['width'],16)
+            reg_mask = (1 << (width * 8)) - 1
             if 8 == width:
                 base_lo = self.cs.pci.read_dword( b, d, f, r )
                 base_hi = self.cs.pci.read_dword( b, d, f, r + 4 )
@@ -354,6 +358,9 @@ class MMIO(hal_base.HALBase):
             else:
                 base = self.cs.pci.read_dword( b, d, f, r )
 
+        if 'fixed_address' in bar and base == reg_mask:
+            base = int(bar['fixed_address'],16)
+            if logger().VERBOSE: logger().log('[mmio] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
         if 'mask' in bar: base &= int(bar['mask'],16)
         if 'offset' in bar: base = base + int(bar['offset'],16)
         size = int(bar['size'],16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
