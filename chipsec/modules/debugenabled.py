@@ -94,12 +94,14 @@ class debugenabled(chipsec.module_common.BaseModule):
             IA32_DEBUG_INTERFACE_DEBUGELOCK = not ((IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK)
             IA32_DEBUG_INTERFACE_DEBUGEOCCURED = ((IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK)
             if edx == EDX_ENABLE_STATE: #Sanity check only EAX matters
-                if (IA32_DEBUG_INTERFACE_DEBUGENABLE) or (IA32_DEBUG_INTERFACE_DEBUGELOCK) or (IA32_DEBUG_INTERFACE_DEBUGEOCCURED):
+                if (IA32_DEBUG_INTERFACE_DEBUGENABLE) or (IA32_DEBUG_INTERFACE_DEBUGELOCK):
                     if self.logger.VERBOSE: 
                         self.logger.log('IA32_DEBUG_INTERFACE_DEBUGENABLE ==' + str(IA32_DEBUG_INTERFACE_DEBUGENABLE));
                         self.logger.log('IA32_DEBUG_INTERFACE_DEBUGELOCK ==' + str(IA32_DEBUG_INTERFACE_DEBUGELOCK));
                         self.logger.log('IA32_DEBUG_INTERFACE_DEBUGEOCCURED ==' + str(IA32_DEBUG_INTERFACE_DEBUGEOCCURED));
                     TestFail = True;
+                if IA32_DEBUG_INTERFACE_DEBUGEOCCURED:
+                        TestFail = ModuleResult.WARNING
         return TestFail
 
     def run( self, module_argv ):
@@ -128,8 +130,12 @@ class debugenabled(chipsec.module_common.BaseModule):
             if self.logger.VERBOSE: self.logger.log_failed('CPU IA32_DEBUG_INTERFACE is enabled')
             returned_result = ModuleResult.FAILED
         else:
-            if self.logger.VERBOSE: self.logger.log_passed_check('CPU IA32_DEBUG_INTERFACE is disabled')
-            returned_result = ModuleResult.PASSED
+            if cpu_debug_test_fail == ModuleResult.WARNING:
+                self.logger.log_warning('Debug Occured bit set in IA32_DEBUG_INTERFACE msr')
+                returned_result = ModuleResult.WARNING
+            else:
+                returned_result = ModuleResult.PASSED
+                if self.logger.VERBOSE: self.logger.log_passed_check('CPU IA32_DEBUG_INTERFACE is disabled')
         if (dci_test_fail | cpu_debug_test_fail): 
             self.logger.log_failed_check('One or more of the debug checks have failed and a debug feature is enabled')        
         else: 
