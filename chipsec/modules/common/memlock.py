@@ -35,10 +35,6 @@ import chipsec.chipset
 import chipsec.defines
 _MODULE_NAME = 'memlock'
 
-MSR_LT_LOCK_MEMORY = 0x2E7
-
-B_MSR_LT_LOCK_MEMORY_MASK = 0b00000000000000000000000000000001
-
 ########################################################################################################
 #
 # Main module functionality
@@ -59,16 +55,24 @@ class memlock(chipsec.module_common.BaseModule):
         self.logger.log( "[X] Checking MSR_LT_LOCK_MEMORY status" )
         status = False
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            (eax, edx) = self.cs.helper.read_msr( tid, MSR_LT_LOCK_MEMORY )
-            self.logger.log('[cpu%d] RDMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X' % (tid, MSR_LT_LOCK_MEMORY, eax, edx) )
-            MSR_LT_LOCK_MEMORY_STATE = ((B_MSR_LT_LOCK_MEMORY_MASK & eax) == B_MSR_LT_LOCK_MEMORY_MASK)
-            if not MSR_LT_LOCK_MEMORY_STATE: 
-                status = True
+                lt_lock_msr = 0
+                try:
+                    lt_lock_msr = self.cs.read_register( 'MSR_LT_LOCK_MEMORY', tid )
+                except chipsec.helper.oshelper.HWAccessViolationError:
+                    self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
+                    break
+                lt_lock = self.cs.get_register_field( 'MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK' )
+                self.logger.log( "[*]   cpu%d: MSR_LT_LOCK_MEMORY[LT_LOCK] = %x" % (tid, lt_lock) )
+                if 0 == lt_lock:
+                    status = True
         return status
 
     def run( self, module_argv ):
         if len(module_argv) > 2:
             self.logger.error( 'Not expecting any arguments' )
+            return ModuleResult.ERROR
+        if not self.cs.is_register_defined( 'MSR_LT_LOCK_MEMORY' ):
+            self.logger.error( "couldn't find definition of required MSRs" )
             return ModuleResult.ERROR
         returned_result = ModuleResult.PASSED;
         self.logger.start_test( "[X] Check MSR_LT_LOCK_MEMORY" )
