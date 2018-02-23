@@ -364,7 +364,7 @@ class LinuxHelper(Helper):
         if len(in_buf) < length:
             in_buf += (length - len(in_buf)) * 'A'
         out_buf = self.ioctl(IOCTL_READ_PHYSMEM, in_buf)
-        ret = struct.unpack(str(length)+'s', out_buf)
+        ret = struct.unpack(str(length)+'s', out_buf[:length])
         return ret[0]
 
     def native_read_phys_mem(self, phys_address_hi, phys_address_lo, length):
