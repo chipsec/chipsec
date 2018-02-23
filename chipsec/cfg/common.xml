@@ -587,6 +587,9 @@
     <register name="IA32_PRED_CMD" type="msr" msr="0x49" desc="Prediction Command MSR">
       <field name="IBPB"  bit="0" size="1" desc="IBPB Command" />
     </register>
+    <register name="MSR_LT_LOCK_MEMORY" type="msr" msr="0x2E7" desc="LT lock memory configuration MSR">
+      <field name="LT_LOCK"  bit="0" size="1" desc="Lock bit" />
+    </register>
        
   </registers>
 
