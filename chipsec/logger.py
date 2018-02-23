@@ -299,8 +299,8 @@ class Logger:
         self.xmlAux.error_check( text )
 
     def log_skipped_check( self, text ):
-        """Logs a Test as SKIPPED, this is used for XML output.
-           If XML file was not specified, then it will just print a SKIPPED test message.
+        """Logs a Test as Not Implemented, this is used for XML output.
+           If XML file was not specified, then it will just print a NOT IMPLEMENTED test message.
         """
         self.log_skipped(text)
         self.xmlAux.skipped_check( text )
@@ -310,6 +310,12 @@ class Logger:
            Logs a Test as PASSED, this is used for XML output."""
         self.log_warning(text)
         self.xmlAux.passed_check()
+
+    def log_not_applicable_check( self, text):
+        """Logs a Test as Not Applicable, this is used for XML output.
+           If XML file was not specified, then it will just print a NOT APPLICABLE test message """
+        self.log_not_applicable(text)
+        self.xmlAux.not_applicable_check()
 
 
     def log_passed( self, text ):
@@ -329,8 +335,13 @@ class Logger:
         #self.xmlAux.passed_check()
 
     def log_skipped( self, text ):
-        """Logs a skipped message."""
-        text = "[*] SKIPPED: " + text
+        """Logs a NOT IMPLEMENTED message."""
+        text = "[*] NOT IMPLEMENTED: " + text
+        self._log(text, YELLOW, True)
+
+    def log_not_applicable(self, text):
+        """Logs a NOT APPLICABLE message."""
+        text = "[*] NOT APPLICABLE: " + text
         self._log(text, YELLOW, True)
 
     def log_heading( self, text ):
