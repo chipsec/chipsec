@@ -26,5 +26,6 @@ from chipsec.helper.efi import *
 from chipsec.helper.linux import *
 from chipsec.helper.osx import *
 from chipsec.helper.win import *
-from chipsec.helper.rwe import *
+# WARNING: Use of RWE driver has known issues. Experimental use only.
+#from chipsec.helper.rwe import *
 
