@@ -1259,33 +1259,31 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	{
 		// IN params : physical address, length
 		// OUT params : ptr to buffer
-		printk( KERN_INFO "[chipsec] > READMEM\n");
-
 		uint64_t NumberofBytes = 0;
 		phys_addr_t pa;
 		void *va; 
 
+		NumberofBytes = 0;
 		numargs = 3;
+
+		printk( KERN_INFO "[chipsec] > READMEM\n");
 
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 		{
 			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
-			break;
+			return -EFAULT;
 		}
 
 		pa = ptr[0];
-		va = phys_to_virt(pa);
+		va = my_xlate_dev_mem_ptr(pa);
 		NumberofBytes = ptr[1];
-		
-		if ( pa == NULL || va == NULL )
-		{
-			printk( KERN_ALERT "[chipsec] ERROR: MEMORY is not allocated");
-			break;
- 		}
 
 		if ( copy_to_user((void*)ioctl_param,va,NumberofBytes) > 0){
-			printk( KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not read all memory");
+			printk( KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not read memory");
+			my_unxlate_dev_mem_ptr(pa,va);
+			return -EFAULT;
 		}
+		my_unxlate_dev_mem_ptr(pa,va);
 		break;
 	}
 
@@ -1293,27 +1291,36 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	{
 		// IN params : physical address, length, ptr to buffer
 		// OUT params : length
-		printk( KERN_INFO "[chipsec] > WRITEMEM\n");
-
-		uint64_t 	NumberofBytes = 0;
+		uint64_t 	NumberofBytes;
 		phys_addr_t 	pa;
 		void 		*va;
 		void		*buffer; 
 
+		NumberofBytes = 0;
 		numargs = 3;
+
+		printk( KERN_INFO "[chipsec] > WRITEMEM\n");
 
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 		{
 			printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
-			break;
+			return -EFAULT;
 		}
 
 		pa = ptr[0];
-		va = phys_to_virt(pa);
+		va = my_xlate_dev_mem_ptr(pa);
 		NumberofBytes = ptr[1];
-		buffer = ioctl_param + (sizeof(long) * 2);
-		//printk ( KERN_INFO "Buffer %p\n",buffer );
-		copy_from_user( va, buffer, NumberofBytes );
+		buffer = (void*)&ptr[2];
+		if ( copy_from_user( va, buffer, NumberofBytes ) > 0)
+		{
+			NumberofBytes = 0;
+		}
+		my_unxlate_dev_mem_ptr(pa,va);
+		printk( KERN_ALERT "[chipsec] : Number of Bytes written %llu\n", NumberofBytes);
+		if (copy_to_user( (void*)ioctl_param,&NumberofBytes,sizeof(NumberofBytes)) > 0){
+			printk (KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL -error trying to write memory");
+			return -EFAULT;
+		} 
 		break;
 	}
    
