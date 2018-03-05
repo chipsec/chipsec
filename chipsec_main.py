@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -66,69 +66,86 @@ except ImportError:
   pass
 
 class ExitCode:
-    OK         = 0
-    SKIPPED    = 1
-    WARNING    = 2
-    DEPRECATED = 4
-    FAIL       = 8
-    ERROR      = 16
-    EXCEPTION  = 32
+    OK            = 0
+    SKIPPED       = 1
+    WARNING       = 2
+    DEPRECATED    = 4
+    FAIL          = 8
+    ERROR         = 16
+    EXCEPTION     = 32
+    INFORMATION   = 64
+    NOTAPPLICABLE = 128
     def __init__(self):
-        self._skipped    = False
-        self._warning    = False
-        self._deprecated = False
-        self._fail       = False
-        self._error      = False
-        self._exception  = False
+        self._skipped       = False
+        self._warning       = False
+        self._deprecated    = False
+        self._fail          = False
+        self._error         = False
+        self._exception     = False
+        self._information   = False
+        self._notapplicable = False
 
-    def skipped(self):     self._skipped = True
-    def warning(self):     self._warning = True
-    def deprecated(self):  self._deprecated = True
-    def fail(self):        self._fail = True
-    def error(self):       self._error = True
-    def exception(self):   self._exception = True
+    def skipped(self):       self._skipped = True
+    def warning(self):       self._warning = True
+    def deprecated(self):    self._deprecated = True
+    def fail(self):          self._fail = True
+    def error(self):         self._error = True
+    def exception(self):     self._exception = True
+    def information(self):   self._information = True
+    def notapplicable(self): self._notapplicable = True
 
     def get_code(self):
         exit_code = ExitCode.OK
-        if self._skipped:      exit_code = exit_code | ExitCode.SKIPPED
-        if self._warning:      exit_code = exit_code | ExitCode.WARNING
-        if self._deprecated:   exit_code = exit_code | ExitCode.DEPRECATED
-        if self._fail:         exit_code = exit_code | ExitCode.FAIL
-        if self._error:        exit_code = exit_code | ExitCode.ERROR
-        if self._exception:    exit_code = exit_code | ExitCode.EXCEPTION
+        if self._skipped:       exit_code = exit_code | ExitCode.SKIPPED
+        if self._warning:       exit_code = exit_code | ExitCode.WARNING
+        if self._deprecated:    exit_code = exit_code | ExitCode.DEPRECATED
+        if self._fail:          exit_code = exit_code | ExitCode.FAIL
+        if self._error:         exit_code = exit_code | ExitCode.ERROR
+        if self._exception:     exit_code = exit_code | ExitCode.EXCEPTION
+        if self._information:   exit_code = exit_code | ExitCode.INFORMATION
+        if self._notapplicable: exit_code = exit_code | ExitCode.NOTAPPLICABLE
         return exit_code
 
-    def is_skipped(self):     return self._skipped
-    def is_warning(self):     return self._warning
-    def is_deprecated(self):  return self._deprecated
-    def is_fail(self):        return self._fail
-    def is_error(self):       return self._error
-    def is_exception(self):   return self._exception
+    def is_skipped(self):       return self._skipped
+    def is_warning(self):       return self._warning
+    def is_deprecated(self):    return self._deprecated
+    def is_fail(self):          return self._fail
+    def is_error(self):         return self._error
+    def is_exception(self):     return self._exception
+    def is_informaiton(self):   return self._information
+    def is_notapplicable(self): return self._notapplicable
 
 
     def parse(self, code):
         code = int(code)
-        self._skipped    = ( code & ExitCode.SKIPPED )    != 0
-        self._warning    = ( code & ExitCode.WARNING )    != 0
-        self._deprecated = ( code & ExitCode.DEPRECATED ) != 0
-        self._fail       = ( code & ExitCode.FAIL )       != 0
-        self._error      = ( code & ExitCode.ERROR )      != 0
-        self._exception  = ( code & ExitCode.EXCEPTION )  != 0
+        self._skipped       = ( code & ExitCode.SKIPPED )    != 0
+        self._warning       = ( code & ExitCode.WARNING )    != 0
+        self._deprecated    = ( code & ExitCode.DEPRECATED ) != 0
+        self._fail          = ( code & ExitCode.FAIL )       != 0
+        self._error         = ( code & ExitCode.ERROR )      != 0
+        self._exception     = ( code & ExitCode.EXCEPTION )  != 0
+        self._information   = ( code & ExitCode.INFORMATION ) != 0
+        self._notapplicable = ( code & ExitCode.NOTAPPLICABLE ) != 0
 
     def __str__(self):
         return """
-        SKIPPED    = %r
-        WARNING    = %r
-        DEPRECATED = %r
-        FAIL       = %r
-        ERROR      = %r
-        EXCEPTION  = %r"""%(
+        SKIPPED       = %r
+        NOTAPPLICABLE = %r
+        WARNING       = %r
+        DEPRECATED    = %r
+        FAIL          = %r
+        ERROR         = %r
+        EXCEPTION     = %r
+        INFORMATION   = %r
+        """%(
         self._skipped    ,
         self._warning    ,
         self._deprecated ,
         self._fail       ,
         self._error      ,
-        self._exception  )
+        self._exception  ,
+        self._information,
+        self._notapplicable)
 
 
 class ChipsecMain:
@@ -326,15 +343,17 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        failed     = []
-        errors     = []
-        warnings   = []
-        passed     = []
-        skipped    = []
-        exceptions = []
-        executed   = 0
-        exit_code  = ExitCode()
-        results    = {}
+        failed        = []
+        errors        = []
+        warnings      = []
+        passed        = []
+        skipped       = []
+        exceptions    = []
+        information   = []
+        notapplicable = []
+        executed      = 0
+        exit_code     = ExitCode()
+        results       = {}
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
@@ -380,6 +399,11 @@ class ChipsecMain:
             elif module_common.ModuleResult.SKIPPED == result:
                 exit_code.skipped()
                 skipped.append( modx )
+            elif module_common.ModuleResult.INFORMATION == result:
+                information.append( modx )
+            elif module_common.ModuleResult.NOTAPPLICABLE == result:
+                exit_code.notapplicable()
+                notapplicable.append( modx )
 
         if self._json_out:
             results_json = json.dumps(results, sort_keys=True, indent=2, separators=(',', ': '))
@@ -395,12 +419,16 @@ class ChipsecMain:
             for mod in errors: logger().error( str(mod) )
             logger().log( "[CHIPSEC] Modules passed        %d:" % len(passed) )
             for fmod in passed: logger().log_passed( str(fmod) )
+            logger().log( "[CHIPSEC] Modules information   %d:" % len(information) )
+            for fmod in information: logger().log_information( str(fmod) )
             logger().log( "[CHIPSEC] Modules failed        %d:" % len(failed) )
             for fmod in failed: logger().log_failed( str(fmod) )
             logger().log( "[CHIPSEC] Modules with warnings %d:" % len(warnings) )
             for fmod in warnings: logger().log_warning( str(fmod) )
-            logger().log( "[CHIPSEC] Modules skipped %d:" % len(skipped) )
+            logger().log( "[CHIPSEC] Modules not implemented %d:" % len(skipped) )
             for fmod in skipped: logger().log_skipped( str(fmod) )
+            logger().log( "[CHIPSEC] Modules not applicable %d:" % len(notapplicable) )
+            for fmod in notapplicable: logger().log_not_applicable( str(fmod) )
             if len(exceptions) > 0:
                 logger().log( "[CHIPSEC] Modules with Exceptions %d:" % len(exceptions) )
                 for fmod in exceptions: logger().error( str(fmod) )
@@ -578,13 +606,15 @@ class ChipsecMain:
             return ExitCode.EXCEPTION
 
 
-        logger().log( "[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log( "[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        logger().log("[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
+        logger().log("[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
         #logger().log( "[CHIPSEC] CPU affinity: 0x%X" % self._cs.helper.get_affinity() )
 
-        logger().xmlAux.add_test_suite_property( "OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().xmlAux.add_test_suite_property( "Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did) )
-        logger().xmlAux.add_test_suite_property( "CHIPSEC", "%s" % self.version )
+        logger().xmlAux.add_test_suite_property("OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine))
+        logger().xmlAux.add_test_suite_property("Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        logger().xmlAux.add_test_suite_property("PCH", "{}, VID: {:04X}, DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
+        logger().xmlAux.add_test_suite_property("CHIPSEC", "%s" % self.version)
         logger().log( " " )
 
         if logger().VERBOSE: logger().log("[*] Running from %s" % os.getcwd())

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -115,22 +115,22 @@ elif "linux" == platform.system().lower():
         CYAN   = 6
         WHITE  = 7
         NORMAL = 8
-    
+
         def log_test(self):
             print ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC
             print ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC
             for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
                 for code in xrange(ColorLogger.GRAY, ColorLogger.NORMAL+1):
                     self.log(color_type+code, color_type, code )
-    
-        
+
+
         def log(self,msg, color_type=LIGHT,color=8):
             print ColorLogger.format(msg, color_type, color)
-        
+
         @staticmethod
         def format(msg, color_type=LIGHT,color=8):
-            return ( '\033[%im%s%s'%(color_type+color,str(msg),ColorLogger.ENDC)) 
-    
+            return ( '\033[%im%s%s'%(color_type+color,str(msg),ColorLogger.ENDC))
+
     COLOR_ID = {
       BLACK  : ColorLogger.NORMAL,
       RED    : ColorLogger.RED,
@@ -141,9 +141,9 @@ elif "linux" == platform.system().lower():
       CYAN   : ColorLogger.CYAN,
       WHITE  : ColorLogger.WHITE
       }
-    
+
     def log_color( fg_color, text ):
-        _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ]) 
+        _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
         print _text
 
 else:
@@ -299,8 +299,8 @@ class Logger:
         self.xmlAux.error_check( text )
 
     def log_skipped_check( self, text ):
-        """Logs a Test as SKIPPED, this is used for XML output.
-           If XML file was not specified, then it will just print a SKIPPED test message.
+        """Logs a Test as Not Implemented, this is used for XML output.
+           If XML file was not specified, then it will just print a NOT IMPLEMENTED test message.
         """
         self.log_skipped(text)
         self.xmlAux.skipped_check( text )
@@ -310,6 +310,18 @@ class Logger:
            Logs a Test as PASSED, this is used for XML output."""
         self.log_warning(text)
         self.xmlAux.passed_check()
+
+    def log_information_check( self, text ):
+        """Logs a Information test, an information test.
+           Logs a Test as INFORMATION, this is used for XML output."""
+        self.log_information(text)
+        self.xmlAux.information_check(text)
+
+    def log_not_applicable_check( self, text):
+        """Logs a Test as Not Applicable, this is used for XML output.
+           If XML file was not specified, then it will just print a NOT APPLICABLE test message """
+        self.log_not_applicable(text)
+        self.xmlAux.not_applicable_check()
 
 
     def log_passed( self, text ):
@@ -329,8 +341,13 @@ class Logger:
         #self.xmlAux.passed_check()
 
     def log_skipped( self, text ):
-        """Logs a skipped message."""
-        text = "[*] SKIPPED: " + text
+        """Logs a NOT IMPLEMENTED message."""
+        text = "[*] NOT IMPLEMENTED: " + text
+        self._log(text, YELLOW, True)
+
+    def log_not_applicable(self, text):
+        """Logs a NOT APPLICABLE message."""
+        text = "[*] NOT APPLICABLE: " + text
         self._log(text, YELLOW, True)
 
     def log_heading( self, text ):
@@ -361,6 +378,11 @@ class Logger:
         """Logs a message with a question mark."""
         text = "[?] " + text
         self._log(text, None, None)
+
+    def log_information( self, text):
+        """Logs a message with information message"""
+        text = "[#] INFORMATION: " + text
+        self._log(text, GREEN, None)
 
     def start_test( self, test_name ):
         """Logs the start point of a Test, this is used for XML output.

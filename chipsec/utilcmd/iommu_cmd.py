@@ -75,7 +75,7 @@ class IOMMUCommand(BaseCommand):
         if ( 'list' == op ):
             self.logger.log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
             self.logger.log( iommu.IOMMU_ENGINES.keys() )
-        elif ( 'config' == op or 'status' == op or 'enable' == op or 'disable' == op ):
+        elif ( 'config' == op or 'status' == op or 'enable' == op or 'disable' == op or 'pt' == op ):
             if len(self.argv) > 3:
                 if self.argv[3] in iommu.IOMMU_ENGINES.keys():
                     _iommu_engines = [ self.argv[3] ]

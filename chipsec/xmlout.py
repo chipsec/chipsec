@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -97,10 +97,23 @@ class xmlAux:
             self._end_test()
 
     def skipped_check(self, text):
-        """Used when you want to mark a testcase as SKIPPED and add it to the testsuite."""
+        """Used when you want to mark a testcase as NOT IMPLEMENTED and add it to the testsuite."""
         if self.useXML == True:
             self._check_testCase_exist()
             self.testCase.add_skipped_info( text, None )
+            self._end_test()
+
+    def information_check(self, text):
+        if self.useXML == True:
+            self._check_testCase_exist()
+            self.testCase.add_information_info( text, None )
+            self._end_test()
+
+    def not_applicable_check(self, text):
+        """Used when you want to mark a testcase as NOT IMPLEMENTED and add it to the testsuite."""
+        if self.useXML == True:
+            self._check_testCase_exist()
+            self.testCase.add_not_applicable_info( text, None )
             self._end_test()
 
     def start_test(self, test_name):
@@ -141,10 +154,12 @@ class xmlAux:
 
 class testCaseType:
     """Used to represent the types of TestCase that can be assigned (FAILURE, ERROR, SKIPPED, PASS)"""
-    FAILURE = 1
-    ERROR   = 2
-    SKIPPED = 3
-    PASS    = 4
+    FAILURE       = 1
+    ERROR         = 2
+    SKIPPED       = 3
+    INFORMATION   = 4
+    PASS          = 5
+    NOTAPPLICABLE = 6
 
 class xmlTestCase():
     """Represents a JUnit test case with a result and possibly some stdout or stderr"""
@@ -170,6 +185,10 @@ class xmlTestCase():
         self.failure_output  = ""
         self.skipped_message = ""
         self.skipped_output  = ""
+        self.information_message = ""
+        self.information_output = ""
+        self.not_applicable_message = ""
+        self.not_applicable_output = ""
 
         if tcType == testCaseType.ERROR:
             self.error_message = message
@@ -180,6 +199,12 @@ class xmlTestCase():
         elif tcType == testCaseType.SKIPPED:
             self.skipped_message = message
             self.skipped_output  = output
+        elif tcType == testCaseType.INFORMATION:
+            self.information_message = message
+            self.information_output = output
+        elif tcType == testCasetype.NOTAPPLICABLE:
+            self.not_applicable_message = message
+            self.not_applicable_output = output
         else:
             #Then it should be PASSED.
             self.tcType = testCaseType.PASS
@@ -187,6 +212,13 @@ class xmlTestCase():
     def is_skipped(self):
         """Returns True if the testCase is of Type Skipped, if not returns False"""
         if self.tcType == testCaseType.SKIPPED:
+            return True
+        else:
+            False
+
+    def is_not_applicable(self):
+        """Returns True if the testCase is of Type NOTAPPLICABLE, if not returns False"""
+        if self.tcType == testCaseType.NOTAPPLICABLE:
             return True
         else:
             False
@@ -207,10 +239,18 @@ class xmlTestCase():
 
     def is_pass(self):
         """Returns True if the testCase is of Type Pass, if not returns False."""
-        if self.tcType not in [testCaseType.ERROR, testCaseType.FAILURE, testCaseType.SKIPPED] or self.tcType == testCaseType.PASS:
+        if self.tcType not in [testCaseType.ERROR, testCaseType.FAILURE, testCaseType.SKIPPED, testCaseType.INFORMATION, testCaseType.NOTAPPLICABLE] or self.tcType == testCaseType.PASS:
             return True
         else:
             False
+
+    def is_information(self):
+        """Returns True if the testCase is of Type Information, if not returns False."""
+        if self.tcType == testCaseType.INFORMATION:
+            return True
+        else:
+            False
+
 
     def add_failure_info(self, message=None, output=None):
         """Sets the values for the corresponding Type Failure."""
@@ -231,13 +271,31 @@ class xmlTestCase():
         self.error_output  = output
 
     def add_skipped_info(self, message=None, output=None):
-        """Sets the values for the corresponding Type Skipped."""
+        """Sets the values for the corresponding Type Not Implemented."""
         self.tcType          = testCaseType.SKIPPED
         self.tcMessage       = message
         self.tcOutput        = output
         #To be compatible with junit_xml
         self.skipped_message = message
         self.skipped_output  = output
+
+    def add_information_info(self, message=None, output=None):
+        """Sets the values for the corresponding Type Information."""
+        self.tcType          = testCaseType.INFORMATION
+        self.tcMessage       = message
+        self.tcOutput        = output
+        #To be compatible with junit_xml
+        self.information_message = message
+        self.information_output  = output
+
+    def add_not_applicable_info(self, message=None, output=None):
+        """Sets the values for the corresponding Type Not Applicable."""
+        self.tcType          = testCaseType.NOTAPPLICABLE
+        self.tcMessage       = message
+        self.tcOutput        = output
+        #To be compatible with junit_xml
+        self.not_applicable_message = message
+        self.not_applicable_output  = output
 
     def add_stdout_info(self, text):
         """Adds the text that is going to be part of the stdout for the TestCase."""
@@ -348,6 +406,8 @@ class TestSuite(object):
         ts_attributes['failures']      = str( len( [tc for tc in self.test_cases if tc.is_failure()] ) )
         ts_attributes['errors']        = str( len( [tc for tc in self.test_cases if tc.is_error()] ) )
         ts_attributes['skipped']       = str( len( [tc for tc in self.test_cases if tc.is_skipped()] ) )
+        ts_attributes['information']   = str( len( [tc for tc in self.test_cases if tc.is_information()] ) )
+        ts_attributes['notapplicable'] = str( len( [tc for tc in self.test_cases if tc.is_not_applicable()] ) )
         #ts_attributes["time"]          = str( sum( [tc.time for tc in self.test_cases if tc.time] ) )
         ts_attributes["time"]          = "%.5f" % sum( [tc.time for tc in self.test_cases if tc.time] )
         ts_attributes["tests"]         = str( len( self.test_cases ) )
@@ -375,6 +435,12 @@ class TestSuite(object):
             #For the is_pass() case, just log a 'pass' tag.
             if tc.is_pass():
                 pass_element = ET.SubElement( tc_element, "pass", {'type':'pass'} )
+            elif tc.is_information():
+                information_element = ET.SubElement( tc_element, "information", {'type': 'information'} )
+                if tc.information_message:
+                    information_element.set('message', tc.information_message)
+                if tc.information_output:
+                    information_output = tc.information_output
             elif tc.is_failure():
                 failure_element = ET.SubElement( tc_element, "failure", {'type': 'failure'} )
                 if tc.failure_message:
@@ -388,11 +454,17 @@ class TestSuite(object):
                 if tc.error_output:
                     error_element.text = tc.error_output
             elif tc.is_skipped():
-                skipped_element = ET.SubElement( tc_element, "skipped", {'type': 'skipped'} )
+                skipped_element = ET.SubElement( tc_element, "not_implemented", {'type': 'not_implemented'} )
                 if tc.skipped_message:
                     skipped_element.set( 'message', tc.skipped_message )
                 if tc.skipped_output:
                     skipped_element.text = tc.skipped_output
+            elif tc.is_not_applicable():
+                not_applicable_element = ET.SubElement( tc_element, "not_applicable", {'type': 'not_applicable'} )
+                if tc.not_applicable_message:
+                    not_applicable_element.set( 'message', tc.not_applicable_message )
+                if tc.not_applicable_output:
+                    not_applicable_element.text = tc.skipped_output
 
             #system-out and system-err are common for all, so here we go.
             if tc.stdout:

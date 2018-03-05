@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -44,21 +44,25 @@ import chipsec.chipset
 import chipsec.defines
 
 class ModuleResult:
-    FAILED  = 0
-    PASSED  = 1
-    WARNING = 2
-    SKIPPED = 3
-    DEPRECATED = 4
-    ERROR   = -1
+    FAILED        = 0
+    PASSED        = 1
+    WARNING       = 2
+    SKIPPED       = 3
+    DEPRECATED    = 4
+    INFORMATION   = 5
+    NOTAPPLICABLE = 6
+    ERROR         = -1
 
 
 ModuleResultName = {
-    ModuleResult.FAILED:     "Failed",
-    ModuleResult.PASSED:     "Passed",
-    ModuleResult.WARNING:    "Warning",
-    ModuleResult.SKIPPED:    "Skipped",
-    ModuleResult.DEPRECATED: "Deprecated",
-    ModuleResult.ERROR:      "Error"
+    ModuleResult.FAILED:        "Failed",
+    ModuleResult.PASSED:        "Passed",
+    ModuleResult.WARNING:       "Warning",
+    ModuleResult.SKIPPED:       "Skipped",
+    ModuleResult.DEPRECATED:    "Deprecated",
+    ModuleResult.INFORMATION:   "Information",
+    ModuleResult.ERROR:         "Error",
+    ModuleResult.NOTAPPLICABLE: "NotApplicable"
 }
 def getModuleResultName(res):
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
@@ -88,7 +92,9 @@ class BaseModule(object):
         elif self.res == ModuleResult.FAILED:
             if value == ModuleResult.ERROR:
                 self.res = value
-        else: # PASSED or SKIPPED or DEPRECATED
+        elif self.res == ModuleResult.INFORMATION:
+            self.res = value
+        else: # PASSED or SKIPPED or DEPRECATED or NOTAPPLICABLE
             self.res = value
 
     def run(self, module_argv):
@@ -99,7 +105,8 @@ MTAG_BIOS       = "BIOS"
 MTAG_SMM        = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
 MTAG_HWCONFIG   = "HWCONFIG"
-MTAG_CPU        = "CPU" 
+MTAG_CPU        = "CPU"
+
 
 ##! [Available Tags]
 MTAG_METAS = {

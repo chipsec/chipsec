@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2017, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -151,6 +151,8 @@ Chipset_Dictionary = {
 # 5th Generation Core Processor Family (Broadwell)
 0x1600 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)' },
 0x1604 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)' },
+0x1610 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Desktop 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)' },
+0x1614 : {'name' : 'Broadwell',      'id' : CHIPSET_ID_BDW , 'code' : CHIPSET_CODE_BDW,  'longname' : 'Mobile 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)' },
 
 # 6th Generation Core Processor Family (Skylake)
 0x1904 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKL , 'code' : CHIPSET_CODE_SKL,  'longname' : 'Mobile 6th Generation Core Processor (Skylake U)' },
@@ -168,6 +170,7 @@ Chipset_Dictionary = {
 0x5910 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 0x5914 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 8th Generation Core Processor (Kabylake U-Quad Core)' },
 0x591F : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Desktop 7th Generation Core Processor (Kabylake S)' },
+0x5918 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 
 # 8th Generation Core Processor Family (Coffeelake)
 0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
@@ -225,6 +228,36 @@ Chipset_Dictionary = {
 0x0958 : {'name' : 'Galileo ',       'id' : CHIPSET_ID_QRK , 'code' : CHIPSET_CODE_QRK,  'longname' : 'Intel Quark SoC X1000' },
 
 }
+
+PCH_ID_1xx      = 10001
+PCH_ID_2xx      = 10002
+
+PCH_CODE_PREFIX = 'PCH_'
+PCH_CODE_1xx    = 'PCH_1xx'
+PCH_CODE_2xx    = 'PCH_2xx'
+
+pch_dictionary = {
+# 100 series PCH
+0xA143 : {'name' : 'H110',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel H110 (100 series) PCH'},
+0xA144 : {'name' : 'H170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel H170 (100 series) PCH'},
+0xA145 : {'name' : 'Z170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Z170 (100 series) PCH'},
+0xA146 : {'name' : 'Q170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Q170 (100 series) PCH'},
+0xA147 : {'name' : 'Q150',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Q150 (100 series) PCH'},
+0xA148 : {'name' : 'B150',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel B150 (100 series) PCH'},
+0xA14D : {'name' : 'CQM170', 'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CQM170 (100 series) PCH'},
+0xA14E : {'name' : 'HM170',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel HM170 (100 series) PCH'},
+0xA150 : {'name' : 'CM236',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CM236 (100 series) PCH'},
+
+# 200 series and Z370 PCH
+0xA2C4 : {'name' : 'H270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel H270 (200 series) PCH'},
+0xA2C5 : {'name' : 'Z270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Z270 (200 series) PCH'},
+0xA2C6 : {'name' : 'Q270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Q270 (200 series) PCH'},
+0xA2C7 : {'name' : 'Q250', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Q250 (200 series) PCH'},
+0xA2C8 : {'name' : 'B250', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel B250 (200 series) PCH'},
+0xA2C9 : {'name' : 'Z370', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Z370 (200 series) PCH'},
+0xA2D2 : {'name' : 'X299', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel X299 (200 series) PCH'},
+}
+
 try:
     from custom_chipsets import *
 except :
@@ -270,11 +303,16 @@ class Chipset:
         else:
             self.helper = helper
 
-        self.vid        = 0xFFFF
-        self.did        = 0xFFFF
-        self.code       = CHIPSET_CODE_UNKNOWN
-        self.longname   = "Unrecognized Platform"
-        self.id         = CHIPSET_ID_UNKNOWN
+        self.vid            = 0xFFFF
+        self.did            = 0xFFFF
+        self.code           = CHIPSET_CODE_UNKNOWN
+        self.longname       = "Unrecognized Platform"
+        self.id             = CHIPSET_ID_UNKNOWN
+        self.pch_vid        = 0xFFFF
+        self.pch_did        = 0xFFFF
+        self.pch_code       = CHIPSET_CODE_UNKNOWN
+        self.pch_longname   = 'Unrecognized PCH'
+        self.pch_id         = CHIPSET_ID_UNKNOWN
         self.Cfg        = Cfg()
 
         #
@@ -307,13 +345,21 @@ class Chipset:
     def detect_platform( self ):
         vid = 0xFFFF
         did = 0xFFFF
+        pch_vid = 0xFFFF
+        pch_did = 0xFFFF
         try:
             vid_did = self.pci.read_dword(0, 0, 0, 0)
             vid = vid_did & 0xFFFF
             did = (vid_did >> 16) & 0xFFFF
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
-        return (vid, did)
+        try:
+            vid_did = self.pci.read_dword(0, 31, 0, 0)
+            pch_vid = vid_did & 0xFFFF
+            pch_did = (vid_did >> 16) & 0xFFFF
+        except:
+            if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
+        return (vid, did, pch_vid, pch_did)
 
     def init( self, platform_code, start_driver, driver_exists=False ):
 
@@ -322,7 +368,7 @@ class Chipset:
         logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         if platform_code is None:
-            self.vid, self.did = self.detect_platform()
+            self.vid, self.did, self.pch_vid, self.pch_did = self.detect_platform()
             if VID_INTEL != self.vid:
                 _unknown_platform = True
         else:
@@ -339,10 +385,17 @@ class Chipset:
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
             self.id         = data_dict['id']
-
         else:
             _unknown_platform = True
             self.longname   = 'UnknownPlatform'
+
+        if self.pch_vid == VID_INTEL and pch_dictionary.has_key(self.pch_did):
+            data_dict           = pch_dictionary[self.pch_did]
+            self.pch_code       = data_dict['code'].lower()
+            self.pch_longname   = data_dict['longname']
+            self.pch_id         = data_dict['id']
+        else:
+            self.pch_longname = 'Default PCH'
 
         self.init_cfg()
         if _unknown_platform and start_driver:
@@ -357,14 +410,26 @@ class Chipset:
     def get_chipset_id(self):
         return self.id
 
+    def get_pch_id(self):
+        return self.pch_id
+
     def get_chipset_code(self):
         return self.code
 
-    def get_chipset_name(self, id ):
+    def get_pch_code(self):
+        return self.pch_code
+
+    def get_chipset_name(self, id):
         return self.longname
 
+    def get_pch_name(self, id):
+        return self.pch_longname
+
     def print_chipset(self):
-        logger().log( "[*] Platform: %s\n          VID: %04X\n          DID: %04X" % (self.longname, self.vid, self.did))
+        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}".format(self.longname, self.vid, self.did))
+
+    def print_pch(self):
+        logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}".format(self.pch_longname, self.pch_vid, self.pch_did))
 
     def is_core(self):
         return  self.get_chipset_id() in CHIPSET_FAMILY_CORE
@@ -403,25 +468,31 @@ class Chipset:
                 loaded_files.append(_xml)
 
         # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
-        if self.code and '' != self.code:
+        if self.code and CHIPSET_CODE_UNKNOWN != self.code:
             for _xml in _cfg_files:
                 if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code)):
+                    loaded_files.append(_xml)
+
+        # Locate PCH specific (chipsec/cfg/pch_<code>*.xml) configuration XML files.
+        if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
+            for _xml in _cfg_files:
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code)):
                     loaded_files.append(_xml)
 
         # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
         platform_files = []
         for plat in [c.lower() for c in Chipset_Code]:
-            platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat))])
+            platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
         loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
         # Load all configuration files for this platform.
         if logger().VERBOSE: logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
-            self.init_cfg_xml(_xml, self.code)
+            self.init_cfg_xml(_xml, self.code, self.pch_code)
         self.Cfg.XML_CONFIG_LOADED = True
 
 
-    def init_cfg_xml(self, fxml, code):
+    def init_cfg_xml(self, fxml, code, pch_code):
         import xml.etree.ElementTree as ET
         if not os.path.exists( fxml ): return
         if logger().VERBOSE: logger().log( "[*] looking for platform config in '%s'.." % fxml )
@@ -432,6 +503,8 @@ class Chipset:
                 if logger().HAL: logger().log( "[*] loading common platform config from '%s'.." % fxml )
             elif code == _cfg.attrib['platform'].lower():
                 if logger().HAL: logger().log( "[*] loading '%s' platform config from '%s'.." % (code,fxml) )
+            elif pch_code == _cfg.attrib['platform'].lower():
+                if logger().HAL: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code,fxml))
             else: continue
 
             if logger().VERBOSE: logger().log( "[*] loading integrated devices/controllers.." )
@@ -576,7 +649,7 @@ class Chipset:
 # print_register
 #   prints configuration register
 # get_control/set_control
-#   reads/writes some control field (by name) 
+#   reads/writes some control field (by name)
 #
 ##################################################################################
 
@@ -618,7 +691,7 @@ class Chipset:
             size = int(reg['size'],16)
             reg_value = self.io._read_port( port, size )
         elif RegisterType.IOBAR == rtype:
-            reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) ) 
+            reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) )
         elif RegisterType.MSGBUS == rtype:
             reg_value = self.msgbus.msgbus_reg_read( int(reg['port'],16), int(reg['offset'],16) )
         elif RegisterType.MM_MSGBUS == rtype:
@@ -658,7 +731,7 @@ class Chipset:
         elif RegisterType.IOBAR == rtype:
             self.iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16), reg_value )
         elif RegisterType.MSGBUS == rtype:
-            self.msgbus.msgbus_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value ) 
+            self.msgbus.msgbus_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value )
         elif RegisterType.MM_MSGBUS == rtype:
             self.msgbus.mm_msgbus_reg_write(int(reg['port'],16), int(reg['offset'],16), reg_value)
         else:
@@ -677,6 +750,21 @@ class Chipset:
                 field_mask = (field_mask << 1) | 1
             result['FIELDS'][f]['value'] = (reg_value >> field_bit) & field_mask
         return result
+
+    def get_register_field_mask(self, reg_name, reg_field=None,
+                                preserve_field_position=False):
+        reg_def = self.get_register_def(reg_name)
+        if reg_field is not None:
+            field_attrs = reg_def['FIELDS'][reg_field]
+            mask_start = int(field_attrs['bit'])
+            mask = (1 << int(field_attrs['size'])) - 1
+        else:
+            mask_start = 0
+            mask = (1 << (int(reg_def['size'],16) * 8)) - 1
+        if preserve_field_position:
+            return mask << mask_start
+        else:
+            return mask
 
     def get_register_field(self, reg_name, reg_value, field_name,
                            preserve_field_position=False):
