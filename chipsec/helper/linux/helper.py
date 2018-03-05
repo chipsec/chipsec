@@ -347,7 +347,8 @@ class LinuxHelper(Helper):
         addr = (phys_address_hi << 32) | phys_address_lo
         in_buf = struct.pack('2'+self._pack,addr,length)+str(newval)
         out_buf = self.ioctl(IOCTL_WRITE_PHYSMEM, in_buf)
-        return
+        res = struct.unpack('Q',out_buf[:8])
+        return res[0]
 
     def native_write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
         if newval is None: return None
@@ -364,7 +365,7 @@ class LinuxHelper(Helper):
         if len(in_buf) < length:
             in_buf += (length - len(in_buf)) * 'A'
         out_buf = self.ioctl(IOCTL_READ_PHYSMEM, in_buf)
-        ret = struct.unpack(str(length)+'s', out_buf)
+        ret = struct.unpack(str(length)+'s', out_buf[:length])
         return ret[0]
 
     def native_read_phys_mem(self, phys_address_hi, phys_address_lo, length):
