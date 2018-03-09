@@ -170,6 +170,7 @@ class ChipsecMain:
         self._module               = None
         self._module_argv          = None
         self._platform             = None
+        self._pch                  = None
         self._driver_exists        = False
         self._no_driver            = False
         self._unkownPlatform       = True
@@ -469,6 +470,8 @@ class ChipsecMain:
 
     def usage(self):
         known_chipsets = "[ " + " | ".join(chipset.Chipset_Code) + " ]"
+        known_pch = "[ " + " | ".join(chipset.pch_codes) + " ]"
+        max_line_length = max(len(known_chipsets), len(known_pch)) + 1
         print "\n- Command Line Usage\n\t``# %.65s [options]``\n" % sys.argv[0]
         print "Options\n-------"
         print "====================== ====================================================="
@@ -479,9 +482,11 @@ class ChipsecMain:
         print "-l --log                output to log file"
         print "====================== ====================================================="
         print "\nAdvanced Options\n----------------"
-        print "======================== " + "=" * (len(known_chipsets) + 1)
+        print "======================== " + "=" * max_line_length
         print "-p --platform             explicitly specify platform code. Should be among the supported platforms:"
         print "                          %s" % known_chipsets
+        print "   --pch                  explicitly specify PCH code. Should be among the supported PCH:"
+        print "                          {}".format(known_pch)
         print "-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver"
         print "-i --ignore_platform      run chipsec even if the platform is not recognized"
         print "-j --json                 specify filename for JSON output."
@@ -491,7 +496,7 @@ class ChipsecMain:
         print "-I --include              specify additional path to load modules from"
         print "   --failfast             fail on any exception and exit (don't mask exceptions)"
         print "   --no_time              don't log timestamps"
-        print "======================== " + "=" * (len(known_chipsets) + 1)
+        print "======================== " + "=" * max_line_length
         print "\nExit Code\n---------"
         print "CHIPSEC returns an integer exit code:\n"
         print "- Exit code is 0:       all modules ran successfully and passed"
@@ -512,9 +517,9 @@ class ChipsecMain:
         """
         try:
             opts, args = getopt.getopt(self.argv, "ip:m:ho:vda:nl:t:j:x:I:",
-            ["ignore_platform", "platform=", "module=", "help", "output=",
+            ["ignore_platform", "platform=", "pch=", "module=", "help", "output=",
               "verbose", "debug", "module_args=", "no_driver", "log=",
-              "moduletype=", "json=", "xml=","list_tags", "include", "failfast","no_time"])
+              "moduletype=", "json=", "xml=", "list_tags", "include", "failfast","no_time"])
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
@@ -534,6 +539,8 @@ class ChipsecMain:
                 self._output = a
             elif o in ("-p", "--platform"):
                 self._platform = a.upper()
+            elif o in ("--pch"):
+                self._pch = a.upper()
             elif o in ("-m", "--module"):
                 #_module = a.lower()
                 self._module = a
@@ -586,7 +593,7 @@ class ChipsecMain:
             return ExitCode.EXCEPTION
 
         try:
-            self._cs.init( self._platform, (not self._no_driver), self._driver_exists )
+            self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
         except chipset.UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
