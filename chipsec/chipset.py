@@ -367,8 +367,8 @@ class Chipset:
         self.helper.start(start_driver, driver_exists)
         logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
+        self.vid, self.did, self.pch_vid, self.pch_did = self.detect_platform()
         if platform_code is None:
-            self.vid, self.did, self.pch_vid, self.pch_did = self.detect_platform()
             if VID_INTEL != self.vid:
                 _unknown_platform = True
         else:
