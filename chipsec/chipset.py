@@ -233,8 +233,8 @@ PCH_ID_1xx      = 10001
 PCH_ID_2xx      = 10002
 
 PCH_CODE_PREFIX = 'PCH_'
-PCH_CODE_1xx    = 'PCH_1xx'
-PCH_CODE_2xx    = 'PCH_2xx'
+PCH_CODE_1xx    = 'PCH_1XX'
+PCH_CODE_2xx    = 'PCH_2XX'
 
 pch_dictionary = {
 # 100 series PCH
@@ -264,6 +264,7 @@ except :
     pass
 
 Chipset_Code = dict( [(Chipset_Dictionary[ _did ]['code'], _did) for _did in Chipset_Dictionary] )
+pch_codes = dict([(pch_dictionary[_did]['code'], _did) for _did in pch_dictionary])
 
 def print_supported_chipsets():
     codes_dict = collections.defaultdict(list)
@@ -361,7 +362,7 @@ class Chipset:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
         return (vid, did, pch_vid, pch_did)
 
-    def init( self, platform_code, start_driver, driver_exists=False ):
+    def init( self, platform_code, req_pch_code, start_driver, driver_exists=False ):
 
         _unknown_platform = False
         self.helper.start(start_driver, driver_exists)
@@ -373,11 +374,11 @@ class Chipset:
                 _unknown_platform = True
         else:
             self.vid = VID_INTEL
-            self.code = platform_code.lower()
             if Chipset_Code.has_key( platform_code ):
                 self.did = Chipset_Code[ platform_code ]
             else:
                 _unknown_platform = True
+                self.vid = 0xFFFF
                 self.did = 0xFFFF
 
         if Chipset_Dictionary.has_key( self.did ):
@@ -388,6 +389,14 @@ class Chipset:
         else:
             _unknown_platform = True
             self.longname   = 'UnknownPlatform'
+
+        if req_pch_code is not None:
+            self.pch_vid = VID_INTEL
+            if pch_codes.has_key(req_pch_code):
+                self.pch_did = pch_codes[req_pch_code]
+            else:
+                self.pch_vid = 0xFFFF
+                self.pch_did = 0xFFFF
 
         if self.pch_vid == VID_INTEL and pch_dictionary.has_key(self.pch_did):
             data_dict           = pch_dictionary[self.pch_did]
