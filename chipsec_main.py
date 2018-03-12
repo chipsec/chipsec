@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -54,6 +54,7 @@ except:
 
 import chipsec.file
 import chipsec.module
+import chipsec.result_deltas
 from chipsec import defines
 from chipsec import module_common
 from chipsec import chipset
@@ -176,6 +177,7 @@ class ChipsecMain:
         self._unkownPlatform       = True
         self._list_tags            = False
         self._json_out             = None
+        self._deltas_file          = None
         self.version               = defines.get_version()
 
         self.argv = argv
@@ -410,7 +412,17 @@ class ChipsecMain:
             results_json = json.dumps(results, sort_keys=True, indent=2, separators=(',', ': '))
             chipsec.file.write_file(self._json_out, results_json)
 
-        if not self._list_tags:
+        test_deltas = None
+        if self._deltas_file is not None:
+            prev_results = chipsec.result_deltas.get_json_results(self._deltas_file)
+            if prev_results is None:
+                logger().error("Delta processing disabled.  Displaying results summary.")
+            else:
+                test_deltas = chipsec.result_deltas.compute_result_deltas(prev_results, results)
+
+        if test_deltas is not None:
+            chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
+        elif not self._list_tags:
             logger().log( "" )
             logger().log( "[CHIPSEC] ***************************  SUMMARY  ***************************" )
             if not self.no_time:
@@ -434,14 +446,11 @@ class ChipsecMain:
                 logger().log( "[CHIPSEC] Modules with Exceptions %d:" % len(exceptions) )
                 for fmod in exceptions: logger().error( str(fmod) )
             logger().log( "[CHIPSEC] *****************************************************************" )
-            #logger().log( "[CHIPSEC] Version:   %s"% self.version )
         else:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    %s"%at)
 
         return exit_code.get_code()
-
-
 
     ##################################################################################
     # Running all relevant modules
@@ -464,8 +473,6 @@ class ChipsecMain:
             self.load_my_modules()
         self.load_user_modules()
         return self.run_loaded_modules()
-
-
 
 
     def usage(self):
@@ -496,6 +503,7 @@ class ChipsecMain:
         print "-I --include              specify additional path to load modules from"
         print "   --failfast             fail on any exception and exit (don't mask exceptions)"
         print "   --no_time              don't log timestamps"
+        print "   --deltas               specifies a JSON log file to compute result deltas from"
         print "======================== " + "=" * max_line_length
         print "\nExit Code\n---------"
         print "CHIPSEC returns an integer exit code:\n"
@@ -519,7 +527,8 @@ class ChipsecMain:
             opts, args = getopt.getopt(self.argv, "ip:m:ho:vda:nl:t:j:x:I:",
             ["ignore_platform", "platform=", "pch=", "module=", "help", "output=",
               "verbose", "debug", "module_args=", "no_driver", "log=",
-              "moduletype=", "json=", "xml=", "list_tags", "include", "failfast","no_time"])
+              "moduletype=", "json=", "xml=", "list_tags", "include", "failfast",
+              "no_time", "deltas="])
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
@@ -570,6 +579,8 @@ class ChipsecMain:
                 self.failfast = True
             elif o in ("--no_time"):
                 self.no_time = True
+            elif o in ("--deltas"):
+                self._deltas_file = a
             else:
                 assert False, "unknown option"
         return (True, None)
