@@ -1,9 +1,9 @@
-chipsec (1.3.0-1) UNRELEASED; urgency=medium
+chipsec (1.3.6rc1) UNRELEASED; urgency=medium
 
   * Cleaned up PR
   * Fixed dependencies
 
- -- Tim Brown <timb@nth-dimension.org.uk>  Mon, 27 Mar 2017 08:34:07 +0100
+ -- user <alex@eclypsium.com>  Fri, 16 Mar 2018 12:05:58 -0700
 
 chipsec (1.2.5-3) UNRELEASED; urgency=medium
 
