@@ -1,9 +1,17 @@
-chipsec (1.3.0-1) UNRELEASED; urgency=medium
+chipsec (1.3.5-1) UNRELEASED; urgency=medium
 
+  * revision bump to match source version
+  * Modify control to only build amd64 and i386
+
+ -- Jeff Lane <jeff@ubuntu.com>  Thu, 15 Feb 2018 10:39:15 -0500
+
+chipsec (1.3.0-1) unstable; urgency=medium
+
+  [ Tim Brown ]
   * Cleaned up PR
   * Fixed dependencies
 
- -- Tim Brown <timb@nth-dimension.org.uk>  Mon, 27 Mar 2017 08:34:07 +0100
+ -- Jeff Lane <jeff@ubuntu.com>  Thu, 15 Feb 2018 10:39:07 -0500
 
 chipsec (1.2.5-3) UNRELEASED; urgency=medium
 
