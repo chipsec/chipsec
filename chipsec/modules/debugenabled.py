@@ -124,7 +124,7 @@ class debugenabled(chipsec.module_common.BaseModule):
             self.logger.log_good('CPU IA32_DEBUG_INTERFACE is disabled')
 
         current_platform_id = self.cs.get_chipset_id()
-        dci_supported = (current_platform_id == chipsec.chipset.CHIPSET_ID_CFL) | (current_platform_id == chipsec.chipset.CHIPSET_ID_KBL) | (current_platform_id == chipsec.chipset.CHIPSET_ID_SKL)
+        dci_supported = (current_platform_id == chipsec.chipset.CHIPSET_ID_CFL) or (current_platform_id == chipsec.chipset.CHIPSET_ID_KBL) or (current_platform_id == chipsec.chipset.CHIPSET_ID_SKL)
         if (dci_supported):
             dci_test_fail = self.check_dci()
             if (dci_test_fail == ModuleResult.FAILED):
