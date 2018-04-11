@@ -202,7 +202,7 @@ class xmlTestCase():
         elif tcType == testCaseType.INFORMATION:
             self.information_message = message
             self.information_output = output
-        elif tcType == testCasetype.NOTAPPLICABLE:
+        elif tcType == testCaseType.NOTAPPLICABLE:
             self.not_applicable_message = message
             self.not_applicable_output = output
         else:
