@@ -117,16 +117,24 @@ DWORD pci_read_dword(WORD bus, WORD dev, WORD func, BYTE offset )
 void _dump_buffer( unsigned char * b, unsigned int len )
 {
   unsigned int i;
-  unsigned int m = len / 8;
-  unsigned int r = len % 8;
-  unsigned char line[3*8 + 1];
-  unsigned char * line_ptr = line;
-  for( i = 0; i < m; i++ )
-    DbgPrint( "%02X %02X %02X %02X %02X %02X %02X %02X : %c %c %c %c %c %c %c %c\n", b[i*8], b[i*8+1], b[i*8+2], b[i*8+3], b[i*8+4], b[i*8+5], b[i*8+6], b[i*8+7], b[i*8], b[i*8+1], b[i*8+2], b[i*8+3], b[i*8+4], b[i*8+5], b[i*8+6], b[i*8+7] );
+  unsigned int j;
 
-  for( i = 0; i < r; i++ ) line_ptr += sprintf( line_ptr, "%02X ", b[m*8 + i] );
-  *(line_ptr + 1) = '\0';
-  DbgPrint( "%s\n", line );
+  for( i = 0; i < len; i+=8 ){
+    for (j = 0; j < 8; j++) {
+			if (i + j >= len)
+				DbgPrint("   ");
+			else
+				DbgPrint("%02X ", b[i + j]);
+		}
+		DbgPrint(": ");
+		for (j = 0; j < 8; j++) {
+			if (i + j >= len)
+				DbgPrint("   ");
+			else
+				DbgPrint("%c ", b[i + j]);
+		}
+		DbgPrint("\n");
+  }
 }
 
 
