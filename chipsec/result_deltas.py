@@ -20,6 +20,7 @@
 
 import json
 import time
+import xml.etree.ElementTree as ET
 
 import chipsec.file
 from chipsec.logger import logger
@@ -73,4 +74,14 @@ def log_deltas_json(deltas, outfile):
     chipsec.file.write_file(outfile, deltas_json)
 
 def log_deltas_xml(deltas, outfile):
-    logger().error('XML delta log support not implemented.')
+    xml_deltas = ET.ElementTree(ET.Element('deltas'))
+    delta_root = xml_deltas.getroot()
+    delta_root.text = '\n    '
+    delta_root.tail = '\n'
+    for test in deltas:
+        element = ET.SubElement(delta_root, 'test', {'current': deltas[test]['current'], 'previous': deltas[test]['previous']})
+        element.text = test
+        element.tail = '\n    '
+    else:
+        element.tail = '\n'
+    xml_deltas.write(outfile)
