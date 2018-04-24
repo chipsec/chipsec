@@ -78,10 +78,14 @@ def log_deltas_xml(deltas, outfile):
     delta_root = xml_deltas.getroot()
     delta_root.text = '\n    '
     delta_root.tail = '\n'
+    element = None
     for test in deltas:
         element = ET.SubElement(delta_root, 'test', {'current': deltas[test]['current'], 'previous': deltas[test]['previous']})
         element.text = test
         element.tail = '\n    '
     else:
-        element.tail = '\n'
+        if element is not None:
+            element.tail = '\n'
+        else:
+            delta_root.text = '\n'
     xml_deltas.write(outfile)
