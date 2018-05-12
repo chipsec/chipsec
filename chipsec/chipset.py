@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -87,6 +87,7 @@ CHIPSET_ID_CHT     = 14
 CHIPSET_ID_BDX     = 15
 CHIPSET_ID_CFL     = 16
 CHIPSET_ID_APL     = 17
+CHIPSET_ID_DNV     = 18
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -108,10 +109,11 @@ CHIPSET_CODE_CHT     = 'CHT'
 CHIPSET_CODE_BDX     = 'BDX'
 CHIPSET_CODE_CFL     = 'CFL'
 CHIPSET_CODE_APL     = 'APL'
+CHIPSET_CODE_DNV     = 'DNV'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL]
-CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL]
+CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
 
@@ -195,6 +197,9 @@ Chipset_Dictionary = {
 
 # Bay Trail SoC
 0x0F00 : {'name' : 'Baytrail',       'id' : CHIPSET_ID_BYT , 'code' : CHIPSET_CODE_BYT,  'longname' : 'Bay Trail SoC' },
+
+# Denverton
+0x1980 : {'name' : 'Denverton',      'id' : CHIPSET_ID_DNV , 'code' : CHIPSET_CODE_DNV,  'longname' : 'Intel Atom Processor C3000 Product Family' },
 
 # Atom C2000 Processor Family (Avoton)
 0x1F00 : {'name' : 'Avoton  ',       'id' : CHIPSET_ID_AVN , 'code' : CHIPSET_CODE_AVN,  'longname' : 'Intel Avoton' },
