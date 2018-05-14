@@ -748,6 +748,18 @@ def parse_sha384(data):
 def parse_sha512(data):
     return
 
+def parse_x509_sha256(data):
+    return
+
+def parse_x509_sha384(data):
+    return
+
+def parse_x509_sha512(data):
+    return
+
+def parse_external(data):
+    return
+
 def parse_pkcs7(data):
     return
 
@@ -760,37 +772,45 @@ sig_types = {"C1C41626-504C-4092-ACA9-41F936934328": ("EFI_CERT_SHA256_GUID", pa
              "0B6E5233-A65C-44C9-9407-D9AB83BFC8BD": ("EFI_CERT_SHA224_GUID", parse_sha224, 0x2c, "SHA224"), \
              "FF3E5307-9FD0-48C9-85F1-8AD56C701E01": ("EFI_CERT_SHA384_GUID", parse_sha384, 0x40, "SHA384"), \
              "093E0FAE-A6C4-4F50-9F1B-D41E2B89C19A": ("EFI_CERT_SHA512_GUID", parse_sha512, 0x50, "SHA512"), \
-             "4AAFD29D-68DF-49EE-8AA9-347D375665A7": ("EFI_CERT_TYPE_PKCS7_GUID", parse_pkcs7, 0, "PKCS7") }
+             "3bd2a492-96c0-4079-b420-fcf98ef103ed": ("EFI_CERT_X509_SHA256_GUID", parse_x509_sha256, 0x40, "X509_SHA256"), \
+             "7076876e-80c2-4ee6-aad2-28b349a6865b": ("EFI_CERT_X509_SHA384_GUID", parse_x509_sha384, 0x50, "X509_SHA384"), \
+             "446dbf63-2502-4cda-bcfa-2465d2b0fe9d": ("EFI_CERT_X509_SHA512_GUID", parse_x509_sha512, 0x60, "X509_SHA512"), \
+             "452e8ced-dfff-4b8c-ae01-5118862e682c": ("EFI_CERT_EXTERNAL_MANAGEMENT_GUID", parse_external, 0x11, "EXTERNAL_MANAGEMENT"), \
+             "4AAFD29D-68DF-49EE-8AA9-347D375665A7": ("EFI_CERT_TYPE_PKCS7_GUID", parse_pkcs7, 0, "PKCS7"), \
+             }
 
 
-#def parse_db(db, var_name, path):
-def parse_db( db, decode_dir ):
-    db_size = len(db)
-    if 0 == db_size:
-        return
+def parse_sb_db(db, decode_dir):
+    entries = []
     dof = 0
     nsig = 0
-    entries = []
+    db_size = len(db)
+    if 0 == db_size:
+        return entries
+
     # some platforms have 0's in the beginnig, skip all 0 (no known SignatureType starts with 0x00):
-    while (dof < db_size and db[dof] == '\x00'): dof = dof + 1
     while (dof + SIGNATURE_LIST_size) < db_size:
         SignatureType0, SignatureType1, SignatureType2, SignatureType3, SignatureListSize, SignatureHeaderSize, SignatureSize \
          = struct.unpack(SIGNATURE_LIST, db[dof:dof+SIGNATURE_LIST_size])
+
         # prevent infinite loop when parsing malformed var
         if SignatureListSize == 0:
             logger().log_bad("db parsing failed!")
             return entries
+
+        # Determine the signature type
         SignatureType = guid_str(SignatureType0, SignatureType1, SignatureType2, SignatureType3)
         short_name = "UNKNOWN"
         sig_parse_f = None
         sig_size = 0
         if (SignatureType in sig_types.keys()):
             sig_name, sig_parse_f, sig_size, short_name = sig_types[SignatureType]
-        #logger().log( "SignatureType       : %s (%s)" % (SignatureType, sig_name) )
-        #logger().log( "SignatureListSize   : 0x%08X" % SignatureListSize )
-        #logger().log( "SignatureHeaderSize : 0x%08X" % SignatureHeaderSize )
-        #logger().log( "SignatureSize       : 0x%08X" % SignatureSize )
-        #logger().log( "Parsing..." )
+        else:
+            logger().log_bad('Unknown signature type {}, skipping signature decode.'.format(SignatureType))
+            dof += SignatureListSize
+            continue
+        
+        # Extract signature data blobs
         if (((sig_size > 0) and (sig_size == SignatureSize)) or ((sig_size == 0) and (SignatureSize >= 0x10))):
             sof = 0
             sig_list = db[dof+SIGNATURE_LIST_size+SignatureHeaderSize:dof+SignatureListSize]
@@ -800,7 +820,6 @@ def parse_db( db, decode_dir ):
                 owner0, owner1, owner2, owner3 = struct.unpack(GUID, sig_data[:guid_size])
                 owner = guid_str(owner0, owner1, owner2, owner3)
                 data = sig_data[guid_size:]
-                #logger().log(  "owner: %s" % owner )
                 entries.append( data )
                 sig_file_name = "%s-%s-%02d.bin" % (short_name, owner, nsig)
                 sig_file_name = os.path.join(decode_dir, sig_file_name)
@@ -814,25 +833,25 @@ def parse_db( db, decode_dir ):
             if (sig_size > 0): err_str = err_str + " Must be 0x%X." % (sig_size)
             else:              err_str = err_str + " Must be >= 0x10."
             logger().error( err_str )
-            entries.append( data )
-            sig_file_name = "%s-%s-%02d.bin" % (short_name, SignatureType, nsig)
-            sig_file_name = os.path.join(decode_dir, sig_file_name)
-            write_file(sig_file_name, data)
-            nsig = nsig + 1
+            logger().error('Skipping signature decode for this list.')
         dof = dof + SignatureListSize
 
     return entries
 
-def parse_efivar_file( fname, var=None ):
+SECURE_BOOT_SIG_VAR = 1
+AUTH_SIG_VAR        = 2
+ESAL_SIG_VAR        = 3
+
+def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
     if not var:
         var = read_file( fname )
-    #path, var_name = os.path.split( fname )
-    #var_name, ext = os.path.splitext( var_name )
     var_path = fname + '.dir'
     if not os.path.exists( var_path ):
         os.makedirs( var_path )
-
-    parse_db( var, var_path )
+    if var_type == SECURE_BOOT_SIG_VAR:
+        parse_sb_db(var, var_path)
+    else:
+        logger().warn('Unsupported variable type requested.')
 
 
 ########################################################################################################
