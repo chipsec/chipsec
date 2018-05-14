@@ -34,6 +34,7 @@ Common UEFI/EFI functionality including UEFI variables, Firmware Volumes, Secure
 
 import os
 import struct
+import codecs
 from collections import namedtuple
 
 from chipsec.file import *
@@ -838,6 +839,75 @@ def parse_sb_db(db, decode_dir):
 
     return entries
 
+#
+#  "certdb" variable stores the signer's certificates for non PK/KEK/DB/DBX
+# variables with EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS|EFI_VARIABLE_NON_VOLATILE set.
+#  "certdbv" variable stores the signer's certificates for non PK/KEK/DB/DBX
+# variables with EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS set
+#
+# GUID: gEfiCertDbGuid
+#
+# We need maintain atomicity.
+#
+# Format:
+# +----------------------------+
+# | UINT32                     | <-- CertDbListSize, including this UINT32
+# +----------------------------+
+# | AUTH_CERT_DB_DATA          | <-- First CERT
+# +----------------------------+
+# | ........                   |
+# +----------------------------+
+# | AUTH_CERT_DB_DATA          | <-- Last CERT
+# +----------------------------+
+#
+# typedef struct {
+#   EFI_GUID    VendorGuid;
+#   UINT32      CertNodeSize;
+#   UINT32      NameSize;
+#   UINT32      CertDataSize;
+#   /// CHAR16  VariableName[NameSize];
+#   /// UINT8   CertData[CertDataSize];
+# } AUTH_CERT_DB_DATA;
+#
+AUTH_CERT_DB_LIST_HEAD = "<I"
+AUTH_CERT_DB_LIST_HEAD_size = struct.calcsize(AUTH_CERT_DB_LIST_HEAD)
+AUTH_CERT_DB_DATA = "<IHH8sIII"
+AUTH_CERT_DB_DATA_size = struct.calcsize(AUTH_CERT_DB_DATA)
+
+def parse_auth_var(db, decode_dir):
+    entries = []
+    dof = 0
+    nsig = 0
+    db_size = len(db)
+
+    # Verify that list makes sense
+    if db_size < AUTH_CERT_DB_LIST_HEAD_size:
+        logger().warn("Cert list empty.")
+        return entries
+    expected_size = struct.unpack(AUTH_CERT_DB_LIST_HEAD, db[dof:dof+AUTH_CERT_DB_LIST_HEAD_size])[0]
+    if db_size != expected_size:
+        logger().error("Expected size of cert list did not match actual size.")
+        return entries
+    dof += AUTH_CERT_DB_LIST_HEAD_size
+
+    # Loop through all the certs in the list.
+    while dof + AUTH_CERT_DB_DATA_size < db_size:
+        ven_guid0, ven_guid1, ven_guid2, ven_guid3, cert_node_size, name_size, cert_data_size = struct.unpack(AUTH_CERT_DB_DATA, db[dof:dof+AUTH_CERT_DB_DATA_size])
+        vendor_guid = guid_str(ven_guid0, ven_guid1, ven_guid2, ven_guid3)
+        name_size *= 2  # Name size is actually the number of CHAR16 in the name array
+        tof = dof + AUTH_CERT_DB_DATA_size
+        var_name = codecs.decode(db[tof:tof+name_size], 'utf-16')
+        tof += name_size
+        sig_data = db[tof:tof+cert_data_size]
+        entries.append(sig_data)
+        sig_file_name = '{}-{}-{:02X}.bin'.format(vendor_guid, codecs.encode(var_name), nsig)
+        sig_file_name = os.path.join(decode_dir, sig_file_name)
+        write_file(sig_file_name, sig_data)
+        dof += cert_node_size
+        nsig += 1
+
+    return entries
+
 SECURE_BOOT_SIG_VAR = 1
 AUTH_SIG_VAR        = 2
 ESAL_SIG_VAR        = 3
@@ -850,6 +920,8 @@ def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
         os.makedirs( var_path )
     if var_type == SECURE_BOOT_SIG_VAR:
         parse_sb_db(var, var_path)
+    elif var_type == AUTH_SIG_VAR:
+        parse_auth_var(var, var_path)
     else:
         logger().warn('Unsupported variable type requested.')
 
