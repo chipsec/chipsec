@@ -228,7 +228,7 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
             attr_str = get_attr_string( attrs )
             var_fname = os.path.join( nvram_pth, '%s_%s_%s_%d.bin' % (name, guid, attr_str.strip(), n) )
             write_file( var_fname, data )
-            if name in SECURE_BOOT_VARIABLES:
+            if name in SECURE_BOOT_KEY_VARIABLES:
                 parse_efivar_file(var_fname, data, SECURE_BOOT_SIG_VAR)
             elif name == EFI_VAR_NAME_certdb:
                 parse_efivar_file(var_fname, data, AUTH_SIG_VAR)
