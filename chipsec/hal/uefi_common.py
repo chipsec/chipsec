@@ -913,6 +913,7 @@ AUTH_SIG_VAR        = 2
 ESAL_SIG_VAR        = 3
 
 def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
+    logger().log('Processing certs in file: {}'.format(fname))
     if not var:
         var = read_file( fname )
     var_path = fname + '.dir'
@@ -923,7 +924,7 @@ def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
     elif var_type == AUTH_SIG_VAR:
         parse_auth_var(var, var_path)
     else:
-        logger().warn('Unsupported variable type requested.')
+        logger().warn('Unsupported variable type requested: {}'.format(var_type))
 
 
 ########################################################################################################
