@@ -139,7 +139,7 @@ class VMMCommand(BaseCommand):
                 pt_fname = 'ept_%08X' % eptp
                 self.logger.log( "[CHIPSEC] EPT physical base: 0x%016X" % eptp )
                 self.logger.log( "[CHIPSEC] dumping EPT to '%s'..." % pt_fname )
-                vmm.dump_SLAT_page_tables( eptp, pt_fname )
+                vmm.dump_EPT_page_tables( eptp, pt_fname )
             else:
                 self.logger.log( "[CHIPSEC] finding EPT hierarchy in memory is not implemented yet" )
                 print VMMCommand.__doc__
