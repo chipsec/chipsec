@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,13 +19,10 @@
 #chipsec@intel.com
 #
 
-
-
-
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -643,7 +640,7 @@ class LinuxHelper(Helper):
             for i in range( 0, numCpus ):
                 if mask[i] == 1:
                     AffinityString += "%s " % i
-            logger().log( AffinityString )
+            if logger().VERBOSE: logger().log( AffinityString )
             return 1
         else:
             AffinityString = " Get_affinity errno::%s"%( errno.value )
