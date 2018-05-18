@@ -1,6 +1,6 @@
 /* 
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2014, Intel Corporation
+Copyright (c) 2010-2018, Intel Corporation
  
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1300,8 +1300,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		// OUT params : length
 		uint64_t 	NumberofBytes;
 		phys_addr_t 	pa;
-		void 		*va;
-		void		*buffer; 
+		char 		*va;
+		char		*buffer; 
 		uint64_t	i;
 
 		NumberofBytes = 0;
