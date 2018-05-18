@@ -590,7 +590,39 @@
     <register name="MSR_LT_LOCK_MEMORY" type="msr" msr="0x2E7" desc="LT lock memory configuration MSR">
       <field name="LT_LOCK"  bit="0" size="1" desc="Lock bit" />
     </register>
-       
+    <register name="BIOS_SE_SVN" type="msr" msr="0x302" desc="BIOS SGX SVN values">
+      <field name="PFAT_SE_SVN"  bit="40"  size="8" desc="PFAT_SE_SVN" />
+      <field name="ANC_SE_SVN"  bit="32"  size="8" desc="ANC_SE_SVN" />
+      <field name="SCLEAN_SE_SVN"  bit="24"  size="8" desc="SCLEAN_SE_SVN" />
+      <field name="SINIT_SE_SVN"  bit="16"  size="8" desc="SINIT_SE_SVN" />
+    </register>
+    <register name="BIOS_SE_SVN_STATUS" type="msr" msr="0x500" desc="BIOS SGX SVN status register">
+      <field name="LOCK"  bit="0"  size="1" desc="ACM threshold locked" />
+      <field name="SINIT_SE_SVN"  bit="16"  size="8" desc="SINIT_SE_SVN" />
+    </register>
+    <register name="PRMRR_VALID_CONFIG" type="msr" msr="0x1FB" desc="PRMRR VALID register">
+      <field name="PRMRR_SIZE_SUPPORT"    bit="5"  size="4" desc="PRMRR size support"/>
+    </register>
+    <register name="PRMRR_PHYBASE" type="msr" msr="0x1F4" desc="PRMRR BASE Address">
+      <field name="PRMRR_MEMTYPE"  bit="0"  size="3" desc="PRMRR Memory Type" />
+      <field name="PRMRR_base_address_fields"   bit="12"  size="34" desc="PRMRR base address bits" />
+    </register>
+    <register name="PRMRR_MASK" type="msr" msr="0x1F5" desc="PRMRR MASK register">
+      <field name= "PRMRR_LOCK" bit="10" size="1" desc = "PRMRR Lock Bit" />
+      <field name= "PRMRR_VLD" bit="11" size="1" desc = "PRMRR Valid Bit set by mcheck" />
+      <field name="PRMRR_mask_bits"   bit="12"  size="34" desc="PRMRR mask bits" />
+    </register>
+    <register name="PRMRR_UNCORE_PHYBASE" type="msr" msr="0x2F4" desc="PRMRR uncore BASE Address">
+      <field name="PRMRR_base_address_fields"   bit="12"  size="27" desc="PRMRR uncore base address bits" />
+    </register>
+    <register name="PRMRR_UNCORE_MASK" type="msr" msr="0x2F5" desc="PRMRR uncore MASK register">
+      <field name= "PRMRR_LOCK" bit="10" size="1" desc = "PRMRR uncore Lock Bit" />
+      <field name= "PRMRR_VLD" bit="11" size="1" desc = "PRMRR uncore Valid Bit set by mcheck" />
+      <field name="PRMRR_mask_bits"   bit="12"  size="27" desc="PRMRR uncore mask bits" />
+    </register>
+    <register name="SGX_DEBUG_MODE" type="msr" msr="0x503" desc="SGX debug mode resiter">
+      <field name="SGX_DEBUG_MODE_STATUS_BIT"   bit="1"  size="1" desc="Debug mode status but"/>
+    </register>
   </registers>
 
 
