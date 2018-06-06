@@ -87,13 +87,13 @@ if "windows" == platform.system().lower():
             """
             old_setting = WConio.gettextinfo()[4] & 0x00FF
             WConio.textattr( COLOR_ID[ fg_color ] )
-            print text
+            print("{}".format(text))
             WConio.textattr( old_setting )
 
     except ImportError, e:
         #print "WConio package is not installed. No colored output"
         def log_color( fg_color, text ):
-            print text
+            print("{}".format(text))
 
 elif "linux" == platform.system().lower():
 
@@ -117,15 +117,15 @@ elif "linux" == platform.system().lower():
         NORMAL = 8
 
         def log_test(self):
-            print ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC
-            print ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC
+            print("{}BOLD{}".format(ColorLogger.BOLD,ColorLogger.ENDC))
+            print("{}UNDERLINE{}".format(ColorLogger.UNDERLINE,ColorLogger.ENDC))
             for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
                 for code in xrange(ColorLogger.GRAY, ColorLogger.NORMAL+1):
                     self.log(color_type+code, color_type, code )
 
 
         def log(self,msg, color_type=LIGHT,color=8):
-            print ColorLogger.format(msg, color_type, color)
+            print(ColorLogger.format(msg, color_type, color))
 
         @staticmethod
         def format(msg, color_type=LIGHT,color=8):
@@ -144,11 +144,11 @@ elif "linux" == platform.system().lower():
 
     def log_color( fg_color, text ):
         _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
-        print _text
+        print("{}".format(_text))
 
 else:
     def log_color( fg_color, text ):
-        print text
+        print("{}".format(text))
 
 
 
@@ -187,7 +187,7 @@ class Logger:
                 self.logfile = open( self.LOG_FILE_NAME, 'a+' )
                 self.LOG_TO_FILE = True
             except None:
-                print ("WARNING: Could not open log file '%s'" % name)
+                print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
 
     def set_default_log_file( self ):
         """Sets the default log file for the output."""
@@ -200,7 +200,7 @@ class Logger:
             self.logfile = open( self.LOG_FILE_NAME, 'a+' )
             self.LOG_TO_FILE = True
         except None:
-            print ("WARNING: Could not open log file '%s'" % self.LOG_FILE_NAME)
+            print ("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
 
     def set_status_log_file( self ):
         """Sets the status log file for the output."""
@@ -215,7 +215,7 @@ class Logger:
             try:
                 self.logfile.close()
             except None:
-                print 'WARNING: Could not close log file'
+                print ("WARNING: Could not close log file")
             finally:
                 self.logfile = None
 
@@ -262,7 +262,7 @@ class Logger:
         else:
             if color: log_color( color, text )
             else:
-                print text
+                print ("{}".format(text))
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
@@ -409,6 +409,7 @@ class Logger:
 
     def _write_log( self, text, filename ):
         print >> self.logfile, text
+        #print("{}".format(text), file=self.logfile) #Stament is throwing syntax error
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()
