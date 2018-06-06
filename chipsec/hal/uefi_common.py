@@ -908,6 +908,30 @@ def parse_auth_var(db, decode_dir):
 
     return entries
 
+ESAL_SIG_SIZE = 256
+
+def parse_esal_var(db, decode_dir):
+    entries = []
+    dof = 0
+    nsig = 0
+    db_size = len(db)
+
+    # Check to see how many signatures exist
+    if db_size < ESAL_SIG_SIZE:
+        logger().log('No signatures present.')
+        return entries
+
+    # Extract signatures
+    while dof + ESAL_SIG_SIZE <= db_size:
+        key_data = db[dof:dof+ESAL_SIG_SIZE]
+        entries.append(key_data)
+        key_file_name = os.path.join(decode_dir,'AuthVarKeyDatabase-cert-{:02X}.bin'.format(nsig))
+        write_file(key_file_name, key_data)
+        dof += ESAL_SIG_SIZE
+        nsig += 1
+
+    return entries
+
 SECURE_BOOT_SIG_VAR = 1
 AUTH_SIG_VAR        = 2
 ESAL_SIG_VAR        = 3
@@ -923,6 +947,8 @@ def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
         parse_sb_db(var, var_path)
     elif var_type == AUTH_SIG_VAR:
         parse_auth_var(var, var_path)
+    elif var_type == ESAL_SIG_VAR:
+        parse_esal_var(var, var_path)
     else:
         logger().warn('Unsupported variable type requested: {}'.format(var_type))
 
