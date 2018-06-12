@@ -220,7 +220,7 @@ def parse_spi_flash_descriptor( cs, rom ):
         master_region_ra = cs.get_register_field( 'FLMSTR1', flmstr, 'MRRA' )
         master_region_wa = cs.get_register_field( 'FLMSTR1', flmstr, 'MRWA' )
         flmstrs[m] = (master_region_ra, master_region_wa)
-        logger().log( '+ 0x%04X FLMSTR%d   : 0x%08X' % (flmstr_off,m,flmstr) )
+        logger().log( '+ 0x%04X FLMSTR%d   : 0x%08X' % (flmstr_off,m+1,flmstr) )
 
     logger().log('')
     logger().log( 'Master Read/Write Access to Flash Regions' )
