@@ -237,7 +237,7 @@ def parse_spi_flash_descriptor( cs, rom ):
         s = '%-2d %-020s ' % (r, spi.SPI_REGION_NAMES[r])
         for m in range(nm):
             access_s = ''
-            mask = (0x1 << r) & 0xFF
+            mask = (0x1 << r)
             if (flmstrs[m][0] & mask): access_s += 'R'
             if (flmstrs[m][1] & mask): access_s += 'W'
             s = s + '| ' + ('%-9s' % access_s)
