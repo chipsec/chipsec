@@ -236,10 +236,12 @@ Chipset_Dictionary = {
 
 PCH_ID_1xx      = 10001
 PCH_ID_2xx      = 10002
+PCH_ID_C620     = 10003
 
 PCH_CODE_PREFIX = 'PCH_'
 PCH_CODE_1xx    = 'PCH_1XX'
 PCH_CODE_2xx    = 'PCH_2XX'
+PCH_CODE_C620   = 'PCH_620'
 
 pch_dictionary = {
 # 100 series PCH
@@ -261,6 +263,15 @@ pch_dictionary = {
 0xA2C8 : {'name' : 'B250', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel B250 (200 series) PCH'},
 0xA2C9 : {'name' : 'Z370', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Z370 (200 series) PCH'},
 0xA2D2 : {'name' : 'X299', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel X299 (200 series) PCH'},
+
+# C620 series PCH
+0xA1C1 : {'name' : 'C621', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C621 (C620 series) PCH'},
+0xA1C2 : {'name' : 'C622', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C622 (C620 series) PCH'},
+0xA1C3 : {'name' : 'C624', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C624 (C620 series) PCH'},
+0xA1C4 : {'name' : 'C625', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C625 (C620 series) PCH'},
+0xA1C5 : {'name' : 'C626', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C626 (C620 series) PCH'},
+0xA1C6 : {'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'},
+0xA1C7 : {'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'}
 }
 
 try:
