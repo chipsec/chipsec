@@ -131,8 +131,6 @@ SPI_REGION_NAMES = {
 # Flash Descriptor Master Defines
 #
 
-SPI_MASTER_NUMBER_IN_FD = 4
-
 MASTER_HOST_CPU_BIOS    = 0
 MASTER_ME               = 1
 MASTER_GBE              = 2
