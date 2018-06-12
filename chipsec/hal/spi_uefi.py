@@ -267,7 +267,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
 
             # "container" sections: keep parsing
-            if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
+            if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
                 if sec.Type == EFI_SECTION_COMPRESSION:
                     ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
                     d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], ct, True )
@@ -284,18 +284,48 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                             d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], 2, True )
                         if d:
                             sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
-                    #elif sec.Guid == FIRMWARE_VOLUME_GUID:
                     else:
                         sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
-                elif sec.Type in (EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW):
-                    sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+                elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
+                    children = build_efi_file_tree( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+                    if not children is None:
+						sec.children = children
 
             sections.append(sec)
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
         secn += 1
     return sections
+    
+# build_efi_file_tree - extract EFI FV file from EFI image and build an object tree
+#
+# Input arguements:
+# _uefi    - instance of chipsec.hal.uefi.UEFI class
+# fv_image - fv_image containing files
 
-
+def build_efi_file_tree ( _uefi, fv_img, fwtype):
+    fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
+    polarity = Attributes & EFI_FVB2_ERASE_POLARITY
+    foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv_img, fv_size, HeaderSize, polarity )
+    fv = []
+    while next_offset is not None:
+        if fname:
+            fwbin = EFI_FILE( foff, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum )
+            fwbin.calc_hashes()
+            if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD) or fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
+                fwbin.children = build_efi_modules_tree( _uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity )
+                fv.append(fwbin)
+            elif fwbin.Type == EFI_FV_FILETYPE_RAW:
+                if fwbin.Name != NVAR_NVRAM_FS_FILE:
+                    fwbin.children = build_efi_tree( _uefi, fwbin.Image[fhdrsz:], fwtype )
+                    fv.append(fwbin)
+                else:
+                    fwbin.isNVRAM   = True
+                    fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
+                    fv.append(fwbin)
+				#fv.children.append(fwbin)
+		#fv.append(fwbin)
+        foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv_img, fv_size, next_offset, polarity )
+    return fv
 #
 # build_efi_tree - extract EFI modules (FV, files, sections) from EFI image and build an object tree
 #
@@ -310,26 +340,13 @@ def build_efi_tree( _uefi, data, fwtype ):
     while fv_off is not None:
         fv = EFI_FV( fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum )
         fv.calc_hashes()
-        polarity = bit_set( fv.Attributes, EFI_FVB2_ERASE_POLARITY )
+        #polarity = bit_set( fv.Attributes, EFI_FVB2_ERASE_POLARITY )
 
         # Detect File System firmware volumes
         if fv.Guid in (EFI_PLATFORM_FS_GUIDS + EFI_FS_GUIDS):
-            foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, fv.HeaderSize, polarity )
-            while next_offset is not None:
-                if fname:
-                    fwbin = EFI_FILE( foff, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum )
-                    fwbin.calc_hashes()
-                    if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
-                        fwbin.children = build_efi_modules_tree( _uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity )
-                    elif fwbin.Type == EFI_FV_FILETYPE_RAW:
-                        if fwbin.Name != NVAR_NVRAM_FS_FILE:
-                            fwbin.children = build_efi_tree( _uefi, fwbin.Image, fwtype )
-                        else:
-                            fwbin.isNVRAM   = True
-                            fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
-
-                    fv.children.append(fwbin)
-                foff, next_offset, fname, ftype, fattr, fstate, fcsum, fsz, fimg, fhdrsz, fUD, fcalcsum = NextFwFile( fv.Image, fv.Size, next_offset, polarity )
+			fwbin = build_efi_file_tree ( _uefi, fv_img, fwtype)
+			for i in fwbin:
+			    fv.children.append(i)
 
         # Detect NVRAM firmware volumes
         elif fv.Guid in EFI_NVRAM_GUIDS: # == VARIABLE_STORE_FV_GUID:
