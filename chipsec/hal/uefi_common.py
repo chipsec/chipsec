@@ -622,40 +622,99 @@ def NextFwVolume(buffer, off = 0):
             fof += 0x2C
     return res
 
+EFI_FIRMWARE_VOLUME_HEADER = "<16sIHH8sQIIHHHBB" 
+EFI_FV_BLOCK_MAP_ENTRY = "<II" 
+FFS_ATTRIB_LARGE_FILE         = 0x01
+  
+def GetFvHeader(buffer, off = 0):
+    header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
+    if (len(buffer) < header_size):
+        return (0,0,0)
+    size = 0
+    fof = off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
+    ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
+    FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
+    Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[off:off+struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)])
+    numblocks,lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY,buffer[fof:fof+struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)])
+    '''
+    print "\nFV volume offset: 0x%08X" % fof
+    print "\tFvLength:         0x%08X" % FvLength
+    print "\tAttributes:       0x%08X" % Attributes
+    print "\tHeaderLength:     0x%04X" % HeaderLength
+    print "\tChecksum:         0x%04X" % Checksum
+    print "\tRevision:         0x%02X" % Revision
+    print "\tExtHeaderOffset:  0x%02X" % ExtHeaderOffset
+    print "\tReserved:         0x%02X" % Reserved
+    print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
+    '''
+    while not (numblocks == 0 and lenblock == 0):
+        fof += struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
+        if (fof + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)) >= len(buffer):
+			return (0,0,0)
+        if numblocks != 0:
+            #print "Num blocks:   0x%08X\n" % (numblocks)
+            #print "block Len:    0x%08X\n" % (lenblock)
+            size = size + (numblocks * lenblock)
+        numblocks,lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY,buffer[fof:fof+struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)])
+    if FvLength != size:
+        #print("ERROR: Volume Size not consistant with Block Maps")
+        return (0,0,0)
+    if size >= 0x40000000 or size == 0:
+        #print("ERROR: Volume is corrupted")
+        return (0,0,0)
+    return (size, HeaderLength, Attributes)
+    
+
 EFI_FFS_FILE_HEADER = "<IHH8sHBB3sB"
+EFI_FFS_FILE_HEADER2 = "<IHH8sHBB3sBQ"
 file_header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
 def NextFwFile(FvImage, FvLength, fof, polarity):
     fof = align(fof, 8)
     cur_offset = fof
     next_offset = None
     res = None
-    update_or_deleted = False
+    update_or_deleted = False 
+    
     if (fof + file_header_size) <= min(FvLength, len(FvImage)):
-        if ('\xff\xff\xff\xff' == FvImage[fof+file_header_size-4:fof+file_header_size]):
+        Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, FvImage[fof:fof+file_header_size])
+        #Get File Header Size
+        if Attributes & FFS_ATTRIB_LARGE_FILE:
+            header_size = struct.calcsize(EFI_FFS_FILE_HEADER2)
+        else:
+            header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
+        #Check for a blank header
+        if polarity:
+            blank = "\xff" * file_header_size
+        else:
+            blank = "\x00" * file_header_size
+		
+        if (blank == FvImage[fof:fof+file_header_size]):
             next_offset = fof + 8
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
-
-        Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, FvImage[fof:fof+file_header_size])
-        fsize = get_3b_size(Size);
-        update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
-        if   (not bit_set(State, EFI_FILE_HEADER_VALID, polarity))   or (bit_set(State, EFI_FILE_HEADER_INVALID, polarity)):
-            next_offset = align(fof + 1, 8)
-        elif (not bit_set(State, EFI_FILE_DATA_VALID, polarity)):
-            next_offset = align(fof + 1, 8)
-        elif fsize == 0:
-            next_offset = align(fof + 1, 8)
+        #Get File size
+        if Attributes & FFS_ATTRIB_LARGE_FILE:
+            fsize = struct.unpack("Q",FvImage[fof+file_header_size:fof+file_header_size+struct.calcsize("Q")])
         else:
-            next_offset = fof + fsize
-            next_offset = align(next_offset, 8)
-            Name = guid_str(Name0, Name1, Name2, Name3)
-            fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, Name1, Name2, Name3, 0, Type, Attributes, Size, 0)
-            hsum = FvChecksum8(fheader)
-            if (Attributes & FFS_ATTRIB_CHECKSUM):
-                fsum = FvChecksum8(FvImage[fof+file_header_size:fof+fsize])
-            else:
-                fsum = FFS_FIXED_CHECKSUM
-            CalcSum = (hsum | (fsum << 8))
-            res = (cur_offset, next_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[fof:fof+fsize], file_header_size, update_or_deleted, CalcSum)
+            fsize = get_3b_size(Size);
+        #Get next_offset
+        update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
+        if (bit_set(State, EFI_FILE_DATA_VALID, polarity)) or update_or_deleted:
+            next_offset = align(fof + fsize, 8)
+        else:
+            next_offset = align(fof + 1, 8)
+            return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
+        
+        Name = guid_str(Name0, Name1, Name2, Name3)
+        #print Name, hex(Type), hex(State)
+        #TODO need to fix up checksum?
+        fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, Name1, Name2, Name3, 0, Type, Attributes, Size, 0)
+        hsum = FvChecksum8(fheader)
+        if (Attributes & FFS_ATTRIB_CHECKSUM):
+            fsum = FvChecksum8(FvImage[fof+file_header_size:fof+fsize])
+        else:
+            fsum = FFS_FIXED_CHECKSUM
+        CalcSum = (hsum | (fsum << 8))
+        res = (cur_offset, next_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[fof:fof+fsize], header_size, update_or_deleted, CalcSum)
     if res is None: return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
     else:           return res
 
@@ -663,6 +722,7 @@ EFI_COMMON_SECTION_HEADER = "<3sB"
 EFI_COMMON_SECTION_HEADER_size = struct.calcsize(EFI_COMMON_SECTION_HEADER)
 
 def NextFwFileSection(sections, ssize, sof, polarity):
+    #print "InNextFileSection",type(sof)
     # offset, next_offset, SecName, SecType, SecBody, SecHeaderSize
     cur_offset = sof
     if (sof + EFI_COMMON_SECTION_HEADER_size) < ssize:
@@ -670,15 +730,20 @@ def NextFwFileSection(sections, ssize, sof, polarity):
         if len(header) < EFI_COMMON_SECTION_HEADER_size: return (None, None, None, None, None, None)
         Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, header)
         Size = get_3b_size(Size)
+        Header_Size = EFI_COMMON_SECTION_HEADER_size
+        if Size == 0xFFFFFF:
+			Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
+			Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
         sec_name = "S_UNKNOWN_%02X" % Type
         if Type in SECTION_NAMES.keys():
             sec_name = SECTION_NAMES[Type]
         if (Size == 0xffffff and Type == 0xff) or (Size == 0):
             sof = align(sof + 4, 4)
             return (cur_offset, sof, None, None, None, None)
+        #print type(Size), hex(Size), hex(Type)
         sec_body = sections[sof:sof+Size]
         sof = align(sof + Size, 4)
-        return (cur_offset, sof, sec_name, Type, sec_body, EFI_COMMON_SECTION_HEADER_size)
+        return (cur_offset, sof, sec_name, Type, sec_body, Header_Size)
     return (None, None, None, None, None, None)
 
 def DecodeSection(SecType, SecBody, SecHeaderSize):
