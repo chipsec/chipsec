@@ -11,8 +11,9 @@
   <!--                                      -->
   <!-- #################################### -->
   <pci>
+    <device name="P2SBC"  bus="0" dev="0x1F" fun="1" vid="0x8086" />
     <device name="SMBUS"  bus="0" dev="0x1F" fun="4" vid="0x8086" />
-    <device name="SPI"    bus="0" dev="0x1F" fun="5" vid="0x8086" />
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" vid="0x8086" />    
   </pci>
 
   <!-- #################################### -->
@@ -68,6 +69,9 @@
 
     <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="2" desc="P2SB Configuration Register">
       <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR"/>
+    </register>
+    <register name="P2SB_HIDE" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE1" size="1" desc="P2SB Configuration Register hide-unhide">
+      <field name="HIDE" bit="0" size="1" desc="Hide SBREG_BAR"/>
     </register>
 
     <!-- Power Management Controller -->
