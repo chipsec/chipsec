@@ -590,6 +590,11 @@
     <register name="MSR_LT_LOCK_MEMORY" type="msr" msr="0x2E7" desc="LT lock memory configuration MSR">
       <field name="LT_LOCK"  bit="0" size="1" desc="Lock bit" />
     </register>
+    <register name="IA32_DEBUG_INTERFACE" type="msr" msr="0xC80" desc="Silicon Debug Feature Control">
+      <field name="ENABLE"         bit="0"  size="1"  desc="Enable" />
+      <field name="LOCK"           bit="30" size="1"  desc="Lock (set automatically on the first SMI)" />
+      <field name="DEBUG_OCCURRED" bit="31" size="1"  desc="Debug Occurred (set by hardware)" />
+    </register>
 
     <!-- SGX related Model Specific Registers (MSR) -->
     <!-- Check if CPUID(EAX=7,ECX=0):EBX[2] is set before accessing these registers-->
