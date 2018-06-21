@@ -253,8 +253,6 @@ class sgx_check(BaseModule):
         self.logger.log("[*] Verifying if SGX is available to use")
         if sgx_ok and prmrr_enable and prmrr_uniform:
             self.logger.log_passed_check("Intel SGX is available to use")
-        if sgx_ok and prmrr_enable and prmrr_uniform:
-            self.logger.log_passed_check("Intel SGX is available to use")
             self.logger.log("[*] *******************************")
             self.logger.log("[*] *****SGX MODULE CHECK PASS*****")
             self.logger.log("[*] *******************************")
@@ -271,6 +269,12 @@ class sgx_check(BaseModule):
         self.logger.log("[*]     SINIT_SE_SVN : 0x%02X" % self.cs.read_register_field('BIOS_SE_SVN', 'SINIT_SE_SVN'))
         self.logger.log("[*] BIOS_SE_SVN_STATUS : 0x%016X" % self.cs.read_register('BIOS_SE_SVN_STATUS'))
         self.logger.log("[*]     BIOS_SE_SVN ACM threshold lock : 0x%u" % self.cs.read_register_field('BIOS_SE_SVN_STATUS', 'LOCK'))
+        sgx_debug_status = self.cs.read_register_field('SGX_DEBUG_MODE', 'SGX_DEBUG_MODE_STATUS_BIT')
+        self.logger.log("[*] SGX Debug Enable             : %u" % sgx_debug_status)
+        if sgx_debug_status:
+            self.logger.log_failed_check("SGX debug mode is enabled")
+        else:
+            self.logger.log_passed_check("SGX debug mode is disabled")
         self.logger.log("[*] Check Silicon debug feature settings")
         debug_interface = self.cs.read_register('IA32_DEBUG_INTERFACE')
         self.logger.log("[*]   IA32_DEBUG_INTERFACE : 0x%08X" % debug_interface)
@@ -281,15 +285,11 @@ class sgx_check(BaseModule):
         ok = (0 == debug_enable)
         if ok: self.logger.log_passed_check("Silicon debug features are disabled")
         else:  self.logger.log_failed_check("Silicon debug features are not disabled")
+        if (0 == debug_enable) and (1==sgx_debug_status):
+            self.logger.log_failed_check("Enabling sgx_debug without enabling debug mode in msr IA32_DEBUG_INTERFACE is not a valid configuration")
         ok = debug_lock
         if ok: self.logger.log_passed_check("Silicon debug Feature Control register is locked")
         else:  self.logger.log_failed_check("Silicon debug Feature Control register is not locked")
-        sgx_debug_status = self.cs.read_register_field('SGX_DEBUG_MODE', 'SGX_DEBUG_MODE_STATUS_BIT')
-        self.logger.log("[*] SGX Debug Enable             : %u" % sgx_debug_status)
-        if sgx_debug_status:
-            self.logger.log_failed_check("SGX debug mode is enabled")
-        else:
-            self.logger.log_passed_check("SGX debug mode is diabled")
         return sgx_ok
 
     def run(self, module_argv):
