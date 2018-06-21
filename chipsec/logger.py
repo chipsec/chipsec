@@ -30,7 +30,8 @@
 """
 Logging functions
 """
-
+import logging as pyLogging
+import coloredlogs
 import platform
 import string
 import sys
@@ -157,6 +158,7 @@ class LoggerError (RuntimeWarning):
     pass
 
 class Logger:
+    
     """Class for logging to console, text file or XML."""
 
     def __init__( self ):
@@ -165,6 +167,7 @@ class Logger:
         self.mytime = localtime()
         self.logfile = None
         self.ALWAYS_FLUSH = False
+        self.INFO = pyLogging.INFO
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
         #self._set_log_files()
@@ -184,7 +187,15 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-                self.logfile = open( self.LOG_FILE_NAME, 'a+' )
+                self.logfile = pyLogging.FileHandler(self.LOG_FILE_NAME) #creates FileHandler for log file
+                self.logfile.setLevel(self.INFO) #sets the logfile level to Logging.INFO
+
+                pyLogging.basicConfig(format = (""),
+                                        filename = self.LOG_FILE_NAME,
+                                        level = self.INFO) #configures logfile specifications
+
+                pyLogging.getLogger(__name__).addHandler(self.logfile) #adds the logfile to the root logger
+
                 self.LOG_TO_FILE = True
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
@@ -201,14 +212,14 @@ class Logger:
             self.LOG_TO_FILE = True
         except None:
             print ("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
-
+    
     def set_status_log_file( self ):
         """Sets the status log file for the output."""
         if not os.path.exists(LOG_PATH):
             os.makedirs(LOG_PATH)
         self.LOG_STATUS_FILE_NAME =   os.path.join( LOG_PATH, strftime('%Y_%m_%d__%H%M%S', self.mytime ) + '_results.log')
         self.LOG_TO_STATUS_FILE = True
-
+    
     def close( self ):
         """Closes the log file."""
         if self.logfile:
@@ -227,10 +238,11 @@ class Logger:
         #self.LOG_TO_STATUS_FILE = False
         #self.LOG_STATUS_FILE_NAME = None
 
+   
     def __del__(self):
         """Disables the logger."""
         self.disable()
-
+    
     ######################################################################
     # Logging functions
     ######################################################################
@@ -255,7 +267,6 @@ class Logger:
         """Sends plain text to logging."""
         self._log(text, None, None)
 
-
     def _log(self, text, color, isStatus):
         """Internal method for logging"""
         if self.LOG_TO_FILE: self._save_to_log_file( text )
@@ -265,7 +276,7 @@ class Logger:
                 print ("{}".format(text))
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
-        if isStatus: self._save_to_status_log_file( text )
+        #if isStatus: self._save_to_status_log_file( text )
 
     def error( self, text ):
         """Logs an Error message"""
@@ -408,8 +419,9 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        print >> self.logfile, text
-        #print("{}".format(text), file=self.logfile) #Stament is throwing syntax error
+        #print >> self.logfile, text
+        pyLogging.log(self.INFO,text) #writes text to defined log file
+        
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()
