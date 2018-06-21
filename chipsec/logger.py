@@ -199,9 +199,10 @@ class Logger:
                 self.LOG_TO_FILE = True
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
-
+    #################################################################
+    """
     def set_default_log_file( self ):
-        """Sets the default log file for the output."""
+        ""Sets the default log file for the output.""
         # Close current log file if it's opened
         self.disable()
         if not os.path.exists( LOG_PATH ): os.makedirs( LOG_PATH )
@@ -212,14 +213,20 @@ class Logger:
             self.LOG_TO_FILE = True
         except None:
             print ("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
-    
+    """
+    #################################################################
+
+    #################################################################
+    """
     def set_status_log_file( self ):
-        """Sets the status log file for the output."""
+        ""Sets the status log file for the output.""
         if not os.path.exists(LOG_PATH):
             os.makedirs(LOG_PATH)
         self.LOG_STATUS_FILE_NAME =   os.path.join( LOG_PATH, strftime('%Y_%m_%d__%H%M%S', self.mytime ) + '_results.log')
         self.LOG_TO_STATUS_FILE = True
-    
+    """
+    #################################################################
+
     def close( self ):
         """Closes the log file."""
         if self.logfile:
@@ -238,11 +245,14 @@ class Logger:
         #self.LOG_TO_STATUS_FILE = False
         #self.LOG_STATUS_FILE_NAME = None
 
-   
+    ######################################################################
+    """
     def __del__(self):
-        """Disables the logger."""
+        ""Disables the logger.""
         self.disable()
-    
+    """
+    ######################################################################
+
     ######################################################################
     # Logging functions
     ######################################################################
