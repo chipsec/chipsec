@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -32,6 +32,8 @@
 """
 HAL component providing access to and decoding of ACPI tables
 """
+
+__version__ = '0.1'
 
 import struct
 import sys
@@ -111,6 +113,23 @@ ACPI_TABLE_SIG_BATB = 'BATB'
 ACPI_TABLE_SIG_BGRT = 'BGRT'
 ACPI_TABLE_SIG_LPIT = 'LPIT'
 ACPI_TABLE_SIG_ASPT = 'ASPT'
+ACPI_TABLE_SIG_FIDT = 'FIDT'
+ACPI_TABLE_SIG_HEST = 'HEST'
+ACPI_TABLE_SIG_BERT = 'BERT'
+ACPI_TABLE_SIG_ERST = 'ERST'
+ACPI_TABLE_SIG_EINJ = 'EINJ'
+ACPI_TABLE_SIG_TPM2 = 'TPM2'
+ACPI_TABLE_SIG_WSMT = 'WSMT'
+ACPI_TABLE_SIG_DBG2 = 'DBG2'
+ACPI_TABLE_SIG_NHLT = 'NHLT'
+ACPI_TABLE_SIG_MSCT = 'MSCT'
+ACPI_TABLE_SIG_RASF = 'RASF'
+ACPI_TABLE_SIG_SPMI = 'SPMI'
+ACPI_TABLE_SIG_OEM1 = 'OEM1'
+ACPI_TABLE_SIG_OEM2 = 'OEM2'
+ACPI_TABLE_SIG_OEM3 = 'OEM3'
+ACPI_TABLE_SIG_OEM4 = 'OEM4'
+ACPI_TABLE_SIG_NFIT = 'NFIT'
 
 ACPI_TABLES = {
   ACPI_TABLE_SIG_ROOT: acpi_tables.ACPI_TABLE,
@@ -148,9 +167,26 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_PCCT: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_MSDM: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_BATB: acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_BGRT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_BGRT: acpi_tables.BGRT,
   ACPI_TABLE_SIG_LPIT: acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_ASPT: acpi_tables.ACPI_TABLE
+  ACPI_TABLE_SIG_ASPT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_FIDT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_HEST: acpi_tables.HEST,
+  ACPI_TABLE_SIG_BERT: acpi_tables.BERT,
+  ACPI_TABLE_SIG_ERST: acpi_tables.ERST,
+  ACPI_TABLE_SIG_EINJ: acpi_tables.EINJ,
+  ACPI_TABLE_SIG_TPM2: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WSMT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_DBG2: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_NHLT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_MSCT: acpi_tables.MSCT,
+  ACPI_TABLE_SIG_RASF: acpi_tables.RASF,
+  ACPI_TABLE_SIG_SPMI: acpi_tables.SPMI,
+  ACPI_TABLE_SIG_OEM1: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_OEM2: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_OEM3: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_OEM4: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_NFIT: acpi_tables.NFIT
 }
 
 ########################################################################################################
@@ -499,20 +535,25 @@ class ACPI(hal_base.HALBase):
 
     def _parse_table( self, name, table_header_blob, table_blob ):
         table_header       = self._parse_table_header( table_header_blob )
-        table              = self._parse_table_contents( name, table_blob )
+        table              = self._parse_table_contents( name, table_blob, table_header_blob )
         return (table_header,table,table_header_blob,table_blob)
 
 
     def _parse_table_header( self, header ):
         acpi_table_hdr = ACPI_TABLE_HEADER( *struct.unpack_from( ACPI_TABLE_HEADER_FORMAT, header ) )
-        if logger().VERBOSE: logger().log( acpi_table_hdr ) 
+        if logger().VERBOSE: logger().log( acpi_table_hdr )
         return acpi_table_hdr
 
 
-    def _parse_table_contents( self, signature, contents ):
+    def _parse_table_contents( self, signature, contents, header ):
         table = None
         if ACPI_TABLES.__contains__(signature):
-            table = (ACPI_TABLES[signature])() 
+            logger().log('%s' % signature)
+            if 'BERT' in signature:
+                table = (ACPI_TABLES[signature])(self.cs)
+            elif 'NFIT' in signature:
+                table = (ACPI_TABLES[signature])(header)
+            else:
+                table = (ACPI_TABLES[signature])()
             table.parse( contents )
         return table
-

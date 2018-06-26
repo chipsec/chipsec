@@ -213,31 +213,34 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( '+ 0x%04X Master Section:' % fmba )
     logger().log( '========================================================' )
 
-    flmstrs = [None] * nm #spi.SPI_MASTER_NUMBER_IN_FD
+    flmstrs = [None] * nm
     for m in range(nm):
         flmstr_off = fmba + m*4
         flmstr = struct.unpack_from( '=I', fd[flmstr_off:flmstr_off + 0x4] )[0]
         master_region_ra = cs.get_register_field( 'FLMSTR1', flmstr, 'MRRA' )
         master_region_wa = cs.get_register_field( 'FLMSTR1', flmstr, 'MRWA' )
         flmstrs[m] = (master_region_ra, master_region_wa)
-        logger().log( '+ 0x%04X FLMSTR%d   : 0x%08X' % (flmstr_off,m,flmstr) )
+        logger().log( '+ 0x%04X FLMSTR%d   : 0x%08X' % (flmstr_off,m+1,flmstr) )
 
     logger().log('')
     logger().log( 'Master Read/Write Access to Flash Regions' )
     logger().log( '--------------------------------------------------------' )
-    s = ' Region                '
+    s = ' Region                 '
     for m in range(nm):
-        s = s + '| ' + ('%-6s' % spi.SPI_MASTER_NAMES[m])
+        if m in spi.SPI_MASTER_NAMES:
+            s = s + '| ' + ('%-9s' % spi.SPI_MASTER_NAMES[m])
+        else:
+            s = s + '| Master %-2d' % m
     logger().log( s )
     logger().log( '--------------------------------------------------------' )
     for r in range(nr):
-        s = '%d %-020s ' % (r, spi.SPI_REGION_NAMES[r])
+        s = '%-2d %-020s ' % (r, spi.SPI_REGION_NAMES[r])
         for m in range(nm):
             access_s = ''
-            mask = (0x1 << r) & 0xFF
+            mask = (0x1 << r)
             if (flmstrs[m][0] & mask): access_s += 'R'
             if (flmstrs[m][1] & mask): access_s += 'W'
-            s = s + '| ' + ('%-6s' % access_s)
+            s = s + '| ' + ('%-9s' % access_s)
         logger().log( s )
 
     #

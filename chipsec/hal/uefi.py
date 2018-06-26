@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -85,14 +85,16 @@ def parse_script( script, log_script=False ):
 ########################################################################################################
 
 
-EFI_VAR_NAME_PK               = 'PK'
-EFI_VAR_NAME_KEK              = 'KEK'
-EFI_VAR_NAME_db               = 'db'
-EFI_VAR_NAME_dbx              = 'dbx'
-EFI_VAR_NAME_SecureBoot       = 'SecureBoot'
-EFI_VAR_NAME_SetupMode        = 'SetupMode'
-EFI_VAR_NAME_CustomMode       = 'CustomMode'
-EFI_VAR_NAME_SignatureSupport = 'SignatureSupport'
+EFI_VAR_NAME_PK                 = 'PK'
+EFI_VAR_NAME_KEK                = 'KEK'
+EFI_VAR_NAME_db                 = 'db'
+EFI_VAR_NAME_dbx                = 'dbx'
+EFI_VAR_NAME_SecureBoot         = 'SecureBoot'
+EFI_VAR_NAME_SetupMode          = 'SetupMode'
+EFI_VAR_NAME_CustomMode         = 'CustomMode'
+EFI_VAR_NAME_SignatureSupport   = 'SignatureSupport'
+EFI_VAR_NAME_certdb             = 'certdb'
+EFI_VAR_NAME_AuthVarKeyDatabase = 'AuthVarKeyDatabase'
 
 #
 # \MdePkg\Include\Guid\ImageAuthentication.h
@@ -130,7 +132,7 @@ EFI_VAR_NAME_SignatureSupport: EFI_GLOBAL_VARIABLE_GUID
 SECURE_BOOT_KEY_VARIABLES  = (EFI_VAR_NAME_PK, EFI_VAR_NAME_KEK, EFI_VAR_NAME_db, EFI_VAR_NAME_dbx)
 SECURE_BOOT_VARIABLES      = (EFI_VAR_NAME_SecureBoot, EFI_VAR_NAME_SetupMode) + SECURE_BOOT_KEY_VARIABLES
 SECURE_BOOT_VARIABLES_ALL  = (EFI_VAR_NAME_CustomMode, EFI_VAR_NAME_SignatureSupport) + SECURE_BOOT_VARIABLES
-AUTHENTICATED_VARIABLES    = ('AuthVarKeyDatabase', 'certdb') + SECURE_BOOT_KEY_VARIABLES
+AUTHENTICATED_VARIABLES    = (EFI_VAR_NAME_AuthVarKeyDatabase, EFI_VAR_NAME_certdb) + SECURE_BOOT_KEY_VARIABLES
 
 
 def get_auth_attr_string( attr ):
@@ -226,9 +228,12 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
             attr_str = get_attr_string( attrs )
             var_fname = os.path.join( nvram_pth, '%s_%s_%s_%d.bin' % (name, guid, attr_str.strip(), n) )
             write_file( var_fname, data )
-            #if name in SECURE_BOOT_VARIABLES:
-            if name in AUTHENTICATED_VARIABLES:
-                parse_efivar_file( var_fname, data )
+            if name in SECURE_BOOT_KEY_VARIABLES:
+                parse_efivar_file(var_fname, data, SECURE_BOOT_SIG_VAR)
+            elif name == EFI_VAR_NAME_certdb:
+                parse_efivar_file(var_fname, data, AUTH_SIG_VAR)
+            elif name == EFI_VAR_NAME_AuthVarKeyDatabase:
+                parse_efivar_file(var_fname, data, ESAL_SIG_VAR)
             n = n+1
 
 

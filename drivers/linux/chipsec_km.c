@@ -1,6 +1,6 @@
 /* 
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2014, Intel Corporation
+Copyright (c) 2010-2018, Intel Corporation
  
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -1300,8 +1300,9 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		// OUT params : length
 		uint64_t 	NumberofBytes;
 		phys_addr_t 	pa;
-		void 		*va;
-		void		*buffer; 
+		char 		*va;
+		char		*buffer; 
+		uint64_t	i;
 
 		NumberofBytes = 0;
 		numargs = 3;
@@ -1318,10 +1319,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		va = my_xlate_dev_mem_ptr(pa);
 		NumberofBytes = ptr[1];
 		buffer = (void*)&ptr[2];
-		if ( copy_from_user( va, buffer, NumberofBytes ) > 0)
-		{
-			NumberofBytes = 0;
+
+		//Copy from user was causing issues 
+		for(i=0;i<NumberofBytes;i++){
+			va[i] = buffer[i];
 		}
+
 		my_unxlate_dev_mem_ptr(pa,va);
 		printk( KERN_INFO "[chipsec] : Number of Bytes written %llu\n", NumberofBytes);
 		if (copy_to_user( (void*)ioctl_param,&NumberofBytes,sizeof(NumberofBytes)) > 0){
