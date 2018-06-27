@@ -142,7 +142,7 @@ elif "linux" == platform.system().lower():
       CYAN   : ColorLogger.CYAN,
       WHITE  : ColorLogger.WHITE
       }
-
+    
     def log_color( fg_color, text ):
         _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
         print("{}".format(_text))
@@ -166,6 +166,9 @@ class Logger:
         pass
         self.mytime = localtime()
         self.logfile = None
+        self.logstream = None
+        self.logFormatter = pyLogging.Formatter("%(message)s")
+        self.rootLogger = pyLogging.getLogger(__name__)
         self.ALWAYS_FLUSH = False
         self.INFO = pyLogging.INFO
         #Used for interaction with XML output classes.
@@ -187,15 +190,17 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-                self.logfile = pyLogging.FileHandler(self.LOG_FILE_NAME) #creates FileHandler for log file
-                self.logfile.setLevel(self.INFO) #sets the logfile level to Logging.INFO
+                logPath = os.getcwd() #gets current working directory
+                self.rootLogger.setLevel(self.INFO) #sets rootlogger level
 
-                pyLogging.basicConfig(format = (""),
-                                        filename = self.LOG_FILE_NAME,
-                                        level = self.INFO) #configures logfile specifications
-
-                pyLogging.getLogger(__name__).addHandler(self.logfile) #adds the logfile to the root logger
-
+                self.logfile = pyLogging.FileHandler("{0}/{1}".format(logPath, self.LOG_FILE_NAME)) #creates FileHandler for log file
+                self.logfile.setFormatter(self.logFormatter)
+                self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
+        
+                self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
+                self.logstream.setFormatter(self.logFormatter)
+                self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
+                
                 self.LOG_TO_FILE = True
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
@@ -429,8 +434,8 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        #print >> self.logfile, text
-        pyLogging.log(self.INFO,text) #writes text to defined log file
+        
+        self.rootLogger.log(self.INFO,text) #writes text to defined log file
         
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
