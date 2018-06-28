@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -158,7 +158,7 @@ class OsHelper:
         return self.helper.use_native_api()
 
     def is_efi( self ):
-        return self.os_system.lower().startswith('efi')
+        return self.os_system.lower().startswith('efi') or self.os_system.lower().startswith('uefi')
     def is_linux( self ):
         return ('linux' == self.os_system.lower())
     def is_windows( self ):
