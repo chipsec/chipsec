@@ -142,10 +142,33 @@ elif "linux" == platform.system().lower():
       CYAN   : ColorLogger.CYAN,
       WHITE  : ColorLogger.WHITE
       }
+
+    """Mapping of log level names to default font styles."""
+    coloredlogs.DEFAULT_LEVEL_STYLES = dict(
+        spam=dict(color='green', faint=True),
+        debug=dict(color='green'),
+        verbose=dict(color='magenta'),
+        info=dict(),
+        notice=dict(color='magenta'),
+        warning=dict(color='yellow'),
+        success=dict(color='green', bold=coloredlogs.CAN_USE_BOLD_FONT),
+        error=dict(color='red'),
+        critical=dict(color='blue'))
     
+
     def log_color( fg_color, text ):
-        _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
-        print("{}".format(_text))
+        pyLogging.getLogger(__name__) 
+        
+        coloredlogs.install(fmt='%(message)s')
+        
+        if fg_color == YELLOW:
+            pyLogging.warn(text)                        
+        elif fg_color == RED:
+            pyLogging.error(text)
+        elif fg_color == BLUE:
+            pyLogging.critical(text)
+        elif fg_color == GREEN:
+            pyLogging.debug
 
 else:
     def log_color( fg_color, text ):
@@ -158,6 +181,8 @@ class LoggerError (RuntimeWarning):
     pass
 
 class Logger:
+
+    
     
     """Class for logging to console, text file or XML."""
 
@@ -167,10 +192,10 @@ class Logger:
         self.mytime = localtime()
         self.logfile = None
         self.logstream = None
-        self.logFormatter = pyLogging.Formatter("%(message)s")
+        self.logFormatter = coloredlogs.ColoredFormatter("%(message)s")
         self.rootLogger = pyLogging.getLogger(__name__)
         self.ALWAYS_FLUSH = False
-        self.INFO = pyLogging.INFO
+        self.DEBUG = pyLogging.DEBUG
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
         #self._set_log_files()
@@ -187,20 +212,21 @@ class Logger:
         self.disable()
         self.LOG_FILE_NAME = name
         # specifying name=None effectively disables logging to file
+        
+
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
                 logPath = os.getcwd() #gets current working directory
-                self.rootLogger.setLevel(self.INFO) #sets rootlogger level
 
                 self.logfile = pyLogging.FileHandler("{0}/{1}".format(logPath, self.LOG_FILE_NAME)) #creates FileHandler for log file
-                self.logfile.setFormatter(self.logFormatter)
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
         
                 self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
                 self.logstream.setFormatter(self.logFormatter)
                 self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
                 
+                self.rootLogger.setLevel(level=self.DEBUG) #sets rootlogger level
                 self.LOG_TO_FILE = True
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
@@ -280,10 +306,13 @@ class Logger:
 
     def log( self, text):
         """Sends plain text to logging."""
-        self._log(text, None, None)
+        #self.rootLogger.info(text)
+        print ("{}".format(text))
+        #self._log(text, None, None)
 
+    """
     def _log(self, text, color, isStatus):
-        """Internal method for logging"""
+        "Internal method for logging"
         if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:
             if color: log_color( color, text )
@@ -292,17 +321,20 @@ class Logger:
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         #if isStatus: self._save_to_status_log_file( text )
+    """
 
     def error( self, text ):
         """Logs an Error message"""
         text = "ERROR: " + text
-        self._log(text, RED, None)
+        self.rootLogger.error(text)
+        #self._log(text, RED, None)
 
     def warn( self, text ):
         """Logs an Warning message"""
         text = "WARNING: " + text
-        self._log(text, YELLOW, None)
-
+        self.rootLogger.warning(text)
+        #self._log(text, YELLOW, None)
+    
     def log_passed_check( self, text ):
         """Logs a Test as PASSED, this is used for XML output.
            If XML file was not specified, then it will just print a PASSED test message.
@@ -353,62 +385,74 @@ class Logger:
     def log_passed( self, text ):
         """Logs a passed message."""
         text = "[+] PASSED: " + text
-        self._log(text, GREEN, True)
+        self.rootLogger.debug(text)
+        #self._log(text, GREEN, True)
 
     def log_failed( self, text ):
         """Logs a failed message."""
         text = "[-] FAILED: " + text
-        self._log(text, RED, True)
+        self.rootLogger.error(text)
+        #self._log(text, RED, True)
 
     def log_warning( self, text ):
         """Logs a Warning message"""
         text = "[!] WARNING: " + text
-        self._log(text, YELLOW, None)
+        self.rootLogger.warning(text)
+        #self._log(text, YELLOW, None)
         #self.xmlAux.passed_check()
 
     def log_skipped( self, text ):
         """Logs a NOT IMPLEMENTED message."""
         text = "[*] NOT IMPLEMENTED: " + text
-        self._log(text, YELLOW, True)
+        self.rootLogger.warning(text)
+        #self._log(text, YELLOW, True)
 
     def log_not_applicable(self, text):
         """Logs a NOT APPLICABLE message."""
         text = "[*] NOT APPLICABLE: " + text
-        self._log(text, YELLOW, True)
+        self.rootLogger.warning(text)
+        #self._log(text, YELLOW, True)
 
     def log_heading( self, text ):
         """Logs a heading message."""
-        self._log(text, BLUE, None)
+        self.rootLogger.critical(text)
+        #self._log(text, BLUE, None)
 
     def log_important( self, text ):
         """Logs a important message."""
         text = "[!] " + text
-        self._log(text, RED, None)
+        self.rootLogger.error(text)
+        #self._log(text, RED, None)
 
     def log_result( self, text ):
         """Logs a result message."""
         text = "[+] " + text
-        self._log(text, GREEN, None)
+        self.rootLogger.debug(text)
+        #self._log(text, GREEN, None)
 
     def log_bad( self, text ):
         """Logs a bad message, so it calls attention in the information displayed."""
         text = "[-] " + text
-        self._log(text, RED, None)
+        self.rootLogger.error(text)
+        #self._log(text, RED, None)
 
     def log_good( self, text ):
         """Logs a message, if colors available, displays in green."""
         text = "[+] " + text
-        self._log(text, GREEN, None)
+        self.rootLogger.debug(text)
+        #self._log(text, GREEN, None)
 
     def log_unknown( self, text ):
         """Logs a message with a question mark."""
         text = "[?] " + text
-        self._log(text, None, None)
+        self.rootLogger.info(text)
+        #self._log(text, None, None)
 
     def log_information( self, text):
         """Logs a message with information message"""
         text = "[#] INFORMATION: " + text
-        self._log(text, GREEN, None)
+        self.rootLogger.debug(text)
+        #self._log(text, GREEN, None)
 
     def start_test( self, test_name ):
         """Logs the start point of a Test, this is used for XML output.
@@ -417,7 +461,8 @@ class Logger:
         text =        "[x][ =======================================================================\n"
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
-        self._log(text, BLUE, True)
+        self.rootLogger.critical(text)
+        #self._log(text, BLUE, True)
         self.xmlAux.start_test( test_name )
 
 
@@ -425,7 +470,9 @@ class Logger:
         """Displays a banner for the module name provided."""
         #text = "\n[*] start module: %s" % module_name
         #self._log(text, WHITE, None)
-        self.log( "\n[*] running module: %s" % module_name )
+        text = "\n[*] running module: %s" % module_name
+        self.rootLogger.info(text)
+        #self.log( "\n[*] running module: %s" % module_name )
         self.xmlAux.start_module( module_name )
 
     def end_module( self, module_name ):
@@ -435,7 +482,7 @@ class Logger:
 
     def _write_log( self, text, filename ):
         
-        self.rootLogger.log(self.INFO,text) #writes text to defined log file
+        self.rootLogger.log(self.DEBUG,text) #writes text to defined log file
         
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
@@ -447,9 +494,11 @@ class Logger:
             except None:
                 self.disable()
 
+    """"
     def _save_to_status_log_file(self, text):
         if(self.LOG_TO_STATUS_FILE):
             self._write_log(text, self.LOG_STATUS_FILE_NAME)
+    """
 
     def _save_to_log_file(self, text):
         if(self.LOG_TO_FILE):
