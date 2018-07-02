@@ -307,10 +307,9 @@ class Logger:
     def log( self, text):
         """Sends plain text to logging."""
         #self.rootLogger.info(text)
-        print ("{}".format(text))
-        #self._log(text, None, None)
+        self._log(text, None, None)
 
-    """
+    
     def _log(self, text, color, isStatus):
         "Internal method for logging"
         if self.LOG_TO_FILE: self._save_to_log_file( text )
@@ -321,7 +320,7 @@ class Logger:
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         #if isStatus: self._save_to_status_log_file( text )
-    """
+    
 
     def error( self, text ):
         """Logs an Error message"""
@@ -335,6 +334,13 @@ class Logger:
         self.rootLogger.warning(text)
         #self._log(text, YELLOW, None)
     
+    def verbose( self, text):
+        """Logs an Verbose message"""
+        if self.VERBOSE:
+            verbose = 15
+            pyLogging.addLevelName(verbose,"verbose") #Additional level on python logging
+            self.rootLogger.log(verbose, text )
+
     def log_passed_check( self, text ):
         """Logs a Test as PASSED, this is used for XML output.
            If XML file was not specified, then it will just print a PASSED test message.
