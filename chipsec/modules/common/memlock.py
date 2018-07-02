@@ -51,7 +51,7 @@ class memlock(chipsec.module_common.BaseModule):
         # causes a GP fault and can't be caught in UEFI Shell.
         if self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_ATOM:
             return False
-        return True
+        return False
         
     def check_MSR_LT_LOCK_MEMORY( self ):
         self.logger.log( "[X] Checking MSR_LT_LOCK_MEMORY status" )
