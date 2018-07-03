@@ -196,6 +196,7 @@ class Logger:
         self.rootLogger = pyLogging.getLogger(__name__)
         self.ALWAYS_FLUSH = False
         self.DEBUG = pyLogging.DEBUG
+        self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
         #self._set_log_files()
@@ -262,7 +263,8 @@ class Logger:
         """Closes the log file."""
         if self.logfile:
             try:
-                self.logfile.close()
+                self.rootLogger.removeHandler(self.logfile)
+                self.logfile.close()                
             except None:
                 print ("WARNING: Could not close log file")
             finally:
@@ -306,10 +308,14 @@ class Logger:
 
     def log( self, text):
         """Sends plain text to logging."""
+        
+        print ("{}".format(text))
+        if self.ALWAYS_FLUSH: sys.stdout.flush()
+        #self._log(text, None, None)
         #self.rootLogger.info(text)
-        self._log(text, None, None)
 
-    
+    ####################################################################
+    """    
     def _log(self, text, color, isStatus):
         "Internal method for logging"
         if self.LOG_TO_FILE: self._save_to_log_file( text )
@@ -319,8 +325,9 @@ class Logger:
                 print ("{}".format(text))
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
-        #if isStatus: self._save_to_status_log_file( text )
-    
+        #if isStatus: self._save_to_status_log_file( text ) #status file not used
+    """
+    ####################################################################
 
     def error( self, text ):
         """Logs an Error message"""
@@ -337,9 +344,7 @@ class Logger:
     def verbose( self, text):
         """Logs an Verbose message"""
         if self.VERBOSE:
-            verbose = 15
-            pyLogging.addLevelName(verbose,"verbose") #Additional level on python logging
-            self.rootLogger.log(verbose, text )
+            self.rootLogger.log(self.verbose, text )
 
     def log_passed_check( self, text ):
         """Logs a Test as PASSED, this is used for XML output.
@@ -500,11 +505,13 @@ class Logger:
             except None:
                 self.disable()
 
-    """"
+    ########################################################################
+    """
     def _save_to_status_log_file(self, text):
         if(self.LOG_TO_STATUS_FILE):
             self._write_log(text, self.LOG_STATUS_FILE_NAME)
     """
+    #######################################################################
 
     def _save_to_log_file(self, text):
         if(self.LOG_TO_FILE):
