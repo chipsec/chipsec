@@ -156,11 +156,11 @@ elif "linux" == platform.system().lower():
         critical=dict(color='blue'))
     
 
-    def log_color( fg_color, text ):
+    def log_color( text ):
         pyLogging.getLogger(__name__) 
-        
-        coloredlogs.install(fmt='%(message)s')
-        
+        print ("{}".format(text))
+        coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
+        """
         if fg_color == YELLOW:
             pyLogging.warn(text)                        
         elif fg_color == RED:
@@ -169,6 +169,7 @@ elif "linux" == platform.system().lower():
             pyLogging.critical(text)
         elif fg_color == GREEN:
             pyLogging.debug
+        """
 
 else:
     def log_color( fg_color, text ):
@@ -196,9 +197,11 @@ class Logger:
         self.rootLogger = pyLogging.getLogger(__name__)
         self.ALWAYS_FLUSH = False
         self.DEBUG = pyLogging.DEBUG
+        self.INFO = pyLogging.INFO
         self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
+        #pyLogging.basicConfig(format=self.logFormatter)
         #self._set_log_files()
 
     def set_xml_file(self, name=None):
@@ -220,7 +223,7 @@ class Logger:
             try:
                 logPath = os.getcwd() #gets current working directory
 
-                self.logfile = pyLogging.FileHandler("{0}/{1}".format(logPath, self.LOG_FILE_NAME)) #creates FileHandler for log file
+                self.logfile = pyLogging.FileHandler("{0}/{1}".format(logPath, self.LOG_FILE_NAME),mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
         
                 self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
@@ -229,6 +232,7 @@ class Logger:
                 
                 self.rootLogger.setLevel(level=self.DEBUG) #sets rootlogger level
                 self.LOG_TO_FILE = True
+
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
     #################################################################
@@ -309,13 +313,20 @@ class Logger:
     def log( self, text):
         """Sends plain text to logging."""
         
-        print ("{}".format(text))
-        if self.ALWAYS_FLUSH: sys.stdout.flush()
+        if self.LOG_TO_FILE: self._save_to_log_file( text )
+        else:
+            if self.rootLogger:
+                coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
+                print ("{}".format(text))
+                if self.ALWAYS_FLUSH: sys.stdout.flush()
+            else:
+                print("{}".format(text))
+        if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
+        #if isStatus: self._save_to_status_log_file( text ) #status file not used #doesnt affect code
         #self._log(text, None, None)
-        #self.rootLogger.info(text)
-
-    ####################################################################
-    """    
+    
+    ##############################################################################
+    """  
     def _log(self, text, color, isStatus):
         "Internal method for logging"
         if self.LOG_TO_FILE: self._save_to_log_file( text )
@@ -327,8 +338,7 @@ class Logger:
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         #if isStatus: self._save_to_status_log_file( text ) #status file not used
     """
-    ####################################################################
-
+    ############################################################################
     def error( self, text ):
         """Logs an Error message"""
         text = "ERROR: " + text
@@ -493,7 +503,7 @@ class Logger:
 
     def _write_log( self, text, filename ):
         
-        self.rootLogger.log(self.DEBUG,text) #writes text to defined log file
+        self.rootLogger.log(self.INFO,text) #writes text to defined log file
         
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
