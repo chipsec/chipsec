@@ -126,9 +126,9 @@ class MsgBus(hal_base.HALBase):
     def __hide_p2sb(self, hide):
         hidden = not self.cs.is_device_enabled('P2SBC')
         if hide:
-            self.cs.write_register_field('P2SBC_HIDE', 'HIDE', 1)
+            self.cs.write_register_field('P2SB_HIDE', 'HIDE', 1)
         else:
-            self.cs.write_register_field('P2SBC_HIDE', 'HIDE', 0)
+            self.cs.write_register_field('P2SB_HIDE', 'HIDE', 0)
         return hidden
 
     #
