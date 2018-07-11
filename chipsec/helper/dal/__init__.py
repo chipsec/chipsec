@@ -1,7 +1,7 @@
-#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-#
+#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2018, Jason Meltzer (jmeltzer@strangeresearch.com)
+# 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -13,20 +13,24 @@
 #
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
 #
 #Contact information:
 #chipsec@intel.com
 #
 
-import os, platform
-import chipsec.file
 
-from chipsec.helper.efi import *
-from chipsec.helper.linux import *
-from chipsec.helper.osx import *
-from chipsec.helper.win import *
-# WARNING: Use of RWE driver has known issues. Experimental use only.
-#from chipsec.helper.rwe import *
-# WARNING: Intel DAL helper and other windows helpers are mutually exclusive.
-#from chipsec.helper.dal import *
+
+
+##################################################################################
+#
+# List of all extension modules: add your module name here
+#
+##################################################################################
+
+import os
+if os.environ.has_key("USEDAL"):
+    __all__ = [ "dalhelper" ]
+else:
+    __all__ = [ ]

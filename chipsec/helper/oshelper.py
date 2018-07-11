@@ -157,6 +157,8 @@ class OsHelper:
     def use_native_api(self):
         return self.helper.use_native_api()
 
+    def is_dal( self ):
+       return self.os.environ.has_key("USEDAL")
     def is_efi( self ):
         return self.os_system.lower().startswith('efi') or self.os_system.lower().startswith('uefi')
     def is_linux( self ):
