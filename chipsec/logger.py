@@ -157,9 +157,12 @@ elif "linux" == platform.system().lower():
     
 
     def log_color( text ):
-        pyLogging.getLogger(__name__) 
-        print ("{}".format(text))
-        coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
+        """
+        Function not used
+        """
+        #pyLogging.getLogger(__name__) 
+        #print ("{}".format(text))
+        #coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
         """
         if fg_color == YELLOW:
             pyLogging.warn(text)                        
@@ -198,6 +201,7 @@ class Logger:
         self.ALWAYS_FLUSH = False
         self.DEBUG = pyLogging.DEBUG
         self.INFO = pyLogging.INFO
+        self.CRITICAL = pyLogging.CRITICAL
         self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
