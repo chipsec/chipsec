@@ -75,6 +75,7 @@ Examples:
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a name,1,123456789,94  
 '''
 
+import pdb
 import random
 from time import time
 
@@ -104,6 +105,15 @@ class uefivar_fuzz(BaseModule):
         self.logger.log( USAGE_TEXT )
         return True
 
+    def bound(self,value):
+      
+        BOUNDS = 200
+        if sys.getsizeof(value) < BOUNDS:
+          value = self.rnd(3)
+        else:
+          self.bound(value)
+        return value
+
     def run( self, module_argv ):
         self.logger.start_test( "Fuzz UEFI Variable Interface" )
         
@@ -111,6 +121,7 @@ class uefivar_fuzz(BaseModule):
         s = raw_input( "Type 'yes' to continue > " )
         if s != 'yes': return
 
+      
         # Default options
         _NAME   = 'FuzzerVarName'
         _GUID   = '414C4694-F4CF-0525-69AF-C99C8596530F'
@@ -118,9 +129,11 @@ class uefivar_fuzz(BaseModule):
         _SIZE   = 0x08
         _DATA   = 'A'*_SIZE
 
-        ITERATIONS = 1000
+        ITERATIONS = 10
         SEED       = int(time())
         CASE       = 1
+        BOUNDS     = 200
+
 
         FUZZ_NAME   = True 
         FUZZ_GUID   = True
@@ -132,7 +145,7 @@ class uefivar_fuzz(BaseModule):
         
         if len(module_argv):
             fz_cli = module_argv[0].lower()
-
+            
             if ('all' != fz_cli):
                 FUZZ_NAME   = False
                 FUZZ_GUID   = False
@@ -160,7 +173,9 @@ class uefivar_fuzz(BaseModule):
                 else: help_text = self.usage()
         
         if not help_text:
+            
             random.seed( SEED )
+            random.randrange(SEED)
             write_file( 'SEED.txt', str(SEED) )
             
             if not len(module_argv): fz_cli = 'all'
@@ -169,24 +184,37 @@ class uefivar_fuzz(BaseModule):
             self.logger.log( 'Seed      : %d' % SEED )
             self.logger.log( 'Test case : %d' % CASE )
             self.logger.log('')
-     
+            
+             
+                
             for count in range(1,ITERATIONS+CASE):
                 
                 if FUZZ_NAME:
                     _NAME = ''
-                    for n in range(int(self.rnd(3),16)):
+                    for n in range(int(self.rnd(3),16)%24):
                         _NAME += random.choice(string.printable)
                 if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
+                
                 if FUZZ_ATTRIB: _ATTRIB = int(self.rnd(4),16)
-                if FUZZ_DATA  : _DATA   = self.rnd(int(self.rnd(3),16))
+                #pdb.set_trace()  
+                if FUZZ_DATA  : _DATA   = self.bound(_DATA)
+                    
                 if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)
-
+                
+                #print(_NAME)
+                #print(_GUID)
+                #print(_ATTRIB)
+                print(_DATA)
+                #print(_SIZE)
+                
+                
                 if (count < CASE): continue
                 
                 self.logger.log( '  Running test #%d:' % count )                    
                 self.logger.flush()
-                
+
                 status = self._uefi.set_EFI_variable(_NAME, _GUID, _DATA, _SIZE, _ATTRIB)
+                
                 self.logger.log( status )
                 status = self._uefi.delete_EFI_variable(_NAME, _GUID)
                 self.logger.log( status )
