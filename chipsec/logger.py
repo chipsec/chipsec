@@ -160,19 +160,9 @@ elif "linux" == platform.system().lower():
         """
         Function not used
         """
-        #pyLogging.getLogger(__name__) 
-        #print ("{}".format(text))
-        #coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
-        """
-        if fg_color == YELLOW:
-            pyLogging.warn(text)                        
-        elif fg_color == RED:
-            pyLogging.error(text)
-        elif fg_color == BLUE:
-            pyLogging.critical(text)
-        elif fg_color == GREEN:
-            pyLogging.debug
-        """
+        coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
+        print ("{}".format(text))
+       
 
 else:
     def log_color( fg_color, text ):
@@ -305,8 +295,9 @@ class Logger:
             # self.logfile.flush()
             # close and re-open log file
             try:
-                self.logfile.close()
-                self.logfile = open( self.LOG_FILE_NAME, 'a+' )
+                self.rootLogger.removeHandler(self.logfile)
+                self.logfile.flush()
+                #self.logfile = open( self.LOG_FILE_NAME, 'a+' )
             except None:
                 self.disable()
 
@@ -316,12 +307,10 @@ class Logger:
 
     def log( self, text):
         """Sends plain text to logging."""
-        
         if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:
             if self.rootLogger:
-                coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
-                print ("{}".format(text))
+                log_color(text)
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
             else:
                 print("{}".format(text))
@@ -355,7 +344,7 @@ class Logger:
         self.rootLogger.warning(text)
         #self._log(text, YELLOW, None)
     
-    def verbose( self, text):
+    def verbose_log( self, text):
         """Logs an Verbose message"""
         if self.VERBOSE:
             self.rootLogger.log(self.verbose, text )
@@ -506,7 +495,6 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        
         self.rootLogger.log(self.INFO,text) #writes text to defined log file
         
         if self.ALWAYS_FLUSH:
@@ -535,6 +523,7 @@ class Logger:
     UTIL_TRACE = False
     HAL        = False
     DEBUG      = False
+    
 
     LOG_TO_STATUS_FILE   = False
     LOG_STATUS_FILE_NAME = ""
