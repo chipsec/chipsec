@@ -102,6 +102,7 @@ Extract (
   return Status;
 }
 
+#if PY_MAJOR_VERSION == 2
 EFI_STATUS
 ParseObject(
   PyObject  *SrcData,
@@ -137,6 +138,7 @@ ParseObject(
 
   return EFI_SUCCESS;
 }
+#endif
 
 void 
 errorHandling(
@@ -179,9 +181,13 @@ UefiDecompress(
     return NULL;
   }
 
+#if PY_MAJOR_VERSION == 3
+  if (SrcData == NULL){
+#else
   if (SrcData->ob_type->tp_as_buffer == NULL
       || SrcData->ob_type->tp_as_buffer->bf_getreadbuffer == NULL
       || SrcData->ob_type->tp_as_buffer->bf_getsegcount == NULL) {
+#endif
     PyErr_SetString(PyExc_Exception, "First argument is not a buffer\n");
     return NULL;
   }
@@ -195,7 +201,11 @@ UefiDecompress(
     return NULL;
   }
 
+#if PY_MAJOR_VERSION == 3
+  Status = PyObject_GetBuffer(SrcData, (Py_buffer*)SrcBuf, 0);
+#else
   Status = ParseObject(SrcData, SrcBuf, SrcDataSize);
+#endif
   if (Status != EFI_SUCCESS) {
     PyErr_SetString(PyExc_Exception, "Buffer segment is not available, or incorrect length\n");
     errorHandling(SrcBuf, DstBuf);
@@ -211,7 +221,11 @@ UefiDecompress(
     return NULL;
   }
 
+#if PY_MAJOR_VERSION == 3
+  return PyMemoryView_FromMemory(DstBuf, (Py_ssize_t)DstDataSize,0);
+#else
   return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
+#endif
 }
 
 /*
@@ -243,10 +257,14 @@ UefiCompress(
   if (Status == 0) {
     return NULL;
   }
-
+  
+#if PY_MAJOR_VERSION == 3
+  if (SrcData == NULL){
+#else
   if (SrcData->ob_type->tp_as_buffer == NULL
       || SrcData->ob_type->tp_as_buffer->bf_getreadbuffer == NULL
       || SrcData->ob_type->tp_as_buffer->bf_getsegcount == NULL) {
+#endif
     PyErr_SetString(PyExc_Exception, "First argument is not a buffer\n");
     return NULL;
   }
@@ -260,7 +278,12 @@ UefiCompress(
     return NULL;
   }
 
+#if PY_MAJOR_VERSION == 3
+  Status = PyObject_GetBuffer(SrcData, (Py_buffer*)SrcBuf, 0);
+#else
   Status = ParseObject(SrcData, SrcBuf, SrcDataSize);
+#endif
+
   if (Status != EFI_SUCCESS) {
     PyErr_SetString(PyExc_Exception, "Buffer segment is not available, or incorrect length\n");
     errorHandling(SrcBuf, DstBuf);
@@ -290,7 +313,8 @@ UefiCompress(
     return NULL;
   }
 
-  return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
+  //return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
+  return PyMemoryView_FromMemory(DstBuf, (Py_ssize_t)DstDataSize,0);
 }
 
 /**
@@ -386,9 +410,26 @@ STATIC PyMethodDef EfiCompressor_Funcs[] = {
   {NULL, NULL, 0, NULL}
 };
 
+
+#if PY_MAJOR_VERSION == 3
+static struct PyModuleDef eficompressormodule = {
+	PyModuleDef_HEAD_INIT,
+	"efi_compressor",
+	"Various EFI Compression Algorithms",
+	-1,
+	EfiCompressor_Funcs
+};
+
 PyMODINIT_FUNC
-initefi_compressor(VOID) {
-  Py_InitModule3("efi_compressor", EfiCompressor_Funcs, "Various EFI Compression Algorithms Extension Module");
+PyInit_efi_compressor (VOID) {
+  
+  return PyModule_Create(&eficompressormodule);
 }
 
+#else
+PyMODINIT_FUNC
+initefi_compressor(VOID) {
+	Py_InitModule3("efi_compressor", EfiCompressor_Funcs, "Various EFI Compression Algorithms Extension Module");
+}
 
+#endif
