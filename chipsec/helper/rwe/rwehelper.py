@@ -594,7 +594,7 @@ class RweHelper(Helper):
         in_buf = struct.pack( '<I', length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
         (size, pa, va) = struct.unpack( '<IIQ', out_buf )
-        print hex(va), hex(pa)
+        print (hex(va), hex(pa))
         return (va, pa)
 
     def va2pa( self, va ):
@@ -738,7 +738,7 @@ class RweHelper(Helper):
         value = 0
         in_buf = struct.pack( '<QQ', cr_number, 0 )
         out_buf = self._ioctl( IOCTL_RDCR, in_buf, 16)
-        print len(out_buf), out_buf.encode('hex')
+        print (len(out_buf), out_buf.encode('hex'))
         code, value = struct.unpack( '<QQ', out_buf )
         return value
 

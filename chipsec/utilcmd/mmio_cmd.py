@@ -63,7 +63,7 @@ class MMIOCommand(BaseCommand):
         _mmio = mmio.MMIO(self.cs)
 
         if len(self.argv) < 3:
-            print MMIOCommand.__doc__
+            print (MMIOCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -90,14 +90,15 @@ class MMIOCommand(BaseCommand):
                 self.logger.log( "[CHIPSEC] Write %s + 0x%X: 0x%08X" % (bar,off,reg) )
                 _mmio.write_MMIO_BAR_reg(bar, off, reg, width)
             else:
-                print MMIOCommand.__doc__
+                print (MMIOCommand.__doc__)
                 return
         else:
             self.logger.error( "unknown command-line option '%.32s'" % op )
-            print MMIOCommand.__doc__
+            print (MMIOCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (mmio) time elapsed %.3f" % (time.time()-t) )
 
 
-commands = { 'mmio': MMIOCommand }
+commands = { 'mmio': MMIOCommand }
+

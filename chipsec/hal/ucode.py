@@ -75,7 +75,7 @@ Reserved3           : 0x%08X
 UCODE_HEADER_SIZE = 0x30
 def dump_ucode_update_header( pdb_ucode_buffer ):
     ucode_header = UcodeUpdateHeader( *struct.unpack_from( '12I', pdb_ucode_buffer ) )
-    print ucode_header
+    print (ucode_header)
     return ucode_header
 
 def read_ucode_file( ucode_filename ):
