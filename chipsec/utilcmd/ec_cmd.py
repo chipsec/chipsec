@@ -57,7 +57,7 @@ class ECCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print ECCommand.__doc__
+            print (ECCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -108,7 +108,7 @@ class ECCommand(BaseCommand):
                 self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x%X: 0x%X" % (off, val) )
         else:
             self.logger.error( "unknown command-line option '%.32s'" % op )
-            print ECCommand.__doc__
+            print (ECCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (ec) time elapsed %.3f" % (time.time()-t) )

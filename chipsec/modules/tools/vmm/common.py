@@ -244,7 +244,7 @@ def get_int_arg(arg):
     try:
        arg = int(eval(arg))
     except:
-       print "\n  ERROR: Invalid parameter\n"
+       print ("\n  ERROR: Invalid parameter\n")
        exit(1)
     return arg
 

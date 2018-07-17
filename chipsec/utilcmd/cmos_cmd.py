@@ -45,7 +45,7 @@ class CMOSCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print CMOSCommand.__doc__
+            print (CMOSCommand.__doc__)
             return
 
         try:
@@ -80,7 +80,7 @@ class CMOSCommand(BaseCommand):
             _cmos.write_cmos_high( off, val )
         else:
             self.logger.error( "unknown command-line option '%.32s'" % op )
-            print CMOSCommand.__doc__
+            print (CMOSCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
