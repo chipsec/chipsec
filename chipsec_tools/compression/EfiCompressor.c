@@ -313,8 +313,11 @@ UefiCompress(
     return NULL;
   }
 
-  //return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
+#if PY_MAJOR_VERSION == 3
   return PyMemoryView_FromMemory(DstBuf, (Py_ssize_t)DstDataSize,0);
+#else  
+  return PyBuffer_FromMemory(DstBuf, (Py_ssize_t)DstDataSize);
+#endif
 }
 
 /**
