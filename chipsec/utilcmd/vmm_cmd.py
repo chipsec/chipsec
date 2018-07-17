@@ -71,7 +71,7 @@ class VMMCommand(BaseCommand):
                 virt_dev = [dev]
             else:
                 self.logger.error("invalid B:D.F (%s)" % bdf)
-                print VMMCommand.__doc__
+                print (VMMCommand.__doc__)
                 return
         else:
             self.logger.log("[CHIPSEC] enumerating VirtIO devices..")
@@ -89,7 +89,7 @@ class VMMCommand(BaseCommand):
     def run(self):
 
         if len(self.argv) < 3:
-            print VMMCommand.__doc__
+            print (VMMCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -98,7 +98,7 @@ class VMMCommand(BaseCommand):
         try:
             vmm = VMM( self.cs )
         except VMMRuntimeError, msg:
-            print msg
+            print (msg)
             return
 
         vmm.init();
@@ -107,7 +107,7 @@ class VMMCommand(BaseCommand):
 
             gprs_cnt = len(self.argv) - 3
             if (gprs_cnt < 6) or (gprs_cnt > 10):
-                print VMMCommand.__doc__
+                print (VMMCommand.__doc__)
                 return
 
             gpr = self.argv[3:]
@@ -142,7 +142,7 @@ class VMMCommand(BaseCommand):
                 vmm.dump_EPT_page_tables( eptp, pt_fname )
             else:
                 self.logger.log( "[CHIPSEC] finding EPT hierarchy in memory is not implemented yet" )
-                print VMMCommand.__doc__
+                print (VMMCommand.__doc__)
                 return
 
         elif op == 'virtio':
@@ -151,7 +151,7 @@ class VMMCommand(BaseCommand):
 
         else:
             self.logger.log( "Unknown command: %s" % op )
-            print VMMCommand.__doc__
+            print (VMMCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (vmm) time elapsed %.3f" % (time.time()-t) )

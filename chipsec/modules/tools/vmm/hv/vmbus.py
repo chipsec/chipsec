@@ -666,7 +666,7 @@ class VMBusDiscovery(VMBus):
             self.int_page = (FFs << (63 - i)) & FFs
             self.dbg('Address: 0x%016x' % self.int_page)
             self.vmbus_connect(version)
-            print self.supported_versions
+            print (self.supported_versions)
         (self.int_page, self.monitor_page1, self.monitor_page2) = pages
         return
 

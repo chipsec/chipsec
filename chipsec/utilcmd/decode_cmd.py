@@ -63,12 +63,12 @@ class DecodeCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print DecodeCommand.__doc__
+            print (DecodeCommand.__doc__)
             return
         
         _uefi = uefi.UEFI( self.cs )
         if self.argv[2] == "types":
-            print "\n<fw_type> should be in [ %s ]\n" % ( " | ".join( ["%s" % t for t in uefi.uefi_platform.fw_types] ) )
+            print ("\n<fw_type> should be in [ %s ]\n" % ( " | ".join( ["%s" % t for t in uefi.uefi_platform.fw_types] ) ))
             return
             
         rom_file = self.argv[2]
