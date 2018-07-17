@@ -57,7 +57,7 @@ class ACPICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print ACPICommand.__doc__
+            print (ACPICommand.__doc__)
             return
         op = self.argv[2]
         t = time.time()
@@ -73,7 +73,7 @@ class ACPICommand(BaseCommand):
             _acpi.print_ACPI_table_list()
         elif ( 'table' == op ):
             if len(self.argv) < 4:
-                print ACPICommand.__doc__
+                print (ACPICommand.__doc__)
                 return
             name = self.argv[ 3 ]
             if name in ACPI_TABLES:
@@ -87,10 +87,10 @@ class ACPICommand(BaseCommand):
                 _acpi.dump_ACPI_table( name, True )
             else:
                 self.logger.error( "Please specify table name or path to a file.\nTable name must be in %s" % ACPI_TABLES.keys() )
-                print ACPICommand.__doc__
+                print (ACPICommand.__doc__)
                 return
         else:
-            print ACPICommand.__doc__
+            print (ACPICommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (acpi) time elapsed %.3f" % (time.time()-t) )

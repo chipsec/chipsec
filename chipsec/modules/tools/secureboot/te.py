@@ -56,6 +56,7 @@ import shutil
 import struct
 
 from chipsec.module_common import *
+from __future__ import print_function
 
 logger  = chipsec.logger.logger()
 
@@ -63,11 +64,11 @@ DEFAULT_PE_FILE_PATH     = "chipsec/modules/tools/secureboot/Shell.efi"
 DEFAULT_CONFIG_FILE_PATH = 'chipsec/modules/tools/secureboot/te.cfg'
 
 def dumpstr(s):
-    for c in xrange(len(s)):
-        print "%02X " % ord(s[c]),
+    for c in range(len(s)):
+        print ("{:02X} ".format(ord(s[c])),end=' ')
         if ((c+1)%16 == 0):
-            print ""
-    print ""
+            print ("")
+    print ("")
 
 #logger.VERBOSE = False
 

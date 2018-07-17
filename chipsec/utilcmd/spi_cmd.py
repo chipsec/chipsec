@@ -60,13 +60,13 @@ class SPICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SPICommand.__doc__
+            print (SPICommand.__doc__)
             return
 
         try:
             _spi = SPI( self.cs )
         except SpiRuntimeError, msg:
-            print msg
+            print (msg)
             return
 
         spi_op = self.argv[2]
@@ -128,7 +128,7 @@ class SPICommand(BaseCommand):
             else:
                 self.logger.log_bad( "couldn't disable BIOS region write protection in SPI flash" )
         else:
-            print SPICommand.__doc__
+            print (SPICommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (spi %s) time elapsed %.3f" % (spi_op, time.time()-t) )

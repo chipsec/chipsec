@@ -120,7 +120,7 @@ class VMemCommand(BaseCommand):
         size = 0x100
 
         if len(self.argv) < 3:
-            print VMemCommand.__doc__
+            print (VMemCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -229,7 +229,7 @@ class VMemCommand(BaseCommand):
                 self.logger.log( '[CHIPSEC] Allocated %X bytes of virtual memory: VA = 0x%016X, PA = 0x%016X' % (size, virt_address, pa) )
             
         else:
-                print VMemCommand.__doc__
+                print (VMemCommand.__doc__)
                 return
 
 commands = { 'vmem': VMemCommand }

@@ -61,7 +61,7 @@ class MsgBusCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) > 7 or len(self.argv) < 5:
-            print MsgBusCommand.__doc__
+            print (MsgBusCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -78,7 +78,7 @@ class MsgBusCommand(BaseCommand):
             res = _msgbus.msgbus_reg_read( port, reg )
         elif 'write' == op:
             if len(self.argv) < 6:
-                print msgbuscmd.__doc__
+                print (msgbuscmd.__doc__)
                 return
             val = int(self.argv[5], 16)
             self.logger.log("[CHIPSEC] msgbus write: port 0x%02X + 0x%08X < 0x%08X" % (port, reg, val))
@@ -88,7 +88,7 @@ class MsgBusCommand(BaseCommand):
             res = _msgbus.mm_msgbus_reg_read( port, reg )
         elif 'mm_write' == op:
             if len(self.argv) < 6:
-                print msgbuscmd.__doc__
+                print (msgbuscmd.__doc__)
                 return
             val = int(self.argv[5], 16)
             self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x%02X + 0x%08X < 0x%08X" % (port, reg, val))
@@ -100,7 +100,7 @@ class MsgBusCommand(BaseCommand):
             if val is not None: self.logger.log("[CHIPSEC]                 data: 0x%08X" % val)
             res = _msgbus.msgbus_send_message( port, reg, opcode, val )
         else:
-             print msgbuscmd.__doc__
+             print (msgbuscmd.__doc__)
              return
 
         if res is not None: self.logger.log("[CHIPSEC] result: 0x%08X" % res)

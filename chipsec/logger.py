@@ -93,7 +93,7 @@ if "windows" == platform.system().lower():
     except ImportError as e:
         #print "WConio package is not installed. No colored output"
         def log_color( fg_color, text ):
-            print text
+            print (text)
 
 elif "linux" == platform.system().lower():
 
@@ -117,15 +117,15 @@ elif "linux" == platform.system().lower():
         NORMAL = 8
 
         def log_test(self):
-            print ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC
-            print ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC
+            print (ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC)
+            print (ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC)
             for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
                 for code in xrange(ColorLogger.GRAY, ColorLogger.NORMAL+1):
                     self.log(color_type+code, color_type, code )
 
 
         def log(self,msg, color_type=LIGHT,color=8):
-            print ColorLogger.format(msg, color_type, color)
+            print (ColorLogger.format(msg, color_type, color))
 
         @staticmethod
         def format(msg, color_type=LIGHT,color=8):
@@ -144,11 +144,11 @@ elif "linux" == platform.system().lower():
 
     def log_color( fg_color, text ):
         _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
-        print _text
+        print (_text)
 
 else:
     def log_color( fg_color, text ):
-        print text
+        print (text)
 
 
 
@@ -215,7 +215,7 @@ class Logger:
             try:
                 self.logfile.close()
             except None:
-                print 'WARNING: Could not close log file'
+                print ('WARNING: Could not close log file')
             finally:
                 self.logfile = None
 
@@ -262,7 +262,7 @@ class Logger:
         else:
             if color: log_color( color, text )
             else:
-                print text
+                print (text)
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
@@ -408,7 +408,7 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        print >> self.logfile, text
+        self.logfile.write("{}\n".format(text))
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()

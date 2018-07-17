@@ -57,7 +57,7 @@ class IgdCommand(BaseCommand):
         size = 0x100
 
         if len(self.argv) < 3:
-            print IgdCommand.__doc__
+            print (IgdCommand.__doc__)
             return
 
         if not self.cs.igd.is_device_enabled():
@@ -111,9 +111,10 @@ class IgdCommand(BaseCommand):
                 return
 
         else:
-                print IgdDmaCommand.__doc__
+                print (IgdDmaCommand.__doc__)
                 return
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
 
-commands = { 'igd': IgdCommand }
+commands = { 'igd': IgdCommand }
+

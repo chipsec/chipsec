@@ -44,13 +44,13 @@ class SMBusCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SMBusCommand.__doc__
+            print (SMBusCommand.__doc__)
             return
 
         try:
             _smbus = SMBus( self.cs )
         except BaseException, msg:
-            print msg
+            print (msg)
             return
 
         op = self.argv[2]
@@ -81,7 +81,7 @@ class SMBusCommand(BaseCommand):
             _smbus.write_byte( dev_addr, off, val )
         else:
             self.logger.error( "unknown command-line option '%.32s'" % op )
-            print SMBusCommand.__doc__
+            print (SMBusCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (smbus) time elapsed %.3f" % (time.time()-t) )
