@@ -54,7 +54,7 @@ class CPUCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print CPUCommand.__doc__
+            print (CPUCommand.__doc__)
             return
         op = self.argv[2]
         t = time.time()
@@ -108,7 +108,7 @@ class CPUCommand(BaseCommand):
 
         elif 'cpuid' == op:
             if len(self.argv) < 4:
-                print CPUCommand.__doc__
+                print (CPUCommand.__doc__)
                 return
 
             eax = int(self.argv[3],16)
@@ -141,7 +141,7 @@ class CPUCommand(BaseCommand):
                     self.cs.cpu.dump_page_tables( cr3, pt_fname )
 
         else:
-            print CPUCommand.__doc__
+            print (CPUCommand.__doc__)
             return
         
         self.logger.log( "[CHIPSEC] (cpu) time elapsed %.3f" % (time.time()-t) )

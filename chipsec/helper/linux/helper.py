@@ -275,11 +275,11 @@ class LinuxHelper(Helper):
             if not os.path.exists("/dev/cpu/0/msr"):
                 os.system("modprobe msr")
             for cpu in os.listdir("/dev/cpu"):
-                print "found cpu = " + cpu
+                print ("found cpu = {}".format(cpu))
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
-                    print "Added dev_msr "+str(cpu)
+                    print ("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
@@ -389,7 +389,7 @@ class LinuxHelper(Helper):
         #Check if PA > max physical address
         max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
         if pa > 1<<max_pa:
-            print "[helper] Error in va2pa: PA higher that max physical address: VA (0x%016X) -> PA (0x%016X)"% (va, pa)
+            print ("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
             error_code = 1
         return (pa,error_code)
 
@@ -400,7 +400,7 @@ class LinuxHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
         except IOError:
-            print "IOError\n"
+            print ("IOError\n")
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
@@ -425,7 +425,7 @@ class LinuxHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_WRPCI, d)
         except IOError:
-            print "IOError\n"
+            print ("IOError\n")
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
@@ -453,7 +453,7 @@ class LinuxHelper(Helper):
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
-            print "IOError IOCTL Load Patch\n"
+            print ("IOError IOCTL Load Patch\n")
             return None
 
         return True

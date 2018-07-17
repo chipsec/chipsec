@@ -49,7 +49,7 @@ class UCodeCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print UCodeCommand.__doc__
+            print (UCodeCommand.__doc__)
             return
 
         ucode_op = self.argv[2]
@@ -66,7 +66,7 @@ class UCodeCommand(BaseCommand):
                 self.logger.log( "[CHIPSEC] Loading Microcode update on CPU%d from '%s'" % (cpu_thread_id, ucode_filename) )
                 self.cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
             else:
-                print UCodeCommand.__doc__
+                print (UCodeCommand.__doc__)
                 return
         elif ( 'decode' == ucode_op ):
             if (4 == len(self.argv)):
@@ -88,7 +88,7 @@ class UCodeCommand(BaseCommand):
                 self.logger.log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
         else:
             self.logger.error( "unknown command-line option '%.32s'" % ucode_op )
-            print UCodeCommand.__doc__
+            print (UCodeCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (ucode) time elapsed %.3f" % (time.time()-t) )

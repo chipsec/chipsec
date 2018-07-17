@@ -52,13 +52,13 @@ class PortIOCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print PortIOCommand.__doc__
+            print (PortIOCommand.__doc__)
             return
 
         try:
             _iobar = iobar.IOBAR( self.cs )
         except iobar.IOBARRuntimeError, msg:
-            print msg
+            print (msg)
             return
 
         op = self.argv[2]
@@ -69,7 +69,7 @@ class PortIOCommand(BaseCommand):
         t = time.time()
 
         if len(self.argv) < 3:
-            print PortIOCommand.__doc__
+            print (PortIOCommand.__doc__)
             return
 
         io_port = int(self.argv[2],16)

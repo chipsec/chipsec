@@ -62,13 +62,13 @@ class SPICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SPICommand.__doc__
+            print (SPICommand.__doc__)
             return
 
         try:
             _spi = SPI( self.cs )
         except SpiRuntimeError, msg:
-            print msg
+            print (msg)
             return
 
         spi_op = self.argv[2]
@@ -140,7 +140,7 @@ class SPICommand(BaseCommand):
                 self.logger.log( '    Device       : 0x{:04X}   - {}'.format(jedec & 0xFFFF, part) )
                 self.logger.log( '' )
         else:
-            print SPICommand.__doc__
+            print (SPICommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (spi %s) time elapsed %.3f" % (spi_op, time.time()-t) )

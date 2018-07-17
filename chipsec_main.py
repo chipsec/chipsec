@@ -33,7 +33,7 @@ savimp = __builtin__.__import__
 def newimp(name, *x):
     caller = inspect.currentframe().f_back
     if 'chipsec' in name:
-        print "%-35s -> %s" % (caller.f_globals.get('__name__'), name)
+        print ("{:35} -> {}".format( (caller.f_globals.get('__name__'), name)))
     return savimp(name, *x)
 ## Uncomment the following line to display  the imports that chipsec calls
 #__builtin__.__import__ = newimp
@@ -97,8 +97,8 @@ class ChipsecMain:
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "[CHIPSEC] Version %s" % self.version )
-        logger().log( "[CHIPSEC] Arguments: %s"% " ".join(self.argv) )
+        logger().log( "[CHIPSEC] Version {}".format(self.version) )
+        logger().log( "[CHIPSEC] Arguments: {}".format( " ".join(self.argv) ) )
 
     ##################################################################################
     # Module API

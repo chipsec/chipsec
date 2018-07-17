@@ -192,7 +192,7 @@ class ChipsecUtil:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
 
-            logger().log( "[CHIPSEC] Executing command '%s' with args %s\n" % (cmd,self.argv[2:]) )
+            logger().log( "[CHIPSEC] Executing command {}' with args {}\n".format(cmd,self.argv[2:]) )
             comm.run()
             if comm.requires_driver():
                 self._cs.destroy(True)
@@ -224,7 +224,7 @@ class ChipsecUtil:
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "[CHIPSEC] Version %s" % defines.get_version() )
+        logger().log( "[CHIPSEC] Version {}".format(defines.get_version()) )
 
 def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])

@@ -451,7 +451,7 @@ class OSXHelper(Helper):
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
-            print "IOError IOCTL Load Patch\n"
+            print ("IOError IOCTL Load Patch\n")
             return None
 
         return True'''
