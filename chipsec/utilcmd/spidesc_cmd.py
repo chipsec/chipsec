@@ -39,7 +39,7 @@ class SPIDescCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SPIDescCommand.__doc__
+            print (SPIDescCommand.__doc__)
             return
 
         fd_file = self.argv[2]

@@ -93,12 +93,12 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
 
 class synth_dev(BaseModule):
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info'
-        print '      print channel offers'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>'
-        print '      fuzzing device with specified relid'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info')
+        print ('      print channel offers')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>')
+        print ('      fuzzing device with specified relid')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
@@ -143,7 +143,7 @@ class synth_dev(BaseModule):
         except Exception as error:
             print ('\n\n')
             traceback.print_exc()
-            print '\n\n'
+            print ('\n\n')
         finally:
             vb.vmbus_rescind_all_offers()
             del vb
