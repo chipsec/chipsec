@@ -99,8 +99,8 @@ class access_uefispec(BaseModule):
         newstr = ":".join("{:02x}".format(ord(c)) for c in data2)
 
         if oldstr != newstr:
-            print oldstr
-            print newstr
+            print (oldstr)
+            print (newstr)
             return True
         else:
             return False
