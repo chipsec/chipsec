@@ -33,7 +33,7 @@ savimp = __builtin__.__import__
 def newimp(name, *x):
     caller = inspect.currentframe().f_back
     if 'chipsec' in name:
-        print "%-35s -> %s" % (caller.f_globals.get('__name__'), name)
+        print "{:35} -> {}".format( (caller.f_globals.get('__name__'), name))
     return savimp(name, *x)
 ## Uncomment the following line to display  the imports that chipsec calls
 #__builtin__.__import__ = newimp
@@ -192,8 +192,8 @@ class ChipsecMain:
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "[CHIPSEC] Version %s" % self.version )
-        logger().log( "[CHIPSEC] Arguments: %s"% " ".join(self.argv) )
+        logger().log( "[CHIPSEC] Version {}}".format(self.version) )
+        logger().log( "[CHIPSEC] Arguments: {}}".format( " ".join(self.argv) ) )
 
     ##################################################################################
     # Module API
@@ -479,42 +479,42 @@ class ChipsecMain:
         known_chipsets = "[ " + " | ".join(chipset.Chipset_Code) + " ]"
         known_pch = "[ " + " | ".join(chipset.pch_codes) + " ]"
         max_line_length = max(len(known_chipsets), len(known_pch)) + 1
-        print "\n- Command Line Usage\n\t``# %.65s [options]``\n" % sys.argv[0]
-        print "Options\n-------"
-        print "====================== ====================================================="
-        print "-m --module             specify module to run (example: -m common.bios_wp)"
-        print "-a --module_args        additional module arguments, format is 'arg0,arg1..'"
-        print "-v --verbose            verbose mode"
-        print "-d --debug              show debug output"
-        print "-l --log                output to log file"
-        print "====================== ====================================================="
-        print "\nAdvanced Options\n----------------"
-        print "======================== " + "=" * max_line_length
-        print "-p --platform             explicitly specify platform code. Should be among the supported platforms:"
-        print "                          %s" % known_chipsets
-        print "   --pch                  explicitly specify PCH code. Should be among the supported PCH:"
-        print "                          {}".format(known_pch)
-        print "-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver"
-        print "-i --ignore_platform      run chipsec even if the platform is not recognized"
-        print "-j --json                 specify filename for JSON output."
-        print "-x --xml                  specify filename for xml output (JUnit style)."
-        print "-t --moduletype           run tests of a specific type (tag)."
-        print "   --list_tags            list all the available options for -t,--moduletype"
-        print "-I --include              specify additional path to load modules from"
-        print "   --failfast             fail on any exception and exit (don't mask exceptions)"
-        print "   --no_time              don't log timestamps"
-        print "   --deltas               specifies a JSON log file to compute result deltas from"
-        print "======================== " + "=" * max_line_length
-        print "\nExit Code\n---------"
-        print "CHIPSEC returns an integer exit code:\n"
-        print "- Exit code is 0:       all modules ran successfully and passed"
-        print "- Exit code is not 0:   each bit means the following:\n"
-        print "    - Bit 0: SKIPPED    at least one module was skipped"
-        print "    - Bit 1: WARNING    at least one module had a warning"
-        print "    - Bit 2: DEPRECATED at least one module uses deprecated API"
-        print "    - Bit 3: FAIL       at least one module failed"
-        print "    - Bit 4: ERROR      at least one module wasn't able to run"
-        print "    - Bit 5: EXCEPTION  at least one module thrown an unexpected exception"
+        print ("\n- Command Line Usage\n\t``# {:.65} [options]``\n".format(sys.argv[0]))
+        print ("Options\n-------")
+        print ("====================== =====================================================")
+        print ("-m --module             specify module to run (example: -m common.bios_wp)")
+        print ("-a --module_args        additional module arguments, format is 'arg0,arg1..'")
+        print ("-v --verbose            verbose mode")
+        print ("-d --debug              show debug output")
+        print ("-l --log                output to log file")
+        print ("====================== =====================================================")
+        print ("\nAdvanced Options\n----------------")
+        print ("======================== " + "=" * max_line_length)
+        print ("-p --platform             explicitly specify platform code. Should be among the supported platforms:")
+        print ("                          {}".format(known_chipsets))
+        print ("   --pch                  explicitly specify PCH code. Should be among the supported PCH:")
+        print ("                          {}".format(known_pch))
+        print ("-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver")
+        print ("-i --ignore_platform      run chipsec even if the platform is not recognized")
+        print ("-j --json                 specify filename for JSON output.")
+        print ("-x --xml                  specify filename for xml output (JUnit style).")
+        print ("-t --moduletype           run tests of a specific type (tag).")
+        print ("   --list_tags            list all the available options for -t,--moduletype")
+        print ("-I --include              specify additional path to load modules from")
+        print ("   --failfast             fail on any exception and exit (don't mask exceptions)")
+        print ("   --no_time              don't log timestamps")
+        print ("   --deltas               specifies a JSON log file to compute result deltas from")
+        print ("======================== " + "=" * max_line_length)
+        print ("\nExit Code\n---------")
+        print ("CHIPSEC returns an integer exit code:\n")
+        print ("- Exit code is 0:       all modules ran successfully and passed")
+        print ("- Exit code is not 0:   each bit means the following:\n")
+        print ("    - Bit 0: SKIPPED    at least one module was skipped")
+        print ("    - Bit 1: WARNING    at least one module had a warning")
+        print ("    - Bit 2: DEPRECATED at least one module uses deprecated API")
+        print ("    - Bit 3: FAIL       at least one module failed")
+        print ("    - Bit 4: ERROR      at least one module wasn't able to run")
+        print ("    - Bit 5: EXCEPTION  at least one module thrown an unexpected exception")
 
 
     def parse_args(self):
@@ -530,7 +530,7 @@ class ChipsecMain:
               "moduletype=", "json=", "xml=", "list_tags", "include", "failfast",
               "no_time", "deltas="])
         except getopt.GetoptError, err:
-            print str(err)
+            print (str(err))
             self.usage()
             return (False, ExitCode.EXCEPTION)
 

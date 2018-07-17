@@ -68,9 +68,9 @@ class RingBufferFuzzer(RingBuffer):
 
 class synth_kbd(BaseModule):
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
@@ -134,11 +134,11 @@ class synth_kbd(BaseModule):
                 vb.err('synth_kbd protocol request has failed!')
 
         except KeyboardInterrupt:
-            print '***** Control-C *****'
+            print ('***** Control-C *****')
         except Exception, error:
-            print '\n\n'
+            print ('\n\n')
             traceback.print_exc()
-            print '\n\n'
+            print ('\n\n')
         finally:
             vb.vmbus_close(relid)
             vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)

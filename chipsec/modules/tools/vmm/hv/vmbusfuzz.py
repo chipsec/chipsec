@@ -158,7 +158,7 @@ class VMBusFuzz(VMBusDiscovery):
                         self.fuzzing = False
                     m += 1
         except KeyboardInterrupt:
-            print '***** Control-C *****'
+            print ('***** Control-C *****')
         except Exception, error:
             traceback.print_exc()
         finally:

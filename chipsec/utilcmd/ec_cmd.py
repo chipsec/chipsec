@@ -57,7 +57,7 @@ class ECCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print ECCommand.__doc__
+            print (ECCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -66,7 +66,7 @@ class ECCommand(BaseCommand):
         try:
             _ec = EC( self.cs )
         except BaseException, msg:
-            print msg
+            print (msg)
             return
 
         if ( 'command' == op ):

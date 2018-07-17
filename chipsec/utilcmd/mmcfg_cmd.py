@@ -57,7 +57,7 @@ class MMCfgCommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
             return
         elif 6 > len(self.argv):
-            print MMCfgCommand.__doc__
+            print (MMCfgCommand.__doc__)
             return
 
         try:
@@ -79,7 +79,7 @@ class MMCfgCommand(BaseCommand):
                     width = int(self.argv[6])
 
         except Exception as e :
-            print MMCfgCommand.__doc__
+            print (MMCfgCommand.__doc__)
             return
 
         if 8 == len(self.argv):

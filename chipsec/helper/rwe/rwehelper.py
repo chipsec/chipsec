@@ -593,7 +593,7 @@ class RweHelper(Helper):
         in_buf = struct.pack( '<I', length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
         (size, pa, va) = struct.unpack( '<IIQ', out_buf )
-        print hex(va), hex(pa)
+        print (hex(va), hex(pa))
         return (va, pa)
 
     def va2pa( self, va ):
@@ -737,7 +737,7 @@ class RweHelper(Helper):
         value = 0
         in_buf = struct.pack( '<QQ', cr_number, 0 )
         out_buf = self._ioctl( IOCTL_RDCR, in_buf, 16)
-        print len(out_buf), out_buf.encode('hex')
+        print (len(out_buf), out_buf.encode('hex'))
         code, value = struct.unpack( '<QQ', out_buf )
         return value
 
@@ -857,7 +857,7 @@ class RweHelper(Helper):
             try:
                 pHandle = win32api.OpenProcess(flags, 0, pid)
             except pywintypes.error, e:
-                print "unable to open a process handle"
+                print ("unable to open a process handle")
                 raise ValueError, e
         return pHandle
 
@@ -867,7 +867,7 @@ class RweHelper(Helper):
         try:
             win32process.SetProcessAffinityMask(pHandle, current)
         except win32process.error, e:
-            print "unable to set process affinity"
+            print ("unable to set process affinity")
             raise ValueError, e
         return current
 
@@ -876,7 +876,7 @@ class RweHelper(Helper):
         try:
             return win32process.GetProcessAffinityMask(pHandle)[0]
         except win32process.error, e:
-            print "unable to get the running cpu"
+            print ("unable to get the running cpu")
             raise ValueError, e
             
     #
