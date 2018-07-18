@@ -605,7 +605,7 @@ class ChipsecMain:
 
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
-        except chipset.UnknownChipsetError , msg:
+        except chipset.UnknownChipsetError as msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
