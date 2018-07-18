@@ -158,7 +158,7 @@ class ChipsecUtil:
                 module = importlib.import_module( cmd_path )
                 cu = getattr(module, 'commands')
                 self.commands.update(cu)
-            except ImportError, msg:
+            except ImportError as msg:
                 # Display the import error and continue to import commands
                 logger().error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
                 continue
@@ -182,13 +182,13 @@ class ChipsecUtil:
 
             try:
                 self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver)
-            except UnknownChipsetError, msg:
+            except UnknownChipsetError as msg:
                 logger().warn("*******************************************************************")
                 logger().warn("* Unknown platform!")
                 logger().warn("* Platform dependent functionality will likely be incorrect")
                 logger().warn("* Error Message: \"%s\"" % str(msg))
                 logger().warn("*******************************************************************")
-            except (None,Exception) , msg:
+            except (None,Exception) as msg:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
 

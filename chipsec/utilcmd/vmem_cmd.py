@@ -113,7 +113,7 @@ class VMemCommand(BaseCommand):
     def run(self):
         try:
             _vmem = virtmem.VirtMemory(self.cs)
-        except VMemRuntimeError,msg:
+        except VMemRuntimeError as msg:
             print (msg)
             return
 
@@ -185,7 +185,7 @@ class VMemCommand(BaseCommand):
                     #buffer = buf_file.decode('hex')
                     try:
                       buffer = bytearray.fromhex(buf_file)
-                    except ValueError, e:
+                    except ValueError as e:
                         self.logger.error( "incorrect <value> specified: '%s'" % buf_file )
                         self.logger.error( str(e) )
                         return

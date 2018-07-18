@@ -134,9 +134,9 @@ class synth_kbd(BaseModule):
                 vb.err('synth_kbd protocol request has failed!')
 
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
-            print '\n\n'
+            print ('***** Control-C *****')
+        except Exception as error:
+            print ('\n\n')
             traceback.print_exc()
             print '\n\n'
         finally:

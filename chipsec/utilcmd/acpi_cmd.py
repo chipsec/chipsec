@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -69,7 +69,7 @@ class ACPICommand(BaseCommand):
         self._acpi.print_ACPI_table_list()
 
     def acpi_table(self):
-        name = self._name[0]      
+        name = self._name[0]
         if not self._file and not self._acpi.is_ACPI_table_present( name ):
             self.logger.error( "Please specify table name from {}".format(ACPI_TABLES.keys()) )
             return
@@ -79,16 +79,16 @@ class ACPICommand(BaseCommand):
         self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '',name) )
         self._acpi.dump_ACPI_table( name, self._file )
         return
-       
+
 
     def run(self):
         t = time()
         try:
             self._acpi = ACPI(self.cs)
-        except AcpiRuntimeError, msg:
-            print msg
+        except AcpiRuntimeError as msg:
+            print (msg)
             return
-            
+
         self.func()
         self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time()-t) )
 

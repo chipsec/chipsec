@@ -484,7 +484,7 @@ class Chipset:
         if _unknown_platform and start_driver:
             msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.vid,self.did,self.rid)
             logger().error( msg )
-            raise UnknownChipsetError, msg
+            raise UnknownChipsetError (msg)
 
 
     def destroy( self, start_driver ):
@@ -705,7 +705,7 @@ class Chipset:
                 module = importlib.import_module( module_path )
                 logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % self.code )
                 self.Cfg = getattr( module, self.code )()
-            except ImportError, msg:
+            except ImportError as msg:
                 if logger().DEBUG: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
 
         #
@@ -727,7 +727,7 @@ class Chipset:
 
     def get_device_BDF( self, device_name ):
         device = self.Cfg.CONFIG_PCI[ device_name ]
-        if device is None or device == {}: raise DeviceNotFoundError, ('DeviceNotFound: %s' % device_name)
+        if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: %s' % device_name)
         b = int(device['bus'],16)
         d = int(device['dev'],16)
         f = int(device['fun'],16)
