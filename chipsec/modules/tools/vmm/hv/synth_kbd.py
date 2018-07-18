@@ -106,7 +106,7 @@ class synth_kbd(BaseModule):
             synth_kbd_protocol_request  = pack('<LL', SYNTH_KBD_PROTOCOL_REQUEST, SYNTH_KBD_VERSION)
             vb.vmbus_sendpacket(relid, synth_kbd_protocol_request, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             synth_kbd_protocol_response = vb.vmbus_recvpacket(relid)
-            if len(synth_kbd_protocol_response) <> 8:
+            if len(synth_kbd_protocol_response) != 8:
                 vb.fatal('Invalid response from synthetic keyboard!')
             msg_type, proto_status = unpack('<LL', synth_kbd_protocol_response)
             if (proto_status & 0x1) == 0x1:

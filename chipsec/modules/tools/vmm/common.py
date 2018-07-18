@@ -97,7 +97,7 @@ class BaseModuleDebug(BaseModule):
     ##
     def info_bitwise(self, reg, desc):
         i = 0
-        while reg <> 0:
+        while reg != 0:
             if i in desc:
                 self.msg('       Bit %2d:  %d  %s' % (i, reg & 0x1, desc[i]))
             i  += 1

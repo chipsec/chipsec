@@ -360,7 +360,7 @@ class LinuxHelper(Helper):
         addr = (phys_address_hi << 32) | phys_address_lo
         in_buf = struct.pack( '3'+self._pack,addr,length,0 )
         if len(in_buf) < length:
-            in_buf += (length - len(in_buf)) * 'A'
+            in_buf += (length - len(in_buf)) * b'A'
         out_buf = self.ioctl(IOCTL_READ_PHYSMEM, in_buf)
         ret = struct.unpack(str(length)+'s', out_buf[:length])
         return ret[0]
@@ -721,15 +721,15 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-        buffer = array.array("c", in_buf)
+        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+        buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
         new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (status == 0x5):
             data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
-            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-            buffer = array.array("c", in_buf)
+            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+            buffer = array.array("B", in_buf)
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
             except IOError:

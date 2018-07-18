@@ -55,7 +55,7 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
             msg_sent = messages.pop(0)
             self.vmbus_sendpacket(relid, msg_sent, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             msg_recv = self.vmbus_recvpacket(relid)
-            if msg_recv <> '':
+            if msg_recv != '':
                 (msg1, msg2) = (msg_recv, msg_sent) if order else (msg_sent, msg_recv)
                 if msg1 not in info:
                     info[msg1] = {'next': {}, 'count': 0, 'message': ''}
@@ -104,8 +104,8 @@ class synth_dev(BaseModule):
     def run(self, module_argv):
         self.logger.start_test( "Hyper-V VMBus synthetic device fuzzer" )
 
-        command =             module_argv[0]  if len(module_argv) > 0 and module_argv[0] <> '' else 'none'
-        relid   = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] <> '' else 0x5
+        command =             module_argv[0]  if len(module_argv) > 0 and module_argv[0] != '' else 'none'
+        relid   = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] != '' else 0x5
 
         vb = VMBusDeviceFuzzer()
         vb.debug = False
