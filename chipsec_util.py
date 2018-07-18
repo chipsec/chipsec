@@ -176,7 +176,7 @@ class ChipsecUtil:
             cmd = 'help'
             self.argv = ['dummy']
 
-        if self.commands.has_key( cmd ):
+        if cmd in self.commands:
             comm = self.commands[cmd](self.argv, cs = self._cs)
 
             try:
@@ -187,7 +187,10 @@ class ChipsecUtil:
                 logger().warn("* Platform dependent functionality will likely be incorrect")
                 logger().warn("* Error Message: \"%s\"" % str(msg))
                 logger().warn("*******************************************************************")
-            except (None,Exception) as msg:
+            except Exception as msg:
+                logger().error(str(msg))
+                sys.exit(ExitCode.EXCEPTION)
+            except None as msg:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
 

@@ -298,7 +298,7 @@ class c_4level_page_tables(c_paging):
     def print_entry(self, lvl, pa, va = 0, perm = ''):
         canonical_va = self.get_canonical(va)
         info = '  %s%6s: %013X' % ('  ' *lvl, self.PT_NAME[lvl], pa)
-        if perm <> '':
+        if perm != '':
             size  = self.PT_SIZE[lvl]
             info += ' - %s PAGE  %s' % (size, perm)
             info  = info.ljust(64)
@@ -418,10 +418,10 @@ class c_ia32e_page_tables(c_4level_page_tables):
         self.BIGPAGE = {'mask': 0x1, 'offset': 7}
 
     def is_present(self, entry):
-        return self.get_field(entry, self.P) <> 0
+        return self.get_field(entry, self.P) != 0
 
     def is_bigpage(self, entry):
-        return self.get_field(entry, self.BIGPAGE) <> 0
+        return self.get_field(entry, self.BIGPAGE) != 0
 
     def get_attr(self, entry):
         RW_DESC  = ['R', 'W']
@@ -478,10 +478,10 @@ class c_extended_page_tables(c_4level_page_tables):
         self.canonical_msb = 63
 
     def is_present(self, entry):
-        return self.get_field(entry, self.XWR) <> 0
+        return self.get_field(entry, self.XWR) != 0
 
     def is_bigpage(self, entry):
-        return self.get_field(entry, self.BIGPAGE) <> 0
+        return self.get_field(entry, self.BIGPAGE) != 0
 
     def get_attr(self, entry):
         XWR_DESC  = ['---', '--R', '-W-', '-WR', 'X--', 'X-R', 'XW-', 'XWR']
