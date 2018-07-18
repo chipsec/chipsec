@@ -421,11 +421,39 @@ def print_buffer( arr, length = 16 ):
     tmp_str=[]
     i=1
     for c in arr:
-        tmp+=["%2.2x "%ord(c)]
+        tmp+=["{:2x} ".format(ord(c))]
         if (not c in string.printable) or (c in string.whitespace):
             ch = " "
         else:
             ch = ord(c)
+        tmp_str+=["%c"%ch]
+        if i%length==0:
+            tmp+=["| "]
+            tmp+=tmp_str
+            tmp_s = "".join(tmp)
+            logger().log( tmp_s )
+            tmp_str=[]
+            tmp=[]
+        i+=1
+
+    if 0 != len(arr)%length:
+        tmp+=[ (length - len(arr)%length) * 3*" " ]
+        tmp+=["| "]
+        tmp+=tmp_str
+        tmp_s = "".join(tmp)
+        logger().log( tmp_s )
+
+def print_buffer_bytes( arr, length = 16 ):
+    """Prints the buffer."""
+    tmp=[]
+    tmp_str=[]
+    i=1
+    for c in arr:
+        tmp+=["{:2x} ".format(c)]
+        if (not chr(c) in string.printable) or (chr(c) in string.whitespace):
+            ch = " "
+        else:
+            ch = c
         tmp_str+=["%c"%ch]
         if i%length==0:
             tmp+=["| "]
