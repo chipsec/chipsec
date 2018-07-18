@@ -864,7 +864,7 @@ class LinuxHelper(Helper):
                 attr |= EFI_VARIABLE_APPEND_WRITE
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             if logger().DEBUG: logger().error('Failed to read files under /sys/firmware/efi/vars/'+filename)
             data = ""
             guid = 0
@@ -911,7 +911,7 @@ class LinuxHelper(Helper):
                     f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
                     f.write(value)
                     ret = 0 # EFI_SUCCESS
-                except Exception, err:
+                except Exception as err:
                     if logger().DEBUG: logger().error('Failed to write EFI variable. %s' % err)
         return ret
 
@@ -933,7 +933,7 @@ class LinuxHelper(Helper):
             data = data[4:]
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
             guid = 0
@@ -971,7 +971,7 @@ class LinuxHelper(Helper):
             data = data[4:]
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
 
@@ -1000,13 +1000,13 @@ class LinuxHelper(Helper):
                 f.write(sattrs + value)
                 f.close()
                 ret = 0 # EFI_SUCCESS
-            except Exception, err:
+            except Exception as err:
                 if logger().DEBUG: logger().error('Failed to write EFI variable. %s' % err)
         else:
             try:
                 os.remove(path)
                 ret = 0 # EFI_SUCCESS
-            except Exception, err:
+            except Exception as err:
                 if logger().DEBUG: logger().error('Failed to delete EFI variable. %s' % err)
 
         return ret
