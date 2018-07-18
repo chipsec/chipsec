@@ -62,7 +62,7 @@ class VMM:
 
 
     def __del__(self):
-        if self.membuf0_va <> 0:
+        if self.membuf0_va != 0:
             #self.helper.free_physical_mem(self.membuf0_va)
             (self.membuf0_va, self.membuf0_pa) = (0, 0)
             (self.membuf1_va, self.membuf1_pa) = (0, 0)
