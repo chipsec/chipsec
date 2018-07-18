@@ -27,8 +27,14 @@ Main application logic and automation functions
 
 ## These are for debugging imports
 import inspect
-import __builtin__
-savimp = __builtin__.__import__
+import sys
+if sys.version[0] == 2:
+    import __builtin__
+    savimp = __builtin__.__import__
+elif sys.version[0] == 3:
+    import builtins
+    savimp = builtins.__import__
+
 
 def newimp(name, *x):
     caller = inspect.currentframe().f_back
@@ -44,7 +50,7 @@ import getopt
 import json
 import os
 import re
-import sys
+
 import time
 import traceback
 try:
