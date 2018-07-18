@@ -817,7 +817,7 @@ class Win32Helper(Helper):
             try:
                 pHandle = win32api.OpenProcess(flags, 0, pid)
             except pywintypes.error, e:
-                print "unable to open a process handle"
+                print ("unable to open a process handle")
                 raise ValueError, e
         return pHandle
 
@@ -827,7 +827,7 @@ class Win32Helper(Helper):
         try:
             win32process.SetProcessAffinityMask(pHandle, current)
         except win32process.error, e:
-            print "unable to set process affinity"
+            print ("unable to set process affinity")
             raise ValueError, e
         return current
 
@@ -836,7 +836,7 @@ class Win32Helper(Helper):
         try:
             return win32process.GetProcessAffinityMask(pHandle)[0]
         except win32process.error, e:
-            print "unable to get the running cpu"
+            print ("unable to get the running cpu")
             raise ValueError, e
             
     #
