@@ -561,7 +561,7 @@ class OsHelper:
           if exe is None: return None 
           try:
             subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
+          except BaseException as msg:
             if logger().DEBUG: 
                 logger().error( str(msg) )
                 logger().log_bad( traceback.format_exc() )
