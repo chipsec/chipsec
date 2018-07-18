@@ -444,7 +444,7 @@ class Chipset:
                 _unknown_platform = True
         else:
             self.vid = VID_INTEL
-            if Chipset_Code.has_key( platform_code ):
+            if platform_code in Chipset_Code:
                 self.did = Chipset_Code[ platform_code ]
                 self.rid = 0x00
             else:
@@ -453,7 +453,7 @@ class Chipset:
                 self.did = 0xFFFF
                 self.rid = 0xFF
 
-        if Chipset_Dictionary.has_key( self.did ):
+        if self.did in Chipset_Dictionary:
             data_dict       = Chipset_Dictionary[ self.did ]
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
@@ -464,7 +464,7 @@ class Chipset:
 
         if req_pch_code is not None:
             self.pch_vid = VID_INTEL
-            if pch_codes.has_key(req_pch_code):
+            if req_pch_code in pch_codes:
                 self.pch_did = pch_codes[req_pch_code]
                 self.pch_rid = 0x00
             else:
@@ -472,7 +472,7 @@ class Chipset:
                 self.pch_did = 0xFFFF
                 self.pch_rid = 0xFF
 
-        if self.pch_vid == VID_INTEL and pch_dictionary.has_key(self.pch_did):
+        if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
             data_dict           = pch_dictionary[self.pch_did]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']

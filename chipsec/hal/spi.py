@@ -62,6 +62,7 @@ from chipsec.cfg.common import *
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import *
+from builtins import bytes
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -340,7 +341,7 @@ class SPI(hal_base.HALBase):
         logger().log( "Flash Region             | FREGx Reg | Base     | Limit     " )
         logger().log( "------------------------------------------------------------" )
         regions = self.get_SPI_regions()
-        for region_id, region in regions.iteritems():
+        for (region_id, region) in regions.items():
             base, limit, size, name, freg = region
             logger().log( '%d %-022s | %08X  | %08X | %08X ' % (region_id, name, freg, base, limit) )
 
@@ -540,8 +541,9 @@ class SPI(hal_base.HALBase):
         buf = self.read_spi( spi_fla, data_byte_count )
         if buf is None:
             return None
+        buf = bytes([ord(i) for i in buf])
         if filename is not None:
-            write_file( filename, struct.pack('c'*len(buf), *buf) )
+            write_file( filename, struct.pack(str(len(buf))+'s', buf) )
         else:
             chipsec.logger.print_buffer( buf, 16 )
         return buf
@@ -560,7 +562,7 @@ class SPI(hal_base.HALBase):
         if (data_byte_count >= SPI_READ_WRITE_MAX_DBC):
             dbc = SPI_READ_WRITE_MAX_DBC
 
-        n = data_byte_count / dbc
+        n = data_byte_count // dbc
         r = data_byte_count % dbc
         if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] reading 0x%x bytes from SPI at FLA = 0x%X (in %d 0x%x-byte chunks + 0x%x-byte remainder)" % (data_byte_count, spi_fla, n, dbc, r) )
@@ -576,7 +578,7 @@ class SPI(hal_base.HALBase):
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, dbc-1, spi_fla + i*dbc ):
                 logger().error( "SPI flash read failed" )
             else:
-                for fdata_idx in range(0,dbc/4):
+                for fdata_idx in range(0,dbc//4):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
                     if logger().HAL:
                         logger().log( "[spi] FDATA00 + 0x%x: 0x%X" % (fdata_idx*4, dword_value) )

@@ -68,8 +68,8 @@ class HypercallFuzz(BaseModule):
             self.usage()
             return
 
-        callnum = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] <> '' else 'all'
-        testnum = get_int_arg(module_argv[2]) if len(module_argv) > 2 and module_argv[2] <> '' else 10000000
+        callnum = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] != '' else 'all'
+        testnum = get_int_arg(module_argv[2]) if len(module_argv) > 2 and module_argv[2] != '' else 10000000
 
         hv = HyperVHypercall()
         hv.promt = 'CHIPSEC'

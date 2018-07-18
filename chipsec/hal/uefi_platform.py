@@ -678,7 +678,7 @@ def isCorrectVSStype(nvram_buf, vss_type):
             else:
                 if (next_var < len(nvram_buf)):
                     new_nex_var = nvram_buf.find(VARIABLE_SIGNATURE_VSS, next_var, next_var + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
-                    if (new_nex_var <> -1):
+                    if (new_nex_var != -1):
                         return True
 
     return False
