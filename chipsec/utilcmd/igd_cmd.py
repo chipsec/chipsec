@@ -91,7 +91,7 @@ class IgdCommand(BaseCommand):
                 if not os.path.exists( buf_file ):
                     try:
                       buffer = bytearray.fromhex(buf_file)
-                    except ValueError, e:
+                    except ValueError as e:
                         self.logger.error( "incorrect <value> specified: '%s'" % buf_file )
                         self.logger.error( str(e) )
                         return

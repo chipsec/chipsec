@@ -135,7 +135,7 @@ class synth_kbd(BaseModule):
 
         except KeyboardInterrupt:
             print ('***** Control-C *****')
-        except Exception, error:
+        except Exception as error:
             print ('\n\n')
             traceback.print_exc()
             print ('\n\n')

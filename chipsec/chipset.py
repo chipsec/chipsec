@@ -631,7 +631,7 @@ class Chipset:
                 module = importlib.import_module( module_path )
                 logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % self.code )
                 self.Cfg = getattr( module, self.code )()
-            except ImportError, msg:
+            except ImportError as msg:
                 if logger().VERBOSE: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
 
         #

@@ -68,7 +68,7 @@ class IOMMUCommand(BaseCommand):
 
         try:
             _iommu = iommu.IOMMU(self.cs)
-        except IOMMUError, msg:
+        except IOMMUError as msg:
             print (msg)
             return
 
@@ -89,7 +89,7 @@ class IOMMUCommand(BaseCommand):
 
                 try:
                     _acpi  = acpi.ACPI( self.cs )
-                except acpi.AcpiRuntimeError, msg:
+                except acpi.AcpiRuntimeError as msg:
                     print (msg)
                     return
 

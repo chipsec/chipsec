@@ -58,7 +58,7 @@ class TPMCommand(BaseCommand):
     def run(self):
         try:
             _tpm = tpm.TPM(self.cs)
-        except TpmRuntimeError, msg:
+        except TpmRuntimeError as msg:
             print(msg)
             return
 
