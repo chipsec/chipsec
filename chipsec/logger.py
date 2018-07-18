@@ -90,7 +90,7 @@ if "windows" == platform.system().lower():
             print text
             WConio.textattr( old_setting )
 
-    except ImportError, e:
+    except ImportError as e:
         #print "WConio package is not installed. No colored output"
         def log_color( fg_color, text ):
             print text

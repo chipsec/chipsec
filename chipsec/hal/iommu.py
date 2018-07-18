@@ -51,17 +51,17 @@ class IOMMU(hal_base.HALBase):
 
     def get_IOMMU_Base_Address( self, iommu_engine ):
         if iommu_engine in IOMMU_ENGINES: vtd_base_name = IOMMU_ENGINES[iommu_engine]
-        else: raise IOMMUError, ('IOMMUError: unknown IOMMU engine 0x%X' % iommu_engine )
+        else: raise IOMMUError ('IOMMUError: unknown IOMMU engine 0x%X' % iommu_engine )
 
         if self.mmio.is_MMIO_BAR_defined(vtd_base_name):
             (base, size) = self.mmio.get_MMIO_BAR_base_address(vtd_base_name)
         else:
-            raise IOMMUError, ('IOMMUError: IOMMU BAR %s is not defined in the config' % vtd_base_name)
+            raise IOMMUError ('IOMMUError: IOMMU BAR %s is not defined in the config' % vtd_base_name)
         return base
 
     def is_IOMMU_Engine_Enabled( self, iommu_engine ):
         if iommu_engine in IOMMU_ENGINES: vtd_base_name = IOMMU_ENGINES[iommu_engine]
-        else: raise IOMMUError, ('IOMMUError: unknown IOMMU engine 0x%X' % iommu_engine )
+        else: raise IOMMUError ('IOMMUError: unknown IOMMU engine 0x%X' % iommu_engine )
         return self.mmio.is_MMIO_BAR_defined(vtd_base_name) and self.mmio.is_MMIO_BAR_enabled(vtd_base_name)
 
     def is_IOMMU_Translation_Enabled( self, iommu_engine ):

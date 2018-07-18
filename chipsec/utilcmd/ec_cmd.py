@@ -65,8 +65,8 @@ class ECCommand(BaseCommand):
 
         try:
             _ec = EC( self.cs )
-        except BaseException, msg:
-            print msg
+        except BaseException as msg:
+            print (msg)
             return
 
         if ( 'command' == op ):

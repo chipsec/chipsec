@@ -62,7 +62,7 @@ class PythonEDk2:
         try:
             opts, args = getopt.getopt(argv, "e:ht:",
             ["edk2=","help","target="])
-        except getopt.GetoptError, err:
+        except getopt.GetoptError as err:
             print str(err)
             self.usage()
             return 1

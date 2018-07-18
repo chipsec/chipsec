@@ -158,8 +158,8 @@ class VMBusFuzz(VMBusDiscovery):
                         self.fuzzing = False
                     m += 1
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
+            print ('***** Control-C *****')
+        except Exception as error:
             traceback.print_exc()
         finally:
             self.vmbus_rescind_all_offers()

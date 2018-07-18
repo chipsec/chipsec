@@ -132,7 +132,7 @@ class ChipsecUtil:
         import getopt
         try:
             opts, args = getopt.getopt(self.argv, "ip:h:vdnl:", ["ignore_platform", "platform=", "help=", "verbose", "debug", "no_driver", "log=", "pch="])
-        except getopt.GetoptError, err:
+        except getopt.GetoptError as err:
             logger().error(str(err))
             self.chipsec_util_help()
             sys.exit(ExitCode.EXCEPTION)
@@ -195,9 +195,9 @@ class ChipsecUtil:
                 module = importlib.import_module( cmd_path )
                 cu = getattr(module, 'commands')
                 self.commands.update(cu)
-            except ImportError, msg:
+            except ImportError as msg:
                 logger().error( "Couldn't import util command extension '%s'" % cmd )
-                raise ImportError, msg
+                raise ImportError (msg)
 
         if self.show_help:
             self.chipsec_util_help(self.help_cmd)
@@ -217,13 +217,13 @@ class ChipsecUtil:
 
             try:
                 self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver)
-            except UnknownChipsetError, msg:
+            except UnknownChipsetError as msg:
                 logger().warn("*******************************************************************")
                 logger().warn("* Unknown platform!")
                 logger().warn("* Platform dependent functionality will likely be incorrect")
                 logger().warn("* Error Message: \"%s\"" % str(msg))
                 logger().warn("*******************************************************************")
-            except (None,Exception) , msg:
+            except (None,Exception) as msg:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
 
