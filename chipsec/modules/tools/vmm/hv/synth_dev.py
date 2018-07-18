@@ -139,9 +139,9 @@ class synth_dev(BaseModule):
                 self.usage()
 
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
-            print '\n\n'
+            print ('***** Control-C *****')
+        except Exception as error:
+            print ('\n\n')
             traceback.print_exc()
             print '\n\n'
         finally:
