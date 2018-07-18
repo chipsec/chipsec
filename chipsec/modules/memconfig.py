@@ -65,7 +65,7 @@ class memconfig(BaseModule):
     def check_memmap_locks(self):
         self.logger.start_test( "Host Bridge Memory Map Locks" )
 
-        regs = memmap_registers.keys()
+        regs = list(memmap_registers.keys())
         regs.sort()
         all_locked = True
 

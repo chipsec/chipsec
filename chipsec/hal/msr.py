@@ -140,7 +140,7 @@ class Msr:
         logger().log( '[cpu%d] Physical Address: 0x%016X' % (cpu_thread_id,pa) )
         logger().log( '[cpu%d] # of entries    : %d' % (cpu_thread_id,total_num) )
         logger().log( '[cpu%d] Contents (%d entries):' % (cpu_thread_id,num_entries) )
-        print_buffer( buffer(dt,0,16*num_entries) )
+        print_buffer( dt )
         logger().log( '--------------------------------------' )
         logger().log( '#    segment:offset         attributes' )
         logger().log( '--------------------------------------' )
