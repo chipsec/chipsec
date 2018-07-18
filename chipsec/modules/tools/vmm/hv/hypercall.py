@@ -170,7 +170,7 @@ class HyperVHypercall(BaseModuleHwAccess):
                                 hv_fast = 0
                             else:
                                 hv_fast = 1
-                    if result <> HV_STATUS_INVALID_HYPERCALL_CODE:
+                    if result != HV_STATUS_INVALID_HYPERCALL_CODE:
                         self.hv_hypercalls[call_code] = [hv_rep, hv_fast, result]
                 except Exception as e:
                     self.msg('Exception on hypercall (0x%08x): %s' % (call_code, str(e)))
@@ -201,7 +201,7 @@ class HyperVHypercall(BaseModuleHwAccess):
             hciv = hv_hciv(0, 0, HV_POST_MESSAGE)
             buffer = pack ('<LLLLQ', i, 0x0, 0x1, 8, 0x0)
             result = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
-            if result <> HV_STATUS_INVALID_CONNECTION_ID:
+            if result != HV_STATUS_INVALID_CONNECTION_ID:
                 if result == HV_STATUS_SUCCESS:
                     self.hv_connectionid[i] = 0x1
                 else:
@@ -218,7 +218,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         statistics = {}
         pattern    = ''
         hc = self.hv_hypercalls[i] if i in self.hv_hypercalls else [0, 0, HV_STATUS_INVALID_HYPERCALL_CODE]
-        if hc[2] <> HV_STATUS_SUCCESS:
+        if hc[2] != HV_STATUS_SUCCESS:
             for x in xrange(total_tests):
                 buffer  = ''
                 buffer += '\x00' * randint(0 ,8) + chr(getrandbits(8))
@@ -282,7 +282,7 @@ class HyperVHypercall(BaseModuleHwAccess):
                         ranges.append('%02X' % x)
                     else:
                         ranges.append('%02X-%02X' % (x, v))
-            if (ranges <> ['00-FF']) and (ranges <> []):
+            if (ranges != ['00-FF']) and (ranges != []):
                 self.msg('  Byte %02d = [ %s ]' % (l, ', '.join(ranges)))
         return
 

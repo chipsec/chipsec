@@ -642,7 +642,7 @@ class BGRT (ACPI_TABLE):
     def parse(self, table_content):
         self.Version = struct.unpack('<H', table_content[0:2])[0]
         self.Status = struct.unpack('<b', table_content[2:3])[0]
-	self.ImageType = struct.unpack('<b', table_content[3:4])[0]
+        self.ImageType = struct.unpack('<b', table_content[3:4])[0]
         self.ImageAddress = struct.unpack('<Q', table_content[4:12])[0]
         self.ImageOffsetX = struct.unpack('<I', table_content[12:16])[0]
         self.ImageOffsetY = struct.unpack('<I', table_content[16:20])[0]
@@ -656,7 +656,7 @@ class BGRT (ACPI_TABLE):
             self.OrientationOffset = '270 degrees'
         else:
             self.OrientationOffset = 'Reserved bits are used'
-	if(self.ImageType is 0):
+        if(self.ImageType is 0):
             self.ImageTypeStr = ' - Bitmap'
         else:
             self.ImageTypeStr = 'Reserved'
@@ -1264,7 +1264,7 @@ class HEST (ACPI_TABLE):
             ghes_assist_str = 'Bit is reserved'
 		
         self.resultsStr = self.resultsStr + ("""
-  Architecture Machine Check Exception Structure
+    Architecture Machine Check Exception Structure
     Source ID                                     : %s
     Reserved                                      : %s
     Flags                                         : %s
@@ -1276,8 +1276,8 @@ class HEST (ACPI_TABLE):
     Global Capability Init Data                   : %s
     Number of Hardware Banks                      : %s
     Reserved                                      : %s %s %s %s %s %s %s
-	""" % ( ('0x%04X' % sourceID ),  ('0x%04X' % reserved1 ), ('0x%02X' % flags ), firmware_first , firmware_first_str, ghes_assist , ghes_assist_str, ('0x%02X' % enabled ), ('0x%08X' % recordsToPreAllocate ), ('0x%08X' % maxSectorsPerRecord ), ('0x%016X' % globalCapabilityInitData ), ('0x%016X' % globalControlInitData ), ('0x%02X' %  numHardwareBanks), ('0x%02X' %  reserved2_1), ('0x%02X' %  reserved2_2), ('0x%02X' %  reserved2_3), ('0x%02X' %  reserved2_4), ('0x%02X' %  reserved2_5), ('0x%02X' %  reserved2_6), ('0x%02X' %  reserved2_7) ) )
-	curBankNum = 0
+    """ % ( ('0x%04X' % sourceID ),  ('0x%04X' % reserved1 ), ('0x%02X' % flags ), firmware_first , firmware_first_str, ghes_assist , ghes_assist_str, ('0x%02X' % enabled ), ('0x%08X' % recordsToPreAllocate ), ('0x%08X' % maxSectorsPerRecord ), ('0x%016X' % globalCapabilityInitData ), ('0x%016X' % globalControlInitData ), ('0x%02X' %  numHardwareBanks), ('0x%02X' %  reserved2_1), ('0x%02X' %  reserved2_2), ('0x%02X' %  reserved2_3), ('0x%02X' %  reserved2_4), ('0x%02X' %  reserved2_5), ('0x%02X' %  reserved2_6), ('0x%02X' %  reserved2_7) ) )
+        curBankNum = 0
         while curBankNum < numHardwareBanks:
             machineBankParser(table_content[40 + i*28:40 + (i+1)*28])
             curBankNum += 1
@@ -1335,7 +1335,7 @@ class HEST (ACPI_TABLE):
     %s
     Number of Hardware Banks                      : %s
     Reserved                                      : %s %s %s
-	""" % ( title, ('0x%04X' % sourceID ),  ('0x%04X' % reserved1 ), ('0x%02X' % flags ), flags_str, firmware_first , firmware_first_str, ghes_assist , ghes_assist_str, ('0x%02X' % enabled ), ('0x%08X' % recordsToPreAllocate ), ('0x%08X' % maxSectorsPerRecord ), notificationStructure, ('0x%02X' %  numHardwareBanks), ('0x%02X' %  reserved2_1), ('0x%02X' %  reserved2_2), ('0x%02X' %  reserved2_3) ) )
+    """ % ( title, ('0x%04X' % sourceID ),  ('0x%04X' % reserved1 ), ('0x%02X' % flags ), flags_str, firmware_first , firmware_first_str, ghes_assist , ghes_assist_str, ('0x%02X' % enabled ), ('0x%08X' % recordsToPreAllocate ), ('0x%08X' % maxSectorsPerRecord ), notificationStructure, ('0x%02X' %  numHardwareBanks), ('0x%02X' %  reserved2_1), ('0x%02X' %  reserved2_2), ('0x%02X' %  reserved2_3) ) )
         currBank = 0
         while currBank < numHardwareBanks:
             machineBankParser(table_content[48 + i*28:48 + (i+1)*28])
@@ -1728,7 +1728,7 @@ class MSCT (ACPI_TABLE):
     def parse(self, table_content):
         offsetProxDomInfo = struct.unpack('<L', table_content[0:4])[0]
         maxNumProxDoms = struct.unpack('<L', table_content[4:8])[0]
-	maxNumClockDoms = struct.unpack('<L', table_content[8:12])[0]
+        maxNumClockDoms = struct.unpack('<L', table_content[8:12])[0]
         maxPhysAddr = struct.unpack('<Q', table_content[12:20])[0]
         proxDomInfoStructStr = self.parseProxDomInfoStruct( table_content[20: ], maxNumProxDoms )
         self.results = '''==================================================================

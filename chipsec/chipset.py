@@ -438,7 +438,7 @@ class Chipset:
         if _unknown_platform and start_driver:
             msg = 'Unsupported Platform: VID = 0x%04X, DID = 0x%04X' % (self.vid,self.did)
             logger().error( msg )
-            raise UnknownChipsetError, msg
+            raise UnknownChipsetError (msg)
 
 
     def destroy( self, start_driver ):
@@ -653,7 +653,7 @@ class Chipset:
 
     def get_device_BDF( self, device_name ):
         device = self.Cfg.CONFIG_PCI[ device_name ]
-        if device is None or device == {}: raise DeviceNotFoundError, ('DeviceNotFound: %s' % device_name)
+        if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: {}'.format(device_name))
         b = int(device['bus'],16)
         d = int(device['dev'],16)
         f = int(device['fun'],16)

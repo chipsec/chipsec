@@ -27,8 +27,7 @@ Main application logic and automation functions
 
 ## These are for debugging imports
 import inspect
-import __builtin__
-savimp = __builtin__.__import__
+savimp = __builtins__.__import__
 
 def newimp(name, *x):
     caller = inspect.currentframe().f_back
@@ -192,8 +191,8 @@ class ChipsecMain:
                       "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                       "##                                                            ##\n"
                       "################################################################" )
-        logger().log( "[CHIPSEC] Version {}}".format(self.version) )
-        logger().log( "[CHIPSEC] Arguments: {}}".format( " ".join(self.argv) ) )
+        logger().log( "[CHIPSEC] Version {}".format(self.version) )
+        logger().log( "[CHIPSEC] Arguments: {}".format( " ".join(self.argv) ) )
 
     ##################################################################################
     # Module API
@@ -606,7 +605,7 @@ class ChipsecMain:
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
         except chipset.UnknownChipsetError as msg:
-            logger().error( "Platform is not supported (%s)." % str(msg) )
+            logger().error( "Platform is not supported ({}).".format(str(msg)) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
