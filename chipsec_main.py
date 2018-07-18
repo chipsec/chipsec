@@ -134,7 +134,7 @@ class ChipsecMain:
         else:
             try:
                 module = importlib.import_module( module_path )
-            except BaseException, msg:
+            except BaseException as msg:
                 logger().error( "Exception occurred during import of %s: '%s'" % (module_path, str(msg)) )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
@@ -163,7 +163,7 @@ class ChipsecMain:
                 result = modx.run( module_argv )
             else:
                 return module_common.ModuleResult.SKIPPED
-        except BaseException , msg:
+        except BaseException as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (modx.get_name(), str(msg)) )
             raise msg
@@ -430,8 +430,8 @@ class ChipsecMain:
               "verbose", "debug", "module_args=", "no_driver", "log=",
               "moduletype=", "json=", "xml=", "list_tags", "include", "failfast",
               "no_time", "deltas="])
-        except getopt.GetoptError, err:
-            print str(err)
+        except getopt.GetoptError as err:
+            print (str(err))
             self.usage()
             return (False, ExitCode.EXCEPTION)
 
@@ -519,7 +519,7 @@ class ChipsecMain:
 
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
-        except chipset.UnknownChipsetError , msg:
+        except chipset.UnknownChipsetError as msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
@@ -532,7 +532,7 @@ class ChipsecMain:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             if self.failfast: raise os_helper_error
             return ExitCode.EXCEPTION
-        except BaseException, be:
+        except BaseException as be:
             logger().log_bad(traceback.format_exc())
             if self.failfast: raise be
             return ExitCode.EXCEPTION

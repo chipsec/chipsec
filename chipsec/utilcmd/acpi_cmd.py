@@ -64,8 +64,8 @@ class ACPICommand(BaseCommand):
 
         try:
             _acpi = ACPI(self.cs)
-        except AcpiRuntimeError, msg:
-            print msg
+        except AcpiRuntimeError as msg:
+            print (msg)
             return
 
         if ( 'list' == op ):

@@ -289,7 +289,7 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariable = kernel32.SetFirmwareEnvironmentVariableW
             self.SetFirmwareEnvironmentVariable.restype = c_int
             self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             logger().warn( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
             pass
 
@@ -297,7 +297,7 @@ class Win32Helper(Helper):
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
             self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
-        except AttributeError, msg:
+        except AttributeError as msg:
             logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
             pass
 
@@ -308,7 +308,7 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableExW
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().VERBOSE: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
             pass
 
@@ -316,7 +316,7 @@ class Win32Helper(Helper):
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
             self.GetSystemFirmwareTbl.restype = c_int
             self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
             pass
         
@@ -324,7 +324,7 @@ class Win32Helper(Helper):
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
             self.EnumSystemFirmwareTbls.restype = c_int
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
 
 
@@ -358,7 +358,7 @@ class Win32Helper(Helper):
 
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
-        except win32service.error, (hr, fn, msg):
+        except win32service.error as (hr, fn, msg):
             handle_winerror(fn, msg, hr)
 
         if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
@@ -377,12 +377,12 @@ class Win32Helper(Helper):
                  None, 0, u"", None, None )
             if hs:
                 if logger().VERBOSE: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )
-        except win32service.error, (hr, fn, msg):
+        except win32service.error as (hr, fn, msg):
             if (winerror.ERROR_SERVICE_EXISTS == hr):
                 if logger().VERBOSE: logger().log( "[helper] service '%s' already exists: %s (%d)" % (SERVICE_NAME, msg, hr) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
-                except win32service.error, (hr, fn, msg):
+                except win32service.error as (hr, fn, msg):
                     handle_winerror(fn, msg, hr)
             else:
                 handle_winerror(fn, msg, hr)
@@ -408,7 +408,7 @@ class Win32Helper(Helper):
         try:
             win32serviceutil.RemoveService( SERVICE_NAME )
             if logger().VERBOSE: logger().log( "[helper] service '%s' deleted" % SERVICE_NAME )
-        except win32service.error, (hr, fn, msg):
+        except win32service.error as (hr, fn, msg):
             logger().warn( "RemoveService failed: %s (%d)" % (msg, hr) )
             return False
 
@@ -435,7 +435,7 @@ class Win32Helper(Helper):
                 win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
                 self.driver_loaded = True
                 if logger().VERBOSE: logger().log( "[helper] service '%s' started" % SERVICE_NAME )
-            except pywintypes.error, (hr, fn, msg):
+            except pywintypes.error as (hr, fn, msg):
                 _handle_error( "service '%s' didn't start: %s (%d)" % (SERVICE_NAME, msg, hr), hr )
 
         return True
@@ -452,7 +452,7 @@ class Win32Helper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
-        except pywintypes.error, (hr, fn, msg):
+        except pywintypes.error as (hr, fn, msg):
             logger().error( "StopService failed: %s (%d)" % (msg, hr) )
             return False
         finally:
@@ -461,7 +461,7 @@ class Win32Helper(Helper):
         try:
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             if logger().VERBOSE: logger().log( "[helper] service '%s' stopped" % SERVICE_NAME )
-        except pywintypes.error, (hr, fn, msg):
+        except pywintypes.error as (hr, fn, msg):
             logger().warn( "service '%s' didn't stop: %s (%d)" % (SERVICE_NAME, msg, hr) )
             return False
 
@@ -518,7 +518,7 @@ class Win32Helper(Helper):
         if logger().VERBOSE: print_buffer( in_buf )
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
-        except pywintypes.error, _err:
+        except pywintypes.error as _err:
             err_status = _err[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x%X)" % err_status
@@ -816,8 +816,8 @@ class Win32Helper(Helper):
                 flags |= wn32con.PROCESS_SET_INFORMATION
             try:
                 pHandle = win32api.OpenProcess(flags, 0, pid)
-            except pywintypes.error, e:
-                print "unable to open a process handle"
+            except pywintypes.error as e:
+                print ("unable to open a process handle")
                 raise ValueError, e
         return pHandle
 
@@ -826,8 +826,8 @@ class Win32Helper(Helper):
         current = win32process.GetProcessAffinityMask(pHandle)[0]
         try:
             win32process.SetProcessAffinityMask(pHandle, current)
-        except win32process.error, e:
-            print "unable to set process affinity"
+        except win32process.error as e:
+            print ("unable to set process affinity")
             raise ValueError, e
         return current
 
@@ -835,8 +835,8 @@ class Win32Helper(Helper):
         pHandle = self._get_handle_for_pid()
         try:
             return win32process.GetProcessAffinityMask(pHandle)[0]
-        except win32process.error, e:
-            print "unable to get the running cpu"
+        except win32process.error as e:
+            print ("unable to get the running cpu")
             raise ValueError, e
             
     #
@@ -923,7 +923,7 @@ class Win32Helper(Helper):
           if exe is None: return None 
           try:
             subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
+          except BaseException as msg:
             logger().error( str(msg) )
             if logger().DEBUG: logger().log_bad( traceback.format_exc() )
             return None

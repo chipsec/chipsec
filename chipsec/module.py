@@ -55,7 +55,7 @@ class Module():
                     self.module = importlib.import_module( self.name )
                 loaded = True
                 if self.logger.VERBOSE: self.logger.log_good( "imported: %s" % self.name )
-            except BaseException, msg:
+            except BaseException as msg:
                 self.logger.error( "Exception occurred during import of %s: '%s'" % (self.name, str(msg)) )
                 if self.logger.VERBOSE: self.logger.log_bad(traceback.format_exc())
                 raise msg

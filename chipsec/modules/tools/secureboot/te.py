@@ -377,7 +377,7 @@ def replace_efi_binary(orig_efi_binary, new_efi_binary):
     if not os.path.exists(backup): os.rename(orig_efi_binary, backup)
     try:
         shutil.copy(te_binary, orig_efi_binary)
-    except OSError, err:
+    except OSError as err:
         logger.error( 'Cannot replace binary (%s)' % err )
         return False
     return True
@@ -431,7 +431,7 @@ def restore_efi_binary( orig_efi_binary ):
     try:
         if os.path.exists(orig_efi_binary): os.remove(orig_efi_binary)
         os.rename(backup, orig_efi_binary)
-    except OSError, err:
+    except OSError as err:
         logger.error( 'Cannot restore original binary (%s)' % err )
         return False
     return True
