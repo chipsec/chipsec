@@ -105,8 +105,7 @@ class uefivar_fuzz(BaseModule):
         self.logger.log( USAGE_TEXT )
         return True
 
-    def bound(self,value): 
-        BOUNDS = 1000
+    def bound(self,value,BOUNDS):
         if value:
             if sys.getsizeof(value) < BOUNDS:
                 return value
@@ -131,6 +130,7 @@ class uefivar_fuzz(BaseModule):
         ITERATIONS = 1000
         SEED       = int(time())
         CASE       = 1
+        BOUND      = 1000 #tested value that can be increased or decreased to fit the limit bounds
 
 
         FUZZ_NAME   = True 
@@ -200,7 +200,7 @@ class uefivar_fuzz(BaseModule):
                 if FUZZ_DATA  : 
                     _DATA = ''
                     while not _DATA:
-                        _DATA   = self.bound(self.rnd(int(self.rnd(3),16)%255))
+                        _DATA   = self.bound(self.rnd(int(self.rnd(3),16)%255),BOUND)
         
                 if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)            
                 
