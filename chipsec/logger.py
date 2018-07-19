@@ -193,9 +193,8 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-                logPath = os.getcwd() #gets current working directory
 
-                self.logfile = pyLogging.FileHandler("{0}/{1}".format(logPath, self.LOG_FILE_NAME),mode='w') #creates FileHandler for log file
+                self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME,mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
         
                 self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
