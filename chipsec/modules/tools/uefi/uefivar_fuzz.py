@@ -105,15 +105,14 @@ class uefivar_fuzz(BaseModule):
         self.logger.log( USAGE_TEXT )
         return True
 
-    def bound(self,value):
-      
-        BOUNDS = 200
-        if sys.getsizeof(value) < BOUNDS:
-          value = self.rnd(3)
+    def bound(self,value): 
+        BOUNDS = 1000
+        if value:
+            if sys.getsizeof(value) < BOUNDS:
+                return value
         else:
-          self.bound(value)
-        return value
-
+            pass
+    
     def run( self, module_argv ):
         self.logger.start_test( "Fuzz UEFI Variable Interface" )
         
@@ -129,10 +128,9 @@ class uefivar_fuzz(BaseModule):
         _SIZE   = 0x08
         _DATA   = 'A'*_SIZE
 
-        ITERATIONS = 10
+        ITERATIONS = 1000
         SEED       = int(time())
         CASE       = 1
-        BOUNDS     = 200
 
 
         FUZZ_NAME   = True 
@@ -191,31 +189,29 @@ class uefivar_fuzz(BaseModule):
                 
                 if FUZZ_NAME:
                     _NAME = ''
-                    for n in range(int(self.rnd(3),16)%24):
-                        _NAME += random.choice(string.printable)
+                    while not _NAME:
+                        for n in range(int(self.rnd(3),16)%255):
+                            _NAME += random.choice(string.printable)      
+
                 if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
                 
                 if FUZZ_ATTRIB: _ATTRIB = int(self.rnd(4),16)
-                #pdb.set_trace()  
-                if FUZZ_DATA  : _DATA   = self.bound(_DATA)
-                    
-                if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)
                 
-                #print(_NAME)
-                #print(_GUID)
-                #print(_ATTRIB)
-                print(_DATA)
-                #print(_SIZE)
-                
+                if FUZZ_DATA  : 
+                    _DATA = ''
+                    while not _DATA:
+                        _DATA   = self.bound(self.rnd(int(self.rnd(3),16)%255))
+        
+                if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)            
                 
                 if (count < CASE): continue
                 
                 self.logger.log( '  Running test #%d:' % count )                    
                 self.logger.flush()
 
-                status = self._uefi.set_EFI_variable(_NAME, _GUID, _DATA, _SIZE, _ATTRIB)
-                
+                status = self._uefi.set_EFI_variable(_NAME, _GUID, _DATA, _SIZE, _ATTRIB) 
                 self.logger.log( status )
+                
                 status = self._uefi.delete_EFI_variable(_NAME, _GUID)
                 self.logger.log( status )
  
