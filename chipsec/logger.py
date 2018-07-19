@@ -169,9 +169,8 @@ class Logger:
         self.logFormatter = coloredlogs.ColoredFormatter("%(message)s")
         self.rootLogger = pyLogging.getLogger(__name__)
         self.ALWAYS_FLUSH = False
-        self.DEBUG = pyLogging.DEBUG
-        self.INFO = pyLogging.INFO
-        self.CRITICAL = pyLogging.CRITICAL
+        self.debug = pyLogging.DEBUG
+        self.info = pyLogging.INFO
         self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
@@ -203,7 +202,7 @@ class Logger:
                 self.logstream.setFormatter(self.logFormatter)
                 self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
                 
-                self.rootLogger.setLevel(level=self.DEBUG) #sets rootlogger level
+                self.rootLogger.setLevel(level=self.debug) #sets rootlogger level
                 self.LOG_TO_FILE = True
 
             except None:
@@ -400,7 +399,7 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        self.rootLogger.log(self.INFO,text) #writes text to defined log file
+        self.rootLogger.log(self.info,text) #writes text to defined log file
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()
