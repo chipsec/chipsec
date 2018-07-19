@@ -75,7 +75,6 @@ Examples:
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a name,1,123456789,94  
 '''
 
-import pdb
 import random
 from time import time
 
@@ -104,13 +103,6 @@ class uefivar_fuzz(BaseModule):
     def usage(self):
         self.logger.log( USAGE_TEXT )
         return True
-
-    def bound(self,value,BOUNDS):
-        if value:
-            if sys.getsizeof(value) < BOUNDS:
-                return value
-        else:
-            pass
     
     def run( self, module_argv ):
         self.logger.start_test( "Fuzz UEFI Variable Interface" )
@@ -130,8 +122,8 @@ class uefivar_fuzz(BaseModule):
         ITERATIONS = 1000
         SEED       = int(time())
         CASE       = 1
-        BOUND      = 1000 #tested value that can be increased or decreased to fit the limit bounds
-
+        BOUND_STR  = 255 #tested value that can be increased or decreased to fit the limit bounds
+        BOUND_INT  = 1000
 
         FUZZ_NAME   = True 
         FUZZ_GUID   = True
@@ -143,7 +135,6 @@ class uefivar_fuzz(BaseModule):
         
         if len(module_argv):
             fz_cli = module_argv[0].lower()
-            
             if ('all' != fz_cli):
                 FUZZ_NAME   = False
                 FUZZ_GUID   = False
@@ -173,7 +164,6 @@ class uefivar_fuzz(BaseModule):
         if not help_text:
             
             random.seed( SEED )
-            random.randrange(SEED)
             write_file( 'SEED.txt', str(SEED) )
             
             if not len(module_argv): fz_cli = 'all'
@@ -182,26 +172,23 @@ class uefivar_fuzz(BaseModule):
             self.logger.log( 'Seed      : {:d}'.format(SEED) )
             self.logger.log( 'Test case : {:d}'.format(CASE) )
             self.logger.log('')
-            
-             
-                
             for count in range(1,ITERATIONS+CASE):
                 
                 if FUZZ_NAME:
                     _NAME = ''
                     while not _NAME:
-                        for n in range(int(self.rnd(3),16)%255):
-                            _NAME += random.choice(string.printable)      
+                        for n in xrange(random.randrange(BOUND_STR)):
+                            _NAME += random.choice(string.printable)    
 
                 if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
                 
                 if FUZZ_ATTRIB: _ATTRIB = int(self.rnd(4),16)
                 
                 if FUZZ_DATA  : 
-                    _DATA = ''
+                    _DATA = None
                     while not _DATA:
-                        _DATA   = self.bound(self.rnd(int(self.rnd(3),16)%255),BOUND)
-        
+                        _DATA   = self.rnd(random.randrange(BOUND_INT))
+                        
                 if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)            
                 
                 if (count < CASE): continue
