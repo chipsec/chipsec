@@ -31,7 +31,6 @@
 Logging functions
 """
 import logging as pyLogging
-import coloredlogs
 import platform
 import string
 import sys
@@ -88,13 +87,13 @@ if "windows" == platform.system().lower():
             """
             old_setting = WConio.gettextinfo()[4] & 0x00FF
             WConio.textattr( COLOR_ID[ fg_color ] )
-            print("{}".format(text))
+            print(text)
             WConio.textattr( old_setting )
 
     except ImportError, e:
         #print "WConio package is not installed. No colored output"
         def log_color( fg_color, text ):
-            print("{}".format(text))
+            print(text)
 
 elif "linux" == platform.system().lower():
 
@@ -132,25 +131,13 @@ elif "linux" == platform.system().lower():
         def format(msg, color_type=LIGHT,color=8):
             return ( '\033[%im%s%s'%(color_type+color,str(msg),ColorLogger.ENDC))
 
-    """Mapping of log level names to default font styles."""
-    coloredlogs.DEFAULT_LEVEL_STYLES = dict(
-        spam=dict(color='green', faint=True),
-        debug=dict(color='green'),
-        verbose=dict(color='magenta'),
-        info=dict(),
-        notice=dict(color='magenta'),
-        warning=dict(color='yellow'),
-        success=dict(color='green'), #bold=coloredlogs.CAN_USE_BOLD_FONT)
-        error=dict(color='red'),
-        critical=dict(color='blue'))
-
     def log_color( text ):
-        coloredlogs.install(fmt='%(message)s',level=pyLogging.DEBUG)
-        print ("{}".format(text))   
+        "To be implemented using coloredlogs"
+        print(text)   
 
 else:
-    def log_color( fg_color, text ):
-        print("{}".format(text))
+    def log_color( text ):
+        print(text)
 
 
 class LoggerError (RuntimeWarning):
@@ -166,16 +153,19 @@ class Logger:
         self.mytime = localtime()
         self.logfile = None
         self.logstream = None
-        self.logFormatter = coloredlogs.ColoredFormatter("%(message)s")
-        self.rootLogger = pyLogging.getLogger(__name__)
-        self.ALWAYS_FLUSH = False
         self.debug = pyLogging.DEBUG
         self.info = pyLogging.INFO
+        self.rootLogger = pyLogging.getLogger(__name__)
+        self.rootLogger.setLevel(self.debug)
+        self.ALWAYS_FLUSH = False
         self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
-        #pyLogging.basicConfig(format=self.logFormatter)
         #self._set_log_files()
+        self.LOG_TO_STREAM = True
+        self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
+        self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
+            
 
     def set_xml_file(self, name=None):
         self.xmlAux.set_xml_file(name)
@@ -196,12 +186,10 @@ class Logger:
 
                 self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME,mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
-        
-                self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
-                self.logstream.setFormatter(self.logFormatter)
-                self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
                 
-                self.rootLogger.setLevel(level=self.debug) #sets rootlogger level
+                if not self.LOG_TO_STREAM:
+                    self.rootLogger.removeHandler(self.logstream)
+
                 self.LOG_TO_FILE = True
 
             except None:
@@ -212,12 +200,19 @@ class Logger:
         if self.logfile:
             try:
                 self.rootLogger.removeHandler(self.logfile)
-                self.logfile.close()                
+                self.rootLogger.removeHandler(self.logstream)
+                self.logfile.close()
+                self.logstream.flush()
+                #self.logstream.flush()              
             except None:
                 print ("WARNING: Could not close log file")
             finally:
                 self.logfile = None
+        
 
+              
+
+        
     def disable( self ):
         """Disables the logging to file and closes the file if any."""
         self.LOG_TO_FILE = False
@@ -245,11 +240,8 @@ class Logger:
         """Sends plain text to logging."""
         if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:
-            if self.rootLogger:
-                log_color(text)
-                if self.ALWAYS_FLUSH: sys.stdout.flush()
-            else:
-                print("{}".format(text))
+            self.rootLogger.info(text)
+            if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         #if isStatus: self._save_to_status_log_file( text ) #status file not used ##doesnt affect code
     
@@ -388,7 +380,7 @@ class Logger:
 
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
-        text = "\n[*] running module: %s" % module_name
+        text = "\n[*] running module: {}".format(module_name)
         self.rootLogger.info(text)
         self.xmlAux.start_module( module_name )
 
