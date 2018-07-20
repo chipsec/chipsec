@@ -32,6 +32,8 @@ Checks for exposure of pre-boot passwords (BIOS/HDD/pre-bot authentication SW) i
 from chipsec.hal.mmio import *
 from chipsec.hal.spi import *
 from chipsec.module_common import *
+from builtins import bytes
+
 
 TAGS = [MTAG_BIOS]
 
@@ -55,14 +57,10 @@ class bios_kbrd_buffer(BaseModule):
         self.logger.log( "[*] Keyboard buffer head pointer = 0x%X (at 0x41A), tail pointer = 0x%X (at 0x41C)" % (kbrd_buf_head,kbrd_buf_tail) )
         bios_kbrd_buf = self.cs.mem.read_physical_mem( 0x41E, 32 )
         self.logger.log( "[*] Keyboard buffer contents (at 0x41E):" )
-        chipsec.logger.print_buffer( bios_kbrd_buf )
+        bios_kbrd_buf = bytes(bios_kbrd_buf)
+        chipsec.logger.print_buffer_bytes( bios_kbrd_buf )
 
-        #try:
-            #s = struct.unpack( '32c', bios_kbrd_buf.raw )
-        s = struct.unpack( '32c', bios_kbrd_buf )
-        #except:
-        #   self.logger.error( 'Cannot convert buffer to char sequence' )
-        #   return -1
+        s = struct.unpack( '32s', bios_kbrd_buf )[0]
 
         has_contents = False
 
@@ -70,8 +68,14 @@ class bios_kbrd_buffer(BaseModule):
             self.logger.log_passed_check( "Keyboard buffer is filled with common fill pattern" )
             return ModuleResult.PASSED
 
-        for x in range(32):
-            if ( chr(0) != s[x] and chr(0x20) != s[x] ):
+        if 0x0 in bios_kbrd_buf:
+            print ("hello")
+        
+        if 0x20 in bios_kbrd_buf:
+            print ("world")
+
+        for x in bios_kbrd_buf:
+            if ( 0x0 != x and 0x20 != x ):
                 has_contents = True
                 break
 

@@ -402,14 +402,14 @@ class Chipset:
                 _unknown_platform = True
         else:
             self.vid = VID_INTEL
-            if Chipset_Code.has_key( platform_code ):
+            if platform_code in Chipset_Code:
                 self.did = Chipset_Code[ platform_code ]
             else:
                 _unknown_platform = True
                 self.vid = 0xFFFF
                 self.did = 0xFFFF
 
-        if Chipset_Dictionary.has_key( self.did ):
+        if self.did in Chipset_Dictionary:
             data_dict       = Chipset_Dictionary[ self.did ]
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
@@ -420,13 +420,13 @@ class Chipset:
 
         if req_pch_code is not None:
             self.pch_vid = VID_INTEL
-            if pch_codes.has_key(req_pch_code):
+            if req_pch_code in pch_codes:
                 self.pch_did = pch_codes[req_pch_code]
             else:
                 self.pch_vid = 0xFFFF
                 self.pch_did = 0xFFFF
 
-        if self.pch_vid == VID_INTEL and pch_dictionary.has_key(self.pch_did):
+        if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
             data_dict           = pch_dictionary[self.pch_did]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
@@ -653,7 +653,7 @@ class Chipset:
 
     def get_device_BDF( self, device_name ):
         device = self.Cfg.CONFIG_PCI[ device_name ]
-        if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: {}'.format(device_name))
+        if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: {}}'.format( device_name))
         b = int(device['bus'],16)
         d = int(device['dev'],16)
         f = int(device['fun'],16)

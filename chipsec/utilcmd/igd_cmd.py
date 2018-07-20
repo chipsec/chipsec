@@ -111,7 +111,7 @@ class IgdCommand(BaseCommand):
                 return
 
         else:
-                print IgdDmaCommand.__doc__
+                print (IgdDmaCommand.__doc__)
                 return
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )

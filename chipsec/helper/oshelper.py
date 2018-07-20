@@ -32,6 +32,7 @@
 Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
 """
 
+from six import with_metaclass
 import os
 import fnmatch
 import re
@@ -75,15 +76,15 @@ class UnimplementedNativeAPIError (UnimplementedAPIError):
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
 
-# Base class for the helpers
-class Helper(object):
-    class __metaclass__(type):
-        def __init__(cls, name, bases, attrs):
-            if not hasattr(cls, 'registry'):
-                cls.registry = []
-            else:
-                cls.registry.append((name, cls))
+class MetaHelper(type):
+    def __init__(cls,name,bases, attrs):
+        if not hasattr(cls, 'registry'):
+            cls.registry = []
+        else:
+            cls.registry.append((name,cls))
 
+# Base class for the helpers
+class Helper(with_metaclass(MetaHelper,object)):
     def __init__(self):
         self.driver_loaded = False
 

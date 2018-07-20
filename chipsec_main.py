@@ -34,7 +34,8 @@ if sys.version[0] == 2:
 elif sys.version[0] == 3:
     import builtins
     savimp = builtins.__import__
-    
+
+
 def newimp(name, *x):
     caller = inspect.currentframe().f_back
     if 'chipsec' in name:
@@ -49,6 +50,7 @@ import getopt
 import json
 import os
 import re
+
 import time
 import traceback
 try:
@@ -610,7 +612,7 @@ class ChipsecMain:
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
         except chipset.UnknownChipsetError as msg:
-            logger().error( "Platform is not supported ({}).".format(str(msg)) )
+            logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())

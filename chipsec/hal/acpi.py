@@ -522,11 +522,11 @@ class ACPI(hal_base.HALBase):
             logger().log( "==================================================================" )
             # print table header
             logger().log( table_header )
-            print_buffer( table_header_blob )
+            print_buffer_bytes( table_header_blob )
             # print table contents
             logger().log( '' )
             logger().log( table )
-            print_buffer( table_blob )
+            print_buffer_bytes( table_blob )
             logger().log( '' )
 
     # --------------------------------------------------------------------
