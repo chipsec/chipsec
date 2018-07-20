@@ -165,8 +165,8 @@ class Logger:
         self.LOG_TO_STREAM = True
         self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
+       
             
-
     def set_xml_file(self, name=None):
         self.xmlAux.set_xml_file(name)
 
@@ -208,10 +208,6 @@ class Logger:
                 print ("WARNING: Could not close log file")
             finally:
                 self.logfile = None
-        
-
-              
-
         
     def disable( self ):
         """Disables the logging to file and closes the file if any."""
