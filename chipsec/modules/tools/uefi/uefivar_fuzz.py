@@ -177,7 +177,7 @@ class uefivar_fuzz(BaseModule):
                 if FUZZ_NAME:
                     _NAME = ''
                     while not _NAME:
-                        for n in xrange(random.randrange(BOUND_STR)):
+                        for n in range(random.randrange(BOUND_STR)):
                             _NAME += random.choice(string.printable)    
 
                 if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
