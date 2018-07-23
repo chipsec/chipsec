@@ -39,65 +39,57 @@ from time import localtime, strftime
 
 from chipsec.xmlout import xmlAux
 import traceback
-
-
-RESET     =0
-BRIGHT    =1
-DIM       =2
-UNDERLINE =3
-BLINK     =4
-REVERSE   =7
-HIDDEN    =8
-
-BLACK     =0
-RED       =1
-GREEN     =2
-YELLOW    =3
-BLUE      =4
-MAGENTA   =5
-CYAN      =6
-WHITE     =7
+try:
+    import WConio
+    has_WConio = True
+except ImportError:
+    has_WConio = False
+    #raiseImportError('WConio package not installed. No colored output')
 
 LOG_PATH                = os.path.join( os.getcwd(), "logs" )
 #LOG_STATUS_FILE_NAME    = ""
 #LOG_COMPLETED_FILE_NAME = ""
 
-#
-# Colored output
-#
-if "windows" == platform.system().lower():
+class ColorLogger( pyLogging.Formatter ):
+    """Colored Output for Python Logging"""
+    
+    def format( self, record ):
+        message = pyLogging.Formatter.format(self,record)
+        message = self.log_color(message,record)
+        return message
 
-    try:
-        import WConio
+    if "windows" == platform.system().lower():
+        if has_WConio:
+            BLACK = WConio.BLACK
+            RED = WConio.LIGHTRED
+            GREEN = WConio.LIGHTGREEN
+            YELLOW = WConio.YELLOW
+            BLUE = WConio.LIGHTBLUE
+            MAGENTA = WConio.MAGENTA
+            CYAN = WConio.CYAN
+            WHITE = WConio.WHITE
 
-        COLOR_ID = {
-                  BLACK  : WConio.BLACK,
-                  RED    : WConio.LIGHTRED,
-                  GREEN  : WConio.LIGHTGREEN,
-                  YELLOW : WConio.YELLOW,
-                  BLUE   : WConio.LIGHTBLUE,
-                  MAGENTA: WConio.MAGENTA,
-                  CYAN   : WConio.CYAN,
-                  WHITE  : WConio.WHITE
-                  }
+            LEVEL_ID = {
+            pyLogging.DEBUG: GREEN,
+            pyLogging.INFO: WHITE,
+            pyLogging.WARNING: YELLOW,
+            pyLogging.CRITICAL: BLUE,
+            pyLogging.ERROR: RED
+            }   
 
-        def log_color( fg_color, text ):
-            """
-            Store current attribute settings
-            """
-            old_setting = WConio.gettextinfo()[4] & 0x00FF
-            WConio.textattr( COLOR_ID[ fg_color ] )
-            print(text)
-            WConio.textattr( old_setting )
+            def log_color ( self, message, record ):
+                """ Testing """
+                if record.levelno in self.LEVEL_ID:
+                    old_setting = WConio.gettextinfo()[4] & 0x00FF
+                    WConio.textcolor( self.LEVEL_ID[record.levelno] )
+                    return message
+                WConio.textcolor( old_setting )
 
-    except ImportError as e:
-        #print "WConio package is not installed. No colored output"
-        def log_color( fg_color, text ):
-            print(text)
+        else:
+            def log_color( self, message, record ):
+                return message
 
-elif "linux" == platform.system().lower():
-
-    class ColorLogger:
+    elif "linux" == platform.system().lower():
         ENDC = '\033[0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
@@ -113,33 +105,33 @@ elif "linux" == platform.system().lower():
         BLUE   = 4
         PURPLE = 5
         CYAN   = 6
-        WHITE  = 7
+        LIGHT_GRAY  = 7 
         NORMAL = 8
+        WHITE = 9
+        csi = '\x1b['
+        reset = '\x1b[0m'
 
-        def log_test(self):
-            print("{}BOLD{}".format(ColorLogger.BOLD,ColorLogger.ENDC))
-            print("{}UNDERLINE{}".format(ColorLogger.UNDERLINE,ColorLogger.ENDC))
-            for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
-                for code in range(ColorLogger.GRAY, ColorLogger.NORMAL+1):
-                    self.log(color_type+code, color_type, code )
+        LEVEL_ID = {
+            pyLogging.DEBUG: GREEN,
+            pyLogging.INFO: WHITE,
+            pyLogging.WARNING: YELLOW,
+            pyLogging.CRITICAL: BLUE,
+            pyLogging.ERROR: RED
+            }  
 
+        def log_color( self, message, record) :
+            if record.levelno in self.LEVEL_ID:
+                color = self.LEVEL_ID[record.levelno]
+                params = []
+                params.append(str(color + 30))
+                message = ''.join((self.csi, ';'.join(params),
+                                    'm',message,self.reset))
+            return message
 
-        def log(self,msg, color_type=LIGHT,color=8):
-            print(ColorLogger.format(msg, color_type, color))
-
-        @staticmethod
-        def format(msg, color_type=LIGHT,color=8):
-            return ( '\033[{:d}m{}{}'.format(color_type+color,str(msg),ColorLogger.ENDC))
-
-    def log_color( fg_color, text ):
-        _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
-        print(_text)  
-
-else:
-    def log_color( text ):
-        print(text)
-
-
+    else:
+        def log_color( self, message, record ):
+            return message
+    
 class LoggerError (RuntimeWarning):
     pass
 
@@ -152,7 +144,6 @@ class Logger:
         pass
         self.mytime = localtime()
         self.logfile = None
-        self.logstream = None
         self.debug = pyLogging.DEBUG
         self.info = pyLogging.INFO
         self.rootLogger = pyLogging.getLogger(__name__)
@@ -161,12 +152,10 @@ class Logger:
         self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
-        #self._set_log_files()
-        self.LOG_TO_STREAM = True
-        self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
+        self.logstream = pyLogging.StreamHandler(sys.stdout)
+        self.logstream.setFormatter(ColorLogger()) #applys colorization to output
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
-       
-            
+
     def set_xml_file(self, name=None):
         self.xmlAux.set_xml_file(name)
 
@@ -196,11 +185,12 @@ class Logger:
                 self.rootLogger.removeHandler(self.logfile)
                 self.rootLogger.removeHandler(self.logstream)
                 self.logfile.close()
-                self.logstream.flush()          
+                self.logstream.flush()             
             except None:
                 print ("WARNING: Could not close log file")
             finally:
-                self.logfile = None  
+                self.logfile = None
+        
     def disable( self ):
         """Disables the logging to file and closes the file if any."""
         self.LOG_TO_FILE = False
@@ -228,8 +218,11 @@ class Logger:
         """Sends plain text to logging."""
         if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:
-            self.rootLogger.info(text)
-            if self.ALWAYS_FLUSH: sys.stdout.flush()
+            if self.rootLogger:
+                self.rootLogger.info(text)
+                if self.ALWAYS_FLUSH: sys.stdout.flush()
+            else:
+                print(text)
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
     
     def error( self, text ):
