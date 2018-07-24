@@ -175,8 +175,20 @@ Chipset_Dictionary = {
 0x5918 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 
 # 8th Generation Core Processor Family (Coffeelake)
-0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
-0x3EC2 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
+0x3E0F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake S 2 Cores)' },
+0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S 4 Cores)' },
+0x3EC2 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S 6 Cores)' },
+0x3E30 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake S 8 Cores)' },
+0x3ECC : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake U 2 Cores)' },
+0x3ED0 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake U 4 Cores)' },
+0x3E10 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake H 4 Cores)' },
+0x3EC4 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake H 6 Cores)' },
+0x3E18 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Workstation 4 Cores)' },
+0x3EC6 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Workstation 6 Cores)' },
+0x3E31 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Workstation 8 Cores)' },
+0x3E33 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 4 Cores)' },
+0x3ECA : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 6 Cores)' },
+0x3E32 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 8 Cores)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
