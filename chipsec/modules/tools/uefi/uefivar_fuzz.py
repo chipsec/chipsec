@@ -103,7 +103,7 @@ class uefivar_fuzz(BaseModule):
     def usage(self):
         self.logger.log( USAGE_TEXT )
         return True
-    
+
     def run( self, module_argv ):
         self.logger.start_test( "Fuzz UEFI Variable Interface" )
         
