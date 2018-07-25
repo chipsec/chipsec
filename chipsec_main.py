@@ -349,19 +349,18 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        failed        = []
-        errors        = []
-        warnings      = []
-        passed        = []
-        skipped       = []
-        exceptions    = []
-        information   = []
-        notapplicable = []
-        executed      = 0
+        #failed        = []
+        #errors        = []
+        #warnings      = []
+        #passed        = []
+        #skipped       = []
+        #exceptions    = []
+        #information   = []
+        #notapplicable = []
+        #executed      = 0
         exit_code     = ExitCode()
         #results       = {}
-        mres          = logger().Results
-        
+        mres          = logger().Results       
         mres.add_properties(self.properties)
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
@@ -375,7 +374,8 @@ class ChipsecMain:
             try:
                 result = self.run_module( modx, modx_argv )
             except BaseException:
-                exceptions.append( modx )
+                #exceptions.append( modx )
+                mres.add_exception()
                 exit_code.exception()
                 result = module_common.ModuleResult.ERROR
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
@@ -396,27 +396,27 @@ class ChipsecMain:
             if modx_argv: mr.add_arg( modx_argv )
             mres.add_testcase(mr)
 
-            """if not self._list_tags: logger().end_module( modx.get_name() )
+            if not self._list_tags: logger().end_module( modx.get_name() )
 
             if result is None or module_common.ModuleResult.ERROR == result:
-                errors.append( modx )
+                #errors.append( modx )
                 exit_code.error()
             elif False == result or module_common.ModuleResult.FAILED == result:
-                failed.append( modx )
+                #failed.append( modx )
                 exit_code.fail()
-            elif True == result or module_common.ModuleResult.PASSED == result:
-                passed.append( modx )
+            #elif True == result or module_common.ModuleResult.PASSED == result:
+                #passed.append( modx )
             elif module_common.ModuleResult.WARNING == result:
                 exit_code.warning()
-                warnings.append( modx )
+                #warnings.append( modx )
             elif module_common.ModuleResult.SKIPPED == result:
                 exit_code.skipped()
-                skipped.append( modx )
-            elif module_common.ModuleResult.INFORMATION == result:
-                information.append( modx )
+                #skipped.append( modx )
+            #elif module_common.ModuleResult.INFORMATION == result:
+                #information.append( modx )
             elif module_common.ModuleResult.NOTAPPLICABLE == result:
                 exit_code.notapplicable()
-                notapplicable.append( modx )"""
+                #notapplicable.append( modx )
             
         #print(mres.get_summary())
         #print(mres.txt_summary())
@@ -445,7 +445,7 @@ class ChipsecMain:
             logger().log( mres.txt_summary() )
         else:
             logger().log( "[*] Available tags are:" )
-            for at in self.AVAILABLE_TAGS: logger().log("    %s"%at)
+            for at in self.AVAILABLE_TAGS: logger().log("    {}".format(at))
 
         return exit_code.get_code()
 

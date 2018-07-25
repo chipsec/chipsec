@@ -1,11 +1,13 @@
 import json
 from collections import OrderedDict
+import xml.etree.ElementTree at ET
 
 class ChipsecResults():
     def __init__(self):
         self.test_cases = []
         self.properties = None
         self.summary = False
+        self.exceptions = []
         
     def add_properties(self,properties):
 		self.properties = properties
@@ -20,6 +22,9 @@ class ChipsecResults():
         if len(self.test_cases) == 0 or self.summary:
             return None
         return self.test_cases[len(self.test_cases)-1]    
+
+    def add_exception(self,name):
+        self.append(name)
         
     def order_summary(self):
         self.summary = True
@@ -50,13 +55,14 @@ class ChipsecResults():
             elif fields['result'] == 'NotApplicable':
                 notapplicable.append(fields['name']) 
         ret['total']  = executed
+        ret['failed to run'] = errors
         ret['passed'] = passed
         ret['information'] = information
         ret['failed'] = failed
         ret['warnings'] = warnings
         ret['not implemented'] = skipped
         ret['not applicable'] = notapplicable
-        ret['with Exceptions'] =errors 
+        ret['exceptions'] = self.exceptions 
         return ret
         
     def txt_summary(self):
@@ -74,18 +80,21 @@ class ChipsecResults():
         
     def xml_summary(self):
         summary = self.order_summary()
-        xml =  '<?xml version="1.0" ?>\n'
-        xml += '<Summary>\n'
+        xml_element = ET.Element("Summary")
         for k in summary.keys():
+            temp = dict()
             if k == 'total':
-                xml += '  <Metric name="Modules {}">\n    <total>\n      {:d}\n    </total>\n  </Metric>\n'.format(k,summary[k])
+                temp['name'] = k
+                temp['total'] = summary[k]
+                m_element = ET.SubElement( xml_element, 'result', temp)
             else:
-                xml += '  <Metric name="Modules {}">\n    <total>\n      {:d}\n    </total>\n'.format(k,len(summary[k]))
+                temp['name'] = k
+                temp['total'] = len(summary[k])
+                m_element = ET.SubElement( xml_element, 'result', temp)
                 for mod in summary[k]:
-                    xml += '    <name>\n      {}\n    </name>\n'.format(mod)
-                xml += '    </Metric name=Modules {}>\n'.format(k)
-        xml += '</Summary>\n'
-        return xml
+                    n_element = ET.SubElement( m_element, 'name')
+                    n_element.text = mod
+        return ET.tostring( xml_element, None, None )
         
     def json_summary(self):
         summary = self.order_summary()
