@@ -68,91 +68,7 @@ try:
 except ImportError:
   pass
 
-class ExitCode:
-    OK            = 0
-    SKIPPED       = 1
-    WARNING       = 2
-    DEPRECATED    = 4
-    FAIL          = 8
-    ERROR         = 16
-    EXCEPTION     = 32
-    INFORMATION   = 64
-    NOTAPPLICABLE = 128
-    def __init__(self):
-        self._skipped       = False
-        self._warning       = False
-        self._deprecated    = False
-        self._fail          = False
-        self._error         = False
-        self._exception     = False
-        self._information   = False
-        self._notapplicable = False
-
-    def skipped(self):       self._skipped = True
-    def warning(self):       self._warning = True
-    def deprecated(self):    self._deprecated = True
-    def fail(self):          self._fail = True
-    def error(self):         self._error = True
-    def exception(self):     self._exception = True
-    def information(self):   self._information = True
-    def notapplicable(self): self._notapplicable = True
-
-    def get_code(self):
-        exit_code = ExitCode.OK
-        if self._skipped:       exit_code = exit_code | ExitCode.SKIPPED
-        if self._warning:       exit_code = exit_code | ExitCode.WARNING
-        if self._deprecated:    exit_code = exit_code | ExitCode.DEPRECATED
-        if self._fail:          exit_code = exit_code | ExitCode.FAIL
-        if self._error:         exit_code = exit_code | ExitCode.ERROR
-        if self._exception:     exit_code = exit_code | ExitCode.EXCEPTION
-        if self._information:   exit_code = exit_code | ExitCode.INFORMATION
-        if self._notapplicable: exit_code = exit_code | ExitCode.NOTAPPLICABLE
-        return exit_code
-
-    def is_skipped(self):       return self._skipped
-    def is_warning(self):       return self._warning
-    def is_deprecated(self):    return self._deprecated
-    def is_fail(self):          return self._fail
-    def is_error(self):         return self._error
-    def is_exception(self):     return self._exception
-    def is_informaiton(self):   return self._information
-    def is_notapplicable(self): return self._notapplicable
-
-
-    def parse(self, code):
-        code = int(code)
-        self._skipped       = ( code & ExitCode.SKIPPED )    != 0
-        self._warning       = ( code & ExitCode.WARNING )    != 0
-        self._deprecated    = ( code & ExitCode.DEPRECATED ) != 0
-        self._fail          = ( code & ExitCode.FAIL )       != 0
-        self._error         = ( code & ExitCode.ERROR )      != 0
-        self._exception     = ( code & ExitCode.EXCEPTION )  != 0
-        self._information   = ( code & ExitCode.INFORMATION ) != 0
-        self._notapplicable = ( code & ExitCode.NOTAPPLICABLE ) != 0
-
-    def __str__(self):
-        return """
-        SKIPPED       = %r
-        NOTAPPLICABLE = %r
-        WARNING       = %r
-        DEPRECATED    = %r
-        FAIL          = %r
-        ERROR         = %r
-        EXCEPTION     = %r
-        INFORMATION   = %r
-        """%(
-        self._skipped    ,
-        self._warning    ,
-        self._deprecated ,
-        self._fail       ,
-        self._error      ,
-        self._exception  ,
-        self._information,
-        self._notapplicable)
-
-
 class ChipsecMain:
-
 
     def __init__(self, argv):
         self.VERBOSE               = False
@@ -349,7 +265,6 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        exit_code     = ExitCode()
         results          = logger().Results       
         results.add_properties(self.properties)
 
@@ -364,14 +279,12 @@ class ChipsecMain:
                 result = self.run_module( modx, modx_argv )
             except BaseException:
                 results.add_exception()
-                exit_code.exception()
                 result = module_common.ModuleResult.ERROR
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise
 
             # Module uses the old API  display warning and try to run anyways
             if result == module_common.ModuleResult.DEPRECATED:
-                exit_code.deprecated()
                 logger().error( 'Module %s does not inherit BaseModule class' % str(modx) )
 
             # Populate results
@@ -379,23 +292,6 @@ class ChipsecMain:
             test_result.add_result( module_common.getModuleResultName(result) )
             if modx_argv: test_result.add_arg( modx_argv )
             results.add_testcase(test_result)
-
-            #if not self._list_tags: logger().end_module( modx.get_name() )
-
-            if result is None or module_common.ModuleResult.ERROR == result:
-                exit_code.error()
-            elif False == result or module_common.ModuleResult.FAILED == result:
-                exit_code.fail()
-            #elif True == result or module_common.ModuleResult.PASSED == result:
-                #passed.append( modx )
-            elif module_common.ModuleResult.WARNING == result:
-                exit_code.warning()
-            elif module_common.ModuleResult.SKIPPED == result:
-                exit_code.skipped()
-            #elif module_common.ModuleResult.INFORMATION == result:
-                #information.append( modx )
-            elif module_common.ModuleResult.NOTAPPLICABLE == result:
-                exit_code.notapplicable()
 
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_summary())
@@ -420,7 +316,7 @@ class ChipsecMain:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    {}".format(at))
 
-        return exit_code.get_code()
+        return results.get_return_code()
 
     ##################################################################################
     # Running all relevant modules
@@ -479,12 +375,14 @@ class ChipsecMain:
         print "CHIPSEC returns an integer exit code:\n"
         print "- Exit code is 0:       all modules ran successfully and passed"
         print "- Exit code is not 0:   each bit means the following:\n"
-        print "    - Bit 0: SKIPPED    at least one module was skipped"
-        print "    - Bit 1: WARNING    at least one module had a warning"
-        print "    - Bit 2: DEPRECATED at least one module uses deprecated API"
-        print "    - Bit 3: FAIL       at least one module failed"
-        print "    - Bit 4: ERROR      at least one module wasn't able to run"
-        print "    - Bit 5: EXCEPTION  at least one module thrown an unexpected exception"
+        print "    - Bit 0: NOT IMPLEMENTED at least one module was not implemented for the platform"
+        print "    - Bit 1: WARNING         at least one module had a warning"
+        print "    - Bit 2: DEPRECATED      at least one module uses deprecated API"
+        print "    - Bit 3: FAIL            at least one module failed"
+        print "    - Bit 4: ERROR           at least one module wasn't able to run"
+        print "    - Bit 5: EXCEPTION       at least one module threw an unexpected exception"
+        print "    - Bit 6: INFORMATION     at least one module contained information"
+        print "    - Bit 7: NOT APPLICABLE  at least one module was not applicable for the platform"
 
 
     def parse_args(self):

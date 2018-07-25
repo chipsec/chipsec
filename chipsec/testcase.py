@@ -2,6 +2,16 @@ import json
 from collections import OrderedDict
 import xml.etree.ElementTree as ET
 
+OK            = 0
+SKIPPED       = 1
+WARNING       = 2
+DEPRECATED    = 4
+FAIL          = 8
+ERROR         = 16
+EXCEPTION     = 32
+INFORMATION   = 64
+NOTAPPLICABLE = 128
+
 class ChipsecResults():
     def __init__(self):
         self.test_cases = []
@@ -64,6 +74,25 @@ class ChipsecResults():
         ret['not applicable'] = notapplicable
         ret['exceptions'] = self.exceptions 
         return ret
+
+    def get_return_code(self):
+        summary = self.order_summary()
+        if len(summary['failed to run']) != 0:
+            return ERROR
+        elif len(summary['exceptions']) != 0:
+            return EXCEPTION
+        elif len(summary['failed']) != 0:
+            return FAIL
+        elif len(summary['warnings']) != 0:
+            return WARNING
+        elif len(summary['skipped']) != 0:
+            return SKIPPED
+        elif len(summary['not applicable']) != 0:
+            return NOTAPPLICABLE
+        elif len(summary['information']) != 0:
+            return INFORMATION
+        else:
+            return OK
         
     def txt_summary(self):
         summary = self.order_summary()
