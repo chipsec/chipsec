@@ -349,33 +349,21 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        #failed        = []
-        #errors        = []
-        #warnings      = []
-        #passed        = []
-        #skipped       = []
-        #exceptions    = []
-        #information   = []
-        #notapplicable = []
-        #executed      = 0
         exit_code     = ExitCode()
-        #results       = {}
-        mres          = logger().Results       
-        mres.add_properties(self.properties)
+        results          = logger().Results       
+        results.add_properties(self.properties)
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
         t = time.time()
         for (modx,modx_argv) in self.Loaded_Modules:
-            executed += 1
             if not self._list_tags: logger().start_module( modx.get_name( ) )
 
             # Run the module
             try:
                 result = self.run_module( modx, modx_argv )
             except BaseException:
-                #exceptions.append( modx )
-                mres.add_exception()
+                results.add_exception()
                 exit_code.exception()
                 result = module_common.ModuleResult.ERROR
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
@@ -386,49 +374,34 @@ class ChipsecMain:
                 exit_code.deprecated()
                 logger().error( 'Module %s does not inherit BaseModule class' % str(modx) )
 
-            # Populate results dictionary to export to JSON
-            #r = {}
-            #r['result'] = module_common.getModuleResultName(result)
-            #if modx_argv: r['arg'] = modx_argv
-            #results[modx.get_name()] = r
-            mr = TestCase(modx.get_name())
-            mr.add_result( module_common.getModuleResultName(result) )
-            if modx_argv: mr.add_arg( modx_argv )
-            mres.add_testcase(mr)
+            # Populate results
+            test_result = TestCase(modx.get_name())
+            test_result.add_result( module_common.getModuleResultName(result) )
+            if modx_argv: test_result.add_arg( modx_argv )
+            results.add_testcase(test_result)
 
-            if not self._list_tags: logger().end_module( modx.get_name() )
+            #if not self._list_tags: logger().end_module( modx.get_name() )
 
             if result is None or module_common.ModuleResult.ERROR == result:
-                #errors.append( modx )
                 exit_code.error()
             elif False == result or module_common.ModuleResult.FAILED == result:
-                #failed.append( modx )
                 exit_code.fail()
             #elif True == result or module_common.ModuleResult.PASSED == result:
                 #passed.append( modx )
             elif module_common.ModuleResult.WARNING == result:
                 exit_code.warning()
-                #warnings.append( modx )
             elif module_common.ModuleResult.SKIPPED == result:
                 exit_code.skipped()
-                #skipped.append( modx )
             #elif module_common.ModuleResult.INFORMATION == result:
                 #information.append( modx )
             elif module_common.ModuleResult.NOTAPPLICABLE == result:
                 exit_code.notapplicable()
-                #notapplicable.append( modx )
-            
-        #print(mres.get_summary())
-        #print(mres.txt_summary())
-        #print(mres.xml_summary())
-        #print(mres.json_summary())
 
         if self._json_out:
-            #results_json = json.dumps(results, sort_keys=True, indent=2, separators=(',', ': '))
-            chipsec.file.write_file(self._json_out, mres.json_summary())
+            chipsec.file.write_file(self._json_out, results.json_summary())
             
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, mres.xml_summary())			
+            chipsec.file.write_file(self._xml_out, results.xml_summary())			
 
         test_deltas = None
         if self._deltas_file is not None:
@@ -442,7 +415,7 @@ class ChipsecMain:
             chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
         elif not self._list_tags:
             logger().log( "" )
-            logger().log( mres.txt_summary() )
+            logger().log( results.txt_summary() )
         else:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    {}".format(at))
@@ -565,7 +538,6 @@ class ChipsecMain:
             elif o in ("-n", "--no_driver"):
                 self._no_driver = True
             elif o in ("-x", "--xml"):
-                #logger().set_xml_file(a)
                 self._xml_out = a
             elif o in ("-j", "--json"):
                 self._json_out = a
@@ -629,7 +601,6 @@ class ChipsecMain:
             if self.failfast: raise be
             return ExitCode.EXCEPTION
 
-        print ("BH",self.properties())
         logger().log("[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
         logger().log("[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
         logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))

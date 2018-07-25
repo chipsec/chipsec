@@ -1,6 +1,6 @@
 import json
 from collections import OrderedDict
-import xml.etree.ElementTree at ET
+import xml.etree.ElementTree as ET
 
 class ChipsecResults():
     def __init__(self):
@@ -10,7 +10,7 @@ class ChipsecResults():
         self.exceptions = []
         
     def add_properties(self,properties):
-		self.properties = properties
+        self.properties = properties
         
     def add_testcase(self,test):
         self.test_cases.append(test)
@@ -24,7 +24,7 @@ class ChipsecResults():
         return self.test_cases[len(self.test_cases)-1]    
 
     def add_exception(self,name):
-        self.append(name)
+        self.exceptions.append(str(name))
         
     def order_summary(self):
         self.summary = True
@@ -75,7 +75,7 @@ class ChipsecResults():
                 txt += '[CHIPSEC] Modules {:16}{:d}\n'.format(k,len(summary[k]))
                 for mod in summary[k]:
                     txt += '    {}\n'.format(mod)
-        txt += '[CHIPSEC] *****************************************************************'
+        txt += '[CHIPSEC] *****************************************************************\n'
         return txt
         
     def xml_summary(self):
@@ -85,20 +85,20 @@ class ChipsecResults():
             temp = dict()
             if k == 'total':
                 temp['name'] = k
-                temp['total'] = summary[k]
+                temp['total'] = str(summary[k])
                 m_element = ET.SubElement( xml_element, 'result', temp)
             else:
                 temp['name'] = k
-                temp['total'] = len(summary[k])
+                temp['total'] = str(len(summary[k]))
                 m_element = ET.SubElement( xml_element, 'result', temp)
                 for mod in summary[k]:
-                    n_element = ET.SubElement( m_element, 'name')
+                    n_element = ET.SubElement( m_element, 'module')
                     n_element.text = mod
         return ET.tostring( xml_element, None, None )
         
     def json_summary(self):
         summary = self.order_summary()
-        js = json.loads(json.dumps(summary, sort_keys=True, indent=2, separators=(',', ': ')))
+        js = json.dumps(summary, sort_keys=False, indent=2, separators=(',', ': '))
         return js
                 
 class TestCase():
