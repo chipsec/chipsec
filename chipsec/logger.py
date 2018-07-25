@@ -30,7 +30,6 @@
 """
 Logging functions
 """
-import coloredlogs
 import logging as pyLogging
 import platform
 import string
@@ -120,6 +119,9 @@ elif "linux" == platform.system().lower():
         WHITE  = 9
         NORMAL = 8
 
+        csi = '\x1b['
+        reset = '\x1b[0m'
+
         LEVEL_ID = {
             pyLogging.DEBUG: GREEN,
             pyLogging.INFO: WHITE,
@@ -127,27 +129,6 @@ elif "linux" == platform.system().lower():
             pyLogging.CRITICAL: BLUE,
             pyLogging.ERROR: RED
         }
-        
-        color_map = {
-        'black': 0,
-        'red': 1,
-        'green': 2,
-        'yellow': 3,
-        'blue': 4,
-        'magenta': 5,
-        'cyan': 6,
-        'white': 7,
-            }
-        csi = '\x1b['
-        reset = '\x1b[0m'
-
-        level_map = {
-            pyLogging.DEBUG: (None, 'blue', True),
-            pyLogging.INFO: (None, 'white', False),
-            pyLogging.WARNING: (None, 'yellow', True),
-            pyLogging.ERROR: (None, 'red', True),
-            pyLogging.CRITICAL: ('red', 'white', True),
-}
 
         @property
         def is_tty(self):
@@ -159,14 +140,12 @@ elif "linux" == platform.system().lower():
         
         def colorize(self,message,record):
             if record.levelno in self.LEVEL_ID:
-                #bg, fg, bold = self.level_map[record.levelno]
                 color = self.LEVEL_ID[record.levelno]
                 params = []
                 params.append(str(color + 30))
                 if params:
                     message = ''.join((self.csi, ';'.join(params),
                                         'm',message,self.reset))
-                #pdb.set_trace()
             return message
 
         def format(self,record):
@@ -174,10 +153,6 @@ elif "linux" == platform.system().lower():
             if self.is_tty:
                 # Don't colorize any traceback
                 message = self.colorize(message,record)
-                #parts = message.split('\n', 1)
-                #parts[0] = self.colorize(parts[0], record)
-                #pdb.set_trace()
-                #message = '\n'.join(parts)
             return message
 
 class LoggerError (RuntimeWarning):
