@@ -162,7 +162,6 @@ class uefivar_fuzz(BaseModule):
                 else: help_text = self.usage()
         
         if not help_text:
-            
             random.seed( SEED )
             write_file( 'SEED.txt', str(SEED) )
             
