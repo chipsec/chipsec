@@ -68,6 +68,16 @@ try:
 except ImportError:
   pass
 
+OK            = 0
+SKIPPED       = 1
+WARNING       = 2
+DEPRECATED    = 4
+FAIL          = 8
+ERROR         = 16
+EXCEPTION     = 32
+INFORMATION   = 64
+NOTAPPLICABLE = 128
+
 class ChipsecMain:
 
     def __init__(self, argv):
@@ -400,7 +410,7 @@ class ChipsecMain:
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
-            return (False, ExitCode.EXCEPTION)
+            return (False, EXCEPTION)
 
         for o, a in opts:
             if o in ("-v", "--verbose"):
@@ -411,7 +421,7 @@ class ChipsecMain:
                 logger().DEBUG   = True
             elif o in ("-h", "--help"):
                 self.usage()
-                return (False, ExitCode.OK)
+                return (False, OK)
             elif o in ("-o", "--output"):
                 self._output = a
             elif o in ("-p", "--platform"):
@@ -477,7 +487,7 @@ class ChipsecMain:
 
         if self._no_driver and self._driver_exists:
             logger().error( "incompatible options: --no_driver and --exists" )
-            return ExitCode.EXCEPTION
+            return EXCEPTION
 
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
@@ -487,22 +497,20 @@ class ChipsecMain:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
-                return  ExitCode.EXCEPTION
+                return  EXCEPTION
             logger().warn("Platform dependent functionality is likely to be incorrect")
         except oshelper.OsHelperError as os_helper_error:
             logger().error(str(os_helper_error))
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             if self.failfast: raise os_helper_error
-            return ExitCode.EXCEPTION
+            return EXCEPTION
         except BaseException, be:
             logger().log_bad(traceback.format_exc())
             if self.failfast: raise be
-            return ExitCode.EXCEPTION
+            return EXCEPTION
 
-        logger().log("[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log("[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
-        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
-        #logger().log( "[CHIPSEC] CPU affinity: 0x%X" % self._cs.helper.get_affinity() )
+        for prop in self.properties():
+            logger().log( prop )
 
         #logger().xmlAux.add_test_suite_property("OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine))
         #logger().xmlAux.add_test_suite_property("Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
@@ -510,7 +518,7 @@ class ChipsecMain:
         #logger().xmlAux.add_test_suite_property("CHIPSEC", "%s" % self.version)
         logger().log( " " )
 
-        if logger().VERBOSE: logger().log("[*] Running from %s" % os.getcwd())
+        if logger().VERBOSE: logger().log("[*] Running from {}".format(os.getcwd()))
 
         modules_failed = 0
         if self._module:
