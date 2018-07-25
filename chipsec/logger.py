@@ -203,11 +203,8 @@ class Logger:
         self.xmlAux = xmlAux()
         #self._set_log_files()
         self.LOG_TO_STREAM = True
-        self.formatter= coloredlogs.ColoredFormatter('%(message)s') #Color format
-        self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
-        self.logstream.setFormatter(self.formatter)
-        self.rootLogger.addHandler(ColorizingStreamHandler()) #adds streamhandler to root logger
-
+        self.logstream = ColorizingStreamHandler()
+        self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
 
     def set_xml_file(self, name=None):
         self.xmlAux.set_xml_file(name)
