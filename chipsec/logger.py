@@ -40,6 +40,7 @@ from time import localtime, strftime
 
 from chipsec.xmlout import xmlAux
 import traceback
+import pdb
 
 
 RESET     =0
@@ -99,19 +100,85 @@ if "windows" == platform.system().lower():
 
 elif "linux" == platform.system().lower():
 
-    class ColorLogger:
+    class ColorizingStreamHandler(pyLogging.StreamHandler):
 
-        """Mapping of log level names to default font styles."""
-        coloredlogs.DEFAULT_LEVEL_STYLES = dict(
-            spam=dict(color='green', faint=True),
-            debug=dict(color='green'),
-            verbose=dict(color='magenta'),
-            info=dict(),
-            notice=dict(color='magenta'),
-            warning=dict(color='yellow'),
-            success=dict(color='green'), #bold=coloredlogs.CAN_USE_BOLD_FONT)
-            error=dict(color='red'),
-            critical=dict(color='blue'))
+        ENDC = '\033[0m'
+        BOLD = '\033[1m'
+        UNDERLINE = '\033[4m'
+        END = 0
+        LIGHT = 90
+        DARK  = 30
+        BACKGROUND = 40
+        LIGHT_BACKGROUND = 100
+        GRAY   = 0
+        RED    = 1
+        GREEN  = 2
+        YELLOW = 3
+        BLUE   = 4
+        PURPLE = 5
+        CYAN   = 6
+        WHITE  = 9
+        NORMAL = 8
+
+        LEVEL_ID = {
+            pyLogging.DEBUG: GREEN,
+            pyLogging.INFO: WHITE,
+            pyLogging.WARNING: YELLOW,
+            pyLogging.CRITICAL: BLUE,
+            pyLogging.ERROR: RED
+        }
+        
+        color_map = {
+        'black': 0,
+        'red': 1,
+        'green': 2,
+        'yellow': 3,
+        'blue': 4,
+        'magenta': 5,
+        'cyan': 6,
+        'white': 7,
+            }
+        csi = '\x1b['
+        reset = '\x1b[0m'
+
+        level_map = {
+            pyLogging.DEBUG: (None, 'blue', True),
+            pyLogging.INFO: (None, 'white', False),
+            pyLogging.WARNING: (None, 'yellow', True),
+            pyLogging.ERROR: (None, 'red', True),
+            pyLogging.CRITICAL: ('red', 'white', True),
+}
+
+        @property
+        def is_tty(self):
+            isatty = getattr(self.stream, 'isatty',None)
+            return isatty and isatty()
+
+        def output_colorized(self,message):
+            self.stream.write(message)
+        
+        def colorize(self,message,record):
+            if record.levelno in self.LEVEL_ID:
+                #bg, fg, bold = self.level_map[record.levelno]
+                color = self.LEVEL_ID[record.levelno]
+                params = []
+                params.append(str(color + 30))
+                if params:
+                    message = ''.join((self.csi, ';'.join(params),
+                                        'm',message,self.reset))
+                #pdb.set_trace()
+            return message
+
+        def format(self,record):
+            message = pyLogging.StreamHandler.format(self,record)
+            if self.is_tty:
+                # Don't colorize any traceback
+                message = self.colorize(message,record)
+                #parts = message.split('\n', 1)
+                #parts[0] = self.colorize(parts[0], record)
+                #pdb.set_trace()
+                #message = '\n'.join(parts)
+            return message
 
 class LoggerError (RuntimeWarning):
     pass
@@ -139,7 +206,7 @@ class Logger:
         self.formatter= coloredlogs.ColoredFormatter('%(message)s') #Color format
         self.logstream = pyLogging.StreamHandler(sys.stdout) #creates stream handler for log output
         self.logstream.setFormatter(self.formatter)
-        self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
+        self.rootLogger.addHandler(ColorizingStreamHandler()) #adds streamhandler to root logger
 
 
     def set_xml_file(self, name=None):
