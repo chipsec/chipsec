@@ -188,8 +188,10 @@ class uefivar_fuzz(BaseModule):
                     _DATA = None
                     while not _DATA:
                         _DATA   = self.rnd(random.randrange(BOUND_INT))
+                print _DATA
                         
-                if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)            
+                if FUZZ_SIZE  : _SIZE   = random.randrange(len(_DATA))
+                print ("hoe",_SIZE)            
                 
                 if (count < CASE): continue
                 
