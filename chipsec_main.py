@@ -61,22 +61,12 @@ from chipsec import module_common
 from chipsec import chipset
 from chipsec.helper import oshelper
 from chipsec.logger import logger
-from chipsec.testcase import TestCase, ChipsecResults
+from chipsec.testcase import *
 
 try:
   import importlib
 except ImportError:
   pass
-
-OK            = 0
-SKIPPED       = 1
-WARNING       = 2
-DEPRECATED    = 4
-FAIL          = 8
-ERROR         = 16
-EXCEPTION     = 32
-INFORMATION   = 64
-NOTAPPLICABLE = 128
 
 class ChipsecMain:
 
@@ -414,7 +404,7 @@ class ChipsecMain:
         except getopt.GetoptError, err:
             print str(err)
             self.usage()
-            return (False, EXCEPTION)
+            return (False, ExitCode.EXCEPTION)
 
         for o, a in opts:
             if o in ("-v", "--verbose"):
@@ -425,7 +415,7 @@ class ChipsecMain:
                 logger().DEBUG   = True
             elif o in ("-h", "--help"):
                 self.usage()
-                return (False, OK)
+                return (False, ExitCode.OK)
             elif o in ("-o", "--output"):
                 self._output = a
             elif o in ("-p", "--platform"):
@@ -491,7 +481,7 @@ class ChipsecMain:
 
         if self._no_driver and self._driver_exists:
             logger().error( "incompatible options: --no_driver and --exists" )
-            return EXCEPTION
+            return ExitCode.EXCEPTION
 
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
@@ -501,17 +491,17 @@ class ChipsecMain:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
-                return  EXCEPTION
+                return  ExitCode.EXCEPTION
             logger().warn("Platform dependent functionality is likely to be incorrect")
         except oshelper.OsHelperError as os_helper_error:
             logger().error(str(os_helper_error))
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             if self.failfast: raise os_helper_error
-            return EXCEPTION
+            return ExitCode.EXCEPTION
         except BaseException, be:
             logger().log_bad(traceback.format_exc())
             if self.failfast: raise be
-            return EXCEPTION
+            return ExitCode.EXCEPTION
 
         for prop in self.properties():
             logger().log( prop )

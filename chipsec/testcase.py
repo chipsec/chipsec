@@ -4,15 +4,16 @@ import os
 from collections import OrderedDict
 import xml.etree.ElementTree as ET
 
-OK            = 0
-SKIPPED       = 1
-WARNING       = 2
-DEPRECATED    = 4
-FAIL          = 8
-ERROR         = 16
-EXCEPTION     = 32
-INFORMATION   = 64
-NOTAPPLICABLE = 128
+class ExitCode:
+    OK            = 0
+    SKIPPED       = 1
+    WARNING       = 2
+    DEPRECATED    = 4
+    FAIL          = 8
+    ERROR         = 16
+    EXCEPTION     = 32
+    INFORMATION   = 64
+    NOTAPPLICABLE = 128
 
 class ChipsecResults():
     def __init__(self):

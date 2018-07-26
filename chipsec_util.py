@@ -36,12 +36,9 @@ import getopt
 from chipsec import defines
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
+from chipsec.testcase import ExitCode
 
 logger().UTIL_TRACE = True
-
-class ExitCode:
-    OK = 0
-    EXCEPTION = 32
 
 #CMD_OPTS_WIDTH = [ 'byte', 'word', 'dword', 'qword' ]
 CMD_OPTS_WIDTH = [ 'byte', 'word', 'dword' ]
