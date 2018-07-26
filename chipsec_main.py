@@ -276,19 +276,21 @@ class ChipsecMain:
     def run_loaded_modules(self):
 
         results          = logger().Results       
-        results.add_properties(self.properties)
+        results.add_properties(self.properties())
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
         t = time.time()
         for (modx,modx_argv) in self.Loaded_Modules:
-            if not self._list_tags: logger().start_module( modx.get_name( ) )
+            test_result = TestCase(modx.get_name())
+            results.add_testcase(test_result)
+            logger().start_module( modx.get_name( ) )
 
             # Run the module
             try:
                 result = self.run_module( modx, modx_argv )
             except BaseException:
-                results.add_exception()
+                results.add_exception(modx)
                 result = module_common.ModuleResult.ERROR
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise
@@ -298,18 +300,17 @@ class ChipsecMain:
                 logger().error( 'Module %s does not inherit BaseModule class' % str(modx) )
 
             # Populate results
-            test_result = TestCase(modx.get_name())
+
             test_result.add_result( module_common.getModuleResultName(result) )
             if modx_argv: test_result.add_arg( modx_argv )
-            results.add_testcase(test_result)
 
-            if not self._list_tags: logger().end_module( modx.get_name() )
+            logger().end_module( modx.get_name() )
 
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_summary())
             
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full())
+            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
             #chipsec.file.write_file(self._xml_out, results.xml_summary())			
 
         test_deltas = None

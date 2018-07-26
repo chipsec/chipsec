@@ -1,4 +1,6 @@
 import json
+import time
+import os
 from collections import OrderedDict
 import xml.etree.ElementTree as ET
 
@@ -101,7 +103,7 @@ class ChipsecResults():
             self.time = pTime
         else:
             if len(self.test_cases) > 1:
-                self.time = self.test_cases[0].time - self.test_cases[len(self.test_cases)].time
+                self.time = self.get_current().endTime - self.test_cases[0].startTime
             else:
                 self.time = self.test_cases[0].time
         
@@ -148,10 +150,10 @@ class ChipsecResults():
         summary_dict = dict()
         for k in summary.keys():
             if k == 'total':
-                summary_dict[k] = "{:d}".format(len(summary[k]))
+                summary_dict[k] = "{:d}".format(summary[k])
             else:
                 summary_dict[k] = "{:d}".format(len(summary[k]))
-        summary_dict["name"] = basename( os.path.splitext(name)[0] )
+        summary_dict["name"] = os.path.basename( os.path.splitext(name)[0] )
         summary_dict["time"] = "{:5f}".format( self.time )
         ts_element = ET.SubElement(xml_element,"testsuite",summary_dict)
         #add properties
@@ -167,6 +169,7 @@ class ChipsecResults():
             r_element =   ET.SubElement(tc_element, "pass", {"type":test.result})
             out_element = ET.SubElement(tc_element, "system-out")
             out_element.text = test.output
+        return ET.tostring( xml_element, None, None )
 
 class TestCase():
     def __init__(self, name):
@@ -177,7 +180,7 @@ class TestCase():
         self.desc = ''
         self.startTime = None
         self.endTime = None
-        self.Time = none
+        self.time = None
         
     def add_output(self, text):
 		self.output += text
@@ -188,7 +191,7 @@ class TestCase():
     def add_arg(self, arg):
         self.argv = arg
 
-    def add_desc(self, desc)
+    def add_desc(self, desc):
         self.desc = desc
 
     def set_time(self, pTime=None):
@@ -200,3 +203,6 @@ class TestCase():
         else:    
             self.endTime = time.time()
             self.time = self.endTime - self.startTime
+
+    def get_fields(self):
+        return {'name':self.name,'output':self.output,'result':self.result}

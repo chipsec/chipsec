@@ -397,7 +397,7 @@ class Logger:
         text = text + "[x][ ======================================================================="
         self._log(text, BLUE, True)
         if self.Results.get_current() != None:
-            self.Results.get_current().add_desc(text)
+            self.Results.get_current().add_desc(test_name)
             self.Results.get_current().set_time()
         #self.xmlAux.start_test( test_name )
 
