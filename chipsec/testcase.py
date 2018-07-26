@@ -18,6 +18,7 @@ class ChipsecResults():
         self.properties = None
         self.summary = False
         self.exceptions = []
+        self.time = None
         
     def add_properties(self,properties):
         self.properties = properties
@@ -93,6 +94,16 @@ class ChipsecResults():
             return INFORMATION
         else:
             return OK
+
+    def set_time(self, pTime=None):
+        """Sets the time"""
+        if pTime is not None:
+            self.time = pTime
+        else:
+            if len(self.test_cases) > 1:
+                self.time = self.test_cases[0].time - self.test_cases[len(self.test_cases)].time
+            else:
+                self.time = self.test_cases[0].time
         
     def txt_summary(self):
         summary = self.order_summary()
@@ -114,11 +125,11 @@ class ChipsecResults():
             temp = dict()
             if k == 'total':
                 temp['name'] = k
-                temp['total'] = str(summary[k])
+                temp['total'] = "{:d}".format(summary[k])
                 m_element = ET.SubElement( xml_element, 'result', temp)
             else:
                 temp['name'] = k
-                temp['total'] = str(len(summary[k]))
+                temp['total'] = "{:d}".format(len(summary[k]))
                 m_element = ET.SubElement( xml_element, 'result', temp)
                 for mod in summary[k]:
                     n_element = ET.SubElement( m_element, 'module')
@@ -129,13 +140,44 @@ class ChipsecResults():
         summary = self.order_summary()
         js = json.dumps(summary, sort_keys=False, indent=2, separators=(',', ': '))
         return js
-                
+
+    def xml_full(self, name):
+        self.set_time()
+        xml_element = ET.Element("testsuites")
+        summary = self.order_summary()
+        summary_dict = dict()
+        for k in summary.keys():
+            if k == 'total':
+                summary_dict[k] = "{:d}".format(len(summary[k]))
+            else:
+                summary_dict[k] = "{:d}".format(len(summary[k]))
+        summary_dict["name"] = basename( os.path.splitext(name)[0] )
+        summary_dict["time"] = "{:5f}".format( self.time )
+        ts_element = ET.SubElement(xml_element,"testsuite",summary_dict)
+        #add properties
+        pr_element = ET.SubElement(ts_element,"properties")
+        prop_dict = dict()
+        for k in self.properties:
+            prop_dict["name"]  = k
+            prop_dict["value"] = self.properties[k]
+            p_element = ET.SubElement(pr_element,"property",prop_dict)
+        #add test cases
+        for test in self.test_cases:
+            tc_element =  ET.SubElement(ts_element, "testcase", {'classname':test.name,'name':test.desc, 'time':"{:5f}".format(test.time)})
+            r_element =   ET.SubElement(tc_element, "pass", {"type":test.result})
+            out_element = ET.SubElement(tc_element, "system-out")
+            out_element.text = test.output
+
 class TestCase():
     def __init__(self, name):
         self.name = name
         self.result = ''
         self.output = ''
         self.argv = ''
+        self.desc = ''
+        self.startTime = None
+        self.endTime = None
+        self.Time = none
         
     def add_output(self, text):
 		self.output += text
@@ -145,6 +187,16 @@ class TestCase():
         
     def add_arg(self, arg):
         self.argv = arg
-		
-    def get_fields(self):
-		return {'name':self.name,'output':self.output,'result':self.result}
+
+    def add_desc(self, desc)
+        self.desc = desc
+
+    def set_time(self, pTime=None):
+        """Sets the time"""
+        if pTime is not None:
+            self.time = pTime
+        elif self.startTime == None:
+            self.startTime = time.time()
+        else:    
+            self.endTime = time.time()
+            self.time = self.endTime - self.startTime

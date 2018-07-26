@@ -303,11 +303,14 @@ class ChipsecMain:
             if modx_argv: test_result.add_arg( modx_argv )
             results.add_testcase(test_result)
 
+            if not self._list_tags: logger().end_module( modx.get_name() )
+
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_summary())
             
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_summary())			
+            chipsec.file.write_file(self._xml_out, results.xml_full())
+            #chipsec.file.write_file(self._xml_out, results.xml_summary())			
 
         test_deltas = None
         if self._deltas_file is not None:
