@@ -74,7 +74,7 @@ for current, dirs, files in os.walk(cfg_dir ):
     for file in files:
         if file.endswith('.xml') :
             #xf = os.path.join('chipsec','cfg') ,os.path.join(cfg_dir,file)
-            xf = 'chipsec/cfg' ,['chipsec/cfg/%s'%file]
+            xf = 'chipsec/cfg' ,['chipsec/cfg/{}'.format(file)]
             data_files.append( xf ) 
 
 version=""
@@ -82,12 +82,12 @@ if os.path.exists(VERSION_FILE):
     data_files.append(('.',['VERSION']))
     with open(VERSION_FILE, "r") as verFile:
         version = verFile.read()
-print "VERSION: %s"%version 
+print "VERSION: {}".format(version) 
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
     if current.startswith(os.path.join(tool_dir,'build')): 
-        #print "*********** skipped: %s"%current
+        #print "*********** skipped: {}".format(current)
         continue
     for file in files:
         if file == "__init__.py":

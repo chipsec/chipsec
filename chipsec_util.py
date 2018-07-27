@@ -106,9 +106,9 @@ class ChipsecUtil:
         if command is None or command not in self.commands:
             logger().log("\n<command> can be one of the following:")
             for cmd in sorted(self.commands.keys() + ['help']):
-                logger().log( '    %s' % cmd )
+                logger().log( '    {}'.format(cmd) )
         else:
-            logger().log("\nhelp for '%s' <command>:" % command)
+            logger().log("\nhelp for '{}' <command>:".format(command))
             logger().log(self.commands[command].__doc__)
 
     def f_mod_zip(self, x):
@@ -184,7 +184,7 @@ class ChipsecUtil:
 
         if logger().VERBOSE:
             logger().log( '[CHIPSEC] Loaded command-line extensions:' )
-            logger().log( '   %s' % cmds )
+            logger().log( '   {}'.format(cmds) )
         module = None
         for cmd in cmds:
             try:
@@ -193,7 +193,7 @@ class ChipsecUtil:
                 cu = getattr(module, 'commands')
                 self.commands.update(cu)
             except ImportError as msg:
-                logger().error( "Couldn't import util command extension '%s'" % cmd )
+                logger().error( "Couldn't import util command extension '{}'".format(cmd) )
                 raise ImportError (msg)
 
         if self.show_help:
@@ -218,7 +218,7 @@ class ChipsecUtil:
                 logger().warn("*******************************************************************")
                 logger().warn("* Unknown platform!")
                 logger().warn("* Platform dependent functionality will likely be incorrect")
-                logger().warn("* Error Message: \"%s\"" % str(msg))
+                logger().warn("* Error Message: \"{}\"".format(str(msg)))
                 logger().warn("*******************************************************************")
             except Exception as msg:
                 logger().error(str(msg))
@@ -227,7 +227,7 @@ class ChipsecUtil:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
 
-            logger().log( "[CHIPSEC] Executing command {}' with args {}\n".format(cmd,self.argv[2:]) )
+            logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(cmd,self.argv[2:]) )
             comm.run()
             if comm.requires_driver():
                 self._cs.destroy(True)
@@ -238,7 +238,7 @@ class ChipsecUtil:
             else:
                 self.chipsec_util_help(self.argv[2])
         else:
-            logger().error( "Unknown command '%.32s'" % cmd )
+            logger().error( "Unknown command '{:.32s}'".format(cmd) )
         return ExitCode.OK
 
     def set_logfile(self, logfile):

@@ -67,7 +67,7 @@ class HWAccessViolationError (OsHelperError):
 
 class UnimplementedAPIError (OsHelperError):
     def __init__(self,api_name):
-        super(UnimplementedAPIError,self).__init__("'%s' is not implemented" % api_name, 0)
+        super(UnimplementedAPIError,self).__init__("'{}' is not implemented".format(api_name), 0)
 
 class UnimplementedNativeAPIError (UnimplementedAPIError):
     def __init__(self,api_name):
@@ -100,13 +100,13 @@ class OsHelper:
     def __init__(self):
         self.helper = None
         self.loadHelpers()
-        #print "Operating System: %s %s %s %s" % (self.os_system, self.os_release, self.os_version, self.os_machine)
+        #print "Operating System: {} {} {} {}".format(self.os_system, self.os_release, self.os_version, self.os_machine)
         #print self.os_uname
         if(not self.helper):
             import platform
             os_system  = platform.system()
-            #raise OsHelperError("Unsupported platform '%s'" % os_system,errno.ENODEV)
-            raise OsHelperError( "Could not load helper for '%s' environment (unsupported environment?)" % os_system, errno.ENODEV )
+            #raise OsHelperError("Unsupported platform '{}'".format(os_system),errno.ENODEV)
+            raise OsHelperError( "Could not load helper for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -134,7 +134,7 @@ class OsHelper:
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
                 error_no = msg.errorcode
-            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"%s\"" % msg,error_no)
+            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"{}\"".format(msg),error_no)
 
     def stop( self, start_driver ):
         if not self.helper.stop( start_driver ):
