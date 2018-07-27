@@ -58,19 +58,19 @@ class UcodeUpdateHeader( namedtuple('UcodeUpdateHeader', 'header_version update_
         return """
 Microcode Update Header
 --------------------------------
-Header Version      : 0x%08X
-Update Revision     : 0x%08X
-Date                : 0x%08X
-Processor Signature : 0x%08X
-Checksum            : 0x%08X
-Loader Revision     : 0x%08X
-Processor Flags     : 0x%08X
-Update Data Size    : 0x%08X
-Total Size          : 0x%08X
-Reserved1           : 0x%08X
-Reserved2           : 0x%08X
-Reserved3           : 0x%08X
-""" % ( self.header_version, self.update_revision, self.date, self.processor_signature, self.checksum, self.loader_revision, self.processor_flags, self.data_size, self.total_size, self.reserved1, self.reserved2, self.reserved3 )
+Header Version      : 0x{:08X}
+Update Revision     : 0x{:08X}
+Date                : 0x{:08X}
+Processor Signature : 0x{:08X}
+Checksum            : 0x{:08X}
+Loader Revision     : 0x{:08X}
+Processor Flags     : 0x{:08X}
+Update Data Size    : 0x{:08X}
+Total Size          : 0x{:08X}
+Reserved1           : 0x{:08X}
+Reserved2           : 0x{:08X}
+Reserved3           : 0x{:08X}
+""".format( self.header_version, self.update_revision, self.date, self.processor_signature, self.checksum, self.loader_revision, self.processor_flags, self.data_size, self.total_size, self.reserved1, self.reserved2, self.reserved3 )
 
 UCODE_HEADER_SIZE = 0x30
 def dump_ucode_update_header( pdb_ucode_buffer ):
@@ -82,7 +82,7 @@ def read_ucode_file( ucode_filename ):
     ucode_buf = read_file( ucode_filename )
     if (ucode_filename.endswith('.pdb')):
         if logger().HAL:
-            logger().log( "[ucode] PDB file '%.256s' has ucode update header (size = 0x%X)" % (ucode_filename, UCODE_HEADER_SIZE) )
+            logger().log( "[ucode] PDB file '{:256}' has ucode update header (size = 0x{:X})".format(ucode_filename, UCODE_HEADER_SIZE) )
         dump_ucode_update_header( ucode_buf )
         return ucode_buf[UCODE_HEADER_SIZE:]
     else:
@@ -106,15 +106,15 @@ class Ucode:
         ucode_update_id = bios_sign_id_hi
 
         if (bios_sign_id_lo & IA32_MSR_BIOS_SIGN_ID_STATUS):
-            if logger().HAL: logger().log( "[ucode] CPU%d: last Microcode update failed (current microcode id = 0x%08X)" % (cpu_thread_id, ucode_update_id) )
+            if logger().HAL: logger().log( "[ucode] CPU{:d}: last Microcode update failed (current microcode id = 0x{:08X})".format(cpu_thread_id, ucode_update_id) )
         else:
-            if logger().HAL: logger().log( "[ucode] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
+            if logger().HAL: logger().log( "[ucode] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
 
         return ucode_update_id
 
     def update_ucode_all_cpus(self, ucode_file ):
         if not ( os.path.exists(ucode_file) and os.path.isfile(ucode_file) ):
-            logger().error( "Ucode file not found: '%.256s'" % ucode_file )
+            logger().error( "Ucode file not found: '{:.256}'".format(ucode_file) )
             return False
         ucode_buf = read_ucode_file( ucode_file )
         if (ucode_buf is not None) and (len(ucode_buf) > 0):
@@ -124,12 +124,12 @@ class Ucode:
 
     def update_ucode(self, cpu_thread_id, ucode_file ):
         if not ( os.path.exists(ucode_file) and os.path.isfile(ucode_file) ):
-            logger().error( "Ucode file not found: '%.256s'" % ucode_file )
+            logger().error( "Ucode file not found: '{:.256}'".format(ucode_file) )
             return False
         _ucode_buf = read_ucode_file( ucode_file )
         return self.load_ucode_update( cpu_thread_id, _ucode_buf )
 
     def load_ucode_update(self, cpu_thread_id, ucode_buf ):
-        if logger().HAL: logger().log( "[ucode] loading microcode update on CPU%d" % cpu_thread_id )
+        if logger().HAL: logger().log( "[ucode] loading microcode update on CPU{:d}".format(cpu_thread_id) )
         self.helper.load_ucode_update( cpu_thread_id, ucode_buf )
         return self.ucode_update_id( cpu_thread_id )

@@ -59,18 +59,18 @@ class Interrupts(hal_base.HALBase):
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         if logger().HAL:
-            logger().log( "[intr] sending SW SMI: code port 0x%02X <- 0x%02X, data port 0x%02X <- 0x%02X (0x%04X)" % (SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT+1, SMI_data_port_value, SMI_code_data) )
-            logger().log( "       RAX = 0x%016X (AX will be overwridden with values of SW SMI ports B2/B3)" % _rax )
-            logger().log( "       RBX = 0x%016X" % _rbx )
-            logger().log( "       RCX = 0x%016X" % _rcx )
-            logger().log( "       RDX = 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
-            logger().log( "       RSI = 0x%016X" % _rsi )
-            logger().log( "       RDI = 0x%016X" % _rdi )
+            logger().log( "[intr] sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT+1, SMI_data_port_value, SMI_code_data) )
+            logger().log( "       RAX = 0x{:016X} (AX will be overwridden with values of SW SMI ports B2/B3)".format_rax )
+            logger().log( "       RBX = 0x{:016X}".format(_rbx) )
+            logger().log( "       RCX = 0x{:016X}".format(_rcx) )
+            logger().log( "       RDX = 0x{:016X} (DX will be overwridden with 0x00B2)".format(_rdx) )
+            logger().log( "       RSI = 0x{:016X}".format(_rsi) )
+            logger().log( "       RDI = 0x{:016X}".format(_rdi) )
         return self.cs.helper.send_sw_smi( thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
     def send_SMI_APMC( self, SMI_code_port_value, SMI_data_port_value ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().HAL: logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x%02X, data 0xB3 <- 0x%02X (0x%04X)" % (SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
+        if logger().HAL: logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X} (0x{:04X})".format(SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
         return self.cs.io.write_port_word( SMI_APMC_PORT, SMI_code_data )
 
 

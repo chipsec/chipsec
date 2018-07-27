@@ -172,7 +172,7 @@ class c_paging_with_2nd_level_translation(c_paging_memory_access):
     def readmem(self, name, addr, size = 4096):
         phys = self.translation_level2.get_translation(addr)
         if phys != addr:
-            name += '_0x%08x' % phys
+            name += '_0x{:08X}'.format(phys)
         return super(c_paging_with_2nd_level_translation, self).readmem(name, phys, size)
 
 class c_paging(c_paging_with_2nd_level_translation, c_translation):
@@ -200,7 +200,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         return (value & desc['mask']) << desc['offset']
 
     def read_entries(self, info, addr, size = 8):
-        data = self.readmem('%s_%s_0x%08x' % (self.name, info, addr), addr, 0x1000)
+        data = self.readmem('{}_{}_0x{:08X}'.format(self.name, info, addr), addr, 0x1000)
         entries = struct.unpack('<512Q', data)
         if size == 16:
             entries = [[entries[i], entries[i + 1]] for i in xrange(0, 512, 2)]
@@ -213,17 +213,17 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         return entries
 
     def print_info(self, name):
-        logger().log('\n  %s physical address ranges:' % name)
+        logger().log('\n  {} physical address ranges:'.format(name))
         mem_range = self.get_mem_range()
         for index in xrange(len(mem_range)):
             i = mem_range[index]
-            logger().log('    0x%013x - 0x%013x %8d  %s' % (i[0], i[1] - 1, (i[1] - i[0]) >> 12, i[2]))
+            logger().log('    0x{:013X} - 0x{:013X} {:8d}  {}'.format(i[0], i[1] - 1, (i[1] - i[0]) >> 12, i[2]))
 
-        logger().log('\n  %s pages:' % name)
+        logger().log('\n  {} pages:'.format(name))
         for i in sorted(self.pt.keys()):
-            logger().log('    0x%013x  %s' % (i, self.pt[i]))
+            logger().log('    0x{:013X}  {}'.format(i, self.pt[i]))
         logger().log('\n')
-        logger().log('  %s size: %d KB, address space: %d MB' % (name, len(self.pt.keys()) * 4, self.get_address_space() >> 20))
+        logger().log('  {} size: {:d} KB, address space: {:d} MB'.format(name, len(self.pt.keys()) * 4, self.get_address_space() >> 20))
         return
 
     def check_misconfig(self, addr_list):
@@ -232,7 +232,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         for addr in addr_list:
             for i in xrange(len(mem_range)):
                 if (mem_range[i][0] <= addr) and (addr < mem_range[i][1]):
-                    print ('*** WARNING: PAGE TABLES MISCONFIGURATION  0x%013x' % addr)
+                    print ('*** WARNING: PAGE TABLES MISCONFIGURATION  0x{:013X}'.format(addr))
         return
 
     def save_configuration(self, path):
@@ -258,19 +258,19 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
     def read_pt_and_show_status(self, path, name, ptr):
         #txt = open(path, 'w')
         try:
-            if logger().HAL: logger().log( '[paging] reading %s page tables at 0x%016X ...' % (name, ptr) )
+            if logger().HAL: logger().log( '[paging] reading {} page tables at 0x{:016X} ...'.format(name, ptr) )
             #self.out = txt
             self.read_page_tables(ptr)
-            self.print_info('[paging] %s page tables' % name)
+            self.print_info('[paging] {} page tables'.format(name))
             #self.out = sys.stdout
             self.failure = False
-            if logger().HAL: logger().log( '[paging] size: %d KB, address space: %d MB' % (len(self.pt.keys()) * 4, self.get_address_space() >> 20) )
+            if logger().HAL: logger().log( '[paging] size: {:d} KB, address space: {:d} MB'.format(len(self.pt.keys()) * 4, self.get_address_space() >> 20) )
         except InvalidMemoryAddress:
             self.translation_level2.translation = {}
             self.translation                    = {}
             self.pt                             = {}
             self.failure = True
-            if logger().HAL: logger().error( '    ERROR: Invalid %s Page Tables!' % name )
+            if logger().HAL: logger().error( '    ERROR: Invalid {} Page Tables!'.format(name) )
         #finally:
         #    #txt.close()
         return
@@ -297,15 +297,15 @@ class c_4level_page_tables(c_paging):
 
     def print_entry(self, lvl, pa, va = 0, perm = ''):
         canonical_va = self.get_canonical(va)
-        info = '  %s%6s: %013X' % ('  ' *lvl, self.PT_NAME[lvl], pa)
+        info = '  {}{:6}: {:013X}'.format('  ' *lvl, self.PT_NAME[lvl], pa)
         if perm != '':
             size  = self.PT_SIZE[lvl]
-            info += ' - %s PAGE  %s' % (size, perm)
+            info += ' - {} PAGE  {}'.format(size, perm)
             info  = info.ljust(64)
             if pa == va:
                 info += '1:1 mapping'
             else:
-                info += '%s: %013X' % (self.PHYSICAL_ADDR_NAME, canonical_va)
+                info += '{}: {:013X}'.format(self.PHYSICAL_ADDR_NAME, canonical_va)
 
             self.add_page(canonical_va, pa, size, perm)
 
@@ -539,8 +539,8 @@ class c_vtd_page_tables(c_extended_page_tables):
             if len(self.domains) != 0:
                 logger().log('[paging] VT-d domains:')
                 for domain in sorted(self.domains.keys()):
-                    logger().log('  0x%016x ' % domain)
-            logger().log('[paging] total VT-d domains: %d\n' % len(self.domains))
+                    logger().log('  0x{:016X} '.format(domain))
+            logger().log('[paging] total VT-d domains: {:d}\n'.format(len(self.domains)))
 
             logger().log('[paging] VT-d context entries:')
             for source_id in sorted(self.context.keys()):
@@ -548,7 +548,7 @@ class c_vtd_page_tables(c_extended_page_tables):
 
             logger().log('[paging] VT-d context pages:')
             for i in sorted(self.cpt.keys()):
-                logger().log('    0x%013x  %s' % (i, self.cpt[i]))
+                logger().log('    0x{:013X}  {}'.format(i, self.cpt[i]))
         finally:
             txt.close()
         return
@@ -590,11 +590,11 @@ class c_vtd_page_tables(c_extended_page_tables):
                self.get_field(cee[0], self.CE_LO_FPD),
                cee[0] & MAXPHYADDR
             )
-            logger().log('  %02X:%02X.%X  DID: %02X  AVAIL: %X  AW: %X  T: %X  FPD: %X  SLPTPTR: %016X' % info)
+            logger().log('  {:02X}:{:02X}.{:X}  DID: {:02X}  AVAIL: {:X}  AW: {:X}  T: {:X}  FPD: {:X}  SLPTPTR: {:016X}'.format(info))
         return
 
     def read_page_tables(self, ptr):
-        logger().log('  Page Tables for domain 0x%013x: ' % ptr)
+        logger().log('  Page Tables for domain 0x{:013X}: '.format(ptr))
         super(c_vtd_page_tables, self).read_page_tables(ptr)
         return
 

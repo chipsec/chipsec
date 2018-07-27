@@ -82,7 +82,7 @@ class bios_wp(BaseModule):
 
     def check_SPI_protected_ranges(self):
         (bios_base,bios_limit,bios_freg) = self.spi.get_SPI_region( BIOS )
-        self.logger.log( "\n[*] BIOS Region: Base = 0x%08X, Limit = 0x%08X" % (bios_base,bios_limit) )
+        self.logger.log( "\n[*] BIOS Region: Base = 0x{:08X}, Limit = 0x{:08X}".format(bios_base,bios_limit) )
         self.spi.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False

@@ -64,18 +64,18 @@ class CPU(hal_base.HALBase):
 
     def read_cr(self, cpu_thread_id, cr_number ):
         value = self.helper.read_cr( cpu_thread_id, cr_number )
-        if logger().HAL: logger().log( "[cpu%d] read CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
+        if logger().HAL: logger().log( "[cpu{:d}] read CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
         return value
 
     def write_cr(self, cpu_thread_id, cr_number, value ):
-        if logger().HAL: logger().log( "[cpu%d] write CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
+        if logger().HAL: logger().log( "[cpu{:d}] write CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
         status = self.helper.write_cr( cpu_thread_id, cr_number, value )
         return status
 
     def cpuid(self, eax, ecx ):
-        if logger().HAL: logger().log( "[cpu] CPUID in : EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
+        if logger().HAL: logger().log( "[cpu] CPUID in : EAX=0x{:08X}, ECX=0x{:08X}".format(eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
-        if logger().HAL: logger().log( "[cpu] CPUID out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
+        if logger().HAL: logger().log( "[cpu] CPUID out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)
 
     # Using cpuid check if running under vmm control
@@ -205,8 +205,8 @@ class CPU(hal_base.HALBase):
     def dump_page_tables( self, cr3, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
         hpt = paging.c_ia32e_page_tables( self.cs )
-        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x%08X...' % cr3 )
-        if pt_fname is None: pt_fname = ('pt_%08X' % cr3)
+        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x{:08X}...'.formatcr3 )
+        if pt_fname is None: pt_fname = ('pt_{:08X}'.format(cr3))
         logger().set_log_file( pt_fname )
         hpt.read_pt_and_show_status( pt_fname, 'PT', cr3 )
         logger().set_log_file( _orig_logname )
@@ -215,7 +215,7 @@ class CPU(hal_base.HALBase):
     def dump_page_tables_all( self ):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             cr3 = self.read_cr( tid, 3 )
-            if logger().HAL: logger().log( '[cpu%d] found paging hierarchy base (CR3): 0x%08X' % (tid,cr3) )
+            if logger().HAL: logger().log( '[cpu{:d}] found paging hierarchy base (CR3): 0x{:08X}'.format(tid,cr3) )
             self.dump_page_tables( cr3 )
 
     

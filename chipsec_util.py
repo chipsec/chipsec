@@ -81,9 +81,9 @@ class ChipsecUtil:
         """
         if command is None or command not in self.commands:
             for cmd in sorted(self.commands.keys() + ['help']):
-                logger().log( '    %s' % cmd )
+                logger().log( '    {}'.format(cmd) )
         else:
-            logger().log("\nhelp for '%s' <command>:" % command)
+            logger().log("\nhelp for '{}' <command>:".format(command))
             logger().log(self.commands[command].__doc__)
 
     def f_mod_zip(self, x):
@@ -150,7 +150,7 @@ class ChipsecUtil:
 
         if logger().DEBUG:
             logger().log( '[CHIPSEC] Loaded command-line extensions:' )
-            logger().log( '   %s' % cmds )
+            logger().log( '   {}'.format(cmds) )
         module = None
         for cmd in cmds:
             try:
@@ -186,7 +186,7 @@ class ChipsecUtil:
                 logger().warn("*******************************************************************")
                 logger().warn("* Unknown platform!")
                 logger().warn("* Platform dependent functionality will likely be incorrect")
-                logger().warn("* Error Message: \"%s\"" % str(msg))
+                logger().warn("* Error Message: \"{}\"".format(str(msg)))
                 logger().warn("*******************************************************************")
             except Exception as msg:
                 logger().error(str(msg))
@@ -195,7 +195,7 @@ class ChipsecUtil:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
 
-            logger().log( "[CHIPSEC] Executing command {}' with args {}\n".format(cmd,self.argv[2:]) )
+            logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(cmd,self.argv[2:]) )
             comm.run()
             if comm.requires_driver():
                 self._cs.destroy(True)
@@ -208,7 +208,7 @@ class ChipsecUtil:
                 self.chipsec_util_help(self.argv[2])
             return ExitCode.OK
         else:
-            logger().error( "Unknown command '%.32s'" % cmd )
+            logger().error( "Unknown command '{:.32s}'".format(cmd) )
         return ExitCode.WARNING
 
     def set_logfile(self, logfile):

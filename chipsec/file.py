@@ -53,7 +53,7 @@ def read_file( filename, size=0 ):
     try:
         f = open(filename, 'rb')
     except:
-        logger().error( "Unable to open file '%.256s' for read access" % filename )
+        logger().error( "Unable to open file '{:.256}' for read access".format(filename) )
         return 0
 
     if size:
@@ -62,7 +62,7 @@ def read_file( filename, size=0 ):
         _file = f.read()
     f.close()
 
-    if logger().DEBUG: logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
+    if logger().DEBUG: logger().log( "[file] read {:d} bytes from '{:256}'".format( len(_file), filename ) )
     return _file
 
 def write_file( filename, buffer, append=False ):
@@ -73,12 +73,12 @@ def write_file( filename, buffer, append=False ):
     try:
         f = open(filename, perm)
     except:
-        logger().error( "Unable to open file '%.256s' for write access" % filename )
+        logger().error( "Unable to open file '{:.256}' for write access".format(filename) )
         return 0
     f.write( buffer )
     f.close()
 
-    if logger().DEBUG: logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
+    if logger().DEBUG: logger().log( "[file] wrote {:d} bytes to '{:.256}'".format( len(buffer), filename ) )
     return True
 
 

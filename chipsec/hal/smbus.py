@@ -77,7 +77,7 @@ class SMBus(hal_base.HALBase):
             raise chipsec.chipset.RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
 
     def display_SMBus_info( self ):
-        if logger().HAL: logger().log( "[smbus] SMBus Base Address: 0x%04X" % self.get_SMBus_Base_Address() )
+        if logger().HAL: logger().log( "[smbus] SMBus Base Address: 0x{:04X}".format(self.get_SMBus_Base_Address()) )
         self.get_SMBus_HCFG()
 
     def is_SMBus_enabled( self ):
@@ -85,10 +85,10 @@ class SMBus(hal_base.HALBase):
 
     def is_SMBus_supported( self ):
         (did,vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
-        if logger().HAL: logger().log( "[smbus] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
+        if logger().HAL: logger().log( "[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did,vid) )
         if (0x8086 == vid): return True
         else:
-            logger().error( "Unknown SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
+            logger().error( "Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did,vid) )
             return False
 
     def is_SMBus_host_controller_enabled( self ):
@@ -136,7 +136,7 @@ class SMBus(hal_base.HALBase):
             if 0 == busy and 1 == intr:
                 #if logger().HAL:
                 #    intr = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'INTR' )
-                #    logger().log( "[smbus]: INTR = %d" % intr )
+                #    logger().log( "[smbus]: INTR = {:d}".format(intr) )
                 break
             elif 1 == failed:
                 #kill = 0
@@ -181,7 +181,7 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if logger().HAL: logger().log( "[smbus] read device %X off %X = %X" % (target_address, offset, value) )
+        if logger().HAL: logger().log( "[smbus] read device {:X} off {:X} = {:X}".format(target_address, offset, value) )
         return value
 
     def write_byte( self, target_address, offset, value ):
@@ -210,7 +210,7 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if logger().HAL: logger().log( "[smbus] write to device %X off %X = %X" % (target_address, offset, value) )
+        if logger().HAL: logger().log( "[smbus] write to device {:X} off {:X} = {:X}".format(target_address, offset, value) )
         return True
 
 
@@ -219,7 +219,7 @@ class SMBus(hal_base.HALBase):
         for i in range (size):
             buffer[i] = chr( self.read_byte( target_address, start_offset + i ) )
         if logger().HAL:
-            logger().log( "[smbus] reading %u bytes from device 0x%X at offset %X" % (size, target_address, start_offset) )
+            logger().log( "[smbus] reading {:d} bytes from device 0x{:X} at offset {:X}".format(size, target_address, start_offset) )
             #print_buffer( buffer )
         return buffer
 
@@ -228,6 +228,6 @@ class SMBus(hal_base.HALBase):
         for i in range(size):
             self.write_byte( target_address, start_offset + i, ord(buffer[i]) )
         if logger().HAL:
-            logger().log( "[smbus] writing %u bytes to device 0x%X at offset %X" % (size, target_address, start_offset) )
+            logger().log( "[smbus] writing {:d} bytes to device 0x{:X} at offset {:X}".format(size, target_address, start_offset) )
             #print_buffer( buffer )
         return True

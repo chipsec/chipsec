@@ -75,7 +75,7 @@ class IOBAR(hal_base.HALBase):
     def get_IO_BAR_base_address( self, bar_name ):
         bar = self.cs.Cfg.IO_BARS[ bar_name ]
         if bar is None or bar == {}:
-            raise IOBARNotFoundError ('IOBARNotFound: %s' % bar_name)
+            raise IOBARNotFoundError ('IOBARNotFound: {}'.format(bar_name))
 
         if 'register' in bar:
             bar_reg   = bar['register']
@@ -99,7 +99,7 @@ class IOBAR(hal_base.HALBase):
         if 'offset' in bar: base = base + int(bar['offset'],16)
         size = int(bar['size'],16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
-        if logger().HAL: logger().log( '[iobar] %s: 0x%04X (size = 0x%X)' % (bar_name,base,size) )
+        if logger().HAL: logger().log( '[iobar] {}: 0x{:04X} (size = 0x{:X})'.format(bar_name,base,size) )
         return base, size
 
 
@@ -107,10 +107,10 @@ class IOBAR(hal_base.HALBase):
     # Read I/O register from I/O range defined by I/O BAR name
     #
     def read_IO_BAR_reg( self, bar_name, offset, size ):
-        if logger().HAL: logger().log('[iobar] read %s + 0x%X (%u)' % (bar_name, offset, size))
+        if logger().HAL: logger().log('[iobar] read {} + 0x{:X} ({:d})'.format(bar_name, offset, size))
         (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
         io_port = bar_base + offset
-        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
+        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x{:X} is ouside {} size (0x{:X})'.format(offset,bar_name,size) )
         value = self.cs.io._read_port( io_port, size )
         return value
 
@@ -119,9 +119,9 @@ class IOBAR(hal_base.HALBase):
     #
     def write_IO_BAR_reg( self, bar_name, offset, size, value ):
         (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
-        if logger().HAL: logger().log( '[iobar] write %s + 0x%X (%u): 0x%X' % (bar_name,offset,size,value) )
+        if logger().HAL: logger().log( '[iobar] write {} + 0x{:X} ({:d}): 0x{:X}'.format(bar_name,offset,size,value) )
         io_port = bar_base + offset
-        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
+        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x{:X} is ouside {} size (0x{:X})'.format(offset,bar_name,size) )
         return self.cs.io._write_port( io_port, value, size )
 
 
@@ -152,11 +152,11 @@ class IOBAR(hal_base.HALBase):
 
             if 'register' in _bar:
                 _s = _bar['register']
-                if 'offset' in _bar: _s += (' + 0x%X' % int(_bar['offset'],16))
+                if 'offset' in _bar: _s += (' + 0x{:X}'.format(int(_bar['offset'],16)))
             else:
-                _s = '%02X:%02X.%01X + %s' % ( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
+                _s = '{:02X}:{:02X}.{:01X} + {}'.format( int(_bar['bus'],16),int(_bar['dev'],16),int(_bar['fun'],16),_bar['reg'] )
 
-            logger().log( ' %-12s | %-14s | %016X | %08X | %d   | %s' % (_bar_name, _s, _base, _size, _en, _bar['desc']) )
+            logger().log( ' {:12} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, _s, _base, _size, _en, _bar['desc']) )
 
 
     #
@@ -177,9 +177,9 @@ class IOBAR(hal_base.HALBase):
     def dump_IO_BAR( self, bar_name, size=1 ):
         (range_base,range_size) = self.get_IO_BAR_base_address( bar_name )
         n = range_size/size
-        fmt = '%0' + ( '%dX' % (size*2) )
-        logger().log("[iobar] I/O BAR %s:" % bar_name)
+        fmt = '0{:d}X'.format(size*2)
+        logger().log("[iobar] I/O BAR {}:".format(bar_name))
         for i in xrange(n):
             reg = self.cs.io._read_port( range_base + i*size, size )
-            logger().log( ('+%04X: ' + fmt) % (i*size,r) )
+            logger().log( '{:+04X}: {:{form}}'.format(i*size,r,form=fmt) )
 
