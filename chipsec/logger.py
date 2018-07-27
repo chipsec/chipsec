@@ -99,7 +99,7 @@ if "windows" == platform.system().lower():
 
 elif "linux" == platform.system().lower():
 
-    class ColorizingStreamHandler(pyLogging.StreamHandler):
+    class ColorLogger(pyLogging.StreamHandler):
 
         ENDC = '\033[0m'
         BOLD = '\033[1m'
@@ -134,11 +134,8 @@ elif "linux" == platform.system().lower():
         def is_tty(self):
             isatty = getattr(self.stream, 'isatty',None)
             return isatty and isatty()
-
-        def output_colorized(self,message):
-            self.stream.write(message)
         
-        def colorize(self,message,record):
+        def log_color(self,message,record):
             if record.levelno in self.LEVEL_ID:
                 color = self.LEVEL_ID[record.levelno]
                 params = []
@@ -152,7 +149,7 @@ elif "linux" == platform.system().lower():
             message = pyLogging.StreamHandler.format(self,record)
             if self.is_tty:
                 # Don't colorize any traceback
-                message = self.colorize(message,record)
+                message = self.log_color(message,record)
             return message
 
 class LoggerError (RuntimeWarning):
@@ -178,7 +175,7 @@ class Logger:
         self.xmlAux = xmlAux()
         #self._set_log_files()
         self.LOG_TO_STREAM = True
-        self.logstream = ColorizingStreamHandler()
+        self.logstream = ColorLogger()
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
 
     def set_xml_file(self, name=None):
