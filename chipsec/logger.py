@@ -39,7 +39,6 @@ from time import localtime, strftime
 
 from chipsec.xmlout import xmlAux
 import traceback
-import pdb
 
 
 RESET     =0
