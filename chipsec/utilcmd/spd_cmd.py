@@ -79,7 +79,7 @@ class SPDCommand(BaseCommand):
                 dev = self.argv[3].upper()
                 dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
                 if not _spd.isSPDPresent( dev_addr ):
-                    self.logger.log( "[CHIPSEC] SPD for DIMM 0x%X is not found" % dev_addr )
+                    self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(dev_addr) )
                     return
                 _spd.decode( dev_addr )
             else:
@@ -92,23 +92,23 @@ class SPDCommand(BaseCommand):
                 dev = self.argv[3].upper()
                 dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
             if not _spd.isSPDPresent( dev_addr ):
-                self.logger.log( "[CHIPSEC] SPD for DIMM 0x%X is not found" % dev_addr )
+                self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(dev_addr) )
                 return
 
             off = int(self.argv[4],16)
             if( 'read' == op ):
                 val      = _spd.read_byte( off, dev_addr )
-                self.logger.log( "[CHIPSEC] SPD read: offset 0x%X = 0x%X" % (off, val) )
+                self.logger.log( "[CHIPSEC] SPD read: offset 0x{:X} = 0x{:X}".format(off, val) )
             elif( 'write' == op ):
                 val      = int(self.argv[5],16)
-                self.logger.log( "[CHIPSEC] SPD write: offset 0x%X = 0x%X" % (off, val) )
+                self.logger.log( "[CHIPSEC] SPD write: offset 0x{:X} = 0x{:X}".format(off, val) )
                 _spd.write_byte( off, val, dev_addr )
 
         else:
-            self.logger.error( "unknown command-line option '%.32s'" % op )
+            self.logger.error( "unknown command-line option '{:.32}'".format(op) )
             self.logger.log( SPDCommand.__doc__ )
             return
 
-        self.logger.log( "[CHIPSEC] (spd) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (spd) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'spd': SPDCommand }

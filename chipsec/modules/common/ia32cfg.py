@@ -51,7 +51,7 @@ class ia32cfg(BaseModule):
             #feature_cntl = chipsec.chipset.read_register( self.cs, 'IA32_FEATURE_CONTROL', tid )
             #chipsec.chipset.print_register( self.cs, 'IA32_FEATURE_CONTROL', feature_cntl )
             feature_cntl_lock = self.cs.get_control('Ia32FeatureControlLock' )
-            self.logger.log( "[*] cpu%d: IA32_Feature_Control Lock = %d" % (tid,feature_cntl_lock) )
+            self.logger.log( "[*] cpu{:d}: IA32_Feature_Control Lock = {:d}".format(tid,feature_cntl_lock) )
             if 0 == feature_cntl_lock: ok = False
 
         if ok:

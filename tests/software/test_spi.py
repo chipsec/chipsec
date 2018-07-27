@@ -45,7 +45,7 @@ class TestSPIChipsecUtil(util.TestChipsecUtil):
 
         fileno, rom_file = tempfile.mkstemp()
         os.close(fileno)
-        self._chipsec_util("spi dump %s" % rom_file, mock_helper.SPIHelper)
+        self._chipsec_util("spi dump {}".format(rom_file), mock_helper.SPIHelper)
         self.assertEqual(os.stat(rom_file).st_size, 0x3000)
         os.remove(rom_file)
 

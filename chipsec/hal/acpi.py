@@ -60,16 +60,16 @@ class ACPI_TABLE_HEADER( namedtuple('ACPI_TABLE_HEADER', 'Signature Length Revis
     def __str__(self):
         return """  Table Header
 ------------------------------------------------------------------
-  Signature        : %s
-  Length           : 0x%08X
-  Revision         : 0x%02X
-  Checksum         : 0x%02X
-  OEM ID           : %s
-  OEM Table ID     : %s
-  OEM Revision     : 0x%08X
-  Creator ID       : %s
-  Creator Revision : 0x%08X
-""" % ( self.Signature, self.Length, self.Revision, self.Checksum, self.OEMID, self.OEMTableID, self.OEMRevision, self.CreatorID, self.CreatorRevision )
+  Signature        : {}
+  Length           : 0x{:08X}
+  Revision         : 0x{:02X}
+  Checksum         : 0x{:02X}
+  OEM ID           : {}
+  OEM Table ID     : {}
+  OEM Revision     : 0x{:08X}
+  Creator ID       : {}
+  Creator Revision : 0x{:08X}
+""".format( self.Signature, self.Length, self.Revision, self.Checksum, self.OEMID, self.OEMTableID, self.OEMRevision, self.CreatorID, self.CreatorRevision )
 
 
 ACPI_TABLE_SIG_SIZE = 0x4
@@ -221,18 +221,18 @@ class RSDP():
         default = ("==================================================================\n"
                    "  Root System Description Pointer (RSDP)\n"
                    "==================================================================\n"
-                   "  Signature        : %s\n"
-                   "  Checksum         : 0x%02X\n"
-                   "  OEM ID           : %s\n"
-                   "  Revision         : 0x%02X\n"
-                   "  RSDT Address     : 0x%08X\n"
-                  ) % (self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress)
+                   "  Signature        : {}\n"
+                   "  Checksum         : 0x{:02X}\n"
+                   "  OEM ID           : {}\n"
+                   "  Revision         : 0x{:02X}\n"
+                   "  RSDT Address     : 0x{:08X}\n"
+                  ).format(self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress)
         if hasattr(self, "Length"):
-          default += ("  Length           : 0x%08X\n"
-                      "  XSDT Address     : 0x%016X\n"
-                      "  Extended Checksum: 0x%02X\n"
-                      "  Reserved         : %s\n"
-                     ) % (self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex"))
+          default += ("  Length           : 0x{:08X}\n"
+                      "  XSDT Address     : 0x{:016X}\n"
+                      "  Extended Checksum: 0x{:02X}\n"
+                      "  Reserved         : {}\n"
+                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex"))
         return default
 
     # some sanity checking on RSDP
@@ -277,7 +277,7 @@ class ACPI(hal_base.HALBase):
                 rsdp_pa = ebda_addr + pos
                 rsdp = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    if logger().HAL: logger().log( "[acpi] found RSDP in EBDA at: 0x%016X" % rsdp_pa )
+                    if logger().HAL: logger().log( "[acpi] found RSDP in EBDA at: 0x{:016X}".format(rsdp_pa) )
                 else:
                     rsdp_pa = None
         return rsdp, rsdp_pa
@@ -294,7 +294,7 @@ class ACPI(hal_base.HALBase):
             rsdp_pa  = 0xE0000 + pos
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
-                if logger().HAL: logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x%016X" % rsdp_pa )
+                if logger().HAL: logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x{:016X}".format(rsdp_pa) )
             else:
                 rsdp_pa = None
         return rsdp, rsdp_pa
@@ -310,14 +310,14 @@ class ACPI(hal_base.HALBase):
         if isFound:
             if RSDP_GUID_ACPI2_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI2_0 ]
-                if logger().HAL: logger().log( '[acpi] ACPI 2.0+ RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI2_0,rsdp_pa) )
+                if logger().HAL: logger().log( '[acpi] ACPI 2.0+ RSDP {} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI2_0,rsdp_pa) )
             elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
-                if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {%s} in EFI Config Table: 0x%016X' % (RSDP_GUID_ACPI1_0,rsdp_pa) )
+                if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI1_0,rsdp_pa) )
 
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
-                if logger().HAL: logger().log( "[acpi] found RSDP in EFI Config Table: 0x%016X" % rsdp_pa )
+                if logger().HAL: logger().log( "[acpi] found RSDP in EFI Config Table: 0x{:016X}".format(rsdp_pa) )
             else:
                 rsdp_pa = None
         return rsdp, rsdp_pa
@@ -337,10 +337,10 @@ class ACPI(hal_base.HALBase):
             pos = membuf.find( ACPI_RSDP_SIG )
             if -1 != pos:
                 rsdp_pa  = pa + pos
-                if logger().VERBOSE: logger().log( "[acpi] found '%s' signature at 0x%016X. Checking if valid RSDP.." % (ACPI_RSDP_SIG,rsdp_pa) )
+                if logger().VERBOSE: logger().log( "[acpi] found '{}' signature at 0x{:016X}. Checking if valid RSDP..".format(ACPI_RSDP_SIG,rsdp_pa) )
                 rsdp     = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    if logger().HAL: logger().log( "[acpi] found RSDP in EFI memory: 0x%016X" % rsdp_pa )
+                    if logger().HAL: logger().log( "[acpi] found RSDP in EFI memory: 0x{:016X}".format(rsdp_pa) )
                     break
             pa -= CHUNK_SZ
         return rsdp, rsdp_pa
@@ -379,7 +379,7 @@ class ACPI(hal_base.HALBase):
                 is_xsdt = True
             else:
                 return (False,None,None,None)
-            if logger().HAL: logger().log( "[acpi] found %s at PA: 0x%016X" % ('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
+            if logger().HAL: logger().log( "[acpi] found {} at PA: 0x{:016X}".format('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
             sdt_header_buf = self.cs.mem.read_physical_mem( sdt_pa, ACPI_TABLE_HEADER_SIZE )
             sdt_header     = self._parse_table_header( sdt_header_buf )
             sdt_buf        = self.cs.mem.read_physical_mem( sdt_pa, sdt_header.Length )
@@ -427,11 +427,11 @@ class ACPI(hal_base.HALBase):
     # Gets table list from entries in RSDT/XSDT
     #
     def get_table_list_from_SDT(self, sdt, is_xsdt):
-        if logger().HAL: logger().log( '[acpi] Getting table list from entries in %s' % ('XSDT' if is_xsdt else 'RSDT') )
+        if logger().HAL: logger().log( '[acpi] Getting table list from entries in {}'.format('XSDT' if is_xsdt else 'RSDT') )
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             if _sig not in ACPI_TABLES.keys():
-                logger().warn( 'Unknown ACPI table signature: %s' % _sig )
+                logger().warn( 'Unknown ACPI table signature: {}'.format(_sig) )
             self.tableList[ _sig ].append(a)
 
     #
@@ -443,7 +443,7 @@ class ACPI(hal_base.HALBase):
         if ACPI_TABLE_SIG_FACP in self.tableList:
             (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
         else:
-            logger().warn( 'Cannot find FADT in %s' % ('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
+            logger().warn( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
             return
 
         dsdt_address_to_use = parsed_fadt_content.get_DSDT_address_to_use()
@@ -452,8 +452,8 @@ class ACPI(hal_base.HALBase):
             dsdt_address = parsed_fadt_content.dsdt
             x_dsdt_address = parsed_fadt_content.x_dsdt
             logger().error( 'Unable to determine the correct DSDT address' )
-            logger().error( '  DSDT   address = %s' % ('0x%08X' % dsdt_address) )
-            logger().error( '  X_DSDT address = %s' % (('0x%016X' % x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
+            logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
+            logger().error( '  X_DSDT address = 0x{:016X}'.format(x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
@@ -473,7 +473,7 @@ class ACPI(hal_base.HALBase):
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):
-                logger().log( " - %s: %s" % (tableName, ", ".join([("0x%016X" % addr) for addr in self.tableList[tableName]])) )
+                logger().log( " - {}: {}".format(tableName, ", ".join([("0x%016X" % addr) for addr in self.tableList[tableName]])) )
 
     #
     # Retrieves contents of ACPI table from memory or from file
@@ -518,7 +518,7 @@ class ACPI(hal_base.HALBase):
         for acpi_table in acpi_tables:
             (table_header,table,table_header_blob,table_blob) = acpi_table
             logger().log( "==================================================================" )
-            logger().log( "ACPI Table: %s" % name )
+            logger().log( "ACPI Table: {}".format(name) )
             logger().log( "==================================================================" )
             # print table header
             logger().log( table_header )
@@ -548,7 +548,7 @@ class ACPI(hal_base.HALBase):
     def _parse_table_contents( self, signature, contents, header ):
         table = None
         if ACPI_TABLES.__contains__(signature):
-            logger().log('%s' % signature)
+            logger().log('{}'.format(signature))
             if 'BERT' in signature:
                 table = (ACPI_TABLES[signature])(self.cs)
             elif 'NFIT' in signature:
