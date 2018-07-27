@@ -194,16 +194,16 @@ class SPI(hal_base.HALBase):
         self.fdata0_off = int(self.cs.get_register_def("FDATA0")['offset'],16)
         if logger().VERBOSE:
             logger().log( "[spi] Reading SPI flash controller registers definitions:" )
-            logger().log( "      HSFC   offset = 0x%04X" % self.hsfc_off )
-            logger().log( "      HSFS   offset = 0x%04X" % self.hsfs_off )
-            logger().log( "      FADDR  offset = 0x%04X" % self.faddr_off )
-            logger().log( "      FDATA0 offset = 0x%04X" % self.fdata0_off )
+            logger().log( "      HSFC   offset = 0x{:04X}".format(self.hsfc_off) )
+            logger().log( "      HSFS   offset = 0x{:04X}".format(self.hsfs_off) )
+            logger().log( "      FADDR  offset = 0x{:04X}".format(self.faddr_off) )
+            logger().log( "      FDATA0 offset = 0x{:04X}".format(self.fdata0_off) )
 
     # Fallback option when XML config is not available: using hardcoded config
     def get_SPI_MMIO_base_fallback(self):
         reg_value = self.cs.pci.read_dword( Cfg.SPI_MMIO_BUS, Cfg.SPI_MMIO_DEV, Cfg.SPI_MMIO_FUN, Cfg.SPI_MMIO_REG_OFFSET )
         spi_base = ((reg_value >> Cfg.SPI_BASE_ADDR_SHIFT) << Cfg.SPI_BASE_ADDR_SHIFT) + Cfg.SPI_MMIO_BASE_OFFSET
-        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
+        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
         return spi_base
 
     def get_SPI_MMIO_base(self):
@@ -211,7 +211,7 @@ class SPI(hal_base.HALBase):
             (spi_base,spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
         else:
             spi_base = self.get_SPI_MMIO_base_fallback()
-        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
+        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
         return spi_base
 
     def spi_reg_read( self, reg, size=4 ):
@@ -251,7 +251,7 @@ class SPI(hal_base.HALBase):
         if pr_num > SPI_MAX_PR_COUNT:
             return None
 
-        pr_name = 'PR%x'%pr_num
+        pr_name = 'PR{:x}'.format(pr_num)
         pr_j_reg = int(self.cs.get_register_def(pr_name)['offset'],16)
         pr_j = self.cs.read_register(pr_name)
 
@@ -282,25 +282,25 @@ class SPI(hal_base.HALBase):
         for j in range(5):
             self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_FSDM|(j<<2)))
             fdod = self.cs.read_register('FDOD')
-            logger().log( "%08X" % fdod )
+            logger().log( "{:08X}".format(fdod) )
 
         logger().log( "\nComponents:" )
         for j in range(3):
             self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_COMP|(j<<2)))
             fdod = self.cs.read_register('FDOD')
-            logger().log( "%08X" % fdod )
+            logger().log( "{:08X}".format(fdod) )
 
         logger().log( "\nRegions:" )
         for j in range(5):
             self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_REGN|(j<<2)))
             fdod = self.cs.read_register('FDOD')
-            logger().log( "%08X" % fdod )
+            logger().log( "{:08X}".format(fdod) )
 
         logger().log( "\nMasters:" )
         for j in range(3):
             self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_MSTR|(j<<2)))
             fdod = self.cs.read_register('FDOD')
-            logger().log( "%08X" % fdod )
+            logger().log( "{:08X}".format(fdod) )
 
 
     def display_SPI_opcode_info( self ):
@@ -308,18 +308,18 @@ class SPI(hal_base.HALBase):
         logger().log( "SPI Opcode Info" )
         logger().log( "------------------------------------------------------------" )
         preop = self.cs.read_register( 'PREOP' )
-        logger().log( "PREOP : 0x%04X" % preop )
+        logger().log( "PREOP : 0x{:04X}".format(preop) )
         optype = self.cs.read_register('OPTYPE' )
-        logger().log( "OPTYPE: 0x%04X" % optype )
+        logger().log( "OPTYPE: 0x{:04X}".format(optype) )
         opmenu_lo = self.cs.read_register('OPMENU_LO' )
         opmenu_hi = self.cs.read_register('OPMENU_HI' )
         opmenu = ((opmenu_hi << 32)|opmenu_lo)
-        logger().log( "OPMENU: 0x%016X" % opmenu )
+        logger().log( "OPMENU: 0x{:016X}".format(opmenu) )
         logger().log('')
         preop0 = preop&0xFF
         preop1 = (preop>>8)&0xFF
-        logger().log( "Prefix Opcode 0 = 0x%02X" % preop0 )
-        logger().log( "Prefix Opcode 1 = 0x%02X" % preop1 )
+        logger().log( "Prefix Opcode 0 = 0x{:02X}".format(preop0) )
+        logger().log( "Prefix Opcode 1 = 0x{:02X}".format(preop1) )
 
         logger().log( "------------------------------------------------------------" )
         logger().log( "Opcode # | Opcode | Optype | Description" )
@@ -334,7 +334,7 @@ class SPI(hal_base.HALBase):
                 desc = 'SPI read cycle with address'
             elif (Cfg.PCH_RCBA_SPI_OPTYPE_WRADDR == optype_j):
                 desc = 'SPI write cycle with address'
-            logger().log( "Opcode%d  | 0x%02X   | %X      | %s " % (j,((opmenu >> j*8) & 0xFF),optype_j,desc) )
+            logger().log( "Opcode{:d}  | 0x{:02X}   | {:x}      | {} ".format(j,((opmenu >> j*8) & 0xFF),optype_j,desc) )
 
     def display_SPI_Flash_Regions( self ):
         logger().log( "------------------------------------------------------------" )
@@ -343,7 +343,7 @@ class SPI(hal_base.HALBase):
         regions = self.get_SPI_regions()
         for (region_id, region) in regions.items():
             base, limit, size, name, freg = region
-            logger().log( '%d %-022s | %08X  | %08X | %08X ' % (region_id, name, freg, base, limit) )
+            logger().log( '{:d} {:22} | {:08X}  | {:08X} | {:08X} '.format(region_id, name, freg, base, limit) )
 
     def display_BIOS_region( self ):
         bfpreg = self.cs.read_register('BFPR' )
@@ -352,9 +352,9 @@ class SPI(hal_base.HALBase):
         limit |= SPI_FLA_PAGE_MASK
         logger().log( "BIOS Flash Primary Region" )
         logger().log( "------------------------------------------------------------" )
-        logger().log( "BFPREG = %08X:" % bfpreg )
-        logger().log( "  Base  : %08X" % base )
-        logger().log( "  Limit : %08X" % limit )
+        logger().log( "BFPREG = {:08X}:".format(bfpreg) )
+        logger().log( "  Base  : {:08X}".format(base) )
+        logger().log( "  Limit : {:08X}".format(limit) )
 
     def display_SPI_Ranges_Access_Permissions( self ):
         logger().log( "SPI Flash Region Access Permissions" )
@@ -366,19 +366,19 @@ class SPI(hal_base.HALBase):
         bmrag = self.cs.get_register_field('FRAP', fracc, 'BMRAG' )
         bmwag = self.cs.get_register_field('FRAP', fracc, 'BMWAG' )
         logger().log( '' )
-        logger().log( "BIOS Region Write Access Grant (%02X):" % bmwag )
+        logger().log( "BIOS Region Write Access Grant ({:02X}):".format(bmwag) )
         regions = self.get_SPI_regions()
         for region_id in regions:
-            logger().log( "  %-12s: %1d" % (SPI_REGION[region_id], (0 != bmwag&(1<<region_id))) )
-        logger().log( "BIOS Region Read Access Grant (%02X):" % bmrag )
+            logger().log( "  {:12}: {:1d}".format(SPI_REGION[region_id], (0 != bmwag&(1<<region_id))) )
+        logger().log( "BIOS Region Read Access Grant ({:02X}):".format(bmrag) )
         for region_id in regions:
-            logger().log( "  %-12s: %1d" % (SPI_REGION[region_id ], (0 != bmrag&(1<<region_id))) )
-        logger().log( "BIOS Region Write Access (%02X):" % brwa )
+            logger().log( "  {:12}: {:1d}".format(SPI_REGION[region_id ], (0 != bmrag&(1<<region_id))) )
+        logger().log( "BIOS Region Write Access ({:02X}):".format(brwa) )
         for region_id in regions:
-            logger().log( "  %-12s: %1d" % (SPI_REGION[ region_id ], (0 != brwa&(1<<region_id))) )
-        logger().log( "BIOS Region Read Access (%02X):" % brra )
+            logger().log( "  {:12}: {:1d}".format(SPI_REGION[ region_id ], (0 != brwa&(1<<region_id))) )
+        logger().log( "BIOS Region Read Access ({:02X}):".format(brra) )
         for region_id in regions:
-            logger().log( "  %-12s: %1d" % (SPI_REGION[ region_id ], (0 != brra&(1<<region_id))) )
+            logger().log( "  {:12}: {:1d}".format(SPI_REGION[ region_id ], (0 != brra&(1<<region_id))) )
 
     def display_SPI_Protected_Ranges( self ):
         logger().log( "SPI Protected Ranges" )
@@ -387,7 +387,7 @@ class SPI(hal_base.HALBase):
         logger().log( "------------------------------------------------------------" )
         for j in range(5):
             (base,limit,wpe,rpe,pr_reg_off,pr_reg_value) = self.get_SPI_Protected_Range( j )
-            logger().log( "PR%d (%02X)     | %08X | %08X | %08X | %d   | %d " % (j,pr_reg_off,pr_reg_value,base,limit,wpe,rpe) )
+            logger().log( "PR{:d} ({:02X})     | {:08X} | {:08X} | {:08X} | {:d}   | {:d} ".format(j,pr_reg_off,pr_reg_value,base,limit,wpe,rpe) )
 
     def display_SPI_map( self ):
         logger().log( "============================================================" )
@@ -452,7 +452,7 @@ class SPI(hal_base.HALBase):
         bioswe = self.cs.get_control('BiosWriteEnable' )
 
         if logger().VERBOSE: self.display_BIOS_write_protection()
-        if logger().HAL: logger().log_important( "BIOS write protection is %s (BiosWriteEnable = %d)" % ('disabled' if bioswe else 'still enabled', bioswe) )
+        if logger().HAL: logger().log_important( "BIOS write protection is {} (BiosWriteEnable = {:d})".format('disabled' if bioswe else 'still enabled', bioswe) )
 
         return (bioswe==1)
 
@@ -485,12 +485,12 @@ class SPI(hal_base.HALBase):
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
             cycle_done = not ((hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_AEL) or (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_FCERR))
 
-        if logger().VERBOSE: logger().log( "[spi] HSFS: 0x%02X" % hsfsts )
+        if logger().VERBOSE: logger().log( "[spi] HSFS: 0x{:02X}".format(hsfsts) )
 
         return cycle_done
 
     def _send_spi_cycle(self, hsfctl_spi_cycle_cmd, dbc, spi_fla ):
-        if logger().VERBOSE: logger().log( "[spi] > send SPI cycle 0x%X to address 0x%08X.." % (hsfctl_spi_cycle_cmd, spi_fla) )
+        if logger().VERBOSE: logger().log( "[spi] > send SPI cycle 0x{:x} to address 0x{:08X}..".format(hsfctl_spi_cycle_cmd, spi_fla) )
 
         # No need to check for SPI cycle DONE status before each cycle
         # DONE status is checked once before entire SPI operation
@@ -503,9 +503,9 @@ class SPI(hal_base.HALBase):
 
         if logger().VERBOSE:
             _faddr = self.spi_reg_read( self.faddr_off )
-            logger().log( "[spi] FADDR: 0x%08X" % _faddr )
+            logger().log( "[spi] FADDR: 0x{:08X}".format(_faddr) )
 
-        if logger().VERBOSE: logger().log( "[spi] SPI cycle GO (DBC <- 0x%02X, HSFC <- 0x%X)" % (dbc, hsfctl_spi_cycle_cmd) )
+        if logger().VERBOSE: logger().log( "[spi] SPI cycle GO (DBC <- 0x{:02X}, HSFC <- 0x{:x})".format(dbc, hsfctl_spi_cycle_cmd) )
 
         if ( HSFCTL_ERASE_CYCLE != hsfctl_spi_cycle_cmd ):
             self.spi_reg_write( self.hsfc_off + 0x1, dbc, 1 )
@@ -516,7 +516,7 @@ class SPI(hal_base.HALBase):
         # Read HSFC back (logging only)
         if logger().VERBOSE:
             _hsfc = self.spi_reg_read( self.hsfc_off, 1 )
-            logger().log( "[spi] HSFC: 0x%04X" % _hsfc )
+            logger().log( "[spi] HSFC: 0x{:04X}".format(_hsfc) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
@@ -563,9 +563,9 @@ class SPI(hal_base.HALBase):
             dbc = SPI_READ_WRITE_MAX_DBC
 
         n = data_byte_count // dbc
-        r = data_byte_count % dbc
+        r = data_byte_count.format(dbc)
         if logger().UTIL_TRACE or logger().DEBUG:
-            logger().log( "[spi] reading 0x%x bytes from SPI at FLA = 0x%X (in %d 0x%x-byte chunks + 0x%x-byte remainder)" % (data_byte_count, spi_fla, n, dbc, r) )
+            logger().log( "[spi] reading 0x{:x} bytes from SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
@@ -574,19 +574,19 @@ class SPI(hal_base.HALBase):
 
         for i in range(n):
             if logger().DEBUG:
-                logger().log( "[spi] reading chunk %d of 0x%x bytes from 0x%X" % (i, dbc, spi_fla + i*dbc) )
+                logger().log( "[spi] reading chunk {:d} of 0x{:x} bytes from 0x{:x}".format(i, dbc, spi_fla + i*dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, dbc-1, spi_fla + i*dbc ):
                 logger().error( "SPI flash read failed" )
             else:
                 for fdata_idx in range(0,dbc//4):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
                     if logger().VERBOSE:
-                        logger().log( "[spi] FDATA00 + 0x%x: 0x%X" % (fdata_idx*4, dword_value) )
+                        logger().log( "[spi] FDATA00 + 0x{:x}: 0x{:x}".format(fdata_idx*4, dword_value) )
                     buf += [ chr((dword_value>>(8*j))&0xff) for j in range(4) ]
                     #buf += tuple( struct.pack("I", dword_value) )
         if (0 != r):
             if logger().DEBUG:
-                logger().log( "[spi] reading remaining 0x%x bytes from 0x%X" % (r, spi_fla + n*dbc) )
+                logger().log( "[spi] reading remaining 0x{:x} bytes from 0x{:x}".format(r, spi_fla + n*dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, r-1, spi_fla + n*dbc ):
                 logger().error( "SPI flash read failed" )
             else:
@@ -595,7 +595,7 @@ class SPI(hal_base.HALBase):
                 for fdata_idx in range(0, n_dwords):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
                     if logger().VERBOSE:
-                        logger().log( "[spi] FDATA00 + 0x%x: 0x%08X" % (fdata_idx*4, dword_value) )
+                        logger().log( "[spi] FDATA00 + 0x{:x}: 0x{:08X}".format(fdata_idx*4, dword_value) )
                     if (fdata_idx == (n_dwords-1)) and (0 != r%4):
                         t = r%4
                     buf += [ chr((dword_value >> (8*j)) & 0xff) for j in range(t) ]
@@ -614,9 +614,9 @@ class SPI(hal_base.HALBase):
         data_byte_count = len(buf)
         dbc = 4
         n = data_byte_count / dbc
-        r = data_byte_count % dbc
+        r = data_byte_count.format(dbc)
         if logger().UTIL_TRACE or logger().VERBOSE:
-            logger().log( "[spi] writing 0x%x bytes to SPI at FLA = 0x%X (in %d 0x%x-byte chunks + 0x%x-byte remainder)" % (data_byte_count, spi_fla, n, dbc, r) )
+            logger().log( "[spi] writing 0x{:x} bytes to SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
@@ -625,10 +625,10 @@ class SPI(hal_base.HALBase):
 
         for i in range(n):
             if logger().UTIL_TRACE or logger().VERBOSE:
-                logger().log( "[spi] writing chunk %d of 0x%x bytes to 0x%X" % (i, dbc, spi_fla + i*dbc) )
+                logger().log( "[spi] writing chunk {:d} of 0x{:x} bytes to 0x{:x}".format(i, dbc, spi_fla + i*dbc) )
             dword_value = (ord(buf[i*dbc + 3]) << 24) | (ord(buf[i*dbc + 2]) << 16) | (ord(buf[i*dbc + 1]) << 8) | ord(buf[i*dbc])
             if logger().VERBOSE:
-                logger().log( "[spi] in FDATA00 = 0x%08x" % dword_value )
+                logger().log( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, dbc-1, spi_fla + i*dbc ):
                 write_ok = False
@@ -636,12 +636,12 @@ class SPI(hal_base.HALBase):
 
         if (0 != r):
             if logger().UTIL_TRACE or logger().VERBOSE:
-                logger().log( "[spi] writing remaining 0x%x bytes to FLA = 0x%X" % (r, spi_fla + n*dbc) )
+                logger().log( "[spi] writing remaining 0x{:x} bytes to FLA = 0x{:x}".format(r, spi_fla + n*dbc) )
             dword_value = 0
             for j in range(r):
                 dword_value |= (ord(buf[n*dbc + j]) << 8*j)
             if logger().VERBOSE:
-                logger().log( "[spi] in FDATA00 = 0x%08x" % dword_value )
+                logger().log( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, r-1, spi_fla + n*dbc ):
                 write_ok = False
@@ -654,7 +654,7 @@ class SPI(hal_base.HALBase):
         self.check_hardware_sequencing()
 
         if logger().UTIL_TRACE or logger().VERBOSE:
-            logger().log( "[spi] Erasing SPI Flash block @ 0x%X" % spi_fla )
+            logger().log( "[spi] Erasing SPI Flash block @ 0x{:x}".format(spi_fla) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:

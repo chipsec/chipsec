@@ -69,7 +69,7 @@ type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pi
 WRITE_ALL_HASHES = False
 
 def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_data, compression_type, remove_files=False ):
-    compressed_name = os.path.join(section_dir_path, "%s.gz" % sec_fs_name)
+    compressed_name = os.path.join(section_dir_path, "{}.gz".format(sec_fs_name))
     uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
     write_file(compressed_name, compressed_data)
     uncompressed_image = _uefi.decompress_EFI_binary( compressed_name, uncompressed_name, compression_type )
@@ -106,19 +106,19 @@ def modify_uefi_region(data, command, guid, uefi_file = ''):
                     NxtFileOffset  = FvOffset + next_offset + FvLengthChange
                     if command == CMD_UEFI_FILE_REMOVE:
                         FvLengthChange -= (next_offset - cur_offset)
-                        logger().log( "Removing UEFI file with GUID=%s at offset=%08X, size change: %d bytes" % (Name, CurFileOffset, FvLengthChange) )
+                        logger().log( "Removing UEFI file with GUID={} at offset={:08X}, size change: {:d} bytes".format(Name, CurFileOffset, FvLengthChange) )
                         data = data[:CurFileOffset] + data[NxtFileOffset:]
                     elif command == CMD_UEFI_FILE_INSERT_BEFORE:
                         FvLengthChange += uefi_file_size
-                        logger().log( "Inserting UEFI file before file with GUID=%s at offset=%08X, size change: %d bytes" % (Name, CurFileOffset, FvLengthChange) )
+                        logger().log( "Inserting UEFI file before file with GUID={} at offset={:08X}, size change: {:d} bytes".format(Name, CurFileOffset, FvLengthChange) )
                         data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[CurFileOffset:]
                     elif command == CMD_UEFI_FILE_INSERT_AFTER:
                         FvLengthChange += uefi_file_size
-                        logger().log( "Inserting UEFI file after file with GUID=%s at offset=%08X, size change: %d bytes" % (Name, CurFileOffset, FvLengthChange) )
+                        logger().log( "Inserting UEFI file after file with GUID={} at offset={:08X}, size change: {:d} bytes".format(Name, CurFileOffset, FvLengthChange) )
                         data = data[:NxtFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[NxtFileOffset:]
                     elif command == CMD_UEFI_FILE_REPLACE:
                         FvLengthChange += uefi_file_size - (next_offset - cur_offset)
-                        logger().log( "Replacing UEFI file with GUID=%s at offset=%08X, new size: %d, old size: %d, size change: %d bytes" % (Name, CurFileOffset, len(uefi_file), Size, FvLengthChange) )
+                        logger().log( "Replacing UEFI file with GUID={} at offset={:08X}, new size: {:d}, old size: {:d}, size change: {:d} bytes".format(Name, CurFileOffset, len(uefi_file), Size, FvLengthChange) )
                         data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[NxtFileOffset:]
                     else:
                         raise Exception('Invalid command')
@@ -136,7 +136,7 @@ def modify_uefi_region(data, command, guid, uefi_file = ''):
             FvLengthChange = 0
 
             #if FvLengthChange != 0:
-            #    logger().log( "Rebuilding Firmware Volume with GUID=%s at offset=%08X" % (FsGuid, FvOffset) )
+            #    logger().log( "Rebuilding Firmware Volume with GUID={} at offset={:08X}".format(FsGuid, FvOffset) )
             #    FvHeader = data[FvOffset: FvOffset + FvHeaderLength]
             #    FvHeader = FvHeader[:0x20] + struct.pack('<Q', FvLength) + FvHeader[0x28:]
             #    NewChecksum = FvChecksum16(FvHeader[:0x32] + '\x00\x00' + FvHeader[0x34:])
@@ -169,14 +169,14 @@ class EFI_MODULE(object):
         self.children   = []
 
     def name(self):
-        return "%s {%s} %s" % (type(self).__name__.encode('ascii', 'ignore'),self.Guid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
+        return "{} {{}} {}".format(type(self).__name__.encode('ascii', 'ignore'),self.Guid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
     def __str__(self):
         _ind = self.indent + DEF_INDENT
         _s = ''
-        if self.MD5   : _s  = "\n%sMD5   : %s" % (_ind,self.MD5)
-        if self.SHA1  : _s += "\n%sSHA1  : %s" % (_ind,self.SHA1)
-        if self.SHA256: _s += "\n%sSHA256: %s" % (_ind,self.SHA256)
+        if self.MD5   : _s  = "\n{}MD5   : {}".format(_ind,self.MD5)
+        if self.SHA1  : _s += "\n{}SHA1  : {}".format(_ind,self.SHA1)
+        if self.SHA256: _s += "\n{}SHA256: {}".format(_ind,self.SHA256)
         return _s
 
     def calc_hashes( self, off=0 ):
@@ -201,8 +201,8 @@ class EFI_FV(EFI_MODULE):
         self.CalcSum         = CalcSum
 
     def __str__(self):
-        schecksum = ('%04Xh (%04Xh) *** checksum mismatch ***' % (self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('%04Xh' % self.Checksum)
-        _s = "\n%s%s +%08Xh {%s}: Size %08Xh, Attr %08Xh, HdrSize %04Xh, ExtHdrOffset %08Xh, Checksum %s" % (self.indent,type(self).__name__,self.Offset,self.Guid,self.Size,self.Attributes,self.HeaderSize,self.ExtHeaderOffset,schecksum)
+        schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
+        _s = "\n{}{} +{:08X}h {{}}: Size {:08X}h, Attr {:08X}h, HdrSize {:04X}h, ExtHdrOffset {:08X}h, Checksum {}".format(self.indent,type(self).__name__,self.Offset,self.Guid,self.Size,self.Attributes,self.HeaderSize,self.ExtHeaderOffset,schecksum)
         _s += super(EFI_FV, self).__str__()
         return _s
 
@@ -218,8 +218,8 @@ class EFI_FILE(EFI_MODULE):
         self.CalcSum     = CalcSum
 
     def __str__(self):
-        schecksum = ('%04Xh (%04Xh) *** checksum mismatch ***' % (self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('%04Xh' % self.Checksum)
-        _s = "\n%s+%08Xh %s\n%sType %02Xh, Attr %08Xh, State %02Xh, Size %06Xh, Checksum %s" % (self.indent,self.Offset,self.name(),self.indent,self.Type,self.Attributes,self.State,self.Size,schecksum)
+        schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
+        _s = "\n{}+{:08X}h {}\n{}Type {:02X}h, Attr {:08X}h, State {:02X}h, Size {:06X}h, Checksum {}".format(self.indent,self.Offset,self.name(),self.indent,self.Type,self.Attributes,self.State,self.Size,schecksum)
         _s += (super(EFI_FILE, self).__str__() + '\n')
         return _s
 
@@ -234,13 +234,13 @@ class EFI_SECTION(EFI_MODULE):
         self.parentGuid  = None
     
     def name(self):
-        return "%s section of binary {%s} %s" % (self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
+        return "{} section of binary {{}} {}".format(self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
     def __str__(self):
-        _s = "%s+%08Xh %s: Type %02Xh" % (self.indent,self.Offset,self.name(),self.Type)
-        if self.Guid: _s += " GUID {%s}" % self.Guid
-        if self.Attributes: _s += " Attr %04Xh" % self.Attributes
-        if self.DataOffset: _s += " DataOffset %04Xh" % self.DataOffset
+        _s = "{}+{:08X}h {}: Type {:02X}h".format(self.indent,self.Offset,self.name(),self.Type)
+        if self.Guid: _s += " GUID {{}}".format(self.Guid)
+        if self.Attributes: _s += " Attr {:04X}h".format(self.Attributes)
+        if self.DataOffset: _s += " DataOffset {:04X}h".format(self.DataOffset)
         _s += super(EFI_SECTION, self).__str__()
         return _s
 
@@ -254,7 +254,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
         if _name is not None:
             sec = EFI_SECTION( _off, _name, _type, _img, _hdrsz )
             # pick random file name in case dumpall=False - we'll need it to decompress the section
-            sec_fs_name = "sect%02d_%s" % (secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
+            sec_fs_name = "sect{:02d}_{}".format(secn, ''.join(random.choice(string.ascii_lowercase) for _ in range(4)))
 
             if sec.Type in EFI_SECTIONS_EXE:
                 # "leaf" executable section: update hashes and check against match criteria
@@ -362,7 +362,7 @@ def build_efi_tree( _uefi, data, fwtype ):
             fv.isNVRAM = True
             try:
                 fv.NVRAMType = identify_EFI_NVRAM( fv.Image ) if fwtype is None else fwtype
-            except: logger().warn("couldn't identify NVRAM in FV {%s}" % fv.Guid)
+            except: logger().warn("couldn't identify NVRAM in FV {{}}".format(fv.Guid))
 
         fvolumes.append(fv)
         fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum = NextFwVolume( data, fv.Offset + fv.Size )
@@ -414,19 +414,19 @@ def build_efi_model( _uefi, data, fwtype ):
     return model
 
 def FILENAME(mod, parent, modn):
-    fname = "%02d_%s" % (modn,mod.Guid)
+    fname = "{:02d}_{}".format(modn,mod.Guid)
     if type(mod) == EFI_FILE:
-        type_s = FILE_TYPE_NAMES[mod.Type] if mod.Type in FILE_TYPE_NAMES.keys() else ("UNKNOWN_%02X" % mod.Type)
-        fname = "%s.%s" % (fname,type_s)
+        type_s = FILE_TYPE_NAMES[mod.Type] if mod.Type in FILE_TYPE_NAMES.keys() else ("UNKNOWN_{:02X}".format(mod.Type))
+        fname = "{}.{}".format(fname,type_s)
     elif type(mod) == EFI_SECTION:
-        fname = "%02d_%s" % (modn,mod.Name)
+        fname = "{:02d}_{}".format(modn,mod.Name)
         if mod.Type in EFI_SECTIONS_EXE:
             if parent.ui_string:
                 if (parent.ui_string.endswith(".efi")):
                     fname = parent.ui_string
                 else:
-                    fname = "%s.efi" % parent.ui_string
-            else:                fname = "%s.%s" % (fname,type2ext[mod.Type])
+                    fname = "{}.efi".format(parent.ui_string)
+            else:                fname = "{}.{}".format(fname,type2ext[mod.Type])
     return fname
 
 def dump_efi_module(mod, parent, modn, path):
@@ -434,9 +434,9 @@ def dump_efi_module(mod, parent, modn, path):
     mod_path = os.path.join(path, fname)
     write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) == EFI_SECTION else mod.Image)
     if type(mod) == EFI_SECTION or WRITE_ALL_HASHES:
-        if mod.MD5   : write_file(("%s.md5"    % mod_path), mod.MD5)
-        if mod.SHA1  : write_file(("%s.sha1"   % mod_path), mod.SHA1)
-        if mod.SHA256: write_file(("%s.sha256" % mod_path), mod.SHA256)
+        if mod.MD5   : write_file(("{}.md5"   .format(mod_path)), mod.MD5)
+        if mod.SHA1  : write_file(("{}.sha1"  .format(mod_path)), mod.SHA1)
+        if mod.SHA256: write_file(("{}.sha256".format(mod_path)), mod.SHA256)
     return mod_path
 
 class EFIModuleType:
@@ -490,7 +490,7 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
             except:
                 md["file_path"] = mod_path.split(os.sep)[-1]
             if m.isNVRAM or len(m.children) > 0:
-                mod_dir_path = "%s.dir" % mod_path
+                mod_dir_path = "{}.dir".format(mod_path)
                 if not os.path.exists(mod_dir_path): os.makedirs(mod_dir_path)
                 if m.isNVRAM:
                     try:
@@ -501,7 +501,7 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
                         else: raise
-                    except: logger().warn( "couldn't extract NVRAM in {%s} using type '%s'" % (m.Guid,m.NVRAMType) )
+                    except: logger().warn( "couldn't extract NVRAM in {{}} using type '{}'".format(m.Guid,m.NVRAMType) )
     
         # save children modules
         if len(m.children) > 0:
@@ -517,7 +517,7 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
 
 def parse_uefi_region_from_file( _uefi, filename, fwtype, outpath = None):
     # Create an output folder to dump EFI module tree
-    if outpath is None: outpath = "%s.dir" % filename
+    if outpath is None: outpath = "{}.dir".format(filename)
     if not os.path.exists( outpath ): os.makedirs( outpath )
 
     # Read UEFI image binary to parse
@@ -528,7 +528,7 @@ def parse_uefi_region_from_file( _uefi, filename, fwtype, outpath = None):
 
     # Save entire EFI module hierarchy on a file-system and export into JSON
     tree_json = save_efi_tree(_uefi, tree, path=outpath)
-    write_file( "%s.UEFI.json" % filename, json.dumps(tree_json, indent=2, separators=(',', ': ')) )
+    write_file( "{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': ')) )
 
 
 def decode_uefi_region(_uefi, pth, fname, fwtype):
@@ -551,8 +551,8 @@ def decode_uefi_region(_uefi, pth, fname, fwtype):
         fwtype = identify_EFI_NVRAM( region_data )
         if fwtype is None: return
     elif fwtype not in fw_types:
-        if logger().HAL: logger().error( "unrecognized NVRAM type %s" % fwtype )
+        if logger().HAL: logger().error( "unrecognized NVRAM type {}".format(fwtype) )
         return
-    nvram_fname = os.path.join( bios_pth, ('nvram_%s' % fwtype) )
+    nvram_fname = os.path.join( bios_pth, ('nvram_{}'.format(fwtype)) )
     logger().set_log_file( (nvram_fname + '.nvram.lst') )
     _uefi.parse_EFI_variables( nvram_fname, region_data, False, fwtype )
