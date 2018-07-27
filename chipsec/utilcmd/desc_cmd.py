@@ -43,7 +43,7 @@ class IDTCommand(BaseCommand):
 
     def run(self):
         if (2 == len(self.argv)):
-            self.logger.log( "[CHIPSEC] Dumping IDT of %d CPU threads" % self.cs.msr.get_cpu_thread_count() )
+            self.logger.log( "[CHIPSEC] Dumping IDT of {:d} CPU threads".format(self.cs.msr.get_cpu_thread_count()) )
             self.cs.msr.IDT_all( 4 )
         elif (3 == len(self.argv)):
             tid = int(self.argv[2],16)
@@ -64,7 +64,7 @@ class GDTCommand(BaseCommand):
 
     def run(self):
         if (2 == len(self.argv)):
-            self.logger.log( "[CHIPSEC] Dumping GDT of %d CPU threads" % self.cs.msr.get_cpu_thread_count() )
+            self.logger.log( "[CHIPSEC] Dumping GDT of {:d} CPU threads".format(self.cs.msr.get_cpu_thread_count()) )
             self.cs.msr.GDT_all( 4 )
         elif (3 == len(self.argv)):
             tid = int(self.argv[2],16)

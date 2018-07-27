@@ -214,14 +214,14 @@ class UEFI_VARIABLE_HEADER( namedtuple('UEFI_VARIABLE_HEADER', 'StartId State Re
         return """
 Header (UEFI)
 -------------
-StartId    : 0x%04X
-State      : 0x%02X
-Reserved   : 0x%02X
-Attributes : 0x%08X
-NameSize   : 0x%08X
-DataSize   : 0x%08X
-VendorGuid : {0x%08X-0x%04X-0x%04X-0x%08X}
-""" % ( self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.VendorGuid0, self.VendorGuid1, self.VendorGuid2, self.VendorGuid3 )
+StartId    : 0x{:04X}
+State      : 0x{:02X}
+Reserved   : 0x{:02X}
+Attributes : 0x{:08X}
+NameSize   : 0x{:08X}
+DataSize   : 0x{:08X}
+VendorGuid : {0x{:08X}-0x{:04X}-0x{:04X}-0x{:08X}}
+""".format( self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.VendorGuid0, self.VendorGuid1, self.VendorGuid2, self.VendorGuid3 )
 
 
 UEFI_VARIABLE_STORE_HEADER = "<IHH8sIBBHI"
@@ -343,14 +343,14 @@ class EFI_HDR_NVAR1( namedtuple('EFI_HDR_NVAR1', 'StartId TotalSize Reserved1 Re
         return """
 Header (NVAR)
 ------------
-StartId    : 0x%04X
-TotalSize  : 0x%04X
-Reserved1  : 0x%02X
-Reserved2  : 0x%02X
-Reserved3  : 0x%02X
-Attributes : 0x%02X
-State      : 0x%02X
-""" % ( self.StartId, self.TotalSize, self.Reserved1, self.Reserved2, self.Reserved3, self.Attributes, self.State )
+StartId    : 0x{:04X}
+TotalSize  : 0x{:04X}
+Reserved1  : 0x{:02X}
+Reserved2  : 0x{:02X}
+Reserved3  : 0x{:02X}
+Attributes : 0x{:02X}
+State      : 0x{:02X}
+""".format( self.StartId, self.TotalSize, self.Reserved1, self.Reserved2, self.Reserved3, self.Attributes, self.State )
 
 NVAR_EFIvar_signature   = 'NVAR'
 
@@ -503,13 +503,13 @@ class VARIABLE_STORE_HEADER_VSS( namedtuple('VARIABLE_STORE_HEADER_VSS', 'Signat
         return """
 EFI Variable Store
 -----------------------------
-Signature : %s (0x%08X)
-Size      : 0x%08X bytes
-Format    : 0x%02X
-State     : 0x%02X
-Reserved  : 0x%04X
-Reserved1 : 0x%08X
-""" % ( struct.pack('=I',self.Signature), self.Signature, self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+Signature : {} (0x{:08X})
+Size      : 0x{:08X} bytes
+Format    : 0x{:02X}
+State     : 0x{:02X}
+Reserved  : 0x{:04X}
+Reserved1 : 0x{:08X}
+""".format( struct.pack('=I',self.Signature), self.Signature, self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
 
 HDR_FMT_VSS                   = '<HBBIII4s2s2s8s'
@@ -521,14 +521,14 @@ class EFI_HDR_VSS( namedtuple('EFI_HDR_VSS', 'StartId State Reserved Attributes 
         return """
 Header (VSS)
 ------------
-VendorGuid : {%s}
-StartId    : 0x%04X
-State      : 0x%02X
-Reserved   : 0x%02X
-Attributes : 0x%08X
-NameSize   : 0x%08X
-DataSize   : 0x%08X
-""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
+VendorGuid : {{{}}}
+StartId    : 0x{:04X}
+State      : 0x{:02X}
+Reserved   : 0x{:02X}
+Attributes : 0x{:08X}
+NameSize   : 0x{:08X}
+DataSize   : 0x{:08X}
+""".format( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
 
 
 HDR_FMT_VSS_AUTH  = '<HBBIQQQIII4s2s2s8s'
@@ -540,18 +540,18 @@ class EFI_HDR_VSS_AUTH( namedtuple('EFI_HDR_VSS_AUTH', 'StartId State Reserved A
         return """
 Header (VSS_AUTH)
 ----------------
-VendorGuid     : {%s}
-StartId        : 0x%04X
-State          : 0x%02X
-Reserved       : 0x%02X
-Attributes     : 0x%08X
-MonotonicCount : 0x%016X
-TimeStamp1     : 0x%016X
-TimeStamp2     : 0x%016X
-PubKeyIndex    : 0x%08X
-NameSize       : 0x%08X
-DataSize       : 0x%08X
-""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.MonotonicCount, self.TimeStamp1, self.TimeStamp2, self.PubKeyIndex, self.NameSize, self.DataSize )
+VendorGuid     : {{{}}}
+StartId        : 0x{:04X}
+State          : 0x{:02X}
+Reserved       : 0x{:02X}
+Attributes     : 0x{:08X}
+MonotonicCount : 0x{:016X}
+TimeStamp1     : 0x{:016X}
+TimeStamp2     : 0x{:016X}
+PubKeyIndex    : 0x{:08X}
+NameSize       : 0x{:08X}
+DataSize       : 0x{:08X}
+""".format( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.MonotonicCount, self.TimeStamp1, self.TimeStamp2, self.PubKeyIndex, self.NameSize, self.DataSize )
 
 HDR_FMT_VSS_APPLE  = '<HBBIII4s2s2s8sI'
 class EFI_HDR_VSS_APPLE( namedtuple('EFI_HDR_VSS_APPLE', 'StartId State Reserved Attributes NameSize DataSize guid0 guid1 guid2 guid3 unknown') ):
@@ -560,15 +560,15 @@ class EFI_HDR_VSS_APPLE( namedtuple('EFI_HDR_VSS_APPLE', 'StartId State Reserved
         return """
 Header (VSS_APPLE)
 ------------
-VendorGuid : {%s}
-StartId    : 0x%04X
-State      : 0x%02X
-Reserved   : 0x%02X
-Attributes : 0x%08X
-NameSize   : 0x%08X
-DataSize   : 0x%08X
-Unknown    : 0x%08X
-""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
+VendorGuid : {{{}}}
+StartId    : 0x{:04X}
+State      : 0x{:02X}
+Reserved   : 0x{:02X}
+Attributes : 0x{:08X}
+NameSize   : 0x{:08X}
+DataSize   : 0x{:08X}
+Unknown    : 0x{:08X}
+""".format( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
 
 
 def _getNVstore_VSS( nvram_buf, vss_type ):
@@ -789,12 +789,12 @@ def EFIvar_EVSA(nvram_buf):
                 g = guid_str(guid0, guid1, guid2, guid3)
                 guid_map[GuidId] = g
             elif (Tag0 == 0xEE) or (Tag0 == 0xE2):  # var name
-                VAR_NAME_RECORD = "<H%ds" % (Size - tlv_h_size - 2)
+                VAR_NAME_RECORD = "<H{:d}s".format(Size - tlv_h_size - 2)
                 VarId, Name = struct.unpack(VAR_NAME_RECORD, value)
                 Name = unicode(Name, "utf-16-le")[:-1]
                 var_list.append((Name, VarId, Tag0, Tag1))
             elif (Tag0 == 0xEF) or (Tag0 == 0xE3) or (Tag0 == 0x83):  # values
-                VAR_VALUE_RECORD = "<HHI%ds" % (Size - tlv_h_size - 8)
+                VAR_VALUE_RECORD = "<HHI{:d}s".format(Size - tlv_h_size - 8)
                 GuidId, VarId, Attributes, Data = struct.unpack(VAR_VALUE_RECORD, value)
                 value_list[VarId] = (GuidId, Attributes, Data, Tag0, Tag1)
             elif not ((Tag0 == 0xff) and (Tag1 == 0xff) and (Size == 0xffff)):
@@ -836,7 +836,7 @@ def EFIvar_EVSA(nvram_buf):
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
 #
 #def guid_str(guid0, guid1, guid2, guid3):
-#        return ( "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+#        return ( "{:08X}-{:04X}-{:04X}-{:04}-{:06}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 #
 #class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid0 guid1 guid2 guid3') ):
 #        __slots__ = ()
@@ -844,12 +844,12 @@ def EFIvar_EVSA(nvram_buf):
 #            return """
 #Header (Windows)
 #----------------
-#VendorGuid= {%08X-%04X-%04X-%04s-%06s}
-#Size      = 0x%08X
-#DataOffset= 0x%08X
-#DataSize  = 0x%08X
-#Attributes= 0x%08X
-#""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
+#VendorGuid= {{:08X}-{:04X}-{:04X}-{:04}-{:06}}
+#Size      = 0x{:08X}
+#DataOffset= 0x{:08X}
+#DataSize  = 0x{:08X}
+#Attributes= 0x{:08X}
+#""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
 """
 def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         start = 0
@@ -867,7 +867,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
            efi_var_data    = buffer[ off + efi_var_hdr.DataOffset : off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
 
            #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
-           str_fmt = "%ds" % (efi_var_hdr.DataOffset - header_size)
+           str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
            s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
            efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
@@ -978,7 +978,7 @@ def decode_s3bs_opcode_def( data ):
         op = op_terminate( opcode, size )
     else:
         op = op_unknown( opcode, 1 )
-        if logger().HAL: logger().warn( 'Unrecognized opcode %X' % opcode )
+        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
 
     return op
 
@@ -1024,7 +1024,7 @@ def encode_s3bs_opcode_def( op ):
         frmt = '<B'
 
     else:
-        if logger().HAL: logger().warn( 'Unrecognized opcode %X' % op.opcode )
+        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(op.opcode) )
 
     return encoded_opcode
 
@@ -1068,7 +1068,7 @@ def decode_s3bs_opcode_edkcompat( data ):
         op = op_io_pci_mem( opcode, size, width, address, None, count, None, value, mask )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
-        if logger().UTIL_TRACE or logger().HAL: logger().warn( 'Cannot parse opcode %X yet' % opcode )
+        if logger().UTIL_TRACE or logger().HAL: logger().warn( 'Cannot parse opcode {:X} yet'.format(opcode) )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<Q'
@@ -1093,11 +1093,7 @@ def decode_s3bs_opcode_edkcompat( data ):
 
     else:
         op = op_unknown( opcode, size )
-        if logger().HAL: logger().warn( 'Unrecognized opcode %X' % opcode )
-
-    return op
-
-#
+        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
 # @TODO: encode functions are not fully implemented
 #
 def encode_s3bs_opcode_edkcompat( op ):
@@ -1115,7 +1111,7 @@ def encode_s3bs_opcode_edkcompat( op ):
          S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode or \
          S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == op.opcode:
 
-        frmt = '<IQ2%c' % script_width_formats[op.width]
+        frmt = '<IQ2%c'% (script_width_formats[op.width])
         encoded_opcode = struct.pack( frmt, op.width, op.address, op.value, op.mask )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
@@ -1149,7 +1145,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         fhdr = '<HB'
         hdr_length = struct.calcsize(fhdr)
         if remaining_len < hdr_length:
-            if logger().HAL: logger().warn( 'the script should have at least 0x%X bytes to parse next entry' % hdr_length )
+            if logger().HAL: logger().warn( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length) )
             return (0,None)
 
         opcode, entry_length = struct.unpack( fhdr, script[ off : off + hdr_length ] )
@@ -1158,7 +1154,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         entry_data = script[ off : off + entry_length ]
 
         if entry_length > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x%X)' % entry_length )
+            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
             return (0,None)
 
         s3script_entry = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
@@ -1169,7 +1165,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         hdr_length = struct.calcsize(fhdr)
         f          = fhdr + 'B'
         if remaining_len < (hdr_length + 1):
-            if logger().HAL: logger().warn( 'the script should have at least 0x%X bytes to parse next entry' % (hdr_length+1) )
+            if logger().HAL: logger().warn( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length+1) )
             return (0,None)
 
         entry_index, entry_length, opcode = struct.unpack(f, script[ off : off + hdr_length + 1 ])
@@ -1179,7 +1175,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         entry_data = script[ off + hdr_length : off + entry_length ]
 
         if entry_length > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x%X)' % entry_length )
+            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
             return (0,None)
 
         s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
@@ -1202,7 +1198,7 @@ def encode_s3bootscript_entry( entry ):
     if entry_val_buf is not None:
         entry_buf = entry_hdr_buf + entry_val_buf
     else:
-        logger().warn( 'Could not encode opcode of boot script entry (type 0x%X)' % entry.script_type )
+        logger().warn( 'Could not encode opcode of boot script entry (type 0x{:X})'.format(entry.script_type) )
 
     return entry_buf
 
@@ -1227,7 +1223,7 @@ def id_s3bootscript_type( script, log_script=False ):
     if S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TABLE_OPCODE == start_op:
         if logger().HAL: logger().log('S3 Boot Script AA Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT
-        if log_script: logger().log( '[uefi] Start opcode 0x%X' % start_op )
+        if log_script: logger().log( '[uefi] Start opcode 0x{:X}'.format(start_op) )
         script_header_length = 1 # skip start opcode
         script_header_length += 0x34
     else:
