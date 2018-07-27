@@ -75,8 +75,8 @@ class bios_smi(BaseModule):
         self.logger.log( "[*] Checking SMI enables.." )
         tco_en     = self.cs.get_control( 'TCOSMIEnable' )
         gbl_smi_en = self.cs.get_control( 'GlobalSMIEnable' )
-        self.logger.log( "    Global SMI enable: %d" % gbl_smi_en )
-        self.logger.log( "    TCO SMI enable   : %d" % tco_en )
+        self.logger.log( "    Global SMI enable: {:d}".format(gbl_smi_en) )
+        self.logger.log( "    TCO SMI enable   : {:d}".format(tco_en) )
 
         if gbl_smi_en != 1:
             ok = False

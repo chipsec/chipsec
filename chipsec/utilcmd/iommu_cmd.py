@@ -80,7 +80,7 @@ class IOMMUCommand(BaseCommand):
                 if self.argv[3] in iommu.IOMMU_ENGINES.keys():
                     _iommu_engines = [ self.argv[3] ]
                 else:
-                    self.logger.error( "IOMMU name %s not recognized. Run 'iommu list' command for supported IOMMU names" % self.argv[3] )
+                    self.logger.error( "IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.argv[3]) )
                     return
             else:
                 _iommu_engines = iommu.IOMMU_ENGINES.keys()
@@ -109,7 +109,7 @@ class IOMMUCommand(BaseCommand):
             print (IOMMUCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (iommu) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (iommu) time elapsed {:.3f}".format(time.time()-t) )
 
 
 commands = { 'iommu': IOMMUCommand }
