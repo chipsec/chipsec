@@ -1487,7 +1487,7 @@ class SPMI (ACPI_TABLE):
 ==================================================================
   Interface Type                                          : 0x{:02X} - {}
   Reserved                                                : 0x{:02X} - Must always be 01h to be compatible with any software implementing previous versions of the spec
-  Specification Revision (version)                        : {} remove({})
+  Specification Revision (version)                        : {} 
   Interrupt Type                                          : 0x{:04X}
     SCI triggered through GPE                             : 0x{:02X} - {}
     I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x{:02X} - {}
