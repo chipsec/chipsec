@@ -40,7 +40,6 @@ from time import localtime, strftime
 from chipsec.xmlout import xmlAux
 import traceback
 
-
 RESET     =0
 BRIGHT    =1
 DIM       =2
@@ -65,41 +64,45 @@ LOG_PATH                = os.path.join( os.getcwd(), "logs" )
 #
 # Colored output
 #
-if "windows" == platform.system().lower():
 
-    try:
-        import WConio
+class ColorLogger( pyLogging.Formatter ):
+      
+    def format( self, record ):
+        message = pyLogging.Formatter.format(self,record)
+        message = self.log_color(message,record)
+        return message
 
-        COLOR_ID = {
-                  BLACK  : WConio.BLACK,
-                  RED    : WConio.LIGHTRED,
-                  GREEN  : WConio.LIGHTGREEN,
-                  YELLOW : WConio.YELLOW,
-                  BLUE   : WConio.LIGHTBLUE,
-                  MAGENTA: WConio.MAGENTA,
-                  CYAN   : WConio.CYAN,
-                  WHITE  : WConio.WHITE
-                  }
+    if "windows" == platform.system().lower():
+        try:
+            import WConio
 
-        def log_color( fg_color, text ):
-            """
-            Store current attribute settings
-            """
-            #colorama.init() #Needs to be called inorder for color logging to be enabled on windows
-            old_setting = WConio.gettextinfo()[4] & 0x00FF
-            WConio.textattr( COLOR_ID[ fg_color ] )
-            print(text)
-            WConio.textattr( old_setting )
+            LEVEL_ID = {
+            pyLogging.DEBUG: WConio.LIGHTGREEN,
+            pyLogging.INFO: WConio.BLACK,
+            pyLogging.WARNING: WConio.YELLOW,
+            pyLogging.CRITICAL: WConio.BLUE,
+            pyLogging.ERROR: WConio.RED
+            }
 
-    except ImportError, e:
-        #print "WConio package is not installed. No colored output"
-        def log_color( fg_color, text ):
-            print(text)
+            def log_color (self, message, record ):
+                """ Testing """
+                old_setting = WConio.gettextinfo()[4] & 0x00FF
+                WConio.textattr( COLOR_ID)
+                WConio.textattr( old_setting )
+                if record.levelno in self.LEVEL_ID:
+                    color = self.LEVEL_ID[record.levelno]
+                    params = []
+                    params.append(str(color + 30))
+                    message = ''.join((self.csi, ';'.join(params),
+                                        'm',message,self.reset))
+                return message
+        
+        except ImportError, e:
+            #print "WConio package is not installed. No colored output"
+            def log_color( self, message, record ):
+                return message
 
-elif "linux" == platform.system().lower():
-
-    class ColorLogger(pyLogging.StreamHandler):
-
+    if "linux" == platform.system().lower():
         ENDC = '\033[0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
@@ -115,8 +118,9 @@ elif "linux" == platform.system().lower():
         BLUE   = 4
         PURPLE = 5
         CYAN   = 6
-        WHITE  = 9
+        LIGHT_GRAY  = 7 
         NORMAL = 8
+        WHITE = 9
 
         csi = '\x1b['
         reset = '\x1b[0m'
@@ -129,28 +133,19 @@ elif "linux" == platform.system().lower():
             pyLogging.ERROR: RED
         }
 
-        @property
-        def is_tty(self):
-            isatty = getattr(self.stream, 'isatty',None)
-            return isatty and isatty()
-        
-        def log_color(self,message,record):
+        def log_color( self, message, record) :
             if record.levelno in self.LEVEL_ID:
                 color = self.LEVEL_ID[record.levelno]
                 params = []
                 params.append(str(color + 30))
-                if params:
-                    message = ''.join((self.csi, ';'.join(params),
-                                        'm',message,self.reset))
+                message = ''.join((self.csi, ';'.join(params),
+                                    'm',message,self.reset))
             return message
-
-        def format(self,record):
-            message = pyLogging.StreamHandler.format(self,record)
-            if self.is_tty:
-                # Don't colorize any traceback
-                message = self.log_color(message,record)
+    
+    else:
+        def log_color( self, message, record ):
             return message
-
+    
 class LoggerError (RuntimeWarning):
     pass
 
@@ -163,7 +158,6 @@ class Logger:
         pass
         self.mytime = localtime()
         self.logfile = None
-        self.logstream = None
         self.debug = pyLogging.DEBUG
         self.info = pyLogging.INFO
         self.rootLogger = pyLogging.getLogger(__name__)
@@ -174,7 +168,8 @@ class Logger:
         self.xmlAux = xmlAux()
         #self._set_log_files()
         self.LOG_TO_STREAM = True
-        self.logstream = ColorLogger()
+        self.logstream = pyLogging.StreamHandler(sys.stdout)
+        self.logstream.setFormatter(ColorLogger())
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
 
     def set_xml_file(self, name=None):
