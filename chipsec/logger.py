@@ -109,7 +109,7 @@ class ColorLogger( pyLogging.Formatter ):
             def log_color( self, message, record ):
                 return message
 
-    if "linux" == platform.system().lower():
+    elif "linux" == platform.system().lower():
         ENDC = '\033[0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
@@ -147,6 +147,10 @@ class ColorLogger( pyLogging.Formatter ):
                 params.append(str(color + 30))
                 message = ''.join((self.csi, ';'.join(params),
                                     'm',message,self.reset))
+            return message
+
+    else:
+        def log_color( self, message, record ):
             return message
     
 class LoggerError (RuntimeWarning):
