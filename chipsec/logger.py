@@ -495,9 +495,9 @@ def print_buffer( arr, length = 16 ):
 
 def pretty_print_hex_buffer( arr, length = 16 ):
     _str = ["    _"]
-    for n in xrange(length):
+    for n in range(length):
         _str += ["%02X__" % n]
-    for n in xrange(len(arr)):
+    for n in range(len(arr)):
         if n%length == 0: _str += ["\n%02X | " % n]
         _str += ["%02X  " % arr[n]]
     logger().log( ''.join(_str) )
