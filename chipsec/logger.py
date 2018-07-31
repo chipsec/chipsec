@@ -131,9 +131,9 @@ elif "linux" == platform.system().lower():
         def format(msg, color_type=LIGHT,color=8):
             return ( '\033[%im%s%s'%(color_type+color,str(msg),ColorLogger.ENDC))
 
-    def log_color( text ):
-        "To be implemented using coloredlogs"
-        print(text)   
+    def log_color( fg_color, text ):
+        _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
+        print _text  
 
 else:
     def log_color( text ):
