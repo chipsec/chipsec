@@ -120,7 +120,7 @@ elif "linux" == platform.system().lower():
             print("{}BOLD{}".format(ColorLogger.BOLD,ColorLogger.ENDC))
             print("{}UNDERLINE{}".format(ColorLogger.UNDERLINE,ColorLogger.ENDC))
             for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
-                for code in xrange(ColorLogger.GRAY, ColorLogger.NORMAL+1):
+                for code in range(ColorLogger.GRAY, ColorLogger.NORMAL+1):
                     self.log(color_type+code, color_type, code )
 
 
@@ -480,9 +480,9 @@ def print_buffer( arr, length = 16 ):
 
 def pretty_print_hex_buffer( arr, length = 16 ):
     _str = ["    _"]
-    for n in xrange(length):
+    for n in range(length):
         _str += ["%02X__" % n]
-    for n in xrange(len(arr)):
+    for n in range(len(arr)):
         if n%length == 0: _str += ["\n%02X | " % n]
         _str += ["%02X  " % arr[n]]
     logger().log( ''.join(_str) )
