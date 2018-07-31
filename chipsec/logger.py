@@ -239,7 +239,6 @@ class Logger:
             self.rootLogger.info(text)
             if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
-        #if isStatus: self._save_to_status_log_file( text ) #status file not used ##doesnt affect code
     
     def error( self, text ):
         """Logs an Error message"""
