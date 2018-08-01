@@ -46,33 +46,13 @@ except ImportError:
     has_WConio = False
     #raiseImportError('WConio package not installed. No colored output')
 
-RESET     =0
-BRIGHT    =1
-DIM       =2
-UNDERLINE =3
-BLINK     =4
-REVERSE   =7
-HIDDEN    =8
-
-BLACK     =0
-RED       =1
-GREEN     =2
-YELLOW    =3
-BLUE      =4
-MAGENTA   =5
-CYAN      =6
-WHITE     =7
-
 LOG_PATH                = os.path.join( os.getcwd(), "logs" )
 #LOG_STATUS_FILE_NAME    = ""
 #LOG_COMPLETED_FILE_NAME = ""
 
-#
-# Colored output
-#
-
 class ColorLogger( pyLogging.Formatter ):
-      
+    """Colored Output for Python Logging"""
+    
     def format( self, record ):
         message = pyLogging.Formatter.format(self,record)
         message = self.log_color(message,record)
@@ -128,7 +108,6 @@ class ColorLogger( pyLogging.Formatter ):
         LIGHT_GRAY  = 7 
         NORMAL = 8
         WHITE = 9
-
         csi = '\x1b['
         reset = '\x1b[0m'
 
@@ -138,7 +117,7 @@ class ColorLogger( pyLogging.Formatter ):
             pyLogging.WARNING: YELLOW,
             pyLogging.CRITICAL: BLUE,
             pyLogging.ERROR: RED
-        }
+            }  
 
         def log_color( self, message, record) :
             if record.levelno in self.LEVEL_ID:
@@ -157,7 +136,6 @@ class LoggerError (RuntimeWarning):
     pass
 
 class Logger:
-    
     """Class for logging to console, text file or XML."""
 
     def __init__( self ):
@@ -173,8 +151,6 @@ class Logger:
         self.verbose = pyLogging.addLevelName(15,"verbose")
         #Used for interaction with XML output classes.
         self.xmlAux = xmlAux()
-        #self._set_log_files()
-        self.LOG_TO_STREAM = True
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         self.logstream.setFormatter(ColorLogger()) #applys colorization to output
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
@@ -195,15 +171,9 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-
                 self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME,mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
-                
-                if not self.LOG_TO_STREAM:
-                    self.rootLogger.removeHandler(self.logstream)
-
                 self.LOG_TO_FILE = True
-
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
 
@@ -253,7 +223,6 @@ class Logger:
             else:
                 print(text)
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
-        #if isStatus: self._save_to_status_log_file( text ) #status file not used ##doesnt affect code
     
     def error( self, text ):
         """Logs an Error message"""
