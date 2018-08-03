@@ -183,15 +183,9 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-
                 self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME,mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
-                
-                if not self.LOG_TO_STREAM:
-                    self.rootLogger.removeHandler(self.logstream)
-
                 self.LOG_TO_FILE = True
-
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
 
@@ -202,13 +196,11 @@ class Logger:
                 self.rootLogger.removeHandler(self.logfile)
                 self.rootLogger.removeHandler(self.logstream)
                 self.logfile.close()
-                self.logstream.flush()
-                #self.logstream.flush()              
+                self.logstream.flush()          
             except None:
                 print ("WARNING: Could not close log file")
             finally:
-                self.logfile = None
-        
+                self.logfile = None  
     def disable( self ):
         """Disables the logging to file and closes the file if any."""
         self.LOG_TO_FILE = False
