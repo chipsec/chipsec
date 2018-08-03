@@ -61,7 +61,7 @@ class ColorLogger( pyLogging.Formatter ):
     if "windows" == platform.system().lower():
         if has_WConio:
             BLACK = WConio.BLACK
-            RED = WConio.RED
+            RED = WConio.LIGHTRED
             GREEN = WConio.LIGHTGREEN
             YELLOW = WConio.YELLOW
             BLUE = WConio.LIGHTBLUE
