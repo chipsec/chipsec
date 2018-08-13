@@ -667,6 +667,11 @@ class Chipset:
         (b,d,f) = self.get_device_BDF( device_name )
         return self.pci.is_enabled( b, d, f )
 
+    def switch_device_def( self, target_dev, source_dev ):
+        (b,d,f) = self.get_device_BDF( source_dev )
+        self.Cfg.CONFIG_PCI[ target_dev ]['bus'] = str(b)
+        self.Cfg.CONFIG_PCI[ target_dev ]['dev'] = str(d)
+        self.Cfg.CONFIG_PCI[ target_dev ]['fun'] = str(f)
 
 ##################################################################################
 #
@@ -700,10 +705,18 @@ class Chipset:
             return False
 
     def get_register_def(self, reg_name):
-        return self.Cfg.REGISTERS[reg_name]
+        reg_def = self.Cfg.REGISTERS[reg_name]
+        if reg_def["type"] == "pcicfg" and "device" in reg_def:
+            dev_name = reg_def["device"]
+            if dev_name in self.Cfg.CONFIG_PCI:
+                dev = self.Cfg.CONFIG_PCI[dev_name]
+                reg_def['bus'] = dev['bus']
+                reg_def['dev'] = dev['dev']
+                reg_def['fun'] = dev['fun']
+        return reg_def
 
     def read_register(self, reg_name, cpu_thread=0):
-        reg = self.Cfg.REGISTERS[ reg_name ]
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_value = 0
         if RegisterType.PCICFG == rtype:
@@ -739,7 +752,7 @@ class Chipset:
         return reg_value
 
     def write_register(self, reg_name, reg_value, cpu_thread=0):
-        reg = self.Cfg.REGISTERS[ reg_name ]
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         if RegisterType.PCICFG == rtype:
             b = int(reg['bus'],16)
@@ -856,7 +869,7 @@ class Chipset:
         return reg_fields_str
 
     def print_register(self, reg_name, reg_val):
-        reg = self.Cfg.REGISTERS[ reg_name ]
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_str = ''
         reg_val_str = ("0x%0" + ("%dX" % (int(reg['size'],16)*2))) % reg_val
