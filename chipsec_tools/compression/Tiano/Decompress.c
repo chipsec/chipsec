@@ -260,7 +260,7 @@ Returns:
   for (Char = 0; Char < NumOfChar; Char++) {
 
     Len = BitLen[Char];
-    if (Len == 0) {
+    if (Len == 0 || Len >= 17) {
       continue;
     }
 
