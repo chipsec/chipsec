@@ -91,7 +91,7 @@ class MemoryMapping(mmap.mmap):
     This subclass keeps tracks of the start and end of the mapping.
     """
     def __init__(self, fileno, length, flags, prot, offset):
-        super(MemoryMapping, self).__init__(self, fileno, length, flags, prot,
+        super(MemoryMapping, self).__init__(fileno, length, flags, prot,
                                             offset=offset)
         self.start = offset
         self.end = offset + length
