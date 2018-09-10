@@ -64,7 +64,7 @@ class memlock(chipsec.module_common.BaseModule):
                     self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
                     break
                 lt_lock = self.cs.get_register_field( 'MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK' )
-                self.logger.log( "[*]   cpu%d: MSR_LT_LOCK_MEMORY[LT_LOCK] = %x" % (tid, lt_lock) )
+                self.logger.log( "[*]   cpu{:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {:x}".format(tid, lt_lock) )
                 if 0 == lt_lock:
                     status = True
         return status

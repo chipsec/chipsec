@@ -82,7 +82,7 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
         if len(info) == 0:
             return
         for i in self.responses:
-            self.msg('%s%20s:%20s  %4d' % ('  ' * indent, hexlify(i), hexlify(info[i]['message']), info[i]['count']))
+            self.msg('{}{:20}:{:20}  {:4d}'.format('  ' * indent, hexlify(i), hexlify(info[i]['message']), info[i]['count']))
             self.print_1(info[i]['next'], indent + 1)
         return
 
@@ -115,7 +115,7 @@ class synth_dev(BaseModule):
             vb.vmbus_request_offers()
 
             if relid not in [value['child_relid'] for value in vb.offer_channels.values()]:
-                vb.fatal('child relid #%d has not been found!' % relid)
+                vb.fatal('child relid #{:d} has not been found!'.format(relid))
 
             vb.ringbuffers[relid] = RingBuffer()
             vb.ringbuffers[relid].debug = False
@@ -131,7 +131,7 @@ class synth_dev(BaseModule):
                 vb.vmbus_close(relid)
                 vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)
             elif command == 'fuzz':
-                vb.promt = 'DEVICE %02d' % relid
+                vb.promt = 'DEVICE {:02d}'.format(relid)
                 vb.msg('Fuzzing VMBus devices ...')
                 vb.device_fuzzing(relid)
                 vb.print_statistics()

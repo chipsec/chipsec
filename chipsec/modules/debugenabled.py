@@ -79,7 +79,7 @@ class debugenabled(chipsec.module_common.BaseModule):
         TestFail = ModuleResult.PASSED
         self.logger.log('[X] Checking DCI register status')
         value = self.cs.msgbus.mm_msgbus_reg_read(P2SB_DCI_PORT_ID,DCI_CONTROL_REG_OFFSET)
-        if self.logger.VERBOSE: self.logger.log('[*] DCI Control Register = 0x%X' % value )
+        if self.logger.VERBOSE: self.logger.log('[*] DCI Control Register = 0x{:X}'.format(value) )
         HDCIEN = ((value & HDCIEN_MASK) == HDCIEN_MASK)
         if HDCIEN:
             TestFail = ModuleResult.FAILED
@@ -90,7 +90,7 @@ class debugenabled(chipsec.module_common.BaseModule):
         TestFail = ModuleResult.PASSED
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             (eax, edx) = self.cs.helper.read_msr( tid, IA32_DEBUG_INTERFACE_MSR )
-            if self.logger.VERBOSE: self.logger.log('[cpu%d] RDMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X' % (tid, IA32_DEBUG_INTERFACE_MSR, eax, edx) )
+            if self.logger.VERBOSE: self.logger.log('[cpu{:d}] RDMSR( 0x{:X} ): EAX = 0x{:08X}, EDX = 0x{:08X}'.format(tid, IA32_DEBUG_INTERFACE_MSR, eax, edx) )
             IA32_DEBUG_INTERFACE_DEBUGENABLE = ((IA32_DEBUG_INTERFACE_DEBUGENABLE_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGENABLE_MASK)
             IA32_DEBUG_INTERFACE_DEBUGELOCK = not ((IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK)
             IA32_DEBUG_INTERFACE_DEBUGEOCCURED = ((IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK)

@@ -149,7 +149,7 @@ class xmlAux:
         ts.test_cases = self.test_cases
         if self.properties is not None and len( self.properties ) > 0: ts.properties = self.properties
         ts.to_file( filename )
-        print ("[CHIPSEC] Saving output to XML file: %s" % str( os.path.abspath( filename ) ))
+        print "[CHIPSEC] Saving output to XML file: {}".format(str( os.path.abspath( filename ) ))
         return True
 
 class testCaseType:
@@ -409,7 +409,7 @@ class TestSuite(object):
         ts_attributes['information']   = str( len( [tc for tc in self.test_cases if tc.is_information()] ) )
         ts_attributes['notapplicable'] = str( len( [tc for tc in self.test_cases if tc.is_not_applicable()] ) )
         #ts_attributes["time"]          = str( sum( [tc.time for tc in self.test_cases if tc.time] ) )
-        ts_attributes["time"]          = "%.5f" % sum( [tc.time for tc in self.test_cases if tc.time] )
+        ts_attributes["time"]          = "{.5f}".format(sum( [tc.time for tc in self.test_cases if tc.time]) )
         ts_attributes["tests"]         = str( len( self.test_cases ) )
 
         xml_element = ET.Element( "testsuite", ts_attributes )
@@ -426,7 +426,7 @@ class TestSuite(object):
             tc_attributes = dict()
             tc_attributes['name'] = str( tc.name )
             if tc.time:
-                tc_attributes['time'] = "%.5f" % tc.time
+                tc_attributes['time'] = "{.5f}".format(tc.time)
             if tc.classname:
                 tc_attributes['classname'] = str( tc.classname )
 

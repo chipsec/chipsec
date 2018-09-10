@@ -74,10 +74,10 @@ class memconfig(BaseModule):
             v = self.cs.read_register( r )
             locked = self.cs.get_register_field( r, v, memmap_registers[r] )
             if locked == 1:
-                self.logger.log_good( "%-20s = 0x%016X - LOCKED   - %s" % (r, v, d['desc']) )
+                self.logger.log_good( "{:20} = 0x{:016X} - LOCKED   - {}".format(r, v, d['desc']) )
             else:
                 all_locked = False
-                self.logger.log_bad(  "%-20s = 0x%016X - UNLOCKED - %s" % (r, v, d['desc']) )
+                self.logger.log_bad(  "{:20} = 0x{:016X} - UNLOCKED - {}".format(r, v, d['desc']) )
 
         if all_locked:
             res = ModuleResult.PASSED

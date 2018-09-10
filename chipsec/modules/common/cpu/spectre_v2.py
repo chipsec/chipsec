@@ -129,9 +129,9 @@ class spectre_v2(BaseModule):
         ibrs_ibpb_supported = (r_edx & chipsec.defines.BIT26) > 0
         stibp_supported     = (r_edx & chipsec.defines.BIT27) > 0
         arch_cap_supported  = (r_edx & chipsec.defines.BIT29) > 0
-        self.logger.log( "[*] CPUID.7H:EDX[26] = %d Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)" % ibrs_ibpb_supported )
-        self.logger.log( "[*] CPUID.7H:EDX[27] = %d Single Thread Indirect Branch Predictors (STIBP)" % stibp_supported )
-        self.logger.log( "[*] CPUID.7H:EDX[29] = %d IA32_ARCH_CAPABILITIES" % arch_cap_supported )
+        self.logger.log( "[*] CPUID.7H:EDX[26] = {:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)".format(ibrs_ibpb_supported) )
+        self.logger.log( "[*] CPUID.7H:EDX[27] = {:d} Single Thread Indirect Branch Predictors (STIBP)".format(stibp_supported) )
+        self.logger.log( "[*] CPUID.7H:EDX[29] = {:d} IA32_ARCH_CAPABILITIES".format(arch_cap_supported) )
 
         if ibrs_ibpb_supported: self.logger.log_good( "CPU supports IBRS and IBPB" )
         else:                   self.logger.log_bad( "CPU doesn't support IBRS and IBPB" )
@@ -160,15 +160,15 @@ class spectre_v2(BaseModule):
                     break
 
                 ibrs_all = self.cs.get_register_field( 'IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL' )
-                self.logger.log( "[*]   cpu%d: IBRS_ALL = %x" % (tid, ibrs_all) )
+                self.logger.log( "[*]   cpu{:d}: IBRS_ALL = {:x}".format(tid, ibrs_all) )
                 if 0 == ibrs_all:
                     ibrs_enh_supported = False
                     break
 
                 # @TODO: this checks for RDCL aka Meltdown (Variant 3) mitigation
-                #self.logger.log( "[*]   cpu%d: checking RDCL mitigation support..." % tid )
+                #self.logger.log( "[*]   cpu{:d}: checking RDCL mitigation support...".format(tid) )
                 #rdcl_no = self.cs.get_register_field( 'IA32_ARCH_CAPABILITIES', arch_cap_msr, 'RDCL_NO' )
-                #self.logger.log( "[*]   cpu%d: RDCL_NO = %x" % (tid, rdcl_no) )
+                #self.logger.log( "[*]   cpu{:d}: RDCL_NO = {:x}".format(tid, rdcl_no) )
                 #if 0 == rdcl_no:
                 #    rdcl_mitigation_supported = False
                 #    break
@@ -197,13 +197,13 @@ class spectre_v2(BaseModule):
                     break
 
                 ibrs = self.cs.get_register_field( 'IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS' )
-                self.logger.log( "[*]   cpu%d: IA32_SPEC_CTRL[IBRS] = %x" % (tid, ibrs) )
+                self.logger.log( "[*]   cpu{:d}: IA32_SPEC_CTRL[IBRS] = {:x}".format(tid, ibrs) )
                 if 0 == ibrs:
                     ibrs_enabled = False
 
                 # ok to access STIBP bit even if STIBP is not supported
                 stibp = self.cs.get_register_field( 'IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP' )
-                self.logger.log( "[*]   cpu%d: IA32_SPEC_CTRL[STIBP] = %x" % (tid, stibp) )
+                self.logger.log( "[*]   cpu{:d}: IA32_SPEC_CTRL[STIBP] = {:x}".format(tid, stibp) )
                 if 0 == stibp:
                     stibp_enabled = False
 
