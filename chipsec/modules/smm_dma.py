@@ -63,10 +63,10 @@ class smm_dma(BaseModule):
     def check_tseg_config(self):
         res = ModuleResult.FAILED
         (tseg_base,  tseg_limit,  tseg_size ) = self.cs.cpu.get_TSEG()
-        self.logger.log("[*] TSEG      : 0x%016X - 0x%016X (size = 0x%08X)"   % (tseg_base,  tseg_limit,  tseg_size ))      
+        self.logger.log("[*] TSEG      : 0x{:016X} - 0x{:016X} (size = 0x{:08X})".format(tseg_base,  tseg_limit,  tseg_size ))      
         if (self.cs.cpu.check_SMRR_supported()):
             (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
-            self.logger.log("[*] SMRR range: 0x%016X - 0x%016X (size = 0x%08X)\n" % (smram_base, smram_limit, smram_size))
+            self.logger.log("[*] SMRR range: 0x{:016X} - 0x{:016X} (size = 0x{:08X})\n".format(smram_base, smram_limit, smram_size))
         else:
             smram_base = 0
             smram_limit = 0
