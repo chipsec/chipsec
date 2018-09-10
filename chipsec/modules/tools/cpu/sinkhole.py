@@ -67,11 +67,11 @@ class sinkhole(BaseModule):
         apicbase  = self.cs.get_register_field( 'IA32_APIC_BASE', apic_base_msr, 'APICBase' )
         apic_base = self.cs.get_register_field( 'IA32_APIC_BASE', apic_base_msr, 'APICBase', True )
 
-        self.logger.log( "[*] Local APIC Base: 0x%016X" % apic_base )
-        self.logger.log( "[*] SMRR Base      : 0x%016X" % smrr_base )
+        self.logger.log( "[*] Local APIC Base: 0x{:016X}".format(apic_base) )
+        self.logger.log( "[*] SMRR Base      : 0x{:016X}".format(smrr_base) )
 
         self.logger.log( "[*] Attempting to overlap Local APIC page with SMRR region" )
-        self.logger.log( "    writing 0x%X to IA32_APIC_BASE[APICBase].." % smrrbase )
+        self.logger.log( "    writing 0x{:X} to IA32_APIC_BASE[APICBase]..".format(smrrbase) )
         self.logger.log_important( "NOTE: The system may hang or process may crash when running this test. In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
         try:
             self.cs.write_register_field( 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
@@ -82,7 +82,7 @@ class sinkhole(BaseModule):
             self.logger.log_good( "Could not modify IA32_APIC_BASE" )
 
         apic_base_msr_new = self.cs.read_register( 'IA32_APIC_BASE', 0 )
-        self.logger.log( "[*] new IA32_APIC_BASE: 0x%016X" % apic_base_msr_new )
+        self.logger.log( "[*] new IA32_APIC_BASE: 0x{:016X}".format(apic_base_msr_new) )
         #self.cs.print_register( 'IA32_APIC_BASE', apic_base_msr_new )
 
         if apic_base_msr_new == apic_base_msr and ex:
@@ -90,7 +90,7 @@ class sinkhole(BaseModule):
             self.logger.log_passed_check( "CPU does not seem to have SMM memory sinkhole vulnerability" )
         else:
             self.cs.write_register( 'IA32_APIC_BASE', apic_base_msr, 0 )
-            self.logger.log( "[*] Restored original value 0x%016X" % apic_base_msr )
+            self.logger.log( "[*] Restored original value 0x{:016X}".format(apic_base_msr) )
             res = ModuleResult.FAILED
             self.logger.log_failed_check( "CPU is succeptible to SMM memory sinkhole vulnerability" )
 
