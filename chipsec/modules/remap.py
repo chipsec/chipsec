@@ -61,11 +61,11 @@ class remap(BaseModule):
         tolud      = self.cs.read_register( 'PCI0.0.0_TOLUD' )
         tsegmb     = self.cs.read_register( 'PCI0.0.0_TSEGMB' )
         self.logger.log( "[*] Registers:" )
-        self.logger.log( "[*]   TOUUD     : 0x%016X" % touud )
-        self.logger.log( "[*]   REMAPLIMIT: 0x%016X" % remaplimit )
-        self.logger.log( "[*]   REMAPBASE : 0x%016X" % remapbase )
-        self.logger.log( "[*]   TOLUD     : 0x%08X" % tolud )
-        self.logger.log( "[*]   TSEGMB    : 0x%08X\n" % tsegmb )
+        self.logger.log( "[*]   TOUUD     : 0x{:016X}".format(touud) )
+        self.logger.log( "[*]   REMAPLIMIT: 0x{:016X}".format(remaplimit) )
+        self.logger.log( "[*]   REMAPBASE : 0x{:016X}".format(remapbase) )
+        self.logger.log( "[*]   TOLUD     : 0x{:08X}".format(tolud) )
+        self.logger.log( "[*]   TSEGMB    : 0x{:08X}\n".format(tsegmb) )
 
         remapbase_lock  = remapbase & 0x1
         remaplimit_lock = remaplimit & 0x1
@@ -79,12 +79,12 @@ class remap(BaseModule):
         tolud      &= _TOLUD_MASK
         tsegmb     &= _TOLUD_MASK
         self.logger.log( "[*] Memory Map:" )
-        self.logger.log( "[*]   Top Of Upper Memory: 0x%016X" % touud )
-        self.logger.log( "[*]   Remap Limit Address: 0x%016X" % (remaplimit|0xFFFFF) )
-        self.logger.log( "[*]   Remap Base Address : 0x%016X" % remapbase )
-        self.logger.log( "[*]   4GB                : 0x%016X" % chipsec.defines.BIT32 )
-        self.logger.log( "[*]   Top Of Low Memory  : 0x%016X" % tolud )
-        self.logger.log( "[*]   TSEG (SMRAM) Base  : 0x%016X\n" % tsegmb )
+        self.logger.log( "[*]   Top Of Upper Memory: 0x{:016X}".format(touud) )
+        self.logger.log( "[*]   Remap Limit Address: 0x{:016X}".format(remaplimit|0xFFFFF) )
+        self.logger.log( "[*]   Remap Base Address : 0x{:016X}".format(remapbase) )
+        self.logger.log( "[*]   4GB                : 0x{:016X}".format(chipsec.defines.BIT32) )
+        self.logger.log( "[*]   Top Of Low Memory  : 0x{:016X}".format(tolud) )
+        self.logger.log( "[*]   TSEG (SMRAM) Base  : 0x{:016X}\n".format(tsegmb) )
 
         remap_ok = True
 

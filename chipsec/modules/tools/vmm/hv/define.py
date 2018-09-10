@@ -505,7 +505,7 @@ def set_variables(varlist):
     for i in varlist:
         var = re.sub(r"([a-z])([A-Z]+)", r"\1_\2", varlist[i])
         var = var.upper()
-        exec("global %s; %s=%d" % (var, var, i))
+        exec("global {}; {}={:d}".format(var, var, i))
 
 set_variables(msrs)
 set_variables(hypercall_status_codes)

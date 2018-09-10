@@ -336,13 +336,13 @@ def replace_header(data):
          = struct.unpack(IMAGE_OPTIONAL_HEADER64, data[dof:dof+IMAGE_OPTIONAL_HEADER64_size])
         dof = dof + IMAGE_OPTIONAL_HEADER64_size
     else:
-        #print " *** Unsupported magic: %X" % Magic
+        #print " *** Unsupported magic: {:X}".format(Magic)
         return None
     if (NumberOfSections &~0xFF):
-        #print " *** NumberOfSections cannot be packed: %X" % NumberOfSections
+        #print " *** NumberOfSections cannot be packed: {:X}".format(NumberOfSections)
         return None
     if (Subsystem &~0xFF):
-        #print " *** Subsystem cannot be packed: %X" % NumberOfSections
+        #print " *** Subsystem cannot be packed: {:X}".format(NumberOfSections)
         return None
 
     basereloc_off = dof + EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC*IMAGE_DATA_DIRECTORY_size
@@ -370,7 +370,7 @@ def produce_te(fname, outfname):
     return 1
 
 def replace_efi_binary(orig_efi_binary, new_efi_binary):
-    logger.log( "[*] replacing EFI binary '%s'.." % orig_efi_binary )
+    logger.log( "[*] replacing EFI binary '{}'..".format(orig_efi_binary) )
     te_binary = new_efi_binary + '.te'
     if not os.path.exists(te_binary): produce_te(new_efi_binary, te_binary)
     # back up original binary
@@ -379,7 +379,7 @@ def replace_efi_binary(orig_efi_binary, new_efi_binary):
     try:
         shutil.copy(te_binary, orig_efi_binary)
     except OSError as err:
-        logger.error( 'Cannot replace binary (%s)' % err )
+        logger.error( 'Cannot replace binary ({})'.format(err) )
         return False
     return True
 
@@ -387,7 +387,7 @@ def umount(drive):
     import subprocess
     if os.path.exists(drive):
         res = subprocess.call( ["mountvol.exe", drive, "/D"] )
-        if res != 0: logger.warn( "Cannot unmount EFI System partition: %d" % res )
+        if res != 0: logger.warn( "Cannot unmount EFI System partition: {:d}".format(res) )
 
 def get_efi_mount():
     import subprocess
@@ -395,7 +395,7 @@ def get_efi_mount():
         if not os.path.exists('%c:\\' % l):
             res = subprocess.call( ["mountvol.exe", "%c:\\" % l, "/S"] )
             if res != 0:
-                logger.error( "Cannot mount EFI System partition (status = %d)" % res )
+                logger.error( "Cannot mount EFI System partition (status = {:d})".format(res) )
                 return None
             return '%c:\\' % l
     logger.error( "Cannot mount EFI System partition. No drive letters to use." )
@@ -404,11 +404,11 @@ def get_efi_mount():
 def get_bootloader_paths( cfg_file ):
     bootloader_paths = []
     fcfg = open( cfg_file, 'r' )
-    logger.log( "[*] reading paths from '%s'.." % cfg_file )
+    logger.log( "[*] reading paths from '{}'..".format(cfg_file) )
     for line in fcfg:
         bl_path = line.rstrip()
         if bl_path is not None: 
-            logger.log( "    adding path '%s'.." % bl_path )
+            logger.log( "    adding path '{}'..".format(bl_path) )
             bootloader_paths.append( bl_path )
     return bootloader_paths
 
@@ -424,16 +424,16 @@ def replace_bootloader( bootloader_paths, new_bootloader_file, do_mount=True ):
     return True
 
 def restore_efi_binary( orig_efi_binary ):
-    logger.log( "[*] Restoring %s.." % orig_efi_binary )
+    logger.log( "[*] Restoring {}..".format(orig_efi_binary) )
     backup = orig_efi_binary + ".bak"
     if not os.path.exists(backup):
-        logger.error( "Cannot restore original binary: '%s' not found" % backup )
+        logger.error( "Cannot restore original binary: '{}' not found".format(backup) )
         return False
     try:
         if os.path.exists(orig_efi_binary): os.remove(orig_efi_binary)
         os.rename(backup, orig_efi_binary)
     except OSError as err:
-        logger.error( 'Cannot restore original binary (%s)' % err )
+        logger.error( 'Cannot restore original binary ({})'.format(err) )
         return False
     return True
 
@@ -506,7 +506,7 @@ class te(BaseModule):
         if 'generate_te' == mode:
             if len(module_argv) > 1: file_path = module_argv[1]
             if not os.path.exists( file_path ):
-                self.logger.error( "Cannot find file '%s'" % file_path )
+                self.logger.error( "Cannot find file '{}'".format(file_path) )
                 return ModuleResult.ERROR
 
             sts = replace_efi_binary( file_path, file_path )
@@ -516,7 +516,7 @@ class te(BaseModule):
 
             if len(module_argv) > 1: te_cfg    = module_argv[1]
             if not os.path.exists( te_cfg ):
-                self.logger.error( "Cannot find file '%s'" % te_cfg )
+                self.logger.error( "Cannot find file '{}'".format(te_cfg) )
                 return ModuleResult.ERROR
 
             bootloader_paths = get_bootloader_paths( te_cfg )
@@ -532,6 +532,6 @@ class te(BaseModule):
                 sts = replace_bootloader( bootloader_paths, file_path, do_mount )
 
         else:
-            self.logger.error( "Invalid mode: '%s'" % mode )
+            self.logger.error( "Invalid mode: '{}'".format(mode) )
 
         return (ModuleResult.PASSED if sts else ModuleResult.ERROR)
