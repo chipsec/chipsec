@@ -48,14 +48,14 @@ class BaseModuleDebug(BaseModule):
     ##  msg
     ##
     def msg(self, message):
-        sys.stdout.write('[%s]  %s\n' % (self.promt, message))
+        sys.stdout.write('[{}]  {}\n'.format(self.promt, message))
         return
 
     ##
     ##  err
     ##
     def err(self, message):
-        sys.stdout.write('[%s]  **** ERROR: %s\n' % (self.promt, message))
+        sys.stdout.write('[{}]  **** ERROR: {}\n'.format(self.promt, message))
         return
 
     ##
@@ -63,7 +63,7 @@ class BaseModuleDebug(BaseModule):
     ##
     def dbg(self, message):
         if self.debug:
-            sys.stdout.write('[%s]  %s\n' % (self.promt, message))
+            sys.stdout.write('[{}]  {}\n'.format(self.promt, message))
         return
 
     ##
@@ -72,14 +72,14 @@ class BaseModuleDebug(BaseModule):
     def hex(self, title, data, w = 16):
         if title and data:
             title = '-'*6 + title + '-'*w*3
-            sys.stdout.write('[%s]  %s' % (self.promt, title[:w*3+15]))
+            sys.stdout.write('[{}]  {}'.format(self.promt, title[:w*3+15]))
         a = 0
         for c in data:
-          if a % w== 0:
-              sys.stdout.write('\n[%s]  %08X: ' % (self.promt, a))
+          if a.formatw== 0:
+              sys.stdout.write('\n[{}]  {:08X}: '.format(self.promt, a))
           elif a % w % 8 == 0:
              sys.stdout.write('| ')          
-          sys.stdout.write('%02x ' % ord(c))
+          sys.stdout.write('{:02X} '.format(ord(c)))
           a = a + 1
         sys.stdout.write('\n')
         return
@@ -88,7 +88,7 @@ class BaseModuleDebug(BaseModule):
     ##  fatal
     ##
     def fatal(self, message):
-        sys.stdout.write('[%s]  **** FATAL: %s\n' % (self.promt, message))
+        sys.stdout.write('[{}]  **** FATAL: {}\n'.format(self.promt, message))
         exit(1)
         return
 
@@ -99,7 +99,7 @@ class BaseModuleDebug(BaseModule):
         i = 0
         while reg != 0:
             if i in desc:
-                self.msg('       Bit %2d:  %d  %s' % (i, reg & 0x1, desc[i]))
+                self.msg('       Bit {:2d}:  {:d}  {}'.format(i, reg & 0x1, desc[i]))
             i  += 1
             reg = reg >> 1
         return
@@ -127,9 +127,9 @@ class BaseModuleSupport(BaseModuleDebug):
 
     def stats_print(self, title):
         self.msg('')
-        self.msg((' %s ' % title).center(72 - len(self.promt), '*'))
+        self.msg((' {} '.format(title).center(72 - len(self.promt), '*')))
         for name in sorted(self.statistics, key=self.statistics.get, reverse=True):
-            self.msg('%50s : %d' % (name, self.statistics[name]) )
+            self.msg('{:50} : {:d}'.format(name, self.statistics[name]) )
         self.msg('')
         return
 
@@ -159,7 +159,7 @@ class BaseModuleSupport(BaseModuleDebug):
                     found = True
                     break
         if not found:
-            self.initial_data.append({"vector": "%02x" % vector, "status": status, "data": buffer})
+            self.initial_data.append({"vector": "{:02X}".format(vector), "status": status, "data": buffer})
         return
 
     def dump_initial_data(self, filename):
@@ -176,8 +176,8 @@ class BaseModuleHwAccess(BaseModuleSupport):
     def cpuid_info(self, eax, ecx, desc):
         val = self.cs.cpu.cpuid(eax, ecx)
         self.msg('')
-        self.msg('CPUID.%Xh.%Xh > %s' % (eax, ecx, desc))
-        self.msg('EAX: 0x%08X EBX: 0x%08X ECX: 0x%08X EDX: 0x%08X' % (val[0], val[1], val[2], val[3]))
+        self.msg('CPUID.{:X}h.{:X}h > {}'.format(eax, ecx, desc))
+        self.msg('EAX: 0x{:08X} EBX: 0x{:08X} ECX: 0x{:08X} EDX: 0x{:08X}'.format(val[0], val[1], val[2], val[3]))
         return val
 
     ##
@@ -252,7 +252,7 @@ def hv_hciv(rep_start, rep_count, call_code, fast = 0):
     return (((rep_start & 0x0FFF) << 48) + ((rep_count & 0x0FFF) << 32) + ((fast & 0x1) << 16) + (call_code & 0xFFFF))
 
 def uuid(id):
-    return '{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}' % struct.unpack('<LHH8B', id)
+    return '{{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}}'.format(struct.unpack('<LHH8B', id))
 
 ### OPTIONAL ROUTINES ##########################################################
 
@@ -264,9 +264,9 @@ class session_logger(object):
         self.log2file  = True
         if self.log:
 #            logpath = 'logs/'
-#            logfile = '%s.log' % details
-            logpath = 'logs/%s/' % strftime("%Yww%W.%w", localtime())
-            logfile = '%s-%s.log' % (details, strftime("%H%M", localtime()))
+#            logfile = '{}.log'.format(details)
+            logpath = 'logs/{}/'.format(strftime("%Yww%W.%w", localtime()))
+            logfile = '{}-{}.log'.format(details, strftime("%H%M", localtime()))
             try:
                 os.makedirs(logpath)
             except OSError:

@@ -598,7 +598,6 @@ def NextFwVolume(buffer, off = 0):
         ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
           FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
            Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
-
         fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
                           FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
                           FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
@@ -617,10 +616,6 @@ def NextFwVolume(buffer, off = 0):
 
 FFS_ATTRIB_LARGE_FILE         = 0x01
   
-def GetFvHeader(buffer, off = 0):
-    EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
-    header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
-    if (len(buffer) < header_size):
         return (0,0,0)
     size = 0
     fof = off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
