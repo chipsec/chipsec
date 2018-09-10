@@ -115,15 +115,15 @@ class access_uefispec(BaseModule):
         if baddata == origdata:
             baddata = 'A'*datalen #in case we failed to restore previously
         status = self._uefi.set_EFI_variable(name, guid, baddata)
-        if not status: self.logger.log_good('Writing EFI variable %s did not succeed.' % name)
+        if not status: self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
         newdata  = self._uefi.get_EFI_variable(name, guid)
         if self.diff_var(newdata, origdata):
-            self.logger.log_bad('Corruption of EFI variable of concern %s. Trying to recover.' % name)
+            self.logger.log_bad('Corruption of EFI variable of concern {}. Trying to recover.'.format(name))
             ret = True
             self._uefi.set_EFI_variable(name, guid, origdata)
             if self.diff_var(self._uefi.get_EFI_variable(name, guid), origdata):
                 nameguid = name+' ('+guid+')'
-                self.logger.log_bad('RECOVERY FAILED. Variable %s remains corrupted. Original data value: %s' % (nameguid, origdata))
+                self.logger.log_bad('RECOVERY FAILED. Variable {} remains corrupted. Original data value: {}'.format(nameguid, origdata))
         return ret
 
 
@@ -151,12 +151,12 @@ class access_uefispec(BaseModule):
                 pass
 
             if len(vars[name]) > 1:
-                self.logger.log_important( 'Found two instances of the variable %s.' % name )
+                self.logger.log_important( 'Found two instances of the variable {}.'.format(name) )
             for (off, buf, hdr, data, guid, attrs) in vars[name]:
-                self.logger.log('[*] Variable %s (%s)' % (name,get_attr_string(attrs)))
+                self.logger.log('[*] Variable {} ({})'.format(name,get_attr_string(attrs)))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
-                    #self.logger.log(' UEFI Spec Var %s' % name)
+                    #self.logger.log(' UEFI Spec Var {}'.format(name))
                     if perms != attrs:
                         attr_diffs = (perms ^ attrs)
                         extra_attr = attr_diffs &  attrs
@@ -172,22 +172,22 @@ class access_uefispec(BaseModule):
                 if do_modify:
                     #self.logger.log('uefispec_ro_vars')
                     if name in self.uefispec_ro_vars:
-                        self.logger.log("[*] Testing modification of %s .." %name)
+                        self.logger.log("[*] Testing modification of {} ..".format(name))
                         if self.can_modify(name, guid, data):
                             ro_concern.append(name)
-                            self.logger.log_bad("Variable %s should be read only." % name)
+                            self.logger.log_bad("Variable {} should be read only.".format(name))
                             res = ModuleResult.FAILED
 
         self.logger.log('')
         self.logger.log_bad('Variables with attributes that differ from UEFI spec:')
         for name in uefispec_concern:
-            self.logger.log('    %s' % name)
+            self.logger.log('    {}'.format(name))
 
         if do_modify:
             self.logger.log('')
             self.logger.log_bad('Variables that should have been read-only and were not:')
             for name in ro_concern:
-                self.logger.log('    %s' % name)
+                self.logger.log('    {}'.format(name))
 
         self.logger.log('')
 

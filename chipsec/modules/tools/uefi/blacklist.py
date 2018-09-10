@@ -102,15 +102,15 @@ class blacklist(BaseModule):
     def check_blacklist( self ):
         res = ModuleResult.PASSED
 
-        self.logger.log( "[*] searching for EFI binaries that match criteria from '%s':" % self.cfg_name )
+        self.logger.log( "[*] searching for EFI binaries that match criteria from '{}':".format(self.cfg_name) )
         for k in self.efi_blacklist.keys():
             entry = self.efi_blacklist[k]
-            self.logger.log( "    %-16s - %s" % (k,entry['description'] if 'description' in entry else '') )
+            self.logger.log( "    {:16} - {}".format(k,entry['description'] if 'description' in entry else '') )
             #if 'match' in entry:
-            #    for c in entry['match'].keys(): self.logger.log( "[*]   %s" % entry['match'][c] )
+            #    for c in entry['match'].keys(): self.logger.log( "[*]   {}".format(entry['match'][c]) )
             #if 'exclude' in entry:
             #    self.logger.log( "[*]   excluding binaries:" )
-            #    for c in entry['exclude']: self.logger.log( "[*]   %s" % entry['exclude'][c] )
+            #    for c in entry['exclude']: self.logger.log( "[*]   {}".format(entry['exclude'][c]) )
 
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
         efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
@@ -145,13 +145,13 @@ class blacklist(BaseModule):
             self.spi = chipsec.hal.spi.SPI( self.cs )
             (base,limit,freg) = self.spi.get_SPI_region( chipsec.hal.spi.BIOS )
             image_size = limit + 1 - base
-            self.logger.log( "[*] dumping FW image from ROM to %s: 0x%08X bytes at [0x%08X:0x%08X]" % (image_file,base,limit,image_size) )
+            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file,base,limit,image_size) )
             self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
             self.spi.read_spi_to_file( base, image_size, image_file )
         elif len(module_argv) > 0:
             # Use provided firmware image 
             image_file = module_argv[0]
-            self.logger.log( "[*] reading FW image from file: %s" % image_file )
+            self.logger.log( "[*] reading FW image from file: {}".format(image_file) )
 
         self.image = chipsec.file.read_file( image_file )
 
