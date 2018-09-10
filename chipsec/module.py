@@ -48,15 +48,15 @@ class Module():
     def do_import(self):
         loaded = False
         if not MODPATH_RE.match(self.get_name()):
-            self.logger.error( "Invalid module path: %s" % self.name )
+            self.logger.error( "Invalid module path: {}".format(self.name) )
         else:
             try:
                 if _importlib:
                     self.module = importlib.import_module( self.name )
                 loaded = True
-                if self.logger.VERBOSE: self.logger.log_good( "imported: %s" % self.name )
+                if self.logger.VERBOSE: self.logger.log_good( "imported: {}".format(self.name) )
             except BaseException as msg:
-                self.logger.error( "Exception occurred during import of %s: '%s'" % (self.name, str(msg)) )
+                self.logger.error( "Exception occurred during import of {}: '{}'".format(self.name, str(msg)) )
                 if self.logger.VERBOSE: self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
@@ -66,7 +66,7 @@ class Module():
 
         if self.mod_obj != None and result == ModuleResult.PASSED:
             if module_argv is not None:
-                self.logger.log( "[*] Module arguments (%d):" % len(module_argv) )
+                self.logger.log( "[*] Module arguments ({:d}):".format(len(module_argv)) )
                 self.logger.log( module_argv )
             else:
                 module_argv = []
@@ -77,10 +77,10 @@ class Module():
                 else:
                     if self.mod_obj.res == ModuleResult.NOTAPPLICABLE:
                         result = ModuleResult.NOTAPPLICABLE
-                        self.logger.log("Skipping module %s since it is not applicable to this platform"%self.name)
+                        self.logger.log("Skipping module {} since it is not supported in this platform".format(self.name))
                     else:
                         result = ModuleResult.SKIPPED
-                        self.logger.log("Skipping module %s since it is not supported in this platform"%self.name)
+                        self.logger.log("Skipping module {} since it is not supported in this platform".format(self.name))
 
         return result
 

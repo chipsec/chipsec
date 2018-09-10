@@ -58,17 +58,17 @@ class variables(BaseModule):
 
 
     def can_modify( self, name, guid, data, attrs ):
-        self.logger.log( "    > attempting to modify variable %s:%s" % (guid,name) )
+        self.logger.log( "    > attempting to modify variable {}:{}".format(guid,name) )
         datalen = len(data)
         #print_buffer( data )
 
         baddata = chr( ord(data[0]) ^ 0xFF ) + data[1:]
         #if datalen > 1: baddata = baddata[:datalen-1] + chr( ord(baddata[datalen-1]) ^ 0xFF )
         status = self._uefi.set_EFI_variable( name, guid, baddata )
-        if StatusCode.EFI_SUCCESS != status: self.logger.log( '    < modification of %s returned error 0x%X' % (name,status) )
-        else: self.logger.log( '    < modification of %s returned succees' % name )
+        if StatusCode.EFI_SUCCESS != status: self.logger.log( '    < modification of {} returned error 0x{:X}'.format(name,status) )
+        else: self.logger.log( '    < modification of {} returned succees'.format(name) )
 
-        self.logger.log( '    > checking variable %s contents after modification..' % name )
+        self.logger.log( '    > checking variable {} contents after modification..'.format(name) )
         newdata = self._uefi.get_EFI_variable( name, guid )
 
         #print_buffer( newdata )
@@ -78,15 +78,15 @@ class variables(BaseModule):
 
         _changed = (data != newdata)
         if _changed:
-            self.logger.log_bad( "EFI variable %s has been modified. Restoring original contents.." % name )
+            self.logger.log_bad( "EFI variable {} has been modified. Restoring original contents..".format(name) )
             self._uefi.set_EFI_variable( name, guid, data )
             # checking if restored correctly
             restoreddata = self._uefi.get_EFI_variable( name, guid )
             #print_buffer( restoreddata )
-            if (restoreddata != data): self.logger.error( "Failed to restore contents of variable %s failed!" % name )
-            else:                      self.logger.log( "    contents of variable %s have been restored" % name )
+            if (restoreddata != data): self.logger.error( "Failed to restore contents of variable {} failed!".format(name) )
+            else:                      self.logger.log( "    contents of variable {} have been restored".format(name) )
         else:
-            self.logger.log_good( "Could not modify UEFI variable %s:%s" % (guid,name) )
+            self.logger.log_good( "Could not modify UEFI variable {}:{}".format(guid,name) )
         return _changed
 
     ## check_secureboot_variable_attributes
@@ -107,10 +107,10 @@ class variables(BaseModule):
 
             if name in sbvars.keys() and sbvars[name] is not None:
                 if len(sbvars[name]) > 1:
-                    self.logger.log_failed_check( 'There should only be one instance of variable %s' % name )
+                    self.logger.log_failed_check( 'There should only be one instance of variable {}'.format(name) )
                     return ModuleResult.FAILED
                 for (off, buf, hdr, data, guid, attrs) in sbvars[name]:
-                    self.logger.log( "[*] Checking protections of UEFI variable %s:%s" % (guid,name) )
+                    self.logger.log( "[*] Checking protections of UEFI variable {}:{}".format(guid,name) )
 
                     # check the status of Secure Boot
                     if EFI_VAR_NAME_SecureBoot == name:
@@ -121,12 +121,12 @@ class variables(BaseModule):
                     #
                     if name in SECURE_BOOT_KEY_VARIABLES:
                         if IS_VARIABLE_ATTRIBUTE( attrs, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS ):
-                            self.logger.log_good( 'Variable %s:%s is authenticated (AUTHENTICATED_WRITE_ACCESS)' % (guid,name) )
+                            self.logger.log_good( 'Variable {}:{} is authenticated (AUTHENTICATED_WRITE_ACCESS)'.format(guid,name) )
                         elif IS_VARIABLE_ATTRIBUTE( attrs, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS ):
-                            self.logger.log_good( 'Variable %s:%s is authenticated (TIME_BASED_AUTHENTICATED_WRITE_ACCESS)' % (guid,name) )
+                            self.logger.log_good( 'Variable {}:{} is authenticated (TIME_BASED_AUTHENTICATED_WRITE_ACCESS)'.format(guid,name) )
                         else:
                             not_auth += 1
-                            self.logger.log_bad( 'Variable %s:%s is not authenticated' % (guid,name) )
+                            self.logger.log_bad( 'Variable {}:{} is not authenticated'.format(guid,name) )
 
                     #
                     # Attempt to modify contents of the variables
@@ -136,11 +136,11 @@ class variables(BaseModule):
 
             else:
                 not_found += 1
-                self.logger.log_important( 'Secure Boot variable %s is not found' % name )
+                self.logger.log_important( 'Secure Boot variable {} is not found'.format(name) )
                 continue
 
         self.logger.log( '' )
-        self.logger.log( '[*] Secure Boot appears to be %sabled' % ('en' if is_secureboot_enabled else 'dis') )
+        self.logger.log( '[*] Secure Boot appears to be {}abled'.format('en' if is_secureboot_enabled else 'dis') )
 
         if len(SECURE_BOOT_VARIABLES) == not_found:
             # None of Secure Boot variables were not found

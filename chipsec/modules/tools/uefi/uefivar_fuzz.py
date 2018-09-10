@@ -97,7 +97,7 @@ class uefivar_fuzz(BaseModule):
     def rnd(self, n=1):
         rnum = ''
         for j in range(n):
-            rnum += '%02x' % random.randint(0,255)
+            rnum += '{:02X}'.format(random.randint(0,255))
         return rnum
         
     def usage(self):
@@ -166,10 +166,10 @@ class uefivar_fuzz(BaseModule):
             write_file( 'SEED.txt', str(SEED) )
             
             if not len(module_argv): fz_cli = 'all'
-            self.logger.log( 'Test      : %s' % fz_cli)
-            self.logger.log( 'Iterations: %d' % ITERATIONS )
-            self.logger.log( 'Seed      : %d' % SEED )
-            self.logger.log( 'Test case : %d' % CASE )
+            self.logger.log( 'Test      : {}'.format(fz_cli))
+            self.logger.log( 'Iterations: {:d}'.format(ITERATIONS) )
+            self.logger.log( 'Seed      : {:d}'.format(SEED) )
+            self.logger.log( 'Test case : {:d}'.format(CASE) )
             self.logger.log('')
             for count in range(1,ITERATIONS+CASE):
                 
@@ -192,7 +192,7 @@ class uefivar_fuzz(BaseModule):
                 
                 if (count < CASE): continue
                 
-                self.logger.log( '  Running test #%d:' % count )                    
+                self.logger.log( '  Running test #{:d}:'.format(count) )                    
                 self.logger.flush()
 
                 status = self._uefi.set_EFI_variable(_NAME, _GUID, _DATA, _SIZE, _ATTRIB) 

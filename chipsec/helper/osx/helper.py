@@ -100,9 +100,9 @@ class OSXHelper(Helper):
         subprocess.check_call(["kextload", driver_path])
         if os.path.exists(self.DEVICE_NAME):
             if logger().VERBOSE:
-                logger().log("Module %s loaded successfully" % self.DRIVER_NAME)
+                logger().log("Module {} loaded successfully".format(self.DRIVER_NAME))
         else:
-            logger().error("Failed to load the module %s" % self.DRIVER_NAME)
+            logger().error("Failed to load the module {}".format(self.DRIVER_NAME))
 
     def create(self, start_driver):
         #self.init(start_driver)
@@ -144,7 +144,7 @@ class OSXHelper(Helper):
                 self.driver_loaded = True
             except IOError as e:
                 raise OsHelperError("Unable to open the Chipsec device.\n"
-                                    "%s" % str(e), e.errno)
+                                    "{}".format(str(e), e.errno))
 
     def close(self):
         if self.dev_fh:
@@ -228,7 +228,7 @@ class OSXHelper(Helper):
             if data is not None:
                 chipsec.file.write_file( OutputFileName, data )
             else:
-                logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                logger().error( "Cannot decompress file ({})".format( CompressedFileName ) )
                 return None
         return chipsec.file.read_file( OutputFileName )
 
@@ -289,7 +289,7 @@ class OSXHelper(Helper):
             else:
                 value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffffffff
         except:
-            logger().error("DeviceIoControl did not return value of proper size %x (value = '%s')" %(size,out_buf))
+            logger().error("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size,out_buf))
         return value
 
     def write_io_port(self, io_port, value, size):

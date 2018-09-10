@@ -238,13 +238,13 @@ class VARIABLE_STORE_HEADER( namedtuple('VARIABLE_STORE_HEADER', 'guid0 guid1 gu
         return """
 EFI Variable Store
 -----------------------------
-Signature : {%08X-%04X-%04X-%04s-%06s}
-Size      : 0x%08X bytes
-Format    : 0x%02X
-State     : 0x%02X
-Reserved  : 0x%04X
-Reserved1 : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+Signature : {}{:08X}-{:04X}-{:04X}-{:04}-{:06}{}
+Size      : 0x{:08X} bytes
+Format    : 0x{:02X}
+State     : 0x{:02X}
+Reserved  : 0x{:04X}
+Reserved1 : 0x{:08X}
+""".format( "{",self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), "}", self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
 #
 # Variable data start flag.
@@ -478,7 +478,7 @@ EFI_STATUS_DICT = {
 
 EFI_GUID_FMT = "IHH8s"
 def EFI_GUID( guid0, guid1, guid2, guid3 ):
-    return ("%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ("{:08X}-{:04X}-{:04X}-{:04}-{:06}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 
 
 def align(of, size):
@@ -493,7 +493,7 @@ def get_3b_size(s):
     return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
 def guid_str(guid0, guid1, guid2, guid3):
-    guid = "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper())
+    guid = "{:08X}-{:04X}-{:04X}-{:04}-{:06}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper())
     return guid
 
 
@@ -595,24 +595,24 @@ def NextFwVolume(buffer, off = 0):
           FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
            Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
         '''
-        print "\nFV volume offset: 0x%08X" % fof
-        print "\tFvLength:         0x%08X" % FvLength
-        print "\tAttributes:       0x%08X" % Attributes
-        print "\tHeaderLength:     0x%04X" % HeaderLength
-        print "\tChecksum:         0x%04X" % Checksum
-        print "\tRevision:         0x%02X" % Revision
-        print "\tExtHeaderOffset:  0x%02X" % ExtHeaderOffset
-        print "\tReserved:         0x%02X" % Reserved
+        print "\nFV volume offset: 0x{:08X}".format(fof)
+        print "\tFvLength:         0x{:08X}".format(FvLength)
+        print "\tAttributes:       0x{:08X}".format(Attributes)
+        print "\tHeaderLength:     0x{:04X}".format(HeaderLength)
+        print "\tChecksum:         0x{:04X}".format(Checksum)
+        print "\tRevision:         0x{:02X}".format(Revision)
+        print "\tExtHeaderOffset:  0x{:02X}".format(ExtHeaderOffset)
+        print "\tReserved:         0x{:02X}".format(Reserved)
         '''
-        #print "FFS Guid:     %s" % guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3)
-        #print "FV Checksum:  0x%04X (0x%04X)" % (Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
+        #print "FFS Guid:     {}".format(guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3))
+        #print "FV Checksum:  0x{:04X} (0x{:04X})".format(Checksum, FvChecksum16(buffer[fof:fof+HeaderLength]))
         #'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
         fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
                           FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
                           FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
                           Reserved, Revision)
         if (len(fvh) < HeaderLength):
-            #print "len(fvh)=%d, HeaderLength=%d" % (len(fvh), HeaderLength)
+            #print "len(fvh)={:d}, HeaderLength={:d}".format(len(fvh), HeaderLength)
             tail = buffer[fof+len(fvh):fof+HeaderLength]
             fvh = fvh + tail
         CalcSum = FvChecksum16(fvh)
@@ -743,7 +743,7 @@ def NextFwFileSection(sections, ssize, sof, polarity):
         if Size == 0xFFFFFF:
 			Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
 			Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
-        sec_name = "S_UNKNOWN_%02X" % Type
+        sec_name = "S_UNKNOWN_{:02X}".format(Type)
         if Type in SECTION_NAMES.keys():
             sec_name = SECTION_NAMES[Type]
         if (Size == 0xffffff and Type == 0xff) or (Size == 0):
@@ -894,7 +894,7 @@ def parse_sb_db(db, decode_dir):
                 owner = guid_str(owner0, owner1, owner2, owner3)
                 data = sig_data[guid_size:]
                 entries.append( data )
-                sig_file_name = "%s-%s-%02d.bin" % (short_name, owner, nsig)
+                sig_file_name = "{}-{}-{:02d}.bin".format(short_name, owner, nsig)
                 sig_file_name = os.path.join(decode_dir, sig_file_name)
                 write_file(sig_file_name, data)
                 if (sig_parse_f != None):
@@ -902,8 +902,8 @@ def parse_sb_db(db, decode_dir):
                 sof = sof + SignatureSize
                 nsig = nsig + 1
         else:
-            err_str = "Wrong SignatureSize for %s type: 0x%X."  % (SignatureType, SignatureSize)
-            if (sig_size > 0): err_str = err_str + " Must be 0x%X." % (sig_size)
+            err_str = "Wrong SignatureSize for {} type: 0x{:X}." .format(SignatureType, SignatureSize)
+            if (sig_size > 0): err_str = err_str + " Must be 0x{:X}.".format(sig_size)
             else:              err_str = err_str + " Must be >= 0x10."
             logger().error( err_str )
             logger().error('Skipping signature decode for this list.')
@@ -1259,22 +1259,22 @@ class op_io_pci_mem():
         if self.count is not None and self.count > 0 and self.buffer is not None:
             sz = self.count * script_width_sizes[ self.width ]
             if len(self.buffer) != sz:
-                logger().log( '[?] buffer size (0x%X) != Width x Count (0x%X)' % (len(self.buffer), sz) )
+                logger().log( '[?] buffer size (0x{:X}) != Width x Count (0x{:X})'.format(len(self.buffer), sz) )
             else:
                 self.values = list( struct.unpack( ('<%d%c' % (self.count,script_width_formats[self.width])), self.buffer ) )
     def __str__(self):
-        str_r =  "  Opcode : %s (0x%04X)\n" % (self.name, self.opcode)
-        str_r += "  Width  : 0x%02X (%X bytes)\n" % (self.width, script_width_sizes[self.width])
-        str_r += "  Address: 0x%08X\n" % self.address
-        if self.value   is not None: str_r += "  Value  : 0x%08X\n" % self.value
-        if self.mask    is not None: str_r += "  Mask   : 0x%08X\n" % self.mask
-        if self.unknown is not None: str_r += "  Unknown: 0x%04X\n" % self.unknown
-        if self.count   is not None: str_r += "  Count  : 0x%X\n" % self.count
+        str_r =  "  Opcode : {} (0x{:04X})\n".format(self.name, self.opcode)
+        str_r += "  Width  : 0x{:02X} ({:X} bytes)\n".format(self.width, script_width_sizes[self.width])
+        str_r += "  Address: 0x{:08X}\n".format(self.address)
+        if self.value   is not None: str_r += "  Value  : 0x{:08X}\n".format(self.value)
+        if self.mask    is not None: str_r += "  Mask   : 0x{:08X}\n".format(self.mask)
+        if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
+        if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x%0' + ( '%dX' % (script_width_sizes[self.width]*2) )
+            fmt = '0x%0' + ( '{:d}X'.format(script_width_sizes[self.width]*2) )
             str_r += "  Values : %s\n" % ("  ".join( [fmt % v for v in self.values] ))
         elif self.buffer is not None:
-            str_r += ("  Buffer (size = 0x%X):\n" % len(self.buffer)) + dump_buffer( self.buffer, 16 )
+            str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))
         return str_r
 
 
@@ -1288,11 +1288,11 @@ class op_smbus_execute():
         self.peccheck      = peccheck
         self.name          = script_opcodes[ opcode ] 
     def __str__(self):
-        str_r =  "  Opcode       : %s (0x%04X)\n" % (self.name, self.opcode)
-        str_r += "  Slave Address: 0x%02X\n" % self.slave_address
-        str_r += "  Command      : 0x%08X\n" % self.command
-        str_r += "  Operation    : 0x%02X\n" % self.operation
-        str_r += "  PEC Check    : %d\n" % self.peccheck
+        str_r =  "  Opcode       : {} (0x{:04X})\n".format(self.name, self.opcode)
+        str_r += "  Slave Address: 0x{:02X}\n".format(self.slave_address)
+        str_r += "  Command      : 0x{:08X}\n".format(self.command)
+        str_r += "  Operation    : 0x{:02X}\n".format(self.operation)
+        str_r += "  PEC Check    : {:d}\n".format(self.peccheck)
         return str_r
 
 #typedef struct {
@@ -1307,8 +1307,8 @@ class op_stall():
         self.duration = duration
         self.name     = script_opcodes[ self.opcode ] 
     def __str__(self):
-        str_r =  "  Opcode  : %s (0x%04X)\n" % (self.name, self.opcode)
-        str_r += "  Duration: 0x%08X (us)\n" % self.duration
+        str_r =  "  Opcode  : {} (0x{:04X})\n".format(self.name, self.opcode)
+        str_r += "  Duration: 0x{:08X} (us)\n".format(self.duration)
         return str_r
 
 #typedef struct {
@@ -1324,9 +1324,9 @@ class op_dispatch():
         self.context    = context
         self.name       = script_opcodes[ self.opcode ] 
     def __str__(self):
-        str_r =  "  Opcode     : %s (0x%04X)\n" % (self.name, self.opcode)
-        str_r += "  Entry Point: 0x%016X\n" % self.entrypoint
-        if self.context is not None: str_r += "  Context    : 0x%016X\n" % self.context
+        str_r =  "  Opcode     : {} (0x{:04X})\n".format(self.name, self.opcode)
+        str_r += "  Entry Point: 0x{:016X}\n".format(self.entrypoint)
+        if self.context is not None: str_r += "  Context    : 0x{:016X}\n".format(self.context)
         return str_r
 
 #typedef struct {
@@ -1347,11 +1347,11 @@ class op_mem_poll():
         self.looptimes = looptimes
         self.name      = 'S3_BOOTSCRIPT_MEM_POLL' 
     def __str__(self):
-        str_r =  "  Opcode    : %s (0x%04X)\n" % (self.name, self.opcode)
-        str_r += "  Width     : 0x%02X (%X bytes)\n" % (self.width, script_width_sizes[self.width])
-        str_r += "  Address   : 0x%016X\n" % self.address
-        str_r += "  Duration? : 0x%016X\n" % self.duration
-        str_r += "  LoopTimes?: 0x%016X\n" % self.looptimes
+        str_r =  "  Opcode    : {} (0x{:04X})\n".format(self.name, self.opcode)
+        str_r += "  Width     : 0x{:02X} ({:X} bytes)\n".format(self.width, script_width_sizes[self.width])
+        str_r += "  Address   : 0x{:016X}\n".format(self.address)
+        str_r += "  Duration? : 0x{:016X}\n".format(self.duration)
+        str_r += "  LoopTimes?: 0x{:016X}\n".format(self.looptimes)
         return str_r
 
 #typedef struct {
@@ -1364,14 +1364,14 @@ class op_terminate():
         self.size       = size
         self.name       = script_opcodes[ self.opcode ] 
     def __str__(self):
-        return "  Opcode     : %s (0x%02X)\n" % (self.name, self.opcode)
+        return "  Opcode     : {} (0x{:02X})\n".format(self.name, self.opcode)
 
 class op_unknown():
     def __init__(self, opcode, size):
         self.opcode     = opcode
         self.size       = size
     def __str__(self):
-        return "  Opcode     : unknown (0x%02X)\n" % self.opcode
+        return "  Opcode     : unknown (0x{:02X})\n".format(self.opcode)
 
 
 
@@ -1386,8 +1386,8 @@ class S3BOOTSCRIPT_ENTRY():
         self.header_length    = 0
 
     def __str__(self):
-        entry_str = '' if self.index is None else ('[%03d] ' % self.index)
-        entry_str += ( 'Entry at offset 0x%04X (len = 0x%X, header len = 0x%X):' % (self.offset_in_script, self.length, self.header_length) )
+        entry_str = '' if self.index is None else ('[{:03d}] '.format(self.index))
+        entry_str += ( 'Entry at offset 0x{:04X} (len = 0x{:X}, header len = 0x{:X}):'.format(self.offset_in_script, self.length, self.header_length) )
         if self.data: entry_str = entry_str + '\nData:\n' + dump_buffer(self.data, 16)
         if self.decoded_opcode: entry_str = entry_str + 'Decoded:\n' + str(self.decoded_opcode)
         return entry_str
@@ -1421,11 +1421,11 @@ class EFI_TABLE_HEADER( namedtuple('EFI_TABLE_HEADER', 'Signature Revision Heade
     __slots__ = ()
     def __str__(self):
         return """Header:
-  Signature     : %s
-  Revision      : %s
-  HeaderSize    : 0x%08X
-  CRC32         : 0x%08X
-  Reserved      : 0x%08X""" % ( self.Signature, EFI_SYSTEM_TABLE_REVISION(self.Revision), self.HeaderSize, self.CRC32, self.Reserved )
+  Signature     : {}
+  Revision      : {}
+  HeaderSize    : 0x{:08X}
+  CRC32         : 0x{:08X}
+  Reserved      : 0x{:08X}""".format( self.Signature, EFI_SYSTEM_TABLE_REVISION(self.Revision), self.HeaderSize, self.CRC32, self.Reserved )
 
 
 # #################################################################################################
@@ -1500,26 +1500,26 @@ EFI_1_02_SYSTEM_TABLE_REVISION = ((1 << 16) | (0o2))
 EFI_REVISIONS = [EFI_2_70_SYSTEM_TABLE_REVISION, EFI_2_60_SYSTEM_TABLE_REVISION, EFI_2_50_SYSTEM_TABLE_REVISION, EFI_2_40_SYSTEM_TABLE_REVISION, EFI_2_31_SYSTEM_TABLE_REVISION, EFI_2_30_SYSTEM_TABLE_REVISION, EFI_2_20_SYSTEM_TABLE_REVISION, EFI_2_10_SYSTEM_TABLE_REVISION, EFI_2_00_SYSTEM_TABLE_REVISION, EFI_1_10_SYSTEM_TABLE_REVISION, EFI_1_02_SYSTEM_TABLE_REVISION ]
 
 def EFI_SYSTEM_TABLE_REVISION(revision):
-    return ('%d.%d' % (revision>>16,revision&0xFFFF) )
+    return ('{:d}.{:d}'.format(revision>>16,revision&0xFFFF) )
 
 EFI_SYSTEM_TABLE_FMT  = '=12Q'
 class EFI_SYSTEM_TABLE( namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareRevision ConsoleInHandle ConIn ConsoleOutHandle ConOut StandardErrorHandle StdErr RuntimeServices BootServices NumberOfTableEntries ConfigurationTable') ):
     __slots__ = ()
     def __str__(self):
         return """EFI System Table:
-  FirmwareVendor      : 0x%016X
-  FirmwareRevision    : 0x%016X
-  ConsoleInHandle     : 0x%016X
-  ConIn               : 0x%016X
-  ConsoleOutHandle    : 0x%016X
-  ConOut              : 0x%016X
-  StandardErrorHandle : 0x%016X
-  StdErr              : 0x%016X
-  RuntimeServices     : 0x%016X
-  BootServices        : 0x%016X
-  NumberOfTableEntries: 0x%016X
-  ConfigurationTable  : 0x%016X
-""" % ( self.FirmwareVendor, self.FirmwareRevision, self.ConsoleInHandle, self.ConIn, self.ConsoleOutHandle, self.ConOut, self.StandardErrorHandle, self.StdErr, self.RuntimeServices, self.BootServices, self.NumberOfTableEntries, self.ConfigurationTable )
+  FirmwareVendor      : 0x{:016X}
+  FirmwareRevision    : 0x{:016X}
+  ConsoleInHandle     : 0x{:016X}
+  ConIn               : 0x{:016X}
+  ConsoleOutHandle    : 0x{:016X}
+  ConOut              : 0x{:016X}
+  StandardErrorHandle : 0x{:016X}
+  StdErr              : 0x{:016X}
+  RuntimeServices     : 0x{:016X}
+  BootServices        : 0x{:016X}
+  NumberOfTableEntries: 0x{:016X}
+  ConfigurationTable  : 0x{:016X}
+""".format( self.FirmwareVendor, self.FirmwareRevision, self.ConsoleInHandle, self.ConIn, self.ConsoleOutHandle, self.ConOut, self.StandardErrorHandle, self.StdErr, self.RuntimeServices, self.BootServices, self.NumberOfTableEntries, self.ConfigurationTable )
 
 
 # #################################################################################################
@@ -1589,21 +1589,21 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
     __slots__ = ()
     def __str__(self):
         return """Runtime Services:
-  GetTime                  : 0x%016X
-  SetTime                  : 0x%016X
-  GetWakeupTime            : 0x%016X
-  SetWakeupTime            : 0x%016X
-  SetVirtualAddressMap     : 0x%016X
-  ConvertPointer           : 0x%016X
-  GetVariable              : 0x%016X
-  GetNextVariableName      : 0x%016X
-  SetVariable              : 0x%016X
-  GetNextHighMonotonicCount: 0x%016X
-  ResetSystem              : 0x%016X
-  UpdateCapsule            : 0x%016X
-  QueryCapsuleCapabilities : 0x%016X
-  QueryVariableInfo        : 0x%016X
-""" % ( self.GetTime, self.SetTime, self.GetWakeupTime, self.SetWakeupTime, self.SetVirtualAddressMap, self.ConvertPointer, self.GetVariable, self.GetNextVariableName, self.SetVariable, self.GetNextHighMonotonicCount, self.ResetSystem, self.UpdateCapsule, self.QueryCapsuleCapabilities, self.QueryVariableInfo )
+  GetTime                  : 0x{:016X}
+  SetTime                  : 0x{:016X}
+  GetWakeupTime            : 0x{:016X}
+  SetWakeupTime            : 0x{:016X}
+  SetVirtualAddressMap     : 0x{:016X}
+  ConvertPointer           : 0x{:016X}
+  GetVariable              : 0x{:016X}
+  GetNextVariableName      : 0x{:016X}
+  SetVariable              : 0x{:016X}
+  GetNextHighMonotonicCount: 0x{:016X}
+  ResetSystem              : 0x{:016X}
+  UpdateCapsule            : 0x{:016X}
+  QueryCapsuleCapabilities : 0x{:016X}
+  QueryVariableInfo        : 0x{:016X}
+""".format( self.GetTime, self.SetTime, self.GetWakeupTime, self.SetWakeupTime, self.SetVirtualAddressMap, self.ConvertPointer, self.GetVariable, self.GetNextVariableName, self.SetVariable, self.GetNextHighMonotonicCount, self.ResetSystem, self.UpdateCapsule, self.QueryCapsuleCapabilities, self.QueryVariableInfo )
 
 
 # #################################################################################################
@@ -1723,51 +1723,51 @@ class EFI_BOOT_SERVICES_TABLE( namedtuple('EFI_BOOT_SERVICES_TABLE', 'RaiseTPL R
     __slots__ = ()
     def __str__(self):
         return """Boot Services:
-  RaiseTPL                           : 0x%016X
-  RestoreTPL                         : 0x%016X
-  AllocatePages                      : 0x%016X
-  FreePages                          : 0x%016X
-  GetMemoryMap                       : 0x%016X
-  AllocatePool                       : 0x%016X
-  FreePool                           : 0x%016X
-  CreateEvent                        : 0x%016X
-  SetTimer                           : 0x%016X
-  WaitForEvent                       : 0x%016X
-  SignalEvent                        : 0x%016X
-  CloseEvent                         : 0x%016X
-  CheckEvent                         : 0x%016X
-  InstallProtocolInterface           : 0x%016X
-  ReinstallProtocolInterface         : 0x%016X
-  UninstallProtocolInterface         : 0x%016X
-  HandleProtocol                     : 0x%016X
-  Reserved                           : 0x%016X
-  RegisterProtocolNotify             : 0x%016X
-  LocateHandle                       : 0x%016X
-  LocateDevicePath                   : 0x%016X
-  InstallConfigurationTable          : 0x%016X
-  LoadImage                          : 0x%016X
-  StartImage                         : 0x%016X
-  Exit                               : 0x%016X
-  UnloadImage                        : 0x%016X
-  ExitBootServices                   : 0x%016X
-  GetNextMonotonicCount              : 0x%016X
-  Stall                              : 0x%016X
-  SetWatchdogTimer                   : 0x%016X
-  ConnectController                  : 0x%016X
-  DisconnectController               : 0x%016X
-  OpenProtocol                       : 0x%016X
-  CloseProtocol                      : 0x%016X
-  OpenProtocolInformation            : 0x%016X
-  ProtocolsPerHandle                 : 0x%016X
-  LocateHandleBuffer                 : 0x%016X
-  LocateProtocol                     : 0x%016X
-  InstallMultipleProtocolInterfaces  : 0x%016X
-  UninstallMultipleProtocolInterfaces: 0x%016X
-  CalculateCrc32                     : 0x%016X
-  CopyMem                            : 0x%016X
-  SetMem                             : 0x%016X
-  CreateEventEx                      : 0x%016X
-""" % ( self.RaiseTPL, self.RestoreTPL, self.AllocatePages, self.FreePages, self.GetMemoryMap, self.AllocatePool, self.FreePool, self.CreateEvent, self.SetTimer, self.WaitForEvent, self.SignalEvent, self.CloseEvent, self.CheckEvent, self.InstallProtocolInterface, self.ReinstallProtocolInterface, self.UninstallProtocolInterface, self.HandleProtocol, self.Reserved, self.RegisterProtocolNotify, self.LocateHandle, self.LocateDevicePath, self.InstallConfigurationTable, self.LoadImage, self.StartImage, self.Exit, self.UnloadImage, self.ExitBootServices, self.GetNextMonotonicCount, self.Stall, self.SetWatchdogTimer, self.ConnectController, self.DisconnectController, self.OpenProtocol, self.CloseProtocol, self.OpenProtocolInformation, self.ProtocolsPerHandle, self.LocateHandleBuffer, self.LocateProtocol, self.InstallMultipleProtocolInterfaces, self.UninstallMultipleProtocolInterfaces, self.CalculateCrc32, self.CopyMem, self.SetMem, self.CreateEventEx )
+  RaiseTPL                           : 0x{:016X}
+  RestoreTPL                         : 0x{:016X}
+  AllocatePages                      : 0x{:016X}
+  FreePages                          : 0x{:016X}
+  GetMemoryMap                       : 0x{:016X}
+  AllocatePool                       : 0x{:016X}
+  FreePool                           : 0x{:016X}
+  CreateEvent                        : 0x{:016X}
+  SetTimer                           : 0x{:016X}
+  WaitForEvent                       : 0x{:016X}
+  SignalEvent                        : 0x{:016X}
+  CloseEvent                         : 0x{:016X}
+  CheckEvent                         : 0x{:016X}
+  InstallProtocolInterface           : 0x{:016X}
+  ReinstallProtocolInterface         : 0x{:016X}
+  UninstallProtocolInterface         : 0x{:016X}
+  HandleProtocol                     : 0x{:016X}
+  Reserved                           : 0x{:016X}
+  RegisterProtocolNotify             : 0x{:016X}
+  LocateHandle                       : 0x{:016X}
+  LocateDevicePath                   : 0x{:016X}
+  InstallConfigurationTable          : 0x{:016X}
+  LoadImage                          : 0x{:016X}
+  StartImage                         : 0x{:016X}
+  Exit                               : 0x{:016X}
+  UnloadImage                        : 0x{:016X}
+  ExitBootServices                   : 0x{:016X}
+  GetNextMonotonicCount              : 0x{:016X}
+  Stall                              : 0x{:016X}
+  SetWatchdogTimer                   : 0x{:016X}
+  ConnectController                  : 0x{:016X}
+  DisconnectController               : 0x{:016X}
+  OpenProtocol                       : 0x{:016X}
+  CloseProtocol                      : 0x{:016X}
+  OpenProtocolInformation            : 0x{:016X}
+  ProtocolsPerHandle                 : 0x{:016X}
+  LocateHandleBuffer                 : 0x{:016X}
+  LocateProtocol                     : 0x{:016X}
+  InstallMultipleProtocolInterfaces  : 0x{:016X}
+  UninstallMultipleProtocolInterfaces: 0x{:016X}
+  CalculateCrc32                     : 0x{:016X}
+  CopyMem                            : 0x{:016X}
+  SetMem                             : 0x{:016X}
+  CreateEventEx                      : 0x{:016X}
+""".format( self.RaiseTPL, self.RestoreTPL, self.AllocatePages, self.FreePages, self.GetMemoryMap, self.AllocatePool, self.FreePool, self.CreateEvent, self.SetTimer, self.WaitForEvent, self.SignalEvent, self.CloseEvent, self.CheckEvent, self.InstallProtocolInterface, self.ReinstallProtocolInterface, self.UninstallProtocolInterface, self.HandleProtocol, self.Reserved, self.RegisterProtocolNotify, self.LocateHandle, self.LocateDevicePath, self.InstallConfigurationTable, self.LoadImage, self.StartImage, self.Exit, self.UnloadImage, self.ExitBootServices, self.GetNextMonotonicCount, self.Stall, self.SetWatchdogTimer, self.ConnectController, self.DisconnectController, self.OpenProtocol, self.CloseProtocol, self.OpenProtocolInformation, self.ProtocolsPerHandle, self.LocateHandleBuffer, self.LocateProtocol, self.InstallMultipleProtocolInterfaces, self.UninstallMultipleProtocolInterfaces, self.CalculateCrc32, self.CopyMem, self.SetMem, self.CreateEventEx )
 
 
 # #################################################################################################
@@ -1805,7 +1805,7 @@ class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
         self.VendorTables = {}
     def __str__(self):
-        return ( 'Vendor Tables:\n%s' % (''.join( ['{%s} : 0x%016X\n' % (vt,self.VendorTables[vt]) for vt in self.VendorTables])) )
+        return ( 'Vendor Tables:\n%s' % (''.join( ['{%s} : 0x{:016X}\n' % (vt,self.VendorTables[vt]) for vt in self.VendorTables])) )
 
 
 # #################################################################################################
@@ -1871,24 +1871,24 @@ class EFI_DXE_SERVICES_TABLE( namedtuple('EFI_DXE_SERVICES_TABLE', 'AddMemorySpa
     __slots__ = ()
     def __str__(self):
         return """DXE Services:
-  AddMemorySpace          : 0x%016X
-  AllocateMemorySpace     : 0x%016X
-  FreeMemorySpace         : 0x%016X
-  RemoveMemorySpace       : 0x%016X
-  GetMemorySpaceDescriptor: 0x%016X
-  SetMemorySpaceAttributes: 0x%016X
-  GetMemorySpaceMap       : 0x%016X
-  AddIoSpace              : 0x%016X
-  AllocateIoSpace         : 0x%016X
-  FreeIoSpace             : 0x%016X
-  RemoveIoSpace           : 0x%016X
-  GetIoSpaceDescriptor    : 0x%016X
-  GetIoSpaceMap           : 0x%016X
-  Dispatch                : 0x%016X
-  Schedule                : 0x%016X
-  Trust                   : 0x%016X
-  ProcessFirmwareVolume   : 0x%016X
-""" % ( self.AddMemorySpace, self.AllocateMemorySpace, self.FreeMemorySpace, self.RemoveMemorySpace, self.GetMemorySpaceDescriptor, self.SetMemorySpaceAttributes, self.GetMemorySpaceMap, self.AddIoSpace, self.AllocateIoSpace, self.FreeIoSpace, self.RemoveIoSpace, self.GetIoSpaceDescriptor, self.GetIoSpaceMap, self.Dispatch, self.Schedule, self.Trust, self.ProcessFirmwareVolume )
+  AddMemorySpace          : 0x{:016X}
+  AllocateMemorySpace     : 0x{:016X}
+  FreeMemorySpace         : 0x{:016X}
+  RemoveMemorySpace       : 0x{:016X}
+  GetMemorySpaceDescriptor: 0x{:016X}
+  SetMemorySpaceAttributes: 0x{:016X}
+  GetMemorySpaceMap       : 0x{:016X}
+  AddIoSpace              : 0x{:016X}
+  AllocateIoSpace         : 0x{:016X}
+  FreeIoSpace             : 0x{:016X}
+  RemoveIoSpace           : 0x{:016X}
+  GetIoSpaceDescriptor    : 0x{:016X}
+  GetIoSpaceMap           : 0x{:016X}
+  Dispatch                : 0x{:016X}
+  Schedule                : 0x{:016X}
+  Trust                   : 0x{:016X}
+  ProcessFirmwareVolume   : 0x{:016X}
+""".format( self.AddMemorySpace, self.AllocateMemorySpace, self.FreeMemorySpace, self.RemoveMemorySpace, self.GetMemorySpaceDescriptor, self.SetMemorySpaceAttributes, self.GetMemorySpaceMap, self.AddIoSpace, self.AllocateIoSpace, self.FreeIoSpace, self.RemoveIoSpace, self.GetIoSpaceDescriptor, self.GetIoSpaceMap, self.Dispatch, self.Schedule, self.Trust, self.ProcessFirmwareVolume )
 
 
 

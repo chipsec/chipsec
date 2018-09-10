@@ -93,19 +93,19 @@ class s3bootscript(BaseModule):
             if chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE   == e.decoded_opcode.opcode:
                #chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE == e.decoded_opcode.opcode:
                 n_dispatch += 1
-                dispatchstr = "Dispatch opcode (off 0x%04X) with entry-point 0x%016X" % (e.offset_in_script, e.decoded_opcode.entrypoint)
+                dispatchstr = "Dispatch opcode (off 0x{:04X}) with entry-point 0x{:016X}".format(e.offset_in_script, e.decoded_opcode.entrypoint)
                 #self.logger.log( e )
                 if not self.is_inside_SMRAM( e.decoded_opcode.entrypoint ) and not self.is_inside_SPI( e.decoded_opcode.entrypoint ):
                     dispatch_ep_ok = False
                     self.logger.log_bad( dispatchstr + " > UNPROTECTED"  )
                 else:
                     self.logger.log_good( dispatchstr + " > PROTECTED" )
-        self.logger.log( "[*] Found %d Dispatch opcodes" % n_dispatch )
+        self.logger.log( "[*] Found {:d} Dispatch opcodes".format(n_dispatch) )
         return dispatch_ep_ok
 
     def check_s3_bootscript( self, bootscript_pa ):
         res = BOOTSCRIPT_OK
-        self.logger.log( "[*] Checking S3 boot-script at 0x%016X" % bootscript_pa )
+        self.logger.log( "[*] Checking S3 boot-script at 0x{:016X}".format(bootscript_pa) )
         # Checking if it's in SMRAM
         scriptInsideSMRAM = self.is_inside_SMRAM( bootscript_pa )
         if scriptInsideSMRAM:
@@ -142,7 +142,7 @@ class s3bootscript(BaseModule):
                 self.logger.log_warn_check( "S3 Boot-Script was not found. Firmware may be using other ways to store/locate it" )
                 return ModuleResult.WARNING
 
-            self.logger.log_important( 'Found %d S3 boot-script(s) in EFI variables' % len(bootscript_PAs) )
+            self.logger.log_important( 'Found {:d} S3 boot-script(s) in EFI variables'.format(len(bootscript_PAs)) )
 
         for bootscript_pa in bootscript_PAs:
             if 0 == bootscript_pa: continue
@@ -182,10 +182,10 @@ class s3bootscript(BaseModule):
 
         if len(module_argv) > 0:
             script_pa = int(module_argv[0],16)
-            self.logger.log( '[*] Using manually assigned S3 Boot-Script table base: 0x%016X' % script_pa )
+            self.logger.log( '[*] Using manually assigned S3 Boot-Script table base: 0x{:016X}'.format(script_pa) )
         (self.smrambase, self.smramlimit, self.smramsize) = self.cs.cpu.get_SMRAM()
         if self.smrambase is not None and self.smramlimit is not None:
-            self.logger.log( '[*] SMRAM: Base = 0x%016X, Limit = 0x%016X, Size = 0x%08X' % (self.smrambase, self.smramlimit, self.smramsize) )
+            self.logger.log( '[*] SMRAM: Base = 0x{:016X}, Limit = 0x{:016X}, Size = 0x{:08X}'.format(self.smrambase, self.smramlimit, self.smramsize) )
 
         try:
             if script_pa is not None: return self.check_s3_bootscripts( script_pa )
