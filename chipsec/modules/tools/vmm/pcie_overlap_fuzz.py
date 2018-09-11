@@ -90,7 +90,7 @@ class pcie_overlap_fuzz(BaseModule):
         self.cs.mem.write_physical_mem_byte( bar + reg_off + 1, 0xFF )
 
     def fuzz_mmio_bar(self, bar, is64bit, size=0x1000 ):
-        self.logger.log( "[*] Fuzzing MMIO BAR 0x%016X, size = 0x%X.." % (bar,size) )
+        self.logger.log( "[*] Fuzzing MMIO BAR 0x{:016X}, size = 0x{:X}..".format(bar,size) )
         reg_off = 0
         # Issue 32b MMIO requests with various values to all MMIO registers
         for reg_off in range(0,size,4):
@@ -101,7 +101,7 @@ class pcie_overlap_fuzz(BaseModule):
             self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value )
 
     def fuzz_mmio_bar_random(self, bar, is64bit, size=0x1000 ):
-        self.logger.log( "[*] Fuzzing MMIO BAR in random mode 0x%016X, size = 0x%X.." % (bar,size) )
+        self.logger.log( "[*] Fuzzing MMIO BAR in random mode 0x{:016X}, size = 0x{:X}..".format(bar,size) )
         reg_off = 0
         while 1:
             rand = random.randint(0, size/4-1)
@@ -122,13 +122,13 @@ class pcie_overlap_fuzz(BaseModule):
                                 if bar2 not in _EXCLUDE_MMIO_BAR2:
                                     if isMMIO2:
                                         if bar1 != bar2:
-                                            self.logger.log( "[*] overlap device %02X:%02X.%X offset %X bar: %08X and %02X:%02X.%X offset %X bar: %08X" % (b1, d1, f1, bar_off1, bar1, b2, d2, f2, bar_off2, bar2) )
+                                            self.logger.log( "[*] overlap device {:02X}:{:02X}.{:X} offset {:X} bar: {:08X} and {:02X}:{:02X}.{:X} offset {:X} bar: {:08X}".format(b1, d1, f1, bar_off1, bar1, b2, d2, f2, bar_off2, bar2) )
                                             self.overlap_mmio_range(b1, d1, f1, is64bit1, bar_off1, b2, d2, f2, is64bit2, bar_off2, OVERLAP_MODE)
                                             if FUZZ_OVERLAP:
                                                 _bar     = bar1     if OVERLAP_MODE else bar2
                                                 _is64bit = is64bit1 if OVERLAP_MODE else is64bit2
                                                 _size    = size1    if OVERLAP_MODE else size2
-                                                self.logger.log( "[*] fuzzing MMIO BAR 0x%X..." % _bar )
+                                                self.logger.log( "[*] fuzzing MMIO BAR 0x{:X}...".format(_bar) )
                                                 if FUZZ_RANDOM:
                                                     self.fuzz_mmio_bar_random( _bar, _is64bit, _size )
                                                 else:

@@ -58,12 +58,12 @@ class UCodeCommand(BaseCommand):
         if ( 'load' == ucode_op ):
             if (4 == len(self.argv)):
                 ucode_filename = self.argv[3]
-                self.logger.log( "[CHIPSEC] Loading Microcode update on all cores from '%s'" % ucode_filename )
+                self.logger.log( "[CHIPSEC] Loading Microcode update on all cores from '{}'".format(ucode_filename) )
                 self.cs.ucode.update_ucode_all_cpus( ucode_filename )
             elif (5 == len(self.argv)):
                 ucode_filename = self.argv[3]
                 cpu_thread_id = int(self.argv[4],16)
-                self.logger.log( "[CHIPSEC] Loading Microcode update on CPU%d from '%s'" % (cpu_thread_id, ucode_filename) )
+                self.logger.log( "[CHIPSEC] Loading Microcode update on CPU{:d} from '{}'".format(cpu_thread_id, ucode_filename) )
                 self.cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
             else:
                 print (UCodeCommand.__doc__)
@@ -72,25 +72,25 @@ class UCodeCommand(BaseCommand):
             if (4 == len(self.argv)):
                 ucode_filename = self.argv[3]
                 if (not ucode_filename.endswith('.pdb')):
-                    self.logger.log( "[CHIPSEC] Ucode update file is not PDB file: '%s'" % ucode_filename )
+                    self.logger.log( "[CHIPSEC] Ucode update file is not PDB file: '{}'".format(ucode_filename) )
                     return
                 pdb_ucode_buffer = read_file( ucode_filename )
-                self.logger.log( "[CHIPSEC] Decoding Microcode Update header of PDB file: '%s'" % ucode_filename )
+                self.logger.log( "[CHIPSEC] Decoding Microcode Update header of PDB file: '{}'".format(ucode_filename) )
                 dump_ucode_update_header( pdb_ucode_buffer )
         elif ( 'id' == ucode_op ):
             if (3 == len(self.argv)):
                 for tid in range(self.cs.msr.get_cpu_thread_count()):
                     ucode_update_id = self.cs.ucode.ucode_update_id( tid )
-                    self.logger.log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (tid, ucode_update_id) )
+                    self.logger.log( "[CHIPSEC] CPU{:d}: Microcode update ID = 0x{:08X}".format(tid, ucode_update_id) )
             elif (4 == len(self.argv)):
                 cpu_thread_id = int(self.argv[3],16)
                 ucode_update_id = self.cs.ucode.ucode_update_id( cpu_thread_id )
-                self.logger.log( "[CHIPSEC] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
+                self.logger.log( "[CHIPSEC] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
         else:
-            self.logger.error( "unknown command-line option '%.32s'" % ucode_op )
+            self.logger.error( "unknown command-line option '{:32}'".format(ucode_op) )
             print (UCodeCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (ucode) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (ucode) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'ucode': UCodeCommand }

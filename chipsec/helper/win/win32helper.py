@@ -370,8 +370,9 @@ class Win32Helper(Helper):
         except win32service.error as (hr, fn, msg):
             handle_winerror(fn, msg, hr)
 
-        if logger().DEBUG: logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
-        if logger().DEBUG: logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
+        if logger().DEBUG: 
+            logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
+            logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
         try:
             hs = win32service.CreateService(
@@ -434,8 +435,9 @@ class Win32Helper(Helper):
 
         if self.use_existing_service:
             self.driver_loaded = True
-            if logger().DEBUG: logger().log( "[helper] service '{}' already running".format(SERVICE_NAME) )
-            if logger().DEBUG: logger().log( "[helper] trying to connect to existing '{}' service...".format(SERVICE_NAME) )
+            if logger().DEBUG: 
+                logger().log( "[helper] service '{}' already running".format(SERVICE_NAME) )
+                logger().log( "[helper] trying to connect to existing '{}' service...".format(SERVICE_NAME) )
         else:
             #if self.use_existing_service:
             #    _handle_error( "connecting to existing '{}' service failed (service is not running)".format(SERVICE_NAME) )
@@ -806,8 +808,9 @@ class Win32Helper(Helper):
             if logger().DEBUG: logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
-            if logger().DEBUG: logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
-            if logger().DEBUG: logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
+            if logger().DEBUG:
+                logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
+                logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
             raise WinError()
         if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )

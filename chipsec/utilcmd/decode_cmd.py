@@ -68,23 +68,23 @@ class DecodeCommand(BaseCommand):
         
         _uefi = uefi.UEFI( self.cs )
         if self.argv[2] == "types":
-            print ("\n<fw_type> should be in [ %s ]\n" % ( " | ".join( ["%s" % t for t in uefi.uefi_platform.fw_types] ) ))
+            print ("\n<fw_type> should be in [ {} ]\n".format( " | ".join( ["{}".formatt for t in uefi.uefi_platform.fw_types] ) ))
             return
             
         rom_file = self.argv[2]
         fwtype   = self.argv[3] if len(self.argv) == 4 else None      
 
-        self.logger.log( "[CHIPSEC] Decoding SPI ROM image from a file '%s'" % rom_file )
+        self.logger.log( "[CHIPSEC] Decoding SPI ROM image from a file '{}'".format(rom_file) )
         t = time.time()
 
         f = read_file( rom_file )
         (fd_off, fd) = spi_descriptor.get_spi_flash_descriptor( f )
         if (-1 == fd_off) or (fd is None):
-            self.logger.error( "Could not find SPI Flash descriptor in the binary '%s'" % rom_file )
+            self.logger.error( "Could not find SPI Flash descriptor in the binary '{}'".format(rom_file) )
             self.logger.info( "To decode an image without a flash decriptor try chipsec_util uefi decode" )
             return False
 
-        self.logger.log( "[CHIPSEC] Found SPI Flash descriptor at offset 0x%x in the binary '%s'" % (fd_off, rom_file) )
+        self.logger.log( "[CHIPSEC] Found SPI Flash descriptor at offset 0x{:X} in the binary '{}'".format(fd_off, rom_file) )
         rom = f[fd_off:]
         # Decoding Flash Descriptor
         #self.logger.LOG_COMPLETE_FILE_NAME = os.path.join( pth, 'flash_descriptor.log' )
@@ -112,7 +112,7 @@ class DecodeCommand(BaseCommand):
             notused = r[5]
             if not notused:
                 region_data = rom[base:limit+1]
-                fname = os.path.join( pth, '%d_%04X-%04X_%s.bin' % (idx, base, limit, name) )
+                fname = os.path.join( pth, '{:d}_{:04X}-{:04X}_{}.bin'.format(idx, base, limit, name) )
                 write_file( fname, region_data )
                 if spi.FLASH_DESCRIPTOR == idx:
                     # Decoding Flash Descriptor
@@ -124,6 +124,6 @@ class DecodeCommand(BaseCommand):
                     spi_uefi.decode_uefi_region(_uefi, pth, fname, fwtype)
 
         self.logger.set_log_file( _orig_logname )
-        self.logger.log( "[CHIPSEC] (decode) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (decode) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { "decode": DecodeCommand }

@@ -78,21 +78,21 @@ class ACPICommand(BaseCommand):
             name = self.argv[ 3 ]
             if name in ACPI_TABLES:
                 if _acpi.is_ACPI_table_present( name ):
-                    self.logger.log( "[CHIPSEC] reading ACPI table '%s'" % name )
+                    self.logger.log( "[CHIPSEC] reading ACPI table '{}'".format(name) )
                     _acpi.dump_ACPI_table( name )
                 else:
-                    self.logger.log( "[CHIPSEC] ACPI table '%s' wasn't found" % name )
+                    self.logger.log( "[CHIPSEC] ACPI table '{}' wasn't found".format(name) )
             elif os.path.exists( name ):
-                self.logger.log( "[CHIPSEC] reading ACPI table from file '%s'" % name )
+                self.logger.log( "[CHIPSEC] reading ACPI table from file '{}'".format(name) )
                 _acpi.dump_ACPI_table( name, True )
             else:
-                self.logger.error( "Please specify table name or path to a file.\nTable name must be in %s" % ACPI_TABLES.keys() )
+                self.logger.error( "Please specify table name or path to a file.\nTable name must be in {}".format(ACPI_TABLES.keys()) )
                 print (ACPICommand.__doc__)
                 return
         else:
             print (ACPICommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'acpi': ACPICommand }
