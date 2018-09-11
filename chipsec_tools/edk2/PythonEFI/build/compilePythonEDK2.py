@@ -45,7 +45,7 @@ class PythonEDk2:
         self.is_linux = ("linux" == platform.system().lower())
         
     def usage(self):
-        print "\nUSAGE: %.65s --edk2 <edk2-path>  [--target <target>]" % sys.argv[0]
+        print "\nUSAGE: {:.65} --edk2 <edk2-path>  [--target <target>]".format(sys.argv[0])
         print "OPTIONS:"
         print "    -e, --edk2             specify path where edk2 exist in the local filesystem"
         print "    -t, --target           one of X64, IA32, i586. if none is specified X64 is used"
@@ -80,10 +80,10 @@ class PythonEDk2:
             self.usage()
             return 1
         if self.target not in TARGETS:
-            print "\n\nERROR: Invalid target \"%s\". Valid targets are: %s"%(self.target, TARGETS)
+            print "\n\nERROR: Invalid target \"{}\". Valid targets are: {}".format(self.target, TARGETS)
             return 1
         if self.target == TARGET_I586 and not self.is_linux:
-            print"\n\nERROR: Target \"%s\" can only be compiled in linux"%(self.target)
+            print"\n\nERROR: Target \"{}\" can only be compiled in linux".format(self.target)
             return 1
         return 0
 
@@ -92,14 +92,14 @@ class PythonEDk2:
         efi_path = os.path.join(self.edk2_path,"AppPkg","Applications","Python","Efi")
         for file in os.listdir('..'):
             if fnmatch.fnmatch(file, '*.asm') or fnmatch.fnmatch(file, '*.s') or fnmatch.fnmatch(file, '*.c'):
-                print "copying %-60s to %s"%(file , efi_path)
+                print "copying {:60} to {}".format(file , efi_path)
                 shutil.copy(os.path.join(os.pardir,file) , efi_path)
         print
         py_mod = os.path.join(self.edk2_path,"AppPkg","Applications","Python","PyMod-2.7.2")
         py_dir = os.path.join(self.edk2_path,"AppPkg","Applications","Python","Python-2.7.2")
         print py_dir
         #for dir in os.listdir(py_mod):
-        print "copying %-80s to %s"%(py_mod , py_dir)
+        print "copying {:80} to {}".format(py_mod , py_dir)
         reserve_mode=1
         preserve_times=1,
         preserve_symlinks=0
@@ -128,12 +128,12 @@ class PythonEDk2:
                 sys.stdout.write( line )
             else:
                 if "cpu" in line:
-                    sys.stdout.write ( "  Efi/%s\n"%asmFiles[self.target])
+                    sys.stdout.write ( "  Efi/{}\n".format(asmFiles[self.target]))
                     wrote_asm = True
                 elif len(line.strip()) <= 1:
                     in_sources = False
                     if not wrote_asm:
-                        sys.stdout.write ( "  Efi/%s\n"%asmFiles[self.target])
+                        sys.stdout.write ( "  Efi/{}\n".format(asmFiles[self.target]))
                     sys.stdout.write( line )
                 else:
                     sys.stdout.write( line )
@@ -172,7 +172,7 @@ class PythonEDk2:
             if line.strip().startswith("DEFINE GCC46_IA32_CC_FLAGS"):
                 if self.target == TARGET_I586:
                     if not march in line:
-                        sys.stdout.write( "%s %s\n" %(line.strip(), march) )
+                        sys.stdout.write( "{} {}\n".format(line.strip(), march) )
                     else:
                         sys.stdout.write( line )
                 else:

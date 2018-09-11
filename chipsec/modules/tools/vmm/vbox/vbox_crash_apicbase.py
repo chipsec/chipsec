@@ -43,7 +43,7 @@ class vbox_crash_apicbase (BaseModule):
         apicbase_msr = self.cs.read_register( 'IA32_APIC_BASE', tid )
         self.cs.print_register( 'IA32_APIC_BASE', apicbase_msr )
         apicbase_msr = 0xDEADBEEF00000000 | (apicbase_msr & 0xFFFFFFFF)
-        self.logger.log( "[*] writing 0x%016X to IA32_APIC_BASE MSR.." % apicbase_msr )
+        self.logger.log( "[*] writing 0x{:016X} to IA32_APIC_BASE MSR..".format(apicbase_msr) )
         self.cs.write_register( 'IA32_APIC_BASE', apicbase_msr, tid )
 
         # If we are here, then we are fine ;)

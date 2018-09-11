@@ -130,15 +130,15 @@ def get_iverr(status, bits = 64):
     return (mask - status + 1) & mask
 
 def get_hypercall_status(code, brief = False):
-    defstatus = ['0x%016X' % code, 'Status 0x%016X' % code]
+    defstatus = ['0x{:016X}'.format(code), 'Status 0x{:016X}'.format(code)]
     if (code >> 32) == 0xFFFFFFFF:
         code = get_iverr(code)
-        defstatus = ['XEN_ERRNO_%04X' % code, 'Unknown error 0x%04X' % code]
+        defstatus = ['XEN_ERRNO_{:04X}'.format(code), 'Unknown error 0x{:04X}'.format(code)]
     desc = hypercall_status_codes.get(code, defstatus)
     return desc[0] if brief else desc[1]
 
 def get_hypercall_status_extended(code):
-    return '%s - %s' % (get_hypercall_status(code, False), get_hypercall_status(code, True))
+    return '{} - {}'.format(get_hypercall_status(code, False), get_hypercall_status(code, True))
 
 def get_invalid_hypercall_code():
     return XEN_ERRNO_ENOSYS
@@ -229,7 +229,7 @@ def set_variables(varlist):
     for i in varlist:
         var = re.sub(r"([a-z])([A-Z]+)", r"\1_\2", varlist[i])
         var = var.upper()
-        exec("global %s; %s=%d" % (var, var, i))
+        exec("global {}; {}={:d}".format(var, var, i))
 
 set_variables(hypercall_names)
 set_variables(xenmem_commands)
