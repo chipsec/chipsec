@@ -68,12 +68,6 @@ class bios_kbrd_buffer(BaseModule):
             self.logger.log_passed_check( "Keyboard buffer is filled with common fill pattern" )
             return ModuleResult.PASSED
 
-        if 0x0 in bios_kbrd_buf:
-            print ("hello")
-        
-        if 0x20 in bios_kbrd_buf:
-            print ("world")
-
         for x in bios_kbrd_buf:
             if ( 0x0 != x and 0x20 != x ):
                 has_contents = True
