@@ -59,7 +59,7 @@ class msr_fuzz (BaseModule):
     def fuzz_MSRs( self, msr_addr_start, random_order=False ):
         msr_addr_range = 0x10000
         msr_addr_end   = msr_addr_start + msr_addr_range
-        self.logger.log( "[*] Fuzzing MSRs in range 0x%08X:0x%08X.." % (msr_addr_start,msr_addr_end) )
+        self.logger.log( "[*] Fuzzing MSRs in range 0x{:08X}:0x{:08X}..".format(msr_addr_start,msr_addr_end) )
         it = 0
         if random_order: it_max = _NO_ITERATIONS_TO_FUZZ
         else:            it_max = msr_addr_range
@@ -69,10 +69,10 @@ class msr_fuzz (BaseModule):
             if _FLUSH_LOG_EACH_MSR: self.logger.flush()
             if msr_addr not in _EXCLUDE_MSR:
                 if _READ_MSR:
-                    self.logger.log( "[*] rdmsr 0x%08X" % msr_addr )
+                    self.logger.log( "[*] rdmsr 0x{:08X}".formatmsr_addr )
                     try: (eax, edx) = self.cs.msr.read_msr( 0, msr_addr )
                     except: pass
-                self.logger.log( "[*] wrmsr 0x%08X" % msr_addr )
+                self.logger.log( "[*] wrmsr 0x{:08X}".formatmsr_addr )
                 if _FUZZ_VALUE_0_all1s:
                     #self.logger.log( "    0" )
                     try: self.cs.msr.write_msr( 0, msr_addr, 0, 0 )
@@ -87,7 +87,7 @@ class msr_fuzz (BaseModule):
                 if _FUZZ_VALUE_RND:
                     val_hi = random.randint( 0, 0xFFFFFFFF )
                     val_lo = random.randint( 0, 0xFFFFFFFF )
-                    #self.logger.log( "    0x%08X%08X" % (val_hi,val_lo) )
+                    #self.logger.log( "    0x{:08X}{:08X}".format(val_hi,val_lo) )
                     try: self.cs.msr.write_msr( 0, msr_addr, val_hi, val_lo )
                     except: pass
             it += 1
@@ -106,8 +106,8 @@ class msr_fuzz (BaseModule):
         _NO_ITERATIONS_TO_FUZZ = 100000
 
         self.logger.log( "[*] Configuration:" )
-        self.logger.log( "    Mode: %s" % ('random' if _random_order else 'sequential') )
-        if _random_order: self.logger.log( "    Number of iterations: %d" % _NO_ITERATIONS_TO_FUZZ )
+        self.logger.log( "    Mode: {}".format('random' if _random_order else 'sequential') )
+        if _random_order: self.logger.log( "    Number of iterations: {:d}".format(_NO_ITERATIONS_TO_FUZZ) )
 
         self.logger.log( "\n[*] Fuzzing Low MSR range.." )
         self.fuzz_MSRs( 0x0, _random_order )
