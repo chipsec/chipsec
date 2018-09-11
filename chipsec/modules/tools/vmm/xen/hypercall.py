@@ -84,7 +84,7 @@ class XenHypercall(BaseModuleHwAccess):
             rax = self.vmm.hypercall64_five_args(*args)
             val = self.cs.mem.read_physical_mem(self.buff_pa, size) if size > 0 else ''
         except Exception as e:
-            self.dbg('Exception on hypercall (0x%08x): %s' % (args[0], str(e)))
+            self.dbg('Exception on hypercall (0x{:08X}): {}'.format(args[0], str(e)))
             return {'exception': True, 'status': 0xFFFFFFFFFFFFFFFF, 'buffer': str(e)}
         return {'exception': False, 'status': rax, 'buffer': val}
 
@@ -114,7 +114,7 @@ class XenHypercall(BaseModuleHwAccess):
             info['extra_version']       = extra_version['buffer'].strip('\x00')
             info['xen_major']           = (version['status'] >> 16) & 0xFFFF
             info['xen_minor']           = version['status'] & 0xFFFF
-            info['xen_version']         = '%d.%d%s' % (info['xen_major'], info['xen_minor'], extra_version['buffer'])
+            info['xen_version']         = '{:d}.{:d}{}'.format(info['xen_major'], info['xen_minor'], extra_version['buffer'])
             info['compiler']            = compile_info['buffer'][:64].strip('\x00')
             info['compile_by']          = compile_info['buffer'][64:80].strip('\x00')
             info['compile_domain']      = compile_info['buffer'][80:112].strip('\x00')
@@ -141,18 +141,18 @@ class XenHypercall(BaseModuleHwAccess):
     def print_hypervisor_info(self, info):
             features = ", ".join(['F%d=%016X' % (k, v) for k,v in info['features'].items() if v != 0])
             self.msg('XEN Hypervisor is present!')
-            self.msg('          Version : %s'    % info['xen_version']         )
-            self.msg('         Compiler : %s'    % info['compiler']            )
-            self.msg('       Compile by : %s'    % info['compile_by']          )
-            self.msg('   Compile Domain : %s'    % info['compile_domain']      )
-            self.msg('     Compile Date : %s'    % info['compile_date']        )
-            self.msg('     Capabilities : %s'    % info['capabilities']        )
-            self.msg('       Change Set : %s'    % info['changeset']           )
-            self.msg('  Platform Params : %016X' % info['platform_parameters'] )
-            self.msg('         Features : %s'    % features                    )
-            self.msg('        Page size : %016X' % info['pagesize']            )
-            self.msg('     Guest Handle : %016X' % info['guest_handle']        )
-            self.msg('     Command Line : %s'    % info['command_line']        )
+            self.msg('          Version : {}'.format(info['xen_version'])         )
+            self.msg('         Compiler : {}'.format(info['compiler'])            )
+            self.msg('       Compile by : {}'.format(info['compile_by'])          )
+            self.msg('   Compile Domain : {}'.format(info['compile_domain'])      )
+            self.msg('     Compile Date : {}'.format(info['compile_date'])        )
+            self.msg('     Capabilities : {}'.format(info['capabilities'])        )
+            self.msg('       Change Set : {}'.format(info['changeset'])           )
+            self.msg('  Platform Params : {:016X}'.format(info['platform_parameters']) )
+            self.msg('         Features : {}'.format(features)                    )
+            self.msg('        Page size : {:016X}'.format(info['pagesize'])            )
+            self.msg('     Guest Handle : {:016X}'.format(info['guest_handle'])        )
+            self.msg('     Command Line : {}'.format(info['command_line'])        )
 
     def scan_hypercalls(self, vector_list):
         for vector in vector_list:
@@ -170,7 +170,7 @@ class XenHypercall(BaseModuleHwAccess):
             data   = self.hypercalls[vector]
             name   = get_hypercall_name(vector)
             status = get_hypercall_status_extended(data['status'])
-            self.msg("HYPERCALL %04x  %016X  %-45s '%s'" % (vector, data['status'], status, name))
+            self.msg("HYPERCALL {:04X}  {:016X}  {45} '{}'".format(vector, data['status'], status, name))
         return
 
     def fuzz_hypercall(self, code, iterations):    
@@ -178,7 +178,7 @@ class XenHypercall(BaseModuleHwAccess):
         if not rule:
             self.msg( "WARNING: Fuzzing rule is not defined for this hypercall!")
         args = rule.get('args', [])
-        self.msg( "Fuzzing %s (0x%02X) hypercall" % (get_hypercall_name(code, 'Unknown'), code))
+        self.msg( "Fuzzing {} (0x{:02X}) hypercall".format(get_hypercall_name(code, 'Unknown'), code))
         self.stats_reset()
         for it in xrange(iterations):
             data  = list('\x00' * 32)
