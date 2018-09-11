@@ -48,7 +48,7 @@ def dump_region_to_path(path, va_start, va_end):
     if (head_len > 0):
         b = read_mem(va_start, head_len)
         if b is not None:
-            fname = os.path.join(path, "m%016X.bin" % va_start)
+            fname = os.path.join(path, "m{:016X}.bin".format(va_start))
             f = open(fname, 'wb')
             f.write(b)
 
@@ -56,7 +56,7 @@ def dump_region_to_path(path, va_start, va_end):
         b = read_mem(va)
         if b is not None:
             if f is None:
-                fname = os.path.join(path, "m%016X.bin" % va)
+                fname = os.path.join(path, "m{:016X}.bin".format(va))
                 f = open(fname, 'wb')
             f.write(b)
         else:
@@ -70,7 +70,7 @@ def dump_region_to_path(path, va_start, va_end):
         b = read_mem(end, tail_len)
         if b is not None:
             if f is None:
-                fname = os.path.join(path, "m%016X.bin" % end)
+                fname = os.path.join(path, "m{:016X}.bin".format(end))
                 f = open(fname, 'wb')
             f.write(b)
 
@@ -128,7 +128,7 @@ class VMemCommand(BaseCommand):
         if 'allocate'   == op and 4 == len(self.argv):
             size = int(self.argv[3],16)
             (va, pa) = _vmem.alloc_virtual_mem( size )
-            self.logger.log( '[CHIPSEC] Allocated %X bytes of virtual memory: VA = 0x%016X, PA = 0x%016X' % (size, va, pa) )
+            self.logger.log( '[CHIPSEC] Allocated {:X} bytes of virtual memory: VA = 0x{:016X}, PA = 0x{:016X}'.format(size, va, pa) )
 
         elif 'search' == op and len(self.argv) > 5:
             virt_address = int(self.argv[3],16)
@@ -138,9 +138,9 @@ class VMemCommand(BaseCommand):
             offset = buffer.find(self.argv[5])
 
             if offset != -1:
-                self.logger.log( '[CHIPSEC] search buffer from memory: VA = 0x%016X, len = 0x%X, target address= 0x%X..' % (virt_address, size, virt_address + offset) )
+                self.logger.log( '[CHIPSEC] search buffer from memory: VA = 0x{:016X}, len = 0x{:X}, target address= 0x{:X}..'.format(virt_address, size, virt_address + offset) )
             else:
-                self.logger.log( '[CHIPSEC] search buffer from memory: VA = 0x%016X, len = 0x%X, can not find the target in the searched range..' % (virt_address, size) )
+                self.logger.log( '[CHIPSEC] search buffer from memory: VA = 0x{:016X}, len = 0x{:X}, can not find the target in the searched range..'.format(virt_address, size) )
 
         elif 'pagedump' == op and len(self.argv) > 3:
             start   = long(self.argv[3],16)
@@ -152,12 +152,12 @@ class VMemCommand(BaseCommand):
         elif 'read'     == op:
             virt_address = int(self.argv[3],16)
             size         = int(self.argv[4],16) if len(self.argv) > 4 else 0x100
-            self.logger.log( '[CHIPSEC] reading buffer from memory: VA = 0x%016X, len = 0x%X..' % (virt_address, size) )
+            self.logger.log( '[CHIPSEC] reading buffer from memory: VA = 0x{:016X}, len = 0x{:X}..'.format(virt_address, size) )
             buffer = _vmem.read_virtual_mem( virt_address, size )
             if len(self.argv) > 5:
                 buf_file = self.argv[5]
                 chipsec.file.write_file( buf_file, buffer )
-                self.logger.log( "[CHIPSEC] written 0x%X bytes to '%s'" % (len(buffer), buf_file) )
+                self.logger.log( "[CHIPSEC] written 0x{:X} bytes to '{}'".format(len(buffer), buf_file) )
             else:
                 print_buffer( buffer )
 
@@ -166,11 +166,11 @@ class VMemCommand(BaseCommand):
             width        = 0x4
             if len(self.argv) > 4: 
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
-            self.logger.log( '[CHIPSEC] reading %X-byte value from VA 0x%016X..' % (width, virt_address) )
+            self.logger.log( '[CHIPSEC] reading {:X}-byte value from VA 0x{:016X}..'.format(width, virt_address) )
             if   0x1 == width: value = _vmem.read_physical_mem_byte ( virt_address )
             elif 0x2 == width: value = _vmem.read_physical_mem_word ( virt_address )
             elif 0x4 == width: value = _vmem.read_physical_mem_dword( virt_address )
-            self.logger.log( '[CHIPSEC] value = 0x%X' % value )
+            self.logger.log( '[CHIPSEC] value = 0x{:X}'.format(value) )
 
         elif 'write'    == op:
             virt_address = int(self.argv[3],16)
@@ -186,19 +186,19 @@ class VMemCommand(BaseCommand):
                     try:
                       buffer = bytearray.fromhex(buf_file)
                     except ValueError as e:
-                        self.logger.error( "incorrect <value> specified: '%s'" % buf_file )
+                        self.logger.error( "incorrect <value> specified: '{}'".format(buf_file) )
                         self.logger.error( str(e) )
                         return
-                    self.logger.log( "[CHIPSEC] read 0x%X hex bytes from command-line: %s'" % (len(buffer), buf_file) )
+                    self.logger.log( "[CHIPSEC] read 0x{:X} hex bytes from command-line: {}'".format(len(buffer), buf_file) )
                 else:
                     buffer = chipsec.file.read_file( buf_file )
-                    self.logger.log( "[CHIPSEC] read 0x%X bytes from file '%s'" % (len(buffer), buf_file) )
+                    self.logger.log( "[CHIPSEC] read 0x{:X} bytes from file '{}'".format(len(buffer), buf_file) )
 
                 if len(buffer) < size:
-                    self.logger.error( "number of bytes read (0x%X) is less than the specified <length> (0x%X)" % (len(buffer),size) )
+                    self.logger.error( "number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer),size) )
                     return
 
-                self.logger.log( '[CHIPSEC] writing buffer to memory: VA = 0x%016X, len = 0x%X..' % (virt_address, size) )
+                self.logger.log( '[CHIPSEC] writing buffer to memory: VA = 0x{:016X}, len = 0x{:X}..'.format(virt_address, size) )
                 _vmem.write_virtual_mem( virt_address, size, buffer )
             else:
                 self.logger.error( "must specify <buffer>|<file> argument in 'mem write'" )
@@ -209,7 +209,7 @@ class VMemCommand(BaseCommand):
             if len(self.argv) > 4: 
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
             else:
-                self.logger.error( "must specify <length> argument in 'mem writeval' as one of %s" % chipsec_util.CMD_OPTS_WIDTH )
+                self.logger.error( "must specify <length> argument in 'mem writeval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH) )
                 return
             if len(self.argv) > 5: 
                 value = int(self.argv[5],16)
@@ -217,7 +217,7 @@ class VMemCommand(BaseCommand):
                 self.logger.error( "must specify <value> argument in 'mem writeval'" )
                 return
 
-            self.logger.log( '[CHIPSEC] writing %X-byte value 0x%X to VA 0x%016X..' % (width, value, virt_address) )
+            self.logger.log( '[CHIPSEC] writing {:X}-byte value 0x{:X} to VA 0x{:016X}..'.format(width, value, virt_address) )
             if   0x1 == width: _vmem.write_physical_mem_byte ( virt_address, value )
             elif 0x2 == width: _vmem.write_physical_mem_word ( virt_address, value )
             elif 0x4 == width: _vmem.write_physical_mem_dword( virt_address, value )
@@ -226,7 +226,7 @@ class VMemCommand(BaseCommand):
             virt_address = int(self.argv[3],16)
             pa = _vmem.va2pa( virt_address )
             if pa != None:
-                self.logger.log( '[CHIPSEC] Allocated %X bytes of virtual memory: VA = 0x%016X, PA = 0x%016X' % (size, virt_address, pa) )
+                self.logger.log( '[CHIPSEC] Allocated {:X} bytes of virtual memory: VA = 0x{:016X}, PA = 0x{:016X}'.format(size, virt_address, pa) )
             
         else:
                 print (VMemCommand.__doc__)

@@ -136,15 +136,15 @@ class ExitCode:
 
     def __str__(self):
         return """
-        SKIPPED       = %r
-        NOTAPPLICABLE = %r
-        WARNING       = %r
-        DEPRECATED    = %r
-        FAIL          = %r
-        ERROR         = %r
-        EXCEPTION     = %r
-        INFORMATION   = %r
-        """%(
+        SKIPPED       = {0!r}
+        NOTAPPLICABLE = {0!r}
+        WARNING       = {0!r}
+        DEPRECATED    = {0!r}
+        FAIL          = {0!r}
+        ERROR         = {0!r}
+        EXCEPTION     = {0!r}
+        INFORMATION   = {0!r}
+        """.format(
         self._skipped    ,
         self._warning    ,
         self._deprecated ,
@@ -217,12 +217,12 @@ class ChipsecMain:
     def import_module(self,module_path):
         module = None
         if not self.MODPATH_RE.match(module_path):
-            logger().error( "Invalid module path: %s" % module_path )
+            logger().error( "Invalid module path: {}".format(module_path) )
         else:
             try:
                 module = importlib.import_module( module_path )
             except BaseException as msg:
-                logger().error( "Exception occurred during import of %s: '%s'" % (module_path, str(msg)) )
+                logger().error( "Exception occurred during import of {}: '{}'".format(module_path, str(msg)) )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
         return module
@@ -244,7 +244,7 @@ class ChipsecMain:
         result = None
         try:
             if not modx.do_import(): return module_common.ModuleResult.ERROR
-            if logger().DEBUG and not self._list_tags: logger().log( "[*] Module path: %s" % modx.get_location() )
+            if logger().DEBUG and not self._list_tags: logger().log( "[*] Module path: {}".format(modx.get_location()) )
 
             if self.verify_module_tags( modx ):
                 result = modx.run( module_argv )
@@ -252,7 +252,7 @@ class ChipsecMain:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
-            logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (modx.get_name(), str(msg)) )
+            logger().log_error_check( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
             raise msg
         return result
 
@@ -296,11 +296,11 @@ class ChipsecMain:
 
         if module not in self.Loaded_Modules:
             self.Loaded_Modules.append( (module,module_argv) )
-            if not self._list_tags: logger().log( "[+] loaded %s" % module.get_name() )
+            if not self._list_tags: logger().log( "[+] loaded {}".format(module.get_name()) )
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
-        if logger().VERBOSE: logger().log( "[*] Path: %s" % os.path.abspath( from_path ) )
+        if logger().VERBOSE: logger().log( "[*] Path: {}".format(os.path.abspath( from_path )) )
         for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ) :
             if not recursive:
                 while len(subdirs) > 0:
@@ -315,7 +315,7 @@ class ChipsecMain:
         # Load modules common to all supported platforms
         #
         common_path = os.path.join( self.Modules_Path, 'common' )
-        logger().log( "[*] loading common modules from \"%s\" .." % common_path.replace(os.getcwd(),'.') )
+        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd()),'.') )
         self.load_modules_from_path( common_path )
         #
         # Step 2.
@@ -323,20 +323,20 @@ class ChipsecMain:
         #
         chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
         if (chipset.CHIPSET_ID_UNKNOWN != self._cs.id) and os.path.exists( chipset_path ):
-            logger().log( "[*] loading platform specific modules from \"%s\" .." % chipset_path.replace(os.getcwd(),'.') )
+            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd()),'.') )
             self.load_modules_from_path( chipset_path )
         else:
             logger().log( "[*] No platform specific modules to load" )
         #
         # Step 3.
         # Enumerate all modules from the root module directory
-        logger().log( "[*] loading modules from \"%s\" .." % self.Modules_Path.replace(os.getcwd(),'.') )
+        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd()),'.') )
         self.load_modules_from_path( self.Modules_Path, False )
 
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
-            logger().log( "[*] loading modules from \"%s\" .." % import_path )
+            logger().log( "[*] loading modules from \"{}\" ..".format(import_path) )
             self.load_modules_from_path(import_path)
 
     def clear_loaded_modules(self):
@@ -384,7 +384,7 @@ class ChipsecMain:
             # Module uses the old API  display warning and try to run anyways
             if result == module_common.ModuleResult.DEPRECATED:
                 exit_code.deprecated()
-                logger().error( 'Module %s does not inherit BaseModule class' % str(modx) )
+                logger().error( 'Module {} does not inherit BaseModule class'.format(str(modx)) )
 
             # Populate results dictionary to export to JSON
             r = {}
@@ -432,29 +432,29 @@ class ChipsecMain:
             logger().log( "" )
             logger().log( "[CHIPSEC] ***************************  SUMMARY  ***************************" )
             if not self.no_time:
-                logger().log( "[CHIPSEC] Time elapsed          %.3f" % (time.time()-t) )
-            logger().log( "[CHIPSEC] Modules total         %d" % executed )
-            logger().log( "[CHIPSEC] Modules failed to run %d:" % len(errors) )
+                logger().log( "[CHIPSEC] Time elapsed          {:.3f}".format(time.time()-t) )
+            logger().log( "[CHIPSEC] Modules total         {:d}".format(executed) )
+            logger().log( "[CHIPSEC] Modules failed to run {:d}:".format(len(errors)) )
             for mod in errors: logger().error( str(mod) )
-            logger().log( "[CHIPSEC] Modules passed        %d:" % len(passed) )
+            logger().log( "[CHIPSEC] Modules passed        {:d}:".format(len(passed)) )
             for fmod in passed: logger().log_passed( str(fmod) )
-            logger().log( "[CHIPSEC] Modules information   %d:" % len(information) )
+            logger().log( "[CHIPSEC] Modules information   {:d}:".format(len(information)) )
             for fmod in information: logger().log_information( str(fmod) )
-            logger().log( "[CHIPSEC] Modules failed        %d:" % len(failed) )
+            logger().log( "[CHIPSEC] Modules failed        {:d}:".format(len(failed)) )
             for fmod in failed: logger().log_failed( str(fmod) )
-            logger().log( "[CHIPSEC] Modules with warnings %d:" % len(warnings) )
+            logger().log( "[CHIPSEC] Modules with warnings {:d}:".format(len(warnings)) )
             for fmod in warnings: logger().log_warning( str(fmod) )
-            logger().log( "[CHIPSEC] Modules not implemented %d:" % len(skipped) )
+            logger().log( "[CHIPSEC] Modules not implemented {:d}:".format(len(skipped)) )
             for fmod in skipped: logger().log_skipped( str(fmod) )
-            logger().log( "[CHIPSEC] Modules not applicable %d:" % len(notapplicable) )
+            logger().log( "[CHIPSEC] Modules not applicable {:d}:".format(len(notapplicable)) )
             for fmod in notapplicable: logger().log_not_applicable( str(fmod) )
             if len(exceptions) > 0:
-                logger().log( "[CHIPSEC] Modules with Exceptions %d:" % len(exceptions) )
+                logger().log( "[CHIPSEC] Modules with Exceptions {:d}:".format(len(exceptions)) )
                 for fmod in exceptions: logger().error( str(fmod) )
             logger().log( "[CHIPSEC] *****************************************************************" )
         else:
             logger().log( "[*] Available tags are:" )
-            for at in self.AVAILABLE_TAGS: logger().log("    %s"%at)
+            for at in self.AVAILABLE_TAGS: logger().log("    {}".format(at))
 
         return exit_code.get_code()
 
@@ -565,7 +565,7 @@ class ChipsecMain:
                 logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
                 self._unkownPlatform = False
             elif o in ("-l", "--log"):
-                #logger().log( "[*] Output to log file '%s' (--log option or chipsec_main.logger().set_log_file in Python console)" % a )
+                #logger().log( "[*] Output to log file '{}' (--log option or chipsec_main.logger().set_log_file in Python console)".format(a) )
                 logger().set_log_file( a )
             elif o in ("-t", "--moduletype"):
                 usertags = a.upper().split(",")
@@ -612,7 +612,7 @@ class ChipsecMain:
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
         except chipset.UnknownChipsetError as msg:
-            logger().error( "Platform is not supported (%s)." % str(msg) )
+            logger().error( "Platform is not supported ({}).".format(str(msg)) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
@@ -630,18 +630,18 @@ class ChipsecMain:
             return ExitCode.EXCEPTION
 
 
-        logger().log("[CHIPSEC] OS      : %s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log("[CHIPSEC] Platform: %s\n[CHIPSEC]      VID: %04X\n[CHIPSEC]      DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        logger().log("[CHIPSEC] OS      : {} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
+        logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.longname, self._cs.vid, self._cs.did))
         logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
-        #logger().log( "[CHIPSEC] CPU affinity: 0x%X" % self._cs.helper.get_affinity() )
+        #logger().log( "[CHIPSEC] CPU affinity: 0x{:X}".format(self._cs.helper.get_affinity()) )
 
-        logger().xmlAux.add_test_suite_property("OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine))
-        logger().xmlAux.add_test_suite_property("Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
+        logger().xmlAux.add_test_suite_property("OS", "{} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine))
+        logger().xmlAux.add_test_suite_property("Platform", "{}, VID: {:04X}, DID: {:04X}".format(self._cs.longname, self._cs.vid, self._cs.did))
         logger().xmlAux.add_test_suite_property("PCH", "{}, VID: {:04X}, DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
-        logger().xmlAux.add_test_suite_property("CHIPSEC", "%s" % self.version)
+        logger().xmlAux.add_test_suite_property("CHIPSEC", "{}".format(self.version))
         logger().log( " " )
 
-        if logger().VERBOSE: logger().log("[*] Running from %s" % os.getcwd())
+        if logger().VERBOSE: logger().log("[*] Running from {}".format(os.getcwd()))
 
         modules_failed = 0
         if self._module:

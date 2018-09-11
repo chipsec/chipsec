@@ -129,7 +129,7 @@ elif "linux" == platform.system().lower():
 
         @staticmethod
         def format(msg, color_type=LIGHT,color=8):
-            return ( '\033[%im%s%s'%(color_type+color,str(msg),ColorLogger.ENDC))
+            return ( '\033[{:d}m{}{}'.format(color_type+color,str(msg),ColorLogger.ENDC))
 
     COLOR_ID = {
       BLACK  : ColorLogger.NORMAL,
@@ -187,7 +187,7 @@ class Logger:
                 self.logfile = open( self.LOG_FILE_NAME, 'a+' )
                 self.LOG_TO_FILE = True
             except None:
-                print ("WARNING: Could not open log file '%s'" % name)
+                print ("WARNING: Could not open log file '{}'".format(name))
 
     def set_default_log_file( self ):
         """Sets the default log file for the output."""
@@ -200,7 +200,7 @@ class Logger:
             self.logfile = open( self.LOG_FILE_NAME, 'a+' )
             self.LOG_TO_FILE = True
         except None:
-            print ("WARNING: Could not open log file '%s'" % self.LOG_FILE_NAME)
+            print ("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
 
     def set_status_log_file( self ):
         """Sets the status log file for the output."""
@@ -397,13 +397,13 @@ class Logger:
 
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
-        #text = "\n[*] start module: %s" % module_name
+        #text = "\n[*] start module: {}".format(module_name)
         #self._log(text, WHITE, None)
-        self.log( "\n[*] running module: %s" % module_name )
+        self.log( "\n[*] running module: {}".format(module_name) )
         self.xmlAux.start_module( module_name )
 
     def end_module( self, module_name ):
-        #text = "\n[-] *** Done *** %s" % module_name
+        #text = "\n[-] *** Done *** {}".format(module_name)
         #self._log(text, None, None)
         self.xmlAux.end_module( module_name )
 
@@ -453,7 +453,7 @@ def dump_buffer( arr, length = 8 ):
     tmp_str=[]
     i=1
     for c in arr:
-        tmp+=["%2.2x "%ord(c)]
+        tmp+=["{:2.2x} ".format(ord(c))]
         #if 0xD == ord(c) or 0xA == ord(c):
         if c in string.whitespace:
             ch = " "
@@ -537,6 +537,6 @@ def pretty_print_hex_buffer( arr, length = 16 ):
     for n in range(length):
         _str += ["%02X__" % n]
     for n in range(len(arr)):
-        if n%length == 0: _str += ["\n%02X | " % n]
-        _str += ["%02X  " % arr[n]]
+        if n%length == 0: _str += ["\n{:02X} | ".format(n)]
+        _str += ["{:02X}  ".format(arr[n])]
     logger().log( ''.join(_str) )

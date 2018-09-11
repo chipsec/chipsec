@@ -49,7 +49,7 @@ _EXCLUDE_BAR   = []
 class pcie_fuzz(BaseModule):
 
     def fuzz_io_bar(self, bar, size=0x100):
-        #logger.log( "[*] Fuzzing I/O BAR 0x%08X, size = 0x%X.." % (bar,size) )
+        #logger.log( "[*] Fuzzing I/O BAR 0x{:08X}, size = 0x{:X}..".format(bar,size) )
         port_off = 0
         # Issue 8/16/32-bit I/O requests with various values to all I/O ports (aligned and unaligned)
         for port_off in range(size):
@@ -79,7 +79,7 @@ class pcie_fuzz(BaseModule):
         self.cs.mem.write_physical_mem_byte( bar + reg_off + 1, 0xFF )
 
     def fuzz_mmio_bar(self, bar, is64bit, size=0x1000):
-        self.logger.log( "[*] Fuzzing MMIO BAR 0x%016X, size = 0x%X.." % (bar,size) )
+        self.logger.log( "[*] Fuzzing MMIO BAR 0x{:016X}, size = 0x{:X}..".format(bar,size) )
         reg_off = 0
         # Issue aligned 32-bit MMIO requests with various values to all MMIO registers
         for reg_off in range(0,size,4):
@@ -91,7 +91,7 @@ class pcie_fuzz(BaseModule):
 
 
     def fuzz_mmio_bar_random(self, bar, is64bit, size=0x1000):
-        self.logger.log( "[*] Fuzzing MMIO BAR in random mode 0x%016X, size = 0x%X.." % (bar,size) )
+        self.logger.log( "[*] Fuzzing MMIO BAR in random mode 0x{:016X}, size = 0x{:X}..".format(bar,size) )
         reg_off = 0
         while 1:
             rand = random.randint(0, size/4-1)
@@ -100,14 +100,14 @@ class pcie_fuzz(BaseModule):
             self.fuzz_unaligned(bar, rand*4, is64bit)
 
     def fuzz_mmio_bar_in_active_range(self, bar, is64bit, list):
-        self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x%016X, size of range = 0x%X.." % (bar,len(list)) )
+        self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x{:016X}, size of range = 0x{:X}..".format(bar,len(list)) )
         reg_off = 0
         for reg_off in list:
             self.fuzz_offset(bar, reg_off)
         self.fuzz_unaligned(bar)
     
     def fuzz_mmio_bar_in_active_range_random(self, bar, is64bit, list):
-        self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x%016X in random mode, size of range = 0x%X.." % (bar,len(list)) )
+        self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x{:016X} in random mode, size of range = 0x{:X}..".format(bar,len(list)) )
         reg_off = 0
         self.fuzz_unaligned(bar)
         while 1:
@@ -115,7 +115,7 @@ class pcie_fuzz(BaseModule):
             self.fuzz_offset(bar, list[rand])
 
     def fuzz_mmio_bar_in_active_range_bit_flip(self, bar, is64bit, list):
-        self.logger.log( "[*] Fuzzing (bit flipping) MMIO BAR in Active range 0x%016X, size of range = 0x%X.." % (bar,len(list)) )
+        self.logger.log( "[*] Fuzzing (bit flipping) MMIO BAR in Active range 0x{:016X}, size of range = 0x{:X}..".format(bar,len(list)) )
         reg_off = 0
         while 1:
             rand_index = random.randint(0, len(list)-1)
@@ -130,7 +130,7 @@ class pcie_fuzz(BaseModule):
             self.cs.mmio.write_MMIO_reg( bar, reg_off, reg_value )
 
     def find_active_range(self, bar, size):
-        self.logger.log( "[*] Determine MMIO BAR Active range 0x%016X, size  0x%X.." % (bar,size) )
+        self.logger.log( "[*] Determine MMIO BAR Active range 0x{:016X}, size  0x{:X}..".format(bar,size) )
         one = self.cs.mem.read_physical_mem(bar, size)
         time.sleep(TIMEOUT)
         two = self.cs.mem.read_physical_mem(bar, size)
@@ -147,7 +147,7 @@ class pcie_fuzz(BaseModule):
             if bar not in _EXCLUDE_BAR:
                 # Fuzzing MMIO registers of the PCIe device
                 if isMMIO:
-                    self.logger.log( "[*] + 0x%02X (%X): MMIO BAR at 0x%016X (64-bit? %d) with size: 0x%08X. Fuzzing.." % (bar_off,bar_reg,bar,is64bit,size) )
+                    self.logger.log( "[*] + 0x{:02X} ({:X}): MMIO BAR at 0x{:016X} (64-bit? {:d}) with size: 0x{:08X}. Fuzzing..".format(bar_off,bar_reg,bar,is64bit,size) )
                     if ACTIVE_RANGE and size > 0x1000:
                         list = []
                         list = find_active_range(bar, size)
@@ -162,7 +162,7 @@ class pcie_fuzz(BaseModule):
                 # Fuzzing I/O registers of the PCIe device
                 else:
                     if IO_FUZZ:
-                        self.logger.log( "[*] + 0x%02X: I/O BAR at 0x%08X. Fuzzing.." % (bar_off,bar) )
+                        self.logger.log( "[*] + 0x{:02X}: I/O BAR at 0x{:08X}. Fuzzing..".format(bar_off,bar) )
                         self.fuzz_io_bar( bar )
             
     def run(self, module_argv):
@@ -181,7 +181,7 @@ class pcie_fuzz(BaseModule):
         self.logger.log( "[*] About to fuzz the following PCIe devices.." )
         pci.print_pci_devices( pcie_devices )
         for (b, d, f, vid, did) in pcie_devices:
-            self.logger.log( "[+] Fuzzing device %02X:%02X.%X" % (b, d, f) )
+            self.logger.log( "[+] Fuzzing device {:02X}:{:02X}.{:X}".format(b, d, f) )
             self.fuzz_pcie_device( b, d, f )
 
         return ModuleResult.PASSED
