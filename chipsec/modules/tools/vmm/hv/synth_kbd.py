@@ -68,9 +68,9 @@ class RingBufferFuzzer(RingBuffer):
 
 class synth_kbd(BaseModule):
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
@@ -106,7 +106,7 @@ class synth_kbd(BaseModule):
             synth_kbd_protocol_request  = pack('<LL', SYNTH_KBD_PROTOCOL_REQUEST, SYNTH_KBD_VERSION)
             vb.vmbus_sendpacket(relid, synth_kbd_protocol_request, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             synth_kbd_protocol_response = vb.vmbus_recvpacket(relid)
-            if len(synth_kbd_protocol_response) <> 8:
+            if len(synth_kbd_protocol_response) != 8:
                 vb.fatal('Invalid response from synthetic keyboard!')
             msg_type, proto_status = unpack('<LL', synth_kbd_protocol_response)
             if (proto_status & 0x1) == 0x1:
@@ -134,11 +134,11 @@ class synth_kbd(BaseModule):
                 vb.err('synth_kbd protocol request has failed!')
 
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
-            print '\n\n'
+            print ('***** Control-C *****')
+        except Exception as error:
+            print ('\n\n')
             traceback.print_exc()
-            print '\n\n'
+            print ('\n\n')
         finally:
             vb.vmbus_close(relid)
             vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)

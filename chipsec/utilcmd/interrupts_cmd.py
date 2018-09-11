@@ -49,13 +49,13 @@ class SMICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SMICommand.__doc__
+            print (SMICommand.__doc__)
             return
 
         try:
             interrupts = Interrupts( self.cs )
-        except RuntimeError, msg:
-            print msg
+        except RuntimeError as msg:
+            print (msg)
             return
 
         op = self.argv[2]
@@ -90,10 +90,10 @@ class SMICommand(BaseCommand):
                     self.logger.log( "          RSI: 0x%016X" % _rsi )
                     self.logger.log( "          RDI: 0x%016X" % _rdi )
                     interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-                else: print SMICommand.__doc__
+                else: print (SMICommand.__doc__)
             else:
                 self.logger.error( "unknown command-line option '%.32s'" % op )
-                print SMICommand.__doc__
+                print (SMICommand.__doc__)
                 return
 
         self.logger.log( "[CHIPSEC] (smi) time elapsed %.3f" % (time.time()-t) )
@@ -113,8 +113,8 @@ class NMICommand(BaseCommand):
     def run(self):
         try:
             interrupts = Interrupts( self.cs )
-        except RuntimeError, msg:
-            print msg
+        except RuntimeError as msg:
+            print (msg)
             return
 
         t = time.time()

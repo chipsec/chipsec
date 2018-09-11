@@ -38,13 +38,13 @@ class RegisterCommand(command.BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print RegisterCommand.__doc__
+            print (RegisterCommand.__doc__)
             return
 
         op = self.argv[2]
         if ( 'read' == op ):
             if len(self.argv) < 4:
-                print RegisterCommand.__doc__
+                print (RegisterCommand.__doc__)
                 return
             reg_name = self.argv[3]
             if len(self.argv) == 5:
@@ -57,7 +57,7 @@ class RegisterCommand(command.BaseCommand):
                 self.cs.print_register(reg_name, value)
         elif ( 'read_field' == op ):
             if len(self.argv) < 5:
-                print RegisterCommand.__doc__
+                print (RegisterCommand.__doc__)
                 return
             reg_name   = self.argv[3]
             field_name = self.argv[4]
@@ -68,7 +68,7 @@ class RegisterCommand(command.BaseCommand):
                 self.logger.error("[CHIPSEC] register %s doesn't have field %s defined" % (reg_name, field_name))
         elif ( 'write' == op ):
             if len(self.argv) < 5:
-                print RegisterCommand.__doc__
+                print (RegisterCommand.__doc__)
                 return
             reg_name = self.argv[3]
             value    = int(self.argv[4],16)
@@ -76,7 +76,7 @@ class RegisterCommand(command.BaseCommand):
             self.cs.write_register(reg_name, value)
         elif ( 'write_field' == op ):
             if len(self.argv) < 6:
-                print RegisterCommand.__doc__
+                print (RegisterCommand.__doc__)
                 return
             reg_name    = self.argv[3]
             field_name  = self.argv[4]
@@ -88,7 +88,7 @@ class RegisterCommand(command.BaseCommand):
                 self.logger.error("[CHIPSEC] register %s doesn't have field %s defined" % (reg_name, field_name))
         elif ( 'get_control' == op ):
             if len(self.argv) < 4:
-                print RegisterCommand.__doc__
+                print (RegisterCommand.__doc__)
                 return
             control_name = self.argv[3]
             if self.cs.is_control_defined(control_name):
@@ -98,7 +98,7 @@ class RegisterCommand(command.BaseCommand):
                 self.logger.error("[CHIPSEC] control %s isn't defined" % control_name)
         elif ( 'set_control' == op ):
             if len(self.argv) < 5:
-                print RegisterCommand.__doc__
+                print (RegisterCommand.__doc__)
                 return
             control_name = self.argv[3]
             value        = int(self.argv[4],16)
@@ -108,7 +108,7 @@ class RegisterCommand(command.BaseCommand):
             else:
                 self.logger.error("[CHIPSEC] control %s isn't defined" % control_name)
         else:
-            print RegisterCommand.__doc__
+            print (RegisterCommand.__doc__)
             return
 
 

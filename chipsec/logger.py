@@ -31,6 +31,7 @@
 Logging functions
 """
 
+from __future__ import print_function
 import platform
 import string
 import sys
@@ -87,13 +88,13 @@ if "windows" == platform.system().lower():
             """
             old_setting = WConio.gettextinfo()[4] & 0x00FF
             WConio.textattr( COLOR_ID[ fg_color ] )
-            print text
+            print (text)
             WConio.textattr( old_setting )
 
-    except ImportError, e:
+    except ImportError as e:
         #print "WConio package is not installed. No colored output"
         def log_color( fg_color, text ):
-            print text
+            print (text)
 
 elif "linux" == platform.system().lower():
 
@@ -117,15 +118,15 @@ elif "linux" == platform.system().lower():
         NORMAL = 8
 
         def log_test(self):
-            print ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC
-            print ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC
+            print (ColorLogger.BOLD + "BOLD" + ColorLogger.ENDC)
+            print (ColorLogger.UNDERLINE + "UNDERLINE" + ColorLogger.ENDC)
             for color_type in (ColorLogger.LIGHT,ColorLogger.DARK,ColorLogger.BACKGROUND,ColorLogger.LIGHT_BACKGROUND):
                 for code in xrange(ColorLogger.GRAY, ColorLogger.NORMAL+1):
                     self.log(color_type+code, color_type, code )
 
 
         def log(self,msg, color_type=LIGHT,color=8):
-            print ColorLogger.format(msg, color_type, color)
+            print (ColorLogger.format(msg, color_type, color))
 
         @staticmethod
         def format(msg, color_type=LIGHT,color=8):
@@ -144,11 +145,11 @@ elif "linux" == platform.system().lower():
 
     def log_color( fg_color, text ):
         _text = ColorLogger.format(text, ColorLogger.LIGHT,COLOR_ID[ fg_color ])
-        print _text
+        print (_text)
 
 else:
     def log_color( fg_color, text ):
-        print text
+        print (text)
 
 
 
@@ -215,7 +216,7 @@ class Logger:
             try:
                 self.logfile.close()
             except None:
-                print 'WARNING: Could not close log file'
+                print ('WARNING: Could not close log file')
             finally:
                 self.logfile = None
 
@@ -262,7 +263,7 @@ class Logger:
         else:
             if color: log_color( color, text )
             else:
-                print text
+                print (text)
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
         if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
@@ -408,7 +409,7 @@ class Logger:
         self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
-        print >> self.logfile, text
+        print (text, file=self.logfile)
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()
@@ -481,7 +482,7 @@ def print_buffer( arr, length = 16 ):
     tmp_str=[]
     i=1
     for c in arr:
-        tmp+=["%2.2x "%ord(c)]
+        tmp+=["{:2x} ".format(ord(c))]
         if (not c in string.printable) or (c in string.whitespace):
             ch = " "
         else:
@@ -503,12 +504,40 @@ def print_buffer( arr, length = 16 ):
         tmp_s = "".join(tmp)
         logger().log( tmp_s )
 
+def print_buffer_bytes( arr, length = 16 ):
+    """Prints the buffer."""
+    tmp=[]
+    tmp_str=[]
+    i=1
+    for c in arr:
+        tmp+=["{:2x} ".format(c)]
+        if (not chr(c) in string.printable) or (chr(c) in string.whitespace):
+            ch = " "
+        else:
+            ch = c
+        tmp_str+=["%c"%ch]
+        if i%length==0:
+            tmp+=["| "]
+            tmp+=tmp_str
+            tmp_s = "".join(tmp)
+            logger().log( tmp_s )
+            tmp_str=[]
+            tmp=[]
+        i+=1
+
+    if 0 != len(arr)%length:
+        tmp+=[ (length - len(arr)%length) * 3*" " ]
+        tmp+=["| "]
+        tmp+=tmp_str
+        tmp_s = "".join(tmp)
+        logger().log( tmp_s )
+
 
 def pretty_print_hex_buffer( arr, length = 16 ):
     _str = ["    _"]
-    for n in xrange(length):
+    for n in range(length):
         _str += ["%02X__" % n]
-    for n in xrange(len(arr)):
+    for n in range(len(arr)):
         if n%length == 0: _str += ["\n%02X | " % n]
         _str += ["%02X  " % arr[n]]
     logger().log( ''.join(_str) )

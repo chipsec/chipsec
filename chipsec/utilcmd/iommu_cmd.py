@@ -61,15 +61,15 @@ class IOMMUCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print IOMMUCommand.__doc__
+            print (IOMMUCommand.__doc__)
             return
         op = self.argv[2]
         t = time.time()
 
         try:
             _iommu = iommu.IOMMU(self.cs)
-        except IOMMUError, msg:
-            print msg
+        except IOMMUError as msg:
+            print (msg)
             return
 
         if ( 'list' == op ):
@@ -89,8 +89,8 @@ class IOMMUCommand(BaseCommand):
 
                 try:
                     _acpi  = acpi.ACPI( self.cs )
-                except acpi.AcpiRuntimeError, msg:
-                    print msg
+                except acpi.AcpiRuntimeError as msg:
+                    print (msg)
                     return
 
                 if _acpi.is_ACPI_table_present(acpi.ACPI_TABLE_SIG_DMAR):
@@ -106,7 +106,7 @@ class IOMMUCommand(BaseCommand):
                elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
                elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )
         else:
-            print IOMMUCommand.__doc__
+            print (IOMMUCommand.__doc__)
             return
 
         self.logger.log( "[CHIPSEC] (iommu) time elapsed %.3f" % (time.time()-t) )

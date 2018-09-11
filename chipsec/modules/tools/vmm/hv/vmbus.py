@@ -61,12 +61,12 @@ class RingBuffer(BaseModuleDebug):
     def ringbuffer_alloc(self, pages = 4):
         (va, pa) = self.cs.mem.alloc_physical_mem(pages << 12, 0xFFFFFFFFFFFFFFFF)
         self.base_addr.append(va)
-        if pa <> 0:
+        if pa != 0:
             for i in xrange(pages):
                 self.pfn.append(pa + (i << 12))
             self.ringbuffer_init()
         self.send_size = pages >> 1
-        return pa <> 0
+        return pa != 0
 
     ##
     ##  ringbuffer_init - init data and control structures in the ring buffer
@@ -178,7 +178,7 @@ class HyperV(BaseModuleDebug):
     def __del__(self):
         BaseModuleDebug.__del__(self)
         self.dbg('Free kernel memory')
-        #if self.membuf[0] <> 0:
+        #if self.membuf[0] != 0:
         #    self.cs.mem.free_physical_mem(self.membuf[0])
         if len(self.old_sint2) == 2:
             self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
@@ -309,7 +309,7 @@ class VMBus(HyperV):
             message = message[:240]
         header = pack('<4L', VMBUS_MESSAGE_CONNECTION_ID, 0x0, 0x1, len(message))
         result = self.hv_post_msg(header + message)
-        if result <> HV_STATUS_SUCCESS:
+        if result != HV_STATUS_SUCCESS:
             status = hypercall_status_codes[result] if result in hypercall_status_codes else ''
             self.err('vmbus_post_msg returns  %02X %s' % (result, status))
         return result == HV_STATUS_SUCCESS
@@ -331,9 +331,9 @@ class VMBus(HyperV):
             if (payload_size < 8) or (payload_size > 240):
                 self.msg('vmbus_recv_msg: invalid payload size %d' % payload_size)
                 payload_size = 240
-            if rsvd <> 0x0000:
+            if rsvd != 0x0000:
                 self.msg('vmbus_recv_msg: invalid reserved field 0x%04x' % rsvd)
-            #if port_id <> VMBUS_MESSAGE_PORT_ID:
+            #if port_id != VMBUS_MESSAGE_PORT_ID:
             #    self.msg('vmbus_recv_msg: invalid ConnectionID 0x%016x' % port_id)
             message = message[16 : 16 + payload_size]
         return message
@@ -358,7 +358,7 @@ class VMBus(HyperV):
             self.dbg('Send an event notification to the parent ...')
             self.cs.mem.set_mem_bit(self.send_int_page, child_relid)
             result = self.hv_signal_event(channel['connection_id'], 0x0)
-            if result <> 0:
+            if result != 0:
                 status = hypercall_status_codes[result] if result in hypercall_status_codes else ''
                 self.err('vmbus_setevent returns  %02X %s' % (result, status))
                 return False
@@ -404,7 +404,7 @@ class VMBus(HyperV):
         channel_gpadl_header   = pack ('<LLHH', child_relid, gpadl, range_buflen, rangecount)
         result = self.vmbus_post_msg(channel_message_header + channel_gpadl_header + gpa_range[:27*8])
         gpa_range = gpa_range[27*8:]
-        while result and gpa_range <> '':
+        while result and gpa_range != '':
             channel_message_header = pack ('<LL', CHANNELMSG_GPADL_BODY, 0x0)
             channel_gpadl_body     = pack ('<LL', 0x0, gpadl)
             result = self.vmbus_post_msg(channel_message_header + channel_gpadl_body + gpa_range[:28*8])
@@ -474,7 +474,7 @@ class VMBus(HyperV):
         result = self.vmbus_post_msg(channel_message_header)
         while result:
             msgtype = self.vmbus_onmessage()
-            if msgtype <> CHANNELMSG_OFFERCHANNEL:
+            if msgtype != CHANNELMSG_OFFERCHANNEL:
                 break
         return result and (msgtype == CHANNELMSG_ALLOFFERS_DELIVERED)
 
@@ -521,7 +521,7 @@ class VMBus(HyperV):
                 self.hex('Message', message)
                 exit(1)
 
-            if padding <> 0x00000000:
+            if padding != 0x00000000:
                 self.msg('vmbus_onmessage invalid padding %d' % padding)
 
         ## vmbus_ongpadl_created - GPADL created handler
@@ -541,7 +541,7 @@ class VMBus(HyperV):
         ##  vmbus_onversion_response - Version response handler
         elif msgtype == CHANNELMSG_VERSION_RESPONSE:
             version_supported, version = unpack('<2L', message_body[:8])
-            if version_supported <> 0x00:
+            if version_supported != 0x00:
                 self.supported_versions[version] = 0x1
         ## vmbus_onoffer - Handler for channel offers from vmbus in parent partition.
         elif msgtype == CHANNELMSG_OFFERCHANNEL:
@@ -584,7 +584,7 @@ class VMBus(HyperV):
     def vmbus_sendpacket(self, child_relid, data, requestid, packet_type, flags):
         self.dbg('Send the specified buffer on the given channel ...')
         rb = self.ringbuffers[child_relid]
-        while (len(data) & 0x7) <> 0:
+        while (len(data) & 0x7) != 0:
             data += '\x00'
         offset8 = 16 >> 3
         len8    = offset8 + (len(data) >> 3)
@@ -666,7 +666,7 @@ class VMBusDiscovery(VMBus):
             self.int_page = (FFs << (63 - i)) & FFs
             self.dbg('Address: 0x%016x' % self.int_page)
             self.vmbus_connect(version)
-            print self.supported_versions
+            print (self.supported_versions)
         (self.int_page, self.monitor_page1, self.monitor_page2) = pages
         return
 
@@ -746,6 +746,6 @@ class VMBusDiscovery(VMBus):
         result = []
         for i in events:
             result.append('%02X' % i)
-        if len(result) <> 0:
+        if len(result) != 0:
             self.msg('EVENTS: ' + ', '.join(result))
         return

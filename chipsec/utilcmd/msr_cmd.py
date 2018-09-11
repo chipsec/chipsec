@@ -47,7 +47,7 @@ class MSRCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print MSRCommand.__doc__
+            print (MSRCommand.__doc__)
             return
 
         #msr = Msr( os_helper )

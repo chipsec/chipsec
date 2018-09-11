@@ -113,14 +113,14 @@ class VMemCommand(BaseCommand):
     def run(self):
         try:
             _vmem = virtmem.VirtMemory(self.cs)
-        except VMemRuntimeError,msg:
+        except VMemRuntimeError as msg:
             print (msg)
             return
 
         size = 0x100
 
         if len(self.argv) < 3:
-            print VMemCommand.__doc__
+            print (VMemCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -185,7 +185,7 @@ class VMemCommand(BaseCommand):
                     #buffer = buf_file.decode('hex')
                     try:
                       buffer = bytearray.fromhex(buf_file)
-                    except ValueError, e:
+                    except ValueError as e:
                         self.logger.error( "incorrect <value> specified: '%s'" % buf_file )
                         self.logger.error( str(e) )
                         return
@@ -229,7 +229,7 @@ class VMemCommand(BaseCommand):
                 self.logger.log( '[CHIPSEC] Allocated %X bytes of virtual memory: VA = 0x%016X, PA = 0x%016X' % (size, virt_address, pa) )
             
         else:
-                print VMemCommand.__doc__
+                print (VMemCommand.__doc__)
                 return
 
 commands = { 'vmem': VMemCommand }

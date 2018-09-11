@@ -91,7 +91,7 @@ class MemoryMapping(mmap.mmap):
     This subclass keeps tracks of the start and end of the mapping.
     """
     def __init__(self, fileno, length, flags, prot, offset):
-        super(MemoryMapping, self).__init__(self, fileno, length, flags, prot,
+        super(MemoryMapping, self).__init__(fileno, length, flags, prot,
                                             offset=offset)
         self.start = offset
         self.end = offset + length
@@ -278,11 +278,11 @@ class LinuxHelper(Helper):
             if not os.path.exists("/dev/cpu/0/msr"):
                 os.system("modprobe msr")
             for cpu in os.listdir("/dev/cpu"):
-                print "found cpu = " + cpu
+                print ("found cpu = {}".format(cpu))
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
-                    print "Added dev_msr "+str(cpu)
+                    print ("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
@@ -360,7 +360,7 @@ class LinuxHelper(Helper):
         addr = (phys_address_hi << 32) | phys_address_lo
         in_buf = struct.pack( '3'+self._pack,addr,length,0 )
         if len(in_buf) < length:
-            in_buf += (length - len(in_buf)) * 'A'
+            in_buf += (length - len(in_buf)) * b'A'
         out_buf = self.ioctl(IOCTL_READ_PHYSMEM, in_buf)
         ret = struct.unpack(str(length)+'s', out_buf[:length])
         return ret[0]
@@ -381,7 +381,7 @@ class LinuxHelper(Helper):
         #Check if PA > max physical address
         max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
         if pa > 1<<max_pa:
-            print "[helper] Error in va2pa: PA higher that max physical address: VA (0x%016X) -> PA (0x%016X)"% (va, pa)
+            print ("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
             error_code = 1
         return (pa,error_code)
 
@@ -392,7 +392,7 @@ class LinuxHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
         except IOError:
-            print "IOError\n"
+            print ("IOError\n")
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
@@ -417,7 +417,7 @@ class LinuxHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_WRPCI, d)
         except IOError:
-            print "IOError\n"
+            print ("IOError\n")
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
@@ -445,7 +445,7 @@ class LinuxHelper(Helper):
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
-            print "IOError IOCTL Load Patch\n"
+            print ("IOError IOCTL Load Patch\n")
             return None
 
         return True
@@ -721,15 +721,15 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-        buffer = array.array("c", in_buf)
+        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+        buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
         new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (status == 0x5):
             data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
-            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-            buffer = array.array("c", in_buf)
+            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+            buffer = array.array("B", in_buf)
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
             except IOError:
@@ -853,7 +853,7 @@ class LinuxHelper(Helper):
                 attr |= EFI_VARIABLE_APPEND_WRITE
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             logger().error('Failed to read files under /sys/firmware/efi/vars/'+filename)
             data = ""
             guid = 0
@@ -900,7 +900,7 @@ class LinuxHelper(Helper):
                     f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
                     f.write(value)
                     ret = 0 # EFI_SUCCESS
-                except Exception, err:
+                except Exception as err:
                     logger().error('Failed to write EFI variable. %s' % err)
         return ret
 
@@ -922,7 +922,7 @@ class LinuxHelper(Helper):
             data = data[4:]
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
             guid = 0
@@ -960,7 +960,7 @@ class LinuxHelper(Helper):
             data = data[4:]
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
 
@@ -988,13 +988,13 @@ class LinuxHelper(Helper):
                 f.write(sattrs + value)
                 f.close()
                 ret = 0 # EFI_SUCCESS
-            except Exception, err:
+            except Exception as err:
                 logger().error('Failed to write EFI variable. %s' % err)
         else:
             try:
                 os.remove(path)
                 ret = 0 # EFI_SUCCESS
-            except Exception, err:
+            except Exception as err:
                 logger().error('Failed to delete EFI variable. %s' % err)
 
         return ret

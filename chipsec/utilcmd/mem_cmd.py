@@ -118,7 +118,7 @@ class MemCommand(BaseCommand):
         size = 0x100
 
         if len(self.argv) < 3:
-            print MemCommand.__doc__
+            print (MemCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -184,7 +184,7 @@ class MemCommand(BaseCommand):
                     #buffer = buf_file.decode('hex')
                     try:
                       buffer = bytearray.fromhex(buf_file)
-                    except ValueError, e:
+                    except ValueError as e:
                         self.logger.error( "incorrect <value> specified: '%s'" % buf_file )
                         self.logger.error( str(e) )
                         return
@@ -222,7 +222,7 @@ class MemCommand(BaseCommand):
             elif 0x4 == width: self.cs.mem.write_physical_mem_dword( phys_address, value )
 
         else:
-                print MemCommand.__doc__
+                print (MemCommand.__doc__)
                 return
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )

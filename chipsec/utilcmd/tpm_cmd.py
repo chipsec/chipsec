@@ -58,12 +58,12 @@ class TPMCommand(BaseCommand):
     def run(self):
         try:
             _tpm = tpm.TPM(self.cs)
-        except TpmRuntimeError, msg:
+        except TpmRuntimeError as msg:
             print(msg)
             return
 
         if len(self.argv) < 4:
-            print TPMCommand.__doc__
+            print (TPMCommand.__doc__)
             return
         op = self.argv[2]
         if ( 'parse_log' == op ):
@@ -71,7 +71,7 @@ class TPMCommand(BaseCommand):
             tpm_eventlog.parse(log)
         elif ('command' == op ):
             if len(self.argv) < 5:
-                print TPMCommand.__doc__
+                print (TPMCommand.__doc__)
                 return
             _tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
         elif ('state' == op ):
@@ -82,7 +82,7 @@ class TPMCommand(BaseCommand):
             _tpm.dump_intcap ( self.argv[3] )
             _tpm.dump_intenable( self.argv[3] )
         else:
-            print TPMCommand.__doc__
+            print (TPMCommand.__doc__)
             return
 
 commands = { 'tpm': TPMCommand }

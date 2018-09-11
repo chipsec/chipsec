@@ -65,7 +65,7 @@ class PCICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print PCICommand.__doc__
+            print (PCICommand.__doc__)
             return
 
         op = self.argv[2]
@@ -91,7 +91,7 @@ class PCICommand(BaseCommand):
                 cfg_buf = self.cs.pci.dump_pci_config( bus, device, function )
                 pretty_print_hex_buffer( cfg_buf )
             else:
-                print PCICommand.__doc__
+                print (PCICommand.__doc__)
                 return
 
         elif ( 'xrom' == op ):
@@ -117,7 +117,7 @@ class PCICommand(BaseCommand):
                 else:
                     self.logger.log( "[CHIPSEC] coudn't find XROM of %02X:%02X.%02X" % (bus,device,function) )
             else:
-                print PCICommand.__doc__
+                print (PCICommand.__doc__)
                 return
 
         elif ('cmd' == op):
@@ -146,7 +146,7 @@ class PCICommand(BaseCommand):
         else:
 
             if len(self.argv) < 6:
-                print PCICommand.__doc__
+                print (PCICommand.__doc__)
                 return
 
             bus      = int(self.argv[2],16)

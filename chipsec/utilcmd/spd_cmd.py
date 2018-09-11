@@ -48,14 +48,14 @@ class SPDCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SPDCommand.__doc__
+            print (SPDCommand.__doc__)
             return
 
         try:
             _smbus = smbus.SMBus( self.cs )
             _spd   = spd.SPD( _smbus )
-        except BaseException, msg:
-            print msg
+        except BaseException as msg:
+            print (msg)
             return
 
         op = self.argv[2]

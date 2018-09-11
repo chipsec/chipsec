@@ -47,16 +47,16 @@ excluded_hypercalls_from_fuzzing  = excluded_hypercalls_from_scan + [HV_POST_MES
 class HypercallFuzz(BaseModule):
 
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]'
-        print '      mode                fuzzing mode'
-        print '        = status-fuzzing  finding parameters with hypercall success status'
-        print '        = params-info     shows input parameters valid ranges'
-        print '        = params-fuzzing  parameters fuzzing based on their valid ranges'
-        print '        = custom-fuzzing  fuzzing of known hypercalls'
-        print '      vector              hypercall vector'
-        print '      iterations          number of hypercall iterations'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]')
+        print ('      mode                fuzzing mode')
+        print ('        = status-fuzzing  finding parameters with hypercall success status')
+        print ('        = params-info     shows input parameters valid ranges')
+        print ('        = params-fuzzing  parameters fuzzing based on their valid ranges')
+        print ('        = custom-fuzzing  fuzzing of known hypercalls')
+        print ('      vector              hypercall vector')
+        print ('      iterations          number of hypercall iterations')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
@@ -68,8 +68,8 @@ class HypercallFuzz(BaseModule):
             self.usage()
             return
 
-        callnum = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] <> '' else 'all'
-        testnum = get_int_arg(module_argv[2]) if len(module_argv) > 2 and module_argv[2] <> '' else 10000000
+        callnum = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] != '' else 'all'
+        testnum = get_int_arg(module_argv[2]) if len(module_argv) > 2 and module_argv[2] != '' else 10000000
 
         hv = HyperVHypercall()
         hv.promt = 'CHIPSEC'

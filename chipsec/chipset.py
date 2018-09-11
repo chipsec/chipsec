@@ -175,8 +175,20 @@ Chipset_Dictionary = {
 0x5918 : {'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' },
 
 # 8th Generation Core Processor Family (Coffeelake)
-0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
-0x3EC2 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S)' },
+0x3E0F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake S 2 Cores)' },
+0x3E1F : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S 4 Cores)' },
+0x3EC2 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (Coffeelake S 6 Cores)' },
+0x3E30 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake S 8 Cores)' },
+0x3ECC : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake U 2 Cores)' },
+0x3ED0 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake U 4 Cores)' },
+0x3E10 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake H 4 Cores)' },
+0x3EC4 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake H 6 Cores)' },
+0x3E18 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Workstation 4 Cores)' },
+0x3EC6 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Workstation 6 Cores)' },
+0x3E31 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Workstation 8 Cores)' },
+0x3E33 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 4 Cores)' },
+0x3ECA : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 6 Cores)' },
+0x3E32 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 8 Cores)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
@@ -402,14 +414,14 @@ class Chipset:
                 _unknown_platform = True
         else:
             self.vid = VID_INTEL
-            if Chipset_Code.has_key( platform_code ):
+            if platform_code in Chipset_Code:
                 self.did = Chipset_Code[ platform_code ]
             else:
                 _unknown_platform = True
                 self.vid = 0xFFFF
                 self.did = 0xFFFF
 
-        if Chipset_Dictionary.has_key( self.did ):
+        if self.did in Chipset_Dictionary:
             data_dict       = Chipset_Dictionary[ self.did ]
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
@@ -420,13 +432,13 @@ class Chipset:
 
         if req_pch_code is not None:
             self.pch_vid = VID_INTEL
-            if pch_codes.has_key(req_pch_code):
+            if req_pch_code in pch_codes:
                 self.pch_did = pch_codes[req_pch_code]
             else:
                 self.pch_vid = 0xFFFF
                 self.pch_did = 0xFFFF
 
-        if self.pch_vid == VID_INTEL and pch_dictionary.has_key(self.pch_did):
+        if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
             data_dict           = pch_dictionary[self.pch_did]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
@@ -438,7 +450,7 @@ class Chipset:
         if _unknown_platform and start_driver:
             msg = 'Unsupported Platform: VID = 0x%04X, DID = 0x%04X' % (self.vid,self.did)
             logger().error( msg )
-            raise UnknownChipsetError, msg
+            raise UnknownChipsetError (msg)
 
 
     def destroy( self, start_driver ):
@@ -631,7 +643,7 @@ class Chipset:
                 module = importlib.import_module( module_path )
                 logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % self.code )
                 self.Cfg = getattr( module, self.code )()
-            except ImportError, msg:
+            except ImportError as msg:
                 if logger().VERBOSE: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
 
         #
@@ -653,7 +665,7 @@ class Chipset:
 
     def get_device_BDF( self, device_name ):
         device = self.Cfg.CONFIG_PCI[ device_name ]
-        if device is None or device == {}: raise DeviceNotFoundError, ('DeviceNotFound: %s' % device_name)
+        if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: {}}'.format( device_name))
         b = int(device['bus'],16)
         d = int(device['dev'],16)
         f = int(device['fun'],16)

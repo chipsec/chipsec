@@ -75,7 +75,7 @@ class IOBAR(hal_base.HALBase):
     def get_IO_BAR_base_address( self, bar_name ):
         bar = self.cs.Cfg.IO_BARS[ bar_name ]
         if bar is None or bar == {}:
-            raise IOBARNotFoundError, ('IOBARNotFound: %s' % bar_name)
+            raise IOBARNotFoundError ('IOBARNotFound: %s' % bar_name)
 
         if 'register' in bar:
             bar_reg   = bar['register']

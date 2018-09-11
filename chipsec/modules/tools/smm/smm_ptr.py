@@ -504,7 +504,7 @@ class smm_ptr(BaseModule):
                 bad_ptr_cnt = self.test_config( thread_id, _smi_config_fname, _addr, _addr1 )
             elif 'fuzz' == test_mode or 'fuzzmore' == test_mode:
                 bad_ptr_cnt = self.test_fuzz  ( thread_id, smic_start, smic_end, _addr, _addr1 )
-        except BadSMIDetected, msg:
+        except BadSMIDetected as msg:
             bad_ptr_cnt = 1
             self.logger.log_important( "Potentially bad SMI detected! Stopped fuzing (see FUZZ_BAIL_ON_1ST_DETECT option)" )
 

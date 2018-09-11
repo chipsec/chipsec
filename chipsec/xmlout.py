@@ -73,7 +73,7 @@ class xmlAux:
             self.test_cases.append( self.testCase )
             self.testCase = None
         except:
-            print "Unexpected error:", sys.exc_info() [0]
+            print ("Unexpected error:", sys.exc_info() [0])
             raise
 
     def passed_check(self):
@@ -149,7 +149,7 @@ class xmlAux:
         ts.test_cases = self.test_cases
         if self.properties is not None and len( self.properties ) > 0: ts.properties = self.properties
         ts.to_file( filename )
-        print "[CHIPSEC] Saving output to XML file: %s" % str( os.path.abspath( filename ) )
+        print ("[CHIPSEC] Saving output to XML file: %s" % str( os.path.abspath( filename ) ))
         return True
 
 class testCaseType:

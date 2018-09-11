@@ -82,7 +82,7 @@ class CMOS(hal_base.HALBase):
     def dump_low( self ):
         cmos_buf = [0xFF]*0x80
         orig = self.cs.io.read_port_byte( CMOS_ADDR_PORT_LOW );
-        for off in xrange(0x80):
+        for off in range(0x80):
             cmos_buf[off] = self.read_cmos_low( off )
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_LOW, orig );
         return cmos_buf
@@ -90,7 +90,7 @@ class CMOS(hal_base.HALBase):
     def dump_high( self ):
         cmos_buf = [0xFF]*0x80
         orig = self.cs.io.read_port_byte( CMOS_ADDR_PORT_HIGH );
-        for off in xrange(0x80):
+        for off in range(0x80):
             cmos_buf[off] = self.read_cmos_high( off )
         self.cs.io.write_port_byte( CMOS_ADDR_PORT_HIGH, orig );
         return cmos_buf

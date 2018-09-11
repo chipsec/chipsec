@@ -56,6 +56,7 @@ import shutil
 import struct
 
 from chipsec.module_common import *
+from __future__ import print_function
 
 logger  = chipsec.logger.logger()
 
@@ -63,11 +64,11 @@ DEFAULT_PE_FILE_PATH     = "chipsec/modules/tools/secureboot/Shell.efi"
 DEFAULT_CONFIG_FILE_PATH = 'chipsec/modules/tools/secureboot/te.cfg'
 
 def dumpstr(s):
-    for c in xrange(len(s)):
-        print "%02X " % ord(s[c]),
+    for c in range(len(s)):
+        print ("{:02X} ".format(ord(s[c])),end=' ')
         if ((c+1)%16 == 0):
-            print ""
-    print ""
+            print ("")
+    print ("")
 
 #logger.VERBOSE = False
 
@@ -377,7 +378,7 @@ def replace_efi_binary(orig_efi_binary, new_efi_binary):
     if not os.path.exists(backup): os.rename(orig_efi_binary, backup)
     try:
         shutil.copy(te_binary, orig_efi_binary)
-    except OSError, err:
+    except OSError as err:
         logger.error( 'Cannot replace binary (%s)' % err )
         return False
     return True
@@ -431,7 +432,7 @@ def restore_efi_binary( orig_efi_binary ):
     try:
         if os.path.exists(orig_efi_binary): os.remove(orig_efi_binary)
         os.rename(backup, orig_efi_binary)
-    except OSError, err:
+    except OSError as err:
         logger.error( 'Cannot restore original binary (%s)' % err )
         return False
     return True

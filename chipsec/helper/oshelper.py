@@ -32,12 +32,14 @@
 Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
 """
 
+from six import with_metaclass
 import os
 import fnmatch
 import re
 import errno
 import shutil
 import traceback
+import sys
 
 import chipsec.file
 from chipsec.logger import *
@@ -75,15 +77,15 @@ class UnimplementedNativeAPIError (UnimplementedAPIError):
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
 
-# Base class for the helpers
-class Helper(object):
-    class __metaclass__(type):
-        def __init__(cls, name, bases, attrs):
-            if not hasattr(cls, 'registry'):
-                cls.registry = []
-            else:
-                cls.registry.append((name, cls))
+class MetaHelper(type):
+    def __init__(cls,name,bases, attrs):
+        if not hasattr(cls, 'registry'):
+            cls.registry = []
+        else:
+            cls.registry.append((name,cls))
 
+# Base class for the helpers
+class Helper(with_metaclass(MetaHelper,object)):
     def __init__(self):
         self.driver_loaded = False
 
@@ -128,7 +130,7 @@ class OsHelper:
                 raise OsHelperError("failed to create OS helper")
             if not self.helper.start( start_driver, driver_exists ):
                 raise OsHelperError("failed to start OS helper")
-        except (None,Exception) , msg:
+        except (None,Exception) as msg:
             if logger().VERBOSE: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
@@ -157,6 +159,8 @@ class OsHelper:
     def use_native_api(self):
         return self.helper.use_native_api()
 
+    def is_dal( self ):
+        return ('itpii' in sys.modules)
     def is_efi( self ):
         return self.os_system.lower().startswith('efi') or self.os_system.lower().startswith('uefi')
     def is_linux( self ):
@@ -459,7 +463,7 @@ class OsHelper:
           if exe is None: return None 
           try:
             subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
+          except BaseException as msg:
             logger().error( str(msg) )
             if logger().DEBUG: logger().log_bad( traceback.format_exc() )
             return None
@@ -473,7 +477,7 @@ def helper():
     if _helper == None:
         try:
             _helper  = OsHelper()
-        except BaseException, msg:
+        except BaseException as msg:
             logger().error( str(msg) )
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             raise
