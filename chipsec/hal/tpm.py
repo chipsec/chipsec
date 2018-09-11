@@ -340,7 +340,7 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                        TPM Access" )
         logger().log( "================================================================" )
-        logger().log( "\ttpmRegValidSts  : 0x{}"(.formatbin( access_value & ( 1<<7 ) )[2]) )
+        logger().log( "\ttpmRegValidSts  : 0x{}".format(bin( access_value & ( 1<<7 ) )[2]) )
         logger().log( "\treserved        : 0x{}".format(bin( access_value & ( 1<<6 ) )[2]) )
         logger().log( "\tactiveLocality  : 0x{}".format(bin( access_value & ( 1<<5 ) )[2]) )
         logger().log( "\tbeenSeized      : 0x{}".format(bin( access_value & ( 1<<4 ) )[2]) )
