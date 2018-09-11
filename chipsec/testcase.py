@@ -82,21 +82,21 @@ class ChipsecResults():
     def get_return_code(self):
         summary = self.order_summary()
         if len(summary['failed to run']) != 0:
-            return ERROR
+            return ExitCode.ERROR
         elif len(summary['exceptions']) != 0:
-            return EXCEPTION
+            return ExitCode.EXCEPTION
         elif len(summary['failed']) != 0:
-            return FAIL
+            return ExitCode.FAIL
         elif len(summary['warnings']) != 0:
-            return WARNING
+            return ExitCode.WARNING
         elif len(summary['skipped']) != 0:
-            return SKIPPED
+            return ExitCode.SKIPPED
         elif len(summary['not applicable']) != 0:
-            return NOTAPPLICABLE
+            return ExitCode.NOTAPPLICABLE
         elif len(summary['information']) != 0:
-            return INFORMATION
+            return ExitCode.INFORMATION
         else:
-            return OK
+            return ExitCode.OK
 
     def set_time(self, pTime=None):
         """Sets the time"""
