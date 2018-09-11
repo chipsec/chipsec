@@ -234,7 +234,7 @@ class ChipsecMain:
         # Load modules common to all supported platforms
         #
         common_path = os.path.join( self.Modules_Path, 'common' )
-        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd()),'.') )
+        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd(),'.')) )
         self.load_modules_from_path( common_path )
         #
         # Step 2.
@@ -242,7 +242,7 @@ class ChipsecMain:
         #
         chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
         if (chipset.CHIPSET_ID_UNKNOWN != self._cs.id) and os.path.exists( chipset_path ):
-            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd()),'.') )
+            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd(),'.')) )
             self.load_modules_from_path( chipset_path )
         else:
             logger().log( "[*] No platform specific modules to load" )
