@@ -96,7 +96,7 @@ class uefivar_fuzz(BaseModule):
 
     def rnd(self, n=1):
         rnum = ''
-        for j in xrange(n):
+        for j in range(n):
             rnum += '%02x' % random.randint(0,255)
         return rnum
         
@@ -111,6 +111,7 @@ class uefivar_fuzz(BaseModule):
         s = raw_input( "Type 'yes' to continue > " )
         if s != 'yes': return
 
+      
         # Default options
         _NAME   = 'FuzzerVarName'
         _GUID   = '414C4694-F4CF-0525-69AF-C99C8596530F'
@@ -121,6 +122,8 @@ class uefivar_fuzz(BaseModule):
         ITERATIONS = 1000
         SEED       = int(time())
         CASE       = 1
+        BOUND_STR  = 255 #tested value that can be increased or decreased to fit the limit bounds
+        BOUND_INT  = 1000
 
         FUZZ_NAME   = True 
         FUZZ_GUID   = True
@@ -132,7 +135,6 @@ class uefivar_fuzz(BaseModule):
         
         if len(module_argv):
             fz_cli = module_argv[0].lower()
-
             if ('all' != fz_cli):
                 FUZZ_NAME   = False
                 FUZZ_GUID   = False
@@ -169,25 +171,33 @@ class uefivar_fuzz(BaseModule):
             self.logger.log( 'Seed      : %d' % SEED )
             self.logger.log( 'Test case : %d' % CASE )
             self.logger.log('')
-     
             for count in range(1,ITERATIONS+CASE):
                 
                 if FUZZ_NAME:
                     _NAME = ''
-                    for n in range(int(self.rnd(3),16)):
-                        _NAME += random.choice(string.printable)
-                if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
-                if FUZZ_ATTRIB: _ATTRIB = int(self.rnd(4),16)
-                if FUZZ_DATA  : _DATA   = self.rnd(int(self.rnd(3),16))
-                if FUZZ_SIZE  : _SIZE   = int(self.rnd(3),16)
+                    while not _NAME:
+                        for n in range(random.randrange(BOUND_STR)):
+                            _NAME += random.choice(string.printable)    
 
+                if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
+                
+                if FUZZ_ATTRIB: _ATTRIB = int(self.rnd(4),16)
+                
+                if FUZZ_DATA  : 
+                    _DATA = None
+                    while not _DATA:
+                        _DATA   = self.rnd(random.randrange(BOUND_INT))
+                        
+                if FUZZ_SIZE  : _SIZE   = random.randrange(len(_DATA))
+                
                 if (count < CASE): continue
                 
                 self.logger.log( '  Running test #%d:' % count )                    
                 self.logger.flush()
-                
-                status = self._uefi.set_EFI_variable(_NAME, _GUID, _DATA, _SIZE, _ATTRIB)
+
+                status = self._uefi.set_EFI_variable(_NAME, _GUID, _DATA, _SIZE, _ATTRIB) 
                 self.logger.log( status )
+                
                 status = self._uefi.delete_EFI_variable(_NAME, _GUID)
                 self.logger.log( status )
  

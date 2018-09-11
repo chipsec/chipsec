@@ -39,6 +39,7 @@ import re
 import errno
 import shutil
 import traceback
+import sys
 
 import chipsec.file
 from chipsec.logger import *
@@ -175,6 +176,8 @@ class OsHelper:
     def use_native_api(self):
         return self.helper.use_native_api()
 
+    def is_dal( self ):
+        return ('itpii' in sys.modules)
     def is_efi( self ):
         return self.os_system.lower().startswith('efi') or self.os_system.lower().startswith('uefi')
     def is_linux( self ):
