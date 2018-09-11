@@ -453,7 +453,7 @@ class ACPI(hal_base.HALBase):
             x_dsdt_address = parsed_fadt_content.x_dsdt
             logger().error( 'Unable to determine the correct DSDT address' )
             logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
-            logger().error( '  X_DSDT address = 0x{:016X}'.format(x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
+            logger().error( '  X_DSDT address = {}'.format('0x{:016X}'.format(x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
