@@ -563,7 +563,7 @@ class SPI(hal_base.HALBase):
             dbc = SPI_READ_WRITE_MAX_DBC
 
         n = data_byte_count // dbc
-        r = data_byte_count.format(dbc)
+        r = data_byte_count % dbc
         if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] reading 0x{:x} bytes from SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
 
