@@ -74,36 +74,36 @@ class MsgBusCommand(BaseCommand):
         reg  = int(self.argv[4], 16)
 
         if 'read' == op:
-            self.logger.log("[CHIPSEC] msgbus read: port 0x%02X + 0x%08X" % (port, reg))
+            self.logger.log("[CHIPSEC] msgbus read: port 0x{:02X} + 0x{:08X}".format(port, reg))
             res = _msgbus.msgbus_reg_read( port, reg )
         elif 'write' == op:
             if len(self.argv) < 6:
                 print (msgbuscmd.__doc__)
                 return
             val = int(self.argv[5], 16)
-            self.logger.log("[CHIPSEC] msgbus write: port 0x%02X + 0x%08X < 0x%08X" % (port, reg, val))
+            self.logger.log("[CHIPSEC] msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(port, reg, val))
             res = _msgbus.msgbus_reg_write( port, reg, val )
         elif 'mm_read' == op:
-            self.logger.log("[CHIPSEC] MMIO msgbus read: port 0x%02X + 0x%08X" % (port, reg))
+            self.logger.log("[CHIPSEC] MMIO msgbus read: port 0x{:02X} + 0x{:08X}".format(port, reg))
             res = _msgbus.mm_msgbus_reg_read( port, reg )
         elif 'mm_write' == op:
             if len(self.argv) < 6:
                 print (msgbuscmd.__doc__)
                 return
             val = int(self.argv[5], 16)
-            self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x%02X + 0x%08X < 0x%08X" % (port, reg, val))
+            self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(port, reg, val))
             res = _msgbus.mm_msgbus_reg_write( port, reg, val )
         elif 'message' == op:
             opcode = int(self.argv[5], 16)
             val = None if len(self.argv) < 7 else int(self.argv[6], 16)
-            self.logger.log("[CHIPSEC] msgbus message: port 0x%02X + 0x%08X, opcode: 0x%02X" % (port, reg, opcode))
-            if val is not None: self.logger.log("[CHIPSEC]                 data: 0x%08X" % val)
+            self.logger.log("[CHIPSEC] msgbus message: port 0x{:02X} + 0x{:08X}, opcode: 0x{:02X}".format(port, reg, opcode))
+            if val is not None: self.logger.log("[CHIPSEC]                 data: 0x{:08X}".format(val))
             res = _msgbus.msgbus_send_message( port, reg, opcode, val )
         else:
              print (msgbuscmd.__doc__)
              return
 
-        if res is not None: self.logger.log("[CHIPSEC] result: 0x%08X" % res)
-        self.logger.log( "[CHIPSEC] (msgbus) time elapsed %.3f" % (time.time()-t) )
+        if res is not None: self.logger.log("[CHIPSEC] result: 0x{:08X}".format(res))
+        self.logger.log( "[CHIPSEC] (msgbus) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'msgbus': MsgBusCommand }

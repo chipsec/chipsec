@@ -80,7 +80,7 @@ class PortIOCommand(BaseCommand):
 
         if 5 == len(self.argv):
             value = int(self.argv[4], 16)
-            self.logger.log( "[CHIPSEC] OUT 0x%04X <- 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+            self.logger.log( "[CHIPSEC] OUT 0x{:04X} <- 0x{:08X} (size = 0x{:02X})".format(io_port, value, width) )
             if   0x1 == width: self.cs.io.write_port_byte( io_port, value )
             elif 0x2 == width: self.cs.io.write_port_word( io_port, value )
             elif 0x4 == width: self.cs.io.write_port_dword( io_port, value )
@@ -94,9 +94,9 @@ class PortIOCommand(BaseCommand):
             else:
                 self.logger.log( "Invalid read size requested. 1,2,4 supported")
                 return
-            self.logger.log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+            self.logger.log( "[CHIPSEC] IN 0x{:04X} -> 0x{:08X} (size = 0x{:02X})".format(io_port, value, width) )
 
-        self.logger.log( "[CHIPSEC] (io) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (io) time elapsed {:.3f}".format(time.time()-t) )
 
 
 commands = { 'io': PortIOCommand }

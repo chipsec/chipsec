@@ -53,7 +53,7 @@ def dump_region_to_path(path, pa_start, pa_end):
     if (head_len > 0):
         b = read_mem(pa_start, head_len)
         if b is not None:
-            fname = os.path.join(path, "m%016X.bin" % pa_start)
+            fname = os.path.join(path, "m{:016X}.bin".format(pa_start))
             f = open(fname, 'wb')
             f.write(b)
 
@@ -61,7 +61,7 @@ def dump_region_to_path(path, pa_start, pa_end):
         b = read_mem(pa)
         if b is not None:
             if f is None:
-                fname = os.path.join(path, "m%016X.bin" % pa)
+                fname = os.path.join(path, "m{:016X}.bin".format(pa))
                 f = open(fname, 'wb')
             f.write(b)
         else:
@@ -75,7 +75,7 @@ def dump_region_to_path(path, pa_start, pa_end):
         b = read_mem(end, tail_len)
         if b is not None:
             if f is None:
-                fname = os.path.join(path, "m%016X.bin" % end)
+                fname = os.path.join(path, "m{:016X}.bin".format(end))
                 f = open(fname, 'wb')
             f.write(b)
 
@@ -127,7 +127,7 @@ class MemCommand(BaseCommand):
         if 'allocate'   == op and 4 == len(self.argv):
             size = int(self.argv[3],16)
             (va, pa) = self.cs.mem.alloc_physical_mem( size )
-            self.logger.log( '[CHIPSEC] Allocated %X bytes of physical memory: VA = 0x%016X, PA = 0x%016X' % (size, va, pa) )
+            self.logger.log( '[CHIPSEC] Allocated {:X} bytes of physical memory: VA = 0x{:016X}, PA = 0x{:016X}'.format(size, va, pa) )
 
         elif 'search' == op and len(self.argv) > 5:
             phys_address = int(self.argv[3],16)
@@ -137,9 +137,9 @@ class MemCommand(BaseCommand):
             offset = buffer.find(self.argv[5])
 
             if offset != -1:
-                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, target address= 0x%X..' % (phys_address, size, phys_address + offset) )
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x{:016X}, len = 0x{:X}, target address= 0x{:X}..'.format(phys_address, size, phys_address + offset) )
             else:
-                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x%016X, len = 0x%X, can not find the target in the searched range..' % (phys_address, size) )
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x{:016X}, len = 0x{:X}, can not find the target in the searched range..'.format(phys_address, size) )
 
         elif 'pagedump' == op and len(self.argv) > 3:
             start   = long(self.argv[3],16)
@@ -151,12 +151,12 @@ class MemCommand(BaseCommand):
         elif 'read'     == op:
             phys_address = int(self.argv[3],16)
             size         = int(self.argv[4],16) if len(self.argv) > 4 else 0x100
-            self.logger.log( '[CHIPSEC] reading buffer from memory: PA = 0x%016X, len = 0x%X..' % (phys_address, size) )
+            self.logger.log( '[CHIPSEC] reading buffer from memory: PA = 0x{:016X}, len = 0x{:X}..'.format(phys_address, size) )
             buffer = self.cs.mem.read_physical_mem( phys_address, size )
             if len(self.argv) > 5:
                 buf_file = self.argv[5]
                 chipsec.file.write_file( buf_file, buffer )
-                self.logger.log( "[CHIPSEC] written 0x%X bytes to '%s'" % (len(buffer), buf_file) )
+                self.logger.log( "[CHIPSEC] written 0x{:X} bytes to '{}'".format(len(buffer), buf_file) )
             else:
                 print_buffer( buffer )
 
@@ -165,11 +165,11 @@ class MemCommand(BaseCommand):
             width        = 0x4
             if len(self.argv) > 4: 
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
-            self.logger.log( '[CHIPSEC] reading %X-byte value from PA 0x%016X..' % (width, phys_address) )
+            self.logger.log( '[CHIPSEC] reading {:X}-byte value from PA 0x{:016X}..'.format(width, phys_address) )
             if   0x1 == width: value = self.cs.mem.read_physical_mem_byte ( phys_address )
             elif 0x2 == width: value = self.cs.mem.read_physical_mem_word ( phys_address )
             elif 0x4 == width: value = self.cs.mem.read_physical_mem_dword( phys_address )
-            self.logger.log( '[CHIPSEC] value = 0x%X' % value )
+            self.logger.log( '[CHIPSEC] value = 0x{:X}'.format(value) )
 
         elif 'write'    == op:
             phys_address = int(self.argv[3],16)
@@ -185,19 +185,19 @@ class MemCommand(BaseCommand):
                     try:
                       buffer = bytearray.fromhex(buf_file)
                     except ValueError as e:
-                        self.logger.error( "incorrect <value> specified: '%s'" % buf_file )
+                        self.logger.error( "incorrect <value> specified: '{}'".format(buf_file) )
                         self.logger.error( str(e) )
                         return
-                    self.logger.log( "[CHIPSEC] read 0x%X hex bytes from command-line: %s'" % (len(buffer), buf_file) )
+                    self.logger.log( "[CHIPSEC] read 0x{:X} hex bytes from command-line: {}'".format(len(buffer), buf_file) )
                 else:
                     buffer = chipsec.file.read_file( buf_file )
-                    self.logger.log( "[CHIPSEC] read 0x%X bytes from file '%s'" % (len(buffer), buf_file) )
+                    self.logger.log( "[CHIPSEC] read 0x{:X} bytes from file '{}'".format(len(buffer), buf_file) )
 
                 if len(buffer) < size:
-                    self.logger.error( "number of bytes read (0x%X) is less than the specified <length> (0x%X)" % (len(buffer),size) )
+                    self.logger.error( "number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer),size) )
                     return
 
-                self.logger.log( '[CHIPSEC] writing buffer to memory: PA = 0x%016X, len = 0x%X..' % (phys_address, size) )
+                self.logger.log( '[CHIPSEC] writing buffer to memory: PA = 0x{:016X}, len = 0x{:X}..'.format(phys_address, size) )
                 self.cs.mem.write_physical_mem( phys_address, size, buffer )
             else:
                 self.logger.error( "must specify <buffer>|<file> argument in 'mem write'" )
@@ -208,7 +208,7 @@ class MemCommand(BaseCommand):
             if len(self.argv) > 4: 
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
             else:
-                self.logger.error( "must specify <length> argument in 'mem writeval' as one of %s" % chipsec_util.CMD_OPTS_WIDTH )
+                self.logger.error( "must specify <length> argument in 'mem writeval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH) )
                 return
             if len(self.argv) > 5: 
                 value = int(self.argv[5],16)
@@ -216,7 +216,7 @@ class MemCommand(BaseCommand):
                 self.logger.error( "must specify <value> argument in 'mem writeval'" )
                 return
 
-            self.logger.log( '[CHIPSEC] writing %X-byte value 0x%X to PA 0x%016X..' % (width, value, phys_address) )
+            self.logger.log( '[CHIPSEC] writing {:X}-byte value 0x{:X} to PA 0x{:016X}..'.format(width, value, phys_address) )
             if   0x1 == width: self.cs.mem.write_physical_mem_byte ( phys_address, value )
             elif 0x2 == width: self.cs.mem.write_physical_mem_word ( phys_address, value )
             elif 0x4 == width: self.cs.mem.write_physical_mem_dword( phys_address, value )
@@ -225,7 +225,7 @@ class MemCommand(BaseCommand):
                 print (MemCommand.__doc__)
                 return
 
-        self.logger.log( "[CHIPSEC] (mem) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (mem) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'mem': MemCommand }
 

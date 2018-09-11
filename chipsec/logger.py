@@ -393,7 +393,7 @@ def dump_buffer( arr, length = 8 ):
     tmp_str=[]
     i=1
     for c in arr:
-        tmp+=["%2.2x "%ord(c)]
+        tmp+=["{:2.2x} ".format(ord(c))]
         #if 0xD == ord(c) or 0xA == ord(c):
         if c in string.whitespace:
             ch = " "
@@ -477,6 +477,6 @@ def pretty_print_hex_buffer( arr, length = 16 ):
     for n in range(length):
         _str += ["%02X__" % n]
     for n in range(len(arr)):
-        if n%length == 0: _str += ["\n%02X | " % n]
-        _str += ["%02X  " % arr[n]]
+        if n%length == 0: _str += ["\n{:02X} | ".format(n)]
+        _str += ["{:02X}  ".format(arr[n])]
     logger().log( ''.join(_str) )
