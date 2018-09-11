@@ -136,12 +136,12 @@ class ChipsecMain:
     def import_module(self,module_path):
         module = None
         if not self.MODPATH_RE.match(module_path):
-            logger().error( "Invalid module path: %s" % module_path )
+            logger().error( "Invalid module path: {}".format(module_path) )
         else:
             try:
                 module = importlib.import_module( module_path )
             except BaseException as msg:
-                logger().error( "Exception occurred during import of %s: '%s'" % (module_path, str(msg)) )
+                logger().error( "Exception occurred during import of {}: '{}'".format(module_path, str(msg)) )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
         return module
@@ -163,7 +163,7 @@ class ChipsecMain:
         result = None
         try:
             if not modx.do_import(): return module_common.ModuleResult.ERROR
-            if logger().DEBUG and not self._list_tags: logger().log( "[*] Module path: %s" % modx.get_location() )
+            if logger().DEBUG and not self._list_tags: logger().log( "[*] Module path: {}".format(modx.get_location()) )
 
             if self.verify_module_tags( modx ):
                 result = modx.run( module_argv )
@@ -171,7 +171,7 @@ class ChipsecMain:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
-            logger().log_error_check( "Exception occurred during %s.run(): '%s'" % (modx.get_name(), str(msg)) )
+            logger().log_error_check( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
             raise msg
         return result
 
@@ -215,11 +215,11 @@ class ChipsecMain:
 
         if module not in self.Loaded_Modules:
             self.Loaded_Modules.append( (module,module_argv) )
-            if not self._list_tags: logger().log( "[+] loaded %s" % module.get_name() )
+            if not self._list_tags: logger().log( "[+] loaded {}".format(module.get_name()) )
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
-        if logger().VERBOSE: logger().log( "[*] Path: %s" % os.path.abspath( from_path ) )
+        if logger().VERBOSE: logger().log( "[*] Path: {}".format(os.path.abspath( from_path )) )
         for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ) :
             if not recursive:
                 while len(subdirs) > 0:
@@ -234,7 +234,7 @@ class ChipsecMain:
         # Load modules common to all supported platforms
         #
         common_path = os.path.join( self.Modules_Path, 'common' )
-        logger().log( "[*] loading common modules from \"%s\" .." % common_path.replace(os.getcwd(),'.') )
+        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd()),'.') )
         self.load_modules_from_path( common_path )
         #
         # Step 2.
@@ -242,20 +242,20 @@ class ChipsecMain:
         #
         chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
         if (chipset.CHIPSET_ID_UNKNOWN != self._cs.id) and os.path.exists( chipset_path ):
-            logger().log( "[*] loading platform specific modules from \"%s\" .." % chipset_path.replace(os.getcwd(),'.') )
+            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd()),'.') )
             self.load_modules_from_path( chipset_path )
         else:
             logger().log( "[*] No platform specific modules to load" )
         #
         # Step 3.
         # Enumerate all modules from the root module directory
-        logger().log( "[*] loading modules from \"%s\" .." % self.Modules_Path.replace(os.getcwd(),'.') )
+        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd()),'.') )
         self.load_modules_from_path( self.Modules_Path, False )
 
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
-            logger().log( "[*] loading modules from \"%s\" .." % import_path )
+            logger().log( "[*] loading modules from \"{}\" ..".format(import_path) )
             self.load_modules_from_path(import_path)
 
     def clear_loaded_modules(self):
@@ -293,7 +293,7 @@ class ChipsecMain:
 
             # Module uses the old API  display warning and try to run anyways
             if result == module_common.ModuleResult.DEPRECATED:
-                logger().error( 'Module %s does not inherit BaseModule class' % str(modx) )
+                logger().error( 'Module {} does not inherit BaseModule class'.format(str(modx)) )
 
             # Populate results
 
@@ -466,7 +466,7 @@ class ChipsecMain:
                 logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
                 self._unkownPlatform = False
             elif o in ("-l", "--log"):
-                #logger().log( "[*] Output to log file '%s' (--log option or chipsec_main.logger().set_log_file in Python console)" % a )
+                #logger().log( "[*] Output to log file '{}' (--log option or chipsec_main.logger().set_log_file in Python console)".format(a) )
                 logger().set_log_file( a )
             elif o in ("-t", "--moduletype"):
                 usertags = a.upper().split(",")
@@ -526,7 +526,7 @@ class ChipsecMain:
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
         except chipset.UnknownChipsetError as msg:
-            logger().error( "Platform is not supported (%s)." % str(msg) )
+            logger().error( "Platform is not supported ({}).".format(str(msg)) )
             if self._unkownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())

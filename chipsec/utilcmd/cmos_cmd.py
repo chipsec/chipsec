@@ -63,26 +63,26 @@ class CMOSCommand(BaseCommand):
         elif ( 'readl' == op ):
             off = int(self.argv[3],16)
             val = _cmos.read_cmos_low( off )
-            self.logger.log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
+            self.logger.log( "[CHIPSEC] CMOS low byte 0x{:X} = 0x{:X}".format(off, val) )
         elif ( 'writel' == op ):
             off = int(self.argv[3],16)
             val = int(self.argv[4],16)
-            self.logger.log( "[CHIPSEC] Writing CMOS low byte 0x%X <- 0x%X " % (off, val) )
+            self.logger.log( "[CHIPSEC] Writing CMOS low byte 0x{:X} <- 0x{:X} ".format(off, val) )
             _cmos.write_cmos_low( off, val )
         elif ( 'readh' == op ):
             off = int(self.argv[3],16)
             val = _cmos.read_cmos_high( off )
-            self.logger.log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
+            self.logger.log( "[CHIPSEC] CMOS high byte 0x{:X} = 0x{:X}".format(off, val) )
         elif ( 'writeh' == op ):
             off = int(self.argv[3],16)
             val = int(self.argv[4],16)
-            self.logger.log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
+            self.logger.log( "[CHIPSEC] Writing CMOS high byte 0x{:X} <- 0x{:X} ".format(off, val) )
             _cmos.write_cmos_high( off, val )
         else:
-            self.logger.error( "unknown command-line option '%.32s'" % op )
+            self.logger.error( "unknown command-line option '{32}'".format(op) )
             print (CMOSCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (cmos) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (cmos) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'cmos': CMOSCommand }

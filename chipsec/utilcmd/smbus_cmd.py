@@ -68,22 +68,22 @@ class SMBusCommand(BaseCommand):
             if len(self.argv) > 5:
                 size   = int(self.argv[5],16)
                 buf = _smbus.read_range( dev_addr, start_off, size )
-                self.logger.log( "[CHIPSEC] SMBus read: device 0x%X offset 0x%X size 0x%X" % (dev_addr, start_off, size) )
+                self.logger.log( "[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} size 0x{:X}".format(dev_addr, start_off, size) )
                 print_buffer( buf )
             else:
                 val = _smbus.read_byte( dev_addr, start_off )
-                self.logger.log( "[CHIPSEC] SMBus read: device 0x%X offset 0x%X = 0x%X" % (dev_addr, start_off, val) )
+                self.logger.log( "[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} = 0x{:X}".format(dev_addr, start_off, val) )
         elif ( 'write' == op ):
             dev_addr = int(self.argv[3],16)
             off      = int(self.argv[4],16)
             val      = int(self.argv[5],16)
-            self.logger.log( "[CHIPSEC] SMBus write: device 0x%X offset 0x%X = 0x%X" % (dev_addr, off, val) )
+            self.logger.log( "[CHIPSEC] SMBus write: device 0x{:X} offset 0x{:X} = 0x{:X}".format(dev_addr, off, val) )
             _smbus.write_byte( dev_addr, off, val )
         else:
-            self.logger.error( "unknown command-line option '%.32s'" % op )
+            self.logger.error( "unknown command-line option '{:32}'".format(op) )
             print (SMBusCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (smbus) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (smbus) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'smbus': SMBusCommand }
