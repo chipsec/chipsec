@@ -9,6 +9,7 @@
 -->
   
   <pci>
+    <device name="SMBUS"  bus="0" dev="0x1F" fun="4" vid="0x8086" />
   </pci>
 
 
@@ -19,6 +20,7 @@
   <io>
     <bar name="ABASE"    register="ABASE"    base_field="Base"  size="0x100"  desc="ACPI Base Address"/>
     <bar name="TCOBASE"  register="TCOBASE"  base_field="Base"  size="0x20"   desc="TCO Base Address"/>
+    <bar name="SMBUS_BASE" bus="0" dev="0x1F" fun="4" reg="0x20" mask="0xFFE0" size="0x80" desc="SMBus Base Address"/>
   </io>
 
   <memory>
