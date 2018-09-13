@@ -166,7 +166,7 @@ class ChipsecResults():
             p_element = ET.SubElement(pr_element,"property",prop_dict)
         #add test cases
         for test in self.test_cases:
-            tc_element =  ET.SubElement(ts_element, "testcase", {'classname':test.name,'name':test.desc, 'time':"{:5f}".format(test.time)})
+            tc_element =  ET.SubElement(ts_element, "testcase", {'classname':test.name,'name':test.desc, 'time':'{}'.format("{:5f}".format(test.time)if test.time is not None else "0.0")})
             r_element =   ET.SubElement(tc_element, "pass", {"type":test.result})
             out_element = ET.SubElement(tc_element, "system-out")
             out_element.text = test.output
