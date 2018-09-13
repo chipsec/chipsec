@@ -238,7 +238,7 @@ class VARIABLE_STORE_HEADER( namedtuple('VARIABLE_STORE_HEADER', 'guid0 guid1 gu
         return """
 EFI Variable Store
 -----------------------------
-Signature : {}{:08X}-{:04X}-{:04X}-{:04}-{:06}{}
+Signature : {}{:08X}-{:04X}-{:04X}-{:4}-{:6}{}
 Size      : 0x{:08X} bytes
 Format    : 0x{:02X}
 State     : 0x{:02X}
@@ -478,7 +478,7 @@ EFI_STATUS_DICT = {
 
 EFI_GUID_FMT = "IHH8s"
 def EFI_GUID( guid0, guid1, guid2, guid3 ):
-    return ("{:08X}-{:04X}-{:04X}-{:04}-{:06}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ("{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 
 
 def align(of, size):
@@ -493,7 +493,7 @@ def get_3b_size(s):
     return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
 def guid_str(guid0, guid1, guid2, guid3):
-    guid = "{:08X}-{:04X}-{:04X}-{:04}-{:06}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper())
+    guid = "{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper())
     return guid
 
 
