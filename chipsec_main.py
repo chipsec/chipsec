@@ -235,7 +235,7 @@ class ChipsecMain:
         #
         # Step 3.
         # Enumerate all modules from the root module directory
-        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd()),'.') )
+        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(),'.')) )
         self.load_modules_from_path( self.Modules_Path, False )
 
 
