@@ -181,7 +181,7 @@ FirmwareTableID_XSDT = 0x54445358
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
 #
 def guid_str(guid0, guid1, guid2, guid3):
-    return ( "{:08X}-{:04X}-{:04X}-{:04}-{:06}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ( "{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 
 class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid0 guid1 guid2 guid3') ):
     __slots__ = ()
@@ -189,7 +189,7 @@ class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attribute
         return """
 Header (Windows)
 ----------------
-VendorGuid= {}{:08X}-{:04X}-{:04X}-{:04}-{:06}{}
+VendorGuid= {}{:08X}-{:04X}-{:04X}-{:4}-{:6}{}
 Size      = 0x{:08X}
 DataOffset= 0x{:08X}
 DataSize  = 0x{:08X}
@@ -361,7 +361,7 @@ class Win32Helper(Helper):
         except win32service.error as (hr, fn, msg):
             handle_winerror(fn, msg, hr)
 
-        if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = 0x{:08X})".format(hscm) )
+        if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
         if logger().VERBOSE: logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
         try:
