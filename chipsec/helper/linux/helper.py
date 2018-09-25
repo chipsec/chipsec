@@ -77,8 +77,6 @@ IOCTL_WRMMIO                   = 0x13
 IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
-IOCTL_READ_PHYSMEM             = 0x17
-IOCTL_WRITE_PHYSMEM            = 0x18
 
 LZMA  = efi_compressor.LzmaDecompress
 Tiano = efi_compressor.TianoDecompress
@@ -342,10 +340,8 @@ class LinuxHelper(Helper):
     def write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
         if newval is None: return None
         addr = (phys_address_hi << 32) | phys_address_lo
-        in_buf = struct.pack('2'+self._pack,addr,length)+str(newval)
-        out_buf = self.ioctl(IOCTL_WRITE_PHYSMEM, in_buf)
-        res = struct.unpack('Q',out_buf[:8])
-        return res[0]
+        self.dev_fh.seek(addr)
+        return self.__mem_block(length, newval)
 
     def native_write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
         if newval is None: return None
@@ -358,12 +354,8 @@ class LinuxHelper(Helper):
 
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         addr = (phys_address_hi << 32) | phys_address_lo
-        in_buf = struct.pack( '3'+self._pack,addr,length,0 )
-        if len(in_buf) < length:
-            in_buf += (length - len(in_buf)) * b'A'
-        out_buf = self.ioctl(IOCTL_READ_PHYSMEM, in_buf)
-        ret = struct.unpack(str(length)+'s', out_buf[:length])
-        return ret[0]
+        self.dev_fh.seek(addr)
+        return self.__mem_block(length)
 
     def native_read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         if self.devmem_available():
