@@ -483,7 +483,7 @@ cPublicProc _hypercall, 12
     pop    esi
     pop    ebx
     stdRET _hypercall
-stdENDP _hypercall ENDP
+stdENDP _hypercall
 
 ;------------------------------------------------------------------------------
 ;  UINT64 hypercall_page ( )

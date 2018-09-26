@@ -147,7 +147,9 @@ DriverEntry(
     PDEVICE_OBJECT DeviceObject = NULL;
     NTSTATUS       Status = STATUS_SUCCESS;
     UNICODE_STRING DeviceName;
-    UNICODE_STRING DosDeviceName;  
+    UNICODE_STRING DosDeviceName;
+
+	UNREFERENCED_PARAMETER(RegistryPath);
 
     //
     // Initialize a unicode string for the drivers object name.
@@ -291,7 +293,7 @@ NTSTATUS _read_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
       DbgPrint( "[chipsec] ERROR: no space for mapping\n" );
       return STATUS_UNSUCCESSFUL;
     }
-  DbgPrint( "[chipsec] reading %d bytes from physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (unsigned int)va );
+  DbgPrint( "[chipsec] reading %d bytes from physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
   RtlCopyMemory( pData, va, len );
   MmUnmapIoSpace( va, len );
   return STATUS_SUCCESS;
@@ -305,7 +307,7 @@ NTSTATUS _write_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
       DbgPrint( "[chipsec] ERROR: no space for mapping\n" );
       return STATUS_UNSUCCESSFUL;
     }
-  DbgPrint( "[chipsec] writing %d bytes to physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (unsigned int)va );
+  DbgPrint( "[chipsec] writing %d bytes to physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
   RtlCopyMemory( va, pData, len );
   MmUnmapIoSpace( va, len );
   return STATUS_SUCCESS;
@@ -327,7 +329,7 @@ DriverDeviceControl(
     unsigned int       new_cpu_thread_id = 0;
     ULONG              _num_active_cpus = 0;
     KAFFINITY          _kaffinity = 0;
-    UINT32             core_id = 0;
+    //UINT32             core_id = 0;
 
     //
     // Get the current IRP stack location of this request
@@ -412,7 +414,7 @@ DriverDeviceControl(
         case IOCTL_READ_PHYSMEM:
           {
             UINT32 len = 0;
-            PVOID virt_addr;
+            //PVOID virt_addr;
             PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
 
             DbgPrint( "[chipsec] > IOCTL_READ_PHYSMEM\n" );
@@ -461,7 +463,7 @@ DriverDeviceControl(
         case IOCTL_WRITE_PHYSMEM:
           {
             UINT32 len = 0;
-            PVOID virt_addr = 0;
+            //PVOID virt_addr = 0;
             PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
 
             DbgPrint( "[chipsec] > IOCTL_WRITE_PHYSMEM\n" );
@@ -480,7 +482,8 @@ DriverDeviceControl(
                 phys_addr.HighPart = ((UINT32*)pInBuf)[0];
                 phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
                 len                = ((UINT32*)pInBuf)[2];
-                ((UINT32*)pInBuf) += 3;
+                //((UINT32*)pInBuf) += 3;
+				*pInBuf = *pInBuf + (3 * sizeof(UINT32*));
 
                 if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3*sizeof(UINT32) )
                   {
@@ -552,20 +555,20 @@ DriverDeviceControl(
 
         case IOCTL_FREE_PHYSMEM:
           {
-            UINT64 va = 0x0;
+            UINTN va = 0x0;
             pInBuf  = Irp->AssociatedIrp.SystemBuffer;
             pOutBuf = Irp->AssociatedIrp.SystemBuffer;
 
             DbgPrint( "[chipsec] > IOCTL_FREE_PHYSMEM\n" );
             if( !Irp->AssociatedIrp.SystemBuffer ||
-                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(UINT64))
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(UINTN))
             {
                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
                Status = STATUS_INVALID_PARAMETER;
                break;
             }
 
-            RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT64) );
+            RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINTN) );
             DbgPrint( "[chipsec][IOCTL_FREE_PHYSMEM] Virtual address of the memory being freed: 0x%I64X\n", va );
             MmFreeContiguousMemory( (PVOID)va );
 
@@ -577,7 +580,7 @@ DriverDeviceControl(
 
         case IOCTL_GET_PHYSADDR:
           {
-            UINT64 va = 0x0;
+            UINTN va = 0x0;
             PHYSICAL_ADDRESS pa = { 0x0, 0x0 };
 
             pInBuf  = Irp->AssociatedIrp.SystemBuffer;
@@ -585,26 +588,26 @@ DriverDeviceControl(
 
             DbgPrint( "[chipsec] > IOCTL_GET_PHYSADDR\n" );
             if( !Irp->AssociatedIrp.SystemBuffer ||
-                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(UINT64))
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength != sizeof(UINTN))
             {
                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
                Status = STATUS_INVALID_PARAMETER;
                break;
             }
 
-            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINT64))
+            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(UINTN))
             {
                DbgPrint( "[chipsec] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
                Status = STATUS_BUFFER_TOO_SMALL;
                break;
             }
 
-            RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT64) );
+            RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINTN) );
             pa = MmGetPhysicalAddress( (PVOID)va );
 
             DbgPrint( "[chipsec][IOCTL_GET_PHYSADDR] Traslated virtual address 0x%I64X to physical: 0x%I64X\n", va, pa.QuadPart, pa.LowPart);
-            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&pa, sizeof(UINT64) );
-            IrpSp->Parameters.Read.Length = sizeof(UINT64);
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&pa, sizeof(UINTN) );
+            IrpSp->Parameters.Read.Length = sizeof(UINTN);
             dwBytesWritten = IrpSp->Parameters.Read.Length;
             Status = STATUS_SUCCESS;
             break;
@@ -992,9 +995,9 @@ DriverDeviceControl(
           }
         case IOCTL_CPUID:
           {
-            DWORD CPUInfo[4] = {-1};
-            DWORD gprs[2] = {0};
-            DWORD _rax = 0, _rcx = 0;
+            int CPUInfo[4] = {-1};
+            int gprs[2] = {0};
+            int _rax = 0, _rcx = 0;
             //CPU_REG_TYPE gprs[6];
             //CPU_REG_TYPE _rax = 0, _rbx = 0, _rcx = 0, _rdx = 0, _rsi = 0, _rdi = 0;
 
@@ -1198,7 +1201,7 @@ DriverDeviceControl(
 
             __try
               {
-                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], &hypercall_page);
+                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], (void*)&hypercall_page);
               }
             __except( EXCEPTION_EXECUTE_HANDLER )
               {
