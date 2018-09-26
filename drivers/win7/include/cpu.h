@@ -35,8 +35,10 @@ chipsec@intel.com
 
 #if defined(_M_AMD64)
 typedef UINT64 CPU_REG_TYPE;
+typedef UINT64 UINTN;
 #elif defined(_M_IX86)
-typedef UINT32 CPU_REG_TYPE;
+typedef unsigned long CPU_REG_TYPE;
+typedef UINT32 UINTN;
 #else
 #error "Architecture not supported"
 #endif
