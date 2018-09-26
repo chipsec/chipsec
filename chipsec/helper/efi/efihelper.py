@@ -163,7 +163,9 @@ class EfiHelper(Helper):
         if logger().VERBOSE:
             logger().log( '[efi] helper does not support 64b PA' )
         out_buf = self._read_phys_mem( phys_address, size )
-        if size == 4:
+        if size == 8:
+            value = struct.unpack('=Q', out_buf[:size])[0]
+        elif size == 4:
             value = struct.unpack( '=I', out_buf[:size] )[0]
         elif size == 2:
             value = struct.unpack( '=H', out_buf[:size] )[0]
