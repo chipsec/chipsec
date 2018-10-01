@@ -1,3 +1,23 @@
+#CHIPSEC: Platform Security Assessment Framework
+#Copyright (c) 2018, Intel Corporation
+#
+#This program is free software; you can redistribute it and/or
+#modify it under the terms of the GNU General Public License
+#as published by the Free Software Foundation; Version 2.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+#Contact information:
+#chipsec@intel.com
+#
+
 import json
 import time
 import os
@@ -108,19 +128,6 @@ class ChipsecResults():
             else:
                 self.time = self.test_cases[0].time
         
-    def txt_summary(self):
-        summary = self.order_summary()
-        txt =  '[CHIPSEC] ***************************  SUMMARY  ***************************\n'
-        for k in summary.keys():
-            if k == 'total':
-                txt += '[CHIPSEC] Modules {:16}{:d}\n'.format(k,summary[k])
-            else:
-                txt += '[CHIPSEC] Modules {:16}{:d}\n'.format(k,len(summary[k]))
-                for mod in summary[k]:
-                    txt += '    {}\n'.format(mod)
-        txt += '[CHIPSEC] *****************************************************************\n'
-        return txt
-        
     def xml_summary(self):
         summary = self.order_summary()
         xml_element = ET.Element("Summary")
@@ -153,7 +160,7 @@ class ChipsecResults():
             if k == 'total':
                 summary_dict[k] = "{:d}".format(summary[k])
             else:
-                summary_dict[k] = "{:d}".format(len(summary[k]))
+                summary_dict[k.replace(" ","")] = "{:d}".format(len(summary[k]))
         summary_dict["name"] = os.path.basename( os.path.splitext(name)[0] )
         summary_dict["time"] = "{:5f}".format( self.time )
         ts_element = ET.SubElement(xml_element,"testsuite",summary_dict)

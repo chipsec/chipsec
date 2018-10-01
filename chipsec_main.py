@@ -300,8 +300,7 @@ class ChipsecMain:
             chipsec.file.write_file(self._json_out, results.json_summary())
             
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
-            #chipsec.file.write_file(self._xml_out, results.xml_summary())			
+            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))	
 
         test_deltas = None
         if self._deltas_file is not None:
@@ -314,8 +313,38 @@ class ChipsecMain:
         if test_deltas is not None:
             chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
         elif not self._list_tags:
-            logger().log( "" )
-            logger().log( results.txt_summary() )
+            summary = results.order_summary()
+            logger().log( "\n[CHIPSEC] ***************************  SUMMARY  ***************************" )
+            if not self.no_time:	
+                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time()-t) )	
+            for k in summary.keys():
+                if k == 'total':
+                    logger().log( '[CHIPSEC] Modules {:16}{:d}'.format(k,summary[k]) )
+                elif k == 'warnings':
+                    logger().log( '[CHIPSEC] Modules with {:11}{:d}'.format(k,len(summary[k])) )
+                    for mod in summary[k]:
+                        logger().log_warning(mod)
+                elif k == 'exceptions':
+                    if len(summary[k]) > 0: 
+                        logger().log( '[CHIPSEC] Modules with {:11}{:d}'.format(k,len(summary[k])) )
+                        for mod in summary[k]:
+                            logger().error(mod)
+                else:
+                    logger().log( '[CHIPSEC] Modules {:16}{:d}'.format(k,len(summary[k])) )
+                    for mod in summary[k]:
+                        if k == 'failed to run':
+                            logger().error(mod)
+                        elif k == 'passed':
+                            logger().log_passed(mod)
+                        elif k == 'information':
+                            logger().log_information(mod)
+                        elif k == 'failed':
+                            logger().log_failed(mod)
+                        elif k == 'not implemented':
+                            logger().log_skipped(mod)
+                        elif k == 'not applicable':
+                            logger().log_not_applicable(mod)
+            logger().log ('[CHIPSEC] *****************************************************************')
         else:
             logger().log( "[*] Available tags are:" )
             for at in self.AVAILABLE_TAGS: logger().log("    {}".format(at))
@@ -506,10 +535,6 @@ class ChipsecMain:
         for prop in self.properties():
             logger().log( prop )
 
-        #logger().xmlAux.add_test_suite_property("OS", "%s %s %s %s" % (self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine))
-        #logger().xmlAux.add_test_suite_property("Platform", "%s, VID: %04X, DID: %04X" % (self._cs.longname, self._cs.vid, self._cs.did))
-        #logger().xmlAux.add_test_suite_property("PCH", "{}, VID: {:04X}, DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
-        #logger().xmlAux.add_test_suite_property("CHIPSEC", "%s" % self.version)
         logger().log( " " )
 
         if logger().VERBOSE: logger().log("[*] Running from {}".format(os.getcwd()))
@@ -520,8 +545,6 @@ class ChipsecMain:
             modules_failed = self.run_loaded_modules()
         else:
             modules_failed = self.run_all_modules()
-
-        #logger().saveXML()
 
         self._cs.destroy( (not self._no_driver) )
         del self._cs
