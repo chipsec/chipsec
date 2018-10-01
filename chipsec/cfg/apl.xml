@@ -62,6 +62,7 @@
       <field name="FCERR"   bit="1"  size="1" desc="Flash Cycle Error"/>
       <field name="AEL"     bit="2"  size="1" desc="Access Error Log"/>
       <field name="SCIP"    bit="5"  size="1" desc="SPI cycle in progress"/>
+      <field name="WRSDIS"  bit="11" size="1" desc="Write status disable"/>
       <field name="PR34LKD" bit="12" size="1" desc="PRR3 PRR4 Lock-Down"/>
       <field name="FDOPSS"  bit="13" size="1" desc="Flash Descriptor Override Pin-Strap Status"/>
       <field name="FDV"     bit="14" size="1" desc="Flash Descriptor Valid"/>
@@ -186,6 +187,7 @@
   <!-- #################################### -->
   <controls>
       <control name="BiosInterfaceLockDown"  register="BC"    field="BILD"    desc="BIOS Interface Lock-Down"/>
+      <control name="SpiWriteStatusDis"      register="HSFS"  field="WRSDIS"  desc="Write Status Disable"/>
       <control name="TopSwapStatus"          register="BC"    field="TSS"     desc="Top Swap Status"/>
       <control name="TopSwap"                register="BC"    field="TSS"     desc="Top Swap Status"/>
   </controls>

@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -37,24 +37,38 @@ class spi_lock(BaseModule):
         super(spi_lock, self).__init__()
 
     def is_supported(self):
-        return True
+        return self.cs.is_control_defined('FlashLockDown')
 
     def check_spi_lock(self):
-        self.logger.start_test( "SPI Flash Controller Configuration Lock" )
+        self.logger.start_test( "SPI Flash Controller Configuration Locks" )
 
-        spi_lock_res = ModuleResult.FAILED
-        #hsfs_reg = chipsec.chipset.read_register( self.cs, 'HSFS' )
-        #chipsec.chipset.print_register( self.cs, 'HSFS', hsfs_reg )
-        #flockdn = chipsec.chipset.get_register_field( self.cs, 'HSFS', hsfs_reg, 'FLOCKDN' )
-        flockdn = self.cs.get_control('FlashLockDown', with_print=True)
+        res = ModuleResult.PASSED
+        reg_print = True
+        if self.cs.is_control_defined('SpiWriteStatusDis'):
+            wrsdis = self.cs.get_control('SpiWriteStatusDis', with_print=reg_print)
+            if 1 == wrsdis:
+                self.logger.log_good('SPI write status disable set.')
+            else:
+                res = ModuleResult.FAILED
+                self.logger.log_bad('SPI write status disable not set.')
+            reg_print = False
 
+        flockdn = self.cs.get_control('FlashLockDown', with_print=reg_print)
         if 1 == flockdn:
-            spi_lock_res = ModuleResult.PASSED
-            self.logger.log_passed_check( "SPI Flash Controller configuration is locked" )
+            self.logger.log_good( "SPI Flash Controller configuration is locked" )
         else:
-            self.logger.log_failed_check( "SPI Flash Controller configuration is not locked" )
+            res = ModuleResult.FAILED
+            self.logger.log_bad( "SPI Flash Controller configuration is not locked" )
+        reg_print = False
 
-        return spi_lock_res
+        if res == ModuleResult.FAILED:
+            self.logger.log_failed_check("SPI Flash Controller not locked correctly.")
+        elif res == ModuleResult.PASSED:
+            self.logger.log_passed_check("SPI Flash Controller locked correctly.")
+        else:
+            self.logger.log_warning_check("Unable to determine if SPI Flash Controller is locked correctly.")
+
+        return res
 
     def run( self, module_argv ):
         return self.check_spi_lock()
