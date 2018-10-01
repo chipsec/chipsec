@@ -138,6 +138,22 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- PCH SPIBAR registers -->
+    <register name="HSFS" type="mmio" bar="SPIBAR" offset="0x04" size="4" desc="Hardware Sequencing Flash Status Register">
+      <field name="FDONE"   bit="0"  size="1" desc="Flash Cycle Done"/>
+      <field name="FCERR"   bit="1"  size="1" desc="Flash Cycle Error"/>
+      <field name="AEL"     bit="2"  size="1" desc="Access Error Log"/>
+      <field name="SCIP"    bit="5"  size="1" desc="SPI cycle in progress"/>
+      <field name="WRSDIS"  bit="11" size="1" desc="Write status disable"/>
+      <field name="PR34LKD" bit="12" size="1" desc="PRR3 PRR4 Lock-Down"/>
+      <field name="FDOPSS"  bit="13" size="1" desc="Flash Descriptor Override Pin-Strap Status"/>
+      <field name="FDV"     bit="14" size="1" desc="Flash Descriptor Valid"/>
+      <field name="FLOCKDN" bit="15" size="1" desc="Flash Configuration Lock-Down"/>
+      <field name="FGO"     bit="16" size="1" desc="Flash cycle go"/>
+      <field name="FCYCLE"  bit="17" size="4" desc="Flash Cycle Type"/>
+      <field name="WET"     bit="21" size="1" desc="Write Enable Type"/>
+      <field name="FDBC"    bit="24" size="6" desc="Flash Data Byte Count"/>
+      <field name="FSMIE"   bit="31" size="1" desc="Flash SPI SMI Enable"/>
+    </register>
     <register name="FREG0_FLASHD" type="mmio" bar="SPIBAR" offset="0x54" size="4" desc="Flash Region 0 (Flash Descriptor)">
       <field name="RB" bit="0"  size="15" desc="Region Base"/>
       <field name="RL" bit="16" size="15" desc="Region Limit"/>
@@ -290,6 +306,7 @@
   <!-- #################################### -->
   <controls>
     <control name="BiosInterfaceLockDown"  register="BC"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
+    <control name="SpiWriteStatusDis"      register="HSFS"                field="WRSDIS"             desc="Write Status Disable"/>
   </controls>
 
 </configuration>
