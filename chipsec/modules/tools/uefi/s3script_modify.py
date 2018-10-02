@@ -376,7 +376,7 @@ class s3script_modify(BaseModule):
                 value      = int(module_argv[3],16)
                 width      = int(module_argv[4],16)
                 width_val  = chipsec.hal.uefi_common.script_width_values[width]
-                value_buff = struct.pack("<%s"c % hipsec.hal.uefi_common.script_width_formats[width_val], value)
+                value_buff = struct.pack("<{}".format(chipsec.hal.uefi_common.script_width_formats[width_val]), value)
                 if ( chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == cmd2opcode[scmd]
                   or chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == cmd2opcode[scmd]
                   or chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == cmd2opcode[scmd]):
