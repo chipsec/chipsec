@@ -58,7 +58,7 @@ def display_deltas(deltas, hide_time, start_time):
     logger().log( "" )
     logger().log( "[CHIPSEC] **********************  TEST DELTA SUMMARY  *********************" )
     if not hide_time:
-        logger().log( "[CHIPSEC] Time elapsed          {.3f}" .format(time.time()-start_time) )
+        logger().log( "[CHIPSEC] Time elapsed          {:.3f}" .format(time.time()-start_time) )
     if deltas:
         logger().log( "[*] {:46}| {:10} | {:10}".format("Test", "Previous", "Current") )
         logger().log( "[*] {}".format('-' * 71) )

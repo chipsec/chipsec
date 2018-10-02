@@ -37,7 +37,7 @@ from builtins import bytes
 
 TAGS = [MTAG_BIOS]
 
-COMMON_FILL_PTRN = "".join( ['%c' % chr(x + 0x1E) for x in range(32)] )
+COMMON_FILL_PTRN = "".join( ['{:1}'.format((chr(x + 0x1E))) for x in range(32)] )
 
 
 class bios_kbrd_buffer(BaseModule):
