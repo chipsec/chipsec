@@ -79,7 +79,7 @@ class CMOSCommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Writing CMOS high byte 0x{:X} <- 0x{:X} ".format(off, val) )
             _cmos.write_cmos_high( off, val )
         else:
-            self.logger.error( "unknown command-line option '{32}'".format(op) )
+            self.logger.error( "unknown command-line option '{:32}'".format(op) )
             print (CMOSCommand.__doc__)
             return
 
