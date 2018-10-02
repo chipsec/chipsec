@@ -1115,7 +1115,7 @@ def encode_s3bs_opcode_edkcompat( op ):
          S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE == op.opcode or \
          S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE        == op.opcode:
 
-        frmt = '<IQ2%c'% (script_width_formats[op.width])
+        frmt = '<IQ2{}'.format(script_width_formats[op.width])
         encoded_opcode = struct.pack( frmt, op.width, op.address, op.value, op.mask )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == op.opcode:
