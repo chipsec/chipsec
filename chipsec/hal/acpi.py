@@ -473,7 +473,7 @@ class ACPI(hal_base.HALBase):
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):
-                logger().log( " - {}: {}".format(tableName, ", ".join([("0x%016X" % addr) for addr in self.tableList[tableName]])) )
+                logger().log( " - {}: {}".format(tableName, ", ".join([("0x{:016X}".format(addr) ) for addr in self.tableList[tableName]])) )
 
     #
     # Retrieves contents of ACPI table from memory or from file

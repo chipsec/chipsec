@@ -100,7 +100,7 @@ class SMICommand(BaseCommand):
                         self.logger.log( "          RDI: {:16X}".format(ret[6]) )  
                 else: print (SMICommand.__doc__)
             else:
-                self.logger.error( "unknown command-line option '{32}'".format(op) )
+                self.logger.error( "unknown command-line option '{:32}'".format(op) )
                 print (SMICommand.__doc__)
                 return
 

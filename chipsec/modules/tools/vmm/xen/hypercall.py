@@ -79,7 +79,7 @@ class XenHypercall(BaseModuleHwAccess):
     def hypercall(self, args, size = 0, data = ''):
         data = data.ljust(4096, '\x00')[:4096]
         self.cs.mem.write_physical_mem(self.buff_pa, len(data), data)
-        self.dbg('ARGS: %s  DATA: %s' % (' '.join(['%016X' % x for x in args]), binascii.hexlify(data[:32])))
+        self.dbg('ARGS: {}  DATA: {}'.format(' '.join(['{:016X}'.format(x) for x in args]), binascii.hexlify(data[:32])))
         try:
             rax = self.vmm.hypercall64_five_args(*args)
             val = self.cs.mem.read_physical_mem(self.buff_pa, size) if size > 0 else ''
@@ -139,7 +139,7 @@ class XenHypercall(BaseModuleHwAccess):
     ##  print_hypervisor_info
     ##
     def print_hypervisor_info(self, info):
-            features = ", ".join(['F%d=%016X' % (k, v) for k,v in info['features'].items() if v != 0])
+            features = ", ".join(['F{:d}={:016X}'.format(k, v) for k,v in info['features'].items() if v != 0])
             self.msg('XEN Hypervisor is present!')
             self.msg('          Version : {}'.format(info['xen_version'])         )
             self.msg('         Compiler : {}'.format(info['compiler'])            )
