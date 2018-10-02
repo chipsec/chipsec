@@ -92,6 +92,6 @@ class MMCfgCommand(BaseCommand):
             #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
             self.logger.log( "[CHIPSEC] reading MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(bus, device, function, offset, value) )
 
-        self.logger.log( "[CHIPSEC] (mmcfg) time elapsed {.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (mmcfg) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'mmcfg': MMCfgCommand }

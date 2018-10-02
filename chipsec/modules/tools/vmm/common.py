@@ -134,8 +134,8 @@ class BaseModuleSupport(BaseModuleDebug):
         return
 
     def get_initial_data(self, statuses, vector, size, padding = '\x00'):
-        connectionid_message = [(' '.join(["%02x" % ord(x) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 1]
-        connectionid_event   = [(' '.join(["%02x" % ord(x) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 2]
+        connectionid_message = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 1]
+        connectionid_event   = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 2]
         result = []
         for status in statuses:
             for item in self.initial_data:
@@ -152,7 +152,7 @@ class BaseModuleSupport(BaseModuleDebug):
     def add_initial_data(self, vector, buffer, status):
         found  = False
         buffer = buffer.rstrip("\x00")
-        buffer = " ".join("%02x" % x for x in buffer)
+        buffer = " ".join("{:02x}".format(x) for x in buffer)
         for item in self.initial_data:
             if int(item['vector'], 16) == vector:
                 if item['data'] == buffer:

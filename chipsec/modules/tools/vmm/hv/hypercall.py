@@ -136,7 +136,7 @@ class HyperVHypercall(BaseModuleHwAccess):
                 result = "0x{:08X}_{:08X}".format(self.rdmsr(addr))
             except Exception as e:
                 result = str(e)
-            self.msg('RDMSR [{40} = 0x{:08X}] :  {}'.format(name, addr, result))
+            self.msg('RDMSR [{:40} = 0x{:08X}] :  {}'.format(name, addr, result))
         return
  
     ##
@@ -283,7 +283,7 @@ class HyperVHypercall(BaseModuleHwAccess):
                     else:
                         ranges.append('{:02X}-{:02X}'.format(x, v))
             if (ranges != ['00-FF']) and (ranges != []):
-                self.msg('  Byte %02d = [ %s ]' % (l, ', '.join(ranges)))
+                self.msg('  Byte {:02d} = [ {} ]'.format(l, ', '.join(ranges)))
         return
 
     ##
@@ -295,7 +295,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         self.msg('Start input parameters fuzzing ...')
         for x in xrange(total_tests):
             if x % 10000000 == 10000000-1:
-                self.msg('{4.0f}% DONE'.format(100.0*x/total_tests))
+                self.msg('{:4.0f}% DONE'.format(100.0*x/total_tests))
             l = randint(0, maxlen-1)
             v = randint(0, 0x100-1)
             if matrix[l][v] == 1:

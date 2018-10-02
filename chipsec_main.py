@@ -40,6 +40,7 @@ def newimp(name, *x):
     caller = inspect.currentframe().f_back
     if 'chipsec' in name:
         print ("{:35} -> {}".format( (caller.f_globals.get('__name__'), name)))
+
     return savimp(name, *x)
 ## Uncomment the following line to display  the imports that chipsec calls
 #__builtin__.__import__ = newimp
