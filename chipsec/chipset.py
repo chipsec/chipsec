@@ -251,10 +251,12 @@ PCH_ID_2xx      = 10002
 PCH_ID_C620     = 10003
 PCH_ID_C60x     = 10004
 PCH_ID_C61x     = 10005
+PCH_ID_3xx      = 10006
 
 PCH_CODE_PREFIX = 'PCH_'
 PCH_CODE_1xx    = 'PCH_1XX'
 PCH_CODE_2xx    = 'PCH_2XX'
+PCH_CODE_3xx    = 'PCH_3XX'
 PCH_CODE_C620   = 'PCH_620'
 PCH_CODE_C60x   = 'PCH_C60X'
 PCH_CODE_C61x   = 'PCH_C61X'
@@ -279,6 +281,15 @@ pch_dictionary = {
 0xA2C8 : {'name' : 'B250', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel B250 (200 series) PCH'},
 0xA2C9 : {'name' : 'Z370', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Z370 (200 series) PCH'},
 0xA2D2 : {'name' : 'X299', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel X299 (200 series) PCH'},
+
+# 300 series and Z390 PCH
+0xA306 : {'name' : 'Q370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Q370 (300 series) PCH'},
+0xA304 : {'name' : 'H370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H370 (300 series) PCH'},
+0xA308 : {'name' : 'B360',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel B360 (300 series) PCH'},
+0xA303 : {'name' : 'H310',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H310 (300 series) PCH'},
+0xA30D : {'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel HM370 (300 series) PCH'},
+0xA30C : {'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'},
+0xA30E : {'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'},
 
 # C600 and X79 series PCH
 0x1D41 : {'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X97 series PCH'},
