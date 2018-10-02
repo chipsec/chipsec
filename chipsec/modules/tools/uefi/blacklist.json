@@ -34,5 +34,12 @@
       "HP_ProBook6475b_F.65"                : { "md5": "97a19f161359502c9bf2e0898fc35721", "sha1": "3619a78915abc195fc44d6c59984903c9444a1ab" },
       "HP_ProBook4x5G2-6x5G1_EliteBook7x5G2": { "md5": "37a51e769fbb2df9a086ed4543380488", "sha1": "b27ac995729a64e84c444d7e3d6a5bd6f07611a3" }
     }
+  },
+  "LoJax": {
+    "description": "LoJax: First UEFI rootkit found in the wild (https://www.welivesecurity.com/2018/09/27/lojax-first-uefi-rootkit-found-wild-courtesy-sednit-group/)",
+    "match": {
+      "SecDxe_file_info": { "name": "SecDxe", "guid": "682894B5-6B70-4EBA-9E90-A607E5676297"},
+      "SecDxe_hash_data": { "sha1": "f2be778971ad9df2082a266bd04ab657bd287413", "sha256": "7ea33696c91761e95697549e0b0f84db2cf4033216cd16c3264b10daa31f598c"}
+    }
   }
 }
