@@ -409,7 +409,7 @@ class TestSuite(object):
         ts_attributes['information']   = str( len( [tc for tc in self.test_cases if tc.is_information()] ) )
         ts_attributes['notapplicable'] = str( len( [tc for tc in self.test_cases if tc.is_not_applicable()] ) )
         #ts_attributes["time"]          = str( sum( [tc.time for tc in self.test_cases if tc.time] ) )
-        ts_attributes["time"]          = "{.5f}".format(sum( [tc.time for tc in self.test_cases if tc.time]) )
+        ts_attributes["time"]          = "{:.5f}".format(sum( [tc.time for tc in self.test_cases if tc.time]) )
         ts_attributes["tests"]         = str( len( self.test_cases ) )
 
         xml_element = ET.Element( "testsuite", ts_attributes )

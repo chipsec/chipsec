@@ -92,7 +92,7 @@ class SMICommand(BaseCommand):
                     interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
                 else: print (SMICommand.__doc__)
             else:
-                self.logger.error( "unknown command-line option '{32}'".format(op) )
+                self.logger.error( "unknown command-line option '{:32}'".format(op) )
                 print (SMICommand.__doc__)
                 return
 

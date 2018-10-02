@@ -279,7 +279,7 @@ class sgx_check(BaseModule):
             self.logger.log_passed_check("SGX debug mode is disabled")
         self.logger.log("[*] Check Silicon debug feature settings")
         debug_interface = self.cs.read_register('IA32_DEBUG_INTERFACE')
-        self.logger.log("[*]   IA32_DEBUG_INTERFACE : 0x{08X}".format(debug_interface))
+        self.logger.log("[*]   IA32_DEBUG_INTERFACE : 0x{:08X}".format(debug_interface))
         debug_enable = self.cs.get_register_field('IA32_DEBUG_INTERFACE', debug_interface, 'ENABLE')
         debug_lock = self.cs.get_register_field('IA32_DEBUG_INTERFACE', debug_interface, 'LOCK')
         self.logger.log("[*]     Debug enabled      : {:d}".format(debug_enable))

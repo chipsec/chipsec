@@ -84,7 +84,7 @@ class SPICommand(BaseCommand):
         elif ( 'write' == spi_op and 5 == len(self.argv) ):
             spi_fla = int(self.argv[3],16)
             filename = self.argv[4]
-            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{64}'".format(spi_fla, filename) )
+            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{:64}'".format(spi_fla, filename) )
 
             ok = _spi.write_spi_from_file( spi_fla, filename )
             if ok: self.logger.log( "[CHIPSEC] completed SPI flash memory write" )

@@ -1189,7 +1189,7 @@ class op_io_pci_mem():
             if len(self.buffer) != sz:
                 logger().log( '[?] buffer size (0x{:X}) != Width x Count (0x{:X})'.format(len(self.buffer), sz) )
             else:
-                self.values = list( struct.unpack( ('<%d%c' % (self.count,script_width_formats[self.width])), self.buffer ) )
+                self.values = list( struct.unpack( ('<{:d}{:1}'.format(self.count,script_width_formats[self.width])), self.buffer ) )
     def __str__(self):
         str_r =  "  Opcode : {} (0x{:04X})\n".format(self.name, self.opcode)
         str_r += "  Width  : 0x{:02X} ({:X} bytes)\n".format(self.width, script_width_sizes[self.width])
@@ -1199,8 +1199,8 @@ class op_io_pci_mem():
         if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
         if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x%0' + ( '{:d}X'.format(script_width_sizes[self.width]*2) )
-            str_r += "  Values : %s\n" % ("  ".join( [fmt % v for v in self.values] ))
+            fmt = '0x{}'.format( '{}{:d}X{}'.format('{:',scrpt_width_sizes[self.width]*2,'}') )
+            str_r += "  Values : {}\n".format("  ".join( [fmt.format(v) for v in self.values] ))
         elif self.buffer is not None:
             str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))
         return str_r
@@ -1733,7 +1733,7 @@ class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
         self.VendorTables = {}
     def __str__(self):
-        return ( 'Vendor Tables:\n%s' % (''.join( ['{%s} : 0x{:016X}\n' % (vt,self.VendorTables[vt]) for vt in self.VendorTables])) )
+        return ( 'Vendor Tables:\n{}'.format(''.join( ['{}{}{} : 0x{:016X}\n'.format('{',vt,'}',self.VendorTables[vt]) for vt in self.VendorTables])) )
 
 
 # #################################################################################################
