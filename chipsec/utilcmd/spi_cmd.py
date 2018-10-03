@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2018, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -51,6 +51,8 @@ class SPICommand(BaseCommand):
     >>> chipsec_util spi read 0x700000 0x100000 bios.bin
     >>> chipsec_util spi write 0x0 flash_descriptor.bin
     >>> chipsec_util spi disable-wp
+    >>> chipsec_util spi jedec
+    >>> chipsec_util spi jedec decode
     """
     def requires_driver(self):
         # No driver required when printing the util documentation
@@ -127,6 +129,16 @@ class SPICommand(BaseCommand):
                 self.logger.log_good( "BIOS region write protection is disabled in SPI flash" )
             else:
                 self.logger.log_bad( "couldn't disable BIOS region write protection in SPI flash" )
+        elif ( 'jedec' == spi_op ):
+            if ( len(self.argv) < 4 ):
+                self.logger.log( '    JEDEC ID: 0x{:06X}'.format(_spi.get_SPI_JEDEC_ID()) )
+                self.logger.log( '' )
+            else:
+                (jedec, man, part) = _spi.get_SPI_JEDEC_ID_decoded()
+                self.logger.log( '    JEDEC ID     : 0x{:06X}'.format(jedec) )
+                self.logger.log( '    Manufacturer : 0x{:02X}     - {}'.format( (jedec >> 16) & 0xFF , man) )
+                self.logger.log( '    Device       : 0x{:04X}   - {}'.format(jedec & 0xFFFF, part) )
+                self.logger.log( '' )
         else:
             print SPICommand.__doc__
             return
