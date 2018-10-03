@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2018, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -35,7 +35,9 @@ usage:
     >>> read_spi( spi_fla, length )
     >>> write_spi( spi_fla, buf )
     >>> erase_spi_block( spi_fla )
-    
+    >>> get_SPI_JEDEC_ID()
+    >>> get_SPI_JEDEC_ID_decoded()
+
 .. note::
     !! IMPORTANT:
     Size of the data chunk used in SPI read cycle (in bytes)
@@ -60,6 +62,7 @@ from chipsec.cfg.common import *
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from builtins import bytes
+from chipsec.hal.spi_jedec_ids import *
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -69,9 +72,10 @@ SPI_FLA_SHIFT     = 12
 SPI_FLA_PAGE_MASK = chipsec.defines.ALIGNED_4KB
 
 # agregated SPI Flash commands
-HSFCTL_READ_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_READ<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_READ_CYCLE  = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_READ<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
 HSFCTL_WRITE_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
 HSFCTL_ERASE_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_JEDEC_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # FGO bit cleared (for safety ;)
@@ -255,7 +259,7 @@ class SPI(hal_base.HALBase):
         base  = self.cs.get_register_field(pr_name, pr_j, 'PRB' ) << SPI_FLA_SHIFT
         # Protected Range Limit corresponds to FLA bits 24:12
         limit = self.cs.get_register_field(pr_name, pr_j, 'PRL' ) << SPI_FLA_SHIFT
-        
+
         wpe = (0 != self.cs.get_register_field(pr_name, pr_j, 'WPE' ))
         rpe = (0 != self.cs.get_register_field(pr_name, pr_j, 'RPE' ))
 
@@ -552,7 +556,7 @@ class SPI(hal_base.HALBase):
     def read_spi(self, spi_fla, data_byte_count ):
 
         self.check_hardware_sequencing()
-	
+
         buf = []
         dbc = SPI_READ_WRITE_DEF_DBC
         if (data_byte_count >= SPI_READ_WRITE_MAX_DBC):
@@ -603,7 +607,7 @@ class SPI(hal_base.HALBase):
         return buf
 
     def write_spi(self, spi_fla, buf ):
-	
+
         self.check_hardware_sequencing()
 
         write_ok = True
@@ -662,3 +666,25 @@ class SPI(hal_base.HALBase):
             logger().error( "SPI Flash erase cycle failed" )
 
         return erase_ok
+
+    #
+    # SPI JEDEC ID operations
+    #
+
+    def get_SPI_JEDEC_ID(self):
+
+        self.check_hardware_sequencing()
+
+        if not self._send_spi_cycle( HSFCTL_JEDEC_CYCLE, 4, 0 ):
+            logger().error( 'SPI JEDEC ID cycle failed' )
+        id = self.spi_reg_read( self.fdata0_off )
+
+        return ((id & 0xFF) << 16) | (id & 0xFF00) | ( (id >> 16) & 0xFF )
+
+    def get_SPI_JEDEC_ID_decoded(self):
+
+        jedec_id = self.get_SPI_JEDEC_ID()
+        manu = JEDEC_ID.MANUFACTURER.get((jedec_id >> 16) & 0xff, 'Unknown')
+        part = JEDEC_ID.DEVICE.get( jedec_id, 'Unknown')
+
+        return (jedec_id, manu, part)

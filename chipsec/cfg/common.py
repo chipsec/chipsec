@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010 - 2012 Intel Corporation
+# (c) 2010 - 2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 #
@@ -125,6 +125,7 @@ class Cfg:
     PCH_RCBA_SPI_HSFCTL_FCYCLE_READ    = 0                             # Flash Cycle Read
     PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE   = 2                             # Flash Cycle Write
     PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE   = 3                             # Flash Cycle Block Erase
+    PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC   = 6                             # Flash Cycle Read JEDEC ID
     PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO     = BIT0                          # Flash Cycle GO
 
     #PCH_RCBA_SPI_FADDR               = 0x08  # SPI Flash Address
