@@ -494,6 +494,11 @@ class ChipsecMain:
         ret["Version"] ="{}".format(self.version)
         return ret
 
+    def log_properties( self ):
+        logger().log("[CHIPSEC] OS      : {} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
+        logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.longname, self._cs.vid, self._cs.did))
+        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
+
     ##################################################################################
     # Entry point for command-line execution
     ##################################################################################
@@ -532,8 +537,7 @@ class ChipsecMain:
             if self.failfast: raise be
             return ExitCode.EXCEPTION
 
-        for prop in self.properties():
-            logger().log( prop )
+        self.log_properties()
 
         logger().log( " " )
 
