@@ -638,18 +638,18 @@ def GetFvHeader(buffer, off = 0):
     Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[off:off+struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)])
     numblocks,lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY,buffer[fof:fof+struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)])
     if logger().DEBUG:
-        logger().log({}.format(
+        logger().log('{}'.format(
         '''
-        print "\nFV volume offset: 0x{:08X}".format(fof)
-        print "\tFvLength:         0x{:08X}".format(FvLength)
-        print "\tAttributes:       0x{:08X}".format(Attributes)
-        print "\tHeaderLength:     0x{:04X}".format(HeaderLength)
-        print "\tChecksum:         0x{:04X}".format(Checksum)
-        print "\tRevision:         0x{:02X}".format(Revision)
-        print "\tExtHeaderOffset:  0x{:02X}".format(ExtHeaderOffset)
-        print "\tReserved:         0x{:02X}".format(Reserved)
-        print "FFS Guid:    {}".format(guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3))
-        '''
+        \nFV volume offset: 0x{:08X}
+        \tFvLength:         0x{:08X}
+        \tAttributes:       0x{:08X}
+        \tHeaderLength:     0x{:04X}
+        \tChecksum:         0x{:04X}
+        \tRevision:         0x{:02X}
+        \tExtHeaderOffset:  0x{:02X}
+        \tReserved:         0x{:02X}
+        FFS Guid:    {}
+        '''.format(fof,FvLength,Attributes,HeaderLength,Checksum,Revision,ExtHeaderOffset,Reserved,guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3))
         ))
     while not (numblocks == 0 and lenblock == 0):
         fof += EFI_FV_BLOCK_MAP_ENTRY_SZ
@@ -662,12 +662,10 @@ def GetFvHeader(buffer, off = 0):
             size = size + (numblocks * lenblock)
         numblocks,lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY,buffer[fof:fof+EFI_FV_BLOCK_MAP_ENTRY_SZ])
     if FvLength != size:
-        if logger().DEBUG:
-            logger().log("ERROR: Volume Size not consistant with Block Maps")
+        logger().log("ERROR: Volume Size not consistant with Block Maps")
         return (0,0,0)
     if size >= 0x40000000 or size == 0:
-        if logger().DEBUG:
-            logger().log("ERROR: Volume is corrupted")
+        logger().log("ERROR: Volume is corrupted")
         return (0,0,0)
     return (size, HeaderLength, Attributes)
     
@@ -700,9 +698,15 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
         #Get File size
         if Attributes & FFS_ATTRIB_LARGE_FILE:
-            fsize = struct.unpack("Q",FvImage[fof+file_header_size:fof+file_header_size+struct.calcsize("Q")])
+            fsize = struct.unpack("Q",FvImage[fof+file_header_size:fof+file_header_size+struct.calcsize("Q")])[0]
+            fsize &= 0xFFFFFFFF
         else:
-            fsize = get_3b_size(Size);
+            fsize = get_3b_size(Size)
+        #Validate fsize is a legal value
+        if fsize == 0 or fsize > FvLength-fof:
+            logger().log("Unable to get correct file size for NextFwFile corrupt header information")
+            next_offset = None
+            return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
         #Get next_offset
         update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
         if (bit_set(State, EFI_FILE_DATA_VALID, polarity)) or update_or_deleted:
