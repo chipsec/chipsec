@@ -61,6 +61,8 @@ class ChipsecResults():
         self.exceptions.append(str(name))
         
     def order_summary(self):
+        if self.time is None:
+            self.set_time()
         self.summary = True
         ret = OrderedDict()
         passed        = []
@@ -109,7 +111,7 @@ class ChipsecResults():
             return ExitCode.FAIL
         elif len(summary['warnings']) != 0:
             return ExitCode.WARNING
-        elif len(summary['skipped']) != 0:
+        elif len(summary['not implemented']) != 0:
             return ExitCode.SKIPPED
         elif len(summary['not applicable']) != 0:
             return ExitCode.NOTAPPLICABLE
@@ -152,7 +154,6 @@ class ChipsecResults():
         return js
 
     def xml_full(self, name):
-        self.set_time()
         xml_element = ET.Element("testsuites")
         summary = self.order_summary()
         summary_dict = dict()

@@ -376,15 +376,15 @@ class Logger:
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
         self._log(text, BLUE, True)
-        if self.Results.get_current() is not None:
-            self.Results.get_current().add_desc(test_name)
-            self.Results.get_current().set_time()
 
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
         #text = "\n[*] start module: %s" % module_name
         #self._log(text, WHITE, None)
         self.log( "\n[*] running module: %s" % module_name )
+        if self.Results.get_current() is not None:
+            self.Results.get_current().add_desc(test_name)
+            self.Results.get_current().set_time()
 
     def end_module( self, module_name ):
         if self.Results.get_current() is not None:
