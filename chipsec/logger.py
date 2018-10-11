@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -37,7 +37,7 @@ import sys
 import os
 from time import localtime, strftime
 
-from chipsec.xmlout import xmlAux
+from chipsec.testcase import TestCase, ChipsecResults
 import traceback
 
 
@@ -165,15 +165,7 @@ class Logger:
         self.mytime = localtime()
         self.logfile = None
         self.ALWAYS_FLUSH = False
-        #Used for interaction with XML output classes.
-        self.xmlAux = xmlAux()
-        #self._set_log_files()
-
-    def set_xml_file(self, name=None):
-        self.xmlAux.set_xml_file(name)
-
-    def saveXML(self):
-        self.xmlAux.saveXML()
+        self.Results = ChipsecResults()
 
     def set_log_file( self, name=None ):
         """Sets the log file for the output."""
@@ -258,13 +250,14 @@ class Logger:
 
     def _log(self, text, color, isStatus):
         """Internal method for logging"""
+        if self.Results.get_current() is not None:
+            self.Results.get_current().add_output(text)
         if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:
             if color: log_color( color, text )
             else:
                 print text
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
-        if self.xmlAux.useXML: self.xmlAux.append_stdout(text)
         if isStatus: self._save_to_status_log_file( text )
 
     def error( self, text ):
@@ -282,47 +275,39 @@ class Logger:
            If XML file was not specified, then it will just print a PASSED test message.
         """
         self.log_passed(text)
-        self.xmlAux.passed_check()
 
     def log_failed_check( self, text ):
         """Logs a Test as FAILED, this is used for XML output.
            If XML file was not specified, then it will just print a FAILED test message.
         """
         self.log_failed(text)
-        self.xmlAux.failed_check( text )
 
     def log_error_check( self, text ):
         """Logs a Test as ERROR, this is used for XML output.
            If XML file was not specified, then it will just print a ERROR test message.
         """
         self.error(text)
-        self.xmlAux.error_check( text )
 
     def log_skipped_check( self, text ):
         """Logs a Test as Not Implemented, this is used for XML output.
            If XML file was not specified, then it will just print a NOT IMPLEMENTED test message.
         """
         self.log_skipped(text)
-        self.xmlAux.skipped_check( text )
 
     def log_warn_check( self, text ):
         """Logs a Warning test, a warning test is considered equal to a PASSED test.
            Logs a Test as PASSED, this is used for XML output."""
         self.log_warning(text)
-        self.xmlAux.passed_check()
 
     def log_information_check( self, text ):
         """Logs a Information test, an information test.
            Logs a Test as INFORMATION, this is used for XML output."""
         self.log_information(text)
-        self.xmlAux.information_check(text)
 
     def log_not_applicable_check( self, text):
         """Logs a Test as Not Applicable, this is used for XML output.
            If XML file was not specified, then it will just print a NOT APPLICABLE test message """
         self.log_not_applicable(text)
-        self.xmlAux.not_applicable_check()
-
 
     def log_passed( self, text ):
         """Logs a passed message."""
@@ -338,7 +323,6 @@ class Logger:
         """Logs a Warning message"""
         text = "[!] WARNING: " + text
         self._log(text, YELLOW, None)
-        #self.xmlAux.passed_check()
 
     def log_skipped( self, text ):
         """Logs a NOT IMPLEMENTED message."""
@@ -392,20 +376,21 @@ class Logger:
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
         self._log(text, BLUE, True)
-        self.xmlAux.start_test( test_name )
-
 
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
         #text = "\n[*] start module: %s" % module_name
         #self._log(text, WHITE, None)
         self.log( "\n[*] running module: %s" % module_name )
-        self.xmlAux.start_module( module_name )
+        if self.Results.get_current() is not None:
+            self.Results.get_current().add_desc(test_name)
+            self.Results.get_current().set_time()
 
     def end_module( self, module_name ):
+        if self.Results.get_current() is not None:
+            self.Results.get_current().set_time()
         #text = "\n[-] *** Done *** %s" % module_name
         #self._log(text, None, None)
-        self.xmlAux.end_module( module_name )
 
     def _write_log( self, text, filename ):
         print >> self.logfile, text
