@@ -71,6 +71,7 @@
   <xs:attribute name="size" type="xs:string" use="optional"/>
   <xs:attribute name="desc" type="xs:string" use="optional"/>
   <xs:attribute name="offset" type="xs:string" use="optional"/>
+  <xs:attribute name="fixed_address" type="xs:string" use="optional"/>
 </xs:attributeGroup>
 
 <xs:complexType name="iobar_type">
