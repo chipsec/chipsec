@@ -88,7 +88,7 @@ class IOBAR(hal_base.HALBase):
             # this method is not preferred
             base = self.cs.pci.read_word( int(bar['bus'],16), int(bar['dev'],16), int(bar['fun'],16), int(bar['reg'],16) )
 
-        if 'fixed_address' in bar:
+        if 'fixed_address' in bar and base == 0xFFFF:
             base = int(bar['fixed_address'],16)
             if logger().VERBOSE: logger().log('[iobar] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
 
