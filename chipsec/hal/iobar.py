@@ -82,10 +82,10 @@ class IOBAR(hal_base.HALBase):
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 base = self.cs.read_register_field( bar_reg, base_field, preserve_field_position=True )
-                empty_base = self.cs.get_register_field( bar_reg, 0xFFFFFFFF, base_field, preserve_field_position=True)
+                empty_base = self.cs.get_register_field_mask( bar_reg, base_field, preserve_field_position=True )
             else:
                 base = self.cs.read_register( bar_reg )
-                empty_base = 0xFFFF
+                empty_base = self.cs.get_register_field_mask( bar_reg, preserve_field_position=True )
         else:
             # this method is not preferred
             base = self.cs.pci.read_word( int(bar['bus'],16), int(bar['dev'],16), int(bar['fun'],16), int(bar['reg'],16) )
