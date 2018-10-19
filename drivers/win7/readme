@@ -21,6 +21,27 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+Build Using VS solution
+=======================
+
+1. Build CHIPSEC kernel driver
+----------------------------------------------------
+- Get latest Visual Studio and WDK (Tested on VS 2017 Community, should work on others).
+       https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk
+- Open drivers/win7/chipsec_hlpr/chipsec_hlpr.sln using VS
+- Select Platform and configuration (X86 or x64, Release).
+- Go to Build -> Build Solution
+
+2. Copy the driver to CHIPSEC framework
+----------------------------------------------------
+Output directory depends on platform:
+- On Windows x64, copy signed "drivers\win7\chipsec_hlpr\x64\Release\chipsec_hlpr.sys" to
+ <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 directory
+- On Windows x86, copy "drivers\win7\chipsec_hlpr\Release\chipsec_hlpr.sys" to
+ <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_x86 directory
+
+Old method:
+===========
 
 1. Build CHIPSEC kernel driver
 ----------------------------------------------------
