@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2041
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chipsec_hlpr", "chipsec_hlpr.vcxproj", "{4746561E-E5A3-4245-8F49-1E0219E540A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Debug|x64.ActiveCfg = Debug|x64
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Debug|x64.Build.0 = Debug|x64
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Debug|x64.Deploy.0 = Debug|x64
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Debug|x86.ActiveCfg = Debug|Win32
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Debug|x86.Build.0 = Debug|Win32
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Debug|x86.Deploy.0 = Debug|Win32
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Release|x64.ActiveCfg = Release|x64
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Release|x64.Build.0 = Release|x64
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Release|x64.Deploy.0 = Release|x64
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Release|x86.ActiveCfg = Release|Win32
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Release|x86.Build.0 = Release|Win32
+		{4746561E-E5A3-4245-8F49-1E0219E540A8}.Release|x86.Deploy.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EE171CC2-EC53-42A8-9C1F-1357B28AAC89}
+	EndGlobalSection
+EndGlobal
