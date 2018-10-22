@@ -204,7 +204,7 @@ class TestCase():
         self.time = None
         
     def add_output(self, text):
-		self.output += text
+		self.output += str(text)
 		
     def add_result(self, result):
         self.result = result
