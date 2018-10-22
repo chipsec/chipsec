@@ -172,6 +172,11 @@ class Logger:
             except None:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
             self.rootLogger.removeHandler(self.logstream)
+        else:
+            try:
+                self.rootLogger.addHandler(self.logstream)
+            except:
+                pass
 
     def close( self ):
         """Closes the log file."""
