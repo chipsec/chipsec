@@ -21,8 +21,18 @@
 !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+Build CHIPSEC kernel driver with Visual Studio
+----------------------------------------------------
+-Install the latest verion of Visual Studio and WDK
+  You can find instructions to install Visual Studio and WDK from https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk
+- Open the Visual Studio project file (drivers/win7/chipsec_hlpr.vcxproj) using Visual Studio
+- Select Platform and configuration (X86 or x64, Release).
+- Go to Build -> Build Solution
+- If build process completed without errors, the driver binary will be moved into the chipsec helper directory <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 (or i386) directory
+- Enable loading of test-signed kernel mode drivers (see chipsec-manual.pdf for details)
 
-1. Build CHIPSEC kernel driver
+
+Build CHIPSEC kernel driver (Old Method)
 ----------------------------------------------------
 
 - Install WDK 7600
