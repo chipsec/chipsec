@@ -386,6 +386,7 @@ class ChipsecMain:
         adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)",action='store_true')
         adv_options.add_argument('--no_time', help="don't log timestamps",action='store_true')
         adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
+        adv_options.add_argument('--clone',dest='_to_file',help='run chipsec and clone helper results into clone.json')
 
         parser.parse_args(self.argv,namespace=ChipsecMain)
  
@@ -437,7 +438,7 @@ class ChipsecMain:
             logger().error( "incompatible options: --no_driver and --exists" )
             return ExitCode.EXCEPTION
         try:
-            self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
+            self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists, self._to_file )
         except chipset.UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unknownPlatform:

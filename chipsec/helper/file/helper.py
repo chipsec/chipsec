@@ -1,0 +1,292 @@
+#!/usr/bin/python
+#CHIPSEC: Platform Security Assessment Framework
+#Copyright (c) 2018, Intel Corporation
+# 
+#This program is free software; you can redistribute it and/or
+#modify it under the terms of the GNU General Public License
+#as published by the Free Software Foundation; Version 2.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+#Contact information:
+#chipsec@intel.com
+#
+
+"""
+Use results from a json file
+"""
+
+import chipsec.file
+from chipsec.logger import *
+from chipsec.helper.oshelper import Helper
+import json
+
+class FileCmds:
+    def __init__(self):
+        self.data = {}
+        self.filename = "clone.json"
+
+    def AddElement(self,cmd,args,ret):
+        if self.data.has_key(cmd):
+            self.data[str(cmd)][str(args)] = ret 
+        else:
+            self.data[str(cmd)] = {str(args):ret}
+
+    def Save(self):
+        js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '), encoding='latin_1')
+        chipsec.file.write_file(self.filename,js)
+
+    def Load(self):
+        file_data = chipsec.file.read_file(self.filename)
+        if file_data == 0:
+            logger().error("Unable to open JSON file: {}".format(self.filename))
+        try:
+            self.data = json.loads(file_data)
+        except:
+            logger().error("Unable to load JSON file: {}".format(self.filename))
+
+    def getElement(self,cmd,args):
+        margs = str(args).encode('latin_1')
+        if self.data.has_key(str(cmd)):
+            if self.data[str(cmd)].has_key(margs):
+                return self.data[cmd][margs]
+        logger().error("Missing entry for {} {}".format(str(cmd),margs))
+
+
+class FileHelper(Helper):
+    def __init__(self):
+        super(FileHelper, self).__init__()
+        self.os_system = "File"
+        self.os_release = "0.0"
+        self.os_version = "0.0"
+        self.os_machine = "N/A"
+        self.filehelper = FileCmds()
+
+    def create(self, start_driver):
+        if logger().VERBOSE:
+            logger().log("[helper] File Helper created")
+        return True
+
+    def start(self, start_driver, driver_exists=False, to_file=False):
+        self.filehelper.Load()
+        return True
+
+    def stop( self, start_driver ):
+        if logger().VERBOSE:
+            logger().log("[helper] File Helper stopped/unloaded")
+        return True
+
+    def delete(self, start_driver):
+        if logger().VERBOSE:
+            logger().log("[helper] File Helper deleted")
+        return True
+
+    #################################################################################################
+    # Actual OS helper functionality accessible to HAL components
+
+    #
+    # Read/Write PCI configuration registers via legacy CF8/CFC ports
+    #
+    def read_pci_reg( self, bus, device, function, address, size ):
+        """Read PCI configuration registers via legacy CF8/CFC ports"""
+        if ( 0 != (address & (size - 1)) ):
+            logger().warn( "Config register address is not naturally aligned" )
+        return self.filehelper.getElement("read_pci_reg",(bus,device,function,address,size))
+
+    def write_pci_reg( self, bus, device, function, address, value, size ):
+        """Write PCI configuration registers via legacy CF8/CFC ports"""
+        if ( 0 != (address & (size - 1)) ):
+            logger().warn( "Config register address is not naturally aligned" )
+
+        return self.filehelper.getElement("write_pci_reg",(bus,device,function,address,size))
+
+    #
+    # read/write mmio
+    #
+    def read_mmio_reg( self, phys_address, size ):
+        return self.filehelper.getElement("read_mmio_reg",(phys_address,size))
+        
+    def write_mmio_reg( self, phys_address, size, value ):
+        return self.filehelper.getElement("write_mmio_reg",(phys_address, size, value))
+        
+    #
+    # physical_address is 64 bit integer
+    #
+    def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
+        ret = self.filehelper.getElement("read_physical_mem",(phys_address_hi, phys_address_lo,length))
+        return ret.encode("latin_1")
+
+    def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
+        return self.filehelper.getElement("write_physical_mem",(phys_address_hi, phys_address_lo,length,buf))
+
+    def alloc_phys_mem( self, length, max_phys_address ):
+        return self.filehelper.getElement("alloc_physical_mem",(length,max_phys_address))
+
+    def free_phys_mem(self, physical_address):
+        return self.filehelper.getElement("free_physical_mem",(phys_address))
+
+    def va2pa( self, va ):
+        return self.filehelper.getElement("va2pa",(va))
+
+    def map_io_space(self, physical_address, length, cache_type):
+        try:
+            return self.filehelper.getElement("map_io_space",(physical_address, length, cache_type))
+        except NotImplementedError:
+            pass
+        raise UnimplementedAPIError('map_io_space')
+
+    #
+    # Read/Write I/O portline 462, 
+    #
+    def read_io_port( self, io_port, size ):
+        return self.filehelper.getElement("read_io_port",(io_port,size))
+
+    def write_io_port( self, io_port, value, size ):
+        return self.filehelper.getElement("write_io_port",(io_port,value,size))
+
+    #
+    # Read/Write CR registers
+    #
+    def read_cr(self, cpu_thread_id, cr_number):
+        return self.filehelper.getElement("read_cr",(cpu_thread_id, cr_number))
+
+    def write_cr(self, cpu_thread_id, cr_number, value):
+        return self.filehelper.getElement("write_cr",(cpu_thread_id, cr_number,value))
+
+    #
+    # Read/Write MSR on a specific CPU thread
+    #
+    def read_msr( self, cpu_thread_id, msr_addr ):
+        return self.filehelper.getElement("read_msr",(cpu_thread_id, msr_addr))
+
+    def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
+        return self.filehelper.getElement("write_msr",(cpu_thread_id, msr_addr, eax, edx))
+
+    #
+    # Load CPU microcode update on a specific CPU thread
+    #
+    def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
+        return self.filehelper.getElement("load_ucode_update",(cpu_thread_id, ucode_update_buf))
+
+    #
+    # Read IDTR/GDTR/LDTR on a specific CPU thread
+    #
+    def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
+        return self.filehelper.getElement("get_descriptor_table",(cpu_thread_id, desc_table_code))
+
+    #
+    # EFI Variable API
+    #
+    def EFI_supported(self):
+        return self.filehelper.getElement("EFI_supported",())
+
+    def get_EFI_variable( self, name, guid ):
+        return self.filehelper.getElement("get_EFI_variable",(name, guid))
+
+    def set_EFI_variable( self, name, guid, data, datasize=None, attrs=None ):
+        return self.filehelper.getElement("set_EFI_variable",(name, guid, data, datasize, attrs))
+
+    def delete_EFI_variable( self, name, guid ):
+        return self.filehelper.getElement("delete_EFI_variable",(name, guid))
+
+    def list_EFI_variables( self ):
+        return self.filehelper.getElement("list_EFI_variables",())
+    
+    #
+    # ACPI
+    #
+    def get_ACPI_SDT(self):
+        return self.filehelper.getElement("get_ACPI_SDT",())
+
+    def get_ACPI_table( self, table_name ):
+        return self.filehelper.getElement("get_ACPI_table",(table_name))
+        
+   
+    #
+    # CPUID
+    #
+    def cpuid( self, eax, ecx ):
+        return self.filehelper.getElement("cpuid",(eax, ecx))
+        
+    #
+    # IOSF Message Bus access
+    #
+
+    def msgbus_send_read_message( self, mcr, mcrx ):
+        return self.filehelper.getElement("msgbus_send_read_message",(mcr, mcrx))
+
+    def msgbus_send_write_message( self, mcr, mcrx, mdr ):
+        return self.filehelper.getElement("msgbus_send_write_message",(mcr, mcrx, mdr))
+
+    def msgbus_send_message( self, mcr, mcrx, mdr ):
+        return self.filehelper.getElement("msgbus_send_message",(mcr, mcrx, mdr))
+
+    #
+    # Affinity
+    #
+    def get_affinity( self ):
+        return self.filehelper.getElement("get_affinity",())
+        
+    def set_affinity( self, value ):
+        return self.filehelper.getElement("set_affinity",(value))
+        
+    #
+    # Logical CPU count
+    #
+    def get_threads_count( self ):
+        return self.filehelper.getElement("get_threads_count",())
+
+    #
+    # Send SW SMI
+    #
+    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+        return self.filehelper.getElement("send_sw_smi",(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi))
+
+    #
+    # Hypercall
+    #
+    def hypercall( self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0 ):
+        return self.filehelper.getElement("hypercall",(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer))
+
+
+    #
+    # File system
+    #
+    def getcwd( self ):
+        return self.filehelper.getElement("getcwd",())
+    #
+    # Decompress binary with OS specific tools
+    #
+    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+       return self.filehelper.getElement("decompress_file",(CompressedFileName, OutputFileName, CompressionType))
+
+    #
+    # Compress binary with OS specific tools
+    #
+    def compress_file( self, FileName, OutputFileName, CompressionType ):
+        import subprocess
+        if (CompressionType == 0): # not compressed
+          shutil.copyfile(FileName, OutputFileName)
+        else:
+          exe = self.get_compression_tool_path( CompressionType )
+          if exe is None: return None 
+          try:
+            subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
+          except BaseException, msg:
+            logger().error( str(msg) )
+            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
+            return None
+
+        return self.filehelper.getElement("compress_file",(FileName, OutputFileName, CompressionType))
+
+_helper = None
+
+def get_helper():
+    return FileHelper( )
