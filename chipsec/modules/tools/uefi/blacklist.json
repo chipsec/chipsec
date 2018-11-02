@@ -40,6 +40,12 @@
     "match": {
       "SecDxe_file_info": { "name": "SecDxe", "guid": "682894B5-6B70-4EBA-9E90-A607E5676297"},
       "SecDxe_hash_data": { "sha1": "f2be778971ad9df2082a266bd04ab657bd287413", "sha256": "7ea33696c91761e95697549e0b0f84db2cf4033216cd16c3264b10daa31f598c"}
-    }
   }
+},
+ "LoJax Variant": {
+    "description": "Nearly identical to LoJax with a different signature",
+    "match": { 
+      "Sample_hash_data": { "sha1": "8d80ecb43505d3b27f808a8055b8b55a6b126315", "sha256": "b43c86f8e10bf9e8831a6c1592ab3b25af875830b2acad396a2060f8838b1745"}
+}
+}
 }
