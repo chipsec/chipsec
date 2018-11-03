@@ -3,23 +3,13 @@
 Mac OS X Installation
 =====================
    
-.. warning:: Mac OS X support is currently in Alpha release
+.. warning:: Mac OS X support is currently in Beta release
 
 Please follow the steps below to install CHIPSEC on Mac OS X.
 
 1. Before installing CHIPSEC, install XCode, Python 2.7, PIP and setuptools packages. Please see instructions here: http://docs.python-guide.org/en/latest/starting/install/osx/
 
 2. Turn the System Integrity Protection (SIP) off. See `Configuring SIP <https://developer.apple.com/library/mac/documentation/Security/Conceptual/System_Integrity_Protection_Guide/ConfiguringSystemIntegrityProtection/ConfiguringSystemIntegrityProtection.html>`_
-
-
-**Installing From PyPI**
-
-Installing CHIPSEC from PyPI will automatically build all necessary components including kernel module and install CHIPSEC as a package. CHIPSEC will automatically load the kernel extension module.
-
-	``# pip install chipsec``
-
-	``# sudo chipsec_main``
-
 
 **Installing Manually**
 

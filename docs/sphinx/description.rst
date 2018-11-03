@@ -6,7 +6,7 @@ CHIPSEC is a framework for analyzing platform level security of hardware, device
 
 It contains a set of modules, including simple tests for hardware protections and correct configuration, tests for vulnerabilities in firmware and platform components, security assessment and fuzzing tools for various platform devices and interfaces, and tools acquiring critical firmware and device artifacts.
 
-CHIPSEC can run on *Windows*, *Linux*, *Mac OS* and *UEFI shell*. Mac OS support is Alpha.
+CHIPSEC can run on *Windows*, *Linux*, *Mac OS* and *UEFI shell*. Mac OS support is Beta.
 
 .. warning:: 
     Chipsec should only be used on test systems! 

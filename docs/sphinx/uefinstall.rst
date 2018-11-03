@@ -74,7 +74,18 @@ Native functions accessing HW resources are built directly into Python UEFI port
 (OPTIONAL) Building bootable USB thumb drive with UEFI Shell
 ------------------------------------------------------------
 
-You can build bootable USB drive with UEFI shell using EDK DUET environment:
+You can build bootable USB drive with UEFI shell (X64):
 
-1. `Download UDK from Tianocore <http://sourceforge.net/apps/mediawiki/tianocore/index.php?title=UDK2010>`_ (Tested with ``UDK2010.SR1``)
-2. Follow instructions in ``DuetPkg/ReadMe.txt`` to create a bootable USB thumb drive with UEFI Shell (DUET)
+1. Format your media as FAT32
+
+2. Create the following directory structure in the root of the new media
+
+    ``/efi/boot``
+
+3. Download the UEFI Shell (``Shell.efi``) from the following link
+
+    `UEFI Shell <https://github.com/tianocore/edk2/raw/master/ShellBinPkg/UefiShell/X64/Shell.efi>`
+
+4. Rename the UEFI shell file to ``Bootx64.efi``
+
+5. Copy the UEFI shell (now ``Bootx64.efi``) to the ``/efi/boot`` directory
