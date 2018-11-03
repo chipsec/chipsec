@@ -18,7 +18,8 @@ Core components
     ``chipsec/logger.py``                            logging functions
     ``chipsec/module.py``                            generic functions to import and load modules 
     ``chipsec/module_common.py``                     base class for modules 
-    ``chipsec/xmlout.py``                            support for JUnit compatible XML output (-x command-line option)
+    ``chipsec/result_deltas.py``                     supports checking result deltas between test runs
+    ``chipsec/testcase.py``                          support for XML and JSON log file output
     ``chipsec/helper/helpers.py``                    registry of supported OS helpers
     ``chipsec/helper/oshelper.py``                   OS helper: wrapper around platform specific code that invokes kernel driver
     ===============================================  =================================================================================
