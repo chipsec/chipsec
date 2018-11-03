@@ -50,7 +50,7 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
 
-autodoc_mock_imports = ['efi', 'common']
+autodoc_mock_imports = ['efi', 'common', 'itpii', 'fcntl', 'resource', 'chipsec_tools']
 
 # The master toctree document.
 master_doc = 'index'
