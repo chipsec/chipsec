@@ -11,6 +11,4 @@
     usage
     compandstruct
     mod
-    references
-
 
