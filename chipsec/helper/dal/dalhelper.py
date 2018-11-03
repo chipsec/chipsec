@@ -23,7 +23,7 @@
 """
 Intel DFx Abstraction Layer (DAL) helper
 
-From the Intel® DFx Abstraction Layer Python* Command Line Interface User Guide
+From the Intel(R) DFx Abstraction Layer Python* Command Line Interface User Guide
 
 """
 

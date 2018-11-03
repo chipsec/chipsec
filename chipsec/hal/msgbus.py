@@ -40,7 +40,6 @@ References:
 usage:
     >>> msgbus_reg_read( port, register )
     >>> msgbus_reg_write( port, register, data )
-
     >>> msgbus_read_message( port, register, opcode )
     >>> msgbus_write_message( port, register, opcode, data )
     >>> msgbus_send_message( port, register, opcode, data )
