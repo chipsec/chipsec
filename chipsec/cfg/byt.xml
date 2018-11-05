@@ -66,22 +66,22 @@
     <!-- Graphics -->
 
     <!-- Section 14.9.13 -->
-    <register name="GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
-      <field name="GGCLCK"      bit="0"  size="1" desc="GGC Lock"/>
+    <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
+      <field name="GGCLOCK"     bit="0"  size="1" desc="GGC Lock"/>
       <field name="VGA_DISABLE" bit="1"  size="1" desc="VGA Disable"/>
       <field name="GMS"         bit="3"  size="7" desc="Graphics Mode Select"/>
       <field name="GGMS"        bit="8"  size="2" desc="GTT Graphics Memory Size"/>
       <field name="VAMEN"       bit="14" size="1" desc="Versatile Acceleration"/>
     </register>
     <!-- Section 14.9.14 -->
-    <register name="BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
-      <field name="BDSM_LOCK" bit="0"  size="1" desc="BDSM Lock"/>
-      <field name="BGSM"      bit="20" size="12" desc="GFx Base of Data Stolen Memory"/>
+    <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
+      <field name="LOCK" bit="0"  size="1" desc="BDSM Lock"/>
+      <field name="BDSM" bit="20" size="12" desc="GFx Base of Data Stolen Memory"/>
     </register>
     <!-- Section 14.9.16 -->
-    <register name="BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
-      <field name="BGSM_LOCK" bit="0"  size="1"  desc="BGSM Lock"/>
-      <field name="BGSM"      bit="20" size="12" desc="GFx Base of GTT Stolen Memory"/>
+    <register name="PCI0.0.0_BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
+      <field name="LOCK" bit="0"  size="1"  desc="BGSM Lock"/>
+      <field name="BGSM" bit="20" size="12" desc="GFx Base of GTT Stolen Memory"/>
     </register>
 
     <!-- iLB LPC Bridge -->
