@@ -23,17 +23,17 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- GFx PCI device registers -->
-    <register name="GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
-      <field name="GGCLCK"  bit="0" size="1"/>
+    <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
+      <field name="GGCLOCK"  bit="0" size="1"/>
     </register>
-    <register name="BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
-      <field name="BDSM_LOCK"  bit="0" size="1"/>
+    <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
+      <field name="LOCK"  bit="0" size="1"/>
     </register>
-    <register name="BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
-      <field name="BGSM_LOCK"  bit="0" size="1"/>
+    <register name="PCI0.0.0_BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
+      <field name="LOCK"  bit="0" size="1"/>
     </register>
-    <register name="PAVPC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x74" size="4" desc="PAVP Control">
-      <field name="PAVPC_LOCK"  bit="2" size="1"/>
+    <register name="PCI0.0.0_PAVPC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x74" size="4" desc="PAVP Control">
+      <field name="PAVPLCK"  bit="2" size="1"/>
     </register>
 
     <!-- Misc PCI registers -->
