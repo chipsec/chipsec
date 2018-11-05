@@ -3,43 +3,43 @@
 DAL Windows Installation
 ========================
 
-1. Install Intel System Studio
+#. Install Intel System Studio
 
     Should include Python
 
-2. Install pywin32 and setuptools packages:
+#. Install pywin32 and setuptools packages:
 
     ``pip install setuptools``
 
     ``pip install pypiwin32``
 
-3. Clone CHIPSEC source:
+#. Clone CHIPSEC source:
 
     ``git clone https://github.com/chipsec/chipsec``
 
-4. Install CHIPSEC support:
+#. Install CHIPSEC support:
 
     Manually install CHIPSEC as a package:
 
     ``python setup.py install``
 
-5. Connect and halt platform:
+#. Connect and halt platform:
 
     Connect and set up debugger to system.
 
-6. Import and run CHIPSEC main
+#. Import and run CHIPSEC main
 
-    1. Launch a python Command-line.
+    #. Launch a python Command-line.
 
-    2. Import the IPC CLI module
+    #. Import the IPC CLI module
 
         >>> import ipccli
 
-    3. Import the chipsec_main module
+    #. Import the chipsec_main module
 
         >>> import chipsec_main
 
-    4. Run standard CHIPSEC modules:
+    #. Run standard CHIPSEC modules:
 
         >>> chipsec_main.main()
 
@@ -53,21 +53,21 @@ DAL Windows Installation
 
         >>> chipsec_main.main([‘-l’,’test.log’])
 
-        Note: the test.log file can be found in C:\intel\DAL
+        Note: the test.log file can be found in ``C:\intel\DAL``
 
-7. Import and run CHIPSEC util
+#. Import and run CHIPSEC util
 
-    1. Launch a python Command-line.
+    #. Launch a python Command-line.
 
-    2. Import the IPC CLI module
+    #. Import the IPC CLI module
 
         >>> import ipccli
 
-    3. Import the chipsec_util module
+    #. Import the chipsec_util module
 
         >>> import chipsec_util
 
-    4. Run CHIPSEC util and list available commands:
+    #. Run CHIPSEC util and list available commands:
 
         >>> chipsec_util.main()
 
