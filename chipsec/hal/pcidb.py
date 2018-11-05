@@ -22,12 +22,16 @@
 
 
 """
-.. note:: THIS FILE WAS GENERATED
+PCI Vendor & Device ID data.
 
-Auto generated from:
+.. note:: 
+    THIS FILE WAS GENERATED
 
-http://www.pcidatabase.com/vendors.php?sort=id
-http://www.pcidatabase.com/reports.php?type=csv
+    Auto generated from:
+
+    http://www.pcidatabase.com/vendors.php?sort=id
+
+    http://www.pcidatabase.com/reports.php?type=csv
 """
 
 

@@ -11,9 +11,9 @@ CHIPSEC supports the following versions:
 
 Please follow the steps below to install CHIPSEC framework on Windows:
 
-1. Install `Python <http://www.python.org/download/>`_
+#. Install `Python <http://www.python.org/download/>`_
 
-2. Install `pywin32 <http://sourceforge.net/projects/pywin32/>`_ and ``setuptools`` packages:
+#. Install `pywin32 <http://sourceforge.net/projects/pywin32/>`_ and ``setuptools`` packages:
 
    ``pip install setuptools``
 
@@ -21,15 +21,15 @@ Please follow the steps below to install CHIPSEC framework on Windows:
 
    To get colored console output, you may optionally want to install `WConio <http://newcenturycomputers.net/projects/wconio.html>`_.
 
-3. Clone CHIPSEC source
+#. Clone CHIPSEC source
 
     ``git clone https://github.com/chipsec/chipsec``
 
-4. Build CHIPSEC kernel driver. Please follow the instructions in ``\drivers\win7\readme``. Skip this step if you already have ``chipsec_hlpr.sys`` driver binary for your version of Windows
+#. Build CHIPSEC kernel driver. Please follow the instructions in ``\drivers\win7\readme``. Skip this step if you already have ``chipsec_hlpr.sys`` driver binary for your version of Windows
 
-5. Copy CHIPSEC driver (``chipsec_hlpr.sys``) to proper directory ``\chipsec\helper\win\win7_<arch>`` where ``<arch>`` is "x86" or "amd64" (default path is ``\chipsec\helper\win\win7_amd64``)
+   If you already have a version of the driver you can copy the CHIPSEC driver (``chipsec_hlpr.sys``) to the proper directory ``\chipsec\helper\win\win7_<arch>`` where ``<arch>`` is "x86" or "amd64" (default path is ``\chipsec\helper\win\win7_amd64``)
 
-6. Install CHIPSEC framework
+#. Install CHIPSEC framework
 
    Manually install CHIPSEC as a package:
 
@@ -37,7 +37,7 @@ Please follow the steps below to install CHIPSEC framework on Windows:
 
    .. note:: When installing CHIPSEC on Windows, the driver isn't built automatically (as when installing on Linux). You'll need to build Windows driver and copy it to proper directory (see steps 3 and 4) prior to installing CHIPSEC
 
-7. Turn off kernel driver signature checks
+#. Turn off kernel driver signature checks
 
    *Windows 10 64-bit / Windows 8, 8.1 64-bit (with Secure Boot enabled) / Windows Server 2016 64-bit / Windows Server 2012 64-bit (with Secure Boot enabled):*
 
@@ -67,7 +67,7 @@ Please follow the steps below to install CHIPSEC framework on Windows:
 
        ``bcdedit /set {bootmgr} displaybootmenu yes``
 
-8. Run CHIPSEC
+#. Run CHIPSEC
 
    - Launch CMD.EXE as Administrator
    - You can use commands below to run CHIPSEC. CHIPSEC will automatically load the driver and unload it when done.
