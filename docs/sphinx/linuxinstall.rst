@@ -39,11 +39,3 @@ To use CHIPSEC *in place* without installing it:
 	``# python setup.py build_ext -i``
 
 	``# sudo python chipsec_main.py``
-
-.. note:: To use CHIPSEC without installing it using ``setup.py``, just build kernel module and helper components in place:
-
-	``# make -C ../drivers/linux``
-
-	``# cp ../drivers/linux/chipsec.ko ../chipsec/helper/linux/``
-
-	``# make -C ../chipsec/helper/linux/``
