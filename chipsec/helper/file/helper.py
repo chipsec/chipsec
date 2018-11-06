@@ -29,9 +29,12 @@ from chipsec.helper.oshelper import Helper
 import json
 
 class FileCmds:
-    def __init__(self):
+    def __init__(self, filename):
         self.data = {}
-        self.filename = "clone.json"
+        if filename == "":
+            self.filename = "clone.json"
+        else:
+            self.filename = filename
 
     def AddElement(self,cmd,args,ret):
         if self.data.has_key(cmd):
