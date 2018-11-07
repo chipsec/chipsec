@@ -19,8 +19,4 @@
 #
 
 
-import chipsec.file
-if type(chipsec.file.read_file('clone.json')) == type('str'):
-    __all__ = [ "helper" ]
-else:
-    __all__ = [ ]
+__all__ = ["helper"]

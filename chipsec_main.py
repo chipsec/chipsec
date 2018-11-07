@@ -387,6 +387,8 @@ class ChipsecMain:
         adv_options.add_argument('--no_time', help="don't log timestamps",action='store_true')
         adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
         adv_options.add_argument('--clone',dest='_to_file',help='run chipsec and clone helper results into JSON file')
+        adv_options.add_argument('--replay',dest='_from_file', help='replay a chipsec run with JSON file')
+        adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=["@","CHANGE","ME"], type=str)
 
         parser.parse_args(self.argv,namespace=ChipsecMain)
  
@@ -405,6 +407,8 @@ class ChipsecMain:
             self._module_argv = self._module_argv[0].split(',')
         if self._unknownPlatform is False:
             logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
+        if self._from_file:
+            self._driver_exists = "@CHANGEME"
 
     def properties( self ):
         ret = OrderedDict()
@@ -434,11 +438,12 @@ class ChipsecMain:
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath( import_path ) )
 
-        if self._no_driver and self._driver_exists:
-            logger().error( "incompatible options: --no_driver and --exists" )
-            return ExitCode.EXCEPTION
+        #if self._no_driver and self._driver_exists:
+        #    logger().error( "incompatible options: --no_driver and --exists" )
+        #    return ExitCode.EXCEPTION
+
         try:
-            self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists, self._to_file )
+            self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists, self._to_file, self._from_file )
         except chipset.UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
             if self._unknownPlatform:

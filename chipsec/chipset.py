@@ -419,10 +419,10 @@ class Chipset:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
         return (vid, did, pch_vid, pch_did)
 
-    def init( self, platform_code, req_pch_code, start_driver, driver_exists=False, to_file=None ):
+    def init( self, platform_code, req_pch_code, start_driver, driver_exists=False, to_file=None, from_file=None ):
 
         _unknown_platform = False
-        self.helper.start(start_driver, driver_exists, to_file)
+        self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: %s' % ('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         self.vid, self.did, self.pch_vid, self.pch_did = self.detect_platform()
