@@ -31,10 +31,6 @@ DAL Windows Installation
 
     #. Launch a python Command-line.
 
-    #. Import the IPC CLI module
-
-        >>> import ipccli
-
     #. Import the chipsec_main module
 
         >>> import chipsec_main
