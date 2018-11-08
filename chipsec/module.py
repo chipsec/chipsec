@@ -75,8 +75,12 @@ class Module():
                 if self.mod_obj.is_supported() :
                     result = self.mod_obj.run(module_argv)
                 else:
-                    result = ModuleResult.SKIPPED
-                    self.logger.log("Skipping module %s since it is not supported in this platform"%self.name)
+                    if self.mod_obj.res == ModuleResult.NOTAPPLICABLE:
+                        result = ModuleResult.NOTAPPLICABLE
+                        self.logger.log("Skipping module %s since it is not applicable to this platform"%self.name)
+                    else:
+                        result = ModuleResult.SKIPPED
+                        self.logger.log("Skipping module %s since it is not supported in this platform"%self.name)
 
         return result
 
