@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -70,6 +70,9 @@ class memconfig(BaseModule):
         all_locked = True
 
         for r in regs:
+            if not self.cs.is_register_defined(r) or not self.cs.register_has_field(r, memmap_registers[r]):
+                self.logger.log_unknown('Skipping Validation: Register {} or field {} was not defined for this platform.'.format(r, memmap_registers[r]))
+                continue
             d = self.cs.get_register_def( r )
             v = self.cs.read_register( r )
             locked = self.cs.get_register_field( r, v, memmap_registers[r] )
