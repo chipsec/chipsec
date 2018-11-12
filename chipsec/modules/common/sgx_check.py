@@ -63,7 +63,7 @@ class sgx_check(BaseModule):
             self.logger.log_information("SGX is not supported on CPU")
             return ModuleResult.PASSED
 
-        self.logger.log("[*] SGX BIOS enablement check")
+        self.logger.log("\n[*] SGX BIOS enablement check")
         self.logger.log("[*] Verifying IA32_FEATURE_CONTROL MSR is configured")
         bios_feature_control_enable = True
         for tid in range(self.cs.msr.get_cpu_thread_count()):
@@ -75,7 +75,7 @@ class sgx_check(BaseModule):
             self.logger.log_warning( "Intel SGX is not enabled in BIOS" )
             self.res = ModuleResult.WARNING
 
-        self.logger.log("[*] Verifying IA32_FEATURE_CONTROL MSR is locked")
+        self.logger.log("\n[*] Verifying IA32_FEATURE_CONTROL MSR is locked")
         locked = True
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             feature_cntl_lock = self.cs.get_control('Ia32FeatureControlLock', tid)
@@ -90,7 +90,7 @@ class sgx_check(BaseModule):
 
         # Verify that Protected Memory Range (PRM) is supported, MSR IA32_MTRRCAP (FEh) [12]=1
         # Check on every CPU and make sure that they are all the same values
-        self.logger.log( "[*] Verifying if Protected Memory Range (PRMRR) is configured" )
+        self.logger.log( "\n[*] Verifying if Protected Memory Range (PRMRR) is configured" )
         prmrr_enable = False
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             mtrrcap = self.cs.read_register('MTRRCAP', tid)
@@ -106,7 +106,7 @@ class sgx_check(BaseModule):
             self.res - ModuleResult.FAILED
 
         # Check PRMRR configurations on each core.
-        self.logger.log("[*] Verifying PRMR Configuration on each core.")
+        self.logger.log("\n[*] Verifying PRMR Configuration on each core.")
         first_iter = True
         prmrr_valid_config = 0
         prmrr_base = 0
@@ -231,7 +231,7 @@ class sgx_check(BaseModule):
         if sgx_cpu_support and bios_feature_control_enable and locked:
             sgx1_instr_support = False
             sgx2_instr_support = False
-            self.logger.log("[*] Verifying if SGX instructions are supported")
+            self.logger.log("\n[*] Verifying if SGX instructions are supported")
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
@@ -260,7 +260,7 @@ class sgx_check(BaseModule):
         else:
             sgx_ok = False
 
-        self.logger.log("[*] Verifying if SGX is available to use")
+        self.logger.log("\n[*] Verifying if SGX is available to use")
         if sgx_ok and prmrr_enable and prmrr_uniform:
             self.logger.log_good("Intel SGX is available to use")
         elif (not sgx_ok) and (not bios_feature_control_enable) and prmrr_enable and prmrr_uniform:
@@ -279,7 +279,7 @@ class sgx_check(BaseModule):
         self.logger.log("[*] BIOS_SE_SVN_STATUS : 0x{:016X}".format(self.cs.read_register('BIOS_SE_SVN_STATUS')))
         self.logger.log("[*]     BIOS_SE_SVN ACM threshold lock : 0x{:d}".format(self.cs.read_register_field('BIOS_SE_SVN_STATUS', 'LOCK')))
 
-        self.logger.log("[*] Check SGX debug feature settings")
+        self.logger.log("\n[*] Check SGX debug feature settings")
         sgx_debug_status = self.cs.read_register_field('SGX_DEBUG_MODE', 'SGX_DEBUG_MODE_STATUS_BIT')
         self.logger.log("[*] SGX Debug Enable             : {:d}".format(sgx_debug_status))
         self.logger.log("[*] Check Silicon debug feature settings")
