@@ -70,6 +70,9 @@ class memconfig(BaseModule):
         all_locked = True
 
         for r in regs:
+            if not self.cs.is_register_defined(r) or not self.cs.register_has_field(r, memmap_registers[r]):
+                self.logger.log_unknown('Skipping Validation: Register {} or field {} was not defined for this platform.'.format(r, memmap_registers[r]))
+                continue
             d = self.cs.get_register_def( r )
             v = self.cs.read_register( r )
             locked = self.cs.get_register_field( r, v, memmap_registers[r] )
