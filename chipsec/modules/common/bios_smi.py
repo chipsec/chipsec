@@ -54,9 +54,11 @@ class bios_smi(BaseModule):
 
         self.logger.start_test( "SMI Events Configuration" )
         
-        if not self.cs.is_register_defined( 'TCO1_CNT' ) or \
-           not self.cs.is_register_defined( 'GEN_PMCON_1' ) or \
-           not self.cs.is_register_defined( 'SMI_EN' ):
+        if not self.cs.is_control_defined( 'SmmBiosWriteProtection' ) or \
+           not self.cs.is_control_defined( 'TCOSMIEnable' ) or \
+           not self.cs.is_control_defined( 'GlobalSMIEnable' ) or \
+           not self.cs.is_control_defined( 'TCOSMILock' ) or \
+           not self.cs.is_control_defined( 'SMILock' ):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
         
