@@ -13,13 +13,17 @@ First version of CHIPSEC was released in March 2014:
 Recent presentation on how to use CHIPSEC to find vulnerabilities in firmware, hypervisors and hardware configuration, explore low level system assets and even detect firmware implants:
 [Exploring Your System Deeper](https://www.slideshare.net/CanSecWest/csw2017-bazhaniuk-exploringyoursystemdeeperupdated)
 
+Projects That Include CHIPSEC
+-----------------------------
+
+ * [Linux UEFI Validation (LUV)](https://01.org/linux-uefi-validation)
+
 Contact Us
 ----------
 
 Mailing lists:
 
  * CHIPSEC users: [chipsec-users](https://groups.google.com/forum/#!forum/chipsec-users)
- * CHIPSEC developers: [chipsec-dev](https://groups.google.com/forum/#!forum/chipsec-dev)
  * [CHIPSEC discussion list on 01.org](https://lists.01.org/mailman/listinfo/chipsec)
 
 Follow us on [twitter](https://twitter.com/CHIPSEC)
