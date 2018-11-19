@@ -11,13 +11,17 @@ Announcement at CanSecWest 2014: https://cansecwest.com/slides/2014/Platform%20F
 Recent presentation on how to use CHIPSEC to find vulnerabilities in firmware, hypervisors and hardware configuration, explore low level system assets and even detect firmware implants:
 Exploring Your System Deeper: https://www.slideshare.net/CanSecWest/csw2017-bazhaniuk-exploringyoursystemdeeperupdated
 
+Projects That Include CHIPSEC
+-----------------------------
+
+ * Linux UEFI Validation (LUV): https://01.org/linux-uefi-validation
+
 Contact Us
 ----------
 
 Mailing lists:
 
  * CHIPSEC users: https://groups.google.com/forum/#!forum/chipsec-users
- * CHIPSEC developers: https://groups.google.com/forum/#!forum/chipsec-dev
  * CHIPSEC discussion list on 01.org: https://lists.01.org/mailman/listinfo/chipsec
 
 Follow us on https://twitter.com/CHIPSEC
