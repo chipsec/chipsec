@@ -386,7 +386,7 @@ class ChipsecMain:
         adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)",action='store_true')
         adv_options.add_argument('--no_time', help="don't log timestamps",action='store_true')
         adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
-        adv_options.add_argument('--clone',dest='_to_file',help='run chipsec and clone helper results into JSON file')
+        adv_options.add_argument('--record',dest='_to_file',help='run chipsec and clone helper results into JSON file')
         adv_options.add_argument('--replay',dest='_from_file', help='replay a chipsec run with JSON file')
         adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=["@","CHANGE","ME"], type=str)
 

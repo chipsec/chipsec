@@ -32,15 +32,19 @@ class FileCmds:
     def __init__(self, filename):
         self.data = {}
         if filename == "":
-            self.filename = "clone.json"
+            self.filename = "replay.json"
         else:
             self.filename = filename
 
     def AddElement(self,cmd,args,ret):
-        if self.data.has_key(cmd):
-            self.data[str(cmd)][str(args)] = ret 
+        if self.data.has_key(str(cmd)):
+            if self.data[str(cmd)].has_key(str(args)):
+                #using insert opposed to append so that it creates last in first out when using pop command within getElement
+                self.data[str(cmd)][str(args)].insert(0,ret)
+            else:
+                self.data[str(cmd)][str(args)] = [ret] 
         else:
-            self.data[str(cmd)] = {str(args):ret}
+            self.data[str(cmd)] = {str(args):[ret]}
 
     def Save(self):
         js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '), encoding='latin_1')
@@ -61,7 +65,7 @@ class FileCmds:
         margs = str(args).encode('latin_1')
         if self.data.has_key(str(cmd)):
             if self.data[str(cmd)].has_key(margs):
-                return self.data[cmd][margs]
+                return self.data[cmd][margs].pop()
         logger().error("Missing entry for {} {}".format(str(cmd),margs))
 
 
