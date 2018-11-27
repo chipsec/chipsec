@@ -482,8 +482,8 @@ DriverDeviceControl(
                 phys_addr.HighPart = ((UINT32*)pInBuf)[0];
                 phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
                 len                = ((UINT32*)pInBuf)[2];
-                //((UINT32*)pInBuf) += 3;
-				*pInBuf = *pInBuf + (3 * sizeof(UINT32*));
+                
+				        pInBuf = pInBuf + (3 * sizeof(UINT32));
 
                 if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3*sizeof(UINT32) )
                   {
