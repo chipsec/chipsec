@@ -263,7 +263,19 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 # "leaf" UI section: update section's UI name
                 sec.ui_string = unicode(sec.Image[sec.HeaderSize:], "utf-16-le", errors="ignore")[:-1]
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
-                guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
+                if len(sec.Image) < sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:
+                    logger().warn("EFI Section seems to be malformed")
+                    if len(sec.Image) < sec.HeaderSize+guid_size:
+                        logger().warn("Creating fake GUID of 0000-00-00-0000")
+                        guid0 = "0000"
+                        guid1 = "00"
+                        guid2 = "00"
+                        guid3 = "0000"
+                    else:
+                        guid0, guid1, guid2, guid3 = struct.unpack(GUID, sec.Image[sec.HeaderSize:sec.HeaderSize+guid_size])
+                        sec.DataOffset = len(sec.Image)-1
+                else:
+                    guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
 
             # "container" sections: keep parsing
