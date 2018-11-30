@@ -36,6 +36,24 @@ class ExitCode:
     INFORMATION   = 64
     NOTAPPLICABLE = 128
 
+    help_epilog = """\
+  Exit Code
+  ---------
+  CHIPSEC returns an integer exit code:
+  - Exit code is 0:       all modules ran successfully and passed
+  - Exit code is not 0:   each bit means the following:
+      - Bit 0: NOT IMPLEMENTED at least one module was not implemented for the platform
+      - Bit 1: WARNING         at least one module had a warning
+      - Bit 2: DEPRECATED      at least one module uses deprecated API
+      - Bit 3: FAIL            at least one module failed
+      - Bit 4: ERROR           at least one module wasn't able to run
+      - Bit 5: EXCEPTION       at least one module threw an unexpected exception
+      - Bit 6: INFORMATION     at least one module contained information
+      - Bit 7: NOT APPLICABLE  at least one module was not applicable for the platform
+
+"""
+
+
 class ChipsecResults():
     def __init__(self):
         self.test_cases = []

@@ -40,7 +40,7 @@ def newimp(name, *x):
 ## END DEBUG
 
 import fnmatch
-import getopt
+import argparse
 import json
 import os
 import re
@@ -71,35 +71,21 @@ except ImportError:
 class ChipsecMain:
 
     def __init__(self, argv):
-        self.VERBOSE               = False
         self.CHIPSEC_FOLDER        = os.path.abspath(chipsec.file.get_main_dir())
         self.CHIPSEC_LOADED_AS_EXE = chipsec.file.main_is_frozen()
-        self.USER_MODULE_TAGS      = []
         self.ZIP_MODULES_RE        = None
         self.Import_Path           = "chipsec.modules."
         self.Modules_Path          = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
-        self.IMPORT_PATHS          = []
         self.Loaded_Modules        = []
-        self._list_tags            = False
         self.AVAILABLE_TAGS        = []
         self.MODPATH_RE            = re.compile("^\w+(\.\w+)*$")
-        self.failfast              = False
-        self.no_time               = False
-        self._output               = 'chipsec.log'
-        self._module               = None
-        self._module_argv          = None
-        self._platform             = None
-        self._pch                  = None
         self._driver_exists        = False
-        self._no_driver            = False
-        self._unkownPlatform       = True
-        self._list_tags            = False
-        self._json_out             = None
-        self._xml_out              = None
-        self._deltas_file          = None
         self.version               = defines.get_version()
 
         self.argv = argv
+        self.parse_args()
+        
+    def init_cs(self):
         self._cs = chipset.cs()
 
     def print_banner(self):
@@ -373,118 +359,48 @@ class ChipsecMain:
         self.load_user_modules()
         return self.run_loaded_modules()
 
-
-    def usage(self):
-        known_chipsets = "[ " + " | ".join(chipset.Chipset_Code) + " ]"
-        known_pch = "[ " + " | ".join(chipset.pch_codes) + " ]"
-        max_line_length = max(len(known_chipsets), len(known_pch)) + 1
-        print "\n- Command Line Usage\n\t``# %.65s [options]``\n" % sys.argv[0]
-        print "Options\n-------"
-        print "====================== ====================================================="
-        print "-m --module             specify module to run (example: -m common.bios_wp)"
-        print "-a --module_args        additional module arguments, format is 'arg0,arg1..'"
-        print "-v --verbose            verbose mode"
-        print "-d --debug              show debug output"
-        print "-l --log                output to log file"
-        print "====================== ====================================================="
-        print "\nAdvanced Options\n----------------"
-        print "======================== " + "=" * max_line_length
-        print "-p --platform             explicitly specify platform code. Should be among the supported platforms:"
-        print "                          %s" % known_chipsets
-        print "   --pch                  explicitly specify PCH code. Should be among the supported PCH:"
-        print "                          {}".format(known_pch)
-        print "-n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver"
-        print "-i --ignore_platform      run chipsec even if the platform is not recognized"
-        print "-j --json                 specify filename for JSON output."
-        print "-x --xml                  specify filename for xml output (JUnit style)."
-        print "-t --moduletype           run tests of a specific type (tag)."
-        print "   --list_tags            list all the available options for -t,--moduletype"
-        print "-I --include              specify additional path to load modules from"
-        print "   --failfast             fail on any exception and exit (don't mask exceptions)"
-        print "   --no_time              don't log timestamps"
-        print "   --deltas               specifies a JSON log file to compute result deltas from"
-        print "======================== " + "=" * max_line_length
-        print "\nExit Code\n---------"
-        print "CHIPSEC returns an integer exit code:\n"
-        print "- Exit code is 0:       all modules ran successfully and passed"
-        print "- Exit code is not 0:   each bit means the following:\n"
-        print "    - Bit 0: NOT IMPLEMENTED at least one module was not implemented for the platform"
-        print "    - Bit 1: WARNING         at least one module had a warning"
-        print "    - Bit 2: DEPRECATED      at least one module uses deprecated API"
-        print "    - Bit 3: FAIL            at least one module failed"
-        print "    - Bit 4: ERROR           at least one module wasn't able to run"
-        print "    - Bit 5: EXCEPTION       at least one module threw an unexpected exception"
-        print "    - Bit 6: INFORMATION     at least one module contained information"
-        print "    - Bit 7: NOT APPLICABLE  at least one module was not applicable for the platform"
-
-
     def parse_args(self):
         """Parse the arguments provided on the command line.
 
         Returns: a pair (continue, exit_code). If continue is False,
           the exit_code should be returned.
         """
-        try:
-            opts, args = getopt.getopt(self.argv, "ip:m:ho:vda:nl:t:j:x:I:",
-            ["ignore_platform", "platform=", "pch=", "module=", "help", "output=",
-              "verbose", "debug", "module_args=", "no_driver", "log=",
-              "moduletype=", "json=", "xml=", "list_tags", "include", "failfast",
-              "no_time", "deltas="])
-        except getopt.GetoptError, err:
-            print str(err)
-            self.usage()
-            return (False, ExitCode.EXCEPTION)
+        parser = argparse.ArgumentParser(usage='%(prog)s [options]',formatter_class=argparse.RawDescriptionHelpFormatter,epilog=ExitCode.help_epilog,add_help=False)
+        options = parser.add_argument_group('Options')
+        options.add_argument('-h', '--help', help="show this message and exit",action='store_true')
+        options.add_argument('-m', '--module',dest='_module', help='specify module to run (example: -m common.bios_wp)')
+        options.add_argument('-a','--module_args', nargs='*', dest="_module_argv", help="additional module arguments")
+        options.add_argument('-v','--verbose', help='verbose mode', action='store_true')
+        options.add_argument('-d','--debug', help='debug mode', action='store_true')
+        options.add_argument('-l','--log', help='output to log file')
+        adv_options = parser.add_argument_group('Advanced Options')
+        adv_options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.Chipset_Code, type=str.upper)
+        adv_options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.pch_codes, type=str.upper)
+        adv_options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
+        adv_options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
+        adv_options.add_argument('-j', '--json',dest='_json_out', help='specify filename for JSON output')
+        adv_options.add_argument('-x', '--xml', dest='_xml_out',help='specify filename for xml output (JUnit style)')
+        adv_options.add_argument('-t', '--moduletype',dest='USER_MODULE_TAGS', help='run tests of a specific type (tag)',type=str.upper,default=[])
+        adv_options.add_argument('--list_tags',dest='_list_tags', help='list all the available options for -t,--moduletype',action='store_true')
+        adv_options.add_argument('-I', '--include',dest='IMPORT_PATHS', help='specify additional path to load modules from',default=[])
+        adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)",action='store_true')
+        adv_options.add_argument('--no_time', help="don't log timestamps",action='store_true')
+        adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
 
-        for o, a in opts:
-            if o in ("-v", "--verbose"):
-                logger().VERBOSE = True
-                logger().HAL     = True
-                logger().DEBUG   = True
-            elif o in ("-d", "--debug"):
-                logger().DEBUG   = True
-            elif o in ("-h", "--help"):
-                self.usage()
-                return (False, ExitCode.OK)
-            elif o in ("-o", "--output"):
-                self._output = a
-            elif o in ("-p", "--platform"):
-                self._platform = a.upper()
-            elif o in ("--pch"):
-                self._pch = a.upper()
-            elif o in ("-m", "--module"):
-                #_module = a.lower()
-                self._module = a
-            elif o in ("-a", "--module_args"):
-                self._module_argv = a.split(',')
-            elif o in ("-i", "--ignore_platform"):
-                logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
-                self._unkownPlatform = False
-            elif o in ("-l", "--log"):
-                #logger().log( "[*] Output to log file '%s' (--log option or chipsec_main.logger().set_log_file in Python console)" % a )
-                logger().set_log_file( a )
-            elif o in ("-t", "--moduletype"):
-                usertags = a.upper().split(",")
-                for tag in usertags:
-                    self.USER_MODULE_TAGS.append(tag)
-            elif o in ("-n", "--no_driver"):
-                self._no_driver = True
-            elif o in ("-x", "--xml"):
-                self._xml_out = a
-            elif o in ("-j", "--json"):
-                self._json_out = a
-            elif o in ("--list_tags"):
-                self._list_tags = True
-            elif o in ("-I","--include"):
-                self.IMPORT_PATHS.append(a)
-            elif o in ("--failfast"):
-                self.failfast = True
-            elif o in ("--no_time"):
-                self.no_time = True
-            elif o in ("--deltas"):
-                self._deltas_file = a
-            else:
-                assert False, "unknown option"
-        return (True, None)
+        parser.parse_args(self.argv,namespace=ChipsecMain)
+ 
+        if self.help:
+            parser.print_help()
+        if self.verbose:
+            logger().VERBOSE = True
+            logger().HAL     = True
+            logger().DEBUG   = True
+        if self.debug:
+            logger().DEBUG   = True
+        if self.log:
+            logger().set_log_file( self.log )
+        if self._unknownPlatform is False:
+            logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
 
     def properties( self ):
         ret = OrderedDict()
@@ -504,9 +420,10 @@ class ChipsecMain:
     ##################################################################################
 
     def main ( self ):
-        (cont, exit_code) = self.parse_args()
-        if not cont:
-          return exit_code
+        if self.help:
+            return ExitCode.OK
+
+        self.init_cs()
 
         self.print_banner()
 
@@ -516,12 +433,11 @@ class ChipsecMain:
         if self._no_driver and self._driver_exists:
             logger().error( "incompatible options: --no_driver and --exists" )
             return ExitCode.EXCEPTION
-
         try:
             self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists )
         except chipset.UnknownChipsetError , msg:
             logger().error( "Platform is not supported (%s)." % str(msg) )
-            if self._unkownPlatform:
+            if self._unknownPlatform:
                 logger().error( 'To run anyways please use -i command-line option\n\n' )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
