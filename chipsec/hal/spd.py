@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -329,12 +329,12 @@ class SPD:
     #
     def getDRAMDeviceType( self, device=SPD_SMBUS_ADDRESS ):
         dram_type = self.read_byte( SPD_OFFSET_DRAM_DEVICE_TYPE, device ) 
-        if logger().VERBOSE: logger().log( "[spd][0x%02X] DRAM Device Type (byte 2): 0x%01X" % (device,dram_type) )
+        if logger().HAL: logger().log( "[spd][0x%02X] DRAM Device Type (byte 2): 0x%01X" % (device,dram_type) )
         return dram_type
 
     def getModuleType( self, device=SPD_SMBUS_ADDRESS ):
         module_type = self.read_byte( SPD_OFFSET_DDR3_MODULE_TYPE, device ) 
-        if logger().VERBOSE: logger().log( "[spd][0x%02X] Module Type (byte 3): 0x%01X" % (device,module_type) )
+        if logger().HAL: logger().log( "[spd][0x%02X] Module Type (byte 3): 0x%01X" % (device,module_type) )
         return module_type
 
     def isECC( self, device=SPD_SMBUS_ADDRESS ):

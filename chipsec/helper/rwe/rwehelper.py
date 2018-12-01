@@ -21,7 +21,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -258,7 +258,7 @@ class RweHelper(Helper):
         if "windows" == self.os_system.lower():
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
-            if logger().HAL: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
+            if logger().DEBUG: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
 
         self.use_existing_service = False
 
@@ -272,9 +272,9 @@ class RweHelper(Helper):
             driver_path = os.path.join(path, DRIVER_FILE_NAME)
             if os.path.isfile(driver_path): 
                 self.driver_path = driver_path
-                if logger().HAL: logger().log("[helper] found driver in %s" % driver_path)
+                if logger().DEBUG: logger().log("[helper] found driver in %s" % driver_path)
         if self.driver_path == None: 
-            if logger().HAL: logger().log("[helper] RWE Driver Not Found")
+            if logger().DEBUG: logger().log("[helper] RWE Driver Not Found")
             raise DriverNotFound
 
         c_int_p = POINTER(c_int)
@@ -312,7 +312,7 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError, msg:
-            if logger().VERBOSE: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
+            if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
             pass
 
         try:
@@ -364,8 +364,8 @@ class RweHelper(Helper):
         except win32service.error, (hr, fn, msg):
             handle_winerror(fn, msg, hr)
 
-        if logger().VERBOSE: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
-        if logger().VERBOSE: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
+        if logger().DEBUG: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
+        if logger().DEBUG: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
 
         try:
             hs = win32service.CreateService(
@@ -379,10 +379,10 @@ class RweHelper(Helper):
                  os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
-                if logger().VERBOSE: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )
+                if logger().DEBUG: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )
         except win32service.error, (hr, fn, msg):
             if (winerror.ERROR_SERVICE_EXISTS == hr):
-                if logger().VERBOSE: logger().log( "[helper] service '%s' already exists: %s (%d)" % (SERVICE_NAME, msg, hr) )
+                if logger().DEBUG: logger().log( "[helper] service '%s' already exists: %s (%d)" % (SERVICE_NAME, msg, hr) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
                 except win32service.error, (hr, fn, msg):
@@ -407,10 +407,10 @@ class RweHelper(Helper):
             logger().warn( "cannot delete service '%s' (not stopped)" % SERVICE_NAME )
             return False
 
-        if logger().VERBOSE: logger().log( "[helper] deleting service '%s'..." % SERVICE_NAME )
+        if logger().DEBUG: logger().log( "[helper] deleting service '%s'..." % SERVICE_NAME )
         try:
             win32serviceutil.RemoveService( SERVICE_NAME )
-            if logger().VERBOSE: logger().log( "[helper] service '%s' deleted" % SERVICE_NAME )
+            if logger().DEBUG: logger().log( "[helper] service '%s' deleted" % SERVICE_NAME )
         except win32service.error, (hr, fn, msg):
             logger().warn( "RemoveService failed: %s (%d)" % (msg, hr) )
             return False
@@ -428,8 +428,8 @@ class RweHelper(Helper):
 
         if self.use_existing_service:
             self.driver_loaded = True
-            if logger().VERBOSE: logger().log( "[helper] service '%s' already running" % SERVICE_NAME )
-            if logger().VERBOSE: logger().log( "[helper] trying to connect to existing '%s' service..." % SERVICE_NAME )
+            if logger().DEBUG: logger().log( "[helper] service '%s' already running" % SERVICE_NAME )
+            if logger().DEBUG: logger().log( "[helper] trying to connect to existing '%s' service..." % SERVICE_NAME )
         else:
             #if self.use_existing_service:
             #    _handle_error( "connecting to existing '%s' service failed (service is not running)" % SERVICE_NAME )
@@ -437,7 +437,7 @@ class RweHelper(Helper):
                 win32serviceutil.StartService( SERVICE_NAME )
                 win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
                 self.driver_loaded = True
-                if logger().VERBOSE: logger().log( "[helper] service '%s' started" % SERVICE_NAME )
+                if logger().DEBUG: logger().log( "[helper] service '%s' started" % SERVICE_NAME )
             except pywintypes.error, (hr, fn, msg):
                 _handle_error( "service '%s' didn't start: %s (%d)" % (SERVICE_NAME, msg, hr), hr )
 
@@ -450,7 +450,7 @@ class RweHelper(Helper):
         if not start_driver: return True
         if self.use_existing_service: return True
 
-        if logger().VERBOSE: logger().log( "[helper] stopping service '%s'.." % SERVICE_NAME )
+        if logger().DEBUG: logger().log( "[helper] stopping service '%s'.." % SERVICE_NAME )
         try:
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
@@ -463,7 +463,7 @@ class RweHelper(Helper):
 
         try:
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
-            if logger().VERBOSE: logger().log( "[helper] service '%s' stopped" % SERVICE_NAME )
+            if logger().DEBUG: logger().log( "[helper] service '%s' stopped" % SERVICE_NAME )
         except pywintypes.error, (hr, fn, msg):
             logger().warn( "service '%s' didn't stop: %s (%d)" % (SERVICE_NAME, msg, hr) )
             return False
@@ -481,7 +481,7 @@ class RweHelper(Helper):
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
-            if logger().VERBOSE: logger().log( "[helper] opened device '%.64s' (handle: %08x)" % (DEVICE_FILE, self.driver_handle) )
+            if logger().DEBUG: logger().log( "[helper] opened device '%.64s' (handle: %08x)" % (DEVICE_FILE, self.driver_handle) )
         return self.driver_handle
 
     def check_driver_handle( self ):
@@ -518,7 +518,7 @@ class RweHelper(Helper):
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
-        if logger().VERBOSE: print_buffer( in_buf )
+        if logger().DEBUG: print_buffer( in_buf )
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
         except pywintypes.error, _err:
@@ -770,12 +770,12 @@ class RweHelper(Helper):
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         if attrs is None:
             if self.GetFirmwareEnvironmentVariable is not None:
-                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
+                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
                 length = self.GetFirmwareEnvironmentVariable( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE )
         else:
             if self.GetFirmwareEnvironmentVariableEx is not None:
                 pattrs = c_int(attrs)
-                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
+                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
@@ -797,11 +797,11 @@ class RweHelper(Helper):
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
-                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
+                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
                 ntsts = self.SetFirmwareEnvironmentVariable( name, "{%s}" % guid, var, var_len )
         else:
             if self.SetFirmwareEnvironmentVariableEx is not None:
-                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
+                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
                 ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, var, var_len, attrs )
         if 0 != ntsts:
             status = 0 # EFI_SUCCESS
@@ -815,7 +815,7 @@ class RweHelper(Helper):
         return self.set_EFI_variable( name, guid, None, datasize=0, attrs=None )
 
     def list_EFI_variables( self, infcls=2 ):
-        if logger().VERBOSE: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
+        if logger().DEBUG: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         length = packl_ctypes( long(EFI_VAR_MAX_BUFFER_SIZE), 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
@@ -832,7 +832,7 @@ class RweHelper(Helper):
             logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
             logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
             raise WinError()
-        if logger().VERBOSE: logger().log( '[helper] len(efi_vars) = 0x%X (should be 0x20000)' % len(efi_vars) )
+        if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x%X (should be 0x20000)' % len(efi_vars) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
 
     #

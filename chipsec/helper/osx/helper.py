@@ -1,7 +1,7 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2016, Google
 #
-# Copyright (c) 2010-2015, Intel Corporation
+# Copyright (c) 2010-2018, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -99,14 +99,14 @@ class OSXHelper(Helper):
                     os.chown(os.path.join(root, f), 0, 0)
         subprocess.check_call(["kextload", driver_path])
         if os.path.exists(self.DEVICE_NAME):
-            if logger().VERBOSE:
+            if logger().DEBUG:
                 logger().log("Module %s loaded successfully" % self.DRIVER_NAME)
         else:
             logger().error("Failed to load the module %s" % self.DRIVER_NAME)
 
     def create(self, start_driver):
         #self.init(start_driver)
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] OSX Helper created")
         return True
 
@@ -118,7 +118,7 @@ class OSXHelper(Helper):
                 subprocess.check_call(["kextunload", driver_path])
             self.load_driver()
         self.init(start_driver)
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] OSX Helper started/loaded")
         return True
 
@@ -128,12 +128,12 @@ class OSXHelper(Helper):
             driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
                                        "helper", "osx", self.DRIVER_NAME)
             subprocess.check_call(["kextunload", driver_path])
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] OSX Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] OSX Helper deleted")
         return True
 

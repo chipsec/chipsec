@@ -25,7 +25,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -337,7 +337,7 @@ class ACPI(hal_base.HALBase):
             pos = membuf.find( ACPI_RSDP_SIG )
             if -1 != pos:
                 rsdp_pa  = pa + pos
-                if logger().VERBOSE: logger().log( "[acpi] found '%s' signature at 0x%016X. Checking if valid RSDP.." % (ACPI_RSDP_SIG,rsdp_pa) )
+                if logger().HAL: logger().log( "[acpi] found '%s' signature at 0x%016X. Checking if valid RSDP.." % (ACPI_RSDP_SIG,rsdp_pa) )
                 rsdp     = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
                     if logger().HAL: logger().log( "[acpi] found RSDP in EFI memory: 0x%016X" % rsdp_pa )
@@ -431,7 +431,7 @@ class ACPI(hal_base.HALBase):
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             if _sig not in ACPI_TABLES.keys():
-                logger().warn( 'Unknown ACPI table signature: %s' % _sig )
+                if logger().HAL: logger().warn( 'Unknown ACPI table signature: %s' % _sig )
             self.tableList[ _sig ].append(a)
 
     #
@@ -443,7 +443,7 @@ class ACPI(hal_base.HALBase):
         if ACPI_TABLE_SIG_FACP in self.tableList:
             (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
         else:
-            logger().warn( 'Cannot find FADT in %s' % ('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
+            if logger().HAL: logger().warn( 'Cannot find FADT in %s' % ('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
             return
 
         dsdt_address_to_use = parsed_fadt_content.get_DSDT_address_to_use()
@@ -451,9 +451,9 @@ class ACPI(hal_base.HALBase):
         if dsdt_address_to_use is None:
             dsdt_address = parsed_fadt_content.dsdt
             x_dsdt_address = parsed_fadt_content.x_dsdt
-            logger().error( 'Unable to determine the correct DSDT address' )
-            logger().error( '  DSDT   address = %s' % ('0x%08X' % dsdt_address) )
-            logger().error( '  X_DSDT address = %s' % (('0x%016X' % x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
+            if logger().HAL: logger().error( 'Unable to determine the correct DSDT address' )
+            if logger().HAL: logger().error( '  DSDT   address = %s' % ('0x%08X' % dsdt_address) )
+            if logger().HAL: logger().error( '  X_DSDT address = %s' % (('0x%016X' % x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
@@ -471,7 +471,7 @@ class ACPI(hal_base.HALBase):
         if len( self.tableList ) == 0:
             logger().error("Couldn't get a list of ACPI tables")
         else:
-            if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
+            logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):
                 logger().log( " - %s: %s" % (tableName, ", ".join([("0x%016X" % addr) for addr in self.tableList[tableName]])) )
 
@@ -541,14 +541,14 @@ class ACPI(hal_base.HALBase):
 
     def _parse_table_header( self, header ):
         acpi_table_hdr = ACPI_TABLE_HEADER( *struct.unpack_from( ACPI_TABLE_HEADER_FORMAT, header ) )
-        if logger().VERBOSE: logger().log( acpi_table_hdr )
+        if logger().HAL: logger().log( acpi_table_hdr )
         return acpi_table_hdr
 
 
     def _parse_table_contents( self, signature, contents, header ):
         table = None
         if ACPI_TABLES.__contains__(signature):
-            logger().log('%s' % signature)
+            if logger().HAL: logger().log('%s' % signature)
             if 'BERT' in signature:
                 table = (ACPI_TABLES[signature])(self.cs)
             elif 'NFIT' in signature:

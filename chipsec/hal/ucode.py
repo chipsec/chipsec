@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ def dump_ucode_update_header( pdb_ucode_buffer ):
 def read_ucode_file( ucode_filename ):
     ucode_buf = read_file( ucode_filename )
     if (ucode_filename.endswith('.pdb')):
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[ucode] PDB file '%.256s' has ucode update header (size = 0x%X)" % (ucode_filename, UCODE_HEADER_SIZE) )
         dump_ucode_update_header( ucode_buf )
         return ucode_buf[UCODE_HEADER_SIZE:]
@@ -106,9 +106,9 @@ class Ucode:
         ucode_update_id = bios_sign_id_hi
 
         if (bios_sign_id_lo & IA32_MSR_BIOS_SIGN_ID_STATUS):
-            if logger().VERBOSE: logger().log( "[ucode] CPU%d: last Microcode update failed (current microcode id = 0x%08X)" % (cpu_thread_id, ucode_update_id) )
+            if logger().HAL: logger().log( "[ucode] CPU%d: last Microcode update failed (current microcode id = 0x%08X)" % (cpu_thread_id, ucode_update_id) )
         else:
-            if logger().VERBOSE: logger().log( "[ucode] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
+            if logger().HAL: logger().log( "[ucode] CPU%d: Microcode update ID = 0x%08X" % (cpu_thread_id, ucode_update_id) )
 
         return ucode_update_id
 

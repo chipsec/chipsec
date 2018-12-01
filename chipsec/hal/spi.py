@@ -191,7 +191,7 @@ class SPI(hal_base.HALBase):
         self.hsfc_off   = int(self.cs.get_register_def("HSFC")['offset'],16)
         self.faddr_off  = int(self.cs.get_register_def("FADDR")['offset'],16)
         self.fdata0_off = int(self.cs.get_register_def("FDATA0")['offset'],16)
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[spi] Reading SPI flash controller registers definitions:" )
             logger().log( "      HSFC   offset = 0x%04X" % self.hsfc_off )
             logger().log( "      HSFS   offset = 0x%04X" % self.hsfs_off )
@@ -202,7 +202,7 @@ class SPI(hal_base.HALBase):
     def get_SPI_MMIO_base_fallback(self):
         reg_value = self.cs.pci.read_dword( Cfg.SPI_MMIO_BUS, Cfg.SPI_MMIO_DEV, Cfg.SPI_MMIO_FUN, Cfg.SPI_MMIO_REG_OFFSET )
         spi_base = ((reg_value >> Cfg.SPI_BASE_ADDR_SHIFT) << Cfg.SPI_BASE_ADDR_SHIFT) + Cfg.SPI_MMIO_BASE_OFFSET
-        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
+        if logger().HAL: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
         return spi_base
 
     def get_SPI_MMIO_base(self):
@@ -210,7 +210,7 @@ class SPI(hal_base.HALBase):
             (spi_base,spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
         else:
             spi_base = self.get_SPI_MMIO_base_fallback()
-        if logger().VERBOSE: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
+        if logger().HAL: logger().log( "[spi] SPI MMIO base: 0x%016X (assuming below 4GB)" % spi_base )
         return spi_base
 
     def spi_reg_read( self, reg, size=4 ):
@@ -428,7 +428,7 @@ class SPI(hal_base.HALBase):
 
 
     def disable_BIOS_write_protection( self ):
-        if logger().VERBOSE: self.display_BIOS_write_protection()
+        if logger().HAL: self.display_BIOS_write_protection()
         ble    = self.cs.get_control('BiosLockEnable' )
         bioswe = self.cs.get_control('BiosWriteEnable' )
         smmbwp = self.cs.get_control('SmmBiosWriteProtection' )
@@ -450,7 +450,7 @@ class SPI(hal_base.HALBase):
         # read BiosWriteEnable back to check if BIOS writes are enabled
         bioswe = self.cs.get_control('BiosWriteEnable' )
 
-        if logger().VERBOSE: self.display_BIOS_write_protection()
+        if logger().HAL: self.display_BIOS_write_protection()
         if logger().HAL: logger().log_important( "BIOS write protection is %s (BiosWriteEnable = %d)" % ('disabled' if bioswe else 'still enabled', bioswe) )
 
         return (bioswe==1)
@@ -461,7 +461,7 @@ class SPI(hal_base.HALBase):
     ##############################################################################################################
 
     def _wait_SPI_flash_cycle_done(self):
-        if logger().VERBOSE: logger().log( "[spi] wait for SPI cycle ready/done.." )
+        if logger().HAL: logger().log( "[spi] wait for SPI cycle ready/done.." )
 
         for i in range(1000):
             #time.sleep(0.001)
@@ -473,23 +473,23 @@ class SPI(hal_base.HALBase):
                 break
 
         if not cycle_done:
-            if logger().VERBOSE: logger().log( "[spi] SPI cycle still in progress. Waiting 0.1 sec.." )
+            if logger().HAL: logger().log( "[spi] SPI cycle still in progress. Waiting 0.1 sec.." )
             time.sleep(0.1)
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
             cycle_done = not (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP)
 
         if cycle_done:
-            if logger().VERBOSE: logger().log( "[spi] clear FDONE/FCERR/AEL bits.." )
+            if logger().HAL: logger().log( "[spi] clear FDONE/FCERR/AEL bits.." )
             self.spi_reg_write( self.hsfs_off, HSFSTS_CLEAR, 1 )
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
             cycle_done = not ((hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_AEL) or (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_FCERR))
 
-        if logger().VERBOSE: logger().log( "[spi] HSFS: 0x%02X" % hsfsts )
+        if logger().HAL: logger().log( "[spi] HSFS: 0x%02X" % hsfsts )
 
         return cycle_done
 
     def _send_spi_cycle(self, hsfctl_spi_cycle_cmd, dbc, spi_fla ):
-        if logger().VERBOSE: logger().log( "[spi] > send SPI cycle 0x%X to address 0x%08X.." % (hsfctl_spi_cycle_cmd, spi_fla) )
+        if logger().HAL: logger().log( "[spi] > send SPI cycle 0x%X to address 0x%08X.." % (hsfctl_spi_cycle_cmd, spi_fla) )
 
         # No need to check for SPI cycle DONE status before each cycle
         # DONE status is checked once before entire SPI operation
@@ -500,11 +500,11 @@ class SPI(hal_base.HALBase):
         #write_MMIO_reg( self.cs, spi_base, self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
         #self.cs.mem.write_physical_mem_dword( spi_base + self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
 
-        if logger().VERBOSE:
+        if logger().HAL:
             _faddr = self.spi_reg_read( self.faddr_off )
             logger().log( "[spi] FADDR: 0x%08X" % _faddr )
 
-        if logger().VERBOSE: logger().log( "[spi] SPI cycle GO (DBC <- 0x%02X, HSFC <- 0x%X)" % (dbc, hsfctl_spi_cycle_cmd) )
+        if logger().HAL: logger().log( "[spi] SPI cycle GO (DBC <- 0x%02X, HSFC <- 0x%X)" % (dbc, hsfctl_spi_cycle_cmd) )
 
         if ( HSFCTL_ERASE_CYCLE != hsfctl_spi_cycle_cmd ):
             self.spi_reg_write( self.hsfc_off + 0x1, dbc, 1 )
@@ -513,7 +513,7 @@ class SPI(hal_base.HALBase):
         #self.spi_reg_write( self.hsfc_off, ((dbc<<8)|hsfctl_spi_cycle_cmd), 2 )
 
         # Read HSFC back (logging only)
-        if logger().VERBOSE:
+        if logger().HAL:
             _hsfc = self.spi_reg_read( self.hsfc_off, 1 )
             logger().log( "[spi] HSFC: 0x%04X" % _hsfc )
 
@@ -521,7 +521,7 @@ class SPI(hal_base.HALBase):
         if not cycle_done:
             logger().warn( "SPI cycle not done" )
         else:
-            if logger().VERBOSE: logger().log( "[spi] < SPI cycle done" )
+            if logger().HAL: logger().log( "[spi] < SPI cycle done" )
 
         return cycle_done
 
@@ -562,7 +562,7 @@ class SPI(hal_base.HALBase):
 
         n = data_byte_count / dbc
         r = data_byte_count % dbc
-        if logger().UTIL_TRACE or logger().DEBUG:
+        if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] reading 0x%x bytes from SPI at FLA = 0x%X (in %d 0x%x-byte chunks + 0x%x-byte remainder)" % (data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
@@ -571,19 +571,19 @@ class SPI(hal_base.HALBase):
             return None
 
         for i in range(n):
-            if logger().DEBUG:
+            if logger().HAL:
                 logger().log( "[spi] reading chunk %d of 0x%x bytes from 0x%X" % (i, dbc, spi_fla + i*dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, dbc-1, spi_fla + i*dbc ):
                 logger().error( "SPI flash read failed" )
             else:
                 for fdata_idx in range(0,dbc/4):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
-                    if logger().VERBOSE:
+                    if logger().HAL:
                         logger().log( "[spi] FDATA00 + 0x%x: 0x%X" % (fdata_idx*4, dword_value) )
                     buf += [ chr((dword_value>>(8*j))&0xff) for j in range(4) ]
                     #buf += tuple( struct.pack("I", dword_value) )
         if (0 != r):
-            if logger().DEBUG:
+            if logger().HAL:
                 logger().log( "[spi] reading remaining 0x%x bytes from 0x%X" % (r, spi_fla + n*dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, r-1, spi_fla + n*dbc ):
                 logger().error( "SPI flash read failed" )
@@ -592,13 +592,13 @@ class SPI(hal_base.HALBase):
                 n_dwords = (r+3)/4
                 for fdata_idx in range(0, n_dwords):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
-                    if logger().VERBOSE:
+                    if logger().HAL:
                         logger().log( "[spi] FDATA00 + 0x%x: 0x%08X" % (fdata_idx*4, dword_value) )
                     if (fdata_idx == (n_dwords-1)) and (0 != r%4):
                         t = r%4
                     buf += [ chr((dword_value >> (8*j)) & 0xff) for j in range(t) ]
 
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[spi] buffer read from SPI:" )
             chipsec.logger.print_buffer( buf )
 
@@ -613,7 +613,7 @@ class SPI(hal_base.HALBase):
         dbc = 4
         n = data_byte_count / dbc
         r = data_byte_count % dbc
-        if logger().UTIL_TRACE or logger().VERBOSE:
+        if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] writing 0x%x bytes to SPI at FLA = 0x%X (in %d 0x%x-byte chunks + 0x%x-byte remainder)" % (data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
@@ -622,10 +622,10 @@ class SPI(hal_base.HALBase):
             return None
 
         for i in range(n):
-            if logger().UTIL_TRACE or logger().VERBOSE:
+            if logger().UTIL_TRACE or logger().HAL:
                 logger().log( "[spi] writing chunk %d of 0x%x bytes to 0x%X" % (i, dbc, spi_fla + i*dbc) )
             dword_value = (ord(buf[i*dbc + 3]) << 24) | (ord(buf[i*dbc + 2]) << 16) | (ord(buf[i*dbc + 1]) << 8) | ord(buf[i*dbc])
-            if logger().VERBOSE:
+            if logger().HAL:
                 logger().log( "[spi] in FDATA00 = 0x%08x" % dword_value )
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, dbc-1, spi_fla + i*dbc ):
@@ -633,12 +633,12 @@ class SPI(hal_base.HALBase):
                 logger().error( "SPI flash write cycle failed" )
 
         if (0 != r):
-            if logger().UTIL_TRACE or logger().VERBOSE:
+            if logger().UTIL_TRACE or logger().HAL:
                 logger().log( "[spi] writing remaining 0x%x bytes to FLA = 0x%X" % (r, spi_fla + n*dbc) )
             dword_value = 0
             for j in range(r):
                 dword_value |= (ord(buf[n*dbc + j]) << 8*j)
-            if logger().VERBOSE:
+            if logger().HAL:
                 logger().log( "[spi] in FDATA00 = 0x%08x" % dword_value )
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, r-1, spi_fla + n*dbc ):
@@ -651,7 +651,7 @@ class SPI(hal_base.HALBase):
 
         self.check_hardware_sequencing()
 
-        if logger().UTIL_TRACE or logger().VERBOSE:
+        if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] Erasing SPI Flash block @ 0x%X" % spi_fla )
 
         cycle_done = self._wait_SPI_flash_cycle_done()

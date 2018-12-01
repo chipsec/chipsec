@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -248,37 +248,37 @@ class Pci:
 
     def read_dword(self, bus, device, function, address ):
         value = self.helper.read_pci_reg( bus, device, function, address, 4 )
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%08X" % (bus, device, function, address, value) )
         return value
 
     def read_word(self, bus, device, function, address ):
         word_value = self.helper.read_pci_reg( bus, device, function, address, 2 )
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%04X" % (bus, device, function, address, word_value) )
         return word_value
 
     def read_byte(self, bus, device, function, address ):
         byte_value = self.helper.read_pci_reg( bus, device, function, address, 1 )
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[pci] reading B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%02X" % (bus, device, function, address, byte_value) )
         return byte_value
 
     def write_byte(self, bus, device, function, address, byte_value ):
         self.helper.write_pci_reg( bus, device, function, address, byte_value, 1 )
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%02X" % (bus, device, function, address, byte_value) )
         return
 
     def write_word(self, bus, device, function, address, word_value ):
         self.helper.write_pci_reg( bus, device, function, address, word_value, 2 )
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%04X" % (bus, device, function, address, word_value) )
         return
 
     def write_dword( self, bus, device, function, address, dword_value ):
         self.helper.write_pci_reg( bus, device, function, address, dword_value, 4 )
-        if logger().VERBOSE:
+        if logger().HAL:
             logger().log( "[pci] writing B/D/F: %d/%d/%d, offset: 0x%02X, value: 0x%08X" % (bus, device, function, address, dword_value) )
         return
 
@@ -297,7 +297,7 @@ class Pci:
                     did = (did_vid >> 16) & 0xFFFF
                     devices.append((b, d, f, vid, did))
             except oshelper.OsHelperError:
-                if logger().VERBOSE:
+                if logger().HAL:
                     logger().log("[pci] unable to access B/D/F: %d/%d/%d" % (b, d, f))
         return devices
 
@@ -335,7 +335,7 @@ class Pci:
         # return results
         xrom_found,xrom = False,None
 
-        logger().log( "[pci] checking XROM in %02X:%02X.%02X" % (bus,dev,fun) )
+        if logger().HAL: logger().log( "[pci] checking XROM in %02X:%02X.%02X" % (bus,dev,fun) )
 
         cmd = self.read_word(bus, dev, fun, PCI_HDR_CMD_OFF)
         ms = ((cmd & PCI_HDR_CMD_MS_MASK) == PCI_HDR_CMD_MS_MASK)
@@ -362,7 +362,7 @@ class Pci:
                 if xrom_exists and (xrom_addr is not None):
                     # device indicates XROM may exist. Initialize its base with supplied MMIO address
                     size_align = ~(xrom_bar & PCI_HDR_XROM_BAR_BASE_MASK) # actual XROM alignment
-                    if (xrom_addr & size_align) != 0:
+                    if (xrom_addr & size_align) != 0 and logger().HAL:
                         logger().warn( "XROM address 0x%08X must be aligned at 0x%08X" % (xrom_addr,size_align) )
                         return False,None
                     self.write_dword( bus, dev, fun, xrom_bar_off, (xrom_addr|PCI_HDR_XROM_BAR_EN_MASK) )
