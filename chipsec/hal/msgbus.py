@@ -140,7 +140,7 @@ class MsgBus(hal_base.HALBase):
         mcrx = self.__MB_MESSAGE_MCRX(register)
 
         if logger().HAL: logger().log( "[msgbus] read: port 0x%02X + 0x%08X (op = 0x%02X)" % (port, register, opcode) )
-        if logger().VERBOSE: logger().log( "[msgbus]       MCR = 0x%08X, MCRX = 0x%08X" % (mcr, mcrx) )
+        if logger().HAL: logger().log( "[msgbus]       MCR = 0x%08X, MCRX = 0x%08X" % (mcr, mcrx) )
 
         mdr_out = self.helper.msgbus_send_read_message( mcr, mcrx )
 
@@ -157,7 +157,7 @@ class MsgBus(hal_base.HALBase):
         mdr  = self.__MB_MESSAGE_MDR (data)
 
         if logger().HAL: logger().log( "[msgbus] write: port 0x%02X + 0x%08X (op = 0x%02X) < data = 0x%08X" % (port, register, opcode, data) )
-        if logger().VERBOSE: logger().log( "[msgbus]        MCR = 0x%08X, MCRX = 0x%08X, MDR = 0x%08X" % (mcr, mcrx, mdr) )
+        if logger().HAL: logger().log( "[msgbus]        MCR = 0x%08X, MCRX = 0x%08X, MDR = 0x%08X" % (mcr, mcrx, mdr) )
 
         return self.helper.msgbus_send_write_message( mcr, mcrx, mdr )
 
@@ -172,7 +172,7 @@ class MsgBus(hal_base.HALBase):
         if logger().HAL:
             logger().log( "[msgbus] message: port 0x%02X + 0x%08X (op = 0x%02X)" % (port, register, opcode) )
             if data is not None: logger().log( "[msgbus]          data = 0x%08X" % data )
-        if logger().VERBOSE: logger().log( "[msgbus]          MCR = 0x%08X, MCRX = 0x%08X, MDR = 0x%08X" % (mcr, mcrx, mdr) )
+        if logger().HAL: logger().log( "[msgbus]          MCR = 0x%08X, MCRX = 0x%08X, MDR = 0x%08X" % (mcr, mcrx, mdr) )
 
         mdr_out = self.helper.msgbus_send_message( mcr, mcrx, mdr )
 

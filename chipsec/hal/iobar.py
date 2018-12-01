@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -93,13 +93,13 @@ class IOBAR(hal_base.HALBase):
 
         if 'fixed_address' in bar and base == empty_base:
             base = int(bar['fixed_address'],16)
-            if logger().VERBOSE: logger().log('[iobar] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
+            if logger().HAL: logger().log('[iobar] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
 
         if 'mask'   in bar: base = base & int(bar['mask'],16)
         if 'offset' in bar: base = base + int(bar['offset'],16)
         size = int(bar['size'],16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
-        if logger().VERBOSE: logger().log( '[iobar] %s: 0x%04X (size = 0x%X)' % (bar_name,base,size) )
+        if logger().HAL: logger().log( '[iobar] %s: 0x%04X (size = 0x%X)' % (bar_name,base,size) )
         return base, size
 
 
@@ -107,10 +107,10 @@ class IOBAR(hal_base.HALBase):
     # Read I/O register from I/O range defined by I/O BAR name
     #
     def read_IO_BAR_reg( self, bar_name, offset, size ):
-        if logger().VERBOSE: logger().log('[iobar] read %s + 0x%X (%u)' % (bar_name, offset, size))
+        if logger().HAL: logger().log('[iobar] read %s + 0x%X (%u)' % (bar_name, offset, size))
         (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
         io_port = bar_base + offset
-        if offset > bar_size: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
+        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
         value = self.cs.io._read_port( io_port, size )
         return value
 
@@ -119,9 +119,9 @@ class IOBAR(hal_base.HALBase):
     #
     def write_IO_BAR_reg( self, bar_name, offset, size, value ):
         (bar_base,bar_size) = self.get_IO_BAR_base_address( bar_name )
-        if logger().VERBOSE: logger().log( '[iobar] write %s + 0x%X (%u): 0x%X' % (bar_name,offset,size,value) )
+        if logger().HAL: logger().log( '[iobar] write %s + 0x%X (%u): 0x%X' % (bar_name,offset,size,value) )
         io_port = bar_base + offset
-        if offset > bar_size: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
+        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x%X is ouside %s size (0x%X)' % (offset,bar_name,size) )
         return self.cs.io._write_port( io_port, value, size )
 
 

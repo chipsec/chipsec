@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -85,7 +85,7 @@ class SMBus(hal_base.HALBase):
 
     def is_SMBus_supported( self ):
         (did,vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
-        if logger().VERBOSE: logger().log( "[smbus] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
+        if logger().HAL: logger().log( "[smbus] SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
         if (0x8086 == vid): return True
         else:
             logger().error( "Unknown SMBus Controller (DID,VID) = (0x%04X,0x%04X)" % (did,vid) )
@@ -127,7 +127,7 @@ class SMBus(hal_base.HALBase):
             intr   = self.cs.get_register_field( self.smb_reg_status, sts, 'INTR' )
             failed = self.cs.get_register_field( self.smb_reg_status, sts, 'FAILED' )
             if 0 == busy and 1 == intr:
-                #if logger().VERBOSE:
+                #if logger().HAL:
                 #    intr = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'INTR' )
                 #    logger().log( "[smbus]: INTR = %d" % intr )
                 break
@@ -174,7 +174,7 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if logger().VERBOSE: logger().log( "[smbus] read device %X off %X = %X" % (target_address, offset, value) )
+        if logger().HAL: logger().log( "[smbus] read device %X off %X = %X" % (target_address, offset, value) )
         return value
 
     def write_byte( self, target_address, offset, value ):
@@ -203,7 +203,7 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if logger().VERBOSE: logger().log( "[smbus] write to device %X off %X = %X" % (target_address, offset, value) )
+        if logger().HAL: logger().log( "[smbus] write to device %X off %X = %X" % (target_address, offset, value) )
         return True
 
 

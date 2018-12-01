@@ -230,7 +230,7 @@ class DALHelper(Helper):
     def read_msr( self, thread, msr_addr ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            logger().log('[WARNING] Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
+            logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
             thread = en_thread
         val = self.base.threads[thread].msr( msr_addr )
         edx = ( val.ToUInt64() >> 32 )
@@ -240,7 +240,7 @@ class DALHelper(Helper):
     def write_msr( self, thread, msr_addr, eax, edx ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            logger().log('[WARNING] Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
+            logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
             thread = en_thread
         val = ( edx << 32 ) | eax
         self.base.threads[thread].msr( msr_addr, val )
@@ -249,7 +249,7 @@ class DALHelper(Helper):
     def read_cr(self, cpu_thread_id, cr_number):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            logger().log('[WARNING] Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
+            logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             val = self.base.threads[cpu_thread_id].state.regs.cr0.value
@@ -262,14 +262,14 @@ class DALHelper(Helper):
         elif cr_number == 8:
             val = self.base.threads[cpu_thread_id].state.regs.cr8.value
         else:
-            logger().log('[ERROR] Selected CR%d is not supported.' % cr_number)
+            logger().error('Selected CR%d is not supported.' % cr_number)
             val = 0
         return val
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            logger().log('[WARNING] Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
+            logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             self.base.threads[cpu_thread_id].state.regs.cr0 = value
@@ -282,7 +282,7 @@ class DALHelper(Helper):
         elif cr_number == 8:
             self.base.threads[cpu_thread_id].state.regs.cr8 = value
         else:
-            logger().log('[ERROR] Selected CR%d is not supported.' % cr_number)
+            logger().error('Selected CR%d is not supported.' % cr_number)
             return False
         return True
 

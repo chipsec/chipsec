@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2017, Intel Security
+# Copyright (c) 2017-2018, Intel Security
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -85,7 +85,7 @@ class rogue_mmio_bar(BaseModule):
         # we do that once rather than before every SMI since we return after first change detected
         self.logger.log( "[*] copying BAR 0x%X > 0x%X" % (base,self.reloc_mmio) )
         orig_mmio = self.copy_bar(base, self.reloc_mmio, size)
-        if self.logger.DEBUG:
+        if self.logger.VERBOSE:
             self.cs.mmio.dump_MMIO(base, size)
             file.write_file('mmio_mem.orig', orig_mmio)
 
@@ -112,7 +112,7 @@ class rogue_mmio_bar(BaseModule):
                     self.logger.log("  checking relocated MMIO")
                     if len(diff) > 0:
                         self.logger.log_important("changes found at 0x%X +%s" % (self.reloc_mmio, diff))
-                        if self.logger.DEBUG: file.write_file('mmio_mem.new', buf)
+                        if self.logger.VERBOSE: file.write_file('mmio_mem.new', buf)
                         return True
         return False
 

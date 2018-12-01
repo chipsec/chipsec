@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2017, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -181,7 +181,7 @@ class IGD(hal_base.HALBase):
         N = pages
         if self.logger.HAL: self.logger.log( '[igd] pages = 0x%X, r = 0x%x, N = %d' % (pages,r,N) )
 
-        if self.logger.VERBOSE:
+        if self.logger.HAL:
             self.logger.log( '[igd] original data at address 0x%016X:' % address )
             print_buffer(self.cs.mem.read_physical_mem(address, size))
 

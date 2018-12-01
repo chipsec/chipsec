@@ -25,7 +25,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ def parse_script( script, log_script=False ):
     if log_script: logger().log( '[uefi] +++ End of S3 Resume Boot-Script +++' )
 
     if logger().HAL: logger().log( '[uefi] S3 Resume Boot-Script size: 0x%X' % off )
-    if logger().VERBOSE: 
+    if logger().HAL: 
         logger().log( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
         print_buffer( script[ : off ] )
 
@@ -403,7 +403,7 @@ NVRAM: EFI Variable Store
             (off, buf, hdr, data, guid, attrs) = efivars[efivar_name][0]
             if efivar_name in S3_BOOTSCRIPT_VARIABLES:
                 if logger().HAL: logger().log( "[uefi] found: %s {%s} %s variable" % (efivar_name,guid,get_attr_string(attrs)) )
-                if logger().VERBOSE:
+                if logger().HAL:
                     logger().log('[uefi] %s variable data:' % efivar_name)
                     print_buffer( data )
 
@@ -420,7 +420,7 @@ NVRAM: EFI Variable Store
                 if logger().HAL: logger().log( "[uefi] Pointer to ACPI Global Data structure: 0x%016X" % ( AcpiGlobalAddr ) )
                 if logger().HAL: logger().log( "[uefi] Decoding ACPI Global Data structure.." )
                 AcpiVariableSet = self.helper.read_physical_mem( AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE )
-                if logger().VERBOSE:
+                if logger().HAL:
                     logger().log('[uefi] AcpiVariableSet structure:')
                     print_buffer( AcpiVariableSet )
                 AcpiVariableSet_fmt = '<6Q'
@@ -475,7 +475,7 @@ NVRAM: EFI Variable Store
         var = self.helper.get_EFI_variable( name, guid )
         if var:
             if filename: write_file( filename, var )
-            if logger().UTIL_TRACE or logger().VERBOSE:
+            if logger().UTIL_TRACE or logger().HAL:
                 logger().log( '[uefi] EFI variable %s:%s :' % (guid, name) )
                 print_buffer( var )
         return var
@@ -510,12 +510,12 @@ NVRAM: EFI Variable Store
         pa = smram_base - CHUNK_SZ
         isFound = False
         while pa > CHUNK_SZ:
-            if logger().VERBOSE: logger().log( '[uefi] reading 0x%016X..' % pa )
+            if logger().HAL: logger().log( '[uefi] reading 0x%016X..' % pa )
             membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
             pos = membuf.find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
-                if logger().VERBOSE: logger().log( "[uefi] found signature '%s' at 0x%016X.." % (table_sig,table_pa) )
+                if logger().HAL: logger().log( "[uefi] found signature '%s' at 0x%016X.." % (table_sig,table_pa) )
                 if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE):
                     hdr = membuf[ pos : pos + EFI_TABLE_HEADER_SIZE ]
                 else:
@@ -526,7 +526,7 @@ NVRAM: EFI Variable Store
                    0 == table_header.CRC32    or                 \
                    table_header.Revision not in EFI_REVISIONS or \
                    table_header.HeaderSize > MAX_EFI_TABLE_SIZE:
-                    if logger().VERBOSE:
+                    if logger().HAL:
                         logger().log( "[uefi] found '%s' at 0x%016X but doesn't look like an actual table. keep searching.." % (table_sig,table_pa) )
                         logger().log( table_header )
                 else:
@@ -538,7 +538,7 @@ NVRAM: EFI Variable Store
                     else:
                         table_buf = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE + table_size )
                     table = EFI_TABLES[table_sig]['struct']( *struct.unpack_from( EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:] ) )
-                    if logger().VERBOSE:
+                    if logger().HAL:
                        print_buffer( table_buf )
                        logger().log( '[uefi] %s:' % EFI_TABLES[table_sig]['name'] )
                        logger().log( table_header )

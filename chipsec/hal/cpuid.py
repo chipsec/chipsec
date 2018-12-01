@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ class CpuID(hal_base.HALBase):
         self.helper = cs.helper
 
     def cpuid(self, eax, ecx ):
-        if logger().VERBOSE: logger().log( "[cpuid] in: EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
+        if logger().HAL: logger().log( "[cpuid] in: EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
-        if logger().VERBOSE: logger().log( "[cpuid] out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
+        if logger().HAL: logger().log( "[cpuid] out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)

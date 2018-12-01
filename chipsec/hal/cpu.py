@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
+# (c) 2010-2018 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -64,18 +64,18 @@ class CPU(hal_base.HALBase):
 
     def read_cr(self, cpu_thread_id, cr_number ):
         value = self.helper.read_cr( cpu_thread_id, cr_number )
-        if logger().VERBOSE: logger().log( "[cpu%d] read CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
+        if logger().HAL: logger().log( "[cpu%d] read CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
         return value
 
     def write_cr(self, cpu_thread_id, cr_number, value ):
-        if logger().VERBOSE: logger().log( "[cpu%d] write CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
+        if logger().HAL: logger().log( "[cpu%d] write CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
         status = self.helper.write_cr( cpu_thread_id, cr_number, value )
         return status
 
     def cpuid(self, eax, ecx ):
-        if logger().VERBOSE: logger().log( "[cpu] CPUID in : EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
+        if logger().HAL: logger().log( "[cpu] CPUID in : EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
-        if logger().VERBOSE: logger().log( "[cpu] CPUID out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
+        if logger().HAL: logger().log( "[cpu] CPUID out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)
 
     # Using cpuid check if running under vmm control
@@ -197,7 +197,7 @@ class CPU(hal_base.HALBase):
         # Not a problem for chipsec driver but crashes RwDrv.
         if self.check_vmm() == VMM_HYPER_V: return False
         mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
-        if logger().VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
+        if logger().HAL: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
         smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
 

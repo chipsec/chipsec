@@ -83,7 +83,7 @@ class EfiHelper(Helper):
 ###############################################################################################
 
     def create(self, start_driver):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] UEFI Helper created")
         return True
 
@@ -91,17 +91,17 @@ class EfiHelper(Helper):
         # The driver is part of the modified version of edk2.
         # It is always considered as loaded.
         self.driver_loaded = True
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] UEFI Helper started/loaded")
         return True
 
     def stop(self, start_driver):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] UEFI Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[helper] UEFI Helper deleted")
         return True
 
@@ -115,7 +115,7 @@ class EfiHelper(Helper):
     #
 
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log( '[efi] helper does not support 64b PA' )
         return self._read_phys_mem( phys_address_lo, length )
           
@@ -123,7 +123,7 @@ class EfiHelper(Helper):
         return edk2.readmem( phys_address, length )
 
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log( '[efi] helper does not support 64b PA' )
         return self._write_phys_mem( phys_address_lo, length, buf )
 
@@ -143,12 +143,12 @@ class EfiHelper(Helper):
 
     def va2pa( self, va ):
         pa = va # UEFI shell has identity mapping
-        if logger().VERBOSE: logger().log( "[helper] VA (0X%016x) -> PA (0X%016x)" % (va,pa) )
+        if logger().DEBUG: logger().log( "[helper] VA (0X%016x) -> PA (0X%016x)" % (va,pa) )
         return pa
 
     def pa2va(self, pa):
         va = pa # UEFI Shell has identity mapping
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log('[helper] PA (0X%016x) -> VA (0X%016x)' % (pa, va))
         return va
 
@@ -161,7 +161,7 @@ class EfiHelper(Helper):
         return self.pa2va(physical_address)
 
     def read_mmio_reg(self, phys_address, size):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log( '[efi] helper does not support 64b PA' )
         out_buf = self._read_phys_mem( phys_address, size )
         if size == 8:
@@ -176,7 +176,7 @@ class EfiHelper(Helper):
         return value
 
     def write_mmio_reg(self, phys_address, size, value):
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log( '[efi] helper does not support 64b PA' )
         if size == 4:
             return edk2.writemem_dword( phys_address, value )
@@ -328,7 +328,7 @@ class EfiHelper(Helper):
         (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), randguid.bytes)     
         
         if status == 5:
-            if logger().VERBOSE: logger().log("size was too small increasing to %d" % size)
+            if logger().DEBUG: logger().log("size was too small increasing to %d" % size)
             name = '\0'*size
             (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), randguid.bytes)
 
@@ -337,21 +337,21 @@ class EfiHelper(Helper):
             name = name.encode('ascii','ignore')
             (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
             
-            if logger().VERBOSE: logger().log("%d: Found variable %s" % (len(variables), name))
+            if logger().DEBUG: logger().log("%d: Found variable %s" % (len(variables), name))
 
             var = (off, buf, hdr, data, str(guid), attr)
             if name in variables: 
-                if logger().VERBOSE: logger().log("WARNING: found a second instance of name %s." % name)
+                if logger().DEBUG: logger().log("WARNING: found a second instance of name %s." % name)
 
             else: variables[name] = []
             if data != "" or guid != 0 or attr != 0:
                 variables[name].append(var)
 
             (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), guid.bytes)
-            if logger().VERBOSE: logger().log("returned %s. status is %s" % (name, status_dict[status]))
+            if logger().DEBUG: logger().log("returned %s. status is %s" % (name, status_dict[status]))
 
             if status == 5:
-                if logger().VERBOSE: logger().log("size was too small increasing to %d" % size)
+                if logger().DEBUG: logger().log("size was too small increasing to %d" % size)
                 (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), guid.bytes)
         return variables        
         
