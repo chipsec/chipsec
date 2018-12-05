@@ -64,7 +64,7 @@ class memlock(chipsec.module_common.BaseModule):
                     self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
                     break
                 lt_lock = self.cs.get_register_field( 'MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK' )
-                self.logger.log( "[*]   cpu%d: MSR_LT_LOCK_MEMORY[LT_LOCK] = %x" % (tid, lt_lock) )
+                self.logger.log( "[*]   cpu{:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {:x}".format(tid, lt_lock) )
                 if 0 == lt_lock:
                     status = True
         return status
@@ -76,16 +76,16 @@ class memlock(chipsec.module_common.BaseModule):
         if not self.cs.is_register_defined( 'MSR_LT_LOCK_MEMORY' ):
             self.logger.error( "couldn't find definition of required MSRs" )
             return ModuleResult.ERROR
-        returned_result = ModuleResult.PASSED;
-        self.logger.start_test( "[X] Check MSR_LT_LOCK_MEMORY" )
+        returned_result = ModuleResult.PASSED
+        self.logger.start_test( "Check MSR_LT_LOCK_MEMORY" )
         script_pa = None
-        check_MSR_LT_LOCK_MEMORY_test_fail = self.check_MSR_LT_LOCK_MEMORY();
+        check_MSR_LT_LOCK_MEMORY_test_fail = self.check_MSR_LT_LOCK_MEMORY()
             
         if check_MSR_LT_LOCK_MEMORY_test_fail == True:
-            self.logger.log_failed_check( '[X] Check failed. MSR_LT_LOCK_MEMORY doesn\'t configurated correctly' )
+            self.logger.log_failed_check( 'Check failed. MSR_LT_LOCK_MEMORY doesn\'t configurated correctly' )
             returned_result = ModuleResult.FAILED
         else:
-            self.logger.log_passed_check('[X] Check have successfully passed')
+            self.logger.log_passed_check('Check have successfully passed')
             returned_result = ModuleResult.PASSED
        
         return returned_result
