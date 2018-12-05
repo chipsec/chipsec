@@ -61,7 +61,7 @@ class sgx_check(BaseModule):
             self.logger.log_good("SGX is supported on CPU")
         else:
             self.logger.log_information("SGX is not supported on CPU")
-            return ModuleResult.PASSED
+            return ModuleResult.NOTAPPLICABLE
 
         self.logger.log("\n[*] SGX BIOS enablement check")
         self.logger.log("[*] Verifying IA32_FEATURE_CONTROL MSR is configured")
@@ -321,6 +321,10 @@ class sgx_check(BaseModule):
                 self.logger.log_passed_check('All SGX checks passed')
             elif self.res == ModuleResult.WARNING:
                 self.logger.log_warn_check('One or more SGX checks detected a warning')
+            elif self.res == ModuleResult.SKIPPED:
+                self.logger.log_skipped_check('SGX test is being skipped')
+            elif self.res == ModuleResult.NOTAPPLICABLE:
+                self.logger.log_not_applicable_check('SGX test is being skipped')
             else:
                 self.logger.log_failed_check('One or more SGX checks failed')
             return self.res
