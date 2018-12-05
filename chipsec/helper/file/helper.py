@@ -37,14 +37,18 @@ class FileCmds:
             self.filename = filename
 
     def AddElement(self,cmd,args,ret):
+        try:
+            margs = '({})'.format(','.join(str(i) for i in args))
+        except:
+            margs = str(args)
         if self.data.has_key(str(cmd)):
-            if self.data[str(cmd)].has_key(str(args)):
+            if self.data[str(cmd)].has_key(margs):
                 #using insert opposed to append so that it creates last in first out when using pop command within getElement
-                self.data[str(cmd)][str(args)].insert(0,ret)
+                self.data[str(cmd)][margs].insert(0,ret)
             else:
-                self.data[str(cmd)][str(args)] = [ret] 
+                self.data[str(cmd)][margs] = [ret] 
         else:
-            self.data[str(cmd)] = {str(args):[ret]}
+            self.data[str(cmd)] = {margs:[ret]}
 
     def Save(self):
         js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '), encoding='latin_1')
@@ -62,7 +66,11 @@ class FileCmds:
             raise OsHelperError("Unable to open JSON file: {}".format(self.filename))
 
     def getElement(self,cmd,args):
-        margs = str(args).encode('latin_1')
+        try:
+            targs = '({})'.format(','.join(str(i) for i in args))
+        except:
+            targs = str(args)
+        margs = targs.encode('latin_1')
         if self.data.has_key(str(cmd)):
             if self.data[str(cmd)].has_key(margs):
                 return self.data[cmd][margs].pop()
