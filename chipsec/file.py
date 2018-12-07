@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@ def read_file( filename, size=0 ):
         _file = f.read()
     f.close()
 
-    if logger().VERBOSE: logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
+    if logger().DEBUG: logger().log( "[file] read %d bytes from '%.256s'" % ( len(_file), filename ) )
     return _file
 
 def write_file( filename, buffer, append=False ):
@@ -78,7 +78,7 @@ def write_file( filename, buffer, append=False ):
     f.write( buffer )
     f.close()
 
-    if logger().VERBOSE: logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
+    if logger().DEBUG: logger().log( "[file] wrote %d bytes to '%.256s'" % ( len(buffer), filename ) )
     return True
 
 

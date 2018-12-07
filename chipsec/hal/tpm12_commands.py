@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -102,7 +102,7 @@ def pcrread( command_argv ):
     try:
         Pcr = PCR[int(command_argv[0])]
     except:
-        logger().log_bad("Invalid PCR value\n")
+        if logger().HAL: logger().log_bad("Invalid PCR value\n")
         return
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_PCRREAD, Pcr, 0, 0 )
     size = Size >> 0x18
@@ -129,7 +129,7 @@ def startup( command_argv ):
     try:
         startupType = STARTUP[int(command_argv[0])]
     except:
-        logger().log_bad("Invalid startup type option value\n")
+        if logger().HAL: logger().log_bad("Invalid startup type option value\n")
         return
     Size = 0x0E000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_STARTUP, startupType, 0, 0 )

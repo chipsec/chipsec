@@ -147,7 +147,7 @@ class ChipsecUtil:
             cmds_dir = os.path.join(mydir,os.path.join("utilcmd"))
             cmds = map( self.map_modname, filter(self.f_mod, os.listdir(cmds_dir)) )
 
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log( '[CHIPSEC] Loaded command-line extensions:' )
             logger().log( '   %s' % cmds )
         module = None

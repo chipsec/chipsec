@@ -113,7 +113,7 @@ class DALHelper(Helper):
         for en_thread in range(len(self.base.threads)):
             if self.base.threads[en_thread].isenabled:
                 return en_thread
-        logger().log('[WARNING] No enabled threads found.')
+        if logger().DEBUG: logger().log('[WARNING] No enabled threads found.')
         return 0
 
 ###############################################################################################
@@ -126,7 +126,7 @@ class DALHelper(Helper):
 
     def pci_addr( self, bus, device, function, offset ):
         if (bus >= 256) or (device >= 32) or (function >= 8) or (offset >= 256):
-            logger().log('[WARNING] PCI access out of range. Use mmio functions to access PCIEXBAR.')
+            if logger().DEBUG: logger().log('[WARNING] PCI access out of range. Use mmio functions to access PCIEXBAR.')
         config_addr = self.base.threads[self.find_thread()].dport(0xCF8)
         config_addr &= 0x7f000003
         config_addr |= 0x80000000L
@@ -230,7 +230,7 @@ class DALHelper(Helper):
     def read_msr( self, thread, msr_addr ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
+            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
             thread = en_thread
         val = self.base.threads[thread].msr( msr_addr )
         edx = ( val.ToUInt64() >> 32 )
@@ -240,7 +240,7 @@ class DALHelper(Helper):
     def write_msr( self, thread, msr_addr, eax, edx ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
+            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
             thread = en_thread
         val = ( edx << 32 ) | eax
         self.base.threads[thread].msr( msr_addr, val )
@@ -249,7 +249,7 @@ class DALHelper(Helper):
     def read_cr(self, cpu_thread_id, cr_number):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
+            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             val = self.base.threads[cpu_thread_id].state.regs.cr0.value
@@ -262,14 +262,14 @@ class DALHelper(Helper):
         elif cr_number == 8:
             val = self.base.threads[cpu_thread_id].state.regs.cr8.value
         else:
-            logger().error('Selected CR%d is not supported.' % cr_number)
+            if logger().DEBUG: logger().error('Selected CR%d is not supported.' % cr_number)
             val = 0
         return val
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
+            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             self.base.threads[cpu_thread_id].state.regs.cr0 = value
@@ -282,12 +282,12 @@ class DALHelper(Helper):
         elif cr_number == 8:
             self.base.threads[cpu_thread_id].state.regs.cr8 = value
         else:
-            logger().error('Selected CR%d is not supported.' % cr_number)
+            if logger().DEBUG: logger().error('Selected CR%d is not supported.' % cr_number)
             return False
         return True
 
     def load_ucode_update( self, core_id, ucode_update_buf ):
-        logger().error( "[DAL] API load_ucode_update() is not supported yet" )
+        if logger().DEBUG: logger().error( "[DAL] API load_ucode_update() is not supported yet" )
         return False
 
     def get_threads_count( self ):
@@ -305,7 +305,7 @@ class DALHelper(Helper):
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
-        logger().error( '[DAL] API get_descriptor_table() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API get_descriptor_table() is not supported' )
         return None
 
     #
@@ -318,31 +318,31 @@ class DALHelper(Helper):
     # Placeholders for EFI Variable API
 
     def delete_EFI_variable(self, name, guid):
-        logger().error( '[DAL] API delete_EFI_variable() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API delete_EFI_variable() is not supported' )
         return None
     def native_delete_EFI_variable(self, name, guid):
-        logger().error( '[DAL] API native_delete_EFI_variable() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API native_delete_EFI_variable() is not supported' )
         return None
 
     def list_EFI_variables(self):
-        logger().error( '[DAL] API list_EFI_variables() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API list_EFI_variables() is not supported' )
         return None
     def native_list_EFI_variables(self):
-        logger().error( '[DAL] API native_list_EFI_variables() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API native_list_EFI_variables() is not supported' )
         return None
 
     def get_EFI_variable(self, name, guid, attrs=None):
-        logger().error( '[DAL] API get_EFI_variable() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API get_EFI_variable() is not supported' )
         return None
     def native_get_EFI_variable(self, name, guid, attrs=None):
-        logger().error( '[DAL] API native_get_EFI_variable() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API native_get_EFI_variable() is not supported' )
         return None
 
     def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
-        logger().error( '[DAL] API set_EFI_variable() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API set_EFI_variable() is not supported' )
         return None
     def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
-        logger().error( '[DAL] API native_set_EFI_variable() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API native_set_EFI_variable() is not supported' )
         return None
 
     #
@@ -381,52 +381,52 @@ class DALHelper(Helper):
     # Interrupts
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
-        logger().error( '[DAL] API send_sw_smi() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API send_sw_smi() is not supported' )
         return None
 
     def set_affinity( self, value ):
-        logger().error( '[DAL] API set_affinity() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API set_affinity() is not supported' )
         return 0
 
     def get_affinity( self ):
-        logger().error( '[DAL] API get_affinity() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API get_affinity() is not supported' )
         return 0
 
     #
     # ACPI tables access
     #
     def get_ACPI_SDT( self ):
-        logger().error( '[DAL] API get_ACPI_SDT() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API get_ACPI_SDT() is not supported' )
         return None, None
 
     def native_get_ACPI_table( self, table_name ):
-        logger().error( '[DAL] API native_get_ACPI_table() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API native_get_ACPI_table() is not supported' )
         return None
 
     def get_ACPI_table( self ):
-        logger().error( '[DAL] API get_ACPI_table() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API get_ACPI_table() is not supported' )
         return None
 
     #
     # IOSF Message Bus access
     #
     def msgbus_send_read_message( self, mcr, mcrx ):
-        logger().error( '[DAL] API msgbus_send_read_message() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API msgbus_send_read_message() is not supported' )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        logger().error( '[DAL] API msgbus_send_write_message() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API msgbus_send_write_message() is not supported' )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        logger().error( '[DAL] API msgbus_send_message() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API msgbus_send_message() is not supported' )
         return None
 
     #
     # File system
     #
     def get_tool_info( self, tool_type ):
-        logger().error( '[DAL] API get_tool_info() is not supported' )
+        if logger().DEBUG: logger().error( '[DAL] API get_tool_info() is not supported' )
         return None,None
 
 def get_helper():

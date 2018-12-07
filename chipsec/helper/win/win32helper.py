@@ -416,7 +416,7 @@ class Win32Helper(Helper):
             win32serviceutil.RemoveService( SERVICE_NAME )
             if logger().DEBUG: logger().log( "[helper] service '%s' deleted" % SERVICE_NAME )
         except win32service.error, (hr, fn, msg):
-            logger().warn( "RemoveService failed: %s (%d)" % (msg, hr) )
+            if logger().DEBUG: logger().warn( "RemoveService failed: %s (%d)" % (msg, hr) )
             return False
 
         return True
@@ -460,7 +460,7 @@ class Win32Helper(Helper):
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
         except pywintypes.error, (hr, fn, msg):
-            logger().error( "StopService failed: %s (%d)" % (msg, hr) )
+            if logger().DEBUG: logger().error( "StopService failed: %s (%d)" % (msg, hr) )
             return False
         finally:
             self.driver_loaded = False
@@ -469,7 +469,7 @@ class Win32Helper(Helper):
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             if logger().DEBUG: logger().log( "[helper] service '%s' stopped" % SERVICE_NAME )
         except pywintypes.error, (hr, fn, msg):
-            logger().warn( "service '%s' didn't stop: %s (%d)" % (SERVICE_NAME, msg, hr) )
+            if logger().DEBUG: logger().warn( "service '%s' didn't stop: %s (%d)" % (SERVICE_NAME, msg, hr) )
             return False
 
         return True
@@ -529,7 +529,7 @@ class Win32Helper(Helper):
             err_status = _err[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x%X)" % err_status
-                logger().error( err_msg )
+                if logger().DEBUG: logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
                 _handle_error( "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2]), err_status )
@@ -754,7 +754,7 @@ class Win32Helper(Helper):
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
-            logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
+            if logger().DEBUG: logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
             efi_var_data = None
             #raise WinError(errno.EIO,"Unable to get EFI variable")
         else:
@@ -782,7 +782,7 @@ class Win32Helper(Helper):
             status = 0 # EFI_SUCCESS
         else:
             status = kernel32.GetLastError()
-            logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
+            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
 
@@ -800,12 +800,12 @@ class Win32Helper(Helper):
             efi_vars = create_string_buffer( retlength )
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
-            logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
-            logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
+            if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
+            if logger().DEBUG: logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
-            logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
-            logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
+            if logger().DEBUG: logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
+            if logger().DEBUG: logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
             raise WinError()
         if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x%X (should be 0x20000)' % len(efi_vars) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
@@ -896,15 +896,15 @@ class Win32Helper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
         return None        
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
         return None        
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
         return None       
 
     def get_tool_path( self, tool_type ):
@@ -939,8 +939,9 @@ class Win32Helper(Helper):
           try:
             subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
           except BaseException, msg:
-            logger().error( str(msg) )
-            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
+            if logger().DEBUG: 
+                logger().error( str(msg) )
+                logger().log_bad( traceback.format_exc() )
             return None
 
         return chipsec.file.read_file( OutputFileName )

@@ -99,7 +99,7 @@ class SCRTMVersion(TcgPcrEvent):
         try:
             _str += "\n\t+ version: %s" % (self.version.decode("utf-16"))
         except:
-            logger.logger().warn("[tpm_eventlog] CRTM Version is not "
+            if logger().HAL: logger.logger().warn("[tpm_eventlog] CRTM Version is not "
                                  "a valid string")
         return _str
 

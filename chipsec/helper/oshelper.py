@@ -178,7 +178,7 @@ class OsHelper:
     def read_pci_reg( self, bus, device, function, address, size ):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            logger().warn( "Config register address is not naturally aligned" )
+            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
 
         if self.use_native_api() and hasattr(self.helper, 'native_read_pci_reg'):
             ret = self.helper.native_read_pci_reg( bus, device, function, address, size )
@@ -191,7 +191,7 @@ class OsHelper:
     def write_pci_reg( self, bus, device, function, address, value, size ):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            logger().warn( "Config register address is not naturally aligned" )
+            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
 
         if self.use_native_api() and hasattr(self.helper, 'native_write_pci_reg'):
             ret = self.helper.native_write_pci_reg( bus, device, function, address, value, size )
@@ -567,8 +567,9 @@ class OsHelper:
           try:
             subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
           except BaseException, msg:
-            logger().error( str(msg) )
-            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
+            if logger().DEBUG: 
+                logger().error( str(msg) )
+                logger().log_bad( traceback.format_exc() )
             return None
 
         ret = chipsec.file.read_file( OutputFileName )
@@ -584,7 +585,8 @@ def helper():
         try:
             _helper  = OsHelper()
         except BaseException, msg:
-            logger().error( str(msg) )
-            if logger().DEBUG: logger().log_bad(traceback.format_exc())
+            if logger().DEBUG: 
+                logger().error( str(msg) )
+                logger().log_bad(traceback.format_exc())
             raise
     return _helper

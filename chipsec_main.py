@@ -199,7 +199,7 @@ class ChipsecMain:
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
-        if logger().VERBOSE: logger().log( "[*] Path: %s" % os.path.abspath( from_path ) )
+        if logger().DEBUG: logger().log( "[*] Path: %s" % os.path.abspath( from_path ) )
         for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ) :
             if not recursive:
                 while len(subdirs) > 0:
@@ -466,7 +466,7 @@ class ChipsecMain:
 
         logger().log( " " )
 
-        if logger().VERBOSE: logger().log("[*] Running from {}".format(os.getcwd()))
+        if logger().DEBUG: logger().log("[*] Running from {}".format(os.getcwd()))
 
         modules_failed = 0
         if self._module:

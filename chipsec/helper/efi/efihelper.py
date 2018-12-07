@@ -241,11 +241,11 @@ class EfiHelper(Helper):
         return False
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
-        logger().error( "[efi] load_ucode_update is not supported yet" )
+        if logger().DEBUG: logger().error( "[efi] load_ucode_update is not supported yet" )
         return 0
 
     def get_threads_count ( self ):
-        logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
+        if logger().DEBUG: logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
         return 0
         
@@ -254,7 +254,7 @@ class EfiHelper(Helper):
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
-        logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
+        if logger().DEBUG: logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
         return 0
 
     #
@@ -360,7 +360,7 @@ class EfiHelper(Helper):
     #
 
     def get_ACPI_SDT( self ):
-        logger().error( "[efi] ACPI is not supported yet" )
+        if logger().DEBUG: logger().error( "[efi] ACPI is not supported yet" )
         return 0        
 
     #
@@ -368,15 +368,15 @@ class EfiHelper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        logger().error( "[efi] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
         return None        
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        logger().error( "[efi] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
         return None        
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        logger().error( "[efi] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
         return None        
     
         
