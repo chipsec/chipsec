@@ -366,7 +366,7 @@ class LinuxHelper(Helper):
             os.lseek(self.dev_mem, addr, os.SEEK_SET)
             written = os.write(self.dev_mem, newval)
             if written != length:
-                logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, length))
+                if logger().DEBUG: logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, length))
 
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         addr = (phys_address_hi << 32) | phys_address_lo
@@ -471,7 +471,7 @@ class LinuxHelper(Helper):
             else:
                 value = struct.unpack("3"+self._pack, out_buf)[2] & 0xffffffff
         except:
-            logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
+            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
 
         return value
 
@@ -489,7 +489,7 @@ class LinuxHelper(Helper):
             os.lseek(self.dev_port, addr, os.SEEK_SET)
             written = os.write(self.dev_port, newval)
             if written != size:
-                logger().error("Cannot write %s to port %x (wrote %d of %d)" % (newval, io_port, written, size))
+                if logger().DEBUG: logger().error("Cannot write %s to port %x (wrote %d of %d)" % (newval, io_port, written, size))
 
     def read_cr(self, cpu_thread_id, cr_number):
         self.set_affinity(cpu_thread_id)
@@ -530,7 +530,7 @@ class LinuxHelper(Helper):
             buf = struct.pack( "2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
             if written != 8:
-                logger().error("Cannot write %8X to MSR %x" % (buf, msr_addr))
+                if logger().DEBUG: logger().error("Cannot write %8X to MSR %x" % (buf, msr_addr))
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
         self.set_affinity(cpu_thread_id)
@@ -655,7 +655,7 @@ class LinuxHelper(Helper):
             return 1
         else:
             AffinityString = " Get_affinity errno::%s"%( errno.value )
-            logger().error( AffinityString )
+            if logger().DEBUG: logger().error( AffinityString )
             return None
 
     def set_affinity(self, thread_id):
@@ -667,7 +667,7 @@ class LinuxHelper(Helper):
             return thread_id
         else:
             AffinityString= " Set_affinity errno::%s"%(errno.value)
-            logger().error( AffinityString )
+            if logger().DEBUG: logger().error( AffinityString )
             return None
 
 
@@ -744,16 +744,16 @@ class LinuxHelper(Helper):
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
             except IOError:
-                logger().error("IOError IOCTL GetUEFIvar\n")
+                if logger().DEBUG: logger().error("IOError IOCTL GetUEFIvar\n")
                 return (off, buf, hdr, None, guid, attr)
             new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (new_size > data_size):
-            logger().error( "Incorrect size returned from driver" )
+            if logger().DEBUG: logger().error( "Incorrect size returned from driver" )
             return (off, buf, hdr, None, guid, attr)
 
         if (status > 0):
-            logger().error( "Reading variable (GET_EFIVAR) did not succeed: %s" % status_dict[status])
+            if logger().DEBUG: logger().error( "Reading variable (GET_EFIVAR) did not succeed: %s" % status_dict[status])
             data = ""
             guid = 0
             attr = 0
@@ -781,7 +781,7 @@ class LinuxHelper(Helper):
             else:
                 return None
         except Exception:
-            logger().error('Failed to read /sys/firmware/efi/[vars|efivars]. Folder does not exist')
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/[vars|efivars]. Folder does not exist')
             return None
         variables = dict()
         for v in varlist:
@@ -822,7 +822,7 @@ class LinuxHelper(Helper):
         size, status = struct.unpack( "2I", buffer[:8])
 
         if (status != 0):
-            logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
+            if logger().DEBUG: logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
         else:
             os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
         return status
@@ -865,7 +865,7 @@ class LinuxHelper(Helper):
             f.close()
 
         except Exception, err:
-            logger().error('Failed to read files under /sys/firmware/efi/vars/'+filename)
+            if logger().DEBUG: logger().error('Failed to read files under /sys/firmware/efi/vars/'+filename)
             data = ""
             guid = 0
             attr = 0
@@ -878,7 +878,7 @@ class LinuxHelper(Helper):
         try:
             varlist = os.listdir('/sys/firmware/efi/vars')
         except Exception:
-            logger().error('Failed to read /sys/firmware/efi/vars. Folder does not exist')
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/vars. Folder does not exist')
         variables = dict()
         for v in varlist:
             name = v[:-37]
@@ -912,7 +912,7 @@ class LinuxHelper(Helper):
                     f.write(value)
                     ret = 0 # EFI_SUCCESS
                 except Exception, err:
-                    logger().error('Failed to write EFI variable. %s' % err)
+                    if logger().DEBUG: logger().error('Failed to write EFI variable. %s' % err)
         return ret
 
 
@@ -934,7 +934,7 @@ class LinuxHelper(Helper):
             f.close()
 
         except Exception, err:
-            logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
             guid = 0
             attr = 0
@@ -948,7 +948,7 @@ class LinuxHelper(Helper):
         try:
             varlist = os.listdir('/sys/firmware/efi/efivars')
         except Exception:
-            logger().error('Failed to read /sys/firmware/efi/efivars. Folder does not exist')
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars. Folder does not exist')
             return None
         variables = dict()
         for v in varlist:
@@ -972,7 +972,7 @@ class LinuxHelper(Helper):
             f.close()
 
         except Exception, err:
-            logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
 
         finally:
@@ -989,7 +989,8 @@ class LinuxHelper(Helper):
             try:
                 if os.path.isfile(path):
                     # Variable already exists
-                    if attrs is not None: logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
+                    if attrs is not None: 
+                        if logger().DEBUG: logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
                     f = open(path, 'r')
                     sattrs = f.read(4)
                 else:
@@ -1000,13 +1001,13 @@ class LinuxHelper(Helper):
                 f.close()
                 ret = 0 # EFI_SUCCESS
             except Exception, err:
-                logger().error('Failed to write EFI variable. %s' % err)
+                if logger().DEBUG: logger().error('Failed to write EFI variable. %s' % err)
         else:
             try:
                 os.remove(path)
                 ret = 0 # EFI_SUCCESS
             except Exception, err:
-                logger().error('Failed to delete EFI variable. %s' % err)
+                if logger().DEBUG: logger().error('Failed to delete EFI variable. %s' % err)
 
         return ret
 
@@ -1094,10 +1095,10 @@ class LinuxHelper(Helper):
                     if data is not None:
                         chipsec.file.write_file( OutputFileName, data )
                     else:
-                        logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                        if logger().DEBUG: logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
                         return None
                 else:
-                    logger().error( "Cannot decompress file (%s) with Data size (%d) " % ( CompressedFileName, len(CompressedFileData) ) )
+                    if logger().DEBUG: logger().error( "Cannot decompress file (%s) with Data size (%d) " % ( CompressedFileName, len(CompressedFileData) ) )
                     return None
         return chipsec.file.read_file( OutputFileName )
 

@@ -471,7 +471,7 @@ class ACPI(hal_base.HALBase):
         if len( self.tableList ) == 0:
             logger().error("Couldn't get a list of ACPI tables")
         else:
-            logger().log( "[acpi] Found the following ACPI tables:" )
+            if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):
                 logger().log( " - %s: %s" % (tableName, ", ".join([("0x%016X" % addr) for addr in self.tableList[tableName]])) )
 

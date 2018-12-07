@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -211,7 +211,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
 
         requestedUse = False
@@ -331,7 +331,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
          
         access_address = self.TPM_BASE | Locality| TPM_ACCESS 
@@ -356,7 +356,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
          
         sts_address = self.TPM_BASE | Locality| TPM_STS 
@@ -382,7 +382,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
          
         didvid_address = self.TPM_BASE | Locality| TPM_DIDVID 
@@ -401,7 +401,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
          
         rid_address = self.TPM_BASE | Locality| TPM_RID 
@@ -419,7 +419,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
          
         intcap_address = self.TPM_BASE | Locality| TPM_INTCAP
@@ -448,7 +448,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            logger().log_bad("Invalid locality value\n")
+            if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
          
         intenable_address = self.TPM_BASE | Locality| TPM_INTENABLE

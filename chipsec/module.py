@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -54,10 +54,10 @@ class Module():
                 if _importlib:
                     self.module = importlib.import_module( self.name )
                 loaded = True
-                if self.logger.VERBOSE: self.logger.log_good( "imported: %s" % self.name )
+                if self.logger.DEBUG: self.logger.log_good( "imported: %s" % self.name )
             except BaseException, msg:
                 self.logger.error( "Exception occurred during import of %s: '%s'" % (self.name, str(msg)) )
-                if self.logger.VERBOSE: self.logger.log_bad(traceback.format_exc())
+                if self.logger.DEBUG: self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
 

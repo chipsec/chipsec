@@ -522,7 +522,7 @@ class Chipset:
         for root, subdirs, files in os.walk(_cfg_path):
             _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
         _cfg_files.sort()
-        if logger().VERBOSE:
+        if logger().DEBUG:
             logger().log("[*] Configuration Files:")
             for _xml in _cfg_files:
                 logger().log("[*] - {}".format(_xml))
@@ -552,7 +552,7 @@ class Chipset:
         loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
         # Load all configuration files for this platform.
-        if logger().VERBOSE: logger().log("[*] Loading Configuration Files:")
+        if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
             self.init_cfg_xml(_xml, self.code, self.pch_code)
         self.Cfg.XML_CONFIG_LOADED = True
@@ -561,74 +561,74 @@ class Chipset:
     def init_cfg_xml(self, fxml, code, pch_code):
         import xml.etree.ElementTree as ET
         if not os.path.exists( fxml ): return
-        if logger().VERBOSE: logger().log( "[*] looking for platform config in '%s'.." % fxml )
+        if logger().DEBUG: logger().log( "[*] looking for platform config in '%s'.." % fxml )
         tree = ET.parse( fxml )
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
-                if logger().HAL: logger().log( "[*] loading common platform config from '%s'.." % fxml )
+                if logger().DEBUG: logger().log( "[*] loading common platform config from '%s'.." % fxml )
             elif code == _cfg.attrib['platform'].lower():
-                if logger().HAL: logger().log( "[*] loading '%s' platform config from '%s'.." % (code,fxml) )
+                if logger().DEBUG: logger().log( "[*] loading '%s' platform config from '%s'.." % (code,fxml) )
             elif pch_code == _cfg.attrib['platform'].lower():
-                if logger().HAL: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code,fxml))
+                if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code,fxml))
             else: continue
 
-            if logger().VERBOSE: logger().log( "[*] loading integrated devices/controllers.." )
+            if logger().DEBUG: logger().log( "[*] loading integrated devices/controllers.." )
             for _pci in _cfg.iter('pci'):
                 for _device in _pci.iter('device'):
                     _name = _device.attrib['name']
                     del _device.attrib['name']
                     if 'undef' in _device.attrib:
                         if _name in self.Cfg.CONFIG_PCI:
-                            if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _device.attrib['undef']))
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _device.attrib['undef']))
                             self.Cfg.CONFIG_PCI.pop(_name, None)
                         continue
                     self.Cfg.CONFIG_PCI[ _name ] = _device.attrib
-                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _device.attrib) )
-            if logger().VERBOSE: logger().log( "[*] loading MMIO BARs.." )
+                    if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _device.attrib) )
+            if logger().DEBUG: logger().log( "[*] loading MMIO BARs.." )
             for _mmio in _cfg.iter('mmio'):
                 for _bar in _mmio.iter('bar'):
                     _name = _bar.attrib['name']
                     del _bar.attrib['name']
                     if 'undef' in _bar.attrib:
                         if _name in self.Cfg.MMIO_BARS:
-                            if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
                             self.Cfg.MMIO_BARS.pop(_name, None)
                         continue
                     self.Cfg.MMIO_BARS[ _name ] = _bar.attrib
-                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _bar.attrib) )
-            if logger().VERBOSE: logger().log( "[*] loading I/O BARs.." )
+                    if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _bar.attrib) )
+            if logger().DEBUG: logger().log( "[*] loading I/O BARs.." )
             for _io in _cfg.iter('io'):
                 for _bar in _io.iter('bar'):
                     _name = _bar.attrib['name']
                     del _bar.attrib['name']
                     if 'undef' in _bar.attrib:
                         if _name in self.Cfg.IO_BARS:
-                            if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
                             self.Cfg.IO_BARS.pop(_name, None)
                         continue
                     self.Cfg.IO_BARS[ _name ] = _bar.attrib
-                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _bar.attrib) )
-            if logger().VERBOSE: logger().log( "[*] loading memory ranges.." )
+                    if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _bar.attrib) )
+            if logger().DEBUG: logger().log( "[*] loading memory ranges.." )
             for _memory in _cfg.iter('memory'):
                 for _range in _memory.iter('range'):
                     _name = _range.attrib['name']
                     del _range.attrib['name']
                     if 'undef' in _range.attrib:
                         if _name in self.Cfg.MEMORY_RANGES:
-                            if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _range.attrib['undef']))
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _range.attrib['undef']))
                             self.Cfg.MEMORY_RANGES.pop(_name, None)
                         continue
                     self.Cfg.MEMORY_RANGES[ _name ] = _range.attrib
-                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _range.attrib) )
-            if logger().VERBOSE: logger().log( "[*] loading configuration registers.." )
+                    if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _range.attrib) )
+            if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
             for _registers in _cfg.iter('registers'):
                 for _register in _registers.iter('register'):
                     _name = _register.attrib['name']
                     del _register.attrib['name']
                     if 'undef' in _register.attrib:
                         if _name in self.Cfg.REGISTERS:
-                            if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _register.attrib['undef']))
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _register.attrib['undef']))
                             self.Cfg.REGISTERS.pop(_name, None)
                         continue
                     if 'size' not in _register.attrib: _register.attrib['size'] = "0x4"
@@ -642,19 +642,19 @@ class Chipset:
                             reg_fields[ _field_name ] = _field.attrib
                         _register.attrib['FIELDS'] = reg_fields
                     self.Cfg.REGISTERS[ _name ] = _register.attrib
-                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _register.attrib) )
-            if logger().VERBOSE: logger().log( "[*] loading controls.." )
+                    if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _register.attrib) )
+            if logger().DEBUG: logger().log( "[*] loading controls.." )
             for _controls in _cfg.iter('controls'):
                 for _control in _controls.iter('control'):
                     _name = _control.attrib['name']
                     del _control.attrib['name']
                     if 'undef' in _control.attrib:
                         if _name in self.Cfg.CONTROLS:
-                            if logger().VERBOSE: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
                             self.Cfg.CONTROLS.pop(_name, None)
                         continue
                     self.Cfg.CONTROLS[ _name ] = _control.attrib
-                    if logger().VERBOSE: logger().log( "    + %-16s: %s" % (_name, _control.attrib) )
+                    if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _control.attrib) )
 
     #
     # Load chipsec/cfg/<code>.py configuration file for platform <code>
@@ -667,7 +667,7 @@ class Chipset:
                 logger().log_good( "imported platform specific configuration: chipsec.cfg.%s" % self.code )
                 self.Cfg = getattr( module, self.code )()
             except ImportError, msg:
-                if logger().VERBOSE: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
+                if logger().DEBUG: logger().log( "[*] Couldn't import chipsec.cfg.%s\n%s" % ( self.code, str(msg) ) )
 
         #
         # Initialize platform configuration from XML files
@@ -675,7 +675,7 @@ class Chipset:
         try:
             self.init_xml_configuration()
         except:
-            if logger().VERBOSE: logger().log_bad(traceback.format_exc())
+            if logger().DEBUG: logger().log_bad(traceback.format_exc())
             pass
 
 
@@ -730,7 +730,7 @@ class Chipset:
         try:
             return (self.Cfg.REGISTERS[reg_name] is not None)
         except KeyError:
-            #if logger().VERBOSE: logger().error( "'%s' register definition not found in XML config" % reg_name)
+            #if logger().DEBUG: logger().error( "'%s' register definition not found in XML config" % reg_name)
             #raise RegisterNotFoundError, ('RegisterNotFound: %s' % reg_name)
             return False
 

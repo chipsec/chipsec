@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@ class IOBAR(hal_base.HALBase):
         try:
             return (self.cs.Cfg.IO_BARS[ bar_name ] is not None)
         except KeyError:
-            logger().error( "'%s' I/O BAR definition not found in XML config" % bar_name)
+            if logger().HAL: logger().error( "'%s' I/O BAR definition not found in XML config" % bar_name)
             #raise IOBARNotFoundError, ('IOBARNotFound: %s' % bar_name)
             return False
 

@@ -179,7 +179,7 @@ class OSXHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_RDPCI, data)
         except IOError:
-            logger().error("IOError")
+            if logger().DEBUG: logger().error("IOError")
             return None
         x = struct.unpack(_pci_msg_t_fmt, ret)
         return x[5]
@@ -190,7 +190,7 @@ class OSXHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_WRPCI, data)
         except IOError:
-            logger().error("IOError")
+            if logger().DEBUG: logger().error("IOError")
 
     def read_mmio_reg(self, phys_address, size):
         data = struct.pack(_mmio_msg_t_fmt, phys_address, 0, size)
@@ -228,7 +228,7 @@ class OSXHelper(Helper):
             if data is not None:
                 chipsec.file.write_file( OutputFileName, data )
             else:
-                logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
+                if logger().DEBUG: logger().error( "Cannot decompress file (%s)" % ( CompressedFileName ) )
                 return None
         return chipsec.file.read_file( OutputFileName )
 
@@ -289,7 +289,7 @@ class OSXHelper(Helper):
             else:
                 value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffffffff
         except:
-            logger().error("DeviceIoControl did not return value of proper size %x (value = '%s')" %(size,out_buf))
+            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size %x (value = '%s')" %(size,out_buf))
         return value
 
     def write_io_port(self, io_port, value, size):
