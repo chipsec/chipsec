@@ -199,7 +199,7 @@
     <register name="FDOD" type="mmio" bar="SPIBAR" offset="0xB8" size="4" desc="Flash Descriptor Observability Data Register">
       <field name="FDSD" bit="0"  size="32" desc="Flash Descriptor Section Data"/>
     </register>
-    <register name="VSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
+    <register name="LVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
       <field name="LWG"   bit="2"  size="1" desc="Lower Write Granularity"/>
       <field name="LWSR"  bit="3"  size="1" desc="Lower Write Status Required"/>
       <field name="LWEWS" bit="4"  size="1" desc="Write Enable on Write Status"/>
