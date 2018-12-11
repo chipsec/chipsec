@@ -200,12 +200,35 @@
       <field name="FDSD" bit="0"  size="32" desc="Flash Descriptor Section Data"/>
     </register>
     <register name="LVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
-      <field name="LWG"   bit="2"  size="1" desc="Lower Write Granularity"/>
-      <field name="LWSR"  bit="3"  size="1" desc="Lower Write Status Required"/>
-      <field name="LWEWS" bit="4"  size="1" desc="Write Enable on Write Status"/>
-      <field name="LEO"   bit="8"  size="8" desc="Lower Erase Opcode"/>
-      <field name="VCL"   bit="30" size="1" desc="Vendor Component Lock"/>
-      <field name="CPPTV" bit="31" size="1" desc="Component Property Parameter Table Valid"/>
+      <field name="WG"                 bit="2"  size="1" desc="Write Granularity"/>
+      <field name="WSR"                bit="3"  size="1" desc="Write Status Required"/>
+      <field name="WEWS"               bit="4"  size="1" desc="Write Enable on Write Status"/>
+      <field name="QER"                bit="5"  size="3" desc="Quad Enable Requirements"/>
+      <field name="EO_4k"              bit="8"  size="8" desc="4k Erase Opcode"/>
+      <field name="EO_64k"             bit="16" size="8" desc="64k Erase Opcode"/>
+      <field name="SOFT_RST_SUP"       bit="24" size="1" desc="Soft Reset Supported"/>
+      <field name="SUSPEND_RESUME_SUP" bit="25" size="1" desc="Suspend/Resume Supported"/>
+      <field name="DEEP_PWRDN_SUP"     bit="26" size="1" desc="Deep Powerdown Supported"/>
+      <field name="RPMC_SUP"           bit="27" size="1" desc="RPMC Supported"/>
+      <field name="EO_4k_VALID"        bit="28" size="1" desc="4k Erase Valid"/>
+      <field name="EO_64k_VALID"       bit="29" size="1" desc="64k Erase Valid"/>
+      <field name="VCL"                bit="30" size="1" desc="Vendor Component Lock"/>
+      <field name="CPPTV"              bit="31" size="1" desc="Component Property Parameter Table Valid"/>
+    </register>
+    <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
+      <field name="WG"                 bit="2"  size="1" desc="Write Granularity"/>
+      <field name="WSR"                bit="3"  size="1" desc="Write Status Required"/>
+      <field name="WEWS"               bit="4"  size="1" desc="Write Enable on Write Status"/>
+      <field name="QER"                bit="5"  size="3" desc="Quad Enable Requirements"/>
+      <field name="EO_4k"              bit="8"  size="8" desc="4k Erase Opcode"/>
+      <field name="EO_64k"             bit="16" size="8" desc="64k Erase Opcode"/>
+      <field name="SOFT_RST_SUP"       bit="24" size="1" desc="Soft Reset Supported"/>
+      <field name="SUSPEND_RESUME_SUP" bit="25" size="1" desc="Suspend/Resume Supported"/>
+      <field name="DEEP_PWRDN_SUP"     bit="26" size="1" desc="Deep Powerdown Supported"/>
+      <field name="RPMC_SUP"           bit="27" size="1" desc="RPMC Supported"/>
+      <field name="EO_4k_VALID"        bit="28" size="1" desc="4k Erase Valid"/>
+      <field name="EO_64k_VALID"       bit="29" size="1" desc="64k Erase Valid"/>
+      <field name="CPPTV"              bit="31" size="1" desc="Component Property Parameter Table Valid"/>
     </register>
 
     <!-- PCH RTC registers -->
