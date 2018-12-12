@@ -239,7 +239,7 @@
       <field name="VCL"                bit="30" size="1" desc="Vendor Component Lock"/>
       <field name="CPPTV"              bit="31" size="1" desc="Component Property Parameter Table Valid"/>
     </register>
-    <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
+    <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC8" size="4" desc="Vendor Specific Component Capabilities">
       <field name="WG"                 bit="2"  size="1" desc="Write Granularity"/>
       <field name="WSR"                bit="3"  size="1" desc="Write Status Required"/>
       <field name="WEWS"               bit="4"  size="1" desc="Write Enable on Write Status"/>
