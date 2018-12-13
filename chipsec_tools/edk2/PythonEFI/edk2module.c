@@ -47,7 +47,7 @@ PyDoc_STRVAR(edk2__doc__,
   // -- Access to CPU MSRs
   extern void _rdmsr( unsigned int msr_num, unsigned int* msr_lo, unsigned int* msr_hi );
   extern void _wrmsr( unsigned int msr_num, unsigned int  msr_hi, unsigned int  msr_lo );
-  extern void _swsmi( unsigned int smi_code_data, unsigned int rax_value, unsigned int rbx_value, unsigned int rcx_value, unsigned int rdx_value, unsigned int rsi_value, unsigned int rdi_value );
+  extern void _swsmi( unsigned long long smi_code_data, unsigned long long rax_value, unsigned long long rbx_value, unsigned long long rcx_value, unsigned long long rdx_value, unsigned long long rsi_value, unsigned long long rdi_value );
   extern unsigned int  AsmCpuidEx( unsigned int  RegisterInEax, unsigned int  RegisterInEcx, unsigned int* RegisterOutEax, unsigned int* RegisterOutEbx, unsigned int* RegisterOutEcx, unsigned int* RegisterOutEdx);
   // -- Access to PCI CFG space
   extern void WritePCIByte          ( unsigned int pci_reg, unsigned short cfg_data_port, unsigned char  byte_value );
@@ -6920,8 +6920,8 @@ Triggering Software SMI");
 static PyObject *
 posix_swsmi(PyObject *self, PyObject *args)
 {
-  unsigned int smi_code_data, rax_value, rbx_value, rcx_value, rdx_value, rsi_value, rdi_value;
-  if (!PyArg_Parse(args, "(IIIIIII)", &smi_code_data, &rax_value, &rbx_value, &rcx_value, &rdx_value, &rsi_value, &rdi_value))
+  unsigned long long smi_code_data, rax_value, rbx_value, rcx_value, rdx_value, rsi_value, rdi_value;
+  if (!PyArg_Parse(args, "(KKKKKKK)", &smi_code_data, &rax_value, &rbx_value, &rcx_value, &rdx_value, &rsi_value, &rdi_value))
     return NULL;
   Py_BEGIN_ALLOW_THREADS
   _swsmi( smi_code_data, rax_value, rbx_value, rcx_value, rdx_value, rsi_value, rdi_value );
