@@ -1,7 +1,6 @@
-#!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-#
+#Copyright (c) 2018, Intel Corporation
+# 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,15 +18,17 @@
 #chipsec@intel.com
 #
 
-import os, platform
-import chipsec.file
 
-from chipsec.helper.msrsafe import *
-#from chipsec.helper.dal import *
-#from chipsec.helper.efi import *
-#from chipsec.helper.linux import *
-#from chipsec.helper.osx import *
-#from chipsec.helper.win import *
-# WARNING: Use of RWE driver has known issues. Experimental use only.
-#from chipsec.helper.rwe import *
 
+
+##################################################################################
+#
+# List of all extension modules: add your module name here
+#
+##################################################################################
+
+import os
+if "msr_whitelist" in os.listdir("/dev/cpu"):
+    __all__ = [ "helper" ]
+else:
+    __all__ = [ ]
