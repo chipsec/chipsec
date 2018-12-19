@@ -175,7 +175,7 @@ class UEFICommand(BaseCommand):
 
             _input_var = self.argv[3]
             if ('-' in _input_var):
-                self.logger.log( "[*] Searching for UEFI variable with GUID {}{}{}..".format("{",_input_var,"}") )
+                self.logger.log( "[*] Searching for UEFI variable with GUID {{{}}}..".format(_input_var) )
                 for name in _vars:
                     n = 0
                     for (off, buf, hdr, data, guid, attrs) in _vars[name]:
