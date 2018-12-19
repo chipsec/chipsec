@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2017, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -20,8 +20,9 @@
 #
 
 import platform, os
-
+from chipsec.helper.oshelper import avail_helpers
 if "windows" == platform.system().lower():
     __all__ = [ "rwehelper" ]
+    avail_helpers.append("rwehelper")
 else:
     __all__ = [ ]
