@@ -238,13 +238,13 @@ class VARIABLE_STORE_HEADER( namedtuple('VARIABLE_STORE_HEADER', 'guid0 guid1 gu
         return """
 EFI Variable Store
 -----------------------------
-Signature : {}{:08X}-{:04X}-{:04X}-{:4}-{:6}{}
+Signature : {{{:08X}-{:04X}-{:04X}-{:4}-{:6}}}
 Size      : 0x{:08X} bytes
 Format    : 0x{:02X}
 State     : 0x{:02X}
 Reserved  : 0x{:04X}
 Reserved1 : 0x{:08X}
-""".format( "{",self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), "}", self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
 #
 # Variable data start flag.
@@ -1271,7 +1271,7 @@ class op_io_pci_mem():
         if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
         if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x{}'.format( '{}{:d}X{}'.format('{:',scrpt_width_sizes[self.width]*2,'}') )
+            fmt = '0x{}'.format( '{{{:d}X}}'.format(scrpt_width_sizes[self.width]*2) )
             str_r += "  Values : {}\n".format("  ".join( [fmt.format(v) for v in self.values] ))
         elif self.buffer is not None:
             str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))
@@ -1805,7 +1805,7 @@ class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
         self.VendorTables = {}
     def __str__(self):
-        return ( 'Vendor Tables:\n{}'.format(''.join( ['{}{}{} : 0x{:016X}\n'.format('{',vt,'}',self.VendorTables[vt]) for vt in self.VendorTables])) )
+        return ( 'Vendor Tables:\n{}'.format(''.join( ['{{{}}} : 0x{:016X}\n'.format(vt,self.VendorTables[vt]) for vt in self.VendorTables])) )
 
 
 # #################################################################################################
