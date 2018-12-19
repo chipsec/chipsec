@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,7 +28,9 @@
 ##################################################################################
 
 import sys
+from chipsec.helper.oshelper import avail_helpers
 if sys.platform.startswith('uefi') or sys.platform.startswith('EFI'):
     __all__ = [ "efihelper" ]
+    avail_helpers.append("efihelper")
 else:
     __all__ = [ ]
