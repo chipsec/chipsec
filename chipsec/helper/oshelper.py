@@ -51,6 +51,8 @@ try:
 except ImportError:
     _importlib = False
 
+avail_helpers = []
+
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
     return ( x.find('__init__') == -1 and ZIP_HELPER_RE.match(x) )
@@ -76,7 +78,7 @@ class UnimplementedNativeAPIError (UnimplementedAPIError):
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
 
-import chipsec.helper.helpers
+import chipsec.helper.helpers as chiphelpers
 
 ## OS Helper
 #
@@ -97,9 +99,9 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        for name, cls in Helper.registry:
+        for helper in avail_helpers:
             try:
-                self.helper = cls()
+                self.helper = getattr(chiphelpers,helper).get_helper()
                 break
             except OsHelperError:
                 raise
