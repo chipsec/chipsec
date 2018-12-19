@@ -192,12 +192,12 @@ class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attribute
         return """
 Header (Windows)
 ----------------
-VendorGuid= {}{:08X}-{:04X}-{:04X}-{:4}-{:6}{}
+VendorGuid= {{{:08X}-{:04X}-{:04X}-{:4}-{:6}}}
 Size      = 0x{:08X}
 DataOffset= 0x{:08X}
 DataSize  = 0x{:08X}
 Attributes= 0x{:08X}
-""".format( '{',self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), '}', self.Size, self.DataOffset, self.DataSize, self.Attributes )
+""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
 
 def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
     start = 0
@@ -765,13 +765,13 @@ class RweHelper(Helper):
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         if attrs is None:
             if self.GetFirmwareEnvironmentVariable is not None:
-                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='{}', GUID='{}' )..".format(name, "{}".format('{'+guid+'}')) )
-                length = self.GetFirmwareEnvironmentVariable( name, "{}".format('{'+guid+'}'), efi_var, EFI_VAR_MAX_BUFFER_SIZE )
+                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='{}', GUID='{}' )..".format(name, "{{{}}}".format(guid)) )
+                length = self.GetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE )
         else:
             if self.GetFirmwareEnvironmentVariableEx is not None:
                 pattrs = c_int(attrs)
-                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', attrs = 0x{:X} )..".format(name, "{}".format('{'+guid+'}'), attrs) )
-                length = self.GetFirmwareEnvironmentVariableEx( name, "{}".format('{'+guid+'}'), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
+                if logger().HAL: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', attrs = 0x{:X} )..".format(name, "{{{}}}".format(guid), attrs) )
+                length = self.GetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
             logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
@@ -792,12 +792,12 @@ class RweHelper(Helper):
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
-                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='{}', GUID='{}', length=0x{:X} )..".format(name, "{}".format('{'+guid+'}'), var_len) )
-                ntsts = self.SetFirmwareEnvironmentVariable( name, "{}".format('{'+guid+'}'), var, var_len )
+                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='{}', GUID='{}', length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len) )
+                ntsts = self.SetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), var, var_len )
         else:
             if self.SetFirmwareEnvironmentVariableEx is not None:
-                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, length=0x{:X} )..".format(name, "{}".format('{'+guid+'}'), var_len, attrs) )
-                ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{}".format('{'+guid+'}'), var, var_len, attrs )
+                if logger().HAL: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len, attrs) )
+                ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), var, var_len, attrs )
         if 0 != ntsts:
             status = 0 # EFI_SUCCESS
         else:
