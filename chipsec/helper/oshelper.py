@@ -49,6 +49,7 @@ try:
 except ImportError:
     _importlib = False
 
+avail_helpers = []
 
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
@@ -77,20 +78,13 @@ def get_tools_path():
 
 # Base class for the helpers
 class Helper(object):
-    class __metaclass__(type):
-        def __init__(cls, name, bases, attrs):
-            if not hasattr(cls, 'registry'):
-                cls.registry = []
-            else:
-                cls.registry.append((name, cls))
-
     def __init__(self):
         self.driver_loaded = False
 
     def use_native_api(self):
         return (not self.driver_loaded)
 
-import chipsec.helper.helpers
+import chipsec.helper.helpers as chiphelpers
 
 ## OS Helper
 #
@@ -113,9 +107,9 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        for name, cls in Helper.registry:
+        for helper in avail_helpers:
             try:
-                self.helper = cls()
+                self.helper = getattr(chiphelpers,helper).get_helper()
                 break
             except OsHelperError:
                 raise
