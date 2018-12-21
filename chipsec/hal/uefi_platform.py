@@ -685,10 +685,6 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype):
             efi_var_name = "<not defined>"
 
             end_var_offset = start + hdr_size + name_size + data_size
-            # deal with different alignments (1-8)
-            next_var_offset = nvram_buf.find( VARIABLE_SIGNATURE_VSS, end_var_offset, end_var_offset + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
-            if (next_var_offset == -1) or (next_var_offset > nvsize):
-                break
             efi_var_buf  = nvram_buf[ start : end_var_offset ]
 
             name_offset = hdr_size
@@ -703,7 +699,12 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype):
                 variables[efi_var_name] = []
             #                                off,   buf,         hdr,         data,         guid, attrs
             variables[efi_var_name].append( (start, efi_var_buf, efi_var_hdr, efi_var_data, guid, efi_var_hdr.Attributes) )
-
+            
+            # deal with different alignments (1-8)
+            next_var_offset = nvram_buf.find( VARIABLE_SIGNATURE_VSS, end_var_offset, end_var_offset + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
+            if (next_var_offset == -1) or (next_var_offset > nvsize):
+                break
+                
         if start >= next_var_offset: break
         start = next_var_offset
 
