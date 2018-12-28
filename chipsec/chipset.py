@@ -292,7 +292,7 @@ pch_dictionary = {
 0xA30E : {'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'},
 
 # C600 and X79 series PCH
-0x1D41 : {'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X97 series PCH'},
+0x1D41 : {'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X79 series PCH'},
 
 # C610 and X99 series PCH
 0x8D40 : {'name' : 'C610',   'id' : PCH_ID_C61x, 'code' : PCH_CODE_C61x, 'longname' : 'Intel Wellsburg (C610/X99 series) PCH'},
