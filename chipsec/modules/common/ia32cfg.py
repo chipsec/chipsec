@@ -37,9 +37,6 @@ class ia32cfg(BaseModule):
         self.res = ModuleResult.PASSED
 
     def is_supported(self):
-        # @TODO: currently, this module cannot run on macOS
-        if self.cs.helper.is_macos(): return False
-
         return (not self.cs.is_atom())
 
     def check_ia32feature_control(self):
