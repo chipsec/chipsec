@@ -71,7 +71,9 @@ class debugenabled(chipsec.module_common.BaseModule):
     def is_supported(self):
         (eax, ebx, ecx, edx) = self.cs.helper.cpuid( 1, 0 )
         supported = (ecx & CPUID_IA32_DEBUG_INTERFACE_SUPPORTED_BIT11_MASK == CPUID_IA32_DEBUG_INTERFACE_SUPPORTED_BIT11_MASK)
-        if not supported: self.logger.log_skipped_check('CPU Debug features are not supported on this platform')
+        if not supported:
+            self.logger.log_skipped_check('CPU Debug features are not supported on this platform')
+            self.res = ModuleResult.NOTAPPLICABLE
         return supported
 
 

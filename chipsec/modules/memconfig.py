@@ -60,7 +60,10 @@ class memconfig(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return self.cs.is_core()
+        if self.cs.is_core():
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_memmap_locks(self):
         self.logger.start_test( "Host Bridge Memory Map Locks" )

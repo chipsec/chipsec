@@ -37,7 +37,10 @@ class spi_lock(BaseModule):
         super(spi_lock, self).__init__()
 
     def is_supported(self):
-        return self.cs.is_control_defined('FlashLockDown')
+        if self.cs.is_control_defined('FlashLockDown'):
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_spi_lock(self):
         self.logger.start_test( "SPI Flash Controller Configuration Locks" )

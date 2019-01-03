@@ -41,28 +41,24 @@ class sgx_check(BaseModule):
         self.helper = self.cs.helper
         self.res = ModuleResult.PASSED
 
-    def check_sgx_config(self):
-        self.logger.start_test("Check SGX feature support")
-        self.logger.log("[*] Test if CPU has support for SGX")
-        sgx_cpu_support = False
-        sgx_ok = False
+    def is_supported(self):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             status = self.helper.set_affinity(tid)
             if status == -1:
-                if logger().VERBOSE:
-                    self.logger.log("[*] Failed to set affinity to CPU%d" % tid)
+                if logger().VERBOSE: self.logger.log("[*] Failed to set affinity to CPU%d" % tid)
             (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid(0x07, 0x00)
             if (r_ebx & BIT2):
                 if logger().VERBOSE: self.logger.log("[*] CPU%d: does support SGX" % tid)
-                sgx_cpu_support = True
+                return True
             else:
                 if logger().VERBOSE: self.logger.log("[*]CPU%d: does not support SGX" % tid)
-        if sgx_cpu_support:
-            self.logger.log_good("SGX is supported on CPU")
-        else:
-            self.logger.log_information("SGX is not supported on CPU")
-            return ModuleResult.PASSED
+                self.res = ModuleResult.NOTAPPLICABLE
+                return False
+        
 
+    def check_sgx_config(self):
+        self.logger.start_test("Check SGX feature support")
+        sgx_ok = False
         self.logger.log("\n[*] SGX BIOS enablement check")
         self.logger.log("[*] Verifying IA32_FEATURE_CONTROL MSR is configured")
         bios_feature_control_enable = True
@@ -228,7 +224,7 @@ class sgx_check(BaseModule):
                 self.logger.log_failed( "PMRR uncore MASK register is not locked" )
                 self.res = ModuleResult.FAILED
 
-        if sgx_cpu_support and bios_feature_control_enable and locked:
+        if bios_feature_control_enable and locked:
             sgx1_instr_support = False
             sgx2_instr_support = False
             self.logger.log("\n[*] Verifying if SGX instructions are supported")

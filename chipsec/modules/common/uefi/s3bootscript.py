@@ -74,7 +74,9 @@ class s3bootscript(BaseModule):
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
-        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        if not supported:
+            self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+            self.res = ModuleResult.SKIPPED
         return supported
 
     def is_inside_SMRAM( self, pa ):

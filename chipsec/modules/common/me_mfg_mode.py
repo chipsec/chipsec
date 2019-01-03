@@ -82,7 +82,10 @@ class me_mfg_mode(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return self.cs.is_device_enabled("MEI1")
+        if self.cs.is_device_enabled("MEI1"):
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_me_mfg_mode(self):
         self.logger.start_test( "ME Manufacturing Mode" )

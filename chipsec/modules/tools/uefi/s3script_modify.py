@@ -144,7 +144,9 @@ class s3script_modify(BaseModule):
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
-        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        if not supported: 
+            self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+            self.res = ModuleResult.SKIPPED
         return supported
 
     def modify_s3_reg( self, opcode, address, new_value ):

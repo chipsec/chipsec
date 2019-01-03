@@ -37,8 +37,10 @@ class smm(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        chipset = self.cs.get_chipset_id()
-        return (chipset not in chipsec.chipset.CHIPSET_FAMILY_ATOM) and (chipset not in chipsec.chipset.CHIPSET_FAMILY_XEON)
+        if self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE:
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_SMRAMC(self):
         self.logger.start_test( "Compatible SMM memory (SMRAM) Protection" )

@@ -44,10 +44,13 @@ class smm_dma(BaseModule):
 
     def is_supported(self):
         # @TODO: currently, this module cannot run on macOS
-        if self.cs.helper.is_macos(): return False
-        if self.cs.is_atom(): return False
-        if self.cs.is_server(): return False
-        else: return True
+        if self.cs.helper.is_macos():
+            self.res = ModuleResult.SKIPPED
+            return False
+        elif self.cs.is_atom() or self.cs.is_server():
+            self.res = ModuleResult.NOTAPPLICABLE 
+            return False
+        return True
 
     def check_tseg_locks(self):
         tseg_base_lock = self.cs.get_control('TSEGBaseLock')

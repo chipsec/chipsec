@@ -50,6 +50,7 @@ class memlock(chipsec.module_common.BaseModule):
         # Workaround for Atom based processors.  Accessing this MSR on these systems
         # causes a GP fault and can't be caught in UEFI Shell.
         if self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_ATOM:
+            self.res = ModuleResult.NOTAPPLICABLE
             return False
         return True
         

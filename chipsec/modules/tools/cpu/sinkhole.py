@@ -42,7 +42,10 @@ class sinkhole(BaseModule):
 
     def is_supported(self):
         # @TODO: Currently this module doesn't work properly on (U)EFI
-        return (self.cs.helper.is_windows() or self.cs.helper.is_linux())
+        if (self.cs.helper.is_windows() or self.cs.helper.is_linux()):
+            return True
+        self.res = ModuleResult.SKIPPED
+        return False
 
     def check_LAPIC_SMRR_overlap( self ):
         if not self.cs.is_register_defined( 'IA32_APIC_BASE' ) or \

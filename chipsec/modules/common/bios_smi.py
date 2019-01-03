@@ -46,9 +46,13 @@ class bios_smi(BaseModule):
 
     def is_supported(self):
         # @TODO: currently, this module cannot run on macOS
-        if self.cs.helper.is_macos(): return False
-
-        return (not self.cs.is_atom())
+        if self.cs.helper.is_macos():
+            self.res = ModuleResult.SKIPPED
+            return False            
+        elif self.cs.is_atom():
+            self.res = ModuleResult.NOTAPPLICABLE
+            return False
+        return True
 
     def check_SMI_locks(self):
 
