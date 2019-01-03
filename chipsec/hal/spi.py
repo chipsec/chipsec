@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -671,11 +671,16 @@ class SPI(hal_base.HALBase):
 
     def get_SPI_JEDEC_ID(self):
 
-        self.check_hardware_sequencing()
+        if self.cs.register_has_field( 'HSFS', 'FCYCLE' ):
+            self.check_hardware_sequencing()
 
-        if not self._send_spi_cycle( HSFCTL_JEDEC_CYCLE, 4, 0 ):
-            logger().error( 'SPI JEDEC ID cycle failed' )
-        id = self.spi_reg_read( self.fdata0_off )
+            if not self._send_spi_cycle( HSFCTL_JEDEC_CYCLE, 4, 0 ):
+                logger().error( 'SPI JEDEC ID cycle failed' )
+            id = self.spi_reg_read( self.fdata0_off )
+        else:
+            id = 0x000000
+            if logger().VERBOSE:
+                logger().log( '[spi] get_SPI_JEDEC_ID() skipped' )
 
         return ((id & 0xFF) << 16) | (id & 0xFF00) | ( (id >> 16) & 0xFF )
 
