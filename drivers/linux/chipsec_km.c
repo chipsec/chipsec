@@ -28,10 +28,13 @@ chipsec@intel.com
 #include <linux/slab.h>
 #include <asm/io.h>
 #include <linux/smp.h>
-#include <linux/efi.h>
 #include <linux/miscdevice.h>
 
 #include "include/chipsec.h"
+
+#ifdef HAS_EFI
+    #include <linux/efi.h>
+#endif
 
 #define _GNU_SOURCE 
 #define CHIPSEC_VER_ 		1
@@ -702,10 +705,9 @@ void * patch_read_msr(void * CPUInfo)
 	return NULL;
 }
 
-
+#ifdef EFI_NOT_READY
 void print_stat(efi_status_t stat)
 {
-#ifdef EFI_NOT_READY
     switch (stat) {
         case EFI_SUCCESS:
             printk( KERN_DEBUG "EFI_SUCCESS\n");
@@ -747,8 +749,8 @@ void print_stat(efi_status_t stat)
             printk( KERN_DEBUG "Unknown status\n");
             break;
     }
-#endif
 }
+#endif
 
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
