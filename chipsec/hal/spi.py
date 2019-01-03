@@ -679,7 +679,7 @@ class SPI(hal_base.HALBase):
             id = self.spi_reg_read( self.fdata0_off )
         else:
             id = 0x000000
-            if logger().VERBOSE:
+            if logger().HAL:
                 logger().log( '[spi] get_SPI_JEDEC_ID() skipped' )
 
         return ((id & 0xFF) << 16) | (id & 0xFF00) | ( (id >> 16) & 0xFF )
