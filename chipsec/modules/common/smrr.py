@@ -37,8 +37,6 @@ class smrr(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        # @TODO: currently, this module cannot run on macOS
-        if self.cs.helper.is_macos(): return False
         return True
 
     #

@@ -43,8 +43,6 @@ class smm_dma(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        # @TODO: currently, this module cannot run on macOS
-        if self.cs.helper.is_macos(): return False
         if self.cs.is_atom(): return False
         if self.cs.is_server(): return False
         else: return True
