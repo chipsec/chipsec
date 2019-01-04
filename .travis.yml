@@ -1,13 +1,17 @@
 language: python
-dist: trusty
 python:
   - "2.7"
+os:
+  - linux
+  - osx
 
 sudo: required
 install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y linux-headers-$(uname -r) nasm
-  - sudo ln -s /usr/src/$(uname -r) /lib/modules/$(uname -r)/build
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y linux-headers-$(uname -r) nasm          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo ln -s /usr/src/$(uname -r) /lib/modules/$(uname -r)/build          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install nasm; fi
 
 script:
   - python setup.py test
