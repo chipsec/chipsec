@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -81,7 +81,6 @@ IOCTL_FREE_PHYSMEM             = 0x16
 LZMA  = efi_compressor.LzmaDecompress
 Tiano = efi_compressor.TianoDecompress
 EFI   = efi_compressor.EfiDecompress
-
 
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
@@ -218,7 +217,7 @@ class LinuxHelper(Helper):
             except BaseException as be:
                 raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(be),errno.ENXIO)
 
-            self._ioctl_base = fcntl.ioctl(self.dev_fh, IOCTL_BASE) << 4
+            self._ioctl_base = self.compute_ioctlbase()
 
     def devmem_available(self):
         """Check if /dev/mem is usable.
@@ -297,6 +296,23 @@ class LinuxHelper(Helper):
             os.close(self.dev_mem)
         self.dev_mem = None
 
+    # code taken from /include/uapi/asm-generic/ioctl.h
+    # by default itype is 'C' see drivers/linux/include/chipsec.h
+    # currently all chipsec ioctl functions are _IOWR
+    # currently all size are pointer
+    def compute_ioctlbase(self,itype = 'C'):
+        #define _IOWR(type,nr,size)	 _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size))) 
+        #define _IOC(dir,type,nr,size) \
+        #    (((dir)  << _IOC_DIRSHIFT) | \ 
+        #    ((type) << _IOC_TYPESHIFT) | \ 
+        #    ((nr)   << _IOC_NRSHIFT) | \ 
+        #    ((size) << _IOC_SIZESHIFT)) 
+        # IOC_READ | _IOC_WRITE is 3 
+        # default _IOC_DIRSHIFT is 30
+        # default _IOC_TYPESHIFT is 8
+        # nr will be 0
+        # _IOC_SIZESHIFT is 16
+        return (3 << 30) | (ord(itype) << 8) | (struct.calcsize(self._pack) << 16)
 
     def ioctl(self, nr, args, *mutate_flag):
         return fcntl.ioctl(self.dev_fh, self._ioctl_base + nr, args)
