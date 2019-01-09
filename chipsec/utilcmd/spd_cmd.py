@@ -54,7 +54,7 @@ class SPDCommand(BaseCommand):
         try:
             _smbus = smbus.SMBus( self.cs )
             _spd   = spd.SPD( _smbus )
-        except BaseException, msg:
+        except BaseException as msg:
             print (msg)
             return
 

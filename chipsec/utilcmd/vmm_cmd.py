@@ -97,7 +97,7 @@ class VMMCommand(BaseCommand):
 
         try:
             vmm = VMM( self.cs )
-        except VMMRuntimeError, msg:
+        except VMMRuntimeError as msg:
             print (msg)
             return
 

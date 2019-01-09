@@ -54,7 +54,7 @@ class SMICommand(BaseCommand):
 
         try:
             interrupts = Interrupts( self.cs )
-        except RuntimeError, msg:
+        except RuntimeError as msg:
             print (msg)
             return
 
@@ -121,7 +121,7 @@ class NMICommand(BaseCommand):
     def run(self):
         try:
             interrupts = Interrupts( self.cs )
-        except RuntimeError, msg:
+        except RuntimeError as msg:
             print (msg)
             return
 
