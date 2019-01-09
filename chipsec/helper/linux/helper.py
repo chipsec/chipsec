@@ -330,7 +330,7 @@ class LinuxHelper(Helper):
                 return region
         return None
 
-    def native_map_io_space(self, base, size, unused_cache_type):
+    def native_map_io_space(self, base, size):
         """Map to memory a specific region."""
         if self.devmem_available() and not self.memory_mapping(base, size):
             if logger().VERBOSE:
@@ -563,33 +563,34 @@ class LinuxHelper(Helper):
         reg = out_buf[:size]
         return defines.unpack1(reg, size)
 
-    def native_read_mmio_reg(self, phys_address, size):
+    def native_read_mmio_reg(self, bar_base, bar_size, offset, size):
+        if bar_size is None: bar_size = offset + size
         if self.devmem_available():
-            region = self.memory_mapping(phys_address, size)
+            region = self.memory_mapping(bar_base, bar_size)
             if not region:
-                os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
-                reg = os.read(self.dev_mem, size)
-            else:
-                region.seek(phys_address - region.start)
-                reg = region.read(size)
+                self.native_map_io_space(bar_base, bar_size)
+                region = self.memory_mapping(bar_base, bar_size)
+            region.seek(phys_address - region.start)
+            reg = region.read(size)
             return defines.unpack1(reg, size)
 
     def write_mmio_reg(self, phys_address, size, value):
         in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
         out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
 
-    def native_write_mmio_reg(self, phys_address, size, value):
+    def native_write_mmio_reg(self, bar_base, bar_size, offset, size, value):
+        if bar_size is None: bar_size = offset + size
         if self.devmem_available():
             reg = defines.pack1(value, size)
-            region = self.memory_mapping(phys_address, size)
+            region = self.memory_mapping(bar_base, bar_size)
             if not region:
-                os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
-                written = os.write(self.dev_mem, reg)
-                if written != size:
-                    logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
-            else:
-                region.seek(phys_address - region.start)
-                region.write(reg)
+                self.native_map_io_space(bar_base, bar_size)
+                region = self.memory_mapping(bar_base, bar_size)
+            region.seek(phys_address - region.start)
+            region.write(reg)                
+            if written != size:
+                logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
+
 
     def get_ACPI_SDT( self ):
         raise UnimplementedAPIError( "get_ACPI_SDT" )

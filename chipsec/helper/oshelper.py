@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -202,17 +202,17 @@ class OsHelper:
     #
     # read/write mmio
     #
-    def read_mmio_reg( self, phys_address, size ):
+    def read_mmio_reg( self, bar_base, size, offset=0, bar_size=None ):
         if self.use_native_api() and hasattr(self.helper, 'native_read_mmio_reg'):
-            return self.helper.native_read_mmio_reg( phys_address, size )
+            return self.helper.native_read_mmio_reg( bar_base, bar_size, offset, size )
         else:
-            return self.helper.read_mmio_reg( phys_address, size )
+            return self.helper.read_mmio_reg( bar_base+offset, size )
         
-    def write_mmio_reg( self, phys_address, size, value ):
+    def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None ):
         if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
-            return self.helper.native_write_mmio_reg( phys_address, size, value )
+            return self.helper.native_write_mmio_reg( bar_base, bar_size, offset, size, value )
         else:
-            return self.helper.write_mmio_reg( phys_address, size, value )
+            return self.helper.write_mmio_reg(bar_base+offset, size, value )
         
     #
     # physical_address is 64 bit integer

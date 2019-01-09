@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@ class MMCfgCommand(BaseCommand):
 
         if 2 == len(self.argv):
             #pciexbar = _mmio.get_PCIEXBAR_base_address()
-            pciexbar = _mmio.get_MMCFG_base_address()
+            pciexbar, pciexbar_sz = _mmio.get_MMCFG_base_address()
             self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
             return
         elif 6 > len(self.argv):
