@@ -67,7 +67,7 @@ class SPICommand(BaseCommand):
 
         try:
             _spi = SPI( self.cs )
-        except SpiRuntimeError, msg:
+        except SpiRuntimeError as msg:
             print (msg)
             return
 
