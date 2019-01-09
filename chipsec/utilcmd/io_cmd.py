@@ -57,7 +57,7 @@ class PortIOCommand(BaseCommand):
 
         try:
             _iobar = iobar.IOBAR( self.cs )
-        except iobar.IOBARRuntimeError, msg:
+        except iobar.IOBARRuntimeError as msg:
             print (msg)
             return
 

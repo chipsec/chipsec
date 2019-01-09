@@ -49,7 +49,7 @@ class SMBusCommand(BaseCommand):
 
         try:
             _smbus = SMBus( self.cs )
-        except BaseException, msg:
+        except BaseException as msg:
             print (msg)
             return
 
