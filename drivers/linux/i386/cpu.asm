@@ -40,10 +40,10 @@
  section .text
 
 setctx_cpuid:
-	xchg ebx, [eax+0x4]
-	xchg ecx, [eax+0x8]
-	xchg edx, [eax+0xc]
-	xchg eax, [eax]
+	xchg ebx, [edi+0x4]
+	xchg ecx, [edi+0x8]
+	xchg edx, [edi+0xc]
+	xchg eax, [edi]
 	ret
 
 ;This function has one argument: CPUID_CTX structure which contain 4 regs: rax, rbx, rcx, rdx:
