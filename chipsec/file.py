@@ -69,7 +69,9 @@ def write_file( filename, buffer, append=False ):
     #with open( filename, 'wb' ) as f:
     #  f.write( buffer )
     #f.closed
-    perm = 'ab' if append else 'wb'
+    perm = 'a' if append else 'w'
+    if type(buffer) == type(bytes()):
+        perm += 'b'
     try:
         f = open(filename, perm)
     except:

@@ -211,7 +211,7 @@ class LinuxHelper(Helper):
             logger().log("****** Chipsec Linux Kernel module is licensed under GPL 2.0")
 
             try:
-                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
                 raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(e),e.errno))

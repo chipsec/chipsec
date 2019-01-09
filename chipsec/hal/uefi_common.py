@@ -654,7 +654,7 @@ def GetFvHeader(buffer, off = 0):
     while not (numblocks == 0 and lenblock == 0):
         fof += EFI_FV_BLOCK_MAP_ENTRY_SZ
         if (fof + EFI_FV_BLOCK_MAP_ENTRY_SZ) >= len(buffer):
-			return (0,0,0)
+            return (0,0,0)
         if numblocks != 0:
             if logger().DEBUG:
                 logger().log("Num blocks:   0x{:08X}\n".format(numblocks))
@@ -741,8 +741,8 @@ def NextFwFileSection(sections, ssize, sof, polarity):
         Size = get_3b_size(Size)
         Header_Size = EFI_COMMON_SECTION_HEADER_size
         if Size == 0xFFFFFF:
-			Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
-			Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
+            Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
+            Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
         sec_name = "S_UNKNOWN_{:02X}".format(Type)
         if Type in SECTION_NAMES.keys():
             sec_name = SECTION_NAMES[Type]
