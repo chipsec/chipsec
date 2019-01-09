@@ -62,7 +62,6 @@ from chipsec.cfg.common import *
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import *
-from builtins import bytes
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4

@@ -32,8 +32,6 @@ Checks for exposure of pre-boot passwords (BIOS/HDD/pre-bot authentication SW) i
 from chipsec.hal.mmio import *
 from chipsec.hal.spi import *
 from chipsec.module_common import *
-from builtins import bytes
-
 
 TAGS = [MTAG_BIOS]
 
@@ -57,10 +55,8 @@ class bios_kbrd_buffer(BaseModule):
         self.logger.log( "[*] Keyboard buffer head pointer = 0x{:X} (at 0x41A), tail pointer = 0x{:X} (at 0x41C)".format(kbrd_buf_head,kbrd_buf_tail) )
         bios_kbrd_buf = self.cs.mem.read_physical_mem( 0x41E, 32 )
         self.logger.log( "[*] Keyboard buffer contents (at 0x41E):" )
-        bios_kbrd_buf = bytes(bios_kbrd_buf)
-        chipsec.logger.print_buffer_bytes( bios_kbrd_buf )
-
-        s = struct.unpack( '32s', bios_kbrd_buf )[0]
+        bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')
+        chipsec.logger.print_buffer( bios_kbrd_buf )
 
         has_contents = False
 
@@ -69,7 +65,7 @@ class bios_kbrd_buffer(BaseModule):
             return ModuleResult.PASSED
 
         for x in bios_kbrd_buf:
-            if ( 0x0 != x and 0x20 != x ):
+            if ( "\x00" != x and "\x20" != x ):
                 has_contents = True
                 break
 
