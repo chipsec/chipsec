@@ -105,7 +105,7 @@ class ChipsecUtil:
 
         if command is None or command not in self.commands:
             logger().log("\n<command> can be one of the following:")
-            for cmd in sorted(self.commands.keys() + ['help']):
+            for cmd in sorted(list(self.commands.keys()) + ['help']):
                 logger().log( '    {}'.format(cmd) )
         else:
             logger().log("\nhelp for '{}' <command>:".format(command))
