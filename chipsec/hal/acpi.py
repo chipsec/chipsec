@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -43,6 +43,7 @@ from collections import namedtuple
 
 from chipsec.logger import *
 from chipsec.file import *
+from chipsec.defines import bytestostring
 
 from chipsec.hal import acpi_tables, hal_base, uefi
 from chipsec.helper import oshelper
@@ -208,7 +209,6 @@ ACPI_RSDP_EXT_SIZE = struct.calcsize(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT)
 assert ACPI_RSDP_EXT_SIZE == 36
 
 class RSDP():
-    __slots__ = ()
     def __init__( self, table_content ):
         if len(table_content) == ACPI_RSDP_SIZE:
           (self.Signature, self.Checksum, self.OEMID,
@@ -232,7 +232,7 @@ class RSDP():
                       "  XSDT Address     : 0x{:016X}\n"
                       "  Extended Checksum: 0x{:02X}\n"
                       "  Reserved         : {}\n"
-                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex"))
+                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.hex() if (type(self.Reserved) == type(bytes())) else self.Reserved.encode("hex"))
         return default
 
     # some sanity checking on RSDP
@@ -289,6 +289,7 @@ class ACPI(hal_base.HALBase):
         rsdp_pa = None
         rsdp    = None
         membuf = self.cs.mem.read_physical_mem( 0xE0000, 0x20000 )
+        membuf = bytestostring(membuf)
         pos = membuf.find( ACPI_RSDP_SIG )
         if -1 != pos:
             rsdp_pa  = 0xE0000 + pos
@@ -408,7 +409,7 @@ class ACPI(hal_base.HALBase):
             (is_xsdt,sdt_pa,sdt,sdt_header) = self.get_SDT()
 
             # cache RSDT/XSDT in the list of ACPI tables
-            if sdt_pa is not None: self.tableList[ sdt_header.Signature ].append(sdt_pa)
+            if sdt_pa is not None: self.tableList[ bytestostring(sdt_header.Signature) ].append(sdt_pa)
 
             self.get_table_list_from_SDT(sdt, is_xsdt)
             self.get_DSDT_from_FADT()
@@ -430,6 +431,7 @@ class ACPI(hal_base.HALBase):
         if logger().HAL: logger().log( '[acpi] Getting table list from entries in {}'.format('XSDT' if is_xsdt else 'RSDT') )
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
+            _sig = bytestostring(_sig)
             if _sig not in ACPI_TABLES.keys():
                 logger().warn( 'Unknown ACPI table signature: {}'.format(_sig) )
             self.tableList[ _sig ].append(a)
@@ -522,11 +524,11 @@ class ACPI(hal_base.HALBase):
             logger().log( "==================================================================" )
             # print table header
             logger().log( table_header )
-            print_buffer( table_header_blob )
+            print_buffer( bytestostring(table_header_blob) )
             # print table contents
             logger().log( '' )
             logger().log( table )
-            print_buffer( table_blob )
+            print_buffer( bytestostring(table_blob) )
             logger().log( '' )
 
     # --------------------------------------------------------------------
@@ -548,7 +550,6 @@ class ACPI(hal_base.HALBase):
     def _parse_table_contents( self, signature, contents, header ):
         table = None
         if ACPI_TABLES.__contains__(signature):
-            logger().log('{}'.format(signature))
             if 'BERT' in signature:
                 table = (ACPI_TABLES[signature])(self.cs)
             elif 'NFIT' in signature:
