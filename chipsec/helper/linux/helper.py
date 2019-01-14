@@ -554,7 +554,8 @@ class LinuxHelper(Helper):
             if not region:
                 self.native_map_io_space(bar_base, bar_size)
                 region = self.memory_mapping(bar_base, bar_size)
-            region.seek(phys_address - region.start)
+                if not region: logger().error("Unable to map region {:08x}".format(bar_base))
+            region.seek(bar_base + offset - region.start)
             reg = region.read(size)
             return defines.unpack1(reg, size)
 
@@ -570,7 +571,8 @@ class LinuxHelper(Helper):
             if not region:
                 self.native_map_io_space(bar_base, bar_size)
                 region = self.memory_mapping(bar_base, bar_size)
-            region.seek(phys_address - region.start)
+                if not region: logger().error("Unable to map region {:08x}".format(bar_base))
+            region.seek(bar_base + offset - region.start)
             region.write(reg)                
             if written != size:
                 logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))

@@ -222,7 +222,6 @@ class MMIO(hal_base.HALBase):
     #
     def read_MMIOBAR_reg(self, bar_id, offset ):
         bar_base  = self.MMIO_BAR_base[ bar_id ]
-        #reg_addr  = bar_base + offset
         reg_value = self.cs.helper.read_mmio_reg( bar_base, 4, offset )
         if logger().VERBOSE:
             logger().log( '[mmio] %s + 0x%08X (0x%08X) = 0x%08X' % (MMIO_BAR_name[bar_id], offset, reg_addr, reg_value) )

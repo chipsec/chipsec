@@ -55,6 +55,7 @@ class MMCfgCommand(BaseCommand):
             #pciexbar = _mmio.get_PCIEXBAR_base_address()
             pciexbar, pciexbar_sz = _mmio.get_MMCFG_base_address()
             self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x%016X" % pciexbar )
+            if self.logger.VERBOSE: self.logger.log("[CHIPSEC] Memory Mapped Config Size: {:016X}".format(pciebar_sz))
             return
         elif 6 > len(self.argv):
             print MMCfgCommand.__doc__
