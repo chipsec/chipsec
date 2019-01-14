@@ -113,7 +113,7 @@ class CPU(hal_base.HALBase):
     def get_number_physical_processor_per_package(self):
         logical_processor_per_core=self.get_number_logical_processor_per_core()
         logical_processor_per_package=self.get_number_logical_processor_per_package()
-        return (logical_processor_per_package/logical_processor_per_core)
+        return (logical_processor_per_package//logical_processor_per_core)
     
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self):
