@@ -20,7 +20,7 @@ matrix:
       language: generic
       install:
         - brew update
-        - brew install python@2 nasm
+        - brew install nasm
 
 script:
   - python setup.py test
