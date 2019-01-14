@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -160,6 +160,12 @@ SIZE2FORMAT = {
     4: 'I',
     8: 'Q'
 }
+
+def bytestostring(mbytes):
+    if type(mbytes) == type(bytes()):
+        return mbytes.decode("latin_1")
+    else:
+        return mbytes 
 
 def pack1(value, size):
     """Shortcut to pack a single value into a string based on its size."""

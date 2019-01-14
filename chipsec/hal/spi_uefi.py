@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -355,7 +355,7 @@ def build_efi_tree( _uefi, data, fwtype ):
         if fv.Guid in (EFI_PLATFORM_FS_GUIDS + EFI_FS_GUIDS):
             fwbin = build_efi_file_tree ( _uefi, fv_img, fwtype)
             for i in fwbin:
-			    fv.children.append(i)
+                fv.children.append(i)
 
         # Detect NVRAM firmware volumes
         elif fv.Guid in EFI_NVRAM_GUIDS: # == VARIABLE_STORE_FV_GUID:

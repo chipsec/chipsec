@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,6 +41,7 @@ import struct
 from collections import namedtuple
 
 from chipsec.logger import *
+from chipsec.defines import bytestostring
 
 class ACPI_TABLE():
     def parse( self, table_content ):
@@ -90,7 +91,7 @@ class DMAR (ACPI_TABLE):
   Host Address Width  : {:d}
   Flags               : 0x{:02X}
   Reserved            : {}
-""".format( self.HostAddrWidth, self.Flags, ''.join('{:02x} '.format(ord(c)) for c in self.Reserved) )
+""".format( self.HostAddrWidth, self.Flags, ''.join('{:02x} '.format(ord(c)) for c in bytestostring(self.Reserved)) )
         _str += "\n  Remapping Structures:\n"
         for st in self.dmar_structures: _str += str(st)
         return _str
@@ -175,7 +176,7 @@ class ACPI_TABLE_DMAR_DeviceScope( namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Ty
     __slots__ = ()
     def __str__(self):
         return """      {} ({:02X}): Len: 0x{:02X}, Rsvd: 0x{:04X}, Enum ID: 0x{:02X}, Start Bus#: 0x{:02X}, Path: {}
-""".format( DMAR_DS_TYPE[self.Type], self.Type, self.Length, self.Reserved, self.EnumerationID, self.StartBusNum, ''.join('{:02x} '.format(ord(c)) for c in self.Path) )
+""".format( DMAR_DS_TYPE[self.Type], self.Type, self.Length, self.Reserved, self.EnumerationID, self.StartBusNum, ''.join('{:02x} '.format(ord(c)) for c in bytestostring(self.Path)) )
 
 #
 # DMAR DMA Remapping Hardware Unit Definition (DRHD) Structure
@@ -258,7 +259,7 @@ class ACPI_TABLE_DMAR_ANDD( namedtuple('ACPI_TABLE_DMAR_ANDD', 'Type Length Rese
     Reserved (0)          : {}
     ACPI Device Number    : 0x{:02X}
     ACPI Object Name      : {}
-""".format( self.Type, self.Length, ''.join('{:02x} '.format(ord(c)) for c in self.Reserved), self.ACPIDevNum, self.ACPIObjectName )
+""".format( self.Type, self.Length, ''.join('{:02x} '.format(ord(c)) for c in bytestostring(self.Reserved)), self.ACPIDevNum, self.ACPIObjectName )
 
 ########################################################################################################
 #
@@ -554,7 +555,7 @@ class XSDT (ACPI_TABLE):
         self.Entries = []
 
     def parse( self, table_content ):
-        num_of_tables = len(table_content) / 8
+        num_of_tables = len(table_content) // 8
         self.Entries= struct.unpack( ('={:d}Q'.format(num_of_tables)), table_content )
         return
 
