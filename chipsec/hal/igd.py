@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -37,6 +37,7 @@ import sys
 
 from chipsec.hal import hal_base
 from chipsec.logger import print_buffer
+from chipsec.defines import bytestostring
 
 class IGDRuntimeError (RuntimeError):
     pass
@@ -201,6 +202,7 @@ class IGD(hal_base.HALBase):
             if value is None:
                 if self.logger.HAL: self.logger.log( '[igd] reading 0x{:X} bytes at 0x{:016X} through GFx aperture 0x{:016X} ..'.format(size,pa,igd_addr + pa_off) )
                 page = self.cs.mem.read_physical_mem(igd_addr + pa_off, size)
+                page = bytestostring(page)
                 buffer += page
                 if self.logger.HAL: print_buffer(page[:size])
             else:
