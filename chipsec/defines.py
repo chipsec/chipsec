@@ -166,6 +166,12 @@ SIZE2FORMAT = {
     8: 'Q'
 }
 
+def bytestostring(mbytes):
+    if type(mbytes) == type(bytes()):
+        return mbytes.decode("latin_1")
+    else:
+        return mbytes 
+
 def pack1(value, size):
     """Shortcut to pack a single value into a string based on its size."""
     return struct.pack(SIZE2FORMAT[size], value)
