@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -35,54 +35,6 @@ import chipsec.file
 from chipsec.logger     import print_buffer
 from chipsec.command    import BaseCommand
 
-def read_mem(pa, size = chipsec.defines.BOUNDARY_4KB):
-    try:
-        buffer = chipsec_util._cs.mem.read_physical_mem( pa, size )
-    except:
-        buffer = None
-    return buffer
-
-def dump_region_to_path(path, pa_start, pa_end):
-    pa = (pa_start + chipsec.defines.ALIGNED_4KB) & ~chipsec.defines.ALIGNED_4KB
-    end = pa_end & ~chipsec.defines.ALIGNED_4KB
-    head_len = pa - pa_start
-    tail_len = pa_end - end
-    f = None
-
-    # read leading bytes to the next boundary
-    if (head_len > 0):
-        b = read_mem(pa_start, head_len)
-        if b is not None:
-            fname = os.path.join(path, "m{:016X}.bin".format(pa_start))
-            f = open(fname, 'wb')
-            f.write(b)
-
-    while pa < end:
-        b = read_mem(pa)
-        if b is not None:
-            if f is None:
-                fname = os.path.join(path, "m{:016X}.bin".format(pa))
-                f = open(fname, 'wb')
-            f.write(b)
-        else:
-            if f is not None:
-                f.close()
-                f = None
-        pa += chipsec.defines.BOUNDARY_4KB
-
-    # read trailing bytes
-    if (tail_len > 0):
-        b = read_mem(end, tail_len)
-        if b is not None:
-            if f is None:
-                fname = os.path.join(path, "m{:016X}.bin".format(end))
-                f = open(fname, 'wb')
-            f.write(b)
-
-    if f is not None:
-        f.close()
-
-
 # Physical Memory
 class MemCommand(BaseCommand):
     """
@@ -114,6 +66,28 @@ class MemCommand(BaseCommand):
             return False
         return True
 
+    def dump_region_to_path(self,path,pa_start,pa_end):
+        if pa_start >= pa_end: return
+        pa = (pa_start + chipsec.defines.ALIGNED_4KB) & ~chipsec.defines.ALIGNED_4KB
+        head_len = pa_start & chipsec.defines.ALIGNED_4KB
+        tail_len = pa_end & chipsec.defines.ALIGNED_4KB
+        pa = pa_start - head_len + chipsec.defines.ALIGNED_4KB + 1
+        fname = os.path.join(path, "m{:016X}.bin".format(pa_start))
+        f = open(fname, 'wb')
+        end = pa_end - tail_len
+
+        # read leading bytes to the next boundary
+        if (head_len > 0 ):
+            f.write(self.cs.mem.read_physical_mem(pa_start, chipsec.defines.ALIGNED_4KB + 1 - head_len))
+
+        for addr in range(pa,end,chipsec.defines.ALIGNED_4KB+1):
+            f.write(self.cs.mem.read_physical_mem(addr,chipsec.defines.ALIGNED_4KB+1))
+
+        # read trailing bytes
+        if (tail_len > 0):
+            f.write(self.cs.mem.read_physical_mem(end, tail_len))
+        f.close()
+
     def run(self):
         size = 0x100
 
@@ -134,6 +108,7 @@ class MemCommand(BaseCommand):
             size         = int(self.argv[4],16)
                       
             buffer = self.cs.mem.read_physical_mem( phys_address, size )
+            buffer = chipsec.defines.bytestostring(buffer)
             offset = buffer.find(self.argv[5])
 
             if offset != -1:
@@ -142,11 +117,10 @@ class MemCommand(BaseCommand):
                 self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x{:016X}, len = 0x{:X}, can not find the target in the searched range..'.format(phys_address, size) )
 
         elif 'pagedump' == op and len(self.argv) > 3:
-            start   = long(self.argv[3],16)
-            length  = long(self.argv[4],16) if len(self.argv) > 4 else chipsec.defines.BOUNDARY_4KB
+            start   = int(self.argv[3],16)
+            length  = int(self.argv[4],16) if len(self.argv) > 4 else chipsec.defines.BOUNDARY_4KB
             end = start + length
-
-            dump_region_to_path( chipsec.file.get_main_dir(), start, end )
+            self.dump_region_to_path( chipsec.file.get_main_dir(), start, end )
 
         elif 'read'     == op:
             phys_address = int(self.argv[3],16)
@@ -158,7 +132,7 @@ class MemCommand(BaseCommand):
                 chipsec.file.write_file( buf_file, buffer )
                 self.logger.log( "[CHIPSEC] written 0x{:X} bytes to '{}'".format(len(buffer), buf_file) )
             else:
-                print_buffer( buffer )
+                print_buffer( chipsec.defines.bytestostring(buffer) )
 
         elif 'readval'  == op:
             phys_address = int(self.argv[3],16)
