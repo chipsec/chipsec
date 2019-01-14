@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,55 +28,7 @@ The vmem command provides direct access to read and write virtual memory.
 import chipsec.defines
 from chipsec.logger     import print_buffer
 from chipsec.command    import BaseCommand
-from chipsec.hal	import virtmem
-
-def read_mem(va, size = chipsec.defines.BOUNDARY_4KB):
-    try:
-        buffer = virtmem.read_virtual_mem( va, size )
-    except:
-        buffer = None
-    return buffer
-
-def dump_region_to_path(path, va_start, va_end):
-    va = (va_start + chipsec.defines.ALIGNED_4KB) & ~chipsec.defines.ALIGNED_4KB
-    end = va_end & ~chipsec.defines.ALIGNED_4KB
-    head_len = va - va_start
-    tail_len = va_end - end
-    f = None
-
-    # read leading bytes to the next boundary
-    if (head_len > 0):
-        b = read_mem(va_start, head_len)
-        if b is not None:
-            fname = os.path.join(path, "m{:016X}.bin".format(va_start))
-            f = open(fname, 'wb')
-            f.write(b)
-
-    while va < end:
-        b = read_mem(va)
-        if b is not None:
-            if f is None:
-                fname = os.path.join(path, "m{:016X}.bin".format(va))
-                f = open(fname, 'wb')
-            f.write(b)
-        else:
-            if f is not None:
-                f.close()
-                f = None
-        va += chipsec.defines.BOUNDARY_4KB
-
-    # read trailing bytes
-    if (tail_len > 0):
-        b = read_mem(end, tail_len)
-        if b is not None:
-            if f is None:
-                fname = os.path.join(path, "m{:016X}.bin".format(end))
-                f = open(fname, 'wb')
-            f.write(b)
-
-    if f is not None:
-        f.close()
-
+from chipsec.hal	    import virtmem
 
 # Virtual Memory
 class VMemCommand(BaseCommand):
@@ -98,7 +50,6 @@ class VMemCommand(BaseCommand):
     >>> chipsec_util vmem write    0x100000000        0x1000   buffer.bin
     >>> chipsec_util vmem write    0x100000000        0x10     000102030405060708090A0B0C0D0E0F
     >>> chipsec_util vmem allocate                    0x1000
-    >>> chipsec_util vmem pagedump 0xFED00000         0x100000
     >>> chipsec_util vmem search   0xF0000            0x10000  _SM_  
     >>> chipsec_util vmem getphys  0xFED00000                       
     """
@@ -135,19 +86,13 @@ class VMemCommand(BaseCommand):
             size         = int(self.argv[4],16)
                       
             buffer = _vmem.read_virtual_mem( virt_address, size )
+            buffer = chipsec.defines.bytestostring(buffer)
             offset = buffer.find(self.argv[5])
 
             if offset != -1:
                 self.logger.log( '[CHIPSEC] search buffer from memory: VA = 0x{:016X}, len = 0x{:X}, target address= 0x{:X}..'.format(virt_address, size, virt_address + offset) )
             else:
                 self.logger.log( '[CHIPSEC] search buffer from memory: VA = 0x{:016X}, len = 0x{:X}, can not find the target in the searched range..'.format(virt_address, size) )
-
-        elif 'pagedump' == op and len(self.argv) > 3:
-            start   = long(self.argv[3],16)
-            length  = long(self.argv[4],16) if len(self.argv) > 4 else chipsec.defines.BOUNDARY_4KB
-            end = start + length
-
-            dump_region_to_path( chipsec.file.get_main_dir(), start, end )
 
         elif 'read'     == op:
             virt_address = int(self.argv[3],16)
@@ -159,7 +104,7 @@ class VMemCommand(BaseCommand):
                 chipsec.file.write_file( buf_file, buffer )
                 self.logger.log( "[CHIPSEC] written 0x{:X} bytes to '{}'".format(len(buffer), buf_file) )
             else:
-                print_buffer( buffer )
+                print_buffer( chipsec.defines.bytestostring(buffer) )
 
         elif 'readval'  == op:
             virt_address = int(self.argv[3],16)
