@@ -18,7 +18,7 @@ Advanced Options
 -p --platform             explicitly specify platform code. Should be among the supported platforms:
                           [ CFL | SNB | IVB | KBL | JKT | BYT | QRK | BDW | IVT | AVN | DNV | CHT | HSW | APL | SKL | HSX | BDX ]
    --pch                  explicitly specify PCH code. Should be among the supported PCH:
-                          [ PCH_620 | PCH_3XX | PCH_1XX | PCH_2XX | PCH_C61X | PCH_C60X ]
+                          [ PCH_3XX | PCH_C620 | PCH_1XX | PCH_2XX | PCH_C61X | PCH_C60X ]
 -n --no_driver            chipsec won't need kernel mode functions so don't load chipsec driver
 -i --ignore_platform      run chipsec even if the platform is not recognized
 -j --json                 specify filename for JSON output.
