@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="BDW">
-<!-- XML configuration for Broadwell based platforms
+<!--
+XML configuration for Broadwell based platforms
 -->
 
   <!-- #################################### -->

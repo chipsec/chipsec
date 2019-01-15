@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="QRK">
-<!-- XML configuration for Quark based platforms
+<!--
+XML configuration for Quark based platforms
 -->
   <!-- #################################### -->
   <!--                                      -->

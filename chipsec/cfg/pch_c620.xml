@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_C620">
-<!-- XML configuration file for
+<!--
+XML configuration file for
+
 * Intel(R) C620 Series Chipset Family Platform Controller Hub
-* https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/c620-series-chipset-datasheet.pdf
+  https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/c620-series-chipset-datasheet.pdf
 -->
 
   <!-- #################################### -->

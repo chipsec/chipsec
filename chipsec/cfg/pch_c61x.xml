@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_C61X" >
-<!-- XML configuration file for C610 series PCH
+<!--
+XML configuration file for C610 series PCH
+
 * Intel(R) C610 Series Chipset Family Platform Controller Hub (PCH)
-* https://ark.intel.com/products/series/98915/Intel-C610-Series-Chipsets
+  https://ark.intel.com/products/series/98915/Intel-C610-Series-Chipsets
 -->
 
   <registers>

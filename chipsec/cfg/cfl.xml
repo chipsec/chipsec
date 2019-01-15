@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="CFL">
-<!-- XML configuration file for Coffee Lake
+<!--
+XML configuration file for Coffee Lake
+
 * 8th Generation Intel(R) Processor Family for S-Processor Platforms
-* https://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+  https://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 -->
 
   <!-- #################################### -->

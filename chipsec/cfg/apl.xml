@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <configuration platform="APL">
-<!-- XML configuration for Apollo Lake based SoCs -->
+<!--
+XML configuration for Apollo Lake based SoCs
+-->
   <!-- #################################### -->
   <!--                                      -->
   <!-- Memory Mapped I/O spaces (MMIO BARs) -->

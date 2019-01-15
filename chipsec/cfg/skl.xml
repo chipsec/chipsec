@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <configuration platform="SKL">
-<!-- XML configuration file for Skylake based platforms
+<!--
+XML configuration file for Skylake based platforms
+
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 
 * 6th Generation Intel(R) Processor Datasheet for U/Y-Platforms
 
@@ -11,8 +14,6 @@
 * 6th Generation Intel(R) Processor Datasheet for H-Platforms
 
 * Intel(R) 100 Series Chipset Family Platform Controller Hub (PCH)
-
-* http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 -->
 
   <!-- #################################### -->
