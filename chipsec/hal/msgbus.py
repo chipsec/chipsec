@@ -32,8 +32,10 @@
 Access to message bus (IOSF sideband) interface registers on Intel SoCs
 
 References:
+
 - Intel(R) Atom(TM) Processor E3800 Product Family Datasheet, May 2016, Revision 4.0
   http://www.intel.com/content/www/us/en/embedded/products/bay-trail/atom-e3800-family-datasheet.html (sections 3.6 and 13.4.6 - 13.4.8)
+
 - Intel(R) Atom(TM) Processor D2000 and N2000 Series Datasheet, Volume 2, July 2012, Revision 003
   http://www.intel.com/content/dam/doc/datasheet/atom-d2000-n2000-vol-2-datasheet.pdf (section 1.10.2)
 

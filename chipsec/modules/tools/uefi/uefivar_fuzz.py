@@ -29,27 +29,26 @@ Note: this module modifies contents of non-volatile SPI flash memory (UEFI Varia
 This may render system unbootable if firmware doesn't properly handle variable update/delete operations.
  
 Usage:
-    ``chipsec_main -m tools.uefi.uefivar_fuzz [-a <options>]``
-    
-Options:        
+
+    chipsec_main -m tools.uefi.uefivar_fuzz [-a <options>]
+
+Options:
 
     ``[-a <test>,<iterations>,<seed>,<test_case>]``
-    - ``test``		which UEFI variable interface to fuzz
-			``(all, name, guid, attrib, data, size)``
-    - ``iterations``	number of tests to perform (default = 1000)
-    - ``seed``		RNG seed to use
-    - ``test_case``	test case # to skip to (combined with seed, can be used to skip to failing test)
+
+        - ``test``  UEFI variable interface to fuzz (all, name, guid, attrib, data, size)
+        - ``iterations``  number of tests to perform (default = 1000)
+        - ``seed``  RNG seed to use
+        - ``test_case`` test case # to skip to (combined with seed, can be used to skip to failing test)
 
     All module arguments are optional
-    
-Examples:
->>> chipsec_main.py -m tools.uefi.uefivar_fuzz 
 
->>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a all,100000
+Examples::
 
->>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a data,1000,123456789
-
->>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a name,1,123456789,94
+    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz
+    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a all,100000
+    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a data,1000,123456789
+    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a name,1,123456789,94
 """
 
 USAGE_TEXT = '''
