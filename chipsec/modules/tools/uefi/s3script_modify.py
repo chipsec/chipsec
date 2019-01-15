@@ -1,5 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,26 +25,24 @@
 This module will attempt to modify the S3 Boot Script on the platform. Doing this could cause the platform to malfunction. Use with care!
 
 Usage:
-    Replacing existing opcode:
+    Replacing existing opcode::
 
-    ``chipsec_main.py -m tools.uefi.s3script_modify \``
-    ``-a replace_op,<reg_opcode>,<address>,<value>``
-      ``<reg_opcode> = pci_wr|mmio_wr|io_wr|pci_rw|mmio_rw|io_rw``
+        chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,<reg_opcode>,<address>,<value>
+            <reg_opcode> = pci_wr|mmio_wr|io_wr|pci_rw|mmio_rw|io_rw
 
-    ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,mem[,<address>,<value>]``
+        chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,mem[,<address>,<value>]
 
-    ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch``
+        chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch``
 
-    ``chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch_ep``
+        chipsec_main.py -m tools.uefi.s3script_modify -a replace_op,dispatch_ep``
 
 
-    Adding new opcode:
+    Adding new opcode::
 
-    ``chipsec_main.py -m tools.uefi.s3script_modify \``
-    ``-a add_op,<reg_opcode>,<address>,<value>,<width>``
-      ``<reg_opcode> = pci_wr|mmio_wr|io_wr``
+        chipsec_main.py -m tools.uefi.s3script_modify -a add_op,<reg_opcode>,<address>,<value>,<width>
+            <reg_opcode> = pci_wr|mmio_wr|io_wr
 
-    ``chipsec_main.py -m tools.uefi.s3script_modify -a add_op,dispatch[,<entrypoint>]``
+        chipsec_main.py -m tools.uefi.s3script_modify -a add_op,dispatch[,<entrypoint>]
 
 Examples:
 

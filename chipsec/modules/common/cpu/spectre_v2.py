@@ -32,68 +32,93 @@ and enabled by the OS/software:
    IA32_ARCH_CAPABILITIES[IBRS_ALL] == 1
    IA32_SPEC_CTRL[IBRS] == 1
 
-@TODO:
-4. Mitigation for Rogue Data Cache Load (RDCL):
+4. @TODO: Mitigation for Rogue Data Cache Load (RDCL):
    CPUID.(EAX=7H,ECX=0):EDX[29] == 1
    IA32_ARCH_CAPABILITIES[RDCL_NO] == 1
 
 In addition to checking if CPU supports and OS enables all mitigations, we need to check
 that relevant MSR bits are set consistently on all logical processors (CPU threads).
 
+
 The module returns the following results:
 
-FAILED : IBRS/IBPB is not supported
-WARNING: IBRS/IBPB is supported
-         enhanced IBRS is not supported
-WARNING: IBRS/IBPB is supported
-         enhanced IBRS is supported
-         enhanced IBRS is not enabled by the OS
-WARNING: IBRS/IBPB is supported
-         STIBP is not supported
-PASSED : IBRS/IBPB is supported
-         enhanced IBRS is supported
-         enhanced IBRS is enabled by the OS 
-         STIBP is supported
+FAILED:
+    IBRS/IBPB is not supported
+
+WARNING:
+    IBRS/IBPB is supported
+
+    Enhanced IBRS is not supported
+
+WARNING:
+    IBRS/IBPB is supported
+
+    Enhanced IBRS is supported
+
+    Enhanced IBRS is not enabled by the OS
+
+WARNING:
+    IBRS/IBPB is supported
+
+    STIBP is not supported or not enabled by the OS
+
+PASSED:
+    IBRS/IBPB is supported
+
+    Enhanced IBRS is supported
+
+    Enhanced IBRS is enabled by the OS 
+
+    STIBP is supported
+
 
 Notes:
 
 - The module returns WARNING when CPU doesn't support enhanced IBRS
   Even though OS/software may use basic IBRS by setting IA32_SPEC_CTRL[IBRS] when necessary,
   we have no way to verify this
+
 - The module returns WARNING when CPU supports enhanced IBRS but OS doesn't set IA32_SPEC_CTRL[IBRS]
   Under enhanced IBRS, OS can set IA32_SPEC_CTRL[IBRS] once to take advantage of IBRS protection
+
 - The module returns WARNING when CPU doesn't support STIBP or OS doesn't enable it
   Per Speculative Execution Side Channel Mitigations:
   "enabling IBRS prevents software operating on one logical processor from controlling
-   the predicted targets of indirect branches executed on another logical processor.
-   For that reason, it is not necessary to enable STIBP when IBRS is enabled"
+  the predicted targets of indirect branches executed on another logical processor.
+  For that reason, it is not necessary to enable STIBP when IBRS is enabled"
+
 - OS/software may implement "retpoline" mitigation for Spectre variant 2
   instead of using CPU hardware IBRS/IBPB
 
 @TODO: we should verify CPUID.07H:EDX on all logical CPUs as well
 because it may differ if ucode update wasn't loaded on all CPU cores
 
+
 Hardware registers used:
 
-CPUID.(EAX=7H,ECX=0):EDX[26]     - enumerates support for IBRS and IBPB
-CPUID.(EAX=7H,ECX=0):EDX[27]     - enumerates support for STIBP
-CPUID.(EAX=7H,ECX=0):EDX[29]     - enumerates support for the IA32_ARCH_CAPABILITIES MSR
-IA32_ARCH_CAPABILITIES[IBRS_ALL] - enumerates support for enhanced IBRS
-IA32_ARCH_CAPABILITIES[RCDL_NO]  - enumerates support RCDL mitigation
-IA32_SPEC_CTRL[IBRS]             - enable control for enhanced IBRS by the software/OS
-IA32_SPEC_CTRL[STIBP]            - enable control for STIBP by the software/OS
+- CPUID.(EAX=7H,ECX=0):EDX[26]     - enumerates support for IBRS and IBPB
+- CPUID.(EAX=7H,ECX=0):EDX[27]     - enumerates support for STIBP
+- CPUID.(EAX=7H,ECX=0):EDX[29]     - enumerates support for the IA32_ARCH_CAPABILITIES MSR
+- IA32_ARCH_CAPABILITIES[IBRS_ALL] - enumerates support for enhanced IBRS
+- IA32_ARCH_CAPABILITIES[RCDL_NO]  - enumerates support RCDL mitigation
+- IA32_SPEC_CTRL[IBRS]             - enable control for enhanced IBRS by the software/OS
+- IA32_SPEC_CTRL[STIBP]            - enable control for STIBP by the software/OS
 
 
 References:
 
 - Reading privileged memory with a side-channel by Jann Horn, Google Project Zero:
   https://googleprojectzero.blogspot.com/2018/01/reading-privileged-memory-with-side.html
+
 - Spectre:
   https://spectreattack.com/spectre.pdf
+
 - Meltdown:
   https://meltdownattack.com/meltdown.pdf
+
 - Speculative Execution Side Channel Mitigations:
   https://software.intel.com/sites/default/files/managed/c5/63/336996-Speculative-Execution-Side-Channel-Mitigations.pdf
+
 - Retpoline: a software construct for preventing branch-target-injection:
   https://support.google.com/faqs/answer/7625886
 
