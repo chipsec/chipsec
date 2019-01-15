@@ -1,11 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="DNV" >
-<!-- XML configuration file for Denverton
+<!--
+XML configuration file for Denverton
 
 * Intel Atom(R) Processor C3000 Product Family
-
-* https://www.intel.com/content/www/us/en/processors/atom/atom-technical-resources.html
-
+  https://www.intel.com/content/www/us/en/processors/atom/atom-technical-resources.html
 -->
   
   <pci>

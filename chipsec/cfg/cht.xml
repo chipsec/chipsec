@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="CHT">
-<!-- XML configuration for Cherry Trail and Braswell SoCs
+<!--
+XML configuration for Cherry Trail and Braswell SoCs
 
 * Intel(R) Atom(TM) Processor Z8000 series datasheet
   http://www.intel.com/content/www/us/en/processors/atom/atom-z8000-datasheet-vol-2.html

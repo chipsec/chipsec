@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_1xx">
-<!-- XML configuration file for 100 series PCH based platforms
+<!--
+XML configuration file for 100 series PCH based platforms
+
 * Intel(R) 100 Series Chipset Family Platform Controller Hub (PCH)
-* http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+  http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
 -->
 
   <!-- #################################### -->

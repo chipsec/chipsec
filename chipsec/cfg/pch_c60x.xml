@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_C60X" >
-<!-- XML configuration file for C600 series PCH
+<!--
+XML configuration file for C600 series PCH
+
 * Intel(R) C600 Series Chipset Family Platform Controller Hub (PCH)
-* https://ark.intel.com/products/series/98463/Intel-C600-Series-Chipsets
+  https://ark.intel.com/products/series/98463/Intel-C600-Series-Chipsets
 -->
 
   <registers>

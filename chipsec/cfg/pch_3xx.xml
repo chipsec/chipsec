@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_3xx">
-<!-- XML configuration file for the 300 series PCH -->
+<!--
+XML configuration file for the 300 series PCH
+-->
   <!-- #################################### -->
   <!--                                      -->
   <!-- Integrated devices                   -->

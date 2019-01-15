@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="BDX" >
-<!-- XML configuration file for Broadwell Server based platforms
+<!--
+XML configuration file for Broadwell Server based platforms
 -->
 
   <pci>
