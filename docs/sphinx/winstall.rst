@@ -8,12 +8,13 @@ CHIPSEC supports the following versions:
 - Windows 7, 8, 8.1, 10 x86 and 64-bit
 - Windows Server 2008, 2012, 2016 x86 and 64-bit
 
+NOTE: CHIPSEC has removed support for the `RWEverything <https://rweverything.com/>`_ driver due to PCI configuration space access issues.
 
 Please follow the steps below to install CHIPSEC framework on Windows:
 
-#. Install `Python <http://www.python.org/download/>`_
+#. Install `Python 2.7 <http://www.python.org/download/>`_
 
-#. Install `pywin32 <http://sourceforge.net/projects/pywin32/>`_ and ``setuptools`` packages:
+#. Install `pywin32 <https://pypi.org/project/pywin32/#files>`_ and ``setuptools`` packages:
 
    ``pip install setuptools``
 
