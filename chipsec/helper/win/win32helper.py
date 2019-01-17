@@ -723,8 +723,9 @@ class Win32Helper(Helper):
     # EFI Variable API
     #
     def EFI_supported( self):
-        # GetFirmwareEnvironmentVariable with garbage parameters will return 0 reliably on a legacy system
-        return self.GetFirmwareEnvironmentVariable("","{00000000-0000-0000-0000-000000000000}",0,0) !=0
+        # kern32.GetFirmwareEnvironmentVariable with garbage parameters will return error = 1 reliably on a legacy system
+        self.GetFirmwareEnvironmentVariable("","{00000000-0000-0000-0000-000000000000}",0,0)
+        return win32api.GetLastError() !=1
 
     def get_EFI_variable_full( self, name, guid, attrs=None ):
         status = 0 # EFI_SUCCESS
