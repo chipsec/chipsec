@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'CHIPSEC'
-copyright = u'(c) 2010-2017 Intel Corporation'
+copyright = u'(c) 2010-2019 Intel Corporation'
 author = u'CHIPSEC'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -65,7 +65,7 @@ author = u'CHIPSEC'
 # built documents.
 #
 # The short X.Y version.
-version = '1.3.6'
+version = '1.3.7'
 # The full version, including alpha/beta/rc tags.
 release = version
 
