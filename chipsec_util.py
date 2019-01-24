@@ -193,8 +193,9 @@ class ChipsecUtil:
                 cu = getattr(module, 'commands')
                 self.commands.update(cu)
             except ImportError, msg:
-                logger().error( "Couldn't import util command extension '%s'" % cmd )
-                raise ImportError, msg
+                # Display the import error and continue to import commands
+                logger().error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
+                continue
 
         if self.show_help:
             self.chipsec_util_help(self.help_cmd)
