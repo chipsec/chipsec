@@ -2,7 +2,7 @@
     OS-specific module implementation for EDK II and UEFI.
     Derived from posixmodule.c in Python 2.7.2.
 
-    Copyright (c) 2011 - 2012, Intel Corporation. All rights reserved.<BR>
+    Copyright (c) 2011 - 2019, Intel Corporation. All rights reserved.<BR>
     This program and the accompanying materials are licensed and made available under
     the terms and conditions of the BSD License that accompanies this distribution.
     The full text of the license may be found at
@@ -7052,7 +7052,7 @@ posix_writepci(PyObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(efi_readmem__doc__,
-"readmem(addr, len) -> PyString\n\
+"readmem(addr_lo, addr_hi, len) -> PyString\n\
 Read the given memory address.");
 
 static PyObject *
@@ -7061,39 +7061,50 @@ posix_readmem(PyObject *self, PyObject *args)
   int len;
   PyObject *pybuffer;
   char *cbuf, *addr;
+  UINT32 addr_lo, addr_hi;
 
-  if (!PyArg_Parse(args, "(II)", &addr, &len))
+  if (!PyArg_Parse(args, "(III)", &addr_lo, &addr_hi, &len))
     return NULL;
+#ifdef MDE_CPU_X64
+  addr = (unsigned char*)((UINT64)addr_lo | ((UINT64)addr_hi << 32));
+#else
+  addr = (unsigned char*)addr_lo;
+#endif
 
   Py_BEGIN_ALLOW_THREADS
-	
+
   pybuffer = PyString_FromStringAndSize((char *)NULL, len);
   if (pybuffer == NULL)
     return NULL;
   cbuf = PyString_AsString(pybuffer);
-	
-  while(len--){	
+
+  while(len--){
     *cbuf = *addr;
     cbuf++;
     addr++;
   }
 
-  Py_END_ALLOW_THREADS		
+  Py_END_ALLOW_THREADS
   return pybuffer;
-  //return PyBuffer_FromMemory( addr, len );
 }
 
 PyDoc_STRVAR(efi_readmem_dword__doc__,
-"readmem_dword(addr) -> (int32)\n\
+"readmem_dword(addr_lo, addr_hi) -> (int32)\n\
 Read the given memory address and return 32-bit value.");
 
 static PyObject *
 posix_readmem_dword(PyObject *self, PyObject *args)
 {
   unsigned int result, *addr;
+  UINT32 addr_lo, addr_hi;
 
-  if (!PyArg_Parse(args, "I", &addr))
+  if (!PyArg_Parse(args, "(II)", &addr_lo, &addr_hi))
     return NULL;
+#ifdef MDE_CPU_X64
+  addr = (unsigned int*)((UINT64)addr_lo | ((UINT64)addr_hi << 32));
+#else
+  addr = (unsigned int*)addr_lo;
+#endif
 
   Py_BEGIN_ALLOW_THREADS
   result = *addr;
@@ -7103,7 +7114,7 @@ posix_readmem_dword(PyObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(efi_writemem__doc__,
-"writemem(addr, buf, len) -> None\n\
+"writemem(addr_lo, addr_hi, buf, len) -> None\n\
 Write the buf (PyString) to the given memory address.");
 
 static PyObject *
@@ -7111,9 +7122,15 @@ posix_writemem(PyObject *self, PyObject *args)
 {
   char *buf, *addr;
   int len;
+  UINT32 addr_lo, addr_hi;
 
-  if (!PyArg_Parse(args, "(IsI)", &addr, &buf, &len))
+  if (!PyArg_Parse(args, "(IIsI)", &addr_lo, &addr_hi, &buf, &len))
     return NULL;
+#ifdef MDE_CPU_X64
+  addr = (unsigned char*)((UINT64)addr_lo | ((UINT64)addr_hi << 32));
+#else
+  addr = (unsigned char*)addr_lo;
+#endif
 
   Py_BEGIN_ALLOW_THREADS
   while(len--){
@@ -7128,16 +7145,22 @@ posix_writemem(PyObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(efi_writemem_dword__doc__,
-"writemem_dword(addr, val) -> None\n\
+"writemem_dword(addr_lo, addr_hi, val) -> None\n\
 Write the 32-bit value to the given memory address.");
 
 static PyObject *
 posix_writemem_dword(PyObject *self, PyObject *args)
 {
   unsigned int *addr, val;
+  UINT32 addr_lo, addr_hi;
 
-  if (!PyArg_Parse(args, "(II)", &addr, &val))
+  if (!PyArg_Parse(args, "(III)", &addr_lo, &addr_hi, &val))
     return NULL;
+#ifdef MDE_CPU_X64
+  addr = (unsigned int*)((UINT64)addr_lo | ((UINT64)addr_hi << 32));
+#else
+  addr = (unsigned int*)addr_lo;
+#endif
 
   Py_BEGIN_ALLOW_THREADS
   *addr = val;
