@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@ usage:
 import struct
 import sys
 
-from chipsec.logger import *
+from chipsec.logger import logger, print_buffer
 from chipsec.hal import hal_base
 
 class MemoryRuntimeError (RuntimeError):
@@ -71,21 +71,21 @@ class VirtMemory(hal_base.HALBase):
 
     def read_virtual_mem_dword( self, virt_address ):
         phys_address = self.va2pa(virt_address)
-        out_buf = self.read_physical_mem( phys_address, 4 )
+        out_buf = self.helper.read_physical_mem( phys_address, 4 )
         value = struct.unpack( '=I', out_buf )[0]
         if logger().HAL: logger().log( '[mem] dword at VA = 0x%016X: 0x%08X' % (virt_address, value) )
         return value
 
     def read_virtual_mem_word( self, virt_address ):
         phys_address = self.va2pa(virt_address)
-        out_buf = self.read_physical_mem( phys_address, 2 )
+        out_buf = self.helper.read_physical_mem( phys_address, 2 )
         value = struct.unpack( '=H', out_buf )[0]
         if logger().HAL: logger().log( '[mem] word at VA = 0x%016X: 0x%04X' % (virt_address, value) )
         return value
 
     def read_virtual_mem_byte( self, virt_address ):
         phys_address = self.va2pa(virt_address)
-        out_buf = self.read_physical_mem( phys_address, 1 )
+        out_buf = self.helper.read_physical_mem( phys_address, 1 )
         value = struct.unpack( '=B', out_buf )[0]
         if logger().HAL: logger().log( '[mem] byte at VA = 0x%016X: 0x%02X' % (virt_address, value) )
         return value
@@ -102,17 +102,17 @@ class VirtMemory(hal_base.HALBase):
     def write_virtual_mem_dword( self, virt_address, dword_value ):
         if logger().HAL: logger().log( '[mem] dword to VA = 0x%016X <- 0x%08X' % (virt_address, dword_value) )
         phys_address = self.va2pa(virt_address)
-        return self.write_physical_mem( phys_address, 4, struct.pack( 'I', dword_value ) )
+        return self.helper.write_physical_mem( phys_address, 4, struct.pack( 'I', dword_value ) )
 
     def write_virtual_mem_word( self, virt_address, word_value ):
         if logger().HAL: logger().log( '[mem] word to VA = 0x%016X <- 0x%04X' % (virt_address, word_value) )
         phys_address = self.va2pa(virt_address)
-        return self.write_physical_mem( phys_address, 2, struct.pack( 'H', word_value ) )
+        return self.helper.write_physical_mem( phys_address, 2, struct.pack( 'H', word_value ) )
 
     def write_virtual_mem_byte( self, virt_address, byte_value ):
         if logger().HAL: logger().log( '[mem] byte to VA = 0x%016X <- 0x%02X' % (virt_address, byte_value) )
         phys_address = self.va2pa(virt_address)
-        return self.write_physical_mem( phys_address, 1, struct.pack( 'B', byte_value ) )
+        return self.helper.write_physical_mem( phys_address, 1, struct.pack( 'B', byte_value ) )
 
     # Allocate virtual memory buffer
 
