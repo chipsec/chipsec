@@ -117,23 +117,12 @@ class EfiHelper(Helper):
     #
 
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
-        if logger().DEBUG:
-            logger().log( '[efi] helper does not support 64b PA' )
-        return self._read_phys_mem( phys_address_lo, length )
-
-    def _read_phys_mem( self, phys_address, length ):
-        return edk2.readmem( phys_address, length )
+        return edk2.readmem(phys_address_lo, phys_address_hi, length)
 
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
-        if logger().DEBUG:
-            logger().log( '[efi] helper does not support 64b PA' )
-        return self._write_phys_mem( phys_address_lo, length, buf )
-
-    def _write_phys_mem( self, phys_address, length, buf ):
-        # temp hack
         if 4 == length:
-            dword_value = struct.unpack( 'I', buf )[0]
-            edk2.writemem_dword( phys_address, dword_value )
+            dword_value = struct.unpack('I', buf)[0]
+            edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
         else:
             edk2.writemem( phys_address, buf, length )
 
@@ -163,9 +152,9 @@ class EfiHelper(Helper):
         return self.pa2va(physical_address)
 
     def read_mmio_reg(self, phys_address, size):
-        if logger().DEBUG:
-            logger().log( '[efi] helper does not support 64b PA' )
-        out_buf = self._read_phys_mem( phys_address, size )
+        phys_address_lo = phys_address & 0xFFFFFFFF
+        phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
+        out_buf = edk2.readmem(phys_address_lo, phys_address_hi, size)
         if size == 8:
             value = struct.unpack('=Q', out_buf[:size])[0]
         elif size == 4:
@@ -178,13 +167,13 @@ class EfiHelper(Helper):
         return value
 
     def write_mmio_reg(self, phys_address, size, value):
-        if logger().DEBUG:
-            logger().log( '[efi] helper does not support 64b PA' )
+        phys_address_lo = phys_address & 0xFFFFFFFF
+        phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
         if size == 4:
-            return edk2.writemem_dword( phys_address, value )
+            return edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
             buf = struct.pack(size*"B", value)
-            edk2.writemem( phys_address, buf, size )
+            edk2.writemem(phys_address_lo, phys_address_hi, buf, size)
 
     #
     # PCIe configuration access
