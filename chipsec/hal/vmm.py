@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -163,7 +163,7 @@ class VirtIO_Device():
         bars = self.cs.pci.get_device_bars(self.bus, self.dev, self.fun)
         for (bar, isMMIO, is64bit, bar_off, bar_reg, size) in bars:
             if isMMIO:
-                chipsec.hal.mmio.dump_MMIO( self.cs, bar, size )
+                self.cs.mmio.dump_MMIO( bar, size )
             else:
                 self.cs.io.dump_IO( bar, size, 4 )
 

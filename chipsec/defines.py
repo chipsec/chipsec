@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -147,7 +147,7 @@ COMPRESSION_TYPES = [COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_TIANO, COMPRESSION_
 
 def DB(val):
     return struct.pack('<B', val)
-def DW(value):
+def DW(val):
     return struct.pack('<H', val)
 def DD(val):
     return struct.pack('<L', val)
