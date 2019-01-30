@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -856,6 +856,8 @@ class Chipset:
 
     def register_has_field( self, reg_name, field_name ):
         reg_def = self.get_register_def(reg_name )
+        if 'FIELDS' not in reg_def:
+            return False
         return (field_name in reg_def['FIELDS'])
 
     def _register_fields_str(self, reg_def, reg_val):
