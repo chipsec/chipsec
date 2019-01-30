@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -37,15 +37,13 @@ class smm(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        chipset = self.cs.get_chipset_id()
-        return (chipset not in chipsec.chipset.CHIPSET_FAMILY_ATOM) and (chipset not in chipsec.chipset.CHIPSET_FAMILY_XEON)
+        if self.cs.is_core() and self.cs.is_register_defined('PCI0.0.0_SMRAMC'):
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_SMRAMC(self):
         self.logger.start_test( "Compatible SMM memory (SMRAM) Protection" )
-
-        if not self.cs.is_register_defined( 'PCI0.0.0_SMRAMC'  ) :
-            self.logger.error( "Couldn't find definition of required registers (PCI0.0.0_SMRAMC)" )
-            return ModuleResult.ERROR
 
         regval = self.cs.read_register( 'PCI0.0.0_SMRAMC' )
         g_smrame = self.cs.get_register_field( 'PCI0.0.0_SMRAMC', regval, 'G_SMRAME' )
