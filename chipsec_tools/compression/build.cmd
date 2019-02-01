@@ -16,15 +16,22 @@
 @REM #Contact information:
 @REM #chipsec@intel.com
 
-@REM # Need to set EDK_TOOLS_PATH and BASE_TOOLS_PATH to current directory and HOST_ARCH
-if not defined EDK_TOOLS_PATH (
-    set EDK_TOOLS_PATH=%CD%
-)
-if not defined BASE_TOOLS_PATH (
-    set BASE_TOOLS_PATH=%CD%
+@REM # Need to find Visual Studio
+call get_vsvars.bat
+if not defined VCINSTALLDIR(
+    @echo.
+    @echo !!! ERROR !!!! Cannot find Visual Studio.
+    @echo Please download compression tools from https://github.com/tianocore/edk2-BaseTools-win32/archive/master.zip
+    @echo Unzip the archive into the chipsec_tools/compression/bin directory
+    @echo.
+    goto end
 )
 
-set HOST_ARCH=IA32
+@REM # Need to set EDK_TOOLS_PATH and BASE_TOOLS_PATH to current directory and HOST_ARCH
+set EDK_TOOLS_PATH=%CD%
+
+set BASE_TOOLS_PATH=%CD%
+
 if %PROCESSOR_ARCHITECTURE% == AMD64(
     set HOST_ARCH=X64
 )
@@ -32,4 +39,4 @@ if %PROCESSOR_ARCHITECTURE% == AMD64(
 @REM # Now call make and build the compression tools
 nmake -c
 
-
+:end
