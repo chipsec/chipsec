@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -51,6 +51,7 @@ try:
 except ImportError:
     _importlib = False
 
+avail_helpers = []
 
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
@@ -68,7 +69,7 @@ class HWAccessViolationError (OsHelperError):
 
 class UnimplementedAPIError (OsHelperError):
     def __init__(self,api_name):
-        super(UnimplementedAPIError,self).__init__("'%s' is not implemented" % api_name, 0)
+        super(UnimplementedAPIError,self).__init__("'{}' is not implemented".format(api_name), 0)
 
 class UnimplementedNativeAPIError (UnimplementedAPIError):
     def __init__(self,api_name):
@@ -87,13 +88,10 @@ class OsHelper:
         self.helper = None
         self.loadHelpers()
         self.filecmds = None
-        #print "Operating System: %s %s %s %s" % (self.os_system, self.os_release, self.os_version, self.os_machine)
-        #print self.os_uname
         if(not self.helper):
             import platform
             os_system  = platform.system()
-            #raise OsHelperError("Unsupported platform '%s'" % os_system,errno.ENODEV)
-            raise OsHelperError( "Could not load helper for '%s' environment (unsupported environment?)" % os_system, errno.ENODEV )
+            raise OsHelperError( "Could not load helper for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -101,9 +99,9 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        for name, cls in Helper.registry:
+        for helper in avail_helpers:
             try:
-                self.helper = cls()
+                self.helper = getattr(chiphelpers,helper).get_helper()
                 break
             except OsHelperError:
                 raise
@@ -123,12 +121,12 @@ class OsHelper:
                 raise OsHelperError("failed to create OS helper")
             if not self.helper.start( start_driver, from_file ):
                 raise OsHelperError("failed to start OS helper")
-        except (None,Exception) , msg:
+        except (None,Exception) as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
                 error_no = msg.errorcode
-            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"%s\"" % msg,error_no)
+            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"{}\"".format(msg),error_no)
 
     def stop( self, start_driver ):
         if not self.filecmds is None:
@@ -204,7 +202,7 @@ class OsHelper:
     #
     # read/write mmio
     #
-    def read_mmio_reg( self, bar_base, size, offset=0, bar_size=None ):
+    def read_mmio_reg( self, phys_address, size ):
         if self.use_native_api() and hasattr(self.helper, 'native_read_mmio_reg'):
             ret = self.helper.native_read_mmio_reg( bar_base, bar_size, offset, size )
         else:
@@ -213,7 +211,7 @@ class OsHelper:
             self.filecmds.AddElement("read_mmio_reg",(bar_base + offset,size),ret)
         return ret
         
-    def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None ):
+    def write_mmio_reg( self, phys_address, size, value ):
         if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
             ret = self.helper.native_write_mmio_reg( bar_base, bar_size, offset, size, value )
         else:
@@ -584,7 +582,7 @@ def helper():
     if _helper == None:
         try:
             _helper  = OsHelper()
-        except BaseException, msg:
+        except BaseException as msg:
             if logger().DEBUG: 
                 logger().error( str(msg) )
                 logger().log_bad(traceback.format_exc())
