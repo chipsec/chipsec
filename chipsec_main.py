@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -399,6 +399,9 @@ class ChipsecMain:
             logger().DEBUG   = True
         if self.log:
             logger().set_log_file( self.log )
+        if self._module_argv and len(self._module_argv) == 1 and len(self._module_argv[0].split(',')) > 1:
+            logger().log( "[*] Use of the -a command no longer needs to have arguments concatinated with ','")
+            self._module_argv = self._module_argv[0].split(',')
         if self._unknownPlatform is False:
             logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
 
