@@ -44,6 +44,7 @@ from chipsec.hal.uefi_common import *
 from chipsec.logger import *
 from chipsec.file import *
 from chipsec.defines import COMPRESSION_TYPES
+from chipsec.defines import bytestostring
 
 
 ########################################################################################################
@@ -203,13 +204,13 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
 
     # Print Variable Data
     logger().log( 'Data:' )
-    print_buffer( efi_var_data )
+    print_buffer( bytestostring(efi_var_data) )
 
     # Print Variable Full Contents
     if logger().VERBOSE:
         logger().log( 'Full Contents:' )
         if not efi_var_buf is None:
-            print_buffer( efi_var_buf )
+            print_buffer( bytestostring(efi_var_buf) )
 
 
 def print_sorted_EFI_variables( variables ):
@@ -485,7 +486,7 @@ NVRAM: EFI Variable Store
             if filename: write_file( filename, var )
             if logger().UTIL_TRACE or logger().HAL:
                 logger().log( '[uefi] EFI variable {}:{} :'.format(guid, name) )
-                print_buffer( var )
+                print_buffer( bytestostring(var) )
         return var
 
     def set_EFI_variable( self, name, guid, var, datasize=None, attrs=None ):
@@ -520,7 +521,7 @@ NVRAM: EFI Variable Store
         while pa > CHUNK_SZ:
             if logger().HAL: logger().log( '[uefi] reading 0x{:016X}..'.format(pa) )
             membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
-            pos = membuf.find( table_sig )
+            pos = bytestostring(membuf).find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
                 if logger().HAL: logger().log( "[uefi] found signature '{}' at 0x{:016X}..".format(table_sig,table_pa) )
@@ -600,7 +601,7 @@ NVRAM: EFI Variable Store
         (found,pa,hdr,table,table_buf) = self.find_EFI_System_Table()
         if found:
             logger().log( "[uefi] EFI System Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
         (found,ect_pa,ect,ect_buf) = self.find_EFI_Configuration_Table()
@@ -611,18 +612,18 @@ NVRAM: EFI Variable Store
         (found,pa,hdr,table,table_buf) = self.find_EFI_RuntimeServices_Table()
         if found:
             logger().log( "\n[uefi] EFI Runtime Services Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
         (found,pa,hdr,table,table_buf) = self.find_EFI_BootServices_Table()
         if found:
             logger().log( "\n[uefi] EFI Boot Services Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
         (found,pa,hdr,table,table_buf) = self.find_EFI_DXEServices_Table()
         if found:
             logger().log( "\n[uefi] EFI DXE Services Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )

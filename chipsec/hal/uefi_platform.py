@@ -379,7 +379,7 @@ def getNVstore_NVAR( nvram_buf ):
     return l
 
 def getEFIvariables_NVAR( nvram_buf ):
-    start = nvram_buf.find( NVAR_EFIvar_signature )
+    start = defines.bytestostring(nvram_buf).find( NVAR_EFIvar_signature )
     nvram_size = len(nvram_buf)
     EFI_HDR_NVAR = "<4sH3sB"
     nvar_size = struct.calcsize(EFI_HDR_NVAR)

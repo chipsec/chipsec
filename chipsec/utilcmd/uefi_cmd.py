@@ -186,13 +186,13 @@ class UEFICommand(BaseCommand):
                         n += 1
             else:
                 self.logger.log( "[*] Searching for UEFI variable with name {}..".format(_input_var) )
-                for name,_v in _vars.iteritems():
+                name = _input_var
+                if name in list(_vars.keys()):
                     n = 0
-                    for (off, buf, hdr, data, guid, attrs) in _v:
-                        if _input_var == name:
-                            var_fname = '{}_{}_{}_{:d}.bin'.format(name,guid,get_attr_string(attrs).strip(),n)
-                            self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid,name,var_fname) )
-                            write_file( var_fname, data )
+                    for (off, buf, hdr, data, guid, attrs) in _vars[name]:
+                        var_fname = '{}_{}_{}_{:d}.bin'.format(name,guid,get_attr_string(attrs).strip(),n)
+                        self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid,name,var_fname) )
+                        write_file( var_fname, data )
                         n += 1
 
         elif ( 'nvram' == op or 'nvram-auth' == op ):
