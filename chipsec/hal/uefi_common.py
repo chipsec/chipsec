@@ -40,6 +40,7 @@ from collections import namedtuple
 
 from chipsec.file import *
 from chipsec.logger import *
+from chipsec.defines import bytestostring
 
 #from chipsec.helper.oshelper import helper
 
@@ -485,6 +486,7 @@ def bit_set(value, mask, polarity = False):
     return ( (value & mask) == mask )
 
 def get_3b_size(s):
+    s = bytestostring(s)
     return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
 def guid_str(guid0, guid1, guid2, guid3):
@@ -545,7 +547,7 @@ def assemble_uefi_raw(image):
 
 def FvSum8(buffer):
     sum8 = 0
-    for b in buffer:
+    for b in bytestostring(buffer):
         sum8 = (sum8 + ord(b)) & 0xff
     return sum8
 
@@ -554,7 +556,7 @@ def FvChecksum8(buffer):
 
 def FvSum16(buffer):
     sum16 = 0
-    buffer = buffer
+    buffer = bytestostring(buffer)
     blen = len(buffer)//2
     i = 0
     while i < blen:
@@ -584,7 +586,7 @@ def NextFwVolume(buffer, off = 0):
     size = len(buffer)
     res = (None, None, None, None, None, None, None, None, None)
     while ((fof + vf_header_size) < size):
-        fof =  buffer.find("_FVH", fof)
+        fof =   bytestostring(buffer).find("_FVH", fof)
         if fof == -1 or size - fof < vf_header_size:
             #return if signature is not found
             return res
