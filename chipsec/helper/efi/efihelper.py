@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -299,13 +299,16 @@ class EfiHelper(Helper):
         
         if data     is None: data = '\0'*4
         if datasize is None: datasize = len(data)
+        if attrs is None:
+            attrs=0x07
+            if logger().VERBOSE: logger().log_warning("Setting attributes to: {:04X}".format(attrs))
 
         (Status, datasize, guidbytes) = edk2.SetVariable(unicode(name), guid.bytes, int(attrs), data, datasize)
         
         return Status
         
     def delete_EFI_variable(self, name, guid):
-        return self.set_EFI_variable(name, guid, None, 0)
+        return self.set_EFI_variable(name, guid, None, 0, 0)
     
     def list_EFI_variables(self):   
                 
@@ -328,16 +331,14 @@ class EfiHelper(Helper):
             name = '\0'*size
             (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), randguid.bytes)
 
-        
-#        while status != 14:
         while status == 0:
-            guid =  uuid.UUID(bytes=guidbytes)  
+            guid = uuid.UUID(bytes=guidbytes)
             name = name.encode('ascii','ignore')
             (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
             
             if logger().VERBOSE: logger().log("%d: Found variable %s" % (len(variables), name))
 
-            var = (off, buf, hdr, data, guid, attr)
+            var = (off, buf, hdr, data, str(guid), attr)
             if name in variables: 
                 if logger().VERBOSE: logger().log("WARNING: found a second instance of name %s." % name)
 
