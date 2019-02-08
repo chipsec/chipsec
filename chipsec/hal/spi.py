@@ -540,9 +540,8 @@ class SPI(hal_base.HALBase):
         buf = self.read_spi( spi_fla, data_byte_count )
         if buf is None:
             return None
-        buf = bytes([ord(i) for i in buf])
         if filename is not None:
-            write_file( filename, struct.pack(str(len(buf))+'s', buf) )
+            write_file( filename, buf )
         else:
             chipsec.logger.print_buffer( buf, 16 )
         return buf
@@ -556,7 +555,7 @@ class SPI(hal_base.HALBase):
 
         self.check_hardware_sequencing()
 
-        buf = []
+        buf = bytearray()
         dbc = SPI_READ_WRITE_DEF_DBC
         if (data_byte_count >= SPI_READ_WRITE_MAX_DBC):
             dbc = SPI_READ_WRITE_MAX_DBC
@@ -581,8 +580,8 @@ class SPI(hal_base.HALBase):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
                     if logger().HAL:
                         logger().log( "[spi] FDATA00 + 0x{:x}: 0x{:x}".format(fdata_idx*4, dword_value) )
-                    buf += [ chr((dword_value>>(8*j))&0xff) for j in range(4) ]
-                    #buf += tuple( struct.pack("I", dword_value) )
+                    buf += struct.pack("I",dword_value)
+
         if (0 != r):
             if logger().HAL:
                 logger().log( "[spi] reading remaining 0x{:x} bytes from 0x{:x}".format(r, spi_fla + n*dbc) )
@@ -590,14 +589,15 @@ class SPI(hal_base.HALBase):
                 logger().error( "SPI flash read failed" )
             else:
                 t = 4
-                n_dwords = (r+3)/4
+                n_dwords = (r+3)//4
                 for fdata_idx in range(0, n_dwords):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx*4 )
                     if logger().HAL:
                         logger().log( "[spi] FDATA00 + 0x{:x}: 0x{:08X}".format(fdata_idx*4, dword_value) )
                     if (fdata_idx == (n_dwords-1)) and (0 != r%4):
                         t = r%4
-                    buf += [ chr((dword_value >> (8*j)) & 0xff) for j in range(t) ]
+                    for j in range(t):
+                        buf += struct.pack('B',(dword_value >> (8*j)) & 0xff)
 
         if logger().HAL:
             logger().log( "[spi] buffer read from SPI:" )
@@ -612,7 +612,7 @@ class SPI(hal_base.HALBase):
         write_ok = True
         data_byte_count = len(buf)
         dbc = 4
-        n = data_byte_count / dbc
+        n = data_byte_count // dbc
         r = data_byte_count.format(dbc)
         if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] writing 0x{:x} bytes to SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )

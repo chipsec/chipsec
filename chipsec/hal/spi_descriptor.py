@@ -46,6 +46,7 @@ from chipsec.file import *
 
 from chipsec.cfg.common import *
 from chipsec.hal import spi
+from binascii import hexlify
 
 SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A )
 SPI_FLASH_DESCRIPTOR_SIZE      = 0x1000
@@ -94,13 +95,13 @@ def get_spi_regions( fd ):
 
 
 def parse_spi_flash_descriptor( cs, rom ):
-    if not (type(rom) == str):
+    if not (isinstance(rom,str) or isinstance(rom,bytes)):
         logger().error('Invalid fd object type {}'.format(type(rom)))
         return
 
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I',SPI_FLASH_DESCRIPTOR_SIGNATURE)) )
+        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:8s})'.format(struct.unpack('=I',SPI_FLASH_DESCRIPTOR_SIGNATURE)) )
         return None
 
     fd_off = pos - 0x10
@@ -115,8 +116,8 @@ def parse_spi_flash_descriptor( cs, rom ):
     fd     = rom[ fd_off : fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
     fd_sig = struct.unpack_from( '=I', fd[0x10:0x14] )
 
-    logger().log( '+ 0x0000 Reserved : {:16}'.format(fd[0x0:0xF].encode('hex').upper()) )
-    logger().log( '+ 0x0010 Signature: 0x{:08X}'.format(fd_sig) )
+    logger().log( '+ 0x0000 Reserved : 0x{}'.format(hexlify(fd[0x0:0xF]).upper()) )
+    logger().log( '+ 0x0010 Signature: 0x{:8s}'.format(fd_sig) )
 
     #
     # Flash Descriptor Map Section
@@ -204,7 +205,7 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( ' Region                | FLREGx    | Base     | Limit   ' )
     logger().log( '--------------------------------------------------------' )
     for r in range(nr):
-        if flregs[r]: logger().log( '{:d} {:020} | {:08X}  | {:08X} | {:08X} {}'.format(r, spi.SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
+        if flregs[r]: logger().log( '{:d} {:20s} | {:08X}  | {:08X} | {:08X} {}'.format(r, spi.SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
 
     #
     # Flash Descriptor Master Section
@@ -234,7 +235,7 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( s )
     logger().log( '--------------------------------------------------------' )
     for r in range(nr):
-        s = '{:-2d} {:020} '.format(r, spi.SPI_REGION_NAMES[r])
+        s = '{:-2d} {:20s} '.format(r, spi.SPI_REGION_NAMES[r])
         for m in range(nm):
             access_s = ''
             mask = (0x1 << r)
@@ -264,7 +265,7 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( '' )
     logger().log( '+ 0x{:04X} OEM Section:'.format(0xF00) )
     logger().log( '========================================================' )
-    print_buffer( fd[0xF00:] )
+    print_buffer( bytestostring(fd[0xF00:]) )
 
     logger().log( '' )
     logger().log( '########################################################' )
