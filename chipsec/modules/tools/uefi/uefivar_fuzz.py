@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2017, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -83,6 +83,8 @@ from chipsec.file          import *
 from chipsec.hal.uefi      import *
 import chipsec.chipset
 
+from chipsec.fuzzing import primitives as prim
+
 class uefivar_fuzz(BaseModule):
 
     def __init__(self):
@@ -111,7 +113,7 @@ class uefivar_fuzz(BaseModule):
         s = raw_input( "Type 'yes' to continue > " )
         if s != 'yes': return
 
-      
+
         # Default options
         _NAME   = 'FuzzerVarName'
         _GUID   = '414C4694-F4CF-0525-69AF-C99C8596530F'
@@ -130,6 +132,11 @@ class uefivar_fuzz(BaseModule):
         FUZZ_ATTRIB = True
         FUZZ_DATA   = True
         FUZZ_SIZE   = True
+
+        # Init fuzzing primitives
+        name_prim = prim.string(value=_NAME,max_len=BOUND_STR)
+        attrib_prim = prim.dword(value=_ATTRIB) # i think the attrib field is 4 bytes large?
+        data_prim = prim.random_data(value=_DATA,min_length=0,max_length=BOUND_INT)
 
         help_text  = False
         
@@ -172,21 +179,30 @@ class uefivar_fuzz(BaseModule):
             self.logger.log( 'Test case : %d' % CASE )
             self.logger.log('')
             for count in range(1,ITERATIONS+CASE):
-                
                 if FUZZ_NAME:
                     _NAME = ''
-                    while not _NAME:
-                        for n in range(random.randrange(BOUND_STR)):
-                            _NAME += random.choice(string.printable)    
+                    if name_prim.mutate():
+                        _NAME = name_prim.render()
+                    else: # if mutate() returns false, we need to reload the primitive
+                        name_prim = prim.string(value=_NAME,max_len=BOUND_STR)
+                        _NAME = name_prim.render()   
 
                 if FUZZ_GUID  : _GUID   = self.rnd(4)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(2)+'-'+self.rnd(6)
-                
-                if FUZZ_ATTRIB: _ATTRIB = int(self.rnd(4),16)
-                
-                if FUZZ_DATA  : 
+        
+                if FUZZ_ATTRIB:
+                    if attrib_prim.mutate():
+                        _ATTRIB = attrib_prim.render()
+                    else:
+                        attrib_prim = prim.dword(value=_ATTRIB)
+                        _ATTRIB = attrib_prim.render()
+ 
+                if FUZZ_DATA  :
                     _DATA = None
-                    while not _DATA:
-                        _DATA   = self.rnd(random.randrange(BOUND_INT))
+                    if data_prim.mutate():
+                        _DATA = data_prim.render()
+                    else:
+                        data_prim = prim.random_data(value=_DATA,min_length=0,max_length=BOUND_INT)
+                        _DATA = data_prim.render()
                         
                 if FUZZ_SIZE  : _SIZE   = random.randrange(len(_DATA))
                 
