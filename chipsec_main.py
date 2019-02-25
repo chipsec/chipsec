@@ -388,7 +388,7 @@ class ChipsecMain:
         adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
         adv_options.add_argument('--record',dest='_to_file',help='run chipsec and clone helper results into JSON file')
         adv_options.add_argument('--replay',dest='_from_file', help='replay a chipsec run with JSON file')
-        adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=["@","CHANGE","ME"], type=str)
+        adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i[0] for i in oshelper.Helper.registry])
 
         parser.parse_args(self.argv,namespace=ChipsecMain)
  
@@ -408,7 +408,7 @@ class ChipsecMain:
         if self._unknownPlatform is False:
             logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
         if self._from_file:
-            self._driver_exists = "@CHANGEME"
+            self._driver_exists = "FileHelper"
 
     def properties( self ):
         ret = OrderedDict()

@@ -124,13 +124,14 @@ class OsHelper:
             except:
                 pass
 
-    def start(self, start_driver, driver_exists=0, to_file=None, from_file=False):
+    def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:
             from chipsec.helper.file.helper import FileCmds
             self.filecmds = FileCmds(to_file)
-        if not driver_exists == 0:
-            name, cls = Helper.registry[driver_exists]
-            self.helper = cls()
+        if not driver_exists is None:
+            for name, cls in Helper.registry:
+                if name == driver_exists:
+                    self.helper = cls()
         try:
             if not self.helper.create( start_driver ):
                 raise OsHelperError("failed to create OS helper")
@@ -223,7 +224,7 @@ class OsHelper:
         else:
             ret = self.helper.read_mmio_reg( bar_base+offset, size )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_mmio_reg",(phys_address,size),ret)
+            self.filecmds.AddElement("read_mmio_reg",(bar_base + offset,size),ret)
         return ret
         
     def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None ):
@@ -232,7 +233,7 @@ class OsHelper:
         else:
             ret = self.helper.write_mmio_reg(bar_base+offset, size, value )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_mmio_reg",(phys_address, size, value),ret)
+            self.filecmds.AddElement("write_mmio_reg",(bar_base + offset, size, value),ret)
         return ret
         
     #
