@@ -399,8 +399,8 @@ class ChipsecMain:
             logger().DEBUG   = True
         if self.log:
             logger().set_log_file( self.log )
-        if self._module_argv and len(self._module_argv) == 1 and len(self._module_argv[0].split(',')) > 1:
-            logger().log( "[*] Use of the -a command no longer needs to have arguments concatinated with ','")
+        if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):
+            logger().log( "[*] Use of the -a command no longer needs to have arguments concatenated with ','")
             self._module_argv = self._module_argv[0].split(',')
         if self._unknownPlatform is False:
             logger().log( "[*] Ignoring unsupported platform warning and continue execution" )
