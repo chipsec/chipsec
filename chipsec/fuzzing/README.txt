@@ -1,4 +1,8 @@
 Fuzzing primitives (primitives.py) taken from https://github.com/OpenRCE/sulley
+OpenRCE/sulley is licensed under the
+GNU General Public License v2.0
+
+The GNU GPL is the most widely used free software license and has a strong copyleft requirement. When distributing derived works, the source code of the work must be made available under the same license. There are multiple variants of the GNU GPL, each with different requirements.
 
 Sulley is a fuzzing engine and fuzz testing framework consisting of multiple extensible components. Sulley (IMHO) exceeds the capabilities of most previously published fuzzing technologies, commercial and public domain. The goal of the framework is to simplify not only data representation but to simplify data transmission and instrumentation. Sulley is affectionately named after the creature from Monsters Inc., because, well, he is fuzzy.
 
