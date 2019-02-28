@@ -84,6 +84,27 @@ class build_ext(_build_ext):
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
+    def _build_linux_compression(self):
+        log.info("building compression executables")
+        build_elf = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
+        elfs = ["Brotli","LzmaCompress","TianoCompress"]
+        #copy the compression files to build directory
+        self.copy_tree(os.path.join("chipsec_tools","compression"),build_elf)
+        # Run the makefile there
+        subprocess.check_output(["make", "-C", build_elf, "-f", "GNUmakefile"])
+        # Copy the resulting elf files into the correct place
+        root_dst = "" if self.inplace else self.real_build_lib
+        dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
+        try:
+            dir_util.remove_tree(dst)
+        except:
+            pass
+        os.mkdir(dst)
+        for elf in elfs:
+            self.copy_file(os.path.join(build_elf,"bin",elf),dst)
+        # Clean up the build directory
+        dir_util.remove_tree(os.path.join(self.real_build_lib,"chipsec_tools"))
+
     def _build_darwin_driver(self):
         log.info("building the OSX driver")
         build_driver = os.path.join(self.real_build_lib, "drivers", "osx")
@@ -101,6 +122,27 @@ class build_ext(_build_ext):
         self.copy_tree(os.path.join(build_driver, "build", "Release", "chipsec.kext"), dst)
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
+
+    def _build_darwin_compression(self):
+        log.info("building compression executables")
+        build_exe = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
+        exes = ["Brotli","LzmaCompress","TianoCompress"]
+        #copy the compression files to build directory
+        self.copy_tree(os.path.join("chipsec_tools","compression"),build_exe)
+        # Run the makefile there
+        subprocess.check_output(["make", "-C", build_exe, "-f", "GNUmakefile"])
+        # Copy the resulting elf files into the correct place
+        root_dst = "" if self.inplace else self.real_build_lib
+        dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
+        try:
+            dir_util.remove_tree(dst)
+        except:
+            pass
+        os.mkdir(dst)
+        for exe in exes:
+            self.copy_file(os.path.join(build_exe,"bin",exe),dst)
+        # Clean up the build directory
+        dir_util.remove_tree(os.path.join(self.real_build_lib,"chipsec_tools"))
 
     def run(self):
         # First, we build the standard extensions.
