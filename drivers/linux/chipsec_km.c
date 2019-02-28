@@ -842,7 +842,12 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Initializing update routine\n");
 
 		/* we just check if the first bytes are in the ok range */
-		if (!access_ok(VERIFY_READ, ioctl_param, sizeof(unsigned short))) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
+		if (!access_ok(VERIFY_READ, ioctl_param, sizeof(unsigned short))) 
+#else
+		if(!access_ok(ioctl_param,sizeof(unsigned short)))
+#endif	
+		{
 			printk("\n address not in user-mode\n");
 			return -EFAULT;
 		}
