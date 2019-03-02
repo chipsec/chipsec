@@ -206,7 +206,7 @@ class ChipsecMain:
                     subdirs.pop()
             for modx in mod_fnames:
                 if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
-                    self.load_module( os.path.join( dirname, modx ), None )
+                    self.load_module( os.path.join( dirname, modx ), self._module_argv )
 
     def load_my_modules(self):
         #
