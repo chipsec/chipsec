@@ -13,6 +13,8 @@ call python chipsec_main.py -h > %TARGET%\docs\sphinx\options.rst
 popd
 
 pushd %TARGET%\docs\sphinx
+:: Update options.rst to make it a preformatted block
+call python options.py
 
 call sphinx-apidoc -e -f -T -o modules %TARGET%
 call python removeStrRst.py
