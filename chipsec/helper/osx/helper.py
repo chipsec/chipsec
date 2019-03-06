@@ -377,7 +377,8 @@ class OSXHelper(Helper):
         #self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
-        return
+        ret = struct.unpack(_smi_msg_t_fmt,out_buf)
+        return ret
 
     def map_io_space(self, base, size, cache_type):
         raise NotImplementedError()
