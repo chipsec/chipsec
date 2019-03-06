@@ -1024,8 +1024,9 @@ class LinuxHelper(Helper):
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         self.set_affinity(cpu_thread_id)
         in_buf = struct.pack( "7"+self._pack, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-        self.ioctl(IOCTL_SWSMI, in_buf)
-        return
+        out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
+        ret = struct.unpack("7"+self._pack, out_buf)
+        return ret
 
 
     #
