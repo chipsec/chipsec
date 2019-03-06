@@ -945,51 +945,55 @@ DriverDeviceControl(
           }
         case IOCTL_SWSMI:
           {
-            CPU_REG_TYPE gprs[6] = {0};
-            CPU_REG_TYPE _rax = 0, _rbx = 0, _rcx = 0, _rdx = 0, _rsi = 0, _rdi = 0;
-            unsigned int _smi_code_data = 0;
+            swsmi_msg_t smi_msg;
 
             DbgPrint("[chipsec] > IOCTL_SWSMI\n");
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	        DbgPrint( "[chipsec] ERROR: NO data provided\n" );
+	              DbgPrint( "[chipsec] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(UINT16) + sizeof(gprs) )
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(smi_msg) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < sizeof(UINT16) + sizeof(gprs))\n" );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < sizeof(smi_msg))\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            RtlCopyBytes( &_smi_code_data, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT16) );
-            RtlCopyBytes( gprs, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT16), sizeof(gprs) );
-            _rax = gprs[ 0 ];
-            _rbx = gprs[ 1 ];
-            _rcx = gprs[ 2 ];
-            _rdx = gprs[ 3 ];
-            _rsi = gprs[ 4 ];
-            _rdi = gprs[ 5 ];
-            DbgPrint( "[chipsec][IOCTL_SWSMI] SW SMI to ports 0x%X-0x%X <- 0x%04X\n", 0xB2, 0xB3, _smi_code_data );
-            DbgPrint( "                       RAX = 0x%I64x\n", _rax );
-            DbgPrint( "                       RBX = 0x%I64x\n", _rbx );
-            DbgPrint( "                       RCX = 0x%I64x\n", _rcx );
-            DbgPrint( "                       RDX = 0x%I64x\n", _rdx );
-            DbgPrint( "                       RSI = 0x%I64x\n", _rsi );
-            DbgPrint( "                       RDI = 0x%I64x\n", _rdi );
+            RtlCopyBytes( &gprs, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(smi_msg) );
+
+            DbgPrint( "[chipsec][IOCTL_SWSMI] SW SMI to ports 0x%X-0x%X <- 0x%04X\n", 0xB2, 0xB3, smi_msg.code_data );
+            DbgPrint( "                       RAX = 0x%I64x\n", smi_msg.rax );
+            DbgPrint( "                       RBX = 0x%I64x\n", smi_msg.rbx );
+            DbgPrint( "                       RCX = 0x%I64x\n", smi_msg.rcx );
+            DbgPrint( "                       RDX = 0x%I64x\n", smi_msg.rdx );
+            DbgPrint( "                       RSI = 0x%I64x\n", smi_msg.rsi );
+            DbgPrint( "                       RDI = 0x%I64x\n", smi_msg.rdi );
             // --
             // -- send SMI using port 0xB2
             // --
             __try
               {
-                _swsmi( _smi_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi );
+                _swsmi( &smi_msg );
               }
             __except( EXCEPTION_EXECUTE_HANDLER )
               {
                 Status = GetExceptionCode();
                 break;
               }
+            
+            RtlCopyBytes( (BYTE*)Irp->AssociatedIrp.SystemBuffer, &smi_msg, sizeof(smi_msg) );
+            dwBytesWritten = sizeof(smi_msg);
+
+            DbgPrint( "[chipsec][IOCTL_SWSMI] SW SMI return from ports 0x%X-0x%X <- 0x%04X\n", 0xB2, 0xB3, smi_msg.code_data );
+            DbgPrint( "                       RAX = 0x%I64x\n", smi_msg.rax );
+            DbgPrint( "                       RBX = 0x%I64x\n", smi_msg.rbx );
+            DbgPrint( "                       RCX = 0x%I64x\n", smi_msg.rcx );
+            DbgPrint( "                       RDX = 0x%I64x\n", smi_msg.rdx );
+            DbgPrint( "                       RSI = 0x%I64x\n", smi_msg.rsi );
+            DbgPrint( "                       RDI = 0x%I64x\n", smi_msg.rdi );
+
             Status = STATUS_SUCCESS;
             break;
           }

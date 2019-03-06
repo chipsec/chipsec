@@ -125,4 +125,14 @@ typedef struct _DESCRIPTOR_TABLE_RECORD {
 } DESCRIPTOR_TABLE_RECORD, *PDESCRIPTOR_TABLE_RECORD;
 #pragma pack()
 
+typedef struct _swsmi_msg_t {
+    UINTN code_data;
+    UINTN rax;
+    UINTN rbx;
+    UINTN rcx;
+    UINTN rdx;
+    UINTN rsi;
+    UINTN rdi;
+} swsmi_msg_t;
+
 #endif	// CPU_H

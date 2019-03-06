@@ -344,47 +344,54 @@ SendAPMSMI PROC
 SendAPMSMI ENDP
 
 ;------------------------------------------------------------------------------
+;This function has one argument: swsmi_msg_t structure which contain 7 regs: rcx, rdx, r8, r9, r10, r11, r12:
+;    IN   UINT64	smi_code_data	
+;    IN   UINT64	rax_value	    
+;    IN   UINT64	rbx_value	    
+;    IN   UINT64	rcx_value	    
+;    IN   UINT64	rdx_value	    
+;    IN   UINT64	rsi_value	    
+;    IN   UINT64	rdi_value	    
+;------------------------------------------------------------------------------
 ;  void
-;  _swsmi (
-;    unsigned int	smi_code_data	// rcx
-;    IN   UINT64	rax_value	// rdx
-;    IN   UINT64	rbx_value	// r8
-;    IN   UINT64	rcx_value	// r9
-;    IN   UINT64	rdx_value	// sp+0x28
-;    IN   UINT64	rsi_value	// sp+0x30
-;    IN   UINT64	rdi_value	// sp+0x38
+; __swsmi__ (
+;    swsmi_msg_t*
 ;    )
 ;------------------------------------------------------------------------------
 _swsmi PROC
+
     push rbx
     push rsi
     push rdi
-
-    ; sp - 0x18
-
+   
     ; setting up GPR (arguments) to SMI handler call
     ; notes:
     ;   RAX will get partially overwritten (AX) by _smi_code_data (which is passed in RCX)
-    mov rax, rdx ; rax_value
-    mov ax, cx   ; smi_code_data
-    mov rdx, [rsp+040h] ; rdx_value sp+0x28+0x18
-
-    mov rbx, r8  ; rbx_value
-    mov rcx, r9  ; rcx_value
-    mov rsi, [rsp+048h] ; rsi_value
-    mov rdi, [rsp+050h] ; rdi_value
-
+    ;   RDX will get partially overwritten (DX) by the value of APMC port (= 0x00B2)
+    mov  r10, rcx        ; //pointer for struct into r10
+    xchg rax, [r10+08h]  ; //rax_value overwritten by _smi_code_data
+    mov  rax, [r10]      ; //smi_code_data
+    xchg rbx, [r10+10h]  ; //rbx value
+    xchg rcx, [r10+18h]  ; //rcx value
+    xchg rdx, [r10+20h]  ; //rdx value
+    xchg rsi, [r10+28h]  ; //rsi value
+    xchg rdi, [r10+30h]  ; //rdi value
+    
     ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
-    out 0B2h, ax
+    out 0B2h, ax ; 0xB2
 
-    ; @TODO: some SM handlers return data/errorcode in GPRs, need to return this to the caller
-
+    ; some SM handlers return data/errorcode in GPRs, need to return this to the caller
+    xchg [r10+08h], rax  ; //rax value
+    xchg [r10+10h], rbx  ; //rbx value
+    xchg [r10+18h], rcx  ; //rcx value
+    xchg [r10+20h], rdx  ; //rdx value
+    xchg [r10+28h], rsi  ; //rsi value
+    xchg [r10+30h], rdi  ; //rdi value
     pop rdi
     pop rsi
     pop rbx
     ret
 _swsmi ENDP
-
 
 ;------------------------------------------------------------------------------
 ;  void

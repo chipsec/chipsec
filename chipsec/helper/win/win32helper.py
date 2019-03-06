@@ -132,6 +132,12 @@ IOCTL_RDCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUF
 IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
 #
+# Format for IOCTL Structures
+#
+_pack = 'Q' if sys.maxsize > 2**32 else 'I'
+_smi_msg_t_fmt       = 7*_pack
+
+#
 # NT Errors
 #
 # Defined in WinDDK\7600.16385.1\inc\api\ntstatus.h
@@ -810,9 +816,10 @@ class Win32Helper(Helper):
         out_length = 0
         out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
-        in_buf = struct.pack( '=H6Q', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+        in_buf = struct.pack( _smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
-        return
+        ret = struct.unpack( _smi_msg_t_fmt, out_buf)
+        return ret
 
     def _get_handle_for_pid( self, pid=0, ro=True ):
         if pid == 0:
