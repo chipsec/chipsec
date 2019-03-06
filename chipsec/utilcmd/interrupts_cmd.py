@@ -89,7 +89,15 @@ class SMICommand(BaseCommand):
                     self.logger.log( "          RDX: 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
                     self.logger.log( "          RSI: 0x%016X" % _rsi )
                     self.logger.log( "          RDI: 0x%016X" % _rdi )
-                    interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+                    ret = interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+                    if not ret is None:
+                        self.logger.log( "Return values")
+                        self.logger.log( "          RAX: {:16X}".format(ret[1]) )
+                        self.logger.log( "          RBX: {:16X}".format(ret[2]) )
+                        self.logger.log( "          RCX: {:16X}".format(ret[3]) )
+                        self.logger.log( "          RDX: {:16X}".format(ret[4]) )
+                        self.logger.log( "          RSI: {:16X}".format(ret[5]) )
+                        self.logger.log( "          RDI: {:16X}".format(ret[6]) )                    
                 else: print SMICommand.__doc__
             else:
                 self.logger.error( "unknown command-line option '%.32s'" % op )
