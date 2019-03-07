@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -162,7 +162,7 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_ASF : acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_MSEG: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_DMAR: acpi_tables.DMAR,
-  ACPI_TABLE_SIG_UEFI: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_UEFI: acpi_tables.UEFI_TABLE,
   ACPI_TABLE_SIG_FPDT: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_PCCT: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_MSDM: acpi_tables.ACPI_TABLE,
