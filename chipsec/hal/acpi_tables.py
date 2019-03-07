@@ -41,6 +41,7 @@ import struct
 from collections import namedtuple
 
 from chipsec.logger import *
+from chipsec.hal.uefi_common import GUID,guid_str
 
 class ACPI_TABLE():
     def parse( self, table_content ):
@@ -848,40 +849,7 @@ class EINJ (ACPI_TABLE):
         return
 
     def parseAddress(self, table_content):
-        addrSpaceID = struct.unpack('<B', table_content[0:1])[0]
-        regBitWidth = struct.unpack('<B', table_content[1:2])[0]
-        regBitOffset = struct.unpack('<B', table_content[2:3])[0]
-        accessSize = struct.unpack('<B', table_content[3:4])[0]
-        addr = struct.unpack('<Q', table_content[4:12])[0]
-        if addrSpaceID is 0:
-            addrSpaceID_str = 'System Memory Space'
-        elif addrSpaceID is 1:
-            addrSpaceID_str = 'System I/O Space'
-        elif addrSpaceID is 2:
-            addrSpaceID_str = 'PCI Configuration Space - Error, should be 0 or 1'
-        elif addrSpaceID is 3:
-            addrSpaceID_str = 'Embedded Controller - Error, should be 0 or 1'
-        elif addrSpaceID is 4:
-            addrSpaceID_str = 'SMBus - Error, should be 0 or 1'
-        elif addrSpaceID is 0x0A:
-            addrSpaceID_str = 'Platform Communications Channel (PCC) - Error, should be 0 or 1'
-        elif addrSpaceID is 0x7F:
-            addrSpaceID_str = 'Functional Fixed Hardware - Error, should be 0 or 1'
-        elif addrSpaceID >= 0xC0 and addrSpaceID <= 0xFF:
-            addrSpaceID_str = 'OEM Defined - Error, should be 0 or 1'
-        else:
-            addrSpaceID_str = 'Reserved - Error, should be 0 or 1'
-        accessSizeList = ['Undefined (legacy reasons)', 'Byte Access', 'Word Access', 'Dword Access', 'QWord Access', 'Not a defined value, check if defined by Address Space ID']
-        if accessSize < 6:
-            accessSize_str = accessSizeList[accessSize]
-        else:
-            accessSize_str = accessSizeList[5]
-        return """Generic Address Structure
-        Address Space ID                            : %s - %s
-        Register Bit Width                          : %s
-        Register Bit Offset                         : %s
-        Access Size                                 : %s - %s
-        Address                                     : %s""" % ( ('0x%02X' % addrSpaceID ), addrSpaceID_str, ('0x%02X' % regBitWidth ), ('0x%02X' % regBitOffset ), ('0x%02X' % accessSize ), accessSize_str, ('0x%016X' % addr ) )
+        return str(GAS(table_content))
 
     def parseInjection(self, table_content):
         errorInjectActions = [ 'BEGIN_INJECTION_OPERATION', 'GET_TRIGGER_ERROR_ACTION', 'SET_ERROR_TYPE', 'GET_ERROR_TYPE', 'END_OPERATION', 'EXECUTE_OPERATION', 'CHECK_BUSY_STATUS', 'GET_COMMAND_STATUS', 'SET_ERROR_TYPE_WITH_ADDRESS', 'GET_EXECUTE_OPERATION_TIMING', 'not recognized as valid aciton' ]
@@ -971,43 +939,7 @@ class ERST (ACPI_TABLE):
         return
 
     def parseAddress(self, table_content):
-        addrSpaceID = struct.unpack('<B', table_content[0:1])[0]
-        regBitWidth = struct.unpack('<B', table_content[1:2])[0]
-        regBitOffset = struct.unpack('<B', table_content[2:3])[0]
-        accessSize = struct.unpack('<B', table_content[3:4])[0]
-        addr = struct.unpack('<Q', table_content[4:12])[0]
-
-        if addrSpaceID is 0:
-            addrSpaceID_str = 'System Memory Space'
-        elif addrSpaceID is 1:
-            addrSpaceID_str = 'System I/O Space'
-        elif addrSpaceID is 2:
-            addrSpaceID_str = 'PCI Configuration Space'
-        elif addrSpaceID is 3:
-            addrSpaceID_str = 'Embedded Controller'
-        elif addrSpaceID is 4:
-            addrSpaceID_str = 'SMBus'
-        elif addrSpaceID is 0x0A:
-            addrSpaceID_str = 'Platform Communications Channel (PCC)'
-        elif addrSpaceID is 0x7F:
-            addrSpaceID_str = 'Functional Fixed Hardware'
-        elif addrSpaceID >= 0xC0 and addrSpaceID <= 0xFF:
-            addrSpaceID_str = 'OEM Defined'
-        else:
-            addrSpaceID_str = 'Reserved'
-	
-        accessSizeList = ['Undefined (legacy reasons)', 'Byte Access', 'Word Access', 'Dword Access', 'QWord Access', 'Not a defined value, check if defined by Address Space ID']
-        if accessSize < 6:
-            accessSize_str = accessSizeList[accessSize]
-        else:
-            accessSize_str = accessSizeList[5]
-
-        return """Generic Address Structure
-        Address Space ID                            : %s - %s
-        Register Bit Width                          : %s
-        Register Bit Offset                         : %s
-        Access Size                                 : %s - %s
-        Address                                     : %s""" % ( ('0x%02X' % addrSpaceID ), addrSpaceID_str, ('0x%02X' % regBitWidth ), ('0x%02X' % regBitOffset ), ('0x%02X' % accessSize ), accessSize_str, ('0x%016X' % addr ) )
+        return str(GAS(table_content))
 
     def parseActionTable(self, table_content, instrCountEntry):
         curInstruction = 0
@@ -1190,43 +1122,7 @@ class HEST (ACPI_TABLE):
       Misc Register MSR Address	                  : %s%s""" % ( ('0x%04X' % bankNum ), ('0x%04X' % clearStatus ), clearStatus_str, ('0x%04X' % statusDataFormat ), statusDataFormat_str, ('0x%04X' % reserved1 ), ('0x%04X' % controlRegMsrAddr ), controlRegMsrAddr_str, ('0x%04X' % controlInitData ), ('0x%04X' % statusRegMSRAddr ), statusRegMSRAddr_str, ('0x%04X' % addrRegMSRAddr ), addrRegMSRAddr_str, ('0x%04X' % miscRegMSTAddr ), miscRegMSTAddr_str ) )
 
     def parseAddress(self, table_content):
-        addrSpaceID = struct.unpack('<B', table_content[0:1])[0]
-        regBitWidth = struct.unpack('<B', table_content[1:2])[0]
-        regBitOffset = struct.unpack('<B', table_content[2:3])[0]
-        accessSize = struct.unpack('<B', table_content[3:4])[0]
-        addr = struct.unpack('<Q', table_content[4:12])[0]
-
-        if addrSpaceID is 0:
-            addrSpaceID_str = 'System Memory Space'
-        elif addrSpaceID is 1:
-            addrSpaceID_str = 'System I/O Space'
-        elif addrSpaceID is 2:
-            addrSpaceID_str = 'PCI Configuration Space'
-        elif addrSpaceID is 3:
-            addrSpaceID_str = 'Embedded Controller'
-        elif addrSpaceID is 4:
-            addrSpaceID_str = 'SMBus'
-        elif addrSpaceID is 0x0A:
-            addrSpaceID_str = 'Platform Communications Channel (PCC)'
-        elif addrSpaceID is 0x7F:
-            addrSpaceID_str = 'Functional Fixed Hardware'
-        elif addrSpaceID >= 0xC0 and addrSpaceID <= 0xFF:
-            addrSpaceID_str = 'OEM Defined'
-        else:
-            addrSpaceID_str = 'Reserved'
-	
-        accessSizeList = ['Undefined (legacy reasons)', 'Byte Access', 'Word Access', 'Dword Access', 'QWord Access', 'Not a defined value, check if defined by Address Space ID']
-        if accessSize < 6:
-            accessSize_str = accessSizeList[accessSize]
-        else:
-            accessSize_str = accessSizeList[5]
-
-        return """Generic Address Structure
-      Address Space ID                            : %s - %s
-      Register Bit Width                          : %s
-      Register Bit Offset                         : %s
-      Access Size                                 : %s - %s
-      Address                                     : %s""" % ( ('0x%02X' % addrSpaceID ), addrSpaceID_str, ('0x%02X' % regBitWidth ), ('0x%02X' % regBitOffset ), ('0x%02X' % accessSize ), accessSize_str, ('0x%016X' % addr ) )
+        return str(GAS(table_content))
 
     def parseAMCES(self, table_content):
         sourceID = struct.unpack('<H', table_content[2:4])[0]
@@ -1522,44 +1418,7 @@ class SPMI (ACPI_TABLE):
         return
 
     def parseAddress(self, table_content):
-        addrSpaceID = struct.unpack('<B', table_content[0:1])[0]
-        regBitWidth = struct.unpack('<B', table_content[1:2])[0]
-        regBitOffset = struct.unpack('<B', table_content[2:3])[0]
-        accessSize = struct.unpack('<B', table_content[3:4])[0]
-        addr = struct.unpack('<Q', table_content[4:12])[0]
-
-        if addrSpaceID is 0:
-            addrSpaceID_str = 'System Memory Space'
-        elif addrSpaceID is 1:
-            addrSpaceID_str = 'System I/O Space'
-        elif addrSpaceID is 2:
-            addrSpaceID_str = 'PCI Configuration Space -- Error, should only be 0 (system memory), 1 (system IO), or 4 (SMBus)'
-        elif addrSpaceID is 3:
-            addrSpaceID_str = 'Embedded Controller -- Error, should only be 0 (system memory), 1 (system IO), or 4 (SMBus)'
-        elif addrSpaceID is 4:
-            addrSpaceID_str = 'SMBus'
-        elif addrSpaceID is 0x0A:
-            addrSpaceID_str = 'Platform Communications Channel (PCC) -- Error, should only be 0 (system memory), 1 (system IO), or 4 (SMBus)'
-        elif addrSpaceID is 0x7F:
-            addrSpaceID_str = 'Functional Fixed Hardware -- Error, should only be 0 (system memory), 1 (system IO), or 4 (SMBus)'
-        elif addrSpaceID >= 0xC0 and addrSpaceID <= 0xFF:
-            addrSpaceID_str = 'OEM Defined -- Error, should only be 0 (system memory), 1 (system IO), or 4 (SMBus)'
-        else:
-            addrSpaceID_str = 'Reserved'
-	
-        accessSizeList = ['Undefined (legacy reasons)', 'Byte Access', 'Word Access', 'Dword Access', 'QWord Access', 'Not a defined value, check if defined by Address Space ID']
-        if accessSize < 6:
-            accessSize_str = accessSizeList[accessSize]
-        else:
-            accessSize_str = accessSizeList[5]
-
-        return """Generic Address Structure
-    Address Space ID                            : %s - %s
-    Register Bit Width                          : %s
-    Register Bit Offset                         : %s
-    Access Size                                 : %s - %s
-    Address                                     : %s""" % ( ('0x%02X' % addrSpaceID ), addrSpaceID_str, ('0x%02X' % regBitWidth ), ('0x%02X' % regBitOffset ), ('0x%02X' % accessSize ), accessSize_str, ('0x%016X' % addr ) )
-
+        return str(GAS(table_content))
 
     def parseNonUID(self, table_content):
         pciSegGrpNum = struct.unpack('<B', table_content[0:1])[0]
@@ -2150,3 +2009,96 @@ class NFIT (ACPI_TABLE):
 
     def __str__(self):
         return self.results
+
+########################################################################################################
+#
+# UEFI Table
+#
+########################################################################################################
+
+class UEFI_TABLE (ACPI_TABLE):
+    def __init__( self ):
+        self.buf_addr = None
+        self.smi = None
+        self.invoc_reg = None
+        return
+
+    def parse(self, table_content):
+        # Get Guid and Data Offset
+        guid = struct.unpack(GUID, table_content[:16])
+        identifier = guid_str(guid[0],guid[1],guid[2],guid[3])
+        offset = struct.unpack('H',table_content[16:18])[0]
+        content_offset = offset - 36
+        self.results =  '''==================================================================
+  Table Content
+=================================================================='''
+        if content_offset < 0 or content_offset+12 > len(table_content): 
+            return
+        self.smi = struct.unpack('I',table_content[content_offset:content_offset+4])[0]
+        content_offset += 4
+        self.buf_addr = struct.unpack('Q',table_content[content_offset:content_offset+8])[0]
+        content_offset += 8
+        self.results += """
+  identifier                 : {}
+  Data Offset                : {:d}
+  SW SMI NUM                 : {}
+  Buffer Ptr Address         : {:X}""".format(identifier,offset,self.smi,int(self.buf_addr))
+        #content_offset -= 12 # REMOVE
+        if content_offset + 12 <= len(table_content):
+            self.invoc_reg = GAS(table_content[content_offset:content_offset+12])
+            self.results += "\n  Invocation Register        :\n{}".format(str(self.invoc_reg))
+        else:
+            self.results += "\n  Invocation Register        : None\n"
+                    
+    def __str__(self):
+        return self.results
+
+    def get_commbuf_info(self):
+        return (self.smi,self.buf_addr,self.invoc_reg)
+
+########################################################################################################
+#
+# Generic Address Structure
+#
+########################################################################################################
+class GAS:
+    def __init__(self,table_content):
+        self.addrSpaceID = struct.unpack('<B', table_content[0:1])[0]
+        self.regBitWidth = struct.unpack('<B', table_content[1:2])[0]
+        self.regBitOffset = struct.unpack('<B', table_content[2:3])[0]
+        self.accessSize = struct.unpack('<B', table_content[3:4])[0]
+        self.addr = struct.unpack('<Q', table_content[4:12])[0]
+        if self.addrSpaceID is 0:
+            self.addrSpaceID_str = 'System Memory Space'
+        elif self.addrSpaceID is 1:
+            self.addrSpaceID_str = 'System I/O Space'
+        elif self.addrSpaceID is 2:
+            self.addrSpaceID_str = 'PCI Configuration Space'
+        elif self.addrSpaceID is 3:
+            self.addrSpaceID_str = 'Embedded Controller'
+        elif self.addrSpaceID is 4:
+            self.addrSpaceID_str = 'SMBus'
+        elif self.addrSpaceID is 0x0A:
+            self.addrSpaceID_str = 'Platform Communications Channel (PCC)'
+        elif self.addrSpaceID is 0x7F:
+            self.addrSpaceID_str = 'Functional Fixed Hardware'
+        elif self.addrSpaceID >= 0xC0 and self.addrSpaceID <= 0xFF:
+            self.addrSpaceID_str = 'OEM Defined'
+        else:
+            self.addrSpaceID_str = 'Reserved'
+        accessSizeList = ['Undefined (legacy reasons)', 'Byte Access', 'Word Access', 'Dword Access', 'QWord Access', 'Not a defined value, check if defined by Address Space ID']
+        if self.accessSize < 6:
+            self.accessSize_str = accessSizeList[self.accessSize]
+        else:
+            self.accessSize_str = accessSizeList[5]
+
+    def __str__(self):
+        return """  Generic Address Structure
+    Address Space ID                            : {:02X} - {}
+    Register Bit Width                          : {:02X}
+    Register Bit Offset                         : {:02X}
+    Access Size                                 : {:02X} - {}
+    Address                                     : {:16X}\n""".format ( self.addrSpaceID, self.addrSpaceID_str, self.regBitWidth, self.regBitOffset, self.accessSize, self.accessSize_str, self.addr )
+
+    def get_info(self):
+        return (self.addrSpaceID,self.regBitWidth,self.regBitOffset,self.accessSize,self.addr)

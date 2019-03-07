@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -45,6 +45,8 @@ import sys
 from chipsec.hal import hal_base
 from chipsec.logger import *
 from chipsec.cfg.common import *
+from chipsec.hal.acpi import ACPI
+from chipsec.hal.acpi_tables import UEFI_TABLE, GAS
 
 SMI_APMC_PORT = 0xB2
 
@@ -83,3 +85,53 @@ class Interrupts(hal_base.HALBase):
         if logger().HAL: logger().log( "[intr] sending NMI# through TCO1_CTL[NMI_NOW]" )
         tcobase = self.get_TCOBASE()
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )
+
+    def find_ACPI_SMI_Buffer(self):
+        if logger().HAL: logger().log("Parsing ACPI tables to identify Communication Buffer")
+        _acpi = ACPI(self.cs).get_ACPI_table("UEFI")
+        if len(_acpi):
+            _uefi = UEFI_TABLE()
+            _uefi.parse(_acpi[0][1])
+            if logger().HAL: logger().log(str(_uefi))
+            return _uefi.get_commbuf_info() 
+        if logger().HAL: logger().log("Unable to find Communication Buffer")
+        return None
+
+    def send_ACPI_SMI(self, thread_id, smi_num, buf_addr, invoc_reg, guid, data):
+        #Prepare Communication Data buffer
+        #typedef struct {
+        #   EFI_GUID HeaderGuid;
+        #   UINTN MessageLength;
+        #   UINT8 Data[ANYSIZE_ARRAY];
+        # } EFI_SMM_COMMUNICATE_HEADER;
+        data_hdr = struct.pack(uuid.UUID(EFI_GUID_DEFINED_SECTION+"Q","{{{}}}".format(guid)),len(data)) + data
+        
+        if not invoc_reg is None:
+            #need to write data_hdr to comm buffer
+            tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
+            #USING GAS need to write buf_addr into invoc_reg
+            if invoc_reg.addrSpaceID is 0:
+                self.cs.helper.write_physical_mem(invoc_reg.addr,invoc_reg.access_size,buf_addr)
+                #check for return status
+                ret_buf = self.cs.helper.read_physical_mem(buf_addr,8)
+            elif invoc_reg.addrSpaceID is 1:
+                self.cs.helper.write_io_port(invoc_reg.addr,invoc_reg.access_size,buf_addr)
+                #check for return status
+                ret_buf = self.cs.helper.read_io_port(buf_addr,8)
+            else:
+                self.logger().error("Functionality is currently not implemented")
+                ret_buf = None
+            return ret_buf
+
+        else:
+            #Wait for Communication buffer to be empty
+            buf = 1
+            while not buf == "\x00\x00":
+                buf = cs.helper.read_physical_mem_word(buf_addr)
+            #write data to commbuffer
+            tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
+            #call SWSMI
+            self.send_SW_SMI(thread_id,smi_num,0,0,0,0,0,0)
+            #clear CommBuffer
+            self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),"\x00"*len(data_hdr))
+            return None
