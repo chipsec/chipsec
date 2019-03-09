@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -25,10 +25,11 @@
 Command-line utility providing access to ACPI tables 
 """
 
-import os
-import time
+from os.path import exists as path_exists
+from time import time
+from argparse import ArgumentParser
 
-from chipsec.hal.acpi   import *
+from chipsec.hal.acpi   import ACPI, AcpiRuntimeError, ACPI_TABLES
 from chipsec.command    import BaseCommand
 
 # ###################################################################
@@ -50,49 +51,43 @@ class ACPICommand(BaseCommand):
     """
 
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if len(self.argv) < 3:
-            return False
+        parser = ArgumentParser(usage=ACPICommand.__doc__)
+        subparsers = parser.add_subparsers()
+        parser_list = subparsers.add_parser('list')
+        parser_list.set_defaults(func=self.acpi_list)
+        parser_table = subparsers.add_parser('table')
+        parser_table.add_argument('-f','--file',dest='_file', help='Read from file', action='store_true')
+        parser_table.add_argument('_name',metavar='table|filename',nargs=1,help="table to list")
+        parser_table.set_defaults(func=self.acpi_table)
+        parser.parse_args(self.argv[2:],namespace=ACPICommand)
         return True
 
+    def acpi_list(self):
+        self.logger.log( "[CHIPSEC] Enumerating ACPI tables.." )
+        self._acpi.print_ACPI_table_list()
+
+    def acpi_table(self):
+        name = self._name[0]      
+        if not self._file and not self._acpi.is_ACPI_table_present( name ):
+            self.logger.error( "Please specify table name from {}".format(ACPI_TABLES.keys()) )
+            return
+        elif self._file and not path_exists( name ):
+            self.logger.error( "[CHIPSEC] Unable to find file '{}'".format(name) )
+            return
+        self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '',name) )
+        self._acpi.dump_ACPI_table( name, self._file )
+        return
+       
+
     def run(self):
-        if len(self.argv) < 3:
-            print (ACPICommand.__doc__)
-            return
-        op = self.argv[2]
-        t = time.time()
-
+        t = time()
         try:
-            _acpi = ACPI(self.cs)
-        except AcpiRuntimeError as msg:
-            print (msg)
+            self._acpi = ACPI(self.cs)
+        except AcpiRuntimeError, msg:
+            print msg
             return
-
-        if ( 'list' == op ):
-            self.logger.log( "[CHIPSEC] Enumerating ACPI tables.." )
-            _acpi.print_ACPI_table_list()
-        elif ( 'table' == op ):
-            if len(self.argv) < 4:
-                print (ACPICommand.__doc__)
-                return
-            name = self.argv[ 3 ]
-            if name in ACPI_TABLES:
-                if _acpi.is_ACPI_table_present( name ):
-                    self.logger.log( "[CHIPSEC] reading ACPI table '{}'".format(name) )
-                    _acpi.dump_ACPI_table( name )
-                else:
-                    self.logger.log( "[CHIPSEC] ACPI table '{}' wasn't found".format(name) )
-            elif os.path.exists( name ):
-                self.logger.log( "[CHIPSEC] reading ACPI table from file '{}'".format(name) )
-                _acpi.dump_ACPI_table( name, True )
-            else:
-                self.logger.error( "Please specify table name or path to a file.\nTable name must be in {}".format(ACPI_TABLES.keys()) )
-                print (ACPICommand.__doc__)
-                return
-        else:
-            print (ACPICommand.__doc__)
-            return
-
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time.time()-t) )
+            
+        self.func()
+        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time()-t) )
 
 commands = { 'acpi': ACPICommand }
