@@ -110,7 +110,7 @@ class ChipsecUtil:
         options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         options.add_argument('-i', '--ignore_platform',dest='_unkownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
-        options.add_argument('_cmd_args',metavar='Command',nargs='*',help="All numeric values are in hex. <width> can be one of {1, byte, 2, word, 4, dword}")
+        options.add_argument('_cmd_args',metavar='Command',nargs=argparse.REMAINDER,help="All numeric values are in hex. <width> can be one of {1, byte, 2, word, 4, dword}")
 
         parser.parse_args(self.argv,namespace=ChipsecUtil)
         if self.show_help or self._cmd_args == []:
