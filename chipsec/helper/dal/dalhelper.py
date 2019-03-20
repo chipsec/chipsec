@@ -33,7 +33,7 @@ import sys
 from chipsec.logger import logger
 import itpii
 from ctypes import *
-from chipsec.helper.oshelper import Helper
+from chipsec.helper.basehelper import Helper
 
 SYSTEM_HALTED = True
 

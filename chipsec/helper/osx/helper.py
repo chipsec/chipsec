@@ -27,7 +27,8 @@ import sys
 import shutil
 
 import chipsec
-from chipsec.helper.oshelper import OsHelperError, Helper, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger, print_buffer
 
 from chipsec_tools import efi_compressor

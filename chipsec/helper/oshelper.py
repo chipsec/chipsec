@@ -42,6 +42,7 @@ import sys
 
 import chipsec.file
 from chipsec.logger import *
+from chipsec.helper.basehelper import Helper
 
 _importlib = True
 try:
@@ -75,21 +76,6 @@ class UnimplementedNativeAPIError (UnimplementedAPIError):
 
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
-
-# Base class for the helpers
-class Helper(object):
-    class __metaclass__(type):
-        def __init__(cls, name, bases, attrs):
-            if not hasattr(cls, 'registry'):
-                cls.registry = []
-            else:
-                cls.registry.append((name, cls))
-
-    def __init__(self):
-        self.driver_loaded = False
-
-    def use_native_api(self):
-        return (not self.driver_loaded)
 
 import chipsec.helper.helpers
 
