@@ -43,7 +43,8 @@ except ImportError:
 
 import chipsec.defines
 from chipsec.logger import logger
-from chipsec.helper.oshelper import Helper, get_tools_path
+from chipsec.helper.oshelper import get_tools_path
+from chipsec.helper.basehelper import Helper
 
 class EfiHelperError (RuntimeError):
     pass
