@@ -302,6 +302,8 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                     children = build_efi_file_tree( _uefi, sec.Image[sec.HeaderSize:], fwtype )
                     if not children is None:
                         sec.children = children
+            if sec.Type not in SECTION_NAMES.keys() or sec.Type == EFI_SECTION_RAW:
+                sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype)
 
             sections.append(sec)
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
