@@ -512,7 +512,7 @@ Reserved1 : 0x%08X
 """ % ( struct.pack('=I',self.Signature), self.Signature, self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
 
-HDR_FMT_VSS                   = '<HBBIIIIHH8s'
+HDR_FMT_VSS                   = '<HBBIII4s2s2s8s'
 #HDR_SIZE_VSS                  = struct.calcsize( HDR_FMT_VSS )
 #NAME_OFFSET_IN_VAR_VSS        = HDR_SIZE_VSS
 class EFI_HDR_VSS( namedtuple('EFI_HDR_VSS', 'StartId State Reserved Attributes NameSize DataSize guid0 guid1 guid2 guid3') ):
@@ -521,17 +521,17 @@ class EFI_HDR_VSS( namedtuple('EFI_HDR_VSS', 'StartId State Reserved Attributes 
         return """
 Header (VSS)
 ------------
-VendorGuid : {%08X-%04X-%04X-%04s-%06s}
+VendorGuid : {%s}
 StartId    : 0x%04X
 State      : 0x%02X
 Reserved   : 0x%02X
 Attributes : 0x%08X
 NameSize   : 0x%08X
 DataSize   : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
+""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
 
 
-HDR_FMT_VSS_AUTH  = '<HBBIQQQIIIIHH8s'
+HDR_FMT_VSS_AUTH  = '<HBBIQQQIII4s2s2s8s'
 class EFI_HDR_VSS_AUTH( namedtuple('EFI_HDR_VSS_AUTH', 'StartId State Reserved Attributes MonotonicCount TimeStamp1 TimeStamp2 PubKeyIndex NameSize DataSize guid0 guid1 guid2 guid3') ):
     __slots__ = ()
     # if you don't re-define __str__ method, initialize is to None
@@ -540,7 +540,7 @@ class EFI_HDR_VSS_AUTH( namedtuple('EFI_HDR_VSS_AUTH', 'StartId State Reserved A
         return """
 Header (VSS_AUTH)
 ----------------
-VendorGuid     : {%08X-%04X-%04X-%08X}
+VendorGuid     : {%s}
 StartId        : 0x%04X
 State          : 0x%02X
 Reserved       : 0x%02X
@@ -551,16 +551,16 @@ TimeStamp2     : 0x%016X
 PubKeyIndex    : 0x%08X
 NameSize       : 0x%08X
 DataSize       : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.MonotonicCount, self.TimeStamp1, self.TimeStamp2, self.PubKeyIndex, self.NameSize, self.DataSize )
+""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.MonotonicCount, self.TimeStamp1, self.TimeStamp2, self.PubKeyIndex, self.NameSize, self.DataSize )
 
-HDR_FMT_VSS_APPLE  = '<HBBIIIIHH8sI'
+HDR_FMT_VSS_APPLE  = '<HBBIII4s2s2s8sI'
 class EFI_HDR_VSS_APPLE( namedtuple('EFI_HDR_VSS_APPLE', 'StartId State Reserved Attributes NameSize DataSize guid0 guid1 guid2 guid3 unknown') ):
     __slots__ = ()
     def __str__(self):
         return """
 Header (VSS_APPLE)
 ------------
-VendorGuid : {%08X-%04X-%04X-%04s-%06s}
+VendorGuid : {%s}
 StartId    : 0x%04X
 State      : 0x%02X
 Reserved   : 0x%02X
@@ -568,7 +568,7 @@ Attributes : 0x%08X
 NameSize   : 0x%08X
 DataSize   : 0x%08X
 Unknown    : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
+""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
 
 
 def _getNVstore_VSS( nvram_buf, vss_type ):
