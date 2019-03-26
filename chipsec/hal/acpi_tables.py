@@ -39,6 +39,7 @@ __version__ = '0.1'
 
 import struct
 from collections import namedtuple
+from uuid import UUID
 
 from chipsec.logger import *
 from chipsec.hal.uefi_common import GUID,guid_str
@@ -2015,6 +2016,7 @@ class NFIT (ACPI_TABLE):
 # UEFI Table
 #
 ########################################################################################################
+SMM_COMM_TABLE = str(UUID(bytes='\xc6\x8e\xd8\xe2\x9d\xc6\x4c\xbd\x9d\x94\xdb\x65\xac\xc5\xc3\x32')).upper()
 
 class UEFI_TABLE (ACPI_TABLE):
     def __init__( self ):
@@ -2024,26 +2026,35 @@ class UEFI_TABLE (ACPI_TABLE):
         return
 
     def parse(self, table_content):
+        self.results =  '''==================================================================
+  Table Content
+=================================================================='''
+        #Ensure can get identifier and dataOffset fields
+        if len(table_content) < 18:
+            return
         # Get Guid and Data Offset
         guid = struct.unpack(GUID, table_content[:16])
         identifier = guid_str(guid[0],guid[1],guid[2],guid[3])
         offset = struct.unpack('H',table_content[16:18])[0]
+        self.results += """
+  identifier                 : {}
+  Data Offset                : {:d}""".format(identifier,offset)
+        #check if SMM Communication ACPI Table
+        print SMM_COMM_TABLE, identifier
+        if not (SMM_COMM_TABLE == identifier):
+            return
         content_offset = offset - 36
-        self.results =  '''==================================================================
-  Table Content
-=================================================================='''
-        if content_offset < 0 or content_offset+12 > len(table_content): 
+        #check to see if there is enough data to get SW SMI Number and Buffer Ptr Address
+        if content_offset < 0 or content_offset + 12 > len(table_content): 
             return
         self.smi = struct.unpack('I',table_content[content_offset:content_offset+4])[0]
         content_offset += 4
         self.buf_addr = struct.unpack('Q',table_content[content_offset:content_offset+8])[0]
         content_offset += 8
         self.results += """
-  identifier                 : {}
-  Data Offset                : {:d}
   SW SMI NUM                 : {}
-  Buffer Ptr Address         : {:X}""".format(identifier,offset,self.smi,int(self.buf_addr))
-        #content_offset -= 12 # REMOVE
+  Buffer Ptr Address         : {:X}""".format(self.smi,int(self.buf_addr))
+        #Check to see if there is enough data for Invocation Register
         if content_offset + 12 <= len(table_content):
             self.invoc_reg = GAS(table_content[content_offset:content_offset+12])
             self.results += "\n  Invocation Register        :\n{}".format(str(self.invoc_reg))
