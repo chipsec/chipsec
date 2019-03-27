@@ -134,7 +134,7 @@ IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUF
 
 LZMA  = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress.exe")
 TIANO = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress.exe")
-EFI   = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress.exe") + "-uefi"
+EFI   = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress.exe")
 BROTLI = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","Brotli.exe")
 
 #
@@ -940,18 +940,19 @@ class Win32Helper(Helper):
     def compress_file( self, FileName, OutputFileName, CompressionType ):
         if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
             return False
-        encode_str = " -e -o {} {}".format(OutputFileName,FileName)
+        encode_str = " -e -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
             shutil.copyfile(FileName,OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             encode_str = TIANO + encode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            encode_str = EFI + encode_str
+            encode_str = EFI + encode_str + "--uefi "
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
             encode_str = LZMA + encode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             encode_str = BROTLI + encode_str
+        encode_str += FileName
         data = subprocess.call(encode_str,stdout=open(os.devnull, 'wb'),shell=True)
         if not data == 0 and logger().DEBUG:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
@@ -970,18 +971,19 @@ class Win32Helper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD:
             data = self.unknown_efi_decompress(CompressedFileName,OutputFileName)
             return data
-        decode_str = " -d -o {} {}".format(OutputFileName, CompressedFileName)
+        decode_str = " -d -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
             shutil.copyfile(CompressedFileName,OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             decode_str = TIANO + decode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            decode_str = EFI + decode_str
+            decode_str = EFI + decode_str + "--uefi "
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
             decode_str = LZMA + decode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
+        decode_str += CompressedFileName
         data = subprocess.call(decode_str,stdout=open(os.devnull, 'wb'),shell=True)
         if not data == 0 and logger().DEBUG:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
