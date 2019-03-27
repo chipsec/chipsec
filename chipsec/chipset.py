@@ -88,6 +88,7 @@ CHIPSET_ID_BDX     = 15
 CHIPSET_ID_CFL     = 16
 CHIPSET_ID_APL     = 17
 CHIPSET_ID_DNV     = 18
+CHIPSET_ID_WHL     = 19
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -110,9 +111,10 @@ CHIPSET_CODE_BDX     = 'BDX'
 CHIPSET_CODE_CFL     = 'CFL'
 CHIPSET_CODE_APL     = 'APL'
 CHIPSET_CODE_DNV     = 'DNV'
+CHIPSET_CODE_WHL     = 'WHL'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX]
-CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL]
+CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL,CHIPSET_ID_WHL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
@@ -189,6 +191,9 @@ Chipset_Dictionary = {
 0x3E33 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 4 Cores)' },
 0x3ECA : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 6 Cores)' },
 0x3E32 : {'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake Server 8 Cores)' },
+
+# 8th Generation Core Processor Family (Whiskey Lake)
+0x3E34 : {'name': 'Whiskey Lake',    'id' : CHIPSET_ID_WHL , 'code' : CHIPSET_CODE_WHL,  'longname' : 'Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)' },
 
 # Xeon v3 Processor (Haswell Server)
 0x2F00 : {'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'},
@@ -290,6 +295,7 @@ pch_dictionary = {
 0xA30D : {'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel HM370 (300 series) PCH'},
 0xA30C : {'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'},
 0xA30E : {'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'},
+0x9D84 : {'name' : 'PCH-U', 'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'},
 
 # C600 and X79 series PCH
 0x1D41 : {'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X79 series PCH'},
