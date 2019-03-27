@@ -968,7 +968,12 @@ def parse_auth_var(db, decode_dir):
         vendor_guid = guid_str(ven_guid0, ven_guid1, ven_guid2, ven_guid3)
         name_size *= 2  # Name size is actually the number of CHAR16 in the name array
         tof = dof + AUTH_CERT_DB_DATA_size
-        var_name = codecs.decode(db[tof:tof+name_size], 'utf-16')
+        try:
+            var_name = codecs.decode(db[tof:tof+name_size], 'utf-16')
+        except UnicodeDecodeError:
+            logger().warn("Unable to decode {}".format(db[tof:tof+name_size]))
+            var_name = "CHIPSEC ERROR!"
+            pass
         tof += name_size
         sig_data = db[tof:tof+cert_data_size]
         entries.append(sig_data)
