@@ -129,6 +129,11 @@ class build_ext(_build_ext):
         exes = ["Brotli","LzmaCompress","TianoCompress"]
         #copy the compression files to build directory
         self.copy_tree(os.path.join("chipsec_tools","compression"),build_exe)
+        #fix case issues
+        try:
+            subprocess.check_output(["mv", os.path.join(build_exe,"LZMA","SDK"), os.path.join(build_exe,"LZMA","Sdk")])
+        except:
+            pass
         # Run the makefile there
         subprocess.check_output(["make", "-C", build_exe, "-f", "GNUmakefile"])
         # Copy the resulting elf files into the correct place
