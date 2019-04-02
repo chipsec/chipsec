@@ -589,7 +589,13 @@ def NextFwVolume(buffer, off = 0):
     res = (None, None, None, None, None, None, None, None, None)
     while ((fof + vf_header_size) < size):
         fof =  buffer.find("_FVH", fof)
-        if fof < 0x28: return res
+        if fof == -1 or size - fof < vf_header_size:
+            #return if signature is not found
+            return res
+        elif fof < 0x28:
+            #continue searching for signatrue if header is not valid
+            fof += 0x4
+            continue
         fof = fof - 0x28
         ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
           FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
