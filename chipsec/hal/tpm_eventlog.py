@@ -47,7 +47,7 @@ class TcgPcrEvent(object):
         self.pcr_index = pcr_index
         self.event_type = event_type
         name = SML_EVENT_TYPE.get(self.event_type)
-        if isinstance(name, basestring):
+        if isinstance(name, str):
             self.event_type_name = name
         self.digest = digest
         self.event_size = event_size
@@ -75,7 +75,7 @@ class TcgPcrEvent(object):
             logger.logger().warn("[tpm_eventlog] event data length "
                                  "does not match the expected size")
         name = SML_EVENT_TYPE.get(event_type)
-        kls = cls if isinstance(name, basestring) else name
+        kls = cls if isinstance(name, str) else name
         return kls(pcr_index, event_type, digest, event_size, event)
 
     def __str__(self):
@@ -172,11 +172,14 @@ class PcrLogParser(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         event = TcgPcrEvent.parse(self.log)
         if not event:
             raise StopIteration()
         return event
+    
+    def next(self):
+        return self.__next__()
 
 
 def parse(log):
