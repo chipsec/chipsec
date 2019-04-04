@@ -41,8 +41,6 @@ class TestChipsecUtil(unittest.TestCase):
         """
         fileno, self.log_file = tempfile.mkstemp()
         os.close(fileno)
-        self.old_registry = oshelper.Helper.registry
-        oshelper.Helper.registry = []
         oshelper._helper = None
         chipset._chipset = None
 
@@ -51,7 +49,6 @@ class TestChipsecUtil(unittest.TestCase):
         oshelper._helper = None
         chipset._chipset = None
         chipsec_util._cs = None
-        oshelper.Helper.registry = self.old_registry
 
     def _chipsec_util(self, arg, helper_class=mock_helper.TestHelper):
         """Run the chipsec_util command with the arguments.
@@ -61,7 +58,7 @@ class TestChipsecUtil(unittest.TestCase):
         It verifies that no error is being reported. self.log will be populated
         with the output.
         """
-        oshelper.Helper.registry = [(helper_class.__name__, helper_class)]
+        oshelper._helper =  helper_class()
         chipsec_util._cs = chipset.cs()
         util = chipsec_util.ChipsecUtil(arg.split())
         util.VERBOSE = True
@@ -69,7 +66,7 @@ class TestChipsecUtil(unittest.TestCase):
         util.set_logfile(self.log_file)
         err_code = util.main()
         logger.logger().close()
-        self.log = open(self.log_file).read()
+        self.log = open(self.log_file,'rb').read()
         self.assertEqual(err_code, 0)
 
     def _assertLogValue(self, name, value):
@@ -78,5 +75,5 @@ class TestChipsecUtil(unittest.TestCase):
         Assert that at least one line exists within the log which matches the
         expression: name [:=] value.
         """
-        exp = r'(^|\W){}\s*[:=]\s*{}($|\W)'
-        self.assertRegexpMatches(self.log, exp.format(name, value))
+        exp = r'(^|\W){}\s*[:=]\s*{}($|\W)'.format(name, value)
+        self.assertRegexpMatches(self.log, exp.encode())

@@ -59,6 +59,9 @@ class TestHelper(oshelper.Helper):
         else:
             raise Exception("Unexpected PCI read")
 
+    def read_physical_mem(self,phys_address, length):
+        return self.read_phys_mem(phys_address>>32,phys_address& 0xFFFFFFFF,length)
+
 
 class ACPIHelper(TestHelper):
     """Generic ACPI emulation
@@ -89,25 +92,25 @@ class ACPIHelper(TestHelper):
     RSDT_ADDRESS = 0x200
 
     def _create_rsdp(self):
-        rsdp = None
+        rsdp = b""
         if self.USE_RSDP_REV_0:
             # Emulate initial version of RSDP described in ACPI v1.0
-            rsdp = ("RSD PTR " +                            # Signature
+            rsdp = (b"RSD PTR " +                            # Signature
                     struct.pack("<B", 0x1) +                # Checksum
-                    "TEST00" +                              # OEMID
+                    b"TEST00" +                              # OEMID
                     struct.pack("<B", 0x0) +                # Revision
                     struct.pack("<I", self.RSDT_ADDRESS))   # RSDT Address
         else:
             # Emulate RSDP described in ACPI v2.0 onwards
-            rsdp = ("RSD PTR " +                            # Signature
+            rsdp = (b"RSD PTR " +                            # Signature
                     struct.pack("<B", 0x1) +                # Checksum
-                    "TEST00" +                              # OEMID
+                    b"TEST00" +                              # OEMID
                     struct.pack("<B", 0x2) +                # Revision
                     struct.pack("<I", self.RSDT_ADDRESS) +  # RSDT Address
                     struct.pack("<I", 0x24) +               # Length
                     struct.pack("<Q", self.XSDT_ADDRESS) +  # XSDT Address
                     struct.pack("<B", 0x0) +                # Extended Checksum
-                    "AAA")                                  # Reserved
+                    b"AAA")                                  # Reserved
         return rsdp
 
     def _create_generic_acpi_table_header(self, signature, length):
@@ -115,22 +118,22 @@ class ACPIHelper(TestHelper):
                 struct.pack("<I", length) +  # Length
                 struct.pack("<B", 0x1) +     # Revision
                 struct.pack("<B", 0x1) +     # Checksum
-                "OEMIDT" +                   # OEMID
-                "OEMTBLID" +                 # OEM Table ID
-                "OEMR" +                     # OEM Revision
-                "CRID" +                     # Creator ID
-                "CRRV")                      # Creator Revision
+                b"OEMIDT" +                   # OEMID
+                b"OEMTBLID" +                 # OEM Table ID
+                b"OEMR" +                     # OEM Revision
+                b"CRID" +                     # Creator ID
+                b"CRRV")                      # Creator Revision
 
     def _create_rsdt(self):
         rsdt_length = self.TABLE_HEADER_SIZE + 4 * len(self.rsdt_entries)
-        rsdt = self._create_generic_acpi_table_header("RSDT", rsdt_length)
+        rsdt = self._create_generic_acpi_table_header(b"RSDT", rsdt_length)
         for rsdt_entry in self.rsdt_entries:
             rsdt += struct.pack("<I", rsdt_entry)
         return rsdt
 
     def _create_xsdt(self):
         xsdt_length = self.TABLE_HEADER_SIZE + 8 * len(self.xsdt_entries)
-        xsdt = self._create_generic_acpi_table_header("XSDT", xsdt_length)
+        xsdt = self._create_generic_acpi_table_header(b"XSDT", xsdt_length)
         for xsdt_entry in self.xsdt_entries:
             xsdt += struct.pack("<Q", xsdt_entry)
         return xsdt
@@ -156,7 +159,7 @@ class ACPIHelper(TestHelper):
             return struct.pack("<H", self.EBDA_ADDRESS >> 4)
         elif (pa_lo >= self.EBDA_ADDRESS and
               pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
-            mem = "\x00" * self.EBDA_PADDING + self.rsdp_descriptor
+            mem = b"\x00" * self.EBDA_PADDING + self.rsdp_descriptor
             offset = pa_lo - self.EBDA_ADDRESS
             return mem[offset:offset+length]
         elif pa_lo == self.RSDT_ADDRESS:
@@ -164,7 +167,7 @@ class ACPIHelper(TestHelper):
         elif pa_lo == self.XSDT_ADDRESS:
             return self.xsdt_descriptor[:length]
         else:
-            return "\xFF" * length
+            return b"\xFF" * length
 
 
 class DSDTParsingHelper(ACPIHelper):
@@ -188,16 +191,16 @@ class DSDTParsingHelper(ACPIHelper):
             self._add_entry_to_xsdt(self.FADT_ADDRESS)
 
     def _create_fadt(self):
-        fadt = ""
+        fadt = b""
         if self.USE_FADT_WITH_X_DSDT:
-            fadt = self._create_generic_acpi_table_header("FACP", 0x10C)
+            fadt = self._create_generic_acpi_table_header(b"FACP", 0x10C)
             fadt += struct.pack("<I", 0x500)                # Address of FACS
             fadt += struct.pack("<I", self.DSDT_ADDRESS)    # DSDT
             fadt += struct.pack("<B", 0x1) * 96             # Padding
             fadt += struct.pack("<Q", self.X_DSDT_ADDRESS)  # X_DSDT
             fadt += struct.pack("<B", 0x1) * 120            # Remaining fields
         else:
-            fadt = self._create_generic_acpi_table_header("FACP", 0x74)
+            fadt = self._create_generic_acpi_table_header(b"FACP", 0x74)
             fadt += struct.pack("<I", 0x500)                # Address of FACS
             fadt += struct.pack("<I", self.DSDT_ADDRESS)    # DSDT
             fadt += struct.pack("<B", 0x1) * 72             # Remaining fields

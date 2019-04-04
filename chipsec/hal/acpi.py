@@ -272,7 +272,7 @@ class ACPI(hal_base.HALBase):
         ebda_addr = struct.unpack('<H', self.cs.mem.read_physical_mem( ebda_ptr_addr, 2 ))[0] << 4
         if ebda_addr > 0x400 and ebda_addr < 0xA0000:
             membuf = self.cs.mem.read_physical_mem(ebda_addr, 0xA0000 - ebda_addr)
-            pos = membuf.find( ACPI_RSDP_SIG )
+            pos = bytestostring(membuf).find( ACPI_RSDP_SIG )
             if -1 != pos:
                 rsdp_pa = ebda_addr + pos
                 rsdp = self.read_RSDP(rsdp_pa)
