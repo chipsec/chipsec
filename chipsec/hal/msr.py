@@ -134,13 +134,13 @@ class Msr:
     def dump_Descriptor_Table( self, cpu_thread_id, code, num_entries=None ):
         (limit,base,pa) = self.helper.get_descriptor_table( cpu_thread_id, code )
         dt = self.helper.read_physical_mem( pa, limit + 1 )
-        total_num = len(dt)/16
+        total_num = len(dt)//16
         if (total_num < num_entries) or (num_entries is None):
             num_entries = total_num
         logger().log( '[cpu{:d}] Physical Address: 0x{:016X}'.format(cpu_thread_id,pa) )
         logger().log( '[cpu{:d}] # of entries    : {:d}'.format(cpu_thread_id,total_num) )
         logger().log( '[cpu{:d}] Contents ({:d} entries):'.format(cpu_thread_id,num_entries) )
-        print_buffer( buffer(dt) )
+        print_buffer( dt )
         logger().log( '--------------------------------------' )
         logger().log( '#    segment:offset         attributes' )
         logger().log( '--------------------------------------' )
