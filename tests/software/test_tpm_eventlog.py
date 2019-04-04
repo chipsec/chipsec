@@ -38,15 +38,15 @@ class TestTpmEventLogChipsecUtil(util.TestChipsecUtil):
         os.remove(binary_event_log)
 
     def test_tpm_eventlog_basic(self):
-        empty_event = self._tpm12_event(0x0, 0x0, "\x00"*20, "")
+        empty_event = self._tpm12_event(0x0, 0x0, b"\x00"*20, b"")
         self._parse_eventlog([empty_event])
-        self.assertIn("EV_PREBOOT_CERT", self.log)
+        self.assertIn(b"EV_PREBOOT_CERT", self.log)
 
     def test_tpm_eventlog_firmware_blob(self):
         data = struct.pack("QQ", 0xABABABABFEFEFEFE, 0x12345678)
-        blob_event = self._tpm12_event(0x0, 0x80000008, "\x00"*20, data)
+        blob_event = self._tpm12_event(0x0, 0x80000008, b"\x00"*20, data)
         self._parse_eventlog([blob_event])
-        self.assertIn("EV_EFI_PLATFORM_FIRMWARE_BLOB", self.log)
+        self.assertIn(b"EV_EFI_PLATFORM_FIRMWARE_BLOB", self.log)
         self._assertLogValue("base", "0xababababfefefefe")
         self._assertLogValue("length", "0x12345678")
 

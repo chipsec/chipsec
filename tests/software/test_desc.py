@@ -35,7 +35,7 @@ class TestDescChipsecUtil(util.TestChipsecUtil):
                 return "\xff" * length
 
         self._chipsec_util("gdt 0", GDTHelper)
-        self.assertIn("# of entries    : 4", self.log)
+        self.assertIn(b"# of entries    : 4", self.log)
 
 if __name__ == '__main__':
     unittest.main()
