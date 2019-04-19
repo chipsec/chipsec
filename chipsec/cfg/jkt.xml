@@ -13,8 +13,8 @@ XML configuration file for Jaketown (Sandy Bridge-E) based platforms
         <field name="G_SMRAME"  bit="3"     size="1"/>
         <field name="C_BASE_SEG" bit="0"    size="3"/>
     </register>
-   
-    <register name="VTBAR"     type="pcicfg" bus="0" dev="5" fun="0" offset="0x180" size="4" desc="VT BAR Register">
+
+    <register name="VTBAR" type="mmcfg" bus="0" dev="5" fun="0" offset="0x180" size="4" desc="VT BAR Register">
       <field name="Enable" bit="0"  size="1"  desc="Enable"/>
       <field name="Base"   bit="13" size="19" desc="VTD Base Address"/>
     </register>
@@ -29,7 +29,7 @@ XML configuration file for Jaketown (Sandy Bridge-E) based platforms
     <register name="TSEG_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0xAC" size="4" desc="TSEG Memory Limit">
       <field name="limit" bit="20" size="12" desc="Limit address"/>
     </register>
-    
+
   </registers>
 
 </configuration>
