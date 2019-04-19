@@ -224,7 +224,6 @@ class OsHelper:
     # physical_address is 64 bit integer
     #
     def read_physical_mem( self, phys_address, length ):
-        #return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
         if self.use_native_api() and hasattr(self.helper, 'native_read_phys_mem'):
             ret = self.helper.native_read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
         else:
