@@ -51,8 +51,6 @@ try:
 except ImportError:
     _importlib = False
 
-avail_helpers = []
-
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
     return ( x.find('__init__') == -1 and ZIP_HELPER_RE.match(x) )
@@ -99,9 +97,9 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        for helper in avail_helpers:
+        for name, cls in Helper.registry:
             try:
-                self.helper = getattr(chiphelpers,helper).get_helper()
+                self.helper = cls()
                 break
             except OsHelperError:
                 raise
@@ -202,7 +200,7 @@ class OsHelper:
     #
     # read/write mmio
     #
-    def read_mmio_reg( self, phys_address, size ):
+    def read_mmio_reg( self, bar_base, size, offset=0, bar_size=None ):
         if self.use_native_api() and hasattr(self.helper, 'native_read_mmio_reg'):
             ret = self.helper.native_read_mmio_reg( bar_base, bar_size, offset, size )
         else:
@@ -211,7 +209,7 @@ class OsHelper:
             self.filecmds.AddElement("read_mmio_reg",(bar_base + offset,size),ret)
         return ret
         
-    def write_mmio_reg( self, phys_address, size, value ):
+    def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None ):
         if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
             ret = self.helper.native_write_mmio_reg( bar_base, bar_size, offset, size, value )
         else:
