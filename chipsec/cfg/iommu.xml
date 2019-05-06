@@ -19,7 +19,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="MIN" bit="0" size="4" desc="Minor Version Number"/>
       <field name="MAX" bit="4" size="4" desc="Major Version Number"/>
     </register>
-    <register name="VTBAR_CAP" type="mmio" bar="VTBAR" offset="0x08" size="4" desc="Capability">
+    <register name="VTBAR_CAP" type="mmio" bar="VTBAR" offset="0x08" size="8" desc="Capability">
       <field name="ND"    bit="0"  size="2"  desc="Number of Domains Supported"/>
       <field name="AFL"   bit="3"  size="1"  desc="Advanced Fault Logging"/>
       <field name="RWBF"  bit="4"  size="1"  desc="Required Write-Buffer Flushing"/>
@@ -190,7 +190,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="MIN" bit="0" size="4" desc="Minor Version Number"/>
       <field name="MAX" bit="4" size="4" desc="Major Version Number"/>
     </register>
-    <register name="GFXVTBAR_CAP" type="mmio" bar="GFXVTBAR" offset="0x08" size="4" desc="Capability">
+    <register name="GFXVTBAR_CAP" type="mmio" bar="GFXVTBAR" offset="0x08" size="8" desc="Capability">
       <field name="ND"    bit="0"  size="2"  desc="Number of Domains Supported"/>
       <field name="AFL"   bit="3"  size="1"  desc="Advanced Fault Logging"/>
       <field name="RWBF"  bit="4"  size="1"  desc="Required Write-Buffer Flushing"/>
