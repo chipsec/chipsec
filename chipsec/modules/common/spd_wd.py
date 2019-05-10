@@ -29,9 +29,11 @@ This module checks the following:
 
 The module returns the following results:
 
-    FAILED : SMBUS_HCFG.SPD_WD is not set
-
     PASSED : SMBUS_HCFG.SPD_WD is set
+
+    FAILED : SMBUS_HCFG.SPD_WD is not set and SPDs were detected
+
+    INFORMATION: SMBUS_HCFG.SPD_WD is not set, but no SPDs were detected
 
 Hardware registers used:
 
@@ -39,6 +41,7 @@ Hardware registers used:
 """
 
 from chipsec.module_common import *
+from chipsec.hal import smbus, spd
 
 class spd_wd(BaseModule):
 
@@ -51,17 +54,30 @@ class spd_wd(BaseModule):
     def check_spd_wd(self):
         self.logger.start_test( "SPD Write Disable" )
 
-        spd_wd_res = ModuleResult.FAILED
+        try:
+            _smbus = smbus.SMBus( self.cs )
+            _spd   = spd.SPD( _smbus )
+        except BaseException, msg:
+            print msg
+            return
+
         spd_wd_reg = self.cs.read_register( 'SMBUS_HCFG' )
         spd_wd = self.cs.get_register_field( 'SMBUS_HCFG', spd_wd_reg, 'SPD_WD' )
 
-        if 0 == spd_wd:
-            self.logger.log_failed_check( "SPD Write Disable is not set" )
-        else:
-            spd_wd_res = ModuleResult.PASSED
-            self.logger.log_passed_check( "SPD Write Disable is set" )
+        dimms = _spd.detect()
 
-        return spd_wd_res
+        if 1 == spd_wd:
+            self.logger.log_passed_check( "SPD Write Disable is set" )
+            self.res = ModuleResult.PASSED
+        else:
+            if dimms:
+                self.logger.log_failed_check( "SPD Write Disable is not set and SPDs were detected" )
+                self.res = ModuleResult.FAILED
+            else:
+                self.logger.log_information_check( "SPD Write Disable is not set, but no SPDs detected" )
+                self.res = ModuleResult.INFORMATION
+
+        return self.res
 
     def run( self, module_argv ):
         return self.check_spd_wd()
