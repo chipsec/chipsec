@@ -225,13 +225,13 @@ def weighted_choice(choices):
 def rand_dd(n, rndbytes = 1, rndbits = 1):
     weights = [(0x00000000, 0.85), (0xFFFFFFFF, 0.10), (0xFFFF0000, 0.05), (0xFFFFFF00, 0.05)]
     buffer  = ''
-    for i in xrange(n):
+    for i in range(n):
         buffer += DD(weighted_choice(weights))
     buffer = list(buffer)
-    for i in xrange(rndbytes):
+    for i in range(rndbytes):
         pos = randint(0, len(buffer) - 1)
         buffer[pos] = chr(randint(0, 255))
-    for i in xrange(rndbits):
+    for i in range(rndbits):
         pos = randint(0, len(buffer) - 1)
         buffer[pos] = chr(ord(buffer[pos]) ^ (0x1 << randint(0, 7)))
     buffer = ''.join(buffer)

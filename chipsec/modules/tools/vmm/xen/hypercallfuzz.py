@@ -104,7 +104,7 @@ class HypercallFuzz (BaseModule):
             if len(info) > 0:
                 xen.hypervisor_present = True
                 xen.print_hypervisor_info(info)
-                xen.scan_hypercalls(xrange(256))
+                xen.scan_hypercalls(range(256))
                 xen.print_hypercall_status()
  
         elif command == 'fuzzing':
@@ -121,7 +121,7 @@ class HypercallFuzz (BaseModule):
 
         elif command in ['fuzzing-all', 'fuzzing-all-randomly']:
             count = self.get_int(arg1)
-            xen.scan_hypercalls(xrange(256))
+            xen.scan_hypercalls(range(256))
             xen.print_hypercall_status()
             self.logger.log('\nStart fuzzing ...\n')
             #excluded = [MEMORY_OP, CONSOLE_IO, GRANT_TABLE_OP, SCHED_OP, EVENT_CHANNEL_OP]

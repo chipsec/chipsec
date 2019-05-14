@@ -62,7 +62,7 @@ class RingBuffer(BaseModuleDebug):
         (va, pa) = self.cs.mem.alloc_physical_mem(pages << 12, 0xFFFFFFFFFFFFFFFF)
         self.base_addr.append(va)
         if pa != 0:
-            for i in xrange(pages):
+            for i in range(pages):
                 self.pfn.append(pa + (i << 12))
             self.ringbuffer_init()
         self.send_size = pages >> 1
@@ -252,9 +252,9 @@ class HyperV(BaseModuleDebug):
         events = set()
         buffer = self.cs.mem.read_physical_mem(self.siefp + 0x100*sint, 0x100)
         buffer = unpack('<64L', buffer)
-        for i in xrange(64):
+        for i in range(64):
             if buffer[i]:
-                for n in xrange(32):
+                for n in range(32):
                     if (buffer[i] >> n) & 0x1:
                         events.add(i*32 + n)
         return events
@@ -629,7 +629,7 @@ class VMBusDiscovery(VMBus):
         #for i in self.offer_channels.keys():
         #    relid = self.offer_channels[i]['child_relid']
         #    self.vmbus_process_rescind_offer(relid)
-        for i in xrange(0x10):
+        for i in range(0x10):
             self.vmbus_process_rescind_offer(i)
         return
 
@@ -661,7 +661,7 @@ class VMBusDiscovery(VMBus):
     def scan_physical_addresses(self, version):
         pages = (self.int_page, self.monitor_page1, self.monitor_page2)
         FFs = 0xFFFFFFFFFFFFFFFF
-        for i in xrange(64):
+        for i in range(64):
             self.supported_versions = {}
             self.int_page = (FFs << (63 - i)) & FFs
             self.dbg('Address: 0x{:016X}'.format(self.int_page))
@@ -691,7 +691,7 @@ class VMBusDiscovery(VMBus):
         for i in uuid_sorted_by_connid:
             channel = self.offer_channels[i]
             flags = []
-            for n in xrange(16):
+            for n in range(16):
                 if (n in channel_flags) and (((channel['flags'] >> n) & 0x1) == 0x1):
                     flags.append(channel_flags[n])
 

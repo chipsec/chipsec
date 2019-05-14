@@ -41,7 +41,7 @@ class TestHelper(oshelper.Helper):
     def delete(self, start_driver):
         return True
 
-    def start(self, start_driver, driver_exists=False):
+    def start(self, start_driver, driver_exists=False, tofile=None, fromfile=None):
         return True
 
     def stop(self, start_driver):
@@ -247,21 +247,21 @@ class SPIHelper(TestHelper):
                                                        function,
                                                        address, size)
 
-    def read_mmio_reg(self, pa, size):
-        if pa == self.FREG0:
+    def read_mmio_reg(self, pa, size, offset, bar_size):
+        if pa + offset == self.FREG0:
             return 0x00010001
-        elif pa == self.FREG0 + 4:
+        elif pa + offset == self.FREG0 + 4:
             return 0x00020002
-        elif pa == self.FRAP:
+        elif pa + offset == self.FRAP:
             return 0xEEEEEEEE
-        elif pa == self.HSFS:
+        elif pa + offset == self.HSFS:
             return (1 << 14)  # FDV = 1, the flash descriptor is valid
         elif pa >= self.SPIBAR_ADDR and pa < self.SPIBAR_END:
             return 0x0
         else:
             raise Exception("Unexpected address")
 
-    def write_mmio_reg(self, pa, size, value):
+    def write_mmio_reg(self, pa, size, value, offset, bar_size):
         if pa < self.SPIBAR_ADDR or pa > self.SPIBAR_END:
             raise Exception("Write to outside of SPIBAR")
 

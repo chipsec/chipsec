@@ -232,7 +232,7 @@ class RSDP():
                       "  XSDT Address     : 0x{:016X}\n"
                       "  Extended Checksum: 0x{:02X}\n"
                       "  Reserved         : {}\n"
-                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.hex() if (type(self.Reserved) == type(bytes())) else self.Reserved.encode("hex"))
+                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.hex() if (not type(self.Reserved) == type(bytes())) else self.Reserved.encode("hex"))
         return default
 
     # some sanity checking on RSDP
@@ -455,7 +455,7 @@ class ACPI(hal_base.HALBase):
             x_dsdt_address = parsed_fadt_content.x_dsdt
             if logger().HAL: logger().error( 'Unable to determine the correct DSDT address' )
             if logger().HAL: logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
-            if logger().HAL: logger().error( '  X_DSDT address = 0x{:16X}'.format(x_dsdt_address) if x_dsdt_address is not None else 'Not found') )
+            if logger().HAL: logger().error( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)

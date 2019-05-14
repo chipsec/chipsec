@@ -87,14 +87,14 @@ class ChipsecUtil:
             logger().log(self.commands[command].__doc__)
 
     def f_mod_zip(self, x):
-        ZIP_UTILCMD_RE = re.compile("^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
+        ZIP_UTILCMD_RE = re.compile(r"^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
         return ( x.find('__init__') == -1 and ZIP_UTILCMD_RE.match(x) )
         
     def map_modname_zip(self, x):
         return ((x.split('/', 2)[2]).rpartition('.')[0]).replace('/','.')
 
     def f_mod(self, x):
-        MODFILE_RE = re.compile("^\w+\.py$")
+        MODFILE_RE = re.compile(r"^\w+\.py$")
         return ( x.lower().find('__init__') == -1 and MODFILE_RE.match(x.lower()) )
     def map_modname(self, x):
         return x.split('.')[0]

@@ -77,7 +77,7 @@ class hypercallfuzz(BaseModule):
         if self.random_order:
 
             self.logger.log( "[*] Fuzzing {:d} random hypercalls with random arguments...".format(self.iterations) )
-            for it in xrange(self.iterations):
+            for it in range(self.iterations):
                 rax = random.randint(0, self.gprs['rax'])
                 rbx = random.randint(0, self.gprs['rbx'])
                 rcx = random.randint(0, self.gprs['rcx'])
@@ -99,16 +99,16 @@ class hypercallfuzz(BaseModule):
 
             it = 0
             self.logger.log( "[*] Fuzzing hypercalls with arguments exhaustively..." )
-            for rax in xrange(self.gprs['rax']):
-                for rbx in xrange(self.gprs['rbx']):
-                    for rcx in xrange(self.gprs['rcx']):
-                        for rdx in xrange(self.gprs['rdx']):
-                            for rdi in xrange(self.gprs['rdi']):
-                                for rsi in xrange(self.gprs['rsi']):
-                                    for r8 in xrange(self.gprs['r8']):
-                                        for r9 in xrange(self.gprs['r9']):
-                                            for r10 in xrange(self.gprs['r10']):
-                                                for r11 in xrange(self.gprs['r11']):
+            for rax in range(self.gprs['rax']):
+                for rbx in range(self.gprs['rbx']):
+                    for rcx in range(self.gprs['rcx']):
+                        for rdx in range(self.gprs['rdx']):
+                            for rdi in range(self.gprs['rdi']):
+                                for rsi in range(self.gprs['rsi']):
+                                    for r8 in range(self.gprs['r8']):
+                                        for r9 in range(self.gprs['r9']):
+                                            for r10 in range(self.gprs['r10']):
+                                                for r11 in range(self.gprs['r11']):
                                                     if _LOG_ALL_GPRS: self.logger.log( _str.format(it,rax,rbx,rcx,rdx,rdi,rsi,r8,r9,r10,r11) )
                                                     else:             self.logger.log( "{:d} hcall".format(it) )
                                                     if _FLUSH_LOG_EACH_ITER: self.logger.flush()

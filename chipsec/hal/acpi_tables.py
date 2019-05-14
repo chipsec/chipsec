@@ -2017,7 +2017,7 @@ class NFIT (ACPI_TABLE):
 # UEFI Table
 #
 ########################################################################################################
-SMM_COMM_TABLE = str(UUID(bytes='\xc6\x8e\xd8\xe2\x9d\xc6\x4c\xbd\x9d\x94\xdb\x65\xac\xc5\xc3\x32')).upper()
+SMM_COMM_TABLE = str(UUID('c68ed8e29dc64cbd9d94db65acc5c332')).upper()
 
 class UEFI_TABLE (ACPI_TABLE):
     def __init__( self ):
@@ -2041,7 +2041,6 @@ class UEFI_TABLE (ACPI_TABLE):
   identifier                 : {}
   Data Offset                : {:d}""".format(identifier,offset)
         #check if SMM Communication ACPI Table
-        print SMM_COMM_TABLE, identifier
         if not (SMM_COMM_TABLE == identifier):
             return
         content_offset = offset - 36

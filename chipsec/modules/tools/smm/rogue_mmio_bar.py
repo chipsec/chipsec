@@ -89,9 +89,9 @@ class rogue_mmio_bar(BaseModule):
             self.cs.mmio.dump_MMIO(base, size)
             file.write_file('mmio_mem.orig', orig_mmio)
 
-        for smi_code in xrange(self.smic_start,self.smic_end+1):
-            for smi_data in xrange(self.smid_start,self.smid_end+1):
-                for ecx in xrange(self.smif_start,self.smif_end+1):
+        for smi_code in range(self.smic_start,self.smic_end+1):
+            for smi_data in range(self.smid_start,self.smid_end+1):
+                for ecx in range(self.smif_start,self.smif_end+1):
                     self.logger.log( "> SMI# {:02X}: data {:02X}, func (ECX) {:X}".format(smi_code,smi_data,ecx) )
                     if FLUSH_OUTPUT_AFTER_SMI: self.logger.flush()
 
@@ -118,7 +118,7 @@ class rogue_mmio_bar(BaseModule):
 
 
     def copy_bar(self, bar_base, bar_base_mem, size):
-        for off in xrange(0,size,4):
+        for off in range(0,size,4):
             r = self.cs.mem.read_physical_mem_dword(bar_base + off)
             self.cs.mem.write_physical_mem_dword(bar_base_mem + off, r)
         return self.cs.mem.read_physical_mem(bar_base_mem, size)

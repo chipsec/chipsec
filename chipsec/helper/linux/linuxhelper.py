@@ -213,9 +213,9 @@ class LinuxHelper(Helper):
                 self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
-                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(e),e.errno))
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(e)),e.errno)
             except BaseException as be:
-                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(be),errno.ENXIO))
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(be)),errno.ENXIO)
 
             self._ioctl_base = self.compute_ioctlbase()
 
@@ -486,7 +486,7 @@ class LinuxHelper(Helper):
 
     def native_write_io_port(self, io_port, newval, size):
         if self.devport_available():
-            os.lseek(self.dev_port, addr, os.SEEK_SET)
+            os.lseek(self.dev_port, io_port, os.SEEK_SET)
             written = os.write(self.dev_port, newval)
             if written != size:
                 if logger().DEBUG: logger().error("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
@@ -589,7 +589,7 @@ class LinuxHelper(Helper):
                 region = self.memory_mapping(bar_base, bar_size)
                 if not region: logger().error("Unable to map region {:08x}".format(bar_base))
             region.seek(bar_base + offset - region.start)
-            region.write(reg)                
+            written = region.write(reg)                
             if written != size:
                 logger().error("Unable to write all data to MMIO (wrote {:d} of {:d})".format(written, size))
 
@@ -1101,7 +1101,7 @@ class LinuxHelper(Helper):
         encode_str += FileName
         data = subprocess.check_output(encode_str,shell=True)
         if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+            logger().error("Cannot compress file({})".format(FileName))
             return False
         return True
         

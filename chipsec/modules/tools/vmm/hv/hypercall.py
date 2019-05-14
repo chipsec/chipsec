@@ -219,7 +219,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         pattern    = ''
         hc = self.hv_hypercalls[i] if i in self.hv_hypercalls else [0, 0, HV_STATUS_INVALID_HYPERCALL_CODE]
         if hc[2] != HV_STATUS_SUCCESS:
-            for x in xrange(total_tests):
+            for x in range(total_tests):
                 buffer  = ''
                 buffer += '\x00' * randint(0 ,8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
@@ -250,12 +250,12 @@ class HyperVHypercall(BaseModuleHwAccess):
     ##  scan_input_parameters
     ##
     def scan_input_parameters(self, i, maxlen):
-        matrix = [[0 for x in xrange(0x101)] for y in xrange(maxlen)]
+        matrix = [[0 for x in range(0x101)] for y in range(maxlen)]
         hc = self.hv_hypercalls[i] if i in self.hv_hypercalls else [0, 0, HV_STATUS_INVALID_HYPERCALL_CODE]
         iv = self.get_initial_data(GOOD_PARAMS_STATUSES, i, 32)[0]
         self.msg('Start scanning ...')
-        for l in xrange(maxlen):
-            for v in xrange(0x100):
+        for l in range(maxlen):
+            for v in range(0x100):
                 s = list(iv)
                 s[l]   = chr(v)
                 buffer = ''.join(s)
@@ -271,10 +271,10 @@ class HyperVHypercall(BaseModuleHwAccess):
     ##
     def print_input_parameters(self, i, maxlen, status_list):
         matrix = self.param_matrix_status[i]
-        for l in xrange(maxlen):
+        for l in range(maxlen):
             x   = 0
             ranges = []
-            for v in xrange(0x100):
+            for v in range(0x100):
                 if (matrix[l][v] not in status_list) and (matrix[l][v + 1] in status_list):
                     x = v + 1
                 if (matrix[l][v] in status_list) and (matrix[l][v + 1] not in status_list):
@@ -293,7 +293,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         matrix = self.param_matrix_status[i]
         buffer = self.get_initial_data(GOOD_PARAMS_STATUSES, i, 32)[0]
         self.msg('Start input parameters fuzzing ...')
-        for x in xrange(total_tests):
+        for x in range(total_tests):
             if x % 10000000 == 10000000-1:
                 self.msg('{:4.0f}% DONE'.format(100.0*x/total_tests))
             l = randint(0, maxlen-1)
@@ -347,8 +347,8 @@ class HyperVHypercall(BaseModuleHwAccess):
         self.msg('')
         self.msg('*** Partition properties ***')
         for partid in sorted(self.hv_partitionid.keys()):
-            for n in xrange(0x10):
-                for m in xrange(0x10):
+            for n in range(0x10):
+                for m in range(0x10):
                     hciv = hv_hciv(0, 0, HV_GET_PARTITION_PROPERTY)
                     prop = (n << 16) + m
                     buffer = pack('<QLL', partid, prop, 0)
@@ -384,14 +384,14 @@ class HyperVHypercall(BaseModuleHwAccess):
     ##
     def custom_fuzzing(self, call_code, total_tests):
         statistics = {}
-        buffer = ''.join( [chr(randint(0,255)) for i in xrange(0, 112)] )
+        buffer = ''.join( [chr(randint(0,255)) for i in range(0, 112)] )
         hcname = get_hypercall_name(call_code)
 
         if hcname == 'HvConnectPort':
             return
             self.msg('Hypercall: {} '.format(hcname))
             hciv = hv_hciv(0, 0, call_code)
-            for i in xrange(0x0, 0xFFFFF):
+            for i in range(0x0, 0xFFFFF):
                 buffer = pack ('<5Q', i & 0xF, (i >> 4) & 0xF, (i >> 8) & 0xF, (i >> 12) & 0xF, (i >> 16) & 0xF ) 
                 result = self.hv.hypercall64_memory_based(hciv, buffer)
                 statistics[result] = 1 if result not in statistics else statistics[result]  + 1
@@ -402,7 +402,7 @@ class HyperVHypercall(BaseModuleHwAccess):
             for connid in sorted(self.hv_connectionid.keys()):
                 if self.hv_connectionid[connid] == HV_PORT_TYPE_MESSAGE:
                     self.msg('Connection ID: : {:08X}'.format(connid))
-                    for i in xrange(0x100, 0x1000):
+                    for i in range(0x100, 0x1000):
                         messagetype = 0x7FFFFFFF & getrandbits(32)
                         payloadsize = randint(0, 240)
                         message0    = getrandbits(8)
@@ -417,7 +417,7 @@ class HyperVHypercall(BaseModuleHwAccess):
             for connid in sorted(self.hv_connectionid.keys()):
                 if self.hv_connectionid[connid] == HV_PORT_TYPE_EVENT:
                     self.msg('Connection ID: {:08X}'.format(connid))
-                    for i in xrange(min(total_tests, 0xFFFF)):
+                    for i in range(min(total_tests, 0xFFFF)):
                         buffer = pack ('<LHH', connid, 0, i)
                         result = self.hv.hypercall64_memory_based(hciv, buffer)
                         statistics[result] = 1 if result not in statistics else statistics[result]  + 1
