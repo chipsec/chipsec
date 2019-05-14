@@ -506,7 +506,7 @@ def align_image(image, size=8, fill='\x00'):
 def get_guid_bin(guid):
     values = guid.split('-')
     if [len(x) for x in values] == [8, 4, 4, 4, 12]:
-        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in xrange(0, 12, 2)]
+        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in range(0, 12, 2)]
         values = [int(x, 16) for x in values]
         return struct.pack('<LHHBBBBBBBB', *tuple(values))
     return ''
@@ -615,7 +615,11 @@ def NextFwVolume(buffer, off = 0):
     return res
 
 FFS_ATTRIB_LARGE_FILE         = 0x01
-  
+
+def GetFvHeader(buffer, off = 0):
+    EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
+    header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
+    if (len(buffer) < header_size):  
         return (0,0,0)
     size = 0
     fof = off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
@@ -1262,7 +1266,7 @@ class op_io_pci_mem():
         if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
         if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x{}'.format( '{{{:d}X}}'.format(scrpt_width_sizes[self.width]*2) )
+            fmt = '0x{}'.format( '{{{:d}X}}'.format(script_width_sizes[self.width]*2) )
             str_r += "  Values : {}\n".format("  ".join( [fmt.format(v) for v in self.values] ))
         elif self.buffer is not None:
             str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))

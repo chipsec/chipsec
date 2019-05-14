@@ -303,7 +303,7 @@ class Pci:
 
     def dump_pci_config( self, bus, device, function ):
         cfg = [0xFF]*0x100
-        for off in xrange(0x100):
+        for off in range(0x100):
             cfg[off] = self.read_byte( bus, device, function, off )
         return cfg
 

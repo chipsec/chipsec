@@ -310,7 +310,7 @@ class SPD:
 
     def read_range( self, start_offset, size, device=SPD_SMBUS_ADDRESS ):
         buffer = [chr(0xFF)]*size
-        for i in xrange(size):
+        for i in range(size):
             buffer[i] = chr( self.read_byte( start_offset + i, device ) )
         return buffer
 

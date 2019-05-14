@@ -108,7 +108,7 @@ class PortIO:
     def read_IO( self, range_base, range_size, size=1 ):
         n = range_size/size
         io_ports = []
-        for i in xrange(n):
+        for i in range(n):
             io_ports.append( self._read_port( range_base + i*size, size ) )
         return io_ports
 
@@ -119,6 +119,6 @@ class PortIO:
         n = range_size/size
         fmt = '0{:d}X'.format( (size*2) )
         logger().log("[io] I/O register range [0x{:04X}:0x{:04X}+{:04X}]:".format(range_base,range_base,range_size))
-        for i in xrange(n):
+        for i in range(n):
             reg = self._read_port( range_base + i*size, size )
             logger().log( '+{:04X}: {:{form}}'.format(i*size,reg,form=fmt) )

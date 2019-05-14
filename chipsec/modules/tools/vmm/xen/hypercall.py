@@ -67,7 +67,7 @@ class XenHypercall(BaseModuleHwAccess):
     def get_value(self, arg):
         if type(arg) in [dict]:
             value = random.choice(arg.get('masks')) & random.getrandbits(64)
-        elif type(arg) in [list, tuple, xrange]:
+        elif type(arg) in [list, tuple, range]:
             value = random.choice(arg)
         else:
             value = arg
@@ -127,7 +127,7 @@ class XenHypercall(BaseModuleHwAccess):
             info['command_line']        = command_line['buffer'].strip('\x00')
 
             info['features'] = {}
-            for i in xrange(0x100):
+            for i in range(0x100):
                 feature = self.xen_version(XENVER_GET_FEATURES, 8, struct.pack('<LL', i, 0))
                 if feature['exception'] == False:
                     values = struct.unpack('<LL', feature['buffer'])
@@ -180,7 +180,7 @@ class XenHypercall(BaseModuleHwAccess):
         args = rule.get('args', [])
         self.msg( "Fuzzing {} (0x{:02X}) hypercall".format(get_hypercall_name(code, 'Unknown'), code))
         self.stats_reset()
-        for it in xrange(iterations):
+        for it in range(iterations):
             data  = list('\x00' * 32)
             data[randint(0, len(data) - 1)] = chr(getrandbits(8))
             data[randint(0, len(data) - 1)] = chr(getrandbits(8))
@@ -195,7 +195,7 @@ class XenHypercall(BaseModuleHwAccess):
         return
 
     def fuzz_hypercalls_randomly(self, codes, iterations):    
-        for it in xrange(iterations):
+        for it in range(iterations):
             code = random.choice(codes)
             rule = self.hypercall_args.get(code, {})
             if not rule:

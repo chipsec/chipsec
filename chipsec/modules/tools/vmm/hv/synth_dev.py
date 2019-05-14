@@ -65,8 +65,8 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
         return info
 
     def device_fuzzing(self, relid):
-        for x in xrange(1, 0x100):
-            for a in xrange(0, 0x100):
+        for x in range(1, 0x100):
+            for a in range(0, 0x100):
                 self.ringbuffers[relid].ringbuffer_init()
                 self.vmbus_establish_gpadl(relid, self.ringbuffers[relid].gpadl, self.ringbuffers[relid].pfn)
                 self.vmbus_open(relid, self.ringbuffers[relid].gpadl, self.ringbuffers[relid].send_size)

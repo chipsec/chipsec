@@ -391,7 +391,7 @@ def umount(drive):
 
 def get_efi_mount():
     import subprocess
-    for l in xrange(ord('z'), ord('a'), -1):
+    for l in range(ord('z'), ord('a'), -1):
         if not os.path.exists('%c:\\' % l):
             res = subprocess.call( ["mountvol.exe", "%c:\\" % l, "/S"] )
             if res != 0:

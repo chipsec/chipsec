@@ -601,7 +601,7 @@ class SPI(hal_base.HALBase):
 
         if logger().HAL:
             logger().log( "[spi] buffer read from SPI:" )
-            chipsec.logger.print_buffer( buf )
+            chipsec.logger.print_buffer( "{}".format(buf) )
 
         return buf
 

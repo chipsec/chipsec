@@ -296,7 +296,7 @@ class FileHelper(Helper):
           if exe is None: return None 
           try:
             subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
+          except BaseException as msg:
             logger().error( str(msg) )
             if logger().DEBUG: logger().log_bad( traceback.format_exc() )
             return None
