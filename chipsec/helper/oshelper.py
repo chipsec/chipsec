@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -553,21 +553,7 @@ class OsHelper:
     # Compress binary with OS specific tools
     #
     def compress_file( self, FileName, OutputFileName, CompressionType ):
-        import subprocess
-        if (CompressionType == 0): # not compressed
-          shutil.copyfile(FileName, OutputFileName)
-        else:
-          exe = self.get_compression_tool_path( CompressionType )
-          if exe is None: return None 
-          try:
-            subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
-            if logger().DEBUG: 
-                logger().error( str(msg) )
-                logger().log_bad( traceback.format_exc() )
-            return None
-
-        ret = chipsec.file.read_file( OutputFileName )
+        ret = self.helper.compress_file( FileName, OutputFileName, CompressionType )
         if not self.filecmds is None:
             self.filecmds.AddElement("compress_file",(FileName, OutputFileName, CompressionType),ret)
         return ret
