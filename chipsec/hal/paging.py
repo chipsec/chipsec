@@ -133,7 +133,7 @@ class c_translation(object):
             phys   = self.translation[virt]['addr']
             pgsize = (1<<12) if size == '2MB' else (1<<20)
             if size == exp_size:
-                for i in xrange(512):
+                for i in range(512):
                     self.add_page(virt + i*pgsize, phys + i*pgsize, SIZE[exp_size], attr)
         return
 
@@ -203,10 +203,10 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         data = self.readmem('{}_{}_0x{:08X}'.format(self.name, info, addr), addr, 0x1000)
         entries = struct.unpack('<512Q', data)
         if size == 16:
-            entries = [[entries[i], entries[i + 1]] for i in xrange(0, 512, 2)]
+            entries = [[entries[i], entries[i + 1]] for i in range(0, 512, 2)]
 
         same = True
-        for i in xrange(len(entries)):
+        for i in range(len(entries)):
             same = same and (entries[0] == entries[i])
         if same:
             return [entries[0]]
@@ -215,7 +215,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
     def print_info(self, name):
         logger().log('\n  {} physical address ranges:'.format(name))
         mem_range = self.get_mem_range()
-        for index in xrange(len(mem_range)):
+        for index in range(len(mem_range)):
             i = mem_range[index]
             logger().log('    0x{:013X} - 0x{:013X} {:8d}  {}'.format(i[0], i[1] - 1, (i[1] - i[0]) >> 12, i[2]))
 
@@ -230,7 +230,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         addr_list = [x & MAXPHYADDR for x in addr_list]
         mem_range = self.get_mem_range()
         for addr in addr_list:
-            for i in xrange(len(mem_range)):
+            for i in range(len(mem_range)):
                 if (mem_range[i][0] <= addr) and (addr < mem_range[i][1]):
                     print ('*** WARNING: PAGE TABLES MISCONFIGURATION  0x{:013X}'.format(addr))
         return
@@ -323,7 +323,7 @@ class c_4level_page_tables(c_paging):
 
     def read_pml4(self, addr):
         pml4 = self.read_entries('pml4', addr)
-        for pml4e_index in xrange(len(pml4)):
+        for pml4e_index in range(len(pml4)):
            pml4e = pml4[pml4e_index]
            if self.is_present(pml4e):
                addr = pml4e & ADDR_4KB
@@ -334,7 +334,7 @@ class c_4level_page_tables(c_paging):
 
     def read_pdpt(self, addr, pml4e_index):
         pdpt = self.read_entries('pdpt', addr)
-        for pdpte_index in xrange(len(pdpt)):
+        for pdpte_index in range(len(pdpt)):
             pdpte = pdpt[pdpte_index]
             if self.is_present(pdpte):
                 if self.is_bigpage(pdpte):
@@ -350,7 +350,7 @@ class c_4level_page_tables(c_paging):
 
     def read_pd(self, addr, pml4e_index, pdpte_index):
         pd = self.read_entries('pd', addr)
-        for pde_index in xrange(len(pd)):
+        for pde_index in range(len(pd)):
             pde = pd[pde_index]
             if self.is_present(pde):
                 if self.is_bigpage(pde):
@@ -366,7 +366,7 @@ class c_4level_page_tables(c_paging):
 
     def read_pt(self, addr, pml4e_index, pdpte_index, pde_index):
         pt = self.read_entries('pt', addr)
-        for pte_index in xrange(len(pt)):
+        for pte_index in range(len(pt)):
             pte = pt[pte_index]
             if self.is_present(pte):
                 virt = self.get_virt_addr(pml4e_index, pdpte_index, pde_index, pte_index)
@@ -452,7 +452,7 @@ class c_pae_page_tables(c_ia32e_page_tables):
 
     def read_pdpt(self, addr):
         pdpt = self.read_entries('pdpt', addr)
-        for pdpte_index in xrange(4):
+        for pdpte_index in range(4):
             pdpte = pdpt[pdpte_index]
             if self.is_present(pdpte):
                 if self.is_bigpage(pdpte):
@@ -555,7 +555,7 @@ class c_vtd_page_tables(c_extended_page_tables):
 
     def read_re(self, addr):
         re = self.read_entries('re', addr, 16)
-        for ree_index in xrange(len(re)):
+        for ree_index in range(len(re)):
             ree_lo = re[ree_index][0]
             ree_hi = re[ree_index][1]
             if self.get_field(ree_lo, self.RE_LO_P):
@@ -566,7 +566,7 @@ class c_vtd_page_tables(c_extended_page_tables):
 
     def read_ce(self, addr, ree_index):
         ce = self.read_entries('ce', addr, 16)
-        for cee_index in xrange(len(ce)):
+        for cee_index in range(len(ce)):
             cee_lo = ce[cee_index][0]
             cee_hi = ce[cee_index][1]
             if self.get_field(cee_lo, self.CE_LO_P):

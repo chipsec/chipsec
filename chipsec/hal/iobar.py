@@ -166,7 +166,7 @@ class IOBAR(hal_base.HALBase):
         (range_base,range_size) = self.get_IO_BAR_base_address( bar_name )
         n = range_size/size
         io_ports = []
-        for i in xrange(n):
+        for i in range(n):
             io_ports.append( self.cs.io._read_port( range_base + i*size, size ) )
             #io_ports.append( self.read_IO_BAR_reg( bar_name, i*size, size ) )
         return io_ports
@@ -179,7 +179,7 @@ class IOBAR(hal_base.HALBase):
         n = range_size/size
         fmt = '0{:d}X'.format(size*2)
         logger().log("[iobar] I/O BAR {}:".format(bar_name))
-        for i in xrange(n):
+        for i in range(n):
             reg = self.cs.io._read_port( range_base + i*size, size )
             logger().log( '{:+04X}: {:{form}}'.format(i*size,r,form=fmt) )
 

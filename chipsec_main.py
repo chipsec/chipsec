@@ -39,7 +39,7 @@ elif sys.version[0] == 3:
 def newimp(name, *x):
     caller = inspect.currentframe().f_back
     if 'chipsec' in name:
-        print ("{:35} -> {}".format( (caller.f_globals.get('__name__'), name)))
+        print ("{:35} -> {}".format( (caller.f_globals.get('__name__')), name))
 
     return savimp(name, *x)
 ## Uncomment the following line to display  the imports that chipsec calls
@@ -85,8 +85,7 @@ class ChipsecMain:
         self.Modules_Path          = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
         self.Loaded_Modules        = []
         self.AVAILABLE_TAGS        = []
-        self.MODPATH_RE            = re.compile("^\w+(\.\w+)*$")
-        self._driver_exists        = False
+        self.MODPATH_RE            = re.compile(r"^\w+(\.\w+)*$")
         self.version               = defines.get_version()
 
         self.argv = argv
@@ -352,7 +351,7 @@ class ChipsecMain:
         if self.CHIPSEC_LOADED_AS_EXE:
             myzip = zipfile.ZipFile( os.path.join(self.CHIPSEC_FOLDER, "library.zip" ))
             global ZIP_MODULES_RE
-            ZIP_MODULES_RE = re.compile("^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/"+self._cs.code.lower()+"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
+            ZIP_MODULES_RE = re.compile(r"^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/"+self._cs.code.lower()+r"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
             zip_modules = []
             zip_modules.extend( map(self.map_pass, filter(self.f_mod, myzip.namelist())) )
             logger().log( "Loaded modules from ZIP:" )
@@ -396,7 +395,7 @@ class ChipsecMain:
         adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
         adv_options.add_argument('--record',dest='_to_file',help='run chipsec and clone helper results into JSON file')
         adv_options.add_argument('--replay',dest='_from_file', help='replay a chipsec run with JSON file')
-        adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i[0] for i in oshelper.Helper.registry])
+        adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
 
         parser.parse_args(self.argv,namespace=ChipsecMain)
  

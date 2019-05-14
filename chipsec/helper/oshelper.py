@@ -110,12 +110,12 @@ class OsHelper:
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:
-            from chipsec.helper.file.helper import FileCmds
+            from chipsec.helper.file.filehelper import FileCmds
             self.filecmds = FileCmds(to_file)
         if not driver_exists is None:
-            for name, cls in Helper.registry:
+            for name in avail_helpers:
                 if name == driver_exists:
-                    self.helper = cls()
+                    self.helper = getattr(chiphelpers,helper).get_helper()
         try:
             if not self.helper.create( start_driver ):
                 raise OsHelperError("failed to create OS helper")
@@ -256,7 +256,7 @@ class OsHelper:
         else:
             ret = self.helper.free_phys_mem(physical_address)
         if not self.filecmds is None:
-            self.filecmds.AddElement("free_physical_mem",(phys_address),ret)
+            self.filecmds.AddElement("free_physical_mem",(physical_address),ret)
         return ret
 
     def va2pa( self, va ):
