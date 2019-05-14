@@ -25,7 +25,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -369,7 +369,10 @@ NVRAM: EFI Variable Store
     def decompress_EFI_binary( self, compressed_name, uncompressed_name, compression_type ):
         if logger().HAL: logger().log( "[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n       {}".format(compression_type,compressed_name,uncompressed_name) )
         if compression_type in COMPRESSION_TYPES:
-            return self.cs.helper.decompress_file( compressed_name, uncompressed_name, compression_type )
+            if self.cs.helper.decompress_file( compressed_name, uncompressed_name, compression_type ):
+                return read_file(uncompressed_name)
+            else:
+                return None
         else: 
             logger().error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
             return None
@@ -377,7 +380,10 @@ NVRAM: EFI Variable Store
     def compress_EFI_binary( self, uncompressed_name, compressed_name, compression_type ):
         if logger().HAL: logger().log( "[uefi] compressing EFI binary (type = 0x{:X})\n       {} ->\n       {}".format(compression_type,uncompressed_name,compressed_name) )
         if compression_type in COMPRESSION_TYPES:
-            return self.cs.helper.compress_file( uncompressed_name, compressed_name, compression_type )
+            if self.cs.helper.compress_file( uncompressed_name, compressed_name, compression_type ):
+                return read_file(compressed_name)
+            else:
+                return None
         else: 
             logger().error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
             return None
