@@ -126,6 +126,7 @@ class Cfg:
     PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE   = 2                             # Flash Cycle Write
     PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE   = 3                             # Flash Cycle Block Erase
     PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC   = 6                             # Flash Cycle Read JEDEC ID
+    PCH_RCBA_SPI_HSFCTL_FCYCLE_SFDP    = 5                             # Flash Cycle SFDP
     PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO     = BIT0                          # Flash Cycle GO
 
     #PCH_RCBA_SPI_FADDR               = 0x08  # SPI Flash Address

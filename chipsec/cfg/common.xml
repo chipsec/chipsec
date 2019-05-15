@@ -382,6 +382,9 @@ Common (default) XML platform configuration file
       <field name="UEO"   bit="8"  size="8" desc="Upper Erase Opcode"/>
     </register>
 
+    <register name="BIOS_PTINX" type="mmio" bar="SPIBAR" offset="0xCC" size="4" desc="Parameter Table Index"/>
+    <register name="BIOS_PTDATA" type="mmio" bar="SPIBAR" offset="0xD0" size="4" desc="Parameter Table Data"/>
+
     <!-- SPI Flash Descriptor registers -->
     <register name="FLMAP0" type="mmio" bar="FDBAR" offset="0x14" size="4" desc="Flash Map 0 Register">
       <field name="FCBA"    bit="0"  size="8" desc="Flash Component Base Address"/>
