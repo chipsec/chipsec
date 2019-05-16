@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -26,8 +26,9 @@ Setup module to install chipsec package via setuptools
 
 import os
 import platform
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages
 from distutils import log, dir_util
+from distutils.core import Extension
 import subprocess
 import shutil
 
@@ -96,14 +97,11 @@ class build_ext(_build_ext):
         root_dst = "" if self.inplace else self.real_build_lib
         dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
         try:
-            dir_util.remove_tree(dst)
+            os.mkdir(dst)
         except:
             pass
-        os.mkdir(dst)
         for elf in elfs:
             self.copy_file(os.path.join(build_elf,"bin",elf),dst)
-        # Clean up the build directory
-        dir_util.remove_tree(os.path.join(self.real_build_lib,"chipsec_tools"))
 
     def _build_darwin_driver(self):
         log.info("building the OSX driver")
@@ -140,14 +138,11 @@ class build_ext(_build_ext):
         root_dst = "" if self.inplace else self.real_build_lib
         dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
         try:
-            dir_util.remove_tree(dst)
+            os.mkdir(dst)
         except:
             pass
-        os.mkdir(dst)
         for exe in exes:
             self.copy_file(os.path.join(build_exe,"bin",exe),dst)
-        # Clean up the build directory
-        dir_util.remove_tree(os.path.join(self.real_build_lib,"chipsec_tools"))
 
     def run(self):
         # First, we build the standard extensions.
@@ -192,7 +187,7 @@ package_data = {
 }
 data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
-extra_kw = {}
+extra_kw = []
 
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
@@ -200,8 +195,9 @@ if platform.system().lower() == "windows":
     package_data["chipsec_tools.compression.bin"] = ['*']
     install_requires.append("pypiwin32")
 
-elif platform.system().lower == "linux":
+elif platform.system().lower() == "linux":
     package_data["chipsec_tools.compression.bin"] = ['*']
+    extra_kw.append(Extension("chipsec.helper.linux.cores",["chipsec/helper/linux/cores.c"]))
 
 elif platform.system().lower() == "darwin":
     package_data["chipsec_tools.compression.bin"] = ['*']
@@ -251,5 +247,5 @@ setup(
         'build': build,
         'build_ext'   : build_ext,
     },
-    **extra_kw
+    ext_modules = extra_kw
 )
