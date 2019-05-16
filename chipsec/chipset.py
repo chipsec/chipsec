@@ -561,6 +561,11 @@ class Chipset:
         if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
             self.init_cfg_xml(_xml, self.code, self.pch_code)
+
+        # Load Bus numbers for this platform.
+        if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
+        self.init_cfg_bus()
+
         self.Cfg.XML_CONFIG_LOADED = True
 
 
@@ -662,6 +667,23 @@ class Chipset:
                     self.Cfg.CONTROLS[ _name ] = _control.attrib
                     if logger().DEBUG: logger().log( "    + %-16s: %s" % (_name, _control.attrib) )
 
+    def init_cfg_bus( self ):
+        if logger().DEBUG: logger().log( '[*] loading device buses..' )
+        _devices = self.pci.enumerate_devices()
+        for _device in self.Cfg.CONFIG_PCI:
+            device = self.Cfg.CONFIG_PCI[_device]
+            _vid  = device.get( 'vid', None )
+            _did  = device.get( 'did', None )
+            if (_vid and _did):
+                _bus = []
+                did  = [_.strip() for _ in _did.split(',')]
+                for _dev in _devices:
+                    if ((device['dev'], device['fun'], _vid) == _dev[1:3]) and (_dev[4] in did):
+                        _bus.append( hex(_dev[0]) )
+                        if logger().DEBUG: logger().log( '    + {:-16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus 0x{:02X}'.format(_device, _dev[3], _dev[4], _dev[0]) )
+                if len(_bus):
+                    self.Cfg.BUS[ _device ] = _bus
+
     #
     # Load chipsec/cfg/<code>.py configuration file for platform <code>
     #
@@ -721,6 +743,8 @@ class Chipset:
 #
 # is_register_defined
 #   checks if register is defined in the XML config
+# get_register_bus/get_device_bus
+#   returns list of buses device/register was discovered on
 # read_register/write_register
 #   reads/writes configuration register (by name)
 # get_register_field (set_register_field)
@@ -745,19 +769,28 @@ class Chipset:
             #raise RegisterNotFoundError, ('RegisterNotFound: %s' % reg_name)
             return False
 
-    def get_register_def(self, reg_name):
+    def get_register_def(self, reg_name, bus_index=0):
         reg_def = self.Cfg.REGISTERS[reg_name]
-        if reg_def["type"] == "pcicfg" and "device" in reg_def:
+        if (reg_def["type"] == "pcicfg" or reg_def["type"] == "mmcfg") and ("device" in reg_def):
             dev_name = reg_def["device"]
             if dev_name in self.Cfg.CONFIG_PCI:
                 dev = self.Cfg.CONFIG_PCI[dev_name]
                 reg_def['bus'] = dev['bus']
                 reg_def['dev'] = dev['dev']
                 reg_def['fun'] = dev['fun']
+                if dev_name in self.Cfg.BUS:
+                    reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
         return reg_def
 
-    def read_register(self, reg_name, cpu_thread=0):
-        reg = self.get_register_def(reg_name)
+    def get_register_bus(self, reg_name):
+        name = self.Cfg.REGISTERS[reg_name].get( 'device', None )
+        return self.get_device_bus( name )
+
+    def get_device_bus(self, dev_name):
+        return self.Cfg.BUS.get( dev_name, None )
+
+    def read_register(self, reg_name, cpu_thread=0, bus_index=0):
+        reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_value = 0
         if RegisterType.PCICFG == rtype:
@@ -792,8 +825,8 @@ class Chipset:
 
         return reg_value
 
-    def write_register(self, reg_name, reg_value, cpu_thread=0):
-        reg = self.get_register_def(reg_name)
+    def write_register(self, reg_name, reg_value, cpu_thread=0, bus_index=0):
+        reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         if RegisterType.PCICFG == rtype:
             b = int(reg['bus'],16)
@@ -911,8 +944,8 @@ class Chipset:
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
-    def print_register(self, reg_name, reg_val):
-        reg = self.get_register_def(reg_name)
+    def print_register(self, reg_name, reg_val, bus_index=0):
+        reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_str = ''
         reg_val_str = ("0x%0" + ("%dX" % (int(reg['size'],16)*2))) % reg_val
