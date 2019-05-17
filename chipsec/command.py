@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2016, Google
+#Copyright (c) 2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -18,6 +19,7 @@
 
 
 import chipsec.logger
+from chipsec.testcase import ExitCode
 
 class BaseCommand:
 
@@ -25,6 +27,7 @@ class BaseCommand:
         self.argv = argv
         self.logger = chipsec.logger.logger()
         self.cs = cs
+        self.ExitCode = ExitCode.OK
 
     def run(self):
         raise NotImplementedError('sub class should overwrite the run() method')
