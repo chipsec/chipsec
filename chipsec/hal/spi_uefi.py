@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -239,9 +239,10 @@ class EFI_SECTION(EFI_MODULE):
 
     def __str__(self):
         _s = "{}+{:08X}h {}: Type {:02X}h".format(self.indent,self.Offset,self.name(),self.Type)
-        if self.Guid: _s += " GUID {{}}".format(self.Guid)
+        if self.Guid: _s += " GUID {{{}}}".format(self.Guid)
         if self.Attributes: _s += " Attr {:04X}h".format(self.Attributes)
         if self.DataOffset: _s += " DataOffset {:04X}h".format(self.DataOffset)
+        if self.Comments: _s += "Comments {}".format(self.Comments)
         _s += super(EFI_SECTION, self).__str__()
         return _s
 
@@ -300,6 +301,11 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                             d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
                         if d:
                             sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                    elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
+                        offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
+                        self.Comments = "Certificate Type RSA2048/SHA256"
+                        if len(sec.Image) > offset:
+                            sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
                     else:
                         sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
                 elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
