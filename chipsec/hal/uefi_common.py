@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -360,6 +360,8 @@ EFI_GUID_DEFINED_SECTION = "<4s2s2s8sHH"
 EFI_GUID_DEFINED_SECTION_size = struct.calcsize(EFI_GUID_DEFINED_SECTION)
 
 EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID = "FC1BCDB0-7D31-49AA-936A-A4600D9DD083"
+EFI_CERT_TYPE_RSA_2048_SHA256_GUID = "A7717414-C616-4977-9420-844712A735BF"
+EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size = struct.calcsize(GUID+"256s256s")
 
 VARIABLE_STORE_FV_GUID   = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
 
