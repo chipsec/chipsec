@@ -77,10 +77,10 @@ IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
 
-LZMA  = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress")
-TIANO = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-EFI   = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-BROTLI = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","Brotli")
+LZMA  = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress")
+TIANO = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
+EFI   = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
+BROTLI = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","Brotli")
 
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
