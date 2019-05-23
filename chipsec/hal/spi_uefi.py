@@ -44,9 +44,7 @@ import re
 import random
 import binascii
 import json
-#import phex
 
-from chipsec.helper.oshelper import helper
 from chipsec.logger import *
 from chipsec.file import *
 
@@ -169,7 +167,7 @@ class EFI_MODULE(object):
         self.children   = []
 
     def name(self):
-        return "{} {{}} {}".format(type(self).__name__.encode('ascii', 'ignore'),self.Guid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
+        return "{} {{{}}} {}".format(type(self).__name__.encode('ascii', 'ignore'),self.Guid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
     def __str__(self):
         _ind = self.indent + DEF_INDENT
@@ -202,7 +200,7 @@ class EFI_FV(EFI_MODULE):
 
     def __str__(self):
         schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
-        _s = "\n{}{} +{:08X}h {{}}: ".format(self.indent,type(self).__name__,self.Offset,self.Guid)
+        _s = "\n{}{} +{:08X}h {{{}}}: ".format(self.indent,type(self).__name__,self.Offset,self.Guid)
         _s += "Size {:08X}h, Attr {:08X}h, HdrSize {:04X}h, ExtHdrOffset {:08X}h, Checksum {}".format(self.Size,self.Attributes,self.HeaderSize,self.ExtHeaderOffset,schecksum)
         _s += super(EFI_FV, self).__str__()
         return _s
@@ -230,12 +228,13 @@ class EFI_SECTION(EFI_MODULE):
         self.Name        = Name
         self.Type        = Type
         self.DataOffset  = None
+        self.Comments    = None
 
         # parent GUID used in search, export to JSON/log
         self.parentGuid  = None
     
     def name(self):
-        return "{} section of binary {{}} {}".format(self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
+        return "{} section of binary {{{}}} {}".format(self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
     def __str__(self):
         _s = "{}+{:08X}h {}: Type {:02X}h".format(self.indent,self.Offset,self.name(),self.Type)
@@ -303,7 +302,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                             sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
                     elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
                         offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
-                        self.Comments = "Certificate Type RSA2048/SHA256"
+                        sec.Comments = "Certificate Type RSA2048/SHA256"
                         if len(sec.Image) > offset:
                             sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
                     else:
@@ -374,7 +373,7 @@ def build_efi_tree( _uefi, data, fwtype ):
             fv.isNVRAM = True
             try:
                 fv.NVRAMType = identify_EFI_NVRAM( fv.Image ) if fwtype is None else fwtype
-            except: logger().warn("couldn't identify NVRAM in FV {{}}".format(fv.Guid))
+            except: logger().warn("couldn't identify NVRAM in FV {{{}}}".format(fv.Guid))
 
         fvolumes.append(fv)
         fv_off, fv_guid, fv_size, fv_attr, fv_hdrsz, fv_csum, fv_hdroff, fv_img, fv_calccsum = NextFwVolume( data, fv.Offset + fv.Size )
@@ -513,7 +512,7 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
                         else: raise
-                    except: logger().warn( "couldn't extract NVRAM in {{}} using type '{}'".format(m.Guid,m.NVRAMType) )
+                    except: logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid,m.NVRAMType) )
     
         # save children modules
         if len(m.children) > 0:
