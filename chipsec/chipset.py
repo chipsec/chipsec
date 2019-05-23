@@ -676,9 +676,9 @@ class Chipset:
             _did  = device.get( 'did', None )
             if (_vid and _did):
                 _bus = []
-                did  = [_.strip() for _ in _did.split(',')]
+                did  = [int(_,16) for _ in _did.split(',')]
                 for _dev in _devices:
-                    if ((device['dev'], device['fun'], _vid) == _dev[1:3]) and (_dev[4] in did):
+                    if ((int(device['dev'],16), int(device['fun'],16), int(_vid,16)) == _dev[1:4]) and (_dev[4] in did):
                         _bus.append( hex(_dev[0]) )
                         if logger().DEBUG: logger().log( '    + {:-16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus 0x{:02X}'.format(_device, _dev[3], _dev[4], _dev[0]) )
                 if len(_bus):
