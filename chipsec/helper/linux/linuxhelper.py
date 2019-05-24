@@ -642,7 +642,12 @@ class LinuxHelper(Helper):
     #
 
     def get_affinity(self):
-        CORES = ctypes.cdll.LoadLibrary( os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/cores.so' ) )
+        mpath = os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/')
+        for i in os.listdir(mpath):
+            if i.find("cores") == 0 and i.rfind(".so") > 4:
+                mpath += i
+                break
+        CORES = ctypes.cdll.LoadLibrary( mpath )
         CORES.getaffinity.argtypes = [ ctypes.c_int, ctypes.POINTER( ( ctypes.c_long * 128 ) ),ctypes.POINTER( ctypes.c_int ) ]
         CORES.getaffinity.restype = ctypes.c_int
         mask = ( ctypes.c_long * 128 )( )
@@ -670,7 +675,12 @@ class LinuxHelper(Helper):
             return None
 
     def set_affinity(self, thread_id):
-        CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))
+        mpath = os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/')
+        for i in os.listdir(mpath):
+            if i.find("cores") == 0 and i.rfind(".so") > 4:
+                mpath += i
+                break
+        CORES = ctypes.cdll.LoadLibrary(mpath)
         CORES.setaffinity.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
         CORES.setaffinity.restype=ctypes.c_int
         errno= ctypes.c_int(0)
