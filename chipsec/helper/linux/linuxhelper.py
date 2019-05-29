@@ -1140,7 +1140,11 @@ class LinuxHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
-        data = subprocess.check_output(decode_str,shell=True)
+        try:
+            data = subprocess.check_output(decode_str,shell=True)
+        except subprocess.CalledProcessError:
+            data = 1
+            pass
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False
