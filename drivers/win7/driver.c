@@ -1,6 +1,6 @@
 /***
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2014, Intel Corporation
+Copyright (c) 2010-2019, Intel Corporation
  
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -961,7 +961,7 @@ DriverDeviceControl(
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            RtlCopyBytes( &gprs, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(smi_msg) );
+            RtlCopyBytes( &smi_msg, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(smi_msg) );
 
             DbgPrint( "[chipsec][IOCTL_SWSMI] SW SMI to ports 0x%X-0x%X <- 0x%04X\n", 0xB2, 0xB3, smi_msg.code_data );
             DbgPrint( "                       RAX = 0x%I64x\n", smi_msg.rax );

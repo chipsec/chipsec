@@ -1,6 +1,6 @@
 /*
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2014, Intel Corporation
+Copyright (c) 2010-2019, Intel Corporation
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -43,6 +43,16 @@ typedef UINT32 UINTN;
 #error "Architecture not supported"
 #endif
 
+typedef struct _swsmi_msg_t {
+    UINTN code_data;
+    UINTN rax;
+    UINTN rbx;
+    UINTN rcx;
+    UINTN rdx;
+    UINTN rsi;
+    UINTN rdi;
+} swsmi_msg_t;
+
 extern CPU_REG_TYPE ReadCR0();
 extern CPU_REG_TYPE ReadCR2();
 extern CPU_REG_TYPE ReadCR3();
@@ -84,7 +94,7 @@ extern void _load_idtr ( void* desc_address );
 extern void _store_gdtr( void* desc_address );
 extern void _store_ldtr( void* desc_address );
 // -- Interrupts
-extern void _swsmi( UINT32 smi_code_data, CPU_REG_TYPE rax_value, CPU_REG_TYPE rbx_value, CPU_REG_TYPE rcx_value, CPU_REG_TYPE rdx_value, CPU_REG_TYPE rsi_value, CPU_REG_TYPE rdi_value );
+extern void _swsmi( swsmi_msg_t* sw_smi );
 // -- Hypercalls
 extern CPU_REG_TYPE hypercall (
     CPU_REG_TYPE rcx_val,
@@ -124,15 +134,5 @@ typedef struct _DESCRIPTOR_TABLE_RECORD {
   ULONG_PTR base;
 } DESCRIPTOR_TABLE_RECORD, *PDESCRIPTOR_TABLE_RECORD;
 #pragma pack()
-
-typedef struct _swsmi_msg_t {
-    UINTN code_data;
-    UINTN rax;
-    UINTN rbx;
-    UINTN rcx;
-    UINTN rdx;
-    UINTN rsi;
-    UINTN rdi;
-} swsmi_msg_t;
 
 #endif	// CPU_H

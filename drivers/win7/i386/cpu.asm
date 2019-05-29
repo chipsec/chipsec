@@ -370,7 +370,7 @@ stdENDP _ReadPCIDword
 ;    )
 ;------------------------------------------------------------------------------
 
-cPublicProc __swsmi, 7
+cPublicProc __swsmi, 1
     xor eax, eax
     stdRET __swsmi
 stdENDP __swsmi
