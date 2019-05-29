@@ -297,6 +297,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                         else:
                             d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
                         if d is None:
+                            sec.Comments = "Unable to decompress image"
                             d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
                         if d:
                             sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
