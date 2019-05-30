@@ -105,6 +105,13 @@ class SMBus(hal_base.HALBase):
         cmd = self.cs.read_register( 'SMBUS_CMD' )
         if 0 == (cmd & 0x1): self.cs.write_register( 'SMBUS_CMD', (cmd|0x1) )
 
+    def reset_SMBus_controller(self):
+        reg_value = self.cs.read_register('SMBUS_HCFG')
+        self.cs.write_register('SMBUS_HCFG', reg_value | 0x08)
+        for i in range(SMBUS_POLL_COUNT):
+            if (self.cs.read_register('SMBUS_HCFG') & 0x08) == 0:
+                return True
+        return False
 
     #
     # SMBus commands
