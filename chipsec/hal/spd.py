@@ -341,6 +341,7 @@ class SPD:
         device_type = self.getDRAMDeviceType( device )
         ecc_supported = False
         ecc_off = 0
+        ecc = None
         if   DRAM_DEVICE_TYPE_DDR3 == device_type:
             ecc_off = SPD_OFFSET_DDR3_MEMORY_BUS_WIDTH_ECC
             ecc = self.read_byte( ecc_off, device ) 
@@ -354,9 +355,13 @@ class SPD:
             ecc = self.read_byte( ecc_off, device ) 
             ecc_supported = (0x2 == ecc)
             ecc_width = self.read_byte( SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, device ) 
-            if logger().HAL: logger().log( "[spd][0x%02X] DDR/DDR2 ECC width (byte %d): 0x%02X" % (device,SPD_OFFSET_DDR_ECC_SDRAM_WIDTH,ecc_width) )
+            if logger().HAL: logger().log("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH ,ecc_width))
 
-        if logger().HAL: logger().log( "[spd][0x%02X] ECC is %ssupported by the DIMM (byte %d = 0x%02X)" % (device,'' if ecc_supported else 'not ',ecc_off,ecc) )
+        if logger().HAL:
+            if ecc is None:
+                logger().log("[spd][0x{:02X}] Unable to determine ECC support".format(device))
+            else:
+                logger().log("[spd][0x{:02X}] ECC is {}supported by the DIMM (byte {:d} = 0x{:02X})".format(device, '' if ecc_supported else 'not ', ecc_off, ecc))
         return ecc_supported
 
 
