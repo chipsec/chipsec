@@ -226,7 +226,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
         str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
         s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
-        efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        efi_var_name = str(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
@@ -270,7 +270,7 @@ class Win32Helper(Helper):
 
         self.win_ver        = win_ver
         self.driver_handle  = None
-        self.device_file    = pywintypes.Unicode(DEVICE_FILE)
+        self.device_file    = str(DEVICE_FILE)
 
         # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
         self.driver_path    = None
@@ -367,9 +367,9 @@ class Win32Helper(Helper):
 
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
-        except win32service.error as (hr, fn, msg):
-            handle_winerror(fn, msg, hr)
-
+        #except win32service.error as (hr, fn, msg):
+        except win32service.error as err:
+            _handle_winerror(err.args[1], err.args[2], err.args[0])
         if logger().DEBUG: 
             logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
             logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
@@ -387,15 +387,15 @@ class Win32Helper(Helper):
                  None, 0, u"", None, None )
             if hs:
                 if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,hs) )
-        except win32service.error as (hr, fn, msg):
-            if (winerror.ERROR_SERVICE_EXISTS == hr):
-                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, msg, hr) )
+        except win32service.error as err:
+            if (winerror.ERROR_SERVICE_EXISTS == err.args[0]):
+                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
-                except win32service.error as (hr, fn, msg):
-                    handle_winerror(fn, msg, hr)
+                except win32service.error as err:
+                    _handle_winerror(err.args[1], err.args[2], err.args[0])
             else:
-                handle_winerror(fn, msg, hr)
+                _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         finally:
             win32service.CloseServiceHandle( hs )
@@ -418,8 +418,8 @@ class Win32Helper(Helper):
         try:
             win32serviceutil.RemoveService( SERVICE_NAME )
             if logger().DEBUG: logger().log( "[helper] service '{}' deleted".format(SERVICE_NAME) )
-        except win32service.error as (hr, fn, msg):
-            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(msg, hr) )
+        except win32service.error as err:
+            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
 
         return True
@@ -430,7 +430,6 @@ class Win32Helper(Helper):
     def start(self, start_driver, driver_exists=False):
         # we are in native API mode so not starting the service/driver
         if not start_driver: return True
-
         self.use_existing_service = (win32serviceutil.QueryServiceStatus( SERVICE_NAME )[1] == win32service.SERVICE_RUNNING)
 
         if self.use_existing_service:
@@ -446,8 +445,8 @@ class Win32Helper(Helper):
                 win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
                 self.driver_loaded = True
                 if logger().DEBUG: logger().log( "[helper] service '{}' started".format(SERVICE_NAME) )
-            except pywintypes.error as (hr, fn, msg):
-                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, msg, hr), hr )
+            except pywintypes.error as err:
+                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]), err.args[0] )
 
         return True
 
@@ -463,8 +462,8 @@ class Win32Helper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
-        except pywintypes.error as (hr, fn, msg):
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(msg, hr) )
+        except pywintypes.error as err:
+            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
         finally:
             self.driver_loaded = False
@@ -472,8 +471,8 @@ class Win32Helper(Helper):
         try:
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             if logger().DEBUG: logger().log( "[helper] service '{}' stopped".format(SERVICE_NAME) )
-        except pywintypes.error as (hr, fn, msg):
-            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, msg, hr) )
+        except pywintypes.error as err:
+            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
 
         return True
@@ -838,7 +837,7 @@ class Win32Helper(Helper):
                 pHandle = win32api.OpenProcess(flags, 0, pid)
             except pywintypes.error as e:
                 print ("unable to open a process handle")
-                raise ValueError, e
+                raise ValueError(e)
         return pHandle
 
     def set_affinity( self, value ):
@@ -848,7 +847,7 @@ class Win32Helper(Helper):
             win32process.SetProcessAffinityMask(pHandle, current)
         except win32process.error as e:
             print ("unable to set process affinity")
-            raise ValueError, e
+            raise ValueError(e)
         return current
 
     def get_affinity( self ):
@@ -857,7 +856,7 @@ class Win32Helper(Helper):
             return win32process.GetProcessAffinityMask(pHandle)[0]
         except win32process.error as e:
             print ("unable to get the running cpu")
-            raise ValueError, e
+            raise ValueError(e)
             
     #
     # CPUID
