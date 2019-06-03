@@ -226,7 +226,10 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
         str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
         s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
-        efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        if sys.version_info[0] < 3:
+            efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        else:
+            efi_var_name = str(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
