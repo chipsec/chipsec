@@ -39,7 +39,7 @@ XML configuration file for
   <!--                                      -->
   <!-- #################################### -->
   <io>
-    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
+    <bar name="ABASE"      register="ABASE"    base_field="Base"  size="0x100" desc="ACPI Base Address"/>
     <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
     <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
 
@@ -122,6 +122,7 @@ XML configuration file for
       <field name="SMM_BWP"  bit="5" size="1" desc="SMM BIOS Write Protection" />
       <field name="BBS"      bit="6" size="1" desc="Boot BIOS Strap" />
       <field name="BILD"     bit="7" size="1" desc="BIOS Interface Lock Down"/>
+    </register>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
