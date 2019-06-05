@@ -481,7 +481,15 @@ class LinuxHelper(Helper):
     def native_read_io_port(self, io_port, size):
         if self.devport_available():
             os.lseek(self.dev_port, io_port, os.SEEK_SET)
-            return os.read(self.dev_port, size)
+
+            value = os.read(self.dev_port,size)
+            if 1 == size:
+                return struct.unpack("B",value)[0]
+            elif 2 == size:
+                return struct.unpack("H",value)[0]
+            elif 4 == size:
+                return struct.unpack("I",value)[0]
+
 
     def write_io_port( self, io_port, value, size ):
         in_buf = struct.pack( "3"+self._pack, io_port, size, value )
@@ -490,7 +498,10 @@ class LinuxHelper(Helper):
     def native_write_io_port(self, io_port, newval, size):
         if self.devport_available():
             os.lseek(self.dev_port, io_port, os.SEEK_SET)
-            written = os.write(self.dev_port, newval)
+            if 1 == size: fmt = 'B'
+            elif 2 == size: fmt = 'H'
+            elif 4 == size: fmt = 'I'
+            written = os.write(self.dev_port, struct.pack(fmt,newval))
             if written != size:
                 if logger().DEBUG: logger().error("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
 
