@@ -42,4 +42,8 @@ XML configuration file for C610 series PCH
 
   </registers>
 
+  <controls>
+    <control name="ACPIBaseLock" register="GEN_PMCON_LOCK" field="ACPI_BASE_LOCK" desc="Lock Down ACPI Base Address" />
+  </controls>
+
 </configuration>

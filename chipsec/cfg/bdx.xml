@@ -173,15 +173,6 @@ Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub 
       <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
     </register>
 
-
-    <!-- LPC Interface Bridge -->
-    <register name="GEN_PMCON_LOCK" type="pcicfg" device="LPC" offset="0xA6" size="1" desc="General Power Management Configuration Lock">
-      <field name="ACPI_BASE_LOCK"   bit="1" size="1" desc="Lock down ACPI Base Address (ABASE)"/>
-      <field name="SLP_STR_POL_LOCK" bit="2" size="1" desc="SLP Stretching Policy Lock-Down"/>
-    </register>
-
-    <!-- PCH Root Complex Register Base MMIO registers -->
-
     <!-- PCH ABASE (PMBASE) I/O registers -->
     <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
       <field name="GBL_SMI_EN"         bit="0"  size="1"/>

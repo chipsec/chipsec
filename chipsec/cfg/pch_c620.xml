@@ -371,6 +371,7 @@ XML configuration file for
   <controls>
     <control name="BiosInterfaceLockDown"  register="BC"    field="BILD"    desc="BIOS Interface Lock-Down"/>
     <control name="SpiWriteStatusDis"      register="HSFS"  field="WRSDIS"  desc="Write Status Disable"/>
+    <control name="ACPIBaseLock" register="GEN_PMCON_B" field="ACPI_BASE_LOCK" desc="Lock Down ACPI Base Address" />
   </controls>
 
 </configuration>
