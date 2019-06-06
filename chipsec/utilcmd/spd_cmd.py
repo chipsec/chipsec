@@ -71,7 +71,10 @@ class SPDCommand(BaseCommand):
         if( 'detect' == op ):
 
             self.logger.log( "[CHIPSEC] Searching for DIMMs with SPD.." )
-            _spd.detect()
+            _dimms = _spd.detect()
+            if _dimms is not None:
+                self.logger.log( "Detected the following SPD devices:" )
+                for _dimm in _dimms: self.logger.log( "%s: 0x%02X" % (spd.SPD_DIMMS[_dimm],_dimm) )
 
         elif( 'dump' == op ):
 
