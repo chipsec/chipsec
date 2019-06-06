@@ -395,8 +395,8 @@ class Win32Helper(Helper):
                 if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
-                except win32service.error as err:
-                    _handle_winerror(err.args[1], err.args[2], err.args[0])
+                except win32service.error as _err:
+                    _handle_winerror(_err.args[1], _err.args[2], _err.args[0])
             else:
                 _handle_winerror(err.args[1], err.args[2], err.args[0])
 
