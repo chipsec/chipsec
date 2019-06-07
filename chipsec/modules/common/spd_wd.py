@@ -58,8 +58,9 @@ class spd_wd(BaseModule):
             _smbus = smbus.SMBus( self.cs )
             _spd   = spd.SPD( _smbus )
         except BaseException, msg:
-            print msg
-            return
+            self.logger.error( msg )
+            self.res = ModuleResult.ERROR
+            return self.res
 
         spd_wd_reg = self.cs.read_register( 'SMBUS_HCFG' )
         spd_wd = self.cs.get_register_field( 'SMBUS_HCFG', spd_wd_reg, 'SPD_WD' )
