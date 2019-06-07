@@ -43,6 +43,7 @@ class smm_dma(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
+        self.res = ModuleResult.NOTAPPLICABLE
         if self.cs.is_atom(): return False
         if self.cs.is_server(): return False
         else: return True

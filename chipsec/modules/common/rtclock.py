@@ -34,7 +34,10 @@ class rtclock(BaseModule):
         self.res = ModuleResult.PASSED
 
     def is_supported(self):
-        return self.cs.is_core()
+        if self.cs.is_core():
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_rtclock(self):
         self.logger.start_test( "Protected RTC memory locations" )
