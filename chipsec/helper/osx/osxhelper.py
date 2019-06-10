@@ -1,7 +1,7 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2016, Google
 #
-# Copyright (c) 2010-2018, Intel Corporation
+# Copyright (c) 2010-2019, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -144,7 +144,7 @@ class OSXHelper(Helper):
     def init(self, start_driver):
         if start_driver:
             try:
-                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
                 raise OsHelperError("Unable to open the Chipsec device.\n"

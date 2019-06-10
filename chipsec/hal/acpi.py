@@ -232,7 +232,7 @@ class RSDP():
                       "  XSDT Address     : 0x{:016X}\n"
                       "  Extended Checksum: 0x{:02X}\n"
                       "  Reserved         : {}\n"
-                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.hex() if (not type(self.Reserved) == type(bytes())) else self.Reserved.encode("hex"))
+                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.hex() if ( type(self.Reserved) == type(bytes())) else self.Reserved.encode("hex"))
         return default
 
     # some sanity checking on RSDP
