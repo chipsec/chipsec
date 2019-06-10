@@ -144,7 +144,7 @@ class OSXHelper(Helper):
     def init(self, start_driver):
         if start_driver:
             try:
-                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
                 raise OsHelperError("Unable to open the Chipsec device.\n"

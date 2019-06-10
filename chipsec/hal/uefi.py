@@ -548,7 +548,7 @@ NVRAM: EFI Variable Store
                         table_buf = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE + table_size )
                     table = EFI_TABLES[table_sig]['struct']( *struct.unpack_from( EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:] ) )
                     if logger().HAL:
-                       print_buffer( table_buf )
+                       print_buffer( bytestostring(table_buf) )
                        logger().log( '[uefi] {}:'.format(EFI_TABLES[table_sig]['name']) )
                        logger().log( table_header )
                        logger().log( table )
