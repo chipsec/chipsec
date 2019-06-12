@@ -669,20 +669,20 @@ class Chipset:
 
     def init_cfg_bus( self ):
         if logger().DEBUG: logger().log( '[*] loading device buses..' )
-        _devices = self.pci.enumerate_devices()
-        for _device in self.Cfg.CONFIG_PCI:
-            device = self.Cfg.CONFIG_PCI[_device]
-            _vid  = device.get( 'vid', None )
-            _did  = device.get( 'did', None )
-            if (_vid and _did):
-                _bus = []
-                did  = [int(_,16) for _ in _did.split(',')]
-                for _dev in _devices:
-                    if ((int(device['dev'],16), int(device['fun'],16), int(_vid,16)) == _dev[1:4]) and (_dev[4] in did):
-                        _bus.append( hex(_dev[0]) )
-                        if logger().DEBUG: logger().log( '    + {:16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus 0x{:02X}'.format(_device, _dev[3], _dev[4], _dev[0]) )
-                if len(_bus):
-                    self.Cfg.BUS[ _device ] = _bus
+        enum_devices = self.pci.enumerate_devices()
+        for config_device in self.Cfg.CONFIG_PCI:
+            device_data = self.Cfg.CONFIG_PCI[config_device]
+            xml_vid  = device_data.get( 'vid', None )
+            xml_did  = device_data.get( 'did', None )
+            if (xml_vid and xml_did):
+                bus_list = []
+                did_list = [int(_,16) for _ in xml_did.split(',')]
+                for enum_dev in enum_devices:
+                    if ((int(device_data['dev'],16), int(device_data['fun'],16), int(xml_vid,16)) == enum_dev[1:4]) and (enum_dev[4] in did_list):
+                        bus_list.append( hex(enum_dev[0]) )
+                        if logger().DEBUG: logger().log( '    + {:16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus 0x{:02X}'.format(config_device, enum_dev[3], enum_dev[4], enum_dev[0]) )
+                if len(bus_list):
+                    self.Cfg.BUS[ config_device ] = bus_list
 
     #
     # Load chipsec/cfg/<code>.py configuration file for platform <code>
@@ -779,7 +779,10 @@ class Chipset:
                 reg_def['dev'] = dev['dev']
                 reg_def['fun'] = dev['fun']
                 if dev_name in self.Cfg.BUS:
-                    reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
+                    if bus_index < len(self.Cfg.BUS[dev_name]):
+                        reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
+                    else:
+                        logger().error( "Bus index {:d} for '{}' not found.".format(bus_index, dev_name) )
         return reg_def
 
     def get_register_bus(self, reg_name):
