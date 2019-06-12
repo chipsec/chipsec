@@ -139,6 +139,27 @@ class build_ext(_build_ext):
         for exe in exes:
             self.copy_file(os.path.join(build_exe,"bin",exe),dst)
 
+    def _build_win_driver(self):
+        log.info("building the windows driver")
+        build_driver = os.path.join("drivers", "win7")
+        cur_dir = os.getcwd()
+        os.chdir(build_driver)
+        # Run the makefile there.
+        if platform.machine().endswith("64"):
+            subprocess.call(["install.cmd"])
+        else:
+            subprocess.call(["install.cmd","32"])
+        os.chdir(cur_dir)
+    
+    def _build_win_compression(self):
+        log.info("building the windows compression")
+        build_driver = os.path.join("chipsec_tools", "compression")
+        cur_dir = os.getcwd()
+        os.chdir(build_driver)
+        # Run the makefile there.
+        subprocess.call(["build.cmd"])
+        os.chdir(cur_dir)        
+
     def run(self):
         # First, we build the standard extensions.
         _build_ext.run(self)
@@ -151,6 +172,9 @@ class build_ext(_build_ext):
             elif platform.system().lower() == "darwin":
                 self._build_darwin_driver()
                 self._build_darwin_compression()
+            elif platform.system().lower() == "windows":
+                self._build_win_driver()
+                self._build_win_compression()
 
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
