@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -44,6 +44,7 @@ import time
 from threading import Lock
 from collections import namedtuple
 from ctypes import *
+import shutil
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -312,7 +313,7 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableExW
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
             pass
 
@@ -362,8 +363,8 @@ class RweHelper(Helper):
 
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
-        except win32service.error as (hr, fn, msg):
-            handle_winerror(fn, msg, hr)
+        except win32service.error as err:
+            _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         if logger().DEBUG:
             logger().log( "[helper] service control manager opened (handle = 0x{:08X})".format(hscm) )
@@ -382,15 +383,15 @@ class RweHelper(Helper):
                  None, 0, u"", None, None )
             if hs:
                 if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,hs) )
-        except win32service.error as (hr, fn, msg):
-            if (winerror.ERROR_SERVICE_EXISTS == hr):
-                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, msg, hr) )
+        except win32service.error as err:
+            if (winerror.ERROR_SERVICE_EXISTS == err[0]):
+                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err[2], err[0]) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
-                except win32service.error as (hr, fn, msg):
-                    handle_winerror(fn, msg, hr)
+                except win32service.error as err1:
+                    _handle_winerror(err1[1], err1[2], err1[0])
             else:
-                handle_winerror(fn, msg, hr)
+                _handle_winerror(err[1], err[2], err[0])
 
         finally:
             win32service.CloseServiceHandle( hs )
@@ -413,8 +414,8 @@ class RweHelper(Helper):
         try:
             win32serviceutil.RemoveService( SERVICE_NAME )
             if logger().DEBUG: logger().log( "[helper] service '{}' deleted".format(SERVICE_NAME) )
-        except win32service.error as (hr, fn, msg):
-            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(msg, hr) )
+        except win32service.error as err:
+            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err[2], err[0]) )
             return False
 
         return True
@@ -440,8 +441,8 @@ class RweHelper(Helper):
                 win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
                 self.driver_loaded = True
                 if logger().DEBUG: logger().log( "[helper] service '{}' started".format(SERVICE_NAME) )
-            except pywintypes.error as (hr, fn, msg):
-                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, msg, hr), hr )
+            except pywintypes.error as err:
+                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err[2], err[0]), err[0] )
 
         return True
 
@@ -457,8 +458,8 @@ class RweHelper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
-        except pywintypes.error as (hr, fn, msg):
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(msg, hr) )
+        except pywintypes.error as err:
+            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err[2], err[0]) )
             return False
         finally:
             self.driver_loaded = False
@@ -466,8 +467,8 @@ class RweHelper(Helper):
         try:
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             if logger().DEBUG: logger().log( "[helper] service '{}' stopped".format(SERVICE_NAME) )
-        except pywintypes.error as (hr, fn, msg):
-            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, msg, hr) )
+        except pywintypes.error as err:
+            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err[2], err[0]) )
             return False
 
         return True
@@ -819,7 +820,7 @@ class RweHelper(Helper):
     def list_EFI_variables( self, infcls=2 ):
         if logger().DEBUG: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls={:d} )..'.format(infcls) )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
-        length = packl_ctypes( long(EFI_VAR_MAX_BUFFER_SIZE), 32 )
+        length = packl_ctypes( EFI_VAR_MAX_BUFFER_SIZE, 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         status = ( ((1 << 32) - 1) & status)
         if (0xC0000023 == status):
@@ -862,7 +863,7 @@ class RweHelper(Helper):
                 pHandle = win32api.OpenProcess(flags, 0, pid)
             except pywintypes.error as e:
                 print ("unable to open a process handle")
-                raise ValueError, e
+                raise ValueError(e)
         return pHandle
 
     def set_affinity( self, value ):
@@ -872,7 +873,7 @@ class RweHelper(Helper):
             win32process.SetProcessAffinityMask(pHandle, current)
         except win32process.error as e:
             print ("unable to set process affinity")
-            raise ValueError, e
+            raise ValueError(e)
         return current
 
     def get_affinity( self ):
@@ -881,7 +882,7 @@ class RweHelper(Helper):
             return win32process.GetProcessAffinityMask(pHandle)[0]
         except win32process.error as e:
             print ("unable to get the running cpu")
-            raise ValueError, e
+            raise ValueError(e)
             
     #
     # CPUID

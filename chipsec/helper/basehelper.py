@@ -18,6 +18,7 @@
 #Contact information:
 #chipsec@intel.com
 #
+from chipsec.logger import logger
 
 # Base class for the helpers
 class Helper(object):
