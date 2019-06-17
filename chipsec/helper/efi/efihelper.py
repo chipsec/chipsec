@@ -35,6 +35,7 @@ On UEFI use the efi package functions
 import struct
 import sys
 import uuid
+import os
 
 try:
     import edk2        # for Python 2.7 on UEFI

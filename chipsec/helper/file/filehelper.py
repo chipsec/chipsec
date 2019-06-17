@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018, Intel Corporation
+#Copyright (c) 2018-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,8 +24,9 @@ Use results from a json file
 """
 
 import chipsec.file
-from chipsec.logger import *
-from chipsec.helper.oshelper import Helper
+from chipsec.logger import logger
+from chipsec.helper.oshelper import OsHelperError, UnimplementedAPIError
+from chipsec.helper.basehelper import Helper
 import json
 
 class FileCmds:
@@ -58,12 +59,12 @@ class FileCmds:
         file_data = chipsec.file.read_file(self.filename)
         if file_data == 0:
             logger().error("Unable to open JSON file: {}".format(self.filename))
-            raise OsHelperError("Unable to open JSON file: {}".format(self.filename))
+            raise OsHelperError("Unable to open JSON file: {}".format(self.filename),1)
         try:
             self.data = json.loads(file_data)
         except:
             logger().error("Unable to load JSON file: {}".format(self.filename))
-            raise OsHelperError("Unable to open JSON file: {}".format(self.filename))
+            raise OsHelperError("Unable to open JSON file: {}".format(self.filename),1)
 
     def getElement(self,cmd,args):
         try:
@@ -147,7 +148,7 @@ class FileHelper(Helper):
         return self.filecmds.getElement("alloc_physical_mem",(length,max_phys_address))
 
     def free_phys_mem(self, physical_address):
-        return self.filecmds.getElement("free_physical_mem",(phys_address))
+        return self.filecmds.getElement("free_physical_mem",(physical_address))
 
     def va2pa( self, va ):
         return self.filecmds.getElement("va2pa",(va))
@@ -288,19 +289,6 @@ class FileHelper(Helper):
     # Compress binary with OS specific tools
     #
     def compress_file( self, FileName, OutputFileName, CompressionType ):
-        import subprocess
-        if (CompressionType == 0): # not compressed
-          shutil.copyfile(FileName, OutputFileName)
-        else:
-          exe = self.get_compression_tool_path( CompressionType )
-          if exe is None: return None 
-          try:
-            subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException as msg:
-            logger().error( str(msg) )
-            if logger().DEBUG: logger().log_bad( traceback.format_exc() )
-            return None
-
         return self.filecmds.getElement("compress_file",(FileName, OutputFileName, CompressionType))
 
 _helper = None

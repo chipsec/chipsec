@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2018, Intel Corporation
+# Copyright (c) 2010-2019, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -129,7 +129,7 @@ class DALHelper(Helper):
             if logger().DEBUG: logger().log('[WARNING] PCI access out of range. Use mmio functions to access PCIEXBAR.')
         config_addr = self.base.threads[self.find_thread()].dport(0xCF8)
         config_addr &= 0x7f000003
-        config_addr |= 0x80000000L
+        config_addr |= 0x80000000
         config_addr |= (bus & 0xFF) << 16
         config_addr |= (device & 0x1F) << 11
         config_addr |= (function & 0x07) << 8
@@ -434,7 +434,7 @@ def get_helper():
 
 if __name__ == '__main__':
     try:
-        print 'Not doing anything...'
+        print ('Not doing anything...')
 
-    except DALHelperError, msg:
-        print msg
+    except DALHelperError as msg:
+        print(msg)
