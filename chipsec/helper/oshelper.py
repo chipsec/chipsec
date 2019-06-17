@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -118,9 +118,9 @@ class OsHelper:
                     self.helper = getattr(chiphelpers,helper).get_helper()
         try:
             if not self.helper.create( start_driver ):
-                raise OsHelperError("failed to create OS helper")
+                raise OsHelperError("failed to create OS helper",1)
             if not self.helper.start( start_driver, from_file ):
-                raise OsHelperError("failed to start OS helper")
+                raise OsHelperError("failed to start OS helper",1)
         except Exception as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO

@@ -49,6 +49,7 @@ import shutil
 from threading import Lock
 from collections import namedtuple
 from ctypes import *
+import subprocess
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -370,7 +371,6 @@ class Win32Helper(Helper):
 
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
-        #except win32service.error as (hr, fn, msg):
         except win32service.error as err:
             _handle_winerror(err.args[1], err.args[2], err.args[0])
         if logger().DEBUG: 
@@ -960,7 +960,7 @@ class Win32Helper(Helper):
         encode_str += FileName
         data = subprocess.call(encode_str,stdout=open(os.devnull, 'wb'),shell=True)
         if not data == 0 and logger().DEBUG:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+            logger().error("Cannot compress file({})".format(FileName))
             return False
         return True
         

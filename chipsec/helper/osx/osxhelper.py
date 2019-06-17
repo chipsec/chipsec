@@ -148,7 +148,7 @@ class OSXHelper(Helper):
                 self.driver_loaded = True
             except IOError as e:
                 raise OsHelperError("Unable to open the Chipsec device.\n"
-                                    "{}".format(str(e), e.errno))
+                                    "{}".format(str(e)), e.errno)
 
     def close(self):
         if self.dev_fh:
@@ -255,7 +255,7 @@ class OSXHelper(Helper):
         encode_str += FileName
         data = subprocess.call(encode_str,shell=True)
         if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+            logger().error("Cannot decompress file({})".format(FileName))
             return False
         return True
         
