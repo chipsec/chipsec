@@ -41,12 +41,14 @@ usage:
 
 import struct
 import sys
+import uuid
 
 from chipsec.hal import hal_base
-from chipsec.logger import *
+from chipsec.logger import logger
 from chipsec.cfg.common import *
 from chipsec.hal.acpi import ACPI
 from chipsec.hal.acpi_tables import UEFI_TABLE, GAS
+from chipsec.hal.uefi_common import EFI_GUID_DEFINED_SECTION
 
 SMI_APMC_PORT = 0xB2
 
@@ -60,7 +62,7 @@ class Interrupts(hal_base.HALBase):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         if logger().HAL:
             logger().log( "[intr] sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT+1, SMI_data_port_value, SMI_code_data) )
-            logger().log( "       RAX = 0x{:016X} (AX will be overwridden with values of SW SMI ports B2/B3)".format_rax )
+            logger().log( "       RAX = 0x{:016X} (AX will be overwridden with values of SW SMI ports B2/B3)".format(_rax) )
             logger().log( "       RBX = 0x{:016X}".format(_rbx) )
             logger().log( "       RCX = 0x{:016X}".format(_rcx) )
             logger().log( "       RDX = 0x{:016X} (DX will be overwridden with 0x00B2)".format(_rdx) )
@@ -119,7 +121,7 @@ class Interrupts(hal_base.HALBase):
                 #check for return status
                 ret_buf = self.cs.helper.read_io_port(buf_addr,8)
             else:
-                self.logger().error("Functionality is currently not implemented")
+                logger().error("Functionality is currently not implemented")
                 ret_buf = None
             return ret_buf
 
@@ -127,11 +129,11 @@ class Interrupts(hal_base.HALBase):
             #Wait for Communication buffer to be empty
             buf = 1
             while not buf == "\x00\x00":
-                buf = cs.helper.read_physical_mem_word(buf_addr)
+                buf = self.cs.helper.read_physical_mem_word(buf_addr)
             #write data to commbuffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
             #call SWSMI
-            self.send_SW_SMI(thread_id,smi_num,0,0,0,0,0,0)
+            self.send_SW_SMI(thread_id,smi_num,0,0,0,0,0,0,0)
             #clear CommBuffer
             self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),"\x00"*len(data_hdr))
             return None

@@ -1177,7 +1177,7 @@ class HEST (ACPI_TABLE):
 	""".format( sourceID, reserved1, flags , firmware_first , firmware_first_str, ghes_assist , ghes_assist_str, enabled, recordsToPreAllocate, maxSectorsPerRecord, globalCapabilityInitData, numHardwareBanks, reserved2_1, reserved2_2, reserved2_3, reserved2_4, reserved2_5, reserved2_6, reserved2_7 ) )
         curBankNum = 0
         while curBankNum < numHardwareBanks:
-            machineBankParser(table_content[40 + i*28:40 + (i+1)*28])
+            self.machineBankParser(table_content[40 + curBankNum*28:40 + (curBankNum+1)*28])
             curBankNum += 1
         return 40 + numHardwareBanks*28
 	
@@ -1236,7 +1236,7 @@ class HEST (ACPI_TABLE):
 	""".format( title, sourceID,  reserved1, flags, flags_str, firmware_first , firmware_first_str, ghes_assist , ghes_assist_str, enabled, recordsToPreAllocate, maxSectorsPerRecord, notificationStructure, numHardwareBanks, reserved2_1, reserved2_2, reserved2_3 ) )
         currBank = 0
         while currBank < numHardwareBanks:
-            machineBankParser(table_content[48 + i*28:48 + (i+1)*28])
+            self.machineBankParser(table_content[48 + currBank*28:48 + (currBank+1)*28])
             numHardwareBanks == 1	
         return 48 + numHardwareBanks*28
 	
@@ -1365,7 +1365,7 @@ class HEST (ACPI_TABLE):
             extra_str = ''
         else:
             title = 'Generic Hardware Error Source Version 2'
-            readAckReg_str = parseAddress(table_content[64:76])
+            readAckReg_str = self.parseAddress(table_content[64:76])
             readAckPresv = struct.unpack('<Q', table_content[76:84])[0]
             readAckWr = struct.unpack('<Q', table_content[84:88])[0]
             extra_str = '''
