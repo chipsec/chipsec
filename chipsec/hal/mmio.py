@@ -140,7 +140,7 @@ class MMIO(hal_base.HALBase):
     def get_DMIBAR_base_address(self):
         base_lo = self.cs.pci.read_dword(0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF)
         base_hi = self.cs.pci.read_dword(0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF + 4)
-        if (0 == base_lo & 0x1) and logger.HAL():
+        if (0 == base_lo & 0x1) and logger().HAL:
             logger().warn('DMIBAR is disabled')
         base = (base_hi << 32) | (base_lo & 0xFFFFF000)
         if logger().HAL:
@@ -222,6 +222,7 @@ class MMIO(hal_base.HALBase):
     #
     def read_MMIOBAR_reg(self, bar_id, offset ):
         bar_base  = self.MMIO_BAR_base[ bar_id ]
+        reg_addr  = bar_base + offset
         reg_value = self.cs.helper.read_mmio_reg( bar_base, 4, offset )
         if logger().HAL:
             logger().log( '[mmio] {} + 0x{:08X} (0x{:08X}) = 0x{:08X}'.format(MMIO_BAR_name[bar_id], offset, reg_addr, reg_value) )
@@ -234,7 +235,7 @@ class MMIO(hal_base.HALBase):
         bar_base  = self.MMIO_BAR_base[bar_id]
         reg_addr  = bar_base + offset
         if logger().HAL:
-            logger().log('[mmio] write {} + 0x{:08X} (0x{:08X}) = 0x{:08X}'.format(self.MMIO_BAR_name[bar_id], offset, reg_addr, dword_value) )
+            logger().log('[mmio] write {} + 0x{:08X} (0x{:08X}) = 0x{:08X}'.format(MMIO_BAR_name[bar_id], offset, reg_addr, dword_value) )
         self.cs.helper.write_mmio_reg(reg_addr, 4, dword_value)
 
 

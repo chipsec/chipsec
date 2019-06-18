@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -320,14 +320,14 @@ class Pci:
     # PCI Expansion ROM functions
     #
 
-    def parse_XROM( self, xrom_base, xrom_dump=False ):
-        xrom_sig = self.cs.mem.read_physical_mem_word( xrom_base )
+    def parse_XROM( self, xrom, xrom_dump=False ):
+        xrom_sig = self.cs.mem.read_physical_mem_word( xrom.base )
         if xrom_sig != XROM_SIGNATURE: return None
-        xrom_hdr_buf = self.cs.mem.read_physical_mem( xrom_base, PCI_XROM_HEADER_SIZE )
+        xrom_hdr_buf = self.cs.mem.read_physical_mem( xrom.base, PCI_XROM_HEADER_SIZE )
         xrom_hdr = PCI_XROM_HEADER( *struct.unpack_from( PCI_XROM_HEADER_FMT, xrom_hdr_buf ) )
         if xrom_dump:
-            xrom_fname = 'xrom_{:X}-{:X}-{:X}_{:X}{:X}.bin'.format(bus, dev, fun, vid, did)
-            xrom_buf = self.cs.mem.read_physical_mem( xrom_base, xrom_size ) # use xrom_hdr.InitSize ?
+            xrom_fname = 'xrom_{:X}-{:X}-{:X}_{:X}{:X}.bin'.format(xrom.bus, xrom.dev, xrom.fun, xrom.vid, xrom.did)
+            xrom_buf = self.cs.mem.read_physical_mem( xrom.base, xrom.size ) # use xrom_hdr.InitSize ?
             write_file( xrom_fname, xrom_buf )
         return xrom_hdr
 
@@ -384,7 +384,7 @@ class Pci:
             if logger().HAL: logger().log( "[pci]   XROM: BAR = 0x{:08X}, base = 0x{:08X}, size = 0x{:X}, en = {:d}".format(xrom_bar,xrom_base,xrom_size,xrom_en) )
             xrom = XROM(bus, dev, fun, xrom_en, xrom_base, xrom_size)
             if xrom_en and (xrom_base != PCI_HDR_XROM_BAR_BASE_MASK):
-                xrom.header = self.parse_XROM( xrom_base, xrom_dump )
+                xrom.header = self.parse_XROM( xrom, xrom_dump )
                 xrom_found  = (xrom.header is not None)
                 if xrom_found:
                     if logger().HAL:

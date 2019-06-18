@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -122,7 +122,7 @@ class CPU(hal_base.HALBase):
         (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( acpi.ACPI_TABLE_SIG_APIC )
         for structure in APIC_object.apic_structs:
             if 0x00 == structure.Type:
-                if dACPIID.has_key( structure.APICID ) == False:
+                if not structure.ACICID in dACPIID:
                     if 1 == structure.Flags:
                         dACPIID[ structure.APICID ] = structure.ACPIProcID
         return len( dACPIID )
@@ -207,7 +207,7 @@ class CPU(hal_base.HALBase):
     def dump_page_tables( self, cr3, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
         hpt = paging.c_ia32e_page_tables( self.cs )
-        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x{:08X}...'.formatcr3 )
+        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x{:08X}...'.format(cr3) )
         if pt_fname is None: pt_fname = ('pt_{:08X}'.format(cr3))
         logger().set_log_file( pt_fname )
         hpt.read_pt_and_show_status( pt_fname, 'PT', cr3 )

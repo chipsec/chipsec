@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -74,7 +74,7 @@ class SMBus(hal_base.HALBase):
             if logger().HAL: self.cs.print_register( 'SMBUS_HCFG', reg_value )
             return reg_value
         else:
-            raise chipsec.chipset.RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
+            raise self.cs.RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
 
     def display_SMBus_info( self ):
         if logger().HAL: logger().log( "[smbus] SMBus Base Address: 0x{:04X}".format(self.get_SMBus_Base_Address()) )

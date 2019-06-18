@@ -146,11 +146,11 @@ class IGD(hal_base.HALBase):
         return ((pa & ~0xFFF) | 0x1)
 
     def get_PA_from_PTE_gen8(self, pte):
-        return (pa & ~0xFFF)
+        return (pte & ~0xFFF)
 
     def get_PA_from_PTE(self, pte):
         if self.is_legacy_gen():
-            return self.get_PA_from_PTE_legacy()
+            return self.get_PA_from_PTE_legacy( pte )
         else:
             return self.get_PA_from_PTE_gen8( pte )
 
@@ -184,7 +184,7 @@ class IGD(hal_base.HALBase):
 
         if self.logger.HAL:
             self.logger.log( '[igd] original data at address 0x{:016X}:'.format(address) )
-            print_buffer(self.cs.mem.read_physical_mem(address, size))
+            print_buffer(bytestostring(self.cs.mem.read_physical_mem(address, size)))
 
         buffer = ''
         pa = address    

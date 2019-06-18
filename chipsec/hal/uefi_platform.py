@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -663,7 +663,7 @@ def isCorrectVSStype(nvram_buf, vss_type):
         if (efi_var_hdr.NameSize > 0):
             name = nvram_buf[name_offset: name_offset + efi_var_hdr.NameSize]
             try:
-                name = unicode(name, "utf-16-le").split('\x00')[0]
+                name = name.decode("utf-16-le").split('\x00')[0]
                 valid_name = defines.is_printable(name)
             except Exception as e:
                 pass
@@ -728,7 +728,7 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype):
             #if not IS_VARIABLE_ATTRIBUTE( efi_var_hdr.Attributes, EFI_VARIABLE_HARDWARE_ERROR_RECORD ):
             #efi_var_name = "".join( efi_var_buf[ NAME_OFFSET_IN_VAR_VSS : NAME_OFFSET_IN_VAR_VSS + name_size ] )
             Name = efi_var_buf[ name_offset : name_offset + name_size ]
-            efi_var_name = unicode(Name, "utf-16-le").split('\x00')[0]
+            efi_var_name = Name.decode("utf-16-le").split('\x00')[0]
 
             efi_var_data = efi_var_buf[ name_offset + name_size : name_offset + name_size + data_size ]
             guid = guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3)
@@ -834,7 +834,7 @@ def EFIvar_EVSA(nvram_buf):
             elif (Tag0 == 0xEE) or (Tag0 == 0xE2):  # var name
                 VAR_NAME_RECORD = "<H{:d}s".format(Size - tlv_h_size - 2)
                 VarId, Name = struct.unpack(VAR_NAME_RECORD, value)
-                Name = unicode(Name, "utf-16-le")[:-1]
+                Name = Name.decode("utf-16-le")[:-1]
                 var_list.append((Name, VarId, Tag0, Tag1))
             elif (Tag0 == 0xEF) or (Tag0 == 0xE3) or (Tag0 == 0x83):  # values
                 VAR_VALUE_RECORD = "<HHI{:d}s".format(Size - tlv_h_size - 8)
@@ -998,7 +998,7 @@ def decode_s3bs_opcode_def( data ):
         frmt = '<BBQBB'
         size = struct.calcsize( frmt )
         opcode, slave_address, command, operation, peccheck = struct.unpack( frmt, data[ : size ] )
-        op = op_smbus_execute( opcode, size, width, address, count, data[ size : ], value, mask )
+        op = op_smbus_execute( opcode, size, slave_address, command, operation, peccheck )
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<BBQ'
         size = struct.calcsize( frmt )
@@ -1166,7 +1166,7 @@ def encode_s3bs_opcode_edkcompat( op ):
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == op.opcode:
         encoded_opcode = struct.pack( '<Q', op.entrypoint )
 
-    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE == opcode:
+    elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE == op.opcode:
         encoded_opcode = struct.pack( '<IQQQ', op.width, op.address, op.duration, op.looptimes )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == op.opcode:

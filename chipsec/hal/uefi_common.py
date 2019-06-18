@@ -287,7 +287,7 @@ def get_nvar_name(nvram, name_offset, isAscii):
             nend = nend + 1
             nend = nvram.find('\x00\x00', nend)
         name_size = nend - name_offset + 2 # add trailing zero symbol
-        name = unicode(nvram[name_offset:nend], "utf-16-le")
+        name = nvram[name_offset:nend].decode("utf-16-le")
         return (name, name_size)
 
 
