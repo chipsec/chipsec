@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -129,7 +129,7 @@ def check_rules( efi, rules, entry_name, _log, bLog=True ):
         if brule_match and bLog:
             _log.log_important( "match '{}'".format(fname) )
             if (match_result & MATCH_NAME       ) == MATCH_NAME       : _log.log( "    name  : '{}'".format(rule['name']) )
-            if (match_result & MATCH_GUID       ) == MATCH_GUID       : _log.log( "    GUID  : {{}}".format(rule['guid']) )
+            if (match_result & MATCH_GUID       ) == MATCH_GUID       : _log.log( "    GUID  : {{{}}}".format(rule['guid']) )
             if (match_result & MATCH_REGEXP     ) == MATCH_REGEXP     : _log.log( "    regexp: bytes '{}' at offset {:X}h".format(what,offset) )
             if (match_result & MATCH_HASH_MD5   ) == MATCH_HASH_MD5   : _log.log( "    MD5   : {}".format(rule['md5']) )
             if (match_result & MATCH_HASH_SHA1  ) == MATCH_HASH_SHA1  : _log.log( "    SHA1  : {}".format(rule['sha1']) )

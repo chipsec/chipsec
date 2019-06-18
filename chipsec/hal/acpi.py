@@ -232,7 +232,7 @@ class RSDP():
                       "  XSDT Address     : 0x{:016X}\n"
                       "  Extended Checksum: 0x{:02X}\n"
                       "  Reserved         : {}\n"
-                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.hex() if ( type(self.Reserved) == type(bytes())) else self.Reserved.encode("hex"))
+                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex") if ( isinstance(self.Reserved,str) ) else self.Reserved.hex() )
         return default
 
     # some sanity checking on RSDP
@@ -487,7 +487,7 @@ class ACPI(hal_base.HALBase):
     def get_ACPI_table( self, name, isfile = False ):
         acpi_tables_data = []
         if isfile:
-            acpi_tables_data.append(chipsec.file.read_file( name ))
+            acpi_tables_data.append(read_file( name ))
         else:
             try:
                 # 1. Try to extract ACPI table(s) from physical memory

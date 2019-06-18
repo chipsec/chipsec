@@ -195,7 +195,7 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
             if EFI_var_header.__str__:
                 logger().log( EFI_var_header )
             else:
-                logger().log( 'Decoded Header ({}):'.format(uefi_platform.EFI_VAR_DICT[ self._FWType ]['name']) )
+                logger().log( 'Decoded Header ({}):'.format(uefi_platform.EFI_VAR_DICT[ uefi_platform.FWType.EFI_FW_TYPE_UEFI ]['name']) )
                 for attr in EFI_var_header._fields:
                     logger().log( '{} = {:X}'.format('{0:<16}'.format(attr), getattr(EFI_var_header, attr)) )
 
@@ -290,14 +290,20 @@ class UEFI(hal_base.HALBase):
         return self.read_EFI_variables_from_SPI( 0, 0x800000 )
 
     def read_EFI_variables_from_SPI( self, BIOS_region_base, BIOS_region_size ):
-        rom = spi.read_spi( BIOS_region_base, BIOS_region_size )
-        efi_var_store = self.find_EFI_Variable_Store( rom )
-        return self.read_EFI_NVRAM_variables( efi_var_store )
+        rom = self.cs.spi.read_spi( BIOS_region_base, BIOS_region_size )
+        efi_var_store = self.find_EFI_variable_store( rom )
+        if efi_var_store:
+            efi_vars = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']
+            return efi_vars
+        return efi_var_store
 
     def read_EFI_variables_from_file( self, filename ):
         rom = read_file( filename )
-        efi_var_store = self.find_EFI_Variable_Store( rom )
-        return self.read_EFI_NVRAM_variables( efi_var_store )
+        efi_var_store = self.find_EFI_variable_store( rom )
+        if efi_var_store:
+            efi_vars = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']
+            return efi_vars
+        return efi_var_store
 
     def find_EFI_variable_store( self, rom_buffer ):
         if ( rom_buffer is None ):

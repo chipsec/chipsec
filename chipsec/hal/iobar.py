@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -181,5 +181,5 @@ class IOBAR(hal_base.HALBase):
         logger().log("[iobar] I/O BAR {}:".format(bar_name))
         for i in range(n):
             reg = self.cs.io._read_port( range_base + i*size, size )
-            logger().log( '{:+04X}: {:{form}}'.format(i*size,r,form=fmt) )
+            logger().log( '{:+04X}: {:{form}}'.format(i*size,reg,form=fmt) )
 

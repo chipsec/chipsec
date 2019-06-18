@@ -72,7 +72,7 @@ class VMM:
         (self.membuf1_va, self.membuf1_pa) = (self.membuf0_va + 0x1000, self.membuf0_pa + 0x1000)
         if self.membuf0_va == 0:
             logger().log( "[vmm] Could not allocate memory!")
-            raise
+            raise("[vmm] Could not allocate memory!")
 
     # Generic hypercall interface
 
