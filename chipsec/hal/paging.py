@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,20 +19,9 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2016 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-## \addtogroup hal
-# chipsec/hal/paging.py
 # ====================
 # x64/IA-64 Paging functionality including x86 page tables, Extended Page Tables (EPT) and VT-d page tables
-#
-# ~~~
+# ====================
 
 import os
 import sys
@@ -275,6 +264,9 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         #    #txt.close()
         return
 
+    def read_page_tables(self, entry):
+        raise ("Function needs to be implemented by child class")
+
 class c_4level_page_tables(c_paging):
 
     def __init__(self, cs):
@@ -321,6 +313,12 @@ class c_4level_page_tables(c_paging):
         self.read_pml4(addr)
         return
 
+    def is_present(self, entry):
+        return entry & chipsec.defines.BIT0
+
+    def is_bigpage(self, entry):
+        return entry & chipsec.defines.BIT7
+
     def read_pml4(self, addr):
         pml4 = self.read_entries('pml4', addr)
         for pml4e_index in range(len(pml4)):
@@ -331,6 +329,18 @@ class c_4level_page_tables(c_paging):
                self.print_entry(1, addr)
                self.read_pdpt(addr, pml4e_index)
         return
+    
+    def get_attr(self, entry):
+        ret = ''
+        if entry & chipsec.defines.BIT1:
+            ret += 'W'
+        else:
+            ret += "R"
+        if entry & chipsec.defines.BIT2:
+            ret += 'U'
+        else:
+            ret += 'S'
+        return ret
 
     def read_pdpt(self, addr, pml4e_index):
         pdpt = self.read_entries('pdpt', addr)
@@ -430,8 +440,8 @@ class c_ia32e_page_tables(c_4level_page_tables):
 
 class c_pae_page_tables(c_ia32e_page_tables):
 
-    def __init__(self):
-        c_ia32e_page_tables.__init__(self)
+    def __init__(self, cs):
+        c_ia32e_page_tables.__init__(self, cs)
         # constants
         self.PML4_INDX  = {'mask': 0x000, 'offset': 39}
         self.PDPT_INDX  = {'mask': 0x003, 'offset': 30}
@@ -448,7 +458,6 @@ class c_pae_page_tables(c_ia32e_page_tables):
 
     def read_pml4(self, addr):
         raise Exception('PAE Page tables have no PML4!')
-        return
 
     def read_pdpt(self, addr):
         pdpt = self.read_entries('pdpt', addr)
@@ -590,7 +599,7 @@ class c_vtd_page_tables(c_extended_page_tables):
                self.get_field(cee[0], self.CE_LO_FPD),
                cee[0] & MAXPHYADDR
             )
-            logger().log('  {:02X}:{:02X}.{:X}  DID: {:02X}  AVAIL: {:X}  AW: {:X}  T: {:X}  FPD: {:X}  SLPTPTR: {:016X}'.format(info))
+            logger().log('  {:02X}:{:02X}.{:X}  DID: {:02X}  AVAIL: {:X}  AW: {:X}  T: {:X}  FPD: {:X}  SLPTPTR: {:016X}'.format(*info))
         return
 
     def read_page_tables(self, ptr):
