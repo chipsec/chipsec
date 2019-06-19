@@ -128,7 +128,7 @@ class CPUCommand(BaseCommand):
 
             if len(self.argv) == 4:
                 cr3 = int(self.argv[3],16) 
-                pt_fname = 'pt_{:08X}'.formatcr3
+                pt_fname = 'pt_{:08X}'.format(cr3)
                 self.logger.log( "[CHIPSEC] paging physical base (CR3): 0x{:016X}".format(cr3) )
                 self.logger.log( "[CHIPSEC] dumping paging hierarchy to '{}'...".format(pt_fname) )
                 self.cs.cpu.dump_page_tables( cr3, pt_fname )

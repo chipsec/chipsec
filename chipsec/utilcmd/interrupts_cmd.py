@@ -89,7 +89,7 @@ class SMICommand(BaseCommand):
                     self.logger.log( "          RDX: 0x{:016X} (DX will be overwridden with 0x00B2)".format(_rdx) )
                     self.logger.log( "          RSI: 0x{:016X}".format(_rsi) )
                     self.logger.log( "          RDI: 0x{:016X}".format(_rdi) )
-                    interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+                    ret = interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
                     if not ret is None:
                         self.logger.log( "Return values")
                         self.logger.log( "          RAX: {:16X}".format(ret[1]) )
