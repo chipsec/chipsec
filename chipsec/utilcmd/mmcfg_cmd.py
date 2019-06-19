@@ -52,10 +52,9 @@ class MMCfgCommand(BaseCommand):
         _mmio = mmio.MMIO(self.cs)
 
         if 2 == len(self.argv):
-            #pciexbar = _mmio.get_PCIEXBAR_base_address()
             pciexbar, pciexbar_sz = _mmio.get_MMCFG_base_address()
             self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x{:016X}".format(pciexbar) )
-            if self.logger.VERBOSE: self.logger.log("[CHIPSEC] Memory Mapped Config Size: {:016X}".format(pciebar_sz))
+            if self.logger.VERBOSE: self.logger.log("[CHIPSEC] Memory Mapped Config Size: {:016X}".format(pciexbar_sz))
             return
         elif 6 > len(self.argv):
             print (MMCfgCommand.__doc__)
@@ -86,11 +85,9 @@ class MMCfgCommand(BaseCommand):
         if 8 == len(self.argv):
             value = int(self.argv[7], 16)
             _mmio.write_mmcfg_reg(bus, device, function, offset, width, value )
-            #_cs.pci.write_mmcfg_reg( bus, device, function, offset, width, value )
             self.logger.log( "[CHIPSEC] writing MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(bus, device, function, offset, value) )
         else:
             value = _mmio.read_mmcfg_reg(bus, device, function, offset, width )
-            #value = _cs.pci.read_mmcfg_reg( bus, device, function, offset, width )
             self.logger.log( "[CHIPSEC] reading MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(bus, device, function, offset, value) )
 
         self.logger.log( "[CHIPSEC] (mmcfg) time elapsed {:.3f}".format(time.time()-t) )

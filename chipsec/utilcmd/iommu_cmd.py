@@ -68,7 +68,7 @@ class IOMMUCommand(BaseCommand):
 
         try:
             _iommu = iommu.IOMMU(self.cs)
-        except IOMMUError as msg:
+        except iommu.IOMMUError as msg:
             print (msg)
             return
 

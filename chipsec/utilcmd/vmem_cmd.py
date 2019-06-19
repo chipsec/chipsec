@@ -25,6 +25,9 @@
 The vmem command provides direct access to read and write virtual memory.
 """
 
+import os
+import chipsec_util
+
 import chipsec.defines
 from chipsec.logger     import print_buffer
 from chipsec.command    import BaseCommand
@@ -64,8 +67,7 @@ class VMemCommand(BaseCommand):
     def run(self):
         try:
             _vmem = virtmem.VirtMemory(self.cs)
-        except VMemRuntimeError as msg:
-            print (msg)
+        except:
             return
 
         size = 0x100
@@ -112,9 +114,9 @@ class VMemCommand(BaseCommand):
             if len(self.argv) > 4: 
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
             self.logger.log( '[CHIPSEC] reading {:X}-byte value from VA 0x{:016X}..'.format(width, virt_address) )
-            if   0x1 == width: value = _vmem.read_physical_mem_byte ( virt_address )
-            elif 0x2 == width: value = _vmem.read_physical_mem_word ( virt_address )
-            elif 0x4 == width: value = _vmem.read_physical_mem_dword( virt_address )
+            if   0x1 == width: value = _vmem.read_virtual_mem_byte ( virt_address )
+            elif 0x2 == width: value = _vmem.read_virtual_mem_word ( virt_address )
+            elif 0x4 == width: value = _vmem.read_virtual_mem_dword( virt_address )
             self.logger.log( '[CHIPSEC] value = 0x{:X}'.format(value) )
 
         elif 'write'    == op:
@@ -163,9 +165,9 @@ class VMemCommand(BaseCommand):
                 return
 
             self.logger.log( '[CHIPSEC] writing {:X}-byte value 0x{:X} to VA 0x{:016X}..'.format(width, value, virt_address) )
-            if   0x1 == width: _vmem.write_physical_mem_byte ( virt_address, value )
-            elif 0x2 == width: _vmem.write_physical_mem_word ( virt_address, value )
-            elif 0x4 == width: _vmem.write_physical_mem_dword( virt_address, value )
+            if   0x1 == width: _vmem.write_virtual_mem_byte ( virt_address, value )
+            elif 0x2 == width: _vmem.write_virtual_mem_word ( virt_address, value )
+            elif 0x4 == width: _vmem.write_virtual_mem_dword( virt_address, value )
 
         elif 'getphys' == op:
             virt_address = int(self.argv[3],16)

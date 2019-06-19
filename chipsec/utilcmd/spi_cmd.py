@@ -104,7 +104,7 @@ class SPICommand(BaseCommand):
             else: self.logger.log( "[CHIPSEC] completed SPI flash memory read" )
         elif ( 'info' == spi_op ):
             self.logger.log( "[CHIPSEC] SPI flash memory information\n" )
-            ok = _spi.display_SPI_map()
+            _spi.display_SPI_map()
         elif ( 'dump' == spi_op ):
             out_file = 'rom.bin'
             if 4 == len(self.argv):
