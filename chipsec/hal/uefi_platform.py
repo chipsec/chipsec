@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -796,7 +796,7 @@ def EFIvar_EVSA(nvram_buf):
     sn = 0
     EVSA_RECORD = "<IIII"
     evsa_rec_size = struct.calcsize(EVSA_RECORD)
-    GUID_RECORD = "<HIHH8s"
+    GUID_RECORD = "<H4s2s2s8s"
     guid_rc_size = struct.calcsize(GUID_RECORD)
     fof = 0
     variables = dict()
