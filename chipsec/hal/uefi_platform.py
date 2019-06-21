@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -814,7 +814,7 @@ def EFIvar_EVSA(nvram_buf):
     sn = 0
     EVSA_RECORD = "<IIII"
     evsa_rec_size = struct.calcsize(EVSA_RECORD)
-    GUID_RECORD = "<HIHH8s"
+    GUID_RECORD = "<H4s2s2s8s"
     guid_rc_size = struct.calcsize(GUID_RECORD)
     fof = 0
     variables = dict()
