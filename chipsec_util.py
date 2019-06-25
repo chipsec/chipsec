@@ -198,12 +198,14 @@ class ChipsecUtil:
             comm.run()
             if comm.requires_driver():
                 self._cs.destroy(True)
+            return comm.ExitCode
 
         elif cmd == 'help':
             if len(self.argv) <= 2:
                 self.chipsec_util_help()
             else:
                 self.chipsec_util_help(self.argv[2])
+            return ExitCode.OK
         else:
             logger().error( "Unknown command '{:.32s}'".format(cmd) )
         return ExitCode.WARNING
