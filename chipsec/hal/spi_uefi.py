@@ -282,12 +282,12 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
             # "container" sections: keep parsing
             if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
                 if sec.Type == EFI_SECTION_COMPRESSION:
-                    ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
-                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
-                    if (d is None) and not ct == 0:
-                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
-                    if d:
-                        sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                    for mct in COMPRESSION_TYPES_ALGORITHMS:
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], mct, True )
+                        if d:
+                            sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                        if sec.children:
+                            break
                 elif sec.Type == EFI_SECTION_GUID_DEFINED:
                     if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
                         sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )

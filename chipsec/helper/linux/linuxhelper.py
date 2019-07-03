@@ -1084,7 +1084,7 @@ class LinuxHelper(Helper):
 
     def unknown_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type2]:
+        for CompressionType in self.decompression_oder_type2:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type2,failed_times)
@@ -1095,7 +1095,7 @@ class LinuxHelper(Helper):
         
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type1]:
+        for CompressionType in self.decompression_oder_type1:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type1,failed_times)
@@ -1154,11 +1154,7 @@ class LinuxHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
-        try:
-            data = subprocess.check_output(decode_str,shell=True)
-        except subprocess.CalledProcessError:
-            data = 1
-            pass
+        data = subprocess.call(decode_str,shell=True)
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False
