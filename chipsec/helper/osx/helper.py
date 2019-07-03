@@ -1,7 +1,7 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2016, Google
 #
-# Copyright (c) 2010-2018, Intel Corporation
+# Copyright (c) 2010-2019, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -214,7 +214,7 @@ class OSXHelper(Helper):
 
     def unknown_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type2]:
+        for CompressionType in self.decompression_oder_type2:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type2,failed_times)
@@ -225,7 +225,7 @@ class OSXHelper(Helper):
         
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type1]:
+        for CompressionType in self.decompression_oder_type1:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type1,failed_times)
