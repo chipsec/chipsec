@@ -50,8 +50,8 @@ class EfiHelperError (RuntimeError):
     pass
 
 _tools = {
-  chipsec.defines.ToolType.TIANO_COMPRESS: 'TianoCompress.efi',
-  chipsec.defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.efi'
+  chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.efi',
+  chipsec.defines.COMPRESSION_TYPE_LZMA : 'LzmaCompress.efi'
 }
 
 

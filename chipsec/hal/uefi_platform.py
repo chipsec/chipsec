@@ -35,6 +35,7 @@ Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsu
 import struct
 import string
 from collections import namedtuple
+from uuid import UUID
 
 from chipsec import defines
 from chipsec.hal.uefi_common import *
@@ -129,6 +130,8 @@ class FWType:
     EFI_FW_TYPE_VSS_AUTH  = 'vss_auth'  # NVRAM using format with '$VSS' signature with extra fields
                                         # See "A Tour Beyond BIOS Implementing UEFI Authenticated
                                         # Variables in SMM with EDKII"
+    EFI_FW_TYPE_VSS2       = 'vss2'
+    EFI_FW_TYPE_VSS2_AUTH  = 'vss2_auth'
     EFI_FW_TYPE_VSS_APPLE = 'vss_apple'
     EFI_FW_TYPE_NVAR      = 'nvar'      # 'NVAR' NVRAM format
     EFI_FW_TYPE_EVSA      = 'evsa'      # 'EVSA' NVRAM format
@@ -511,8 +514,26 @@ Reserved  : 0x%04X
 Reserved1 : 0x%08X
 """ % ( struct.pack('=I',self.Signature), self.Signature, self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
+VARIABLE_STORE_SIGNATURE_VSS2 = UUID('DDCF3617-3275-4164-98B6-FE85707FFE7D').bytes_le
+VARIABLE_STORE_SIGNATURE_VSS2_AUTH = UUID('AAF32C78-947B-439A-A180-2E144EC37792').bytes_le
 
-HDR_FMT_VSS                   = '<HBBIIIIHH8s'
+VARIABLE_STORE_HEADER_FMT_VSS2 = '=16sIBBHI'
+class VARIABLE_STORE_HEADER_VSS2( namedtuple('VARIABLE_STORE_HEADER_VSS2', 'Signature Size Format State Reserved Reserved1') ):
+    __slots__ = ()
+    def __str__(self):
+        return """
+EFI Variable Store
+-----------------------------
+Signature : %s
+Size      : 0x%08X bytes
+Format    : 0x%02X
+State     : 0x%02X
+Reserved  : 0x%04X
+Reserved1 : 0x%08X
+""" % ( UUID(bytes_le=self.Signature), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+
+
+HDR_FMT_VSS                   = '<HBBIII4s2s2s8s'
 #HDR_SIZE_VSS                  = struct.calcsize( HDR_FMT_VSS )
 #NAME_OFFSET_IN_VAR_VSS        = HDR_SIZE_VSS
 class EFI_HDR_VSS( namedtuple('EFI_HDR_VSS', 'StartId State Reserved Attributes NameSize DataSize guid0 guid1 guid2 guid3') ):
@@ -521,17 +542,17 @@ class EFI_HDR_VSS( namedtuple('EFI_HDR_VSS', 'StartId State Reserved Attributes 
         return """
 Header (VSS)
 ------------
-VendorGuid : {%08X-%04X-%04X-%04s-%06s}
+VendorGuid : {%s}
 StartId    : 0x%04X
 State      : 0x%02X
 Reserved   : 0x%02X
 Attributes : 0x%08X
 NameSize   : 0x%08X
 DataSize   : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
+""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize)
 
 
-HDR_FMT_VSS_AUTH  = '<HBBIQQQIIIIHH8s'
+HDR_FMT_VSS_AUTH  = '<HBBIQQQIII4s2s2s8s'
 class EFI_HDR_VSS_AUTH( namedtuple('EFI_HDR_VSS_AUTH', 'StartId State Reserved Attributes MonotonicCount TimeStamp1 TimeStamp2 PubKeyIndex NameSize DataSize guid0 guid1 guid2 guid3') ):
     __slots__ = ()
     # if you don't re-define __str__ method, initialize is to None
@@ -540,7 +561,7 @@ class EFI_HDR_VSS_AUTH( namedtuple('EFI_HDR_VSS_AUTH', 'StartId State Reserved A
         return """
 Header (VSS_AUTH)
 ----------------
-VendorGuid     : {%08X-%04X-%04X-%08X}
+VendorGuid     : {%s}
 StartId        : 0x%04X
 State          : 0x%02X
 Reserved       : 0x%02X
@@ -551,16 +572,16 @@ TimeStamp2     : 0x%016X
 PubKeyIndex    : 0x%08X
 NameSize       : 0x%08X
 DataSize       : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.MonotonicCount, self.TimeStamp1, self.TimeStamp2, self.PubKeyIndex, self.NameSize, self.DataSize )
+""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.MonotonicCount, self.TimeStamp1, self.TimeStamp2, self.PubKeyIndex, self.NameSize, self.DataSize )
 
-HDR_FMT_VSS_APPLE  = '<HBBIIIIHH8sI'
+HDR_FMT_VSS_APPLE  = '<HBBIII4s2s2s8sI'
 class EFI_HDR_VSS_APPLE( namedtuple('EFI_HDR_VSS_APPLE', 'StartId State Reserved Attributes NameSize DataSize guid0 guid1 guid2 guid3 unknown') ):
     __slots__ = ()
     def __str__(self):
         return """
 Header (VSS_APPLE)
 ------------
-VendorGuid : {%08X-%04X-%04X-%04s-%06s}
+VendorGuid : {%s}
 StartId    : 0x%04X
 State      : 0x%02X
 Reserved   : 0x%02X
@@ -568,17 +589,27 @@ Attributes : 0x%08X
 NameSize   : 0x%08X
 DataSize   : 0x%08X
 Unknown    : 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
+""" % ( guid_str(self.guid0, self.guid1, self.guid2, self.guid3), self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.unknown)
 
 
 def _getNVstore_VSS( nvram_buf, vss_type ):
-    nvram_start = nvram_buf.find( VARIABLE_STORE_SIGNATURE_VSS )
+    if vss_type == FWType.EFI_FW_TYPE_VSS2:
+        sign = VARIABLE_STORE_SIGNATURE_VSS2
+    elif vss_type == FWType.EFI_FW_TYPE_VSS2_AUTH:
+        sign = VARIABLE_STORE_SIGNATURE_VSS2_AUTH
+    else:
+        sign = VARIABLE_STORE_SIGNATURE_VSS
+
+    nvram_start = nvram_buf.find( sign )
     if -1 == nvram_start:
         return (-1, 0, None)
     buf = nvram_buf[nvram_start:]
     if (not isCorrectVSStype(buf, vss_type)):
         return (-1, 0, None)
-    nvram_hdr = VARIABLE_STORE_HEADER_VSS( *struct.unpack_from( VARIABLE_STORE_HEADER_FMT_VSS, buf ) )
+    if vss_type in (FWType.EFI_FW_TYPE_VSS2, FWType.EFI_FW_TYPE_VSS2_AUTH):
+        nvram_hdr = VARIABLE_STORE_HEADER_VSS2( *struct.unpack_from( VARIABLE_STORE_HEADER_FMT_VSS2, buf ) )
+    else:
+        nvram_hdr = VARIABLE_STORE_HEADER_VSS( *struct.unpack_from( VARIABLE_STORE_HEADER_FMT_VSS, buf ) )
     return (nvram_start, nvram_hdr.Size, nvram_hdr)
 
 def getNVstore_VSS( nvram_buf ):
@@ -587,10 +618,16 @@ def getNVstore_VSS( nvram_buf ):
 def getNVstore_VSS_AUTH( nvram_buf ):
     return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
 
+def getNVstore_VSS2( nvram_buf ):
+    return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS2)
+
+def getNVstore_VSS2_AUTH( nvram_buf ):
+    return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS2_AUTH)
+    
 def getNVstore_VSS_APPLE( nvram_buf):
     return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE)
 
-VSS_TYPES = (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS_APPLE)
+VSS_TYPES = (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS2, FWType.EFI_FW_TYPE_VSS2_AUTH, FWType.EFI_FW_TYPE_VSS_APPLE)
 MAX_VSS_VAR_ALIGNMENT = 8
 
 def isCorrectVSStype(nvram_buf, vss_type):
@@ -608,10 +645,10 @@ def isCorrectVSStype(nvram_buf, vss_type):
 
     buf_size -= start
 
-    if   (vss_type == FWType.EFI_FW_TYPE_VSS):
+    if   (vss_type in (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS2)):
         hdr_fmt  = HDR_FMT_VSS
         efi_var_hdr = EFI_HDR_VSS( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
-    elif (vss_type == FWType.EFI_FW_TYPE_VSS_AUTH):
+    elif (vss_type in (FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS2_AUTH)):
         hdr_fmt  = HDR_FMT_VSS_AUTH
         efi_var_hdr = EFI_HDR_VSS_AUTH( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
     elif (vss_type == FWType.EFI_FW_TYPE_VSS_APPLE):
@@ -649,9 +686,9 @@ def isCorrectVSStype(nvram_buf, vss_type):
 def _getEFIvariables_VSS( nvram_buf, _fwtype):
     variables = dict()
     nvsize = len(nvram_buf)
-    if (FWType.EFI_FW_TYPE_VSS == _fwtype):
+    if _fwtype in (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS2):
         hdr_fmt  = HDR_FMT_VSS
-    elif (FWType.EFI_FW_TYPE_VSS_AUTH == _fwtype):
+    elif _fwtype in (FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS2_AUTH):
         hdr_fmt  = HDR_FMT_VSS_AUTH
     elif (FWType.EFI_FW_TYPE_VSS_APPLE == _fwtype):
         hdr_fmt  = HDR_FMT_VSS_APPLE
@@ -663,9 +700,9 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype):
         return variables
 
     while (start + hdr_size) < nvsize:
-        if (FWType.EFI_FW_TYPE_VSS == _fwtype):
+        if _fwtype in (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS2):
             efi_var_hdr = EFI_HDR_VSS( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
-        elif (FWType.EFI_FW_TYPE_VSS_AUTH == _fwtype):
+        elif _fwtype in (FWType.EFI_FW_TYPE_VSS_AUTH, FWType.EFI_FW_TYPE_VSS2_AUTH):
             efi_var_hdr = EFI_HDR_VSS_AUTH( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
         elif (FWType.EFI_FW_TYPE_VSS_APPLE == _fwtype):
             efi_var_hdr = EFI_HDR_VSS_APPLE( *struct.unpack_from( hdr_fmt, nvram_buf[start:] ) )
@@ -716,6 +753,12 @@ def getEFIvariables_VSS( nvram_buf ):
 
 def getEFIvariables_VSS_AUTH( nvram_buf ):
     return _getEFIvariables_VSS( nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH )
+    
+def getEFIvariables_VSS2( nvram_buf ):
+    return _getEFIvariables_VSS( nvram_buf, FWType.EFI_FW_TYPE_VSS2 )
+
+def getEFIvariables_VSS2_AUTH( nvram_buf ):
+    return _getEFIvariables_VSS( nvram_buf, FWType.EFI_FW_TYPE_VSS2_AUTH )
 
 def getEFIvariables_VSS_APPLE( nvram_buf ):
     return _getEFIvariables_VSS( nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE )
@@ -1260,6 +1303,10 @@ FWType.EFI_FW_TYPE_NVAR      : {'name' : 'NVAR',      'func_getefivariables' : g
 FWType.EFI_FW_TYPE_VSS       : {'name' : 'VSS',       'func_getefivariables' : getEFIvariables_VSS,       'func_getnvstore' : getNVstore_VSS },
 # $VSS Authenticated NVRAM format
 FWType.EFI_FW_TYPE_VSS_AUTH  : {'name' : 'VSS_AUTH',  'func_getefivariables' : getEFIvariables_VSS_AUTH,  'func_getnvstore' : getNVstore_VSS_AUTH },
+# VSS2 NVRAM format
+FWType.EFI_FW_TYPE_VSS2       : {'name' : 'VSS2',       'func_getefivariables' : getEFIvariables_VSS2,       'func_getnvstore' : getNVstore_VSS2 },
+# VSS2 Authenticated NVRAM format
+FWType.EFI_FW_TYPE_VSS2_AUTH  : {'name' : 'VSS2_AUTH',  'func_getefivariables' : getEFIvariables_VSS2_AUTH,  'func_getnvstore' : getNVstore_VSS2_AUTH },
 # Apple $VSS formart
 FWType.EFI_FW_TYPE_VSS_APPLE : {'name' : 'VSS_APPLE', 'func_getefivariables' : getEFIvariables_VSS_APPLE, 'func_getnvstore' : getNVstore_VSS_APPLE },
 # EVSA

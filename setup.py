@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -26,8 +26,9 @@ Setup module to install chipsec package via setuptools
 
 import os
 import platform
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages
 from distutils import log, dir_util
+from distutils.core import Extension
 import subprocess
 import shutil
 
@@ -84,6 +85,24 @@ class build_ext(_build_ext):
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
+    def _build_linux_compression(self):
+        log.info("building compression executables")
+        build_elf = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
+        elfs = ["Brotli","LzmaCompress","TianoCompress"]
+        #copy the compression files to build directory
+        self.copy_tree(os.path.join("chipsec_tools","compression"),build_elf)
+        # Run the makefile there
+        subprocess.check_output(["make", "-C", build_elf, "-f", "GNUmakefile"])
+        # Copy the resulting elf files into the correct place
+        root_dst = "" if self.inplace else self.real_build_lib
+        dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
+        try:
+            os.mkdir(dst)
+        except:
+            pass
+        for elf in elfs:
+            self.copy_file(os.path.join(build_elf,"bin",elf),dst)
+
     def _build_darwin_driver(self):
         log.info("building the OSX driver")
         build_driver = os.path.join(self.real_build_lib, "drivers", "osx")
@@ -102,6 +121,24 @@ class build_ext(_build_ext):
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
+    def _build_darwin_compression(self):
+        log.info("building compression executables")
+        build_exe = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
+        exes = ["Brotli","LzmaCompress","TianoCompress"]
+        #copy the compression files to build directory
+        self.copy_tree(os.path.join("chipsec_tools","compression"),build_exe)
+        # Run the makefile there
+        subprocess.check_output(["make", "-C", build_exe, "-f", "GNUmakefile"])
+        # Copy the resulting elf files into the correct place
+        root_dst = "" if self.inplace else self.real_build_lib
+        dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
+        try:
+            os.mkdir(dst)
+        except:
+            pass
+        for exe in exes:
+            self.copy_file(os.path.join(build_exe,"bin",exe),dst)
+
     def run(self):
         # First, we build the standard extensions.
         _build_ext.run(self)
@@ -110,8 +147,10 @@ class build_ext(_build_ext):
             self.real_build_lib = os.path.realpath(self.build_lib)
             if platform.system().lower() == "linux":
                 self._build_linux_driver()
+                self._build_linux_compression()
             elif platform.system().lower() == "darwin":
                 self._build_darwin_driver()
+                self._build_darwin_compression()
 
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
@@ -143,55 +182,20 @@ package_data = {
 }
 data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
-extra_kw = {}
-
-compression_header_files = []
+extra_kw = []
 
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
     package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
-    package_data["chipsec_tools.windows"] = ['*']
+    package_data["chipsec_tools.compression.bin"] = ['*']
     install_requires.append("pypiwin32")
 
 elif platform.system().lower() == "linux":
-    compression_source_files = []
-    package_data["chipsec_tools.compression"] = ["*.c","*.h"]
-    data_files = [(os.path.join("share","doc","chipsec"), ["chipsec-manual.pdf"])]
-    for root, dir, path in os.walk( os.path.join( "chipsec_tools", "compression" ) ):
-        for f in path:
-            if os.path.splitext(f)[1][1:] == 'h':
-                compression_header_files.append(os.path.join(root, f))
-            else:
-                compression_source_files.append(os.path.join(root, f))
-    extra_kw["ext_modules"] = [
-        Extension("chipsec.helper.linux.cores",
-                  ["chipsec/helper/linux/cores.c"]) , 
-        Extension(
-                  'chipsec_tools.efi_compressor',
-                  sources=compression_source_files,
-                  include_dirs=[
-                      os.path.join("chipsec_tools", 'compression', 'Include')
-                  ],
-                  depends=compression_header_files, )
-    ]
+    package_data["chipsec_tools.compression.bin"] = ['*']
+    extra_kw.append(Extension("chipsec.helper.linux.cores",["chipsec/helper/linux/cores.c"]))
 
 elif platform.system().lower() == "darwin":
-    compression_source_files = []
-    for root, dir, path in os.walk( os.path.join( "chipsec_tools", "compression" ) ):
-        for f in path:
-            if os.path.splitext(f)[1][1:] == 'h':
-                compression_header_files.append(os.path.join(root, f))
-            else:
-                compression_source_files.append(os.path.join(root, f))
-    extra_kw["ext_modules"] = [
-        Extension(
-                  'chipsec_tools.efi_compressor',
-                  sources=compression_source_files,
-                  include_dirs=[
-                      os.path.join("chipsec_tools", 'compression', 'Include')
-                  ],
-                  depends=compression_header_files, )
-    ]
+    package_data["chipsec_tools.compression.bin"] = ['*']
 
 setup(
     name = 'chipsec',
@@ -238,5 +242,5 @@ setup(
         'build': build,
         'build_ext'   : build_ext,
     },
-    **extra_kw
+    ext_modules = extra_kw
 )

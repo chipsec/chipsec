@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -76,14 +76,13 @@ class sinkhole(BaseModule):
         try:
             self.cs.write_register_field( 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
             ex = False
-            self.logger.log_bad( "Was able to modify IA32_APIC_BASE" )
+            self.logger.log_bad( "Could modify IA32_APIC_BASE to overlap SMRR" )
         except chipsec.helper.oshelper.HWAccessViolationError:
             ex = True
-            self.logger.log_good( "Could not modify IA32_APIC_BASE" )
+            self.logger.log_good( "Could not modify IA32_APIC_BASE to overlap SMRR" )
 
         apic_base_msr_new = self.cs.read_register( 'IA32_APIC_BASE', 0 )
         self.logger.log( "[*] new IA32_APIC_BASE: 0x%016X" % apic_base_msr_new )
-        #self.cs.print_register( 'IA32_APIC_BASE', apic_base_msr_new )
 
         if apic_base_msr_new == apic_base_msr and ex:
             res = ModuleResult.PASSED
@@ -92,7 +91,7 @@ class sinkhole(BaseModule):
             self.cs.write_register( 'IA32_APIC_BASE', apic_base_msr, 0 )
             self.logger.log( "[*] Restored original value 0x%016X" % apic_base_msr )
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "CPU is succeptible to SMM memory sinkhole vulnerability" )
+            self.logger.log_failed_check( "CPU is succeptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly." )
 
         return res
 

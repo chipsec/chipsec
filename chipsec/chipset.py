@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -89,6 +89,7 @@ CHIPSET_ID_CFL     = 16
 CHIPSET_ID_APL     = 17
 CHIPSET_ID_DNV     = 18
 CHIPSET_ID_WHL     = 19
+CHIPSET_ID_SKX     = 20
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -112,8 +113,9 @@ CHIPSET_CODE_CFL     = 'CFL'
 CHIPSET_CODE_APL     = 'APL'
 CHIPSET_CODE_DNV     = 'DNV'
 CHIPSET_CODE_WHL     = 'WHL'
+CHIPSET_CODE_SKX     = 'SKX'
 
-CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX]
+CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX,CHIPSET_ID_SKX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL,CHIPSET_ID_WHL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
@@ -204,6 +206,7 @@ Chipset_Dictionary = {
 
 # Xeon v5 Processor (Skylake Server)
 0x1918 : {'name' : 'Skylake Server', 'id' : CHIPSET_ID_SKL,  'code' : CHIPSET_CODE_SKL,  'longname' : 'Intel Xeon Processor E3 v5 (Skylake CPU / Sunrise Point PCH)'},
+0x2020 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKX , 'code' : CHIPSET_CODE_SKX,  'longname' : 'Intel Xeon Processor E5/E7 v5 (Skylake)' },
 
 # Xeon v6 Processor (Kabylake Server)
 0x5918 : {'name' : 'Kabylake','id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Intel Xeon Processor E3 v6 (Kabylake CPU)' },
@@ -290,12 +293,15 @@ pch_dictionary = {
 # 300 series and Z390 PCH
 0xA306 : {'name' : 'Q370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Q370 (300 series) PCH'},
 0xA304 : {'name' : 'H370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H370 (300 series) PCH'},
+0xA305 : {'name' : 'Z390',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Z390 (300 series) PCH'},
 0xA308 : {'name' : 'B360',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel B360 (300 series) PCH'},
 0xA303 : {'name' : 'H310',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H310 (300 series) PCH'},
+0xA30A : {'name' : 'C242',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel C242 (300 series) PCH'},
+0xA309 : {'name' : 'C246',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel C246 (300 series) PCH'},
 0xA30D : {'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel HM370 (300 series) PCH'},
 0xA30C : {'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'},
 0xA30E : {'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'},
-0x9D84 : {'name' : 'PCH-U', 'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'},
+0x9D84 : {'name' : 'PCH-U',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'},
 
 # C600 and X79 series PCH
 0x1D41 : {'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X79 series PCH'},
@@ -702,6 +708,11 @@ class Chipset:
         (b,d,f) = self.get_device_BDF( device_name )
         return self.pci.is_enabled( b, d, f )
 
+    def switch_device_def( self, target_dev, source_dev ):
+        (b,d,f) = self.get_device_BDF( source_dev )
+        self.Cfg.CONFIG_PCI[ target_dev ]['bus'] = str(b)
+        self.Cfg.CONFIG_PCI[ target_dev ]['dev'] = str(d)
+        self.Cfg.CONFIG_PCI[ target_dev ]['fun'] = str(f)
 
 ##################################################################################
 #
@@ -735,10 +746,18 @@ class Chipset:
             return False
 
     def get_register_def(self, reg_name):
-        return self.Cfg.REGISTERS[reg_name]
+        reg_def = self.Cfg.REGISTERS[reg_name]
+        if reg_def["type"] == "pcicfg" and "device" in reg_def:
+            dev_name = reg_def["device"]
+            if dev_name in self.Cfg.CONFIG_PCI:
+                dev = self.Cfg.CONFIG_PCI[dev_name]
+                reg_def['bus'] = dev['bus']
+                reg_def['dev'] = dev['dev']
+                reg_def['fun'] = dev['fun']
+        return reg_def
 
     def read_register(self, reg_name, cpu_thread=0):
-        reg = self.Cfg.REGISTERS[ reg_name ]
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_value = 0
         if RegisterType.PCICFG == rtype:
@@ -774,7 +793,7 @@ class Chipset:
         return reg_value
 
     def write_register(self, reg_name, reg_value, cpu_thread=0):
-        reg = self.Cfg.REGISTERS[ reg_name ]
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         if RegisterType.PCICFG == rtype:
             b = int(reg['bus'],16)
@@ -893,7 +912,7 @@ class Chipset:
         return reg_fields_str
 
     def print_register(self, reg_name, reg_val):
-        reg = self.Cfg.REGISTERS[ reg_name ]
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_str = ''
         reg_val_str = ("0x%0" + ("%dX" % (int(reg['size'],16)*2))) % reg_val

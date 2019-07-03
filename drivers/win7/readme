@@ -59,3 +59,13 @@ Build CHIPSEC kernel driver (Old Method)
 ----------------------------------------------------
 - On Windows x64, copy signed "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 directory
 - On Windows x86, copy "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_x86 directory
+
+4. Build the compression tools
+----------------------------------------------------
+- Navigate to the chipsec_tools\compression directory
+- run the build.cmd
+
+Alternately download prebuild compession tools
+----------------------------------------------------
+- Download compression tools from https://github.com/tianocore/edk2-BaseTools-win32/archive/master.zip
+- Unzip the archive into the chipsec_tools/compression/bin directory

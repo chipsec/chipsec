@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -51,7 +51,6 @@ try:
 except ImportError:
     _importlib = False
 
-
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
     return ( x.find('__init__') == -1 and ZIP_HELPER_RE.match(x) )
@@ -68,7 +67,7 @@ class HWAccessViolationError (OsHelperError):
 
 class UnimplementedAPIError (OsHelperError):
     def __init__(self,api_name):
-        super(UnimplementedAPIError,self).__init__("'%s' is not implemented" % api_name, 0)
+        super(UnimplementedAPIError,self).__init__("'{}' is not implemented".format(api_name), 0)
 
 class UnimplementedNativeAPIError (UnimplementedAPIError):
     def __init__(self,api_name):
@@ -87,13 +86,10 @@ class OsHelper:
         self.helper = None
         self.loadHelpers()
         self.filecmds = None
-        #print "Operating System: %s %s %s %s" % (self.os_system, self.os_release, self.os_version, self.os_machine)
-        #print self.os_uname
         if(not self.helper):
             import platform
             os_system  = platform.system()
-            #raise OsHelperError("Unsupported platform '%s'" % os_system,errno.ENODEV)
-            raise OsHelperError( "Could not load helper for '%s' environment (unsupported environment?)" % os_system, errno.ENODEV )
+            raise OsHelperError( "Could not load helper for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -123,12 +119,12 @@ class OsHelper:
                 raise OsHelperError("failed to create OS helper")
             if not self.helper.start( start_driver, from_file ):
                 raise OsHelperError("failed to start OS helper")
-        except (None,Exception) , msg:
+        except (None,Exception) as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
                 error_no = msg.errorcode
-            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"%s\"" % msg,error_no)
+            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"{}\"".format(msg),error_no)
 
     def stop( self, start_driver ):
         if not self.filecmds is None:
@@ -226,7 +222,6 @@ class OsHelper:
     # physical_address is 64 bit integer
     #
     def read_physical_mem( self, phys_address, length ):
-        #return self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
         if self.use_native_api() and hasattr(self.helper, 'native_read_phys_mem'):
             ret = self.helper.native_read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
         else:
@@ -558,21 +553,7 @@ class OsHelper:
     # Compress binary with OS specific tools
     #
     def compress_file( self, FileName, OutputFileName, CompressionType ):
-        import subprocess
-        if (CompressionType == 0): # not compressed
-          shutil.copyfile(FileName, OutputFileName)
-        else:
-          exe = self.get_compression_tool_path( CompressionType )
-          if exe is None: return None 
-          try:
-            subprocess.call( [ exe, "-e", "-o", OutputFileName, FileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
-            if logger().DEBUG: 
-                logger().error( str(msg) )
-                logger().log_bad( traceback.format_exc() )
-            return None
-
-        ret = chipsec.file.read_file( OutputFileName )
+        ret = self.helper.compress_file( FileName, OutputFileName, CompressionType )
         if not self.filecmds is None:
             self.filecmds.AddElement("compress_file",(FileName, OutputFileName, CompressionType),ret)
         return ret
@@ -584,7 +565,7 @@ def helper():
     if _helper == None:
         try:
             _helper  = OsHelper()
-        except BaseException, msg:
+        except BaseException as msg:
             if logger().DEBUG: 
                 logger().error( str(msg) )
                 logger().log_bad(traceback.format_exc())

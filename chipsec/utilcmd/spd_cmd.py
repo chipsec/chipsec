@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -71,7 +71,10 @@ class SPDCommand(BaseCommand):
         if( 'detect' == op ):
 
             self.logger.log( "[CHIPSEC] Searching for DIMMs with SPD.." )
-            _spd.detect()
+            _dimms = _spd.detect()
+            if _dimms is not None:
+                self.logger.log( "Detected the following SPD devices:" )
+                for _dimm in _dimms: self.logger.log( "{}: 0x{:02X}".format(spd.SPD_DIMMS[_dimm],_dimm) )
 
         elif( 'dump' == op ):
 
