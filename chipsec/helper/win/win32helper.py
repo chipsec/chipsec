@@ -821,7 +821,7 @@ class Win32Helper(Helper):
     # Interrupts
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
-        out_length = 0
+        out_length = struct.calcsize(_smi_msg_t_fmt)
         out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( _smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
