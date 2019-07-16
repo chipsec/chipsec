@@ -1148,7 +1148,7 @@ class LinuxHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             decode_str = TIANO + decode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            decode_str = EFI + decode_str + "--uefi"
+            decode_str = EFI + decode_str + "--uefi "
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
             decode_str = LZMA + decode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
