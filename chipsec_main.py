@@ -413,15 +413,15 @@ class ChipsecMain:
     def properties( self ):
         ret = OrderedDict()
         ret["OS"] = "{} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) 
-        ret["Platform"] = "{}, VID: {:04X}, DID: {:04X}".format(self._cs.longname, self._cs.vid, self._cs.did) 
-        ret["PCH"] = "{}, VID: {:04X}, DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did) 
+        ret["Platform"] = "{}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid) 
+        ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid)
         ret["Version"] ="{}".format(self.version)
         return ret
 
     def log_properties( self ):
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.longname, self._cs.vid, self._cs.did))
-        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did))
+        logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
+        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
     ##################################################################################
     # Entry point for command-line execution
