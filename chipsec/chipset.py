@@ -40,6 +40,7 @@ import re
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
+from chipsec.hal.pci import PCI_HDR_RID_OFF
 
 from chipsec.cfg.common import Cfg
 from chipsec.logger import logger
@@ -369,11 +370,13 @@ class Chipset:
 
         self.vid            = 0xFFFF
         self.did            = 0xFFFF
+        self.rid            = 0xFF
         self.code           = CHIPSET_CODE_UNKNOWN
         self.longname       = "Unrecognized Platform"
         self.id             = CHIPSET_ID_UNKNOWN
         self.pch_vid        = 0xFFFF
         self.pch_did        = 0xFFFF
+        self.pch_rid        = 0xFF
         self.pch_code       = CHIPSET_CODE_UNKNOWN
         self.pch_longname   = 'Unrecognized PCH'
         self.pch_id         = CHIPSET_ID_UNKNOWN
@@ -409,21 +412,25 @@ class Chipset:
     def detect_platform( self ):
         vid = 0xFFFF
         did = 0xFFFF
+        rid = 0xFF
         pch_vid = 0xFFFF
         pch_did = 0xFFFF
+        pch_rid = 0xFF
         try:
             vid_did = self.pci.read_dword(0, 0, 0, 0)
             vid = vid_did & 0xFFFF
             did = (vid_did >> 16) & 0xFFFF
+            rid = self.pci.read_byte(0, 0, 0, PCI_HDR_RID_OFF)
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
         try:
             vid_did = self.pci.read_dword(0, 31, 0, 0)
             pch_vid = vid_did & 0xFFFF
             pch_did = (vid_did >> 16) & 0xFFFF
+            pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
-        return (vid, did, pch_vid, pch_did)
+        return (vid, did, rid, pch_vid, pch_did, pch_rid)
 
     def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
 
@@ -431,7 +438,7 @@ class Chipset:
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
-        self.vid, self.did, self.pch_vid, self.pch_did = self.detect_platform()
+        self.vid, self.did, self.rid, self.pch_vid, self.pch_did, self.pch_rid = self.detect_platform()
         if platform_code is None:
             if VID_INTEL != self.vid:
                 _unknown_platform = True
@@ -439,10 +446,12 @@ class Chipset:
             self.vid = VID_INTEL
             if platform_code in Chipset_Code:
                 self.did = Chipset_Code[ platform_code ]
+                self.rid = 0x00
             else:
                 _unknown_platform = True
                 self.vid = 0xFFFF
                 self.did = 0xFFFF
+                self.rid = 0xFF
 
         if self.did in Chipset_Dictionary:
             data_dict       = Chipset_Dictionary[ self.did ]
@@ -457,9 +466,11 @@ class Chipset:
             self.pch_vid = VID_INTEL
             if req_pch_code in pch_codes:
                 self.pch_did = pch_codes[req_pch_code]
+                self.pch_rid = 0x00
             else:
                 self.pch_vid = 0xFFFF
                 self.pch_did = 0xFFFF
+                self.pch_rid = 0xFF
 
         if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
             data_dict           = pch_dictionary[self.pch_did]
@@ -471,7 +482,7 @@ class Chipset:
 
         self.init_cfg()
         if _unknown_platform and start_driver:
-            msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}'.format(self.vid,self.did)
+            msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.vid,self.did,self.rid)
             logger().error( msg )
             raise UnknownChipsetError (msg)
 
@@ -498,10 +509,10 @@ class Chipset:
         return self.pch_longname
 
     def print_chipset(self):
-        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}".format(self.longname, self.vid, self.did))
+        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.vid, self.did, self.rid))
 
     def print_pch(self):
-        logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}".format(self.pch_longname, self.pch_vid, self.pch_did))
+        logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
 
     def is_core(self):
         return  self.get_chipset_id() in CHIPSET_FAMILY_CORE
