@@ -377,6 +377,7 @@ class ChipsecMain:
         options.add_argument('-m', '--module',dest='_module', help='specify module to run (example: -m common.bios_wp)')
         options.add_argument('-a','--module_args', nargs='*', dest="_module_argv", help="additional module arguments")
         options.add_argument('-v','--verbose', help='verbose mode', action='store_true')
+        options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
         adv_options = parser.add_argument_group('Advanced Options')
@@ -402,8 +403,8 @@ class ChipsecMain:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
+        if self.hal:
             logger().HAL     = True
-            logger().DEBUG   = True
         if self.debug:
             logger().DEBUG   = True
         if self.log:

@@ -104,6 +104,7 @@ class ChipsecUtil:
         options = parser.add_argument_group('Options')
         options.add_argument('-h', '--help',dest='show_help', help="show this message and exit",action='store_true')
         options.add_argument('-v','--verbose', help='verbose mode', action='store_true')
+        options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
         options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.Chipset_Code, type=str.upper)
@@ -117,8 +118,8 @@ class ChipsecUtil:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
+        if self.hal:
             logger().HAL     = True
-            logger().DEBUG   = True
         if self.debug:
             logger().DEBUG   = True
         if self.log:
