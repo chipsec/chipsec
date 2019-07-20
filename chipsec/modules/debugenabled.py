@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2018, Intel Corporation
+#Copyright (c) 2018-2019, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,26 +34,9 @@ P2SB_DCI.DCI_CONTROL_REG[HDCIEN]
 
 """
 
-from chipsec.module_common import *
-import chipsec.chipset
-import chipsec.defines
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.defines import BIT11
 _MODULE_NAME = 'debugenabled'
-
-
-import chipsec.hal.uefi
-import chipsec.hal.uefi_common
-
-EDX_ENABLE_STATE = 0x00000000
-IA32_DEBUG_INTERFACE_MSR = 0xC80
-P2SB_DCI_PORT_ID = 0xB8
-DCI_CONTROL_REG_OFFSET = 0x4
-
-HDCIEN_MASK = 0b00000000000000000000000000010000
-IA32_DEBUG_INTERFACE_DEBUGENABLE_MASK = 0b00000000000000000000000000000001
-IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK = 0b01000000000000000000000000000000
-IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK = 0b10000000000000000000000000000000
-
-CPUID_IA32_DEBUG_INTERFACE_SUPPORTED_BIT11_MASK = 0b00000000000000000000100000000000
 
 ########################################################################################################
 #
@@ -61,85 +44,81 @@ CPUID_IA32_DEBUG_INTERFACE_SUPPORTED_BIT11_MASK = 0b0000000000000000000010000000
 #
 ########################################################################################################
 
-class debugenabled(chipsec.module_common.BaseModule):
-
-
+class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
 
     def is_supported(self):
+        # Use CPUID Function 1 to determine if the IA32_DEBUG_INTERFACE MSR is supported.
+        # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
         (eax, ebx, ecx, edx) = self.cs.helper.cpuid( 1, 0 )
-        supported = (ecx & CPUID_IA32_DEBUG_INTERFACE_SUPPORTED_BIT11_MASK == CPUID_IA32_DEBUG_INTERFACE_SUPPORTED_BIT11_MASK)
-        if not supported: self.logger.log_skipped_check('CPU Debug features are not supported on this platform')
+        supported = (ecx & BIT11) != 0
+        if not supported:
+            self.res = ModuleResult.NOTAPPLICABLE
+            self.logger.log_skipped_check('CPU Debug features are not supported on this platform')
         return supported
-
 
     def check_dci( self ):
         TestFail = ModuleResult.PASSED
-        self.logger.log('[X] Checking DCI register status')
-        value = self.cs.msgbus.mm_msgbus_reg_read(P2SB_DCI_PORT_ID,DCI_CONTROL_REG_OFFSET)
-        if self.logger.VERBOSE: self.logger.log('[*] DCI Control Register = 0x%X' % value )
-        HDCIEN = ((value & HDCIEN_MASK) == HDCIEN_MASK)
+        self.logger.log('\n[*] Checking DCI register status')
+        ectrl = self.cs.read_register('ECTRL')
+        HDCIEN = self.cs.get_register_field('ECTRL', ectrl, 'ENABLE') == 1
+        if self.logger.VERBOSE: self.cs.print_register('ECTRL', ectrl)
         if HDCIEN:
+            self.logger.log_bad('DCI Debug is enabled')
             TestFail = ModuleResult.FAILED
+        else:
+            self.logger.log_good('DCI Debug is disabled')
         return TestFail
 
     def check_cpu_debug_enable( self ):
-        self.logger.log('[X] Checking IA32_DEBUG_INTERFACE msr status')
+        self.logger.log('\n[*] Checking IA32_DEBUG_INTERFACE msr status')
         TestFail = ModuleResult.PASSED
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            (eax, edx) = self.cs.helper.read_msr( tid, IA32_DEBUG_INTERFACE_MSR )
-            if self.logger.VERBOSE: self.logger.log('[cpu%d] RDMSR( 0x%x ): EAX = 0x%08X, EDX = 0x%08X' % (tid, IA32_DEBUG_INTERFACE_MSR, eax, edx) )
-            IA32_DEBUG_INTERFACE_DEBUGENABLE = ((IA32_DEBUG_INTERFACE_DEBUGENABLE_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGENABLE_MASK)
-            IA32_DEBUG_INTERFACE_DEBUGELOCK = not ((IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGELOCK_MASK)
-            IA32_DEBUG_INTERFACE_DEBUGEOCCURED = ((IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK & eax) == IA32_DEBUG_INTERFACE_DEBUGEOCCURED_MASK)
-            if edx == EDX_ENABLE_STATE: #Sanity check only EAX matters
-                if (IA32_DEBUG_INTERFACE_DEBUGENABLE) or (IA32_DEBUG_INTERFACE_DEBUGELOCK):
-                    if self.logger.VERBOSE:
-                        self.logger.log('IA32_DEBUG_INTERFACE_DEBUGENABLE ==' + str(IA32_DEBUG_INTERFACE_DEBUGENABLE))
-                        self.logger.log('IA32_DEBUG_INTERFACE_DEBUGELOCK ==' + str(IA32_DEBUG_INTERFACE_DEBUGELOCK))
-                        self.logger.log('IA32_DEBUG_INTERFACE_DEBUGEOCCURED ==' + str(IA32_DEBUG_INTERFACE_DEBUGEOCCURED))
-                    TestFail = ModuleResult.FAILED
-                if IA32_DEBUG_INTERFACE_DEBUGEOCCURED:
-                        TestFail = ModuleResult.WARNING
+            dbgiface = self.cs.read_register('IA32_DEBUG_INTERFACE', tid)
+            IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
+            IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1
+            IA32_DEBUG_INTERFACE_DEBUGEOCCURED = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'DEBUG_OCCURRED') == 1
+            if self.logger.VERBOSE:
+                self.cs.print_register('IA32_DEBUG_INTERFACE', dbgiface)
+
+            if IA32_DEBUG_INTERFACE_DEBUGENABLE:
+                self.logger.log_bad("CPU debug enable requested by software.")
+                TestFail = ModuleResult.FAILED
+            if not IA32_DEBUG_INTERFACE_DEBUGELOCK:
+                self.logger.log_bad("CPU debug interface is not locked.")
+                TestFail = ModuleResult.FAILED
+            if IA32_DEBUG_INTERFACE_DEBUGEOCCURED:
+                self.logger.log_warning('Debug Occured bit set in IA32_DEBUG_INTERFACE msr')
+                if TestFail == ModuleResult.PASSED:
+                    TestFail = ModuleResult.WARNING
+            if TestFail == ModuleResult.PASSED:
+                self.logger.log_good("CPU debug interface state is correct.")
         return TestFail
 
     def run( self, module_argv ):
         if len(module_argv) > 2:
             self.logger.error('Not expecting any arguments')
-            return ModuleResult.ERROR
-        returned_result = ModuleResult.PASSED
+            self.res = ModuleResult.ERROR
+            return self.res
+
         self.logger.start_test('Debug features test')
-        script_pa = None
-        dci_test_fail = ModuleResult.PASSED
-        cpu_debug_test_fail = ModuleResult.PASSED
 
         cpu_debug_test_fail = self.check_cpu_debug_enable()
-        if (cpu_debug_test_fail == ModuleResult.FAILED):
-            self.logger.log_bad('CPU IA32_DEBUG_INTERFACE is enabled')
-        elif cpu_debug_test_fail == ModuleResult.WARNING:
-            self.logger.log_warning('Debug Occured bit set in IA32_DEBUG_INTERFACE msr')
-        else:
-            self.logger.log_good('CPU IA32_DEBUG_INTERFACE is disabled')
 
-        current_platform_id = self.cs.get_chipset_id()
-        dci_supported = (current_platform_id == chipsec.chipset.CHIPSET_ID_CFL) or (current_platform_id == chipsec.chipset.CHIPSET_ID_KBL) or (current_platform_id == chipsec.chipset.CHIPSET_ID_SKL)
-        if (dci_supported):
+        dci_test_fail = ModuleResult.PASSED
+        if self.cs.is_register_defined('ECTRL'):
             dci_test_fail = self.check_dci()
-            if (dci_test_fail == ModuleResult.FAILED):
-                self.logger.log_bad('DCI Debug is enabled')
-            else:
-                self.logger.log_good('DCI Debug is disabled')
 
+        self.logger.log("\n[*] Module Result")
         if (dci_test_fail == ModuleResult.FAILED or cpu_debug_test_fail == ModuleResult.FAILED):
             self.logger.log_failed_check('One or more of the debug checks have failed and a debug feature is enabled')
-            returned_result = ModuleResult.FAILED
+            self.res = ModuleResult.FAILED
         elif (dci_test_fail == ModuleResult.WARNING or cpu_debug_test_fail == ModuleResult.WARNING):
             self.logger.log_warn_check('An unexpected debug state was discovered on this platform')
-            returned_result = ModuleResult.WARNING
+            self.res = ModuleResult.WARNING
         else:
             self.logger.log_passed_check('All checks have successfully passed')
-            returned_result = ModuleResult.PASSED
 
-        return returned_result
+        return self.res

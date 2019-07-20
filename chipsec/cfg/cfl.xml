@@ -253,6 +253,11 @@ XML configuration file for Coffee Lake
 
     <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x18" size="4" desc="Power Management Configuration Reg 1"/>
 
+    <!-- DCI registers -->
+    <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
+      <field name="ENABLE" bit="4" size="1"/>
+    </register>
+    
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- I/O registers (I/O ports)    -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

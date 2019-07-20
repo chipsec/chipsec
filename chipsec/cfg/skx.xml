@@ -156,6 +156,11 @@ Intel (c) C620 Series Chipset Platform Controller Hub datasheet
       <field name="BILD"     bit="7" size="1" desc="BIOS Interface Lock Down"/> <!-- BILD -->
     </register>
 
+    <!-- DCI registers -->
+    <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
+      <field name="ENABLE" bit="4" size="1"/>
+    </register>
+
   </registers>
 
   <controls>
