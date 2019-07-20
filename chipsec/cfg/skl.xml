@@ -308,6 +308,11 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
       <field name="MRWA"    bit="20" size="12" desc="Master Region Write Access"/>
     </register>
 
+    <!-- DCI registers -->
+    <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
+      <field name="ENABLE" bit="4" size="1"/>
+    </register>
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- I/O registers (I/O ports)    -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
