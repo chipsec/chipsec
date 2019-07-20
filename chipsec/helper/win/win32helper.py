@@ -385,7 +385,7 @@ class Win32Helper(Helper):
                  os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
-                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,int(hs)) )
+                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME, int(hs)) )
         except win32service.error as (hr, fn, msg):
             if (winerror.ERROR_SERVICE_EXISTS == hr):
                 if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, msg, hr) )
@@ -487,7 +487,7 @@ class Win32Helper(Helper):
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
-            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, self.driver_handle) )
+            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, int(self.driver_handle)) )
         return self.driver_handle
 
     def check_driver_handle( self ):
@@ -496,7 +496,7 @@ class Win32Helper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             self.get_driver_handle()
-            logger().warn( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, self.driver_handle) )
+            logger().warn( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, int(self.driver_handle)) )
             return False
         return True
 
