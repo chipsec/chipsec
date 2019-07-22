@@ -49,14 +49,14 @@ class CMOSCommand(BaseCommand):
         parser_writel.set_defaults(func=self.cmos_writel)
         parser_readh = subparsers.add_parser('readh')
         parser_readh.set_defaults(func=self.cmos_readh)
-        parser_readh.add_argument('offset', nargs=1,help="offsets read")
-        parser_readl.add_argument('offset', nargs=1,help="offsets read")
+        parser_readh.add_argument('offset',type=lambda x: int(x,0),help="offsets read")
+        parser_readl.add_argument('offset',type=lambda x: int(x,0),help="offsets read")
         parser_writeh = subparsers.add_parser('writeh')
         parser_writeh.set_defaults(func=self.cmos_writeh)
-        parser_writel.add_argument('offset',nargs=1,help="offsets write")
-        parser_writeh.add_argument('offset',nargs=1,help="offsets write")
-        parser_writel.add_argument('value',nargs=1,help="value written")
-        parser_writeh.add_argument('value',nargs=1,help="value written")
+        parser_writel.add_argument('offset',type=lambda x: int(x,0),help="offsets write")
+        parser_writeh.add_argument('offset',type=lambda x: int(x,0),help="offsets write")
+        parser_writel.add_argument('value',type=lambda x: int(x,0),help="value written")
+        parser_writeh.add_argument('value',type=lambda x: int(x,0),help="value written")
         parser.parse_args(self.argv[2:],namespace=CMOSCommand)
 
         return True
@@ -66,25 +66,20 @@ class CMOSCommand(BaseCommand):
         self._cmos.dump()
 
     def cmos_readl(self):
-        off = int(self.argv[3],16)
-        val = self._cmos.read_cmos_low( off )
-        self.logger.log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
+        val = self._cmos.read_cmos_low( self.offset )
+        self.logger.log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (self.offset, val) )
 
     def cmos_writel(self):
-        off = int(self.argv[3],16)
-        val = self._cmos.read_cmos_low( off )
-        self.logger.log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (off, val) )
+        val = self._cmos.write_cmos_low( self.offset, self.value )
+        self.logger.log( "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (self.offset, self.value) )
 
     def cmos_readh(self):
-        off = int(self.argv[3],16)
-        val = self._cmos.read_cmos_high( off )
-        self.logger.log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (off, val) )
+        val = self._cmos.read_cmos_high( self.offset )
+        self.logger.log( "[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (self.offset, val) )
 
     def cmos_writeh(self):
-        off = int(self.argv[3],16)
-        val = int(self.argv[4],16)
-        self.logger.log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (off, val) )
-        self._cmos.write_cmos_high( off, val )
+        self.logger.log( "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (self.offset, self.value) )
+        self._cmos.write_cmos_high( self.offset, self.value )
 
     def run(self):
         t = time()
