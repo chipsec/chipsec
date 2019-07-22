@@ -201,46 +201,52 @@ class sgx_check(BaseModule):
             else:
                 self.logger.log("[*] PRMMR config has improper value")
                 sgx_ok = False
-            self.logger.log("[*]  PRMRR base address: 0x%012X" % prmrr_base)
-            self.logger.log("[*]  Verifying PRMR memory type is valid")
-            self.logger.log("[*]  PRMRR memory type : 0x%X" % prmrr_base_memtype)
-            if prmrr_base_memtype == 0x6:
-                self.logger.log_good( "PRMRR memory type is WB as expected" )
+
+            # In some cases the PRMRR base and mask may be zero
+            if prmrr_base == 0 and prmrr_mask == 0:
+                self.logger.log("[*] PRMRR Base and Mask are set to zero.  PRMRR appears to be disabled.")
+                self.logger.log("[*]   Skipping Base/Mask settings.")
             else:
-                self.logger.log_failed( "Unexpected PRMRR memory type (not WB)" )
-                self.res = ModuleResult.FAILED
-            self.logger.log("[*]  PRMRR mask address: 0x%012X" % prmrr_mask)
-            self.logger.log("[*]  Verifying PRMR address are valid")
-            self.logger.log("[*]      PRMRR mask valid: 0x%u" % prmrr_mask_vld)
-            if prmrr_mask_vld == 0x1:
-                self.logger.log_good( "Mcheck marked PRMRR address as valid" )
-            else:
-                self.logger.log_failed( "Mcheck marked PRMRR address as invalid" )
-                self.res = ModuleResult.FAILED
-            self.logger.log("[*]  Verifying if PRMR mask register is locked")
-            self.logger.log("[*]      PRMRR mask lock: 0x%u" % prmrr_mask_lock)
-            if prmrr_mask_lock == 0x1:
-                self.logger.log_good( "PRMRR MASK register is locked" )
-            else:
-                self.logger.log_failed( "PRMRR MASK register is not locked" )
-                self.res = ModuleResult.FAILED
-            if check_uncore_vals:
-                self.logger.log("[*]  PRMRR uncore base address: 0x%012X" % prmrr_uncore_base)
-                self.logger.log("[*]  PRMRR uncore mask address: 0x%012X" % prmrr_uncore_mask)
-                self.logger.log("[*]  Verifying PRMR uncore address are valid")
-                self.logger.log("[*]      PRMRR uncore mask valid: 0x%u" % prmrr_uncore_mask_vld)
-                if prmrr_uncore_mask_vld == 0x1:
-                    self.logger.log_good( "Mcheck marked uncore PRMRR address as valid" )
+                self.logger.log("[*]  PRMRR base address: 0x%012X" % prmrr_base)
+                self.logger.log("[*]  Verifying PRMR memory type is valid")
+                self.logger.log("[*]  PRMRR memory type : 0x%X" % prmrr_base_memtype)
+                if prmrr_base_memtype == 0x6:
+                    self.logger.log_good( "PRMRR memory type is WB as expected" )
                 else:
-                    self.logger.log_failed( "Mcheck marked uncore PRMRR address as invalid" )
+                    self.logger.log_failed( "Unexpected PRMRR memory type (not WB)" )
                     self.res = ModuleResult.FAILED
-                self.logger.log("[*]  Verifying if PRMR uncore mask register is locked")
-                self.logger.log("[*]      PRMRR uncore mask lock: 0x%u" % prmrr_uncore_mask_lock)
-                if prmrr_uncore_mask_lock == 0x1:
-                    self.logger.log_good( "PMRR uncore MASK register is locked" )
+                self.logger.log("[*]  PRMRR mask address: 0x%012X" % prmrr_mask)
+                self.logger.log("[*]  Verifying PRMR address are valid")
+                self.logger.log("[*]      PRMRR mask valid: 0x%u" % prmrr_mask_vld)
+                if prmrr_mask_vld == 0x1:
+                    self.logger.log_good( "Mcheck marked PRMRR address as valid" )
                 else:
-                    self.logger.log_failed( "PMRR uncore MASK register is not locked" )
+                    self.logger.log_failed( "Mcheck marked PRMRR address as invalid" )
                     self.res = ModuleResult.FAILED
+                self.logger.log("[*]  Verifying if PRMR mask register is locked")
+                self.logger.log("[*]      PRMRR mask lock: 0x%u" % prmrr_mask_lock)
+                if prmrr_mask_lock == 0x1:
+                    self.logger.log_good( "PRMRR MASK register is locked" )
+                else:
+                    self.logger.log_failed( "PRMRR MASK register is not locked" )
+                    self.res = ModuleResult.FAILED
+                if check_uncore_vals:
+                    self.logger.log("[*]  PRMRR uncore base address: 0x%012X" % prmrr_uncore_base)
+                    self.logger.log("[*]  PRMRR uncore mask address: 0x%012X" % prmrr_uncore_mask)
+                    self.logger.log("[*]  Verifying PRMR uncore address are valid")
+                    self.logger.log("[*]      PRMRR uncore mask valid: 0x%u" % prmrr_uncore_mask_vld)
+                    if prmrr_uncore_mask_vld == 0x1:
+                        self.logger.log_good( "Mcheck marked uncore PRMRR address as valid" )
+                    else:
+                        self.logger.log_failed( "Mcheck marked uncore PRMRR address as invalid" )
+                        self.res = ModuleResult.FAILED
+                    self.logger.log("[*]  Verifying if PRMR uncore mask register is locked")
+                    self.logger.log("[*]      PRMRR uncore mask lock: 0x%u" % prmrr_uncore_mask_lock)
+                    if prmrr_uncore_mask_lock == 0x1:
+                        self.logger.log_good( "PMRR uncore MASK register is locked" )
+                    else:
+                        self.logger.log_failed( "PMRR uncore MASK register is not locked" )
+                        self.res = ModuleResult.FAILED
 
         if sgx_cpu_support and bios_feature_control_enable and locked:
             sgx1_instr_support = False
