@@ -53,6 +53,8 @@ import traceback
 #try:                import importlib
 #except ImportError: _importlib = False
 
+# DEBUG Flags
+QUIET_PCI_ENUM = True
 
 class RegisterType:
     PCICFG    = 'pcicfg'
@@ -680,7 +682,12 @@ class Chipset:
 
     def init_cfg_bus( self ):
         if logger().DEBUG: logger().log( '[*] loading device buses..' )
+        if QUIET_PCI_ENUM:
+            old_hal_state = logger().HAL
+            logger().HAL = False
         enum_devices = self.pci.enumerate_devices()
+        if QUIET_PCI_ENUM:
+            logger().HAL = old_hal_state
         for config_device in self.Cfg.CONFIG_PCI:
             device_data = self.Cfg.CONFIG_PCI[config_device]
             xml_vid  = device_data.get( 'vid', None )
