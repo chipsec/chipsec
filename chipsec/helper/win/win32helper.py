@@ -528,7 +528,6 @@ class Win32Helper(Helper):
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
-        if logger().DEBUG: print_buffer( in_buf )
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
         except pywintypes.error as _err:
