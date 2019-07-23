@@ -242,7 +242,8 @@ class Logger:
 
     def log_failed_check( self, text ):
         """Logs a Test as FAILED"""
-        self.log_failed(text)
+        text = "[-] FAILED: " + text
+        self.rootLogger.error(text)
 
     def log_error_check( self, text ):
         """Logs a Test as ERROR"""
@@ -263,11 +264,6 @@ class Logger:
     def log_not_applicable_check( self, text):
         """Logs a Test as Not Applicable"""
         self.log_not_applicable(text)
-
-    def log_failed( self, text ):
-        """Logs a failed message."""
-        text = "[-] FAILED: " + text
-        self.rootLogger.error(text)
 
     def log_warning( self, text ):
         """Logs a Warning message"""

@@ -85,7 +85,7 @@ class sgx_check(BaseModule):
         if locked:
             self.logger.log_good("IA32_Feature_Control locked")
         else:
-            self.logger.log_failed("IA32_Feature_Control is unlocked")
+            self.logger.log_bad("IA32_Feature_Control is unlocked")
             self.res = ModuleResult.FAILED
 
         # Verify that Protected Memory Range (PRM) is supported, MSR IA32_MTRRCAP (FEh) [12]=1
@@ -102,7 +102,7 @@ class sgx_check(BaseModule):
         if prmrr_enable:
             self.logger.log_good( "Protected Memory Range configuration is supported" )
         else:
-            self.logger.log_failed( "Protected Memory Range configuration is not supported" )
+            self.logger.log_bad( "Protected Memory Range configuration is not supported" )
             self.res - ModuleResult.FAILED
 
         # Check PRMRR configurations on each core.
@@ -171,7 +171,7 @@ class sgx_check(BaseModule):
                 (prmrr_base_memtype != prmrr_base_memtype_new)):
                 prmrr_uniform = False
         if not prmrr_uniform:
-            self.logger.log_failed( "PRMRR config is not uniform across all CPUs" )
+            self.logger.log_bad( "PRMRR config is not uniform across all CPUs" )
             self.res = ModuleResult.FAILED
         else:
             self.logger.log_good( "PRMRR config is uniform across all CPUs" )
@@ -213,7 +213,7 @@ class sgx_check(BaseModule):
                 if prmrr_base_memtype == 0x6:
                     self.logger.log_good( "PRMRR memory type is WB as expected" )
                 else:
-                    self.logger.log_failed( "Unexpected PRMRR memory type (not WB)" )
+                    self.logger.log_bad( "Unexpected PRMRR memory type (not WB)" )
                     self.res = ModuleResult.FAILED
                 self.logger.log("[*]  PRMRR mask address: 0x{:012X}".format(prmrr_mask))
                 self.logger.log("[*]  Verifying PRMR address are valid")
@@ -221,14 +221,14 @@ class sgx_check(BaseModule):
                 if prmrr_mask_vld == 0x1:
                     self.logger.log_good( "Mcheck marked PRMRR address as valid" )
                 else:
-                    self.logger.log_failed( "Mcheck marked PRMRR address as invalid" )
+                    self.logger.log_bad( "Mcheck marked PRMRR address as invalid" )
                     self.res = ModuleResult.FAILED
                 self.logger.log("[*]  Verifying if PRMR mask register is locked")
                 self.logger.log("[*]      PRMRR mask lock: 0x%u" % prmrr_mask_lock)
                 if prmrr_mask_lock == 0x1:
                     self.logger.log_good( "PRMRR MASK register is locked" )
                 else:
-                    self.logger.log_failed( "PRMRR MASK register is not locked" )
+                    self.logger.log_bad( "PRMRR MASK register is not locked" )
                     self.res = ModuleResult.FAILED
                 if check_uncore_vals:
                     self.logger.log("[*]  PRMRR uncore base address: 0x%012X" % prmrr_uncore_base)
@@ -238,14 +238,14 @@ class sgx_check(BaseModule):
                     if prmrr_uncore_mask_vld == 0x1:
                         self.logger.log_good( "Mcheck marked uncore PRMRR address as valid" )
                     else:
-                        self.logger.log_failed( "Mcheck marked uncore PRMRR address as invalid" )
+                        self.logger.log_bad( "Mcheck marked uncore PRMRR address as invalid" )
                         self.res = ModuleResult.FAILED
                     self.logger.log("[*]  Verifying if PRMR uncore mask register is locked")
                     self.logger.log("[*]      PRMRR uncore mask lock: 0x%u" % prmrr_uncore_mask_lock)
                     if prmrr_uncore_mask_lock == 0x1:
                         self.logger.log_good( "PMRR uncore MASK register is locked" )
                     else:
-                        self.logger.log_failed( "PMRR uncore MASK register is not locked" )
+                        self.logger.log_bad( "PMRR uncore MASK register is not locked" )
                         self.res = ModuleResult.FAILED
 
         if sgx_cpu_support and bios_feature_control_enable and locked:
@@ -271,7 +271,7 @@ class sgx_check(BaseModule):
                 self.logger.log_good("Intel SGX instructions are supported and available to use")
                 sgx_ok = True
             else:
-                self.logger.log_failed("Intel SGX instructions are not supported on system")
+                self.logger.log_bad("Intel SGX instructions are not supported on system")
                 sgx_ok = False
             if sgx2_instr_support:
                     self.logger.log("[*] SGX-2 instructions are supported")
@@ -288,7 +288,7 @@ class sgx_check(BaseModule):
             if self.res == ModuleResult.PASSED:
                 self.res = ModuleResult.WARNING
         else:
-            self.logger.log_failed("Intel SGX is not available to use")
+            self.logger.log_bad("Intel SGX is not available to use")
             self.res = ModuleResult.FAILED
 
         if self.cs.is_register_defined('BIOS_SE_SVN') and self.cs.is_register_defined('BIOS_SE_SVN_STATUS'):
@@ -312,22 +312,22 @@ class sgx_check(BaseModule):
         self.logger.log("[*]     Lock               : {:d}".format(debug_lock))
 
         if (1 == sgx_debug_status):
-            self.logger.log_failed("SGX debug mode is enabled")
+            self.logger.log_bad("SGX debug mode is enabled")
             self.res = ModuleResult.FAILED
         else:
             self.logger.log_good("SGX debug mode is disabled")
         if (0 == debug_enable):
             self.logger.log_good("Silicon debug features are disabled")
         else:
-            self.logger.log_failed("Silicon debug features are not disabled")
+            self.logger.log_bad("Silicon debug features are not disabled")
             self.res = ModuleResult.FAILED
         if (0 == debug_enable) and (1==sgx_debug_status):
-            self.logger.log_failed("Enabling sgx_debug without enabling debug mode in msr IA32_DEBUG_INTERFACE is not a valid configuration")
+            self.logger.log_bad("Enabling sgx_debug without enabling debug mode in msr IA32_DEBUG_INTERFACE is not a valid configuration")
             self.res = ModuleResult.FAILED
         if (1 == debug_lock):
             self.logger.log_good("Silicon debug Feature Control register is locked")
         else:
-            self.logger.log_failed("Silicon debug Feature Control register is not locked")
+            self.logger.log_bad("Silicon debug Feature Control register is not locked")
             self.res = ModuleResult.FAILED
 
         return self.res
