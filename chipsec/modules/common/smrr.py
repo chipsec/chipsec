@@ -133,8 +133,8 @@ class smrr(BaseModule):
 
         ok = ( 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword( smrrbase ) )
         smrr_ok = smrr_ok and ok 
-        if ok: self.logger.log_passed_check( "SMRR reads are blocked in non-SMM mode" ) #return all F's
-        else:  self.logger.log_failed_check( "SMRR reads are not blocked in non-SMM mode" ) #all F's are not returned
+        if ok: self.logger.log_good( "SMRR reads are blocked in non-SMM mode" ) #return all F's
+        else:  self.logger.bad( "SMRR reads are not blocked in non-SMM mode" ) #all F's are not returned
 
         if (do_modify):
             self.logger.log( "[*] Trying to modify memory at SMRR base 0x{:08X}..".format(smrrbase) )

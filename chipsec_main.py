@@ -328,7 +328,7 @@ class ChipsecMain:
                         if k == 'failed to run':
                             logger().error(mod)
                         elif k == 'passed':
-                            logger().log_passed(mod)
+                            logger().log_passed_check(mod)
                         elif k == 'information':
                             logger().log_information(mod)
                         elif k == 'failed':

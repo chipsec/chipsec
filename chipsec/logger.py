@@ -237,7 +237,8 @@ class Logger:
 
     def log_passed_check( self, text ):
         """Logs a Test as PASSED"""
-        self.log_passed(text)
+        text = "[+] PASSED: " + text
+        self.rootLogger.debug(text)
 
     def log_failed_check( self, text ):
         """Logs a Test as FAILED"""
@@ -262,11 +263,6 @@ class Logger:
     def log_not_applicable_check( self, text):
         """Logs a Test as Not Applicable"""
         self.log_not_applicable(text)
-
-    def log_passed( self, text ):
-        """Logs a passed message."""
-        text = "[+] PASSED: " + text
-        self.rootLogger.debug(text)
 
     def log_failed( self, text ):
         """Logs a failed message."""
