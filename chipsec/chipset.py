@@ -685,7 +685,11 @@ class Chipset:
         if QUIET_PCI_ENUM:
             old_hal_state = logger().HAL
             logger().HAL = False
-        enum_devices = self.pci.enumerate_devices()
+        try:
+            enum_devices = self.pci.enumerate_devices()
+        except:
+            if logger().DEBUG: logger().log('[*] Unable to enumerate PCI devices.')
+            enum_devices = []
         if QUIET_PCI_ENUM:
             logger().HAL = old_hal_state
         for config_device in self.Cfg.CONFIG_PCI:
