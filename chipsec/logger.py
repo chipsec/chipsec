@@ -266,16 +266,12 @@ class Logger:
 
     def log_not_applicable_check( self, text):
         """Logs a Test as Not Applicable"""
-        self.log_not_applicable(text)
+        text = "[*] NOT APPLICABLE: " + text
+        self.rootLogger.warning(text)
 
     def log_warning( self, text ):
         """Logs a Warning message"""
         text = "[!] " + text
-        self.rootLogger.warning(text)
-
-    def log_not_applicable(self, text):
-        """Logs a NOT APPLICABLE message."""
-        text = "[*] NOT APPLICABLE: " + text
         self.rootLogger.warning(text)
 
     def log_heading( self, text ):

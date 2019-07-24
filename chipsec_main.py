@@ -336,7 +336,7 @@ class ChipsecMain:
                         elif k == 'not implemented':
                             logger().log_skipped_check(mod)
                         elif k == 'not applicable':
-                            logger().log_not_applicable(mod)
+                            logger().log_not_applicable_check(mod)
             logger().log ('[CHIPSEC] *****************************************************************')
         else:
             logger().log( "[*] Available tags are:" )
