@@ -251,7 +251,8 @@ class Logger:
 
     def log_skipped_check( self, text ):
         """Logs a Test as Not Implemented"""
-        self.log_skipped(text)
+        text = "[*] NOT IMPLEMENTED: " + text
+        self.rootLogger.warning(text)
 
     def log_warn_check( self, text ):
         """Logs a Warning test, a warning test is considered equal to a PASSED test"""
@@ -268,11 +269,6 @@ class Logger:
     def log_warning( self, text ):
         """Logs a Warning message"""
         text = "[!] WARNING: " + text
-        self.rootLogger.warning(text)
-
-    def log_skipped( self, text ):
-        """Logs a NOT IMPLEMENTED message."""
-        text = "[*] NOT IMPLEMENTED: " + text
         self.rootLogger.warning(text)
 
     def log_not_applicable(self, text):
