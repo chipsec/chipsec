@@ -113,7 +113,7 @@ class HypercallFuzz (BaseModule):
                 code = int(arg1, 16)
             except ValueError:
                 if arg1.lower() not in name2code:
-                    self.logger.error( "Unknown hypercall: '{}'".format(arg1))
+                    self.logger.log_error_check( "Unknown hypercall: '{}'".format(arg1))
                     return ModuleResult.ERROR
                 code = name2code[arg1.lower()]
             count = self.get_int(arg2)

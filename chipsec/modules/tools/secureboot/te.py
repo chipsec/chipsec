@@ -498,7 +498,7 @@ class te(BaseModule):
         if 'generate_te' == mode:
             if len(module_argv) > 1: file_path = module_argv[1]
             if not os.path.exists( file_path ):
-                self.logger.error( "Cannot find file '{}'".format(file_path) )
+                self.logger.log_error_check( "Cannot find file '{}'".format(file_path) )
                 return ModuleResult.ERROR
 
             sts = replace_efi_binary( file_path, file_path )
@@ -508,7 +508,7 @@ class te(BaseModule):
 
             if len(module_argv) > 1: te_cfg    = module_argv[1]
             if not os.path.exists( te_cfg ):
-                self.logger.error( "Cannot find file '{}'".format(te_cfg) )
+                self.logger.log_error_check( "Cannot find file '{}'".format(te_cfg) )
                 return ModuleResult.ERROR
 
             bootloader_paths = get_bootloader_paths( te_cfg )

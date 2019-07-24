@@ -210,13 +210,13 @@ class whitelist(BaseModule):
 
             if op == 'generate':
                 if os.path.exists(json_pth):
-                    self.logger.error("JSON file '{}' already exists. Exiting...".format(json_file))
+                    self.logger.log_error_check("JSON file '{}' already exists. Exiting...".format(json_file))
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.generate_efilist(json_pth)
             elif op == 'check':
                 if not os.path.exists(json_pth):
-                    self.logger.error("JSON file '{}' doesn't exists. Exiting...".format(json_file))
+                    self.logger.log_error_check("JSON file '{}' doesn't exists. Exiting...".format(json_file))
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.check_whitelist(json_pth)

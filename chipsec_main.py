@@ -158,7 +158,7 @@ class ChipsecMain:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
-            logger().log_error_check( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
+            logger().error( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
             raise msg
         return result
 
@@ -321,7 +321,7 @@ class ChipsecMain:
                     if len(summary[k]) > 0: 
                         logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
                         for mod in summary[k]:
-                            logger().error(mod)
+                            logger().log_error_check(mod)
                 else:
                     logger().log( '[CHIPSEC] Modules {:16}{:d}:'.format(k,len(summary[k])) )
                     for mod in summary[k]:

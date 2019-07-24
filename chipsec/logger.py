@@ -247,7 +247,8 @@ class Logger:
 
     def log_error_check( self, text ):
         """Logs a Test as ERROR"""
-        self.error(text)
+        text = "[!] ERROR: " + text
+        self.rootLogger.error(text)
 
     def log_skipped_check( self, text ):
         """Logs a Test as Not Implemented"""

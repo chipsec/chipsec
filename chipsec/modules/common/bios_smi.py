@@ -56,7 +56,7 @@ class bios_smi(BaseModule):
            not self.cs.is_control_defined( 'GlobalSMIEnable' ) or \
            not self.cs.is_control_defined( 'TCOSMILock' ) or \
            not self.cs.is_control_defined( 'SMILock' ):
-            self.logger.error( "Couldn't find definition of required configuration registers" )
+            self.logger.log_error_check( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
         
         #

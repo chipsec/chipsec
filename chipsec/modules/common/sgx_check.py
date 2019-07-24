@@ -334,7 +334,7 @@ class sgx_check(BaseModule):
 
     def run(self, module_argv):
         if self.cs.helper.is_efi():
-            self.logger.error( 'Currently this module cannot run within the EFI Shell. Exiting.' )
+            self.logger.log_skipped_check( 'Currently this module cannot run within the EFI Shell. Exiting.' )
             return ModuleResult.SKIPPED
         else:
             self.res = self.check_sgx_config()

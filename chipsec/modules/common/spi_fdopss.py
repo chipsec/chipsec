@@ -37,7 +37,7 @@ class spi_fdopss(BaseModule):
         self.logger.start_test( "SPI Flash Descriptor Security Override Pin-Strap" )
 
         if not self.cs.is_register_defined( 'HSFS' ):
-            self.logger.error( "Couldn't find definition of required configuration registers (HSFS)" )
+            self.logger.log_error_check( "Couldn't find definition of required configuration registers (HSFS)" )
             return ModuleResult.ERROR
 
         hsfs_reg = self.cs.read_register( 'HSFS' )

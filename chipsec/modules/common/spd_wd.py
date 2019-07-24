@@ -58,7 +58,7 @@ class spd_wd(BaseModule):
             _smbus = smbus.SMBus( self.cs )
             _spd   = spd.SPD( _smbus )
         except BaseException as msg:
-            self.logger.error( msg )
+            self.logger.log_error_check( msg )
             self.res = ModuleResult.ERROR
             return self.res
 

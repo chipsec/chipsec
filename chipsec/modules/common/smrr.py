@@ -52,7 +52,7 @@ class smrr(BaseModule):
         if not self.cs.is_register_defined( 'MTRRCAP' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
-            self.logger.error( "Couldn't find definition of required configuration registers" )
+            self.logger.log_error_check( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
 
         if self.cs.cpu.check_SMRR_supported():

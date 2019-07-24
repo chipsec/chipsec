@@ -99,7 +99,7 @@ class debugenabled(BaseModule):
 
     def run( self, module_argv ):
         if len(module_argv) > 2:
-            self.logger.error('Not expecting any arguments')
+            self.logger.log_error_check('Not expecting any arguments')
             self.res = ModuleResult.ERROR
             return self.res
 
