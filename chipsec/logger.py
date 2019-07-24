@@ -261,7 +261,8 @@ class Logger:
 
     def log_information_check( self, text ):
         """Logs a Information test, an information test"""
-        self.log_information(text)
+        text = "[#] INFORMATION: " + text
+        self.rootLogger.debug(text)
 
     def log_not_applicable_check( self, text):
         """Logs a Test as Not Applicable"""
@@ -308,7 +309,7 @@ class Logger:
 
     def log_information( self, text):
         """Logs a message with information message"""
-        text = "[#] INFORMATION: " + text
+        text = "[#] " + text
         self.rootLogger.debug(text)
 
     def start_test( self, test_name ):
