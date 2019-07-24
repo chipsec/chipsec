@@ -256,7 +256,8 @@ class Logger:
 
     def log_warn_check( self, text ):
         """Logs a Warning test, a warning test is considered equal to a PASSED test"""
-        self.log_warning(text)
+        text = "[!] WARNING: " + text
+        self.rootLogger.warning(text)
 
     def log_information_check( self, text ):
         """Logs a Information test, an information test"""
@@ -268,7 +269,7 @@ class Logger:
 
     def log_warning( self, text ):
         """Logs a Warning message"""
-        text = "[!] WARNING: " + text
+        text = "[!] " + text
         self.rootLogger.warning(text)
 
     def log_not_applicable(self, text):

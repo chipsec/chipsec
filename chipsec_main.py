@@ -316,7 +316,7 @@ class ChipsecMain:
                 elif k == 'warnings':
                     logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
                     for mod in summary[k]:
-                        logger().log_warning(mod)
+                        logger().log_warn_check(mod)
                 elif k == 'exceptions':
                     if len(summary[k]) > 0: 
                         logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
