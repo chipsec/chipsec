@@ -66,7 +66,7 @@ class CMOSCommand(BaseCommand):
         self._cmos.dump()
 
     def cmos_readl(self):
-        self._cmos.read_cmos_low( self.offset )
+        val = self._cmos.read_cmos_low( self.offset )
         self.logger.log( "[CHIPSEC] CMOS low byte 0x{:X} = 0x{:X}".format(self.offset, val) )
 
     def cmos_writel(self):
@@ -85,8 +85,8 @@ class CMOSCommand(BaseCommand):
         t = time()
         try:
             self._cmos = CMOS(self.cs)
-        except CmosRuntimeError, msg:
-            print msg
+        except CmosRuntimeError as msg:
+            print(msg)
             return
 
         self.func()

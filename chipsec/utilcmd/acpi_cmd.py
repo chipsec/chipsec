@@ -85,8 +85,8 @@ class ACPICommand(BaseCommand):
         t = time()
         try:
             self._acpi = ACPI(self.cs)
-        except AcpiRuntimeError, msg:
-            print msg
+        except AcpiRuntimeError as msg:
+            print(msg)
             return
             
         self.func()
