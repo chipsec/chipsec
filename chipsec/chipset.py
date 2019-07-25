@@ -1027,7 +1027,7 @@ class Chipset:
         control = self.Cfg.CONTROLS[ control_name ]
         reg     = control['register']
         field   = control['field']
-        reg_data = self.read_register(reg)
+        reg_data = self.read_register(reg,cpu_thread)
         if with_print: self.print_register(reg, reg_data)
         return self.get_register_field(reg, reg_data, field)
 
