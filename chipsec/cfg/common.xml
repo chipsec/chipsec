@@ -430,19 +430,19 @@ Common (default) XML platform configuration file
       <field name="UE"  bit="2" size="1" desc="Upper 128 Byte Enable"/>
       <field name="LL"  bit="3" size="1" desc="Lower 128 Byte Lock"/>
       <field name="UL"  bit="4" size="1" desc="Upper 128 Byte Lock"/>
-    </register>   
+    </register>
     <register name="GCS" type="mmio" bar="RCBA" offset="0x3410" size="4" desc="General Control and Status">
       <field name="BILD" bit="0"  size="1" desc="BIOS Interface Lock Down"/>
       <field name="BBS"  bit="10" size="2" desc="Boot BIOS Straps"/>
-    </register>   
+    </register>
     <register name="RC" type="mmio" bar="RCBA" offset="0x3400" size="4" desc="RTC Configuration">
       <field name="UE" bit="2" size="1" desc="Upper 128 Byte Enable"/>
       <field name="LL" bit="3" size="1" desc="Lower 128 Byte Lock"/>
       <field name="UL" bit="4" size="1" desc="Upper 128 Byte Lock"/>
-    </register>       
+    </register>
     <register name="BUC" type="mmio" bar="RCBA" offset="0x3414" size="4" desc="Backed Up Control">
       <field name="TS" bit="0" size="1" desc="Top Swap"/>
-    </register>       
+    </register>
 
     <!-- MCHBAR -->
     <!-- Sections 7.40 - 7.41 6th Generation Intel Processor Datasheet -->
@@ -562,7 +562,10 @@ Common (default) XML platform configuration file
       <field name="PhysMask" bit="12" size="20" desc="SMRR address range mask" />
     </register>
     <register name="MTRRCAP"              type="msr" msr="0xFE"  desc="MTRR Capabilities MSR">
+      <field name="Fixed_Range_MTRR" bit="8" size="1" desc="Fixed range MTRRs Supported" />
+      <field name="WC" bit="10" size="1" desc="WC Supported" />
       <field name="SMRR" bit="11" size="1" desc="SMRR Supported" />
+      <field name="PRMRR" bit="12" size="1" desc="PRMRR Supported" />
     </register>
     <register name="IA32_FEATURE_CONTROL" type="msr" msr="0x3A"  desc="Processor Feature Control">
       <field name="LOCK"                 bit="0"  size="1"  desc="Lock" />
@@ -571,7 +574,10 @@ Common (default) XML platform configuration file
       <field name="Reserved0"            bit="3"  size="5"  desc="Reserved" />
       <field name="SENTER_LOCAL_EN"      bit="8"  size="7"  desc="SENTER Local Functions Enable" />
       <field name="SENTER_GLOBAL_EN"     bit="15" size="1"  desc="SENTER Global Enable" />
-      <field name="Reserved1"            bit="16" size="4"  desc="Reserved" />
+      <field name="Reserved1"            bit="16" size="1"  desc="Reserved" />
+      <field name="SGX_LAUNCH_CTRL_EN"   bit="17" size="1"  desc="SGX Launch Control Enable" />
+      <field name="SGX_GLOBAL_EN"        bit="18" size="1"  desc="SGX Global Enable" />
+      <field name="Reserved2"            bit="19" size="1"  desc="Reserved" />
       <field name="LMCE_ON"              bit="20" size="1"  desc="Turn Local Machine Check On" />
     </register>
     <register name="IA32_APIC_BASE" type="msr" msr="0x1B"  desc="Local APIC Base">
@@ -590,6 +596,7 @@ Common (default) XML platform configuration file
     <register name="IA32_SPEC_CTRL" type="msr" msr="0x48" desc="Speculation Control MSR">
       <field name="IBRS"  bit="0" size="1" desc="Enable Indirect Branch Restricted Speculation (IBRS)" />
       <field name="STIBP" bit="1" size="1" desc="Enable Single Thread Indirect Branch Predictors (STIBP)" />
+      <field name="SSBD"  bit="2" size="1" desc="Delays speculative execution of load until the addr for all older stores are known" />
     </register>
     <register name="IA32_PRED_CMD" type="msr" msr="0x49" desc="Prediction Command MSR">
       <field name="IBPB"  bit="0" size="1" desc="IBPB Command" />
@@ -639,7 +646,7 @@ Common (default) XML platform configuration file
     <register name="SGX_DEBUG_MODE" type="msr" msr="0x503" desc="SGX debug mode resiter">
       <field name="SGX_DEBUG_MODE_STATUS_BIT"   bit="1"  size="1" desc="Debug mode status but"/>
     </register>
-       
+
   </registers>
 
 
