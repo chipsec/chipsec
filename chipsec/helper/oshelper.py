@@ -492,7 +492,7 @@ class OsHelper:
         if self.use_native_api() and hasattr(self.helper, 'native_set_affinity'):
             ret = self.helper.native_set_affinity( value )
         else:
-            ret = self.helper.get_affinity()
+            ret = self.helper.set_affinity(value)
         if not self.filecmds is None:
             self.filecmds.AddElement("set_affinity",(value),ret)
         return ret

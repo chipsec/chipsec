@@ -80,10 +80,10 @@ IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
 
-LZMA  = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress")
-TIANO = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-EFI   = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-BROTLI = os.path.join(os.path.dirname(sys.argv[0]),chipsec.file.TOOLS_DIR,"compression","bin","Brotli")
+LZMA  = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress")
+TIANO = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
+EFI   = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
+BROTLI = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","Brotli")
 
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
@@ -481,7 +481,15 @@ class LinuxHelper(Helper):
     def native_read_io_port(self, io_port, size):
         if self.devport_available():
             os.lseek(self.dev_port, io_port, os.SEEK_SET)
-            return os.read(self.dev_port, size)
+
+            value = os.read(self.dev_port,size)
+            if 1 == size:
+                return struct.unpack("B",value)[0]
+            elif 2 == size:
+                return struct.unpack("H",value)[0]
+            elif 4 == size:
+                return struct.unpack("I",value)[0]
+
 
     def write_io_port( self, io_port, value, size ):
         in_buf = struct.pack( "3"+self._pack, io_port, size, value )
@@ -490,7 +498,10 @@ class LinuxHelper(Helper):
     def native_write_io_port(self, io_port, newval, size):
         if self.devport_available():
             os.lseek(self.dev_port, io_port, os.SEEK_SET)
-            written = os.write(self.dev_port, newval)
+            if 1 == size: fmt = 'B'
+            elif 2 == size: fmt = 'H'
+            elif 4 == size: fmt = 'I'
+            written = os.write(self.dev_port, struct.pack(fmt,newval))
             if written != size:
                 if logger().DEBUG: logger().error("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
 
@@ -1073,7 +1084,7 @@ class LinuxHelper(Helper):
 
     def unknown_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type2]:
+        for CompressionType in self.decompression_oder_type2:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type2,failed_times)
@@ -1084,7 +1095,7 @@ class LinuxHelper(Helper):
         
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type1]:
+        for CompressionType in self.decompression_oder_type1:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type1,failed_times)
@@ -1137,17 +1148,13 @@ class LinuxHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             decode_str = TIANO + decode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            decode_str = EFI + decode_str + "--uefi"
+            decode_str = EFI + decode_str + "--uefi "
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
             decode_str = LZMA + decode_str
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
-        try:
-            data = subprocess.check_output(decode_str,shell=True)
-        except subprocess.CalledProcessError:
-            data = 1
-            pass
+        data = subprocess.call(decode_str,shell=True)
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False

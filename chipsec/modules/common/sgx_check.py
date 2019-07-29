@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -106,19 +106,24 @@ class sgx_check(BaseModule):
             self.res - ModuleResult.FAILED
 
         # Check PRMRR configurations on each core.
-        self.logger.log("\n[*] Verifying PRMR Configuration on each core.")
+        self.logger.log("\n[*] Verifying PRMRR Configuration on each core.")
         first_iter = True
         prmrr_valid_config = 0
         prmrr_base = 0
         prmrr_base_memtype = 0
         prmrr_uncore_base = 0
+        prmrr_uncore_base_new = 0
         prmrr_mask = 0
         prmrr_uncore_mask = 0
+        prmrr_uncore_mask_new = 0
         prmrr_mask_vld = 0
         prmrr_uncore_mask_vld = 0
+        prmrr_uncore_mask_vld_new = 0
         prmrr_mask_lock = 0
         prmrr_uncore_mask_lock = 0
+        prmrr_uncore_mask_lock_new = 0
         prmrr_uniform = True
+        check_uncore_vals = self.cs.is_register_defined('PRMRR_UNCORE_PHYBASE') and self.cs.is_register_defined('PRMRR_UNCORE_MASK')
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             prmrr_valid_config_new = self.cs.read_register('PRMRR_VALID_CONFIG', tid)
             prmrr_base_new = self.cs.read_register_field('PRMRR_PHYBASE', 'PRMRR_base_address_fields', False, tid)
@@ -126,10 +131,11 @@ class sgx_check(BaseModule):
             prmrr_mask_new = self.cs.read_register_field('PRMRR_MASK', 'PRMRR_mask_bits', False, tid)
             prmrr_mask_vld_new = self.cs.read_register_field('PRMRR_MASK', 'PRMRR_VLD', False, tid)
             prmrr_mask_lock_new = self.cs.read_register_field('PRMRR_MASK', 'PRMRR_LOCK', False, tid)
-            prmrr_uncore_base_new = self.cs.read_register_field('PRMRR_UNCORE_PHYBASE', 'PRMRR_base_address_fields', False, tid)
-            prmrr_uncore_mask_new = self.cs.read_register_field('PRMRR_UNCORE_MASK', 'PRMRR_mask_bits', False, tid)
-            prmrr_uncore_mask_vld_new = self.cs.read_register_field('PRMRR_UNCORE_MASK', 'PRMRR_VLD', False, tid)
-            prmrr_uncore_mask_lock_new = self.cs.read_register_field('PRMRR_UNCORE_MASK', 'PRMRR_LOCK', False, tid)
+            if check_uncore_vals:
+                prmrr_uncore_base_new = self.cs.read_register_field('PRMRR_UNCORE_PHYBASE', 'PRMRR_base_address_fields', False, tid)
+                prmrr_uncore_mask_new = self.cs.read_register_field('PRMRR_UNCORE_MASK', 'PRMRR_mask_bits', False, tid)
+                prmrr_uncore_mask_vld_new = self.cs.read_register_field('PRMRR_UNCORE_MASK', 'PRMRR_VLD', False, tid)
+                prmrr_uncore_mask_lock_new = self.cs.read_register_field('PRMRR_UNCORE_MASK', 'PRMRR_LOCK', False, tid)
             if logger().VERBOSE:
                 self.logger.log("[*]      CPU{:d} PRMRR_VALID_CONFIG: 0x{:010X}".format(tid, prmrr_valid_config_new))
                 self.logger.log("[*]      CPU{:d} PRMRR base address: 0x{:012X}".format(tid, prmrr_base_new))
@@ -137,10 +143,11 @@ class sgx_check(BaseModule):
                 self.logger.log("[*]      CPU{:d} PRMRR mask address: 0x{:012X}".format(tid, prmrr_mask_new))
                 self.logger.log("[*]      CPU{:d} PRMRR mask valid: 0x{:d}".format(tid, prmrr_mask_vld_new))
                 self.logger.log("[*]      CPU{:d} PRMRR mask lock: 0x{:d}".format(tid, prmrr_mask_lock_new))
-                self.logger.log("[*]      CPU{:d} PRMRR uncore base address: 0x{:012X}".format(tid, prmrr_uncore_base_new))
-                self.logger.log("[*]      CPU{:d} PRMRR uncore mask address: 0x{:012X}".format(tid, prmrr_uncore_mask_new))
-                self.logger.log("[*]      CPU{:d} PRMRR uncore mask valid: 0x{:d}".format(tid, prmrr_uncore_mask_vld_new))
-                self.logger.log("[*]      CPU{:d} PRMRR uncore mask lock: 0x{:d}".format(tid, prmrr_uncore_mask_lock_new))
+                if check_uncore_vals:
+                    self.logger.log("[*]      CPU{:d} PRMRR uncore base address: 0x{:012X}".format(tid, prmrr_uncore_base_new))
+                    self.logger.log("[*]      CPU{:d} PRMRR uncore mask address: 0x{:012X}".format(tid, prmrr_uncore_mask_new))
+                    self.logger.log("[*]      CPU{:d} PRMRR uncore mask valid: 0x{:d}".format(tid, prmrr_uncore_mask_vld_new))
+                    self.logger.log("[*]      CPU{:d} PRMRR uncore mask lock: 0x{:d}".format(tid, prmrr_uncore_mask_lock_new))
             if first_iter:
                 prmrr_valid_config = prmrr_valid_config_new
                 prmrr_base = prmrr_base_new
@@ -168,65 +175,78 @@ class sgx_check(BaseModule):
             self.res = ModuleResult.FAILED
         else:
             self.logger.log_good( "PRMRR config is uniform across all CPUs" )
-            prmrr_config_string = "PRMRR config supports:"
+            prmrr_configs = []
             # NB: BWG Provides only a list of 4 possible values, see item 5, section 2.1. So values e.g. 0x050 are prhibited, report error.
             config_support = False
+            if (BIT0 & prmrr_valid_config):
+                prmrr_configs.append("1M")
+                config_support = True
+            if (BIT1 & prmrr_valid_config):
+                prmrr_configs.append("2M")
+                config_support = True
             if (BIT5 & prmrr_valid_config):
-                prmrr_config_string += "32M"
+                prmrr_configs.append("32M")
                 config_support = True
             if (BIT6 & prmrr_valid_config):
-                prmrr_config_string += ", 64M"
+                prmrr_configs.append("64M")
                 config_support = True
             if (BIT7 & prmrr_valid_config):
-                prmrr_config_string += ", 128M"
+                prmrr_configs.append("128M")
                 config_support = True
             if (BIT8 & prmrr_valid_config):
-                prmrr_config_string += ", 128M"
+                prmrr_configs.append("256M")
                 config_support = True
             if config_support:
-                self.logger.log("[*]  {}".format(prmrr_config_string))
+                self.logger.log("[*]  PRMRR config supports: {}".format(', '.join(prmrr_configs)))
             else:
                 self.logger.log("[*] PRMMR config has improper value")
                 sgx_ok = False
-            self.logger.log("[*]  PRMRR base address: 0x{:012X}".format(prmrr_base))
-            self.logger.log("[*]  Verifying PRMR memory type is valid")
-            self.logger.log("[*]  PRMRR memory type : 0x{:X}".format(prmrr_base_memtype))
-            if prmrr_base_memtype == 0x6:
-                self.logger.log_good( "PRMRR memory type is WB as expected" )
+
+            # In some cases the PRMRR base and mask may be zero
+            if prmrr_base == 0 and prmrr_mask == 0:
+                self.logger.log("[*] PRMRR Base and Mask are set to zero.  PRMRR appears to be disabled.")
+                self.logger.log("[*]   Skipping Base/Mask settings.")
             else:
-                self.logger.log_failed( "Unexpected PRMRR memory type (not WB)" )
-                self.res = ModuleResult.FAILED
-            self.logger.log("[*]  PRMRR mask address: 0x{:012X}".format(prmrr_mask))
-            self.logger.log("[*]  Verifying PRMR address are valid")
-            self.logger.log("[*]      PRMRR mask valid: 0x{:d}".format(prmrr_mask_vld))
-            if prmrr_mask_vld == 0x1:
-                self.logger.log_good( "Mcheck marked PRMRR address as valid" )
-            else:
-                self.logger.log_failed( "Mcheck marked PRMRR address as invalid" )
-                self.res = ModuleResult.FAILED
-            self.logger.log("[*]  Verifying if PRMR mask register is locked")
-            self.logger.log("[*]      PRMRR mask lock: 0x{:d}".format(prmrr_mask_lock))
-            if prmrr_mask_lock == 0x1:
-                self.logger.log_good( "PRMRR MASK register is locked" )
-            else:
-                self.logger.log_failed( "PRMRR MASK register is not locked" )
-                self.res = ModuleResult.FAILED
-            self.logger.log("[*]  PRMRR uncore base address: 0x{:012X}".format(prmrr_uncore_base))
-            self.logger.log("[*]  PRMRR uncore mask address: 0x{:012X}".format(prmrr_uncore_mask))
-            self.logger.log("[*]  Verifying PRMR uncore address are valid")
-            self.logger.log("[*]      PRMRR uncore mask valid: 0x{:d}".format(prmrr_uncore_mask_vld))
-            if prmrr_uncore_mask_vld == 0x1:
-                self.logger.log_good( "Mcheck marked uncore PRMRR address as valid" )
-            else:
-                self.logger.log_failed( "Mcheck marked uncore PRMRR address as invalid" )
-                self.res = ModuleResult.FAILED
-            self.logger.log("[*]  Verifying if PRMR uncore mask register is locked")
-            self.logger.log("[*]      PRMRR uncore mask lock: 0x{:d}".format(prmrr_uncore_mask_lock))
-            if prmrr_uncore_mask_lock == 0x1:
-                self.logger.log_good( "PMRR uncore MASK register is locked" )
-            else:
-                self.logger.log_failed( "PMRR uncore MASK register is not locked" )
-                self.res = ModuleResult.FAILED
+                self.logger.log("[*]  PRMRR base address: 0x{:012X}".format(prmrr_base))
+                self.logger.log("[*]  Verifying PRMR memory type is valid")
+                self.logger.log("[*]  PRMRR memory type : 0x{:X}".format(prmrr_base_memtype))
+                if prmrr_base_memtype == 0x6:
+                    self.logger.log_good( "PRMRR memory type is WB as expected" )
+                else:
+                    self.logger.log_failed( "Unexpected PRMRR memory type (not WB)" )
+                    self.res = ModuleResult.FAILED
+                self.logger.log("[*]  PRMRR mask address: 0x{:012X}".format(prmrr_mask))
+                self.logger.log("[*]  Verifying PRMR address are valid")
+                self.logger.log("[*]      PRMRR uncore mask valid: 0x{:d}".format(prmrr_uncore_mask_vld))
+                if prmrr_mask_vld == 0x1:
+                    self.logger.log_good( "Mcheck marked PRMRR address as valid" )
+                else:
+                    self.logger.log_failed( "Mcheck marked PRMRR address as invalid" )
+                    self.res = ModuleResult.FAILED
+                self.logger.log("[*]  Verifying if PRMR mask register is locked")
+                self.logger.log("[*]      PRMRR mask lock: 0x%u" % prmrr_mask_lock)
+                if prmrr_mask_lock == 0x1:
+                    self.logger.log_good( "PRMRR MASK register is locked" )
+                else:
+                    self.logger.log_failed( "PRMRR MASK register is not locked" )
+                    self.res = ModuleResult.FAILED
+                if check_uncore_vals:
+                    self.logger.log("[*]  PRMRR uncore base address: 0x%012X" % prmrr_uncore_base)
+                    self.logger.log("[*]  PRMRR uncore mask address: 0x%012X" % prmrr_uncore_mask)
+                    self.logger.log("[*]  Verifying PRMR uncore address are valid")
+                    self.logger.log("[*]      PRMRR uncore mask valid: 0x%u" % prmrr_uncore_mask_vld)
+                    if prmrr_uncore_mask_vld == 0x1:
+                        self.logger.log_good( "Mcheck marked uncore PRMRR address as valid" )
+                    else:
+                        self.logger.log_failed( "Mcheck marked uncore PRMRR address as invalid" )
+                        self.res = ModuleResult.FAILED
+                    self.logger.log("[*]  Verifying if PRMR uncore mask register is locked")
+                    self.logger.log("[*]      PRMRR uncore mask lock: 0x%u" % prmrr_uncore_mask_lock)
+                    if prmrr_uncore_mask_lock == 0x1:
+                        self.logger.log_good( "PMRR uncore MASK register is locked" )
+                    else:
+                        self.logger.log_failed( "PMRR uncore MASK register is not locked" )
+                        self.res = ModuleResult.FAILED
 
         if sgx_cpu_support and bios_feature_control_enable and locked:
             sgx1_instr_support = False
@@ -271,13 +291,14 @@ class sgx_check(BaseModule):
             self.logger.log_failed("Intel SGX is not available to use")
             self.res = ModuleResult.FAILED
 
-        self.logger.log("[*] BIOS_SE_SVN : 0x{:016X}".format(self.cs.read_register('BIOS_SE_SVN')))
-        self.logger.log("[*]     PFAT_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'PFAT_SE_SVN')))
-        self.logger.log("[*]     ANC_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'ANC_SE_SVN')))
-        self.logger.log("[*]     SCLEAN_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'SCLEAN_SE_SVN')))
-        self.logger.log("[*]     SINIT_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'SINIT_SE_SVN')))
-        self.logger.log("[*] BIOS_SE_SVN_STATUS : 0x{:016X}".format(self.cs.read_register('BIOS_SE_SVN_STATUS')))
-        self.logger.log("[*]     BIOS_SE_SVN ACM threshold lock : 0x{:d}".format(self.cs.read_register_field('BIOS_SE_SVN_STATUS', 'LOCK')))
+        if self.cs.is_register_defined('BIOS_SE_SVN') and self.cs.is_register_defined('BIOS_SE_SVN_STATUS'):
+            self.logger.log("[*] BIOS_SE_SVN : 0x{:016X}".format(self.cs.read_register('BIOS_SE_SVN')))
+            self.logger.log("[*]     PFAT_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'PFAT_SE_SVN')))
+            self.logger.log("[*]     ANC_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'ANC_SE_SVN')))
+            self.logger.log("[*]     SCLEAN_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'SCLEAN_SE_SVN')))
+            self.logger.log("[*]     SINIT_SE_SVN : 0x{:02X}".format(self.cs.read_register_field('BIOS_SE_SVN', 'SINIT_SE_SVN')))
+            self.logger.log("[*] BIOS_SE_SVN_STATUS : 0x{:016X}".format(self.cs.read_register('BIOS_SE_SVN_STATUS')))
+            self.logger.log("[*]     BIOS_SE_SVN ACM threshold lock : 0x{:d}".format(self.cs.read_register_field('BIOS_SE_SVN_STATUS', 'LOCK')))
 
         self.logger.log("\n[*] Check SGX debug feature settings")
         sgx_debug_status = self.cs.read_register_field('SGX_DEBUG_MODE', 'SGX_DEBUG_MODE_STATUS_BIT')

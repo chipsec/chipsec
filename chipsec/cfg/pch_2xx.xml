@@ -26,8 +26,8 @@ XML configuration file for 200 series PCH based platforms
   <mmio>
     <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
-    <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" desc="Power Management Register Range"/>
-    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" desc="Sideband Register Access BAR"/>
+    <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
+    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
   </mmio>
 
   <!-- #################################### -->
@@ -36,8 +36,8 @@ XML configuration file for 200 series PCH based platforms
   <!--                                      -->
   <!-- #################################### -->
   <io>
-    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
-    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" desc="ACPI Base Address"/>
+    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
     <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
 
     <!-- old definition -->
@@ -295,6 +295,11 @@ XML configuration file for 200 series PCH based platforms
     <register name="FLMSTR1" type="mmio" bar="FMBA" offset="0x0" size="4" desc="Flash Master 1">
       <field name="MRRA"    bit="8"  size="12" desc="Master Region Read Access"/>
       <field name="MRWA"    bit="20" size="12" desc="Master Region Write Access"/>
+    </register>
+
+    <!-- DCI registers -->
+    <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
+      <field name="ENABLE" bit="4" size="1"/>
     </register>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

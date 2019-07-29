@@ -2,15 +2,18 @@
 <configuration platform="PCH_C61X" >
 <!--
 XML configuration file for C610 series PCH
-
-* Intel(R) C610 Series Chipset Family Platform Controller Hub (PCH)
+  Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub (PCH) datasheet
   https://ark.intel.com/products/series/98915/Intel-C610-Series-Chipsets
 -->
+
+  <pci>
+    <device name="LPC"        bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x8D44,0x8D47" />
+  </pci>
 
   <registers>
 
     <!-- LPC Interface Bridge -->
-    <register name="GEN_PMCON_LOCK" type="pcicfg" bus="0" dev="0x1F" fun="0" offset="0xA6" size="1" desc="General Power Management Configuration Lock">
+    <register name="GEN_PMCON_LOCK" type="pcicfg" device="LPC" offset="0xA6" size="1" desc="General Power Management Configuration Lock">
       <field name="ACPI_BASE_LOCK"   bit="1" size="1" desc="Lock down ACPI Base Address (ABASE)"/>
       <field name="SLP_STR_POL_LOCK" bit="2" size="1" desc="SLP Stretching Policy Lock-Down"/>
     </register>
@@ -38,5 +41,9 @@ XML configuration file for C610 series PCH
     </register>
 
   </registers>
+
+  <controls>
+    <control name="ACPIBaseLock" register="GEN_PMCON_LOCK" field="ACPI_BASE_LOCK" desc="Lock Down ACPI Base Address" />
+  </controls>
 
 </configuration>

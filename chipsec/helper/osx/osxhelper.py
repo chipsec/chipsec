@@ -214,7 +214,7 @@ class OSXHelper(Helper):
 
     def unknown_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type2]:
+        for CompressionType in self.decompression_oder_type2:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type2,failed_times)
@@ -225,7 +225,7 @@ class OSXHelper(Helper):
         
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type1]:
+        for CompressionType in self.decompression_oder_type1:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type1,failed_times)

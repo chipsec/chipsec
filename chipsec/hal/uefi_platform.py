@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -532,6 +532,24 @@ Reserved  : 0x%04X
 Reserved1 : 0x%08X
 """ % ( UUID(bytes_le=self.Signature), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
 
+VARIABLE_STORE_SIGNATURE_VSS2 = UUID('DDCF3617-3275-4164-98B6-FE85707FFE7D').bytes_le
+VARIABLE_STORE_SIGNATURE_VSS2_AUTH = UUID('AAF32C78-947B-439A-A180-2E144EC37792').bytes_le
+
+VARIABLE_STORE_HEADER_FMT_VSS2 = '=16sIBBHI'
+class VARIABLE_STORE_HEADER_VSS2( namedtuple('VARIABLE_STORE_HEADER_VSS2', 'Signature Size Format State Reserved Reserved1') ):
+    __slots__ = ()
+    def __str__(self):
+        return """
+EFI Variable Store
+-----------------------------
+Signature : %s
+Size      : 0x%08X bytes
+Format    : 0x%02X
+State     : 0x%02X
+Reserved  : 0x%04X
+Reserved1 : 0x%08X
+""" % ( UUID(bytes_le=self.Signature), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+
 
 HDR_FMT_VSS                   = '<HBBIII4s2s2s8s'
 #HDR_SIZE_VSS                  = struct.calcsize( HDR_FMT_VSS )
@@ -796,7 +814,7 @@ def EFIvar_EVSA(nvram_buf):
     sn = 0
     EVSA_RECORD = "<IIII"
     evsa_rec_size = struct.calcsize(EVSA_RECORD)
-    GUID_RECORD = "<HIHH8s"
+    GUID_RECORD = "<H4s2s2s8s"
     guid_rc_size = struct.calcsize(GUID_RECORD)
     fof = 0
     variables = dict()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -104,6 +104,7 @@ class ChipsecUtil:
         options = parser.add_argument_group('Options')
         options.add_argument('-h', '--help',dest='show_help', help="show this message and exit",action='store_true')
         options.add_argument('-v','--verbose', help='verbose mode', action='store_true')
+        options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
         options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.Chipset_Code, type=str.upper)
@@ -117,8 +118,8 @@ class ChipsecUtil:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
+        if self.hal:
             logger().HAL     = True
-            logger().DEBUG   = True
         if self.debug:
             logger().DEBUG   = True
         if self.log:
@@ -198,15 +199,17 @@ class ChipsecUtil:
             comm.run()
             if comm.requires_driver():
                 self._cs.destroy(True)
+            return comm.ExitCode
 
         elif cmd == 'help':
             if len(self.argv) <= 2:
                 self.chipsec_util_help()
             else:
                 self.chipsec_util_help(self.argv[2])
+            return ExitCode.OK
         else:
             logger().error( "Unknown command '{:.32s}'".format(cmd) )
-        return ExitCode.OK
+        return ExitCode.WARNING
 
     def set_logfile(self, logfile):
         """

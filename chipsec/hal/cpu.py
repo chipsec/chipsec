@@ -119,12 +119,13 @@ class CPU(hal_base.HALBase):
     def get_number_threads_from_APIC_table(self):
         _acpi = acpi.ACPI( self.cs )
         dACPIID = {}
-        (table_header,APIC_object,table_header_blob,table_blob) = _acpi.get_parse_ACPI_table( acpi.ACPI_TABLE_SIG_APIC )
-        for structure in APIC_object.apic_structs:
-            if 0x00 == structure.Type:
-                if not structure.ACICID in dACPIID:
-                    if 1 == structure.Flags:
-                        dACPIID[ structure.APICID ] = structure.ACPIProcID
+        for apic in _acpi.get_parse_ACPI_table( acpi.ACPI_TABLE_SIG_APIC ):
+            table_header,APIC_object,table_header_blob,table_blob = apic
+            for structure in APIC_object.apic_structs:
+                if 0x00 == structure.Type:
+                    if dACPIID.has_key( structure.APICID ) == False:
+                        if 1 == structure.Flags:
+                            dACPIID[ structure.APICID ] = structure.ACPIProcID
         return len( dACPIID )
     
     # determine number of physical sockets using the CPUID and APIC ACPI table
@@ -193,9 +194,6 @@ class CPU(hal_base.HALBase):
     # Check that SMRR is supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
     def check_SMRR_supported( self ):
-        # MS HyperV workaround. HyperV reports SMRR support but throws and exception on access to SMRR msrs.
-        # Not a problem for chipsec driver but crashes RwDrv.
-        if self.check_vmm() == VMM_HYPER_V: return False
         mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
         if logger().HAL: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
         smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )

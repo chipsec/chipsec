@@ -389,7 +389,7 @@ class Win32Helper(Helper):
                  os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
-                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,hs) )
+                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,int(hs)) )
         except win32service.error as err:
             if (winerror.ERROR_SERVICE_EXISTS == err.args[0]):
                 if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
@@ -491,7 +491,7 @@ class Win32Helper(Helper):
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
-            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, self.driver_handle) )
+            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, int(self.driver_handle)) )
         return self.driver_handle
 
     def check_driver_handle( self ):
@@ -500,7 +500,7 @@ class Win32Helper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             self.get_driver_handle()
-            logger().warn( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, self.driver_handle) )
+            logger().warn( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, int(self.driver_handle)) )
             return False
         return True
 
@@ -821,7 +821,7 @@ class Win32Helper(Helper):
     # Interrupts
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
-        out_length = 0
+        out_length = struct.calcsize(_smi_msg_t_fmt)
         out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( _smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
@@ -919,7 +919,7 @@ class Win32Helper(Helper):
 
     def unknown_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type2]:
+        for CompressionType in self.decompression_oder_type2:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type2,failed_times)
@@ -930,7 +930,7 @@ class Win32Helper(Helper):
         
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
-        for CompressionType in [self.decompression_oder_type1]:
+        for CompressionType in self.decompression_oder_type1:
             res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
             if res == True:
                 self.rotate_list(self.decompression_oder_type1,failed_times)

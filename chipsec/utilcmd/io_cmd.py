@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -84,11 +84,17 @@ class PortIOCommand(BaseCommand):
             if   0x1 == width: self.cs.io.write_port_byte( io_port, value )
             elif 0x2 == width: self.cs.io.write_port_word( io_port, value )
             elif 0x4 == width: self.cs.io.write_port_dword( io_port, value )
+            else:
+                self.logger.log( "Invalid write size requested. 1,2,4 supported")
+                return
         else:
             if   0x1 == width: value = self.cs.io.read_port_byte( io_port )
             elif 0x2 == width: value = self.cs.io.read_port_word( io_port )
             elif 0x4 == width: value = self.cs.io.read_port_dword( io_port )
-            self.logger.log( "[CHIPSEC] IN 0x{:04X} -> 0x{:08X} (size = 0x{:02X})".format(io_port, value, width) )
+            else:
+                self.logger.log( "Invalid read size requested. 1,2,4 supported")
+                return
+            self.logger.log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
 
         self.logger.log( "[CHIPSEC] (io) time elapsed {:.3f}".format(time.time()-t) )
 

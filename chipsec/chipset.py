@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
+# (c) 2010-2019 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -40,6 +40,7 @@ import re
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
+from chipsec.hal.pci import PCI_HDR_RID_OFF
 
 from chipsec.cfg.common import Cfg
 from chipsec.logger import logger
@@ -89,6 +90,7 @@ CHIPSET_ID_CFL     = 16
 CHIPSET_ID_APL     = 17
 CHIPSET_ID_DNV     = 18
 CHIPSET_ID_WHL     = 19
+CHIPSET_ID_SKX     = 20
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -112,8 +114,9 @@ CHIPSET_CODE_CFL     = 'CFL'
 CHIPSET_CODE_APL     = 'APL'
 CHIPSET_CODE_DNV     = 'DNV'
 CHIPSET_CODE_WHL     = 'WHL'
+CHIPSET_CODE_SKX     = 'SKX'
 
-CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX]
+CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX,CHIPSET_ID_SKX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL,CHIPSET_ID_WHL]
 CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
@@ -204,6 +207,7 @@ Chipset_Dictionary = {
 
 # Xeon v5 Processor (Skylake Server)
 0x1918 : {'name' : 'Skylake Server', 'id' : CHIPSET_ID_SKL,  'code' : CHIPSET_CODE_SKL,  'longname' : 'Intel Xeon Processor E3 v5 (Skylake CPU / Sunrise Point PCH)'},
+0x2020 : {'name' : 'Skylake',        'id' : CHIPSET_ID_SKX , 'code' : CHIPSET_CODE_SKX,  'longname' : 'Intel Xeon Processor E5/E7 v5 (Skylake)' },
 
 # Xeon v6 Processor (Kabylake Server)
 0x5918 : {'name' : 'Kabylake','id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Intel Xeon Processor E3 v6 (Kabylake CPU)' },
@@ -290,12 +294,15 @@ pch_dictionary = {
 # 300 series and Z390 PCH
 0xA306 : {'name' : 'Q370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Q370 (300 series) PCH'},
 0xA304 : {'name' : 'H370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H370 (300 series) PCH'},
+0xA305 : {'name' : 'Z390',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Z390 (300 series) PCH'},
 0xA308 : {'name' : 'B360',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel B360 (300 series) PCH'},
 0xA303 : {'name' : 'H310',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H310 (300 series) PCH'},
+0xA30A : {'name' : 'C242',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel C242 (300 series) PCH'},
+0xA309 : {'name' : 'C246',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel C246 (300 series) PCH'},
 0xA30D : {'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel HM370 (300 series) PCH'},
 0xA30C : {'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'},
 0xA30E : {'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'},
-0x9D84 : {'name' : 'PCH-U', 'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'},
+0x9D84 : {'name' : 'PCH-U',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'},
 
 # C600 and X79 series PCH
 0x1D41 : {'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X79 series PCH'},
@@ -363,11 +370,13 @@ class Chipset:
 
         self.vid            = 0xFFFF
         self.did            = 0xFFFF
+        self.rid            = 0xFF
         self.code           = CHIPSET_CODE_UNKNOWN
         self.longname       = "Unrecognized Platform"
         self.id             = CHIPSET_ID_UNKNOWN
         self.pch_vid        = 0xFFFF
         self.pch_did        = 0xFFFF
+        self.pch_rid        = 0xFF
         self.pch_code       = CHIPSET_CODE_UNKNOWN
         self.pch_longname   = 'Unrecognized PCH'
         self.pch_id         = CHIPSET_ID_UNKNOWN
@@ -403,21 +412,25 @@ class Chipset:
     def detect_platform( self ):
         vid = 0xFFFF
         did = 0xFFFF
+        rid = 0xFF
         pch_vid = 0xFFFF
         pch_did = 0xFFFF
+        pch_rid = 0xFF
         try:
             vid_did = self.pci.read_dword(0, 0, 0, 0)
             vid = vid_did & 0xFFFF
             did = (vid_did >> 16) & 0xFFFF
+            rid = self.pci.read_byte(0, 0, 0, PCI_HDR_RID_OFF)
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
         try:
             vid_did = self.pci.read_dword(0, 31, 0, 0)
             pch_vid = vid_did & 0xFFFF
             pch_did = (vid_did >> 16) & 0xFFFF
+            pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
-        return (vid, did, pch_vid, pch_did)
+        return (vid, did, rid, pch_vid, pch_did, pch_rid)
 
     def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
 
@@ -425,7 +438,7 @@ class Chipset:
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
-        self.vid, self.did, self.pch_vid, self.pch_did = self.detect_platform()
+        self.vid, self.did, self.rid, self.pch_vid, self.pch_did, self.pch_rid = self.detect_platform()
         if platform_code is None:
             if VID_INTEL != self.vid:
                 _unknown_platform = True
@@ -433,10 +446,12 @@ class Chipset:
             self.vid = VID_INTEL
             if platform_code in Chipset_Code:
                 self.did = Chipset_Code[ platform_code ]
+                self.rid = 0x00
             else:
                 _unknown_platform = True
                 self.vid = 0xFFFF
                 self.did = 0xFFFF
+                self.rid = 0xFF
 
         if self.did in Chipset_Dictionary:
             data_dict       = Chipset_Dictionary[ self.did ]
@@ -451,9 +466,11 @@ class Chipset:
             self.pch_vid = VID_INTEL
             if req_pch_code in pch_codes:
                 self.pch_did = pch_codes[req_pch_code]
+                self.pch_rid = 0x00
             else:
                 self.pch_vid = 0xFFFF
                 self.pch_did = 0xFFFF
+                self.pch_rid = 0xFF
 
         if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
             data_dict           = pch_dictionary[self.pch_did]
@@ -465,7 +482,7 @@ class Chipset:
 
         self.init_cfg()
         if _unknown_platform and start_driver:
-            msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}'.format(self.vid,self.did)
+            msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.vid,self.did,self.rid)
             logger().error( msg )
             raise UnknownChipsetError (msg)
 
@@ -492,10 +509,10 @@ class Chipset:
         return self.pch_longname
 
     def print_chipset(self):
-        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}".format(self.longname, self.vid, self.did))
+        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.vid, self.did, self.rid))
 
     def print_pch(self):
-        logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}".format(self.pch_longname, self.pch_vid, self.pch_did))
+        logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
 
     def is_core(self):
         return  self.get_chipset_id() in CHIPSET_FAMILY_CORE
@@ -555,6 +572,11 @@ class Chipset:
         if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
             self.init_cfg_xml(_xml, self.code, self.pch_code)
+
+        # Load Bus numbers for this platform.
+        if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
+        self.init_cfg_bus()
+
         self.Cfg.XML_CONFIG_LOADED = True
 
 
@@ -656,6 +678,23 @@ class Chipset:
                     self.Cfg.CONTROLS[ _name ] = _control.attrib
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _control.attrib) )
 
+    def init_cfg_bus( self ):
+        if logger().DEBUG: logger().log( '[*] loading device buses..' )
+        enum_devices = self.pci.enumerate_devices()
+        for config_device in self.Cfg.CONFIG_PCI:
+            device_data = self.Cfg.CONFIG_PCI[config_device]
+            xml_vid  = device_data.get( 'vid', None )
+            xml_did  = device_data.get( 'did', None )
+            if (xml_vid and xml_did):
+                bus_list = []
+                did_list = [int(_,16) for _ in xml_did.split(',')]
+                for enum_dev in enum_devices:
+                    if ((int(device_data['dev'],16), int(device_data['fun'],16), int(xml_vid,16)) == enum_dev[1:4]) and (enum_dev[4] in did_list):
+                        bus_list.append( hex(enum_dev[0]) )
+                        if logger().DEBUG: logger().log( '    + {:16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus 0x{:02X}'.format(config_device, enum_dev[3], enum_dev[4], enum_dev[0]) )
+                if len(bus_list):
+                    self.Cfg.BUS[ config_device ] = bus_list
+
     #
     # Load chipsec/cfg/<code>.py configuration file for platform <code>
     #
@@ -715,6 +754,8 @@ class Chipset:
 #
 # is_register_defined
 #   checks if register is defined in the XML config
+# get_register_bus/get_device_bus
+#   returns list of buses device/register was discovered on
 # read_register/write_register
 #   reads/writes configuration register (by name)
 # get_register_field (set_register_field)
@@ -739,19 +780,31 @@ class Chipset:
             #raise RegisterNotFoundError, ('RegisterNotFound: {}'.format(reg_name))
             return False
 
-    def get_register_def(self, reg_name):
+    def get_register_def(self, reg_name, bus_index=0):
         reg_def = self.Cfg.REGISTERS[reg_name]
-        if reg_def["type"] == "pcicfg" and "device" in reg_def:
+        if (reg_def["type"] == "pcicfg" or reg_def["type"] == "mmcfg") and ("device" in reg_def):
             dev_name = reg_def["device"]
             if dev_name in self.Cfg.CONFIG_PCI:
                 dev = self.Cfg.CONFIG_PCI[dev_name]
                 reg_def['bus'] = dev['bus']
                 reg_def['dev'] = dev['dev']
                 reg_def['fun'] = dev['fun']
+                if dev_name in self.Cfg.BUS:
+                    if bus_index < len(self.Cfg.BUS[dev_name]):
+                        reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
+                    else:
+                        logger().error( "Bus index {:d} for '{}' not found.".format(bus_index, dev_name) )
         return reg_def
 
-    def read_register(self, reg_name, cpu_thread=0):
-        reg = self.get_register_def(reg_name)
+    def get_register_bus(self, reg_name):
+        name = self.Cfg.REGISTERS[reg_name].get( 'device', None )
+        return self.get_device_bus( name )
+
+    def get_device_bus(self, dev_name):
+        return self.Cfg.BUS.get( dev_name, None )
+
+    def read_register(self, reg_name, cpu_thread=0, bus_index=0):
+        reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_value = 0
         if RegisterType.PCICFG == rtype:
@@ -786,8 +839,8 @@ class Chipset:
 
         return reg_value
 
-    def write_register(self, reg_name, reg_value, cpu_thread=0):
-        reg = self.get_register_def(reg_name)
+    def write_register(self, reg_name, reg_value, cpu_thread=0, bus_index=0):
+        reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         if RegisterType.PCICFG == rtype:
             b = int(reg['bus'],16)
@@ -905,8 +958,8 @@ class Chipset:
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
-    def print_register(self, reg_name, reg_val):
-        reg = self.get_register_def(reg_name)
+    def print_register(self, reg_name, reg_val, bus_index=0):
+        reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_str = ''
         reg_val_str = "0x{:{width}X}".format(reg_val,width=(int(reg['size'],16)*2))
