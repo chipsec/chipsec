@@ -207,17 +207,17 @@ class sgx_check(BaseModule):
                 self.logger.log("[*] PRMRR Base and Mask are set to zero.  PRMRR appears to be disabled.")
                 self.logger.log("[*]   Skipping Base/Mask settings.")
             else:
-                self.logger.log("[*]  PRMRR base address: 0x%012X" % prmrr_base)
+                self.logger.log("[*]  PRMRR base address: 0x{:012X}".format(prmrr_base))
                 self.logger.log("[*]  Verifying PRMR memory type is valid")
-                self.logger.log("[*]  PRMRR memory type : 0x%X" % prmrr_base_memtype)
+                self.logger.log("[*]  PRMRR memory type : 0x{:X}".format(prmrr_base_memtype))
                 if prmrr_base_memtype == 0x6:
                     self.logger.log_good( "PRMRR memory type is WB as expected" )
                 else:
                     self.logger.log_failed( "Unexpected PRMRR memory type (not WB)" )
                     self.res = ModuleResult.FAILED
-                self.logger.log("[*]  PRMRR mask address: 0x%012X" % prmrr_mask)
+                self.logger.log("[*]  PRMRR mask address: 0x{:012X}".format(prmrr_mask))
                 self.logger.log("[*]  Verifying PRMR address are valid")
-                self.logger.log("[*]      PRMRR mask valid: 0x%u" % prmrr_mask_vld)
+                self.logger.log("[*]      PRMRR uncore mask valid: 0x{:d}".format(prmrr_uncore_mask_vld))
                 if prmrr_mask_vld == 0x1:
                     self.logger.log_good( "Mcheck marked PRMRR address as valid" )
                 else:

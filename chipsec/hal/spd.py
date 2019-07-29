@@ -371,7 +371,7 @@ class SPD:
             if self.isSPDPresent( d ): _dimms.append( d )
         if logger().HAL:
             logger().log( "Detected the following SPD devices:" )
-            for _dimm in _dimms: logger().log( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm],_dimm) )
+            for _dimm in _dimms: logger().log( "%s: 0x%02X" % (SPD_DIMMS[_dimm],_dimm) )
         return _dimms 
 
     def isSPDPresent( self, device=SPD_SMBUS_ADDRESS ):

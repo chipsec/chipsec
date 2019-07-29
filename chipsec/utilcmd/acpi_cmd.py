@@ -86,9 +86,8 @@ class ACPICommand(BaseCommand):
         try:
             self._acpi = ACPI(self.cs)
         except AcpiRuntimeError as msg:
-            print (msg)
+            print(msg)
             return
-
         self.func()
         self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time()-t) )
 

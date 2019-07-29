@@ -86,7 +86,7 @@ class CMOSCommand(BaseCommand):
         try:
             self._cmos = CMOS(self.cs)
         except CmosRuntimeError as msg:
-            print (msg)
+            print(msg)
             return
 
         self.func()
