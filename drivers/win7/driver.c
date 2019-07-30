@@ -1169,6 +1169,7 @@ DriverDeviceControl(
           {
             CPU_REG_TYPE regs[11] = {0};
             CPU_REG_TYPE result = 0;
+            CPU_REG_TYPE mhypercall = (CPU_REG_TYPE)&hypercall_page;
 
             DbgPrint("[chipsec] > IOCTL_HYPERCALL\n");
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
@@ -1205,7 +1206,7 @@ DriverDeviceControl(
 
             __try
               {
-                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], (void*)&hypercall_page);
+                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], mhypercall);
               }
             __except( EXCEPTION_EXECUTE_HANDLER )
               {
