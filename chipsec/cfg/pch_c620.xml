@@ -13,6 +13,7 @@ XML configuration file for
   <!--                                      -->
   <!-- #################################### -->
   <pci>
+    <device name="SATA"  bus="0" dev="0x17" fun="0" vid="0x8086" did="0xA182,0xA186,0xA202,0xA206,0x2822,0x2826" />
     <device name="P2SBC" bus="0" dev="0x1F" fun="1" vid="0x8086" did="0xA220,0xA1A0" />
     <device name="PMC"   bus="0" dev="0x1F" fun="2" vid="0x8086" did="0xA221,0xA1A1" />
     <device name="SMBUS" bus="0" dev="0x1F" fun="4" vid="0x8086" did="0xA223,0xA1A3" />
@@ -57,6 +58,14 @@ XML configuration file for
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+      <!-- SATA Registers -->
+    <register name="ABAR"   type="pcicfg" device="SATA" offset="0x24" size="4" desc="AHCI Base Address">
+      <field name="BA" bit="19" size="13" desc="Base Address"/>
+    </register>
+    <register name="SATAGC" type="pcicfg" device="SATA" offset="0x9C" size="4" desc="SATA General Configuration">
+      <field name="ASSEL" bit="0" size="3" desc="ABAR Size Select"/>
+    </register>
 
     <!-- Sideband Register Access Registers -->
     <register name="SBREG_BAR"  type="pcicfg" device="P2SBC" offset="0x10" size="4" desc="Sideband Register Access BAR">

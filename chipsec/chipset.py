@@ -321,7 +321,12 @@ pch_dictionary = {
 0xA1C4 : {'name' : 'C625', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C625 (C620 series) PCH'},
 0xA1C5 : {'name' : 'C626', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C626 (C620 series) PCH'},
 0xA1C6 : {'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'},
-0xA1C7 : {'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'}
+0xA1C7 : {'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'},
+0xA242 : {'name' : 'C624', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C624 (C620 series) PCH'},
+0xA243 : {'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'},
+0xA244 : {'name' : 'C621', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C621 (C620 series) PCH'},
+0xA245 : {'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'},
+0xA246 : {'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'}
 }
 
 try:
