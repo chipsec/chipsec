@@ -108,7 +108,7 @@ extern CPU_REG_TYPE hypercall (
     CPU_REG_TYPE rdi_val,
     CPU_REG_TYPE rsi_val,
     CPU_REG_TYPE xmm_buffer,
-    void*  hypercall_page
+    CPU_REG_TYPE hypercall_page
 );
 extern CPU_REG_TYPE hypercall_page(void);
 
