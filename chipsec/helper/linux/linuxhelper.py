@@ -53,6 +53,7 @@ import chipsec.file
 from chipsec.hal.uefi_common import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
+from chipsec.defines import bytestostring
 
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
@@ -784,7 +785,7 @@ class LinuxHelper(Helper):
         else:
             data = buffer[base:base+new_size].tostring()
             attr = struct.unpack( "I", buffer[8:12])[0]
-        return (off, buf, hdr, data, guid, attr)
+        return (off, buf, hdr, bytestostring(data), guid, attr)
 
 
     def kern_get_EFI_variable(self, name, guid):

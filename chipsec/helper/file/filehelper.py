@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -22,12 +22,15 @@
 """
 Use results from a json file
 """
+import json
+from sys import version
 
 import chipsec.file
 from chipsec.logger import logger
 from chipsec.helper.oshelper import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
-import json
+from chipsec.defines import bytestostring
+
 
 class FileCmds:
     def __init__(self, filename):
@@ -42,17 +45,22 @@ class FileCmds:
             margs = '({})'.format(','.join(str(i) for i in args))
         except:
             margs = str(args)
-        if self.data.has_key(str(cmd)):
-            if self.data[str(cmd)].has_key(margs):
+        if isinstance(ret, bytes):
+            ret = bytestostring(ret)
+        if str(cmd) in self.data:
+            if margs in self.data[str(cmd)]:
                 #using insert opposed to append so that it creates last in first out when using pop command within getElement
-                self.data[str(cmd)][margs].insert(0,ret)
+                self.data[str(cmd)][margs].insert(0,str(ret))
             else:
-                self.data[str(cmd)][margs] = [ret] 
+                self.data[str(cmd)][margs] = [str(ret)] 
         else:
-            self.data[str(cmd)] = {margs:[ret]}
+            self.data[str(cmd)] = {margs:[str(ret)]}
 
     def Save(self):
-        js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '), encoding='latin_1')
+        if version[0] == "3":
+            js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '))
+        else:
+            js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '), encoding='latin_1')
         chipsec.file.write_file(self.filename,js)
 
     def Load(self):
@@ -72,8 +80,8 @@ class FileCmds:
         except:
             targs = str(args)
         margs = targs.encode('latin_1')
-        if self.data.has_key(str(cmd)):
-            if self.data[str(cmd)].has_key(margs):
+        if str(cmd) in self.data:
+            if margs in self.data[str(cmd)]:
                 return self.data[cmd][margs].pop()
         logger().error("Missing entry for {} {}".format(str(cmd),margs))
 
@@ -130,10 +138,10 @@ class FileHelper(Helper):
     #
     def read_mmio_reg( self, phys_address, size ):
         return self.filecmds.getElement("read_mmio_reg",(phys_address,size))
-        
+
     def write_mmio_reg( self, phys_address, size, value ):
         return self.filecmds.getElement("write_mmio_reg",(phys_address, size, value))
-        
+
     #
     # physical_address is 64 bit integer
     #
@@ -216,7 +224,7 @@ class FileHelper(Helper):
 
     def list_EFI_variables( self ):
         return self.filecmds.getElement("list_EFI_variables",())
-    
+
     #
     # ACPI
     #
@@ -225,14 +233,14 @@ class FileHelper(Helper):
 
     def get_ACPI_table( self, table_name ):
         return self.filecmds.getElement("get_ACPI_table",(table_name))
-        
-   
+
+
     #
     # CPUID
     #
     def cpuid( self, eax, ecx ):
         return self.filecmds.getElement("cpuid",(eax, ecx))
-        
+
     #
     # IOSF Message Bus access
     #
@@ -251,10 +259,10 @@ class FileHelper(Helper):
     #
     def get_affinity( self ):
         return self.filecmds.getElement("get_affinity",())
-        
+
     def set_affinity( self, value ):
         return self.filecmds.getElement("set_affinity",(value))
-        
+
     #
     # Logical CPU count
     #
