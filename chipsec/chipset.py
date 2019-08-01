@@ -63,6 +63,7 @@ class RegisterType:
     IOBAR     = 'iobar'
     MSGBUS    = 'msgbus'
     MM_MSGBUS = 'mm_msgbus'
+    MEMORY    = 'memory'
 
 
 ##################################################################################
@@ -782,18 +783,26 @@ class Chipset:
 
     def get_register_def(self, reg_name, bus_index=0):
         reg_def = self.Cfg.REGISTERS[reg_name]
-        if (reg_def["type"] == "pcicfg" or reg_def["type"] == "mmcfg") and ("device" in reg_def):
+        if "device" in reg_def:
             dev_name = reg_def["device"]
-            if dev_name in self.Cfg.CONFIG_PCI:
-                dev = self.Cfg.CONFIG_PCI[dev_name]
-                reg_def['bus'] = dev['bus']
-                reg_def['dev'] = dev['dev']
-                reg_def['fun'] = dev['fun']
-                if dev_name in self.Cfg.BUS:
-                    if bus_index < len(self.Cfg.BUS[dev_name]):
-                        reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
-                    else:
-                        logger().error( "Bus index {:d} for '{}' not found.".format(bus_index, dev_name) )
+            if reg_def["type"] == "pcicfg" or reg_def["type"] == "mmcfg":
+                if dev_name in self.Cfg.CONFIG_PCI:
+                    dev = self.Cfg.CONFIG_PCI[dev_name]
+                    reg_def['bus'] = dev['bus']
+                    reg_def['dev'] = dev['dev']
+                    reg_def['fun'] = dev['fun']
+                    if dev_name in self.Cfg.BUS:
+                        if bus_index < len(self.Cfg.BUS[dev_name]):
+                            reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
+                        else:
+                            logger().error( "Bus index {:d} for '{}' not found.".format(bus_index, dev_name) )
+            elif reg_def["type"] == "memory":
+                if dev_name in self.Cfg.MEMORY_RANGES:
+                    dev = self.Cfg.MEMORY_RANGES[dev_name]
+                    reg_def['address'] = dev['address']
+                    reg_def['access'] = dev['access']
+                else:
+                    logger().error("Memory device {} not found".format(dev_name))
         return reg_def
 
     def get_register_bus(self, reg_name):
@@ -834,6 +843,11 @@ class Chipset:
             reg_value = self.msgbus.msgbus_reg_read( int(reg['port'],16), int(reg['offset'],16) )
         elif RegisterType.MM_MSGBUS == rtype:
             reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'],16), int(reg['offset'],16))
+        elif RegisterType.MEMORY == rtype:
+            if reg['access'] == 'dram':
+                reg_value= self.mem.read_physical_mem(int(reg['address'],16), int(reg['size'],16))
+            elif reg['access'] == 'mmio':
+                reg_value = self.mmio.read_MMIO_reg(int(reg['address'],16), int(reg['offset']),int(reg['size'],16))
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
@@ -872,6 +886,11 @@ class Chipset:
             self.msgbus.msgbus_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value )
         elif RegisterType.MM_MSGBUS == rtype:
             self.msgbus.mm_msgbus_reg_write(int(reg['port'],16), int(reg['offset'],16), reg_value)
+        elif RegisterType.MEMORY == rtype:
+            if reg['access'] == 'dram':
+                self.mem.write_physical_mem(int(reg['address'],16), int(reg['size'],16), reg_value)
+            elif reg['access'] == 'mmio':
+                self.mmio.write_MMIO_reg(int(reg['address'],16), int(reg['offset']), reg_value, int(reg['size'],16))
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 

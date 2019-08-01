@@ -88,8 +88,8 @@ Common (default) XML platform configuration file
   <!--                                      -->
   <!-- #################################### -->
   <memory>
-    <range name="Legacy DOS" type="dram" address="0x0"        size="0x100000"/>
-    <range name="TPM"        type="mmio" address="0xFED40000" size="0x10000"/>
+    <range name="Legacy DOS" access="dram" address="0x0"        size="0x100000"/>
+    <range name="TPM"        access="mmio" address="0xFED40000" size="0x10000"/>
   </memory>
 
 
