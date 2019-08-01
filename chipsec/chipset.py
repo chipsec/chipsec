@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
+# (c) 2010-2020 Intel Corporation
 #
 # -------------------------------------------------------------------------------
 
@@ -774,16 +774,26 @@ class Chipset:
 #   returns list of buses device/register was discovered on
 # read_register/write_register
 #   reads/writes configuration register (by name)
+# read_register_all/write_register_all/write_register_all_single
+#   reads/writes all configuration register instances (by name)
 # get_register_field (set_register_field)
 #   reads/writes the value of the field (by name) of configuration register (by register value)
+# get_register_field_all (set_register_field_all)
+#   reads/writes the value of the field (by name) of all configuration register instances (by register value)
 # read_register_field (write_register_field)
 #   reads/writes the value of the field (by name) of configuration register (by register name)
+# read_register_field_all (write_register_field_all)
+#   reads/writes the value of the field (by name) of all configuration register instances (by register name)
 # register_has_field
 #   checks if the register has specific field
 # print_register
 #   prints configuration register
+# print_register_all
+#   prints all configuration register instances
 # get_control/set_control
 #   reads/writes some control field (by name)
+# is_all_value
+#   checks if all elements in a list equal a given value
 #
 ##################################################################################
 
@@ -855,6 +865,15 @@ class Chipset:
 
         return reg_value
 
+    def read_register_all(self, reg_name, cpu_thread=0):
+        values = []
+        bus_data = self.get_register_bus( reg_name )
+        if bus_data is None:
+            return [self.read_register( reg_name, cpu_thread )]
+        for index in range( len(bus_data) ):
+            values.append( self.read_register( reg_name, cpu_thread, index) )
+        return values
+
     def write_register(self, reg_name, reg_value, cpu_thread=0, bus_index=0):
         reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
@@ -890,6 +909,27 @@ class Chipset:
             self.msgbus.mm_msgbus_reg_write(int(reg['port'],16), int(reg['offset'],16), reg_value)
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
+
+    def write_register_all(self, reg_name, reg_values, cpu_thread=0):
+        bus_data = self.get_register_bus( reg_name )
+        if bus_data is None:
+            return False
+        values = len(bus_data)
+        if len(reg_values) == values:
+            for index in range( values ):
+                self.write_register( reg_name, reg_values[index], cpu_thread, index )
+            return True
+        else:
+            return False
+
+    def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
+        bus_data = self.get_register_bus( reg_name )
+        if bus_data is None:
+            return False
+        values = len(bus_data)
+        for index in range( values ):
+            self.write_register( reg_name, reg_value, cpu_thread, index )
+        return True
 
     def read_register_dict( self, reg_name):
         reg_value = self.read_register(reg_name)
@@ -928,6 +968,12 @@ class Chipset:
         if preserve_field_position: return reg_value & (field_mask << field_bit)
         else:                       return (reg_value >> field_bit) & field_mask
 
+    def get_register_field_all(self, reg_name, reg_values, field_name, preserve_field_position=False):
+        values = []
+        for reg_value in reg_values:
+            values.append( self.get_register_field( reg_name, reg_value, field_name, preserve_field_position) )
+        return values
+
     def set_register_field(self, reg_name, reg_value, field_name,
                            field_value, preserve_field_position=False):
         field_attrs = self.get_register_def(reg_name)['FIELDS'][field_name]
@@ -938,15 +984,30 @@ class Chipset:
         else:                       reg_value |= ((field_value & field_mask) << field_bit)
         return reg_value
 
+    def set_register_field_all(self, reg_name, reg_values, field_name, field_value, preserve_field_position=False):
+        values = []
+        for reg_value in reg_values:
+            values.append( self.set_register_field( reg_name, reg_value, field_name, field_value, preserve_field_position) )
+        return values
+
     def read_register_field( self, reg_name, field_name, preserve_field_position=False, cpu_thread=0 ):
         reg_value = self.read_register(reg_name, cpu_thread)
         return self.get_register_field(reg_name, reg_value, field_name, preserve_field_position)
+
+    def read_register_field_all(self, reg_name, field_name, preserve_field_position=False, cpu_thread=0):
+        reg_values = self.read_register_all(reg_name, cpu_thread)
+        return self.get_register_field_all(reg_name, reg_values, field_name, preserve_field_position)
 
     def write_register_field( self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
         reg_value = self.read_register(reg_name, cpu_thread)
         reg_value_new = self.set_register_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
         #logger().log("set register {} (0x{:x}) field {} = 0x{:x} ==> 0x{:x}".format(reg_name, reg_value, field_name, field_value, reg_value_new))
         return self.write_register(reg_name, reg_value_new, cpu_thread)
+
+    def write_register_field_all(self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0):
+        reg_values = self.read_register_all(reg_name, cpu_thread)
+        reg_values_new = self.set_register_field_all(reg_name, reg_values, field_name, field_value, preserve_field_position)
+        return self.write_register_all(reg_name, reg_values_new, cpu_thread)
 
     def register_has_field( self, reg_name, field_name ):
         reg_def = self.get_register_def(reg_name )
@@ -1003,6 +1064,16 @@ class Chipset:
         logger().log( reg_str )
         return reg_str
 
+    def print_register_all(self, reg_name, cpu_thread=0):
+        reg_str = ''
+        bus_data = self.get_register_bus( reg_name )
+        if bus_data is None:
+            return reg_str
+        for index in range( len(bus_data) ):
+            reg_val = self.read_register( reg_name, cpu_thread, index )
+            reg_str += self.print_register( reg_name, reg_val, index )
+        return reg_str
+
     def get_control(self, control_name, cpu_thread=0, with_print=0):
         control = self.Cfg.CONTROLS[ control_name ]
         reg     = control['register']
@@ -1022,6 +1093,9 @@ class Chipset:
             return (self.Cfg.CONTROLS[ control_name ] is not None)
         except KeyError:
             return False
+
+    def is_all_value(self, reg_values, value):
+        return all(n == value for n in reg_values)
 
 _chipset = None
 
