@@ -861,7 +861,7 @@ class Chipset:
             if reg['access'] == 'dram':
                 reg_value= self.mem.read_physical_mem(int(reg['address'],16), int(reg['size'],16))
             elif reg['access'] == 'mmio':
-                reg_value = self.mmio.read_MMIO_reg(int(reg['address'],16), int(reg['offset']),int(reg['size'],16))
+                reg_value = self.mmio.read_MMIO_reg(int(reg['address'],16), int(reg['offset'],16),int(reg['size'],16))
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
@@ -904,7 +904,7 @@ class Chipset:
             if reg['access'] == 'dram':
                 self.mem.write_physical_mem(int(reg['address'],16), int(reg['size'],16), reg_value)
             elif reg['access'] == 'mmio':
-                self.mmio.write_MMIO_reg(int(reg['address'],16), int(reg['offset']), reg_value, int(reg['size'],16))
+                self.mmio.write_MMIO_reg(int(reg['address'],16), int(reg['offset'],16), reg_value, int(reg['size'],16))
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
