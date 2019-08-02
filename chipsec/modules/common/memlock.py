@@ -1,6 +1,7 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-# 
+#Copyright (c) 2019, Intel Corporation
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
@@ -14,7 +15,7 @@
 """
 This module checks if memory configuration is locked to protect SMM
 
-Reference: 
+Reference:
 https://github.com/coreboot/coreboot/blob/master/src/cpu/intel/model_206ax/finalize.c
 https://github.com/coreboot/coreboot/blob/master/src/soc/intel/broadwell/include/soc/msr.h
 
@@ -45,14 +46,17 @@ class memlock(chipsec.module_common.BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.res = ModuleResult.NOTAPPLICABLE
 
     def is_supported(self):
         # Workaround for Atom based processors.  Accessing this MSR on these systems
         # causes a GP fault and can't be caught in UEFI Shell.
-        if self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_ATOM:
-            return False
-        return True
-        
+        if self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM:
+            if self.cs.is_register_defined( 'MSR_LT_LOCK_MEMORY' ):
+                if self.cs.register_has_field( 'MSR_LT_LOCK_MEMORY', 'LT_LOCK' ):
+                    return True
+        return False
+
     def check_MSR_LT_LOCK_MEMORY( self ):
         self.logger.log( "[X] Checking MSR_LT_LOCK_MEMORY status" )
         status = False
@@ -70,22 +74,15 @@ class memlock(chipsec.module_common.BaseModule):
         return status
 
     def run( self, module_argv ):
-        if len(module_argv) > 2:
-            self.logger.error( 'Not expecting any arguments' )
-            return ModuleResult.ERROR
-        if not self.cs.is_register_defined( 'MSR_LT_LOCK_MEMORY' ):
-            self.logger.error( "couldn't find definition of required MSRs" )
-            return ModuleResult.ERROR
-        returned_result = ModuleResult.PASSED
+        self.res = ModuleResult.PASSED
         self.logger.start_test( "Check MSR_LT_LOCK_MEMORY" )
-        script_pa = None
         check_MSR_LT_LOCK_MEMORY_test_fail = self.check_MSR_LT_LOCK_MEMORY()
-            
+
         if check_MSR_LT_LOCK_MEMORY_test_fail == True:
-            self.logger.log_failed_check( 'Check failed. MSR_LT_LOCK_MEMORY doesn\'t configurated correctly' )
-            returned_result = ModuleResult.FAILED
+            self.logger.log_failed_check( "Check failed. MSR_LT_LOCK_MEMORY isn't configured correctly" )
+            self.res = ModuleResult.FAILED
         else:
             self.logger.log_passed_check('Check have successfully passed')
-            returned_result = ModuleResult.PASSED
-       
-        return returned_result
+            self.res = ModuleResult.PASSED
+
+        return self.res
