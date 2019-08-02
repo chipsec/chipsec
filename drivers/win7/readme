@@ -31,6 +31,11 @@ Build CHIPSEC kernel driver with Visual Studio
 - If build process completed without errors, the driver binary will be moved into the chipsec helper directory <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 (or i386) directory
 - Enable loading of test-signed kernel mode drivers (see chipsec-manual.pdf for details)
 
+Notes
+-----------------------------------------------------
+- if build errors are with signing are encountered, try running as Administrator
+- The .vcxproj file points to the latest SDK, if this is incompatible with the WDK, change the configuration to a compatible SDK within the project properties
+
 
 Build CHIPSEC kernel driver (Old Method)
 ----------------------------------------------------
