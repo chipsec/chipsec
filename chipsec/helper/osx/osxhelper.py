@@ -159,18 +159,18 @@ class OSXHelper(Helper):
         return fcntl.ioctl(self.dev_fh, ioctl_name, args)
 
     def mem_read_block(self, addr, sz):
-        if(addr != None):
+        if(addr is not None):
             self.dev_fh.seek(addr)
         return self.dev_fh.read(sz)
 
     def mem_write_block(self, addr, sz, newval):
-        if(addr != None):
+        if(addr is not None):
             self.dev_fh.seek(addr)
         self.dev_fh.write(newval)
         self.dev_fh.flush()
 
     def write_phys_mem(self, addr_hi, addr_lo, size, value):
-        if(value != None):
+        if(value is not None):
             self.mem_write_block((addr_hi << 32) | addr_lo, size, value)
 
     def read_phys_mem(self, addr_hi, addr_lo, size):

@@ -137,7 +137,7 @@ class s3script_modify(BaseModule):
         self.parsed_scripts = None
 
     def get_bootscript(self):
-        if self.bootscript_PAs == None or self.parsed_scripts == None:
+        if self.bootscript_PAs is None or self.parsed_scripts is None:
             (self.bootscript_PAs,self.parsed_scripts) = self._uefi.get_s3_bootscript( False )
         return (self.bootscript_PAs, self.parsed_scripts)
 

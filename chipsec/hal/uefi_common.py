@@ -889,7 +889,7 @@ def parse_sb_db(db, decode_dir):
                 sig_file_name = "{}-{}-{:02d}.bin".format(short_name, owner, nsig)
                 sig_file_name = os.path.join(decode_dir, sig_file_name)
                 write_file(sig_file_name, data)
-                if (sig_parse_f != None):
+                if (sig_parse_f is not None):
                     sig_parse_f(data)
                 sof = sof + SignatureSize
                 nsig = nsig + 1

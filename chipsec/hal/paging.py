@@ -385,7 +385,7 @@ class c_4level_page_tables(c_paging):
         return
 
     def read_entry_by_virt_addr(self, virt):
-        if self.pointer == None:
+        if self.pointer is None:
             raise Exception('Page Table pointer is undefined!')
         addr  = self.pointer
         pml4  = self.read_entries('pml4', addr)
@@ -503,7 +503,7 @@ class c_extended_page_tables(c_4level_page_tables):
         return
 
     def map_bigpage_1G(self, virt, i):
-        if self.pointer == None:
+        if self.pointer is None:
             raise Exception('Page Table pointer is undefined!')
         addr  = self.pointer
         pml4  = self.read_entries('pml4', addr)

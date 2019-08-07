@@ -172,7 +172,7 @@ class VMemCommand(BaseCommand):
         elif 'getphys' == op:
             virt_address = int(self.argv[3],16)
             pa = _vmem.va2pa( virt_address )
-            if pa != None:
+            if pa is not None:
                 self.logger.log( '[CHIPSEC] Allocated {:X} bytes of virtual memory: VA = 0x{:016X}, PA = 0x{:016X}'.format(size, virt_address, pa) )
             
         else:

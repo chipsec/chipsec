@@ -564,7 +564,7 @@ _helper = None
 
 def helper():
     global _helper
-    if _helper == None:
+    if _helper is None:
         try:
             _helper  = OsHelper()
         except BaseException as msg:

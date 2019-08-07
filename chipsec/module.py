@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -64,7 +64,7 @@ class Module():
     def run( self, module_argv ):
         result = self.get_module_object()
 
-        if self.mod_obj != None and result == ModuleResult.PASSED:
+        if self.mod_obj is not None and result == ModuleResult.PASSED:
             if module_argv is not None:
                 self.logger.log( "[*] Module arguments ({:d}):".format(len(module_argv)) )
                 self.logger.log( module_argv )
@@ -86,7 +86,7 @@ class Module():
 
     def get_module_object(self):
         result = ModuleResult.PASSED
-        if self.mod_obj == None :
+        if self.mod_obj is None :
             try:
                 if _importlib:
                     pkg = getattr( self.module, "__package__" )
@@ -99,7 +99,7 @@ class Module():
                             if issubclass(iref, chipsec.module_common.BaseModule):
                                 if iname.lower() == class_name.lower():
                                     self.mod_obj = iref()
-                    if self.mod_obj == None:
+                    if self.mod_obj is None:
                         result = ModuleResult.DEPRECATED
             except (AttributeError, TypeError) as ae:
                 result = ModuleResult.DEPRECATED
