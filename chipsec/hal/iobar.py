@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 """
 I/O BAR access (dump, read/write)
@@ -164,7 +156,7 @@ class IOBAR(hal_base.HALBase):
     #
     def read_IO_BAR( self, bar_name, size=1 ):
         (range_base,range_size) = self.get_IO_BAR_base_address( bar_name )
-        n = range_size/size
+        n = range_size//size
         io_ports = []
         for i in range(n):
             io_ports.append( self.cs.io._read_port( range_base + i*size, size ) )
@@ -176,7 +168,7 @@ class IOBAR(hal_base.HALBase):
     #
     def dump_IO_BAR( self, bar_name, size=1 ):
         (range_base,range_size) = self.get_IO_BAR_base_address( bar_name )
-        n = range_size/size
+        n = range_size//size
         fmt = '0{:d}X'.format(size*2)
         logger().log("[iobar] I/O BAR {}:".format(bar_name))
         for i in range(n):

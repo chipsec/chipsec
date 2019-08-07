@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -103,7 +103,7 @@ class cpuid_fuzz (BaseModule):
         self.logger.log( "    Log output results (_LOG_OUT_RESULTS): {:d}".format(_LOG_OUT_RESULTS) )
 
         res = ModuleResult.PASSED
-        steps = 0x100000000 / _EAX_FUZZ_STEP
+        steps = 0x100000000 // _EAX_FUZZ_STEP
         for s in range(steps):
             self.fuzz_CPUID( s*_EAX_FUZZ_STEP, _random_order )
         return res

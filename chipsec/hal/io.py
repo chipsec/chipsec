@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 """
 Access to Port I/O
@@ -106,7 +98,7 @@ class PortIO:
     # Read registers from I/O range
     #
     def read_IO( self, range_base, range_size, size=1 ):
-        n = range_size/size
+        n = range_size//size
         io_ports = []
         for i in range(n):
             io_ports.append( self._read_port( range_base + i*size, size ) )
@@ -116,7 +108,7 @@ class PortIO:
     # Dump I/O range
     #
     def dump_IO( self, range_base, range_size, size=1 ):
-        n = range_size/size
+        n = range_size//size
         fmt = '0{:d}X'.format( (size*2) )
         logger().log("[io] I/O register range [0x{:04X}:0x{:04X}+{:04X}]:".format(range_base,range_base,range_size))
         for i in range(n):
