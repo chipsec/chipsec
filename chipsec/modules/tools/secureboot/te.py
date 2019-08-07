@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -363,7 +363,7 @@ def produce_te(fname, outfname):
     with open(fname, 'rb') as f:
         data = f.read()
     te_data = replace_header(data)
-    if (te_data == None):
+    if (te_data is None):
         return 0
     with open(outfname, 'wb') as fte:
         fte.write(te_data)

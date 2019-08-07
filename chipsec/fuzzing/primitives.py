@@ -679,7 +679,7 @@ class bit_field (base_primitive):
         self.mutant_index  = 0         # current mutation number
         self.cyclic_index  = 0         # when cycling through non-mutating values
 
-        if self.max_num == None:
+        if self.max_num is None:
             self.max_num = self.to_decimal("1" + "0" * width)
 
         assert(type(self.max_num) is int or type(self.max_num) is long)
@@ -811,7 +811,7 @@ class bit_field (base_primitive):
         @rtype:  String
         @return: Bit string
         '''
-        if number == None:
+        if number is None:
             if type(self.value) in [list, tuple]:
                 # We have been given a list to cycle through that is not being mutated...
                 if self.cyclic_index == len(self.value):
@@ -822,7 +822,7 @@ class bit_field (base_primitive):
             else:
                 number = self.value
 
-        if bit_count == None:
+        if bit_count is None:
             bit_count = self.width
 
         return "".join(map(lambda x:str((number >> x) & 1), range(bit_count -1, -1, -1)))

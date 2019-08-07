@@ -275,7 +275,7 @@ class RweHelper(Helper):
             if os.path.isfile(driver_path): 
                 self.driver_path = driver_path
                 if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
-        if self.driver_path == None: 
+        if self.driver_path is None: 
             if logger().DEBUG: logger().log("[helper] RWE Driver Not Found")
             raise DriverNotFound
 

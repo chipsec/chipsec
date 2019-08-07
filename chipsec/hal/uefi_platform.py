@@ -245,7 +245,7 @@ def _getNVstore_EFI( nvram_buf, efi_type ):
     FvLength = 0
     while True:
         FvOffset, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf, FvOffset+FvLength)
-        if (FvOffset == None): break
+        if (FvOffset is None): break
         if (FsGuid != VARIABLE_STORE_FV_GUID): continue
         nvram_start = HeaderLength
         StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
@@ -366,10 +366,10 @@ def getNVstore_NVAR( nvram_buf ):
         return l
     if (FvOffset + FvLength) > len(nvram_buf):
         FvLength = len(nvram_buf) - FvOffset
-    while FvOffset != None:
+    while FvOffset is not None:
         polarity = bit_set(FvAttributes, EFI_FVB2_ERASE_POLARITY)
         cur_offset, next_offset, Name, Type, Attributes, State, Checksum, Size, FileImage, HeaderSize, UD, fCalcSum = NextFwFile(FvImage, FvLength, FvHeaderLength, polarity)
-        while next_offset != None:
+        while next_offset is not None:
             if (Type == EFI_FV_FILETYPE_RAW) and (Name == NVAR_NVRAM_FS_FILE):
                 l = ((FvOffset + cur_offset + HeaderSize), Size - HeaderSize, None)
                 if (not UD):
@@ -794,7 +794,7 @@ tlv_h_size = struct.calcsize(TLV_HEADER)
 def getNVstore_EVSA( nvram_buf ):
     l = (-1, -1, None)
     FvOffset, FsGuid, FvLength, FvAttributes, FvHeaderLength, FvChecksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf)
-    while FvOffset != None:
+    while FvOffset is not None:
         if (FsGuid == VARIABLE_STORE_FV_GUID):
             nvram_start = FvImage.find( VARIABLE_STORE_SIGNATURE_EVSA )
             if (nvram_start != -1) and (nvram_start >= tlv_h_size):

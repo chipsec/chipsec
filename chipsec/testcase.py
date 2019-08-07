@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018, Intel Corporation
+#Copyright (c) 2018-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -61,24 +61,24 @@ class ChipsecResults():
         self.summary = False
         self.exceptions = []
         self.time = None
-        
+
     def add_properties(self,properties):
         self.properties = properties
-        
+
     def add_testcase(self,test):
         self.test_cases.append(test)
-		
+
     def get_results(self):
         return self.test_cases
-        
+
     def get_current(self):
         if len(self.test_cases) == 0 or self.summary:
             return None
-        return self.test_cases[len(self.test_cases)-1]    
+        return self.test_cases[len(self.test_cases)-1]
 
     def add_exception(self,name):
         self.exceptions.append(str(name))
-        
+
     def order_summary(self):
         if self.time is None:
             self.set_time()
@@ -148,13 +148,13 @@ class ChipsecResults():
                 self.time = self.get_current().endTime - self.test_cases[0].startTime
             else:
                 self.time = self.test_cases[0].time
-    
+
     def get_results(self):
         results = {}
         for test in self.test_cases:
             results[test.name] = {"result":test.result}
         return results
-        
+
     def xml_summary(self):
         summary = self.order_summary()
         xml_element = ET.Element("Summary")
@@ -172,7 +172,7 @@ class ChipsecResults():
                     n_element = ET.SubElement( m_element, 'module')
                     n_element.text = mod
         return ET.tostring( xml_element, None, None )
-        
+
     def json_summary(self):
         summary = self.order_summary()
         js = json.dumps(summary, sort_keys=False, indent=2, separators=(',', ': '))
@@ -220,13 +220,13 @@ class TestCase():
         self.startTime = None
         self.endTime = None
         self.time = None
-        
+
     def add_output(self, text):
         self.output += str(text)
-		
+
     def add_result(self, result):
         self.result = result
-        
+
     def add_arg(self, arg):
         self.argv = arg
 
@@ -237,9 +237,9 @@ class TestCase():
         """Sets the time"""
         if pTime is not None:
             self.time = pTime
-        elif self.startTime == None:
+        elif self.startTime is None:
             self.startTime = time.time()
-        else:    
+        else:
             self.endTime = time.time()
             self.time = self.endTime - self.startTime
 
