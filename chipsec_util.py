@@ -58,8 +58,7 @@ def get_option_width( width_op ):
 class ChipsecUtil:
 
     def __init__(self, argv):
-        self.global_usage = "CHIPSEC UTILITIES\n\n" + \
-                   "All numeric values are in hex\n" + \
+        self.global_usage = "All numeric values are in hex\n" + \
                    "<width> is in {1, byte, 2, word, 4, dword}\n\n"
         self.commands = {}
         # determine if CHIPSEC is loaded as chipsec_*.exe or in python
@@ -73,17 +72,6 @@ class ChipsecUtil:
     def init_cs(self):
         self._cs = cs()
 
-    def chipsec_util_help(self, command=None):
-        """
-        Shows the list of available command line extensions
-        """
-        if command is None or command not in self.commands:
-            for cmd in sorted(list(self.commands.keys()) + ['help']):
-                logger().log( '    {}'.format(cmd) )
-        else:
-            logger().log("\nhelp for '{}' <command>:".format(command))
-            logger().log(self.commands[command].__doc__)
-
     def parse_args(self):
         parser = argparse.ArgumentParser(usage='%(prog)s [options] <command>',add_help=False)
         options = parser.add_argument_group('Options')
@@ -96,10 +84,11 @@ class ChipsecUtil:
         options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         options.add_argument('-i', '--ignore_platform',dest='_unkownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
-        options.add_argument('_cmd_args',metavar='Command',nargs=argparse.REMAINDER,help="All numeric values are in hex. <width> can be one of {1, byte, 2, word, 4, dword}")
+        options.add_argument('_cmd',metavar='Command', nargs='?', choices=sorted(self.commands.keys()), type=str.lower, default="help",  help="Util command to run: {{{}}}".format(','.join(sorted(self.commands.keys()))))
+        options.add_argument('_cmd_args',metavar='Command Args', nargs=argparse.REMAINDER, help=self.global_usage)
 
         parser.parse_args(self.argv,namespace=ChipsecUtil)
-        if self.show_help or self._cmd_args == []:
+        if self.show_help or self._cmd == "help":
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
@@ -109,8 +98,6 @@ class ChipsecUtil:
             logger().DEBUG   = True
         if self.log:
             logger().set_log_file( self.log )
-        if self._cmd_args:
-            self.help_cmd = self._cmd_args[0]
 
     def import_cmds(self):
         if self.CHIPSEC_LOADED_AS_EXE:
@@ -118,8 +105,8 @@ class ChipsecUtil:
             myzip = zipfile.ZipFile("library.zip")
             cmds = [i.replace('/','.').replace('chipsec.utilcmd.','')[:-4] for i in myzip.namelist() if r'chipsec\/utilcmd\/' in i and i[:-4] == ".pyc" and not i[:2] == '__' ]
         else:
-            cmds_dir = os.path.join(get_main_dir(),"chipsec","utilcmd"))
-            cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[:-3] == ".py" and not i[:2] == "__"]
+            cmds_dir = os.path.join(get_main_dir(),"chipsec","utilcmd")
+            cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
 
         if logger().DEBUG:
             logger().log( '[CHIPSEC] Loaded command-line extensions:' )
@@ -148,52 +135,35 @@ class ChipsecUtil:
         Receives and executes the commands
         """
 
-        if self.show_help:
+        if self.show_help or self._cmd == "help":
             return ExitCode.OK
 
         self.init_cs()
 
         # @TODO: change later
         # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
-        if self._cmd_args:
-            cmd = self._cmd_args[0]
-            self.argv = ['dummy'] + self._cmd_args
-        else:
-            cmd = 'help'
-            self.argv = ['dummy']
+        self.argv = ['dummy'] + [self._cmd] +self._cmd_args
+        comm = self.commands[self._cmd](self.argv, cs = self._cs)
 
-        if cmd in self.commands:
-            comm = self.commands[cmd](self.argv, cs = self._cs)
+        try:
+            self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver)
+        except UnknownChipsetError as msg:
+            logger().warn("*******************************************************************")
+            logger().warn("* Unknown platform!")
+            logger().warn("* Platform dependent functionality will likely be incorrect")
+            logger().warn("* Error Message: \"{}\"".format(str(msg)))
+            logger().warn("*******************************************************************")
+        except Exception as msg:
+            logger().error(str(msg))
+            sys.exit(ExitCode.EXCEPTION)
+        logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
+        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
-            try:
-                self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver)
-            except UnknownChipsetError as msg:
-                logger().warn("*******************************************************************")
-                logger().warn("* Unknown platform!")
-                logger().warn("* Platform dependent functionality will likely be incorrect")
-                logger().warn("* Error Message: \"{}\"".format(str(msg)))
-                logger().warn("*******************************************************************")
-            except Exception as msg:
-                logger().error(str(msg))
-                sys.exit(ExitCode.EXCEPTION)
-            logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
-            logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
-
-            logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(cmd,self.argv[2:]) )
-            comm.run()
-            if comm.requires_driver():
-                self._cs.destroy(True)
-            return comm.ExitCode
-
-        elif cmd == 'help':
-            if len(self.argv) <= 2:
-                self.chipsec_util_help()
-            else:
-                self.chipsec_util_help(self.argv[2])
-            return ExitCode.OK
-        else:
-            logger().error( "Unknown command '{:.32s}'".format(cmd) )
-        return ExitCode.WARNING
+        logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd,self.argv[2:]) )
+        comm.run()
+        if comm.requires_driver():
+            self._cs.destroy(True)
+        return comm.ExitCode
 
     def print_banner(self):
         """
