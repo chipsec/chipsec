@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -25,20 +25,18 @@
 Standalone utility
 """
 
-import re
 import os
 import sys
 import time
 import importlib
-import imp
 import argparse
 import platform
 
-from chipsec import defines
+from chipsec.defines import get_version
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
 from chipsec.testcase import ExitCode
-from chipsec import chipset
+from chipsec.chipset import cs, Chipset_Code, pch_codes
 
 logger().UTIL_TRACE = True
 
@@ -56,8 +54,6 @@ def get_option_width( width_op ):
     else:               return 0x0
 
 
-commands = {}
-
 class ChipsecUtil:
 
     def __init__(self, argv):
@@ -73,7 +69,7 @@ class ChipsecUtil:
         self.parse_args()
 
     def init_cs(self):
-        self._cs = chipset.cs()
+        self._cs = cs()
 
     def chipsec_util_help(self, command=None):
         """
@@ -89,7 +85,7 @@ class ChipsecUtil:
     def f_mod_zip(self, x):
         ZIP_UTILCMD_RE = re.compile(r"^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
         return ( x.find('__init__') == -1 and ZIP_UTILCMD_RE.match(x) )
-        
+
     def map_modname_zip(self, x):
         return ((x.split('/', 2)[2]).rpartition('.')[0]).replace('/','.')
 
@@ -107,8 +103,8 @@ class ChipsecUtil:
         options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
-        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.Chipset_Code, type=str.upper)
-        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.pch_codes, type=str.upper)
+        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=Chipset_Code, type=str.upper)
+        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         options.add_argument('-i', '--ignore_platform',dest='_unkownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         options.add_argument('_cmd_args',metavar='Command',nargs=argparse.REMAINDER,help="All numeric values are in hex. <width> can be one of {1, byte, 2, word, 4, dword}")
@@ -226,7 +222,7 @@ class ChipsecUtil:
                      "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
                      "##                                                            ##\n"
                      "################################################################")
-        logger().log("[CHIPSEC] Version : {}".format(defines.get_version()))
+        logger().log("[CHIPSEC] Version : {}".format(get_version()))
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(platform.system(), platform.release(), platform.version(), platform.machine()))
         logger().log("[CHIPSEC] Python  : {}".format(platform.python_version()))
 
@@ -234,7 +230,7 @@ def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])
     return chipsecUtil.main()
 
-       
+
 if __name__ == "__main__":
     sys.exit( main() )
 
