@@ -37,6 +37,7 @@ from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs, Chipset_Code, pch_codes
+from chipsec.file import get_main_dir
 
 logger().UTIL_TRACE = True
 
@@ -66,6 +67,7 @@ class ChipsecUtil:
 
         self.argv = argv
         self.print_banner()
+        self.import_cmds()
         self.parse_args()
 
     def init_cs(self):
@@ -81,19 +83,6 @@ class ChipsecUtil:
         else:
             logger().log("\nhelp for '{}' <command>:".format(command))
             logger().log(self.commands[command].__doc__)
-
-    def f_mod_zip(self, x):
-        ZIP_UTILCMD_RE = re.compile(r"^chipsec\/utilcmd\/\w+\.pyc$", re.IGNORECASE)
-        return ( x.find('__init__') == -1 and ZIP_UTILCMD_RE.match(x) )
-
-    def map_modname_zip(self, x):
-        return ((x.split('/', 2)[2]).rpartition('.')[0]).replace('/','.')
-
-    def f_mod(self, x):
-        MODFILE_RE = re.compile(r"^\w+\.py$")
-        return ( x.lower().find('__init__') == -1 and MODFILE_RE.match(x.lower()) )
-    def map_modname(self, x):
-        return x.split('.')[0]
 
     def parse_args(self):
         parser = argparse.ArgumentParser(usage='%(prog)s [options] <command>',add_help=False)
@@ -123,26 +112,14 @@ class ChipsecUtil:
         if self._cmd_args:
             self.help_cmd = self._cmd_args[0]
 
-
-    ##################################################################################
-    # Entry point
-    ##################################################################################
-
-
-    def main(self):
-        """
-        Receives and executes the commands
-        """
-
+    def import_cmds(self):
         if self.CHIPSEC_LOADED_AS_EXE:
             import zipfile
             myzip = zipfile.ZipFile("library.zip")
-            cmds = map( self.map_modname_zip, filter(self.f_mod_zip, myzip.namelist()) )
+            cmds = [i.replace('/','.').replace('chipsec.utilcmd.','')[:-4] for i in myzip.namelist() if r'chipsec\/utilcmd\/' in i and i[:-4] == ".pyc" and not i[:2] == '__' ]
         else:
-            #traceback.print_stack()
-            mydir = imp.find_module('chipsec')[1]
-            cmds_dir = os.path.join(mydir,os.path.join("utilcmd"))
-            cmds = map( self.map_modname, filter(self.f_mod, os.listdir(cmds_dir)) )
+            cmds_dir = os.path.join(get_main_dir(),"chipsec","utilcmd"))
+            cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[:-3] == ".py" and not i[:2] == "__"]
 
         if logger().DEBUG:
             logger().log( '[CHIPSEC] Loaded command-line extensions:' )
@@ -158,6 +135,18 @@ class ChipsecUtil:
                 # Display the import error and continue to import commands
                 logger().error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
                 continue
+        self.commands.update({"help":""})
+
+
+    ##################################################################################
+    # Entry point
+    ##################################################################################
+
+
+    def main(self):
+        """
+        Receives and executes the commands
+        """
 
         if self.show_help:
             return ExitCode.OK
@@ -205,12 +194,6 @@ class ChipsecUtil:
         else:
             logger().error( "Unknown command '{:.32s}'".format(cmd) )
         return ExitCode.WARNING
-
-    def set_logfile(self, logfile):
-        """
-        Calls logger's set_log_file function
-        """
-        logger().set_log_file(logfile)
 
     def print_banner(self):
         """
