@@ -437,4 +437,5 @@ if __name__ == '__main__':
         print ('Not doing anything...')
 
     except DALHelperError as msg:
-        print(msg)
+        if logger().DEBUG:
+            logger().error(msg)

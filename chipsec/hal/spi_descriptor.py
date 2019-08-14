@@ -101,7 +101,7 @@ def parse_spi_flash_descriptor( cs, rom ):
 
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:8s})'.format(struct.unpack('=I',SPI_FLASH_DESCRIPTOR_SIGNATURE)) )
+        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I',SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]) )
         return None
 
     fd_off = pos - 0x10

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 """
 Access to CPU resources (for each CPU thread): Model Specific Registers (MSR), IDT/GDT
