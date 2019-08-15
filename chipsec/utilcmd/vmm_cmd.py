@@ -70,8 +70,8 @@ class VMMCommand(BaseCommand):
                 dev  = (_bus, _dev, _fun, vid, did)
                 virt_dev = [dev]
             else:
-                self.logger.error("invalid B:D.F (%s)" % bdf)
-                print VMMCommand.__doc__
+                self.logger.error("invalid B:D.F ({})".format(bdf))
+                print (VMMCommand.__doc__)
                 return
         else:
             self.logger.log("[CHIPSEC] enumerating VirtIO devices..")
@@ -89,7 +89,7 @@ class VMMCommand(BaseCommand):
     def run(self):
 
         if len(self.argv) < 3:
-            print VMMCommand.__doc__
+            print (VMMCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -97,8 +97,8 @@ class VMMCommand(BaseCommand):
 
         try:
             vmm = VMM( self.cs )
-        except VMMRuntimeError, msg:
-            print msg
+        except VMMRuntimeError as msg:
+            print (msg)
             return
 
         vmm.init();
@@ -107,7 +107,7 @@ class VMMCommand(BaseCommand):
 
             gprs_cnt = len(self.argv) - 3
             if (gprs_cnt < 6) or (gprs_cnt > 10):
-                print VMMCommand.__doc__
+                print (VMMCommand.__doc__)
                 return
 
             gpr = self.argv[3:]
@@ -117,32 +117,32 @@ class VMMCommand(BaseCommand):
             (rax, rbx, rcx, rdx, rsi, rdi, r8, r9, r10, r11) = tuple([int(x, 16) for x in gpr])
 
             self.logger.log( "[CHIPSEC] > hypercall" )
-            self.logger.log( "[CHIPSEC]   RAX: 0x%016x" % rax )
-            self.logger.log( "[CHIPSEC]   RBX: 0x%016x" % rbx )
-            self.logger.log( "[CHIPSEC]   RCX: 0x%016x" % rcx )
-            self.logger.log( "[CHIPSEC]   RDX: 0x%016x" % rdx )
-            self.logger.log( "[CHIPSEC]   RSI: 0x%016x" % rsi )
-            self.logger.log( "[CHIPSEC]   RDI: 0x%016x" % rdi )
-            self.logger.log( "[CHIPSEC]   R8 : 0x%016x" % r8  )
-            self.logger.log( "[CHIPSEC]   R9 : 0x%016x" % r9  )
-            self.logger.log( "[CHIPSEC]   R10: 0x%016x" % r10 )
-            self.logger.log( "[CHIPSEC]   R11: 0x%016x" % r11 )
+            self.logger.log( "[CHIPSEC]   RAX: 0x{:016X}".format(rax) )
+            self.logger.log( "[CHIPSEC]   RBX: 0x{:016X}".format(rbx) )
+            self.logger.log( "[CHIPSEC]   RCX: 0x{:016X}".format(rcx) )
+            self.logger.log( "[CHIPSEC]   RDX: 0x{:016X}".format(rdx) )
+            self.logger.log( "[CHIPSEC]   RSI: 0x{:016X}".format(rsi) )
+            self.logger.log( "[CHIPSEC]   RDI: 0x{:016X}".format(rdi) )
+            self.logger.log( "[CHIPSEC]   R8 : 0x{:016X}".format(r8)  )
+            self.logger.log( "[CHIPSEC]   R9 : 0x{:016X}".format(r9)  )
+            self.logger.log( "[CHIPSEC]   R10: 0x{:016X}".format(r10) )
+            self.logger.log( "[CHIPSEC]   R11: 0x{:016X}".format(r11) )
 
             rax = vmm.hypercall( rax, rbx, rcx, rdx, rsi, rdi, r8, r9, r10, r11 )
 
-            self.logger.log( "[CHIPSEC] < RAX: 0x%016x" % rax )
+            self.logger.log( "[CHIPSEC] < RAX: 0x{:016X}".format(rax) )
 
         elif op in ['pt','ept']:
 
             if len(self.argv) == 4:
                 eptp = int(self.argv[3],16) 
-                pt_fname = 'ept_%08X' % eptp
-                self.logger.log( "[CHIPSEC] EPT physical base: 0x%016X" % eptp )
-                self.logger.log( "[CHIPSEC] dumping EPT to '%s'..." % pt_fname )
+                pt_fname = 'ept_{:08X}'.format(eptp)
+                self.logger.log( "[CHIPSEC] EPT physical base: 0x{:016X}".format(eptp) )
+                self.logger.log( "[CHIPSEC] dumping EPT to '{}'...".format(pt_fname) )
                 vmm.dump_EPT_page_tables( eptp, pt_fname )
             else:
                 self.logger.log( "[CHIPSEC] finding EPT hierarchy in memory is not implemented yet" )
-                print VMMCommand.__doc__
+                print (VMMCommand.__doc__)
                 return
 
         elif op == 'virtio':
@@ -150,11 +150,11 @@ class VMMCommand(BaseCommand):
             self.virtio()
 
         else:
-            self.logger.log( "Unknown command: %s" % op )
-            print VMMCommand.__doc__
+            self.logger.log( "Unknown command: {}".format(op) )
+            print (VMMCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (vmm) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (vmm) time elapsed {:.3f}".format((time.time()-t)) )
 
 
 commands = { 'vmm': VMMCommand }

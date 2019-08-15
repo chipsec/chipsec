@@ -1,5 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2017, Google Inc
+# Copyright (c) 2019, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,7 +35,7 @@ import collections
 import struct
 
 from chipsec import defines
-from chipsec import logger
+from chipsec.logger import logger
 
 
 class TcgPcrEvent(object):
@@ -47,7 +48,7 @@ class TcgPcrEvent(object):
         self.pcr_index = pcr_index
         self.event_type = event_type
         name = SML_EVENT_TYPE.get(self.event_type)
-        if isinstance(name, basestring):
+        if isinstance(name, str):
             self.event_type_name = name
         self.digest = digest
         self.event_size = event_size
@@ -72,19 +73,19 @@ class TcgPcrEvent(object):
         pcr_index, event_type, digest, event_size = fields
         event = log.read(event_size)
         if len(event) != event_size:
-            logger.logger().warn("[tpm_eventlog] event data length "
+            logger().warn("[tpm_eventlog] event data length "
                                  "does not match the expected size")
         name = SML_EVENT_TYPE.get(event_type)
-        kls = cls if isinstance(name, basestring) else name
+        kls = cls if isinstance(name, str) else name
         return kls(pcr_index, event_type, digest, event_size, event)
 
     def __str__(self):
         if self.event_type_name:
             t = self.event_type_name
         else:
-            t = "(0x%x" % (self.event_type)
-        _str = "PCR: %d\ttype: %s\tsize: 0x%x\tdigest: %s"
-        return _str % (self.pcr_index, t.ljust(EVENT_TYPE_MAX_LENGTH),
+            t = "(0x{:x}".format(self.event_type)
+        _str = "PCR: {:d}\ttype: {}\tsize: 0x{:x}\tdigest: {}"
+        return _str.format(self.pcr_index, t.ljust(EVENT_TYPE_MAX_LENGTH),
                        self.event_size, binascii.hexlify(self.digest))
 
 
@@ -97,9 +98,9 @@ class SCRTMVersion(TcgPcrEvent):
     def __str__(self):
         _str = super(SCRTMVersion, self).__str__()
         try:
-            _str += "\n\t+ version: %s" % (self.version.decode("utf-16"))
+            _str += "\n\t+ version: {}".format(self.version.decode("utf-16"))
         except:
-            if logger().HAL: logger.logger().warn("[tpm_eventlog] CRTM Version is not "
+            if logger().HAL: logger().warn("[tpm_eventlog] CRTM Version is not "
                                  "a valid string")
         return _str
 
@@ -119,7 +120,7 @@ class EFIFirmwareBlob(TcgPcrEvent):
 
     def __str__(self):
         _str = super(EFIFirmwareBlob, self).__str__()
-        _str += "\n\t+ base: 0x%x\tlength: 0x%x" % (self.base, self.length)
+        _str += "\n\t+ base: 0x{:x}\tlength: 0x{:x}".format(self.base, self.length)
         return _str
 
 
@@ -160,7 +161,7 @@ SML_EVENT_TYPE = {
 }
 
 EVENT_TYPE_MAX_LENGTH = max([len(v) for v in SML_EVENT_TYPE.values()
-                             if isinstance(v, basestring)])
+                             if isinstance(v, str)])
 
 
 class PcrLogParser(object):
@@ -172,14 +173,17 @@ class PcrLogParser(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         event = TcgPcrEvent.parse(self.log)
         if not event:
             raise StopIteration()
         return event
+    
+    def next(self):
+        return self.__next__()
 
 
 def parse(log):
     """Simple wrapper around PcrLogParser."""
     for event in PcrLogParser(log):
-        logger.logger().log(event)
+        logger().log(event)

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -64,18 +64,18 @@ class CPU(hal_base.HALBase):
 
     def read_cr(self, cpu_thread_id, cr_number ):
         value = self.helper.read_cr( cpu_thread_id, cr_number )
-        if logger().HAL: logger().log( "[cpu%d] read CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
+        if logger().HAL: logger().log( "[cpu{:d}] read CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
         return value
 
     def write_cr(self, cpu_thread_id, cr_number, value ):
-        if logger().HAL: logger().log( "[cpu%d] write CR%d: value = 0x%08X" % (cpu_thread_id, cr_number, value) )
+        if logger().HAL: logger().log( "[cpu{:d}] write CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
         status = self.helper.write_cr( cpu_thread_id, cr_number, value )
         return status
 
     def cpuid(self, eax, ecx ):
-        if logger().HAL: logger().log( "[cpu] CPUID in : EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
+        if logger().HAL: logger().log( "[cpu] CPUID in : EAX=0x{:08X}, ECX=0x{:08X}".format(eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
-        if logger().HAL: logger().log( "[cpu] CPUID out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
+        if logger().HAL: logger().log( "[cpu] CPUID out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)
 
     # Using cpuid check if running under vmm control
@@ -98,23 +98,23 @@ class CPU(hal_base.HALBase):
     def is_HT_active(self):
         logical_processor_per_core=self.get_number_logical_processor_per_core()
         return (True if (logical_processor_per_core>1) else False) 
-    
+
     # Using the CPUID we determine the number of logical processors per core
     def get_number_logical_processor_per_core(self):
         (eax, ebx, ecx, edx)=self.cpuid( 0x0b, 0x0 )
         return ebx
-    
+
     # Using CPUID we can determine the number of logical processors per package
     def get_number_logical_processor_per_package(self):
         (eax, ebx, ecx, edx)=self.cpuid( 0x0b, 0x1 )
         return ebx
-    
+
     # Using CPUID we can determine the number of physical processors per package
     def get_number_physical_processor_per_package(self):
         logical_processor_per_core=self.get_number_logical_processor_per_core()
         logical_processor_per_package=self.get_number_logical_processor_per_package()
-        return (logical_processor_per_package/logical_processor_per_core)
-    
+        return (logical_processor_per_package//logical_processor_per_core)
+
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self):
         _acpi = acpi.ACPI( self.cs )
@@ -123,16 +123,16 @@ class CPU(hal_base.HALBase):
             table_header,APIC_object,table_header_blob,table_blob = apic
             for structure in APIC_object.apic_structs:
                 if 0x00 == structure.Type:
-                    if dACPIID.has_key( structure.APICID ) == False:
+                    if not structure.ACICID in dACPIID:
                         if 1 == structure.Flags:
                             dACPIID[ structure.APICID ] = structure.ACPIProcID
         return len( dACPIID )
-    
+
     # determine number of physical sockets using the CPUID and APIC ACPI table
     def get_number_sockets_from_APIC_table(self):
         number_threads=self.get_number_threads_from_APIC_table()
         logical_processor_per_package=self.get_number_logical_processor_per_package()
-        return (number_threads/logical_processor_per_package)
+        return (number_threads//logical_processor_per_package)
 
     #
     # Return SMRR MSR physical base and mask
@@ -205,8 +205,8 @@ class CPU(hal_base.HALBase):
     def dump_page_tables( self, cr3, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
         hpt = paging.c_ia32e_page_tables( self.cs )
-        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x%08X...' % cr3 )
-        if pt_fname is None: pt_fname = ('pt_%08X' % cr3)
+        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x{:08X}...'.format(cr3) )
+        if pt_fname is None: pt_fname = ('pt_{:08X}'.format(cr3))
         logger().set_log_file( pt_fname )
         hpt.read_pt_and_show_status( pt_fname, 'PT', cr3 )
         logger().set_log_file( _orig_logname )
@@ -215,7 +215,7 @@ class CPU(hal_base.HALBase):
     def dump_page_tables_all( self ):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             cr3 = self.read_cr( tid, 3 )
-            if logger().HAL: logger().log( '[cpu%d] found paging hierarchy base (CR3): 0x%08X' % (tid,cr3) )
+            if logger().HAL: logger().log( '[cpu{:d}] found paging hierarchy base (CR3): 0x{:08X}'.format(tid,cr3) )
             self.dump_page_tables( cr3 )
 
-    
+

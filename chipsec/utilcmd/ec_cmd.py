@@ -57,7 +57,7 @@ class ECCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print ECCommand.__doc__
+            print (ECCommand.__doc__)
             return
 
         op = self.argv[2]
@@ -65,13 +65,13 @@ class ECCommand(BaseCommand):
 
         try:
             _ec = EC( self.cs )
-        except BaseException, msg:
-            print msg
+        except BaseException as msg:
+            print (msg)
             return
 
         if ( 'command' == op ):
             cmd   = int(self.argv[3],16)
-            self.logger.log( "[CHIPSEC] Sending EC command 0x%X" % cmd )
+            self.logger.log( "[CHIPSEC] Sending EC command 0x{:X}".format(cmd) )
             _ec.write_command( cmd )
         elif ( 'dump' == op ):
             size = int(self.argv[3],16) if len(self.argv) > 3 else 0x100
@@ -83,15 +83,15 @@ class ECCommand(BaseCommand):
             if len(self.argv) > 4:
                 size   = int(self.argv[4],16)
                 buf = _ec.read_range( start_off, size )
-                self.logger.log( "[CHIPSEC] EC memory read: offset 0x%X size 0x%X" % (start_off, size) )
+                self.logger.log( "[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(start_off, size) )
                 print_buffer( buf )
             else:
                 val = _ec.read_memory( start_off ) if start_off < 0x100 else _ec.read_memory_extended( start_off )
-                self.logger.log( "[CHIPSEC] EC memory read: offset 0x%X = 0x%X" % (start_off, val) )
+                self.logger.log( "[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(start_off, val) )
         elif ( 'write' == op ):
             off      = int(self.argv[3],16)
             val      = int(self.argv[4],16)
-            self.logger.log( "[CHIPSEC] EC memory write: offset 0x%X = 0x%X" % (off, val) )
+            self.logger.log( "[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(off, val) )
             if off < 0x100: _ec.write_memory( off, val )
             else:           _ec.write_memory_extended( off, val )
         elif ( 'index' == op ):
@@ -105,13 +105,13 @@ class ECCommand(BaseCommand):
             elif len(self.argv) == 4:
                 off = int(self.argv[3],16)       
                 val = _ec.read_idx(off)
-                self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x%X: 0x%X" % (off, val) )
+                self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(off, val) )
         else:
-            self.logger.error( "unknown command-line option '%.32s'" % op )
-            print ECCommand.__doc__
+            self.logger.error( "unknown command-line option '{32}'".format(op) )
+            print (ECCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (ec) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time()-t) )
 
 
 commands = { 'ec': ECCommand }

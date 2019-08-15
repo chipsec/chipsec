@@ -104,9 +104,9 @@ class OSXHelper(Helper):
         subprocess.check_call(["kextload", driver_path])
         if os.path.exists(self.DEVICE_NAME):
             if logger().DEBUG:
-                logger().log("Module %s loaded successfully" % self.DRIVER_NAME)
+                logger().log("Module {} loaded successfully".format(self.DRIVER_NAME))
         else:
-            logger().error("Failed to load the module %s" % self.DRIVER_NAME)
+            logger().error("Failed to load the module {}".format(self.DRIVER_NAME))
 
     def create(self, start_driver):
         #self.init(start_driver)
@@ -144,11 +144,11 @@ class OSXHelper(Helper):
     def init(self, start_driver):
         if start_driver:
             try:
-                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
                 raise OsHelperError("Unable to open the Chipsec device.\n"
-                                    "%s" % str(e), e.errno)
+                                    "{}".format(str(e)), e.errno)
 
     def close(self):
         if self.dev_fh:
@@ -255,7 +255,7 @@ class OSXHelper(Helper):
         encode_str += FileName
         data = subprocess.call(encode_str,shell=True)
         if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+            logger().error("Cannot decompress file({})".format(FileName))
             return False
         return True
         
@@ -347,7 +347,7 @@ class OSXHelper(Helper):
             else:
                 value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffffffff
         except:
-            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size %x (value = '%s')" %(size,out_buf))
+            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size,out_buf))
         return value
 
     def write_io_port(self, io_port, value, size):
@@ -451,7 +451,8 @@ class OSXHelper(Helper):
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
-            print "IOError IOCTL Load Patch\n"
+            if logger().DEBUG:
+                logger().error("IOError IOCTL Load Patch\n")
             return None
 
         return True'''

@@ -62,13 +62,13 @@ class SPICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SPICommand.__doc__
+            print (SPICommand.__doc__)
             return
 
         try:
             _spi = SPI( self.cs )
-        except SpiRuntimeError, msg:
-            print msg
+        except SpiRuntimeError as msg:
+            print (msg)
             return
 
         spi_op = self.argv[2]
@@ -78,7 +78,7 @@ class SPICommand(BaseCommand):
         _msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
         if ( 'erase' == spi_op ):
             spi_fla = int(self.argv[3],16)
-            self.logger.log( "[CHIPSEC] erasing SPI flash memory block at FLA = 0x%X" % spi_fla )
+            self.logger.log( "[CHIPSEC] erasing SPI flash memory block at FLA = 0x{:X}".format(spi_fla) )
 
             ok = _spi.erase_spi_block( spi_fla )
             if ok: self.logger.log_result( "completed SPI flash memory erase" )
@@ -86,7 +86,7 @@ class SPICommand(BaseCommand):
         elif ( 'write' == spi_op and 5 == len(self.argv) ):
             spi_fla = int(self.argv[3],16)
             filename = self.argv[4]
-            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x%X from '%.64s'" % (spi_fla, filename) )
+            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{:64}'".format(spi_fla, filename) )
 
             ok = _spi.write_spi_from_file( spi_fla, filename )
             if ok: self.logger.log( "[CHIPSEC] completed SPI flash memory write" )
@@ -94,8 +94,8 @@ class SPICommand(BaseCommand):
         elif ( 'read' == spi_op ):
             spi_fla = int(self.argv[3],16)
             length = int(self.argv[4],16)
-            self.logger.log( "[CHIPSEC] reading 0x%x bytes from SPI Flash starting at FLA = 0x%X" % (length, spi_fla) )
-            self.logger.log( "[CHIPSEC] %s" % _msg )
+            self.logger.log( "[CHIPSEC] reading 0x{:X} bytes from SPI Flash starting at FLA = 0x{:X}".format(length, spi_fla) )
+            self.logger.log( "[CHIPSEC] {}".format(_msg) )
             out_file = None
             if 6 == len(self.argv):
                 out_file = self.argv[5]
@@ -104,21 +104,21 @@ class SPICommand(BaseCommand):
             else: self.logger.log( "[CHIPSEC] completed SPI flash memory read" )
         elif ( 'info' == spi_op ):
             self.logger.log( "[CHIPSEC] SPI flash memory information\n" )
-            ok = _spi.display_SPI_map()
+            _spi.display_SPI_map()
         elif ( 'dump' == spi_op ):
             out_file = 'rom.bin'
             if 4 == len(self.argv):
                 out_file = self.argv[3]
-            self.logger.log( "[CHIPSEC] dumping entire SPI flash memory to '%s'" % out_file )
-            self.logger.log( "[CHIPSEC] %s" % _msg )
+            self.logger.log( "[CHIPSEC] dumping entire SPI flash memory to '{}'".format(out_file) )
+            self.logger.log( "[CHIPSEC] {}".format(_msg) )
             # @TODO: don't assume SPI Flash always ends with BIOS region
             (base,limit,freg) = _spi.get_SPI_region( BIOS )
             spi_size = limit + 1
-            self.logger.log( "[CHIPSEC] BIOS region: base = 0x%08X, limit = 0x%08X" % (base,limit) )
-            self.logger.log( "[CHIPSEC] dumping 0x%08X bytes (to the end of BIOS region)" % spi_size )
+            self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base,limit) )
+            self.logger.log( "[CHIPSEC] dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
             buf = _spi.read_spi_to_file( 0, spi_size, out_file )
             if (buf is None): self.logger.error( "dumping SPI Flash didn't return any data (turn on VERBOSE)" )
-            else: self.logger.log( "[CHIPSEC] completed SPI flash dump to '%s'" % out_file )
+            else: self.logger.log( "[CHIPSEC] completed SPI flash dump to '{}'".format(out_file) )
 
         elif ( 'disable-wp' == spi_op ):
             self.logger.log( "[CHIPSEC] trying to disable BIOS write protection.." )
@@ -140,9 +140,9 @@ class SPICommand(BaseCommand):
                 self.logger.log( '    Device       : 0x{:04X}   - {}'.format(jedec & 0xFFFF, part) )
                 self.logger.log( '' )
         else:
-            print SPICommand.__doc__
+            print (SPICommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (spi %s) time elapsed %.3f" % (spi_op, time.time()-t) )
+        self.logger.log( "[CHIPSEC] (spi {}) time elapsed {:.3f}".format(spi_op, time.time()-t) )
 
 commands = { 'spi': SPICommand }

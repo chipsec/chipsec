@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -68,9 +68,9 @@ class RingBufferFuzzer(RingBuffer):
 
 class synth_kbd(BaseModule):
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
@@ -90,7 +90,7 @@ class synth_kbd(BaseModule):
         vb.vmbus_request_offers()
         relid = vb.get_relid_by_guid(HV_KBD_GUID)
         if relid == 0:
-            vb.fatal('Could not found keyboard device with GUID: %s' % HV_KBD_GUID)
+            vb.fatal('Could not found keyboard device with GUID: {}'.format(HV_KBD_GUID))
 
         vb.ringbuffers[relid] = RingBufferFuzzer()
         vb.ringbuffers[relid].ringbuffer_alloc(4)
@@ -106,7 +106,7 @@ class synth_kbd(BaseModule):
             synth_kbd_protocol_request  = pack('<LL', SYNTH_KBD_PROTOCOL_REQUEST, SYNTH_KBD_VERSION)
             vb.vmbus_sendpacket(relid, synth_kbd_protocol_request, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             synth_kbd_protocol_response = vb.vmbus_recvpacket(relid)
-            if len(synth_kbd_protocol_response) <> 8:
+            if len(synth_kbd_protocol_response) != 8:
                 vb.fatal('Invalid response from synthetic keyboard!')
             msg_type, proto_status = unpack('<LL', synth_kbd_protocol_response)
             if (proto_status & 0x1) == 0x1:
@@ -122,23 +122,23 @@ class synth_kbd(BaseModule):
                         continue
                     msg_type, code, rsvd, info = unpack('<LHHL', synth_kbd_msg[:12])
                     if msg_type == SYNTH_KBD_EVENT:
-                        vb.msg('keystroke: %04x  flags: %08x' % (code, info))
+                        vb.msg('keystroke: {:04X}  flags: {:08X}'.format(code, info))
                         vb.ringbuffers[relid].fuzzing = (command == 'fuzzing')
                         if code == 0x0046:
                             vb.msg('*** Control Break ***')
                             vb.ringbuffers[relid].fuzzing = False
                             break
                     else:
-                        vb.hex('unhandled message type: %d' % msg_type, synth_kbd_msg)
+                        vb.hex('unhandled message type: {:d}'.format(msg_type), synth_kbd_msg)
             else:
                 vb.err('synth_kbd protocol request has failed!')
 
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
-            print '\n\n'
+            print ('***** Control-C *****')
+        except Exception as error:
+            print ('\n\n')
             traceback.print_exc()
-            print '\n\n'
+            print ('\n\n')
         finally:
             vb.vmbus_close(relid)
             vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)

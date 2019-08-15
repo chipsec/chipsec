@@ -50,7 +50,7 @@ class spi_desc(BaseModule):
         brra = self.cs.get_register_field( 'FRAP', frap, 'BRRA' )
         brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
 
-        self.logger.log("[*] Software access to SPI flash regions: read = 0x%02X, write = 0x%02X" % (brra, brwa) )
+        self.logger.log("[*] Software access to SPI flash regions: read = 0x{:02X}, write = 0x{:02X}".format(brra, brwa) )
         if brwa & (1 << chipsec.hal.spi.FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
             self.logger.log_bad("Software has write access to SPI flash descriptor")

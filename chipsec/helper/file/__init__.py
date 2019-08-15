@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018, Intel Corporation
+#Copyright (c) 2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -18,5 +18,6 @@
 #chipsec@intel.com
 #
 
-
-__all__ = ["helper"]
+from chipsec.helper.oshelper import avail_helpers
+__all__ = ["filehelper"]
+avail_helpers.append("filehelper")

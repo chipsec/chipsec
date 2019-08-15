@@ -186,10 +186,10 @@ class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSi
         _str = """----------------------------------------------------------------
                      TPM response header
 ----------------------------------------------------------------
-   Response TAG: 0x%x
-   Data Size   : 0x%x
-   Return Code : 0x%x
-""" % ( self.ResponseTag, self.DataSize, self.ReturnCode  )
+   Response TAG: 0x{:x}
+   Data Size   : 0x{:x}
+   Return Code : 0x{:x}
+""".format( self.ResponseTag, self.DataSize, self.ReturnCode  )
         _str += "\t"
         try:
             _str += STATUS[self.ReturnCode]
@@ -340,14 +340,14 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                        TPM Access" )
         logger().log( "================================================================" )
-        logger().log( "\ttpmRegValidSts  : 0x%s" % bin( access_value & ( 1<<7 ) )[2] )
-        logger().log( "\treserved        : 0x%s" % bin( access_value & ( 1<<6 ) )[2] )
-        logger().log( "\tactiveLocality  : 0x%s" % bin( access_value & ( 1<<5 ) )[2] )
-        logger().log( "\tbeenSeized      : 0x%s" % bin( access_value & ( 1<<4 ) )[2] )
-        logger().log( "\tSeize           : 0x%s" % bin( access_value & ( 1<<3 ) )[2] )
-        logger().log( "\tpendingRequest  : 0x%s" % bin( access_value & ( 1<<2 ) )[2] )
-        logger().log( "\trequestUse      : 0x%s" % bin( access_value & ( 1<<1 ) )[2] )
-        logger().log( "\ttpmEstablishment: 0x%s" % bin( access_value & ( 1<<0 ) )[2] )
+        logger().log( "\ttpmRegValidSts  : 0x{}".format(bin( access_value & ( 1<<7 ) )[2]) )
+        logger().log( "\treserved        : 0x{}".format(bin( access_value & ( 1<<6 ) )[2]) )
+        logger().log( "\tactiveLocality  : 0x{}".format(bin( access_value & ( 1<<5 ) )[2]) )
+        logger().log( "\tbeenSeized      : 0x{}".format(bin( access_value & ( 1<<4 ) )[2]) )
+        logger().log( "\tSeize           : 0x{}".format(bin( access_value & ( 1<<3 ) )[2]) )
+        logger().log( "\tpendingRequest  : 0x{}".format(bin( access_value & ( 1<<2 ) )[2]) )
+        logger().log( "\trequestUse      : 0x{}".format(bin( access_value & ( 1<<1 ) )[2]) )
+        logger().log( "\ttpmEstablishment: 0x{}".format(bin( access_value & ( 1<<0 ) )[2]) )
              
     def dump_status( self, locality ):
         """
@@ -365,15 +365,15 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                         TPM Status" )
         logger().log( "================================================================" )
-        logger().log( "\tburstCount   : 0x%x" % ( ( sts_value>>8 ) & 0xFFFFFF ) )
-        logger().log( "\tstsValid     : 0x%s" % bin( sts_value & ( 1<<7 ) )[2] )
-        logger().log( "\tcommandReady : 0x%s" % bin( sts_value & ( 1<<6 ) )[2] )
-        logger().log( "\ttpmGo        : 0x%s" % bin( sts_value & ( 1<<5 ) )[2] )
-        logger().log( "\tdataAvail    : 0x%s" % bin( sts_value & ( 1<<4 ) )[2] )
-        logger().log( "\tExpect       : 0x%s" % bin( sts_value & ( 1<<3 ) )[2] )
-        logger().log( "\tReserved     : 0x%s" % bin( sts_value & ( 1<<2 ) )[2] )
-        logger().log( "\tresponseRetry: 0x%s" % bin( sts_value & ( 1<<1 ) )[2] )
-        logger().log( "\tReserved     : 0x%s" % bin( sts_value & ( 1<<0 ) )[2] )
+        logger().log( "\tburstCount   : 0x{:x}".format( ( sts_value>>8 ) & 0xFFFFFF ) )
+        logger().log( "\tstsValid     : 0x{}".format(bin( sts_value & ( 1<<7 ) )[2]) )
+        logger().log( "\tcommandReady : 0x{}".format(bin( sts_value & ( 1<<6 ) )[2]) )
+        logger().log( "\ttpmGo        : 0x{}".format(bin( sts_value & ( 1<<5 ) )[2]) )
+        logger().log( "\tdataAvail    : 0x{}".format(bin( sts_value & ( 1<<4 ) )[2]) )
+        logger().log( "\tExpect       : 0x{}".format(bin( sts_value & ( 1<<3 ) )[2]) )
+        logger().log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<2 ) )[2]) )
+        logger().log( "\tresponseRetry: 0x{}".format(bin( sts_value & ( 1<<1 ) )[2]) )
+        logger().log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<0 ) )[2]) )
 
     def dump_didvid( self, locality ):
         """ 
@@ -391,8 +391,8 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                           TPM DID VID" )
         logger().log( "================================================================" )
-        logger().log( "\tdid: 0x%x" % ( ( didvid_value>>16 ) & 0xFFFF ) )
-        logger().log( "\tvid: 0x%x" % ( didvid_value & 0xFFFF) )
+        logger().log( "\tdid: 0x{:x}".format( ( didvid_value>>16 ) & 0xFFFF ) )
+        logger().log( "\tvid: 0x{:x}".format( didvid_value & 0xFFFF) )
  
     def dump_rid( self, locality ):
         """ 
@@ -410,7 +410,7 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                             TPM RID" )
         logger().log( "================================================================" )
-        logger().log( "\trid: 0x%x" % rid_value )        
+        logger().log( "\trid: 0x{:x}".format(rid_value) )        
  
     def dump_intcap( self, locality ):
         """ 
@@ -428,16 +428,16 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                     TPM INTF CAPABILITY" )
         logger().log( "================================================================" )
-        logger().log( "\tReserved                : 0x%x" % ( ( intcap_value>>8 ) & 0xFFFFFE ) )
-        logger().log( "\tBurstCountStatic        : 0x%s" % bin( intcap_value & ( 1<<8 ) )[2] )
-        logger().log( "\tCommandReadyIntSupport  : 0x%s" % bin( intcap_value & ( 1<<7 ) )[2] )
-        logger().log( "\tInterruptEdgeFalling    : 0x%s" % bin( intcap_value & ( 1<<6 ) )[2] )
-        logger().log( "\tInterruptEdgeRising     : 0x%s" % bin( intcap_value & ( 1<<5 ) )[2] )
-        logger().log( "\tInterruptLevelLow       : 0x%s" % bin( intcap_value & ( 1<<4 ) )[2] )
-        logger().log( "\tInterruptLevelHigh      : 0x%s" % bin( intcap_value & ( 1<<3 ) )[2] )
-        logger().log( "\tLocalityChangeIntSupport: 0x%s" % bin( intcap_value & ( 1<<2 ) )[2] )
-        logger().log( "\tstsValidIntSupport      : 0x%s" % bin( intcap_value & ( 1<<1 ) )[2] )
-        logger().log( "\tdataAvailIntSupport     : 0x%s" % bin( intcap_value & ( 1<<0 ) )[2] )
+        logger().log( "\tReserved                : 0x{:x}".format( ( intcap_value>>8 ) & 0xFFFFFE ) )
+        logger().log( "\tBurstCountStatic        : 0x{}".format(bin( intcap_value & ( 1<<8 ) )[2]) )
+        logger().log( "\tCommandReadyIntSupport  : 0x{}".format(bin( intcap_value & ( 1<<7 ) )[2]) )
+        logger().log( "\tInterruptEdgeFalling    : 0x{}".format(bin( intcap_value & ( 1<<6 ) )[2]) )
+        logger().log( "\tInterruptEdgeRising     : 0x{}".format(bin( intcap_value & ( 1<<5 ) )[2]) )
+        logger().log( "\tInterruptLevelLow       : 0x{}".format(bin( intcap_value & ( 1<<4 ) )[2]) )
+        logger().log( "\tInterruptLevelHigh      : 0x{}".format(bin( intcap_value & ( 1<<3 ) )[2]) )
+        logger().log( "\tLocalityChangeIntSupport: 0x{}".format(bin( intcap_value & ( 1<<2 ) )[2]) )
+        logger().log( "\tstsValidIntSupport      : 0x{}".format(bin( intcap_value & ( 1<<1 ) )[2]) )
+        logger().log( "\tdataAvailIntSupport     : 0x{}".format(bin( intcap_value & ( 1<<0 ) )[2]) )
 
     def dump_intenable( self, locality ):
         """ 
@@ -457,12 +457,12 @@ class TPM(hal_base.HALBase):
         logger().log( "================================================================" )
         logger().log( "                         TPM INT ENABLE" )
         logger().log( "================================================================" )
-        logger().log( "\tglobalIntEnable        : 0x%s" % bin( intenable_value & ( 1<<31 ) )[2] )
-        logger().log( "\tReserved               : 0x%x" % ( (intenable_value>>8) & 0x7FFFFF00 ) )
-        logger().log( "\tcommandReadyEnable     : 0x%s" % bin( intenable_value & ( 1<<7 ) )[2] )
-        logger().log( "\tReserved               : 0x%x" % ( (intenable_value>>5) & 0x3  ) )
+        logger().log( "\tglobalIntEnable        : 0x{}".format(bin( intenable_value & ( 1<<31 ) )[2]) )
+        logger().log( "\tReserved               : 0x{:x}".format( (intenable_value>>8) & 0x7FFFFF00 ) )
+        logger().log( "\tcommandReadyEnable     : 0x{}".format(bin( intenable_value & ( 1<<7 ) )[2]) )
+        logger().log( "\tReserved               : 0x{:x}".format( (intenable_value>>5) & 0x3  ) )
         type = ( ( intenable_value>>3 ) & 0x3 )
-        logger().log( "\ttypePolarity           : 0x%x  %s" % ( type, polType[type] ) )
-        logger().log( "\tlocalityChangeIntEnable: 0x%s" % bin( intenable_value & ( 1<<2 ) )[2] )
-        logger().log( "\tstsValidIntEnable      : 0x%s" % bin( intenable_value & ( 1<<1 ) )[2] )
-        logger().log( "\tdataAvailIntEnable     : 0x%s" % bin( intenable_value & ( 1<<0 ) )[2] )
+        logger().log( "\ttypePolarity           : 0x{:x}  {}".format( type, polType[type] ) )
+        logger().log( "\tlocalityChangeIntEnable: 0x{}".format(bin( intenable_value & ( 1<<2 ) )[2]) )
+        logger().log( "\tstsValidIntEnable      : 0x{}".format(bin( intenable_value & ( 1<<1 ) )[2]) )
+        logger().log( "\tdataAvailIntEnable     : 0x{}".format(bin( intenable_value & ( 1<<0 ) )[2]) )

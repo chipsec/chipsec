@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -47,16 +47,16 @@ excluded_hypercalls_from_fuzzing  = excluded_hypercalls_from_scan + [HV_POST_MES
 class HypercallFuzz(BaseModule):
 
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]'
-        print '      mode                fuzzing mode'
-        print '        = status-fuzzing  finding parameters with hypercall success status'
-        print '        = params-info     shows input parameters valid ranges'
-        print '        = params-fuzzing  parameters fuzzing based on their valid ranges'
-        print '        = custom-fuzzing  fuzzing of known hypercalls'
-        print '      vector              hypercall vector'
-        print '      iterations          number of hypercall iterations'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]')
+        print ('      mode                fuzzing mode')
+        print ('        = status-fuzzing  finding parameters with hypercall success status')
+        print ('        = params-info     shows input parameters valid ranges')
+        print ('        = params-fuzzing  parameters fuzzing based on their valid ranges')
+        print ('        = custom-fuzzing  fuzzing of known hypercalls')
+        print ('      vector              hypercall vector')
+        print ('      iterations          number of hypercall iterations')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
@@ -68,8 +68,8 @@ class HypercallFuzz(BaseModule):
             self.usage()
             return
 
-        callnum = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] <> '' else 'all'
-        testnum = get_int_arg(module_argv[2]) if len(module_argv) > 2 and module_argv[2] <> '' else 10000000
+        callnum = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] != '' else 'all'
+        testnum = get_int_arg(module_argv[2]) if len(module_argv) > 2 and module_argv[2] != '' else 10000000
 
         hv = HyperVHypercall()
         hv.promt = 'CHIPSEC'
@@ -106,13 +106,13 @@ class HypercallFuzz(BaseModule):
 
         elif command == 'status-fuzzing':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL %04X' % i
+                hv.promt = 'HYPERCALL {:04X}'.format(i)
                 hv.msg('[*] Scan hypercall for success status')
                 hv.scan_for_success_status(i, testnum)
 
         elif command == 'params-info':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL %04X' % i
+                hv.promt = 'HYPERCALL {:04X}'.format(i)
                 if (hv.hv_hypercalls[i][2] == HV_STATUS_SUCCESS):
                     hv.msg('Scan hypercall for input parameters')
                     hv.scan_input_parameters(i, 32)
@@ -120,7 +120,7 @@ class HypercallFuzz(BaseModule):
 
         elif command == 'params-fuzzing':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL %04X' % i
+                hv.promt = 'HYPERCALL {:04X}'.format(i)
                 if (hv.hv_hypercalls[i][2] == HV_STATUS_SUCCESS):
                     hv.msg('Fuzzing hypercall for input parameters')
                     hv.scan_input_parameters(i, 32)
@@ -129,7 +129,7 @@ class HypercallFuzz(BaseModule):
 
         elif command == 'custom-fuzzing':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL %04X' % i
+                hv.promt = 'HYPERCALL {:04X}'.format(i)
                 hv.custom_fuzzing(i, testnum)
 
         else:

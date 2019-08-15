@@ -62,7 +62,7 @@ class VMM:
 
 
     def __del__(self):
-        if self.membuf0_va <> 0:
+        if self.membuf0_va != 0:
             #self.helper.free_physical_mem(self.membuf0_va)
             (self.membuf0_va, self.membuf0_pa) = (0, 0)
             (self.membuf1_va, self.membuf1_pa) = (0, 0)
@@ -72,7 +72,7 @@ class VMM:
         (self.membuf1_va, self.membuf1_pa) = (self.membuf0_va + 0x1000, self.membuf0_pa + 0x1000)
         if self.membuf0_va == 0:
             logger().log( "[vmm] Could not allocate memory!")
-            raise
+            raise("[vmm] Could not allocate memory!")
 
     # Generic hypercall interface
 
@@ -104,8 +104,8 @@ class VMM:
     def dump_EPT_page_tables( self, eptp, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
         paging_ept = chipsec.hal.paging.c_extended_page_tables( self.cs )
-        if logger().HAL: logger().log( '[vmm] dumping EPT paging hierarchy at EPTP 0x%08X...' % eptp )
-        if pt_fname is None: pt_fname = ('ept_%08X' % eptp)
+        if logger().HAL: logger().log( '[vmm] dumping EPT paging hierarchy at EPTP 0x{:08X}...'.format(eptp) )
+        if pt_fname is None: pt_fname = ('ept_{:08X}'.format(eptp))
         logger().set_log_file( pt_fname )
         paging_ept.read_pt_and_show_status( pt_fname, 'EPT', eptp )
         logger().set_log_file( _orig_logname )
@@ -157,7 +157,7 @@ class VirtIO_Device():
         self.fun = f
 
     def dump_device(self):
-        logger().log("\n[vmm] VirtIO device %02x:%02x.%01x" % (self.bus, self.dev, self.fun))
+        logger().log("\n[vmm] VirtIO device {:02X}:{:02X}.{:01X}".format(self.bus, self.dev, self.fun))
         dev_cfg = self.cs.pci.dump_pci_config(self.bus, self.dev, self.fun)
         pretty_print_hex_buffer( dev_cfg )
         bars = self.cs.pci.get_device_bars(self.bus, self.dev, self.fun)

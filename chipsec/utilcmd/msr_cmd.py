@@ -47,7 +47,7 @@ class MSRCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print MSRCommand.__doc__
+            print (MSRCommand.__doc__)
             return
 
         #msr = Msr( os_helper )
@@ -57,23 +57,23 @@ class MSRCommand(BaseCommand):
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 (eax, edx) = self.cs.msr.read_msr( tid, msr_addr )
                 val64 = ((edx << 32) | eax)
-                self.logger.log( "[CHIPSEC] CPU%d: RDMSR( 0x%x ) = %016X (EAX=%08X, EDX=%08X)" % (tid, msr_addr, val64, eax, edx) )
+                self.logger.log( "[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(tid, msr_addr, val64, eax, edx) )
         elif (4 == len(self.argv)):
             cpu_thread_id = int(self.argv[3], 16)
             (eax, edx) = self.cs.msr.read_msr( cpu_thread_id, msr_addr )
             val64 = ((edx << 32) | eax)
-            self.logger.log( "[CHIPSEC] CPU%d: RDMSR( 0x%x ) = %016X (EAX=%08X, EDX=%08X)" % (cpu_thread_id, msr_addr, val64, eax, edx) )
+            self.logger.log( "[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(cpu_thread_id, msr_addr, val64, eax, edx) )
         else:
             eax = int(self.argv[3], 16)
             edx = int(self.argv[4], 16)
             val64 = ((edx << 32) | eax)
             if (5 == len(self.argv)):
-                self.logger.log( "[CHIPSEC] All CPUs: WRMSR( 0x%x ) = %016X" % (msr_addr, val64) )
+                self.logger.log( "[CHIPSEC] All CPUs: WRMSR( 0x{:x} ) = {:016X}".format(msr_addr, val64) )
                 for tid in range(self.cs.msr.get_cpu_thread_count()):
                     self.cs.msr.write_msr( tid, msr_addr, eax, edx )
             elif (6 == len(self.argv)):
                 cpu_thread_id = int(self.argv[5], 16)
-                self.logger.log( "[CHIPSEC] CPU%d: WRMSR( 0x%x ) = %016X" % (cpu_thread_id, msr_addr, val64) )
+                self.logger.log( "[CHIPSEC] CPU{:d}: WRMSR( 0x{:x} ) = {:016X}".format(cpu_thread_id, msr_addr, val64) )
                 self.cs.msr.write_msr( cpu_thread_id, msr_addr, eax, edx )
 
 commands = { 'msr': MSRCommand }

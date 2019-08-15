@@ -49,13 +49,13 @@ class SMICommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print SMICommand.__doc__
+            print (SMICommand.__doc__)
             return
 
         try:
             interrupts = Interrupts( self.cs )
-        except RuntimeError, msg:
-            print msg
+        except RuntimeError as msg:
+            print (msg)
             return
 
         op = self.argv[2]
@@ -65,7 +65,7 @@ class SMICommand(BaseCommand):
             self.logger.log( "[CHIPSEC] SMI count:" )
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 smi_cnt = self.cs.read_register_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
-                self.logger.log( "  CPU%d: %d" % (tid,smi_cnt) )
+                self.logger.log( "  CPU{:d}: {:d}".format(tid,smi_cnt) )
         else:
             SMI_code_port_value = 0xF
             SMI_data_port_value = 0x0
@@ -73,7 +73,7 @@ class SMICommand(BaseCommand):
                 thread_id           = int(self.argv[2],16)
                 SMI_code_port_value = int(self.argv[3],16)
                 SMI_data_port_value = int(self.argv[4],16)
-                self.logger.log( "[CHIPSEC] Sending SW SMI (code: 0x%02X, data: 0x%02X).." % (SMI_code_port_value, SMI_data_port_value) )
+                self.logger.log( "[CHIPSEC] Sending SW SMI (code: 0x{:02X}, data: 0x{:02X})..".format(SMI_code_port_value, SMI_data_port_value) )
                 if 5 == len(self.argv):
                     interrupts.send_SMI_APMC( SMI_code_port_value, SMI_data_port_value )
                 elif 11 == len(self.argv):
@@ -83,12 +83,12 @@ class SMICommand(BaseCommand):
                     _rdx = int(self.argv[8],16)
                     _rsi = int(self.argv[9],16)
                     _rdi = int(self.argv[10],16)
-                    self.logger.log( "          RAX: 0x%016X (AX will be overwridden with values of SW SMI ports B2/B3)" % _rax )
-                    self.logger.log( "          RBX: 0x%016X" % _rbx )
-                    self.logger.log( "          RCX: 0x%016X" % _rcx )
-                    self.logger.log( "          RDX: 0x%016X (DX will be overwridden with 0x00B2)" % _rdx )
-                    self.logger.log( "          RSI: 0x%016X" % _rsi )
-                    self.logger.log( "          RDI: 0x%016X" % _rdi )
+                    self.logger.log( "          RAX: 0x{:016X} (AX will be overwridden with values of SW SMI ports B2/B3)".format(_rax) )
+                    self.logger.log( "          RBX: 0x{:016X}".format(_rbx) )
+                    self.logger.log( "          RCX: 0x{:016X}".format(_rcx) )
+                    self.logger.log( "          RDX: 0x{:016X} (DX will be overwridden with 0x00B2)".format(_rdx) )
+                    self.logger.log( "          RSI: 0x{:016X}".format(_rsi) )
+                    self.logger.log( "          RDI: 0x{:016X}".format(_rdi) )
                     ret = interrupts.send_SW_SMI( thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
                     if not ret is None:
                         self.logger.log( "Return values")
@@ -97,14 +97,14 @@ class SMICommand(BaseCommand):
                         self.logger.log( "          RCX: {:16X}".format(ret[3]) )
                         self.logger.log( "          RDX: {:16X}".format(ret[4]) )
                         self.logger.log( "          RSI: {:16X}".format(ret[5]) )
-                        self.logger.log( "          RDI: {:16X}".format(ret[6]) )                    
-                else: print SMICommand.__doc__
+                        self.logger.log( "          RDI: {:16X}".format(ret[6]) )  
+                else: print (SMICommand.__doc__)
             else:
-                self.logger.error( "unknown command-line option '%.32s'" % op )
-                print SMICommand.__doc__
+                self.logger.error( "unknown command-line option '{:32}'".format(op) )
+                print (SMICommand.__doc__)
                 return
 
-        self.logger.log( "[CHIPSEC] (smi) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (smi) time elapsed {:.3f}".format(time.time()-t) )
 
 
 class NMICommand(BaseCommand):
@@ -121,13 +121,13 @@ class NMICommand(BaseCommand):
     def run(self):
         try:
             interrupts = Interrupts( self.cs )
-        except RuntimeError, msg:
-            print msg
+        except RuntimeError as msg:
+            print (msg)
             return
 
         t = time.time()
         self.logger.log( "[CHIPSEC] Sending NMI#.." )
         interrupts.send_NMI()
-        self.logger.log( "[CHIPSEC] (nmi) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (nmi) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'smi': SMICommand, 'nmi': NMICommand }

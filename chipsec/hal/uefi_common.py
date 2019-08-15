@@ -40,6 +40,7 @@ from collections import namedtuple
 
 from chipsec.file import *
 from chipsec.logger import *
+from chipsec.defines import bytestostring
 
 #from chipsec.helper.oshelper import helper
 
@@ -286,7 +287,7 @@ def get_nvar_name(nvram, name_offset, isAscii):
             nend = nend + 1
             nend = nvram.find('\x00\x00', nend)
         name_size = nend - name_offset + 2 # add trailing zero symbol
-        name = unicode(nvram[name_offset:nend], "utf-16-le")
+        name = nvram[name_offset:nend].decode("utf-16-le")
         return (name, name_size)
 
 
@@ -487,6 +488,7 @@ def bit_set(value, mask, polarity = False):
     return ( (value & mask) == mask )
 
 def get_3b_size(s):
+    s = bytestostring(s)
     return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
 def guid_str(guid0, guid1, guid2, guid3):
@@ -506,7 +508,7 @@ def align_image(image, size=8, fill='\x00'):
 def get_guid_bin(guid):
     values = guid.split('-')
     if [len(x) for x in values] == [8, 4, 4, 4, 12]:
-        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in xrange(0, 12, 2)]
+        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in range(0, 12, 2)]
         values = [int(x, 16) for x in values]
         return struct.pack('<LHHBBBBBBBB', *tuple(values))
     return ''
@@ -547,7 +549,7 @@ def assemble_uefi_raw(image):
 
 def FvSum8(buffer):
     sum8 = 0
-    for b in buffer:
+    for b in bytestostring(buffer):
         sum8 = (sum8 + ord(b)) & 0xff
     return sum8
 
@@ -556,7 +558,7 @@ def FvChecksum8(buffer):
 
 def FvSum16(buffer):
     sum16 = 0
-    buffer = buffer
+    buffer = bytestostring(buffer)
     blen = len(buffer)//2
     i = 0
     while i < blen:
@@ -586,7 +588,7 @@ def NextFwVolume(buffer, off = 0):
     size = len(buffer)
     res = (None, None, None, None, None, None, None, None, None)
     while ((fof + vf_header_size) < size):
-        fof =  buffer.find("_FVH", fof)
+        fof =   bytestostring(buffer).find("_FVH", fof)
         if fof == -1 or size - fof < vf_header_size:
             #return if signature is not found
             return res
@@ -598,7 +600,6 @@ def NextFwVolume(buffer, off = 0):
         ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
           FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
            Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
-
         fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
                           FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
                           FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
@@ -616,11 +617,11 @@ def NextFwVolume(buffer, off = 0):
     return res
 
 FFS_ATTRIB_LARGE_FILE         = 0x01
-  
+
 def GetFvHeader(buffer, off = 0):
     EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
     header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
-    if (len(buffer) < header_size):
+    if (len(buffer) < header_size):  
         return (0,0,0)
     size = 0
     fof = off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
@@ -1267,7 +1268,7 @@ class op_io_pci_mem():
         if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
         if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x{}'.format( '{{{:d}X}}'.format(scrpt_width_sizes[self.width]*2) )
+            fmt = '0x{}'.format( '{{{:d}X}}'.format(script_width_sizes[self.width]*2) )
             str_r += "  Values : {}\n".format("  ".join( [fmt.format(v) for v in self.values] ))
         elif self.buffer is not None:
             str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))

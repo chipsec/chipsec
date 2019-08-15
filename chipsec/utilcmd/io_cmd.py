@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -52,13 +52,13 @@ class PortIOCommand(BaseCommand):
 
     def run(self):
         if len(self.argv) < 3:
-            print PortIOCommand.__doc__
+            print (PortIOCommand.__doc__)
             return
 
         try:
             _iobar = iobar.IOBAR( self.cs )
-        except iobar.IOBARRuntimeError, msg:
-            print msg
+        except iobar.IOBARRuntimeError as msg:
+            print (msg)
             return
 
         op = self.argv[2]
@@ -69,7 +69,7 @@ class PortIOCommand(BaseCommand):
         t = time.time()
 
         if len(self.argv) < 3:
-            print PortIOCommand.__doc__
+            print (PortIOCommand.__doc__)
             return
 
         io_port = int(self.argv[2],16)
@@ -80,7 +80,7 @@ class PortIOCommand(BaseCommand):
 
         if 5 == len(self.argv):
             value = int(self.argv[4], 16)
-            self.logger.log( "[CHIPSEC] OUT 0x%04X <- 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+            self.logger.log( "[CHIPSEC] OUT 0x{:04X} <- 0x{:08X} (size = 0x{:02X})".format(io_port, value, width) )
             if   0x1 == width: self.cs.io.write_port_byte( io_port, value )
             elif 0x2 == width: self.cs.io.write_port_word( io_port, value )
             elif 0x4 == width: self.cs.io.write_port_dword( io_port, value )
@@ -94,9 +94,9 @@ class PortIOCommand(BaseCommand):
             else:
                 self.logger.log( "Invalid read size requested. 1,2,4 supported")
                 return
-            self.logger.log( "[CHIPSEC] IN 0x%04X -> 0x%08X (size = 0x%02x)" % (io_port, value, width) )
+            self.logger.log( "[CHIPSEC] IN 0x{:04X} -> 0x{:08X} (size = 0x{:02X})".format(io_port, value, width) )
 
-        self.logger.log( "[CHIPSEC] (io) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (io) time elapsed {:.3f}".format(time.time()-t) )
 
 
 commands = { 'io': PortIOCommand }

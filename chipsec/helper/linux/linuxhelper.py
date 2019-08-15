@@ -50,6 +50,9 @@ from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Unimp
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger, print_buffer
 import chipsec.file
+from chipsec.hal.uefi_common import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS
+from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
+from chipsec.hal.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
 
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
@@ -148,14 +151,14 @@ class LinuxHelper(Helper):
                 if logger().DEBUG:
                     logger().log("Cannot find symbol 'page_is_ram'")
             else:
-                a1 = "a1=0x%s" % page_is_ram
+                a1 = "a1=0x{}".format(page_is_ram)
         if self.SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT:
             phys_mem_access_prot = self.get_phys_mem_access_prot()
             if not phys_mem_access_prot:
                 if logger().DEBUG:
                     logger().log("Cannot find symbol 'phys_mem_access_prot'")
             else:
-                a2 = "a2=0x%s" % phys_mem_access_prot
+                a2 = "a2=0x{}".format(phys_mem_access_prot)
 
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper" ,"linux", "chipsec.ko" )
         if not os.path.exists(driver_path):
@@ -169,9 +172,9 @@ class LinuxHelper(Helper):
         os.chmod(self.DEVICE_NAME, 600)
         if os.path.exists(self.DEVICE_NAME):
             if logger().DEBUG:
-                logger().log("Module %s loaded successfully"%self.DEVICE_NAME)
+                logger().log("Module {} loaded successfully".format(self.DEVICE_NAME))
         else:
-            logger().error( "Fail to load module: %s" % driver_path )
+            logger().error( "Fail to load module: {}".format(driver_path) )
 
 
     def create(self, start_driver):
@@ -210,12 +213,12 @@ class LinuxHelper(Helper):
             logger().log("****** Chipsec Linux Kernel module is licensed under GPL 2.0")
 
             try:
-                self.dev_fh = open(self.DEVICE_NAME, "r+")
+                self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
-                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(e),e.errno)
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(e)),e.errno)
             except BaseException as be:
-                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n %s"%str(be),errno.ENXIO)
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(be)),errno.ENXIO)
 
             self._ioctl_base = self.compute_ioctlbase()
 
@@ -236,7 +239,7 @@ class LinuxHelper(Helper):
             raise OsHelperError("Unable to open /dev/mem.\n"
                                 "This command requires access to /dev/mem.\n"
                                 "Are you running this command as root?\n"
-                                "%s" % str(err), err.errno)
+                                "{}".format(str(err)), err.errno)
         return False
 
 
@@ -257,7 +260,7 @@ class LinuxHelper(Helper):
             raise OsHelperError("Unable to open /dev/port.\n"
                                 "This command requires access to /dev/port.\n"
                                 "Are you running this command as root?\n"
-                                "%s" % str(err), err.errno)
+                                "{}".format(str(err)), err.errno)
 
     def devmsr_available(self):
         """Check if /dev/cpu/CPUNUM/msr is usable.
@@ -275,18 +278,18 @@ class LinuxHelper(Helper):
             if not os.path.exists("/dev/cpu/0/msr"):
                 os.system("modprobe msr")
             for cpu in os.listdir("/dev/cpu"):
-                print "found cpu = " + cpu
+                print ("found cpu = {}".format(cpu))
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
-                    print "Added dev_msr "+str(cpu)
+                    print ("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
                                 "This command requires access to /dev/cpu/CPUNUM/msr.\n"
                                 "Are you running this command as root?\n"
                                 "Do you have the msr kernel module installed?\n"
-                                "%s" % str(err), err.errno)
+                                "{}".format(str(err)), err.errno)
 
     def close(self):
         if self.dev_fh:
@@ -334,7 +337,7 @@ class LinuxHelper(Helper):
         """Map to memory a specific region."""
         if self.devmem_available() and not self.memory_mapping(base, size):
             if logger().DEBUG:
-                logger().log("[helper] Mapping 0x%x to memory" % (base))
+                logger().log("[helper] Mapping 0x{:x} to memory".format(base))
             length = max(size, resource.getpagesize())
             page_aligned_base = base - (base % resource.getpagesize())
             mapping = MemoryMapping(self.dev_mem, length, mmap.MAP_SHARED,
@@ -366,7 +369,7 @@ class LinuxHelper(Helper):
             os.lseek(self.dev_mem, addr, os.SEEK_SET)
             written = os.write(self.dev_mem, newval)
             if written != length:
-                if logger().DEBUG: logger().error("Cannot write %s to memory %016x (wrote %d of %d)" % (newval, addr, written, length))
+                if logger().DEBUG: logger().error("Cannot write {} to memory {:016X} (wrote {:d} of {:d})".format(newval, addr, written, length))
 
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         addr = (phys_address_hi << 32) | phys_address_lo
@@ -389,7 +392,7 @@ class LinuxHelper(Helper):
         #Check if PA > max physical address
         max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
         if pa > 1<<max_pa:
-            print "[helper] Error in va2pa: PA higher that max physical address: VA (0x%016X) -> PA (0x%016X)"% (va, pa)
+            print ("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
             error_code = 1
         return (pa,error_code)
 
@@ -400,7 +403,7 @@ class LinuxHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
         except IOError:
-            print "IOError\n"
+            print ("IOError\n")
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
@@ -425,7 +428,7 @@ class LinuxHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_WRPCI, d)
         except IOError:
-            print "IOError\n"
+            print ("IOError\n")
             return None
         x = struct.unpack("5"+self._pack, ret)
         return x[4]
@@ -453,7 +456,7 @@ class LinuxHelper(Helper):
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
-            print "IOError IOCTL Load Patch\n"
+            print ("IOError IOCTL Load Patch\n")
             return None
 
         return True
@@ -471,7 +474,7 @@ class LinuxHelper(Helper):
             else:
                 value = struct.unpack("3"+self._pack, out_buf)[2] & 0xffffffff
         except:
-            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
+            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf) )
 
         return value
 
@@ -500,7 +503,7 @@ class LinuxHelper(Helper):
             elif 4 == size: fmt = 'I'
             written = os.write(self.dev_port, struct.pack(fmt,newval))
             if written != size:
-                if logger().DEBUG: logger().error("Cannot write %s to port %x (wrote %d of %d)" % (newval, io_port, written, size))
+                if logger().DEBUG: logger().error("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
 
     def read_cr(self, cpu_thread_id, cr_number):
         self.set_affinity(cpu_thread_id)
@@ -541,7 +544,7 @@ class LinuxHelper(Helper):
             buf = struct.pack( "2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
             if written != 8:
-                if logger().DEBUG: logger().error("Cannot write %8X to MSR %x" % (buf, msr_addr))
+                if logger().DEBUG: logger().error("Cannot write {:8X} to MSR {:x}".format(buf, msr_addr))
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
         self.set_affinity(cpu_thread_id)
@@ -600,9 +603,9 @@ class LinuxHelper(Helper):
                 region = self.memory_mapping(bar_base, bar_size)
                 if not region: logger().error("Unable to map region {:08x}".format(bar_base))
             region.seek(bar_base + offset - region.start)
-            region.write(reg)                
+            written = region.write(reg)                
             if written != size:
-                logger().error("Unable to write all data to MMIO (wrote %d of %d)" % (written, size))
+                logger().error("Unable to write all data to MMIO (wrote {:d} of {:d})".format(written, size))
 
 
     def get_ACPI_SDT( self ):
@@ -642,7 +645,12 @@ class LinuxHelper(Helper):
     #
 
     def get_affinity(self):
-        CORES = ctypes.cdll.LoadLibrary( os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/cores.so' ) )
+        mpath = os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/')
+        for i in os.listdir(mpath):
+            if i.find("cores") == 0 and i.rfind(".so") > 4:
+                mpath += i
+                break
+        CORES = ctypes.cdll.LoadLibrary( mpath )
         CORES.getaffinity.argtypes = [ ctypes.c_int, ctypes.POINTER( ( ctypes.c_long * 128 ) ),ctypes.POINTER( ctypes.c_int ) ]
         CORES.getaffinity.restype = ctypes.c_int
         mask = ( ctypes.c_long * 128 )( )
@@ -661,24 +669,29 @@ class LinuxHelper(Helper):
             AffinityString = " GetAffinity: "
             for i in range( 0, numCpus ):
                 if mask[i] == 1:
-                    AffinityString += "%s " % i
+                    AffinityString += "{} ".format(i)
             if logger().DEBUG: logger().log( AffinityString )
             return 1
         else:
-            AffinityString = " Get_affinity errno::%s"%( errno.value )
-            if logger().DEBUG: logger().error( AffinityString )
+            AffinityString = " Get_affinity errno::{}".format( errno.value )
+            if logger().DEBUG: logger().log( AffinityString )
             return None
 
     def set_affinity(self, thread_id):
-        CORES = ctypes.cdll.LoadLibrary(os.path.join(chipsec.file.get_main_dir(),'chipsec/helper/linux/cores.so'))
+        mpath = os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/')
+        for i in os.listdir(mpath):
+            if i.find("cores") == 0 and i.rfind(".so") > 4:
+                mpath += i
+                break
+        CORES = ctypes.cdll.LoadLibrary(mpath)
         CORES.setaffinity.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
         CORES.setaffinity.restype=ctypes.c_int
         errno= ctypes.c_int(0)
         if 0 == CORES.setaffinity(ctypes.c_int(thread_id),ctypes.byref(errno)) :
             return thread_id
         else:
-            AffinityString= " Set_affinity errno::%s"%(errno.value)
-            if logger().DEBUG: logger().error( AffinityString )
+            AffinityString= " Set_affinity errno::{}".format(errno.value)
+            if logger().DEBUG: logger().log( AffinityString )
             return None
 
 
@@ -743,15 +756,15 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-        buffer = array.array("c", in_buf)
+        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+        buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
         new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (status == 0x5):
             data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
-            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name)
-            buffer = array.array("c", in_buf)
+            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+            buffer = array.array("B", in_buf)
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
             except IOError:
@@ -764,7 +777,7 @@ class LinuxHelper(Helper):
             return (off, buf, hdr, None, guid, attr)
 
         if (status > 0):
-            if logger().DEBUG: logger().error( "Reading variable (GET_EFIVAR) did not succeed: %s" % status_dict[status])
+            if logger().DEBUG: logger().error( "Reading variable (GET_EFIVAR) did not succeed: {}".format(status_dict[status]))
             data = ""
             guid = 0
             attr = 0
@@ -833,7 +846,7 @@ class LinuxHelper(Helper):
         size, status = struct.unpack( "2I", buffer[:8])
 
         if (status != 0):
-            if logger().DEBUG: logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: %s" % status_dict[status] )
+            if logger().DEBUG: logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: {}".format(status_dict[status]) )
         else:
             os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
         return status
@@ -875,7 +888,7 @@ class LinuxHelper(Helper):
                 attr |= EFI_VARIABLE_APPEND_WRITE
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             if logger().DEBUG: logger().error('Failed to read files under /sys/firmware/efi/vars/'+filename)
             data = ""
             guid = 0
@@ -908,7 +921,7 @@ class LinuxHelper(Helper):
         if not guid:
             guid = '*'
         for var in os.listdir('/sys/firmware/efi/vars'):
-            if fnmatch.fnmatch(var, '%s-%s' % (name,guid)):
+            if fnmatch.fnmatch(var, '{}-{}'.format(name,guid)):
                 (off,buf,hdr,data,guid,attr) = self.VARS_get_efivar_from_sys(var)
                 return data
 
@@ -917,13 +930,13 @@ class LinuxHelper(Helper):
         if not name: name = '*'
         if not guid: guid = '*'
         for var in os.listdir('/sys/firmware/efi/vars'):
-            if fnmatch.fnmatch(var, '%s-%s' % (name,guid)):
+            if fnmatch.fnmatch(var, '{}-{}'.format(name,guid)):
                 try:
                     f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
                     f.write(value)
                     ret = 0 # EFI_SUCCESS
-                except Exception, err:
-                    if logger().DEBUG: logger().error('Failed to write EFI variable. %s' % err)
+                except Exception as err:
+                    if logger().DEBUG: logger().error('Failed to write EFI variable. {}'.format(err))
         return ret
 
 
@@ -944,7 +957,7 @@ class LinuxHelper(Helper):
             data = data[4:]
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
             guid = 0
@@ -982,7 +995,7 @@ class LinuxHelper(Helper):
             data = data[4:]
             f.close()
 
-        except Exception, err:
+        except Exception as err:
             if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
             data = ""
 
@@ -995,7 +1008,7 @@ class LinuxHelper(Helper):
         if not name: name = '*'
         if not guid: guid = '*'
 
-        path = '/sys/firmware/efi/efivars/%s-%s' % (name, guid)
+        path = '/sys/firmware/efi/efivars/{}-{}'.format(name, guid)
         if value is not None:
             try:
                 if os.path.isfile(path):
@@ -1011,14 +1024,14 @@ class LinuxHelper(Helper):
                 f.write(sattrs + value)
                 f.close()
                 ret = 0 # EFI_SUCCESS
-            except Exception, err:
-                if logger().DEBUG: logger().error('Failed to write EFI variable. %s' % err)
+            except Exception as err:
+                if logger().DEBUG: logger().error('Failed to write EFI variable. {}'.format(err))
         else:
             try:
                 os.remove(path)
                 ret = 0 # EFI_SUCCESS
-            except Exception, err:
-                if logger().DEBUG: logger().error('Failed to delete EFI variable. %s' % err)
+            except Exception as err:
+                if logger().DEBUG: logger().error('Failed to delete EFI variable. {}'.format(err))
 
         return ret
 
@@ -1112,7 +1125,7 @@ class LinuxHelper(Helper):
         encode_str += FileName
         data = subprocess.check_output(encode_str,shell=True)
         if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+            logger().error("Cannot compress file({})".format(FileName))
             return False
         return True
         

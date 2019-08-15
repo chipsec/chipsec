@@ -61,11 +61,11 @@ MAX_DIMM_SPD_COUNT = 8
 
 SPD_DIMMS = {}
 for i in range(MAX_DIMM_SPD_COUNT):
-    SPD_DIMMS[SPD_SMBUS_ADDRESS + i*2] = 'DIMM%d' % i
+    SPD_DIMMS[SPD_SMBUS_ADDRESS + i*2] = 'DIMM{:d}'.format(i)
 
 SPD_DIMM_ADDRESSES = {}
 for i in range(MAX_DIMM_SPD_COUNT):
-    SPD_DIMM_ADDRESSES['DIMM%d' % i] = SPD_SMBUS_ADDRESS + i*2
+    SPD_DIMM_ADDRESSES['DIMM{:d}'.format(i)] = SPD_SMBUS_ADDRESS + i*2
 
 ###############################################################################
 #
@@ -196,7 +196,7 @@ SPD_REVISION_1_1 = 0x11
 SPD_REVISION_1_2 = 0x12
 SPD_REVISION_1_3 = 0x13
 def SPD_REVISION(revision):
-    return ('%d.%d' % (revision>>4,revision&0xF) )
+    return ('{:d}.{:d}'.format(revision>>4,revision&0xF) )
 
 
 def dram_device_type_name( dram_type ):
@@ -215,12 +215,12 @@ class SPD_DDR( namedtuple('SPD_DDR', 'SPDBytes TotalBytes DeviceType RowAddressC
         return """------------------------------------------------------------------
 SPD DDR
 ------------------------------------------------------------------
-[0] Number of SPD bytes written: 0x%02X
-[1] Total number of bytes      : 0x%02X
-[2] DRAM Memory Type           : 0x%02X (%s)
-[3] Number of Row Addresses    : 0x%02X
+[0] Number of SPD bytes written: 0x{:02X}
+[1] Total number of bytes      : 0x{:02X}
+[2] DRAM Memory Type           : 0x{:02X} ({})
+[3] Number of Row Addresses    : 0x{:02X}
 ------------------------------------------------------------------
-""" % ( self.SPDBytes, self.TotalBytes, self.DeviceType, dram_device_type_name(self.DeviceType), self.RowAddressCount )
+""".format( self.SPDBytes, self.TotalBytes, self.DeviceType, dram_device_type_name(self.DeviceType), self.RowAddressCount )
 
 SPD_DDR2_FORMAT = '=4B'
 class SPD_DDR2( namedtuple('SPD_DDR2', 'SPDBytes TotalBytes DeviceType RowAddressCount') ):
@@ -229,12 +229,12 @@ class SPD_DDR2( namedtuple('SPD_DDR2', 'SPDBytes TotalBytes DeviceType RowAddres
         return """------------------------------------------------------------------
 SPD DDR2
 ------------------------------------------------------------------
-[0] Number of SPD bytes written: 0x%02X
-[1] Total number of bytes      : 0x%02X
-[2] DRAM Memory Type           : 0x%02X (%s)
-[3] Number of Row Addresses    : 0x%02X
+[0] Number of SPD bytes written: 0x{:02X}
+[1] Total number of bytes      : 0x{:02X}
+[2] DRAM Memory Type           : 0x{:02X} ({})
+[3] Number of Row Addresses    : 0x{:02X}
 ------------------------------------------------------------------
-""" % ( self.SPDBytes, self.TotalBytes, self.DeviceType, dram_device_type_name(self.DeviceType), self.RowAddressCount )
+""".format( self.SPDBytes, self.TotalBytes, self.DeviceType, dram_device_type_name(self.DeviceType), self.RowAddressCount )
 
 SPD_DDR3_FORMAT = '=16B'
 class SPD_DDR3( namedtuple('SPD_DDR3', 'SPDBytes Revision DeviceType ModuleType ChipSize Addressing Voltages ModuleOrg BusWidthECC FTB MTBDivident MTBDivisor tCKMin RsvdD CASLo CASHi') ):
@@ -243,24 +243,24 @@ class SPD_DDR3( namedtuple('SPD_DDR3', 'SPDBytes Revision DeviceType ModuleType 
         return """------------------------------------------------------------------
 SPD DDR3
 ------------------------------------------------------------------
-[0x00] SPD Bytes Written, Device Size, CRC: 0x%02X
-[0x01] SPD Revision                       : 0x%02X (%s)
-[0x02] DRAM Memory Type                   : 0x%02X (%s)
-[0x03] Module Type                        : 0x%02X (%s)
-[0x04] SDRAM Density and Banks            : 0x%02X
-[0x05] SDRAM Addressing (Row/Column Bits) : 0x%02X
-[0x06] Module Nominal Voltage, VDD        : 0x%02X
-[0x07] Module Organization                : 0x%02X
-[0x08] Module Memory Bus Width, ECC       : 0x%02X
-[0x09] FTB Divident/Divisor               : 0x%02X
-[0x0A] MTB Divident                       : 0x%02X
-[0x0B] MTB Divisor                        : 0x%02X
-[0x0C] SDRAM Minimum Cycle Time (tCKmin)  : 0x%02X
-[0x0D] Reserved                           : 0x%02X
-[0x0E] CAS Latencies Supported (LSB)      : 0x%02X
-[0x0F] CAS Latencies Supported (MSB)      : 0x%02X
+[0x00] SPD Bytes Written, Device Size, CRC: 0x{:02X}
+[0x01] SPD Revision                       : 0x{:02X} ({})
+[0x02] DRAM Memory Type                   : 0x{:02X} ({})
+[0x03] Module Type                        : 0x{:02X} ({})
+[0x04] SDRAM Density and Banks            : 0x{:02X}
+[0x05] SDRAM Addressing (Row/Column Bits) : 0x{:02X}
+[0x06] Module Nominal Voltage, VDD        : 0x{:02X}
+[0x07] Module Organization                : 0x{:02X}
+[0x08] Module Memory Bus Width, ECC       : 0x{:02X}
+[0x09] FTB Divident/Divisor               : 0x{:02X}
+[0x0A] MTB Divident                       : 0x{:02X}
+[0x0B] MTB Divisor                        : 0x{:02X}
+[0x0C] SDRAM Minimum Cycle Time (tCKmin)  : 0x{:02X}
+[0x0D] Reserved                           : 0x{:02X}
+[0x0E] CAS Latencies Supported (LSB)      : 0x{:02X}
+[0x0F] CAS Latencies Supported (MSB)      : 0x{:02X}
 ------------------------------------------------------------------
-""" % ( self.SPDBytes, self.Revision, SPD_REVISION(self.Revision), self.DeviceType, dram_device_type_name(self.DeviceType), self.ModuleType, module_type_name(self.ModuleType), \
+""".format( self.SPDBytes, self.Revision, SPD_REVISION(self.Revision), self.DeviceType, dram_device_type_name(self.DeviceType), self.ModuleType, module_type_name(self.ModuleType), \
         self.ChipSize, self.Addressing, self.Voltages, self.ModuleOrg, self.BusWidthECC, self.FTB, self.MTBDivident, self.MTBDivisor, self.tCKMin, self.RsvdD, self.CASLo, self.CASHi )
 
 SPD_DDR4_FORMAT = '=16B'
@@ -271,24 +271,24 @@ class SPD_DDR4( namedtuple('SPD_DDR4', 'SPDBytes Revision DeviceType ModuleType 
 SPD DDR4
 ------------------------------------------------------------------
 Base Configuration and DRAM Parameters
-[0x00] SPD Bytes Written, Device Size, CRC: 0x%02X
-[0x01] SPD Revision                       : 0x%02X (%s)
-[0x02] DRAM Memory Type                   : 0x%02X (%s)
-[0x03] Module Type                        : 0x%02X (%s)
-[0x04] SDRAM Density and Banks            : 0x%02X
-[0x05] SDRAM Addresing (Row/Column Bits)  : 0x%02X
-[0x06] SDRAM Package Type                 : 0x%02X
-[0x07] SDRAM Optional Features            : 0x%02X
-[0x08] SDRAM Thermal and Refresh Options  : 0x%02X
-[0x09] Other Optional Features            : 0x%02X
-[0x0A] Reserved (== 0x00)                 : 0x%02X
-[0x0B] Module Nominal Voltage, VDD        : 0x%02X
-[0x0C] Module Organization                : 0x%02X
-[0x0D] Module Memory Bus Width            : 0x%02X
-[0x0E] Module Thermal Sensor              : 0x%02X
-[0x0F] Extended Module Type               : 0x%02X
+[0x00] SPD Bytes Written, Device Size, CRC: 0x{:02X}
+[0x01] SPD Revision                       : 0x{:02X} ({})
+[0x02] DRAM Memory Type                   : 0x{:02X} ({})
+[0x03] Module Type                        : 0x{:02X} ({})
+[0x04] SDRAM Density and Banks            : 0x{:02X}
+[0x05] SDRAM Addresing (Row/Column Bits)  : 0x{:02X}
+[0x06] SDRAM Package Type                 : 0x{:02X}
+[0x07] SDRAM Optional Features            : 0x{:02X}
+[0x08] SDRAM Thermal and Refresh Options  : 0x{:02X}
+[0x09] Other Optional Features            : 0x{:02X}
+[0x0A] Reserved (== 0x00)                 : 0x{:02X}
+[0x0B] Module Nominal Voltage, VDD        : 0x{:02X}
+[0x0C] Module Organization                : 0x{:02X}
+[0x0D] Module Memory Bus Width            : 0x{:02X}
+[0x0E] Module Thermal Sensor              : 0x{:02X}
+[0x0F] Extended Module Type               : 0x{:02X}
 ------------------------------------------------------------------
-""" % ( self.SPDBytes, self.Revision, SPD_REVISION(self.Revision), self.DeviceType, dram_device_type_name(self.DeviceType), self.ModuleType, module_type_name(self.ModuleType), \
+""".format( self.SPDBytes, self.Revision, SPD_REVISION(self.Revision), self.DeviceType, dram_device_type_name(self.DeviceType), self.ModuleType, module_type_name(self.ModuleType), \
         self.Density, self.Addressing, self.PackageType, self.OptFeatures, self.ThernalRefresh, self.OptFeatures1, self.ReservedA, self.VDD, self.ModuleOrg, self.BusWidthECC, self.ThermSensor, self.ModuleTypeExt)
 
 
@@ -310,7 +310,7 @@ class SPD:
 
     def read_range( self, start_offset, size, device=SPD_SMBUS_ADDRESS ):
         buffer = [chr(0xFF)]*size
-        for i in xrange(size):
+        for i in range(size):
             buffer[i] = chr( self.read_byte( start_offset + i, device ) )
         return buffer
 
@@ -329,12 +329,12 @@ class SPD:
     #
     def getDRAMDeviceType( self, device=SPD_SMBUS_ADDRESS ):
         dram_type = self.read_byte( SPD_OFFSET_DRAM_DEVICE_TYPE, device ) 
-        if logger().HAL: logger().log( "[spd][0x%02X] DRAM Device Type (byte 2): 0x%01X" % (device,dram_type) )
+        if logger().HAL: logger().log( "[spd][0x{:02X}] DRAM Device Type (byte 2): 0x{:01X}".format(device,dram_type) )
         return dram_type
 
     def getModuleType( self, device=SPD_SMBUS_ADDRESS ):
         module_type = self.read_byte( SPD_OFFSET_DDR3_MODULE_TYPE, device ) 
-        if logger().HAL: logger().log( "[spd][0x%02X] Module Type (byte 3): 0x%01X" % (device,module_type) )
+        if logger().HAL: logger().log( "[spd][0x{:02X}] Module Type (byte 3): 0x{:01X}".format(device,module_type) )
         return module_type
 
     def isECC( self, device=SPD_SMBUS_ADDRESS ):
@@ -377,7 +377,7 @@ class SPD:
     def isSPDPresent( self, device=SPD_SMBUS_ADDRESS ):
         device_type = self.getDRAMDeviceType( device )
         is_spd_present = (device_type != 0xFF)
-        if logger().HAL: logger().log( "[spd][0x%02X] Detecting SPD.. %sfound (DRAM memory type = 0x%X)" % (device,'' if is_spd_present else 'not ',device_type) )
+        if logger().HAL: logger().log( "[spd][0x{:02X}] Detecting SPD.. {}found (DRAM memory type = 0x{:X})".format(device,'' if is_spd_present else 'not ',device_type) )
         return is_spd_present 
 
 
@@ -385,7 +385,7 @@ class SPD:
         spd = None
         device_type = self.getDRAMDeviceType( device )
         spd_rom = self.dump_spd_rom( device )
-        logger().log( "[spd][0x%02X] Serial Presence Detect (SPD) EEPROM contents:" % device )
+        logger().log( "[spd][0x{:02X}] Serial Presence Detect (SPD) EEPROM contents:".format(device) )
         print_buffer( spd_rom )
         spd_buffer = ''.join(spd_rom)
 

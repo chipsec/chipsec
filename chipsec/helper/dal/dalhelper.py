@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2018, Intel Corporation
+# Copyright (c) 2010-2019, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -129,7 +129,7 @@ class DALHelper(Helper):
             if logger().DEBUG: logger().log('[WARNING] PCI access out of range. Use mmio functions to access PCIEXBAR.')
         config_addr = self.base.threads[self.find_thread()].dport(0xCF8)
         config_addr &= 0x7f000003
-        config_addr |= 0x80000000L
+        config_addr |= 0x80000000
         config_addr |= (bus & 0xFF) << 16
         config_addr |= (device & 0x1F) << 11
         config_addr |= (function & 0x07) << 8
@@ -230,7 +230,7 @@ class DALHelper(Helper):
     def read_msr( self, thread, msr_addr ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
+            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(thread, en_thread))
             thread = en_thread
         val = self.base.threads[thread].msr( msr_addr )
         edx = ( val.ToUInt64() >> 32 )
@@ -240,7 +240,7 @@ class DALHelper(Helper):
     def write_msr( self, thread, msr_addr, eax, edx ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (thread, en_thread))
+            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(thread, en_thread))
             thread = en_thread
         val = ( edx << 32 ) | eax
         self.base.threads[thread].msr( msr_addr, val )
@@ -249,7 +249,7 @@ class DALHelper(Helper):
     def read_cr(self, cpu_thread_id, cr_number):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
+            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             val = self.base.threads[cpu_thread_id].state.regs.cr0.value
@@ -262,14 +262,14 @@ class DALHelper(Helper):
         elif cr_number == 8:
             val = self.base.threads[cpu_thread_id].state.regs.cr8.value
         else:
-            if logger().DEBUG: logger().error('Selected CR%d is not supported.' % cr_number)
+            if logger().DEBUG: logger().log('[ERROR] Selected CR{:d} is not supported.'.format(cr_number))
             val = 0
         return val
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().warn('Selected thread [%d] was disabled, using [%d].' % (cpu_thread_id, en_thread))
+            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             self.base.threads[cpu_thread_id].state.regs.cr0 = value
@@ -282,7 +282,7 @@ class DALHelper(Helper):
         elif cr_number == 8:
             self.base.threads[cpu_thread_id].state.regs.cr8 = value
         else:
-            if logger().DEBUG: logger().error('Selected CR%d is not supported.' % cr_number)
+            if logger().DEBUG: logger().log('[ERROR] Selected CR{:d} is not supported.'.format(cr_number))
             return False
         return True
 
@@ -293,7 +293,7 @@ class DALHelper(Helper):
     def get_threads_count( self ):
         no_threads = len(self.base.threads)
         if logger().DEBUG:
-            logger().log( '[helper] Threads discovered : 0x%X (%d)' % (no_threads, no_threads) )
+            logger().log( '[helper] Threads discovered : 0x{:X} ({:d})'.format(no_threads, no_threads) )
         return no_threads
 
     def cpuid(self, eax, ecx):
@@ -434,7 +434,8 @@ def get_helper():
 
 if __name__ == '__main__':
     try:
-        print 'Not doing anything...'
+        print ('Not doing anything...')
 
-    except DALHelperError, msg:
-        print msg
+    except DALHelperError as msg:
+        if logger().DEBUG:
+            logger().error(msg)

@@ -148,7 +148,7 @@ class VMBusFuzz(VMBusDiscovery):
                     for i in fuzzing_range:
                         randstr = pack('<Q', getrandbits(64))[:cmdarg2]
                         self.fuzzing_rules = {m: {i: randstr}}
-                        self.logger.log('[VMBUS] Message: %d/%d  Fuzzing %d byte(s): position %d out of %d' % (m + 1, len(self.training_msginfo), len(randstr), i, n))
+                        self.logger.log('[VMBUS] Message: {:d}/{:d}  Fuzzing {:d} byte(s): position {:d} out of {:d}'.format(m + 1, len(self.training_msginfo), len(randstr), i, n))
                         self.vmbus_clear()
                         if len(self.supported_versions):
                             self.vmbus_connect(version)
@@ -158,8 +158,8 @@ class VMBusFuzz(VMBusDiscovery):
                         self.fuzzing = False
                     m += 1
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
+            print ('***** Control-C *****')
+        except Exception as error:
             traceback.print_exc()
         finally:
             self.vmbus_rescind_all_offers()

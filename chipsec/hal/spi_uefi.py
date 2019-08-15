@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -74,7 +74,7 @@ def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_da
     if remove_files:
         try:
             os.remove(compressed_name)
-            os.remove(uncompressed_name)       
+            os.remove(uncompressed_name)
         except: pass
     return uncompressed_image
 
@@ -232,7 +232,7 @@ class EFI_SECTION(EFI_MODULE):
 
         # parent GUID used in search, export to JSON/log
         self.parentGuid  = None
-    
+
     def name(self):
         return "{} section of binary {{{}}} {}".format(self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
@@ -297,6 +297,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                         else:
                             d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
                         if d is None:
+                            sec.Comments = "Unable to decompress image"
                             d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
                         if d:
                             sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
@@ -318,7 +319,7 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
         secn += 1
     return sections
-    
+
 # build_efi_file_tree - extract EFI FV file from EFI image and build an object tree
 #
 # Input arguements:
@@ -467,7 +468,7 @@ def search_efi_tree(modules, search_callback, match_module_types=EFIModuleType.S
                 if search_callback(m):
                     matching_modules.append(m)
                     if not findall: return True
-        
+
         # recurse search if current module node has children nodes
         if len(m.children) > 0:
             matches = search_efi_tree(m.children, search_callback, match_module_types, findall)
@@ -511,9 +512,9 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             # so for EFI_FILE type of module using parent's Image as NVRAM
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
-                        else: raise
+                        else: raise("NVRAM type cannot be None")
                     except: logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid,m.NVRAMType) )
-    
+
         # save children modules
         if len(m.children) > 0:
             md["children"] = save_efi_tree(_uefi, m.children, m, save_modules, mod_dir_path, save_log, lvl+1)

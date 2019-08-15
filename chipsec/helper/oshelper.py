@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -51,6 +51,8 @@ try:
 except ImportError:
     _importlib = False
 
+avail_helpers = []
+
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
     return ( x.find('__init__') == -1 and ZIP_HELPER_RE.match(x) )
@@ -76,7 +78,7 @@ class UnimplementedNativeAPIError (UnimplementedAPIError):
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
 
-import chipsec.helper.helpers
+import chipsec.helper.helpers as chiphelpers
 
 ## OS Helper
 #
@@ -97,9 +99,9 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        for name, cls in Helper.registry:
+        for helper in avail_helpers:
             try:
-                self.helper = cls()
+                self.helper = getattr(chiphelpers,helper).get_helper()
                 break
             except OsHelperError:
                 raise
@@ -108,18 +110,18 @@ class OsHelper:
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:
-            from chipsec.helper.file.helper import FileCmds
+            from chipsec.helper.file.filehelper import FileCmds
             self.filecmds = FileCmds(to_file)
         if not driver_exists is None:
-            for name, cls in Helper.registry:
+            for name in avail_helpers:
                 if name == driver_exists:
-                    self.helper = cls()
+                    self.helper = getattr(chiphelpers,helper).get_helper()
         try:
             if not self.helper.create( start_driver ):
-                raise OsHelperError("failed to create OS helper")
+                raise OsHelperError("failed to create OS helper",1)
             if not self.helper.start( start_driver, from_file ):
-                raise OsHelperError("failed to start OS helper")
-        except (None,Exception) as msg:
+                raise OsHelperError("failed to start OS helper",1)
+        except Exception as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
@@ -254,7 +256,7 @@ class OsHelper:
         else:
             ret = self.helper.free_phys_mem(physical_address)
         if not self.filecmds is None:
-            self.filecmds.AddElement("free_physical_mem",(phys_address),ret)
+            self.filecmds.AddElement("free_physical_mem",(physical_address),ret)
         return ret
 
     def va2pa( self, va ):

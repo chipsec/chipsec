@@ -35,6 +35,7 @@ On UEFI use the efi package functions
 import struct
 import sys
 import uuid
+import os
 
 try:
     import edk2        # for Python 2.7 on UEFI
@@ -143,13 +144,13 @@ class EfiHelper(Helper):
 
     def va2pa( self, va ):
         pa = va # UEFI shell has identity mapping
-        if logger().DEBUG: logger().log( "[helper] VA (0X%016x) -> PA (0X%016x)" % (va,pa) )
+        if logger().DEBUG: logger().log( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va,pa) )
         return pa
 
     def pa2va(self, pa):
         va = pa # UEFI Shell has identity mapping
         if logger().DEBUG:
-            logger().log('[helper] PA (0X%016x) -> VA (0X%016x)' % (pa, va))
+            logger().log('[helper] PA (0X{:016X}) -> VA (0X{:016X})'.format(pa, va))
         return va
 
 
@@ -328,7 +329,7 @@ class EfiHelper(Helper):
         (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), randguid.bytes)     
         
         if status == 5:
-            if logger().DEBUG: logger().log("size was too small increasing to %d" % size)
+            if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
             name = '\0'*size
             (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), randguid.bytes)
 
@@ -337,21 +338,21 @@ class EfiHelper(Helper):
             name = name.encode('ascii','ignore')
             (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
             
-            if logger().DEBUG: logger().log("%d: Found variable %s" % (len(variables), name))
+            if logger().DEBUG: logger().log("{:d}: Found variable {}".format(len(variables), name))
 
             var = (off, buf, hdr, data, str(guid), attr)
             if name in variables: 
-                if logger().DEBUG: logger().log("WARNING: found a second instance of name %s." % name)
+                if logger().DEBUG: logger().log("WARNING: found a second instance of name {}.".format(name))
 
             else: variables[name] = []
             if data != "" or guid != 0 or attr != 0:
                 variables[name].append(var)
 
             (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), guid.bytes)
-            if logger().DEBUG: logger().log("returned %s. status is %s" % (name, status_dict[status]))
+            if logger().DEBUG: logger().log("returned {}. status is {}".format(name, status_dict[status]))
 
             if status == 5:
-                if logger().DEBUG: logger().log("size was too small increasing to %d" % size)
+                if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
                 (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), guid.bytes)
         return variables        
         

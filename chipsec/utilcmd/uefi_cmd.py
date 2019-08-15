@@ -88,7 +88,7 @@ class UEFICommand(BaseCommand):
     def run(self):
         _uefi = UEFI( self.cs )
         if len(self.argv) < 3:
-            print UEFICommand.__doc__
+            print (UEFICommand.__doc__)
             return
         
         op       = self.argv[2]
@@ -104,7 +104,7 @@ class UEFICommand(BaseCommand):
                 guid = self.argv[4]
             if (5 < len(self.argv)):
                 filename = self.argv[5]
-            self.logger.log( "[CHIPSEC] Reading EFI variable Name='%s' GUID={%s} to '%s' via Variable API.." % (name, guid, filename) )
+            self.logger.log( "[CHIPSEC] Reading EFI variable Name='{}' GUID={{{}}} to '{}' via Variable API..".format(name, guid, filename) )
             var = _uefi.get_EFI_variable( name, guid, filename )
 
         elif ( 'var-write' == op ):
@@ -114,11 +114,11 @@ class UEFICommand(BaseCommand):
                 guid = self.argv[4]
                 filename = self.argv[5]
             else:
-                print UEFICommand.__doc__
+                print (UEFICommand.__doc__)
                 return
-            self.logger.log( "[CHIPSEC] writing EFI variable Name='%s' GUID={%s} from '%s' via Variable API.." % (name, guid, filename) )
+            self.logger.log( "[CHIPSEC] writing EFI variable Name='{}' GUID={{{}}} from '{}' via Variable API..".format(name, guid, filename) )
             status = _uefi.set_EFI_variable_from_file( name, guid, filename )
-            self.logger.log("[CHIPSEC] status: %s" % chipsec.hal.uefi_common.EFI_STATUS_DICT[status])
+            self.logger.log("[CHIPSEC] status: {}".format(chipsec.hal.uefi_common.EFI_STATUS_DICT[status]))
             if status == 0:
                 self.logger.log( "[CHIPSEC] writing EFI variable was successful" )
             else:
@@ -130,11 +130,11 @@ class UEFICommand(BaseCommand):
                 name = self.argv[3]
                 guid = self.argv[4]
             else:
-                print UEFICommand.__doc__
+                print( UEFICommand.__doc__)
                 return
-            self.logger.log( "[CHIPSEC] Deleting EFI variable Name='%s' GUID={%s} via Variable API.." % (name, guid) )
+            self.logger.log( "[CHIPSEC] Deleting EFI variable Name='{}' GUID={{{}}} via Variable API..".format(name, guid) )
             status = _uefi.delete_EFI_variable( name, guid )
-            self.logger.log("Returned %s" % chipsec.hal.uefi_common.EFI_STATUS_DICT[status])
+            self.logger.log("Returned {}".format(chipsec.hal.uefi_common.EFI_STATUS_DICT[status]))
             if status == 0: self.logger.log( "[CHIPSEC] deleting EFI variable was successful" )
             else: self.logger.error( "deleting EFI variable failed" )
 
@@ -175,24 +175,24 @@ class UEFICommand(BaseCommand):
 
             _input_var = self.argv[3]
             if ('-' in _input_var):
-                self.logger.log( "[*] Searching for UEFI variable with GUID {%s}.." % _input_var )
+                self.logger.log( "[*] Searching for UEFI variable with GUID {{{}}}..".format(_input_var) )
                 for name in _vars:
                     n = 0
                     for (off, buf, hdr, data, guid, attrs) in _vars[name]:
                         if _input_var == guid:
-                            var_fname = '%s_%s_%s_%d.bin' % (name,guid,get_attr_string(attrs).strip(),n)
-                            self.logger.log_good( "Found UEFI variable %s:%s. Dumped to '%s'" % (guid,name,var_fname) )
+                            var_fname = '{}_{}_{}_{:d}.bin'.format(name,guid,get_attr_string(attrs).strip(),n)
+                            self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid,name,var_fname) )
                             write_file( var_fname, data )
                         n += 1
             else:
-                self.logger.log( "[*] Searching for UEFI variable with name %s.." % _input_var )
-                for name,_v in _vars.iteritems():
+                self.logger.log( "[*] Searching for UEFI variable with name {}..".format(_input_var) )
+                name = _input_var
+                if name in list(_vars.keys()):
                     n = 0
-                    for (off, buf, hdr, data, guid, attrs) in _v:
-                        if _input_var == name:
-                            var_fname = '%s_%s_%s_%d.bin' % (name,guid,get_attr_string(attrs).strip(),n)
-                            self.logger.log_good( "Found UEFI variable %s:%s. Dumped to '%s'" % (guid,name,var_fname) )
-                            write_file( var_fname, data )
+                    for (off, buf, hdr, data, guid, attrs) in _vars[name]:
+                        var_fname = '{}_{}_{}_{:d}.bin'.format(name,guid,get_attr_string(attrs).strip(),n)
+                        self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid,name,var_fname) )
+                        write_file( var_fname, data )
                         n += 1
 
         elif ( 'nvram' == op or 'nvram-auth' == op ):
@@ -204,9 +204,9 @@ class UEFICommand(BaseCommand):
 
             romfilename = self.argv[3]
             fwtype      = self.argv[4] if len(self.argv) == 5 else None
-            self.logger.log( "[CHIPSEC] Extracting EFI Variables from ROM file '%s'" % romfilename )
+            self.logger.log( "[CHIPSEC] Extracting EFI Variables from ROM file '{}'".format(romfilename) )
             if not os.path.exists( romfilename ):
-                self.logger.error( "Could not find file '%s'" % romfilename )
+                self.logger.error( "Could not find file '{}'".format(romfilename) )
                 return
 
             rom = read_file( romfilename )
@@ -216,7 +216,7 @@ class UEFICommand(BaseCommand):
                     self.logger.error( "Could not automatically identify EFI NVRAM type" )
                     return
             elif fwtype not in fw_types:
-                self.logger.error( "Unrecognized EFI NVRAM type '%s'" % fwtype )
+                self.logger.error( "Unrecognized EFI NVRAM type '{}'".format(fwtype) )
                 return
 
             _orig_logname = self.logger.LOG_FILE_NAME
@@ -227,16 +227,16 @@ class UEFICommand(BaseCommand):
         elif ( 'decode' == op ):
 
             if len(self.argv) < 4:
-                print UEFICommand.__doc__
+                print (UEFICommand.__doc__)
                 return
 
             filename = self.argv[3]
             fwtype   = self.argv[4] if len(self.argv) > 4 else None
             if not os.path.exists( filename ):
-                self.logger.error( "Could not find file '%s'" % filename )
+                self.logger.error( "Could not find file '{}'".format(filename) )
                 return
 
-            self.logger.log( "[CHIPSEC] Parsing EFI volumes from '%s'.." % filename )
+            self.logger.log( "[CHIPSEC] Parsing EFI volumes from '{}'..".format(filename) )
             _orig_logname = self.logger.LOG_FILE_NAME
             self.logger.set_log_file( filename + '.UEFI.lst' )
             cur_dir = self.cs.helper.getcwd()
@@ -248,14 +248,14 @@ class UEFICommand(BaseCommand):
             if (3 < len(self.argv)):
                 var_filename = self.argv[3]
                 if not os.path.exists( var_filename ):
-                    self.logger.error( "Could not find file '%s'" % var_filename )
+                    self.logger.error( "Could not find file '{}'".format(var_filename) )
                     return
             else:
-                print UEFICommand.__doc__
+                print (UEFICommand.__doc__)
                 self.logger.log( "<keyvar_file> should contain one of the following EFI variables\n[ %s ]" % (" | ".join( ["%s" % var for var in SECURE_BOOT_KEY_VARIABLES]))  )
                 return
 
-            self.logger.log( "[CHIPSEC] Parsing EFI variable from '%s'.." % var_filename )
+            self.logger.log( "[CHIPSEC] Parsing EFI variable from '{}'..".format(var_filename) )
             parse_efivar_file( var_filename )
 
         elif ( 'tables' == op ):
@@ -266,7 +266,7 @@ class UEFICommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Searching for and parsing S3 resume bootscripts.." )
             if len(self.argv) > 3:
                 bootscript_pa = int(self.argv[3],16)
-                self.logger.log( '[*] Reading S3 boot-script from memory at 0x%016X..' % bootscript_pa )
+                self.logger.log( '[*] Reading S3 boot-script from memory at 0x{:016X}..'.format(bootscript_pa) )
                 script_all = self.cs.mem.read_physical_mem( bootscript_pa, 0x100000 )
                 self.logger.log( '[*] Decoding S3 boot-script opcodes..' )
                 script_entries = chipsec.hal.uefi.parse_script( script_all, True )               
@@ -276,7 +276,7 @@ class UEFICommand(BaseCommand):
         elif op in ['insert_before', 'insert_after', 'replace']:
 
             if len(self.argv) < 7:
-                print UEFICommand.__doc__
+                print (UEFICommand.__doc__)
                 return
 
             (guid, rom_file, new_file, efi_file) = self.argv[3:7]
@@ -288,15 +288,15 @@ class UEFICommand(BaseCommand):
             }
 
             if get_guid_bin(guid) == '':
-                print '*** Error *** Invalid GUID: %s' % guid
+                print ('*** Error *** Invalid GUID: {}'.format(guid))
                 return
 
             if not os.path.isfile(rom_file):
-                print '*** Error *** File doesn\'t exist: %s' % rom_file
+                print ('*** Error *** File doesn\'t exist: {}'.format(rom_file))
                 return
 
             if not os.path.isfile(efi_file):
-                print '*** Error *** File doesn\'t exist: %s' % efi_file
+                print ('*** Error *** File doesn\'t exist: {}'.format(efi_file))
                 return
 
             rom_image = chipsec.file.read_file(rom_file)
@@ -307,17 +307,17 @@ class UEFICommand(BaseCommand):
         elif op == 'remove':
 
             if len(self.argv) < 6:
-                print UEFICommand.__doc__
+                print (UEFICommand.__doc__)
                 return
 
             (guid, rom_file, new_file) = self.argv[3:6]
 
             if get_guid_bin(guid) == '':
-                print '*** Error *** Invalid GUID: %s' % guid
+                print ('*** Error *** Invalid GUID: {}'.format(guid))
                 return
 
             if not os.path.isfile(rom_file):
-                print '*** Error *** File doesn\'t exist: %s' % rom_file
+                print ('*** Error *** File doesn\'t exist: {}'.format(rom_file))
                 return
 
             rom_image = chipsec.file.read_file(rom_file)
@@ -329,21 +329,21 @@ class UEFICommand(BaseCommand):
             compression = {'none': 0, 'tiano': 1, 'lzma': 2}
 
             if len(self.argv) < 8:
-                print UEFICommand.__doc__
+                print (UEFICommand.__doc__)
                 return
 
             (guid, file_type, comp, raw_file, efi_file) = self.argv[3:8]
 
             if get_guid_bin(guid) == '':
-                print '*** Error *** Invalid GUID: %s' % guid
+                print ('*** Error *** Invalid GUID: {}'.format(guid))
                 return
 
             if not os.path.isfile(raw_file):
-                print '*** Error *** File doesn\'t exist: %s' % raw_file
+                print ('*** Error *** File doesn\'t exist: {}'.format(raw_file))
                 return
 
             if comp not in compression:
-                print '*** Error *** Unknown compression: %s' % comp
+                print ('*** Error *** Unknown compression: {}'.format(comp))
                 return
 
             compression_type = compression[comp]
@@ -357,17 +357,17 @@ class UEFICommand(BaseCommand):
                 uefi_image = assemble_uefi_file(guid, wrap_image)
                 chipsec.file.write_file(efi_file, uefi_image)
             else:
-                print '*** Error *** Unknow file type: %s' % file_type
+                print ('*** Error *** Unknow file type: {}'.format(file_type))
                 return
 
-            self.logger.log( "[CHIPSEC]  UEFI file was successfully assembled! Binary file size: %d, compressed UEFI file size: %d" % (len(raw_image), len(uefi_image)) )
+            self.logger.log( "[CHIPSEC]  UEFI file was successfully assembled! Binary file size: {:d}, compressed UEFI file size: {:d}".format(len(raw_image), len(uefi_image)) )
 
         else:
-            self.logger.error( "Unknown uefi command '%s'" % op )
-            print UEFICommand.__doc__
+            self.logger.error( "Unknown uefi command '{}'".format(op) )
+            print (UEFICommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (uefi) time elapsed %.3f" % (time.time()-t) )
+        self.logger.log( "[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time()-t) )
 
 
 commands = { 'uefi': UEFICommand }
