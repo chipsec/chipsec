@@ -63,7 +63,7 @@ class TestChipsecUtil(unittest.TestCase):
         util = chipsec_util.ChipsecUtil(arg.split())
         util.VERBOSE = True
         logger.logger().HAL = True
-        util.set_logfile(self.log_file)
+        logger.logger().set_log_file(self.log_file)
         err_code = util.main()
         logger.logger().close()
         log = open(self.log_file,'rb')
