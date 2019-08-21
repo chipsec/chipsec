@@ -56,7 +56,6 @@ import shutil
 import struct
 
 from chipsec.module_common import *
-from __future__ import print_function
 
 logger  = chipsec.logger.logger()
 
@@ -486,7 +485,7 @@ class te(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        
+
     def is_supported(self):
         #win8 = self.cs.helper.is_win8_or_greater()
         efi_mode = self.cs.helper.EFI_supported()

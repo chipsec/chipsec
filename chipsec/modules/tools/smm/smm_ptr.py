@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -21,7 +21,7 @@
 
 
 """
-CanSecWest 2015 
+CanSecWest 2015
 `A New Class of Vulnerability in SMI Handlers of BIOS/UEFI Firmware <https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf>`_
 
 A tool to test SMI handlers for pointer validation vulnerabilities
@@ -178,10 +178,10 @@ class smm_ptr(BaseModule):
         self.test_ptr_in_buffer = False
         self.fill_byte = _MEM_FILL_VALUE
         self.fill_size = _MEM_FILL_SIZE
-        
+
     def is_supported(self):
         return True
-        
+
 
     def fill_memory( self, _addr, is_ptr_in_buffer, _ptr, _ptr_offset, _sig, _sig_offset ):
         #
@@ -296,8 +296,8 @@ class smm_ptr(BaseModule):
             contents_changed = self.check_memory( _addr, _smi_desc, fn, restore_contents )
             if contents_changed:
                 msg = "DETECTED: SMI# {:X} data {:X} (rax={:X} rbx={:X} rcx={:X} rdx={:X} rsi={:X} rdi={:X})".format(_smi_desc.smi_code,_smi_desc.smi_data,_rax,_rbx,_rcx,_rdx,_rsi,_rdi)
-                self.logger.log_important( msg )     
-                if FUZZ_BAIL_ON_1ST_DETECT: raise BadSMIDetected, msg
+                self.logger.log_important( msg )
+                if FUZZ_BAIL_ON_1ST_DETECT: raise BadSMIDetected(msg)
 
         if FLUSH_OUTPUT_AFTER_SMI: self.logger.flush()
 
@@ -429,7 +429,7 @@ class smm_ptr(BaseModule):
         self.logger.log( "  size          size of the memory buffer (in Hex)" )
         self.logger.log( "  address       physical address of memory buffer to pass in GP regs to SMI handlers (in Hex)" )
         self.logger.log( "    = smram     pass address of SMRAM base (system may hang in this mode!)\n" )
-        
+
         test_mode            = 'config'
         _smi_config_fname    = 'chipsec/modules/tools/smm/smm_config.ini'
         _addr                = None
