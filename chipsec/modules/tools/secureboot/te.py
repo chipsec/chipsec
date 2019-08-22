@@ -56,6 +56,7 @@ import shutil
 import struct
 
 from chipsec.module_common import *
+from chipsec.defines import cs_input
 
 logger  = chipsec.logger.logger()
 
@@ -467,7 +468,7 @@ def confirm():
     logger.warn("* - On Windows, use recovery mode which should automatically restore correct executables")
     logger.warn("*")
     logger.warn("***************************************************************************************")
-    s = raw_input( "Type 'yes' to continue running the tool > " )
+    s = cs_input( "Type 'yes' to continue running the tool > " )
     if s != 'yes': sys.exit( 0 )
 
 def usage():
