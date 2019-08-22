@@ -827,7 +827,7 @@ class LinuxHelper(Helper):
         if value: datalen = len(value)
         else:
             datalen = 0
-            value = '\0'
+            value = struct.pack('B', 0x0)
         data_size = header_size + namelen + datalen
         guid0 = int(guid[:8] , 16)
         guid1 = int(guid[9:13], 16)
@@ -842,7 +842,7 @@ class LinuxHelper(Helper):
         guid10 = int(guid[34:], 16)
 
         in_buf = struct.pack('15I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
-        buffer = array.array("c", in_buf)
+        buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
         size, status = struct.unpack( "2I", buffer[:8])
 
