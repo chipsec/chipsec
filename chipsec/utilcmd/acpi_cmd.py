@@ -59,7 +59,7 @@ class ACPICommand(BaseCommand):
         parser_table.add_argument('-f','--file',dest='_file', help='Read from file', action='store_true')
         parser_table.add_argument('_name',metavar='table|filename',nargs=1,help="table to list")
         parser_table.set_defaults(func=self.acpi_table)
-        parser.parse_args(self.argv[2:],namespace=ACPICommand)
+        parser.parse_args(self.argv[2:], namespace=self)
         if self.func == self.acpi_table and self._file:
             return False
         return True
