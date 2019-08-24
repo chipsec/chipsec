@@ -290,7 +290,7 @@ class ACPI(hal_base.HALBase):
         rsdp    = None
         membuf = self.cs.mem.read_physical_mem( 0xE0000, 0x20000 )
         membuf = bytestostring(membuf)
-        pos = membuf.find( ACPI_RSDP_SIG )
+        pos = bytestostring(membuf).find( ACPI_RSDP_SIG )
         if -1 != pos:
             rsdp_pa  = 0xE0000 + pos
             rsdp     = self.read_RSDP(rsdp_pa)
@@ -335,7 +335,7 @@ class ACPI(hal_base.HALBase):
         pa = smram_base - CHUNK_SZ
         while pa > CHUNK_SZ:
             membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
-            pos = membuf.find( ACPI_RSDP_SIG )
+            pos = bytestostring(membuf).find( ACPI_RSDP_SIG )
             if -1 != pos:
                 rsdp_pa  = pa + pos
                 if logger().HAL: logger().log( "[acpi] found '{}' signature at 0x{:16X}. Checking if valid RSDP..".format(ACPI_RSDP_SIG,rsdp_pa) )
