@@ -191,9 +191,6 @@ class ChipsecUtil:
             except Exception as msg:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
-            except None as msg:
-                logger().error(str(msg))
-                sys.exit(ExitCode.EXCEPTION)
 
             logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(cmd,self.argv[2:]) )
             comm.run()
