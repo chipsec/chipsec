@@ -32,6 +32,7 @@ import time
 import importlib
 import imp
 import argparse
+import platform
 
 from chipsec import defines
 from chipsec.logger  import logger
@@ -73,7 +74,6 @@ class ChipsecUtil:
 
     def init_cs(self):
         self._cs = chipset.cs()
-
 
     def chipsec_util_help(self, command=None):
         """
@@ -191,6 +191,8 @@ class ChipsecUtil:
             except Exception as msg:
                 logger().error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
+            logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
+            logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
             logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(cmd,self.argv[2:]) )
             comm.run()
@@ -218,13 +220,15 @@ class ChipsecUtil:
         """
         Prints chipsec banner
         """
-        logger().log( '' )
-        logger().log( "################################################################\n"
-                      "##                                                            ##\n"
-                      "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
-                      "##                                                            ##\n"
-                      "################################################################" )
-        logger().log( "[CHIPSEC] Version {}".format(defines.get_version()) )
+        logger().log('')
+        logger().log("################################################################\n"
+                     "##                                                            ##\n"
+                     "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
+                     "##                                                            ##\n"
+                     "################################################################")
+        logger().log("[CHIPSEC] Version : {}".format(defines.get_version()))
+        logger().log("[CHIPSEC] OS      : {} {} {} {}".format(platform.system(), platform.release(), platform.version(), platform.machine()))
+        logger().log("[CHIPSEC] Python  : {}".format(platform.python_version()))
 
 def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])
