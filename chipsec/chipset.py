@@ -792,8 +792,6 @@ class Chipset:
         try:
             return (self.Cfg.REGISTERS[reg_name] is not None)
         except KeyError:
-            #if logger().DEBUG: logger().error( "'{}' register definition not found in XML config".format(reg_name))
-            #raise RegisterNotFoundError, ('RegisterNotFound: {}'.format(reg_name))
             return False
 
     def get_register_def(self, reg_name, bus_index=0):
@@ -949,7 +947,10 @@ class Chipset:
         return self.write_register(reg_name, reg_value_new, cpu_thread)
 
     def register_has_field( self, reg_name, field_name ):
-        reg_def = self.get_register_def(reg_name )
+        try:
+            reg_def = self.get_register_def(reg_name )
+        except KeyError:
+            return False
         if 'FIELDS' not in reg_def:
             return False
         return (field_name in reg_def['FIELDS'])
