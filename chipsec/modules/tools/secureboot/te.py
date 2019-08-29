@@ -51,12 +51,13 @@ Restore bootloaders listed in te.cfg file:
 
 """
 
+from __future__ import print_function
+
 import os
 import shutil
 import struct
 
 from chipsec.module_common import *
-from __future__ import print_function
 
 logger  = chipsec.logger.logger()
 
