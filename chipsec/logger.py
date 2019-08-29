@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -393,9 +393,8 @@ def dump_buffer( arr, length = 8 ):
     tmp_str=[]
     i=1
     for c in arr:
-        tmp+=["{:2.2x} ".format(ord(c))]
-        #if 0xD == ord(c) or 0xA == ord(c):
-        if c in string.whitespace:
+        tmp+=["{:02x} ".format(ord(c))]
+        if c in string.whitespace or c not in string.printable:
             ch = " "
         else:
             ch = ord(c)
@@ -405,8 +404,6 @@ def dump_buffer( arr, length = 8 ):
             tmp+=tmp_str
             tmp+=["\n"]
             tmp_str=[]
-        #print tmp
-        #print "\n"
         i+=1
     if 0 != len(arr)%length:
         tmp+=[ (length - len(arr)%length) * 3*" " ]
