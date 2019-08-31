@@ -12,10 +12,10 @@ To build:
 	make
 
 To load kernel module:
-	make install
+	sudo insmod ./chipsec.ko
 
 To remove kernel module:
-	make uninstall
+	sudo rmmod chipsec
 
 NOTE:
 You may need run apt-get install python-dev for the Python.h header (needed for switching cpu affinity). 
