@@ -62,6 +62,8 @@ class TestHelper(oshelper.Helper):
     def read_physical_mem(self,phys_address, length):
         return self.read_phys_mem(phys_address>>32,phys_address& 0xFFFFFFFF,length)
 
+    def get_threads_count(self):
+        return 2
 
 class ACPIHelper(TestHelper):
     """Generic ACPI emulation
