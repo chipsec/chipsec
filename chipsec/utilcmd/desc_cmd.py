@@ -50,7 +50,7 @@ class IDTCommand(BaseCommand):
     def run(self):
         t = time()
         num_threads = self.cs.msr.get_cpu_thread_count()
-        if self._thread < num_threads:
+        if self._thread and self._thread < num_threads:
             self.logger.log( "[CHIPSEC] Dumping IDT of CPU thread {:d}".format(self._thread) )
             self.cs.msr.IDT( self._thread, 4 )
         else:
@@ -77,7 +77,7 @@ class GDTCommand(BaseCommand):
     def run(self):
         t = time()
         num_threads = self.cs.msr.get_cpu_thread_count()
-        if self._thread < num_threads:
+        if self._thread and self._thread < num_threads:
             self.logger.log( "[CHIPSEC] Dumping IDT of CPU thread {:d}".format(self._thread) )
             self.cs.msr.GDT( self._thread, 4 )
         else:
