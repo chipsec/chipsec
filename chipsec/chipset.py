@@ -331,8 +331,8 @@ pch_dictionary = {
 }
 
 try:
-    from custom_chipsets import *
-except :
+    from chipsec.custom_chipsets import *
+except ImportError:
     pass
 
 Chipset_Code = dict( [(Chipset_Dictionary[ _did ]['code'], _did) for _did in Chipset_Dictionary] )
