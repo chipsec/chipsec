@@ -2,13 +2,7 @@
 This contains some useful functions for parsing INF files.
 
 Copyright (c) 2004 - 2018, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -233,7 +227,7 @@ Returns:
   CHAR8   *Delimiter;
   BOOLEAN ParseError;
   BOOLEAN ReadError;
-  UINTN   Occurrance;
+  UINTN   Occurrence;
 
   //
   // Check input parameters
@@ -258,7 +252,7 @@ Returns:
   //
   // Initialize our instance counter for the search token
   //
-  Occurrance = 0;
+  Occurrence = 0;
 
   if (FindSection (InputFile, Section)) {
     //
@@ -307,7 +301,7 @@ Returns:
         //
         // Check if it is the correct instance
         //
-        if (Instance == Occurrance) {
+        if (Instance == Occurrence) {
           //
           // Copy the contents following the =
           //
@@ -338,9 +332,9 @@ Returns:
           }
         } else {
           //
-          // Increment the occurrance found
+          // Increment the occurrence found
           //
-          Occurrance++;
+          Occurrence++;
         }
       }
     } while (
@@ -348,7 +342,7 @@ Returns:
       !ReadError &&
       InputFile->CurrentFilePointer < InputFile->Eof &&
       CurrentToken[0] != '[' &&
-      Occurrance <= Instance
+      Occurrence <= Instance
     );
   }
   //
@@ -478,7 +472,7 @@ AsciiStringToUint64 (
 Routine Description:
 
   Converts a null terminated ascii string that represents a number into a
-  UINT64 value.  A hex number may be preceeded by a 0x, but may not be
+  UINT64 value.  A hex number may be preceded by a 0x, but may not be
   succeeded by an h.  A number without 0x or 0X is considered to be base 10
   unless the IsHex input is true.
 
@@ -508,7 +502,7 @@ Returns:
   //
   // Check input parameter
   //
-  if (AsciiString == NULL || ReturnValue == NULL) {
+  if (AsciiString == NULL || ReturnValue == NULL || strlen(AsciiString) > 0xFF) {
     return EFI_INVALID_PARAMETER;
   }
   while (AsciiString[Index] == ' ') {
