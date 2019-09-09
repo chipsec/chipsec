@@ -63,13 +63,6 @@ logger  = chipsec.logger.logger()
 DEFAULT_PE_FILE_PATH     = "chipsec/modules/tools/secureboot/Shell.efi"
 DEFAULT_CONFIG_FILE_PATH = 'chipsec/modules/tools/secureboot/te.cfg'
 
-def dumpstr(s):
-    for c in range(len(s)):
-        print ("{:02X} ".format(ord(s[c])),end=' ')
-        if ((c+1)%16 == 0):
-            print ("")
-    print ("")
-
 #logger.VERBOSE = False
 
 # typedef struct _IMAGE_DOS_HEADER
