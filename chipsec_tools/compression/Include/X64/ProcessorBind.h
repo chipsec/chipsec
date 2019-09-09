@@ -3,13 +3,7 @@
 
   Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 
-  This program and the accompanying materials are licensed and made available
-  under the terms and conditions of the BSD License which accompanies this
-  distribution.  The full text of the license may be found at
-    http://opensource.org/licenses/bsd-license.php
-
-  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -71,7 +65,7 @@
 
 
     //
-    // use Microsoft C complier dependent integer width types
+    // use Microsoft C compiler dependent integer width types
     //
     typedef unsigned __int64    UINT64;
     typedef __int64             INT64;
@@ -153,17 +147,17 @@ typedef INT64   INTN;
 //
 // Modifier to ensure that all protocol member functions and EFI intrinsics
 // use the correct C calling convention. All protocol member functions and
-// EFI intrinsics are required to modify thier member functions with EFIAPI.
+// EFI intrinsics are required to modify their member functions with EFIAPI.
 //
 #if _MSC_EXTENSIONS
   ///
-  /// Define the standard calling convention reguardless of optimization level.
+  /// Define the standard calling convention regardless of optimization level.
   /// __cdecl is Microsoft* specific C extension.
   ///
   #define EFIAPI __cdecl
 #elif __GNUC__
   ///
-  /// Define the standard calling convention reguardless of optimization level.
+  /// Define the standard calling convention regardless of optimization level.
   /// efidecl is an extension to GCC that supports the differnece between x64
   /// GCC ABI and x64 Microsoft* ABI. EFI is closer to the Microsoft* ABI and
   /// EFIAPI makes sure the right ABI is used for public interfaces.
