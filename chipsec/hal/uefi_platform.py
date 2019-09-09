@@ -498,7 +498,7 @@ def getEFIvariables_NVAR_simple( nvram_buf ):
 #
 
 #define VARIABLE_STORE_SIGNATURE  EFI_SIGNATURE_32 ('$', 'V', 'S', 'S')
-VARIABLE_STORE_SIGNATURE_VSS  = '$VSS'
+VARIABLE_STORE_SIGNATURE_VSS  = b'$VSS'
 VARIABLE_STORE_HEADER_FMT_VSS = '=IIBBHI' # Signature is '$VSS'
 class VARIABLE_STORE_HEADER_VSS( namedtuple('VARIABLE_STORE_HEADER_VSS', 'Signature Size Format State Reserved Reserved1') ):
     __slots__ = ()
