@@ -774,6 +774,8 @@ class Win32Helper(Helper):
     def set_EFI_variable( self, name, guid, data, datasize, attrs ):
         var     = bytes(0) if data     is None else data
         var_len = len(var) if datasize is None else datasize
+        if isinstance(attrs, (str,bytes)):
+            attrs = struct.unpack("Q","{messge:\x00<{fill}}".format(message=attrs,fill=8)[:8])[0]
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
