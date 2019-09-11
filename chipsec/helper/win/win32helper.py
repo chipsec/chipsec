@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -332,7 +332,7 @@ class Win32Helper(Helper):
         except AttributeError as msg:
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
             pass
-        
+
         try:
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
             self.EnumSystemFirmwareTbls.restype = c_int
@@ -363,7 +363,7 @@ class Win32Helper(Helper):
 
     #
     # Create (register/install) chipsec service
-    #           
+    #
     def create(self, start_driver):
 
         if not start_driver: return True
@@ -429,7 +429,7 @@ class Win32Helper(Helper):
 
     #
     # Start chipsec service
-    #           
+    #
     def start(self, start_driver, driver_exists=False):
         # we are in native API mode so not starting the service/driver
         if not start_driver: return True
@@ -455,7 +455,7 @@ class Win32Helper(Helper):
 
     #
     # Stop chipsec service
-    #           
+    #
     def stop( self, start_driver ):
         if not start_driver: return True
         if self.use_existing_service: return True
@@ -564,7 +564,7 @@ class Win32Helper(Helper):
 
     def native_write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         raise UnimplementedNativeAPIError( "native_write_phys_mem" )
-    
+
     # @TODO: Temporarily the same as read_phys_mem for compatibility 
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
@@ -825,7 +825,10 @@ class Win32Helper(Helper):
         out_size = c_ulong(out_length)
         in_buf = struct.pack( _smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
-        ret = struct.unpack( _smi_msg_t_fmt, out_buf)
+        if out_buf:
+            ret = struct.unpack( _smi_msg_t_fmt, out_buf)
+        else:
+            ret = None
         return ret
 
     def _get_handle_for_pid( self, pid=0, ro=True ):
@@ -859,7 +862,7 @@ class Win32Helper(Helper):
         except win32process.error as e:
             print ("unable to get the running cpu")
             raise ValueError(e)
-            
+
     #
     # CPUID
     #
@@ -903,15 +906,15 @@ class Win32Helper(Helper):
 
     def msgbus_send_read_message( self, mcr, mcrx ):
         if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
-        return None        
+        return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
         if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
-        return None        
+        return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
         if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
-        return None       
+        return None
 
     def rotate_list(self, list, n):
         return list[n:] + list[:n]
@@ -926,7 +929,7 @@ class Win32Helper(Helper):
             else:
                 failed_times += 1
         return res
-        
+
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
@@ -962,7 +965,7 @@ class Win32Helper(Helper):
             logger().error("Cannot compress file({})".format(FileName))
             return False
         return True
-        
+
     #
     # Decompress binary
     #
