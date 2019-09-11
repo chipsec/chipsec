@@ -54,16 +54,15 @@ Restore bootloaders listed in te.cfg file:
 import os
 import shutil
 import struct
+import sys
 
-from chipsec.module_common import *
-from chipsec.defines import cs_input
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import cs_input
+from chipsec.logger import logger
 
-logger  = chipsec.logger.logger()
 
 DEFAULT_PE_FILE_PATH     = "chipsec/modules/tools/secureboot/Shell.efi"
 DEFAULT_CONFIG_FILE_PATH = 'chipsec/modules/tools/secureboot/te.cfg'
-
-#logger.VERBOSE = False
 
 # typedef struct _IMAGE_DOS_HEADER
 # {
@@ -228,7 +227,7 @@ IMAGE_SECTION_HEADER = "<8s6I2HI"
 IMAGE_SECTION_HEADER_size = struct.calcsize(IMAGE_SECTION_HEADER)
 
 # PE executable structure
-# 
+#
 #   MS-DOS header
 #     ...
 #     e_lfanew -------------------+
@@ -301,7 +300,7 @@ def replace_header(data):
     #                          TimeDateStamp, PointerToSymbolTable, NumberOfSymbols, SizeOfOptionalHeader, Characteristics
     Machine, NumberOfSections, u1, u2, u3, SizeOfOptionalHeader, u5 \
      = struct.unpack(IMAGE_FILE_HEADER, data[e_lfanew+4:e_lfanew+4+IMAGE_FILE_HEADER_size])
-    StrippedSize = e_lfanew + 4 + IMAGE_FILE_HEADER_size + SizeOfOptionalHeader;
+    StrippedSize = e_lfanew + 4 + IMAGE_FILE_HEADER_size + SizeOfOptionalHeader
     if (StrippedSize > size):
         #print " *** strip more bytes than the file size"
         return None
@@ -363,7 +362,7 @@ def produce_te(fname, outfname):
     return 1
 
 def replace_efi_binary(orig_efi_binary, new_efi_binary):
-    logger.log( "[*] replacing EFI binary '{}'..".format(orig_efi_binary) )
+    logger().log( "[*] replacing EFI binary '{}'..".format(orig_efi_binary) )
     te_binary = new_efi_binary + '.te'
     if not os.path.exists(te_binary): produce_te(new_efi_binary, te_binary)
     # back up original binary
@@ -372,7 +371,7 @@ def replace_efi_binary(orig_efi_binary, new_efi_binary):
     try:
         shutil.copy(te_binary, orig_efi_binary)
     except OSError as err:
-        logger.error( 'Cannot replace binary ({})'.format(err) )
+        logger().error( 'Cannot replace binary ({})'.format(err) )
         return False
     return True
 
@@ -380,7 +379,7 @@ def umount(drive):
     import subprocess
     if os.path.exists(drive):
         res = subprocess.call( ["mountvol.exe", drive, "/D"] )
-        if res != 0: logger.warn( "Cannot unmount EFI System partition: {:d}".format(res) )
+        if res != 0: logger().warn( "Cannot unmount EFI System partition: {:d}".format(res) )
 
 def get_efi_mount():
     import subprocess
@@ -388,84 +387,84 @@ def get_efi_mount():
         if not os.path.exists('%c:\\' % l):
             res = subprocess.call( ["mountvol.exe", "%c:\\" % l, "/S"] )
             if res != 0:
-                logger.error( "Cannot mount EFI System partition (status = {:d})".format(res) )
+                logger().error( "Cannot mount EFI System partition (status = {:d})".format(res) )
                 return None
             return '%c:\\' % l
-    logger.error( "Cannot mount EFI System partition. No drive letters to use." )
+    logger().error( "Cannot mount EFI System partition. No drive letters to use." )
     return None
 
 def get_bootloader_paths( cfg_file ):
     bootloader_paths = []
     fcfg = open( cfg_file, 'r' )
-    logger.log( "[*] reading paths from '{}'..".format(cfg_file) )
+    logger().log( "[*] reading paths from '{}'..".format(cfg_file) )
     for line in fcfg:
         bl_path = line.rstrip()
         if bl_path is not None: 
-            logger.log( "    adding path '{}'..".format(bl_path) )
+            logger().log( "    adding path '{}'..".format(bl_path) )
             bootloader_paths.append( bl_path )
     return bootloader_paths
 
 def replace_bootloader( bootloader_paths, new_bootloader_file, do_mount=True ):
-    logger.log( "[*] Replacing bootloaders on EFI System Partition (ESP).." )
+    logger().log( "[*] Replacing bootloaders on EFI System Partition (ESP).." )
     dsk = get_efi_mount() if do_mount else ''
     if dsk is None: return False
     for pth in bootloader_paths:
         bootloader_path = os.path.join(dsk,pth)
         if os.path.exists(bootloader_path): replace_efi_binary( bootloader_path, new_bootloader_file )
     if do_mount: umount( dsk )
-    logger.log( "[*] You will need to reboot the system to see the changes" )
+    logger().log( "[*] You will need to reboot the system to see the changes" )
     return True
 
 def restore_efi_binary( orig_efi_binary ):
-    logger.log( "[*] Restoring {}..".format(orig_efi_binary) )
+    logger().log( "[*] Restoring {}..".format(orig_efi_binary) )
     backup = orig_efi_binary + ".bak"
     if not os.path.exists(backup):
-        logger.error( "Cannot restore original binary: '{}' not found".format(backup) )
+        logger().error( "Cannot restore original binary: '{}' not found".format(backup) )
         return False
     try:
         if os.path.exists(orig_efi_binary): os.remove(orig_efi_binary)
         os.rename(backup, orig_efi_binary)
     except OSError as err:
-        logger.error( 'Cannot restore original binary ({})'.format(err) )
+        logger().error( 'Cannot restore original binary ({})'.format(err) )
         return False
     return True
 
 def restore_bootloader( bootloader_paths, do_mount=True ):
-    logger.log( "[*] Restoring bootloaders on EFI System Partition (ESP).." )
+    logger().log( "[*] Restoring bootloaders on EFI System Partition (ESP).." )
     dsk = get_efi_mount() if do_mount else ''
     if dsk is None: return False
     for pth in bootloader_paths:
         bootloader_path = os.path.join(dsk,pth)
         if os.path.exists(bootloader_path): restore_efi_binary( bootloader_path )
     if do_mount: umount( dsk )
-    logger.log( "[*] You will need to reboot the system to see the changes" )
+    logger().log( "[*] You will need to reboot the system to see the changes" )
     return True
 
 def confirm():
-    logger.warn("***************************************************************************************")
-    logger.warn("*")
-    logger.warn("* RUNNING THIS TOOL MAY RESULT IN UNBOOTABLE OS!")
-    logger.warn("* USE IT FOR TESTING PURPOSES ON TEST SYSTEMS ONLY")
-    logger.warn("*")
-    logger.warn("* The tool converts PE/COFF EFI executables to TE EFI executables.")
-    logger.warn("* The tool can also automatically replace files (boot loaders)")
-    logger.warn("* listed in the configuration file with the generated TE executable.")
-    logger.warn("*")
-    logger.warn("* If after reboot, TE executable runs then the firmware doesn't properly")
-    logger.warn("* enforce Secure Boot checks on TE EFI executables")
-    logger.warn("*")
-    logger.warn("* If TE executable doesn't run then the firmware correctly blocked it.")
-    logger.warn("* To restore OS boot loader in this case you may use one of the following:")
-    logger.warn("* - Disable Secure Boot in BIOS, boot to external drive (e.g. Linux or UEFI shell)")
-    logger.warn("*   then restore original boot loader executables from .bak files")
-    logger.warn("* - On Windows, use recovery mode which should automatically restore correct executables")
-    logger.warn("*")
-    logger.warn("***************************************************************************************")
+    logger().warn("***************************************************************************************")
+    logger().warn("*")
+    logger().warn("* RUNNING THIS TOOL MAY RESULT IN UNBOOTABLE OS!")
+    logger().warn("* USE IT FOR TESTING PURPOSES ON TEST SYSTEMS ONLY")
+    logger().warn("*")
+    logger().warn("* The tool converts PE/COFF EFI executables to TE EFI executables.")
+    logger().warn("* The tool can also automatically replace files (boot loaders)")
+    logger().warn("* listed in the configuration file with the generated TE executable.")
+    logger().warn("*")
+    logger().warn("* If after reboot, TE executable runs then the firmware doesn't properly")
+    logger().warn("* enforce Secure Boot checks on TE EFI executables")
+    logger().warn("*")
+    logger().warn("* If TE executable doesn't run then the firmware correctly blocked it.")
+    logger().warn("* To restore OS boot loader in this case you may use one of the following:")
+    logger().warn("* - Disable Secure Boot in BIOS, boot to external drive (e.g. Linux or UEFI shell)")
+    logger().warn("*   then restore original boot loader executables from .bak files")
+    logger().warn("* - On Windows, use recovery mode which should automatically restore correct executables")
+    logger().warn("*")
+    logger().warn("***************************************************************************************")
     s = cs_input( "Type 'yes' to continue running the tool > " )
     if s != 'yes': sys.exit( 0 )
 
 def usage():
-    logger.log( 'Usage:\n' +       \
+    logger().log( 'Usage:\n' +       \
                   'chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]\n' + \
                   '    <mode>\n' + \
                   '      generate_te        - (default) convert PE EFI binary <efi_file> to TE binary\n' + \
