@@ -786,7 +786,7 @@ def getEFIvariables_VSS_APPLE( nvram_buf ):
 # EVSA NVRAM (signature = 'EVSA')
 #
 #
-VARIABLE_STORE_SIGNATURE_EVSA = 'EVSA'
+VARIABLE_STORE_SIGNATURE_EVSA = b'EVSA'
 
 TLV_HEADER = "<BBH"
 tlv_h_size = struct.calcsize(TLV_HEADER)
