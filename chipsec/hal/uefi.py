@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -173,7 +173,7 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
     logger().log( '--------------------------------' )
 
     # Print Variable Name
-    logger().log( 'Name      : {}'.format(efi_var_name) )
+    logger().log( u'Name      : {}'.format(efi_var_name) )
     # Print Variable GUID
     logger().log( 'Guid      : {}'.format(efi_var_guid) )
 
@@ -229,7 +229,7 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
         for (off, buf, hdr, data, guid, attrs) in efi_vars[name]:
             # efi_vars[name] = (off, buf, hdr, data, guid, attrs)
             attr_str = get_attr_string( attrs )
-            var_fname = os.path.join( nvram_pth, '{}_{}_{}_{:d}.bin'.format(name, guid, attr_str.strip(), n) )
+            var_fname = os.path.join( nvram_pth, '{}_{}_{}_{:d}.bin'.format(name.encode('utf-8'), guid, attr_str.strip(), n) )
             write_file( var_fname, data )
             if name in SECURE_BOOT_KEY_VARIABLES:
                 parse_efivar_file(var_fname, data, SECURE_BOOT_SIG_VAR)
@@ -243,7 +243,7 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
 def identify_EFI_NVRAM( buffer ):
     b = buffer
     for fw_type in uefi_platform.fw_types:
-    #for t in uefi_platform.EFI_VAR_DICT.keys():            
+    #for t in uefi_platform.EFI_VAR_DICT.keys():
         if uefi_platform.EFI_VAR_DICT[ fw_type ]['func_getnvstore']:
             (offset, size, hdr) = uefi_platform.EFI_VAR_DICT[ fw_type ]['func_getnvstore']( b )
             if offset != -1: return fw_type
@@ -474,7 +474,7 @@ NVRAM: EFI Variable Store
             # @TODO: should be dumping memory contents in a loop until end opcode is found or id'ing actual size
             script_buffer = self.helper.read_physical_mem( bootscript_pa, 0x200000 )
             if logger().HAL: logger().log( '[uefi] Decoding S3 Resume Boot-Script..' )
-            script_entries = parse_script( script_buffer, log_script )               
+            script_entries = parse_script( script_buffer, log_script )
             parsed_scripts[ bootscript_pa ] = script_entries
         return (bootscript_PAs,parsed_scripts)
 
@@ -500,7 +500,7 @@ NVRAM: EFI Variable Store
             logger().log( '[uefi] writing EFI variable {}:{} {}'.format(guid, name, '' if attrs is None else ('(attributes = {})'.format(attrs))) )
             #print_buffer( var )
         return self.helper.set_EFI_variable( name, guid, var, datasize, attrs )
-        
+
     def set_EFI_variable_from_file( self, name, guid, filename, datasize=None, attrs=None ):
         if filename is None:
             logger().error( 'File with EFI variable is not specified' )
