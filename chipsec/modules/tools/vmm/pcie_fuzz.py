@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -95,24 +95,24 @@ class pcie_fuzz(BaseModule):
         reg_off = 0
         while 1:
             rand = random.randint(0, size/4-1)
-            self.fuzz_offset(bar, rand*4, is64bit)
-            self.fuzz_offset(bar, rand*4+1, is64bit)
+            self.fuzz_offset(bar, reg_off, rand*4, is64bit)
+            self.fuzz_offset(bar, reg_off, rand*4+1, is64bit)
             self.fuzz_unaligned(bar, rand*4, is64bit)
 
     def fuzz_mmio_bar_in_active_range(self, bar, is64bit, list):
         self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x{:016X}, size of range = 0x{:X}..".format(bar,len(list)) )
-        reg_off = 0
         for reg_off in list:
-            self.fuzz_offset(bar, reg_off)
-        self.fuzz_unaligned(bar)
-    
+            rand = random.randint(0, size/4-1)
+            self.fuzz_offset(bar, reg_off, rand, is64bit)
+            self.fuzz_unaligned(bar, reg_off, is64bit)
+
     def fuzz_mmio_bar_in_active_range_random(self, bar, is64bit, list):
         self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x{:016X} in random mode, size of range = 0x{:X}..".format(bar,len(list)) )
         reg_off = 0
-        self.fuzz_unaligned(bar)
+        self.fuzz_unaligned(bar, reg_off, is64bit)
         while 1:
             rand = random.randint(0, len(list)-1)
-            self.fuzz_offset(bar, list[rand])
+            self.fuzz_offset(bar, reg_off, list[rand], is64bit)
 
     def fuzz_mmio_bar_in_active_range_bit_flip(self, bar, is64bit, list):
         self.logger.log( "[*] Fuzzing (bit flipping) MMIO BAR in Active range 0x{:016X}, size of range = 0x{:X}..".format(bar,len(list)) )
@@ -126,7 +126,7 @@ class pcie_fuzz(BaseModule):
                reg_value = ~(1<<rand_offset)& 0xffffffff & reg_value
             else:
                 reg_value = reg_value | 1<<rand_offset
-   
+
             self.cs.mmio.write_MMIO_reg( bar, reg_off, reg_value )
 
     def find_active_range(self, bar, size):
@@ -164,7 +164,7 @@ class pcie_fuzz(BaseModule):
                     if IO_FUZZ:
                         self.logger.log( "[*] + 0x{:02X}: I/O BAR at 0x{:08X}. Fuzzing..".format(bar_off,bar) )
                         self.fuzz_io_bar( bar )
-            
+
     def run(self, module_argv):
         self.logger.start_test( "PCIe device fuzzer (pass-through devices)" )
 

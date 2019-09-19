@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2018, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -170,10 +170,10 @@ class XenHypercall(BaseModuleHwAccess):
             data   = self.hypercalls[vector]
             name   = get_hypercall_name(vector)
             status = get_hypercall_status_extended(data['status'])
-            self.msg("HYPERCALL {:04X}  {:016X}  {45} '{}'".format(vector, data['status'], status, name))
+            self.msg("HYPERCALL {:04X}  {:016X}  {:45} '{}'".format(vector, data['status'], status, name))
         return
 
-    def fuzz_hypercall(self, code, iterations):    
+    def fuzz_hypercall(self, code, iterations):
         rule = self.hypercall_args.get(code, {})
         if not rule:
             self.msg( "WARNING: Fuzzing rule is not defined for this hypercall!")
@@ -194,7 +194,7 @@ class XenHypercall(BaseModuleHwAccess):
         self.stats_print('Hypercall status codes')
         return
 
-    def fuzz_hypercalls_randomly(self, codes, iterations):    
+    def fuzz_hypercalls_randomly(self, codes, iterations):
         for it in range(iterations):
             code = random.choice(codes)
             rule = self.hypercall_args.get(code, {})

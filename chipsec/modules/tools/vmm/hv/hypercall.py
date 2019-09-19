@@ -133,12 +133,12 @@ class HyperVHypercall(BaseModuleHwAccess):
         for addr in sorted(msrs.keys()):
             name = get_msr_name(addr)
             try:
-                result = "0x{:08X}_{:08X}".format(self.rdmsr(addr))
+                result = "0x{:08X}_{:08X}".format(*self.rdmsr(addr))
             except Exception as e:
                 result = str(e)
             self.msg('RDMSR [{:40} = 0x{:08X}] :  {}'.format(name, addr, result))
         return
- 
+
     ##
     ##  scan_hypercalls
     ##
@@ -239,7 +239,7 @@ class HyperVHypercall(BaseModuleHwAccess):
             self.msg('*************** Status codes statistics: *****************')
             for n in sorted(statistics.keys()):
                 status = get_hypercall_status(n, 'Not defined')
-                self.msg('{50}: {:d}'.format(status, statistics[n]) )
+                self.msg('{:50}: {:d}'.format(status, statistics[n]) )
             self.hex('Input Parameters', pattern[:0x20])
         else:
             self.msg('')
