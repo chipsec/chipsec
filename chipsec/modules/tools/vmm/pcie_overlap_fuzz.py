@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -105,8 +105,8 @@ class pcie_overlap_fuzz(BaseModule):
         reg_off = 0
         while 1:
             rand = random.randint(0, size/4-1)
-            self.fuzz_offset (bar, rand*4, is64bit)
-            self.fuzz_offset (bar, rand*4+1, is64bit)
+            self.fuzz_offset (bar, reg_off, rand*4, is64bit)
+            self.fuzz_offset (bar, reg_off, rand*4+1, is64bit)
             self.fuzz_unaligned(bar, rand*4, is64bit)
 
     def fuzz_overlap_pcie_device(self, pcie_devices):
@@ -133,7 +133,7 @@ class pcie_overlap_fuzz(BaseModule):
                                                     self.fuzz_mmio_bar_random( _bar, _is64bit, _size )
                                                 else:
                                                     self.fuzz_mmio_bar( _bar, _is64bit, _size )
-                                                                            
+
 
     def run(self, module_argv):
         self.logger.start_test( "Tool to overlap and fuzz MMIO spaces of available PCIe devices" )
