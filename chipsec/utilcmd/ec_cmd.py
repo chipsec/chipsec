@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -103,11 +103,11 @@ class ECCommand(BaseCommand):
                 print_buffer( mem )
                 del mem
             elif len(self.argv) == 4:
-                off = int(self.argv[3],16)       
+                off = int(self.argv[3],16)
                 val = _ec.read_idx(off)
                 self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(off, val) )
         else:
-            self.logger.error( "unknown command-line option '{32}'".format(op) )
+            self.logger.error( "unknown command-line option '{:32}'".format(op) )
             print (ECCommand.__doc__)
             return
 
