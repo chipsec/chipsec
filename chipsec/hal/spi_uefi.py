@@ -512,7 +512,7 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             # so for EFI_FILE type of module using parent's Image as NVRAM
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
-                        else: raise("NVRAM type cannot be None")
+                        else: raise Exception("NVRAM type cannot be None")
                     except: logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid,m.NVRAMType) )
 
         # save children modules

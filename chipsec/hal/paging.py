@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -265,7 +265,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         return
 
     def read_page_tables(self, entry):
-        raise ("Function needs to be implemented by child class")
+        raise Exception("Function needs to be implemented by child class")
 
 class c_4level_page_tables(c_paging):
 
@@ -329,7 +329,7 @@ class c_4level_page_tables(c_paging):
                self.print_entry(1, addr)
                self.read_pdpt(addr, pml4e_index)
         return
-    
+
     def get_attr(self, entry):
         ret = ''
         if entry & chipsec.defines.BIT1:
@@ -453,13 +453,15 @@ class c_pae_page_tables(c_ia32e_page_tables):
         self.pt = {addr: 'pdpt'}
         self.translation = {}
         self.print_entry(1, addr)
-        self.read_pdpt(addr)
+        self.read_pdpt(addr, None)
         return
 
     def read_pml4(self, addr):
         raise Exception('PAE Page tables have no PML4!')
 
-    def read_pdpt(self, addr):
+    def read_pdpt(self, addr, pml4e_index=None):
+        if not pml4e_index:
+            raise Exception('PAE Page tables have no PML4!')
         pdpt = self.read_entries('pdpt', addr)
         for pdpte_index in range(4):
             pdpte = pdpt[pdpte_index]

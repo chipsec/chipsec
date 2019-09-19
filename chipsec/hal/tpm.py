@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -200,12 +200,12 @@ class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSi
 
 class TPM(hal_base.HALBase):
     def __init__( self, cs ):
-        self.cs = cs
+        hal_base.HALBase.__init__(cs)
         self.helper = cs.helper
         self.TPM_BASE = int(self.cs.Cfg.MEMORY_RANGES["TPM"]["address"], 16)
 
     def command( self, commandName, locality, command_argv ):
-        """ 
+        """
         Send command to the TPM and receive data
         """
         try:
@@ -215,7 +215,7 @@ class TPM(hal_base.HALBase):
             return
 
         requestedUse = False
-        
+
         #
         # Request locality use if needed
         #
@@ -223,44 +223,44 @@ class TPM(hal_base.HALBase):
         if self.helper.read_mmio_reg( access_address, 4 ) == BEENSEIZED:
             self.helper.write_mmio_reg( access_address, 4, REQUESTUSE )
             requestedUse = True
-        
+
         #
         # Build command (big endian) and send/receive 
         #
         ( command, size ) = COMMANDS[commandName]( command_argv )
         self._send_command( Locality, command, size )
-        
+
         ( header, data, header_blob, data_blob ) = self._read_response( Locality )
         logger().log( header )
         print_buffer( str(data_blob) )
         logger().log( '\n' )
-        
+
         #
         # Release locality if needed
         #
         if requestedUse==True:
             self.helper.write_mmio_reg( access_address, 4, BEENSEIZED )
         self.helper.write_mmio_reg( access_address, 1, ACTIVELOCALITY )
-    
+
     def _send_command( self, Locality, command, size ):
         """
         Send a command to the TPM using the locality specified
-        """            
+        """
         count = 0
-        
+
         datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
         sts_address = self.TPM_BASE | Locality| TPM_STS
         access_address = self.TPM_BASE | Locality| TPM_ACCESS
-        
+
         self.helper.write_mmio_reg( access_address, 1, REQUESTUSE )
         #
         # Set status to command ready
         #
-        sts_value = self.helper.read_mmio_reg( sts_address, 1 )       
+        sts_value = self.helper.read_mmio_reg( sts_address, 1 )
         while ( 0 == ( sts_value & COMMANDREADY ) ):
             self.helper.write_mmio_reg( sts_address, 1, COMMANDREADY )
-            sts_value = self.helper.read_mmio_reg( sts_address, 1 )        
- 
+            sts_value = self.helper.read_mmio_reg( sts_address, 1 )
+
         while count < size:
             sts_value = self.helper.read_mmio_reg( sts_address, 4 )
             burst_count = ( ( sts_value>>8 ) & 0xFFFFFF )
@@ -269,36 +269,36 @@ class TPM(hal_base.HALBase):
                 self.helper.write_mmio_reg( datafifo_address, 1, struct.unpack("=B", command[count])[0] )
                 count += 1
                 burst_index += 0x1
-                
+
         self.helper.write_mmio_reg( sts_address, 1, TPMGO )
-        
+
     def _read_response(self, Locality):
         """
         Read the TPM's response using the specified locality
-        """     
+        """
         count = 0
         header = ""
         header_blob = bytearray()
         data = ""
-        data_blob = bytearray()       
+        data_blob = bytearray()
         #
         # Build FIFO address
-        #            
+        #
         datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
-        access_address = self.TPM_BASE | Locality| TPM_ACCESS        
+        access_address = self.TPM_BASE | Locality| TPM_ACCESS
         sts_address = self.TPM_BASE | Locality| TPM_STS
 
         sts_value = self.helper.read_mmio_reg( sts_address, 1 )
         data_avail = bin( sts_value & ( 1<<4 ) )[2]
         #
         # Read data available
-        #        
+        #
         # watchdog?
         while data_avail == '0':
             sts_value = self.helper.read_mmio_reg( sts_address, 1 )
             self.helper.write_mmio_reg( sts_address, 1, DATAAVAIL )
             data_avail = bin( sts_value & ( 1<<4 ) )[2]
-        
+
         while count < HEADERSIZE:
             sts_value = self.helper.read_mmio_reg( sts_address, 4 )
             burst_count = ( ( sts_value>>8 ) & 0xFFFFFF )
@@ -309,7 +309,7 @@ class TPM(hal_base.HALBase):
                 burst_index += 0x1
 
         header = TPM_RESPONSE_HEADER( *struct.unpack_from( HEADERFORMAT, header_blob ) )
-        
+
         count = 0
         if header.DataSize > 10 and header.ReturnCode == 0:
             length = header.DataSize - HEADERSIZE
@@ -321,11 +321,11 @@ class TPM(hal_base.HALBase):
                     data_blob.append( self.helper.read_mmio_reg( datafifo_address, 1 ) )
                     count += 1
                     burst_index += 0x1
-            
-        return ( header, data, header_blob, data_blob )   
-    
+
+        return ( header, data, header_blob, data_blob )
+
     def dump_access( self, locality ):
-        """ 
+        """
         View the contents of the register used to gain ownership of the TPM
         """
         try:
@@ -333,7 +333,7 @@ class TPM(hal_base.HALBase):
         except:
             if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
-         
+
         access_address = self.TPM_BASE | Locality| TPM_ACCESS 
         access_value = self.helper.read_mmio_reg( access_address, 1 )
 
@@ -348,7 +348,7 @@ class TPM(hal_base.HALBase):
         logger().log( "\tpendingRequest  : 0x{}".format(bin( access_value & ( 1<<2 ) )[2]) )
         logger().log( "\trequestUse      : 0x{}".format(bin( access_value & ( 1<<1 ) )[2]) )
         logger().log( "\ttpmEstablishment: 0x{}".format(bin( access_value & ( 1<<0 ) )[2]) )
-             
+
     def dump_status( self, locality ):
         """
         View general status details
@@ -358,10 +358,10 @@ class TPM(hal_base.HALBase):
         except:
             if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
-         
+
         sts_address = self.TPM_BASE | Locality| TPM_STS 
         sts_value = self.helper.read_mmio_reg( sts_address, 4 )
-        
+
         logger().log( "================================================================" )
         logger().log( "                         TPM Status" )
         logger().log( "================================================================" )
@@ -384,18 +384,18 @@ class TPM(hal_base.HALBase):
         except:
             if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
-         
+
         didvid_address = self.TPM_BASE | Locality| TPM_DIDVID 
         didvid_value = self.helper.read_mmio_reg( didvid_address, 4 )
-        
+
         logger().log( "================================================================" )
         logger().log( "                           TPM DID VID" )
         logger().log( "================================================================" )
         logger().log( "\tdid: 0x{:x}".format( ( didvid_value>>16 ) & 0xFFFF ) )
         logger().log( "\tvid: 0x{:x}".format( didvid_value & 0xFFFF) )
- 
+
     def dump_rid( self, locality ):
-        """ 
+        """
         TPM's Revision ID
         """
         try:
@@ -403,17 +403,17 @@ class TPM(hal_base.HALBase):
         except:
             if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
-         
+
         rid_address = self.TPM_BASE | Locality| TPM_RID 
-        rid_value = self.helper.read_mmio_reg( rid_address, 1 )  
-        
+        rid_value = self.helper.read_mmio_reg( rid_address, 1 )
+
         logger().log( "================================================================" )
         logger().log( "                             TPM RID" )
         logger().log( "================================================================" )
-        logger().log( "\trid: 0x{:x}".format(rid_value) )        
- 
+        logger().log( "\trid: 0x{:x}".format(rid_value) )
+
     def dump_intcap( self, locality ):
-        """ 
+        """
         Provides information of which interrupts that particular TPM supports
         """
         try:
@@ -421,7 +421,7 @@ class TPM(hal_base.HALBase):
         except:
             if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
-         
+
         intcap_address = self.TPM_BASE | Locality| TPM_INTCAP
         intcap_value = self.helper.read_mmio_reg( intcap_address, 4 )
 
@@ -440,20 +440,20 @@ class TPM(hal_base.HALBase):
         logger().log( "\tdataAvailIntSupport     : 0x{}".format(bin( intcap_value & ( 1<<0 ) )[2]) )
 
     def dump_intenable( self, locality ):
-        """ 
+        """
         View the contents of the register used to enable specific interrupts
         """
         polType = { 0:"High Level", 1:"Low Level", 2:"Rising edge", 3:"Failing edge" }
-        
+
         try:
             Locality = LOCALITY[locality]
         except:
             if logger().HAL: logger().log_bad("Invalid locality value\n")
             return
-         
+
         intenable_address = self.TPM_BASE | Locality| TPM_INTENABLE
         intenable_value = self.helper.read_mmio_reg( intenable_address, 4 )
-        
+
         logger().log( "================================================================" )
         logger().log( "                         TPM INT ENABLE" )
         logger().log( "================================================================" )
