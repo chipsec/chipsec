@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 """
 Logging functions
 """
@@ -52,7 +44,7 @@ LOG_PATH                = os.path.join( os.getcwd(), "logs" )
 
 class ColorLogger( pyLogging.Formatter ):
     """Colored Output for Python Logging"""
-    
+
     def format( self, record ):
         message = pyLogging.Formatter.format(self,record)
         message = self.log_color(message,record)
@@ -75,7 +67,7 @@ class ColorLogger( pyLogging.Formatter ):
             pyLogging.WARNING: YELLOW,
             pyLogging.CRITICAL: BLUE,
             pyLogging.ERROR: RED
-            }   
+            }
 
             def log_color ( self, message, record ):
                 """ Testing """
@@ -131,12 +123,12 @@ class ColorLogger( pyLogging.Formatter ):
     else:
         def log_color( self, message, record ):
             return message
-    
+
 class LoggerError (RuntimeWarning):
     pass
 
 class Logger:
-    
+
     """Class for logging to console, text file, XML."""
 
     def __init__( self ):
@@ -167,9 +159,9 @@ class Logger:
             try:
                 self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME,mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
-                
+
                 self.LOG_TO_FILE = True
-            except None:
+            except Exception:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
             self.rootLogger.removeHandler(self.logstream)
         else:
@@ -185,12 +177,12 @@ class Logger:
                 self.rootLogger.removeHandler(self.logfile)
                 self.rootLogger.removeHandler(self.logstream)
                 self.logfile.close()
-                self.logstream.flush()             
-            except None:
+                self.logstream.flush()
+            except Exception:
                 print ("WARNING: Could not close log file")
             finally:
                 self.logfile = None
-        
+
     def disable( self ):
         """Disables the logging to file and closes the file if any."""
         self.LOG_TO_FILE = False
@@ -208,7 +200,7 @@ class Logger:
             try:
                 self.rootLogger.removeHandler(self.logfile)
                 self.logfile.flush()
-            except None:
+            except Exception:
                 self.disable()
 
     def set_always_flush( self, val ):
@@ -225,7 +217,7 @@ class Logger:
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
             else:
                 print(text)
-    
+
     def error( self, text ):
         """Logs an Error message"""
         text = "ERROR: " + text
@@ -235,7 +227,7 @@ class Logger:
         """Logs an Warning message"""
         text = "WARNING: " + text
         self.rootLogger.warning(text)
-    
+
     def verbose_log( self, text):
         """Logs an Verbose message"""
         if self.VERBOSE:
@@ -359,7 +351,7 @@ class Logger:
             try:
                 self.logfile.close()
                 self.logfile = open( self.LOG_FILE_NAME, 'a+' )
-            except None:
+            except Exception:
                 self.disable()
 
     def _save_to_log_file(self, text):
@@ -370,7 +362,7 @@ class Logger:
     UTIL_TRACE = False
     HAL        = False
     DEBUG      = False
-    
+
 
     LOG_TO_STATUS_FILE   = False
     LOG_STATUS_FILE_NAME = ""

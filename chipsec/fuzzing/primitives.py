@@ -110,7 +110,7 @@ class delim (base_primitive):
         @type  name:     String
         @param name:     (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
-
+        base_primitive.__init__()
         self.value         = self.original_value = value
         self.fuzzable      = fuzzable
         self.name          = name
@@ -196,7 +196,7 @@ class group (base_primitive):
         @type  values: List or raw data
         @param values: List of possible raw values this group can take.
         '''
-
+        base_primitive.__init__()
         self.name           = name
         self.values         = values
         self.fuzzable       = True
@@ -273,6 +273,7 @@ class random_data (base_primitive):
         @param name:          (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
+        base_primitive.__init__()
         self.value         = self.original_value = str(value)
         self.min_length    = min_length
         self.max_length    = max_length
@@ -348,6 +349,7 @@ class static (base_primitive):
         @param name:  (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
+        base_primitive.__init__()
         self.value         = self.original_value = value
         self.name          = name
         self.fuzzable      = False       # every primitive needs this attribute.
@@ -407,6 +409,7 @@ class string (base_primitive):
         @param name:     (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
+        base_primitive.__init__()
         self.value         = self.original_value = value
         self.size          = size
         self.padding       = padding
@@ -664,6 +667,7 @@ class bit_field (base_primitive):
         @param name:       (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
+        base_primitive.__init__()
         assert isinteger(width)
 
         if isinteger(value) or isinstance(value,(list, tuple)):
