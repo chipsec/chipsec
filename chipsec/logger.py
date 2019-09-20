@@ -141,7 +141,8 @@ class Logger:
         self.rootLogger = pyLogging.getLogger(__name__)
         self.rootLogger.setLevel(self.debug)
         self.ALWAYS_FLUSH = False
-        self.verbose = pyLogging.addLevelName(15,"verbose")
+        pyLogging.addLevelName(15,"verbose")
+        self.verbose = 15
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         self.logstream.setFormatter(ColorLogger()) #applys colorization to output
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
