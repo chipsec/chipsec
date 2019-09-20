@@ -110,16 +110,12 @@ class delim (base_primitive):
         @type  name:     String
         @param name:     (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
-        base_primitive.__init__()
+        super(delim,self).__init__()
         self.value         = self.original_value = value
         self.fuzzable      = fuzzable
         self.name          = name
 
         self.s_type        = "delim"   # for ease of object identification
-        self.rendered      = ""        # rendered value
-        self.fuzz_complete = False     # flag if this primitive has been completely fuzzed
-        self.fuzz_library  = []        # library of fuzz heuristics
-        self.mutant_index  = 0         # current mutation number
 
         #
         # build the library of fuzz heuristics.
@@ -196,7 +192,7 @@ class group (base_primitive):
         @type  values: List or raw data
         @param values: List of possible raw values this group can take.
         '''
-        base_primitive.__init__()
+        super(group, self).__init__()
         self.name           = name
         self.values         = values
         self.fuzzable       = True
@@ -204,9 +200,6 @@ class group (base_primitive):
         self.s_type         = "group"
         self.value          = self.values[0]
         self.original_value = self.values[0]
-        self.rendered       = ""
-        self.fuzz_complete  = False
-        self.mutant_index   = 0
 
         # sanity check that values list only contains strings (or raw data)
         if self.values != []:
@@ -273,7 +266,7 @@ class random_data (base_primitive):
         @param name:          (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        base_primitive.__init__()
+        super(random_data,self).__init__()
         self.value         = self.original_value = str(value)
         self.min_length    = min_length
         self.max_length    = max_length
@@ -283,9 +276,6 @@ class random_data (base_primitive):
         self.name          = name
 
         self.s_type        = "random_data"  # for ease of object identification
-        self.rendered      = ""             # rendered value
-        self.fuzz_complete = False          # flag if this primitive has been completely fuzzed
-        self.mutant_index  = 0              # current mutation number
 
         if self.step:
             self.max_mutations = (self.max_length - self.min_length) // self.step + 1
@@ -349,13 +339,11 @@ class static (base_primitive):
         @param name:  (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        base_primitive.__init__()
+        super(static,self).__init__()
         self.value         = self.original_value = value
         self.name          = name
         self.fuzzable      = False       # every primitive needs this attribute.
-        self.mutant_index  = 0
         self.s_type        = "static"    # for ease of object identification
-        self.rendered      = ""
         self.fuzz_complete = True
 
 
@@ -409,7 +397,7 @@ class string (base_primitive):
         @param name:     (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        base_primitive.__init__()
+        super(string,self).__init__()
         self.value         = self.original_value = value
         self.size          = size
         self.padding       = padding
@@ -418,9 +406,6 @@ class string (base_primitive):
         self.name          = name
 
         self.s_type        = "string"  # for ease of object identification
-        self.rendered      = ""        # rendered value
-        self.fuzz_complete = False     # flag if this primitive has been completely fuzzed
-        self.mutant_index  = 0         # current mutation number
 
         # add this specific primitives repitition values to the unique fuzz library.
         self.this_library = \
@@ -667,7 +652,7 @@ class bit_field (base_primitive):
         @param name:       (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        base_primitive.__init__()
+        super(bit_field,self).__init__()
         assert isinteger(width)
 
         if isinteger(value) or isinstance(value,(list, tuple)):
@@ -685,9 +670,6 @@ class bit_field (base_primitive):
         self.name          = name
 
         self.rendered      = b""        # rendered value
-        self.fuzz_complete = False     # flag if this primitive has been completely fuzzed
-        self.fuzz_library  = []        # library of fuzz heuristics
-        self.mutant_index  = 0         # current mutation number
         self.cyclic_index  = 0         # when cycling through non-mutating values
 
         if self.max_num is None:

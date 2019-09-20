@@ -200,7 +200,7 @@ class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSi
 
 class TPM(hal_base.HALBase):
     def __init__( self, cs ):
-        hal_base.HALBase.__init__(cs)
+        super(TPM,self).__init__(cs)
         self.helper = cs.helper
         self.TPM_BASE = int(self.cs.Cfg.MEMORY_RANGES["TPM"]["address"], 16)
 

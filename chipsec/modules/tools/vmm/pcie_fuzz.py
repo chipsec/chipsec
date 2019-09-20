@@ -102,7 +102,7 @@ class pcie_fuzz(BaseModule):
     def fuzz_mmio_bar_in_active_range(self, bar, is64bit, list):
         self.logger.log( "[*] Fuzzing MMIO BAR in Active range 0x{:016X}, size of range = 0x{:X}..".format(bar,len(list)) )
         for reg_off in list:
-            rand = random.randint(0, size/4-1)
+            rand = random.randint(0, 255)
             self.fuzz_offset(bar, reg_off, rand, is64bit)
             self.fuzz_unaligned(bar, reg_off, is64bit)
 
@@ -150,7 +150,7 @@ class pcie_fuzz(BaseModule):
                     self.logger.log( "[*] + 0x{:02X} ({:X}): MMIO BAR at 0x{:016X} (64-bit? {:d}) with size: 0x{:08X}. Fuzzing..".format(bar_off,bar_reg,bar,is64bit,size) )
                     if ACTIVE_RANGE and size > 0x1000:
                         list = []
-                        list = find_active_range(bar, size)
+                        list = self.find_active_range(bar, size)
                         if len(list) > 0:
                             if BIT_FLIP:
                                 self.fuzz_mmio_bar_in_active_range_bit_flip( bar, is64bit, list)
