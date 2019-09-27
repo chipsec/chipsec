@@ -125,19 +125,12 @@ class ECCommand(BaseCommand):
             del mem
     
     def run(self):
-        if len(self.argv) < 3:
-            print (ECCommand.__doc__)
-            return
-
-        op = self.argv[2]
         t = time.time()
-
         try:
             self._ec = EC( self.cs )
         except BaseException as msg:
             print (msg)
             return
-
         self.func()
         self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time()-t) )
 
