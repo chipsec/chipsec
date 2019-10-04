@@ -201,6 +201,12 @@ Chipset_Dictionary[0x3E32].append({'name' : 'CoffeeLake',     'id' : CHIPSET_ID_
 # 8th Generation Core Processor Family (Whiskey Lake)
 Chipset_Dictionary[0x3E34].append({'name': 'Whiskey Lake',    'id' : CHIPSET_ID_WHL , 'code' : CHIPSET_CODE_WHL,  'longname' : 'Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)' })
 
+# 10th Generation 14nm (Comet Lake)
+0x3E35 : {'name' : 'CometLake', 'id' : CHIPSET_ID_CML , 'code' : 'CML', 'longname' : 'CometLake v1 U2 Core'},
+0x3E34 : {'name' : 'CometLake', 'id' : CHIPSET_ID_CML , 'code' : 'CML', 'longname' : 'CometLake v1 U4 Core'},
+0x3E33 : {'name' : 'CometLake', 'id' : CHIPSET_ID_CML , 'code' : 'CML', 'longname' : 'CometLake v1 U6 Core'},
+0x9B51 : {'name' : 'CometLake', 'id' : CHIPSET_ID_CML , 'code' : 'CML', 'longname' : 'CometLake v1/v2 U6 Core'},
+
 # Xeon v3 Processor (Haswell Server)
 Chipset_Dictionary[0x2F00].append({'name' : 'Haswell Server', 'id' : CHIPSET_ID_HSX,  'code' : CHIPSET_CODE_HSX,  'longname' : 'Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)'})
 
@@ -263,11 +269,15 @@ PCH_ID_C620     = 10003
 PCH_ID_C60x     = 10004
 PCH_ID_C61x     = 10005
 PCH_ID_3xx      = 10006
+PCH_ID_4xx      = 10007
+PCH_ID_495      = 10008
 
 PCH_CODE_PREFIX = 'PCH_'
 PCH_CODE_1xx    = 'PCH_1XX'
 PCH_CODE_2xx    = 'PCH_2XX'
 PCH_CODE_3xx    = 'PCH_3XX'
+PCH_CODE_4xx    = 'PCH_4XX'
+PCH_CODE_495    = 'PCH_495'
 PCH_CODE_C620   = 'PCH_C620'
 PCH_CODE_C60x   = 'PCH_C60X'
 PCH_CODE_C61x   = 'PCH_C61X'
@@ -321,6 +331,16 @@ pch_dictionary[0xA30D].append({'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PC
 pch_dictionary[0xA30C].append({'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'})
 pch_dictionary[0xA30E].append({'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'})
 pch_dictionary[0x9D84].append({'name' : 'PCH-U',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'})
+
+# 400 series PCH
+0x0284 : {'name' : 'PCH-LP-Prem',  'id' : PCH_ID_4xx, 'code' : PCH_CODE_4xx, 'longname' : 'Intel 400 series PCH-LP Prem-U'},
+0x0285 : {'name' : 'PCH-LP',       'id' : PCH_ID_4xx, 'code' : PCH_CODE_4xx, 'longname' : 'Intel 400 series PCH-LP Base-U'},
+
+# 495 series PCH
+0x3481 : {'name' : 'PCH-LP-U',      'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP U'},
+0x3482 : {'name' : 'PCH-LP-UPrem',  'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP Prem-U'},
+0x3486 : {'name' : 'PCH-LP-Y',      'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP Y'},
+0x3487 : {'name' : 'PCH-LP-YPrem',  'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP Prem-Y'},
 
 # C600 and X79 series PCH
 pch_dictionary[0x1D41].append({'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X79 series PCH'})
