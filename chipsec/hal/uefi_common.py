@@ -726,7 +726,7 @@ def NextFwFileSection(sections, ssize, sof, polarity):
         Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, header)
         Size = get_3b_size(Size)
         Header_Size = EFI_COMMON_SECTION_HEADER_size
-        if Size == 0xFFFFFF:
+        if Size == 0xFFFFFF and (sof + EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")) < ssize:
             Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
             Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
         sec_name = "S_UNKNOWN_{:02X}".format(Type)

@@ -74,7 +74,8 @@ def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_da
     if remove_files:
         try:
             os.remove(compressed_name)
-            os.remove(uncompressed_name)
+            if uncompressed_image:
+                os.remove(uncompressed_name)
         except: pass
     return uncompressed_image
 
