@@ -994,8 +994,9 @@ class Win32Helper(Helper):
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
         data = subprocess.call(decode_str,stdout=open(os.devnull, 'wb'),shell=True)
-        if not data == 0 and logger().DEBUG:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+        if not data == 0:
+            if logger().DEBUG:
+                logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False
         return True
 
