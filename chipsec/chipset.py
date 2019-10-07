@@ -488,11 +488,12 @@ class Chipset:
         else:
             self.pch_longname = 'Default PCH'
 
-        self.init_cfg()
         if _unknown_platform and start_driver:
             msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.vid,self.did,self.rid)
             logger().error( msg )
             raise UnknownChipsetError (msg)
+        if not _unknown_platform: # don't intialize config if platform is unknown
+            self.init_cfg()
 
 
     def destroy( self, start_driver ):
