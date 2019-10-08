@@ -284,6 +284,12 @@ pch_dictionary = {
 0xA14D : {'name' : 'CQM170', 'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CQM170 (100 series) PCH'},
 0xA14E : {'name' : 'HM170',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel HM170 (100 series) PCH'},
 0xA150 : {'name' : 'CM236',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CM236 (100 series) PCH'},
+0x9D53 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Base'},
+0x9D58 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'},
+0x9D56 : {'name' : 'PCH-Y',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y Premium'},
+0x9D50 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Base'},
+0x9D4E : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Premium'},
+0x9D4B : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y with iHDCP 2.2 Premium'},
 
 # 200 series and Z370 PCH
 0xA2C4 : {'name' : 'H270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel H270 (200 series) PCH'},
