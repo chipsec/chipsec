@@ -274,22 +274,31 @@ PCH_CODE_C60x   = 'PCH_C60X'
 PCH_CODE_C61x   = 'PCH_C61X'
 
 pch_dictionary = {
-# 100 series PCH
+# 100 series PCH and 7th/8th gen mobile (U/Y)
 0xA143 : {'name' : 'H110',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel H110 (100 series) PCH'},
 0xA144 : {'name' : 'H170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel H170 (100 series) PCH'},
 0xA145 : {'name' : 'Z170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Z170 (100 series) PCH'},
 0xA146 : {'name' : 'Q170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Q170 (100 series) PCH'},
 0xA147 : {'name' : 'Q150',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Q150 (100 series) PCH'},
 0xA148 : {'name' : 'B150',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel B150 (100 series) PCH'},
+0xA149 : {'name' : 'C236',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel C236 (100 series) PCH'},
+0xA14A : {'name' : 'C232',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel C232 (100 series) PCH'},
 0xA14D : {'name' : 'CQM170', 'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CQM170 (100 series) PCH'},
 0xA14E : {'name' : 'HM170',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel HM170 (100 series) PCH'},
 0xA150 : {'name' : 'CM236',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CM236 (100 series) PCH'},
-0x9D53 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Base'},
-0x9D58 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'},
-0x9D56 : {'name' : 'PCH-Y',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y Premium'},
-0x9D50 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Base'},
-0x9D4E : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Premium'},
+0xA151 : {'name' : 'QMS180',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QMS180 (100 series) PCH'},
+0xA152 : {'name' : 'HM175',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel HM175 (100 series) PCH'},
+0xA153 : {'name' : 'QM175',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QM175 (100 series) PCH'},
+0xA154 : {'name' : 'CM238',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CM238 (100 series) PCH'},
+0xA155 : {'name' : 'QMU185',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QMU185 (100 series) PCH'},
+0x9D43 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Baseline'},
+0x9D48 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'},
 0x9D4B : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y with iHDCP 2.2 Premium'},
+0x9D4E : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Premium'},
+0x9D50 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Base'},
+0x9D53 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Base'},
+0x9D56 : {'name' : 'PCH-Y',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y Premium'},
+0x9D58 : {'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'},
 
 # 200 series and Z370 PCH
 0xA2C4 : {'name' : 'H270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel H270 (200 series) PCH'},
