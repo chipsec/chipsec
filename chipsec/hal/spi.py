@@ -613,7 +613,7 @@ class SPI(hal_base.HALBase):
         data_byte_count = len(buf)
         dbc = 4
         n = data_byte_count // dbc
-        r = data_byte_count.format(dbc)
+        r = data_byte_count % dbc
         if logger().UTIL_TRACE or logger().HAL:
             logger().log( "[spi] writing 0x{:x} bytes to SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
 
