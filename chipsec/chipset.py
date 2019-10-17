@@ -346,7 +346,7 @@ def print_supported_chipsets():
     logger().log( "-------------------------------------------------------------------------------------" )
     for _code in sorted(codes_dict):
         for _did in codes_dict[_code]:
-            logger().log( " {:-#6x} | {:14} | {:6} | {:40}".format(_did, Chipset_Dictionary[_did]['name'], _code.lower(), Chipset_Dictionary[_did]['longname']) )
+            logger().log( " {:-#06x} | {:14} | {:6} | {:40}".format(_did, Chipset_Dictionary[_did]['name'], _code.lower(), Chipset_Dictionary[_did]['longname']) )
 
 
 def f_xml(self, x):
