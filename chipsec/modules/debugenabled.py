@@ -90,7 +90,7 @@ class debugenabled(BaseModule):
                 self.logger.log_bad("CPU debug interface is not locked.")
                 TestFail = ModuleResult.FAILED
             if IA32_DEBUG_INTERFACE_DEBUGEOCCURED:
-                self.logger.log_warning('Debug Occured bit set in IA32_DEBUG_INTERFACE msr')
+                self.logger.log_warning('Debug Occurred bit set in IA32_DEBUG_INTERFACE MSR')
                 if TestFail == ModuleResult.PASSED:
                     TestFail = ModuleResult.WARNING
             if TestFail == ModuleResult.PASSED:
