@@ -589,8 +589,16 @@ NVRAM: EFI Variable Store
                 if logger().HAL: logger().log( "[uefi] UEFI appears to be in Runtime mode" )
                 ect_pa = self.cs.mem.va2pa( est.ConfigurationTable )
                 if not ect_pa:
-                    if logger().HAL: logger().warn( "Can't find UEFI ConfigurationTable" )
-                    return (None,ect_pa,ect,ect_buf)
+                    # Most likely the VA in the System Table is not mapped so find the RST by signature and 
+                    # then compute the address of the configuration table.  This assumes the VA mapping keeps
+                    # the pages in the same relative location as in physical memory.
+                    (rst_found, rst_pa, rst_header, rst, rst_buf) = self.find_EFI_RuntimeServices_Table()
+                    if rst_found:
+                        if logger().HAL: logger().warn("Attempting to derive configuration table address")
+                        ect_pa = rst_pa + (est.ConfigurationTable - est.RuntimeServices)
+                    else:
+                        if logger().HAL: logger().warn( "Can't find UEFI ConfigurationTable" )
+                        return (None,ect_pa,ect,ect_buf)
 
         if logger().HAL: logger().log( "[uefi] EFI Configuration Table ({:d} entries): VA = 0x{:016X}, PA = 0x{:016X}".format(est.NumberOfTableEntries,est.ConfigurationTable,ect_pa) )
 
