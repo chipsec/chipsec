@@ -58,6 +58,9 @@ NMI_NOW      = 0x1
 
 class Interrupts(hal_base.HALBase):
 
+    def __init__(self,cs):
+        super(Interrupts, self).__init__(cs)
+
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         if logger().HAL:
@@ -106,8 +109,8 @@ class Interrupts(hal_base.HALBase):
         #   UINTN MessageLength;
         #   UINT8 Data[ANYSIZE_ARRAY];
         # } EFI_SMM_COMMUNICATE_HEADER;
-        data_hdr = struct.pack(uuid.UUID(EFI_GUID_DEFINED_SECTION+"Q","{{{}}}".format(guid)),len(data)) + data
-        
+        _guid = uuid.UUID(guid)
+        data_hdr = _guid + struct.pack("Q",len(data)) + data
         if not invoc_reg is None:
             #need to write data_hdr to comm buffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
@@ -129,7 +132,7 @@ class Interrupts(hal_base.HALBase):
             #Wait for Communication buffer to be empty
             buf = 1
             while not buf == "\x00\x00":
-                buf = self.cs.helper.read_physical_mem_word(buf_addr)
+                buf = self.cs.helper.read_physical_mem(buf_addr,2)
             #write data to commbuffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
             #call SWSMI
