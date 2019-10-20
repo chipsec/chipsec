@@ -116,7 +116,7 @@ class Memory:
         (pa, error_code) = self.helper.va2pa( va )
         if logger().HAL: logger().log( '[mem] VA (0x{:016X}) -> PA (0x{:016X})'.format(va, pa) )
         if error_code:
-            logger().log( '[mem] Looks like VA (0x{:016X}) not mapped'.format(va) )
+            if logger().HAL: logger().log( '[mem] Looks like VA (0x{:016X}) not mapped'.format(va) )
             return 
         return pa
 
