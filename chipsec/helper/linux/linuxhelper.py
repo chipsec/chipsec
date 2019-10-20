@@ -785,7 +785,7 @@ class LinuxHelper(Helper):
         else:
             data = buffer[base:base+new_size].tostring()
             attr = struct.unpack( "I", buffer[8:12])[0]
-        return (off, buf, hdr, bytestostring(data), guid, attr)
+        return (off, buf, hdr, data, guid, attr)
 
 
     def kern_get_EFI_variable(self, name, guid):
