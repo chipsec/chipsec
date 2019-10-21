@@ -62,9 +62,30 @@ class SMBIOS_2_x_ENTRY_POINT(namedtuple('SMBIOS_2_x_ENTRY_POINT', 'Anchor EntryC
                                             self.FormatArea3, self.FormatArea4, self.IntAnchor, self.IntCs, self.TableLen, \
                                             self.TableAddr, self.NumStructures, self.BcdRev)
 
-USING_SMBIOS_3_x = 3
 SMBIOS_3_x_SIG = "_SM3_"
+SMBIOS_3_x_ENTRY_SIZE = 0x18
+SMBIOS_3_x_MAJOR_VER = 0x03
 SMBIOS_3_x_GUID = "F2FD1544-9794-4A2C-992E-E5BBCF20E394"
+SMBIOS_3_x_ENTRY_POINT_FMT = "=5sBBBBBBBIQ"
+SMBIOS_3_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_3_x_ENTRY_POINT_FMT)
+SMBIOS_3_x_FORMAT_STRING = """
+SMBIOS 3.x Entry Point Structure:
+  Anchor String             : {}
+  Checksum                  : 0x{:02X}
+  Entry Point Length        : 0x{:02X}
+  Entry Ponnt Version       : {:d}.{:d}
+  SMBIOS Docrev             : 0x{:02X}
+  Entry Point Revision      : 0x{:02X}
+  Reserved                  : 0x{:02X}
+  Max Structure Size        : 0x{:08X}
+  Structure Table Address   : 0x{:016X}
+"""
+class SMBIOS_3_x_ENTRY_POINT(namedtuple('SMBIOS_3_x_ENTRY_POINT', 'Anchor EntryCs EntryLen MajorVer MinorVer Docrev EntryRev \
+    Reserved MaxSize TableAddr')):
+    __slots__ = ()
+    def __str__(self):
+        return SMBIOS_3_x_FORMAT_STRING.format(self.Anchor, self.EntryCs, self.EntryLen, self.MajorVer, self.MinorVer, \
+                                            self.Docrev, self.EntryRev, self.Reserved, self.MaxSize, self.TableAddr)
 
 class SMBIOS(hal_base.HALBase):
     def __init__(self, cs):
@@ -81,24 +102,46 @@ class SMBIOS(hal_base.HALBase):
         # Force a second read of memory so we don't have to worry about it falling outside the
         # original buffer.
         try:
+            if logger().HAL: logger().log('Validating 32bit SMBIOS header @ 0x{:08X}'.format(pa))
             mem_buffer = self.cs.mem.read_physical_mem(pa, SMBIOS_2_x_ENTRY_POINT_SIZE)
             ep_data = SMBIOS_2_x_ENTRY_POINT(*struct.unpack_from(SMBIOS_2_x_ENTRY_POINT_FMT, mem_buffer))
         except:
+            if logger().HAL: logger().log('- Memory read failed')
             return None
         if ep_data.Anchor != SMBIOS_2_x_SIG:
+            if logger().HAL: logger().log('- Invalid signature')
             return None
         if not (ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE or ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE_OLD):
-            return None
-        if ep_data.MajorVer != SMBIOS_2_x_MAJOR_VER:
+            if logger().HAL: logger().log('- Invalid structure size')
             return None
         if not ep_data.IntAnchor.startswith(SMBIOS_2_x_INT_SIG):
+            if logger().HAL: logger().log('- Invalid intermediate signature')
             return None
         if ep_data.TableAddr == 0 or ep_data.TableLen == 0:
+            if logger().HAL: logger().log('- Invalid table address or length')
             return None
         return ep_data
 
     def validate_ep_3_values(self, pa):
-        return None
+        # Force a second read of memory so we don't have to worry about it falling outside the
+        # original buffer.
+        try:
+            if logger().HAL: logger().log('Validating 64bit SMBIOS header @ 0x{:08X}'.format(pa))
+            mem_buffer = self.cs.mem.read_physical_mem(pa, SMBIOS_3_x_ENTRY_POINT_SIZE)
+            ep_data = SMBIOS_3_x_ENTRY_POINT(*struct.unpack_from(SMBIOS_3_x_ENTRY_POINT_FMT, mem_buffer))
+        except:
+            if logger().HAL: logger().log('- Memory read failed')
+            return None
+        if ep_data.Anchor != SMBIOS_3_x_SIG:
+            if logger().HAL: logger().log('- Invalid signature')
+            return None
+        if not (ep_data.EntryLen == SMBIOS_3_x_ENTRY_SIZE):
+            if logger().HAL: logger().log('- Invalid structure size')
+            return None
+        if ep_data.MaxSize == 0 or ep_data.TableAddr == 0:
+            if logger().HAL: logger().log('- Invalid table address or maximum size')
+            return None
+        return ep_data
 
     def find_smbios_table(self):
         # Handle the case were we already found the tables
@@ -115,13 +158,13 @@ class SMBIOS(hal_base.HALBase):
         if ect_found:
             if logger().HAL: logger().log(ect)
             if SMBIOS_2_x_GUID in ect.VendorTables:
-                if logger().HAL: logger().log('+ Found SMBIOS 2.x entry')
+                if logger().HAL: logger().log('+ Found 32bit SMBIOS entry')
                 if logger().HAL: logger().log('+ Potential 2.x table address: 0x{:016X}'.format(ect.VendorTables[SMBIOS_2_x_GUID]))
                 self.smbios_2_guid_found = True
                 entries_to_find += 1
             if SMBIOS_3_x_GUID in ect.VendorTables:
-                if logger().HAL: logger().log('+ Found SMBIOS 3.x entry')
-                if logger().HAL: logger().log('+ Potential 2.x table address: 0x{:016X}'.format(ect.VendorTables[SMBIOS_3_x_GUID]))
+                if logger().HAL: logger().log('+ Found 64bit SMBIOS entry')
+                if logger().HAL: logger().log('+ Potential 3.x table address: 0x{:016X}'.format(ect.VendorTables[SMBIOS_3_x_GUID]))
                 self.smbios_3_guid_found = True
                 entries_to_find += 1
 
