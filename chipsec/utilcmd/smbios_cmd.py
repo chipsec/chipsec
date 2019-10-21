@@ -18,25 +18,48 @@
 #Contact information:
 #chipsec@intel.com
 #
-
+from argparse import ArgumentParser
+from time import time
 from chipsec.command import BaseCommand
 from chipsec.hal.smbios import SMBIOS
 
 class smbios_cmd(BaseCommand):
+    """
+    >>> chipsec_util smbios entrypoint
+
+    Examples:
+
+    >>> chipsec_util smbios entrypoint
+    """
+
     def requires_driver(self):
+        parser = ArgumentParser(usage=smbios_cmd.__doc__)
+        subparsers = parser.add_subparsers()
+        parser_list = subparsers.add_parser('entrypoint')
+        parser_list.set_defaults(func=self.smbios_ep)
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-    def run(self):
-        smbios = SMBIOS(self.cs)
-
-        self.logger.log('[*] Attempting to detect SMBIOS structures')
-        found = smbios.find_smbios_table()
+    def smbios_ep(self):
+        self.logger.log('[CHIPSEC] Attempting to detect SMBIOS structures')
+        found = self.smbios.find_smbios_table()
         if found:
-            if smbios.smbios_2_pa is not None:
-                self.logger.log(smbios.smbios_2_ep)
-            if smbios.smbios_3_pa is not None:
-                self.logger.log(smbios.smbios_3_ep)
+            if self.smbios.smbios_2_pa is not None:
+                self.logger.log(self.smbios.smbios_2_ep)
+            if self.smbios.smbios_3_pa is not None:
+                self.logger.log(self.smbios.smbios_3_ep)
         else:
-            self.logger.log_bad('Unable to detect SMBIOS structure(s)')
+            self.logger.log('[CHIPSEC] Unable to detect SMBIOS structure(s)')
+
+    def run(self):
+        t = time()
+        try:
+            self.smbios = SMBIOS(self.cs)
+        except Exception as e:
+            self.logger.log(e)
+            return
+
+        self.func()
+        self.logger.log('[CHIPSEC] (acpi) time elapsed {:.3f}'.format(time()-t))
 
 commands = {'smbios': smbios_cmd}
