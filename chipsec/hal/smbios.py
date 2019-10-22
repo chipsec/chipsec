@@ -87,6 +87,23 @@ class SMBIOS_3_x_ENTRY_POINT(namedtuple('SMBIOS_3_x_ENTRY_POINT', 'Anchor EntryC
         return SMBIOS_3_x_FORMAT_STRING.format(self.Anchor, self.EntryCs, self.EntryLen, self.MajorVer, self.MinorVer, \
                                             self.Docrev, self.EntryRev, self.Reserved, self.MaxSize, self.TableAddr)
 
+SMBIOS_STRUCT_HEADER_FMT = "=BBH"
+SMBIOS_STRUCT_HEADER_SIZE = struct.calcsize(SMBIOS_STRUCT_HEADER_FMT)
+SMBIOS_STRUCT_HEADER_FORMAT_STRING = """
+SMBIOS Stuct Header:
+  Type                      : 0x{0:02X} ({0:d})
+  Length                    : 0x{1:02X}
+  Handle                    : 0x{2:04X}
+"""
+class SMBIOS_STRUCT_HEADER(namedtuple('SMBIOS_STRUCT_HEADER', 'Type Length Handle')):
+    __slots__ = ()
+    def __str__(self):
+        return SMBIOS_STRUCT_HEADER_FORMAT_STRING.format(self.Type, self.Length, self.Handle)
+
+SMBIOS_STRUCT_TERM_FMT = "=H"
+SMBIOS_STRUCT_TERM_SIZE = struct.calcsize(SMBIOS_STRUCT_TERM_FMT)
+SMBIOS_STRUCT_TERM_VAL = 0x0000
+
 class SMBIOS(hal_base.HALBase):
     def __init__(self, cs):
         super(SMBIOS, self).__init__(cs)
@@ -94,9 +111,65 @@ class SMBIOS(hal_base.HALBase):
         self.smbios_2_guid_found = False
         self.smbios_2_pa = None
         self.smbios_2_ep = None
+        self.smbios_2_data = None
         self.smbios_3_guid_found = False
         self.smbios_3_pa = None
         self.smbios_3_ep = None
+        self.smbios_3_data = None
+
+    def __get_raw_struct(self, table, start_offset):
+        """
+        Returns a tuple including the raw data and the offset to the next entry.  This allows the function
+        to be called multiple times to process all the entries in a table.
+
+        Return Value:
+        (raw_data, next_offset)
+
+        Error/End:
+        (None, None)
+        """
+        # Check for end of table and remaining size to parse
+        if table is None:
+            if logger().HAL: logger().log('- Invalid table')
+            return (None, None)
+        table_len = len(table)
+        if logger().HAL: logger().log('Start Offset: 0x{:04X}, Table Size: 0x{:04X}'.format(start_offset, table_len))
+        if start_offset >= table_len:
+            if logger().HAL: logger().log('- Bad table length (table_len): 0x{:04X}'.format(table_len))
+            return (None, None)
+        size_left = len(table[start_offset:])
+        if size_left < SMBIOS_STRUCT_HEADER_SIZE:
+            if logger().HAL: logger().log('- Table too small (size_left): 0x{:04X}'.format(size_left))
+            return (None, None)
+
+        # Read the header to determine structure fixed size
+        try:
+            header = SMBIOS_STRUCT_HEADER(*struct.unpack_from(SMBIOS_STRUCT_HEADER_FMT, \
+                table[start_offset:start_offset + SMBIOS_STRUCT_HEADER_SIZE]))
+        except:
+            if logger().HAL: logger().log('- Unable to unpack data')
+            return (None, None)
+        str_offset = start_offset + header.Length
+        if str_offset + SMBIOS_STRUCT_TERM_SIZE >= table_len:
+            if logger().HAL: logger().log('- Not enough space for termination (str_offset): 0x{:04X}'.format(str_offset))
+            return (None, None)
+
+        # Process any remaing content (strings)
+        if logger().HAL: logger().log('String start offset: 0x{:04X}'.format(str_offset))
+        tmp_offset = str_offset
+        while (tmp_offset + SMBIOS_STRUCT_TERM_SIZE < table_len):
+            (value, ) = struct.unpack_from(SMBIOS_STRUCT_TERM_FMT, table[tmp_offset:tmp_offset + SMBIOS_STRUCT_TERM_SIZE])
+            if value == SMBIOS_STRUCT_TERM_VAL:
+                if logger().HAL: logger().log('+ Found structure termination')
+                break
+            tmp_offset += 1
+        if tmp_offset >= table_len:
+            if logger().HAL: logger().log('- End of table reached')
+            return (None, None)
+        tmp_offset += SMBIOS_STRUCT_TERM_SIZE
+
+        if logger().HAL: logger().log('Structure Size: 0x{:04X}'.format(tmp_offset - start_offset))
+        return (table[start_offset:tmp_offset], tmp_offset)
 
     def validate_ep_2_values(self, pa):
         # Force a second read of memory so we don't have to worry about it falling outside the
@@ -205,4 +278,72 @@ class SMBIOS(hal_base.HALBase):
             if logger().HAL: logger().log('- Unable to find SMBIOS tables')
             return False
 
+        # Read the raw data regions
+        if logger().HAL: logger().log('Reading SMBIOS data tables:')
+        if self.smbios_2_ep is not None and self.smbios_2_ep.TableAddr != 0 and self.smbios_2_ep.TableLen != 0:
+            self.smbios_2_data = self.cs.mem.read_physical_mem(self.smbios_2_ep.TableAddr, self.smbios_2_ep.TableLen)
+            if self.smbios_2_data is None and logger().HAL:
+                logger().log('- Failed to read 32bit SMBIOS data')
+        if self.smbios_3_ep is not None and self.smbios_3_ep.TableAddr != 0 and self.smbios_3_ep.MaxSize != 0:
+            self.smbios_3_data = self.cs.mem.read_physical_mem(self.smbios_3_ep.TableAddr, self.smbios_3_ep.MaxSize)
+            if self.smbios_3_data is None and logger().HAL:
+                logger().log('- Failed to read 64bit SMBIOS data')
+
         return True
+
+    def get_raw_structs(self, force_32bit=False):
+        """
+        Returns a list of raw data blobs for each SMBIOS structure.  The default is to process the 64bit
+        entries if available unless specifically specified.
+
+        Error:
+        None
+        """
+        ret_val = []
+
+        if self.smbios_3_data is not None and not force_32bit:
+            if logger().HAL: logger().log('Using 64bit SMBIOS table')
+            table = self.smbios_3_data
+        elif self.smbios_3_data is not None:
+            if logger().HAL: logger().log('Using 32bit SMBIOS table')
+            table = self.smbios_2_data
+        else:
+            if logger().HAL: logger().log('- No SMBIOS data available')
+            return None
+
+        if logger().HAL: logger().log('Getting SMBIOS structures...')
+        raw_data, next_offset = self.__get_raw_struct(table, 0)
+        while next_offset is not None:
+            ret_val.append(raw_data)
+            raw_data, next_offset = self.__get_raw_struct(table, next_offset)
+        if len(ret_val) == 0:
+            return None
+
+        return ret_val
+
+    def get_raw_structs_by_type(self, type, force_32bit=False):
+        return None
+
+    def get_decoded_header(self, raw_data):
+        if logger().HAL: logger.log('Getting generic SMBIOS header information')
+        if raw_data is None:
+            if logger().HAL: logger().log('- Raw data pointer is None')
+            return None
+        if len(raw_data) < SMBIOS_STRUCT_HEADER_SIZE:
+            if logger().HAL: logger().log('- Raw data too small for header information')
+            return None
+
+        try:
+            header = SMBIOS_STRUCT_HEADER(*struct.unpack_from(SMBIOS_STRUCT_HEADER_FMT, raw_data[:SMBIOS_STRUCT_HEADER_SIZE]))
+        except:
+            if logger().HAL: logger().log('- Failed to extract information from raw data')
+            return None
+
+        return header
+
+
+    def get_decoded_structs(self, force_32bit=False):
+        return None
+
+    def get_decoded_structs_by_type(self, type, force_32bit=False):
+        return None
