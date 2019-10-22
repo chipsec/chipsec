@@ -60,11 +60,8 @@ class smbios_cmd(BaseCommand):
 
     def smbios_get(self):
         if self.method == 'raw':
-            if self.type is None:
-                self.logger.log('[CHIPSEC] Dumping all structures in raw format')
-                structs = self.smbios.get_raw_structs(self._force_32)
-            else:
-                structs = None
+            self.logger.log('[CHIPSEC] Dumping all requested structures in raw format')
+            structs = self.smbios.get_raw_structs(self.type, self._force_32)
         elif self.method == 'decoded':
             structs = None
         if structs is None:

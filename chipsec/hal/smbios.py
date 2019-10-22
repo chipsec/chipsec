@@ -62,6 +62,7 @@ class SMBIOS_2_x_ENTRY_POINT(namedtuple('SMBIOS_2_x_ENTRY_POINT', 'Anchor EntryC
                                             self.FormatArea3, self.FormatArea4, self.IntAnchor, self.IntCs, self.TableLen, \
                                             self.TableAddr, self.NumStructures, self.BcdRev)
 
+
 SMBIOS_3_x_SIG = "_SM3_"
 SMBIOS_3_x_ENTRY_SIZE = 0x18
 SMBIOS_3_x_MAJOR_VER = 0x03
@@ -87,6 +88,7 @@ class SMBIOS_3_x_ENTRY_POINT(namedtuple('SMBIOS_3_x_ENTRY_POINT', 'Anchor EntryC
         return SMBIOS_3_x_FORMAT_STRING.format(self.Anchor, self.EntryCs, self.EntryLen, self.MajorVer, self.MinorVer, \
                                             self.Docrev, self.EntryRev, self.Reserved, self.MaxSize, self.TableAddr)
 
+
 SMBIOS_STRUCT_HEADER_FMT = "=BBH"
 SMBIOS_STRUCT_HEADER_SIZE = struct.calcsize(SMBIOS_STRUCT_HEADER_FMT)
 SMBIOS_STRUCT_HEADER_FORMAT_STRING = """
@@ -103,6 +105,7 @@ class SMBIOS_STRUCT_HEADER(namedtuple('SMBIOS_STRUCT_HEADER', 'Type Length Handl
 SMBIOS_STRUCT_TERM_FMT = "=H"
 SMBIOS_STRUCT_TERM_SIZE = struct.calcsize(SMBIOS_STRUCT_TERM_FMT)
 SMBIOS_STRUCT_TERM_VAL = 0x0000
+
 
 class SMBIOS(hal_base.HALBase):
     def __init__(self, cs):
@@ -291,7 +294,7 @@ class SMBIOS(hal_base.HALBase):
 
         return True
 
-    def get_raw_structs(self, force_32bit=False):
+    def get_raw_structs(self, struct_type=None, force_32bit=False):
         """
         Returns a list of raw data blobs for each SMBIOS structure.  The default is to process the 64bit
         entries if available unless specifically specified.
@@ -314,15 +317,15 @@ class SMBIOS(hal_base.HALBase):
         if logger().HAL: logger().log('Getting SMBIOS structures...')
         raw_data, next_offset = self.__get_raw_struct(table, 0)
         while next_offset is not None:
-            ret_val.append(raw_data)
+            if struct_type is None:
+                ret_val.append(raw_data)
+            else:
+                header = SMBIOS_STRUCT_HEADER(*struct.unpack_from(SMBIOS_STRUCT_HEADER_FMT, raw_data[:SMBIOS_STRUCT_HEADER_SIZE]))
+                if header is not None and header.Type == struct_type:
+                    ret_val.append(raw_data)
             raw_data, next_offset = self.__get_raw_struct(table, next_offset)
-        if len(ret_val) == 0:
-            return None
 
         return ret_val
-
-    def get_raw_structs_by_type(self, type, force_32bit=False):
-        return None
 
     def get_decoded_header(self, raw_data):
         if logger().HAL: logger.log('Getting generic SMBIOS header information')
