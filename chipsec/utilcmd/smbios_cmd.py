@@ -22,39 +22,81 @@ from argparse import ArgumentParser
 from time import time
 from chipsec.command import BaseCommand
 from chipsec.hal.smbios import SMBIOS
+from chipsec.logger import print_buffer
 
 class smbios_cmd(BaseCommand):
     """
     >>> chipsec_util smbios entrypoint
+    >>> chipsec_util smbios get [raw|decoded] [type]
 
     Examples:
 
     >>> chipsec_util smbios entrypoint
+    >>> chipsec_util smbios get raw
     """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=smbios_cmd.__doc__)
+        parser = ArgumentParser(prog='chipsec_util smbios', usage=smbios_cmd.__doc__)
         subparsers = parser.add_subparsers()
-        parser_list = subparsers.add_parser('entrypoint')
-        parser_list.set_defaults(func=self.smbios_ep)
+        parser_entrypoint = subparsers.add_parser('entrypoint')
+        parser_entrypoint.set_defaults(func=self.smbios_ep)
+        parser_get = subparsers.add_parser('get')
+        parser_get.add_argument('method', choices=['raw', 'decoded'], default='raw', nargs='?', \
+            help='Get raw data or decoded data.  Decoded data may not exist for all structures')
+        parser_get.add_argument('type', type=int, default=None, nargs='?', \
+            help='SMBIOS type to search for')
+        parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32', \
+            help='Force reading from 32bit structures')
+        parser_get.set_defaults(func=self.smbios_get)
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
     def smbios_ep(self):
-        self.logger.log('[CHIPSEC] Attempting to detect SMBIOS structures')
-        found = self.smbios.find_smbios_table()
-        if found:
-            if self.smbios.smbios_2_pa is not None:
-                self.logger.log(self.smbios.smbios_2_ep)
-            if self.smbios.smbios_3_pa is not None:
-                self.logger.log(self.smbios.smbios_3_ep)
-        else:
-            self.logger.log('[CHIPSEC] Unable to detect SMBIOS structure(s)')
+        self.logger.log('[CHIPSEC] SMBIOS Entry Point Structures')
+        if self.smbios.smbios_2_pa is not None:
+            self.logger.log(self.smbios.smbios_2_ep)
+        if self.smbios.smbios_3_pa is not None:
+            self.logger.log(self.smbios.smbios_3_ep)
+
+    def smbios_get(self):
+        if self.method == 'raw':
+            if self.type is None:
+                self.logger.log('[CHIPSEC] Dumping all structures in raw format')
+                structs = self.smbios.get_raw_structs(self._force_32)
+            else:
+                structs = None
+        elif self.method == 'decoded':
+            structs = None
+        if structs is None:
+            self.logger.log('[CHIPSEC] Error getting data')
+            return
+        if len(structs) == 0:
+            self.logger.log('[CHIPSEC] Structures not found')
+            return
+
+        index = 0
+        for data in structs:
+            self.logger.log('[CHIPSEC] SMBIOS Entry {:4d}'.format(index))
+            if self.method == 'raw':
+                header = self.smbios.get_decoded_header(data)
+                if header is not None:
+                    self.logger.log(header)
+                self.logger.log('[CHIPSEC] Raw Data')
+                print_buffer(data)
+                self.logger.log('==================================================================')
+            index += 1
 
     def run(self):
         t = time()
+
+        # Create and initialize SMBIOS object for commands to use
         try:
+            self.logger.log('[CHIPSEC] Attempting to detect SMBIOS structures')
             self.smbios = SMBIOS(self.cs)
+            found = self.smbios.find_smbios_table()
+            if not found:
+                self.logger.log('[CHIPSEC] Unable to detect SMBIOS structure(s)')
+                return
         except Exception as e:
             self.logger.log(e)
             return
