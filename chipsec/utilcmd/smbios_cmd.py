@@ -75,7 +75,7 @@ class smbios_cmd(BaseCommand):
         for data in structs:
             self.logger.log('[CHIPSEC] SMBIOS Entry {:4d}'.format(index))
             if self.method == 'raw':
-                header = self.smbios.get_decoded_header(data)
+                header = self.smbios.get_header(data)
                 if header is not None:
                     self.logger.log(header)
                 self.logger.log('[CHIPSEC] Raw Data')
