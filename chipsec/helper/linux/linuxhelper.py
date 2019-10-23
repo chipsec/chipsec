@@ -283,7 +283,7 @@ class LinuxHelper(Helper):
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
-                    if logger().DEBUG: logger.log("Added dev_msr {}".format(str(cpu)))
+                    if logger().DEBUG: logger().log("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
@@ -393,7 +393,7 @@ class LinuxHelper(Helper):
         #Check if PA > max physical address
         max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
         if pa > 1<<max_pa:
-            if logger().DEBUG: logger.error("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
+            if logger().DEBUG: logger().error("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
             error_code = 1
         return (pa,error_code)
 
