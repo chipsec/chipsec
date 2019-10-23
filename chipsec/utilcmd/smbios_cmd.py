@@ -72,7 +72,6 @@ class smbios_cmd(BaseCommand):
             self.logger.log('[CHIPSEC] Structures not found')
             return
 
-        index = 0
         for data in structs:
             if self.method == 'raw':
                 header = self.smbios.get_header(data)
@@ -83,7 +82,6 @@ class smbios_cmd(BaseCommand):
             elif self.method == 'decoded':
                 self.logger.log(data)
             self.logger.log('==================================================================')
-            index += 1
 
     def run(self):
         t = time()
@@ -101,6 +99,6 @@ class smbios_cmd(BaseCommand):
             return
 
         self.func()
-        self.logger.log('[CHIPSEC] (acpi) time elapsed {:.3f}'.format(time()-t))
+        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time()-t))
 
 commands = {'smbios': smbios_cmd}
