@@ -19,11 +19,11 @@
 #
 
 import struct
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult
 
 class cpu_info(BaseModule):
     def __init__(self):
-        BaseModule.__init__(self)
+        super(cpu_info, self).__init__()
 
     def is_supported(self):
         return True
