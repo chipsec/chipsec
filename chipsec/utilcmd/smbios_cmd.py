@@ -63,7 +63,8 @@ class smbios_cmd(BaseCommand):
             self.logger.log('[CHIPSEC] Dumping all requested structures in raw format')
             structs = self.smbios.get_raw_structs(self.type, self._force_32)
         elif self.method == 'decoded':
-            structs = None
+            self.logger.log('[CHIPSEC] Dumping all requested structures in decoded format')
+            structs = self.smbios.get_decoded_structs(self.type, self._force_32)
         if structs is None:
             self.logger.log('[CHIPSEC] Error getting data')
             return
@@ -73,14 +74,15 @@ class smbios_cmd(BaseCommand):
 
         index = 0
         for data in structs:
-            self.logger.log('[CHIPSEC] SMBIOS Entry {:4d}'.format(index))
             if self.method == 'raw':
                 header = self.smbios.get_header(data)
                 if header is not None:
                     self.logger.log(header)
                 self.logger.log('[CHIPSEC] Raw Data')
                 print_buffer(data)
-                self.logger.log('==================================================================')
+            elif self.method == 'decoded':
+                self.logger.log(data)
+            self.logger.log('==================================================================')
             index += 1
 
     def run(self):

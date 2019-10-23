@@ -115,23 +115,36 @@ SMBIOS BIOS Information:
   Type                      : 0x{:02X} ({:d})
   Length                    : 0x{:02X}
   Handle                    : 0x{:04X}
-  Vendor                    : {s}
-  BIOS Version              : {s}
+  Vendor                    : {:s}
+  BIOS Version              : {:s}
   BIOS Starting Segment     : 0x{:04X}
-  BIOS Release Date         : {s}
+  BIOS Release Date         : {:s}
   BIOS ROM Size             : 0x{:02X}
   BIOS Characteristics      : 0x{:016X}
 """
-class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_ENTRY_2_0', 'type length handle vendor_str version_str segment release_str rom_sz bios_char')):
+SMBIOS_BIOS_INFO_2_0_FORMAT_STRING_FAILED = """
+SMBIOS BIOS Information structure decode failed
+"""
+class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_ENTRY_2_0', 'type length handle vendor_str version_str segment release_str \
+    rom_sz bios_char strings')):
     __slots__ = ()
     def __str__(self):
-        return SMBIOS_STRUCT_HEADER_FORMAT_STRING
+        str_count = len(self.strings)
+        ven_str = ''
+        ver_str = ''
+        rel_str = ''
+        if self.vendor_str != 0 and self.vendor_str <= str_count:
+            ven_str = self.strings[self.vendor_str - 1]
+        if self.version_str != 0 and self.version_str <= str_count:
+            ver_str = self.strings[self.version_str - 1]
+        if self.release_str != 0 and self.release_str <= str_count:
+            rel_str = self.strings[self.release_str - 1]
+        return SMBIOS_BIOS_INFO_2_0_FORMAT_STRING.format(self.type, self.type, self.length, self.handle, ven_str, \
+            ver_str, self.segment, rel_str, self.rom_sz, self.bios_char)
 
 
 struct_decode_tree = {
-    SMBIOS_BIOS_INFO_ENTRY_ID: {
-        SMBIOS_BIOS_INFO_2_0_ENTRY_SIZE: {'class':SMBIOS_BIOS_INFO_2_0, 'format':SMBIOS_BIOS_INFO_2_0_ENTRY_FMT}
-    }
+    SMBIOS_BIOS_INFO_ENTRY_ID: {'class':SMBIOS_BIOS_INFO_2_0, 'format':SMBIOS_BIOS_INFO_2_0_ENTRY_FMT}
 }
 
 class SMBIOS(hal_base.HALBase):
@@ -404,4 +417,45 @@ class SMBIOS(hal_base.HALBase):
         return ret_val
 
     def get_decoded_structs(self, struct_type=None, force_32bit=False):
-        return None
+        ret_val = []
+
+        # Determine if the structure exists in the table
+        if logger().HAL: logger().log('Getting decoded SMBIOS structures')
+        structs = self.get_raw_structs(struct_type, force_32bit)
+        if structs is None:
+            return None
+
+        # Process all the entries
+        for data in structs:
+            # Get the structures header information so we can determine the correct decode method
+            header = self.get_header(data)
+            if header is None:
+                if logger().HAL: logger().log('- Could not decode header')
+                continue
+            if header.Type not in struct_decode_tree:
+                if logger().HAL: logger().log('- Structure {:d} not in decode list'.format(header.Type))
+                continue
+
+            # Unpack the structure and then get the strings
+            tmp_decode = struct_decode_tree[header.Type]
+            try:
+                decode_data = struct.unpack_from(tmp_decode['format'], data)
+            except:
+                if logger().HAL: logger().log('- Could not decode structure')
+                continue
+            if decode_data is None:
+                if logger().HAL: logger().log('- No structure data was decoded')
+                continue
+            strings = self.get_string_list(data)
+            if strings is not None:
+                decode_data = decode_data + (strings, )
+
+            # Create the actual object
+            try:
+                decode_object = tmp_decode['class'](*decode_data)
+            except:
+                if logger().HAL: logger().log('- Failed to create structure')
+                continue
+            ret_val.append(decode_object)
+
+        return ret_val
