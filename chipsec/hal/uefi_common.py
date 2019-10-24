@@ -685,7 +685,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
             next_offset = fof + 8
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
         #Get File size
-        if Attributes & FFS_ATTRIB_LARGE_FILE:
+        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > fof + struct.calcsize(EFI_FFS_FILE_HEADER2):
             fsize = struct.unpack("Q",FvImage[fof+file_header_size:fof+file_header_size+struct.calcsize("Q")])[0]
             fsize &= 0xFFFFFFFF
             if fsize == 0 or fsize > FvLength-fof:
