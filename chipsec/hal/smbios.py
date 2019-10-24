@@ -29,11 +29,11 @@ from chipsec.logger import logger
 SCAN_LOW_LIMIT = 0xF0000
 SCAN_SIZE = 0x10000
 
-SMBIOS_2_x_SIG = "_SM_"
+SMBIOS_2_x_SIG = b"_SM_"
 SMBIOS_2_x_ENTRY_SIZE = 0x1F
 SMBIOS_2_x_ENTRY_SIZE_OLD = 0x1E
 SMBIOS_2_x_MAJOR_VER = 0x02
-SMBIOS_2_x_INT_SIG = "_DMI_"
+SMBIOS_2_x_INT_SIG = b"_DMI_"
 SMBIOS_2_x_GUID = "EB9D2D31-2D88-11D3-9A16-0090273FC14D"
 SMBIOS_2_x_ENTRY_POINT_FMT = "=4sBBBBHB5B5sBHIHB"
 SMBIOS_2_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_2_x_ENTRY_POINT_FMT)
@@ -57,13 +57,13 @@ class SMBIOS_2_x_ENTRY_POINT(namedtuple('SMBIOS_2_x_ENTRY_POINT', 'Anchor EntryC
     FormatArea0 FormatArea1 FormatArea2 FormatArea3 FormatArea4 IntAnchor IntCs TableLen TableAddr NumStructures BcdRev')):
     __slots__ = ()
     def __str__(self):
-        return SMBIOS_2_x_FORMAT_STRING.format(self.Anchor, self.EntryCs, self.EntryLen, self.MajorVer, self.MinorVer, \
-                                            self.MaxSize, self.EntryRev, self.FormatArea0, self.FormatArea1, self.FormatArea2, \
-                                            self.FormatArea3, self.FormatArea4, self.IntAnchor, self.IntCs, self.TableLen, \
-                                            self.TableAddr, self.NumStructures, self.BcdRev)
+        return SMBIOS_2_x_FORMAT_STRING.format(bytestostring(self.Anchor), self.EntryCs, self.EntryLen, self.MajorVer, \
+                                            self.MinorVer, self.MaxSize, self.EntryRev, self.FormatArea0, self.FormatArea1, \
+                                            self.FormatArea2, self.FormatArea3, self.FormatArea4, bytestostring(self.IntAnchor), \
+                                            self.IntCs, self.TableLen, self.TableAddr, self.NumStructures, self.BcdRev)
 
 
-SMBIOS_3_x_SIG = "_SM3_"
+SMBIOS_3_x_SIG = b"_SM3_"
 SMBIOS_3_x_ENTRY_SIZE = 0x18
 SMBIOS_3_x_MAJOR_VER = 0x03
 SMBIOS_3_x_GUID = "F2FD1544-9794-4A2C-992E-E5BBCF20E394"
@@ -85,8 +85,9 @@ class SMBIOS_3_x_ENTRY_POINT(namedtuple('SMBIOS_3_x_ENTRY_POINT', 'Anchor EntryC
     Reserved MaxSize TableAddr')):
     __slots__ = ()
     def __str__(self):
-        return SMBIOS_3_x_FORMAT_STRING.format(self.Anchor, self.EntryCs, self.EntryLen, self.MajorVer, self.MinorVer, \
-                                            self.Docrev, self.EntryRev, self.Reserved, self.MaxSize, self.TableAddr)
+        return SMBIOS_3_x_FORMAT_STRING.format(bytestostring(self.Anchor), self.EntryCs, self.EntryLen, self.MajorVer, \
+                                            self.MinorVer, self.Docrev, self.EntryRev, self.Reserved, self.MaxSize, \
+                                            self.TableAddr)
 
 
 SMBIOS_STRUCT_HEADER_FMT = "=BBH"
@@ -230,7 +231,7 @@ class SMBIOS(hal_base.HALBase):
         if not (ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE or ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE_OLD):
             if logger().HAL: logger().log('- Invalid structure size')
             return None
-        if not ep_data.IntAnchor.startswith(SMBIOS_2_x_INT_SIG):
+        if ep_data.IntAnchor != SMBIOS_2_x_INT_SIG:
             if logger().HAL: logger().log('- Invalid intermediate signature')
             return None
         if ep_data.TableAddr == 0 or ep_data.TableLen == 0:
@@ -296,7 +297,7 @@ class SMBIOS(hal_base.HALBase):
         if logger().HAL: logger().log('Scanning memory for {:d} signature(s)'.format(entries_to_find))
         while (pa >= SCAN_LOW_LIMIT):
             mem_buffer = self.cs.mem.read_physical_mem(pa, SCAN_SIZE)
-            sig_pa = bytestostring(mem_buffer).find(SMBIOS_2_x_SIG) + pa
+            sig_pa = mem_buffer.find(SMBIOS_2_x_SIG) + pa
             if sig_pa >= pa and self.smbios_2_pa is None:
                 if logger().HAL: logger().log('+ Found SMBIOS 2.x signature @ 0x{:08X}'.format(sig_pa))
                 self.smbios_2_ep = self.__validate_ep_2_values(sig_pa)
@@ -304,7 +305,7 @@ class SMBIOS(hal_base.HALBase):
                     if logger().HAL: logger().log('+ Verified SMBIOS 2.x Entry Point structure')
                     self.smbios_2_pa = sig_pa
                     entries_found += 1
-            sig_pa = bytestostring(mem_buffer).find(SMBIOS_3_x_SIG) + pa
+            sig_pa = mem_buffer.find(SMBIOS_3_x_SIG) + pa
             if sig_pa >= pa and self.smbios_3_pa is None:
                 if logger().HAL: logger().log('+ Found SMBIOS 3.x signature @ 0x{:08X}'.format(sig_pa))
                 self.smbios_3_ep = self.__validate_ep_3_values(sig_pa)
@@ -406,6 +407,7 @@ class SMBIOS(hal_base.HALBase):
             if value == 0:
                 if logger().HAL: logger().log('+ Unpacking string of size {:d}'.format(index))
                 (string, ) = struct.unpack_from('={:d}s'.format(index), raw_data[tmp_offset:])
+                string = bytestostring(string)
                 if logger().HAL: logger().log('+ Found: {:s}'.format(string))
                 ret_val.append(string)
                 tmp_offset += index + 1
