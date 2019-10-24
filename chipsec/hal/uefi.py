@@ -621,7 +621,7 @@ NVRAM: EFI Variable Store
         (found,ect_pa,ect,ect_buf) = self.find_EFI_Configuration_Table()
         if found:
             logger().log( "\n[uefi] EFI Configuration Table:" )
-            print_buffer( ect_buf )
+            print_buffer( bytestostring(ect_buf) )
             logger().log( ect )
         (found,pa,hdr,table,table_buf) = self.find_EFI_RuntimeServices_Table()
         if found:

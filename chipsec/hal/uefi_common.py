@@ -238,7 +238,9 @@ Format    : 0x{:02X}
 State     : 0x{:02X}
 Reserved  : 0x{:04X}
 Reserved1 : 0x{:08X}
-""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+""".format( self.guid0, self.guid1, self.guid2, bytestostring(codecs.encode(self.guid3[:2], 'hex')).upper(), \
+    bytestostring(codecs.encode(self.guid3[-6::], 'hex')).upper(), self.Size, self.Format, self.State, \
+    self.Reserved, self.Reserved1 )
 
 #
 # Variable data start flag.
@@ -468,7 +470,9 @@ EFI_STATUS_DICT = {
 
 EFI_GUID_FMT = "IHH8s"
 def EFI_GUID( guid0, guid1, guid2, guid3 ):
-    return ("{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ("{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, \
+        bytestostring(codecs.encode(guid3[:2], 'hex')).upper(), \
+        bytestostring(codecs.encode(guid3[-6::], 'hex')).upper()))
 
 
 def align(of, size):
@@ -1416,7 +1420,7 @@ class EFI_TABLE_HEADER( namedtuple('EFI_TABLE_HEADER', 'Signature Revision Heade
   Revision      : {}
   HeaderSize    : 0x{:08X}
   CRC32         : 0x{:08X}
-  Reserved      : 0x{:08X}""".format( self.Signature, EFI_SYSTEM_TABLE_REVISION(self.Revision), self.HeaderSize, self.CRC32, self.Reserved )
+  Reserved      : 0x{:08X}""".format( bytestostring(self.Signature), EFI_SYSTEM_TABLE_REVISION(self.Revision), self.HeaderSize, self.CRC32, self.Reserved )
 
 
 # #################################################################################################
