@@ -823,7 +823,7 @@ def EFIvar_EVSA(nvram_buf):
     fof = 0
     variables = dict()
     while fof < image_size:
-        fof = nvram_buf.find("EVSA", fof)
+        fof = nvram_buf.find(VARIABLE_STORE_SIGNATURE_EVSA, fof)
         if fof == -1: break
         if fof < tlv_h_size:
             fof = fof + 4
