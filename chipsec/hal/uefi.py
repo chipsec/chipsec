@@ -229,7 +229,7 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
         for (off, buf, hdr, data, guid, attrs) in efi_vars[name]:
             # efi_vars[name] = (off, buf, hdr, data, guid, attrs)
             attr_str = get_attr_string( attrs )
-            var_fname = os.path.join( nvram_pth, '{}_{}_{}_{:d}.bin'.format(name.encode('utf-8'), guid, attr_str.strip(), n) )
+            var_fname = os.path.join( nvram_pth, '{}_{}_{}_{:d}.bin'.format(name, guid, attr_str.strip(), n) )
             write_file( var_fname, data )
             if name in SECURE_BOOT_KEY_VARIABLES:
                 parse_efivar_file(var_fname, data, SECURE_BOOT_SIG_VAR)
