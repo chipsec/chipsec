@@ -20,6 +20,7 @@
 
 import struct
 from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.defines import bytestostring
 
 class cpu_info(BaseModule):
     def __init__(self):
@@ -52,7 +53,7 @@ class cpu_info(BaseModule):
             for eax_val in [0x80000002, 0x80000003, 0x80000004]:
                 regs = self.cs.cpu.cpuid(eax_val, 0)
                 for i in range(4):
-                    brand += struct.pack('<I', regs[i])
+                    brand += bytestostring(struct.pack('<I', regs[i]))
             self.logger.log('[*] Processor: {}'.format(brand))
 
             # Get processor version information
