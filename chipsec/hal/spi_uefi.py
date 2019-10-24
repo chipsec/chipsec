@@ -263,7 +263,10 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 sec.calc_hashes( sec.HeaderSize )
             elif sec.Type == EFI_SECTION_USER_INTERFACE:
                 # "leaf" UI section: update section's UI name
-                sec.ui_string = sec.Image[sec.HeaderSize:-2].decode("utf-16")
+                try:
+                    sec.ui_string = sec.Image[sec.HeaderSize:-2].decode("utf-16")
+                except UnicodeDecodeError:
+                    pass
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
                 if len(sec.Image) < sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:
                     logger().warn("EFI Section seems to be malformed")
