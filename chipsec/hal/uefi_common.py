@@ -670,9 +670,9 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
             header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
         #Check for a blank header
         if polarity:
-            blank = "\xff" * file_header_size
+            blank = b"\xff" * file_header_size
         else:
-            blank = "\x00" * file_header_size
+            blank = b"\x00" * file_header_size
 
         if (blank == FvImage[fof:fof+file_header_size]):
             next_offset = fof + 8
