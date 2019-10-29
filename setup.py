@@ -150,7 +150,7 @@ class build_ext(_build_ext):
         else:
             subprocess.call(["install.cmd","32"])
         os.chdir(cur_dir)
-    
+
     def _build_win_compression(self):
         log.info("building the windows compression")
         build_driver = os.path.join("chipsec_tools", "compression")
@@ -158,7 +158,7 @@ class build_ext(_build_ext):
         os.chdir(build_driver)
         # Run the makefile there.
         subprocess.call(["build.cmd"])
-        os.chdir(cur_dir)        
+        os.chdir(cur_dir)
 
     def run(self):
         # First, we build the standard extensions.
@@ -212,7 +212,7 @@ if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
     package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
     package_data["chipsec_tools.compression.bin"] = ['*']
-    install_requires.append("pypiwin32")
+    install_requires.append("pywin32")
 
 elif platform.system().lower() == "linux":
     package_data["chipsec_tools.compression.bin"] = ['*']
