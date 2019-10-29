@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="[PLATFORM_CODE]">
+<configuration platform="[PLATFORM_CODE]" req_pch="BOOLEAN">
 <!--
 Template for XML configuration file
 -->
