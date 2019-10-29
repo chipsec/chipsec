@@ -458,6 +458,7 @@ class Chipset:
     def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
 
         _unknown_platform = False
+        self.reqs_pch = False
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
@@ -501,6 +502,7 @@ class Chipset:
             self.pch_longname   = data_dict['longname']
             self.pch_id         = data_dict['id']
         else:
+            _unknown_pch = True
             self.pch_longname = 'Default PCH'
 
         if _unknown_platform and start_driver:
@@ -509,6 +511,10 @@ class Chipset:
             raise UnknownChipsetError (msg)
         if not _unknown_platform: # don't intialize config if platform is unknown
             self.init_cfg()
+        if self.reqs_pch and _unknown_pch and start_driver:
+            msg = 'Chipset requires a supported PCH to be loaded: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.pch_vid,self.pch_did,self.pch_rid)
+            logger().error( msg )
+            raise UnknownChipsetError (msg)
 
 
     def destroy( self, start_driver ):
@@ -615,6 +621,9 @@ class Chipset:
                 if logger().DEBUG: logger().log( "[*] loading common platform config from '{}'..".format(fxml) )
             elif code == _cfg.attrib['platform'].lower():
                 if logger().DEBUG: logger().log( "[*] loading '{}' platform config from '{}'..".format(code,fxml) )
+                if 'req_pch' in _cfg.attrib:
+                    if 'true' == _cfg.attrib['req_pch'].lower():
+                        self.reqs_pch = True
             elif pch_code == _cfg.attrib['platform'].lower():
                 if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code,fxml))
             else: continue
