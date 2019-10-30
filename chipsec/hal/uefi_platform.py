@@ -1159,6 +1159,10 @@ def decode_s3bs_opcode_edkcompat( data ):
     else:
         op = op_unknown( opcode, size )
         if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
+
+    return op
+
+#
 # @TODO: encode functions are not fully implemented
 #
 def encode_s3bs_opcode_edkcompat( op ):
