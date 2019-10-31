@@ -355,7 +355,7 @@ Attributes : 0x{:02X}
 State      : 0x{:02X}
 """.format( self.StartId, self.TotalSize, self.Reserved1, self.Reserved2, self.Reserved3, self.Attributes, self.State )
 
-NVAR_EFIvar_signature   = 'NVAR'
+NVAR_EFIvar_signature   = b'NVAR'
 
 def getNVstore_NVAR( nvram_buf ):
     l = (-1, -1, None)
@@ -378,8 +378,11 @@ def getNVstore_NVAR( nvram_buf ):
         FvOffset, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum = NextFwVolume(nvram_buf, FvOffset+FvLength)
     return l
 
+def _ord(c):
+    return ord(c) if isinstance(c, str) else c
+
 def getEFIvariables_NVAR( nvram_buf ):
-    start = defines.bytestostring(nvram_buf).find( NVAR_EFIvar_signature )
+    start = nvram_buf.find( NVAR_EFIvar_signature )
     nvram_size = len(nvram_buf)
     EFI_HDR_NVAR = "<4sH3sB"
     nvar_size = struct.calcsize(EFI_HDR_NVAR)
@@ -398,13 +401,14 @@ def getEFIvariables_NVAR( nvram_buf ):
         if (not isvar) or (size == (EMPTY & 0xffff)): break
         var_name_off = 1
         if bit_set(attributes, NVRAM_ATTR_GUID):
-            guid0, guid1, guid2, guid3 = struct.unpack(GUID, nvram_buf[nof+nvar_size:nof+nvar_size+guid_size])
-            guid = guid_str(guid0, guid1, guid2, guid3)
+            guid = UUID(bytes_le=nvram_buf[nof + nvar_size: nof + nvar_size + guid_size])
+            guid = str(guid).upper()
             var_name_off = guid_size
         else:
-            guid_idx = ord(nvram_buf[nof+nvar_size])
-            guid0, guid1, guid2, guid3 = struct.unpack(GUID, nvram_buf[nvram_size - guid_size - guid_idx:nvram_size - guid_idx])
-            guid = guid_str(guid0, guid1, guid2, guid3)
+            guid_idx = _ord(nvram_buf[nof+nvar_size])
+            guid_off = (nvram_size - guid_size) - guid_idx * guid_size
+            guid = UUID(bytes_le=nvram_buf[guid_off: guid_off + guid_size])
+            guid = str(guid).upper()
         name_size = 0
         name_offset = nof+nvar_size+var_name_off
         if not bit_set(attributes, NVRAM_ATTR_DATA):
@@ -413,7 +417,7 @@ def getEFIvariables_NVAR( nvram_buf ):
         eattrs = 0
         if bit_set(attributes, NVRAM_ATTR_EXTHDR):
             esize, = struct.unpack("<H", nvram_buf[nof+size-2:nof+size])
-            eattrs = ord(nvram_buf[nof+size-esize])
+            eattrs = _ord(nvram_buf[nof+size-esize])
         attribs = EFI_VARIABLE_BOOTSERVICE_ACCESS
         attribs = attribs | EFI_VARIABLE_NON_VOLATILE
         if bit_set(attributes, NVRAM_ATTR_RT):  attribs = attribs | EFI_VARIABLE_RUNTIME_ACCESS
@@ -819,7 +823,7 @@ def EFIvar_EVSA(nvram_buf):
     fof = 0
     variables = dict()
     while fof < image_size:
-        fof = nvram_buf.find("EVSA", fof)
+        fof = nvram_buf.find(VARIABLE_STORE_SIGNATURE_EVSA, fof)
         if fof == -1: break
         if fof < tlv_h_size:
             fof = fof + 4

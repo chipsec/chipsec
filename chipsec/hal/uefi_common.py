@@ -271,17 +271,14 @@ MAX_NVRAM_SIZE    = 1024*1024
 
 def get_nvar_name(nvram, name_offset, isAscii):
     if isAscii:
-        nend = nvram.find('\x00', name_offset)
-        name_size = nend - name_offset + 1 # add trailing zero symbol
-        name = nvram[name_offset:nend]
+        nend = nvram.find(b'\x00', name_offset)
+        name = nvram[name_offset:nend].decode('latin1')
+        name_size = len(name) + 1
         return (name, name_size)
     else:
-        nend = nvram.find('\x00\x00', name_offset)
-        while (nend & 1) == 1:
-            nend = nend + 1
-            nend = nvram.find('\x00\x00', nend)
-        name_size = nend - name_offset + 2 # add trailing zero symbol
-        name = nvram[name_offset:nend].decode("utf-16-le")
+        nend = nvram.find(b'\x00\x00', name_offset)
+        name = nvram[name_offset:nend].decode('utf-16le')
+        name_size = len(name) + 2
         return (name, name_size)
 
 
@@ -677,9 +674,9 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
             header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
         #Check for a blank header
         if polarity:
-            blank = "\xff" * file_header_size
+            blank = b"\xff" * file_header_size
         else:
-            blank = "\x00" * file_header_size
+            blank = b"\x00" * file_header_size
 
         if (blank == FvImage[fof:fof+file_header_size]):
             next_offset = fof + 8
