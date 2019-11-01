@@ -91,7 +91,7 @@ class ChipsecMain:
 
         self.argv = argv
         self.parse_args()
-        
+
     def init_cs(self):
         self._cs = chipset.cs()
 
@@ -217,28 +217,11 @@ class ChipsecMain:
 
     def load_my_modules(self):
         #
-        # Step 1.
         # Load modules common to all supported platforms
         #
-        common_path = os.path.join( self.Modules_Path, 'common' )
-        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd(),'.')) )
+        common_path = os.path.join( self.Modules_Path, 'check' )
+        logger().log( "[*] loading modules from \"{}\" ..".format(common_path.replace(os.getcwd(),'.')) )
         self.load_modules_from_path( common_path )
-        #
-        # Step 2.
-        # Load platform-specific modules from the corresponding platform module directory
-        #
-        chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
-        if (chipset.CHIPSET_ID_UNKNOWN != self._cs.id) and os.path.exists( chipset_path ):
-            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd(),'.')) )
-            self.load_modules_from_path( chipset_path )
-        else:
-            logger().log( "[*] No platform specific modules to load" )
-        #
-        # Step 3.
-        # Enumerate all modules from the root module directory
-        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(),'.')) )
-        self.load_modules_from_path( self.Modules_Path, False )
-
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
@@ -258,7 +241,7 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        results          = logger().Results       
+        results          = logger().Results
         results.add_properties(self.properties())
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
@@ -291,9 +274,9 @@ class ChipsecMain:
 
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_full())
-            
+
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))	
+            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
 
         test_deltas = None
         if self._deltas_file is not None:
@@ -308,8 +291,8 @@ class ChipsecMain:
         elif not self._list_tags:
             summary = results.order_summary()
             logger().log( "\n[CHIPSEC] ***************************  SUMMARY  ***************************" )
-            if not self.no_time:	
-                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time()-t) )	
+            if not self.no_time:
+                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time()-t) )
             for k in summary.keys():
                 if k == 'total':
                     logger().log( '[CHIPSEC] Modules {:16}{:d}'.format(k,summary[k]) )
@@ -318,7 +301,7 @@ class ChipsecMain:
                     for mod in summary[k]:
                         logger().log_warning(mod)
                 elif k == 'exceptions':
-                    if len(summary[k]) > 0: 
+                    if len(summary[k]) > 0:
                         logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
                         for mod in summary[k]:
                             logger().error(mod)
@@ -399,7 +382,7 @@ class ChipsecMain:
         adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
 
         parser.parse_args(self.argv,namespace=ChipsecMain)
- 
+
         if self.help:
             parser.print_help()
         if self.verbose:
