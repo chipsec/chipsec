@@ -1014,7 +1014,7 @@ class Chipset:
         reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_str = ''
-        reg_val_str = "0x{:{width}X}".format(reg_val,width=(int(reg['size'],16)*2))
+        reg_val_str = "0x{:0{width}X}".format(reg_val,width=(int(reg['size'],16)*2))
         if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
             b = int(reg['bus'],16)
             d = int(reg['dev'],16)
