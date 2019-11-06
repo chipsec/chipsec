@@ -201,6 +201,7 @@ class Logger:
             try:
                 self.rootLogger.removeHandler(self.logfile)
                 self.logfile.flush()
+                self.rootLogger.addHandler(self.logfile)
             except Exception:
                 self.disable()
 
