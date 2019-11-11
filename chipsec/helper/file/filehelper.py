@@ -93,6 +93,7 @@ class FileHelper(Helper):
         self.os_release = "0.0"
         self.os_version = "0.0"
         self.os_machine = "N/A"
+        self.name = "FileHelper"
 
     def create(self, start_driver):
         if logger().VERBOSE:
