@@ -265,6 +265,7 @@ class Win32Helper(Helper):
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
+        self.name       = "Win32Helper"
         if "windows" == self.os_system.lower():
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
@@ -450,7 +451,7 @@ class Win32Helper(Helper):
                 if logger().DEBUG: logger().log( "[helper] service '{}' started".format(SERVICE_NAME) )
             except pywintypes.error as err:
                 _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]), err.args[0] )
-
+        self.driverpath = win32serviceutil.LocateSpecificServiceExe(SERVICE_NAME)
         return True
 
     #

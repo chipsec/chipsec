@@ -60,6 +60,7 @@ class EfiHelper(Helper):
 
     def __init__(self):
         super(EfiHelper, self).__init__()
+        self.name = "EfiHelper"
         if sys.platform.startswith('EFI'):
             self.os_system = sys.platform
             self.os_release = "0.0"
