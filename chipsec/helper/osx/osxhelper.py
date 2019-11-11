@@ -87,6 +87,7 @@ class OSXHelper(Helper):
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
         self.dev_fh = None
+        self.name = "OSXHelper"
 
     decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI]
     decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI,chipsec.defines.COMPRESSION_TYPE_LZMA,chipsec.defines.COMPRESSION_TYPE_BROTLI]
@@ -107,6 +108,7 @@ class OSXHelper(Helper):
                 logger().log("Module {} loaded successfully".format(self.DRIVER_NAME))
         else:
             logger().error("Failed to load the module {}".format(self.DRIVER_NAME))
+        self.driverpath = driver_path
 
     def create(self, start_driver):
         #self.init(start_driver)

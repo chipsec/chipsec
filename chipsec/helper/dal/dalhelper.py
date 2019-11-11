@@ -56,6 +56,7 @@ class DALHelper(Helper):
         self.os_release = '(N/A)'
         self.os_version = self.dal_version()
         self.os_machine = self.target_machine()
+        self.name = "DALHelper"
 
     def __del__(self):
         if not len(self.base.threads):

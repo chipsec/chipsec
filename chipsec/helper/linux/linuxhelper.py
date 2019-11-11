@@ -117,6 +117,7 @@ class LinuxHelper(Helper):
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
+        self.name       = "LinuxHelper"
         self.dev_fh = None
         self.dev_mem = None
         self.dev_port = None
@@ -176,6 +177,7 @@ class LinuxHelper(Helper):
                 logger().log("Module {} loaded successfully".format(self.DEVICE_NAME))
         else:
             logger().error( "Fail to load module: {}".format(driver_path) )
+        self.driverpath = driver_path
 
 
     def create(self, start_driver):
