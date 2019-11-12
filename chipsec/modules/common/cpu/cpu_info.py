@@ -49,7 +49,7 @@ class cpu_info(BaseModule):
             self.logger.log('[*] Thread {:04d}'.format(thread))
 
             # Get processor brand string
-            brand = ''
+            brand = b''
             for eax_val in [0x80000002, 0x80000003, 0x80000004]:
                 regs = self.cs.cpu.cpuid(eax_val, 0)
                 for i in range(4):
