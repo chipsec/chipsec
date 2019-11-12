@@ -95,6 +95,7 @@ CHIPSET_ID_DNV     = 18
 CHIPSET_ID_WHL     = 19
 CHIPSET_ID_SKX     = 20
 CHIPSET_ID_CML     = 21
+CHIPSET_ID_GLK     = 22
 
 CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
@@ -122,7 +123,7 @@ CHIPSET_CODE_SKX     = 'SKX'
 
 CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX,CHIPSET_ID_SKX]
 CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL,CHIPSET_ID_WHL,CHIPSET_ID_CML]
-CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV]
+CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV, CHIPSET_ID_GLK]
 CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
 
 
@@ -255,6 +256,10 @@ Chipset_Dictionary[0x2280].append({'name' : 'Braswell/Cherry Trail', 'id' : CHIP
 
 # Apollo Lake
 Chipset_Dictionary[0x5AF0].append({'name' : 'Apollo Lake','id' : CHIPSET_ID_APL , 'code' : CHIPSET_CODE_APL,  'longname' : 'Apollo Lake' })
+
+# Gemini Lake
+Chipset_Dictionary[0x3180].append({'name' : 'Gemini Lake','id' : CHIPSET_ID_GLK , 'code' : 'GLK',  'longname' : 'Gemini Lake' })
+Chipset_Dictionary[0x31F0].append({'name' : 'Gemini Lake','id' : CHIPSET_ID_GLK , 'code' : 'GLK',  'longname' : 'Gemini Lake' })
 
 #
 # Quark based SoC platforms
