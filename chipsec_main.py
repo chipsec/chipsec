@@ -296,7 +296,10 @@ class ChipsecMain:
             chipsec.file.write_file(self._json_out, results.json_full())
             
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))	
+            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
+
+        if self._markdown_out:
+            chipsec.file.write_file(self._markdown_out, results.markdown_full(self._markdown_out))
 
         test_deltas = None
         if self._deltas_file is not None:
@@ -391,6 +394,7 @@ class ChipsecMain:
         adv_options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         adv_options.add_argument('-j', '--json',dest='_json_out', help='specify filename for JSON output')
         adv_options.add_argument('-x', '--xml', dest='_xml_out',help='specify filename for xml output (JUnit style)')
+        adv_options.add_argument('-k', '--markdown', dest='_markdown_out',help='specify filename for markdown output')
         adv_options.add_argument('-t', '--moduletype',dest='USER_MODULE_TAGS', help='run tests of a specific type (tag)',type=str.upper,default=[])
         adv_options.add_argument('--list_tags',dest='_list_tags', help='list all the available options for -t,--moduletype',action='store_true')
         adv_options.add_argument('-I', '--include',dest='IMPORT_PATHS', help='specify additional path to load modules from',default=[])
