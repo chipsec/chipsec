@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -42,6 +42,9 @@ class remap(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
+        if self.cs.is_atom():
+            self.res = ModuleResult.NOTAPPLICABLE
+            return False
         return self.cs.is_core()
 
     def check_remap_config(self):
