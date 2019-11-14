@@ -19,9 +19,10 @@
 import struct
 
 from chipsec.helper import oshelper
+from chipsec.helper.basehelper import Helper
 
 
-class TestHelper(oshelper.Helper):
+class TestHelper(Helper):
     """Default test helper that emulates a Broadwell architecture.
 
     See datasheet for registers definition.
@@ -29,11 +30,13 @@ class TestHelper(oshelper.Helper):
     """
 
     def __init__(self):
+        super(TestHelper,self).__init__()
         self.os_system = "test_helper"
         self.os_release = "0"
         self.os_version = "0"
         self.os_machine = "test"
         self.driver_loaded = True
+        self.name = "TestHelper"
 
     def create(self, start_driver):
         return True
@@ -249,21 +252,21 @@ class SPIHelper(TestHelper):
                                                        function,
                                                        address, size)
 
-    def read_mmio_reg(self, pa, size, offset, bar_size):
-        if pa + offset == self.FREG0:
+    def read_mmio_reg(self, pa, size):
+        if pa == self.FREG0:
             return 0x00010001
-        elif pa + offset == self.FREG0 + 4:
+        elif pa == self.FREG0 + 4:
             return 0x00020002
-        elif pa + offset == self.FRAP:
+        elif pa == self.FRAP:
             return 0xEEEEEEEE
-        elif pa + offset == self.HSFS:
+        elif pa == self.HSFS:
             return (1 << 14)  # FDV = 1, the flash descriptor is valid
         elif pa >= self.SPIBAR_ADDR and pa < self.SPIBAR_END:
             return 0x0
         else:
             raise Exception("Unexpected address")
 
-    def write_mmio_reg(self, pa, size, value, offset, bar_size):
+    def write_mmio_reg(self, pa, size, value):
         if pa < self.SPIBAR_ADDR or pa > self.SPIBAR_END:
             raise Exception("Write to outside of SPIBAR")
 
