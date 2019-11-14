@@ -41,12 +41,10 @@ class TestChipsecUtil(unittest.TestCase):
         """
         fileno, self.log_file = tempfile.mkstemp()
         os.close(fileno)
-        oshelper._helper = None
         chipset._chipset = None
 
     def tearDown(self):
         os.remove(self.log_file)
-        oshelper._helper = None
         chipset._chipset = None
         chipsec_util._cs = None
 
@@ -58,8 +56,8 @@ class TestChipsecUtil(unittest.TestCase):
         It verifies that no error is being reported. self.log will be populated
         with the output.
         """
-        oshelper._helper =  helper_class()
         chipsec_util._cs = chipset.cs()
+        chipsec_util._cs.helper.helper = helper_class()
         util = chipsec_util.ChipsecUtil(arg.split())
         util.VERBOSE = True
         logger.logger().HAL = True
