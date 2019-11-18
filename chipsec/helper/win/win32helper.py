@@ -276,17 +276,6 @@ class Win32Helper(Helper):
         self.driver_handle  = None
         self.device_file    = str(DEVICE_FILE)
 
-        # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
-        self.driver_path    = None
-        for path in DRIVER_FILE_PATHS:
-            driver_path = os.path.join(path, DRIVER_FILE_NAME)
-            if os.path.isfile(driver_path): 
-                self.driver_path = driver_path
-                if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
-        if self.driver_path is None: 
-            if logger().DEBUG: logger().log("[helper] CHIPSEC Windows Driver Not Found")
-            raise DriverNotFound
-
         c_int_p = POINTER(c_int)
 
         # enable required SeSystemEnvironmentPrivilege privilege
@@ -365,15 +354,27 @@ class Win32Helper(Helper):
     # Create (register/install) chipsec service
     #
     def create(self, start_driver):
-
         if not start_driver: return True
+
+        # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
+        self.driver_path    = None
+        for path in DRIVER_FILE_PATHS:
+            driver_path = os.path.join(path, DRIVER_FILE_NAME)
+            if os.path.isfile(driver_path):
+                self.driver_path = driver_path
+                if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
+        if self.driver_path is None:
+            if logger().DEBUG:
+                logger().log("[helper] CHIPSEC Windows Driver Not Found")
+            raise Exception("CHIPSEC Windows Driver Not Found")
+
         self.show_warning()
 
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
         except win32service.error as err:
             _handle_winerror(err.args[1], err.args[2], err.args[0])
-        if logger().DEBUG: 
+        if logger().DEBUG:
             logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
             logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
@@ -437,7 +438,7 @@ class Win32Helper(Helper):
 
         if self.use_existing_service:
             self.driver_loaded = True
-            if logger().DEBUG: 
+            if logger().DEBUG:
                 logger().log( "[helper] service '{}' already running".format(SERVICE_NAME) )
                 logger().log( "[helper] trying to connect to existing '{}' service...".format(SERVICE_NAME) )
         else:

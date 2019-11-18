@@ -91,7 +91,7 @@ class OsHelper:
         if(not self.helper):
             import platform
             os_system  = platform.system()
-            raise OsHelperError( "Could not load helper for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
+            raise OsHelperError( "Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -106,7 +106,8 @@ class OsHelper:
             except OsHelperError:
                 raise
             except:
-                pass
+                if logger().DEBUG:
+                    logger().log("Unable to load helper: {}".format(helper))
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:
@@ -126,7 +127,7 @@ class OsHelper:
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
                 error_no = msg.errorcode
-            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"{}\"".format(msg),error_no)
+            raise OsHelperError("Message: \"{}\"".format(msg),error_no)
 
     def stop( self, start_driver ):
         if not self.filecmds is None:
