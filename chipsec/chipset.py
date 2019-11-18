@@ -511,7 +511,7 @@ class Chipset:
                 self.did = 0xFFFF
                 self.rid = 0xFF
 
-        if self.did in Chipset_Dictionary and len(Chipset_Dictionary[self.did] > 1):
+        if self.did in Chipset_Dictionary and len(Chipset_Dictionary[self.did]) > 1:
             _unknown_platform = True
             self.longname = 'UnknownPlatform'
             value = self.get_cpuid()
@@ -525,7 +525,7 @@ class Chipset:
                     self.id         = data_dict['id']
                     break
         elif self.did in Chipset_Dictionary:
-            data_dict       = Chipset_Dictionary[ self.did ]
+            data_dict       = Chipset_Dictionary[ self.did ][0]
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
             self.id         = data_dict['id']
@@ -544,7 +544,7 @@ class Chipset:
                 self.pch_rid = 0xFF
 
         if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
-            data_dict           = pch_dictionary[self.pch_did]
+            data_dict           = pch_dictionary[self.pch_did][0]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
             self.pch_id         = data_dict['id']
