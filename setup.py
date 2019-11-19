@@ -24,6 +24,7 @@
 Setup module to install chipsec package via setuptools
 """
 
+import io
 import os
 import platform
 from setuptools import setup, find_packages
@@ -34,7 +35,10 @@ import shutil
 
 from setuptools.command.install import install as _install
 from distutils.command.build import build as _build
+from distutils.command.sdist import sdist as _sdist
 from setuptools.command.build_ext import build_ext as _build_ext
+
+NO_DRIVER_MARKER_FILE = "README.NO_KERNEL_DRIVER"
 
 def long_description():
     return open("README").read()
@@ -190,6 +194,13 @@ class install(_install):
         _install.initialize_options(self)
         self.skip_driver = None
 
+        # Do not build the driver if no-driver marker file is present.
+        # This marker is only created by an sdist command when
+        # "python setup.py sdist" is executed. This allows having
+        # driver-less PIP packages uploaded to PyPi.
+        if os.path.exists(NO_DRIVER_MARKER_FILE):
+            self.skip_driver = True
+
 class build(_build):
     user_options = _build.user_options + skip_driver_opt
     boolean_options = _build.boolean_options + ["skip-driver"]
@@ -197,6 +208,21 @@ class build(_build):
     def initialize_options(self):
         _build.initialize_options(self)
         self.skip_driver = None
+
+class sdist(_sdist):
+    """Build sdist."""
+
+    def make_release_tree(self, base_dir, files):
+        _sdist.make_release_tree(self, base_dir, files)
+        no_driver_marker = os.path.join(base_dir, NO_DRIVER_MARKER_FILE)
+        with io.open(no_driver_marker, "w", encoding="utf-8") as fd:
+          fd.write(
+u"""PyPI-distributed chipsec PIP package doesn't contain a pre-built
+kernel driver. Please use it only when a kernel driver is already present
+on the system. Otherwise, please install chipsec from source, using the
+following procedure:
+https://github.com/chipsec/chipsec/blob/master/chipsec-manual.pdf
+""")
 
 package_data = {
     # Include any configuration file.
@@ -265,6 +291,7 @@ setup(
         'install': install,
         'build': build,
         'build_ext'   : build_ext,
+        'sdist': sdist,
     },
     ext_modules = extra_kw
 )
