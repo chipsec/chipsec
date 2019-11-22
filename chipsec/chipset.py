@@ -379,14 +379,12 @@ Chipset_Code = dict([(dl['code'], _did) for _did in Chipset_Dictionary for dl in
 pch_codes = dict([(dl['code'], _did) for _did in pch_dictionary for dl in pch_dictionary[_did]])
 
 def print_supported_chipsets():
-    codes_dict = collections.defaultdict(list)
-    for _did in Chipset_Dictionary: codes_dict[ Chipset_Dictionary[ _did ]['code'] ].append( _did )
     logger().log( "\nSupported platforms:\n" )
     logger().log( "DID     | Name           | Code   | Long Name" )
     logger().log( "-------------------------------------------------------------------------------------" )
-    for _code in sorted(codes_dict):
-        for _did in codes_dict[_code]:
-            logger().log( " {:-#06x} | {:14} | {:6} | {:40}".format(_did, Chipset_Dictionary[_did]['name'], _code.lower(), Chipset_Dictionary[_did]['longname']) )
+    for _did in sorted(Chipset_Dictionary):
+        for item in Chipset_Dictionary[_did]:
+            logger().log( " {:-#06x} | {:14} | {:6} | {:40}".format(_did, item['name'], item['code'].lower(), item['longname']) )
 
 
 def f_xml(self, x):
