@@ -140,3 +140,36 @@ class Interrupts(hal_base.HALBase):
             #clear CommBuffer
             self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),"\x00"*len(data_hdr))
             return None
+
+    # scan phys mem range start-end looking for 'smmc'
+    def scan_range(self,start,end):
+        chunk_sz = 1024 * 8 #8KB chunks
+        phys_address = start
+        found_at = 0
+        while phys_address <= end:
+            buffer = self.cs.mem.read_physical_mem( phys_address, chunk_sz )
+            buffer = chipsec.defines.bytestostring(buffer)
+            offset = buffer.find('smmc')
+            if offset != -1:
+                found_at = phys_address + offset
+                break
+            phys_address += chunk_sz
+        return found_at
+
+    def send_smmc_SMI(self,gSmmCorePrivate,guid,payload_fn,payload_loc):
+        guid_b = uuid.UUID(guid).bytes_le
+
+        payload_file = open('payload.bin','rb')
+        payload = payload_file.read()
+        payload_sz = len(payload)
+        payload_file.close()
+
+        data_hdr = guid_b + struct.pack("Q",payload_sz) + payload
+        # write payload to payload_loc
+        CommBuffer_offset = 56
+        BufferSize_offset = CommBuffer_offset + 8
+        self.cs.mem.write_physical_mem(gSmmCorePrivate + CommBuffer_offset,8,struct.pack("Q",payload_loc))
+        self.cs.mem.write_physical_mem(gSmmCorePrivate + BufferSize_offset,8,struct.pack("Q",payload_sz))
+        self.cs.mem.write_physical_mem(payload_loc,len(data_hdr),data_hdr)
+        self.send_SMI_APMC(0x0,0x0)
+
