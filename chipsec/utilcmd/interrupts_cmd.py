@@ -24,28 +24,51 @@ import time
 
 from chipsec.command        import BaseCommand
 from chipsec.hal.interrupts import Interrupts
+import chipsec.defines
+import struct
+import uuid
+
 
 # ###################################################################
 #
 # CPU Interrupts
 #
 # ###################################################################
+
+
+
 class SMICommand(BaseCommand):
     """
     >>> chipsec_util smi count
     >>> chipsec_util smi <thread_id> <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]
+    >>> chipsec_util smi comm <RT_code_start> <RT_code_end> <GUID> <payload_loc> <payload_file>
 
     Examples:
 
     >>> chipsec_util smi count
     >>> chipsec_util smi 0x0 0xDE 0x0
     >>> chipsec_util smi 0x0 0xDE 0x0 0xAAAAAAAAAAAAAAAA ..
+    >>> chipsec_util.py smi comm 0x79dfe000 0x79efdfff ed32d533-99e6-4209-9cc02d72cdd998a7 0x79dfaaaa payload.bin
     """
     def requires_driver(self):
         # No driver required when printing the util documentation
         if len(self.argv) < 3:
             return False
         return True
+
+    def scan_range(self,start,end):
+        chunk_sz = 1024 * 8 #8KB chunks
+        phys_address = start
+        found_at = []
+        while phys_address <= end:
+            buffer = self.cs.mem.read_physical_mem( phys_address, chunk_sz )
+            buffer = chipsec.defines.bytestostring(buffer)
+            offset = buffer.find('smmc')
+            if offset != -1:
+                self.logger.log( '[CHIPSEC] search buffer from memory: PA = 0x{:016X}, len = 0x{:X}, target address= 0x{:X}..'.format(phys_address,chunk_sz, phys_address + offset) )
+                found_at.append(phys_address + offset)
+            phys_address += chunk_sz
+        return found_at
 
     def run(self):
         if len(self.argv) < 3:
@@ -66,6 +89,29 @@ class SMICommand(BaseCommand):
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 smi_cnt = self.cs.read_register_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
                 self.logger.log( "  CPU{:d}: {:d}".format(tid,smi_cnt) )
+        elif 'comm' == op:
+            if len(self.argv) < 8:
+                print (SMICommand.__doc__)
+                return
+
+            RTC_start = int(self.argv[3],16)
+            RTC_end = int(self.argv[4],16)
+            guid = self.argv[5]
+            payload_loc = int(self.argv[6],16)
+            payload_fn = self.argv[7]
+
+            self.logger.log("Searching for \'smmc\' in range 0x{:x}-0x{:x}".format(RTC_start,RTC_end))
+            # scan for SMM_CORE_PRIVATE_DATA smmc signature
+            smmc_loc = interrupts.scan_range(RTC_start,RTC_end)
+            if smmc_loc == 0:
+                self.logger.log(" Couldn't find smmc signature")
+                return
+            self.logger.log("Found gSmmCorePrivate at 0x{:x}".format(smmc_loc))
+
+            interrupts.send_smmc_SMI(smmc_loc,guid,payload_fn,payload_loc)
+
+            return
+
         else:
             SMI_code_port_value = 0xF
             SMI_data_port_value = 0x0
