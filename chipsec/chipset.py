@@ -375,8 +375,8 @@ try:
     from chipsec.custom_chipsets import *
 except ImportError:
     pass
-Chipset_Code = dict([(dl['code'], _did) for _did in Chipset_Dictionary for dl in Chipset_Dictionary[_did]])
-pch_codes = dict([(dl['code'], _did) for _did in pch_dictionary for dl in pch_dictionary[_did]])
+Chipset_Code = dict([(dl['code'], _did) for _did in Chipset_Dictionary for dl in Chipset_Dictionary[_did] if isinstance(dl, dict)])
+pch_codes = dict([(dl['code'], _did) for _did in pch_dictionary for dl in pch_dictionary[_did] if isinstance(dl, dict)])
 
 def print_supported_chipsets():
     codes_dict = collections.defaultdict(list)
