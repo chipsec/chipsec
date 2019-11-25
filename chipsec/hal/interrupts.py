@@ -156,13 +156,30 @@ class Interrupts(hal_base.HALBase):
             phys_address += chunk_sz
         return found_at
 
-    def send_smmc_SMI(self,gSmmCorePrivate,guid,payload_fn,payload_loc):
-        guid_b = uuid.UUID(guid).bytes_le
+    
+    '''
+Send SWSMI in the same way as EFI_SMM_COMMUNICATION_PROTOCOL
+    - Write Commbuffer location and Commbuffer size to 'smmc' structure
+    - Write 0 to 0xb3 and 0xb2
 
-        payload_file = open('payload.bin','rb')
-        payload = payload_file.read()
+MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
+
+#define SMM_CORE_PRIVATE_DATA_SIGNATURE  SIGNATURE_32 ('s', 'm', 'm', 'c')
+ struct {
+  UINTN                           Signature;
+   This field is used by the SMM Communicatioon Protocol to pass a buffer into
+   a software SMI handler and for the software SMI handler to pass a buffer back to
+   the caller of the SMM Communication Protocol.
+  VOID                            *CommunicationBuffer;
+  UINTN                           BufferSize;
+
+  EFI_STATUS                      ReturnStatus;
+} SMM_CORE_PRIVATE_DATA;
+    '''
+    def send_smmc_SMI(self,gSmmCorePrivate,guid,payload,payload_loc):
+        guid_b = uuid.UUID(guid).bytes_le
         payload_sz = len(payload)
-        payload_file.close()
+
 
         data_hdr = guid_b + struct.pack("Q",payload_sz) + payload
         # write payload to payload_loc
