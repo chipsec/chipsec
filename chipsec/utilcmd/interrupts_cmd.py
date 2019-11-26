@@ -24,7 +24,7 @@ import time
 
 from chipsec.command        import BaseCommand
 from chipsec.hal.interrupts import Interrupts
-import uuid
+import os
 
 
 # ###################################################################
@@ -39,7 +39,7 @@ class SMICommand(BaseCommand):
     """
     >>> chipsec_util smi count
     >>> chipsec_util smi <thread_id> <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]
-    >>> chipsec_util smi smmc <RT_code_start> <RT_code_end> <GUID> <payload_loc> <payload_file>
+    >>> chipsec_util smi smmc <RT_code_start> <RT_code_end> <GUID> <payload_loc> <payload_file|payload_string>
 
     Examples:
 
@@ -82,24 +82,23 @@ class SMICommand(BaseCommand):
             RTC_end = int(self.argv[4],16)
             guid = self.argv[5]
             payload_loc = int(self.argv[6],16)
-            payload_fn = self.argv[7]
+            payload = self.argv[7]
+            if os.path.isfile(payload):
+                f = open(payload,'rb')
+                payload = f.read()
+                f.close()
 
             self.logger.log("Searching for \'smmc\' in range 0x{:x}-0x{:x}".format(RTC_start,RTC_end))
             # scan for SMM_CORE_PRIVATE_DATA smmc signature
-            smmc_loc = interrupts.scan_range(RTC_start,RTC_end)
+            smmc_loc = interrupts.find_smmc(RTC_start,RTC_end)
             if smmc_loc == 0:
                 self.logger.log(" Couldn't find smmc signature")
                 return
-            self.logger.log("Found gSmmCorePrivate at 0x{:x}".format(smmc_loc))
+            self.logger.log("Found \'smmc\' structure at 0x{:x}".format(smmc_loc))
 
-            payload_file = open(payload_fn,'rb')
-            payload = payload_file.read()
-            payload_file.close()
-
-            interrupts.send_smmc_SMI(smmc_loc,guid,payload,payload_loc)
-
-            return
-
+            ReturnStatus = interrupts.send_smmc_SMI(smmc_loc,guid,payload,payload_loc)
+            #TODO Translate ReturnStatus to EFI_STATUS enum
+            self.logger.log("ReturnStatus: {:x}".format(ReturnStatus))
         else:
             SMI_code_port_value = 0xF
             SMI_data_port_value = 0x0
