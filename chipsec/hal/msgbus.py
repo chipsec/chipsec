@@ -116,7 +116,7 @@ class MsgBus(hal_base.HALBase):
 
     def __MB_MESSAGE_MCRX(self, reg):
         mcrx = 0x0
-        mcrx = self.cs.set_register_field( 'MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', reg, preserve_field_position=True )
+        mcrx = self.cs.set_register_field( 'MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True )
         return mcrx
 
     def __MB_MESSAGE_MDR(self, data):
