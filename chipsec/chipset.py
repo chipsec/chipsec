@@ -364,6 +364,7 @@ pch_dictionary[0xA1C4].append({'name' : 'C625', 'id' : PCH_ID_C620, 'code' : PCH
 pch_dictionary[0xA1C5].append({'name' : 'C626', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C626 (C620 series) PCH'})
 pch_dictionary[0xA1C6].append({'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'})
 pch_dictionary[0xA1C7].append({'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'})
+pch_dictionary[0xA1CA].append({'name' : 'C629', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C629 (C620 series) PCH'})
 pch_dictionary[0xA242].append({'name' : 'C624', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C624 (C620 series) PCH'})
 pch_dictionary[0xA243].append({'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'})
 pch_dictionary[0xA244].append({'name' : 'C621', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C621 (C620 series) PCH'})
