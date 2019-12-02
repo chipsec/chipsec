@@ -824,6 +824,8 @@ class Win32Helper(Helper):
     # Interrupts
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+        if (sys.maxsize < 2**32 and self.os_machine == 'AMD64') or (sys.maxsize > 2**32 and self.os_machine == 'i386'):
+            logger().log("[helper] Python architecture must match OS architecture.  Run with {} architecture of python".format(self.os_machine))
         out_length = struct.calcsize(_smi_msg_t_fmt)
         out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
