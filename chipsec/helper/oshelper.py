@@ -116,7 +116,7 @@ class OsHelper:
         if not driver_exists is None:
             for name in avail_helpers:
                 if name == driver_exists:
-                    self.helper = getattr(chiphelpers,helper).get_helper()
+                    self.helper = getattr(chiphelpers,name).get_helper()
         try:
             if not self.helper.create( start_driver ):
                 raise OsHelperError("failed to create OS helper",1)
