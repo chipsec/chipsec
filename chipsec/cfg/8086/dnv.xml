@@ -8,12 +8,15 @@ XML configuration file for Denverton
   337018-002
 -->
 
+  <!-- #################################### -->
+  <info family="atom">
+    <sku did="0x1980" name="Denverton" code="DNV" longname="Intel Atom Processor C3000 Product Family" />
+  </info>
+
   <pci>
   </pci>
 
-
   <mmio>
-    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFC000" size="0x200"  desc="SPI Controller Register Range"/> 
   </mmio>
 
   <io>

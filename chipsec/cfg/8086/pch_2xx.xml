@@ -9,6 +9,21 @@ XML configuration file for 200 series PCH based platforms
 
   <!-- #################################### -->
   <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0xA2C4" name="H270" code="PCH_2xx" longname="Intel H270 (200 series) PCH" />
+    <sku did="0xA2C5" name="Z270" code="PCH_2xx" longname="Intel Z270 (200 series) PCH" />
+    <sku did="0xA2C6" name="Q270" code="PCH_2xx" longname="Intel Q270 (200 series) PCH" />
+    <sku did="0xA2C7" name="Q250" code="PCH_2xx" longname="Intel Q250 (200 series) PCH" />
+    <sku did="0xA2C8" name="B250" code="PCH_2xx" longname="Intel B250 (200 series) PCH" />
+    <sku did="0xA2C9" name="Z370" code="PCH_2xx" longname="Intel Z370 (200 series) PCH" />
+    <sku did="0xA2D2" name="X299" code="PCH_2xx" longname="Intel X299 (200 series) PCH" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
   <!-- Integrated devices                   -->
   <!--                                      -->
   <!-- #################################### -->

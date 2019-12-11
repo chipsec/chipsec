@@ -12,11 +12,20 @@ XML configuration for Cherry Trail and Braswell SoCs
 
   <!-- #################################### -->
   <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="atom">
+    <sku did="0x2280" name="Braswell/Cherry Trail" code="CHT" longname="Braswell/Cherry Trail SoC" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
   <!-- Memory Mapped I/O spaces (MMIO BARs) -->
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-  
+
     <!-- Section 4.1.7-8 -->
     <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0xFFFFFFF0FFC00000"  desc="Graphics Translation Table Range"/>
 
@@ -30,7 +39,7 @@ XML configuration for Cherry Trail and Braswell SoCs
     <bar name="MMCFG"   register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
 
   </mmio>
-  
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- I/O spaces (I/O BARs)                -->
@@ -52,7 +61,7 @@ XML configuration for Cherry Trail and Braswell SoCs
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-   
+
     <!-- Sections 1.6 -->
     <register name="MSG_CTRL_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD0" desc="Message Bus Control Register">
       <field name="MESSAGE_WR_BYTE_ENABLES" bit="4"  size="4" desc="Message write byte enable" />
@@ -68,7 +77,7 @@ XML configuration for Cherry Trail and Braswell SoCs
     </register>
 
     <!-- Graphics -->
-     
+
     <!-- Section 4.1.13 -->
     <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
       <field name="GGCLOCK"     bit="0"  size="1" desc="GGC Lock"/>
@@ -76,7 +85,7 @@ XML configuration for Cherry Trail and Braswell SoCs
       <field name="GMS"         bit="3"  size="7" desc="Graphics Mode Select"/>
       <field name="GGMS"        bit="8"  size="2" desc="GTT Graphics Memory Size"/>
       <field name="VAMEN"       bit="14" size="1" desc="Versatile Acceleration"/>
-    </register> 
+    </register>
     <!-- Section 4.1.14 -->
     <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
       <field name="LOCK" bit="0"  size="1" desc="BDSM Lock"/>
@@ -166,7 +175,7 @@ XML configuration for Cherry Trail and Braswell SoCs
       <field name="TS"      bit="1"  size="1" desc="Top Swap"/>
       <field name="BBS"     bit="10" size="2" desc="Boot BIOS Straps"/>
       <field name="BBSize"  bit="29" size="2" desc="Boot Block Size"/>
-    </register>   
+    </register>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
@@ -218,7 +227,7 @@ XML configuration for Cherry Trail and Braswell SoCs
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- CPU MSRs                     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- Message Bus registers        -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->

@@ -6,6 +6,16 @@
 
   <!-- #################################### -->
   <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="atom">
+    <sku did="0x3180" name="Gemini Lake" code="GLK" longname="Gemini Lake" />
+    <sku did="0x31F0" name="Gemini Lake" code="GLK" longname="Gemini Lake" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
   <!-- Integrated devices                   -->
   <!--                                      -->
   <!-- #################################### -->

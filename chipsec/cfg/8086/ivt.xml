@@ -1,8 +1,18 @@
 <?xml version="1.0"?>
-<configuration  platform="JKT">
+<configuration platform="IVT">
 <!--
-XML configuration file for Jaketown (Sandy Bridge-E) based platforms
+XML configuration file for Ivytown (Ivy Bridge-E) based platforms
 -->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="xeon">
+    <sku did="0x0E00" name="Ivytown" code="IVT" longname="Server 3rd Generation Core Procesor (Ivytown CPU / Patsburg PCH)" />
+  </info>
+
   <registers>
 
     <!-- B:D.F 00:12.6 -->

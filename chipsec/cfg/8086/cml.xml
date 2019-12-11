@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<configuration platform="CML" req_pch="True">
+<!-- XML configuration file for Comet Lake -->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x3E35" name="CometLake" code="CML" longname="CometLake v1 U2 Core" />
+    <sku did="0x3E34" name="CometLake" code="CML" longname="CometLake v1 U4 Core" detection_value="806EC" />
+    <sku did="0x3E33" name="CometLake" code="CML" longname="CometLake v1 U6 Core" detection_value="806EC" />
+    <sku did="0x9B51" name="CometLake" code="CML" longname="CometLake v1/v2 U6 Core" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+    <bar name="GTTMMADR" bus="0" dev="2" fun="0" reg="0x10" width="8" mask="0x7FFF000000" desc="Graphics Translation Table Range"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+  </memory>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- PCIe Configuration registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- Sideband Register Access Registers -->
+
+    <!-- Power Management Controller -->
+
+    <!-- SMBus Host Controller -->
+
+    <!-- SPI Interface Controller -->
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MMIO registers               -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- PCH SPIBAR registers -->
+
+    <!-- PCH RTC registers -->
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- I/O registers (I/O ports)    -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--      Undefined Registers     -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+  </registers>
+
+  <controls>
+  </controls>
+
+</configuration>
