@@ -3,6 +3,16 @@
 <!--
 XML configuration for Apollo Lake based SoCs
 -->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="atom">
+    <sku did="0x5AF0" name="Apollo Lake" code="APL" longname="Apollo Lake" />
+  </info>
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- Memory Mapped I/O spaces (MMIO BARs) -->

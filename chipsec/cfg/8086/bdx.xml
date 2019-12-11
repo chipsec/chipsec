@@ -9,6 +9,15 @@ Intel (c) C600 Series Chipset and Intel (c) X79 Express Chipset Specification Up
 Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub (PCH) datasheet
 -->
 
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="xeon">
+    <sku did="0x6F00" name="Broadwell Server" code="BDX" longname="Intel Xeon Processor E5/E7 v4 (Broadwell Server CPU / Wellsburg PCH)" />
+  </info>
+
   <pci>
     <device name="VTD_MEM_SM" bus="0" dev="0x5"  fun="0" vid="0x8086" did="0x2F28" />
     <device name="LPC"        bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x8D44,0x8D47,0x1D41" />

@@ -1,6 +1,19 @@
 <?xml version="1.0"?>
-<configuration platform="CML">
-<!-- XML configuration file for Comet Lake -->
+<configuration platform="IVB">
+<!--
+XML configuration for IvyBridge based platforms
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x0150" name="Ivy Bridge" code="IVB" longname="Desktop 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)" />
+    <sku did="0x0154" name="Ivy Bridge" code="IVB" longname="Mobile 3rd Generation Core Processor (Ivy Bridge CPU / Panther Point PCH)" />
+    <sku did="0x0158" name="Ivy Bridge" code="IVB" longname="Intel Xeon Processor E3-1200 v2 (Ivy Bridge CPU, C200/C216 Series PCH)" />
+  </info>
 
   <!-- #################################### -->
   <!--                                      -->
@@ -16,7 +29,6 @@
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-    <bar name="GTTMMADR" bus="0" dev="2" fun="0" reg="0x10" width="8" mask="0x7FFF000000" desc="Graphics Translation Table Range"/>
   </mmio>
 
   <!-- #################################### -->
@@ -41,40 +53,6 @@
   <!--                                      -->
   <!-- #################################### -->
   <registers>
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- PCIe Configuration registers -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- Sideband Register Access Registers -->
-
-    <!-- Power Management Controller -->
-
-    <!-- SMBus Host Controller -->
-
-    <!-- SPI Interface Controller -->
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- MMIO registers               -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- PCH SPIBAR registers -->
-
-    <!-- PCH RTC registers -->
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- I/O registers (I/O ports)    -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!--      Undefined Registers     -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
   </registers>
-
-  <controls>
-  </controls>
 
 </configuration>

@@ -9,6 +9,15 @@ XML configuration for Bay Trail based platforms
 
   <!-- #################################### -->
   <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="atom">
+    <sku did="0x0F00" name="Baytrail" code="BYT" longname="Bay Trail SoC" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
   <!-- Memory Mapped I/O spaces (MMIO BARs) -->
   <!--                                      -->
   <!-- #################################### -->
