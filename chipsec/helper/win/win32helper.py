@@ -409,7 +409,7 @@ class Win32Helper(Helper):
         return True
 
     #
-    # Remove (detele/unregister/uninstall) chipsec service
+    # Remove (delete/unregister/uninstall) chipsec service
     #
     def delete( self, start_driver ):
         if not start_driver: return True
