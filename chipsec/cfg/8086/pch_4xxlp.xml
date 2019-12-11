@@ -3,6 +3,17 @@
 <!--
 XML configuration file for the 400 series LP (U/H) PCH
 -->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0x0284" name="PCH-LP-Prem" code="PCH_4xxLP" longname="Intel 400 series PCH-LP Prem-U" />
+    <sku did="0x0285" name="PCH-LP" code="PCH_4xxLP" longname="Intel 400 series PCH-LP Base-U" />
+  </info>
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- Integrated devices                   -->
