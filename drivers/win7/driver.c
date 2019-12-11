@@ -799,9 +799,9 @@ DriverDeviceControl(
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + sizeof(UINT32) )
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < 2 * sizeof(UINT32) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER - input buffer size < sizeof(BYTE) + sizeof(UINT32)\n" );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER - input buffer size < 2 * sizeof(UINT32)\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
