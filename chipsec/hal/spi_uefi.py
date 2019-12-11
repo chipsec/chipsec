@@ -283,41 +283,46 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                     guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
 
-            # "container" sections: keep parsing
-            if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
-                if sec.Type == EFI_SECTION_COMPRESSION:
-                    for mct in COMPRESSION_TYPES_ALGORITHMS:
-                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], mct, True )
-                        if d:
-                            sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
-                        if sec.children:
-                            break
-                elif sec.Type == EFI_SECTION_GUID_DEFINED:
-                    if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
-                        sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
-                    elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
-                        if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
-                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_LZMA, True )
-                        else:
-                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
-                        if d is None:
-                            sec.Comments = "Unable to decompress image"
-                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
-                        if d:
-                            sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
-                    elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
-                        offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
-                        sec.Comments = "Certificate Type RSA2048/SHA256"
-                        if len(sec.Image) > offset:
-                            sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
+                if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
+                    sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
+                elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
+                    if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_LZMA, True )
                     else:
-                        sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
-                elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
-                    children = build_efi_file_tree( _uefi, sec.Image[sec.HeaderSize:], fwtype )
-                    if not children is None:
-                        sec.children = children
-            if sec.Type not in SECTION_NAMES.keys() or sec.Type == EFI_SECTION_RAW:
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
+                    if d is None:
+                        sec.Comments = "Unable to decompress image"
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
+                    if d:
+                        sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
+                    offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
+                    sec.Comments = "Certificate Type RSA2048/SHA256"
+                    if len(sec.Image) > offset:
+                        sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
+                else:
+                    sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+
+            elif sec.Type == EFI_SECTION_COMPRESSION:
+                for mct in COMPRESSION_TYPES_ALGORITHMS:
+                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], mct, True )
+                    if d:
+                        sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                    if sec.children:
+                        break
+
+            elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
+                children = build_efi_file_tree( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+                if not children is None:
+                    sec.children = children
+
+            elif sec.Type == EFI_SECTION_RAW:
                 sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype)
+
+            elif sec.Type not in SECTION_NAMES.keys():
+                sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype)
+                if not sec.children:
+                    sec.children = build_efi_model( _uefi, data, fwtype)
 
             sections.append(sec)
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
