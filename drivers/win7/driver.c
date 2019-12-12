@@ -229,7 +229,7 @@ DriverOpen(
     )
 {
 
-    DbgPrint( "[chipsec] >> DriverOpen (DeviceObject = 0x%x)\n", DeviceObject );
+    DbgPrint( "[chipsec] >> DriverOpen (DeviceObject = 0x%p)\n", DeviceObject );
 
     //
     // Complete the request and return status.
@@ -248,7 +248,7 @@ DriverClose(
     )
 {
     
-    DbgPrint( "[chipsec] >> DriverClose (DeviceObject = 0x%x)\n", DeviceObject );
+    DbgPrint( "[chipsec] >> DriverClose (DeviceObject = 0x%p)\n", DeviceObject );
 
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
@@ -266,7 +266,7 @@ DriverUnload(
     NTSTATUS       Status;
     UNICODE_STRING DosDeviceName;
 
-    DbgPrint( "[chipsec] >> DriverUnload (DriverObject = 0x%x)\n", DriverObject );
+    DbgPrint( "[chipsec] >> DriverUnload (DriverObject = 0x%p)\n", DriverObject );
 
     RtlInitUnicodeString(&DosDeviceName, DEVICE_NAME_DOS );
     Status = IoDeleteSymbolicLink (&DosDeviceName );
@@ -338,7 +338,7 @@ DriverDeviceControl(
     IOControlCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
 
     DbgPrint( "[chipsec] >>>>>>>>>> IOCTL >>>>>>>>>>\n" );
-    DbgPrint( "[chipsec] DeviceObject = 0x%x IOCTL = 0x%x\n", DeviceObject, IOControlCode );
+    DbgPrint( "[chipsec] DeviceObject = 0x%p IOCTL = 0x%x\n", DeviceObject, IOControlCode );
     DbgPrint( "[chipsec] InputBufferLength = 0x%x, OutputBufferLength = 0x%x\n", IrpSp->Parameters.DeviceIoControl.InputBufferLength, IrpSp->Parameters.DeviceIoControl.OutputBufferLength );
 
     //
