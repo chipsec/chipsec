@@ -37,6 +37,7 @@ import collections
 import os
 import fnmatch
 import re
+import xml.etree.ElementTree as ET
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
@@ -71,192 +72,23 @@ class RegisterType:
 ##################################################################################
 # Functionality defining current chipset
 ##################################################################################
-CHIPSET_ID_COMMON  = -1
+
 CHIPSET_ID_UNKNOWN = 0
 
-CHIPSET_ID_SNB     = 1
-CHIPSET_ID_JKT     = 2
-CHIPSET_ID_IVB     = 3
-CHIPSET_ID_IVT     = 4
-CHIPSET_ID_HSW     = 5
-CHIPSET_ID_BYT     = 6
-CHIPSET_ID_BDW     = 7
-CHIPSET_ID_QRK     = 8
-CHIPSET_ID_AVN     = 9
-CHIPSET_ID_HSX     = 10
-CHIPSET_ID_SKL     = 11
-CHIPSET_ID_BSW     = 12
-CHIPSET_ID_KBL     = 13
-CHIPSET_ID_CHT     = 14
-CHIPSET_ID_BDX     = 15
-CHIPSET_ID_CFL     = 16
-CHIPSET_ID_APL     = 17
-CHIPSET_ID_DNV     = 18
-CHIPSET_ID_WHL     = 19
-CHIPSET_ID_SKX     = 20
-CHIPSET_ID_CML     = 21
-CHIPSET_ID_GLK     = 22
-
-CHIPSET_CODE_COMMON  = 'COMMON'
 CHIPSET_CODE_UNKNOWN = ''
 
-CHIPSET_CODE_SNB     = 'SNB'
-CHIPSET_CODE_JKT     = 'JKT'
-CHIPSET_CODE_IVB     = 'IVB'
-CHIPSET_CODE_IVT     = 'IVT'
-CHIPSET_CODE_HSW     = 'HSW'
-CHIPSET_CODE_BYT     = 'BYT'
-CHIPSET_CODE_BDW     = 'BDW'
-CHIPSET_CODE_QRK     = 'QRK'
-CHIPSET_CODE_AVN     = 'AVN'
-CHIPSET_CODE_HSX     = 'HSX'
-CHIPSET_CODE_SKL     = 'SKL'
-CHIPSET_CODE_BSW     = 'BSW'
-CHIPSET_CODE_KBL     = 'KBL'
-CHIPSET_CODE_CHT     = 'CHT'
-CHIPSET_CODE_BDX     = 'BDX'
-CHIPSET_CODE_CFL     = 'CFL'
-CHIPSET_CODE_APL     = 'APL'
-CHIPSET_CODE_DNV     = 'DNV'
-CHIPSET_CODE_WHL     = 'WHL'
-CHIPSET_CODE_SKX     = 'SKX'
+CHIPSET_FAMILY_XEON  = []
+CHIPSET_FAMILY_CORE  = []
+CHIPSET_FAMILY_ATOM  = []
+CHIPSET_FAMILY_QUARK = []
 
-CHIPSET_FAMILY_XEON  = [CHIPSET_ID_JKT,CHIPSET_ID_IVT,CHIPSET_ID_HSX,CHIPSET_ID_BDX,CHIPSET_ID_SKX]
-CHIPSET_FAMILY_CORE  = [CHIPSET_ID_SNB,CHIPSET_ID_IVB,CHIPSET_ID_HSW,CHIPSET_ID_BDW,CHIPSET_ID_SKL,CHIPSET_ID_KBL,CHIPSET_ID_CFL,CHIPSET_ID_WHL,CHIPSET_ID_CML]
-CHIPSET_FAMILY_ATOM  = [CHIPSET_ID_BYT,CHIPSET_ID_AVN,CHIPSET_ID_BSW,CHIPSET_ID_CHT,CHIPSET_ID_APL,CHIPSET_ID_DNV, CHIPSET_ID_GLK]
-CHIPSET_FAMILY_QUARK = [CHIPSET_ID_QRK]
-
-
-VID_INTEL = 0x8086
-
-# PCI 0/0/0 Device IDs
-Chipset_Dictionary = collections.defaultdict(list)
-
-PCH_ID_1xx      = 10001
-PCH_ID_2xx      = 10002
-PCH_ID_C620     = 10003
-PCH_ID_C60x     = 10004
-PCH_ID_C61x     = 10005
-PCH_ID_3xx      = 10006
-PCH_ID_4xxLP      = 10007
-PCH_ID_495      = 10008
-PCH_ID_3xxOP    = 10009
-PCH_ID_3xxLP    = 10010
 
 PCH_CODE_PREFIX = 'PCH_'
-PCH_CODE_1xx    = 'PCH_1XX'
-PCH_CODE_2xx    = 'PCH_2XX'
-PCH_CODE_3xx    = 'PCH_3XX'
-PCH_CODE_3xxLP    = 'PCH_3XXLP'
-PCH_CODE_3xxOP    = 'PCH_3XXOP'
-PCH_CODE_4xxLP    = 'PCH_4XXLP'
-PCH_CODE_495    = 'PCH_495'
-PCH_CODE_C620   = 'PCH_C620'
-PCH_CODE_C60x   = 'PCH_C60X'
-PCH_CODE_C61x   = 'PCH_C61X'
-
-pch_dictionary = collections.defaultdict(list)
-
-# 100 series PCH and 7th/8th gen mobile (U/Y)
-pch_dictionary[0xA143].append({'name' : 'H110',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel H110 (100 series) PCH'})
-pch_dictionary[0xA144].append({'name' : 'H170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel H170 (100 series) PCH'})
-pch_dictionary[0xA145].append({'name' : 'Z170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Z170 (100 series) PCH'})
-pch_dictionary[0xA146].append({'name' : 'Q170',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Q170 (100 series) PCH'})
-pch_dictionary[0xA147].append({'name' : 'Q150',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel Q150 (100 series) PCH'})
-pch_dictionary[0xA148].append({'name' : 'B150',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel B150 (100 series) PCH'})
-pch_dictionary[0xA149].append({'name' : 'C236',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel C236 (100 series) PCH'})
-pch_dictionary[0xA14A].append({'name' : 'C232',   'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel C232 (100 series) PCH'})
-pch_dictionary[0xA14D].append({'name' : 'CQM170', 'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CQM170 (100 series) PCH'})
-pch_dictionary[0xA14E].append({'name' : 'HM170',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel HM170 (100 series) PCH'})
-pch_dictionary[0xA150].append({'name' : 'CM236',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CM236 (100 series) PCH'})
-pch_dictionary[0xA151].append({'name' : 'QMS180',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QMS180 (100 series) PCH'})
-pch_dictionary[0xA152].append({'name' : 'HM175',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel HM175 (100 series) PCH'})
-pch_dictionary[0xA153].append({'name' : 'QM175',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QM175 (100 series) PCH'})
-pch_dictionary[0xA154].append({'name' : 'CM238',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel CM238 (100 series) PCH'})
-pch_dictionary[0xA155].append({'name' : 'QMU185',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QMU185 (100 series) PCH'})
-pch_dictionary[0x9D43].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Baseline'})
-pch_dictionary[0x9D48].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'})
-
-# 200 series and Z370 PCH
-pch_dictionary[0xA2C4].append({'name' : 'H270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel H270 (200 series) PCH'})
-pch_dictionary[0xA2C5].append({'name' : 'Z270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Z270 (200 series) PCH'})
-pch_dictionary[0xA2C6].append({'name' : 'Q270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Q270 (200 series) PCH'})
-pch_dictionary[0xA2C7].append({'name' : 'Q250', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Q250 (200 series) PCH'})
-pch_dictionary[0xA2C8].append({'name' : 'B250', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel B250 (200 series) PCH'})
-pch_dictionary[0xA2C9].append({'name' : 'Z370', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel Z370 (200 series) PCH'})
-pch_dictionary[0xA2D2].append({'name' : 'X299', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel X299 (200 series) PCH'})
-
-# 300 series and Z390 PCH
-pch_dictionary[0xA306].append({'name' : 'Q370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Q370 (300 series) PCH'})
-pch_dictionary[0xA304].append({'name' : 'H370',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H370 (300 series) PCH'})
-pch_dictionary[0xA305].append({'name' : 'Z390',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel Z390 (300 series) PCH'})
-pch_dictionary[0xA308].append({'name' : 'B360',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel B360 (300 series) PCH'})
-pch_dictionary[0xA303].append({'name' : 'H310',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel H310 (300 series) PCH'})
-pch_dictionary[0xA30A].append({'name' : 'C242',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel C242 (300 series) PCH'})
-pch_dictionary[0xA309].append({'name' : 'C246',   'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel C246 (300 series) PCH'})
-pch_dictionary[0xA30D].append({'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel HM370 (300 series) PCH'})
-pch_dictionary[0xA30C].append({'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'})
-pch_dictionary[0xA30E].append({'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'})
-
-# 300 series OP
-pch_dictionary[0x9D84].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxOP, 'code' : PCH_CODE_3xxOP, 'longname' : 'Intel 300 series On-Package PCH'})
-
-# 300 series LP
-pch_dictionary[0x9D4B].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-Y with iHDCP 2.2 Premium'})
-pch_dictionary[0x9D4E].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U with iHDCP 2.2 Premium'})
-pch_dictionary[0x9D50].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U with iHDCP 2.2 Base'})
-pch_dictionary[0x9D53].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U Base'})
-pch_dictionary[0x9D56].append({'name' : 'PCH-Y',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-Y Premium'})
-pch_dictionary[0x9D58].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U Premium'})
-
-# 400 series PCH - LP
-pch_dictionary[0x0284].append({'name' : 'PCH-LP-Prem',  'id' : PCH_ID_4xxLP, 'code' : PCH_CODE_4xxLP, 'longname' : 'Intel 400 series PCH-LP Prem-U'})
-pch_dictionary[0x0285].append({'name' : 'PCH-LP',       'id' : PCH_ID_4xxLP, 'code' : PCH_CODE_4xxLP, 'longname' : 'Intel 400 series PCH-LP Base-U'})
-
-# 495 series PCH
-pch_dictionary[0x3481].append({'name' : 'PCH-LP-U',      'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP U'})
-pch_dictionary[0x3482].append({'name' : 'PCH-LP-UPrem',  'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP Prem-U'})
-pch_dictionary[0x3486].append({'name' : 'PCH-LP-Y',      'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP Y'})
-pch_dictionary[0x3487].append({'name' : 'PCH-LP-YPrem',  'id' : PCH_ID_495, 'code' : PCH_CODE_495, 'longname' : 'Intel 495 series PCH-LP Prem-Y'})
-
-# C600 and X79 series PCH
-pch_dictionary[0x1D41].append({'name' : 'C600', 'id' : PCH_ID_C60x, 'code' : PCH_CODE_C60x, 'longname' : 'Intel C600/X79 series PCH'})
-
-# C610 and X99 series PCH
-pch_dictionary[0x8D40].append({'name' : 'C610',   'id' : PCH_ID_C61x, 'code' : PCH_CODE_C61x, 'longname' : 'Intel Wellsburg (C610/X99 series) PCH'})
-pch_dictionary[0x8D44].append({'name' : 'C610-G', 'id' : PCH_ID_C61x, 'code' : PCH_CODE_C61x, 'longname' : 'Intel Wellsburg-G (C610/X99 series) PCH'})
-pch_dictionary[0x8D47].append({'name' : 'C610-X', 'id' : PCH_ID_C61x, 'code' : PCH_CODE_C61x, 'longname' : 'Intel Wellsburg-X (C610/X99 series) PCH'})
-
-# C620 series PCH
-pch_dictionary[0xA1C1].append({'name' : 'C621', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C621 (C620 series) PCH'})
-pch_dictionary[0xA1C2].append({'name' : 'C622', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C622 (C620 series) PCH'})
-pch_dictionary[0xA1C3].append({'name' : 'C624', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C624 (C620 series) PCH'})
-pch_dictionary[0xA1C4].append({'name' : 'C625', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C625 (C620 series) PCH'})
-pch_dictionary[0xA1C5].append({'name' : 'C626', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C626 (C620 series) PCH'})
-pch_dictionary[0xA1C6].append({'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'})
-pch_dictionary[0xA1C7].append({'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'})
-pch_dictionary[0xA1CA].append({'name' : 'C629', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C629 (C620 series) PCH'})
-pch_dictionary[0xA242].append({'name' : 'C624', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C624 (C620 series) PCH'})
-pch_dictionary[0xA243].append({'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'})
-pch_dictionary[0xA244].append({'name' : 'C621', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C621 (C620 series) PCH'})
-pch_dictionary[0xA245].append({'name' : 'C627', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C627 (C620 series) PCH'})
-pch_dictionary[0xA246].append({'name' : 'C628', 'id' : PCH_ID_C620, 'code' : PCH_CODE_C620, 'longname' : 'Intel C628 (C620 series) PCH'})
-
 
 try:
     from chipsec.custom_chipsets import *
 except ImportError:
     pass
-Chipset_Code = dict([(dl['code'], _did) for _did in Chipset_Dictionary for dl in Chipset_Dictionary[_did]])
-pch_codes = dict([(dl['code'], _did) for _did in pch_dictionary for dl in pch_dictionary[_did]])
-
-def print_supported_chipsets():
-    logger().log( "\nSupported platforms:\n" )
-    logger().log( "DID     | Name           | Code   | Long Name" )
-    logger().log( "-------------------------------------------------------------------------------------" )
-    for _did in sorted(Chipset_Dictionary):
-        for item in Chipset_Dictionary[_did]:
-            logger().log( " {:-#06x} | {:14} | {:6} | {:40}".format(_did, item['name'], item['code'].lower(), item['longname']) )
 
 
 def f_xml(self, x):
@@ -285,6 +117,8 @@ class Chipset:
             self.helper = OsHelper()
         else:
             self.helper = helper
+
+        self.init_xml_configuration()
 
         self.vid            = 0xFFFF
         self.did            = 0xFFFF
@@ -324,7 +158,7 @@ class Chipset:
 
     ##################################################################################
     #
-    # Iitialization
+    # Initialization
     #
     ##################################################################################
     def detect_platform( self ):
@@ -366,20 +200,19 @@ class Chipset:
                 return '{:02X}{}'.format(extfamily,ret)
 
     def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
-
         _unknown_platform = False
         self.reqs_pch = False
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         self.vid, self.did, self.rid, self.pch_vid, self.pch_did, self.pch_rid = self.detect_platform()
+
         if platform_code is None:
-            if VID_INTEL != self.vid:
-                _unknown_platform = True
+            _unknown_platform = True
         else:
-            self.vid = VID_INTEL
-            if platform_code in Chipset_Code:
-                self.did = Chipset_Code[ platform_code ]
+            if platform_code in self.chipset_codes:
+                self.vid = Chipset_Code[ platform_code ]['vid']
+                self.did = Chipset_Code[ platform_code ]['did']
                 self.rid = 0x00
             else:
                 _unknown_platform = True
@@ -387,11 +220,11 @@ class Chipset:
                 self.did = 0xFFFF
                 self.rid = 0xFF
 
-        if self.did in Chipset_Dictionary and len(Chipset_Dictionary[self.did]) > 1:
+        if self.did in self.chipset_dictionary[self.vid] and len(self.chipset_dictionary[self.vid][self.did]) > 1:
             _unknown_platform = True
             self.longname = 'UnknownPlatform'
             value = self.get_cpuid()
-            for item in Chipset_Dictionary[self.did]:
+            for item in self.chipset_dictionary[self.vid][self.did]:
                 if value == item['detection_value']:
                     #matched setup info
                     _unknown_platform = False
@@ -400,8 +233,9 @@ class Chipset:
                     self.longname   = data_dict['longname']
                     self.id         = data_dict['id']
                     break
-        elif self.did in Chipset_Dictionary:
-            data_dict       = Chipset_Dictionary[ self.did ][0]
+        elif self.did in self.chipset_dictionary[self.vid]:
+            _unknown_platform = False
+            data_dict       = self.chipset_dictionary[self.vid][ self.did ][0]
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
             self.id         = data_dict['id']
@@ -410,18 +244,17 @@ class Chipset:
             self.longname   = 'UnknownPlatform'
 
         if req_pch_code is not None:
-            self.pch_vid = VID_INTEL
-            if req_pch_code in pch_codes:
-                self.pch_did = pch_codes[req_pch_code]
+            if req_pch_code in self.pch_codes:
+                self.pch_vid = self.pch_codes[req_pch_code]['vid']
+                self.pch_did = self.pch_codes[req_pch_code]['did']
                 self.pch_rid = 0x00
             else:
                 self.pch_vid = 0xFFFF
                 self.pch_did = 0xFFFF
                 self.pch_rid = 0xFF
 
-        if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
-            _unknown_pch = False
-            data_dict           = pch_dictionary[self.pch_did][0]
+        if self.pch_vid in self.pch_dictionary.keys() and self.pch_did in self.pch_dictionary[self.pch_vid].keys():
+            data_dict           = self.pch_dictionary[self.vid][self.pch_did][0]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
             self.pch_id         = data_dict['id']
@@ -440,15 +273,8 @@ class Chipset:
             logger().error( msg )
             raise UnknownChipsetError (msg)
 
-
     def destroy( self, start_driver ):
         self.helper.stop( start_driver )
-
-    def get_chipset_id(self):
-        return self.id
-
-    def get_pch_id(self):
-        return self.pch_id
 
     def get_chipset_code(self):
         return self.code
@@ -469,16 +295,25 @@ class Chipset:
         logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
 
     def is_core(self):
-        return  self.get_chipset_id() in CHIPSET_FAMILY_CORE
+        return  self.get_chipset_code() in CHIPSET_FAMILY_CORE
 
     def is_server(self):
-        return  self.get_chipset_id() in CHIPSET_FAMILY_XEON
+        return  self.get_chipset_code() in CHIPSET_FAMILY_XEON
 
     def is_atom(self):
-        return self.get_chipset_id() in CHIPSET_FAMILY_ATOM
+        return self.get_chipset_code() in CHIPSET_FAMILY_ATOM
 
     def use_native_api(self):
         return self.helper.use_native_api()
+
+    def print_supported_chipsets(self):
+        logger().log( "\nSupported platforms:\n" )
+        logger().log( "VID     | DID     | Name           | Code   | Long Name" )
+        logger().log( "-------------------------------------------------------------------------------------" )
+        for _vid in sorted(self.chipset_dictionary.keys()):
+            for _did in sorted(self.chipset_dictionary[_vid]):
+                for item in self.chipset_dictionary[_vid][_did]:
+                    logger().log( " {:-#06x} | {:-#06x} | {:14} | {:6} | {:40}".format(_vid, _did, item['name'], item['code'].lower(), item['longname']) )
 
     ##################################################################################
     #
@@ -486,7 +321,64 @@ class Chipset:
     #
     ##################################################################################
 
-    def init_xml_configuration( self ):
+    def init_xml_configuration(self):
+        self.pch_dictionary = dict()
+        self.chipset_dictionary = dict()
+        self.device_dictionary = dict()
+        self.chipset_codes = {}
+        self.pch_codes = {}
+        self.device_code = []
+        self.load_list = []
+
+        # find VID
+        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec', 'cfg' )
+        VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and not f[:2] == '__' ]
+        # create dictionaries
+        for vid in VID:
+            self.chipset_dictionary[int(vid,16)] = collections.defaultdict(list)
+            self.pch_dictionary[int(vid,16)] = collections.defaultdict(list)
+            self.device_dictionary[int(vid,16)] = collections.defaultdict(list)
+            for fxml in os.listdir(os.path.join(_cfg_path,vid)):
+                if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
+                tree = ET.parse( os.path.join(_cfg_path,vid,fxml) )
+                root = tree.getroot()
+                for _cfg in root.iter('configuration'):
+                    if 'platform' not in _cfg.attrib:
+                        if logger().DEBUG: logger().log( "[*] found common platform config '{}'..".format(fxml) )
+                        self.load_list.append(fxml)
+                        continue
+                    elif _cfg.attrib['platform'].lower().startswith('pch'):
+                        if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
+                        self.pch_codes[_cfg.attrib['platform'].lower()] = {}
+                        self.pch_codes[_cfg.attrib['platform'].lower()]['vid'] = int(vid,16)
+                        mdict = self.pch_dictionary[int(vid,16)]
+                        cdict = self.pch_codes[_cfg.attrib['platform'].lower()]
+                    elif _cfg.attrib['platform'].lower():
+                        if logger().DEBUG: logger().log("[*] found platform config from '{}'..".format(fxml))
+                        self.chipset_codes[_cfg.attrib['platform'].lower()] = {}
+                        self.chipset_codes[_cfg.attrib['platform'].lower()]['vid'] = int(vid,16)
+                        mdict = self.chipset_dictionary[int(vid,16)]
+                        cdict = self.chipset_codes[_cfg.attrib['platform'].lower()]
+                    else: continue
+                    if logger().DEBUG: logger().log( "[*] Populating configuration dictionary.." )
+                    for _info in _cfg.iter('info'):
+                        if 'family' in _info.attrib:
+                            if _info.attrib['family'].lower() == "core":
+                                CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].lower())
+                            if _info.attrib['family'].lower() == "atom":
+                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].lower())
+                            if _info.attrib['family'].lower() == "xeon":
+                                CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].lower())
+                            if _info.attrib['family'].lower() == "quark":
+                                CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].lower())
+                        for _sku in _info.iter('sku'):
+                            _did = _sku.attrib['did']
+                            del _sku.attrib['did']
+                            mdict[int(_did,16)].append(_sku.attrib)
+                        cdict['did'] = _did
+
+
+    def load_xml_configuration( self ):
         # Create a sorted config file list (xml only)
         _cfg_files = []
         _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
@@ -518,7 +410,7 @@ class Chipset:
 
         # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
         platform_files = []
-        for plat in [c.lower() for c in Chipset_Code]:
+        for plat in [c.lower() for c in self.chipset_codes]:
             platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
         loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
@@ -678,7 +570,7 @@ class Chipset:
         # Initialize platform configuration from XML files
         #
         try:
-            self.init_xml_configuration()
+            self.load_xml_configuration()
         except:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             pass
