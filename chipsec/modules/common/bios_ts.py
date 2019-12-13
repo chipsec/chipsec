@@ -34,7 +34,6 @@ class bios_ts(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        #return (self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM)
         return True
 
     def check_bios_iface_lock(self):

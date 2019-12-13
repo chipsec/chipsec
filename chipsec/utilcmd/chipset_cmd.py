@@ -27,7 +27,7 @@ usage as a standalone utility:
 """
 
 from chipsec.command    import BaseCommand
-from chipsec.chipset    import UnknownChipsetError, print_supported_chipsets
+from chipsec.chipset    import UnknownChipsetError
 
 # ###################################################################
 #
@@ -44,7 +44,7 @@ class PlatformCommand(BaseCommand):
 
     def run(self):
         try:
-            print_supported_chipsets()
+            self.cs.print_supported_chipsets()
             self.logger.log("")
             self.cs.print_chipset()
             self.cs.print_pch()
