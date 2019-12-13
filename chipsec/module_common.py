@@ -72,7 +72,6 @@ class BaseModule(object):
         platform.
         To access the currently running platform use
 
-        >>> self.cs.get_chipset_id()
         """
         return True
 

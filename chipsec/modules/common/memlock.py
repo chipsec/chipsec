@@ -32,6 +32,7 @@ MSR_LT_LOCK_MEMORY
 """
 
 from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.helper.oshelper import HWAccessViolationError
 
 _MODULE_NAME = 'memlock'
 
@@ -62,7 +63,7 @@ class memlock(BaseModule):
                 lt_lock_msr = 0
                 try:
                     lt_lock_msr = self.cs.read_register( 'MSR_LT_LOCK_MEMORY', tid )
-                except chipsec.helper.oshelper.HWAccessViolationError:
+                except HWAccessViolationError:
                     self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
                     break
                 lt_lock = self.cs.get_register_field( 'MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK' )

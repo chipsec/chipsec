@@ -19,15 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2020 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Contains platform identification functions
 """
@@ -50,9 +41,6 @@ import chipsec.file
 
 import importlib
 import traceback
-#_importlib = True
-#try:                import importlib
-#except ImportError: _importlib = False
 
 # DEBUG Flags
 QUIET_PCI_ENUM = True
@@ -211,8 +199,8 @@ class Chipset:
             _unknown_platform = True
         else:
             if platform_code in self.chipset_codes:
-                self.vid = Chipset_Code[ platform_code ]['vid']
-                self.did = Chipset_Code[ platform_code ]['did']
+                self.vid = self.chipset_codes[ platform_code ]['vid']
+                self.did = self.chipset_codes[ platform_code ]['did']
                 self.rid = 0x00
             else:
                 _unknown_platform = True
@@ -231,14 +219,14 @@ class Chipset:
                     data_dict       = item
                     self.code       = data_dict['code'].lower()
                     self.longname   = data_dict['longname']
-                    self.id         = data_dict['id']
+                    #self.id         = data_dict['id']
                     break
         elif self.did in self.chipset_dictionary[self.vid]:
             _unknown_platform = False
             data_dict       = self.chipset_dictionary[self.vid][ self.did ][0]
             self.code       = data_dict['code'].lower()
             self.longname   = data_dict['longname']
-            self.id         = data_dict['id']
+            #self.id         = data_dict['id']
         else:
             _unknown_platform = True
             self.longname   = 'UnknownPlatform'
@@ -257,7 +245,7 @@ class Chipset:
             data_dict           = self.pch_dictionary[self.vid][self.pch_did][0]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
-            self.pch_id         = data_dict['id']
+            #self.pch_id         = data_dict['id']
         else:
             _unknown_pch = True
             self.pch_longname = 'Default PCH'
@@ -376,6 +364,8 @@ class Chipset:
                             del _sku.attrib['did']
                             mdict[int(_did,16)].append(_sku.attrib)
                         cdict['did'] = _did
+            for cc in self.chipset_codes:
+                globals()["CHIPSET_CODE_{}".format(cc.upper())] = cc.upper()
 
 
     def load_xml_configuration( self ):
@@ -427,7 +417,6 @@ class Chipset:
 
 
     def init_cfg_xml(self, fxml, code, pch_code):
-        import xml.etree.ElementTree as ET
         if not os.path.exists( fxml ): return
         if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
         tree = ET.parse( fxml )
