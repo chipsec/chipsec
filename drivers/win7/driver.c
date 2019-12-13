@@ -605,7 +605,7 @@ DriverDeviceControl(
             RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINTN) );
             pa = MmGetPhysicalAddress( (PVOID)va );
 
-            DbgPrint( "[chipsec][IOCTL_GET_PHYSADDR] Traslated virtual address 0x%I64X to physical: 0x%I64X\n", va, pa.QuadPart, pa.LowPart);
+            DbgPrint( "[chipsec][IOCTL_GET_PHYSADDR] Translated virtual address 0x%I64X to physical: 0x%I64X\n", va, pa.QuadPart, pa.LowPart);
             RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&pa, sizeof(UINTN) );
             IrpSp->Parameters.Read.Length = sizeof(UINTN);
             dwBytesWritten = IrpSp->Parameters.Read.Length;
