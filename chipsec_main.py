@@ -231,7 +231,7 @@ class ChipsecMain:
         # Load platform-specific modules from the corresponding platform module directory
         #
         chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
-        if (chipset.CHIPSET_ID_UNKNOWN != self._cs.id) and os.path.exists( chipset_path ):
+        if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.code) and os.path.exists( chipset_path ):
             logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd(),'.')) )
             self.load_modules_from_path( chipset_path )
         else:
@@ -385,8 +385,8 @@ class ChipsecMain:
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
         adv_options = parser.add_argument_group('Advanced Options')
-        adv_options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.Chipset_Code, type=str.upper)
-        adv_options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.pch_codes, type=str.upper)
+        adv_options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.cs().chipset_codes, type=str.upper)
+        adv_options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.cs().pch_codes, type=str.upper)
         adv_options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         adv_options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         adv_options.add_argument('-j', '--json',dest='_json_out', help='specify filename for JSON output')

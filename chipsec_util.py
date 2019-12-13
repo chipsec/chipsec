@@ -37,7 +37,7 @@ from chipsec.helper import oshelper
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
 from chipsec.testcase import ExitCode
-from chipsec.chipset import cs, Chipset_Code, pch_codes
+from chipsec.chipset import cs
 from chipsec.file import get_main_dir
 
 logger().UTIL_TRACE = True
@@ -83,8 +83,8 @@ class ChipsecUtil:
         options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
-        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=Chipset_Code, type=str.upper)
-        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=pch_codes, type=str.upper)
+        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=cs().chipset_codes, type=str.upper)
+        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=cs().pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
