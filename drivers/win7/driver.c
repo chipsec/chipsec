@@ -293,7 +293,7 @@ NTSTATUS _read_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
       DbgPrint( "[chipsec] ERROR: no space for mapping\n" );
       return STATUS_UNSUCCESSFUL;
     }
-  DbgPrint( "[chipsec] reading %d bytes from physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
+  DbgPrint( "[chipsec] reading %u bytes from physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
   RtlCopyMemory( pData, va, len );
   MmUnmapIoSpace( va, len );
   return STATUS_SUCCESS;
@@ -307,7 +307,7 @@ NTSTATUS _write_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
       DbgPrint( "[chipsec] ERROR: no space for mapping\n" );
       return STATUS_UNSUCCESSFUL;
     }
-  DbgPrint( "[chipsec] writing %d bytes to physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
+  DbgPrint( "[chipsec] writing %u bytes to physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
   RtlCopyMemory( va, pData, len );
   MmUnmapIoSpace( va, len );
   return STATUS_SUCCESS;
@@ -347,9 +347,9 @@ DriverDeviceControl(
     _num_active_cpus = KeQueryActiveProcessorCount( NULL );
     _kaffinity       = KeQueryActiveProcessors();
     _cpu_thread_id   = KeGetCurrentProcessorNumber();
-    DbgPrint( "[chipsec] Active CPU threads         : %d (KeNumberProcessors = %d)\n", _num_active_cpus, KeNumberProcessors );
+    DbgPrint( "[chipsec] Active CPU threads         : %ul (KeNumberProcessors = %d)\n", _num_active_cpus, KeNumberProcessors );
     DbgPrint( "[chipsec] Active CPU mask (KAFFINITY): 0x%08X\n", _kaffinity );
-    DbgPrint( "[chipsec] Current CPU thread         : %d\n", _cpu_thread_id );
+    DbgPrint( "[chipsec] Current CPU thread         : %u\n", _cpu_thread_id );
 
     //
     // Switch on the IOCTL code that is being requested by the user.  If the
@@ -674,7 +674,7 @@ DriverDeviceControl(
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
             RtlCopyBytes( &ucode_size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT16) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Ucode update size = 0x%X\n", ucode_size );
@@ -751,7 +751,7 @@ DriverDeviceControl(
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), 3 * sizeof(UINT32) );
             _msr_addr = msrData[0];
@@ -809,7 +809,7 @@ DriverDeviceControl(
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT32) );
             _msr_addr = msrData[0];
@@ -916,7 +916,7 @@ DriverDeviceControl(
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
             if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
             RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(BYTE) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Descriptor table: %x\n", dt_code );
 
@@ -1015,7 +1015,7 @@ DriverDeviceControl(
               }
             if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(gprs) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < %d)\n", sizeof(gprs) );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < %zu)\n", sizeof(gprs) );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -1235,7 +1235,7 @@ DriverDeviceControl(
     // -- restore current KAFFINITY
     KeSetSystemAffinityThread( _kaffinity );
     DbgPrint( "[chipsec] Restored active CPU mask (KAFFINITY): 0x%08X\n", KeQueryActiveProcessors() );
-    DbgPrint( "[chipsec] Current CPU thread                  : %d\n", KeGetCurrentProcessorNumber() );
+    DbgPrint( "[chipsec] Current CPU thread                  : %ul\n", KeGetCurrentProcessorNumber() );
 
     // --
     // -- Complete the I/O request, Record the status of the I/O action.
