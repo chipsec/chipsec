@@ -105,7 +105,7 @@ class ChipsecUtil:
         if self.CHIPSEC_LOADED_AS_EXE:
             import zipfile
             myzip = zipfile.ZipFile("library.zip")
-            cmds = [i.replace('/','.').replace('chipsec.utilcmd.','')[:-4] for i in myzip.namelist() if r'chipsec\/utilcmd\/' in i and i[:-4] == ".pyc" and not i[:2] == '__' ]
+            cmds = [i.replace('/','.').replace('chipsec.utilcmd.','')[:-4] for i in myzip.namelist() if 'chipsec/utilcmd/' in i and i[-4:] == ".pyc" and not os.path.basename(i)[:2] == '__' ]
         else:
             cmds_dir = os.path.join(get_main_dir(),"chipsec","utilcmd")
             cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
