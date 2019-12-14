@@ -41,12 +41,9 @@ import os.path
 import struct
 import sys
 import platform
-import re
 import errno
-import traceback
 import time
 import shutil
-from threading import Lock
 from collections import namedtuple
 from ctypes import *
 import subprocess
@@ -57,9 +54,9 @@ import winerror
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
 import win32api, win32process, win32security, win32file, win32serviceutil
 
-from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
+from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.helper.basehelper import Helper
-from chipsec.logger import logger, print_buffer
+from chipsec.logger import logger
 import chipsec.file
 import chipsec.defines
 
@@ -259,7 +256,6 @@ class Win32Helper(Helper):
     def __init__(self):
         super(Win32Helper, self).__init__()
 
-        import platform, os
         self.os_system  = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
@@ -777,7 +773,7 @@ class Win32Helper(Helper):
         var     = bytes(0) if data     is None else data
         var_len = len(var) if datasize is None else datasize
         if isinstance(attrs, (str,bytes)):
-            attrs = struct.unpack("Q","{messge:\x00<{fill}}".format(message=attrs,fill=8)[:8])[0]
+            attrs = struct.unpack("Q","{message:\x00<{fill}}".format(message=attrs,fill=8)[:8])[0]
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
@@ -901,7 +897,7 @@ class Win32Helper(Helper):
         return tBuffer[:retVal]
 
     # ACPI access is implemented through ACPI HAL rather than through kernel module
-    def get_ACPI_table( self ):
+    def get_ACPI_table( self, table_name ):
         raise UnimplementedAPIError( "get_ACPI_table" )
 
 
