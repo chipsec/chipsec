@@ -252,7 +252,7 @@ def hv_hciv(rep_start, rep_count, call_code, fast = 0):
     return (((rep_start & 0x0FFF) << 48) + ((rep_count & 0x0FFF) << 32) + ((fast & 0x1) << 16) + (call_code & 0xFFFF))
 
 def uuid(id):
-    return '{{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}}'.format(struct.unpack('<LHH8B', *id))
+    return '{{{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}}}'.format(*struct.unpack('<IHH8B', id))
 
 ### OPTIONAL ROUTINES ##########################################################
 
