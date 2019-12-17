@@ -182,7 +182,6 @@ Chipset_Dictionary[0x590F].append({'name' : 'Kabylake',       'id' : CHIPSET_ID_
 Chipset_Dictionary[0x5910].append({'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' })
 Chipset_Dictionary[0x5914].append({'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 8th Generation Core Processor (Kabylake U-Quad Core)' })
 Chipset_Dictionary[0x591F].append({'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Desktop 7th Generation Core Processor (Kabylake S)' })
-Chipset_Dictionary[0x5918].append({'name' : 'Kabylake',       'id' : CHIPSET_ID_KBL , 'code' : CHIPSET_CODE_KBL,  'longname' : 'Mobile 7th Generation Core Processor (Kabylake H)' })
 
 # 8th Generation Core Processor Family (Coffeelake)
 Chipset_Dictionary[0x3E0F].append({'name' : 'CoffeeLake',     'id' : CHIPSET_ID_CFL , 'code' : CHIPSET_CODE_CFL,  'longname' : 'Desktop 8th Generation Core Processor (CoffeeLake S 2 Cores)' })
