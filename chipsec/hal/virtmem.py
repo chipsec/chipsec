@@ -44,7 +44,7 @@ class MemoryAccessError (RuntimeError):
 
 class VirtMemory(hal_base.HALBase):
     def __init__( self, cs ):
-        hal_base.HALBase.__init__(VirtMemory,cs)
+        super(VirtMemory, self).__init__(cs)
         self.helper = cs.helper
 
     ####################################################################################
