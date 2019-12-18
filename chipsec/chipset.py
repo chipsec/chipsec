@@ -549,6 +549,7 @@ class Chipset:
                 self.pch_rid = 0xFF
 
         if self.pch_vid == VID_INTEL and self.pch_did in pch_dictionary:
+            _unknown_pch = False
             data_dict           = pch_dictionary[self.pch_did][0]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
