@@ -271,11 +271,11 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 if len(sec.Image) < sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:
                     logger().warn("EFI Section seems to be malformed")
                     if len(sec.Image) < sec.HeaderSize+guid_size:
-                        logger().warn("Creating fake GUID of 0000-00-00-0000")
-                        guid0 = "0000"
-                        guid1 = "00"
-                        guid2 = "00"
-                        guid3 = "0000"
+                        logger().warn("Creating fake GUID of 0000-00-00-0000000")
+                        guid0 = b"\x00\x00\x00\x00"
+                        guid1 = b"\x00\x00"
+                        guid2 = b"\x00\x00"
+                        guid3 = b"\x00\x00\x00\x00\x00\x00\x00\x00"
                     else:
                         guid0, guid1, guid2, guid3 = struct.unpack(GUID, sec.Image[sec.HeaderSize:sec.HeaderSize+guid_size])
                         sec.DataOffset = len(sec.Image)-1
