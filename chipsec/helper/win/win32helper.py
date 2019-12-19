@@ -32,7 +32,7 @@
 """
 Management and communication with Windows kernel mode driver which provides access to hardware resources
 
-.. note:: 
+.. note::
     On Windows you need to install pywin32 Python extension corresponding to your Python version:
     http://sourceforge.net/projects/pywin32/
 """
@@ -47,6 +47,7 @@ import shutil
 from collections import namedtuple
 from ctypes import *
 import subprocess
+import codecs
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -58,7 +59,8 @@ from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Unimp
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger
 import chipsec.file
-import chipsec.defines
+from chipsec.defines import bytestostring
+from chipsec.hal.uefi_common import EFI_GUID
 
 
 class PCI_BDF(Structure):
@@ -172,7 +174,7 @@ PyLong_AsByteArray.argtypes = [py_object,
                                c_int]
 
 def packl_ctypes( lnum, bitlength ):
-    length = (bitlength + 7)/8
+    length = (bitlength + 7)//8
     a = create_string_buffer( length )
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
     return a.raw
@@ -187,11 +189,6 @@ FirmwareTableProviderSignature_RSMB = 0x52534D42 # 'RSMB' - The raw SMBIOS firmw
 FirmwareTableID_RSDT = 0x54445352
 FirmwareTableID_XSDT = 0x54445358
 
-#
-# Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
-#
-def guid_str(guid0, guid1, guid2, guid3):
-    return ( "{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 
 class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid0 guid1 guid2 guid3') ):
     __slots__ = ()
@@ -204,7 +201,7 @@ Size      = 0x{:08X}
 DataOffset= 0x{:08X}
 DataSize  = 0x{:08X}
 Attributes= 0x{:08X}
-""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
+""".format( self.guid0, self.guid1, self.guid2, bytestostring(codecs.encode(self.guid3[:2],'hex')).upper(), bytestostring(codecs.encode(self.guid3[-6::],'hex')).upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
 
 def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
     start = 0
@@ -232,7 +229,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
         #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
-        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
+        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
 
         if 0 == efi_var_hdr.Size: break
         off = next_var_offset
@@ -797,7 +794,7 @@ class Win32Helper(Helper):
     def list_EFI_variables( self, infcls=2 ):
         if logger().DEBUG: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls={:d} )..'.format(infcls) )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
-        length = packl_ctypes( long(EFI_VAR_MAX_BUFFER_SIZE), 32 )
+        length = packl_ctypes( EFI_VAR_MAX_BUFFER_SIZE, 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         status = ( ((1 << 32) - 1) & status)
         if (0xC0000023 == status):
