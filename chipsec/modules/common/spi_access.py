@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2017, Intel Corporation
-# 
+#Copyright (c) 2010-2019, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -29,7 +29,7 @@
 Checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
 """
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 TAGS = [MTAG_BIOS]
 
 from chipsec.hal import spi
@@ -48,6 +48,7 @@ class spi_access(BaseModule):
     def check_flash_access_permissions(self):
 
         res = ModuleResult.PASSED
+        fdv = self.cs.read_register_field( 'HSFS', 'FDV' ) == 1
         frap = self.cs.read_register( 'FRAP' )
         brra = self.cs.get_register_field( 'FRAP', frap, 'BRRA' )
         brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
@@ -58,6 +59,10 @@ class spi_access(BaseModule):
             brwa |= ((tmp_reg >> 20) & 0xFFF)
 
         # Informational
+        # State of Flash Descriptor Valid bit
+        if not fdv:
+            self.logger.log("[*] Flash Descriptor Valid bit is not set")
+
         # CPU/Software access to Platform Data region (platform specific)
         if brwa & (1 << spi.PLATFORM_DATA):
             self.logger.log("[*] Software has write access to Platform Data region in SPI flash (it's platform specific)")
@@ -79,9 +84,13 @@ class spi_access(BaseModule):
             res = ModuleResult.FAILED
             self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
 
-        if   ModuleResult.PASSED  == res: self.logger.log_passed_check("SPI Flash Region Access Permissions in flash descriptor look ok")
-        elif ModuleResult.FAILED  == res: self.logger.log_failed_check("SPI Flash Region Access Permissions are not programmed securely in flash descriptor")
-        elif ModuleResult.WARNING == res: self.logger.log_warn_check("Certain SPI flash regions are writeable by software")
+        if fdv:
+            if   ModuleResult.PASSED  == res: self.logger.log_passed_check("SPI Flash Region Access Permissions in flash descriptor look ok")
+            elif ModuleResult.FAILED  == res: self.logger.log_failed_check("SPI Flash Region Access Permissions are not programmed securely in flash descriptor")
+            elif ModuleResult.WARNING == res: self.logger.log_warn_check("Certain SPI flash regions are writeable by software")
+        else:
+            res = ModuleResult.WARNING
+            self.logger.log_warn_check("Either flash descriptor is not valid or not present on this system")
 
         return res
 
