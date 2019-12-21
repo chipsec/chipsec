@@ -174,6 +174,8 @@ PyLong_AsByteArray.argtypes = [py_object,
                                c_int]
 
 def packl_ctypes( lnum, bitlength ):
+    if sys.version_info.major == 2:
+        lnum = long(lnum)
     length = (bitlength + 7)//8
     a = create_string_buffer( length )
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
