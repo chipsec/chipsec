@@ -56,8 +56,8 @@ from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Unimp
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger, print_buffer
 import chipsec.file
-import chipsec.defines
-
+from chipsec.defines import bytestostring
+from chipsec.hal.uefi_common import EFI_GUID
 
 class PCI_BDF(Structure):
     _fields_ = [("BUS",  c_ushort, 16),  # Bus
@@ -167,7 +167,7 @@ PyLong_AsByteArray.argtypes = [py_object,
                                c_int]
 
 def packl_ctypes( lnum, bitlength ):
-    length = (bitlength + 7)/8
+    length = (bitlength + 7)//8
     a = create_string_buffer( length )
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
     return a.raw
@@ -219,12 +219,15 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
         str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
         s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
-        efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        if sys.version_info[0] < 3:
+            efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        else:
+            efi_var_name = str(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
         #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
-        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
+        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
 
         if 0 == efi_var_hdr.Size: break
         off = next_var_offset
@@ -242,8 +245,8 @@ def _handle_error( err, hr=0 ):
 
 
 _tools = {
-  chipsec.defines.ToolType.TIANO_COMPRESS: 'TianoCompress.exe',
-  chipsec.defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.exe'
+  chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.exe',
+  chipsec.defines.COMPRESSION_TYPE_LZMA : 'LzmaCompress.exe'
 }
 
 class RweHelper(Helper):
@@ -267,7 +270,7 @@ class RweHelper(Helper):
 
         self.win_ver        = win_ver
         self.driver_handle  = None
-        self.device_file    = pywintypes.Unicode(DEVICE_FILE)
+        self.device_file    = str(DEVICE_FILE)
 
         # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
         self.driver_path    = None
@@ -368,7 +371,7 @@ class RweHelper(Helper):
             _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         if logger().DEBUG:
-            logger().log( "[helper] service control manager opened (handle = 0x{:08X})".format(hscm) )
+            logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
             logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
         try:
@@ -385,14 +388,14 @@ class RweHelper(Helper):
             if hs:
                 if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,hs) )
         except win32service.error as err:
-            if (winerror.ERROR_SERVICE_EXISTS == err[0]):
-                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err[2], err[0]) )
+            if (winerror.ERROR_SERVICE_EXISTS == err.args[0]):
+                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
                 except win32service.error as err1:
-                    _handle_winerror(err1[1], err1[2], err1[0])
+                    _handle_winerror(err1.args[1], err1.args[2], err1.args[0])
             else:
-                _handle_winerror(err[1], err[2], err[0])
+                _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         finally:
             win32service.CloseServiceHandle( hs )
@@ -416,7 +419,7 @@ class RweHelper(Helper):
             win32serviceutil.RemoveService( SERVICE_NAME )
             if logger().DEBUG: logger().log( "[helper] service '{}' deleted".format(SERVICE_NAME) )
         except win32service.error as err:
-            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err[2], err[0]) )
+            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
 
         return True
@@ -443,7 +446,7 @@ class RweHelper(Helper):
                 self.driver_loaded = True
                 if logger().DEBUG: logger().log( "[helper] service '{}' started".format(SERVICE_NAME) )
             except pywintypes.error as err:
-                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err[2], err[0]), err[0] )
+                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]), err.args[0] )
         self.driverpath = win32serviceutil.LocateSpecificServiceExe(SERVICE_NAME)
         return True
 
@@ -460,7 +463,7 @@ class RweHelper(Helper):
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err[2], err[0]) )
+            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
         finally:
             self.driver_loaded = False
@@ -469,7 +472,7 @@ class RweHelper(Helper):
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             if logger().DEBUG: logger().log( "[helper] service '{}' stopped".format(SERVICE_NAME) )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err[2], err[0]) )
+            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
 
         return True
@@ -485,7 +488,7 @@ class RweHelper(Helper):
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
-            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, self.driver_handle) )
+            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, int(self.driver_handle)) )
         return self.driver_handle
 
     def check_driver_handle( self ):
@@ -522,17 +525,17 @@ class RweHelper(Helper):
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
-        if logger().DEBUG: print_buffer( in_buf )
+        if logger().DEBUG: print_buffer( bytestostring(in_buf) )
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
         except pywintypes.error as _err:
-            err_status = _err[0] + 0x100000000
+            err_status = _err.args[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x{:X})".format(err_status)
                 if logger().DEBUG: logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
-                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status,_err[2]), err_status )
+                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status,_err.args[2]), err_status )
 
         return out_buf
 
