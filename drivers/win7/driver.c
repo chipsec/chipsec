@@ -672,7 +672,12 @@ DriverDeviceControl(
             }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
@@ -749,7 +754,12 @@ DriverDeviceControl(
               }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
@@ -807,7 +817,12 @@ DriverDeviceControl(
               }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
@@ -914,7 +929,12 @@ DriverDeviceControl(
             DbgPrint( "[chipsec] > GET_CPU_DESCRIPTOR_TABLE\n" );
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
             RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(BYTE) );
@@ -1060,7 +1080,6 @@ DriverDeviceControl(
             new_cpu_thread_id = *((BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg) + sizeof(val64));
             if( new_cpu_thread_id >= _num_active_cpus )
             {
-            //    new_cpu_thread_id = 0;
                  Status = STATUS_INVALID_PARAMETER;
                  break;
             }
@@ -1120,7 +1139,6 @@ DriverDeviceControl(
             new_cpu_thread_id = *((BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg));
             if( new_cpu_thread_id >= _num_active_cpus )
             {
-            //    new_cpu_thread_id = 0;
                  Status = STATUS_INVALID_PARAMETER;
                  break;
             }
