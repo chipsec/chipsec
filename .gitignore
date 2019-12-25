@@ -1,5 +1,19 @@
 *.o
 *.d
 *.pyc
+*.obj
+*.pdb
+*.lib
 chipsec.egg-info
 dist
+
+# Windows driver
+.vs/
+chipsec/helper/win/win7_amd64/
+chipsec/helper/win/win7_x86/
+drivers/win7/Debug/
+drivers/win7/Release/
+drivers/win7/x64/
+
+# Compression tools
+chipsec_tools/compression/Bin/
