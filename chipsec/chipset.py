@@ -201,6 +201,7 @@ Chipset_Dictionary[0x3E32].append({'name' : 'CoffeeLake',     'id' : CHIPSET_ID_
 
 # 8th Generation Core Processor Family (Whiskey Lake)
 Chipset_Dictionary[0x3E34].append({'name': 'Whiskey Lake',    'id' : CHIPSET_ID_WHL , 'code' : CHIPSET_CODE_WHL,  'longname' : 'Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)', 'detection_value' : '806EA' })
+Chipset_Dictionary[0x3E34].append({'name': 'Whiskey Lake',    'id' : CHIPSET_ID_WHL , 'code' : CHIPSET_CODE_WHL,  'longname' : 'Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)', 'detection_value' : '806EB' })
 
 # 10th Generation 14nm (Comet Lake)
 Chipset_Dictionary[0x3E35].append({'name' : 'CometLake', 'id' : CHIPSET_ID_CML , 'code' : 'CML', 'longname' : 'CometLake v1 U2 Core'})
