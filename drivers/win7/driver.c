@@ -690,6 +690,7 @@ DriverDeviceControl(
             if( !ucode_buf )
               {
                 DbgPrint( "[chipsec] ERROR: couldn't allocate pool for ucode binary\n" );
+                Status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
               }
             RtlCopyBytes( ucode_buf, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32) + sizeof(UINT16), ucode_size );
