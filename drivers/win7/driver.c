@@ -664,9 +664,9 @@ DriverDeviceControl(
             DbgPrint("[chipsec] > IOCTL_LOAD_UCODE_UPDATE\n" );
 
             if( !Irp->AssociatedIrp.SystemBuffer ||
-                IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + sizeof(UINT16) )
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(UINT32) + sizeof(UINT16) )
             {
-               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < 3)\n" );
+               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < 6)\n" );
                Status = STATUS_INVALID_PARAMETER;
                break;
             }
@@ -686,7 +686,7 @@ DriverDeviceControl(
 
             if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < ucode_size + sizeof(UINT32) + sizeof(UINT16) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < ucode_size + 3)\n" );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < ucode_size + 6)\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -696,8 +696,8 @@ DriverDeviceControl(
               {
                 DbgPrint( "[chipsec] ERROR: couldn't allocate pool for ucode binary\n" );
                 break;
-              }           
-            RtlCopyBytes( ucode_buf, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE) + sizeof(UINT16), ucode_size );
+              }
+            RtlCopyBytes( ucode_buf, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32) + sizeof(UINT16), ucode_size );
             ucode_start = (UINT64)ucode_buf;
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] ucode update address = 0x%p (eax = 0x%08X, edx = 0x%08X)\n", ucode_start, (UINT32)(ucode_start & 0xFFFFFFFF), (UINT32)((ucode_start >> 32) & 0xFFFFFFFF) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] ucode update contents:\n" );
