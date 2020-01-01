@@ -742,13 +742,13 @@ DriverDeviceControl(
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	        DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
+	            DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + 3*sizeof(UINT32) )
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < 4 * sizeof(UINT32) )
               {
-                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: STATUS_INVALID_PARAMETER (input buffer size < sizeof(BYTE) + 3*sizeof(UINT32))\n" );
+                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: STATUS_INVALID_PARAMETER (input buffer size < 4 * sizeof(UINT32))\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
