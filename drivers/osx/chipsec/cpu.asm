@@ -1,7 +1,7 @@
 #
 # Copyright 2016 Google Inc. All Rights Reserved.
 # Authors: Thiebaud Weksteen (tweksteen@gmail.com)
-# Copyright (c) 2010-2015, Intel Corporation
+# Copyright (c) 2010-2020, Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -402,7 +402,7 @@ _SWSMI:
     xchg %rdx, 0x20(%r10)
     xchg %rsi, 0x28(%r10)
     xchg %rdi, 0x30(%r10)
-    out  %ax, $0x0B2h
+    out  %ax, $0x0B2
     xchg %rax, 0x8(%r10)
     xchg %rbx, 0x10(%r10)
     xchg %rcx, 0x18(%r10)
