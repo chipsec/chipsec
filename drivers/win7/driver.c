@@ -658,7 +658,7 @@ DriverDeviceControl(
             PVOID ucode_buf = NULL;
             UINT64 ucode_start = 0;
             UINT16 ucode_size = 0;
-            UINT32 _eax = 0, _edx = 0;
+            UINT32 _eax[2] = {0}, _edx[2] = {0};
             int CPUInfo[4] = {-1};
 
             DbgPrint("[chipsec] > IOCTL_LOAD_UCODE_UPDATE\n" );
@@ -705,6 +705,12 @@ DriverDeviceControl(
             _dump_buffer( (unsigned char *)ucode_buf, min(ucode_size,0x100) );
 
             // --
+            // -- read IA32_BIOS_SIGN_ID MSR to save current patch ID
+            // -- we'll need this value later to verify the microcode update was successful
+            // --
+            _rdmsr(MSR_IA32_BIOS_SIGN_ID, &_eax[0], &_edx[0]);
+
+            // --
             // -- trigger CPU ucode patch update
             // -- pInBuf points to the beginning of ucode update binary
             // --
@@ -717,17 +723,23 @@ DriverDeviceControl(
             // --
             // -- need to clear IA32_BIOS_SIGN_ID MSR first
             // -- CPUID will deposit an update ID value in 64-bit MSR at address MSR_IA32_BIOS_SIGN_ID
-            // -- read IA32_BIOS_SIGN_ID MSR to check patch ID != 0
+            // -- read IA32_BIOS_SIGN_ID MSR to check patch ID != previous patch ID
             // --
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] checking ucode update was loaded..\n" );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] clear IA32_BIOS_SIGN_ID, CPUID EAX=1, read back IA32_BIOS_SIGN_ID\n" );
             _wrmsr( MSR_IA32_BIOS_SIGN_ID, 0, 0 );
             __cpuid(CPUInfo, 1);
-            _rdmsr( MSR_IA32_BIOS_SIGN_ID, &_eax, &_edx );
-            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] RDMSR( IA32_BIOS_SIGN_ID=0x8b ) = 0x%08x%08x\n", _edx, _eax );
-            if( 0 != _edx ) DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != 0)\n" );
-            else            DbgPrint( "[chipsec] ERROR: Microcode update failed\n" );
+            _rdmsr( MSR_IA32_BIOS_SIGN_ID, &_eax[1], &_edx[1] );
+            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] RDMSR( IA32_BIOS_SIGN_ID=0x8b ) = 0x%08x%08x\n", _edx[1], _eax[1] );
+            if ( _edx[1] == _edx[0] )
+              {
+                // same patch ID, microcode update failed
+                DbgPrint("[chipsec] ERROR: Microcode update failed\n");
+                Status = STATUS_BAD_DATA;
+                break;
+              }
 
+            DbgPrint("[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != %u)\n", _edx[0]);
             Status = STATUS_SUCCESS;
             break;
           }
