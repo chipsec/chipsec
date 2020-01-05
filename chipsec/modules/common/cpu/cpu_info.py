@@ -54,6 +54,7 @@ class cpu_info(BaseModule):
                 regs = self.cs.cpu.cpuid(eax_val, 0)
                 for i in range(4):
                     brand += bytestostring(struct.pack('<I', regs[i]))
+            brand = brand.rstrip('\x00')
             self.logger.log('[*] Processor: {}'.format(brand))
 
             # Get processor version information
