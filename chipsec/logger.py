@@ -208,14 +208,14 @@ class Logger:
     def set_always_flush( self, val ):
         self.ALWAYS_FLUSH = val
 
-    def log( self, text):
+    def log( self, text, level=pyLogging.INFO):
         """Sends plain text to logging."""
         if self.Results.get_current() is not None:
             self.Results.get_current().add_output(text)
         if self.LOG_TO_FILE: self._save_to_log_file( text )
         else:
             if self.rootLogger:
-                self.rootLogger.info(text)
+                self.rootLogger.log(level, text)
                 if self.ALWAYS_FLUSH: sys.stdout.flush()
             else:
                 print(text)
