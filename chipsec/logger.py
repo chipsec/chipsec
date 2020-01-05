@@ -223,17 +223,17 @@ class Logger:
     def error( self, text ):
         """Logs an Error message"""
         text = "ERROR: " + text
-        self.rootLogger.error(text)
+        self.log(text, pyLogging.ERROR)
 
     def warn( self, text ):
         """Logs an Warning message"""
         text = "WARNING: " + text
-        self.rootLogger.warning(text)
+        self.log(text, pyLogging.WARNING)
 
     def verbose_log( self, text):
         """Logs an Verbose message"""
         if self.VERBOSE:
-            self.rootLogger.log(self.verbose, text )
+            self.log(text, self.verbose)
 
     def log_passed_check( self, text ):
         """Logs a Test as PASSED"""
@@ -266,73 +266,73 @@ class Logger:
     def log_passed( self, text ):
         """Logs a passed message."""
         text = "[+] PASSED: " + text
-        self.rootLogger.debug(text)
+        self.log(text, pyLogging.DEBUG)
 
     def log_failed( self, text ):
         """Logs a failed message."""
         text = "[-] FAILED: " + text
-        self.rootLogger.error(text)
+        self.log(text, pyLogging.ERROR)
 
     def log_warning( self, text ):
         """Logs a Warning message"""
         text = "[!] WARNING: " + text
-        self.rootLogger.warning(text)
+        self.log(text, pyLogging.WARNING)
 
     def log_skipped( self, text ):
         """Logs a NOT IMPLEMENTED message."""
         text = "[*] NOT IMPLEMENTED: " + text
-        self.rootLogger.warning(text)
+        self.log(text, pyLogging.WARNING)
 
     def log_not_applicable(self, text):
         """Logs a NOT APPLICABLE message."""
         text = "[*] NOT APPLICABLE: " + text
-        self.rootLogger.warning(text)
+        self.log(text, pyLogging.WARNING)
 
     def log_heading( self, text ):
         """Logs a heading message."""
-        self.rootLogger.critical(text)
+        self.log(text, pyLogging.CRITICAL)
 
     def log_important( self, text ):
         """Logs a important message."""
         text = "[!] " + text
-        self.rootLogger.error(text)
+        self.log(text, pyLogging.ERROR)
 
     def log_result( self, text ):
         """Logs a result message."""
         text = "[+] " + text
-        self.rootLogger.debug(text)
+        self.log(text, pyLogging.DEBUG)
 
     def log_bad( self, text ):
         """Logs a bad message, so it calls attention in the information displayed."""
         text = "[-] " + text
-        self.rootLogger.error(text)
+        self.log(text, pyLogging.ERROR)
 
     def log_good( self, text ):
         """Logs a message, if colors available, displays in green."""
         text = "[+] " + text
-        self.rootLogger.debug(text)
+        self.log(text, pyLogging.DEBUG)
 
     def log_unknown( self, text ):
         """Logs a message with a question mark."""
         text = "[?] " + text
-        self.rootLogger.info(text)
+        self.log(text, pyLogging.INFO)
 
     def log_information( self, text):
         """Logs a message with information message"""
         text = "[#] INFORMATION: " + text
-        self.rootLogger.debug(text)
+        self.log(text, pyLogging.DEBUG)
 
     def start_test( self, test_name ):
         """Logs the start point of a Test"""
         text =        "[x][ =======================================================================\n"
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
-        self.rootLogger.critical(text)
+        self.log(text, pyLogging.CRITICAL)
 
     def start_module( self, module_name ):
         """Displays a banner for the module name provided."""
         text = "\n[*] running module: {}".format(module_name)
-        self.rootLogger.info(text)
+        self.log(text, pyLogging.INFO)
         if self.Results.get_current() is not None:
             self.Results.get_current().add_desc(module_name)
             self.Results.get_current().set_time()
@@ -345,7 +345,7 @@ class Logger:
         #self._log(text, None, None)
 
     def _write_log( self, text, filename ):
-        self.rootLogger.log(self.info,text) #writes text to defined log file
+        self.log(text, pyLogging.INFO) #writes text to defined log file
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()
