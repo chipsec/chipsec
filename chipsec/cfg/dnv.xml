@@ -24,7 +24,20 @@ XML configuration file for Denverton
   </memory>
 
   <registers>
-
+    <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="4" desc="P2SB Control">
+      <field name="MASKLOCK" bit="17" size="12" desc="Base address"/>
+    </register>
+    <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x40" size="1" desc="Host Configuration">
+      <field name="SPD_WD" bit="4" size="1" desc="SPD Write Disable"/>
+    </register>
+    <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
+      <field name="GBL_SMI_EN" bit="0"  size="1"/>
+      <field name="TCO_EN"     bit="13" size="1"/>
+    </register>
+    <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="4" desc="SMI Control and Enable">
+      <field name="TCO_LOCK" bit="12" size="1"/>
+    </register>
+    
     <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="1" desc="BIOS Control">
       <field name="BIOSWE"  bit="0" size="1" desc="Write Protect Disable"/>
       <field name="BLE"     bit="1" size="1" desc="BIOS Lock Enable"/>
@@ -150,13 +163,21 @@ XML configuration file for Denverton
       <field name="EO_4k_VALID"  bit="28" size="1" desc="4k Erase Valid"/>
       <field name="EO_64k_VALID" bit="29" size="1" desc="64k Erase Valid"/>
       <field name="CPPTV"        bit="31" size="1" desc="Component Property Parameter Table Valid"/>
-    </register>
+    </register>  
 
   </registers>
     
   <controls>
     <control name="FlashLockDown"          register="HSFS"          field="FLOCKDN"       desc="Flash Configuration Lock-Down"/>
     <control name="SpiWriteStatusDis"      register="HSFS"          field="WRSDIS"        desc="Write Status Disable"/>
+    <control name="SmmBiosWriteProtection" register="BC"            field="SMM_BWP"       desc="SMM BIOS Write Protection"/>
+    <control name="BiosLockEnable"         register="BC"            field="BLE"           desc="BIOS Lock Enable"/>
+    <control name="BiosWriteEnable"        register="BC"            field="BIOSWE"        desc="BIOS Write Enable"/>
+    <control name="TopSwapStatus"          register="BC"            field="TSS"           desc="Top Swap Status"/>
+    <control name="BiosInterfaceLockDown"  register="BC"            field="BILD"          desc="BIOS Interface Lock-Down"/>
+    <control name="GlobalSMIEnable"        register="SMI_EN"        field="GBL_SMI_EN"    desc="Global SMI Enable"/>
+    <control name="TCOSMILock"             register="TCO1_CNT"      field="TCO_LOCK"      desc="TCO SMI Lock"/>
+    <control name="TCOSMIEnable"           register="SMI_EN"        field="TCO_EN"        desc="TCO SMI Enable"/>
   </controls>
   
   
