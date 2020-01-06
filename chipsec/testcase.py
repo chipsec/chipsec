@@ -223,6 +223,7 @@ class TestCase():
 
     def add_output(self, text):
         self.output += str(text)
+        self.output += "\n"
 
     def add_result(self, result):
         self.result = result
