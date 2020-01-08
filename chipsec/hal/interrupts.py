@@ -131,19 +131,14 @@ class Interrupts(hal_base.HALBase):
         else:
             #Wait for Communication buffer to be empty
             buf = 1
-            #python2/3 HACK. read_physical_mem returns '\x00\x00' in py2, and b'\x00\x00' in py 3
-            if sys.version_info[0] == 2:
-                zero_str = "\x00"
-            else:
-                zero_str = b"\x00"
-            while not buf ==  zero_str*2:
+            while not buf ==  b"\x00\x00":
                 buf = self.cs.helper.read_physical_mem(buf_addr,2)
             #write data to commbuffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
             #call SWSMI
             self.send_SW_SMI(thread_id,smi_num,0,0,0,0,0,0,0)
             #clear CommBuffer
-            self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),zero_str*len(data_hdr))
+            self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),b"\x00"*len(data_hdr))
             return None
 
     # scan phys mem range start-end looking for 'smmc'
