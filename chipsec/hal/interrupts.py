@@ -138,7 +138,6 @@ class Interrupts(hal_base.HALBase):
                 zero_str = b"\x00"
             while not buf ==  zero_str*2:
                 buf = self.cs.helper.read_physical_mem(buf_addr,2)
-                print("",buf)
             #write data to commbuffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
             #call SWSMI
