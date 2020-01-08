@@ -33,6 +33,7 @@ import argparse
 import platform
 
 from chipsec.defines import get_version
+from chipsec.helper import oshelper
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
 from chipsec.testcase import ExitCode
@@ -84,6 +85,7 @@ class ChipsecUtil:
         options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         options.add_argument('-i', '--ignore_platform',dest='_unkownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
+        options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
         options.add_argument('_cmd',metavar='Command', nargs='?', choices=sorted(self.commands.keys()), type=str.lower, default="help",  help="Util command to run: {{{}}}".format(','.join(sorted(self.commands.keys()))))
         options.add_argument('_cmd_args',metavar='Command Args', nargs=argparse.REMAINDER, help=self.global_usage)
 
@@ -148,7 +150,7 @@ class ChipsecUtil:
         comm = self.commands[self._cmd](self.argv, cs = self._cs)
 
         try:
-            self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver)
+            self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver, self._driver_exists)
         except UnknownChipsetError as msg:
             logger().warn("*******************************************************************")
             logger().warn("* Unknown platform!")
