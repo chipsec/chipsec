@@ -157,7 +157,7 @@ class blacklist(BaseModule):
 
         # Load JSON config with black-listed EFI modules
         if len(module_argv) > 1: self.cfg_name = module_argv[1]
-        cfg_pth = os.path.join( os.path.dirname(os.path.realpath(__file__)), self.cfg_name )
+        cfg_pth = os.path.join( chipsec.file.get_main_dir(), "chipsec/modules/tools/uefi", self.cfg_name )
         with open(cfg_pth, 'r') as blacklist_json:
              self.efi_blacklist = json.load( blacklist_json )
 
