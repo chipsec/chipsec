@@ -69,7 +69,11 @@ sys.path.append(tool_dir)
 print os.getcwd()
 
 
-data_files = [(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys'])]
+data_files = [
+    (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
+    ('chipsec/modules/tools/uefi', ['chipsec/modules/tools/uefi/blacklist.json']),
+]
+
 for current, dirs, files in os.walk(cfg_dir ):
     for file in files:
         if file.endswith('.xml') :
