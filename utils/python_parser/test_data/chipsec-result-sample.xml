@@ -1,0 +1,176 @@
+<?xml version="1.0" ?>
+<testsuites>
+	<testsuite exceptions="0" failed="1" failedtorun="0" information="1" name="chipsec_res" notapplicable="1" notimplemented="0" passed="20" time="3.311824" total="25" warnings="2">
+		<properties>
+			<property name="OS" value="Windows 10 10.0.18362 AMD64"/>
+			<property name="Python" value="Python 3.7.4"/>
+			<property name="Platform" value="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores), VID: 8086, DID: 3E34, RID: 0B"/>
+			<property name="PCH" value="Intel 300 series On-Package PCH, VID: 8086, DID: 9D84 RID: 30"/>
+			<property name="Version" value="1.4.5"/>
+		</properties>
+		<testcase classname="chipsec.modules.common.bios_kbrd_buffer" name="chipsec.modules.common.bios_kbrd_buffer" time="0.005992">
+			<pass type="Passed"/>
+			<system-out>[*] Keyboard buffer head pointer = 0x0 (at 0x41A), tail pointer = 0x0 (at 0x41C)[*] Keyboard buffer contents (at 0x41E): 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 |                  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0 |                 [*] Checking contents of the keyboard buffer..
+</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.bios_smi" name="chipsec.modules.common.bios_smi" time="0.006992">
+			<pass type="Passed"/>
+			<system-out>[*] Checking SMI enables..    Global SMI enable: 1    TCO SMI enable   : 1[*] Checking SMI configuration locks..</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.bios_ts" name="chipsec.modules.common.bios_ts" time="0.002974">
+			<pass type="Passed"/>
+			<system-out>[*] BiosInterfaceLockDown (BILD) control = 1[*] BIOS Top Swap mode is disabled (TSS = 0)[*] RTC TopSwap control (TS) = 1</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.bios_wp" name="chipsec.modules.common.bios_wp" time="0.007980">
+			<pass type="Passed"/>
+			<system-out>[*] BC = 0x000000AA &lt;&lt; BIOS Control (b:d.f 00:31.5 + 0xDC)
+    [00] BIOSWE           = 0 &lt;&lt; BIOS Write Enable 
+    [01] BLE              = 1 &lt;&lt; BIOS Lock Enable 
+    [02] SRC              = 2 &lt;&lt; SPI Read Configuration 
+    [04] TSS              = 0 &lt;&lt; Top Swap Status 
+    [05] SMM_BWP          = 1 &lt;&lt; SMM BIOS Write Protection 
+    [06] BBS              = 0 &lt;&lt; Boot BIOS Strap 
+    [07] BILD             = 1 &lt;&lt; BIOS Interface Lock Down 
+[*] BIOS Region: Base = 0x00A00000, Limit = 0x01FFFFFFSPI Protected Ranges------------------------------------------------------------PRx (offset) | Value    | Base     | Limit    | WP? | RP?------------------------------------------------------------PR0 (84)     | 91FF0B00 | 00B00000 | 011FFFFF | 1   | 0 PR1 (88)     | 9FFF12DF | 012DF000 | 01FFFFFF | 1   | 0 PR2 (8C)     | 00000000 | 00000000 | 00000000 | 0   | 0 PR3 (90)     | 00000000 | 00000000 | 00000000 | 0   | 0 PR4 (94)     | 00000000 | 00000000 | 00000000 | 0   | 0 </system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.ia32cfg" name="chipsec.modules.common.ia32cfg" time="0.005992">
+			<pass type="Passed"/>
+			<system-out>[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs..[*] cpu0: IA32_Feature_Control Lock = 1[*] cpu1: IA32_Feature_Control Lock = 1[*] cpu2: IA32_Feature_Control Lock = 1[*] cpu3: IA32_Feature_Control Lock = 1[*] cpu4: IA32_Feature_Control Lock = 1[*] cpu5: IA32_Feature_Control Lock = 1[*] cpu6: IA32_Feature_Control Lock = 1[*] cpu7: IA32_Feature_Control Lock = 1</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.memlock" name="chipsec.modules.common.memlock" time="0.003982">
+			<pass type="Passed"/>
+			<system-out>[X] Checking MSR_LT_LOCK_MEMORY status[*]   cpu0: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu1: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu2: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu3: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu4: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu5: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu6: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1[*]   cpu7: MSR_LT_LOCK_MEMORY[LT_LOCK] = 1</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.me_mfg_mode" name="chipsec.modules.common.me_mfg_mode" time="0.000998">
+			<pass type="Passed"/>
+			<system-out/>
+		</testcase>
+		<testcase classname="chipsec.modules.common.rtclock" name="chipsec.modules.common.rtclock" time="0.002992">
+			<pass type="Passed"/>
+			<system-out>[*] RC = 0xFFFFFFFF &lt;&lt; RTC Configuration (msgbus port 0xC3, off 0x3400)
+    [02] UE               = 1 &lt;&lt; Upper 128 Byte Enable 
+    [03] LL               = 1 &lt;&lt; Lower 128 Byte Lock 
+    [04] UL               = 1 &lt;&lt; Upper 128 Byte Lock 
+    [31] BILD             = 1 &lt;&lt; BIOS Interface Lock-Down </system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.sgx_check" name="chipsec.modules.common.sgx_check" time="0.000996">
+			<pass type="NotApplicable"/>
+			<system-out>Skipping module chipsec.modules.common.sgx_check since it is not supported in this platform</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.smm" name="chipsec.modules.common.smm" time="0.001996">
+			<pass type="Passed"/>
+			<system-out>[*] PCI0.0.0_SMRAMC = 0x1A &lt;&lt; System Management RAM Control (b:d.f 00:00.0 + 0x88)
+    [00] C_BASE_SEG       = 2 &lt;&lt; SMRAM Base Segment = 010b 
+    [03] G_SMRAME         = 1 &lt;&lt; SMRAM Enabled 
+    [04] D_LCK            = 1 &lt;&lt; SMRAM Locked 
+    [05] D_CLS            = 0 &lt;&lt; SMRAM Closed 
+    [06] D_OPEN           = 0 &lt;&lt; SMRAM Open [*] Compatible SMRAM is enabled</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.smrr" name="chipsec.modules.common.smrr" time="0.008975">
+			<pass type="Passed"/>
+			<system-out>[*] Checking SMRR range base programming..[*] IA32_SMRR_PHYSBASE = 0x6A000006 &lt;&lt; SMRR Base Address MSR (MSR 0x1F2)
+    [00] Type             = 6 &lt;&lt; SMRR memory type 
+    [12] PhysBase         = 6A000 &lt;&lt; SMRR physical base address [*] SMRR range base: 0x000000006A000000[*] SMRR range memory type is Writeback (WB)[*] Checking SMRR range mask programming..[*] IA32_SMRR_PHYSMASK = 0xFF000800 &lt;&lt; SMRR Range Mask MSR (MSR 0x1F3)
+    [11] Valid            = 1 &lt;&lt; SMRR valid 
+    [12] PhysMask         = FF000 &lt;&lt; SMRR address range mask [*] SMRR range mask: 0x00000000FF000000[*] Verifying that SMRR range base &amp; mask are the same on all logical CPUs..[CPU0] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU1] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU2] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU3] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU4] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU5] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU6] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[CPU7] SMRR_PHYSBASE = 000000006A000006, SMRR_PHYSMASK = 00000000FF000800[*] Trying to read memory at SMRR base 0x6A000000..</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.spd_wd" name="chipsec.modules.common.spd_wd" time="0.008974">
+			<pass type="Passed"/>
+			<system-out/>
+		</testcase>
+		<testcase classname="chipsec.modules.common.spi_access" name="chipsec.modules.common.spi_access" time="0.015087">
+			<pass type="Warning"/>
+			<system-out>SPI Flash Region Access Permissions------------------------------------------------------------[*] FRAP = 0x00004ACF &lt;&lt; SPI Flash Regions Access Permissions Register (SPIBAR + 0x50)
+    [00] BRRA             = CF &lt;&lt; BIOS Region Read Access 
+    [08] BRWA             = 4A &lt;&lt; BIOS Region Write Access 
+    [16] BMRAG            = 0 &lt;&lt; BIOS Master Read Access Grant 
+    [24] BMWAG            = 0 &lt;&lt; BIOS Master Write Access Grant BIOS Region Write Access Grant (00):  FREG0_FLASHD: 0  FREG1_BIOS  : 0  FREG2_ME    : 0  FREG3_GBE   : 0  FREG4_PD    : 0  FREG5       : 0BIOS Region Read Access Grant (00):  FREG0_FLASHD: 0  FREG1_BIOS  : 0  FREG2_ME    : 0  FREG3_GBE   : 0  FREG4_PD    : 0  FREG5       : 0BIOS Region Write Access (4A):  FREG0_FLASHD: 0  FREG1_BIOS  : 1  FREG2_ME    : 0  FREG3_GBE   : 1  FREG4_PD    : 0  FREG5       : 0BIOS Region Read Access (CF):  FREG0_FLASHD: 1  FREG1_BIOS  : 1  FREG2_ME    : 1  FREG3_GBE   : 1  FREG4_PD    : 0  FREG5       : 0</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.spi_desc" name="chipsec.modules.common.spi_desc" time="0.002991">
+			<pass type="Passed"/>
+			<system-out>[*] FRAP = 0x00004ACF &lt;&lt; SPI Flash Regions Access Permissions Register (SPIBAR + 0x50)
+    [00] BRRA             = CF &lt;&lt; BIOS Region Read Access 
+    [08] BRWA             = 4A &lt;&lt; BIOS Region Write Access 
+    [16] BMRAG            = 0 &lt;&lt; BIOS Master Read Access Grant 
+    [24] BMWAG            = 0 &lt;&lt; BIOS Master Write Access Grant [*] Software access to SPI flash regions: read = 0xCF, write = 0x4A</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.spi_fdopss" name="chipsec.modules.common.spi_fdopss" time="0.003989">
+			<pass type="Passed"/>
+			<system-out>[*] HSFS = 0x3F00E800 &lt;&lt; Hardware Sequencing Flash Status Register (SPIBAR + 0x4)
+    [00] FDONE            = 0 &lt;&lt; Flash Cycle Done 
+    [01] FCERR            = 0 &lt;&lt; Flash Cycle Error 
+    [02] AEL              = 0 &lt;&lt; Access Error Log 
+    [05] SCIP             = 0 &lt;&lt; SPI cycle in progress 
+    [11] WRSDIS           = 1 &lt;&lt; Write status disable 
+    [12] PR34LKD          = 0 &lt;&lt; PRR3 PRR4 Lock-Down 
+    [13] FDOPSS           = 1 &lt;&lt; Flash Descriptor Override Pin-Strap Status 
+    [14] FDV              = 1 &lt;&lt; Flash Descriptor Valid 
+    [15] FLOCKDN          = 1 &lt;&lt; Flash Configuration Lock-Down 
+    [16] FGO              = 0 &lt;&lt; Flash cycle go 
+    [17] FCYCLE           = 0 &lt;&lt; Flash Cycle Type 
+    [21] WET              = 0 &lt;&lt; Write Enable Type 
+    [24] FDBC             = 3F &lt;&lt; Flash Data Byte Count 
+    [31] FSMIE            = 0 &lt;&lt; Flash SPI SMI# Enable </system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.spi_lock" name="chipsec.modules.common.spi_lock" time="0.003988">
+			<pass type="Passed"/>
+			<system-out>[*] HSFS = 0x3F00E800 &lt;&lt; Hardware Sequencing Flash Status Register (SPIBAR + 0x4)
+    [00] FDONE            = 0 &lt;&lt; Flash Cycle Done 
+    [01] FCERR            = 0 &lt;&lt; Flash Cycle Error 
+    [02] AEL              = 0 &lt;&lt; Access Error Log 
+    [05] SCIP             = 0 &lt;&lt; SPI cycle in progress 
+    [11] WRSDIS           = 1 &lt;&lt; Write status disable 
+    [12] PR34LKD          = 0 &lt;&lt; PRR3 PRR4 Lock-Down 
+    [13] FDOPSS           = 1 &lt;&lt; Flash Descriptor Override Pin-Strap Status 
+    [14] FDV              = 1 &lt;&lt; Flash Descriptor Valid 
+    [15] FLOCKDN          = 1 &lt;&lt; Flash Configuration Lock-Down 
+    [16] FGO              = 0 &lt;&lt; Flash cycle go 
+    [17] FCYCLE           = 0 &lt;&lt; Flash Cycle Type 
+    [21] WET              = 0 &lt;&lt; Write Enable Type 
+    [24] FDBC             = 3F &lt;&lt; Flash Data Byte Count 
+    [31] FSMIE            = 0 &lt;&lt; Flash SPI SMI# Enable </system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.cpu.cpu_info" name="chipsec.modules.common.cpu.cpu_info" time="0.017953">
+			<pass type="Information"/>
+			<system-out>[*] Thread 0000[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0001[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0002[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0003[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0004[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0005[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0006[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*][*] Thread 0007[*] Processor: Intel(R) Core(TM) i7-8565U CPU @ 1.80GHz[*]            Family: 06 Model: 8E Stepping: B[*]            Microcode: 000000C6[*]</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.cpu.spectre_v2" name="chipsec.modules.common.cpu.spectre_v2" time="3.004749">
+			<pass type="Failed"/>
+			<system-out>[*] CPUID.7H:EDX[26] = 0 Indirect Branch Restricted Speculation (IBRS) &amp; Predictor Barrier (IBPB)[*] CPUID.7H:EDX[27] = 0 Single Thread Indirect Branch Predictors (STIBP)[*] CPUID.7H:EDX[29] = 0 IA32_ARCH_CAPABILITIESOS may be using software based mitigation (eg. retpoline)</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.secureboot.variables" name="chipsec.modules.common.secureboot.variables" time="0.046860">
+			<pass type="Passed"/>
+			<system-out>[*] Checking protections of UEFI variable 8BE4DF61-93CA-11D2-AA0D-00E098032B8C:SecureBoot[*] Checking protections of UEFI variable 8BE4DF61-93CA-11D2-AA0D-00E098032B8C:SetupMode[*] Checking protections of UEFI variable 8BE4DF61-93CA-11D2-AA0D-00E098032B8C:PK[*] Checking protections of UEFI variable 8BE4DF61-93CA-11D2-AA0D-00E098032B8C:KEK[*] Checking protections of UEFI variable D719B2CB-3D3A-4596-A3BC-DAD00E67656F:db[*] Checking protections of UEFI variable D719B2CB-3D3A-4596-A3BC-DAD00E67656F:dbx[*] Secure Boot appears to be enabled</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.uefi.access_uefispec" name="chipsec.modules.common.uefi.access_uefispec" time="0.085552">
+			<pass type="Passed"/>
+			<system-out>[*] Testing UEFI variables ..[*] Variable SiSetup (NV+BS+RT)[*] Variable LenovoBDG (NV+BS+RT)[*] Variable PciBusSetup (NV+BS+RT)[*] Variable UCR (NV+BS+RT)[*] Variable SPLC (NV+BS+RT)[*] Variable WAND (NV+BS+RT)[*] Variable WRDD (NV+BS+RT)[*] Variable WRDS (NV+BS+RT)[*] Variable BRDS (NV+BS+RT)[*] Variable EWRD (NV+BS+RT)[*] Variable WGDS (NV+BS+RT)[*] Variable SADS (NV+BS+RT)[*] Variable SADS (NV+BS+RT)[*] Variable GPC (NV+BS+RT)[*] Variable GPC (NV+BS+RT)[*] Variable InitSetupVariable (NV+BS+RT)[*] Variable OsProfile (NV+BS+RT)[*] Variable SdevXhciSetup (NV+BS+RT)[*] Variable PbaStatusVar (NV+BS+RT)[*] Variable SMBIOSELOGNUMBER (NV+BS+RT)[*] Variable Tcg2PhysicalPresenceFlags (NV+BS+RT)[*] Variable PhysicalPresenceFlags (NV+BS+RT)[*] Variable SetupHotKey (NV+BS+RT)[*] Variable LnvSysCfgReq (NV+BS+RT)[*] Variable Tcg2PhysicalPresence (NV+BS+RT)[*] Variable LenovoWolInfo (NV+BS+RT)[*] Variable SMBIOSMEMSIZE (NV+BS+RT)[*] Variable LenovoFprData (NV+BS+RT)[*] Variable LenovoAbtStatus (NV+BS+RT)[*] Variable LenovoMfgProductID (NV+BS+RT)[*] Variable LenovoSystemConfig (NV+BS+RT)[*] Variable LWO (NV+BS+RT)[*] Variable LBL (NV+BS+RT+AWS)[*] Variable LBC (NV+BS+RT)[*] Variable LenovoHiddenSetting (NV+BS+RT)[*] Variable MailBoxQ (NV+BS+RT)[*] Variable CapsuleLongModeBuffer (NV+BS+RT)[*] Variable Setup (NV+BS+RT)[*] Variable PchSetup (NV+BS+RT)[*] Variable SaSetup (NV+BS+RT)[*] Variable MeSetupStorage (NV+BS+RT)[*] Variable LastBootOrder (NV+BS+RT)[*] Variable LenovoFunctionConfig (NV+BS+RT)[*] Variable System (NV+BS+RT)[*] Variable SMBIOSELOG000 (NV+BS+RT)[*] Variable LenovoSecurityConfig (NV+BS+RT+AWS)[*] Variable CpuSetup (NV+BS+RT)[*] Variable ESRTPLATFORMENTRY (NV+BS+RT)[*] Variable EPCBIOS (NV+BS+RT)[*] Variable MeSetup (NV+BS+RT)[*] Variable LenovoScratchData (NV+BS+RT)[*] Variable ProtectedBootOptions (NV+BS+RT+AWS)[*] Variable BootOrderDefault (NV+BS+RT+AWS)[*] Variable LenovoConfig (NV+BS+RT)[*] Variable LenovoRuntimeConfig (NV+BS+RT)[*] Variable SetupCpuFeatures (NV+BS+RT)[*] Variable LenovoThermalShutdown (NV+BS+RT)[*] Variable DIAGSPLSHSCRN (BS+RT)[*] Variable SetupMode (BS+RT)[*] Variable SignatureSupport (BS+RT)[*] Variable SecureBoot (BS+RT)[*] Variable certdbv (BS+RT+TBAWS)[*] Variable VendorKeys (BS+RT)[*] Variable SOFTWAREGUARDSTATUS (BS+RT)[*] Variable CpuSetupVolatileData (BS+RT)[*] Variable TbtSetupVolatileData (BS+RT)[*] Variable BootOptionSupport (BS+RT)[*] Variable PlatformLangCodes (BS+RT)[*] Variable EventLog (BS+RT)[*] Variable AbtStatus (BS+RT)[*] Variable ConOutDev (BS+RT)[*] Variable ErrOutDev (BS+RT)[*] Variable ConInDev (BS+RT)[*] Variable lBoot0000 (BS+RT)[*] Variable lBoot0010 (BS+RT)[*] Variable lBoot0011 (BS+RT)[*] Variable lBoot0012 (BS+RT)[*] Variable lBoot0013 (BS+RT)[*] Variable lBoot0014 (BS+RT)[*] Variable lBoot0015 (BS+RT)[*] Variable lBoot0016 (BS+RT)[*] Variable lBoot0017 (BS+RT)[*] Variable lBoot0018 (BS+RT)[*] Variable lBoot0019 (BS+RT)[*] Variable lBoot001A (BS+RT)[*] Variable lBoot001B (BS+RT)[*] Variable lBoot001C (BS+RT)[*] Variable lBoot001D (BS+RT)[*] Variable lBoot001E (BS+RT)[*] Variable lBoot001F (BS+RT)[*] Variable lBoot0020 (BS+RT)[*] Variable lBoot0021 (BS+RT)[*] Variable lBoot0022 (BS+RT)[*] Variable lBoot0023 (BS+RT)[*] Variable lBoot0024 (BS+RT)[*] Variable lBoot0025 (BS+RT)[*] Variable lBoot0026 (BS+RT)[*] Variable lBoot0027 (BS+RT)[*] Variable lBoot0028 (BS+RT)[*] Variable OsIndicationsSupported (BS+RT)[*] Variable BootCurrent (BS+RT)[*] Variable AuthVarKeyDatabase (NV+BS+RT+AWS)[*] Variable certdb (NV+BS+RT+TBAWS)[*] Variable CurrentPolicy (NV+BS+RT+TBAWS)[*] Variable db (NV+BS+RT+TBAWS)[*] Variable KEK (NV+BS+RT+TBAWS)[*] Variable PK (NV+BS+RT+TBAWS)[*] Variable PlatformLang (NV+BS+RT)[*] Variable RstOptaneConfig (NV+BS+RT)[*] Variable VarErrorFlag (NV+BS+RT)[*] Variable BootState (NV+BS+RT)[*] Variable Boot0010 (NV+BS+RT)[*] Variable Boot0011 (NV+BS+RT)[*] Variable Boot0012 (NV+BS+RT)[*] Variable Boot0013 (NV+BS+RT)[*] Variable Boot0014 (NV+BS+RT)[*] Variable Boot0015 (NV+BS+RT)[*] Variable Boot0016 (NV+BS+RT)[*] Variable Boot0017 (NV+BS+RT)[*] Variable Boot0018 (NV+BS+RT)[*] Variable Boot0022 (NV+BS+RT)[*] Variable Boot0023 (NV+BS+RT)[*] Variable Boot0024 (NV+BS+RT)[*] Variable Boot0025 (NV+BS+RT)[*] Variable Boot0026 (NV+BS+RT)[*] Variable Boot0027 (NV+BS+RT)[*] Variable Key0002 (NV+BS+RT)[*] Variable Key0003 (NV+BS+RT)[*] Variable Key0004 (NV+BS+RT)[*] Variable Key0005 (NV+BS+RT)[*] Variable Key0006 (NV+BS+RT)[*] Variable Key0007 (NV+BS+RT)[*] Variable Key0008 (NV+BS+RT)[*] Variable Key0000 (NV+BS+RT)[*] Variable Key0001 (NV+BS+RT)[*] Variable UnlockIDCopy (NV+BS+RT)[*] Variable OfflineUniqueIDEKPub (NV+BS+RT)[*] Variable OfflineUniqueIDEKPubCRC (NV+BS+RT)[*] Variable EPCSW (NV+BS+RT)[*] Variable Boot0019 (NV+BS+RT)[*] Variable Boot001A (NV+BS+RT)[*] Variable Boot001B (NV+BS+RT)[*] Variable Boot001C (NV+BS+RT)[*] Variable Boot001D (NV+BS+RT)[*] Variable Boot001E (NV+BS+RT)[*] Variable Boot001F (NV+BS+RT)[*] Variable Boot0020 (NV+BS+RT)[*] Variable Boot0021 (NV+BS+RT)[*] Variable Boot0000 (NV+BS+RT)[*] Variable BootOrder (NV+BS+RT)[*] Variable Timeout (NV+BS+RT)[*] Variable dbx (NV+BS+RT+TBAWS)[*] Variable LastBootCurrent (NV+BS+RT)[*] Variable OsIndications (NV+BS+RT)[*] Variable MemoryOverwriteRequestControlLock (NV+BS+RT)[*] Variable ConOut (NV+BS+RT)[*] Variable BugCheckProgress (NV+BS+RT)[*] Variable BugCheckCode (NV+BS+RT)[*] Variable BugCheckParameter1 (NV+BS+RT)[*] Variable ConIn (NV+BS+RT)[*] Variable Boot0028 (NV+BS+RT)[*] Variable MTC (NV+BS+RT)[*] Variable MemoryOverwriteRequestControl (NV+BS+RT)[*] Variable LenovoLogging (NV+BS+RT)</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.common.uefi.s3bootscript" name="chipsec.modules.common.uefi.s3bootscript" time="0.040892">
+			<pass type="Warning"/>
+			<system-out>[*] SMRAM: Base = 0x000000006A000000, Limit = 0x000000006AFFFFFF, Size = 0x01000000</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.debugenabled" name="chipsec.modules.debugenabled" time="0.004986">
+			<pass type="Passed"/>
+			<system-out>
+[*] Checking IA32_DEBUG_INTERFACE msr status
+[*] Checking DCI register status
+[*] Module Result</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.memconfig" name="chipsec.modules.memconfig" time="0.003989">
+			<pass type="Passed"/>
+			<system-out/>
+		</testcase>
+		<testcase classname="chipsec.modules.remap" name="chipsec.modules.remap" time="0.007979">
+			<pass type="Passed"/>
+			<system-out>[*] Registers:[*]   TOUUD     : 0x000000088E800001[*]   REMAPLIMIT: 0x000000088E700001[*]   REMAPBASE : 0x00000007FE000001[*]   TOLUD     : 0x6F800001[*]   TSEGMB    : 0x6A000001
+[*] Memory Map:[*]   Top Of Upper Memory: 0x000000088E800000[*]   Remap Limit Address: 0x000000088E7FFFFF[*]   Remap Base Address : 0x00000007FE000000[*]   4GB                : 0x0000000100000000[*]   Top Of Low Memory  : 0x000000006F800000[*]   TSEG (SMRAM) Base  : 0x000000006A000000
+[*] checking memory remap configuration..[*]   Memory Remap is enabled[*] checking if memory remap configuration is locked..</system-out>
+		</testcase>
+		<testcase classname="chipsec.modules.smm_dma" name="chipsec.modules.smm_dma" time="0.003990">
+			<pass type="Passed"/>
+			<system-out>[*] TSEG      : 0x000000006A000000 - 0x000000006AFFFFFF (size = 0x01000000)[*] SMRR range: 0x000000006A000000 - 0x000000006AFFFFFF (size = 0x01000000)
+[*] checking TSEG range configuration..</system-out>
+		</testcase>
+	</testsuite>
+</testsuites>
