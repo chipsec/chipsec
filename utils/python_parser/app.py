@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
 from logging import getLogger
 from chipsec_parser import *
