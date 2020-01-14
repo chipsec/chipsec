@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -75,7 +75,7 @@ class SPICommand(BaseCommand):
         spi_op = self.argv[2]
 
         if spi_op in ['read', 'write','erase'] and len(self.argv) < 4:
-             print SPICommand.__doc__
+             print (SPICommand.__doc__)
              return
         t = time.time()
 
@@ -92,12 +92,12 @@ class SPICommand(BaseCommand):
             if 5 == len(self.argv):
                 filename = self.argv[4]
                 if not os.path.exists(filename):
-                    self.logger.error( "File %s doesn't exist" % filename)
+                    self.logger.error( "File {} doesn't exist".format(filename))
                     return
             else:
-                 print SPICommand.__doc__
+                 print (SPICommand.__doc__)
                  return
-            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{:64}'".format(spi_fla, filename) )
+            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{:64s}'".format(spi_fla, filename) )
 
             ok = _spi.write_spi_from_file( spi_fla, filename )
             if ok: self.logger.log( "[CHIPSEC] completed SPI flash memory write" )
@@ -108,14 +108,14 @@ class SPICommand(BaseCommand):
                 length = int(self.argv[4],16)
             else:
                 length = 0x4
-            self.logger.log( "[CHIPSEC] reading 0x{:X} bytes from SPI Flash starting at FLA = 0x{:X}".format(length, spi_fla) )
+            self.logger.log( "[CHIPSEC] reading 0x{:x} bytes from SPI Flash starting at FLA = 0x{:X}".format(length, spi_fla) )
             self.logger.log( "[CHIPSEC] {}".format(_msg) )
             out_file = None
             if 6 == len(self.argv):
                 if os.path.exists(self.argv[5]):
                     out_file = self.argv[5]
                 else:
-                    self.logger.error( "File %s doesn't exist" % self.argv[5])
+                    self.logger.error( "File {} doesn't exist".format(self.argv[5]))
                     return
             buf = _spi.read_spi_to_file( spi_fla, length, out_file )
             if (buf is None): self.logger.error( "SPI flash read didn't return any data (turn on VERBOSE)" )
@@ -165,7 +165,7 @@ class SPICommand(BaseCommand):
                     else:
                         self.logger.log( ' JEDEC ID command is not supported ')
                 else:
-                    print SPICommand.__doc__
+                    print (SPICommand.__doc__)
                     return
         elif ( 'sfdp' == spi_op):
             _spi.get_SPI_SFDP()
