@@ -47,7 +47,7 @@
 import os
 import sys
 
-print 'Python', (sys.version)
+print('Python', sys.version)
 
 import py2exe
 WIN_DRIVER_INSTALL_PATH = "chipsec/helper/win"
@@ -63,10 +63,10 @@ cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
 win_7_amd64 = os.path.join(bin_dir,'win7-amd64');
 
 
-print os.getcwd()
+print(os.getcwd())
 os.chdir( tool_dir )
 sys.path.append(tool_dir)
-print os.getcwd()
+print(os.getcwd())
 
 
 data_files = [
@@ -86,7 +86,7 @@ if os.path.exists(VERSION_FILE):
     data_files.append(('.',['VERSION']))
     with open(VERSION_FILE, "r") as verFile:
         version = verFile.read()
-print "VERSION: {}".format(version) 
+print("VERSION: {}".format(version))
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
@@ -98,7 +98,7 @@ for current, dirs, files in os.walk(tool_dir ):
             pkg = current.replace(tool_dir+os.path.sep,"")
             pkg = pkg.replace(os.path.sep,'.')
             mypackages.append(pkg)
-            print pkg
+            print(pkg)
 
 from distutils.core import setup
 
