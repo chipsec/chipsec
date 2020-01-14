@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -55,7 +55,6 @@ usage:
 import struct
 import sys
 import time
-import xml.etree.ElementTree as ET
 
 import chipsec.defines
 from chipsec.file import *
@@ -176,10 +175,6 @@ class SpiAccessError (RuntimeError):
 
 
 class SPI(hal_base.HALBase):
-    # XML device definition files stuff
-    XML_ROOT_NAME         = "SFDP"
-    XML_COMMAND_NODE_TAG  = "register"
-    XML_FIELD_NODE_TAG    = "field"
 
     def __init__(self, cs):
         super(SPI, self).__init__(cs)
@@ -699,94 +694,39 @@ class SPI(hal_base.HALBase):
     #
     # SPI SFDP operations
     #
-    def parse_dev_file(self, file_path):
-        return ET.parse(file_path)
-
-    def check_def_file(self, filename):
-        base_name  = os.path.basename(filename)
-        full_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg', base_name )
-
-        if not os.path.exists(full_path):
-            self.logger.error("The file %s does not exist!" % base_name)
-            return False
-        else:
-            if logger().VERBOSE: self.logger.log("checking file {0} ...".format(base_name))
-            try:
-                tree = self.parse_dev_file(full_path)
-            except:
-                logger().log( "Failed parsing the sfdp.xml file provided")
-                return False
-            if tree.getroot().tag == self.XML_ROOT_NAME :
-                if logger().VERBOSE: self.logger.log("file {0} looks OK ...".format(base_name))
-                return full_path
-            else:
-                self.logger.error("The file {0} has an inappropriate structure!".format(base_name))
-                return False
-
-    def get_formated_list_str(self, _list):
-        return "[ " + ", ".join("0x{0:02x}".format(int(i)) for i in _list) + " ]"
-
-    def show_command_result(self, command, result):
-        self.logger.log("    name: {0:<20} reg_value: {1} : {2:s}".format(
-            command.attrib["name"],
-            self.get_formated_list_str(result),
-            command.attrib["desc"]))
-
-        # look if command in XML dev file has some <field> childs
-        for child in command:
-            if child.tag and child.tag == self.XML_FIELD_NODE_TAG:
-                # mask all found bit fields...
-                byte   = int(result[0])
-                bitno  = int(child.attrib["bit"])
-                length = int(child.attrib["size"])
-                mask   = (2 ** length) - 1
-                bitval = (byte & (mask << bitno)) >> bitno
-
-                # ...and self.logger.log them
-                self.logger.log("\tfield: {0:<25} value: {1:<12s} \t: {2:s}".format(
-                    child.attrib["name"],
-                    "0x{0:02x}".format(bitval),
-                    #"0b{0:0{width}b}".format(bitval, width=length),
-                    child.attrib["desc"]))
+    def ptmesg(self, offset):
+        self.spi_reg_write(self.bios_ptinx, offset)
+        self.spi_reg_read(self.bios_ptinx)
+        return self.spi_reg_read(self.bios_ptdata)
 
     def get_SPI_SFDP(self):
         ret = False
         for component in range(0,2):
-            logger().log( "Scanning for Flash device %d" % (component+1))
-            offset = 0x0000
-            offset = offset | (component << 14)
-            self.spi_reg_write(self.bios_ptinx, offset)
-            self.spi_reg_read(self.bios_ptinx)
-            sfdp_signature = self.spi_reg_read(self.bios_ptdata)
+            logger().log( "Scanning for Flash device {:d}".format(component+1))
+            offset = 0x0000 | (component << 14)
+            sfdp_signature = self.ptmesg(offset)
             if sfdp_signature == SFDP_HEADER:
-                logger().log( "  * Found valid SFDP header for Flash device %d" % (component+1))
+                logger().log( "  * Found valid SFDP header for Flash device {:d}".format(component+1))
                 ret = True
             else:
-                logger().log ( "  * Didn't find a valid SFDP header for Flash device %d" % (component+1))
+                logger().log ( "  * Didn't find a valid SFDP header for Flash device {:d}".format(component+1))
                 continue
             # Increment offset to read second dword of SFDP header structure
-            offset += 0x4
-            self.spi_reg_write(self.bios_ptinx, offset)
-            self.spi_reg_read(self.bios_ptinx)
-            sfdp_data = self.spi_reg_read(self.bios_ptdata)
+            sfdp_data = self.ptmesg(offset+0x4)
             sfdp_minor_version = sfdp_data & 0xFF
             sfdp_major_version = ( sfdp_data  >> 8) & 0xFF
-            logger().log( "    SFDP version number: %s.%s" % (sfdp_major_version, sfdp_minor_version))
+            logger().log( "    SFDP version number: {}.{}".format(sfdp_major_version, sfdp_minor_version))
             num_of_param_headers = ((sfdp_data >> 16) & 0xFF) +1
-            logger().log( "    Number of parameter headers: %d" % num_of_param_headers)
-            offset = 0x0000
-            offset = offset | (component << 14)
+            logger().log( "    Number of parameter headers: {:d}".format(num_of_param_headers))
             # Set offset to read 1st Parameter Table in the SFDP header structure
             offset = offset | 0x1000
-            self.spi_reg_write(self.bios_ptinx, offset)
-            self.spi_reg_read(self.bios_ptinx)
-            parameter_1 = self.spi_reg_read(self.bios_ptdata)
+            parameter_1 = self.ptmesg(offset)
             param1_minor_version = (parameter_1 >> 8) & 0xFF
             param1_major_version = (parameter_1 >> 16) & 0xFF
             param1_length = (parameter_1 >> 24) & 0xFF
             logger().log( "  * Parameter Header 1 (JEDEC)" )
-            logger().log( "    ** Parameter version number: %s.%s" % (param1_major_version, param1_minor_version))
-            logger().log( "    ** Parameter length in double words: %s" % hex(param1_length))
+            logger().log( "    ** Parameter version number: {}.{}".format(param1_major_version, param1_minor_version))
+            logger().log( "    ** Parameter length in double words: {}".format(hex(param1_length)))
             if (num_of_param_headers > 1) and self.cs.register_has_field( 'HSFS', 'FCYCLE' ):
                 self.check_hardware_sequencing()
                 self.spi_reg_write( self.fdata12_off, 0x00000000 )
@@ -800,7 +740,7 @@ class SPI(hal_base.HALBase):
                 pTable_length = []
                 # Calculate which fdata_offset registers to read, based on number of parameter headers present
                 for i in range(1,num_of_param_headers):
-                    logger().log( "  * Parameter Header:%d" % (i+1) )
+                    logger().log( "  * Parameter Header:{:d}".format(i+1) )
                     data_reg_1 = "self.fdata" + str(2+(2*i)) + "_off"
                     data_reg_2 = "self.fdata" + str(2+(2*i)+1) + "_off"
                     data_dword_1 = self.spi_reg_read( eval(data_reg_1))
@@ -810,33 +750,22 @@ class SPI(hal_base.HALBase):
                     param_major_version = (data_dword_1 >> 16) & 0xFF
                     param_length = (data_dword_1 >> 24) & 0xFF
                     param_table_pointer = (data_dword_2 & 0x00FFFFFF)
-                    logger().log( "    ** Parameter version number: %s.%s" % (param_major_version, param_minor_version))
-                    logger().log( "    ** Pramaeter length in double words: %s" % hex(param_length))
-                    logger().log( "    ** Parameter ID: %s" % hex(id_manuf))
-                    logger().log( "    ** Parameter Table Pointer(byte address): %s " % hex(param_table_pointer))
+                    logger().log( "    ** Parameter version number:{}.{}".format(param_major_version, param_minor_version))
+                    logger().log( "    ** Pramaeter length in double words: {}".format(hex(param_length)))
+                    logger().log( "    ** Parameter ID: {}".format(hex(id_manuf)))
+                    logger().log( "    ** Parameter Table Pointer(byte address): {} ".format(hex(param_table_pointer)))
                     pTable_offset_list.append(param_table_pointer)
                     pTable_length.append(param_length)
-            offset = 0
-            offset = offset | (component << 14)
+            offset = 0x0000 | (component << 14)
             # Set offset to read 1st Parameter table ( JEDEC Basic Flash Parameter Table) content and Parse it
             offset = offset | 0x2000
             logger().log( "                                ")
             logger().log( "  * 1'st Parameter Table Content ")
-            self.dev_file = self.check_def_file("sfdp.xml")
-            if self.dev_file is False:
-                continue
-            tree = self.parse_dev_file(self.dev_file)
-            root = tree.getroot()
-            count = 0
-            for child in root:
-                if ( count >= param1_length):
-                    break
-                self.spi_reg_write(self.bios_ptinx, offset)
-                self.spi_reg_read(self.bios_ptinx)
-                sfdp_data = self.spi_reg_read(self.bios_ptdata)
-                count +=1
+            for count in range(1,param1_length+1):
+                sfdp_data = self.ptmesg(offset)
                 offset +=4
-                self.show_command_result(child, [sfdp_data])
+                self.cs.print_register("DWORD{}".format(count), sfdp_data)
+        return ret
 
     #
     # SPI JEDEC ID operations
