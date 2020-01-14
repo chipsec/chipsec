@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -1095,7 +1095,9 @@ class Chipset:
         elif RegisterType.IOBAR == rtype:
             reg_str = "[*] {} = {} << {} (I/O {} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
         elif RegisterType.MSGBUS == rtype or RegisterType.MM_MSGBUS == rtype:
-            reg_str = "[*] {} = {} << {} (msgbus port 0x{:X}, off 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
+            reg_str = "[*] %s = %s << %s (msgbus port 0x%X, off 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
+        else:
+            reg_str = "[*] {} = {} << {}".format(reg_name, reg_val_str, reg['desc'])
 
         reg_str += self._register_fields_str(reg, reg_val)
         logger().log( reg_str )
