@@ -77,7 +77,6 @@ data_files = [
 for current, dirs, files in os.walk(cfg_dir ):
     for file in files:
         if file.endswith('.xml') :
-            #xf = os.path.join('chipsec','cfg') ,os.path.join(cfg_dir,file)
             xf = 'chipsec/cfg' ,['chipsec/cfg/{}'.format(file)]
             data_files.append( xf ) 
 
@@ -91,7 +90,6 @@ print("VERSION: {}".format(version))
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
     if current.startswith(os.path.join(tool_dir,'build')): 
-        #print "*********** skipped: {}".format(current)
         continue
     for file in files:
         if file == "__init__.py":
@@ -110,13 +108,10 @@ setup(
         description     = 'CHIPSEC: Platform Security Assessment Framework',
         version         = version,
         console         = [ 'chipsec_main.py', 'chipsec_util.py' ],
-        #zipfile         = None,
         data_files      =  data_files,
         options         = {
                             'build' : { 'build_base': build_dir },
                             'py2exe': {
-                                        #"bundle_files": 1,
-                                        #'includes'    : includes,
                                         'dist_dir'    : win_7_x86,
                                         'packages'    : mypackages,
                                         'compressed'  : True
