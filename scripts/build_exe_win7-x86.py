@@ -39,6 +39,7 @@
 # To build Windows executable chipsec.exe using py2exe:
 #
 # 1. Install py2exe package from http://www.py2exe.org
+#    * for Python 3 please use https://github.com/albertosottile/py2exe instead
 # 2. run "python build_exe_<platform>.py py2exe"
 # 3. chipsec.exe and all needed libraries will be created in "./bin/<platform>"
 #
