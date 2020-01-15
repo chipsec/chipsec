@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -31,10 +31,9 @@ Use '-a modify' option for the module to also try to write/corrupt the variables
 """
 
 
-from chipsec.module_common import *
-
-import chipsec.file
-from chipsec.hal.uefi      import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, OPT_MODIFY
+from chipsec.hal.uefi import UEFI, SECURE_BOOT_VARIABLES, IS_VARIABLE_ATTRIBUTE, EFI_VAR_NAME_SecureBoot, SECURE_BOOT_KEY_VARIABLES
+from chipsec.hal.uefi import StatusCode, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 
 # ############################################################
 # SPECIFY PLATFORMS THIS MODULE IS APPLICABLE TO

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,7 +28,8 @@ This vulnerability (not setting FLOCKDN) is also checked by other tools, includi
 This module checks that the SPI Flash Controller configuration is locked.
 
 """
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+
 TAGS = [MTAG_BIOS]
 
 class spi_lock(BaseModule):
@@ -66,7 +67,7 @@ class spi_lock(BaseModule):
         elif res == ModuleResult.PASSED:
             self.logger.log_passed_check("SPI Flash Controller locked correctly.")
         else:
-            self.logger.log_warning_check("Unable to determine if SPI Flash Controller is locked correctly.")
+            self.logger.log_warn_check("Unable to determine if SPI Flash Controller is locked correctly.")
 
         return res
 

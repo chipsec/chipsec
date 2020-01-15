@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -36,8 +36,8 @@ Usage:
 import random
 import time
 
-from chipsec.module_common import *
-import chipsec.hal.vmm
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.hal.vmm import VMM
 
 DEFAULT_VECTOR_MAXVAL     = 0xFF
 
@@ -56,7 +56,7 @@ class hypercallfuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.vmm = chipsec.hal.vmm.VMM( self.cs )
+        self.vmm = VMM( self.cs )
 
         self.random_order = True
         self.gprs         = GPRS
@@ -153,4 +153,4 @@ class hypercallfuzz(BaseModule):
         self.logger.log( "    Iterations         : {:d}\n".format(self.iterations) )
 
         return self.fuzz_generic_hypercalls()
-        
+

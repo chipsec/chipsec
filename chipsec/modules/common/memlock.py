@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2019, Intel Corporation
+#Copyright (c) 2019-2020, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -31,9 +31,8 @@ MSR_LT_LOCK_MEMORY
 
 """
 
-from chipsec.module_common import *
-import chipsec.chipset
-import chipsec.defines
+from chipsec.module_common import BaseModule, ModuleResult
+
 _MODULE_NAME = 'memlock'
 
 ########################################################################################################
@@ -42,7 +41,7 @@ _MODULE_NAME = 'memlock'
 #
 ########################################################################################################
 
-class memlock(chipsec.module_common.BaseModule):
+class memlock(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
@@ -51,7 +50,7 @@ class memlock(chipsec.module_common.BaseModule):
     def is_supported(self):
         # Workaround for Atom based processors.  Accessing this MSR on these systems
         # causes a GP fault and can't be caught in UEFI Shell.
-        if self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM:
+        if not self.cs.is_atom():
             if self.cs.is_register_defined( 'MSR_LT_LOCK_MEMORY' ):
                 return self.cs.register_has_field( 'MSR_LT_LOCK_MEMORY', 'LT_LOCK' )
         return False

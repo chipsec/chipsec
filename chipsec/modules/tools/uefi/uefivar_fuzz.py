@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -79,10 +79,9 @@ from time import time
 from uuid import uuid4, UUID
 import struct
 
-from chipsec.module_common import *
-from chipsec.file          import *
-from chipsec.hal.uefi      import *
-import chipsec.chipset
+from chipsec.module_common import BaseModule, ModuleResult, cs_input
+from chipsec.file import write_file
+from chipsec.hal.uefi import UEFI
 
 from chipsec.fuzzing import primitives as prim
 

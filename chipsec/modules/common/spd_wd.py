@@ -1,7 +1,7 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2019, Eclypsium, Inc.
-# Copyright (c) 2019, Intel Corporation
-# 
+# Copyright (c) 2019-2020, Intel Corporation
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
@@ -40,8 +40,9 @@ Hardware registers used:
     SMBUS_HCFG
 """
 
-from chipsec.module_common import *
-from chipsec.hal import smbus, spd
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.hal.smbus import SMBus
+from chipsec.hal.spd import SPD
 
 class spd_wd(BaseModule):
 
@@ -55,8 +56,8 @@ class spd_wd(BaseModule):
         self.logger.start_test( "SPD Write Disable" )
 
         try:
-            _smbus = smbus.SMBus( self.cs )
-            _spd   = spd.SPD( _smbus )
+            _smbus = SMBus( self.cs )
+            _spd   = SPD( _smbus )
         except BaseException as msg:
             self.logger.error( msg )
             self.res = ModuleResult.ERROR

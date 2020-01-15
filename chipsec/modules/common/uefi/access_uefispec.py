@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2020, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -26,13 +26,12 @@ Checks protection of UEFI variables defined in the UEFI spec to have certain per
 Returns failure if variable attributes are not as defined in `table 11 "Global Variables" <http://uefi.org/>`_ of the UEFI spec.
 """
 
-from chipsec.module_common import *
-from chipsec.file          import *
-from chipsec.hal.uefi      import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
+from chipsec.hal.uefi import UEFI, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
+from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
 
-TAGS = [MTAG_BIOS]
-TAGS += [MTAG_SECUREBOOT]
 
+TAGS = [MTAG_BIOS, MTAG_SECUREBOOT]
 
 class access_uefispec(BaseModule):
 
