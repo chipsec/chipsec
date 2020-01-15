@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -26,7 +26,8 @@
 Check Memory Remapping Configuration
 """
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG, MTAG_SMM
+from chipsec.defines import BIT32, ALIGNED_1MB
 
 _MODULE_NAME = 'remap'
 
@@ -85,7 +86,7 @@ class remap(BaseModule):
         self.logger.log( "[*]   Top Of Upper Memory: 0x{:016X}".format(touud) )
         self.logger.log( "[*]   Remap Limit Address: 0x{:016X}".format(remaplimit|0xFFFFF) )
         self.logger.log( "[*]   Remap Base Address : 0x{:016X}".format(remapbase) )
-        self.logger.log( "[*]   4GB                : 0x{:016X}".format(chipsec.defines.BIT32) )
+        self.logger.log( "[*]   4GB                : 0x{:016X}".format(BIT32) )
         self.logger.log( "[*]   Top Of Low Memory  : 0x{:016X}".format(tolud) )
         self.logger.log( "[*]   TSEG (SMRAM) Base  : 0x{:016X}\n".format(tsegmb) )
 
@@ -102,10 +103,10 @@ class remap(BaseModule):
             if ok: self.logger.log_good( "  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD" )
             else:  self.logger.log_bad( "  Remap window configuration is not correct" )
 
-        ok = (0 == tolud & chipsec.defines.ALIGNED_1MB)     and \
-             (0 == touud & chipsec.defines.ALIGNED_1MB)     and \
-             (0 == remapbase & chipsec.defines.ALIGNED_1MB) and \
-             (0 == remaplimit & chipsec.defines.ALIGNED_1MB)
+        ok = (0 == tolud & ALIGNED_1MB)     and \
+             (0 == touud & ALIGNED_1MB)     and \
+             (0 == remapbase & ALIGNED_1MB) and \
+             (0 == remaplimit & ALIGNED_1MB)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good( "  All addresses are 1MB aligned" )
         else:  self.logger.log_bad( "  Not all addresses are 1MB aligned" )

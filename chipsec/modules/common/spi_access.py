@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -30,15 +30,15 @@ Checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
-TAGS = [MTAG_BIOS]
+from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
 
-from chipsec.hal import spi
+TAGS = [MTAG_BIOS]
 
 class spi_access(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.spi    = spi.SPI( self.cs )
+        self.spi    = SPI( self.cs )
 
     def is_supported(self):
         return True
@@ -64,23 +64,23 @@ class spi_access(BaseModule):
             self.logger.log("[*] Flash Descriptor Valid bit is not set")
 
         # CPU/Software access to Platform Data region (platform specific)
-        if brwa & (1 << spi.PLATFORM_DATA):
+        if brwa & (1 << PLATFORM_DATA):
             self.logger.log("[*] Software has write access to Platform Data region in SPI flash (it's platform specific)")
 
         # Warnings
         # CPU/Software access to GBe region
-        if brwa & (1 << spi.GBE):
+        if brwa & (1 << GBE):
             res = ModuleResult.WARNING
             self.logger.log_warning("Software has write access to GBe region in SPI flash")
 
         # Failures
         # CPU/Software access to Flash Descriptor region (Read Only)
-        if brwa & (1 << spi.FLASH_DESCRIPTOR):
+        if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 
         # CPU/Software access to Intel ME region (Read Only)
-        if brwa & (1 << spi.ME):
+        if brwa & (1 << ME):
             res = ModuleResult.FAILED
             self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
 

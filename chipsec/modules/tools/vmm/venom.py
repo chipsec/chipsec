@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,7 +28,7 @@ Module is based on PoC by Marcus Meissner (https://marc.info/?l=oss-security&m=1
    ``chipsec_main.py -i -m tools.vmm.venom``
 """
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule
 
 _MODULE_NAME = 'venom'
 

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -26,10 +26,10 @@ Checks for BIOS Interface Lock including Top Swap Mode
 `BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ by Bing Sun
 """
 
-from chipsec.module_common import *
-TAGS = [chipsec.module_common.MTAG_BIOS]
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+TAGS = [MTAG_BIOS]
 
-class bios_ts(chipsec.module_common.BaseModule):
+class bios_ts(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
 
