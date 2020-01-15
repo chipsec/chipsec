@@ -60,6 +60,7 @@ bin_dir = os.path.join(root_dir,"bin")
 source_dir = os.path.join(root_dir,"source")
 tool_dir   = root_dir
 cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
+version_file = os.path.join(root_dir, "chipsec", VERSION_FILE)
 
 win_7_amd64 = os.path.join(bin_dir,'win7-amd64');
 
@@ -82,9 +83,9 @@ for current, dirs, files in os.walk(cfg_dir ):
             data_files.append( xf ) 
 
 version=""
-if os.path.exists(VERSION_FILE):
-    data_files.append(('.',['VERSION']))
-    with open(VERSION_FILE, "r") as verFile:
+if os.path.exists(version_file):
+    data_files.append(('.',[version_file]))
+    with open(version_file, "r") as verFile:
         version = verFile.read()
 print("VERSION: {}".format(version))
 
