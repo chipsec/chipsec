@@ -100,6 +100,10 @@ for current, dirs, files in os.walk(tool_dir ):
             mypackages.append(pkg)
             print(pkg)
 
+# Don't rely on py2exe to create the dist dir
+if not os.path.exists(win_7_x86):
+    os.makedirs(win_7_x86)
+
 from distutils.core import setup
 
 
