@@ -1,7 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-#Copyright (c) 2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -99,14 +98,13 @@ examples_str = """  Examples:
 
 """
 
+import struct
 
-from chipsec.module_common import *
-
-from chipsec.hal.msr import *
-import chipsec.hal.uefi
-import chipsec.hal.uefi_common
-import chipsec.hal.uefi_platform
-from chipsec.hal.physmem import *
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.logger import print_buffer
+from chipsec.hal.uefi import UEFI
+from chipsec.hal.uefi_common import S3BootScriptOpcode, script_width_values, script_width_formats, op_io_pci_mem, op_dispatch
+from chipsec.hal.uefi_platform import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
 
 ########################################################################################################
 #
@@ -115,12 +113,12 @@ from chipsec.hal.physmem import *
 ########################################################################################################
 
 cmd2opcode = {
-'pci_wr' : chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE, 
-'mmio_wr': chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE,
-'io_wr'  : chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE,
-'pci_rw' : chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE, 
-'mmio_rw': chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE,
-'io_rw'  : chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE
+'pci_wr' : S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE,
+'mmio_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE,
+'io_wr'  : S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE,
+'pci_rw' : S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE,
+'mmio_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE,
+'io_rw'  : S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE
 
 }
 
@@ -132,7 +130,7 @@ class s3script_modify(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.logger.HAL = True
-        self._uefi = chipsec.hal.uefi.UEFI( self.cs )
+        self._uefi = UEFI( self.cs )
         self.bootscript_PAs = None
         self.parsed_scripts = None
 
@@ -176,14 +174,14 @@ class s3script_modify(BaseModule):
                     self.logger.log( "[*] Original entry:" )
                     print_buffer( orig_entry_buf )
 
-                    if chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == opcode or \
-                       chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == opcode or \
-                       chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE         == opcode:
+                    if S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == opcode or \
+                       S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == opcode or \
+                       S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE         == opcode:
                         e.decoded_opcode.values[0] = new_value
                     else:
                         e.decoded_opcode.value = new_value
 
-                    entry_buf = chipsec.hal.uefi_platform.encode_s3bootscript_entry( e )
+                    entry_buf = encode_s3bootscript_entry( e )
                     self.cs.mem.write_physical_mem( pa, e.length, entry_buf )
 
                     new_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
@@ -212,7 +210,7 @@ class s3script_modify(BaseModule):
             self.logger.log( "[*] Searching the script at 0x{:016X} for DISPATCH opcodes..".format(bootscript_pa) )
             for e in parsed_scripts[ bootscript_pa ]:
                 if e.decoded_opcode is not None and \
-                   chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == e.decoded_opcode.opcode:
+                   S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == e.decoded_opcode.opcode:
 
                     self.logger.log_good( "Found DISPATCH opcode at offset 0x{:04X}".format(e.offset_in_script) )
                     self.logger.log( e )
@@ -224,7 +222,7 @@ class s3script_modify(BaseModule):
                     print_buffer( orig_entry_buf )
 
                     e.decoded_opcode.entrypoint = new_entrypoint
-                    entry_buf = chipsec.hal.uefi_platform.encode_s3bootscript_entry( e )
+                    entry_buf = encode_s3bootscript_entry( e )
                     self.cs.mem.write_physical_mem( pa, e.length, entry_buf )
 
                     new_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
@@ -247,7 +245,7 @@ class s3script_modify(BaseModule):
             self.logger.log( "[*] Looking for DISPATCH opcode in the script at 0x{:016X}..".format(script_pa) )
             for e in parsed_scripts[ script_pa ]:
                 if e.decoded_opcode is not None and \
-                   chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == e.decoded_opcode.opcode:
+                   S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == e.decoded_opcode.opcode:
                     ep_pa = e.decoded_opcode.entrypoint
                     self.logger.log_good( "Found DISPATCH opcode at offset 0x{:04X} with entry-point 0x{:016X}".format(e.offset_in_script,ep_pa) )
                     self.logger.log( e )
@@ -281,10 +279,10 @@ class s3script_modify(BaseModule):
             return False 
         for bootscript_pa in bootscript_PAs:
             if (bootscript_pa == 0): continue
-            self.logger.log( "[*] Looking for MEM_WRITE opcode in the script at 0x{:016X}..".formatbootscript_pa )
+            self.logger.log( "[*] Looking for MEM_WRITE opcode in the script at 0x{:016X}..".format(bootscript_pa) )
             for e in parsed_scripts[ bootscript_pa ]:
                 if e.decoded_opcode is not None and \
-                   chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == e.decoded_opcode.opcode:
+                   S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == e.decoded_opcode.opcode:
 
                     self.logger.log_good( "Found opcode at offset 0x{:X}".format(e.offset_in_script) )
                     self.logger.log( e )
@@ -297,7 +295,7 @@ class s3script_modify(BaseModule):
 
                     e.decoded_opcode.address = address
                     e.decoded_opcode.values[0] = new_value
-                    entry_buf = chipsec.hal.uefi_platform.encode_s3bootscript_entry( e )
+                    entry_buf = encode_s3bootscript_entry( e )
                     self.cs.mem.write_physical_mem( pa, e.length, entry_buf )
 
                     new_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
@@ -306,26 +304,26 @@ class s3script_modify(BaseModule):
                     self.logger.log('After sleep/resume, read address 0x{:08X} and look for value 0x{:08X}'.format(address, new_value))
                     return True
 
-        self.logger.log_bad( "Did not find required 0x{:X} opcode in the script".format(opcode) )
+        self.logger.log_bad( "Did not find required 0x{:X} opcode in the script".format(S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE) )
         return False
 
     def modify_s3_add(self, new_opcode):
         e_index = None
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
-        if parsed_scripts is None: 
+        if parsed_scripts is None:
             self.logger.log_bad("Did not find boot script.")
             return False 
         for bootscript_pa in bootscript_PAs:
             if (bootscript_pa == 0): continue
             script_buffer = self.cs.mem.read_physical_mem( bootscript_pa, 4 )
-            script_type, hdr_len = chipsec.hal.uefi_platform.id_s3bootscript_type(script_buffer, False)
+            script_type, hdr_len = id_s3bootscript_type(script_buffer, False)
             self.logger.log( "[*] S3 boot script type: 0x{:0X}".format(script_type) )
 
             self.logger.log( "[*] Looking for TERMINATE opcode in the script at 0x{:016X}..".format(bootscript_pa) )
             for e in parsed_scripts[ bootscript_pa ]:
                 if e.index is not None and e.index != -1: e_index = e.index + 1
 
-                if e.decoded_opcode is not None and chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == e.decoded_opcode.opcode:                  
+                if e.decoded_opcode is not None and S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE == e.decoded_opcode.opcode:
                     self.logger.log_good( "Found TERMINATE opcode at offset 0x{:X}".format(e.offset_in_script) )
                     self.logger.log( e )
                     pa = bootscript_pa + e.offset_in_script
@@ -335,7 +333,7 @@ class s3script_modify(BaseModule):
                     self.logger.log( "[*] New S3 boot script opcode:" )
                     self.logger.log( new_opcode )
                     self.logger.log( "[*] Adding new opcode entry at address 0x{:016X}..".format(pa) )
-                    new_entry = chipsec.hal.uefi_platform.create_s3bootscript_entry_buffer( script_type, new_opcode, e_index )
+                    new_entry = create_s3bootscript_entry_buffer( script_type, new_opcode, e_index )
                     print_buffer( new_entry )
 
                     self.cs.mem.write_physical_mem( pa, len(new_entry), new_entry )
@@ -383,12 +381,12 @@ class s3script_modify(BaseModule):
                 address    = int(module_argv[2],16)
                 value      = int(module_argv[3],16)
                 width      = int(module_argv[4],16)
-                width_val  = chipsec.hal.uefi_common.script_width_values[width]
-                value_buff = struct.pack("<{}".format(chipsec.hal.uefi_common.script_width_formats[width_val]), value)
-                if ( chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == cmd2opcode[scmd]
-                  or chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == cmd2opcode[scmd]
-                  or chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == cmd2opcode[scmd]):
-                    new_opcode = chipsec.hal.uefi_common.op_io_pci_mem( cmd2opcode[scmd], None, width_val, address, 0, 1, value_buff, None, None )
+                width_val  = script_width_values[width]
+                value_buff = struct.pack("<{}".format(script_width_formats[width_val]), value)
+                if ( S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == cmd2opcode[scmd]
+                  or S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == cmd2opcode[scmd]
+                  or S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == cmd2opcode[scmd]):
+                    new_opcode = op_io_pci_mem( cmd2opcode[scmd], None, width_val, address, 0, 1, value_buff, None, None )
                 else:
                     self.logger.error( "Unsupported opcode: {}".format(scmd) )
                     self.logger.log( examples_str )
@@ -400,7 +398,7 @@ class s3script_modify(BaseModule):
                     self.cs.mem.write_physical_mem( entrypoint, len(self.DISPATCH_ENTRYPOINT_INSTR), self.DISPATCH_ENTRYPOINT_INSTR )
                 else:
                     entrypoint = int(module_argv[2],16)
-                new_opcode = chipsec.hal.uefi_common.op_dispatch( chipsec.hal.uefi_common.S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE, None, entrypoint )
+                new_opcode = op_dispatch( S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE, None, entrypoint )
             else:
                 self.logger.error( "Unrecognized opcode: {}".format(scmd) )
                 self.logger.log( examples_str )

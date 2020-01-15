@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -67,9 +67,12 @@ Where
 
 """
 
-from chipsec.module_common import *
-from chipsec.file import *
+import struct
+import os
 
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.file import write_file
+from chipsec.logger import print_buffer
 from chipsec.hal.interrupts import Interrupts
 
 #logger.VERBOSE = False
@@ -197,7 +200,7 @@ class smm_ptr(BaseModule):
 
         if self.logger.VERBOSE:
              self.logger.log( "filling in contents at PA 0x{:016X}:".format(_addr) )
-             chipsec.logger.print_buffer( fill_buf )
+             print_buffer( fill_buf )
 
         if is_ptr_in_buffer and _ptr is not None: 
             self.logger.log( "[*] writing buffer at PA 0x{:016X} with 0x{:X} bytes '{}'".format(_ptr, self.fill_size, self.fill_byte) )
@@ -228,9 +231,9 @@ class smm_ptr(BaseModule):
 
         if self.logger.VERBOSE:
              self.logger.log( "checking contents at PA 0x{:016X}:".format(_addr) )
-             chipsec.logger.print_buffer( buf )
+             print_buffer( buf )
              self.logger.log( "expected contents:" )
-             chipsec.logger.print_buffer( expected_buf )
+             print_buffer( expected_buf )
 
         if _changed:
             self.logger.log( "    contents changed at 0x{:016X} +{}".format(_addr,differences) )
@@ -253,7 +256,7 @@ class smm_ptr(BaseModule):
 
             if self.logger.VERBOSE:
                 self.logger.log( "checking contents at PA 0x{:016X}:".format(_ptr) )
-                chipsec.logger.print_buffer( buf1 )
+                print_buffer( buf1 )
 
             if _changed1:
                 self.logger.log( "    contents changed at 0x{:016X} +{}".format(_ptr,differences1) )
