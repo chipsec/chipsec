@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -29,9 +29,8 @@ Checks for exposure of pre-boot passwords (BIOS/HDD/pre-bot authentication SW) i
 
 """
 
-from chipsec.hal.mmio import *
-from chipsec.hal.spi import *
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.logger import print_buffer
 
 TAGS = [MTAG_BIOS]
 
@@ -56,7 +55,7 @@ class bios_kbrd_buffer(BaseModule):
         bios_kbrd_buf = self.cs.mem.read_physical_mem( 0x41E, 32 )
         self.logger.log( "[*] Keyboard buffer contents (at 0x41E):" )
         bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')
-        chipsec.logger.print_buffer( bios_kbrd_buf )
+        print_buffer( bios_kbrd_buf )
 
         has_contents = False
 

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -34,9 +34,8 @@ As demonstrated in the `Speed Racer <https://bromiumlabs.files.wordpress.com/201
 This module common.bios_wp will fail if SMM-based protection is not correctly configured and SPI protected ranges (PR registers) do not protect the entire BIOS region. 
 """
 
-from chipsec.module_common import *
-from chipsec.hal.mmio import *
-from chipsec.hal.spi import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.hal.spi import BIOS, SPI
 
 import fnmatch
 import os

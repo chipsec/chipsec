@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -26,8 +26,7 @@ Researchers demonstrated a way to use CPU cache to effectively change values in 
 This module checks to see that SMRRs are enabled and configured.
 """
 
-from chipsec.module_common import *
-from chipsec.hal.msr import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
 
 TAGS = [MTAG_BIOS,MTAG_SMM]
 
@@ -123,16 +122,16 @@ class smrr(BaseModule):
 
         if smrr_ok: self.logger.log_good( "OK so far. SMRR range base/mask match on all logical CPUs" )
 
-        
+
         #
         # 5. Reading from & writing to SMRR_BASE physical address
         # writes should be dropped, reads should return all F's
         #
-        
+
         self.logger.log( "[*] Trying to read memory at SMRR base 0x{:08X}..".format(smrrbase) )
 
         ok = ( 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword( smrrbase ) )
-        smrr_ok = smrr_ok and ok 
+        smrr_ok = smrr_ok and ok
         if ok: self.logger.log_passed_check( "SMRR reads are blocked in non-SMM mode" ) #return all F's
         else:  self.logger.log_failed_check( "SMRR reads are not blocked in non-SMM mode" ) #all F's are not returned
 
@@ -140,10 +139,10 @@ class smrr(BaseModule):
             self.logger.log( "[*] Trying to modify memory at SMRR base 0x{:08X}..".format(smrrbase) )
             self.cs.mem.write_physical_mem_dword( smrrbase, 0x90909090 )
             ok = ( 0x90909090 != self.cs.mem.read_physical_mem_dword( smrrbase ) )
-            smrr_ok = smrr_ok and ok 
+            smrr_ok = smrr_ok and ok
             if ok: self.logger.log_good( "SMRR writes are blocked in non-SMM mode" )
             else:  self.logger.log_bad( "SMRR writes are not blocked in non-SMM mode" )
-        
+
 
         self.logger.log( '' )
         if not smrr_ok:
@@ -163,4 +162,3 @@ class smrr(BaseModule):
         self.logger.start_test( "CPU SMM Cache Poisoning / System Management Range Registers" )
         do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
         return self.check_SMRR( do_modify )
-        

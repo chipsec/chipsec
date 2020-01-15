@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ Simple CPUID VMM emulation fuzzer
 
 import random
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult
 
 #logger.VERBOSE = True
 
@@ -41,6 +41,9 @@ _MODULE_NAME = 'cpuid_fuzz'
 #global _EAX_FUZZ_STEP
 _NO_EAX_TO_FUZZ       = 0x100
 _EAX_FUZZ_STEP        = 0x1000000
+
+# Number of iterations if value is Randomly chosen
+_NO_ITERATIONS_TO_FUZZ = 0x1000000
 
 # Control values to be passed in ECX
 _FUZZ_ECX_RANDOM      = False

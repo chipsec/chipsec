@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -22,7 +22,7 @@
 Checks for RTC memory locks. Since we do not know what RTC memory will be used for on a specific platform, we return WARNING (rather than FAILED) if the memory is not locked. 
 """
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_HWCONFIG
 
 TAGS = [MTAG_BIOS,MTAG_HWCONFIG]
 
@@ -34,7 +34,7 @@ class rtclock(BaseModule):
         self.res = ModuleResult.PASSED
 
     def is_supported(self):
-        return (self.cs.get_chipset_id() in chipsec.chipset.CHIPSET_FAMILY_CORE)
+        return self.cs.is_core()
 
     def check_rtclock(self):
         self.logger.start_test( "Protected RTC memory locations" )

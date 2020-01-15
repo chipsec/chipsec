@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,11 +28,11 @@ then fuzzes them by writing garbage if corresponding option is enabled
    ``chipsec_main.py -i -m tools.vmm.pcie_overlap_fuzz -l log.txt``
 """
 
-from chipsec.module_common import *
-from chipsec.hal import pci
-
 import time
 import random
+
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.hal.pci import print_pci_devices
 
 #################################################################
 # Fuzzing configuration
@@ -143,7 +143,7 @@ class pcie_overlap_fuzz(BaseModule):
         pcie_devices = self.cs.pci.enumerate_devices()
 
         self.logger.log( "[*] About to fuzz the following PCIe devices.." )
-        pci.print_pci_devices( pcie_devices )
+        print_pci_devices( pcie_devices )
         self.fuzz_overlap_pcie_device( pcie_devices )
 
         return ModuleResult.PASSED

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,7 +28,7 @@ Simple port I/O VMM emulation fuzzer
 """
 import random
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult
 
 MAX_PORTS = 0x10000
 MAX_PORT_VALUE = 0xFF

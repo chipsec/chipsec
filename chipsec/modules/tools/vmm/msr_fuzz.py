@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -29,7 +29,7 @@ Simple CPU Module Specific Register (MSR) VMM emulation fuzzer
 
 import random
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule
 
 #logger.VERBOSE = True
 
@@ -69,10 +69,10 @@ class msr_fuzz (BaseModule):
             if _FLUSH_LOG_EACH_MSR: self.logger.flush()
             if msr_addr not in _EXCLUDE_MSR:
                 if _READ_MSR:
-                    self.logger.log( "[*] rdmsr 0x{:08X}".formatmsr_addr )
+                    self.logger.log( "[*] rdmsr 0x{:08X}".format(msr_addr) )
                     try: (eax, edx) = self.cs.msr.read_msr( 0, msr_addr )
                     except: pass
-                self.logger.log( "[*] wrmsr 0x{:08X}".formatmsr_addr )
+                self.logger.log( "[*] wrmsr 0x{:08X}".format(msr_addr) )
                 if _FUZZ_VALUE_0_all1s:
                     #self.logger.log( "    0" )
                     try: self.cs.msr.write_msr( 0, msr_addr, 0, 0 )

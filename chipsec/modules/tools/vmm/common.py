@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -32,8 +32,8 @@ import pprint
 import binascii
 from random                     import getrandbits, randint
 from time                       import strftime, localtime
-from chipsec.module_common      import *
-from chipsec.defines            import *
+from chipsec.module_common      import BaseModule
+from chipsec.defines            import DD
 
 class BaseModuleDebug(BaseModule):
     def __init__(self):
@@ -112,6 +112,7 @@ class BaseModuleSupport(BaseModuleDebug):
         with open(os.path.join(self.path, 'hv', 'initial_data.json'), "r") as json_file:
             self.initial_data = json.load(json_file)
         self.statistics = {}
+        self.hv_connectionid     = {}
 
     def __del__(self):
         #self.dump_initial_data("initial_data_auto_generated.json")
@@ -134,8 +135,8 @@ class BaseModuleSupport(BaseModuleDebug):
         return
 
     def get_initial_data(self, statuses, vector, size, padding = '\x00'):
-        connectionid_message = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 1]
-        connectionid_event   = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.iteritems() if v == 2]
+        connectionid_message = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.items() if v == 1]
+        connectionid_event   = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.items() if v == 2]
         result = []
         for status in statuses:
             for item in self.initial_data:
