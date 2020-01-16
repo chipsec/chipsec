@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -97,7 +97,7 @@ class ColorLogger( pyLogging.Formatter ):
         BLUE   = 4
         PURPLE = 5
         CYAN   = 6
-        LIGHT_GRAY  = 7 
+        LIGHT_GRAY  = 7
         NORMAL = 8
         WHITE = 9
         csi = '\x1b['
@@ -109,7 +109,7 @@ class ColorLogger( pyLogging.Formatter ):
             pyLogging.WARNING: YELLOW,
             pyLogging.CRITICAL: BLUE,
             pyLogging.ERROR: RED
-            }  
+            }
 
         def log_color( self, message, record) :
             if record.levelno in self.LEVEL_ID:
@@ -345,7 +345,7 @@ class Logger:
         #self._log(text, None, None)
 
     def _write_log( self, text, filename ):
-        self.log(text, pyLogging.INFO) #writes text to defined log file
+        self.rootLogger.log(self.info, text) #writes text to defined log file
         if self.ALWAYS_FLUSH:
             # not sure why flush doesn't work as excpected
             # self.logfile.flush()
