@@ -408,10 +408,12 @@ def replace_bootloader( bootloader_paths, new_bootloader_file, do_mount=True ):
     logger().log( "[*] Replacing bootloaders on EFI System Partition (ESP).." )
     dsk = get_efi_mount() if do_mount else ''
     if dsk is None: return False
-    for pth in bootloader_paths:
-        bootloader_path = os.path.join(dsk,pth)
-        if os.path.exists(bootloader_path): replace_efi_binary( bootloader_path, new_bootloader_file )
-    if do_mount: umount( dsk )
+    try:
+        for pth in bootloader_paths:
+            bootloader_path = os.path.join(dsk,pth)
+            if os.path.exists(bootloader_path): replace_efi_binary( bootloader_path, new_bootloader_file )
+    finally:
+        if do_mount: umount( dsk )
     logger().log( "[*] You will need to reboot the system to see the changes" )
     return True
 
