@@ -178,7 +178,7 @@ class access_uefispec(BaseModule):
                             self.logger.log_bad("Variable {} should be read only.".format(name))
                             res = ModuleResult.FAILED
 
-        if len(uefispec_concern) > 0:
+        if uefispec_concern:
             self.logger.log('')
             self.logger.log_bad('Variables with attributes that differ from UEFI spec:')
             for name in uefispec_concern:
