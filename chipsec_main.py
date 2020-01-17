@@ -205,7 +205,6 @@ class ChipsecMain:
 
         if module not in self.Loaded_Modules:
             self.Loaded_Modules.append( (module,module_argv) )
-            if not self._list_tags: logger().log( "[+] loaded {}".format(module.get_name()) )
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
@@ -217,6 +216,8 @@ class ChipsecMain:
             for modx in mod_fnames:
                 if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
                     self.load_module( os.path.join( dirname, modx ), self._module_argv )
+        self.Loaded_Modules.sort()
+        self.print_loaded_modules()
 
     def load_my_modules(self):
         #
@@ -256,7 +257,7 @@ class ChipsecMain:
         if self.Loaded_Modules == []:
             logger().log( "No modules have been loaded" )
         for (modx,modx_argv) in self.Loaded_Modules:
-            logger().log( modx )
+            logger().log( "[+] loaded {}".format(modx) )
 
 
     def run_loaded_modules(self):
