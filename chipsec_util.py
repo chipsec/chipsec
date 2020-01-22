@@ -84,8 +84,12 @@ class ChipsecUtil:
         options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=Chipset_Code, type=str.upper)
         options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
+        options.add_argument('-i', '--ignore_platform',dest='_unkownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
         options.add_argument('_cmd',metavar='Command', nargs='?', choices=sorted(self.commands.keys()), type=str.lower, default="help",  help="Util command to run: {{{}}}".format(','.join(sorted(self.commands.keys()))))
+        options.add_argument('_cmd_args',metavar='Command Args', nargs=argparse.REMAINDER, help=self.global_usage)
+
+        parser.parse_args(self.argv,namespace=ChipsecUtil)
         if self.show_help or self._cmd == "help":
             parser.print_help()
         if self.verbose:
@@ -153,9 +157,6 @@ class ChipsecUtil:
             logger().warn("* Platform dependent functionality will likely be incorrect")
             logger().warn("* Error Message: \"{}\"".format(str(msg)))
             logger().warn("*******************************************************************")
-            if self._unknownPlatform:
-                logger().error('To run anyways please use -i command-line option\n\n')
-                sys.exit(ExitCode.OK)
         except Exception as msg:
             logger().error(str(msg))
             sys.exit(ExitCode.EXCEPTION)
