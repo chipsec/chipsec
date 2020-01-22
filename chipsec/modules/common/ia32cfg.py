@@ -37,7 +37,7 @@ class ia32cfg(BaseModule):
         self.res = ModuleResult.PASSED
 
     def is_supported(self):
-        return (not self.cs.is_atom())
+        return True
 
     def check_ia32feature_control(self):
         self.logger.start_test( "IA32 Feature Control Lock" )

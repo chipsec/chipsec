@@ -45,7 +45,7 @@ class bios_smi(BaseModule):
         self.iobar = iobar.IOBAR(self.cs)
 
     def is_supported(self):
-        return (not self.cs.is_atom())
+        return True
 
     def check_SMI_locks(self):
 
