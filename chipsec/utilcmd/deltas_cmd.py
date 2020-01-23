@@ -40,8 +40,8 @@ class DeltasCommand(BaseCommand):
         parser = ArgumentParser(usage=DeltasCommand.__doc__)
         parser.add_argument('_prev_log', metavar='<previous>', help='previous log file')
         parser.add_argument('_cur_log', metavar='<current', help='current log file')
-        parser.add_argument('_out-format', metavar='out-format', choices=['JSON','XML'], default='JSON', help='output format')
-        parser.add_argument('_out-name', metavar='out-name', nargs='?', default=None, help='output filename')
+        parser.add_argument('_out_format', metavar='out-format', choices=['JSON','XML'], default='JSON', help='output format')
+        parser.add_argument('_out_name', metavar='out-name', nargs='?', default=None, help='output filename')
         parser.parse_args(self.argv[2:], namespace=self)
         return False
 
