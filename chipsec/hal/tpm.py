@@ -266,7 +266,10 @@ class TPM(hal_base.HALBase):
             burst_count = ( ( sts_value>>8 ) & 0xFFFFFF )
             burst_index = 0
             while ( burst_index < burst_count ) and ( count < size ):
-                self.helper.write_mmio_reg( datafifo_address, 1, struct.unpack("=B", command[count])[0] )
+                datafifo_value = command[count]
+                if sys.version_info.major == 2:
+                    datafifo_value = struct.unpack("=B", datafifo_value)[0]
+                self.helper.write_mmio_reg( datafifo_address, 1, datafifo_value )
                 count += 1
                 burst_index += 0x1
 
