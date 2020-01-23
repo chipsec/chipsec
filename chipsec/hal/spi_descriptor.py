@@ -114,10 +114,10 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( '' )
 
     fd     = rom[ fd_off : fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
-    fd_sig = struct.unpack_from( '=I', fd[0x10:0x14] )
+    fd_sig = struct.unpack_from( '=I', fd[0x10:0x14] )[0]
 
     logger().log( '+ 0x0000 Reserved : 0x{}'.format(hexlify(fd[0x0:0xF]).upper()) )
-    logger().log( '+ 0x0010 Signature: 0x{:8s}'.format(fd_sig) )
+    logger().log( '+ 0x0010 Signature: 0x{:08X}'.format(fd_sig) )
 
     #
     # Flash Descriptor Map Section
