@@ -56,15 +56,16 @@ class TPMCommand(BaseCommand):
         return True
 
     def run(self):
+        if len(self.argv) < 4:
+            print (TPMCommand.__doc__)
+            return
+
         try:
             _tpm = tpm.TPM(self.cs)
         except tpm.TpmRuntimeError as msg:
             print(msg)
             return
 
-        if len(self.argv) < 4:
-            print (TPMCommand.__doc__)
-            return
         op = self.argv[2]
         if ( 'parse_log' == op ):
             log = open(self.argv[3],'rb')
