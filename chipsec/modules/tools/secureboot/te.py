@@ -28,12 +28,12 @@ Usage:
   ``chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]``
       - ``<mode>``
 
-          * ``generate_te``		(default) convert PE EFI binary ``<efi_file>`` to TE binary
-          * ``replace_bootloader``	replace bootloader files listed in ``<cfg_file>`` on ESP with modified ``<efi_file>``
-          * ``restore_bootloader``	restore original bootloader files from ``.bak`` files
+          * ``generate_te``     (default) convert PE EFI binary ``<efi_file>`` to TE binary
+          * ``replace_bootloader``  replace bootloader files listed in ``<cfg_file>`` on ESP with modified ``<efi_file>``
+          * ``restore_bootloader``  restore original bootloader files from ``.bak`` files
 
-      - ``<cfg_file>``	path to config file listing paths to bootloader files to replace
-      - ``<efi_file>``	path to EFI binary to convert to TE binary. If no file path is provided, the tool will look for Shell.efi
+      - ``<cfg_file>``  path to config file listing paths to bootloader files to replace
+      - ``<efi_file>``  path to EFI binary to convert to TE binary. If no file path is provided, the tool will look for Shell.efi
 
 Examples:
 
