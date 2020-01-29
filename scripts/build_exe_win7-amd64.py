@@ -73,6 +73,10 @@ print(os.getcwd())
 data_files = [
     (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
     ('chipsec/modules/tools/uefi', ['chipsec/modules/tools/uefi/blacklist.json']),
+    ('chipsec/modules/tools/secureboot', [
+        'chipsec/modules/tools/secureboot/Shell.efi',
+        'chipsec/modules/tools/secureboot/te.cfg'
+    ]),
 ]
 
 for current, dirs, files in os.walk(cfg_dir ):
