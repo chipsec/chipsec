@@ -139,7 +139,7 @@ class s3bootscript(BaseModule):
             found,bootscript_PAs = self._uefi.find_s3_bootscript()
             if not found:
                 self.logger.log_good( "Didn't find any S3 boot-scripts in EFI variables" )
-                self.logger.log_warn_check( "S3 Boot-Script was not found. Firmware may be using other ways to store/locate it" )
+                self.logger.log_warn_check( "S3 Boot-Script was not found. Firmware may be using other ways to store/locate it, or OS might be blocking access." )
                 return ModuleResult.WARNING
 
             self.logger.log_important( 'Found {:d} S3 boot-script(s) in EFI variables'.format(len(bootscript_PAs)) )
