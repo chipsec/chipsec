@@ -75,7 +75,7 @@ def parse_script( script, log_script=False ):
     if logger().HAL: logger().log( '[uefi] S3 Resume Boot-Script size: 0x{:X}'.format(off) )
     if logger().HAL: 
         logger().log( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
-        print_buffer( script[ : off ] )
+        print_buffer( bytestostring(script[ : off ]) )
 
     return s3_boot_script_entries
 
@@ -420,7 +420,7 @@ NVRAM: EFI Variable Store
                 if logger().HAL: logger().log( "[uefi] found: {} {{{}}} {} variable".format(efivar_name,guid,get_attr_string(attrs)) )
                 if logger().HAL:
                     logger().log('[uefi] {} variable data:'.format(efivar_name))
-                    print_buffer( data )
+                    print_buffer( bytestostring(data) )
 
                 varsz = len(data)
                 if   4 == varsz: AcpiGlobalAddr_fmt = '<L'
@@ -437,7 +437,7 @@ NVRAM: EFI Variable Store
                 AcpiVariableSet = self.helper.read_physical_mem( AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE )
                 if logger().HAL:
                     logger().log('[uefi] AcpiVariableSet structure:')
-                    print_buffer( AcpiVariableSet )
+                    print_buffer( bytestostring(AcpiVariableSet) )
                 AcpiVariableSet_fmt = '<6Q'
                 #if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
                 #    logger().error( 'Unrecognized format of AcpiVariableSet structure' )
