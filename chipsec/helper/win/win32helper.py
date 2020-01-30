@@ -808,10 +808,16 @@ class Win32Helper(Helper):
             if logger().DEBUG: logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
-            if logger().DEBUG:
-                logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
-                logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
-            raise WinError()
+            lasterror = kernel32.GetLastError()
+            if (0xC0000001 == status and lasterror == 0x000003E6): # ERROR_NOACCESS: Invalid access to memory location.  https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
+                if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)' )
+                if logger().DEBUG: logger().log( '[*] Your Windows has restricted access to UEFI variables.\nTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment' )
+                return None
+            else:
+                if logger().DEBUG:
+                    logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(lasterror) )
+                    logger().error( '*** NTSTATUS: {:08X}'.format(status) )
+                raise WinError()
         if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
 
