@@ -99,7 +99,7 @@ class variables(BaseModule):
 
         sbvars = self._uefi.list_EFI_variables()
         if sbvars is None:
-            self.logger.log_warn_check( 'Could not enumerate UEFI variables (Windows Enterprise?)' )
+            self.logger.log_warn_check( 'Could not enumerate UEFI variables.' )
             return ModuleResult.SKIPPED
 
         for name in SECURE_BOOT_VARIABLES:
