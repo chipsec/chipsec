@@ -131,7 +131,7 @@ class access_uefispec(BaseModule):
         error = False
         vars = self._uefi.list_EFI_variables()
         if vars is None:
-            self.logger.log_warn_check( 'Could not enumerate UEFI Variables from runtime (Windows Enterprise?)' )
+            self.logger.log_warn_check( 'Could not enumerate UEFI Variables from runtime.' )
             self.logger.log_important( "Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually." )
             return ModuleResult.SKIPPED
 
