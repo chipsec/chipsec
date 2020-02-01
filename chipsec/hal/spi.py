@@ -46,9 +46,9 @@ usage:
 import struct
 import time
 
-import chipsec.defines
+from chipsec.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
 from chipsec.file import write_file, read_file
-from chipsec.cfg.common import Cfg
+from chipsec.logger import print_buffer
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import JEDEC_ID
@@ -59,22 +59,51 @@ SFDP_HEADER = 0x50444653
 
 SPI_MAX_PR_COUNT  = 5
 SPI_FLA_SHIFT     = 12
-SPI_FLA_PAGE_MASK = chipsec.defines.ALIGNED_4KB
+SPI_FLA_PAGE_MASK = ALIGNED_4KB
+
+SPI_MMIO_BASE_LENGTH  = 0x200
+PCH_RCBA_SPI_HSFSTS_SCIP           = BIT5                          # SPI cycle in progress
+PCH_RCBA_SPI_HSFSTS_AEL            = BIT2                          # Access Error Log
+PCH_RCBA_SPI_HSFSTS_FCERR          = BIT1                          # Flash Cycle Error
+PCH_RCBA_SPI_HSFSTS_FDONE          = BIT0                          # Flash Cycle Done
+
+PCH_RCBA_SPI_HSFCTL_FCYCLE_READ    = 0                             # Flash Cycle Read
+PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE   = 2                             # Flash Cycle Write
+PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE   = 3                             # Flash Cycle Block Erase
+PCH_RCBA_SPI_HSFCTL_FCYCLE_SFDP    = 5
+PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC   = 6                             # Flash Cycle Read JEDEC ID
+PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO     = BIT0                          # Flash Cycle GO
+
+PCH_RCBA_SPI_FADDR_MASK          = 0x07FFFFFF                      # SPI Flash Address Mask [0:26]
+
+PCH_RCBA_SPI_FREGx_LIMIT_MASK    = 0x7FFF0000                    # Size
+PCH_RCBA_SPI_FREGx_BASE_MASK     = 0x00007FFF                    # Base
+
+PCH_RCBA_SPI_OPTYPE_RDNOADDR     = 0x00
+PCH_RCBA_SPI_OPTYPE_WRNOADDR     = 0x01
+PCH_RCBA_SPI_OPTYPE_RDADDR       = 0x02
+PCH_RCBA_SPI_OPTYPE_WRADDR       = 0x03
+
+PCH_RCBA_SPI_FDOC_FDSS_FSDM      = 0x0000                        # Flash Signature and Descriptor Map
+PCH_RCBA_SPI_FDOC_FDSS_COMP      = 0x1000                        # Component
+PCH_RCBA_SPI_FDOC_FDSS_REGN      = 0x2000                        # Region
+PCH_RCBA_SPI_FDOC_FDSS_MSTR      = 0x3000                        # Master
+PCH_RCBA_SPI_FDOC_FDSI_MASK      = 0x0FFC                        # Flash Descriptor Section Index
 
 # agregated SPI Flash commands
-HSFCTL_READ_CYCLE  = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_READ<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
-HSFCTL_WRITE_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
-HSFCTL_ERASE_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
-HSFCTL_JEDEC_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
-HSFCTL_SFDP_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_SFDP<<1) | Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_READ_CYCLE  = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_READ<<1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_WRITE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_ERASE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_JEDEC_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_JEDEC<<1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
+HSFCTL_SFDP_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_SFDP<<1) | PCH_RCBA_SPI_HSFCTL_FCYCLE_FGO)
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # FGO bit cleared (for safety ;)
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#HSFCTL_WRITE_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) )
-#HSFCTL_ERASE_CYCLE = ( (Cfg.PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) )
+#HSFCTL_WRITE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_WRITE<<1) )
+#HSFCTL_ERASE_CYCLE = ( (PCH_RCBA_SPI_HSFCTL_FCYCLE_ERASE<<1) )
 
-HSFSTS_CLEAR = (Cfg.PCH_RCBA_SPI_HSFSTS_AEL | Cfg.PCH_RCBA_SPI_HSFSTS_FCERR | Cfg.PCH_RCBA_SPI_HSFSTS_FDONE)
+HSFSTS_CLEAR = (PCH_RCBA_SPI_HSFSTS_AEL | PCH_RCBA_SPI_HSFSTS_FCERR | PCH_RCBA_SPI_HSFSTS_FDONE)
 
 #
 # Hardware Sequencing Flash Status (HSFSTS)
@@ -149,11 +178,10 @@ SPI_MASTER_NAMES = {
  MASTER_EC            : 'EC'
 }
 
-
 # @TODO: DEPRECATED
 def get_SPI_region(flreg):
-    range_base  = (flreg & Cfg.PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
-    range_limit = ((flreg & Cfg.PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
+    range_base  = (flreg & PCH_RCBA_SPI_FREGx_BASE_MASK) << SPI_FLA_SHIFT
+    range_limit = ((flreg & PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
     range_limit |= SPI_FLA_PAGE_MASK
     return (range_base, range_limit)
 
@@ -173,7 +201,7 @@ class SPI(hal_base.HALBase):
         # We try to map SPIBAR in the process memory, this will increase the
         # speed of MMIO access later on.
         try:
-            self.cs.helper.map_io_space(self.rcba_spi_base, Cfg.SPI_MMIO_BASE_LENGTH, 0)
+            self.cs.helper.map_io_space(self.rcba_spi_base, SPI_MMIO_BASE_LENGTH, 0)
         except oshelper.UnimplementedAPIError:
             pass
 
@@ -208,18 +236,9 @@ class SPI(hal_base.HALBase):
             self.logger.log( "      FADDR  offset = 0x{:04X}".format(self.faddr_off) )
             self.logger.log( "      FDATA0 offset = 0x{:04X}".format(self.fdata0_off) )
 
-    # Fallback option when XML config is not available: using hardcoded config
-    def get_SPI_MMIO_base_fallback(self):
-        reg_value = self.cs.pci.read_dword( Cfg.SPI_MMIO_BUS, Cfg.SPI_MMIO_DEV, Cfg.SPI_MMIO_FUN, Cfg.SPI_MMIO_REG_OFFSET )
-        spi_base = ((reg_value >> Cfg.SPI_BASE_ADDR_SHIFT) << Cfg.SPI_BASE_ADDR_SHIFT) + Cfg.SPI_MMIO_BASE_OFFSET
-        if self.logger.HAL: self.logger.log( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
-        return spi_base
-
     def get_SPI_MMIO_base(self):
         if self.mmio.is_MMIO_BAR_defined('SPIBAR'):
             (spi_base,spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
-        else:
-            spi_base = self.get_SPI_MMIO_base_fallback()
         if self.logger.HAL: self.logger.log( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
         return spi_base
 
@@ -289,25 +308,25 @@ class SPI(hal_base.HALBase):
         self.logger.log( "------------------------------------------------------------" )
         self.logger.log( "\nFlash Signature and Descriptor Map:" )
         for j in range(5):
-            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_FSDM|(j<<2)))
+            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_FSDM|(j<<2)))
             fdod = self.cs.read_register('FDOD')
             self.logger.log( "{:08X}".format(fdod) )
 
         self.logger.log( "\nComponents:" )
         for j in range(3):
-            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_COMP|(j<<2)))
+            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_COMP|(j<<2)))
             fdod = self.cs.read_register('FDOD')
             self.logger.log( "{:08X}".format(fdod) )
 
         self.logger.log( "\nRegions:" )
         for j in range(5):
-            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_REGN|(j<<2)))
+            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_REGN|(j<<2)))
             fdod = self.cs.read_register('FDOD')
             self.logger.log( "{:08X}".format(fdod) )
 
         self.logger.log( "\nMasters:" )
         for j in range(3):
-            self.cs.write_register('FDOC', (Cfg.PCH_RCBA_SPI_FDOC_FDSS_MSTR|(j<<2)))
+            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_MSTR|(j<<2)))
             fdod = self.cs.read_register('FDOD')
             self.logger.log( "{:08X}".format(fdod) )
 
@@ -335,13 +354,13 @@ class SPI(hal_base.HALBase):
         self.logger.log( "------------------------------------------------------------" )
         for j in range(8):
             optype_j = ((optype >> j*2) & 0x3)
-            if (Cfg.PCH_RCBA_SPI_OPTYPE_RDNOADDR == optype_j):
+            if (PCH_RCBA_SPI_OPTYPE_RDNOADDR == optype_j):
                 desc = 'SPI read cycle without address'
-            elif (Cfg.PCH_RCBA_SPI_OPTYPE_WRNOADDR == optype_j):
+            elif (PCH_RCBA_SPI_OPTYPE_WRNOADDR == optype_j):
                 desc = 'SPI write cycle without address'
-            elif (Cfg.PCH_RCBA_SPI_OPTYPE_RDADDR == optype_j):
+            elif (PCH_RCBA_SPI_OPTYPE_RDADDR == optype_j):
                 desc = 'SPI read cycle with address'
-            elif (Cfg.PCH_RCBA_SPI_OPTYPE_WRADDR == optype_j):
+            elif (PCH_RCBA_SPI_OPTYPE_WRADDR == optype_j):
                 desc = 'SPI write cycle with address'
             self.logger.log( "Opcode{:d}  | 0x{:02X}   | {:x}      | {} ".format(j,((opmenu >> j*8) & 0xFF),optype_j,desc) )
 
@@ -486,7 +505,7 @@ class SPI(hal_base.HALBase):
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
 
             #cycle_done = (hsfsts & Cfg.Cfg.PCH_RCBA_SPI_HSFSTS_FDONE) and (0 == (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP))
-            cycle_done = not (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP)
+            cycle_done = not (hsfsts & PCH_RCBA_SPI_HSFSTS_SCIP)
             if cycle_done:
                 break
 
@@ -494,13 +513,13 @@ class SPI(hal_base.HALBase):
             if self.logger.HAL: self.logger.log( "[spi] SPI cycle still in progress. Waiting 0.1 sec.." )
             time.sleep(0.1)
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
-            cycle_done = not (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_SCIP)
+            cycle_done = not (hsfsts & PCH_RCBA_SPI_HSFSTS_SCIP)
 
         if cycle_done:
             if self.logger.HAL: self.logger.log( "[spi] clear FDONE/FCERR/AEL bits.." )
             self.spi_reg_write( self.hsfs_off, HSFSTS_CLEAR, 1 )
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
-            cycle_done = not ((hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_AEL) or (hsfsts & Cfg.PCH_RCBA_SPI_HSFSTS_FCERR))
+            cycle_done = not ((hsfsts & PCH_RCBA_SPI_HSFSTS_AEL) or (hsfsts & PCH_RCBA_SPI_HSFSTS_FCERR))
 
         if self.logger.HAL: self.logger.log( "[spi] HSFS: 0x{:02X}".format(hsfsts) )
 
@@ -512,7 +531,7 @@ class SPI(hal_base.HALBase):
         # No need to check for SPI cycle DONE status before each cycle
         # DONE status is checked once before entire SPI operation
 
-        self.spi_reg_write( self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
+        self.spi_reg_write( self.faddr_off, (spi_fla & PCH_RCBA_SPI_FADDR_MASK) )
         # Other options ;)
         #chipsec.chipset.write_register( self.cs, "FADDR", (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
         #write_MMIO_reg( self.cs, spi_base, self.faddr_off, (spi_fla & Cfg.PCH_RCBA_SPI_FADDR_MASK) )
@@ -561,7 +580,7 @@ class SPI(hal_base.HALBase):
         if filename is not None:
             write_file( filename, buf )
         else:
-            chipsec.logger.print_buffer( buf, 16 )
+            print_buffer( buf, 16 )
         return buf
 
     def write_spi_from_file(self, spi_fla, filename ):
@@ -619,7 +638,7 @@ class SPI(hal_base.HALBase):
 
         if self.logger.HAL:
             self.logger.log( "[spi] buffer read from SPI:" )
-            chipsec.logger.print_buffer( "{}".format(buf) )
+            print_buffer( "{}".format(buf) )
 
         return buf
 

@@ -547,6 +547,10 @@ Common (default) XML platform configuration file
     </register>
 
     <!-- CPU Model Specific Registers (MSR) -->
+    <register name="IA32_MSR_CORE_THREAD_COUNT" type="msr" msr="0x35" desc="Core Thread Count">
+      <field name="Thread_Count" bit="0" size="16" desc="Number of Logical Processors currently enabled"/>
+      <field name="Core_Count" bit="16" size="16" desc="Number of Processor Cores currently enabled"/>
+    </register>
 
     <register name="IA32_BIOS_SIGN_ID"    type="msr" msr="0x8B" desc="Microcode Update Signature Register">
       <field name="Microcode" bit="32" size="32" desc="Microcode update signature" />
