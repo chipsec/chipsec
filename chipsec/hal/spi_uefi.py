@@ -176,7 +176,7 @@ class EFI_MODULE(object):
         if self.MD5   : _s  = "\n{}MD5   : {}".format(_ind,self.MD5)
         if self.SHA1  : _s += "\n{}SHA1  : {}".format(_ind,self.SHA1)
         if self.SHA256: _s += "\n{}SHA256: {}".format(_ind,self.SHA256)
-        return _s
+        return bytestostring(_s)
 
     def calc_hashes( self, off=0 ):
         if self.Image is None: return
@@ -204,7 +204,7 @@ class EFI_FV(EFI_MODULE):
         _s = "\n{}{} +{:08X}h {{{}}}: ".format(self.indent,type(self).__name__,self.Offset,self.Guid)
         _s += "Size {:08X}h, Attr {:08X}h, HdrSize {:04X}h, ExtHdrOffset {:08X}h, Checksum {}".format(self.Size,self.Attributes,self.HeaderSize,self.ExtHeaderOffset,schecksum)
         _s += super(EFI_FV, self).__str__()
-        return _s
+        return bytestostring(_s)
 
 class EFI_FILE(EFI_MODULE):
     def __init__(self, Offset, Guid, Type, Attributes, State, Checksum, Size, Image, HeaderSize, UD, CalcSum):
@@ -221,7 +221,7 @@ class EFI_FILE(EFI_MODULE):
         schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
         _s = "\n{}+{:08X}h {}\n{}Type {:02X}h, Attr {:08X}h, State {:02X}h, Size {:06X}h, Checksum {}".format(self.indent,self.Offset,self.name(),self.indent,self.Type,self.Attributes,self.State,self.Size,schecksum)
         _s += (super(EFI_FILE, self).__str__() + '\n')
-        return _s
+        return bytestostring(_s)
 
 class EFI_SECTION(EFI_MODULE):
     def __init__(self, Offset, Name, Type, Image, HeaderSize):
@@ -244,7 +244,7 @@ class EFI_SECTION(EFI_MODULE):
         if self.DataOffset: _s += " DataOffset {:04X}h".format(self.DataOffset)
         if self.Comments: _s += "Comments {}".format(self.Comments)
         _s += super(EFI_SECTION, self).__str__()
-        return _s
+        return bytestostring(_s)
 
 
 def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):

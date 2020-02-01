@@ -65,8 +65,8 @@ class PfsFileSection:
     def parse(self):
         return self.body
 
-PFS_HDR_SIG = "PFS.HDR."
-PFS_FTR_SIG = "PFS.FTR."
+PFS_HDR_SIG = b"PFS.HDR."
+PFS_FTR_SIG = b"PFS.FTR."
 PFS_HDR_STRUC = "<8sII"
 PFS_HDR_STRUC_SIZE = struct.calcsize(PFS_HDR_STRUC)
 PFS_FTR_STRUC = "<II8s"
@@ -102,7 +102,7 @@ class PfsFile:
                 pfs_sec_data.append(sec_data)
             pfs_sec = PfsFileSection(pfs_sec.tail)
         if self.concat:
-            return ''.join(pfs_sec_data)
+            return b''.join(pfs_sec_data)
         else:
             return pfs_sec_data
 
@@ -645,7 +645,7 @@ def getNVstore_VSS2( nvram_buf ):
 
 def getNVstore_VSS2_AUTH( nvram_buf ):
     return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS2_AUTH)
-    
+
 def getNVstore_VSS_APPLE( nvram_buf):
     return _getNVstore_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE)
 
