@@ -91,7 +91,7 @@ class SMBus(hal_base.HALBase):
 
     def is_SMBus_host_controller_enabled( self ):
         hcfg = self.get_SMBus_HCFG()
-        return hcfg.CFG_REG_PCH_SMB_HCFG_HST_EN
+        return self.cs.get_register_field("SMBUS_HCFG", hcfg, "HST_EN")
 
     def enable_SMBus_host_controller( self ):
         # Enable SMBus Host Controller Interface in HCFG

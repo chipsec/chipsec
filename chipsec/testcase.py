@@ -68,9 +68,6 @@ class ChipsecResults():
     def add_testcase(self,test):
         self.test_cases.append(test)
 
-    def get_results(self):
-        return self.test_cases
-
     def get_current(self):
         if len(self.test_cases) == 0 or self.summary:
             return None

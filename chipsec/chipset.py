@@ -977,6 +977,15 @@ class Chipset:
     def is_all_value(self, reg_values, value):
         return all(n == value for n in reg_values)
 
+    def get_IO_space(self, io_name):
+        if io_name in self.Cfg.IO_BARS.keys():
+            reg = self.Cfg.IO_BARS[io_name]["register"]
+            bf = self.Cfg.IO_BARS[io_name]["base_field"]
+            return (reg,bf)
+        else:
+            return None, None
+
+
 _chipset = None
 
 def cs():

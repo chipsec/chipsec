@@ -77,8 +77,8 @@ class smrr(BaseModule):
         smrrtype = self.cs.get_register_field( 'IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type' )
         self.logger.log( "[*] SMRR range base: 0x{:016X}".format(smrrbase) )
 
-        if smrrtype in self.cs.Cfg.MemType:
-            self.logger.log( "[*] SMRR range memory type is {}".format(self.cs.Cfg.MemType[smrrtype]) )
+        if smrrtype in MemType:
+            self.logger.log( "[*] SMRR range memory type is {}".format(MemType[smrrtype]) )
         else:
             smrr_ok = False
             self.logger.log_bad( "SMRR range memory type 0x{:X} is invalid".format(smrrtype) )
