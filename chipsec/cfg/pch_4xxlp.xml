@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_4xxLP">
 <!--
-XML configuration file for the 300 series PCH
+XML configuration file for the 400 series LP (U/H) PCH
 -->
   <!-- #################################### -->
   <!--                                      -->
@@ -285,10 +285,11 @@ XML configuration file for the 300 series PCH
   <!--                                      -->
   <!-- #################################### -->
   <controls>
-    <control name="BiosInterfaceLockDown"  register="BC"          field="BILD"      desc="BIOS Interface Lock-Down"/>
-    <control name="TopSwap"                register="BC"          field="TSS"       desc="Top Swap Status"/>
-    <control name="SpiWriteStatusDis"      register="HSFS"        field="WRSDIS"    desc="Write Status Disable"/>
-    <control name="SMILock"                register="GEN_PMCON_2" field="SMI_LOCK"  desc="SMI Global Configuration Lock"/>
+    <control name="BiosInterfaceLockDown"  register="BC"          field="BILD"          desc="BIOS Interface Lock-Down"/>
+    <control name="TopSwap"                register="BC"          field="TSS"           desc="Top Swap Status"/>
+    <control name="SpiWriteStatusDis"      register="HSFS"        field="WRSDIS"        desc="Write Status Disable"/>
+    <control name="SMILock"                register="GEN_PMCON_2" field="SMI_LOCK"      desc="SMI Global Configuration Lock"/>
+    <control name="TcoCtlLock"             register="TCOCTL"      field="TCO_BASE_LOCK" desc="TCO Base Lock"/>
   </controls>
 
 </configuration>
