@@ -23,7 +23,11 @@ from chipsec.hal.uefi import UEFI
 from chipsec.hal.spi import SPI, BIOS
 from chipsec.file import read_file
 
-from virus_total_apis import PublicApi as VirusTotalPublicApi
+try:
+    from virus_total_apis import PublicApi as VirusTotalPublicApi
+    has_virus_total_apis = True
+except ImportError:
+    has_virus_total_apis = False
 
 TAGS = [MTAG_BIOS]
 
@@ -52,7 +56,12 @@ class reputation(BaseModule):
         self.vt = None
 
     def is_supported(self):
-        return True
+        if has_virus_total_apis:
+            return True
+        else:
+            self.logger.log_important("""Can't import module 'virus_total_apis'.
+Please run 'pip install virustotal-api' and try again.""")
+            return False
 
     def reputation_callback(self, efi_module):
         vt_report = self.vt.get_file_report(efi_module.SHA256)
