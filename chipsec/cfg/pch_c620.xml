@@ -87,7 +87,7 @@ XML configuration file for
       <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
     </register>
     <register name="ACTL"        type="pcicfg" device="PMC" offset="0x44" size="4" desc="ACPI Control">
-      <field name="SCIS"    bit="0" size="2" desc="SCI IRQ Select"/>
+      <field name="SCIS"    bit="0" size="3" desc="SCI IRQ Select"/>
       <field name="EN"      bit="7" size="1" desc="ACPI Enable"/>
       <field name="PWRM_EN" bit="8" size="1" desc="PWRM Enable"/>
     </register>
@@ -210,34 +210,34 @@ XML configuration file for
       <field name="RL" bit="16" size="15" desc="Region Limit"/>
     </register>
     <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
-      <field name="PRB" bit="0"  size="13"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
     </register>
     <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
-      <field name="PRB" bit="0"  size="13"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
     </register>
     <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
-      <field name="PRB" bit="0"  size="13"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
     </register>
     <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
-      <field name="PRB" bit="0"  size="13"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
     </register>
     <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
-      <field name="PRB" bit="0"  size="13"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected Range Base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
     </register>
     <register name="FDOC" type="mmio" bar="SPIBAR" offset="0xB4" size="4" desc="Flash Descriptor Observability Control Register">
       <field name="FDSI" bit="2"  size="10" desc="Flash Descriptor Section Index"/>
