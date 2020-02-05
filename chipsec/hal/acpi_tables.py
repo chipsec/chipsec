@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -21,15 +21,6 @@
 #  Sarah Van Sickle, INTEL DCG RED team
 #
 
-
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 """
 HAL component decoding various ACPI tables
@@ -649,17 +640,17 @@ class BGRT (ACPI_TABLE):
         self.ImageAddress = struct.unpack('<Q', table_content[4:12])[0]
         self.ImageOffsetX = struct.unpack('<I', table_content[12:16])[0]
         self.ImageOffsetY = struct.unpack('<I', table_content[16:20])[0]
-        if(self.Status is 0):
+        if self.Status == 0:
             self.OrientationOffset = '0 degrees'
-        elif(self.Status is 1):
+        elif self.Status == 1:
             self.OrientationOffset = '90 degrees'
-        elif(self.Status is 2):
+        elif self.Status == 2:
             self.OrientationOffset = '180 degrees'
-        elif(self.Status is 3):
+        elif self.Status == 3:
             self.OrientationOffset = '270 degrees'
         else:
             self.OrientationOffset = 'Reserved bits are used'
-        if(self.ImageType is 0):
+        if self.ImageType == 0:
             self.ImageTypeStr = ' - Bitmap'
         else:
             self.ImageTypeStr = 'Reserved'
@@ -706,29 +697,29 @@ class BERT (ACPI_TABLE):
         val3 = struct.unpack('<L', table_content[8:12])[0]
         val4 = struct.unpack('<L', table_content[12:16])[0]
         results = '''0x{:08X} 0x{:08X} 0x{:08X} 0x{:08X} - '''.format( val1, val2, val3, val4 )
-        """if val1 is 0x9876CCAD and val2 is 0x47B4 and val3 is 0x4bdb and val4 in [0xB6, 0x5E, 0x16, 0xF1, 0x93, 0xC4, 0xF3, 0xDB]:
+        """if val1 == 0x9876CCAD and val2 == 0x47B4 and val3 == 0x4bdb and val4 in [0xB6, 0x5E, 0x16, 0xF1, 0x93, 0xC4, 0xF3, 0xDB]:
             return results + '''Generic Processor'''
-        elif val1 is 0xDC3EA0B0 and val2 is 0xA144 and val3 is 0x4797 and val4 in [0xB9, 0x5B, 0x53, 0xFA, 0x24, 0x2B, 0x6E, 0x1D]:
+        elif val1 == 0xDC3EA0B0 and val2 == 0xA144 and val3 == 0x4797 and val4 in [0xB9, 0x5B, 0x53, 0xFA, 0x24, 0x2B, 0x6E, 0x1D]:
             return results + '''Processor Specific: IA32/X64'''
-        elif val1 is 0xe429faf1 and val2 is 0x3cb7 and val3 is 0x11d4 and val4 in [0xb, 0xca, 0x7, 0x00, 0x80,0xc7, 0x3c, 0x88, 0x81]:
+        elif val1 == 0xe429faf1 and val2 == 0x3cb7 and val3 == 0x11d4 and val4 in [0xb, 0xca, 0x7, 0x00, 0x80,0xc7, 0x3c, 0x88, 0x81]:
             return results + '''Processor Specific: IPF'''
-        elif val1 is 0xE19E3D16 and val2 is 0xBC11 and val3 is 0x11E4 and val4 in [0x9C, 0xAA, 0xC2, 0x05,0x1D, 0x5D, 0x46, 0xB0]:
+        elif val1 == 0xE19E3D16 and val2 == 0xBC11 and val3 == 0x11E4 and val4 in [0x9C, 0xAA, 0xC2, 0x05,0x1D, 0x5D, 0x46, 0xB0]:
             return results + '''Processor Specific: ARM'''
-        elif val1 is 0xA5BC1114 and val2 is x6F64 and val3 is 0x4EDE and val4 in [0xB8, 0x63, 0x3E, 0x83, 0xED, 0x7C, 0x83, 0xB1]:
+        elif val1 == 0xA5BC1114 and val2 == 0x6F64 and val3 == 0x4EDE and val4 in [0xB8, 0x63, 0x3E, 0x83, 0xED, 0x7C, 0x83, 0xB1]:
             return results + '''Platform Memory'''
-        elif val1 is 0xD995E954 and val2 is 0xBBC1 and val3 is 0x430F and val4 in [0xAD, 0x91, 0xB4, 0x4D, 0xCB,0x3C, 0x6F, 0x35]:
+        elif val1 == 0xD995E954 and val2 == 0xBBC1 and val3 == 0x430F and val4 in [0xAD, 0x91, 0xB4, 0x4D, 0xCB,0x3C, 0x6F, 0x35]:
             return results + '''PCIe'''
-        elif val1 is 0x81212A96 and val2 is 0x09ED and val3 is 0x4996 and val4 in [0x94, 0x71, 0x8D, 0x72, 0x9C, 0x8E, 0x69, 0xED]:
+        elif val1 == 0x81212A96 and val2 == 0x09ED and val3 == 0x4996 and val4 in [0x94, 0x71, 0x8D, 0x72, 0x9C, 0x8E, 0x69, 0xED]:
             return results + '''Firmware Error Record Reference'''
-        elif val1 is 0xC5753963 and val2 is 0x3B84 and val3 is 0x4095 and val4 in [0xBF, 0x78, 0xED, 0xDA, 0xD3, 0xF9, 0xC9, 0xDD]:
+        elif val1 == 0xC5753963 and val2 == 0x3B84 and val3 == 0x4095 and val4 in [0xBF, 0x78, 0xED, 0xDA, 0xD3, 0xF9, 0xC9, 0xDD]:
             return results + '''PCI/PCI-X Bus'''
-        elif val1 0xEB5E4685 is and val2 is 0xCA66 and val3 is 0x4769 and val4 in [0xB6, 0xA2, 0x26, 0x06, 0x8B, 0x00, 0x13, 0x26]:
+        elif val1 == 0xEB5E4685 and val2 == 0xCA66 and val3 == 0x4769 and val4 in [0xB6, 0xA2, 0x26, 0x06, 0x8B, 0x00, 0x13, 0x26]:
             return results + '''PCI Component/Device'''
-        elif val1 is 0x5B51FEF7 and val2 is 0xC79D and val3 is 0x4434 and val4 in [0x8F, 0x1B, 0xAA, 0x62, 0xDE, 0x3E, 0x2C, 0x64]:
+        elif val1 == 0x5B51FEF7 and val2 == 0xC79D and val3 == 0x4434 and val4 in [0x8F, 0x1B, 0xAA, 0x62, 0xDE, 0x3E, 0x2C, 0x64]:
             return results + '''DMAr Generic'''
-        elif val1 is 0x71761D37 and val2 is 0x32B2 and val3 is 0x45cd and val4 in [0xA7, 0xD0, 0xB0, 0xFE, 0xDD, 0x93, 0xE8, 0xCF]:
+        elif val1 == 0x71761D37 and val2 == 0x32B2 and val3 == 0x45cd and val4 in [0xA7, 0xD0, 0xB0, 0xFE, 0xDD, 0x93, 0xE8, 0xCF]:
             return results + '''Intel VT for Directed I/O Specific DMAr Section'''
-        elif val1 is 0x036F84E1 and val2 is 0x7F37 and val3 is 0x428c and val4 in [0xA7, 0x9E, 0x57, 0x5F, 0xDF, 0xAA, 0x84, 0xEC]:
+        elif val1 == 0x036F84E1 and val2 == 0x7F37 and val3 == 0x428c and val4 in [0xA7, 0x9E, 0x57, 0x5F, 0xDF, 0xAA, 0x84, 0xEC]:
             return results + '''IOMMU Specific DMAr Section'''"""
         return results + '''Unknown'''
 
@@ -769,10 +760,10 @@ class BERT (ACPI_TABLE):
         if errorSeverity < 4:
             errorSeverity_str = errorSeverities[errorSeverity]
         revision_str = ''
-        if revision is not 3:
+        if revision != 3:
             revision_str = ' - Should be 0x003'
         FRU_Id_str = ''
-        if FRU_Id1 is 0 and FRU_Id2 is 0 and FRU_Id3 is 0 and FRU_Id4 is 0:
+        if FRU_Id1 == 0 and FRU_Id2 == 0 and FRU_Id3 == 0 and FRU_Id4 == 0:
             FRU_Id_str = ' - Default value, invalid FRU ID'
         return '''
       Section Type                                  : {}
@@ -866,7 +857,7 @@ class EINJ (ACPI_TABLE):
         mask = struct.unpack('<Q', table_content[24:32])[0]
         if injectionAction < 10:
             injectionAction_str = errorInjectActions[injectionAction]
-        elif injectionAction is 255:
+        elif injectionAction == 255:
             injectionAction_str = 'TRIGGER_ERROR'
         else:
             injectionAction_str = errorInjectActions[10]
@@ -874,13 +865,13 @@ class EINJ (ACPI_TABLE):
             instruction_str = injectionInstructions[instruction]
         else:
             instruction_str = injectionInstructions[5]
-        if flags is 1 and (instruction is 2 or instruction is 3):
+        if flags == 1 and (instruction == 2 or instruction == 3):
             flags_str = ' - PRESERVE_REGISTER'
-        elif flags is 0:
+        elif flags == 0:
             flags_str = ' - Ignore'
         else:
             flags_str = ''
-        if reserved is not 0:
+        if reserved != 0:
             reserved_str = ' - Error, must be 0'
         else:
             reserved_str = ''
@@ -913,9 +904,9 @@ class EINJ (ACPI_TABLE):
         injectionEntryCount = struct.unpack('<L', table_content[8:12])[0]
         injection_str = ''
         reserved_str = ''
-        if injectionFlags is not 0:
+        if injectionFlags != 0:
             injection_str = ' - Error, this feild should be 0'
-        if reserved is not 0:
+        if reserved != 0:
             reserved_str = ' - Error, this field should be 0'
         self.results_str = """
 ------------------------------------------------------------------
@@ -967,11 +958,11 @@ class ERST (ACPI_TABLE):
             serializationInstr_str = serializationInstructions[instruction]
         else:
             serializationAction_str = 'Unknown'
-        if reserved is not 0:
+        if reserved != 0:
             reserved_str = ' - Error, this should be 0'
         else:
             reserved_str = ''
-        if flags is 1:
+        if flags == 1:
             flags_str = ' - PRESERVE_REGISTER'
         else:
             flags_str = ''
@@ -991,7 +982,7 @@ class ERST (ACPI_TABLE):
         headerSz = struct.unpack('<L', table_content[0:4])[0]
         reserved = struct.unpack('<L', table_content[4:8])[0]
         instrCountEntry = struct.unpack('<L', table_content[8:12])[0]
-        if reserved is not 0:
+        if reserved != 0:
             reserved_str = ' - Error, this should be 0'
         else:
             reserved_str = ''
@@ -1019,15 +1010,15 @@ class HEST (ACPI_TABLE):
 
     def parseErrEntry(self, table_content):
         type = struct.unpack('<H', table_content[0:2])[0]
-        if(type is 0): #Arch Machine Check Execption Structure
+        if type == 0: #Arch Machine Check Execption Structure
             return self.parseAMCES(table_content)
-        elif(type is 1): #Arch Corrected Mach Check Structure or ArchitectureDeferred machine Check Structure
+        elif type == 1: #Arch Corrected Mach Check Structure or ArchitectureDeferred machine Check Structure
             return self.parseAMCS(table_content, type)
-        elif(type is 2): #NMI Error Structure
+        elif type == 2: #NMI Error Structure
             return self.parseNMIStructure(table_content)
-        elif(type is 6 or type is 7 or type is 8): #PCIe Root Port AER Structure or PCIe Device AER Structure or PCIe Bridge AER Structure
+        elif type == 6 or type == 7 or type == 8: #PCIe Root Port AER Structure or PCIe Device AER Structure or PCIe Bridge AER Structure
             return self.parsePCIe(table_content, type)
-        elif(type is 9 or type is 10): #Generic hardware Error Source Structure or Generic Hardware Error Source version 2
+        elif type == 9 or type == 10: #Generic hardware Error Source Structure or Generic Hardware Error Source version 2
             return self.parseGHESS(table_content, type)
         else:
             pass
@@ -1050,7 +1041,7 @@ class HEST (ACPI_TABLE):
             typeStr = types[12]
 
         vector_str = ''
-        if errorType is 10:
+        if errorType == 10:
             vector_str = 'Specifies the GSIV triggerd by error source'
 		
         return """Hardware Error Notification Structure
@@ -1081,7 +1072,7 @@ class HEST (ACPI_TABLE):
         addrRegMSRAddr = struct.unpack('<L', table_content[20:24])[0]
         miscRegMSTAddr = struct.unpack('<L', table_content[24:28])[0]
 	
-        if clearStatus is 0:
+        if clearStatus == 0:
             clearStatus_str = 'Clear'
         else:
             clearStatus_str = "Don't Clear"
@@ -1092,22 +1083,22 @@ class HEST (ACPI_TABLE):
         else:
             statusDataFormat_str = statusDataFormatStrList[3]
 
-        if controlRegMsrAddr is not 0:
+        if controlRegMsrAddr != 0:
             controlRegMsrAddr_str = ''
         else:
             controlRegMsrAddr_str = ' - Ignore'
 
-        if statusRegMSRAddr is not 0:
+        if statusRegMSRAddr != 0:
             statusRegMSRAddr_str = ''
         else:
             statusRegMSRAddr_str = ' - Ignore'
 
-        if addrRegMSRAddr is not 0:
+        if addrRegMSRAddr != 0:
             addrRegMSRAddr_str = ''
         else:
             addrRegMSRAddr_str = ' - Ignore'
 
-        if miscRegMSTAddr is not 0:
+        if miscRegMSTAddr != 0:
             miscRegMSTAddr_str = ''
         else:
             miscRegMSTAddr_str = ' - Ignore' 
@@ -1144,21 +1135,21 @@ class HEST (ACPI_TABLE):
         reserved2_6 = struct.unpack('<B', table_content[38:39])[0]
         reserved2_7 = struct.unpack('<B', table_content[39:40])[0]
         
-        if(flags & 1 is 1):
+        if (flags & 1) == 1:
             firmware_first = 1
             firmware_first_str = 'System firmware handles errors from the source first'
         else:
             firmware_first = 0
             firmware_first_str = 'System firmware does not handle errors from the source first'
 		
-        if(flags & 4 is 4):
+        if (flags & 4) == 4:
             ghes_assist = 1
             ghes_assist_str = 'Additional information given'
         else:
             ghes_assist = 0
             ghes_assist_str = 'Additional information not given'
 		
-        if(firmware_first is 0):
+        if firmware_first == 0:
             ghes_assist_str = 'Bit is reserved'
 		
         self.resultsStr = self.resultsStr + ("""
@@ -1194,31 +1185,31 @@ class HEST (ACPI_TABLE):
         reserved2_2 = struct.unpack('<B', table_content[46:47])[0]
         reserved2_3 = struct.unpack('<B', table_content[47:48])[0]
 		
-        if(flags & 1 is 1):
+        if (flags & 1) == 1:
             firmware_first = 1
             firmware_first_str = 'System firmware handles errors from the source first'
         else:
             firmware_first = 0
             firmware_first_str = 'System firmware does not handle errors from the source first'
 		
-        if(flags & 4 is 4):
+        if (flags & 4) == 4:
             ghes_assist = 1
             ghes_assist_str = 'Additional information given'
         else:
             ghes_assist = 0
             ghes_assist_str = 'Additional information not given'
 		
-        flags_str =''
-        if flags is not 1 and flags is not 4 and flags is not 5:
+        flags_str = ''
+        if flags != 1 and flags != 4 and flags != 5:
             flags_str = ' - Error, Reserved Bits are not 0'
 		
-        if(firmware_first is 0):
+        if firmware_first == 0:
             ghes_assist_str = 'Bit is reserved'
 			
-        if type is 1:
+        if type == 1:
             title = 'Architecture Corrected Machine Check Structure'
         else:
-            title ='Architecture Deferred Machine Check Structure'
+            title = 'Architecture Deferred Machine Check Structure'
 		
         self.resultsStr = self.resultsStr + ("""
     {}
@@ -1247,7 +1238,7 @@ class HEST (ACPI_TABLE):
         maxSectorsPerRecord = struct.unpack('<L', table_content[12:16])[0]
         maxRawDataLength = struct.unpack('<L', table_content[16:20])[0]
 		
-        if reserved is 0:
+        if reserved == 0:
             reserved_str = ''
         else:
             reserved_str = ' - Error, not 0'
@@ -1279,13 +1270,13 @@ class HEST (ACPI_TABLE):
         uncorrectableErrorServerity = struct.unpack('<L', table_content[32:36])[0]
         correctableErrorMask = struct.unpack('<L', table_content[36:40])[0]
         advancedErrorCapabilitiesAndControl = struct.unpack('<L', table_content[40:44])[0]
-        if type is 6:
+        if type == 6:
             title = 'PCI Express Root Port AER Structure'
             rootErrCommand = struct.unpack('<L', table_content[44:48])[0]
             extra_str = '''
     Root Error Command                            : 0x{:08X}'''.format( rootErrCommand )
             size = 48
-        elif type is 8:
+        elif type == 8:
             title = 'PCI Express Bridge AER Structure'
             secondaryUncorrErrMask = struct.unpack('<L', table_content[44:48])[0]
             secondaryUncorrErrServ = struct.unpack('<L', table_content[48:52])[0]
@@ -1300,14 +1291,14 @@ class HEST (ACPI_TABLE):
             extra_str = ''
             size = 44
 		
-        if (flags & 1 is 1):
+        if (flags & 1) == 1:
             firmware_first = 1
             firmware_first_str = 'System firmware handles errors from the source first'
         else:
             firmware_first = 0
             firmware_first_str = 'System firmware does not handle errors from the source first'
 		
-        if (flags & 2 is 2):
+        if (flags & 2) == 2:
             global_flag = 1
             global_flag_str = 'Settings in table are for all PCIe Devices'
         else:
@@ -1320,11 +1311,11 @@ class HEST (ACPI_TABLE):
 	
         if flags >= 4:
             flags_str = 'Error, reserved bits are not 0'
-        if reserved2 is not 0:
+        if reserved2 != 0:
             reserved2_str = ' - Error, reserved bits should be 0'
-        if global_flag is not 0:
+        if global_flag != 0:
             isGlobal_str = ' - This field should be ignored since Global is set'
-        if firmware_first is not 0:
+        if firmware_first != 0:
             isFirmware_str = ' - This field should be ignored since FIRMWARE_FIRST is set'
 		    
         self.resultsStr = self.resultsStr + ("""
@@ -1360,7 +1351,7 @@ class HEST (ACPI_TABLE):
         address_str = self.parseAddress(table_content[20:32])
         notification_str = self.parseNotify(table_content[32:60])
         errStatusBlockLen = struct.unpack('<L', table_content[60:64])[0]
-        if type is 9:
+        if type == 9:
             title = 'Generic Hardware Error Source Structure'
             extra_str = ''
         else:
@@ -1372,7 +1363,7 @@ class HEST (ACPI_TABLE):
     Read Ack Register - {}
     Read Ack Preserve                             : 0x{:016X}
     Read Ack Write                                : 0x{:016X}'''.format( readAckReg_str,  readAckPresv, readAckWr )
-        if relatedSourceID is 65535:
+        if relatedSourceID == 65535:
             relatedSourceID_str = 'Does not represent an alternate souce'
         else:
             relatedSourceID_str = ''
@@ -1447,13 +1438,13 @@ class SPMI (ACPI_TABLE):
         globalSysInter = struct.unpack('<L', table_content[8:12])[0]
         baseAdder = self.parseAddress(table_content[12:24])
         reserved3 = struct.unpack('<B', table_content[28:29])[0]
-        if interfaceType is 1:
+        if interfaceType == 1:
             intTypeStr = "Keyboard Controller Style (KCS)"
-        elif interfaceType is 2:
+        elif interfaceType == 2:
             intTypeStr = "Server Management Interface Chip (SMIC)"
-        elif interfaceType is 3:
+        elif interfaceType == 3:
             intTypeStr = "Block Transfer (BT)"
-        elif interfaceType is 4:
+        elif interfaceType == 4:
             intTypeStr = "SMBus System Interface (SSIF)"
         else:
             intTypeStr = "Reserved"
@@ -1461,19 +1452,19 @@ class SPMI (ACPI_TABLE):
         intType_0 = interruptType & 1
         intType_1 = interruptType & 2 >> 1
         intType_other = interruptType ^ 3 >> 2
-        if intType_0 is 1:
+        if intType_0 == 1:
             intTypeSCIGPE = "supported"
         else:
             intTypeSCIGPE = "not supported"
-        if intType_1 is 1:
+        if intType_1 == 1:
             intTypeIO = "supported"
         else:
             intTypeIO = "not supported"
         GPE_str = ''
-        if interruptType & 1 is not 1:
+        if (interruptType & 1) != 1:
             GPE_str = " - should be set to 00h"
         pciDeviceFlag_0 = pciDeviceFlag & 1
-        if pciDeviceFlag_0 is 1:
+        if pciDeviceFlag_0 == 1:
             pci_str = 'For PCi IPMI devices'
             otherStr = self.parseNonUID(table_content[25:28]) 
         else:
@@ -1481,7 +1472,7 @@ class SPMI (ACPI_TABLE):
             otherStr = self.parseUID(table_content[25:28])
         pciDeviceFlag_reserved = 1 ^ pciDeviceFlag_0
         globalSysInt_str = ''
-        if intType_1 is not 1:
+        if intType_1 != 1:
             globalSysInt_str = ' - this field should be 0'
         self.results = '''==================================================================
   Service Processor Management Interface Description Table ( SPMI )
@@ -1564,9 +1555,9 @@ class MSCT (ACPI_TABLE):
         maxMemCap = struct.unpack('<Q', table_content[14:22])[0]
         maxProcCap_str = ''
         maxMemCap_str = ''
-        if maxProcCap is 0:
+        if maxProcCap == 0:
             maxProcCap_str = ' - Proximity domains do not contain a processor'
-        if maxMemCap is 0:
+        if maxMemCap == 0:
             maxMemCap_str = '- Proximity domains do not contain memory'
         return '''
     Maximum Proximity Domain Informaiton Structure[{:d}]
@@ -1630,18 +1621,18 @@ class NFIT (ACPI_TABLE):
         cap3 = capabilities & 4
         capRes = capabilities & ~(7)
         reserved2 = struct.unpack('<L', table_content[12:16])[0]
-        if cap1 is 1:
+        if cap1 == 1:
             cap1_str = 'Platform ensures the entire CPU store data path is flushed to persistent memory on system power loss'
         else:
             cap1_str = 'Platform does not ensure the entire CPU store data path is flushed to persistent memory on system power loss'
-        if cap2 is 2:
+        if cap2 == 2:
             cap2_str = 'Platform provides mehanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
         else:
-            if cap1 is 1:
+            if cap1 == 1:
                 cap2_str = 'Platform does not provides mehanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
             else:
              cap2_str = 'This should be set to 1 - Platform does not support'
-        if cap3 is 4:
+        if cap3 == 4:
             cap3_str = 'Platform supports mirroring multiple byte addressable persistent memory regions together'
         else:
             cap3_str = 'Platform does not support mirroring multiple byte addressable persistent memory regions together'
@@ -1719,7 +1710,7 @@ class NFIT (ACPI_TABLE):
         rfic_fcf = rfic2 & 31
         numBlockControlWindows = struct.unpack('<H', table_content[30:32])[0]
         cont_str = 'ERROR - Table is shorter than expected.'
-        if numBlockControlWindows is not 0:
+        if numBlockControlWindows != 0:
             szBlckControlWindow = struct.unpack('<Q', table_content[32:40])[0]
             commandRegOffset = struct.unpack('<Q', table_content[40:48])[0]
             szCommandReg = struct.unpack('<Q', table_content[48:56])[0]
@@ -1743,7 +1734,7 @@ class NFIT (ACPI_TABLE):
         valid_0 = validFields & 1
         valid_str = ''
         valid_man_str = ''
-        if valid_0 is 0:
+        if valid_0 == 0:
             valid_str = 'System is compliant with ACPI 6.0 - Manufacturing Location & Date fields are invalid and should be ignored'
             valid_man_str = 'Value is invalid and should be ignored'
         return '''
@@ -1787,9 +1778,9 @@ class NFIT (ACPI_TABLE):
             smbios_table_name = 'Unknown'
             if smbios_table_type > 0 and smbios_table_type < 43:
                 smbios_table_name = smbios_tables[smbios_table_type]
-            elif smbios_table_type is 126:
+            elif smbios_table_type == 126:
                 smbios_table_name =  'Inactive'
-            elif smbios_table_type is 127:
+            elif smbios_table_type == 127:
                 smbios_table_name = 'End-of-Table'
             cur_smbios_table_pos = 2
             smbios_table_data_str = ''
@@ -1891,35 +1882,35 @@ class NFIT (ACPI_TABLE):
         SPARLen = struct.unpack('<Q', table_content[40:48])[0]
         addrRangeMemMapAttr = struct.unpack('<Q', table_content[48:56])[0]
         spaRangeStructure_str = ''
-        if spaRangeStructure is 0:
+        if spaRangeStructure == 0:
             spaRangeStructure_str = ' - Value of 0 is reserved and shall not be used as an index'
-        if flag1 is 1:
+        if flag1 == 1:
             flag1_str = ' - Control region only for hot add/online operation'
         else:
             flag1_str = ' - Control region not only for hot add/online operation'
-        if flag2 is 1:
+        if flag2 == 1:
             flag2str = ' - Data in proximity region is valid'
         else:
             flag2_str = ' - Data in proximity region is not valid'
-        if addrRangeMemMapAttr & 1 is 1:
+        if (addrRangeMemMapAttr & 1) == 1:
             flag2str = 'EFI_MEMORY_UC'
-        elif addrRangeMemMapAttr & 2 is 2:
+        elif (addrRangeMemMapAttr & 2) == 2:
             flag2str = 'EFI_MEMORY_WC'
-        elif addrRangeMemMapAttr & 4 is 4:
+        elif (addrRangeMemMapAttr & 4) == 4:
             flag2str = 'EFI_MEMORY_WT'
-        elif addrRangeMemMapAttr & 8 is 8:
+        elif (addrRangeMemMapAttr & 8) == 8:
             flag2str = 'EFI_MEMORY_WB'
-        elif addrRangeMemMapAttr & 16 is 16:
+        elif (addrRangeMemMapAttr & 16) == 16:
             flag2str = 'EFI_MEMORY_UCE'
-        elif addrRangeMemMapAttr & 4096 is 4096:
+        elif (addrRangeMemMapAttr & 4096) == 4096:
             flag2str = 'EFI_MEMORY_WP'
-        elif addrRangeMemMapAttr & 8192 is 8192:
+        elif (addrRangeMemMapAttr & 8192) == 8192:
             flag2str = 'EFI_MEMORY_RP'
-        elif addrRangeMemMapAttr& 16384 is 16384:
+        elif (addrRangeMemMapAttr & 16384) == 16384:
             flag2str = 'EFI_MEMORY_XP'
-        elif addrRangeMemMapAttr is 32768 is 32768:
+        elif (addrRangeMemMapAttr & 32768) == 32768:
             flag2str = 'EFI_MEMORY_NV'
-        elif addrRangeMemMapAttr is 65536 is 65536:
+        elif (addrRangeMemMapAttr & 65536) == 65536:
             flag2str = 'EFI_MEMORY_MORE_RELIABLE'
         else:
             flag2_str = 'undefined'
@@ -1966,30 +1957,30 @@ class NFIT (ACPI_TABLE):
             tableType = struct.unpack('<H', table_content[curPos:curPos+2])[0]
             tableLen = struct.unpack('<H', table_content[curPos+2:curPos+4])[0]
             result += ''' Length:                    {:d}'''.format(self.total_length)
-            if tableType is 0:
+            if tableType == 0:
                 result += self.parseSPA( tableLen, table_content[curPos:] )
                 curPos = curPos + tableLen
-            elif tableType is 1:
+            elif tableType == 1:
                 result += self.parseMAP( tableLen, table_content[curPos:] )
                 curPos = curPos + tableLen
-            elif tableType is 2:
+            elif tableType == 2:
                 sz, result_str = self.interleave( tableLen, table_content[curPos:] )
                 result += result_str
                 curPos = curPos + tableLen
-            elif tableType is 3:
+            elif tableType == 3:
                 result += self.smbiosManagementInfo( tableLen, table_content[curPos:] )
                 curPos = curPos + tableLen
-            elif tableType is 4:
+            elif tableType == 4:
                 result += self.nvdimmControlRegionStructMark( tableLen, table_content[curPos:] )
                 curPos += tableLen
-            elif tableType is 5:
+            elif tableType == 5:
                 result += self.nvdimmBlockDataWindowsRegionStruct( tableLen, table_content[curPos:] )
                 curPos = curPos + tableLen
-            elif tableType is 6:
+            elif tableType == 6:
                 sz, result_str = self.flushHintAddrStruct( tableLen, table_content[curPos:] )
                 result += result_str
                 curPos = curPos + tableLen
-            elif tableType is 7:
+            elif tableType == 7:
                 result += self.platCapStruct( tableLen, table_content[curPos:] )
                 curPos = curPos + tableLen
             else:
@@ -2079,19 +2070,19 @@ class GAS:
         self.regBitOffset = struct.unpack('<B', table_content[2:3])[0]
         self.accessSize = struct.unpack('<B', table_content[3:4])[0]
         self.addr = struct.unpack('<Q', table_content[4:12])[0]
-        if self.addrSpaceID is 0:
+        if self.addrSpaceID == 0:
             self.addrSpaceID_str = 'System Memory Space'
-        elif self.addrSpaceID is 1:
+        elif self.addrSpaceID == 1:
             self.addrSpaceID_str = 'System I/O Space'
-        elif self.addrSpaceID is 2:
+        elif self.addrSpaceID == 2:
             self.addrSpaceID_str = 'PCI Configuration Space'
-        elif self.addrSpaceID is 3:
+        elif self.addrSpaceID == 3:
             self.addrSpaceID_str = 'Embedded Controller'
-        elif self.addrSpaceID is 4:
+        elif self.addrSpaceID == 4:
             self.addrSpaceID_str = 'SMBus'
-        elif self.addrSpaceID is 0x0A:
+        elif self.addrSpaceID == 0x0A:
             self.addrSpaceID_str = 'Platform Communications Channel (PCC)'
-        elif self.addrSpaceID is 0x7F:
+        elif self.addrSpaceID == 0x7F:
             self.addrSpaceID_str = 'Functional Fixed Hardware'
         elif self.addrSpaceID >= 0xC0 and self.addrSpaceID <= 0xFF:
             self.addrSpaceID_str = 'OEM Defined'
