@@ -5,8 +5,9 @@ XML configuration file for Denverton
 
 * Intel Atom(R) Processor C3000 Product Family
   https://www.intel.com/content/www/us/en/processors/atom/atom-technical-resources.html
+  337018-002
 -->
-  
+
   <pci>
   </pci>
 
@@ -37,7 +38,7 @@ XML configuration file for Denverton
     <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="4" desc="SMI Control and Enable">
       <field name="TCO_LOCK" bit="12" size="1"/>
     </register>
-    
+
     <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="1" desc="BIOS Control">
       <field name="BIOSWE"  bit="0" size="1" desc="Write Protect Disable"/>
       <field name="BLE"     bit="1" size="1" desc="BIOS Lock Enable"/>
@@ -104,7 +105,7 @@ XML configuration file for Denverton
       <field name="RPE" bit="15" size="1"  desc="Read Protection Enabled"/>
       <field name="PRL" bit="16" size="15" desc="Protected Range Limit"/>
       <field name="WPE" bit="31" size="1"  desc="Write Protection Enabled"/>
-    </register>   
+    </register>
     <register name="PREOP" type="mmio" bar="SPIBAR" offset="0xA4" size="2" desc="Prefix Opcode Configuration Register">
       <field name="PREOP0" bit="0" size="8" desc="Prefix Opcode 0"/>
       <field name="PREOP1" bit="8" size="8" desc="Prefix Opcode 1"/>
@@ -163,10 +164,17 @@ XML configuration file for Denverton
       <field name="EO_4k_VALID"  bit="28" size="1" desc="4k Erase Valid"/>
       <field name="EO_64k_VALID" bit="29" size="1" desc="64k Erase Valid"/>
       <field name="CPPTV"        bit="31" size="1" desc="Component Property Parameter Table Valid"/>
-    </register>  
+    </register>
+
+    <!-- ME Host Firmware Status https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/{pch,me}.h -->
+    <register name="HFS" type="pcicfg" bus="0" dev="0x18" fun="0" offset="0x40" size="4" desc="ME Host Firmware Status">
+      <field name="MFG_MODE"   bit="4" size="1" desc="ME Manufacturing Mode" />
+      <field name="FW_INIT_COMPLETE"   bit="9" size="1" desc="ME Firmware Initialization Complete" />
+      <field name="UPDATE_IN_PROGRESS"   bit="11" size="1" desc="ME Update In Progress" />
+    </register>
 
   </registers>
-    
+
   <controls>
     <control name="FlashLockDown"          register="HSFS"          field="FLOCKDN"       desc="Flash Configuration Lock-Down"/>
     <control name="SpiWriteStatusDis"      register="HSFS"          field="WRSDIS"        desc="Write Status Disable"/>
@@ -179,6 +187,5 @@ XML configuration file for Denverton
     <control name="TCOSMILock"             register="TCO1_CNT"      field="TCO_LOCK"      desc="TCO SMI Lock"/>
     <control name="TCOSMIEnable"           register="SMI_EN"        field="TCO_EN"        desc="TCO SMI Enable"/>
   </controls>
-  
-  
+
 </configuration>
