@@ -106,7 +106,7 @@ class ChipsecUtil:
     def import_cmds(self):
         if self.CHIPSEC_LOADED_AS_EXE:
             import zipfile
-            myzip = zipfile.ZipFile("library.zip")
+            myzip = zipfile.ZipFile(os.path.join(get_main_dir(),"library.zip"))
             cmds = [i.replace('/','.').replace('chipsec.utilcmd.','')[:-4] for i in myzip.namelist() if 'chipsec/utilcmd/' in i and i[-4:] == ".pyc" and not os.path.basename(i)[:2] == '__' ]
         else:
             cmds_dir = os.path.join(get_main_dir(),"chipsec","utilcmd")
