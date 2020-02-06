@@ -57,7 +57,6 @@ VERSION_FILE="VERSION"
 build_dir = os.getcwd()
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 bin_dir = os.path.join(root_dir,"bin")
-source_dir = os.path.join(root_dir,"source")
 tool_dir   = root_dir
 cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
 version_file = os.path.join(root_dir, "chipsec", VERSION_FILE)
