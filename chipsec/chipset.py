@@ -277,11 +277,15 @@ PCH_ID_C61x     = 10005
 PCH_ID_3xx      = 10006
 PCH_ID_4xxLP      = 10007
 PCH_ID_495      = 10008
+PCH_ID_3xxOP    = 10009
+PCH_ID_3xxLP    = 10010
 
 PCH_CODE_PREFIX = 'PCH_'
 PCH_CODE_1xx    = 'PCH_1XX'
 PCH_CODE_2xx    = 'PCH_2XX'
 PCH_CODE_3xx    = 'PCH_3XX'
+PCH_CODE_3xxLP    = 'PCH_3XXLP'
+PCH_CODE_3xxOP    = 'PCH_3XXOP'
 PCH_CODE_4xxLP    = 'PCH_4XXLP'
 PCH_CODE_495    = 'PCH_495'
 PCH_CODE_C620   = 'PCH_C620'
@@ -309,12 +313,6 @@ pch_dictionary[0xA154].append({'name' : 'CM238',  'id' : PCH_ID_1xx, 'code' : PC
 pch_dictionary[0xA155].append({'name' : 'QMU185',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'Intel QMU185 (100 series) PCH'})
 pch_dictionary[0x9D43].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Baseline'})
 pch_dictionary[0x9D48].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'})
-pch_dictionary[0x9D4B].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y with iHDCP 2.2 Premium'})
-pch_dictionary[0x9D4E].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Premium'})
-pch_dictionary[0x9D50].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U with iHDCP 2.2 Base'})
-pch_dictionary[0x9D53].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Base'})
-pch_dictionary[0x9D56].append({'name' : 'PCH-Y',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-Y Premium'})
-pch_dictionary[0x9D58].append({'name' : 'PCH-U',  'id' : PCH_ID_1xx, 'code' : PCH_CODE_1xx, 'longname' : 'PCH-U Premium'})
 
 # 200 series and Z370 PCH
 pch_dictionary[0xA2C4].append({'name' : 'H270', 'id' : PCH_ID_2xx, 'code' : PCH_CODE_2xx, 'longname' : 'Intel H270 (200 series) PCH'})
@@ -336,7 +334,17 @@ pch_dictionary[0xA309].append({'name' : 'C246',   'id' : PCH_ID_3xx, 'code' : PC
 pch_dictionary[0xA30D].append({'name' : 'HM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel HM370 (300 series) PCH'})
 pch_dictionary[0xA30C].append({'name' : 'QM370',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel QM370 (300 series) PCH'})
 pch_dictionary[0xA30E].append({'name' : 'CM246',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel CM246 (300 series) PCH'})
-pch_dictionary[0x9D84].append({'name' : 'PCH-U',  'id' : PCH_ID_3xx, 'code' : PCH_CODE_3xx, 'longname' : 'Intel 300 series On-Package PCH'})
+
+# 300 series OP
+pch_dictionary[0x9D84].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxOP, 'code' : PCH_CODE_3xxOP, 'longname' : 'Intel 300 series On-Package PCH'})
+
+# 300 series LP
+pch_dictionary[0x9D4B].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-Y with iHDCP 2.2 Premium'})
+pch_dictionary[0x9D4E].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U with iHDCP 2.2 Premium'})
+pch_dictionary[0x9D50].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U with iHDCP 2.2 Base'})
+pch_dictionary[0x9D53].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U Base'})
+pch_dictionary[0x9D56].append({'name' : 'PCH-Y',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-Y Premium'})
+pch_dictionary[0x9D58].append({'name' : 'PCH-U',  'id' : PCH_ID_3xxLP, 'code' : PCH_CODE_3xxLP, 'longname' : 'PCH-U Premium'})
 
 # 400 series PCH - LP
 pch_dictionary[0x0284].append({'name' : 'PCH-LP-Prem',  'id' : PCH_ID_4xxLP, 'code' : PCH_CODE_4xxLP, 'longname' : 'Intel 400 series PCH-LP Prem-U'})
