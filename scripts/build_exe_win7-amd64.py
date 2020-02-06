@@ -55,7 +55,7 @@ WIN_DRIVER_INSTALL_PATH = "chipsec/helper/win"
 VERSION_FILE="VERSION"
 
 build_dir = os.getcwd()
-root_dir = os.path.abspath(os.pardir)
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 bin_dir = os.path.join(root_dir,"bin")
 source_dir = os.path.join(root_dir,"source")
 tool_dir   = root_dir
