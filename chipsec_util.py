@@ -32,7 +32,7 @@ import importlib
 import argparse
 import platform
 
-from chipsec.defines import get_version
+from chipsec.defines import get_version, get_message
 from chipsec.helper import oshelper
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
@@ -186,6 +186,7 @@ class ChipsecUtil:
         logger().log("[CHIPSEC] Version : {}".format(get_version()))
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(platform.system(), platform.release(), platform.version(), platform.machine()))
         logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if sys.maxsize > 2**32 else "32-bit"))
+        logger().log(get_message())
 
 def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])

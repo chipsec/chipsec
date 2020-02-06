@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -88,10 +88,11 @@ class ChipsecMain:
         self.AVAILABLE_TAGS        = []
         self.MODPATH_RE            = re.compile(r"^\w+(\.\w+)*$")
         self.version               = defines.get_version()
+        self.message               = defines.get_message()
 
         self.argv = argv
         self.parse_args()
-        
+
     def init_cs(self):
         self._cs = chipset.cs()
 
@@ -106,6 +107,7 @@ class ChipsecMain:
                       "################################################################" )
         logger().log( "[CHIPSEC] Version {}".format(self.version) )
         logger().log( "[CHIPSEC] Arguments: {}".format( " ".join(self.argv) ) )
+        logger().log( self.message )
 
     ##################################################################################
     # Module API
@@ -425,6 +427,7 @@ class ChipsecMain:
         ret["Platform"] = "{}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid) 
         ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid)
         ret["Version"] ="{}".format(self.version)
+        ret["Message"] = "{}".format(self.message)
         return ret
 
     def log_properties( self ):
