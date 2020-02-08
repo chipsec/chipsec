@@ -1,8 +1,6 @@
-# LICENSE: PUBLIC
-
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -20,24 +18,19 @@
 #chipsec@intel.com
 #
 
-
-
 """
  Usage:
    ``chipsec_main.py -i -m tools.vmm.ept_finder``
 """
-import re
-import os.path
+
+import os
 import struct
-import chipsec.chipset
-import chipsec.logger
-import chipsec.file
-import binascii
-import time
 import glob
 
-from chipsec.module_common import *
-from chipsec.hal.paging    import *
+from chipsec.logger import logger
+from chipsec.file import write_file
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.hal.paging import c_extended_page_tables
 
 class c_extended_page_tables_from_file(c_extended_page_tables):
     def __init__(self, cs, read_from_file, par):
@@ -79,13 +72,13 @@ class ept_finder(BaseModule):
         tsegmb = None
         touud  = None
 
-        if chipsec.chipset.is_register_defined(self.cs, 'PCI0.0.0_TSEGMB'):
-            tsegmb = chipsec.chipset.read_register(self.cs, 'PCI0.0.0_TSEGMB') & MASK
+        if self.cs.is_register_defined('PCI0.0.0_TSEGMB'):
+            tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB') & MASK
         else:
             self.logger.error( "Couldn't find definition of required registers: TSEGMB" )
 
-        if chipsec.chipset.is_register_defined(self.cs, 'PCI0.0.0_TOUUD'):
-            touud  = chipsec.chipset.read_register(self.cs, 'PCI0.0.0_TOUUD')  & MASK
+        if self.cs.is_register_defined('PCI0.0.0_TOUUD'):
+            touud  = self.cs.read_register('PCI0.0.0_TOUUD')  & MASK
         else:
             self.logger.error( "Couldn't find definition of required registers: TOUUD" )
 
@@ -120,7 +113,7 @@ class ept_finder(BaseModule):
                 allzeros = True
                 topalike = True
                 reserved = False
-                for i in xrange(512):
+                for i in range(512):
                     big_page  = ((page[i] >> 7) & 0x1) == 1
                     memtype   = ((page[i] >> 3) & 0x7)
 
@@ -136,12 +129,12 @@ class ept_finder(BaseModule):
                         reserved_bits_mask = 0x000FFF00000000F8
 
                     if (page[i] & reserved_bits_mask) != 0:
-                        reserved = True            	
+                        reserved = True
                         break
 
                     if (level == 4) or (level in [2, 3] and big_page):
                         if memtype not in [0, 1, 4, 5, 6]:
-                            reserved = True            	
+                            reserved = True
                             break
 
                     if page[i] != 0:
@@ -162,7 +155,7 @@ class ept_finder(BaseModule):
         return pt_list
 
     def dump_dram(self, filename, pa, end_pa, buffer_size = 0x100000):
-        with open(filename, "wb") as dram:              
+        with open(filename, "wb") as dram:
             self.logger.log( '[*] Dumping memory to %s ...' % filename)
             while pa < end_pa:
                 dram.write(self.cs.mem.read_physical_mem(pa, min(end_pa - pa, buffer_size)))
@@ -228,7 +221,7 @@ class ept_finder(BaseModule):
             pass
 
         for addr in sorted(ept_vmcs_list):
-            chipsec.file.write_file(self.path + 'vmcs_%08x.bin' % addr, self.read_physical_mem(addr))
+            write_file(self.path + 'vmcs_%08x.bin' % addr, self.read_physical_mem(addr))
 
         count = 1
         for eptp in sorted(ept_pml4_list.keys()):
