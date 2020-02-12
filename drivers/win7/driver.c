@@ -735,7 +735,7 @@ DriverDeviceControl(
               {
                 // same patch ID, microcode update failed
                 DbgPrint("[chipsec] ERROR: Microcode update failed\n");
-                Status = STATUS_BAD_DATA;
+                Status = STATUS_UNSUCCESSFUL;
                 break;
               }
 
