@@ -28,6 +28,7 @@ import string
 import sys
 import os
 from time import localtime, strftime
+import atexit
 
 from chipsec.testcase import TestCase, ChipsecResults
 import traceback
@@ -72,10 +73,11 @@ class ColorLogger( pyLogging.Formatter ):
             def log_color ( self, message, record ):
                 """ Testing """
                 if record.levelno in self.LEVEL_ID:
-                    old_setting = WConio.gettextinfo()[4] & 0x00FF
                     WConio.textcolor( self.LEVEL_ID[record.levelno] )
                     return message
-                WConio.textcolor( old_setting )
+
+            old_setting = WConio.gettextinfo()[4] & 0x00FF
+            atexit.register(WConio.textcolor, old_setting)
 
         else:
             def log_color( self, message, record ):
