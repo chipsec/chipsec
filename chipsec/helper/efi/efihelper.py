@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -120,7 +120,7 @@ class EfiHelper(Helper):
         if logger().DEBUG:
             logger().log( '[efi] helper does not support 64b PA' )
         return self._read_phys_mem( phys_address_lo, length )
-          
+
     def _read_phys_mem( self, phys_address, length ):
         return edk2.readmem( phys_address, length )
 
@@ -185,7 +185,7 @@ class EfiHelper(Helper):
         else:
             buf = struct.pack(size*"B", value)
             edk2.writemem( phys_address, buf, size )
-        
+
     #
     # PCIe configuration access
     #
@@ -250,7 +250,7 @@ class EfiHelper(Helper):
         if logger().DEBUG: logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
         return 0
-        
+
     def cpuid(self, eax, ecx):
         (reax, rebx, recx, redx)=edk2.cpuid(eax,ecx)
         return (reax, rebx, recx, redx)
@@ -271,7 +271,6 @@ class EfiHelper(Helper):
     def getcwd( self ):
         return os.getcwd()
 
-        
     #
     # EFI Variable API
     #
@@ -281,25 +280,25 @@ class EfiHelper(Helper):
 
     def get_EFI_variable_full(self, name, guidstr):
         guid = uuid.UUID(guidstr)
-        
+
         size = 100
         (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
-        
+
         if Status == 5:
             size = DataSize+1
             (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size) 
-        
+
         return (Status, newdata, Attributes)
-        
+
 
     def get_EFI_variable(self, name, guidstr):
         (status, data, attrs) = self.get_EFI_variable_full(name, guidstr)
         return data
-        
+
     def set_EFI_variable(self, name, guidstr, data, datasize=None, attrs=0x7):
-        
+
         guid = uuid.UUID(guidstr)
-        
+
         if data     is None: data = '\0'*4
         if datasize is None: datasize = len(data)
         if attrs is None:
@@ -307,14 +306,14 @@ class EfiHelper(Helper):
             if logger().VERBOSE: logger().log_warning("Setting attributes to: {:04X}".format(attrs))
 
         (Status, datasize, guidbytes) = edk2.SetVariable(unicode(name), guid.bytes, int(attrs), data, datasize)
-        
+
         return Status
-        
+
     def delete_EFI_variable(self, name, guid):
         return self.set_EFI_variable(name, guid, None, 0, 0)
-    
-    def list_EFI_variables(self):   
-                
+
+    def list_EFI_variables(self):
+
         off = 0
         buf = list()
         hdr = 0
@@ -322,13 +321,13 @@ class EfiHelper(Helper):
         variables = dict()
 
         status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
-        
+
         name = '\0'*200
-        
+
         randguid = uuid.uuid4()
-        
-        (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), randguid.bytes)     
-        
+
+        (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), randguid.bytes)
+
         if status == 5:
             if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
             name = '\0'*size
@@ -338,7 +337,7 @@ class EfiHelper(Helper):
             guid = uuid.UUID(bytes=guidbytes)
             name = name.encode('ascii','ignore')
             (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
-            
+
             if logger().DEBUG: logger().log("{:d}: Found variable {}".format(len(variables), name))
 
             var = (off, buf, hdr, data, str(guid), attr)
@@ -355,15 +354,15 @@ class EfiHelper(Helper):
             if status == 5:
                 if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
                 (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), guid.bytes)
-        return variables        
-        
+        return variables
+
     #
     # ACPI tables access
     #
 
     def get_ACPI_SDT( self ):
         if logger().DEBUG: logger().error( "[efi] ACPI is not supported yet" )
-        return 0        
+        return 0
 
     #
     # IOSF Message Bus access
@@ -371,16 +370,19 @@ class EfiHelper(Helper):
 
     def msgbus_send_read_message( self, mcr, mcrx ):
         if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
-        return None        
+        return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
         if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
-        return None        
+        return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
         if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
-        return None        
-    
-        
+        return None
+
+    def set_affinity( self, value ):
+        if logger().DEBUG: logger().error( '[efi] API set_affinity() is not supported' )
+        return 0
+
 def get_helper():
     return EfiHelper( )
