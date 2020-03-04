@@ -164,13 +164,17 @@ class LinuxHelper(Helper):
 
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper" ,"linux", "chipsec.ko" )
         if not os.path.exists(driver_path):
-            #check DKMS modules location
-            try:
-                driver_path = self.get_dkms_module_location()
-            except Exception:
-                pass
+            driver_path += ".xz"
             if not os.path.exists(driver_path):
-                raise Exception("Cannot find chipsec.ko module")
+                #check DKMS modules location
+                try:
+                    driver_path = self.get_dkms_module_location()
+                except Exception:
+                    pass
+                if not os.path.exists(driver_path):
+                    driver_path += ".xz"
+                    if not os.path.exists(driver_path):
+                        raise Exception("Cannot find chipsec.ko module")
         try:
             subprocess.check_output( [ "insmod", driver_path, a1, a2 ] )
         except Exception as err:
