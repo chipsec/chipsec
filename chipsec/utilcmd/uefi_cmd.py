@@ -83,6 +83,9 @@ class UEFICommand(BaseCommand):
         # Driver is always required for these specific commands to run
         if len(self.argv) >= 3 and self.argv[2] in ('tables','s3bootscript'):
             load_driver = True
+        # Driver is not required for decompression
+        if 'decode' in self.argv:
+            load_driver = False
         return load_driver
 
     def run(self):
