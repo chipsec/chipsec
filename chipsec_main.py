@@ -81,6 +81,7 @@ class ChipsecMain:
     def __init__(self, argv):
         self.CHIPSEC_FOLDER        = os.path.abspath(chipsec.file.get_main_dir())
         self.CHIPSEC_LOADED_AS_EXE = chipsec.file.main_is_frozen()
+        self.PYTHON_64_BITS        = True if (sys.maxsize > 2**32) else False
         self.ZIP_MODULES_RE        = None
         self.Import_Path           = "chipsec.modules."
         self.Modules_Path          = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
@@ -432,10 +433,13 @@ class ChipsecMain:
 
     def log_properties( self ):
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if sys.maxsize > 2**32 else "32-bit"))
+        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log("[CHIPSEC] Helper  : {} ({})".format(*self._cs.helper.helper.get_info()))
         logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
         logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
+        
+        if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
+            logger().warn("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
     ##################################################################################
     # Entry point for command-line execution
