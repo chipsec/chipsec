@@ -280,8 +280,9 @@ class RweHelper(Helper):
                 self.driver_path = driver_path
                 if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
         if self.driver_path is None: 
-            if logger().DEBUG: logger().log("[helper] RWE Driver Not Found")
-            raise DriverNotFound
+            if logger().DEBUG:
+                logger().log("[helper] RWE Driver Not Found")
+            raise Exception("RWE Driver Not Found")
 
         c_int_p = POINTER(c_int)
 
