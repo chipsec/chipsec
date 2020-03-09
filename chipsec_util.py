@@ -64,7 +64,9 @@ class ChipsecUtil:
         self.commands = {}
         # determine if CHIPSEC is loaded as chipsec_*.exe or in python
         self.CHIPSEC_LOADED_AS_EXE = True if (hasattr(sys, "frozen") or hasattr(sys, "importers")) else False
-
+        # determine if the hosting Python interpreter is a 64-bit executable
+        self.PYTHON_64_BITS = True if (sys.maxsize > 2**32) else False
+        
         self.argv = argv
         self.print_banner()
         self.import_cmds()
@@ -185,8 +187,11 @@ class ChipsecUtil:
                      "################################################################")
         logger().log("[CHIPSEC] Version : {}".format(get_version()))
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(platform.system(), platform.release(), platform.version(), platform.machine()))
-        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if sys.maxsize > 2**32 else "32-bit"))
+        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log(get_message())
+        
+        if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
+            logger().warn("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
 def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])
