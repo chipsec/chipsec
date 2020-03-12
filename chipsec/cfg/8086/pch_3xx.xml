@@ -22,7 +22,6 @@ https://www.intel.com/content/www/us/en/products/docs/chipsets/300-series-chipse
     <sku did="0xA30D" name="HM370" code="PCH_3xx" longname="Intel HM370 (300 series) PCH" />
     <sku did="0xA30C" name="QM370" code="PCH_3xx" longname="Intel QM370 (300 series) PCH" />
     <sku did="0xA30E" name="CM246" code="PCH_3xx" longname="Intel CM246 (300 series) PCH" />
-    <sku did="0x9D84" name="PCH-U" code="PCH_3xx" longname="Intel 300 series On-Package PCH" />
   </info>
 
   <!-- #################################### -->
