@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -112,13 +112,13 @@ class UEFICommand(BaseCommand):
 
         # nvram-auth command args
         parser_nvram_auth = subparsers.add_parser('nvram-auth')
-        parser_nvram_auth.add_argument('image', type=str, help='nvram image')
+        parser_nvram_auth.add_argument('romfilename', type=str, help='nvram image')
         parser_nvram_auth.add_argument('fwtype', type=str, nargs='?', default=None)
         parser_nvram_auth.set_defaults(func=self.nvram_auth)
 
         # decode command args
         parser_decode = subparsers.add_parser('decode')
-        parser_decode.add_argument('image', type=str, help='bios image to decompress')
+        parser_decode.add_argument('filename', type=str, help='bios image to decompress')
         parser_decode.add_argument('fwtype', type=str, nargs='?', default=None)
         parser_decode.set_defaults(func=self.decode)
 
@@ -178,23 +178,18 @@ class UEFICommand(BaseCommand):
 
         parser.parse_args(self.argv[2:], namespace=self)
 
-        #TODO Implement this....
-        '''
         # No driver required when printing the util documentation
         if len(self.argv) < 3:
             return False
         # Always load the driver unless native mode is requested
         load_driver = True
         if '-n' in self.argv:
-            self.argv.remove('-n')
             load_driver = False
         # Driver is always required for these specific commands to run
         if len(self.argv) >= 3 and self.argv[2] in ('tables','s3bootscript'):
             load_driver = True
         return load_driver
-        '''
-        load_driver = True
-        return load_driver
+       
         
 
     
@@ -213,14 +208,14 @@ class UEFICommand(BaseCommand):
 
     def var_delete(self):
         self.logger.log( "[CHIPSEC] Deleting EFI variable Name='{}' GUID={{{}}} via Variable API..".format(self.name, self.guid) )
-        status = _uefi.delete_EFI_variable( self.name, self.guid )
+        status = self._uefi.delete_EFI_variable( self.name, self.guid )
         self.logger.log("Returned {}".format(chipsec.hal.uefi_common.EFI_STATUS_DICT[status]))
         if status == 0: self.logger.log( "[CHIPSEC] deleting EFI variable was successful" )
         else: self.logger.error( "deleting EFI variable failed" )
     
     def var_list(self):
         self.logger.log( "[CHIPSEC] Enumerating all EFI variables via OS specific EFI Variable API.." )
-        efi_vars = _uefi.list_EFI_variables()
+        efi_vars = self._uefi.list_EFI_variables()
         if efi_vars is None:
             self.logger.log( "[CHIPSEC] Could not enumerate EFI Variables (Legacy OS?). Exit.." )
             return
@@ -309,7 +304,7 @@ class UEFICommand(BaseCommand):
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file( self.filename + '.UEFI.lst' )
         cur_dir = self.cs.helper.getcwd()
-        decode_uefi_region(self._uefi, cur_dir, self.filename, fwtype)
+        decode_uefi_region(self._uefi, cur_dir, self.filename, self.fwtype)
         self.logger.set_log_file( _orig_logname )
     
     def keys(self):
