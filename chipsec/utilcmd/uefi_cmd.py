@@ -178,8 +178,6 @@ class UEFICommand(BaseCommand):
 
         parser.parse_args(self.argv[2:], namespace=self)
 
-        load_driver = False
-        return load_driver
         #TODO Implement this....
         '''
         # No driver required when printing the util documentation
@@ -195,6 +193,9 @@ class UEFICommand(BaseCommand):
             load_driver = True
         return load_driver
         '''
+        load_driver = True
+        return load_driver
+        
 
     
     def var_read(self):
@@ -397,7 +398,7 @@ class UEFICommand(BaseCommand):
             return
 
         rom_image = chipsec.file.read_file(self.rom_file)
-        new_image = modify_uefi_region(self.rom_image, CMD_UEFI_FILE_REMOVE, self.guid)
+        new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REMOVE, self.guid)
         chipsec.file.write_file(self.new_file, new_image)
 
     def assemble(self):
@@ -432,8 +433,10 @@ class UEFICommand(BaseCommand):
         self.logger.log( "[CHIPSEC]  UEFI file was successfully assembled! Binary file size: {:d}, compressed UEFI file size: {:d}".format(len(raw_image), len(uefi_image)) )
 
     def run(self):
+        t = time.time()
         self._uefi = UEFI( self.cs )
         self.func()
+        self.logger.log( "[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time()-t) )
         return
 
 commands = { 'uefi': UEFICommand }
