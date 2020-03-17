@@ -193,62 +193,74 @@ class Chipset:
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
-        self.vid, self.did, self.rid, self.pch_vid, self.pch_did, self.pch_rid = self.detect_platform()
+        vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
+
+        #initalize chipset values to unknown
+        _unknown_platform = True
+        self.longname   = 'UnknownPlatform'
+        self.vid = 0xFFFF
+        self.did = 0xFFFF
+        self.rid = 0xFF
+        #initialize pch values to unknown/default
+        _unknown_pch = True
+        self.pch_longname = 'Default PCH'
+        self.pch_vid = 0xFFFF
+        self.pch_did = 0xFFFF
+        self.pch_rid = 0xFF
 
         if platform_code is None:
-            _unknown_platform = True
-        else:
-            if platform_code in self.chipset_codes:
-                self.vid = self.chipset_codes[ platform_code ]['vid']
-                self.did = self.chipset_codes[ platform_code ]['did']
-                self.rid = 0x00
-            else:
-                _unknown_platform = True
-                self.vid = 0xFFFF
-                self.did = 0xFFFF
-                self.rid = 0xFF
+            #platform code was not passed in try to determine based upon cpu id
+            if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1:
+                #found multiple entires with did try to match on detection value
+                value = self.get_cpuid()
+                for item in self.chipset_dictionary[vid][did]:
+                    if value == item['detection_value']:
+                        #matched processor with detection value
+                        _unknown_platform = False
+                        data_dict       = item
+                        self.code       = data_dict['code'].lower()
+                        self.longname   = data_dict['longname']
+                        self.vid = vid
+                        self.did = did
+                        self.rid = rid
+                        break
+            elif did in self.chipset_dictionary[vid]:
+                #found single did within configuration that matches
+                _unknown_platform = False
+                data_dict       = self.chipset_dictionary[vid][ did ][0]
+                self.code       = data_dict['code'].lower()
+                self.longname   = data_dict['longname']
+                self.vid = vid
+                self.did = did
+                self.rid = rid
 
-        if self.did in self.chipset_dictionary[self.vid] and len(self.chipset_dictionary[self.vid][self.did]) > 1:
-            _unknown_platform = True
-            self.longname = 'UnknownPlatform'
-            value = self.get_cpuid()
-            for item in self.chipset_dictionary[self.vid][self.did]:
-                if value == item['detection_value']:
-                    #matched setup info
-                    _unknown_platform = False
-                    data_dict       = item
-                    self.code       = data_dict['code'].lower()
-                    self.longname   = data_dict['longname']
-                    #self.id         = data_dict['id']
-                    break
-        elif self.did in self.chipset_dictionary[self.vid]:
+        elif platform_code in self.chipset_codes:
+            # Check if platform code passed in is valid and override configuraiton
             _unknown_platform = False
-            data_dict       = self.chipset_dictionary[self.vid][ self.did ][0]
-            self.code       = data_dict['code'].lower()
-            self.longname   = data_dict['longname']
-            #self.id         = data_dict['id']
-        else:
-            _unknown_platform = True
-            self.longname   = 'UnknownPlatform'
+            self.vid = self.chipset_codes[ platform_code ]['vid']
+            self.did = int(self.chipset_codes[ platform_code ]['did'],16)
+            self.rid = 0x00
+            self.code = platform_code
+            self.longname = platform_code
 
         if req_pch_code is not None:
+            # Check if pch code passed in is valid
             if req_pch_code in self.pch_codes:
                 self.pch_vid = self.pch_codes[req_pch_code]['vid']
                 self.pch_did = self.pch_codes[req_pch_code]['did']
                 self.pch_rid = 0x00
-            else:
-                self.pch_vid = 0xFFFF
-                self.pch_did = 0xFFFF
-                self.pch_rid = 0xFF
-
-        if self.pch_vid in self.pch_dictionary.keys() and self.pch_did in self.pch_dictionary[self.pch_vid].keys():
+                self.pch_code = self.pch_codes[req_pch_code]['code'].lower()
+                self.pch_longname = self.pch_codes[req_pch_code]['longname']
+                _unknown_pch = False
+        elif pch_vid in self.pch_dictionary.keys() and pch_did in self.pch_dictionary[pch_vid].keys():
+            #Check if pch did for device 0:31:0 is in configuration
+            self.pch_vid = pch_vid
+            self.pch_did = pch_did
+            self.pch_rid = pch_rid
             data_dict           = self.pch_dictionary[self.vid][self.pch_did][0]
             self.pch_code       = data_dict['code'].lower()
             self.pch_longname   = data_dict['longname']
-            #self.pch_id         = data_dict['id']
-        else:
-            _unknown_pch = True
-            self.pch_longname = 'Default PCH'
+            _unknown_pch = False
 
         if _unknown_platform and start_driver:
             msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.vid,self.did,self.rid)
@@ -265,7 +277,7 @@ class Chipset:
         self.helper.stop( start_driver )
 
     def get_chipset_code(self):
-        return self.code
+        return self.code.upper()
 
     def get_pch_code(self):
         return self.pch_code
@@ -343,11 +355,13 @@ class Chipset:
                         cdict = self.pch_codes[_cfg.attrib['platform'].lower()]
                     elif _cfg.attrib['platform'].lower():
                         if logger().DEBUG: logger().log("[*] found platform config from '{}'..".format(fxml))
-                        self.chipset_codes[_cfg.attrib['platform'].lower()] = {}
-                        self.chipset_codes[_cfg.attrib['platform'].lower()]['vid'] = int(vid,16)
+                        if not _cfg.attrib['platform'].lower() in self.chipset_codes.keys():
+                            self.chipset_codes[_cfg.attrib['platform'].lower()] = {}
+                            self.chipset_codes[_cfg.attrib['platform'].lower()]['vid'] = int(vid,16)
                         mdict = self.chipset_dictionary[int(vid,16)]
                         cdict = self.chipset_codes[_cfg.attrib['platform'].lower()]
-                    else: continue
+                    else:
+                        continue
                     if logger().DEBUG: logger().log( "[*] Populating configuration dictionary.." )
                     for _info in _cfg.iter('info'):
                         if 'family' in _info.attrib:
@@ -360,10 +374,14 @@ class Chipset:
                             if _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].lower())
                         for _sku in _info.iter('sku'):
+                            _det = ""
                             _did = _sku.attrib['did']
                             del _sku.attrib['did']
                             mdict[int(_did,16)].append(_sku.attrib)
+                            if "detection_value" in _sku.attrib.keys():
+                                _det = _sku.attrib['detection_value']
                         cdict['did'] = _did
+                        cdict['detection_value'] = _det
             for cc in self.chipset_codes:
                 globals()["CHIPSET_CODE_{}".format(cc.upper())] = cc.upper()
 
