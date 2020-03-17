@@ -211,24 +211,22 @@ class Chipset:
         if platform_code is None:
             #platform code was not passed in try to determine based upon cpu id
             if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1:
-                #found multiple entires with did try to match on detection value
                 value = self.get_cpuid()
                 for item in self.chipset_dictionary[vid][did]:
                     if value == item['detection_value']:
                         #matched processor with detection value
                         _unknown_platform = False
                         data_dict       = item
-                        self.code       = data_dict['code'].lower()
+                        self.code       = data_dict['code'].upper()
                         self.longname   = data_dict['longname']
                         self.vid = vid
                         self.did = did
                         self.rid = rid
                         break
             elif did in self.chipset_dictionary[vid]:
-                #found single did within configuration that matches
                 _unknown_platform = False
                 data_dict       = self.chipset_dictionary[vid][ did ][0]
-                self.code       = data_dict['code'].lower()
+                self.code       = data_dict['code'].upper()
                 self.longname   = data_dict['longname']
                 self.vid = vid
                 self.did = did
@@ -277,7 +275,7 @@ class Chipset:
         self.helper.stop( start_driver )
 
     def get_chipset_code(self):
-        return self.code.upper()
+        return self.code
 
     def get_pch_code(self):
         return self.pch_code
@@ -366,13 +364,13 @@ class Chipset:
                     for _info in _cfg.iter('info'):
                         if 'family' in _info.attrib:
                             if _info.attrib['family'].lower() == "core":
-                                CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].lower())
+                                CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "atom":
-                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].lower())
+                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "xeon":
-                                CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].lower())
+                                CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "quark":
-                                CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].lower())
+                                CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
                         for _sku in _info.iter('sku'):
                             _det = ""
                             _did = _sku.attrib['did']
@@ -407,7 +405,7 @@ class Chipset:
         # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
         if self.code and CHIPSET_CODE_UNKNOWN != self.code:
             for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code)):
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code.lower())):
                     loaded_files.append(_xml)
 
         # Locate PCH specific (chipsec/cfg/pch_<code>*.xml) configuration XML files.
@@ -425,7 +423,7 @@ class Chipset:
         # Load all configuration files for this platform.
         if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
-            self.init_cfg_xml(_xml, self.code, self.pch_code)
+            self.init_cfg_xml(_xml, self.code.lower(), self.pch_code)
 
         # Load Bus numbers for this platform.
         if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
