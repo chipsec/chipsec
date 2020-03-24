@@ -1178,7 +1178,7 @@ class LinuxHelper(Helper):
     #
     def get_threads_count ( self ):
         import subprocess
-        return int(subprocess.check_output("grep -c process /proc/cpuinfo", shell=True))
+        return int(subprocess.check_output("egrep -c ^process /proc/cpuinfo", shell=True))
 
 def get_helper():
     return LinuxHelper()
