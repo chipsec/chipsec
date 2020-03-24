@@ -19,15 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Access to SPI Flash parts
 
@@ -379,12 +370,15 @@ class SPI(hal_base.HALBase):
         logger().log( "SPI Flash Region Access Permissions" )
         logger().log( "------------------------------------------------------------" )
         fracc = self.cs.read_register('FRAP')
-        self.cs.print_register('FRAP', fracc)
+        if logger().HAL:
+            self.cs.print_register('FRAP', fracc)
         brra  = self.cs.get_register_field('FRAP', fracc, 'BRRA' )
         brwa  = self.cs.get_register_field('FRAP', fracc, 'BRWA' )
         bmrag = self.cs.get_register_field('FRAP', fracc, 'BMRAG' )
         bmwag = self.cs.get_register_field('FRAP', fracc, 'BMWAG' )
         if self.cs.is_register_defined('FDOC') and self.cs.is_register_defined('FDOD'):
+            if logger().HAL:
+                logger().log("Reading Observability Contol and Data register (may update braa and brwa)")
             self.cs.write_register('FDOC', 0x3000)
             tmp_reg = self.cs.read_register('FDOD')
             brra |= ((tmp_reg >> 8) & 0xFFF)
