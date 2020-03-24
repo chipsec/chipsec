@@ -179,7 +179,7 @@ class UEFICommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
 
         # No driver for decode functionality
-        if self.argv[2] in ('decode'):
+        if 'decode' in self.argv:
             return False
         return True
         
