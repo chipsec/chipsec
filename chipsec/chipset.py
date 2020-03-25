@@ -841,8 +841,10 @@ class Chipset:
         return self.pci.get_DIDVID( b, d, f )
 
     def is_device_enabled( self, device_name ):
-        (b,d,f) = self.get_device_BDF( device_name )
-        return self.pci.is_enabled( b, d, f )
+        if self.is_device_defined( device_name ):
+            (b,d,f) = self.get_device_BDF( device_name )
+            return self.pci.is_enabled( b, d, f )
+        return False
 
     def switch_device_def( self, target_dev, source_dev ):
         (b,d,f) = self.get_device_BDF( source_dev )
@@ -857,6 +859,8 @@ class Chipset:
 #
 # is_register_defined
 #   checks if register is defined in the XML config
+# is_device_defined
+#   checks if device is defined in the XML config
 # get_register_bus/get_device_bus
 #   returns list of buses device/register was discovered on
 # read_register/write_register
@@ -880,6 +884,12 @@ class Chipset:
             return (self.Cfg.REGISTERS[reg_name] is not None)
         except KeyError:
             return False
+
+    def is_device_defined(self, dev_name):
+        if self.cs.Cfg.CONFIG_PCI.get( dev_name, None ) == None:
+            return False
+        else:
+            return True
 
     def get_register_def(self, reg_name, bus_index=0):
         reg_def = self.Cfg.REGISTERS[reg_name]
