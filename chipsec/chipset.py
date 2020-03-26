@@ -886,7 +886,7 @@ class Chipset:
             return False
 
     def is_device_defined(self, dev_name):
-        if self.cs.Cfg.CONFIG_PCI.get( dev_name, None ) == None:
+        if self.cs.Cfg.CONFIG_PCI.get( dev_name, None ) is None:
             return False
         else:
             return True
