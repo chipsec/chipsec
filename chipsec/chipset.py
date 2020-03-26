@@ -896,7 +896,7 @@ class Chipset:
             return False
 
     def is_device_defined(self, dev_name):
-        if self.cs.Cfg.CONFIG_PCI.get( dev_name, None ) is None:
+        if self.Cfg.CONFIG_PCI.get( dev_name, None ) is None:
             return False
         else:
             return True
@@ -1174,7 +1174,7 @@ class Chipset:
         elif RegisterType.IOBAR == rtype:
             reg_str = "[*] {} = {} << {} (I/O {} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
         elif RegisterType.MSGBUS == rtype or RegisterType.MM_MSGBUS == rtype:
-            reg_str = "[*] %s = %s << %s (msgbus port 0x%X, off 0x%X)" % (reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
+            reg_str = "[*] {} = {} << {} (msgbus port 0x{:X}, off 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
         else:
             reg_str = "[*] {} = {} << {}".format(reg_name, reg_val_str, reg['desc'])
 
