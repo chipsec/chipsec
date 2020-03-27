@@ -25,6 +25,7 @@ Logging functions
 import logging as pyLogging
 import platform
 import string
+import binascii
 import sys
 import os
 from time import localtime, strftime
@@ -382,93 +383,109 @@ def logger():
 # Hex dump functions
 ##################################################################################
 
-def dump_buffer( arr, length = 8 ):
-    """Dumps the buffer."""
-    tmp=[]
-    tmp_str=[]
-    i=1
-    for c in arr:
-        tmp+=["{:02x} ".format(ord(c))]
-        if c in string.whitespace or c not in string.printable:
-            ch = " "
+def hex_to_text( value ):
+    '''Generate text string based on bytestrings'''
+    text = binascii.unhexlify('{:x}'.format(value))[::-1]
+    if isinstance( text, str ):
+        return text   # Python 2.x
+    else:
+        return text.decode( 'latin-1' )   # Python 3.x
+
+
+def bytes2string( buffer, length=16 ):
+    '''Generate text string based on str with ASCII side panel'''
+    output       = []
+    num_string   = []
+    ascii_string = []
+    index        = 1
+    for c in buffer:
+        num_string += ['{:02X} '.format(ord(c))]
+        if ( not (c in string.printable) or (c in string.whitespace) ):
+            ascii_string += ['{}'.format(' ')]
         else:
-            ch = ord(c)
-        tmp_str+=["%c"%ch]
-        if i%length==0:
-            tmp+=["| "]
-            tmp+=tmp_str
-            tmp+=["\n"]
-            tmp_str=[]
-        i+=1
-    if 0 != len(arr)%length:
-        tmp+=[ (length - len(arr)%length) * 3*" " ]
-        tmp+=["| "]
-        tmp+=tmp_str
-        tmp+=["\n"]
-    return "".join(tmp)
+            ascii_string += ['{}'.format(c)]
+        if index%length == 0:
+            num_string += ['| ']
+            num_string += ascii_string
+            output.append( ''.join(num_string) )
+            ascii_string = []
+            num_string   = []
+        index += 1
+    if 0 != len(buffer)%length:
+        num_string += [ (length - len(buffer)%length) * 3*' ' ]
+        num_string += ['| ']
+        num_string += ascii_string
+        output.append( ''.join(num_string) )
+    return '\n'.join(output)
+
+
+def dump_buffer( arr, length = 8 ):
+    """Dumps the buffer (str) with ASCII"""
+    return bytes2string( arr, length )
+
 
 def print_buffer( arr, length = 16 ):
-    """Prints the buffer."""
-    tmp=[]
-    tmp_str=[]
-    i=1
-    for c in arr:
-        tmp+=["{:2x} ".format(ord(c))]
-        if (not c in string.printable) or (c in string.whitespace):
-            ch = " "
-        else:
-            ch = ord(c)
-        tmp_str+=["%c"%ch]
-        if i%length==0:
-            tmp+=["| "]
-            tmp+=tmp_str
-            tmp_s = "".join(tmp)
-            logger().log( tmp_s )
-            tmp_str=[]
-            tmp=[]
-        i+=1
+    """Prints the buffer (str) with ASCII"""
+    prt_str = bytes2string( arr, length )
+    logger().log( prt_str )
 
+
+def dump_buffer_bytes( arr, length = 8):
+    """Dumps the buffer (bytes, bytearray) with ASCII"""
+    output       = []
+    num_string   = []
+    ascii_string = []
+    index        = 1
+    for c in arr:
+        num_string += ['{:02X} '.format(c)]
+        if ( not (chr(c) in string.printable) or (chr(c) in string.whitespace) ):
+            ascii_string += ['{}'.format(' ')]
+        else:
+            ascii_string += [chr(c)]
+        if index%length == 0:
+            num_string += ['| ']
+            num_string += ascii_string
+            output.append( ''.join(num_string) )
+            ascii_string = []
+            num_string   = []
+        index += 1
     if 0 != len(arr)%length:
-        tmp+=[ (length - len(arr)%length) * 3*" " ]
-        tmp+=["| "]
-        tmp+=tmp_str
-        tmp_s = "".join(tmp)
-        logger().log( tmp_s )
+        num_string += [ (length - len(arr)%length) * 3*' ' ]
+        num_string += ['| ']
+        num_string += ascii_string
+        output.append( ''.join(num_string) )
+    return output
+    return '\n'.join(output)
+
 
 def print_buffer_bytes( arr, length = 16 ):
-    """Prints the buffer."""
-    tmp=[]
-    tmp_str=[]
-    i=1
-    for c in arr:
-        tmp+=["{:2x} ".format(c)]
-        if (not chr(c) in string.printable) or (chr(c) in string.whitespace):
-            ch = " "
-        else:
-            ch = c
-        tmp_str+=["%c"%ch]
-        if i%length==0:
-            tmp+=["| "]
-            tmp+=tmp_str
-            tmp_s = "".join(tmp)
-            logger().log( tmp_s )
-            tmp_str=[]
-            tmp=[]
-        i+=1
-
-    if 0 != len(arr)%length:
-        tmp+=[ (length - len(arr)%length) * 3*" " ]
-        tmp+=["| "]
-        tmp+=tmp_str
-        tmp_s = "".join(tmp)
-        logger().log( tmp_s )
+    """Prints the buffer (bytes, bytearray) with ASCII"""
+    prt_str = dump_buffer_bytes( arr, length )
+    logger().log( prt_str )
 
 
 def pretty_print_hex_buffer( arr, length = 16 ):
+    """Prints the buffer (bytes, bytearray) in a grid"""
     _str = ["    _"]
     for n in range(length):
-        _str += ["%02X__" % n]
+        _str += ["{:02X}__".format(n)]
     for n in range(len(arr)):
         if n%length == 0: _str += ["\n{:02X} | ".format(n)]
         _str += ["{:02X}  ".format(arr[n])]
     logger().log( ''.join(_str) )
+
+
+def dump_data( data, length = 16 ):
+    """Dumps the buffer with ASCII"""
+    if isinstance( data, str ):
+        dump_buffer( data, length )
+    else:
+        dump_buffer_bytes( data, length )
+
+
+def print_data( data, length = 16 ):
+    """Prints the buffer with ASCII"""
+    if isinstance( data, str ):
+        print_buffer( data, length )
+    else:
+        print_buffer_bytes( data, length )
