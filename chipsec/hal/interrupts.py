@@ -35,7 +35,6 @@ import uuid
 
 from chipsec.hal import hal_base
 from chipsec.logger import logger
-from chipsec.cfg.common import Cfg
 from chipsec.hal.acpi import ACPI
 from chipsec.hal.acpi_tables import UEFI_TABLE
 from chipsec.defines import bytestostring
