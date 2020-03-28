@@ -57,6 +57,12 @@ XML configuration file for Whiskey Lake
   <!--                                      -->
   <!-- #################################### -->
   <registers>
+    <register name="PCI0.0.0_PCIEXBAR"   type="pcicfg" device="HOSTCTRL" offset="0x60" size="8" desc="PCIe MMCFG Base Address">
+      <field name="PCIEXBAREN" bit="0" size="1" desc="Enable" />
+      <Field name="LENGTH" bit="1" size="2" desc="Length of region" />
+      <Field name="RESERVED" bit="3" size="23" desc="Reserved" />
+      <Field name="PCIEXBAR" bit="26" size="13" desc="Base Address for PCI Express" />
+    </register>
   </registers>
 
   <!-- #################################### -->
