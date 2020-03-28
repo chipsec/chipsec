@@ -34,7 +34,6 @@ from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 
-from chipsec.cfg.common import Cfg
 from chipsec.logger import logger
 
 import chipsec.file
@@ -55,6 +54,17 @@ class RegisterType:
     MSGBUS    = 'msgbus'
     MM_MSGBUS = 'mm_msgbus'
     MEMORY    = 'memory'
+
+class Cfg:
+    def __init__(self):
+        self.CONFIG_PCI    = {}
+        self.REGISTERS     = {}
+        self.MMIO_BARS     = {}
+        self.IO_BARS       = {}
+        self.MEMORY_RANGES = {}
+        self.CONTROLS      = {}
+        self.BUS           = {}
+        self.XML_CONFIG_LOADED = False
 
 
 ##################################################################################
