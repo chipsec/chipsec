@@ -48,7 +48,7 @@ Common (default) XML platform configuration file
   <mmio>
     <bar name="PXPEPBAR" bus="0" dev="0"    fun="0" reg="0x40" width="8" mask="0x7FFFFFF000" size="0x1000" enable_bit="0" desc="PCI Express Egress Port Register Range"/>
     <bar name="MCHBAR"   bus="0" dev="0"    fun="0" reg="0x48" width="8" mask="0x7FFFFF8000" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
-    <bar name="MMCFG"    bus="0" dev="0"    fun="0" reg="0x60" width="8" mask="0x7FFFFFF000" size="0x1000" enable_bit="0" desc="PCI Express Register Range"/>
+    <bar name="MMCFG"    bus="0" dev="0"    fun="0" reg="0x60" width="8" mask="0x7FFC000000" size="0x1000" enable_bit="0" desc="PCI Express Register Range"/>
     <bar name="DMIBAR"   bus="0" dev="0"    fun="0" reg="0x68" width="8" mask="0x7FFFFFF000" size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
     <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFFC00000"                              desc="Graphics Translation Table Range"/>
     <bar name="GMADR"    bus="0" dev="2"    fun="0" reg="0x18" width="8" mask="0x7FF8000000"                              desc="Graphics Memory Range"/>
