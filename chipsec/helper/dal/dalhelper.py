@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2019, Intel Corporation
+# Copyright (c) 2010-2020, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,6 @@ From the Intel(R) DFx Abstraction Layer Python* Command Line Interface User Guid
 """
 
 import struct
-import sys
 
 from chipsec.logger import logger
 import itpii
@@ -138,7 +137,6 @@ class DALHelper(Helper):
         return config_addr
 
     def read_pci_reg( self, bus, device, function, address, size ):
-        value = 0xFFFFFFFF
         ie_thread = self.find_thread()
         self.base.threads[ie_thread].dport(0xCF8, self.pci_addr(bus, device, function, address))
         value = (self.base.threads[ie_thread].dport(0xCFC) >> ((address % 4) * 8))
@@ -149,7 +147,6 @@ class DALHelper(Helper):
         return value.ToUInt32()
 
     def write_pci_reg( self, bus, device, function, address, dword_value, size ):
-        old_value = 0xFFFFFFFF
         ie_thread = self.find_thread()
         self.base.threads[ie_thread].dport(0xCF8, self.pci_addr(bus, device, function, address))
         old_value = self.base.threads[ie_thread].dport(0xCFC)
@@ -173,7 +170,7 @@ class DALHelper(Helper):
                 v = self.base.threads[self.find_thread()].mem(itpii.Address((phys_address + ptr),itpii.AddressType.physical), width)
                 struct.pack_into(format[width], out_buf, ptr, v.ToUInt64())
                 ptr += width
-            width = width / 2
+            width = width // 2
         return ''.join(out_buf)
 
     def write_physical_mem( self, phys_address, length, buf, bytewise=False ):
@@ -188,7 +185,7 @@ class DALHelper(Helper):
                 v = struct.unpack_from(format[width], buf, ptr)
                 self.base.threads[self.find_thread()].mem(itpii.Address((phys_address + ptr),itpii.AddressType.physical), width, v[0])
                 ptr += width
-            width = width / 2
+            width = width // 2
         return
 
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ) :
@@ -404,7 +401,7 @@ class DALHelper(Helper):
         if logger().DEBUG: logger().error( '[DAL] API native_get_ACPI_table() is not supported' )
         return None
 
-    def get_ACPI_table( self ):
+    def get_ACPI_table( self, table_name ):
         if logger().DEBUG: logger().error( '[DAL] API get_ACPI_table() is not supported' )
         return None
 

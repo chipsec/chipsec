@@ -19,16 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Management and communication with Windows kernel mode driver which provides access to hardware resources
 
@@ -42,7 +32,6 @@ import struct
 import sys
 import platform
 import errno
-import time
 import shutil
 from collections import namedtuple
 from ctypes import *
@@ -289,7 +278,6 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
         except AttributeError as msg:
             logger().warn( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
-            pass
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
@@ -297,7 +285,6 @@ class Win32Helper(Helper):
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
         except AttributeError as msg:
             logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
-            pass
 
         try:
             self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
@@ -308,7 +295,6 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError as msg:
             if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
-            pass
 
         try:
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
@@ -316,7 +302,6 @@ class Win32Helper(Helper):
             self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
         except AttributeError as msg:
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
-            pass
 
         try:
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
@@ -544,7 +529,6 @@ class Win32Helper(Helper):
 
     def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
         out_length = length
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length )
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_length )
         return out_buf
@@ -554,7 +538,6 @@ class Win32Helper(Helper):
 
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         in_length = length + 12
-        out_buf = (c_char * 4)()
         in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
@@ -565,7 +548,6 @@ class Win32Helper(Helper):
     # @TODO: Temporarily the same as read_phys_mem for compatibility 
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
-        out_buf = (c_char * out_size)()
         in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
         out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_size )
         if size == 8:
@@ -587,10 +569,8 @@ class Win32Helper(Helper):
         return self.write_phys_mem( ((phys_address>>32)&0xFFFFFFFF), (phys_address&0xFFFFFFFF), size, buf )
 
     def alloc_phys_mem( self, length, max_pa ):
-        (va, pa) = (0,0)
         in_length  = 12
         out_length = 16
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( 'QI', max_pa, length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
         (va, pa) = struct.unpack( '2Q', out_buf )
@@ -600,7 +580,6 @@ class Win32Helper(Helper):
         error_code = 0
         in_length  = 8
         out_length = 8
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( 'Q', va )
         out_buf = self._ioctl( IOCTL_GET_PHYSADDR, in_buf, out_length )
         pa = struct.unpack( 'Q', out_buf )[0]
@@ -616,7 +595,6 @@ class Win32Helper(Helper):
         else:
             arg_type = 'I'
             out_length = 4
-        out_buf = (c_char * out_length)()
         in_buf  = struct.pack( '<11' + arg_type, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
         out_buf = self._ioctl( IOCTL_HYPERCALL, in_buf, out_length )
         return struct.unpack( '<' + arg_type, out_buf )[0]
@@ -626,7 +604,6 @@ class Win32Helper(Helper):
     #
     def map_io_space( self, physical_address, length, cache_type ):
         out_length = 8
-        out_buf = (c_char * out_length)()
         in_buf  = struct.pack( '<3Q', physical_address, length, cache_type )
         out_buf = self._ioctl( IOCTL_MAP_IO_SPACE, in_buf, out_length )
         virtual_address = struct.unpack( '<Q', out_buf )[0]
@@ -637,15 +614,12 @@ class Win32Helper(Helper):
     #
     def free_phys_mem( self, physical_address ):
         out_length = 8
-        out_buf = (c_char * out_length)()
         in_buf  = struct.pack( '<Q', physical_address )
         out_buf = self._ioctl( IOCTL_FREE_PHYSMEM, in_buf, out_length )
         return
 
     def read_msr( self, cpu_thread_id, msr_addr ):
-        (eax,edx) = (0,0)
         out_length = 8
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=2I', cpu_thread_id, msr_addr )
         out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
         (eax, edx) = struct.unpack( '2I', out_buf )
@@ -659,10 +633,8 @@ class Win32Helper(Helper):
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
-        value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         out_length = size
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '4HB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, size )
         out_buf = self._ioctl( READ_PCI_CFG_REGISTER, in_buf, out_length )
         if 1 == size:
@@ -676,7 +648,6 @@ class Win32Helper(Helper):
     def write_pci_reg( self, bus, device, function, address, value, size ):
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         out_length = 0
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '4HIB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, value, size )
         out_buf = self._ioctl( WRITE_PCI_CFG_REGISTER, in_buf, out_length )
         return True
@@ -828,7 +799,6 @@ class Win32Helper(Helper):
         if (sys.maxsize < 2**32 and self.os_machine == 'AMD64') or (sys.maxsize > 2**32 and self.os_machine == 'i386'):
             logger().log("[helper] Python architecture must match OS architecture.  Run with {} architecture of python".format(self.os_machine))
         out_length = struct.calcsize(_smi_msg_t_fmt)
-        out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( _smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
@@ -875,7 +845,6 @@ class Win32Helper(Helper):
     #
     def cpuid( self, eax, ecx ):
         out_length = 16
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '=2I', eax, ecx )
         out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )
         (eax, ebx, ecx, edx) = struct.unpack( '4I', out_buf )

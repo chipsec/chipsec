@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,37 +19,18 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
 """
 
 import os
-import fnmatch
 import re
 import errno
-import shutil
 import traceback
 import sys
 
 import chipsec.file
-from chipsec.logger import *
-from chipsec.helper.basehelper import Helper
-
-_importlib = True
-try:
-    import importlib
-
-except ImportError:
-    _importlib = False
+from chipsec.logger import logger
 
 avail_helpers = []
 
