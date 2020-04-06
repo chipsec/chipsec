@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,15 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Microcode update specific functionality (for each CPU thread)
 
@@ -39,12 +30,11 @@ usage:
 """
 
 import struct
-import sys
+import os
 
-from chipsec.logger import *
-from chipsec.hal.physmem import *
-from chipsec.hal.msr import *
-from chipsec.file import *
+from chipsec.logger import logger
+from chipsec.cfg.common import Cfg
+from chipsec.file import read_file
 
 IA32_MSR_BIOS_UPDT_TRIG      = 0x79
 IA32_MSR_BIOS_SIGN_ID        = 0x8B

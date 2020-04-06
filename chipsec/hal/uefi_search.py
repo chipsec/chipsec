@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -38,7 +38,8 @@ import re
 import binascii
 
 from chipsec import defines
-from chipsec.hal.spi_uefi import *
+from chipsec.hal.spi_uefi import EFI_SECTION
+from chipsec.logger import logger
 
 #
 # - EFI binaries are searched according to criteria defined by "match" rules.

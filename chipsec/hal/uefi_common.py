@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -30,8 +30,8 @@ import codecs
 import uuid
 from collections import namedtuple
 
-from chipsec.file import *
-from chipsec.logger import *
+from chipsec.file import read_file, write_file
+from chipsec.logger import logger, dump_buffer
 from chipsec.defines import bytestostring
 
 #from chipsec.helper.oshelper import helper
@@ -511,7 +511,7 @@ def assemble_uefi_file(guid, image):
     FileHeaderSize      = struct.calcsize(EFI_FFS_FILE_HEADER)
 
     Type       = EFI_FV_FILETYPE_FREEFORM
-    CheckSum   = 0x0000;
+    CheckSum   = 0x0000
     Attributes = 0x40
     Size       = FileHeaderSize + len(image)
     State      = 0xF8
@@ -860,7 +860,6 @@ def parse_sb_db(db, decode_dir):
 
         # Determine the signature type
         SignatureType = guid_str(SignatureType0, SignatureType1, SignatureType2, SignatureType3)
-        short_name = "UNKNOWN"
         sig_parse_f = None
         sig_size = 0
         if (SignatureType in sig_types.keys()):
@@ -960,7 +959,6 @@ def parse_auth_var(db, decode_dir):
         except UnicodeDecodeError:
             logger().warn("Unable to decode {}".format(db[tof:tof+name_size]))
             var_name = "CHIPSEC ERROR!"
-            pass
         tof += name_size
         sig_data = db[tof:tof+cert_data_size]
         entries.append(sig_data)

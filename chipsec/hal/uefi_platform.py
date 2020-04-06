@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,26 +19,20 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsules, etc.)
 """
 
 import struct
-import string
 from collections import namedtuple
 from uuid import UUID
 
 from chipsec import defines
-from chipsec.hal.uefi_common import *
+from chipsec.hal.uefi_common import bit_set, NextFwFile, guid_size, guid_str, VARIABLE_SIGNATURE_VSS, NextFwVolume, S3BootScriptOpcode_MDE, op_io_pci_mem, S3BootScriptOpcode_EdkCompat
+from chipsec.hal.uefi_common import op_stall, op_dispatch, op_terminate, op_mem_poll, op_unknown, get_3b_size, get_nvar_name, op_smbus_execute, script_width_formats
+from chipsec.hal.uefi_common import S3BOOTSCRIPT_ENTRY, MAX_S3_BOOTSCRIPT_ENTRY_LENGTH, VARIABLE_STORE_FV_GUID, IS_VARIABLE_ATTRIBUTE, VARIABLE_DATA
+from chipsec.hal.uefi_common import EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_RUNTIME_ACCESS
+from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
 
 #################################################################################################
 # Dell PFS support,
@@ -539,22 +533,6 @@ Reserved1 : 0x%08X
 VARIABLE_STORE_SIGNATURE_VSS2 = UUID('DDCF3617-3275-4164-98B6-FE85707FFE7D').bytes_le
 VARIABLE_STORE_SIGNATURE_VSS2_AUTH = UUID('AAF32C78-947B-439A-A180-2E144EC37792').bytes_le
 
-VARIABLE_STORE_HEADER_FMT_VSS2 = '=16sIBBHI'
-class VARIABLE_STORE_HEADER_VSS2( namedtuple('VARIABLE_STORE_HEADER_VSS2', 'Signature Size Format State Reserved Reserved1') ):
-    __slots__ = ()
-    def __str__(self):
-        return """
-EFI Variable Store
------------------------------
-Signature : %s
-Size      : 0x%08X bytes
-Format    : 0x%02X
-State     : 0x%02X
-Reserved  : 0x%04X
-Reserved1 : 0x%08X
-""" % ( UUID(bytes_le=self.Signature), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
-
-
 HDR_FMT_VSS                   = '<HBBIII4s2s2s8s'
 #HDR_SIZE_VSS                  = struct.calcsize( HDR_FMT_VSS )
 #NAME_OFFSET_IN_VAR_VSS        = HDR_SIZE_VSS
@@ -747,10 +725,9 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype):
             efi_var_buf  = nvram_buf[ start : end_var_offset ]
 
             name_offset = hdr_size
-            #if not IS_VARIABLE_ATTRIBUTE( efi_var_hdr.Attributes, EFI_VARIABLE_HARDWARE_ERROR_RECORD ):
-            #efi_var_name = "".join( efi_var_buf[ NAME_OFFSET_IN_VAR_VSS : NAME_OFFSET_IN_VAR_VSS + name_size ] )
             Name = efi_var_buf[ name_offset : name_offset + name_size ]
-            efi_var_name = Name.decode("utf-16-le").split('\x00')[0]
+            if Name:
+                efi_var_name = Name.decode("utf-16-le").split('\x00')[0]
 
             efi_var_data = efi_var_buf[ name_offset + name_size : name_offset + name_size + data_size ]
             guid = guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3)
