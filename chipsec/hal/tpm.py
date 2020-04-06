@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,11 +28,9 @@ https://trustedcomputinggroup.org
 
 import struct
 import sys
-import time
 from collections import namedtuple
 
-from chipsec.logger import *
-from chipsec.file import *
+from chipsec.logger import print_buffer
 from chipsec.hal import hal_base
 
 import chipsec.hal.tpm12_commands
@@ -211,7 +209,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         requestedUse = False
@@ -231,9 +229,9 @@ class TPM(hal_base.HALBase):
         self._send_command( Locality, command, size )
 
         ( header, data, header_blob, data_blob ) = self._read_response( Locality )
-        logger().log( header )
+        self.logger.log( header )
         print_buffer( str(data_blob) )
-        logger().log( '\n' )
+        self.logger.log( '\n' )
 
         #
         # Release locality if needed
@@ -334,23 +332,23 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         access_address = self.TPM_BASE | Locality| TPM_ACCESS 
         access_value = self.helper.read_mmio_reg( access_address, 1 )
 
-        logger().log( "================================================================" )
-        logger().log( "                        TPM Access" )
-        logger().log( "================================================================" )
-        logger().log( "\ttpmRegValidSts  : 0x{}".format(bin( access_value & ( 1<<7 ) )[2]) )
-        logger().log( "\treserved        : 0x{}".format(bin( access_value & ( 1<<6 ) )[2]) )
-        logger().log( "\tactiveLocality  : 0x{}".format(bin( access_value & ( 1<<5 ) )[2]) )
-        logger().log( "\tbeenSeized      : 0x{}".format(bin( access_value & ( 1<<4 ) )[2]) )
-        logger().log( "\tSeize           : 0x{}".format(bin( access_value & ( 1<<3 ) )[2]) )
-        logger().log( "\tpendingRequest  : 0x{}".format(bin( access_value & ( 1<<2 ) )[2]) )
-        logger().log( "\trequestUse      : 0x{}".format(bin( access_value & ( 1<<1 ) )[2]) )
-        logger().log( "\ttpmEstablishment: 0x{}".format(bin( access_value & ( 1<<0 ) )[2]) )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                        TPM Access" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\ttpmRegValidSts  : 0x{}".format(bin( access_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\treserved        : 0x{}".format(bin( access_value & ( 1<<6 ) )[2]) )
+        self.logger.log( "\tactiveLocality  : 0x{}".format(bin( access_value & ( 1<<5 ) )[2]) )
+        self.logger.log( "\tbeenSeized      : 0x{}".format(bin( access_value & ( 1<<4 ) )[2]) )
+        self.logger.log( "\tSeize           : 0x{}".format(bin( access_value & ( 1<<3 ) )[2]) )
+        self.logger.log( "\tpendingRequest  : 0x{}".format(bin( access_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\trequestUse      : 0x{}".format(bin( access_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\ttpmEstablishment: 0x{}".format(bin( access_value & ( 1<<0 ) )[2]) )
 
     def dump_status( self, locality ):
         """
@@ -359,24 +357,24 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         sts_address = self.TPM_BASE | Locality| TPM_STS 
         sts_value = self.helper.read_mmio_reg( sts_address, 4 )
 
-        logger().log( "================================================================" )
-        logger().log( "                         TPM Status" )
-        logger().log( "================================================================" )
-        logger().log( "\tburstCount   : 0x{:x}".format( ( sts_value>>8 ) & 0xFFFFFF ) )
-        logger().log( "\tstsValid     : 0x{}".format(bin( sts_value & ( 1<<7 ) )[2]) )
-        logger().log( "\tcommandReady : 0x{}".format(bin( sts_value & ( 1<<6 ) )[2]) )
-        logger().log( "\ttpmGo        : 0x{}".format(bin( sts_value & ( 1<<5 ) )[2]) )
-        logger().log( "\tdataAvail    : 0x{}".format(bin( sts_value & ( 1<<4 ) )[2]) )
-        logger().log( "\tExpect       : 0x{}".format(bin( sts_value & ( 1<<3 ) )[2]) )
-        logger().log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<2 ) )[2]) )
-        logger().log( "\tresponseRetry: 0x{}".format(bin( sts_value & ( 1<<1 ) )[2]) )
-        logger().log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<0 ) )[2]) )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                         TPM Status" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tburstCount   : 0x{:x}".format( ( sts_value>>8 ) & 0xFFFFFF ) )
+        self.logger.log( "\tstsValid     : 0x{}".format(bin( sts_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\tcommandReady : 0x{}".format(bin( sts_value & ( 1<<6 ) )[2]) )
+        self.logger.log( "\ttpmGo        : 0x{}".format(bin( sts_value & ( 1<<5 ) )[2]) )
+        self.logger.log( "\tdataAvail    : 0x{}".format(bin( sts_value & ( 1<<4 ) )[2]) )
+        self.logger.log( "\tExpect       : 0x{}".format(bin( sts_value & ( 1<<3 ) )[2]) )
+        self.logger.log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\tresponseRetry: 0x{}".format(bin( sts_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<0 ) )[2]) )
 
     def dump_didvid( self, locality ):
         """ 
@@ -385,17 +383,17 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         didvid_address = self.TPM_BASE | Locality| TPM_DIDVID 
         didvid_value = self.helper.read_mmio_reg( didvid_address, 4 )
 
-        logger().log( "================================================================" )
-        logger().log( "                           TPM DID VID" )
-        logger().log( "================================================================" )
-        logger().log( "\tdid: 0x{:x}".format( ( didvid_value>>16 ) & 0xFFFF ) )
-        logger().log( "\tvid: 0x{:x}".format( didvid_value & 0xFFFF) )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                           TPM DID VID" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tdid: 0x{:x}".format( ( didvid_value>>16 ) & 0xFFFF ) )
+        self.logger.log( "\tvid: 0x{:x}".format( didvid_value & 0xFFFF) )
 
     def dump_rid( self, locality ):
         """
@@ -404,16 +402,16 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         rid_address = self.TPM_BASE | Locality| TPM_RID 
         rid_value = self.helper.read_mmio_reg( rid_address, 1 )
 
-        logger().log( "================================================================" )
-        logger().log( "                             TPM RID" )
-        logger().log( "================================================================" )
-        logger().log( "\trid: 0x{:x}".format(rid_value) )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                             TPM RID" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\trid: 0x{:x}".format(rid_value) )
 
     def dump_intcap( self, locality ):
         """
@@ -422,25 +420,25 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         intcap_address = self.TPM_BASE | Locality| TPM_INTCAP
         intcap_value = self.helper.read_mmio_reg( intcap_address, 4 )
 
-        logger().log( "================================================================" )
-        logger().log( "                     TPM INTF CAPABILITY" )
-        logger().log( "================================================================" )
-        logger().log( "\tReserved                : 0x{:x}".format( ( intcap_value>>8 ) & 0xFFFFFE ) )
-        logger().log( "\tBurstCountStatic        : 0x{}".format(bin( intcap_value & ( 1<<8 ) )[2]) )
-        logger().log( "\tCommandReadyIntSupport  : 0x{}".format(bin( intcap_value & ( 1<<7 ) )[2]) )
-        logger().log( "\tInterruptEdgeFalling    : 0x{}".format(bin( intcap_value & ( 1<<6 ) )[2]) )
-        logger().log( "\tInterruptEdgeRising     : 0x{}".format(bin( intcap_value & ( 1<<5 ) )[2]) )
-        logger().log( "\tInterruptLevelLow       : 0x{}".format(bin( intcap_value & ( 1<<4 ) )[2]) )
-        logger().log( "\tInterruptLevelHigh      : 0x{}".format(bin( intcap_value & ( 1<<3 ) )[2]) )
-        logger().log( "\tLocalityChangeIntSupport: 0x{}".format(bin( intcap_value & ( 1<<2 ) )[2]) )
-        logger().log( "\tstsValidIntSupport      : 0x{}".format(bin( intcap_value & ( 1<<1 ) )[2]) )
-        logger().log( "\tdataAvailIntSupport     : 0x{}".format(bin( intcap_value & ( 1<<0 ) )[2]) )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                     TPM INTF CAPABILITY" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tReserved                : 0x{:x}".format( ( intcap_value>>8 ) & 0xFFFFFE ) )
+        self.logger.log( "\tBurstCountStatic        : 0x{}".format(bin( intcap_value & ( 1<<8 ) )[2]) )
+        self.logger.log( "\tCommandReadyIntSupport  : 0x{}".format(bin( intcap_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\tInterruptEdgeFalling    : 0x{}".format(bin( intcap_value & ( 1<<6 ) )[2]) )
+        self.logger.log( "\tInterruptEdgeRising     : 0x{}".format(bin( intcap_value & ( 1<<5 ) )[2]) )
+        self.logger.log( "\tInterruptLevelLow       : 0x{}".format(bin( intcap_value & ( 1<<4 ) )[2]) )
+        self.logger.log( "\tInterruptLevelHigh      : 0x{}".format(bin( intcap_value & ( 1<<3 ) )[2]) )
+        self.logger.log( "\tLocalityChangeIntSupport: 0x{}".format(bin( intcap_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\tstsValidIntSupport      : 0x{}".format(bin( intcap_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\tdataAvailIntSupport     : 0x{}".format(bin( intcap_value & ( 1<<0 ) )[2]) )
 
     def dump_intenable( self, locality ):
         """
@@ -451,21 +449,21 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         intenable_address = self.TPM_BASE | Locality| TPM_INTENABLE
         intenable_value = self.helper.read_mmio_reg( intenable_address, 4 )
 
-        logger().log( "================================================================" )
-        logger().log( "                         TPM INT ENABLE" )
-        logger().log( "================================================================" )
-        logger().log( "\tglobalIntEnable        : 0x{}".format(bin( intenable_value & ( 1<<31 ) )[2]) )
-        logger().log( "\tReserved               : 0x{:x}".format( (intenable_value>>8) & 0x7FFFFF00 ) )
-        logger().log( "\tcommandReadyEnable     : 0x{}".format(bin( intenable_value & ( 1<<7 ) )[2]) )
-        logger().log( "\tReserved               : 0x{:x}".format( (intenable_value>>5) & 0x3  ) )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                         TPM INT ENABLE" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tglobalIntEnable        : 0x{}".format(bin( intenable_value & ( 1<<31 ) )[2]) )
+        self.logger.log( "\tReserved               : 0x{:x}".format( (intenable_value>>8) & 0x7FFFFF00 ) )
+        self.logger.log( "\tcommandReadyEnable     : 0x{}".format(bin( intenable_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\tReserved               : 0x{:x}".format( (intenable_value>>5) & 0x3  ) )
         type = ( ( intenable_value>>3 ) & 0x3 )
-        logger().log( "\ttypePolarity           : 0x{:x}  {}".format( type, polType[type] ) )
-        logger().log( "\tlocalityChangeIntEnable: 0x{}".format(bin( intenable_value & ( 1<<2 ) )[2]) )
-        logger().log( "\tstsValidIntEnable      : 0x{}".format(bin( intenable_value & ( 1<<1 ) )[2]) )
-        logger().log( "\tdataAvailIntEnable     : 0x{}".format(bin( intenable_value & ( 1<<0 ) )[2]) )
+        self.logger.log( "\ttypePolarity           : 0x{:x}  {}".format( type, polType[type] ) )
+        self.logger.log( "\tlocalityChangeIntEnable: 0x{}".format(bin( intenable_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\tstsValidIntEnable      : 0x{}".format(bin( intenable_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\tdataAvailIntEnable     : 0x{}".format(bin( intenable_value & ( 1<<0 ) )[2]) )

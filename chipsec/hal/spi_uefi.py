@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -34,23 +34,24 @@ usage:
 """
 
 import os
-import fnmatch
 import struct
-import sys
-import time
-import collections
 import hashlib
 import re
 import random
-import binascii
 import json
+import string
 
-from chipsec.logger import *
-from chipsec.file import *
-
-from chipsec.cfg.common import *
-from chipsec.hal.uefi_common import *
-from chipsec.hal.uefi_platform import *
+from chipsec.logger import logger
+from chipsec.file import write_file, read_file
+from chipsec.defines import bytestostring, COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN
+from chipsec.hal.uefi_common import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_RAW, SECTION_NAMES, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE
+from chipsec.hal.uefi_common import NextFwVolume, bit_set, NextFwFile, NextFwVolume, NextFwFileSection, guid_size, GUID, guid_str, GetFvHeader
+from chipsec.hal.uefi_common import EFI_FVB2_ERASE_POLARITY, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM_GUID, FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FV_FILETYPE_RAW
+from chipsec.hal.uefi_common import EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_CONSTRUCTION, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD
+from chipsec.hal.uefi_common import EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_FV_FILETYPE_ALL, EFI_SECTION_GUID_DEFINED, EFI_GUID_DEFINED_SECTION, EFI_SECTION_COMPATIBILITY16
+from chipsec.hal.uefi_common import EFI_GUID_DEFINED_SECTION_size, EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID
+from chipsec.hal.uefi_common import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION_COMPRESSION, EFI_COMPRESSION_SECTION_size
+from chipsec.hal.uefi_platform import FWType, ParsePFS, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.hal.uefi import identify_EFI_NVRAM
 
 CMD_UEFI_FILE_REMOVE        = 0
@@ -287,12 +288,12 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                     sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
                 elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
                     if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
-                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_LZMA, True )
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA, True )
                     else:
-                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD, True )
                     if d is None:
                         sec.Comments = "Unable to decompress image"
-                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN, True )
                     if d:
                         sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
                 elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
