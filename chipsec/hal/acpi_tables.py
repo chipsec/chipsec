@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2020, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -32,7 +32,7 @@ import struct
 from collections import namedtuple
 from uuid import UUID
 
-from chipsec.logger import *
+from chipsec.logger import logger
 from chipsec.hal.uefi_common import GUID,guid_str
 from chipsec.defines import bytestostring
 
@@ -1770,35 +1770,8 @@ class NFIT (ACPI_TABLE):
     SMBIOS Management Information Structure [Type 3]
       Length                                                      : 0x{:04X} ( {:d} bytes )
       Reserved                                                    : 0x{:08X}
-----Infinite loop occurs here.  Unable to further parse without more work to program.----
+      ----Unable to further at this time.----
 '''.format( tableLen, tableLen, reserved)
-        while curPos < tableLen:
-            smbios_table_type = struct.unpack('<B', table_content[curPos:curPos+1])[0]
-            smbios_table_length = struct.unpack('<B', table_content[curPos + 1:curPos + 2])[0]
-            smbios_table_name = 'Unknown'
-            if smbios_table_type > 0 and smbios_table_type < 43:
-                smbios_table_name = smbios_tables[smbios_table_type]
-            elif smbios_table_type == 126:
-                smbios_table_name =  'Inactive'
-            elif smbios_table_type == 127:
-                smbios_table_name = 'End-of-Table'
-            cur_smbios_table_pos = 2
-            smbios_table_data_str = ''
-            while cur_smbios_table_pos < smbios_table_length:
-                entry = struct.unpack('<B', table_content[curPos + cur_smbios_table_pos:curPos + cur_smbios_table_pos + 1])[0]
-                smbios_table_data_str += '''0x{:02X} '''.format(entry)
-                cur_smbios_table_pos += 1
-            dataStr += '''
-      SMBIOS Table - {}
-        Table Type                                                : 0x{:02X} ( {:d} ) - {}
-        Table Length                                              : 0x{:02X} ( {:d} bytes )
-        Data
-          {}'''.format(smbios_table_name, smbios_table_type, smbios_table_type, smbios_table_name, smbios_table_length, smbios_table_length, smbios_table_data_str)
-        return '''
-    SMBIOS Management Information Structure
-      Length                                                      : 0x{:04X} ( {:d} bytes ){}
-      Reserved                                                    : 0x{:08X}
-'''.format( tableLen, tableLen, reserved, dataStr)
 
     def interleave(self, tableLen, table_content):
         interleaveStructureIndex = struct.unpack('<H', table_content[4:6])[0]
@@ -1820,7 +1793,7 @@ class NFIT (ACPI_TABLE):
       Line Size                                                   : 0x{:08X} ( {:d} bytes )
       Lines {}
 '''.format( tableLen, tableLen, reserved, numLinesDescribed, numLinesDescribed, lineSz, lineSz, lines)
-    
+
     def parseMAP(self, tableLen, table_content):
         nfitDeviceHandle = struct.unpack('<L', table_content[4:8])[0]
         nvdimmPhysID = struct.unpack('<H', table_content[8:10])[0]
@@ -1888,32 +1861,31 @@ class NFIT (ACPI_TABLE):
             flag1_str = ' - Control region only for hot add/online operation'
         else:
             flag1_str = ' - Control region not only for hot add/online operation'
-        if flag2 == 1:
-            flag2str = ' - Data in proximity region is valid'
-        else:
+        if flag2 != 1:
             flag2_str = ' - Data in proximity region is not valid'
-        if (addrRangeMemMapAttr & 1) == 1:
-            flag2str = 'EFI_MEMORY_UC'
-        elif (addrRangeMemMapAttr & 2) == 2:
-            flag2str = 'EFI_MEMORY_WC'
-        elif (addrRangeMemMapAttr & 4) == 4:
-            flag2str = 'EFI_MEMORY_WT'
-        elif (addrRangeMemMapAttr & 8) == 8:
-            flag2str = 'EFI_MEMORY_WB'
-        elif (addrRangeMemMapAttr & 16) == 16:
-            flag2str = 'EFI_MEMORY_UCE'
-        elif (addrRangeMemMapAttr & 4096) == 4096:
-            flag2str = 'EFI_MEMORY_WP'
-        elif (addrRangeMemMapAttr & 8192) == 8192:
-            flag2str = 'EFI_MEMORY_RP'
-        elif (addrRangeMemMapAttr & 16384) == 16384:
-            flag2str = 'EFI_MEMORY_XP'
-        elif (addrRangeMemMapAttr & 32768) == 32768:
-            flag2str = 'EFI_MEMORY_NV'
-        elif (addrRangeMemMapAttr & 65536) == 65536:
-            flag2str = 'EFI_MEMORY_MORE_RELIABLE'
         else:
-            flag2_str = 'undefined'
+            if (addrRangeMemMapAttr & 1) == 1:
+                flag2_str = 'EFI_MEMORY_UC'
+            elif (addrRangeMemMapAttr & 2) == 2:
+                flag2_str = 'EFI_MEMORY_WC'
+            elif (addrRangeMemMapAttr & 4) == 4:
+                flag2_str = 'EFI_MEMORY_WT'
+            elif (addrRangeMemMapAttr & 8) == 8:
+                flag2_str = 'EFI_MEMORY_WB'
+            elif (addrRangeMemMapAttr & 16) == 16:
+                flag2_str = 'EFI_MEMORY_UCE'
+            elif (addrRangeMemMapAttr & 4096) == 4096:
+                flag2_str = 'EFI_MEMORY_WP'
+            elif (addrRangeMemMapAttr & 8192) == 8192:
+                flag2_str = 'EFI_MEMORY_RP'
+            elif (addrRangeMemMapAttr & 16384) == 16384:
+                flag2_str = 'EFI_MEMORY_XP'
+            elif (addrRangeMemMapAttr & 32768) == 32768:
+                flag2_str = 'EFI_MEMORY_NV'
+            elif (addrRangeMemMapAttr & 65536) == 65536:
+                flag2_str = 'EFI_MEMORY_MORE_RELIABLE'
+            else:
+                flag2_str = 'undefined'
         addressRangeTypeGUID = [ addressRangeTypeGUID_1, addressRangeTypeGUID_2, addressRangeTypeGUID_3, addressRangeTypeGUID_4, addressRangeTypeGUID_5, addressRangeTypeGUID_6, addressRangeTypeGUID_7, addressRangeTypeGUID_8, addressRangeTypeGUID_9, addressRangeTypeGUID_10, addressRangeTypeGUID_11]
         if addressRangeTypeGUID == volitileMemGUID:
             artg_str = 'Volitile Memory Region'

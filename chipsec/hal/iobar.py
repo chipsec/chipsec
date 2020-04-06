@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -29,10 +29,6 @@ usage:
     >>> write_IO_BAR_reg( bar_name, offset, size, value )
     >>> dump_IO_BAR( bar_name )
 """
-
-import struct
-import sys
-import time
 
 from chipsec.hal import hal_base
 from chipsec.logger import logger

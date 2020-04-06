@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,16 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 HAL component providing access to and decoding of ACPI tables
 """
@@ -36,13 +26,12 @@ HAL component providing access to and decoding of ACPI tables
 __version__ = '0.1'
 
 import struct
-import sys
 
 from collections import defaultdict
 from collections import namedtuple
 
-from chipsec.logger import *
-from chipsec.file import *
+from chipsec.logger import logger, print_buffer
+from chipsec.file import read_file
 from chipsec.defines import bytestostring
 
 from chipsec.hal import acpi_tables, hal_base, uefi
@@ -125,7 +114,6 @@ ACPI_TABLE_SIG_DBG2 = 'DBG2'
 ACPI_TABLE_SIG_NHLT = 'NHLT'
 ACPI_TABLE_SIG_MSCT = 'MSCT'
 ACPI_TABLE_SIG_RASF = 'RASF'
-ACPI_TABLE_SIG_SPMI = 'SPMI'
 ACPI_TABLE_SIG_OEM1 = 'OEM1'
 ACPI_TABLE_SIG_OEM2 = 'OEM2'
 ACPI_TABLE_SIG_OEM3 = 'OEM3'

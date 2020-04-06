@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,15 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Functionality encapsulating interrupt generation
 CPU Interrupts specific functions (SMI, NMI)
@@ -40,15 +31,14 @@ usage:
 #TODO IPIs through Local APIC??
 
 import struct
-import sys
 import uuid
 
 from chipsec.hal import hal_base
 from chipsec.logger import logger
-from chipsec.cfg.common import *
+from chipsec.cfg.common import Cfg
 from chipsec.hal.acpi import ACPI
-from chipsec.hal.acpi_tables import UEFI_TABLE, GAS
-from chipsec.hal.uefi_common import EFI_GUID_DEFINED_SECTION
+from chipsec.hal.acpi_tables import UEFI_TABLE
+from chipsec.defines import bytestostring
 
 SMI_APMC_PORT = 0xB2
 
@@ -148,7 +138,7 @@ class Interrupts(hal_base.HALBase):
         found_at = 0
         while phys_address <= end:
             buffer = self.cs.mem.read_physical_mem( phys_address, chunk_sz )
-            buffer = chipsec.defines.bytestostring(buffer)
+            buffer = bytestostring(buffer)
             offset = buffer.find('smmc')
             if offset != -1:
                 found_at = phys_address + offset
@@ -156,7 +146,6 @@ class Interrupts(hal_base.HALBase):
             phys_address += chunk_sz
         return found_at
 
-    
     '''
 Send SWSMI in the same way as EFI_SMM_COMMUNICATION_PROTOCOL
     - Write Commbuffer location and Commbuffer size to 'smmc' structure

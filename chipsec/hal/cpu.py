@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -20,23 +20,10 @@
 #
 
 
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 CPU related functionality
 
 """
-
-import struct
-import sys
-import os.path
-from collections import namedtuple
 
 from chipsec.hal import acpi, hal_base, paging
 from chipsec.logger import logger
