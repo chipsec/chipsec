@@ -100,7 +100,6 @@ class SMICommand(BaseCommand):
             #TODO Translate ReturnStatus to EFI_STATUS enum
             self.logger.log("ReturnStatus: {:x}".format(ReturnStatus))
         else:
-            SMI_code_port_value = 0xF
             SMI_data_port_value = 0x0
             if len(self.argv) > 4:
                 thread_id           = int(self.argv[2],16)

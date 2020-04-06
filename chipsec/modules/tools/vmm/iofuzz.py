@@ -93,7 +93,6 @@ class iofuzz(BaseModule):
                 for n in range(write_count):
                     try: self.cs.io.write_port_byte( io_addr, v )
                     except: pass
-                    pass
 
         return ModuleResult.PASSED
 

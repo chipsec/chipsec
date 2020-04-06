@@ -68,7 +68,6 @@ class MemCommand(BaseCommand):
 
     def dump_region_to_path(self,path,pa_start,pa_end):
         if pa_start >= pa_end: return
-        pa = (pa_start + chipsec.defines.ALIGNED_4KB) & ~chipsec.defines.ALIGNED_4KB
         head_len = pa_start & chipsec.defines.ALIGNED_4KB
         tail_len = pa_end & chipsec.defines.ALIGNED_4KB
         pa = pa_start - head_len + chipsec.defines.ALIGNED_4KB + 1
@@ -89,8 +88,6 @@ class MemCommand(BaseCommand):
         f.close()
 
     def run(self):
-        size = 0x100
-
         if len(self.argv) < 3:
             print (MemCommand.__doc__)
             return

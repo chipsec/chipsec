@@ -36,7 +36,6 @@ from chipsec.module_common import BaseModule
 _MODULE_NAME = 'msr_fuzz'
 
 # Number of iterations to fuzz randomly
-global _NO_ITERATIONS_TO_FUZZ
 _NO_ITERATIONS_TO_FUZZ = 100000
 
 # Read MSR?

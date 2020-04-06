@@ -53,7 +53,6 @@ class smm(BaseModule):
 
         self.cs.print_register( 'PCI0.0.0_SMRAMC', regval )
 
-        res = ModuleResult.ERROR
         if 1 == g_smrame:
             self.logger.log( "[*] Compatible SMRAM is enabled" )
             # When D_LCK is set HW clears D_OPEN so generally no need to check for D_OPEN but doesn't hurt double checking

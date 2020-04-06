@@ -135,7 +135,6 @@ class Logger:
 
     def __init__( self ):
         """The Constructor."""
-        pass
         self.mytime = localtime()
         self.logfile = None
         self.debug = pyLogging.DEBUG
