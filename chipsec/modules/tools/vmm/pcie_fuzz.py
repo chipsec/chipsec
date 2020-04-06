@@ -137,7 +137,7 @@ class pcie_fuzz(BaseModule):
         time.sleep(TIMEOUT)
         two = self.cs.mem.read_physical_mem(bar, size)
         diff_index = []
-        for i in range(len(one)/4 - 1):
+        for i in range(len(one)//4 - 1):
             if one[4*i] != two[4*i] or one[4*i+1] != two[4*i+1] or one[4*i+2] != two[4*i+2] or one[4*i+3] != two[4*i+3]:
                 diff_index.append(i*4)
         return diff_index

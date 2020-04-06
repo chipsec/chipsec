@@ -128,7 +128,6 @@ class access_uefispec(BaseModule):
 
     def check_vars(self, do_modify):
         res = ModuleResult.PASSED
-        error = False
         vars = self._uefi.list_EFI_variables()
         if vars is None:
             self.logger.log_warn_check( 'Could not enumerate UEFI Variables from runtime.' )
@@ -191,7 +190,6 @@ class access_uefispec(BaseModule):
 
         self.logger.log('')
 
-        if error: return ModuleResult.ERROR
         if   ModuleResult.PASSED == res: self.logger.log_passed_check( 'All checked EFI variables are protected according to spec.' )
         elif ModuleResult.FAILED == res: self.logger.log_failed_check('Some EFI variables were not protected according to spec.')
         return res

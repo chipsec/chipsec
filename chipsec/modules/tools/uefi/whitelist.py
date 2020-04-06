@@ -164,7 +164,7 @@ class whitelist(BaseModule):
                 guid = self.efi_list[m]["guid"] if 'guid' in self.efi_list[m] else '?'
                 name = self.efi_list[m]["name"] if 'name' in self.efi_list[m] else '<unknown>'
                 sha1 = self.efi_list[m]["sha1"] if 'sha1' in self.efi_list[m] else ''
-                self.logger.log_important( "found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{}}\n    {}".format(m,sha1,guid,name))
+                self.logger.log_important( "found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{{}}}\n    {}".format(m,sha1,guid,name))
 
         if len(self.suspect_modules) > 0:
             self.logger.log_warn_check( "found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules),json_pth) )

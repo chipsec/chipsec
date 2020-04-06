@@ -110,7 +110,7 @@ class ECCommand(BaseCommand):
             self._ec.write_memory( self.offset, self.wval )
         else:
             self._ec.write_memory_extended( self.offset, self.wval )
-    
+
     def index(self):
 
         if self.offset:
@@ -122,8 +122,7 @@ class ECCommand(BaseCommand):
             for off in range(0x10000):
                 mem.append(chr(self._ec.read_idx(off)))
             print_buffer(mem)
-            del mem
-    
+
     def run(self):
         t = time.time()
         try:

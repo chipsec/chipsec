@@ -59,7 +59,6 @@ class MMIOCommand(BaseCommand):
         return True
 
     def run(self):
-        t = time.time()
         _mmio = mmio.MMIO(self.cs)
 
         if len(self.argv) < 3:

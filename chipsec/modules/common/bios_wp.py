@@ -56,14 +56,9 @@ class bios_wp(BaseModule):
         #
         # BIOS Control Register
         #
-        #reg_value = chipsec.chipset.read_register(self.cs, 'BC')
-        #chipsec.chipset.print_register(self.cs, 'BC', reg_value)
 
-        #ble    = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
         ble = self.cs.get_control('BiosLockEnable', with_print=True)
-        #bioswe = self.cs.get_register_field('BC', reg_value, 'BIOSWE')
         bioswe = self.cs.get_control('BiosWriteEnable')
-        #smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
         smmbwp = self.cs.get_control( 'SmmBiosWriteProtection' )
 
         # Is the BIOS flash region write protected?
@@ -86,12 +81,6 @@ class bios_wp(BaseModule):
 
         pr_cover_bios = False
         pr_partial_cover_bios = False
-    #    for j in range(5):
-    #        (base,limit,wpe,rpe,pr_reg_off,pr_reg_value) = spi.get_SPI_Protected_Range( j )
-    #        if (wpe == 1 and base < limit and base <= bios_base and limit >= bios_limit):
-    #            pr_cover_bios = True
-    #        if (wpe == 1 and base < limit and limit > bios_base):
-    #            pr_partial_cover_bios = True
 
         areas_to_protect  = [(bios_base, bios_limit)]
         protected_areas = list()
@@ -120,7 +109,6 @@ class bios_wp(BaseModule):
                             areas_to_protect.remove(area)
                             area = (start,base-1)
                             areas_to_protect.append(area)
-                            start,end = area
                     # split
                     elif base > start and limit < end:
                         areas_to_protect.remove(area)

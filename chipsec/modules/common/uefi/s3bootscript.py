@@ -130,7 +130,6 @@ class s3bootscript(BaseModule):
 
     def check_s3_bootscripts( self, bsaddress = None ):
         res    = 0
-        status = ModuleResult.ERROR
         scriptInsideSMRAM = False
 
         if bsaddress:
@@ -149,9 +148,6 @@ class s3bootscript(BaseModule):
             res |= self.check_s3_bootscript( bootscript_pa )
 
         self.logger.log('')
-        #if BOOTSCRIPT_OK == res:
-        #    status = ModuleResult.PASSED
-        #    self.logger.log_passed_check( 'S3 Boot-Scripts including Dispatch entry-points seem to be stored in protected locations' )
 
         if (res & BOOTSCRIPT_OUTSIDE_SMRAM) != 0:
             # BOOTSCRIPT_OUTSIDE_SMRAM

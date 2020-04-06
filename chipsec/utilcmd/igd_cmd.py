@@ -54,8 +54,6 @@ class IgdCommand(BaseCommand):
         return True
 
     def run(self):
-        size = 0x100
-
         if len(self.argv) < 3:
             print (IgdCommand.__doc__)
             return
