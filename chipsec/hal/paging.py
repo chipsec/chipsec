@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -23,9 +23,7 @@
 # x64/IA-64 Paging functionality including x86 page tables, Extended Page Tables (EPT) and VT-d page tables
 # ====================
 
-import os
 import sys
-import time
 import struct
 
 import chipsec.defines

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -35,12 +35,8 @@ usage:
     >>> GDT_all()
 """
 
-import struct
-import sys
-import os
-
 from chipsec.logger import logger, print_buffer
-from chipsec.cfg.common import *
+from chipsec.cfg.common import Cfg
 
 
 DESCRIPTOR_TABLE_CODE_IDTR = 0

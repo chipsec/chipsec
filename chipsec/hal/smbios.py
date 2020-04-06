@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2019, Intel Corporation
+#Copyright (c) 2019-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,10 +19,9 @@
 #chipsec@intel.com
 #
 import struct
-import uuid
 from collections import namedtuple
 
-from chipsec.defines import BOUNDARY_1MB, BOUNDARY_4GB, bytestostring
+from chipsec.defines import BOUNDARY_1MB, bytestostring
 from chipsec.hal import hal_base, uefi
 from chipsec.logger import logger
 

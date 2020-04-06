@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 """
 Access to message bus (IOSF sideband) interface registers on Intel SoCs
@@ -47,12 +39,7 @@ usage:
     >>> msgbus_send_message( port, register, opcode, data )
 """
 
-import struct
-import sys
-import os.path
-
 from chipsec.hal import hal_base
-from chipsec.logger import logger
 
 #
 # IOSF Message bus message opcodes
@@ -139,13 +126,13 @@ class MsgBus(hal_base.HALBase):
         mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
 
-        if logger().HAL: 
-            logger().log( "[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
-            logger().log( "[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx) )
+        if self.logger.HAL: 
+            self.logger.log( "[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
+            self.logger.log( "[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx) )
 
         mdr_out = self.helper.msgbus_send_read_message( mcr, mcrx )
 
-        if logger().HAL: logger().log( "[msgbus]       < 0x{:08X}".format(mdr_out) )
+        if self.logger.HAL: self.logger.log( "[msgbus]       < 0x{:08X}".format(mdr_out) )
 
         return mdr_out
 
@@ -157,9 +144,9 @@ class MsgBus(hal_base.HALBase):
         mcrx = self.__MB_MESSAGE_MCRX(register)
         mdr  = self.__MB_MESSAGE_MDR (data)
 
-        if logger().HAL:
-            logger().log( "[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data) )
-            logger().log( "[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
+        if self.logger.HAL:
+            self.logger.log( "[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data) )
+            self.logger.log( "[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
 
         return self.helper.msgbus_send_write_message( mcr, mcrx, mdr )
 
@@ -171,14 +158,14 @@ class MsgBus(hal_base.HALBase):
         mcrx = self.__MB_MESSAGE_MCRX(register)
         mdr  = None if data is None else self.__MB_MESSAGE_MDR(data)
 
-        if logger().HAL:
-            logger().log( "[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
-            if data is not None: logger().log( "[msgbus]          data = 0x{:08X}".format(data) )
-            logger().log( "[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
+        if self.logger.HAL:
+            self.logger.log( "[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
+            if data is not None: self.logger.log( "[msgbus]          data = 0x{:08X}".format(data) )
+            self.logger.log( "[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
 
         mdr_out = self.helper.msgbus_send_message( mcr, mcrx, mdr )
 
-        if logger().HAL: logger().log( "[msgbus]          < 0x{:08X}".format(mdr_out) )
+        if self.logger.HAL: self.logger.log( "[msgbus]          < 0x{:08X}".format(mdr_out) )
 
         return mdr_out
 
@@ -215,9 +202,9 @@ class MsgBus(hal_base.HALBase):
     """
     # py implementation of msgbus -- doesn't seem to work properly becaise it's not atomic
     def msgbus_send_message( self, port, register, opcode, data=None ):
-        if logger().HAL:
-            logger().log( "[msgbus] message - port: 0x{:02X}, reg: 0x{:08X} (op: 0x{:02X})".format(port, register, opcode) )
-            if data is not None: logger().log( "[msgbus] message - data: 0x{:08X}".format(data) )
+        if self.logger.HAL:
+            self.logger.log( "[msgbus] message - port: 0x{:02X}, reg: 0x{:08X} (op: 0x{:02X})".format(port, register, opcode) )
+            if data is not None: self.logger.log( "[msgbus] message - data: 0x{:08X}".format(data) )
         if (register & 0xFFFFFF00):
             # write extended register address (bits [31:08]) to Message Control Register Extension (MCRX)
             chipsec.chipset.write_register_field( self.cs, 'MSG_CTRL_REG_EXT', 'MESSAGE_ADDRESS_OFFSET_EXT', register, preserve_field_position=True )
