@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -18,13 +18,6 @@
 #chipsec@intel.com
 #
 
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Management and communication with Windows kernel mode driver which provides access to hardware resources
 
@@ -37,11 +30,8 @@ import os.path
 import struct
 import sys
 import platform
-import re
 import errno
 import traceback
-import time
-from threading import Lock
 from collections import namedtuple
 from ctypes import *
 import shutil
@@ -301,7 +291,6 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
         except AttributeError as msg:
             if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
-            pass
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
@@ -309,7 +298,6 @@ class RweHelper(Helper):
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
         except AttributeError as msg:
             if logger().DEBUG: logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
-            pass
 
         try:
             self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
@@ -320,7 +308,6 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError as msg:
             if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
-            pass
 
         try:
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
@@ -328,7 +315,6 @@ class RweHelper(Helper):
             self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
         except AttributeError as msg:
             if logger().DEBUG: logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
-            pass
 
         try:
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
@@ -595,9 +581,7 @@ class RweHelper(Helper):
 
     def alloc_phys_mem( self, length, max_pa ):
         #raise UnimplementedNativeAPIError( "alloc_phys_mem" )
-        (va, pa) = (0,0)
         out_length = 16
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '<I', length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
         (size, pa, va) = struct.unpack( '<IIQ', out_buf )
@@ -606,58 +590,28 @@ class RweHelper(Helper):
 
     def va2pa( self, va ):
         raise UnimplementedNativeAPIError( "va2pa" )
-        error_code = 0
-        in_length  = 8
-        out_length = 8
-        out_buf = (c_char * out_length)()
-        in_buf = struct.pack( 'Q', va )
-        out_buf = self._ioctl( IOCTL_GET_PHYSADDR, in_buf, out_length )
-        pa = struct.unpack( 'Q', out_buf )[0]
-        return (pa,error_code)
 
     #
     # HYPERCALL
     #
     def hypercall( self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
         raise UnimplementedNativeAPIError( "hypercall" )
-        if self.os_machine == 'AMD64':
-            arg_type = 'Q'
-            out_length = 8
-        else:
-            arg_type = 'I'
-            out_length = 4
-        out_buf = (c_char * out_length)()
-        in_buf  = struct.pack( '<11' + arg_type, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
-        out_buf = self._ioctl( IOCTL_HYPERCALL, in_buf, out_length )
-        return struct.unpack( '<' + arg_type, out_buf )[0]
 
     #
     # MAP_IO_SPACE
     #
     def map_io_space( self, physical_address, length, cache_type ):
         raise UnimplementedNativeAPIError( "map_io_space" )
-        out_length = 8
-        out_buf = (c_char * out_length)()
-        in_buf  = struct.pack( '<3Q', physical_address, length, cache_type )
-        out_buf = self._ioctl( IOCTL_MAP_IO_SPACE, in_buf, out_length )
-        virtual_address = struct.unpack( '<Q', out_buf )[0]
-        return virtual_address
 
     #
     # FREE_PHYS_MEM
     #
     def free_phys_mem( self, physical_address ):
         raise UnimplementedNativeAPIError( "free_phys_mem" )
-        out_length = 8
-        out_buf = (c_char * out_length)()
-        in_buf  = struct.pack( '<QQ', 0, physical_address )
-        out_buf = self._ioctl( IOCTL_FREE_PHYSMEM, in_buf, out_length )
-        return
 
     def read_msr( self, cpu_thread_id, msr_addr ):
         (eax,ebx,ecx,edx) = (0,0,0,0)
         out_length = 16
-        out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '<4I', 0, 0, msr_addr, 0 )
         out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
@@ -670,7 +624,6 @@ class RweHelper(Helper):
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
         out_length = 0
-        out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '<4I', eax, 0, msr_addr, edx )
         out_buf = self._ioctl( IOCTL_WRMSR, in_buf, out_length )
@@ -678,7 +631,6 @@ class RweHelper(Helper):
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
-        value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         cfg_addr = bdf.cfg_address()
         byte_off = address & 0x03
@@ -696,12 +648,6 @@ class RweHelper(Helper):
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
         raise UnimplementedNativeAPIError( "load_ucode_update" )
-        in_length = len(ucode_update_buf) + 3
-        out_length = 0
-        out_buf = (c_char * out_length)()
-        in_buf = struct.pack( '=BH', cpu_thread_id, len(ucode_update_buf) ) + ucode_update_buf
-        out_buf = self._ioctl( IOCTL_LOAD_UCODE_PATCH, in_buf, out_length )
-        return True
 
     def read_io_port( self, io_port, size ):
         in_buf = struct.pack( '<II', io_port, 0 )
@@ -760,11 +706,6 @@ class RweHelper(Helper):
     #
     def get_descriptor_table( self, cpu_thread_id, desc_table_code  ):
         raise UnimplementedNativeAPIError( "get_descriptor_table" )
-        in_buf = struct.pack( 'BB', cpu_thread_id, desc_table_code )
-        out_buf = self._ioctl( IOCTL_GET_CPU_DESCRIPTOR_TABLE, in_buf, 18 )
-        (limit,base,pa) = struct.unpack( '=HQQ', out_buf )
-        return (limit,base,pa)
-
 
     #
     # EFI Variable API
@@ -850,12 +791,6 @@ class RweHelper(Helper):
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         raise UnimplementedNativeAPIError( "send_sw_smi" )
-        out_length = 0
-        out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
-        in_buf = struct.pack( '=H6Q', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-        out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
-        return
 
     def _get_handle_for_pid( self, pid=0, ro=True ):
         if pid == 0:
@@ -895,7 +830,6 @@ class RweHelper(Helper):
     def cpuid( self, eax, ecx ):
         #raise UnimplementedNativeAPIError( "cpuid" )
         out_length = 16
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '<2I', eax, ecx )
         out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )
         (eax, ebx, ecx, edx) = struct.unpack( '<4I', out_buf )
@@ -922,7 +856,7 @@ class RweHelper(Helper):
         return tBuffer[:retVal]
 
     # ACPI access is implemented through ACPI HAL rather than through kernel module
-    def get_ACPI_table( self ):
+    def get_ACPI_table( self, table_name ):
         raise UnimplementedAPIError( "get_ACPI_table" )
 
 

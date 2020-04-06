@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,13 +19,6 @@
 #chipsec@intel.com
 #
 
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Linux helper
 """
@@ -37,7 +30,6 @@ import fcntl
 import fnmatch
 import mmap
 import os
-import os.path
 import platform
 import resource
 import struct
@@ -48,12 +40,11 @@ import shutil
 from chipsec import defines
 from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError, get_tools_path
 from chipsec.helper.basehelper import Helper
-from chipsec.logger import logger, print_buffer
+from chipsec.logger import logger
 import chipsec.file
 from chipsec.hal.uefi_common import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
-from chipsec.defines import bytestostring
 
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
@@ -253,7 +244,6 @@ class LinuxHelper(Helper):
                                 "This command requires access to /dev/mem.\n"
                                 "Are you running this command as root?\n"
                                 "{}".format(str(err)), err.errno)
-        return False
 
 
     def devport_available(self):
@@ -465,7 +455,6 @@ class LinuxHelper(Helper):
         in_buf_final = array.array("c", in_buf)
         #print_buffer(in_buf)
         out_length=0
-        out_buf=(ctypes.c_char * out_length)()
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
@@ -627,7 +616,7 @@ class LinuxHelper(Helper):
     def native_get_ACPI_table( self ):
         raise UnimplementedNativeAPIError( "native_get_ACPI_table" )
     # ACPI access is implemented through ACPI HAL rather than through kernel module
-    def get_ACPI_table( self ):
+    def get_ACPI_table( self, table_name ):
         raise UnimplementedAPIError( "get_ACPI_table" )
 
     #
@@ -676,7 +665,7 @@ class LinuxHelper(Helper):
             f.close()
         except:
             numCpus = 1;
-            pass
+
         errno = ctypes.c_int( 0 )
         if 0 == CORES.getaffinity( numCpus,ctypes.byref( mask ),ctypes.byref( errno ) ):
             AffinityString = " GetAffinity: "
@@ -807,7 +796,6 @@ class LinuxHelper(Helper):
     def kern_list_EFI_variables(self):
         varlist = []
         off = 0
-        buf = list()
         hdr = 0
         attr = 0
         try:

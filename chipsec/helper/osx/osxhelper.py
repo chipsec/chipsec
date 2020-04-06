@@ -1,7 +1,7 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2016, Google
 #
-# Copyright (c) 2010-2019, Intel Corporation
+# Copyright (c) 2010-2020, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,20 +17,18 @@
 OSX helper
 """
 
-import errno
 import fcntl
 import os
 import platform
 import struct
 import subprocess
-import sys
 import shutil
 
 import chipsec
 import chipsec.defines
 from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.helper.basehelper import Helper
-from chipsec.logger import logger, print_buffer
+from chipsec.logger import logger
 
 MSGBUS_MDR_IN_MASK          = 0x1
 MSGBUS_MDR_OUT_MASK         = 0x2
@@ -445,19 +443,6 @@ class OSXHelper(Helper):
 
     def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
         raise NotImplementedError()
-        '''cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
-        in_buf = struct.pack(_ucodeh_msg_t_fmt, cpu_thread_id,len(ucode_update_buf))+ ucode_update_buf
-        in_buf_final = array.array("c",in_buf)
-        out_len = 0
-        out_buf = (ctypes.c_char * out_length)()
-        try:
-            out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
-        except IOError:
-            if logger().DEBUG:
-                logger().error("IOError IOCTL Load Patch\n")
-            return None
-
-        return True'''
 
 def get_helper():
     return OSXHelper()
