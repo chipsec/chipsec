@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -18,15 +18,6 @@
 #Contact information:
 #chipsec@intel.com
 #
-
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 """
 Access to of PCI/PCIe device hierarchy
@@ -47,16 +38,13 @@ usage:
 """
 
 import struct
-import sys
-import os.path
 from collections import namedtuple
 import itertools
 
 from chipsec import defines
 from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
-from chipsec.cfg.common import *
-from chipsec.hal.pcidb import *
+from chipsec.hal.pcidb import VENDORS, DEVICES
 from chipsec.helper import oshelper
 
 

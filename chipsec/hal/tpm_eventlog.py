@@ -1,6 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2017, Google Inc
-# Copyright (c) 2019, Intel Corporation
+# Copyright (c) 2019-2020, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -31,10 +31,8 @@ https://trustedcomputinggroup.org/wp-content/uploads/PC-ClientSpecific_Platform_
 """
 
 import binascii
-import collections
 import struct
 
-from chipsec import defines
 from chipsec.logger import logger
 
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,15 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 SPI Flash Descriptor binary parsing functionality
 
@@ -38,13 +29,10 @@ usage:
 """
 
 import struct
-import sys
 import time
 
-from chipsec.logger import *
-from chipsec.file import *
-
-from chipsec.cfg.common import *
+from chipsec.logger import logger, print_buffer
+from chipsec.defines import bytestostring
 from chipsec.hal import spi
 from binascii import hexlify
 
