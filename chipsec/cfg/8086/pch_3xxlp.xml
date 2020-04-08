@@ -12,6 +12,7 @@ https://www.intel.com/content/www/us/en/products/docs/processors/core/7th-and-8t
   <!--                                      -->
   <!-- #################################### -->
   <info>
+    <sku did="0x9D43" name="PCH-U"  code="3xxLP" longname="PCH-U Baseline" />
     <sku did="0x9D4B" name="PCH-U"  code="3xxLP" longname="PCH-Y with iHDCP 2.2 Premium" />
     <sku did="0x9D4E" name="PCH-U"  code="3xxLP" longname="PCH-U with iHDCP 2.2 Premium" />
     <sku did="0x9D50" name="PCH-U"  code="3xxLP" longname="PCH-U with iHDCP 2.2 Base" />

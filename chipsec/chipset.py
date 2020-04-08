@@ -236,7 +236,7 @@ class Chipset:
             # Check if platform code passed in is valid and override configuraiton
             _unknown_platform = False
             self.vid = self.chipset_codes[ platform_code ]['vid']
-            self.did = int(self.chipset_codes[ platform_code ]['did'],16)
+            self.did = self.chipset_codes[ platform_code ]['did']
             self.rid = 0x00
             self.code = platform_code
             self.longname = platform_code
@@ -247,8 +247,8 @@ class Chipset:
                 self.pch_vid = self.pch_codes[req_pch_code]['vid']
                 self.pch_did = self.pch_codes[req_pch_code]['did']
                 self.pch_rid = 0x00
-                self.pch_code = self.pch_codes[req_pch_code]['code'].lower()
-                self.pch_longname = self.pch_codes[req_pch_code]['longname']
+                self.pch_code = req_pch_code
+                self.pch_longname = req_pch_code
                 _unknown_pch = False
         elif pch_vid in self.pch_dictionary.keys() and pch_did in self.pch_dictionary[pch_vid].keys():
             #Check if pch did for device 0:31:0 is in configuration
@@ -347,17 +347,18 @@ class Chipset:
                         continue
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
                         if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
-                        self.pch_codes[_cfg.attrib['platform'].lower()] = {}
-                        self.pch_codes[_cfg.attrib['platform'].lower()]['vid'] = int(vid,16)
+                        if not _cfg.attrib['platform'].upper() in self.pch_codes.keys():
+                            self.pch_codes[_cfg.attrib['platform'].upper()] = {}
+                            self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid,16)
                         mdict = self.pch_dictionary[int(vid,16)]
-                        cdict = self.pch_codes[_cfg.attrib['platform'].lower()]
-                    elif _cfg.attrib['platform'].lower():
+                        cdict = self.pch_codes[_cfg.attrib['platform'].upper()]
+                    elif _cfg.attrib['platform'].upper():
                         if logger().DEBUG: logger().log("[*] found platform config from '{}'..".format(fxml))
-                        if not _cfg.attrib['platform'].lower() in self.chipset_codes.keys():
-                            self.chipset_codes[_cfg.attrib['platform'].lower()] = {}
-                            self.chipset_codes[_cfg.attrib['platform'].lower()]['vid'] = int(vid,16)
+                        if not _cfg.attrib['platform'].upper() in self.chipset_codes.keys():
+                            self.chipset_codes[_cfg.attrib['platform'].upper()] = {}
+                            self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid,16)
                         mdict = self.chipset_dictionary[int(vid,16)]
-                        cdict = self.chipset_codes[_cfg.attrib['platform'].lower()]
+                        cdict = self.chipset_codes[_cfg.attrib['platform'].upper()]
                     else:
                         continue
                     if logger().DEBUG: logger().log( "[*] Populating configuration dictionary.." )
@@ -366,20 +367,21 @@ class Chipset:
                             if _info.attrib['family'].lower() == "core":
                                 CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "atom":
-                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "xeon":
                                 CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].upper())
+                            if _info.attrib['family'].lower() == "xeon":
+                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
-                        for _sku in _info.iter('sku'):
-                            _det = ""
-                            _did = _sku.attrib['did']
-                            del _sku.attrib['did']
-                            mdict[int(_did,16)].append(_sku.attrib)
-                            if "detection_value" in _sku.attrib.keys():
-                                _det = _sku.attrib['detection_value']
-                        cdict['did'] = _did
-                        cdict['detection_value'] = _det
+                        if _info.iter('sku'):
+                            for _sku in _info.iter('sku'):
+                                _det = ""
+                                _did = int(_sku.attrib['did'],16)
+                                del _sku.attrib['did']
+                                mdict[_did].append(_sku.attrib)
+                                if "detection_value" in _sku.attrib.keys():
+                                    _det = _sku.attrib['detection_value']
+                            cdict['did'] = _did
+                            cdict['detection_value'] = _det
             for cc in self.chipset_codes:
                 globals()["CHIPSET_CODE_{}".format(cc.upper())] = cc.upper()
 

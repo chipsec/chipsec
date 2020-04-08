@@ -29,14 +29,6 @@ XML configuration file for 100 series PCH based platforms
     <sku did="0xA153" name="QM175" code="PCH_1xx" longname="Intel QM175 (100 series) PCH" />
     <sku did="0xA154" name="CM238" code="PCH_1xx" longname="Intel CM238 (100 series) PCH" />
     <sku did="0xA155" name="QMU185" code="PCH_1xx" longname="Intel QMU185 (100 series) PCH" />
-    <sku did="0x9D43" name="PCH-U" code="PCH_1xx" longname="PCH-U Baseline" />
-    <sku did="0x9D48" name="PCH-U" code="PCH_1xx" longname="PCH-U Premium" />
-    <sku did="0x9D4B" name="PCH-U" code="PCH_1xx" longname="PCH-Y with iHDCP 2.2 Premium" />
-    <sku did="0x9D4E" name="PCH-U" code="PCH_1xx" longname="PCH-U with iHDCP 2.2 Premium" />
-    <sku did="0x9D50" name="PCH-U" code="PCH_1xx" longname="PCH-U with iHDCP 2.2 Base" />
-    <sku did="0x9D53" name="PCH-U" code="PCH_1xx" longname="PCH-U Base" />
-    <sku did="0x9D56" name="PCH-Y" code="PCH_1xx" longname="PCH-Y Premium" />
-    <sku did="0x9D58" name="PCH-U" code="PCH_1xx" longname="PCH-U Premium" />
   </info>
 
   <!-- #################################### -->
