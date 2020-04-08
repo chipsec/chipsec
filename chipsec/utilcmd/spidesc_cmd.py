@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ import time
 
 from chipsec.command            import BaseCommand
 from chipsec.file               import read_file
-from chipsec.hal.spi_descriptor import *
+from chipsec.hal.spi_descriptor import parse_spi_flash_descriptor
 
 class SPIDescCommand(BaseCommand):
     """
@@ -38,7 +38,7 @@ class SPIDescCommand(BaseCommand):
         return False
 
     def run(self):
-        if len(self.argv) < 3:
+        if self.argv[2] == '--help':
             print (SPIDescCommand.__doc__)
             return
 

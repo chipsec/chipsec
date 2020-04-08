@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,16 +41,15 @@ class MSRCommand(BaseCommand):
     """
     def requires_driver(self):
         # No driver required when printing the util documentation
-        if len(self.argv) < 3:
+        if self.argv[2] == '--help':
             return False
         return True
 
     def run(self):
-        if len(self.argv) < 3:
+        if self.argv[2] == '--help':
             print (MSRCommand.__doc__)
             return
 
-        #msr = Msr( os_helper )
         msr_addr = int(self.argv[2],16)
 
         if (3 == len(self.argv)):

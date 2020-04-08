@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -46,12 +46,12 @@ class PortIOCommand(BaseCommand):
 
     def requires_driver(self):
         # No driver required when printing the util documentation
-        if len(self.argv) < 3:
+        if self.argv[2] == '--help':
             return False
         return True
 
     def run(self):
-        if len(self.argv) < 3:
+        if self.argv[2] == '--help':
             print (PortIOCommand.__doc__)
             return
 
