@@ -1177,8 +1177,8 @@ class LinuxHelper(Helper):
     # Logical CPU count
     #
     def get_threads_count ( self ):
-        import subprocess
-        return int(subprocess.check_output("grep -c process /proc/cpuinfo", shell=True))
+        import multiprocessing
+        return multiprocessing.cpu_count()
 
 def get_helper():
     return LinuxHelper()
