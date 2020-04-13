@@ -23,7 +23,6 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
     <sku did="0x5910" name="Kabylake" code="KBL" longname="Mobile 7th Generation Core Processor (Kabylake H)" />
     <sku did="0x5914" name="Kabylake" code="KBL" longname="Mobile 8th Generation Core Processor (Kabylake U-Quad Core)" />
     <sku did="0x591F" name="Kabylake" code="KBL" longname="Desktop 7th Generation Core Processor (Kabylake S)" />
-    <sku did="0x5918" name="Kabylake" code="KBL" longname="Mobile 7th Generation Core Processor (Kabylake H)" />
     <sku did="0x5918" name="Kabylake" code="KBL" longname="Intel Xeon Processor E3 v6 (Kabylake CPU)" />
   </info>
 

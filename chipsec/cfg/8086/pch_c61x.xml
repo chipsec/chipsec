@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="PCH_C61X" >
+<configuration platform="PCH_C61x" >
 <!--
 XML configuration file for C610 series PCH
   Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub (PCH) datasheet

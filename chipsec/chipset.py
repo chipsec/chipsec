@@ -354,9 +354,9 @@ class Chipset:
                             if _info.attrib['family'].lower() == "core":
                                 CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].lower())
                             if _info.attrib['family'].lower() == "atom":
-                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].lower())
-                            if _info.attrib['family'].lower() == "xeon":
                                 CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].lower())
+                            if _info.attrib['family'].lower() == "xeon":
+                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].lower())
                             if _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].lower())
                         for _sku in _info.iter('sku'):
