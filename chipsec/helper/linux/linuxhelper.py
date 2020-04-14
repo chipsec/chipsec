@@ -563,6 +563,11 @@ class LinuxHelper(Helper):
         out_buf = self.ioctl(IOCTL_CPUID, in_buf)
         return struct.unpack( "4"+self._pack, out_buf )
 
+    def native_cpuid(self, eax, ecx):
+        import chipsec.helper.linux.cpuid as cpuid
+        _cpuid = cpuid.CPUID()
+        return _cpuid(eax, ecx)
+
     def alloc_phys_mem(self, num_bytes, max_addr):
         in_buf = struct.pack( "2"+self._pack, num_bytes, max_addr)
         out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
