@@ -33,7 +33,7 @@ from collections import namedtuple
 from uuid import UUID
 
 from chipsec.logger import logger
-from chipsec.hal.uefi_common import GUID,guid_str
+from chipsec.hal.uefi_common import EFI_GUID_FMT,EFI_GUID_STR
 from chipsec.defines import bytestostring
 
 class ACPI_TABLE():
@@ -1997,8 +1997,8 @@ class UEFI_TABLE (ACPI_TABLE):
         if len(table_content) < 18:
             return
         # Get Guid and Data Offset
-        guid = struct.unpack(GUID, table_content[:16])
-        identifier = guid_str(guid[0],guid[1],guid[2],guid[3])
+        guid = struct.unpack(EFI_GUID_FMT, table_content[:16])
+        identifier = EFI_GUID_STR(guid)
         offset = struct.unpack('H',table_content[16:18])[0]
         self.results += """
   identifier                 : {}

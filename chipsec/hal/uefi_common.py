@@ -29,6 +29,7 @@ import struct
 import codecs
 import uuid
 from collections import namedtuple
+from uuid import UUID
 
 from chipsec.file import read_file, write_file
 from chipsec.logger import logger, dump_buffer
@@ -44,204 +45,6 @@ from chipsec.defines import bytestostring
 ################################################################################################
 
 # UDK2010.SR1\MdeModulePkg\Include\Guid\VariableFormat.h
-# 
-# #ifndef __VARIABLE_FORMAT_H__
-# #define __VARIABLE_FORMAT_H__
-# 
-# #define EFI_VARIABLE_GUID \
-#   { 0xddcf3616, 0x3275, 0x4164, { 0x98, 0xb6, 0xfe, 0x85, 0x70, 0x7f, 0xfe, 0x7d } }
-# 
-# extern EFI_GUID gEfiVariableGuid;
-# 
-# ///
-# /// Alignment of variable name and data, according to the architecture:
-# /// * For IA-32 and Intel(R) 64 architectures: 1.
-# /// * For IA-64 architecture: 8.
-# ///
-# #if defined (MDE_CPU_IPF)
-# #define ALIGNMENT         8
-# #else
-# #define ALIGNMENT         1
-# #endif
-# 
-# //
-# // GET_PAD_SIZE calculates the miminal pad bytes needed to make the current pad size satisfy the alignment requirement.
-# //
-# #if (ALIGNMENT == 1)
-# #define GET_PAD_SIZE(a) (0)
-# #else
-# #define GET_PAD_SIZE(a) (((~a) + 1) & (ALIGNMENT - 1))
-# #endif
-# 
-# ///
-# /// Alignment of Variable Data Header in Variable Store region.
-# ///
-# #define HEADER_ALIGNMENT  4
-# #define HEADER_ALIGN(Header)  (((UINTN) (Header) + HEADER_ALIGNMENT - 1) & (~(HEADER_ALIGNMENT - 1)))
-# 
-# ///
-# /// Status of Variable Store Region.
-# ///
-# typedef enum {
-#   EfiRaw,
-#   EfiValid,
-#   EfiInvalid,
-#   EfiUnknown
-# } VARIABLE_STORE_STATUS;
-# 
-# #pragma pack(1)
-# 
-# #define VARIABLE_STORE_SIGNATURE  EFI_VARIABLE_GUID
-# 
-# ///
-# /// Variable Store Header Format and State.
-# ///
-# #define VARIABLE_STORE_FORMATTED          0x5a
-# #define VARIABLE_STORE_HEALTHY            0xfe
-# 
-# ///
-# /// Variable Store region header.
-# ///
-# typedef struct {
-#   ///
-#   /// Variable store region signature.
-#   ///
-#   EFI_GUID  Signature;
-#   ///
-#   /// Size of entire variable store,
-#   /// including size of variable store header but not including the size of FvHeader.
-#   ///
-#   UINT32  Size;
-#   ///
-#   /// Variable region format state.
-#   ///
-#   UINT8   Format;
-#   ///
-#   /// Variable region healthy state.
-#   ///
-#   UINT8   State;
-#   UINT16  Reserved;
-#   UINT32  Reserved1;
-# } VARIABLE_STORE_HEADER;
-#
-# ///
-# /// Variable data start flag.
-# ///
-# #define VARIABLE_DATA                     0x55AA
-#
-# ///
-# /// Variable State flags.
-# ///
-# #define VAR_IN_DELETED_TRANSITION     0xfe  ///< Variable is in obsolete transition.
-# #define VAR_DELETED                   0xfd  ///< Variable is obsolete.
-# #define VAR_HEADER_VALID_ONLY         0x7f  ///< Variable header has been valid.
-# #define VAR_ADDED                     0x3f  ///< Variable has been completely added.
-#
-# ///
-# /// Single Variable Data Header Structure.
-# ///
-# typedef struct {
-#   ///
-#   /// Variable Data Start Flag.
-#   ///
-#   UINT16      StartId;
-#   ///
-#   /// Variable State defined above.
-#   ///
-#   UINT8       State;
-#   UINT8       Reserved;
-#   ///
-#   /// Attributes of variable defined in UEFI specification.
-#   ///
-#   UINT32      Attributes;
-#   ///
-#   /// Size of variable null-terminated Unicode string name.
-#   ///
-#   UINT32      NameSize;
-#   ///
-#   /// Size of the variable data without this header.
-#   ///
-#   UINT32      DataSize;
-#   ///
-#   /// A unique identifier for the vendor that produces and consumes this varaible.
-#   ///
-#   EFI_GUID    VendorGuid;
-# } VARIABLE_HEADER;
-#
-# #pragma pack()
-#
-# typedef struct _VARIABLE_INFO_ENTRY  VARIABLE_INFO_ENTRY;
-#
-# ///
-# /// This structure contains the variable list that is put in EFI system table.
-# /// The variable driver collects all variables that were used at boot service time and produces this list.
-# /// This is an optional feature to dump all used variables in shell environment.
-# ///
-# struct _VARIABLE_INFO_ENTRY {
-#   VARIABLE_INFO_ENTRY *Next;       ///< Pointer to next entry.
-#   EFI_GUID            VendorGuid;  ///< Guid of Variable.
-#   CHAR16              *Name;       ///< Name of Variable.
-#   UINT32              Attributes;  ///< Attributes of variable defined in UEFI specification.
-#   UINT32              ReadCount;   ///< Number of times to read this variable.
-#   UINT32              WriteCount;  ///< Number of times to write this variable.
-#   UINT32              DeleteCount; ///< Number of times to delete this variable.
-#   UINT32              CacheCount;  ///< Number of times that cache hits this variable.
-#   BOOLEAN             Volatile;    ///< TRUE if volatile, FALSE if non-volatile.
-# };
-#
-# #endif // _EFI_VARIABLE_H_
-
-
-#
-# Variable Store Header Format and State.
-#
-VARIABLE_STORE_FORMATTED = 0x5a
-VARIABLE_STORE_HEALTHY   = 0xfe
-
-#
-# Variable Store region header.
-#
-#typedef struct {
-#  ///
-#  /// Variable store region signature.
-#  ///
-#  EFI_GUID  Signature;
-#  ///
-#  /// Size of entire variable store,
-#  /// including size of variable store header but not including the size of FvHeader.
-#  ///
-#  UINT32  Size;
-#  ///
-#  /// Variable region format state.
-#  ///
-#  UINT8   Format;
-#  ///
-#  /// Variable region healthy state.
-#  ///
-#  UINT8   State;
-#  UINT16  Reserved;
-#  UINT32  Reserved1;
-#} VARIABLE_STORE_HEADER;
-#
-# Signature is EFI_GUID (guid0 guid1 guid2 guid3)
-VARIABLE_STORE_HEADER_FMT  = '<8sIBBHI'
-VARIABLE_STORE_HEADER_SIZE = struct.calcsize( VARIABLE_STORE_HEADER_FMT )
-class VARIABLE_STORE_HEADER( namedtuple('VARIABLE_STORE_HEADER', 'guid0 guid1 guid2 guid3 Size Format State Reserved Reserved1') ):
-    __slots__ = ()
-    def __str__(self):
-        return """
-EFI Variable Store
------------------------------
-Signature : {{{:08X}-{:04X}-{:04X}-{:4}-{:6}}}
-Size      : 0x{:08X} bytes
-Format    : 0x{:02X}
-State     : 0x{:02X}
-Reserved  : 0x{:04X}
-Reserved1 : 0x{:08X}
-""".format( self.guid0, self.guid1, self.guid2, bytestostring(codecs.encode(self.guid3[:2], 'hex')).upper(), \
-    bytestostring(codecs.encode(self.guid3[-6::], 'hex')).upper(), self.Size, self.Format, self.State, \
-    self.Reserved, self.Reserved1 )
-
 #
 # Variable data start flag.
 #
@@ -285,89 +88,8 @@ def get_nvar_name(nvram, name_offset, isAscii):
 VARIABLE_SIGNATURE_VSS = VARIABLE_DATA_SIGNATURE
 
 
-################################################################################################
-#
-# EFI Firmware Volume Defines
-#
-################################################################################################
 
-FFS_ATTRIB_FIXED              = 0x04
-FFS_ATTRIB_DATA_ALIGNMENT     = 0x38
-FFS_ATTRIB_CHECKSUM           = 0x40
-
-EFI_FILE_HEADER_CONSTRUCTION  = 0x01
-EFI_FILE_HEADER_VALID         = 0x02
-EFI_FILE_DATA_VALID           = 0x04
-EFI_FILE_MARKED_FOR_UPDATE    = 0x08
-EFI_FILE_DELETED              = 0x10
-EFI_FILE_HEADER_INVALID       = 0x20
-
-FFS_FIXED_CHECKSUM            = 0xAA
-
-EFI_FVB2_ERASE_POLARITY       = 0x00000800
-
-EFI_FV_FILETYPE_ALL                     = 0x00
-EFI_FV_FILETYPE_RAW                     = 0x01
-EFI_FV_FILETYPE_FREEFORM                = 0x02
-EFI_FV_FILETYPE_SECURITY_CORE           = 0x03
-EFI_FV_FILETYPE_PEI_CORE                = 0x04
-EFI_FV_FILETYPE_DXE_CORE                = 0x05
-EFI_FV_FILETYPE_PEIM                    = 0x06
-EFI_FV_FILETYPE_DRIVER                  = 0x07
-EFI_FV_FILETYPE_COMBINED_PEIM_DRIVER    = 0x08
-EFI_FV_FILETYPE_APPLICATION             = 0x09
-EFI_FV_FILETYPE_FIRMWARE_VOLUME_IMAGE   = 0x0b
-EFI_FV_FILETYPE_FFS_PAD                 = 0xf0
-
-FILE_TYPE_NAMES = {0x00: 'FV_ALL', 0x01: 'FV_RAW', 0x02: 'FV_FREEFORM', 0x03: 'FV_SECURITY_CORE', 0x04: 'FV_PEI_CORE', 0x05: 'FV_DXE_CORE', 0x06: 'FV_PEIM', 0x07: 'FV_DRIVER', 0x08: 'FV_COMBINED_PEIM_DRIVER', 0x09: 'FV_APPLICATION', 0x0B: 'FV_FVIMAGE', 0x0F: 'FV_FFS_PAD'}
-
-EFI_SECTION_ALL                   = 0x00
-EFI_SECTION_COMPRESSION           = 0x01
-EFI_SECTION_GUID_DEFINED          = 0x02
-EFI_SECTION_PE32                  = 0x10
-EFI_SECTION_PIC                   = 0x11
-EFI_SECTION_TE                    = 0x12
-EFI_SECTION_DXE_DEPEX             = 0x13
-EFI_SECTION_VERSION               = 0x14
-EFI_SECTION_USER_INTERFACE        = 0x15
-EFI_SECTION_COMPATIBILITY16       = 0x16
-EFI_SECTION_FIRMWARE_VOLUME_IMAGE = 0x17
-EFI_SECTION_FREEFORM_SUBTYPE_GUID = 0x18
-EFI_SECTION_RAW                   = 0x19
-EFI_SECTION_PEI_DEPEX             = 0x1B
-EFI_SECTION_SMM_DEPEX             = 0x1C
-
-SECTION_NAMES = {0x00: 'S_ALL', 0x01: 'S_COMPRESSION', 0x02: 'S_GUID_DEFINED', 0x10: 'S_PE32', 0x11: 'S_PIC', 0x12: 'S_TE', 0x13: 'S_DXE_DEPEX', 0x14: 'S_VERSION', 0x15: 'S_USER_INTERFACE', 0x16: 'S_COMPATIBILITY16', 0x17: 'S_FV_IMAGE', 0x18: 'S_FREEFORM_SUBTYPE_GUID', 0x19: 'S_RAW', 0x1B: 'S_PEI_DEPEX', 0x1C: 'S_SMM_DEPEX'}
-
-EFI_SECTIONS_EXE = [EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16]
-
-GUID = "<4s2s2s8s"
-guid_size = struct.calcsize(GUID)
-
-EFI_COMPRESSION_SECTION = "<IB"
-EFI_COMPRESSION_SECTION_size = struct.calcsize(EFI_COMPRESSION_SECTION)
-
-EFI_GUID_DEFINED_SECTION = "<4s2s2s8sHH"
-EFI_GUID_DEFINED_SECTION_size = struct.calcsize(EFI_GUID_DEFINED_SECTION)
-
-EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID = "FC1BCDB0-7D31-49AA-936A-A4600D9DD083"
-EFI_CERT_TYPE_RSA_2048_SHA256_GUID = "A7717414-C616-4977-9420-844712A735BF"
-EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size = struct.calcsize(GUID+"256s256s")
-
-VARIABLE_STORE_FV_GUID   = 'FFF12B8D-7696-4C8B-A985-2747075B4F50'
-
-EFI_FIRMWARE_FILE_SYSTEM_GUID  = "7A9354D9-0468-444A-81CE-0BF617D890DF"
-EFI_FIRMWARE_FILE_SYSTEM2_GUID = "8C8CE578-8A3D-4F1C-9935-896185C32DD3"
-EFI_FIRMWARE_FILE_SYSTEM3_GUID = "5473C07A-3DCB-4DCA-BD6F-1E9689E7349A"
-
-EFI_FS_GUIDS = [EFI_FIRMWARE_FILE_SYSTEM3_GUID, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM_GUID]
-
-LZMA_CUSTOM_DECOMPRESS_GUID = "EE4E5898-3914-4259-9D6E-DC7BD79403CF"
-
-FIRMWARE_VOLUME_GUID = "24400798-3807-4A42-B413-A1ECEE205DD8"
-TIANO_DECOMPRESSED_GUID = "A31280AD-481E-41B6-95E8-127F4C984779"
-VOLUME_SECTION_GUID = "367AE684-335D-4671-A16D-899DBFEA6B88"
-
+VARIABLE_STORE_FV_GUID   = UUID('FFF12B8D-7696-4C8B-A985-2747075B4F50')
 
 
 ################################################################################################
@@ -465,11 +187,11 @@ EFI_STATUS_DICT = {
 }
 
 
-EFI_GUID_FMT = "IHH8s"
-def EFI_GUID( guid0, guid1, guid2, guid3 ):
-    return ("{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, \
-        bytestostring(codecs.encode(guid3[:2], 'hex')).upper(), \
-        bytestostring(codecs.encode(guid3[-6::], 'hex')).upper()))
+EFI_GUID_FMT = "16s"
+EFI_GUID_SIZE = struct.calcsize(EFI_GUID_FMT)
+def EFI_GUID_STR( guid ):
+    guid_str = uuid.UUID(bytes_le=guid)
+    return str(guid).upper()
 
 
 def align(of, size):
@@ -484,266 +206,6 @@ def get_3b_size(s):
     s = bytestostring(s)
     return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
-def guid_str(guid0, guid1, guid2, guid3):
-    guid = uuid.UUID(bytes=guid0[::-1] + guid1[::-1] + guid2[::-1] + guid3[:2] + guid3[-6:])
-    return str(guid).upper()
-
-
-# #################################################################################################
-#
-# UEFI Firmware Volume Parsing/Modification Functionality
-#
-# #################################################################################################
-
-def align_image(image, size=8, fill='\x00'):
-    return image.ljust(((len(image) + size - 1) / size) * size, fill)
-
-def get_guid_bin(guid):
-    values = guid.split('-')
-    if [len(x) for x in values] == [8, 4, 4, 4, 12]:
-        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in range(0, 12, 2)]
-        values = [int(x, 16) for x in values]
-        return struct.pack('<LHHBBBBBBBB', *tuple(values))
-    return ''
-
-def assemble_uefi_file(guid, image):
-    EFI_FFS_FILE_HEADER = "<16sHBBL"
-    FileHeaderSize      = struct.calcsize(EFI_FFS_FILE_HEADER)
-
-    Type       = EFI_FV_FILETYPE_FREEFORM
-    CheckSum   = 0x0000
-    Attributes = 0x40
-    Size       = FileHeaderSize + len(image)
-    State      = 0xF8
-
-    SizeState  = (Size & 0x00FFFFFF) | (State << 24)
-    FileHeader = struct.pack(EFI_FFS_FILE_HEADER, get_guid_bin(guid), CheckSum, Type, Attributes, (Size & 0x00FFFFFF))
-
-    hsum = FvChecksum8(FileHeader)
-    if (Attributes & FFS_ATTRIB_CHECKSUM):
-        fsum = FvChecksum8(image)
-    else:
-        fsum = FFS_FIXED_CHECKSUM
-    CheckSum = (hsum | (fsum << 8))
-
-    return struct.pack(EFI_FFS_FILE_HEADER, get_guid_bin(guid), CheckSum, Type, Attributes, SizeState) + image
-
-def assemble_uefi_section(image, uncomressed_size, compression_type):
-    EFI_COMPRESSION_SECTION_HEADER = "<LLB"
-    SectionType   = EFI_SECTION_COMPRESSION
-    SectionSize   = struct.calcsize(EFI_COMPRESSION_SECTION_HEADER) + len(image)
-    SectionHeader = struct.pack(EFI_COMPRESSION_SECTION_HEADER, (SectionSize & 0x00FFFFFF) | (SectionType << 24), uncomressed_size, compression_type)
-    return SectionHeader + image
-
-def assemble_uefi_raw(image):
-    return align_image(struct.pack('<L', ((len(image) + 4) & 0x00FFFFFF) + (EFI_SECTION_RAW << 24)) + image)
-
-
-
-def FvSum8(buffer):
-    sum8 = 0
-    for b in bytestostring(buffer):
-        sum8 = (sum8 + ord(b)) & 0xff
-    return sum8
-
-def FvChecksum8(buffer):
-    return ((0x100 - FvSum8(buffer)) & 0xff)
-
-def FvSum16(buffer):
-    sum16 = 0
-    buffer = bytestostring(buffer)
-    blen = len(buffer)//2
-    i = 0
-    while i < blen:
-        el16 = ord(buffer[2*i]) | (ord(buffer[2*i+1]) << 8)
-        sum16 = (sum16 + el16) & 0xffff
-        i = i + 1
-    return sum16
-
-def FvChecksum16(buffer):
-    return ((0x10000 - FvSum16(buffer)) & 0xffff)
-
-def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size):
-    zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-    fv_rsvd = (Reserved == 0)
-    fs_guid = (FsGuid in (EFI_FS_GUIDS + [VARIABLE_STORE_FV_GUID]))
-    fv_len = (FvLength <= size)
-    fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
-    #sum = (Checksum == CalcSum)
-    return fv_rsvd and fv_len and fv_header_len
-
-EFI_FIRMWARE_VOLUME_HEADER = "<16s4s2s2s8sQIIHHHBB"
-EFI_FV_BLOCK_MAP_ENTRY = "<II" 
-
-def NextFwVolume(buffer, off = 0):
-    fof = off
-    vf_header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
-    size = len(buffer)
-    res = (None, None, None, None, None, None, None, None, None)
-    while ((fof + vf_header_size) < size):
-        fof =   bytestostring(buffer).find("_FVH", fof)
-        if fof == -1 or size - fof < vf_header_size:
-            #return if signature is not found
-            return res
-        elif fof < 0x28:
-            #continue searching for signatrue if header is not valid
-            fof += 0x4
-            continue
-        fof = fof - 0x28
-        ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
-          FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
-           Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
-        fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
-                          FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
-                          FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
-                          Reserved, Revision)
-        if (len(fvh) < HeaderLength):
-            tail = buffer[fof+len(fvh):fof+HeaderLength]
-            fvh = fvh + tail
-        CalcSum = FvChecksum16(fvh)
-        FsGuid = guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3)
-        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, Reserved, CalcSum, size)):
-            res = (fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof+FvLength], CalcSum)
-            return res
-        else:
-            fof += 0x2C
-    return res
-
-FFS_ATTRIB_LARGE_FILE         = 0x01
-
-def GetFvHeader(buffer, off = 0):
-    EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
-    header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
-    if (len(buffer) < header_size):
-        return (0,0,0)
-    size = 0
-    fof = off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
-    ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
-    FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
-    Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[off:off+struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)])
-    numblocks,lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY,buffer[fof:fof+struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)])
-    if logger().HAL:
-        logger().log('{}'.format(
-        '''
-        \nFV volume offset: 0x{:08X}
-        \tFvLength:         0x{:08X}
-        \tAttributes:       0x{:08X}
-        \tHeaderLength:     0x{:04X}
-        \tChecksum:         0x{:04X}
-        \tRevision:         0x{:02X}
-        \tExtHeaderOffset:  0x{:02X}
-        \tReserved:         0x{:02X}
-        FFS Guid:    {}
-        '''.format(fof,FvLength,Attributes,HeaderLength,Checksum,Revision,ExtHeaderOffset,Reserved,guid_str(FileSystemGuid0, FileSystemGuid1,FileSystemGuid2, FileSystemGuid3))
-        ))
-    while not (numblocks == 0 and lenblock == 0):
-        fof += EFI_FV_BLOCK_MAP_ENTRY_SZ
-        if (fof + EFI_FV_BLOCK_MAP_ENTRY_SZ) >= len(buffer):
-            return (0,0,0)
-        if numblocks != 0:
-            if logger().HAL:
-                logger().log("Num blocks:   0x{:08X}\n".format(numblocks))
-                logger().log( "block Len:    0x{:08X}\n".format(lenblock))
-            size = size + (numblocks * lenblock)
-        numblocks,lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY,buffer[fof:fof+EFI_FV_BLOCK_MAP_ENTRY_SZ])
-    if FvLength != size:
-        logger().log("ERROR: Volume Size not consistant with Block Maps")
-        return (0,0,0)
-    if size >= 0x40000000 or size == 0:
-        logger().log("ERROR: Volume is corrupted")
-        return (0,0,0)
-    return (size, HeaderLength, Attributes)
-
-
-EFI_FFS_FILE_HEADER = "<4s2s2s8sHBB3sB"
-EFI_FFS_FILE_HEADER2 = "<4s2s2s8sHBB3sBQ"
-file_header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
-def NextFwFile(FvImage, FvLength, fof, polarity):
-    fof = align(fof, 8)
-    cur_offset = fof
-    next_offset = None
-    res = None
-    update_or_deleted = False
-
-    if (fof + file_header_size) <= min(FvLength, len(FvImage)):
-        Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, FvImage[fof:fof+file_header_size])
-        #Get File Header Size
-        if Attributes & FFS_ATTRIB_LARGE_FILE:
-            header_size = struct.calcsize(EFI_FFS_FILE_HEADER2)
-        else:
-            header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
-        #Check for a blank header
-        if polarity:
-            blank = b"\xff" * file_header_size
-        else:
-            blank = b"\x00" * file_header_size
-
-        if (blank == FvImage[fof:fof+file_header_size]):
-            next_offset = fof + 8
-            return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
-        #Get File size
-        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > fof + struct.calcsize(EFI_FFS_FILE_HEADER2):
-            fsize = struct.unpack("Q",FvImage[fof+file_header_size:fof+file_header_size+struct.calcsize("Q")])[0]
-            fsize &= 0xFFFFFFFF
-            if fsize == 0 or fsize > FvLength-fof:
-                fsize = get_3b_size(Size)
-        else:
-            fsize = get_3b_size(Size)
-        #Validate fsize is a legal value
-        if fsize == 0 or fsize > FvLength-fof:
-            logger().log("Unable to get correct file size for NextFwFile corrupt header information")
-            next_offset = None
-            return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
-        #Get next_offset
-        update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
-        if (bit_set(State, EFI_FILE_DATA_VALID, polarity)) or update_or_deleted:
-            next_offset = align(fof + fsize, 8)
-        else:
-            next_offset = align(fof + 1, 8)
-            return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
-
-        Name = guid_str(Name0, Name1, Name2, Name3)
-        #TODO need to fix up checksum?
-        fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, Name1, Name2, Name3, 0, Type, Attributes, Size, 0)
-        hsum = FvChecksum8(fheader)
-        if (Attributes & FFS_ATTRIB_CHECKSUM):
-            fsum = FvChecksum8(FvImage[fof+file_header_size:fof+fsize])
-        else:
-            fsum = FFS_FIXED_CHECKSUM
-        CalcSum = (hsum | (fsum << 8))
-        res = (cur_offset, next_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[fof:fof+fsize], header_size, update_or_deleted, CalcSum)
-    if res is None: return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
-    else:           return res
-
-EFI_COMMON_SECTION_HEADER = "<3sB"
-EFI_COMMON_SECTION_HEADER_size = struct.calcsize(EFI_COMMON_SECTION_HEADER)
-
-def NextFwFileSection(sections, ssize, sof, polarity):
-    # offset, next_offset, SecName, SecType, SecBody, SecHeaderSize
-    cur_offset = sof
-    if (sof + EFI_COMMON_SECTION_HEADER_size) < ssize:
-        header = sections[sof:sof+EFI_COMMON_SECTION_HEADER_size]
-        if len(header) < EFI_COMMON_SECTION_HEADER_size: return (None, None, None, None, None, None)
-        Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, header)
-        Size = get_3b_size(Size)
-        Header_Size = EFI_COMMON_SECTION_HEADER_size
-        if Size == 0xFFFFFF and (sof + EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")) < ssize:
-            Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
-            Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
-        sec_name = "S_UNKNOWN_{:02X}".format(Type)
-        if Type in SECTION_NAMES.keys():
-            sec_name = SECTION_NAMES[Type]
-        if (Size == 0xffffff and Type == 0xff) or (Size == 0):
-            sof = align(sof + 4, 4)
-            return (cur_offset, sof, None, None, None, None)
-        sec_body = sections[sof:sof+Size]
-        sof = align(sof + Size, 4)
-        return (cur_offset, sof, sec_name, Type, sec_body, Header_Size)
-    return (None, None, None, None, None, None)
-
-def DecodeSection(SecType, SecBody, SecHeaderSize):
-    pass
-
 
 # #################################################################################################
 #
@@ -751,34 +213,7 @@ def DecodeSection(SecType, SecBody, SecHeaderSize):
 #
 # #################################################################################################
 
-# typedef struct {
-#   ///
-#   /// Type of the signature. GUID signature types are defined in below.
-#   ///
-#   EFI_GUID            SignatureType;
-#   ///
-#   /// Total size of the signature list, including this header.
-#   ///
-#   UINT32              SignatureListSize;
-#   ///
-#   /// Size of the signature header which precedes the array of signatures.
-#   ///
-#   UINT32              SignatureHeaderSize;
-#   ///
-#   /// Size of each signature.
-#   ///
-#   UINT32              SignatureSize;
-#   ///
-#   /// Header before the array of signatures. The format of this header is specified
-#   /// by the SignatureType.
-#   /// UINT8           SignatureHeader[SignatureHeaderSize];
-#   ///
-#   /// An array of signatures. Each signature is SignatureSize bytes in length.
-#   /// EFI_SIGNATURE_DATA Signatures[][SignatureSize];
-#   ///
-# } EFI_SIGNATURE_LIST;
-
-SIGNATURE_LIST = "<4s2s2s8sIII"
+SIGNATURE_LIST = "<16sIII"
 SIGNATURE_LIST_size = struct.calcsize(SIGNATURE_LIST)
 
 def parse_sha256(data):
@@ -850,7 +285,7 @@ def parse_sb_db(db, decode_dir):
 
     # some platforms have 0's in the beginnig, skip all 0 (no known SignatureType starts with 0x00):
     while (dof + SIGNATURE_LIST_size) < db_size:
-        SignatureType0, SignatureType1, SignatureType2, SignatureType3, SignatureListSize, SignatureHeaderSize, SignatureSize \
+        SignatureType0, SignatureListSize, SignatureHeaderSize, SignatureSize \
          = struct.unpack(SIGNATURE_LIST, db[dof:dof+SIGNATURE_LIST_size])
 
         # prevent infinite loop when parsing malformed var
@@ -859,7 +294,7 @@ def parse_sb_db(db, decode_dir):
             return entries
 
         # Determine the signature type
-        SignatureType = guid_str(SignatureType0, SignatureType1, SignatureType2, SignatureType3)
+        SignatureType = EFI_GUID_STR(SignatureType0)
         sig_parse_f = None
         sig_size = 0
         if (SignatureType in sig_types.keys()):
@@ -874,11 +309,11 @@ def parse_sb_db(db, decode_dir):
             sof = 0
             sig_list = db[dof+SIGNATURE_LIST_size+SignatureHeaderSize:dof+SignatureListSize]
             sig_list_size = len(sig_list)
-            while ((sof + guid_size) < sig_list_size):
+            while ((sof + EFI_GUID_SIZE) < sig_list_size):
                 sig_data = sig_list[sof:sof+SignatureSize]
-                owner0, owner1, owner2, owner3 = struct.unpack(GUID, sig_data[:guid_size])
-                owner = guid_str(owner0, owner1, owner2, owner3)
-                data = sig_data[guid_size:]
+                owner0 = struct.unpack(EFI_GUID_FMT, sig_data[:EFI_GUID_SIZE])
+                owner = EFI_GUID_STR(owner0)
+                data = sig_data[EFI_GUID_SIZE:]
                 entries.append( data )
                 sig_file_name = "{}-{}-{:02d}.bin".format(short_name, owner, nsig)
                 sig_file_name = os.path.join(decode_dir, sig_file_name)
@@ -929,7 +364,7 @@ def parse_sb_db(db, decode_dir):
 #
 AUTH_CERT_DB_LIST_HEAD = "<I"
 AUTH_CERT_DB_LIST_HEAD_size = struct.calcsize(AUTH_CERT_DB_LIST_HEAD)
-AUTH_CERT_DB_DATA = "<4s2s2s8sIII"
+AUTH_CERT_DB_DATA = "<16sIII"
 AUTH_CERT_DB_DATA_size = struct.calcsize(AUTH_CERT_DB_DATA)
 
 def parse_auth_var(db, decode_dir):
@@ -950,8 +385,8 @@ def parse_auth_var(db, decode_dir):
 
     # Loop through all the certs in the list.
     while dof + AUTH_CERT_DB_DATA_size < db_size:
-        ven_guid0, ven_guid1, ven_guid2, ven_guid3, cert_node_size, name_size, cert_data_size = struct.unpack(AUTH_CERT_DB_DATA, db[dof:dof+AUTH_CERT_DB_DATA_size])
-        vendor_guid = guid_str(ven_guid0, ven_guid1, ven_guid2, ven_guid3)
+        ven_guid0, cert_node_size, name_size, cert_data_size = struct.unpack(AUTH_CERT_DB_DATA, db[dof:dof+AUTH_CERT_DB_DATA_size])
+        vendor_guid = EFI_GUID_STR(ven_guid0)
         name_size *= 2  # Name size is actually the number of CHAR16 in the name array
         tof = dof + AUTH_CERT_DB_DATA_size
         try:
@@ -1035,23 +470,6 @@ MAX_S3_BOOTSCRIPT_ENTRY_LENGTH   = 0x200
 #//*******************************************
 #// EFI Boot Script Opcode definitions
 #//*******************************************
-#define EFI_BOOT_SCRIPT_IO_WRITE_OPCODE                 0x00
-#define EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE            0x01
-#define EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE                0x02
-#define EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE           0x03
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE         0x04
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE    0x05
-#define EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE            0x06
-#define EFI_BOOT_SCRIPT_STALL_OPCODE                    0x07
-#define EFI_BOOT_SCRIPT_DISPATCH_OPCODE                 0x08
-#define EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE               0x09
-#define EFI_BOOT_SCRIPT_INFORMATION_OPCODE              0x0A
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE        0x0B
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE   0x0C
-#define EFI_BOOT_SCRIPT_IO_POLL_OPCODE                  0x0D
-#define EFI_BOOT_SCRIPT_MEM_POLL_OPCODE                 0x0E
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE          0x0F
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE         0x10
 
 class S3BootScriptOpcode:
   EFI_BOOT_SCRIPT_IO_WRITE_OPCODE               = 0x00
@@ -1063,15 +481,6 @@ class S3BootScriptOpcode:
   EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE          = 0x06
   EFI_BOOT_SCRIPT_STALL_OPCODE                  = 0x07
   EFI_BOOT_SCRIPT_DISPATCH_OPCODE               = 0x08
-  #EFI_BOOT_SCRIPT_DISPATCH_2_OPCODE             = 0x09
-  #EFI_BOOT_SCRIPT_INFORMATION_OPCODE            = 0x0A
-  #EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      = 0x0B
-  #EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE = 0x0C
-  #EFI_BOOT_SCRIPT_IO_POLL_OPCODE                = 0x0D
-  #EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x0E
-  #EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE        = 0x0F
-  #EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE       = 0x10
-  #EFI_BOOT_SCRIPT_TABLE_OPCODE                  = 0xAA
   EFI_BOOT_SCRIPT_TERMINATE_OPCODE              = 0xFF
 
 
@@ -1088,26 +497,6 @@ class S3BootScriptOpcode_MDE (S3BootScriptOpcode):
 #
 # EdkCompatibilityPkg\Foundation\Framework\Include\EfiBootScript.h
 #
-#define EFI_BOOT_SCRIPT_IO_WRITE_OPCODE               0x00
-#define EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE          0x01
-#define EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE              0x02
-#define EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE         0x03
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE       0x04
-#define EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE  0x05
-#define EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE          0x06
-#define EFI_BOOT_SCRIPT_STALL_OPCODE                  0x07
-#define EFI_BOOT_SCRIPT_DISPATCH_OPCODE               0x08
-#
-#//
-#// Extensions to boot script definitions
-#//
-#define EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               0x09
-#define EFI_BOOT_SCRIPT_INFORMATION_OPCODE            0x0A
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE      0x0B
-#define EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE 0x0C
-#
-#define EFI_BOOT_SCRIPT_TABLE_OPCODE                  0xAA
-#define EFI_BOOT_SCRIPT_TERMINATE_OPCODE              0xFF
 
 class S3BootScriptOpcode_EdkCompat (S3BootScriptOpcode):
   EFI_BOOT_SCRIPT_MEM_POLL_OPCODE               = 0x09
@@ -1423,56 +812,6 @@ class EFI_TABLE_HEADER( namedtuple('EFI_TABLE_HEADER', 'Signature Revision Heade
 # #################################################################################################
 #
 # \MdePkg\Include\Uefi\UefiSpec.h
-# -------------------------------
-# 
-# //
-# // EFI Runtime Services Table
-# //
-# #define EFI_SYSTEM_TABLE_SIGNATURE      SIGNATURE_64 ('I','B','I',' ','S','Y','S','T')
-# #define EFI_2_31_SYSTEM_TABLE_REVISION  ((2 << 16) | (31))
-# #define EFI_2_30_SYSTEM_TABLE_REVISION  ((2 << 16) | (30))
-# #define EFI_2_20_SYSTEM_TABLE_REVISION  ((2 << 16) | (20))
-# #define EFI_2_10_SYSTEM_TABLE_REVISION  ((2 << 16) | (10))
-# #define EFI_2_00_SYSTEM_TABLE_REVISION  ((2 << 16) | (00))
-# #define EFI_1_10_SYSTEM_TABLE_REVISION  ((1 << 16) | (10))
-# #define EFI_1_02_SYSTEM_TABLE_REVISION  ((1 << 16) | (02))
-# #define EFI_SYSTEM_TABLE_REVISION       EFI_2_31_SYSTEM_TABLE_REVISION
-# 
-# \EdkCompatibilityPkg\Foundation\Efi\Include\EfiApi.h
-# ----------------------------------------------------
-# 
-# //
-# // EFI Configuration Table
-# //
-# typedef struct {
-#   EFI_GUID  VendorGuid;
-#   VOID      *VendorTable;
-# } EFI_CONFIGURATION_TABLE;
-# 
-# 
-# #define EFI_SYSTEM_TABLE_SIGNATURE      0x5453595320494249ULL
-# struct _EFI_SYSTEM_TABLE {
-#   EFI_TABLE_HEADER              Hdr;
-# 
-#   CHAR16                        *FirmwareVendor;
-#   UINT32                        FirmwareRevision;
-# 
-#   EFI_HANDLE                    ConsoleInHandle;
-#   EFI_SIMPLE_TEXT_IN_PROTOCOL   *ConIn;
-# 
-#   EFI_HANDLE                    ConsoleOutHandle;
-#   EFI_SIMPLE_TEXT_OUT_PROTOCOL  *ConOut;
-# 
-#   EFI_HANDLE                    StandardErrorHandle;
-#   EFI_SIMPLE_TEXT_OUT_PROTOCOL  *StdErr;
-# 
-#   EFI_RUNTIME_SERVICES          *RuntimeServices;
-#   EFI_BOOT_SERVICES             *BootServices;
-# 
-#   UINTN                         NumberOfTableEntries;
-#   EFI_CONFIGURATION_TABLE       *ConfigurationTable;
-# 
-# };
 
 EFI_SYSTEM_TABLE_SIGNATURE     = 'IBI SYST'
 
@@ -1517,58 +856,6 @@ class EFI_SYSTEM_TABLE( namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareR
 # #################################################################################################
 #
 # \MdePkg\Include\Uefi\UefiSpec.h
-# -------------------------------
-#
-# #define EFI_RUNTIME_SERVICES_SIGNATURE  SIGNATURE_64 ('R','U','N','T','S','E','R','V')
-# #define EFI_RUNTIME_SERVICES_REVISION   EFI_2_31_SYSTEM_TABLE_REVISION
-#
-# ///
-# /// EFI Runtime Services Table.
-# ///
-# typedef struct {
-#   ///
-#   /// The table header for the EFI Runtime Services Table.
-#   ///
-#   EFI_TABLE_HEADER                Hdr;
-#
-#   //
-#   // Time Services
-#   //
-#   EFI_GET_TIME                    GetTime;
-#   EFI_SET_TIME                    SetTime;
-#   EFI_GET_WAKEUP_TIME             GetWakeupTime;
-#   EFI_SET_WAKEUP_TIME             SetWakeupTime;
-#
-#   //
-#   // Virtual Memory Services
-#   //
-#   EFI_SET_VIRTUAL_ADDRESS_MAP     SetVirtualAddressMap;
-#   EFI_CONVERT_POINTER             ConvertPointer;
-#
-#   //
-#   // Variable Services
-#   //
-#   EFI_GET_VARIABLE                GetVariable;
-#   EFI_GET_NEXT_VARIABLE_NAME      GetNextVariableName;
-#   EFI_SET_VARIABLE                SetVariable;
-#
-#   //
-#   // Miscellaneous Services
-#   //
-#   EFI_GET_NEXT_HIGH_MONO_COUNT    GetNextHighMonotonicCount;
-#   EFI_RESET_SYSTEM                ResetSystem;
-#
-#   //
-#   // UEFI 2.0 Capsule Services
-#   //
-#   EFI_UPDATE_CAPSULE              UpdateCapsule;
-#   EFI_QUERY_CAPSULE_CAPABILITIES  QueryCapsuleCapabilities;
-#
-#   //
-#   // Miscellaneous UEFI 2.0 Service
-#   //
-#   EFI_QUERY_VARIABLE_INFO         QueryVariableInfo;
-# } EFI_RUNTIME_SERVICES;
 
 EFI_RUNTIME_SERVICES_SIGNATURE  = 'RUNTSERV'
 EFI_RUNTIME_SERVICES_REVISION   = EFI_2_31_SYSTEM_TABLE_REVISION
@@ -1601,108 +888,6 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 # #################################################################################################
 #
 # \MdePkg\Include\Uefi\UefiSpec.h
-# -------------------------------
-#
-# #define EFI_BOOT_SERVICES_SIGNATURE   SIGNATURE_64 ('B','O','O','T','S','E','R','V')
-# #define EFI_BOOT_SERVICES_REVISION    EFI_2_31_SYSTEM_TABLE_REVISION
-#
-# ///
-# /// EFI Boot Services Table.
-# ///
-# typedef struct {
-#   ///
-#   /// The table header for the EFI Boot Services Table.
-#   ///
-#   EFI_TABLE_HEADER                Hdr;
-#
-#   //
-#   // Task Priority Services
-#   //
-#   EFI_RAISE_TPL                   RaiseTPL;
-#   EFI_RESTORE_TPL                 RestoreTPL;
-#
-#   //
-#   // Memory Services
-#   //
-#   EFI_ALLOCATE_PAGES              AllocatePages;
-#   EFI_FREE_PAGES                  FreePages;
-#   EFI_GET_MEMORY_MAP              GetMemoryMap;
-#   EFI_ALLOCATE_POOL               AllocatePool;
-#   EFI_FREE_POOL                   FreePool;
-#
-#   //
-#   // Event & Timer Services
-#   //
-#   EFI_CREATE_EVENT                  CreateEvent;
-#   EFI_SET_TIMER                     SetTimer;
-#   EFI_WAIT_FOR_EVENT                WaitForEvent;
-#   EFI_SIGNAL_EVENT                  SignalEvent;
-#   EFI_CLOSE_EVENT                   CloseEvent;
-#   EFI_CHECK_EVENT                   CheckEvent;
-#
-#   //
-#   // Protocol Handler Services
-#   //
-#   EFI_INSTALL_PROTOCOL_INTERFACE    InstallProtocolInterface;
-#   EFI_REINSTALL_PROTOCOL_INTERFACE  ReinstallProtocolInterface;
-#   EFI_UNINSTALL_PROTOCOL_INTERFACE  UninstallProtocolInterface;
-#   EFI_HANDLE_PROTOCOL               HandleProtocol;
-#   VOID                              *Reserved;
-#   EFI_REGISTER_PROTOCOL_NOTIFY      RegisterProtocolNotify;
-#   EFI_LOCATE_HANDLE                 LocateHandle;
-#   EFI_LOCATE_DEVICE_PATH            LocateDevicePath;
-#   EFI_INSTALL_CONFIGURATION_TABLE   InstallConfigurationTable;
-#
-#   //
-#   // Image Services
-#   //
-#   EFI_IMAGE_LOAD                    LoadImage;
-#   EFI_IMAGE_START                   StartImage;
-#   EFI_EXIT                          Exit;
-#   EFI_IMAGE_UNLOAD                  UnloadImage;
-#   EFI_EXIT_BOOT_SERVICES            ExitBootServices;
-#
-#   //
-#   // Miscellaneous Services
-#   //
-#   EFI_GET_NEXT_MONOTONIC_COUNT      GetNextMonotonicCount;
-#   EFI_STALL                         Stall;
-#   EFI_SET_WATCHDOG_TIMER            SetWatchdogTimer;
-#
-#   //
-#   // DriverSupport Services
-#   //
-#   EFI_CONNECT_CONTROLLER            ConnectController;
-#   EFI_DISCONNECT_CONTROLLER         DisconnectController;
-#
-#   //
-#   // Open and Close Protocol Services
-#   //
-#   EFI_OPEN_PROTOCOL                 OpenProtocol;
-#   EFI_CLOSE_PROTOCOL                CloseProtocol;
-#   EFI_OPEN_PROTOCOL_INFORMATION     OpenProtocolInformation;
-#
-#   //
-#   // Library Services
-#   //
-#   EFI_PROTOCOLS_PER_HANDLE          ProtocolsPerHandle;
-#   EFI_LOCATE_HANDLE_BUFFER          LocateHandleBuffer;
-#   EFI_LOCATE_PROTOCOL               LocateProtocol;
-#   EFI_INSTALL_MULTIPLE_PROTOCOL_INTERFACES    InstallMultipleProtocolInterfaces;
-#   EFI_UNINSTALL_MULTIPLE_PROTOCOL_INTERFACES  UninstallMultipleProtocolInterfaces;
-#
-#   //
-#   // 32-bit CRC Services
-#   //
-#   EFI_CALCULATE_CRC32               CalculateCrc32;
-#
-#   //
-#   // Miscellaneous Services
-#   //
-#   EFI_COPY_MEM                      CopyMem;
-#   EFI_SET_MEM                       SetMem;
-#   EFI_CREATE_EVENT_EX               CreateEventEx;
-# } EFI_BOOT_SERVICES;
 
 EFI_BOOT_SERVICES_SIGNATURE = 'BOOTSERV'
 EFI_BOOT_SERVICES_REVISION  = EFI_2_31_SYSTEM_TABLE_REVISION
@@ -1766,30 +951,14 @@ class EFI_BOOT_SERVICES_TABLE( namedtuple('EFI_BOOT_SERVICES_TABLE', 'RaiseTPL R
 #
 # \MdePkg\Include\Uefi\UefiSpec.h
 # -------------------------------
-#
-#///
-#/// Contains a set of GUID/pointer pairs comprised of the ConfigurationTable field in the
-#/// EFI System Table.
-#///
-#typedef struct {
-#  ///
-#  /// The 128-bit GUID value that uniquely identifies the system configuration table.
-#  ///
-#  EFI_GUID                          VendorGuid;
-#  ///
-#  /// A pointer to the table associated with VendorGuid.
-#  ///
-#  VOID                              *VendorTable;
-#} EFI_CONFIGURATION_TABLE;
-#
 
 EFI_VENDOR_TABLE_FORMAT = '<' + EFI_GUID_FMT + 'Q'
 EFI_VENDOR_TABLE_SIZE   = struct.calcsize(EFI_VENDOR_TABLE_FORMAT)
 
-class EFI_VENDOR_TABLE( namedtuple('EFI_VENDOR_TABLE', 'VendorGuid0 VendorGuid1 VendorGuid2 VendorGuid3 VendorTable') ):
+class EFI_VENDOR_TABLE( namedtuple('EFI_VENDOR_TABLE', 'VendorGuid VendorTable') ):
     __slots__ = ()
     def VendorGuid(self):
-        return EFI_GUID(self.VendorGuid0,self.VendorGuid1,self.VendorGuid2,self.VendorGuid3)
+        return EFI_GUID_STR(self.VendorGuid)
 
 class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
@@ -1805,56 +974,6 @@ class EFI_CONFIGURATION_TABLE():
 # \MdePkg\Include\Pi\PiDxeCis.h
 # -----------------------------
 #
-# //
-# // DXE Services Table
-# //
-# #define DXE_SERVICES_SIGNATURE            0x565245535f455844ULL
-# #define DXE_SPECIFICATION_MAJOR_REVISION  1
-# #define DXE_SPECIFICATION_MINOR_REVISION  20
-# #define DXE_SERVICES_REVISION             ((DXE_SPECIFICATION_MAJOR_REVISION<<16) | (DXE_SPECIFICATION_MINOR_REVISION))
-#
-# typedef struct {
-#   ///
-#   /// The table header for the DXE Services Table.
-#   /// This header contains the DXE_SERVICES_SIGNATURE and DXE_SERVICES_REVISION values.
-#   ///
-#   EFI_TABLE_HEADER                Hdr;
-#
-#   //
-#   // Global Coherency Domain Services
-#   //
-#   EFI_ADD_MEMORY_SPACE            AddMemorySpace;
-#   EFI_ALLOCATE_MEMORY_SPACE       AllocateMemorySpace;
-#   EFI_FREE_MEMORY_SPACE           FreeMemorySpace;
-#   EFI_REMOVE_MEMORY_SPACE         RemoveMemorySpace;
-#   EFI_GET_MEMORY_SPACE_DESCRIPTOR GetMemorySpaceDescriptor;
-#   EFI_SET_MEMORY_SPACE_ATTRIBUTES SetMemorySpaceAttributes;
-#   EFI_GET_MEMORY_SPACE_MAP        GetMemorySpaceMap;
-#   EFI_ADD_IO_SPACE                AddIoSpace;
-#   EFI_ALLOCATE_IO_SPACE           AllocateIoSpace;
-#   EFI_FREE_IO_SPACE               FreeIoSpace;
-#   EFI_REMOVE_IO_SPACE             RemoveIoSpace;
-#   EFI_GET_IO_SPACE_DESCRIPTOR     GetIoSpaceDescriptor;
-#   EFI_GET_IO_SPACE_MAP            GetIoSpaceMap;
-#
-#   //
-#   // Dispatcher Services
-#   //
-#   EFI_DISPATCH                    Dispatch;
-#   EFI_SCHEDULE                    Schedule;
-#   EFI_TRUST                       Trust;
-#   //
-#   // Service to process a single firmware volume found in a capsule
-#   //
-#   EFI_PROCESS_FIRMWARE_VOLUME     ProcessFirmwareVolume;
-# } DXE_SERVICES;
-
-#DXE_SERVICES_SIGNATURE           = 0x565245535f455844
-#DXE_SPECIFICATION_MAJOR_REVISION = 1
-#DXE_SPECIFICATION_MINOR_REVISION = 20
-#DXE_SERVICES_REVISION            = ((DXE_SPECIFICATION_MAJOR_REVISION<<16) | (DXE_SPECIFICATION_MINOR_REVISION))
-
-
 EFI_DXE_SERVICES_TABLE_SIGNATURE  = 'DXE_SERV' # 0x565245535f455844
 EFI_DXE_SERVICES_TABLE_FMT        = '=17Q'
 class EFI_DXE_SERVICES_TABLE( namedtuple('EFI_DXE_SERVICES_TABLE', 'AddMemorySpace AllocateMemorySpace FreeMemorySpace RemoveMemorySpace GetMemorySpaceDescriptor SetMemorySpaceAttributes GetMemorySpaceMap AddIoSpace AllocateIoSpace FreeIoSpace RemoveIoSpace GetIoSpaceDescriptor GetIoSpaceMap Dispatch Schedule Trust ProcessFirmwareVolume') ):
@@ -1885,88 +1004,8 @@ class EFI_DXE_SERVICES_TABLE( namedtuple('EFI_DXE_SERVICES_TABLE', 'AddMemorySpa
 # #################################################################################################
 # EFI PEI Services Table
 # #################################################################################################
-#
-# //
-# // Framework PEI Specification Revision information
-# //
-# #define FRAMEWORK_PEI_SPECIFICATION_MAJOR_REVISION    0
-# #define FRAMEWORK_PEI_SPECIFICATION_MINOR_REVISION    91
-#
-#
-# //
-# // PEI services signature and Revision defined in Framework PEI spec
-# //
-# #define FRAMEWORK_PEI_SERVICES_SIGNATURE               0x5652455320494550ULL
-# #define FRAMEWORK_PEI_SERVICES_REVISION               ((FRAMEWORK_PEI_SPECIFICATION_MAJOR_REVISION<<16) | (FRAMEWORK_PEI_SPECIFICATION_MINOR_REVISION))
-#
-# ///
-# ///  FRAMEWORK_EFI_PEI_SERVICES is a collection of functions whose implementation is provided by the PEI
-# ///  Foundation. The table may be located in the temporary or permanent memory, depending upon the capabilities 
-# ///  and phase of execution of PEI.
-# ///
-# ///  These services fall into various classes, including the following:
-# ///  - Managing the boot mode.
-# ///  - Allocating both early and permanent memory.
-# ///  - Supporting the Firmware File System (FFS).
-# ///  - Abstracting the PPI database abstraction.
-# ///  - Creating Hand-Off Blocks (HOBs).
-# ///
-# struct _FRAMEWORK_EFI_PEI_SERVICES {
-#   EFI_TABLE_HEADER                  Hdr;
-#   //
-#   // PPI Functions
-#   //
-#   EFI_PEI_INSTALL_PPI               InstallPpi;
-#   EFI_PEI_REINSTALL_PPI             ReInstallPpi;
-#   EFI_PEI_LOCATE_PPI                LocatePpi;
-#   EFI_PEI_NOTIFY_PPI                NotifyPpi;
-#   //
-#   // Boot Mode Functions
-#   //
-#   EFI_PEI_GET_BOOT_MODE             GetBootMode;
-#   EFI_PEI_SET_BOOT_MODE             SetBootMode;
-#   //
-#   // HOB Functions
-#   //
-#   EFI_PEI_GET_HOB_LIST              GetHobList;
-#   EFI_PEI_CREATE_HOB                CreateHob;
-#   //
-#   // Firmware Volume Functions
-#   //
-#   EFI_PEI_FFS_FIND_NEXT_VOLUME      FfsFindNextVolume;
-#   EFI_PEI_FFS_FIND_NEXT_FILE        FfsFindNextFile;
-#   EFI_PEI_FFS_FIND_SECTION_DATA     FfsFindSectionData;
-#   //
-#   // PEI Memory Functions
-#   //
-#   EFI_PEI_INSTALL_PEI_MEMORY        InstallPeiMemory;
-#   EFI_PEI_ALLOCATE_PAGES            AllocatePages;
-#   EFI_PEI_ALLOCATE_POOL             AllocatePool;
-#   EFI_PEI_COPY_MEM                  CopyMem;
-#   EFI_PEI_SET_MEM                   SetMem;
-#   //
-#   // (the following interfaces are installed by publishing PEIM)
-#   // Status Code
-#   //
-#   EFI_PEI_REPORT_STATUS_CODE        ReportStatusCode;
-#   //
-#   // Reset
-#   //
-#   EFI_PEI_RESET_SYSTEM              ResetSystem;
-#   ///
-#   /// Inconsistent with specification here:
-#   /// In Framework Spec, PeiCis0.91, CpuIo and PciCfg are NOT pointers.
-#   ///
-#
-#   //
-#   // I/O Abstractions
-#   //
-#   EFI_PEI_CPU_IO_PPI                *CpuIo;
-#   EFI_PEI_PCI_CFG_PPI               *PciCfg;
-# };
 
 EFI_FRAMEWORK_PEI_SERVICES_TABLE_SIGNATURE = 0x5652455320494550
-#FRAMEWORK_PEI_SERVICES_SIGNATURE           = 0x5652455320494550
 FRAMEWORK_PEI_SPECIFICATION_MAJOR_REVISION = 0
 FRAMEWORK_PEI_SPECIFICATION_MINOR_REVISION = 91
 FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR_REVISION<<16) | (FRAMEWORK_PEI_SPECIFICATION_MINOR_REVISION))
@@ -1974,120 +1013,6 @@ FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR
 # #################################################################################################
 # EFI System Management System Table
 # #################################################################################################
-#
-#define SMM_SMST_SIGNATURE            EFI_SIGNATURE_32 ('S', 'M', 'S', 'T')
-#define EFI_SMM_SYSTEM_TABLE_REVISION (0 << 16) | (0x09)
-# //
-# // System Management System Table (SMST)
-# //
-# struct _EFI_SMM_SYSTEM_TABLE {
-#   ///
-#   /// The table header for the System Management System Table (SMST). 
-#   ///
-#   EFI_TABLE_HEADER                    Hdr;
-#
-#   ///
-#   /// A pointer to a NULL-terminated Unicode string containing the vendor name. It is
-#   /// permissible for this pointer to be NULL.
-#   ///
-#   CHAR16                              *SmmFirmwareVendor;
-#   ///
-#   /// The particular revision of the firmware.
-#   ///
-#   UINT32                              SmmFirmwareRevision;
-#
-#   ///
-#   /// Adds, updates, or removes a configuration table entry from the SMST. 
-#   ///
-#   EFI_SMM_INSTALL_CONFIGURATION_TABLE SmmInstallConfigurationTable;
-#
-#   //
-#   // I/O Services
-#   //
-#   ///
-#   /// A GUID that designates the particular CPU I/O services. 
-#   ///
-#   EFI_GUID                            EfiSmmCpuIoGuid;
-#   ///
-#   /// Provides the basic memory and I/O interfaces that are used to abstract accesses to
-#   /// devices.
-#   ///
-#   EFI_SMM_CPU_IO_INTERFACE            SmmIo;
-#
-#   //
-#   // Runtime memory service
-#   //
-#   ///
-#   ///
-#   /// Allocates pool memory from SMRAM for IA-32 or runtime memory for the
-#   /// Itanium processor family.
-#   ///
-#   EFI_SMMCORE_ALLOCATE_POOL           SmmAllocatePool;
-#   ///
-#   /// Returns pool memory to the system.
-#   ///
-#   EFI_SMMCORE_FREE_POOL               SmmFreePool;
-#   ///
-#   /// Allocates memory pages from the system.
-#   ///
-#   EFI_SMMCORE_ALLOCATE_PAGES          SmmAllocatePages;
-#   ///
-#   /// Frees memory pages for the system.
-#   ///
-#   EFI_SMMCORE_FREE_PAGES              SmmFreePages;
-#
-#   //
-#   // MP service
-#   //
-#
-#   /// Inconsistent with specification here:
-#   ///  In Framework Spec, this definition does not exist. This method is introduced in PI1.1 specification for 
-#   ///  the implementation needed.
-#   EFI_SMM_STARTUP_THIS_AP             SmmStartupThisAp;
-#
-#   //
-#   // CPU information records
-#   //
-#   ///
-#   /// A 1-relative number between 1 and the NumberOfCpus field. This field designates
-#   /// which processor is executing the SMM infrastructure. This number also serves as an
-#   /// index into the CpuSaveState and CpuOptionalFloatingPointState
-#   /// fields.
-#   ///
-#   UINTN                               CurrentlyExecutingCpu;
-#   ///
-#   /// The number of EFI Configuration Tables in the buffer
-#   /// SmmConfigurationTable.
-#   ///
-#   UINTN                               NumberOfCpus;
-#   ///
-#   /// A pointer to the EFI Configuration Tables. The number of entries in the table is
-#   /// NumberOfTableEntries.
-#   ///
-#   EFI_SMM_CPU_SAVE_STATE              *CpuSaveState;
-#   ///
-#   /// A pointer to a catenation of the EFI_SMM_FLOATING_POINT_SAVE_STATE.
-#   /// The size of this entire table is NumberOfCpus* size of the
-#   /// EFI_SMM_FLOATING_POINT_SAVE_STATE. These fields are populated only if
-#   /// there is at least one SMM driver that has registered for a callback with the
-#   /// FloatingPointSave field in EFI_SMM_BASE_PROTOCOL.RegisterCallback() set to TRUE.
-#   ///
-#   EFI_SMM_FLOATING_POINT_SAVE_STATE   *CpuOptionalFloatingPointState;
-#
-#   //
-#   // Extensibility table
-#   //
-#   ///
-#   /// The number of EFI Configuration Tables in the buffer
-#   /// SmmConfigurationTable.
-#   ///
-#   UINTN                               NumberOfTableEntries;
-#   ///
-#   /// A pointer to the EFI Configuration Tables. The number of entries in the table is
-#   /// NumberOfTableEntries.
-#   ///
-#   EFI_CONFIGURATION_TABLE             *SmmConfigurationTable;
-# };
 
 EFI_SMM_SYSTEM_TABLE_SIGNATURE = 'SMST'
 EFI_SMM_SYSTEM_TABLE_REVISION = (0 << 16) | (0x09)
