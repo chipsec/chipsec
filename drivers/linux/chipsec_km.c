@@ -1,7 +1,7 @@
-/* 
+/*
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2018, Intel Corporation
- 
+Copyright (c) 2010-2020, Intel Corporation
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; Version 2.
@@ -17,7 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 Contact information:
 chipsec@intel.com
-*/ 
+*/
 
 #include <linux/module.h>
 #include <linux/highmem.h>
@@ -36,13 +36,13 @@ chipsec@intel.com
     #include <linux/efi.h>
 #endif
 
-#define _GNU_SOURCE 
+#define _GNU_SOURCE
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
 
 MODULE_LICENSE("GPL");
 
-// function page_is_ram is not exported 
+// function page_is_ram is not exported
 // for modules, but is available in kallsyms.
 // So we need determine this address using dirty tricks
 int (*guess_page_is_ram)(unsigned long pagenr);
@@ -669,42 +669,6 @@ static loff_t memory_lseek(struct file * file, loff_t offset, int orig)
 	return ret;
 }
 
-
-void * patch_apply_ucode(void * ucode_buf)
-{
-	unsigned long long ucode_start;
-
-	printk(KERN_INFO "[chipsec] [patch_apply_ucode] Applying patch in the processor id: %d", smp_processor_id());
-
-	ucode_start = (unsigned long long)ucode_buf;
-	asm volatile("wrmsr" :  : "c"(MSR_IA32_BIOS_UPDT_TRIG),"d"((unsigned int)((ucode_start >> 32) & 0xffffffff)),"a"((unsigned int)(ucode_start & 0xffffffff))); // lo is in eax
-
-
-	return NULL;
-}
-
-void * patch_bios_sign(void * ucode_buf)
-{
-	asm volatile("wrmsr" :  : "c"(MSR_IA32_BIOS_SIGN_ID),"a"((unsigned int)0),"d"((unsigned int)0));
-	return NULL;
-}
-
-void * patch_cpuid_0(void * CPUInfo)
-{
-	unsigned long *pointer;
-	pointer=(unsigned long *) CPUInfo;
-	asm volatile( "cpuid" : "=a"(pointer[0]),"=b"(pointer[1]),"=c"(pointer[2]),"=d"(pointer[3]) : "a"((unsigned int)(1)));
-	return NULL;
-}
-
-void * patch_read_msr(void * CPUInfo)
-{
-	unsigned long *pointer;
-	pointer=(unsigned long *) CPUInfo;
-	asm volatile("rdmsr" : "=a"(pointer[0]), "=d"(pointer[3]) : "c"(MSR_IA32_BIOS_SIGN_ID));
-	return NULL;
-}
-
 #ifdef EFI_NOT_READY
 void print_stat(efi_status_t stat)
 {
@@ -762,7 +726,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	char *ucode_buf;
 	//unsigned int counter;
 	char small_buffer[6]; //32 bits + char + \0
-	unsigned long CPUInfo[4]={-1};
+	unsigned long CPUInfo[4]={1,0,0,0};
 	void (*apply_ucode_patch_p)(void *info);
 
 	switch(ioctl_num)
@@ -837,28 +801,19 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	{
 
 #ifdef CONFIG_X86
+		unsigned long long ucode_start = 0;
+		u32 _eax[2] = {0}, _edx[2] = {0};
 		ucode_size=0;
 
 		printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Initializing update routine\n");
 
-		/* we just check if the first bytes are in the ok range */
-#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
-		if (!access_ok(VERIFY_READ, ioctl_param, sizeof(unsigned short))) 
-#else
-		if(!access_ok(ioctl_param,sizeof(unsigned short)))
-#endif	
-		{
-			printk("\n address not in user-mode\n");
-			return -EFAULT;
-		}
-	
 		/* first byte: thread_id */
 		memset(small_buffer, 0x00, 6);
 
 		if ( copy_from_user(&small_buffer, (char *) ioctl_param, sizeof(unsigned char)) > 0 )
 			return -EFAULT;
 
-		thread_id=(unsigned short) small_buffer[0];	
+		thread_id=(unsigned short) small_buffer[0];
 
 		memset(small_buffer, 0x00, 6);
 
@@ -871,39 +826,32 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		if (!ucode_buf)
 			return -EFAULT;
 
+		ucode_start = (unsigned long long) ucode_start;
 		memset(ucode_buf, 0, ucode_size);
-		
+
 		if ( copy_from_user(ucode_buf, (unsigned char *)(ioctl_param+sizeof(unsigned char)+sizeof(unsigned short)), ucode_size) > 0 )
 			return -EFAULT;
 
+		printk(KERN_INFO "[chipsec] [patch_apply_ucode] Checking current patch ID");
+		rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[0], (u32*)&_edx[0]);
 
-		/* to confirm the received patch is correct, uncomment */
-		/*
-		printk(KERN_INFO "\n");
-		for (counter=0; counter<40; counter++)
-			printk(KERN_INFO "ucode_buf[%d] = 0x%x ",counter, (unsigned char) ucode_buf[counter]);
-		printk(KERN_INFO "\n");
-		printk(KERN_INFO "ucode_buf[%d] = 0x%x ",ucode_size-1, (unsigned char) ucode_buf[ucode_size-1]);
-		*/
+		printk(KERN_INFO "[chipsec] [patch_apply_ucode] Applying patch in the processor id: %d", thread_id);
+		wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_UPDT_TRIG, (u32)ucode_start, (u32)((ucode_start >> 32) & 0xffffffff));
 
-		apply_ucode_patch_p=(void *) patch_apply_ucode;
-		smp_call_function_single(thread_id, apply_ucode_patch_p, ucode_buf, 0);
 		kfree(ucode_buf);
 
-		apply_ucode_patch_p=(void *)patch_bios_sign;
-		smp_call_function_single(thread_id, apply_ucode_patch_p, ucode_buf, 0);
+		printk(KERN_INFO "[chipsec] [patch_apply_ucode] checking ucode update was loaded..\n");
+		printk(KERN_INFO "[chipsec] [patch_apply_ucode] clear IA32_BIOS_SIGN_ID, CPUID EAX=1, read back IA32_BIOS_SIGN_ID\n" );
 
-		apply_ucode_patch_p=(void *)patch_cpuid_0;
-		smp_call_function_single(thread_id, apply_ucode_patch_p, CPUInfo, 0);
+		wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32)_eax[1], (u32)_edx[1]);
+		apply_ucode_patch_p=(void *)__cpuid__;
+		smp_call_function_single(thread_id, apply_ucode_patch_p, (CPUID_CTX *)CPUInfo,0);
+		rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[1], (u32*)&_edx[1]);
 
-		apply_ucode_patch_p=(void *)patch_read_msr;
-		smp_call_function_single(thread_id, apply_ucode_patch_p, CPUInfo, 0);
-
-		if (0 != CPUInfo[3])
-			printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != 0)"); 
+		if (_edx[1] != _edx[0])
+			printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != %u)\n", _edx[0]);
 		else
 			printk(KERN_INFO "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update failed"); 
-
 
 		break;
 #else
