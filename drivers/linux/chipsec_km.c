@@ -1,7 +1,7 @@
-/* 
+/*
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2018, Intel Corporation
- 
+Copyright (c) 2010-2020, Intel Corporation
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; Version 2.
@@ -17,7 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 Contact information:
 chipsec@intel.com
-*/ 
+*/
 
 #include <linux/module.h>
 #include <linux/highmem.h>
@@ -36,13 +36,13 @@ chipsec@intel.com
     #include <linux/efi.h>
 #endif
 
-#define _GNU_SOURCE 
+#define _GNU_SOURCE
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
 
 MODULE_LICENSE("GPL");
 
-// function page_is_ram is not exported 
+// function page_is_ram is not exported
 // for modules, but is available in kallsyms.
 // So we need determine this address using dirty tricks
 int (*guess_page_is_ram)(unsigned long pagenr);
@@ -921,7 +921,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
-		_rdmsr(ptr[1],&ptr[3],&ptr[2]);
+		rdmsr_on_cpu(ptr[0], ptr[1], (u32*)&ptr[3], (u32*)&ptr[2]);
+		//_rdmsr(ptr[1],&ptr[3],&ptr[2]);
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
@@ -939,7 +940,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
-		_wrmsr(ptr[1],ptr[3],ptr[2]);
+		wrmsr_on_cpu(ptr[0], ptr[1], (u32)ptr[3], (u32)ptr[2]);
+		//_wrmsr(ptr[1],ptr[3],ptr[2]);
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
