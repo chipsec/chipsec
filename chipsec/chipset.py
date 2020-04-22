@@ -608,6 +608,17 @@ class Chipset:
             return self.pci.is_enabled( b, d, f )
         return False
 
+    def is_register_device_enabled( self, reg_name, bus_index=0 ):
+        if reg_name in self.Cfg.REGISTERS:
+            reg = self.get_register_def( reg_name, bus_index )
+            rtype = reg['type']
+            if (rtype == RegisterType.MMCFG) or (rtype == RegisterType.PCICFG):
+                b = int(reg['bus'], 16)
+                d = int(reg['dev'], 16)
+                f = int(reg['fun'], 16)
+                return self.pci.is_enabled( b, d, f )
+        return False
+
     def switch_device_def( self, target_dev, source_dev ):
         (b,d,f) = self.get_device_BDF( source_dev )
         self.Cfg.CONFIG_PCI[ target_dev ]['bus'] = str(b)
