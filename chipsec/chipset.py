@@ -43,6 +43,7 @@ import traceback
 
 # DEBUG Flags
 QUIET_PCI_ENUM = True
+LOAD_COMMON = True
 
 class RegisterType:
     PCICFG    = 'pcicfg'
@@ -410,9 +411,16 @@ class Chipset:
 
         # Locate common (chipsec/cfg/common*.xml) configuration XML files.
         loaded_files = []
-        for _xml in _cfg_files:
-            if fnmatch.fnmatch(os.path.basename(_xml), 'common*.xml'):
-                loaded_files.append(_xml)
+        if LOAD_COMMON:
+            for _xml in _cfg_files:
+                if fnmatch.fnmatch(os.path.basename(_xml), 'common*.xml'):
+                    loaded_files.append(_xml)
+
+        # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
+            platform_files = []
+            for plat in [c.lower() for c in self.chipset_codes]:
+                platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
+            loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
         # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
         if self.code and CHIPSET_CODE_UNKNOWN != self.code:
@@ -425,12 +433,6 @@ class Chipset:
             for _xml in _cfg_files:
                 if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code)):
                     loaded_files.append(_xml)
-
-        # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
-        platform_files = []
-        for plat in [c.lower() for c in self.chipset_codes]:
-            platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
-        loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
         # Load all configuration files for this platform.
         if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
