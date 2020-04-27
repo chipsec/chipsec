@@ -27,6 +27,7 @@ This module checks to see that SMRRs are enabled and configured.
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
+from chipsec.hal.msr import MemType
 
 TAGS = [MTAG_BIOS,MTAG_SMM]
 
@@ -41,12 +42,6 @@ class smrr(BaseModule):
     #
     # Check that SMRR are supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
-    #def check_SMRR_supported(self):
-        #mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
-        #if self.logger.VERBOSE: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
-        #smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
-        #return (1 == smrr)
-
     def check_SMRR(self, do_modify):
         if not self.cs.is_register_defined( 'MTRRCAP' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
