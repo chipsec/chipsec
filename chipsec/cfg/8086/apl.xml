@@ -21,7 +21,19 @@ XML configuration for Apollo Lake based SoCs
   <mmio>
     <bar name="SPIBAR"   bus="0" dev="0x0D" fun="2" reg="0x10" width="4" mask="0xFFFFF000" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>
     <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0x7FF000000" desc="Graphics Translation Table Range"/>
+    <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" desc="Power Management Register Range"/>
+    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
   </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+    <bar name="ABASE" register="ABASE" base_field="BA" size="0x100" fixed_address="0x400" desc="ACPI Base Address"/>
+    <bar name="PMBASE" register="ABASE" base_field="BA" size="0x100" fixed_address="0x400" desc="ACPI Base Address"/>
+  </io>
 
   <!-- #################################### -->
   <!--                                      -->
@@ -33,24 +45,33 @@ XML configuration for Apollo Lake based SoCs
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- GFx PCI device registers -->
-    <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
-      <field name="GGCLOCK"  bit="0" size="1"/>
-    </register>
-    <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x5C" size="4" desc="Base of Data Stolen Memory">
-      <field name="LOCK"  bit="0" size="1"/>
-    </register>
-    <register name="PCI0.0.0_BGSM" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x70" size="4" desc="Base of Graphics Stolen Memory">
-      <field name="LOCK"  bit="0" size="1"/>
-    </register>
-    <register name="PCI0.0.0_PAVPC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x74" size="4" desc="PAVP Control">
-      <field name="PAVPLCK"  bit="2" size="1"/>
-    </register>
+    <!-- Sideband Register Access Registers -->
+     <register name="SBREG_BAR" type="pcicfg" bus="0" dev="0xD" fun="0" offset="0x10" size="4" desc="Sideband Register Access BAR">
+       <field name="RBA" bit="24" size="8" desc="Register Base Address"/>
+     </register>
+     <register name="P2SBC" type="pcicfg" bus="0" dev="0xD" fun="0" offset="0xE0" size="4" desc="P2SB Configuration Register">
+      <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR"/>
+     </register>
+     <register name="P2SB_HIDE" type="pcicfg" bus="0" dev="0xD" fun="0" offset="0xE1" size="1" desc="P2SB Configuration Register hide-unhide">
+       <field name="HIDE" bit="0" size="1" desc="Hide SBREG_BAR"/>
+     </register>
 
     <!-- Misc PCI registers -->
     <register name="IADBGCTRL" type="pcicfg" bus="0" dev="0x1A" fun="0" offset="0xB0" desc="Debug Control">
         <field name="IADBGCTRL_LOCK" bit="30" size="1"/>
+    </register>
+    <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x0D" fun="1" offset="0x10" size="8" desc="PM Base Address">
+      <field name="STYPE" bit="1"  size="2"  desc="Space Type (if 0 - 32bit, 10 - 64bit)"/>
+      <field name="BA"    bit="12" size="52" desc="Base Address"/>
+    </register>
+    <register name="ABASE" type="pcicfg" bus="0" dev="0x0D" fun="1" offset="0x20" size="4" desc="ACPI Base Address">
+      <field name="BA" bit="2" size="30" desc="Base Address"/>
+    </register>
+    <register name="TCOBASE"    type="pcicfg" bus="0" dev="0x1f" fun="1" offset="0x50" size="4" desc="TCO Base Address">
+      <field name="TCOBA" bit="5" size="11" desc="TCO Base Address"/>
+    </register>
+    <register name="TCOCTL"     type="pcicfg" bus="0" dev="0x1f" fun="1" offset="0x54" size="4" desc="TCO Control">
+      <field name="TCO_BASE_EN"   bit="8" size="1" desc="TCO Base Enable"/>
     </register>
 
     <!-- SPI Controller Registers -->
@@ -63,7 +84,7 @@ XML configuration for Apollo Lake based SoCs
       <field name="BILD"    bit="7"  size="1" desc="BIOS Interface Lock Down"/>
       <field name="ASE_BWP" bit="11" size="1" desc="Async SMI Enable WP"/>
     </register>
- 
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MMIO registers               -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -180,11 +201,50 @@ XML configuration for Apollo Lake based SoCs
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
-       
+
     <!-- GFx MMIO registers -->
     <register name="PCBR" type="mmio" bar="GTTMMADR" offset="0x182120" desc="PCBR">
         <field name="PCBR_LOCK" bit="0" size="1"/>
     </register>
+
+    <!-- Power Management Registers -->
+    <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration 1" />
+    <register name="GEN_PMCON_2" type="mmio" bar="PWRMBASE" offset="0x1024" size="4" desc="General PM Configuration 2">
+      <field name="SMI_LOCK"    bit="4"     size="1"/>
+    </register>
+
+    <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
+    <register name="TCO1_CNT" type="iobar" bar="ABASE" offset="0x68" size="4" desc="TCO1 Control">
+      <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
+    </register>
+
+    <!-- PCH ABASE (PMBASE) -->
+    <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x40" size="4" desc="SMI Control and Enable">
+      <field name="GBL_SMI_EN"          bit="0" size="1"/>
+      <field name="EOS"                 bit="1" size="1"/>
+      <field name="BIOS_EN"             bit="2" size="1"/>
+      <field name="LEGACY_USB_EN"       bit="3" size="1"/>
+      <field name="SLP_SMI_EN"          bit="4" size="1"/>
+      <field name="APMC_EN"             bit="5" size="1"/>
+      <field name="SWSMI_TMR_EN"        bit="6" size="1"/>
+      <field name="BIOS_RLS"            bit="7" size="1"/>
+      <field name="GPIO_UNLOCK_SMI_EN"  bit="10" size="1"/>
+      <field name="GPIO_UNLOCK_SSMI_EN" bit="11" size="1"/>
+      <field name="MCSMI_EN"            bit="12" size="1"/>
+      <field name="TCO_EN"              bit="13" size="1"/>
+      <field name="PERIODIC_EN"         bit="14" size="1"/>
+      <field name="SERIRQ_SMI_EN"       bit="15" size="1"/>
+      <field name="SMBUS_SMI_EN"        bit="16" size="1"/>
+      <field name="xHCI_SMI_EN"         bit="17" size="1"/>
+      <field name="HOST_SMBUS_SMI_EN"   bit="18" size="1"/>
+      <field name="SCS_SMI_EN"          bit="19" size="1"/>
+      <field name="PCIE_SMI_EN"         bit="20" size="1"/>
+      <field name="SCC2_SMI_EN"         bit="21" size="1"/>
+      <field name="SPI_SSMI_EN"         bit="25" size="1"/>
+      <field name="SPI_SMI_EN"          bit="26" size="1"/>
+      <field name="OCP_SMI_EN"          bit="27" size="1"/>
+    </register>
+  </registers>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- CPU MSRs                     -->
@@ -202,5 +262,6 @@ XML configuration for Apollo Lake based SoCs
       <control name="SpiWriteStatusDis"      register="HSFS"  field="WRSDIS"  desc="Write Status Disable"/>
       <control name="TopSwapStatus"          register="BC"    field="TSS"     desc="Top Swap Status"/>
       <control name="TopSwap"                register="BC"    field="TSS"     desc="Top Swap Status"/>
+      <control name="SMILock"                register="GEN_PMCON_2"  field="SMI_LOCK"  desc="SMI Global Configuration Lock"/>
   </controls>
 </configuration>
