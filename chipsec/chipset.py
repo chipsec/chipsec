@@ -395,6 +395,8 @@ class Chipset:
                             cdict['detection_value'] = _det
             for cc in self.chipset_codes:
                 globals()["CHIPSET_CODE_{}".format(cc.upper())] = cc.upper()
+            for pc in self.pch_codes:
+                globals()["PCH_CODE_{}".format(pc[4:].upper())] = pc.upper()
 
 
     def load_xml_configuration( self ):
