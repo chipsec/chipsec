@@ -267,7 +267,7 @@ class Chipset:
             self.pch_did = pch_did
             self.pch_rid = pch_rid
             data_dict           = self.pch_dictionary[self.vid][self.pch_did][0]
-            self.pch_code       = data_dict['code'].lower()
+            self.pch_code       = data_dict['code']
             self.pch_longname   = data_dict['longname']
             _unknown_pch = False
 
@@ -425,19 +425,19 @@ class Chipset:
         # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
         if self.code and CHIPSET_CODE_UNKNOWN != self.code:
             for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code)):
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code.lower())):
                     loaded_files.append(_xml)
 
         # Locate PCH specific (chipsec/cfg/pch_<code>*.xml) configuration XML files.
         if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
             for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code)):
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code.lower())):
                     loaded_files.append(_xml)
 
         # Load all configuration files for this platform.
         if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
-            self.init_cfg_xml(_xml, self.code, self.pch_code)
+            self.init_cfg_xml(_xml, self.code.lower(), self.pch_code.lower())
 
         # Load Bus numbers for this platform.
         if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
