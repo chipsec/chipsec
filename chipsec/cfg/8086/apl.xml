@@ -19,7 +19,7 @@ XML configuration for Apollo Lake based SoCs
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-    <bar name="SPIBAR"   bus="0" dev="0x0D" fun="2" reg="0x10" width="4" mask="0xFFFFFE00" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>
+    <bar name="SPIBAR"   bus="0" dev="0x0D" fun="2" reg="0x10" width="4" mask="0xFFFFF000" size="0x200" enable_bit="1" desc="SPI Controller Register Range"/>
     <bar name="GTTMMADR" bus="0" dev="0x02" fun="0" reg="0x10" width="8" mask="0x7FF000000" desc="Graphics Translation Table Range"/>
   </mmio>
 
