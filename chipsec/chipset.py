@@ -35,6 +35,7 @@ from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, 
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 
 from chipsec.logger import logger
+from chipsec.defines import is_hex
 
 import chipsec.file
 
@@ -341,7 +342,7 @@ class Chipset:
 
         # find VID
         _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec', 'cfg' )
-        VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and not f[:2] == '__' ]
+        VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
         # create dictionaries
         for vid in VID:
             self.chipset_dictionary[int(vid,16)] = collections.defaultdict(list)
