@@ -180,6 +180,9 @@ def get_version():
 def is_printable(seq):
     return set(seq).issubset(set(string.printable))
 
+def is_hex(maybe_hex):
+    return all(char in string.hexdigits for char in maybe_hex)
+
 def get_message():
     msg_str = ""
     chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
