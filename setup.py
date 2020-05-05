@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -228,7 +228,7 @@ package_data = {
     # Include any configuration file.
     "": ["*.ini", "*.cfg", "*.json"],
     "chipsec": ["*VERSION", "WARNING.txt"],
-    "chipsec.cfg": ["*.xml", "*.xsd"],
+    "chipsec.cfg":  ["8086/*.xml","*.xml","*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
