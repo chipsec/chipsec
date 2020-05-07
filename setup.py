@@ -29,7 +29,6 @@ import os
 import platform
 from setuptools import setup, find_packages
 from distutils import log, dir_util
-from distutils.core import Extension
 import subprocess
 import shutil
 
@@ -242,7 +241,6 @@ if platform.system().lower() == "windows":
 
 elif platform.system().lower() == "linux":
     package_data["chipsec_tools.compression.bin"] = ['*']
-    extra_kw.append(Extension("chipsec.helper.linux.cores",["chipsec/helper/linux/cores.c"]))
 
 elif platform.system().lower() == "darwin":
     package_data["chipsec_tools.compression.bin"] = ['*']

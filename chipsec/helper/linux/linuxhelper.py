@@ -666,64 +666,15 @@ class LinuxHelper(Helper):
     #
 
     def get_affinity(self):
-        mpath = os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/')
-        for i in os.listdir(mpath):
-            if i.find("cores") == 0 and i.rfind(".so") > 4:
-                mpath += i
-                break
-        CORES = ctypes.cdll.LoadLibrary( mpath )
-        CORES.getaffinity.argtypes = [ ctypes.c_int, ctypes.POINTER( ( ctypes.c_long * 128 ) ),ctypes.POINTER( ctypes.c_int ) ]
-        CORES.getaffinity.restype = ctypes.c_int
-        mask = ( ctypes.c_long * 128 )( )
-        try:
-            numCpus = 0
-            f = open('/proc/cpuinfo', 'r')
-            for line in f:
-                if "processor" in line:
-                    numCpus += 1
-            f.close()
-        except:
-            numCpus = 1;
-
-        errno = ctypes.c_int( 0 )
-        if 0 == CORES.getaffinity( numCpus,ctypes.byref( mask ),ctypes.byref( errno ) ):
-            AffinityString = " GetAffinity: "
-            for i in range( 0, numCpus ):
-                if mask[i] == 1:
-                    AffinityString += "{} ".format(i)
-            if logger().DEBUG: logger().log( AffinityString )
-            return 1
-        else:
-            AffinityString = " Get_affinity errno::{}".format( errno.value )
-            if logger().DEBUG: logger().log( AffinityString )
-            return None
+        affinity = os.sched_getaffinity(0)
+        return len(affinity)
 
     def set_affinity(self, thread_id):
-        mpath = os.path.join(chipsec.file.get_main_dir( ), 'chipsec/helper/linux/')
-        for i in os.listdir(mpath):
-            if i.find("cores") == 0 and i.rfind(".so") > 4:
-                mpath += i
-                break
-        CORES = ctypes.cdll.LoadLibrary(mpath)
-        CORES.setaffinity.argtypes=[ctypes.c_int,ctypes.POINTER(ctypes.c_int)]
-        CORES.setaffinity.restype=ctypes.c_int
-        errno= ctypes.c_int(0)
-        if 0 == CORES.setaffinity(ctypes.c_int(thread_id),ctypes.byref(errno)) :
+        if thread_id < self.get_affinity():
+            os.sched_setaffinity(thread_id)
             return thread_id
         else:
-            AffinityString= " Set_affinity errno::{}".format(errno.value)
-            if logger().DEBUG: logger().log( AffinityString )
             return None
-
-    def native_set_affinity(self, thread_id):
-        os.sched_setaffinity(0, {thread_id})
-        return 0
-
-    def native_get_affinity(self):
-        mask = os.sched_getaffinity(0)
-        # We get a set with the mask from sched_getaffinity, just return the first one
-        return mask.pop()
-
 
     #########################################################
     # (U)EFI Variable API
