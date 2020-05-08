@@ -126,11 +126,16 @@ _load_gdt ENDP
 ;    unsigned int* msr_hi  // r8
 ;    )
 ;------------------------------------------------------------------------------
-_rdmsr PROC
+_rdmsr PROC FRAME
     push r10
+    .ALLOCSTACK 8
     push r11
+    .ALLOCSTACK 8
     push rax
+    .ALLOCSTACK 8
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     mov r10, rdx ; msr_lo
     mov r11, r8  ; msr_hi
@@ -157,8 +162,10 @@ _rdmsr ENDP
 ;    unsigned int msr_lo   // r8
 ;    )
 ;------------------------------------------------------------------------------
-_wrmsr PROC
+_wrmsr PROC FRAME
     push rax
+    .ALLOCSTACK 8
+    .endprolog
 
     ; rcx has msr_num
     ; rdx has msr_hi
@@ -187,8 +194,10 @@ DisableInterrupts ENDP
 ;    unsigned short	port_num           // rdx
 ;    )
 ;------------------------------------------------------------------------------
-WritePortDword PROC
+WritePortDword PROC FRAME
     push rax
+    .ALLOCSTACK 8
+    .endprolog
 
     mov rax, rcx
     out dx, rax
@@ -204,8 +213,10 @@ WritePortDword ENDP
 ;    unsigned short	port_num           // rdx
 ;    )
 ;------------------------------------------------------------------------------
-WritePortWord PROC
+WritePortWord PROC FRAME
     push rax
+    .ALLOCSTACK 8
+    .endprolog
 
     mov rax, rcx
     out dx, ax
@@ -221,8 +232,10 @@ WritePortWord ENDP
 ;    unsigned short	port_num           // rdx
 ;    )
 ;------------------------------------------------------------------------------
-WritePortByte PROC
+WritePortByte PROC FRAME
     push rax
+    .ALLOCSTACK 8
+    .endprolog
 
     mov rax, rcx
     out dx, al
@@ -237,10 +250,12 @@ WritePortByte ENDP
 ;    unsigned short	port_num           // rcx
 ;    )
 ;------------------------------------------------------------------------------
-ReadPortDword PROC
+ReadPortDword PROC FRAME
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
-    xor rax, rax    
+    xor rax, rax
     mov rdx, rcx
     in eax, dx
 
@@ -254,10 +269,12 @@ ReadPortDword ENDP
 ;    unsigned short	port_num           // rcx
 ;    )
 ;------------------------------------------------------------------------------
-ReadPortWord PROC
+ReadPortWord PROC FRAME
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
-    xor rax, rax    
+    xor rax, rax
     mov rdx, rcx
     in ax, dx
 
@@ -271,10 +288,12 @@ ReadPortWord ENDP
 ;    unsigned short	port_num           // rcx
 ;    )
 ;------------------------------------------------------------------------------
-ReadPortByte PROC
+ReadPortByte PROC FRAME
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
-    xor rax, rax    
+    xor rax, rax
     mov rdx, rcx
     in al, dx
 
@@ -290,8 +309,10 @@ ReadPortByte ENDP
 ;    unsigned char	val   		// rdx
 ;    )
 ;------------------------------------------------------------------------------
-WriteHighCMOSByte PROC
+WriteHighCMOSByte PROC FRAME
     push rax
+    .ALLOCSTACK 8
+    .endprolog
 
     mov rax, rcx
     out 72h, al
@@ -308,8 +329,10 @@ WriteHighCMOSByte ENDP
 ;    unsigned char	val   		// rdx
 ;    )
 ;------------------------------------------------------------------------------
-WriteLowCMOSByte PROC
+WriteLowCMOSByte PROC FRAME
     push rax
+    .ALLOCSTACK 8
+    .endprolog
 
     mov rax, rcx
     or al, 80h
@@ -330,9 +353,12 @@ WriteLowCMOSByte ENDP
 ;    IN   UINT64	rax_value               // rdx
 ;    )
 ;------------------------------------------------------------------------------
-SendAPMSMI PROC
+SendAPMSMI PROC FRAME
     push rax
+    .ALLOCSTACK 8
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     mov rax, rcx
     mov dx, 0B2h
@@ -345,25 +371,28 @@ SendAPMSMI ENDP
 
 ;------------------------------------------------------------------------------
 ;This function has one argument: swsmi_msg_t structure which contain 7 regs: rcx, rdx, r8, r9, r10, r11, r12:
-;    IN   UINT64	smi_code_data	
-;    IN   UINT64	rax_value	    
-;    IN   UINT64	rbx_value	    
-;    IN   UINT64	rcx_value	    
-;    IN   UINT64	rdx_value	    
-;    IN   UINT64	rsi_value	    
-;    IN   UINT64	rdi_value	    
+;    IN   UINT64	smi_code_data
+;    IN   UINT64	rax_value
+;    IN   UINT64	rbx_value
+;    IN   UINT64	rcx_value
+;    IN   UINT64	rdx_value
+;    IN   UINT64	rsi_value
+;    IN   UINT64	rdi_value
 ;------------------------------------------------------------------------------
 ;  void
 ; __swsmi__ (
 ;    swsmi_msg_t*
 ;    )
 ;------------------------------------------------------------------------------
-_swsmi PROC
-
+_swsmi PROC FRAME
     push rbx
+    .pushreg rbx
     push rsi
+    .pushreg rsi
     push rdi
-   
+    .pushreg rdi
+    .endprolog
+
     ; setting up GPR (arguments) to SMI handler call
     ; notes:
     ;   RAX will get partially overwritten (AX) by _smi_code_data (which is passed in RCX)
@@ -376,7 +405,7 @@ _swsmi PROC
     xchg rdx, [r10+20h]  ; //rdx value
     xchg rsi, [r10+28h]  ; //rsi value
     xchg rdi, [r10+30h]  ; //rdi value
-    
+
     ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
     out 0B2h, ax ; 0xB2
 
@@ -401,9 +430,12 @@ _swsmi ENDP
 ;    unsigned char	byte_value       // r8
 ;    )
 ;------------------------------------------------------------------------------
-WritePCIByte PROC
+WritePCIByte PROC FRAME
     push rax
+    .ALLOCSTACK 8
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     cli
     mov rax, rcx  ; pci_reg
@@ -415,7 +447,7 @@ WritePCIByte PROC
     out dx, al
     sti
 
-    pop rax  
+    pop rax
     ret
 WritePCIByte ENDP
 
@@ -427,9 +459,12 @@ WritePCIByte ENDP
 ;    unsigned short	word_value       // r8
 ;    )
 ;------------------------------------------------------------------------------
-WritePCIWord PROC
+WritePCIWord PROC FRAME
     push rax
+    .ALLOCSTACK 8
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     cli
     mov rax, rcx  ; pci_reg
@@ -441,7 +476,7 @@ WritePCIWord PROC
     out dx, ax
     sti
 
-    pop rax  
+    pop rax
     ret
 WritePCIWord ENDP
 
@@ -453,9 +488,12 @@ WritePCIWord ENDP
 ;    unsigned int	dword_value      // r8
 ;    )
 ;------------------------------------------------------------------------------
-WritePCIDword PROC
+WritePCIDword PROC FRAME
     push rax
+    .ALLOCSTACK 8
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     cli
     mov rax, rcx  ; pci_reg
@@ -467,7 +505,7 @@ WritePCIDword PROC
     out dx, eax
     sti
 
-    pop rax  
+    pop rax
     ret
 WritePCIDword ENDP
 
@@ -480,15 +518,17 @@ WritePCIDword ENDP
 ;    unsigned short	cfg_data_port    // rdx
 ;    )
 ;------------------------------------------------------------------------------
-ReadPCIByte PROC
+ReadPCIByte PROC FRAME
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     cli
     mov rax, rcx  ; pci_reg
     mov dx, 0CF8h
     out dx, rax
-	
-    xor rax, rax	
+
+    xor rax, rax
     pop rdx       ; cfg_data_port
     in  al, dx
     sti
@@ -503,15 +543,17 @@ ReadPCIByte ENDP
 ;    unsigned short	cfg_data_port    // rdx
 ;    )
 ;------------------------------------------------------------------------------
-ReadPCIWord PROC
+ReadPCIWord PROC FRAME
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     cli
     mov rax, rcx  ; pci_reg
     mov dx, 0CF8h
     out dx, rax
 
-    xor rax, rax	
+    xor rax, rax
     pop rdx       ; cfg_data_port
     in  ax, dx
     sti
@@ -526,15 +568,17 @@ ReadPCIWord ENDP
 ;    unsigned short	cfg_data_port    // rdx
 ;    )
 ;------------------------------------------------------------------------------
-ReadPCIDword PROC
+ReadPCIDword PROC FRAME
     push rdx
+    .ALLOCSTACK 8
+    .endprolog
 
     cli
     mov rax, rcx  ; pci_reg
     mov dx, 0CF8h
     out dx, rax
 
-    xor rax, rax	
+    xor rax, rax
     pop rdx       ; cfg_data_port
     in  eax, dx
     sti
@@ -608,7 +652,7 @@ WriteCR8 ENDP
 ;    CPU_REG_TYPE    r11_val,                // on stack +30h
 ;    CPU_REG_TYPE    rax_val,                // on stack +38h
 ;    CPU_REG_TYPE    rbx_val,                // on stack +40h
-;    CPU_REG_TYPE    rdi_val,                // on stack +48h 
+;    CPU_REG_TYPE    rdi_val,                // on stack +48h
 ;    CPU_REG_TYPE    rsi_val,                // on stack +50h
 ;    CPU_REG_TYPE    xmm_buffer,             // on stack +58h
 ;    CPU_REG_TYPE    hypercall_page          // on stack +60h
@@ -643,7 +687,7 @@ hypercall PROC
     mov    rsi, qword ptr [rsp + 18h + 50h]
     call   qword ptr [rsp + 18h + 60h]
     pop    rbx
-    pop    rdi                         
+    pop    rdi
     pop    rsi
     ret
 hypercall ENDP

@@ -41,6 +41,7 @@ REM       (Or invoke the relevant vsvars32 file beforehand).
 if defined VCINSTALLDIR goto :done
   if exist "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"  call :set_vsvars "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
   if exist "%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe"       call :set_vsvars "%ProgramFiles%\Microsoft Visual Studio\Installer\vswhere.exe"
+  if defined VS160COMNTOOLS  call :read_vsvars  "%VS160COMNTOOLS%"
   if defined VS140COMNTOOLS  call :read_vsvars  "%VS140COMNTOOLS%"
   if defined VS120COMNTOOLS  call :read_vsvars  "%VS120COMNTOOLS%"
   if defined VS110COMNTOOLS  call :read_vsvars  "%VS110COMNTOOLS%"

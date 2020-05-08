@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -29,13 +29,12 @@ Checks for exposure of pre-boot passwords (BIOS/HDD/pre-bot authentication SW) i
 
 """
 
-from chipsec.hal.mmio import *
-from chipsec.hal.spi import *
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.logger import print_buffer
 
 TAGS = [MTAG_BIOS]
 
-COMMON_FILL_PTRN = "".join( ['%c' % chr(x + 0x1E) for x in range(32)] )
+COMMON_FILL_PTRN = "".join( ['{:1}'.format((chr(x + 0x1E))) for x in range(32)] )
 
 
 class bios_kbrd_buffer(BaseModule):
@@ -52,17 +51,11 @@ class bios_kbrd_buffer(BaseModule):
 
         kbrd_buf_head = self.cs.mem.read_physical_mem_dword( 0x41A ) & 0x000000FF
         kbrd_buf_tail = self.cs.mem.read_physical_mem_dword( 0x41C ) & 0x000000FF
-        self.logger.log( "[*] Keyboard buffer head pointer = 0x%X (at 0x41A), tail pointer = 0x%X (at 0x41C)" % (kbrd_buf_head,kbrd_buf_tail) )
+        self.logger.log( "[*] Keyboard buffer head pointer = 0x{:X} (at 0x41A), tail pointer = 0x{:X} (at 0x41C)".format(kbrd_buf_head,kbrd_buf_tail) )
         bios_kbrd_buf = self.cs.mem.read_physical_mem( 0x41E, 32 )
         self.logger.log( "[*] Keyboard buffer contents (at 0x41E):" )
-        chipsec.logger.print_buffer( bios_kbrd_buf )
-
-        #try:
-            #s = struct.unpack( '32c', bios_kbrd_buf.raw )
-        s = struct.unpack( '32c', bios_kbrd_buf )
-        #except:
-        #   self.logger.error( 'Cannot convert buffer to char sequence' )
-        #   return -1
+        bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')
+        print_buffer( bios_kbrd_buf )
 
         has_contents = False
 
@@ -70,15 +63,15 @@ class bios_kbrd_buffer(BaseModule):
             self.logger.log_passed_check( "Keyboard buffer is filled with common fill pattern" )
             return ModuleResult.PASSED
 
-        for x in range(32):
-            if ( chr(0) != s[x] and chr(0x20) != s[x] ):
+        for x in bios_kbrd_buf:
+            if ( "\x00" != x and "\x20" != x ):
                 has_contents = True
                 break
 
         if (0x1E < kbrd_buf_tail) and (kbrd_buf_tail <= 0x1E+32):
             #has_contents = True
-            self.logger.log_bad( "Keyboard buffer tail points inside the buffer (= 0x%X)" % kbrd_buf_tail )
-            self.logger.log( "    It may potentially expose lengths of pre-boot passwords. Was your password %d characters long?" % ((kbrd_buf_tail+2 - 0x1E)/2) )
+            self.logger.log_bad( "Keyboard buffer tail points inside the buffer (= 0x{:X})".format(kbrd_buf_tail) )
+            self.logger.log( "    It may potentially expose lengths of pre-boot passwords. Was your password {:d} characters long?".format((kbrd_buf_tail+2 - 0x1E)/2) )
 
         self.logger.log( "[*] Checking contents of the keyboard buffer..\n" )
 

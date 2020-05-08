@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -61,12 +61,12 @@ class RingBuffer(BaseModuleDebug):
     def ringbuffer_alloc(self, pages = 4):
         (va, pa) = self.cs.mem.alloc_physical_mem(pages << 12, 0xFFFFFFFFFFFFFFFF)
         self.base_addr.append(va)
-        if pa <> 0:
-            for i in xrange(pages):
+        if pa != 0:
+            for i in range(pages):
                 self.pfn.append(pa + (i << 12))
             self.ringbuffer_init()
         self.send_size = pages >> 1
-        return pa <> 0
+        return pa != 0
 
     ##
     ##  ringbuffer_init - init data and control structures in the ring buffer
@@ -178,7 +178,7 @@ class HyperV(BaseModuleDebug):
     def __del__(self):
         BaseModuleDebug.__del__(self)
         self.dbg('Free kernel memory')
-        #if self.membuf[0] <> 0:
+        #if self.membuf[0] != 0:
         #    self.cs.mem.free_physical_mem(self.membuf[0])
         if len(self.old_sint2) == 2:
             self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
@@ -252,9 +252,9 @@ class HyperV(BaseModuleDebug):
         events = set()
         buffer = self.cs.mem.read_physical_mem(self.siefp + 0x100*sint, 0x100)
         buffer = unpack('<64L', buffer)
-        for i in xrange(64):
+        for i in range(64):
             if buffer[i]:
-                for n in xrange(32):
+                for n in range(32):
                     if (buffer[i] >> n) & 0x1:
                         events.add(i*32 + n)
         return events
@@ -305,13 +305,13 @@ class VMBus(HyperV):
     ##
     def vmbus_post_msg(self, message):
         if len(message) > 240:
-            self.err('vmbus_post_msg: message it too long %d bytes' % len(message))
+            self.err('vmbus_post_msg: message it too long {:d} bytes'.format(len(message)))
             message = message[:240]
         header = pack('<4L', VMBUS_MESSAGE_CONNECTION_ID, 0x0, 0x1, len(message))
         result = self.hv_post_msg(header + message)
-        if result <> HV_STATUS_SUCCESS:
+        if result != HV_STATUS_SUCCESS:
             status = hypercall_status_codes[result] if result in hypercall_status_codes else ''
-            self.err('vmbus_post_msg returns  %02X %s' % (result, status))
+            self.err('vmbus_post_msg returns  {:02X} {}'.format(result, status))
         return result == HV_STATUS_SUCCESS
 
     ##
@@ -327,13 +327,13 @@ class VMBus(HyperV):
             msg_type, payload_size, msg_flags, rsvd, port_id = unpack('<LBBHQ', message[0:16])
             if msg_type not in [HVMSG_NONE, 0x0001]:
                 status = hv_message_type[msg_type] if msg_type in hv_message_type else ''
-                self.fatal('vmbus_recv_msg: unhandeled message type 0x%08x %s' % (msg_type, status))
+                self.fatal('vmbus_recv_msg: unhandeled message type 0x{:08X} {}'.format(msg_type, status))
             if (payload_size < 8) or (payload_size > 240):
-                self.msg('vmbus_recv_msg: invalid payload size %d' % payload_size)
+                self.msg('vmbus_recv_msg: invalid payload size {:d}'.format(payload_size))
                 payload_size = 240
-            if rsvd <> 0x0000:
-                self.msg('vmbus_recv_msg: invalid reserved field 0x%04x' % rsvd)
-            #if port_id <> VMBUS_MESSAGE_PORT_ID:
+            if rsvd != 0x0000:
+                self.msg('vmbus_recv_msg: invalid reserved field 0x{:04X}'.format(rsvd))
+            #if port_id != VMBUS_MESSAGE_PORT_ID:
             #    self.msg('vmbus_recv_msg: invalid ConnectionID 0x%016x' % port_id)
             message = message[16 : 16 + payload_size]
         return message
@@ -344,7 +344,7 @@ class VMBus(HyperV):
     def vmbus_setevent(self, child_relid):
         self.dbg('Trigger an event notification on the specified channel ...')
         if child_relid not in self.open_channels:
-            self.err('vmbus_setevent could not find channel with child relid: %d' % child_relid)
+            self.err('vmbus_setevent could not find channel with child relid: {:d}'.format(child_relid))
             return False
         channel = self.open_channels[child_relid]['offer']
         if channel['monitor_allocated'] == 1:
@@ -358,9 +358,9 @@ class VMBus(HyperV):
             self.dbg('Send an event notification to the parent ...')
             self.cs.mem.set_mem_bit(self.send_int_page, child_relid)
             result = self.hv_signal_event(channel['connection_id'], 0x0)
-            if result <> 0:
+            if result != 0:
                 status = hypercall_status_codes[result] if result in hypercall_status_codes else ''
-                self.err('vmbus_setevent returns  %02X %s' % (result, status))
+                self.err('vmbus_setevent returns  {:02X} {}'.format(result, status))
                 return False
         return True
 
@@ -404,7 +404,7 @@ class VMBus(HyperV):
         channel_gpadl_header   = pack ('<LLHH', child_relid, gpadl, range_buflen, rangecount)
         result = self.vmbus_post_msg(channel_message_header + channel_gpadl_header + gpa_range[:27*8])
         gpa_range = gpa_range[27*8:]
-        while result and gpa_range <> '':
+        while result and gpa_range != '':
             channel_message_header = pack ('<LL', CHANNELMSG_GPADL_BODY, 0x0)
             channel_gpadl_body     = pack ('<LL', 0x0, gpadl)
             result = self.vmbus_post_msg(channel_message_header + channel_gpadl_body + gpa_range[:28*8])
@@ -474,7 +474,7 @@ class VMBus(HyperV):
         result = self.vmbus_post_msg(channel_message_header)
         while result:
             msgtype = self.vmbus_onmessage()
-            if msgtype <> CHANNELMSG_OFFERCHANNEL:
+            if msgtype != CHANNELMSG_OFFERCHANNEL:
                 break
         return result and (msgtype == CHANNELMSG_ALLOFFERS_DELIVERED)
 
@@ -511,18 +511,18 @@ class VMBus(HyperV):
             msgtype, padding = unpack('<LL', message[:8])
             message_body     = message[8:]
 
-            self.dbg('vmbus_onmessage: message %d %s' % (msgtype, vmbus_channel_message_type[msgtype]))
+            self.dbg('vmbus_onmessage: message {:d} {}'.format(msgtype, vmbus_channel_message_type[msgtype]))
 
             if msgtype not in channelmsg:
-                self.msg('vmbus_onmessage: invalid message type %d' % msgtype)
+                self.msg('vmbus_onmessage: invalid message type {:d}'.format(msgtype))
                 self.hex('Message', message)
             elif channelmsg[msgtype] > len(message_body):
                 self.msg('vmbus_onmessage: message is too short!')
                 self.hex('Message', message)
                 exit(1)
 
-            if padding <> 0x00000000:
-                self.msg('vmbus_onmessage invalid padding %d' % padding)
+            if padding != 0x00000000:
+                self.msg('vmbus_onmessage invalid padding {:d}'.format(padding))
 
         ## vmbus_ongpadl_created - GPADL created handler
         if   msgtype == CHANNELMSG_GPADL_CREATED:
@@ -541,7 +541,7 @@ class VMBus(HyperV):
         ##  vmbus_onversion_response - Version response handler
         elif msgtype == CHANNELMSG_VERSION_RESPONSE:
             version_supported, version = unpack('<2L', message_body[:8])
-            if version_supported <> 0x00:
+            if version_supported != 0x00:
                 self.supported_versions[version] = 0x1
         ## vmbus_onoffer - Handler for channel offers from vmbus in parent partition.
         elif msgtype == CHANNELMSG_OFFERCHANNEL:
@@ -584,7 +584,7 @@ class VMBus(HyperV):
     def vmbus_sendpacket(self, child_relid, data, requestid, packet_type, flags):
         self.dbg('Send the specified buffer on the given channel ...')
         rb = self.ringbuffers[child_relid]
-        while (len(data) & 0x7) <> 0:
+        while (len(data) & 0x7) != 0:
             data += '\x00'
         offset8 = 16 >> 3
         len8    = offset8 + (len(data) >> 3)
@@ -629,7 +629,7 @@ class VMBusDiscovery(VMBus):
         #for i in self.offer_channels.keys():
         #    relid = self.offer_channels[i]['child_relid']
         #    self.vmbus_process_rescind_offer(relid)
-        for i in xrange(0x10):
+        for i in range(0x10):
             self.vmbus_process_rescind_offer(i)
         return
 
@@ -661,12 +661,12 @@ class VMBusDiscovery(VMBus):
     def scan_physical_addresses(self, version):
         pages = (self.int_page, self.monitor_page1, self.monitor_page2)
         FFs = 0xFFFFFFFFFFFFFFFF
-        for i in xrange(64):
+        for i in range(64):
             self.supported_versions = {}
             self.int_page = (FFs << (63 - i)) & FFs
-            self.dbg('Address: 0x%016x' % self.int_page)
+            self.dbg('Address: 0x{:016X}'.format(self.int_page))
             self.vmbus_connect(version)
-            print self.supported_versions
+            print (self.supported_versions)
         (self.int_page, self.monitor_page1, self.monitor_page2) = pages
         return
 
@@ -678,7 +678,7 @@ class VMBusDiscovery(VMBus):
         self.msg('******************** Supported versions ********************')
         for version in sorted(self.supported_versions.keys()):
             status = 'Unknown' if version not in vmbus_versions else vmbus_versions[version]
-            self.msg('  %d . %2d - %s' % (version >> 16, version & 0xFFFF, status))
+            self.msg('  {:d} . {:2d} - {}'.format(version >> 16, version & 0xFFFF, status))
         return
 
     ##
@@ -691,23 +691,23 @@ class VMBusDiscovery(VMBus):
         for i in uuid_sorted_by_connid:
             channel = self.offer_channels[i]
             flags = []
-            for n in xrange(16):
+            for n in range(16):
                 if (n in channel_flags) and (((channel['flags'] >> n) & 0x1) == 0x1):
                     flags.append(channel_flags[n])
 
-            conid = 'Connection ID: 0x%08x'      % (channel['connection_id'])
-            relid = 'Child relid: 0x%08x'        % (channel['child_relid'])
-            mmios = 'MMIO: %dMB'                 % (channel['mmio'])
-            subch = 'Sub channel: 0x%04x'        % (channel['sub_channel'])
-            monid = 'Monitor: %d ID=0x%02X'      % (channel['monitor_allocated'], channel['monitor_id'])
-            dintr = 'Dedicated interrupt: %d'    % (channel['dedicated_interrupt'])
-            flags = 'Flags: 0x%04x >%s'          % (channel['flags'], ', '.join(flags))
+            conid = 'Connection ID: 0x{:08X}'.format(channel['connection_id'])
+            relid = 'Child relid: 0x{:08X}'.format(channel['child_relid'])
+            mmios = 'MMIO: {:d}MB'.format(channel['mmio'])
+            subch = 'Sub channel: 0x{:04X}'.format(channel['sub_channel'])
+            monid = 'Monitor: {:d} ID=0x{:02X}'.format(channel['monitor_allocated'], channel['monitor_id'])
+            dintr = 'Dedicated interrupt: {:d}'.format(channel['dedicated_interrupt'])
+            flags = 'Flags: 0x{:04X} >{}'.format(channel['flags'], ', '.join(flags))
 
             self.msg('')
-            self.msg('%s' % channel['name'])
-            self.msg('  Hardware IDs:  %s   %s' % (uuid(i[0x00:0x10]), uuid(i[0x10:0x20])))
-            self.msg('  %s   %s   %s   %s' % (conid, relid, subch, monid))
-            self.msg('  %s   %s   %s' % (mmios, dintr, flags))
+            self.msg('{}'.format(channel['name']))
+            self.msg('  Hardware IDs:  {}   {}'.format(uuid(i[0x00:0x10]), uuid(i[0x10:0x20])))
+            self.msg('  {}   {}   {}   {}'.format(conid, relid, subch, monid))
+            self.msg('  {}   {}   {}'.format(mmios, dintr, flags))
         return
 
     ##
@@ -720,7 +720,7 @@ class VMBusDiscovery(VMBus):
         self.msg('---------------------------------------------------')
         for gpadl in sorted(self.created_gpadl.keys()):
             channel = self.created_gpadl[gpadl]
-            self.msg('  0x%08x   |  0x%08x   |  0x%08x' % (gpadl, channel['child_relid'], channel['status']))
+            self.msg('  0x{:08X}   |  0x{:08X}   |  0x{:08X}'.format(gpadl, channel['child_relid'], channel['status']))
         self.msg('---------------------------------------------------')
         return
 
@@ -734,7 +734,7 @@ class VMBusDiscovery(VMBus):
         self.msg('---------------------------------------------------')
         for child_relid in sorted(self.open_channels):
             channel = self.open_channels[child_relid]
-            self.msg('  0x%08x   |  0x%08x   |  0x%08x' % (child_relid, channel['openid'], channel['status']))
+            self.msg('  0x{:08X}   |  0x{:08X}   |  0x{:08X}'.format(child_relid, channel['openid'], channel['status']))
         self.msg('---------------------------------------------------')
         return
 
@@ -745,7 +745,7 @@ class VMBusDiscovery(VMBus):
         events = self.vmbus_recv_events()
         result = []
         for i in events:
-            result.append('%02X' % i)
-        if len(result) <> 0:
+            result.append('{:02X}'.format(i))
+        if len(result) != 0:
             self.msg('EVENTS: ' + ', '.join(result))
         return

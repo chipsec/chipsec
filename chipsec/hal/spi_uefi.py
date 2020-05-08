@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -34,23 +34,24 @@ usage:
 """
 
 import os
-import fnmatch
 import struct
-import sys
-import time
-import collections
 import hashlib
 import re
 import random
-import binascii
 import json
+import string
 
-from chipsec.logger import *
-from chipsec.file import *
-
-from chipsec.cfg.common import *
-from chipsec.hal.uefi_common import *
-from chipsec.hal.uefi_platform import *
+from chipsec.logger import logger
+from chipsec.file import write_file, read_file
+from chipsec.defines import bytestostring, COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN
+from chipsec.hal.uefi_common import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_RAW, SECTION_NAMES, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE
+from chipsec.hal.uefi_common import NextFwVolume, bit_set, NextFwFile, NextFwVolume, NextFwFileSection, guid_size, GUID, guid_str, GetFvHeader
+from chipsec.hal.uefi_common import EFI_FVB2_ERASE_POLARITY, EFI_FIRMWARE_FILE_SYSTEM2_GUID, EFI_FIRMWARE_FILE_SYSTEM_GUID, FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FV_FILETYPE_RAW
+from chipsec.hal.uefi_common import EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_CONSTRUCTION, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD
+from chipsec.hal.uefi_common import EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_FV_FILETYPE_ALL, EFI_SECTION_GUID_DEFINED, EFI_GUID_DEFINED_SECTION, EFI_SECTION_COMPATIBILITY16
+from chipsec.hal.uefi_common import EFI_GUID_DEFINED_SECTION_size, EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID
+from chipsec.hal.uefi_common import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION_COMPRESSION, EFI_COMPRESSION_SECTION_size
+from chipsec.hal.uefi_platform import FWType, ParsePFS, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.hal.uefi import identify_EFI_NVRAM
 
 CMD_UEFI_FILE_REMOVE        = 0
@@ -74,7 +75,8 @@ def decompress_section_data( _uefi, section_dir_path, sec_fs_name, compressed_da
     if remove_files:
         try:
             os.remove(compressed_name)
-            os.remove(uncompressed_name)       
+            if uncompressed_image:
+                os.remove(uncompressed_name)
         except: pass
     return uncompressed_image
 
@@ -175,7 +177,7 @@ class EFI_MODULE(object):
         if self.MD5   : _s  = "\n{}MD5   : {}".format(_ind,self.MD5)
         if self.SHA1  : _s += "\n{}SHA1  : {}".format(_ind,self.SHA1)
         if self.SHA256: _s += "\n{}SHA256: {}".format(_ind,self.SHA256)
-        return _s
+        return bytestostring(_s)
 
     def calc_hashes( self, off=0 ):
         if self.Image is None: return
@@ -203,7 +205,7 @@ class EFI_FV(EFI_MODULE):
         _s = "\n{}{} +{:08X}h {{{}}}: ".format(self.indent,type(self).__name__,self.Offset,self.Guid)
         _s += "Size {:08X}h, Attr {:08X}h, HdrSize {:04X}h, ExtHdrOffset {:08X}h, Checksum {}".format(self.Size,self.Attributes,self.HeaderSize,self.ExtHeaderOffset,schecksum)
         _s += super(EFI_FV, self).__str__()
-        return _s
+        return bytestostring(_s)
 
 class EFI_FILE(EFI_MODULE):
     def __init__(self, Offset, Guid, Type, Attributes, State, Checksum, Size, Image, HeaderSize, UD, CalcSum):
@@ -220,7 +222,7 @@ class EFI_FILE(EFI_MODULE):
         schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum,self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
         _s = "\n{}+{:08X}h {}\n{}Type {:02X}h, Attr {:08X}h, State {:02X}h, Size {:06X}h, Checksum {}".format(self.indent,self.Offset,self.name(),self.indent,self.Type,self.Attributes,self.State,self.Size,schecksum)
         _s += (super(EFI_FILE, self).__str__() + '\n')
-        return _s
+        return bytestostring(_s)
 
 class EFI_SECTION(EFI_MODULE):
     def __init__(self, Offset, Name, Type, Image, HeaderSize):
@@ -232,7 +234,7 @@ class EFI_SECTION(EFI_MODULE):
 
         # parent GUID used in search, export to JSON/log
         self.parentGuid  = None
-    
+
     def name(self):
         return "{} section of binary {{{}}} {}".format(self.Name.encode('ascii', 'ignore'),self.parentGuid,self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
 
@@ -243,7 +245,7 @@ class EFI_SECTION(EFI_MODULE):
         if self.DataOffset: _s += " DataOffset {:04X}h".format(self.DataOffset)
         if self.Comments: _s += "Comments {}".format(self.Comments)
         _s += super(EFI_SECTION, self).__str__()
-        return _s
+        return bytestostring(_s)
 
 
 def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
@@ -262,16 +264,19 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 sec.calc_hashes( sec.HeaderSize )
             elif sec.Type == EFI_SECTION_USER_INTERFACE:
                 # "leaf" UI section: update section's UI name
-                sec.ui_string = sec.Image[sec.HeaderSize:-2].decode("utf-16")
+                try:
+                    sec.ui_string = sec.Image[sec.HeaderSize:-2].decode("utf-16")
+                except UnicodeDecodeError:
+                    pass
             elif sec.Type == EFI_SECTION_GUID_DEFINED:
                 if len(sec.Image) < sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:
                     logger().warn("EFI Section seems to be malformed")
                     if len(sec.Image) < sec.HeaderSize+guid_size:
-                        logger().warn("Creating fake GUID of 0000-00-00-0000")
-                        guid0 = "0000"
-                        guid1 = "00"
-                        guid2 = "00"
-                        guid3 = "0000"
+                        logger().warn("Creating fake GUID of 0000-00-00-0000000")
+                        guid0 = b"\x00\x00\x00\x00"
+                        guid1 = b"\x00\x00"
+                        guid2 = b"\x00\x00"
+                        guid3 = b"\x00\x00\x00\x00\x00\x00\x00\x00"
                     else:
                         guid0, guid1, guid2, guid3 = struct.unpack(GUID, sec.Image[sec.HeaderSize:sec.HeaderSize+guid_size])
                         sec.DataOffset = len(sec.Image)-1
@@ -279,46 +284,52 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                     guid0, guid1, guid2, guid3, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
                 sec.Guid = guid_str(guid0, guid1, guid2, guid3)
 
-            # "container" sections: keep parsing
-            if sec.Type in (EFI_SECTION_COMPRESSION, EFI_SECTION_GUID_DEFINED, EFI_SECTION_FIRMWARE_VOLUME_IMAGE):
-                if sec.Type == EFI_SECTION_COMPRESSION:
-                    ul, ct = struct.unpack(EFI_COMPRESSION_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_COMPRESSION_SECTION_size])
-                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
-                    if (d is None) and not ct == 0:
-                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
+                if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
+                    sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
+                elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
+                    if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA, True )
+                    else:
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD, True )
+                    if d is None:
+                        sec.Comments = "Unable to decompress image"
+                        d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN, True )
                     if d:
                         sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
-                elif sec.Type == EFI_SECTION_GUID_DEFINED:
-                    if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
-                        sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity )
-                    elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
-                        if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
-                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_LZMA, True )
-                        else:
-                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD, True )
-                        if d is None:
-                            d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], chipsec.defines.COMPRESSION_TYPE_UNKNOWN, True )
-                        if d:
-                            sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
-                    elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
-                        offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
-                        sec.Comments = "Certificate Type RSA2048/SHA256"
-                        if len(sec.Image) > offset:
-                            sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
-                    else:
-                        sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
-                elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
-                    children = build_efi_file_tree( _uefi, sec.Image[sec.HeaderSize:], fwtype )
-                    if not children is None:
-                        sec.children = children
-            if sec.Type not in SECTION_NAMES.keys() or sec.Type == EFI_SECTION_RAW:
+                elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
+                    offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
+                    sec.Comments = "Certificate Type RSA2048/SHA256"
+                    if len(sec.Image) > offset:
+                        sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
+                else:
+                    sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+
+            elif sec.Type == EFI_SECTION_COMPRESSION:
+                for mct in COMPRESSION_TYPES_ALGORITHMS:
+                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], mct, True )
+                    if d:
+                        sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
+                    if sec.children:
+                        break
+
+            elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
+                children = build_efi_file_tree( _uefi, sec.Image[sec.HeaderSize:], fwtype )
+                if not children is None:
+                    sec.children = children
+
+            elif sec.Type == EFI_SECTION_RAW:
                 sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype)
+
+            elif sec.Type not in SECTION_NAMES.keys():
+                sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype)
+                if not sec.children:
+                    sec.children = build_efi_model( _uefi, data, fwtype)
 
             sections.append(sec)
         _off, next_offset, _name, _type, _img, _hdrsz = NextFwFileSection( data, Size, next_offset, polarity )
         secn += 1
     return sections
-    
+
 # build_efi_file_tree - extract EFI FV file from EFI image and build an object tree
 #
 # Input arguements:
@@ -467,7 +478,7 @@ def search_efi_tree(modules, search_callback, match_module_types=EFIModuleType.S
                 if search_callback(m):
                     matching_modules.append(m)
                     if not findall: return True
-        
+
         # recurse search if current module node has children nodes
         if len(m.children) > 0:
             matches = search_efi_tree(m.children, search_callback, match_module_types, findall)
@@ -511,9 +522,9 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             # so for EFI_FILE type of module using parent's Image as NVRAM
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
-                        else: raise
+                        else: raise Exception("NVRAM type cannot be None")
                     except: logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid,m.NVRAMType) )
-    
+
         # save children modules
         if len(m.children) > 0:
             md["children"] = save_efi_tree(_uefi, m.children, m, save_modules, mod_dir_path, save_log, lvl+1)

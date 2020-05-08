@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,25 +19,12 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 CPUID information
 
 usage:
     >>> cpuid(0)
 """
-
-import struct
-import sys
-import os.path
 
 from chipsec.hal import hal_base
 from chipsec.logger import logger
@@ -52,7 +39,7 @@ class CpuID(hal_base.HALBase):
         self.helper = cs.helper
 
     def cpuid(self, eax, ecx ):
-        if logger().HAL: logger().log( "[cpuid] in: EAX=0x%08X, ECX=0x%08X" % (eax, ecx) )
+        if logger().HAL: logger().log( "[cpuid] in: EAX=0x{:08X}, ECX=0x{:08X}".format(eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
-        if logger().HAL: logger().log( "[cpuid] out: EAX=0x%08X, EBX=0x%08X, ECX=0x%08X, EDX=0x%08X" % (eax, ebx, ecx, edx) )
+        if logger().HAL: logger().log( "[cpuid] out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)

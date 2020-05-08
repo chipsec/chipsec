@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -26,15 +26,14 @@ Checks for BIOS Interface Lock including Top Swap Mode
 `BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ by Bing Sun
 """
 
-from chipsec.module_common import *
-TAGS = [chipsec.module_common.MTAG_BIOS]
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+TAGS = [MTAG_BIOS]
 
-class bios_ts(chipsec.module_common.BaseModule):
+class bios_ts(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        #return (self.cs.get_chipset_id() not in chipsec.chipset.CHIPSET_FAMILY_ATOM)
         return True
 
     def check_bios_iface_lock(self):
@@ -43,18 +42,18 @@ class bios_ts(chipsec.module_common.BaseModule):
         bild = 0
         if self.cs.is_control_defined( 'BiosInterfaceLockDown' ):
             bild = self.cs.get_control( 'BiosInterfaceLockDown' )
-            self.logger.log( "[*] BiosInterfaceLockDown (BILD) control = %d" % bild )
+            self.logger.log( "[*] BiosInterfaceLockDown (BILD) control = {:d}".format(bild) )
         else:
             self.logger.error( "BiosInterfaceLockDown (BILD) control is not defined" )
             return ModuleResult.ERROR
 
         if self.cs.is_control_defined( 'TopSwapStatus' ):
             tss = self.cs.get_control( 'TopSwapStatus' )
-            self.logger.log( "[*] BIOS Top Swap mode is %s (TSS = %d)" % ('enabled' if (1==tss) else 'disabled', tss) )
+            self.logger.log( "[*] BIOS Top Swap mode is {} (TSS = {:d})".format('enabled' if (1==tss) else 'disabled', tss) )
 
         if self.cs.is_control_defined( 'TopSwap' ):
             ts  = self.cs.get_control( 'TopSwap' )
-            self.logger.log( "[*] RTC TopSwap control (TS) = %x" % ts )
+            self.logger.log( "[*] RTC TopSwap control (TS) = {:x}".format(ts) )
 
         if 0 == bild:
             res = ModuleResult.FAILED

@@ -18,6 +18,7 @@
 #Contact information:
 #chipsec@intel.com
 #
+from chipsec.logger import logger
 
 # Base class for the helpers
 class Helper(object):
@@ -34,6 +35,8 @@ class Helper(object):
         self.os_release = "0.0"
         self.os_version = "0.0"
         self.os_machine = "base"
+        self.name = "Helper"
+        self.driverpath = None
 
     def use_native_api(self):
         return (not self.driver_loaded)
@@ -57,6 +60,9 @@ class Helper(object):
         if logger().VERBOSE:
             logger().log("[helper] Helper deleted")
         raise NotImplementedError()
+
+    def get_info(self):
+        return self.name, self.driverpath
 
     #################################################################################################
     # Actual OS helper functionality accessible to HAL components

@@ -229,7 +229,7 @@ DriverOpen(
     )
 {
 
-    DbgPrint( "[chipsec] >> DriverOpen (DeviceObject = 0x%x)\n", DeviceObject );
+    DbgPrint( "[chipsec] >> DriverOpen (DeviceObject = 0x%p)\n", DeviceObject );
 
     //
     // Complete the request and return status.
@@ -248,7 +248,7 @@ DriverClose(
     )
 {
     
-    DbgPrint( "[chipsec] >> DriverClose (DeviceObject = 0x%x)\n", DeviceObject );
+    DbgPrint( "[chipsec] >> DriverClose (DeviceObject = 0x%p)\n", DeviceObject );
 
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = 0;
@@ -266,7 +266,7 @@ DriverUnload(
     NTSTATUS       Status;
     UNICODE_STRING DosDeviceName;
 
-    DbgPrint( "[chipsec] >> DriverUnload (DriverObject = 0x%x)\n", DriverObject );
+    DbgPrint( "[chipsec] >> DriverUnload (DriverObject = 0x%p)\n", DriverObject );
 
     RtlInitUnicodeString(&DosDeviceName, DEVICE_NAME_DOS );
     Status = IoDeleteSymbolicLink (&DosDeviceName );
@@ -293,7 +293,7 @@ NTSTATUS _read_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
       DbgPrint( "[chipsec] ERROR: no space for mapping\n" );
       return STATUS_UNSUCCESSFUL;
     }
-  DbgPrint( "[chipsec] reading %d bytes from physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
+  DbgPrint( "[chipsec] reading %u bytes from physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
   RtlCopyMemory( pData, va, len );
   MmUnmapIoSpace( va, len );
   return STATUS_SUCCESS;
@@ -307,7 +307,7 @@ NTSTATUS _write_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
       DbgPrint( "[chipsec] ERROR: no space for mapping\n" );
       return STATUS_UNSUCCESSFUL;
     }
-  DbgPrint( "[chipsec] writing %d bytes to physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
+  DbgPrint( "[chipsec] writing %u bytes to physical address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va );
   RtlCopyMemory( va, pData, len );
   MmUnmapIoSpace( va, len );
   return STATUS_SUCCESS;
@@ -338,7 +338,7 @@ DriverDeviceControl(
     IOControlCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
 
     DbgPrint( "[chipsec] >>>>>>>>>> IOCTL >>>>>>>>>>\n" );
-    DbgPrint( "[chipsec] DeviceObject = 0x%x IOCTL = 0x%x\n", DeviceObject, IOControlCode );
+    DbgPrint( "[chipsec] DeviceObject = 0x%p IOCTL = 0x%x\n", DeviceObject, IOControlCode );
     DbgPrint( "[chipsec] InputBufferLength = 0x%x, OutputBufferLength = 0x%x\n", IrpSp->Parameters.DeviceIoControl.InputBufferLength, IrpSp->Parameters.DeviceIoControl.OutputBufferLength );
 
     //
@@ -347,9 +347,9 @@ DriverDeviceControl(
     _num_active_cpus = KeQueryActiveProcessorCount( NULL );
     _kaffinity       = KeQueryActiveProcessors();
     _cpu_thread_id   = KeGetCurrentProcessorNumber();
-    DbgPrint( "[chipsec] Active CPU threads         : %d (KeNumberProcessors = %d)\n", _num_active_cpus, KeNumberProcessors );
+    DbgPrint( "[chipsec] Active CPU threads         : %ul (KeNumberProcessors = %d)\n", _num_active_cpus, KeNumberProcessors );
     DbgPrint( "[chipsec] Active CPU mask (KAFFINITY): 0x%08X\n", _kaffinity );
-    DbgPrint( "[chipsec] Current CPU thread         : %d\n", _cpu_thread_id );
+    DbgPrint( "[chipsec] Current CPU thread         : %u\n", _cpu_thread_id );
 
     //
     // Switch on the IOCTL code that is being requested by the user.  If the
@@ -605,7 +605,7 @@ DriverDeviceControl(
             RtlCopyBytes( &va, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINTN) );
             pa = MmGetPhysicalAddress( (PVOID)va );
 
-            DbgPrint( "[chipsec][IOCTL_GET_PHYSADDR] Traslated virtual address 0x%I64X to physical: 0x%I64X\n", va, pa.QuadPart, pa.LowPart);
+            DbgPrint( "[chipsec][IOCTL_GET_PHYSADDR] Translated virtual address 0x%I64X to physical: 0x%I64X\n", va, pa.QuadPart);
             RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)&pa, sizeof(UINTN) );
             IrpSp->Parameters.Read.Length = sizeof(UINTN);
             dwBytesWritten = IrpSp->Parameters.Read.Length;
@@ -658,30 +658,35 @@ DriverDeviceControl(
             PVOID ucode_buf = NULL;
             UINT64 ucode_start = 0;
             UINT16 ucode_size = 0;
-            UINT32 _eax = 0, _edx = 0;
+            UINT32 _eax[2] = {0}, _edx[2] = {0};
             int CPUInfo[4] = {-1};
 
             DbgPrint("[chipsec] > IOCTL_LOAD_UCODE_UPDATE\n" );
 
             if( !Irp->AssociatedIrp.SystemBuffer ||
-                IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + sizeof(UINT16) )
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(UINT32) + sizeof(UINT16) )
             {
-               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < 3)\n" );
+               DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < 6)\n" );
                Status = STATUS_INVALID_PARAMETER;
                break;
             }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
             RtlCopyBytes( &ucode_size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT16) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Ucode update size = 0x%X\n", ucode_size );
 
             if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < ucode_size + sizeof(UINT32) + sizeof(UINT16) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < ucode_size + 3)\n" );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < ucode_size + 6)\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -690,13 +695,20 @@ DriverDeviceControl(
             if( !ucode_buf )
               {
                 DbgPrint( "[chipsec] ERROR: couldn't allocate pool for ucode binary\n" );
+                Status = STATUS_INSUFFICIENT_RESOURCES;
                 break;
-              }           
-            RtlCopyBytes( ucode_buf, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(BYTE) + sizeof(UINT16), ucode_size );
+              }
+            RtlCopyBytes( ucode_buf, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32) + sizeof(UINT16), ucode_size );
             ucode_start = (UINT64)ucode_buf;
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] ucode update address = 0x%p (eax = 0x%08X, edx = 0x%08X)\n", ucode_start, (UINT32)(ucode_start & 0xFFFFFFFF), (UINT32)((ucode_start >> 32) & 0xFFFFFFFF) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] ucode update contents:\n" );
             _dump_buffer( (unsigned char *)ucode_buf, min(ucode_size,0x100) );
+
+            // --
+            // -- read IA32_BIOS_SIGN_ID MSR to save current patch ID
+            // -- we'll need this value later to verify the microcode update was successful
+            // --
+            _rdmsr(MSR_IA32_BIOS_SIGN_ID, &_eax[0], &_edx[0]);
 
             // --
             // -- trigger CPU ucode patch update
@@ -711,17 +723,23 @@ DriverDeviceControl(
             // --
             // -- need to clear IA32_BIOS_SIGN_ID MSR first
             // -- CPUID will deposit an update ID value in 64-bit MSR at address MSR_IA32_BIOS_SIGN_ID
-            // -- read IA32_BIOS_SIGN_ID MSR to check patch ID != 0
+            // -- read IA32_BIOS_SIGN_ID MSR to check patch ID != previous patch ID
             // --
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] checking ucode update was loaded..\n" );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] clear IA32_BIOS_SIGN_ID, CPUID EAX=1, read back IA32_BIOS_SIGN_ID\n" );
             _wrmsr( MSR_IA32_BIOS_SIGN_ID, 0, 0 );
             __cpuid(CPUInfo, 1);
-            _rdmsr( MSR_IA32_BIOS_SIGN_ID, &_eax, &_edx );
-            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] RDMSR( IA32_BIOS_SIGN_ID=0x8b ) = 0x%08x%08x\n", _edx, _eax );
-            if( 0 != _edx ) DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != 0)\n" );
-            else            DbgPrint( "[chipsec] ERROR: Microcode update failed\n" );
+            _rdmsr( MSR_IA32_BIOS_SIGN_ID, &_eax[1], &_edx[1] );
+            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] RDMSR( IA32_BIOS_SIGN_ID=0x8b ) = 0x%08x%08x\n", _edx[1], _eax[1] );
+            if ( _edx[1] == _edx[0] )
+              {
+                // same patch ID, microcode update failed
+                DbgPrint("[chipsec] ERROR: Microcode update failed\n");
+                Status = STATUS_UNSUCCESSFUL;
+                break;
+              }
 
+            DbgPrint("[chipsec][IOCTL_LOAD_UCODE_UPDATE] Microcode update loaded (ID != %u)\n", _edx[0]);
             Status = STATUS_SUCCESS;
             break;
           }
@@ -737,21 +755,26 @@ DriverDeviceControl(
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	        DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
+	            DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + 3*sizeof(UINT32) )
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < 4 * sizeof(UINT32) )
               {
-                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: STATUS_INVALID_PARAMETER (input buffer size < sizeof(BYTE) + 3*sizeof(UINT32))\n" );
+                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: STATUS_INVALID_PARAMETER (input buffer size < 4 * sizeof(UINT32))\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), 3 * sizeof(UINT32) );
             _msr_addr = msrData[0];
@@ -799,17 +822,22 @@ DriverDeviceControl(
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
-            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(BYTE) + sizeof(UINT32) )
+            if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < 2 * sizeof(UINT32) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER - input buffer size < sizeof(BYTE) + sizeof(UINT32)\n" );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER - input buffer size < 2 * sizeof(UINT32)\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
 
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT32) );
             _msr_addr = msrData[0];
@@ -914,9 +942,14 @@ DriverDeviceControl(
             DbgPrint( "[chipsec] > GET_CPU_DESCRIPTOR_TABLE\n" );
 
             RtlCopyBytes( &new_cpu_thread_id, (BYTE*)Irp->AssociatedIrp.SystemBuffer, sizeof(UINT32) );
-            if( new_cpu_thread_id >= _num_active_cpus ) new_cpu_thread_id = 0;
+            if( new_cpu_thread_id >= _num_active_cpus )
+            {
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
             KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %d\n", KeGetCurrentProcessorNumber() );
+            DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
             RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(BYTE) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Descriptor table: %x\n", dt_code );
 
@@ -1015,7 +1048,7 @@ DriverDeviceControl(
               }
             if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < sizeof(gprs) )
               {
-                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < %d)\n", sizeof(gprs) );
+                DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER (input buffer size < %zu)\n", sizeof(gprs) );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -1060,7 +1093,6 @@ DriverDeviceControl(
             new_cpu_thread_id = *((BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg) + sizeof(val64));
             if( new_cpu_thread_id >= _num_active_cpus )
             {
-            //    new_cpu_thread_id = 0;
                  Status = STATUS_INVALID_PARAMETER;
                  break;
             }
@@ -1120,7 +1152,6 @@ DriverDeviceControl(
             new_cpu_thread_id = *((BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(cr_reg));
             if( new_cpu_thread_id >= _num_active_cpus )
             {
-            //    new_cpu_thread_id = 0;
                  Status = STATUS_INVALID_PARAMETER;
                  break;
             }
@@ -1169,6 +1200,7 @@ DriverDeviceControl(
           {
             CPU_REG_TYPE regs[11] = {0};
             CPU_REG_TYPE result = 0;
+            CPU_REG_TYPE mhypercall = (CPU_REG_TYPE)&hypercall_page;
 
             DbgPrint("[chipsec] > IOCTL_HYPERCALL\n");
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
@@ -1205,7 +1237,7 @@ DriverDeviceControl(
 
             __try
               {
-                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], (void*)&hypercall_page);
+                result = hypercall(regs[0], regs[1], regs[2], regs[3], regs[4], regs[5], regs[6], regs[7], regs[8], regs[9], regs[10], mhypercall);
               }
             __except( EXCEPTION_EXECUTE_HANDLER )
               {
@@ -1234,7 +1266,7 @@ DriverDeviceControl(
     // -- restore current KAFFINITY
     KeSetSystemAffinityThread( _kaffinity );
     DbgPrint( "[chipsec] Restored active CPU mask (KAFFINITY): 0x%08X\n", KeQueryActiveProcessors() );
-    DbgPrint( "[chipsec] Current CPU thread                  : %d\n", KeGetCurrentProcessorNumber() );
+    DbgPrint( "[chipsec] Current CPU thread                  : %ul\n", KeGetCurrentProcessorNumber() );
 
     // --
     // -- Complete the I/O request, Record the status of the I/O action.

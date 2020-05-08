@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -34,9 +34,8 @@ As demonstrated in the `Speed Racer <https://bromiumlabs.files.wordpress.com/201
 This module common.bios_wp will fail if SMM-based protection is not correctly configured and SPI protected ranges (PR registers) do not protect the entire BIOS region. 
 """
 
-from chipsec.module_common import *
-from chipsec.hal.mmio import *
-from chipsec.hal.spi import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.hal.spi import BIOS, SPI
 
 import fnmatch
 import os
@@ -57,14 +56,9 @@ class bios_wp(BaseModule):
         #
         # BIOS Control Register
         #
-        #reg_value = chipsec.chipset.read_register(self.cs, 'BC')
-        #chipsec.chipset.print_register(self.cs, 'BC', reg_value)
 
-        #ble    = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'BLE')
         ble = self.cs.get_control('BiosLockEnable', with_print=True)
-        #bioswe = self.cs.get_register_field('BC', reg_value, 'BIOSWE')
         bioswe = self.cs.get_control('BiosWriteEnable')
-        #smmbwp = chipsec.chipset.get_register_field(self.cs, 'BC', reg_value, 'SMM_BWP')
         smmbwp = self.cs.get_control( 'SmmBiosWriteProtection' )
 
         # Is the BIOS flash region write protected?
@@ -82,17 +76,11 @@ class bios_wp(BaseModule):
 
     def check_SPI_protected_ranges(self):
         (bios_base,bios_limit,bios_freg) = self.spi.get_SPI_region( BIOS )
-        self.logger.log( "\n[*] BIOS Region: Base = 0x%08X, Limit = 0x%08X" % (bios_base,bios_limit) )
+        self.logger.log( "\n[*] BIOS Region: Base = 0x{:08X}, Limit = 0x{:08X}".format(bios_base,bios_limit) )
         self.spi.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False
         pr_partial_cover_bios = False
-    #    for j in range(5):
-    #        (base,limit,wpe,rpe,pr_reg_off,pr_reg_value) = spi.get_SPI_Protected_Range( j )
-    #        if (wpe == 1 and base < limit and base <= bios_base and limit >= bios_limit):
-    #            pr_cover_bios = True
-    #        if (wpe == 1 and base < limit and limit > bios_base):
-    #            pr_partial_cover_bios = True
 
         areas_to_protect  = [(bios_base, bios_limit)]
         protected_areas = list()
@@ -121,7 +109,6 @@ class bios_wp(BaseModule):
                             areas_to_protect.remove(area)
                             area = (start,base-1)
                             areas_to_protect.append(area)
-                            start,end = area
                     # split
                     elif base > start and limit < end:
                         areas_to_protect.remove(area)

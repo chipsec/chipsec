@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="[PLATFORM_CODE]">
+<configuration platform="[PLATFORM_CODE]" req_pch="BOOLEAN">
 <!--
 Template for XML configuration file
 -->
@@ -42,7 +42,7 @@ Template for XML configuration file
   <!--                                      -->
   <!-- #################################### -->
   <memory>
-    <range name="[RANGE NAME]" type="dram|mmio" address="[PHYS ADDRESS]" size="[RANGE SIZE]"/>
+    <range name="[RANGE NAME]" access="dram|mmio" address="[PHYS ADDRESS]" size="[RANGE SIZE]"/>
   </memory>
 
   <!-- #################################### -->
@@ -51,7 +51,7 @@ Template for XML configuration file
   <!--                                      -->
   <!-- #################################### -->
   <registers>
-    <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg|msgbus" desc="[REGISTER DESCRIPTION]" />
+    <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg|msgbus|memory" desc="[REGISTER DESCRIPTION]" />
   </registers>
 
   <!-- #################################### -->

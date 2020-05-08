@@ -6,13 +6,7 @@ This sequence is further divided into Blocks and Huffman codings are applied to
 each Block.
 
 Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php
-
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -229,7 +223,7 @@ Routine Description:
 
   Allocate memory spaces for data structures used in compression process
 
-Argements:
+Arguments:
   VOID
 
 Returns:
@@ -507,7 +501,7 @@ Returns: (VOID)
   if (mMatchLen >= 4) {
     //
     // We have just got a long match, the target tree
-    // can be located by MatchPos + 1. Travese the tree
+    // can be located by MatchPos + 1. Traverse the tree
     // from bottom up to get to a proper starting point.
     // The usage of PERC_FLAG ensures proper node deletion
     // in DeleteNode() later.
@@ -1708,7 +1702,7 @@ Returns:
   fprintf (stdout, "  --uefi\n\
             Enable UefiCompress, use TianoCompress when without this option\n");
   fprintf (stdout, "  -o FileName, --output FileName\n\
-            File will be created to store the ouput content.\n");
+            File will be created to store the output content.\n");
   fprintf (stdout, "  -v, --verbose\n\
            Turn on verbose output with informational messages.\n");
   fprintf (stdout, "  -q, --quiet\n\
@@ -2111,10 +2105,8 @@ Returns: (VOID)
 --*/
 {
   Sd->mBitBuf = (UINT32) (((UINT64)Sd->mBitBuf) << NumOfBits);
-  printf("mBitBuf- pre fillbuf %x BitCount %x\n",Sd->mBitBuf, Sd->mBitCount);
 
   while (NumOfBits > Sd->mBitCount) {
-    printf("loop NumBits %x BitCount %x\n",NumOfBits,Sd->mBitCount);
 
     Sd->mBitBuf |= (UINT32) (((UINT64)Sd->mSubBitBuf) << (NumOfBits = (UINT16) (NumOfBits - Sd->mBitCount)));
 
@@ -2135,13 +2127,10 @@ Returns: (VOID)
       Sd->mBitCount   = 8;
 
     }
-    printf("subbuf %x\n",Sd->mSubBitBuf);
   }
 
   Sd->mBitCount = (UINT16) (Sd->mBitCount - NumOfBits);
-  printf("info %x %x %x\n", Sd->mBitCount, Sd->mBitBuf, Sd->mSubBitBuf);
   Sd->mBitBuf |= Sd->mSubBitBuf >> Sd->mBitCount;
-  printf("mBitBuf- post fillbuf %x BitCount %x\n",Sd->mBitBuf,Sd->mBitCount);
 }
 
 UINT32
@@ -2170,9 +2159,7 @@ Returns:
 {
   UINT32  OutBits;
 
-
   OutBits = (UINT32) (Sd->mBitBuf >> (BITBUFSIZ - NumOfBits));
-  printf("\nBitBuf %x OutBits %x BITBUFSIZ %x NumBits %x\n", Sd->mBitBuf,OutBits,BITBUFSIZ,NumOfBits);
 
   FillBuf (Sd, NumOfBits);
 
@@ -2242,7 +2229,6 @@ Returns:
     WordOfStart = Start[Index];
     WordOfCount = Count[Index];
     Start[Index + 1] = (UINT16) (WordOfStart + (WordOfCount << (16 - Index)));
-    printf("Start[Index + 1] %x %x\n",Start[Index+1],Index+1);
   }
 
   if (Start[17] != 0) {
@@ -2257,7 +2243,6 @@ Returns:
   Weight[0] = 0;
   for (Index = 1; Index <= TableBits; Index++) {
     Start[Index] >>= JuBits;
-    printf("Start[Index] %x %x\n",Start[Index],Index);
     Weight[Index] = (UINT16) (1U << (TableBits - Index));
   }
 
@@ -2287,14 +2272,14 @@ Returns:
     }
 
     NextCode = (UINT16) (Start[Len] + Weight[Len]);
-    printf("NextCode %x Start[Len] %x Weight[Len] %x\n",NextCode,Start[Len],Weight[Len]);
+
     if (Len <= TableBits) {
 
+      if (Start[Len] >= NextCode || NextCode > MaxTableLength){
+        return (UINT16) BAD_TABLE;
+      }
+
       for (Index = Start[Len]; Index < NextCode; Index++) {
-        if (Index >= MaxTableLength) {
-          return (UINT16) BAD_TABLE;
-        }
-        printf("Table[Index] = Char: %x %x\n",Index,Char);
         Table[Index] = Char;
       }
 
@@ -2325,7 +2310,6 @@ Returns:
     }
 
     Start[Len] = NextCode;
-    printf("Start[Len] %x NextCode %x\n",Start[Len],NextCode);
   }
   //
   // Succeeds
@@ -2380,7 +2364,6 @@ Returns:
 
   Pos = Val;
   if (Val > 1) {
-    printf("GetBits 0");
     Pos = (UINT32) ((1U << (Val - 1)) + GetBits (Sd, (UINT16) (Val - 1)));
   }
 
@@ -2421,11 +2404,9 @@ Returns:
 
   assert (nn <= NPT);
 
-  printf("GetBits 1");
   Number = (UINT16) GetBits (Sd, nbit);
 
   if (Number == 0) {
-    printf("GetBits 2");
     CharC = (UINT16) GetBits (Sd, nbit);
 
     for (Index = 0; Index < 256; Index++) {
@@ -2458,7 +2439,6 @@ Returns:
     Sd->mPTLen[Index++] = (UINT8) CharC;
 
     if (Index == Special) {
-      printf("GetBits 3");
       CharC = (UINT16) GetBits (Sd, 2);
       while ((INT16) (--CharC) >= 0) {
         Sd->mPTLen[Index++] = 0;
@@ -2496,12 +2476,9 @@ Returns: (VOID)
   volatile UINT16  Index;
   UINT32  Mask;
 
-  printf("GetBits 4");
   Number = (UINT16) GetBits (Sd, CBIT);
-  printf("\nNumber %x\n",Number);
 
   if (Number == 0) {
-    printf("GetBits 5");
     CharC = (UINT16) GetBits (Sd, CBIT);
 
     for (Index = 0; Index < NC; Index++) {
@@ -2538,16 +2515,14 @@ Returns: (VOID)
     // Advance what we have read
     //
     FillBuf (Sd, Sd->mPTLen[CharC]);
-    printf("CharC check %x\n",CharC);
+
     if (CharC <= 2) {
 
       if (CharC == 0) {
         CharC = 1;
       } else if (CharC == 1) {
-        printf("GetBits 6");
         CharC = (UINT16) (GetBits (Sd, 4) + 3);
       } else if (CharC == 2) {
-        printf("GetBits 7");
         CharC = (UINT16) (GetBits (Sd, CBIT) + 20);
       }
 
@@ -2598,7 +2573,6 @@ Returns:
     //
     // Starting a new block
     //
-    printf("GetBits 8");
     Sd->mBlockSize    = (UINT16) GetBits (Sd, 16);
     Sd->mBadTableFlag = ReadPTLen (Sd, NT, TBIT, 3);
     if (Sd->mBadTableFlag != 0) {
@@ -2735,11 +2709,11 @@ Arguments:
   Source          - The source buffer containing the compressed data.
   Destination     - The destination buffer to store the decompressed data
   Scratch         - The buffer used internally by the decompress routine. This  buffer is needed to store intermediate data.
-  Version         - 1 for EFI1.1 Decompress algoruthm, 2 for Tiano Decompress algorithm
+  Version         - 1 for EFI1.1 Decompress algorithm, 2 for Tiano Decompress algorithm
 
 Returns:
 
-  RETURN_SUCCESS           - Decompression is successfull
+  RETURN_SUCCESS           - Decompression is successful
   RETURN_INVALID_PARAMETER - The source data is corrupted
 
 --*/

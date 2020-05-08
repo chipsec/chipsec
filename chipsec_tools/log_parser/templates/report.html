@@ -1,0 +1,38 @@
+{%extends 'template.html' %}
+{% block content %}
+<h1>Chipsec Report</h1>
+{% for row in suite | batch(2) %}
+	<div class="row">
+		{% for key in row %}
+		<div class="col-md-6"/><strong>{{ key }}</strong>: {{ suite[key] }}</div>
+		{% endfor %}
+	</div>
+{% endfor %}
+
+<h2 class="mt-5">Test Cases</h2>
+
+{% for case in cases %}
+<div class="container border my-4">
+	<h2 class="mb-2">
+		{% if case.pass == 'Passed' %}
+			<span class="btn-success">{{ case.name }}</span>
+		{% elif case.pass == 'Warning' %}
+			<span class="btn-warning">{{ case.name }}</span>
+		{% elif case.pass == 'Failed' %}
+			<span class="btn-danger">{{ case.name }}</span>
+		{% elif case.pass == 'Information' %}
+			<span class="btn-info">{{ case.name }}</span>
+		{% else %}
+			<span>{{ case.name }}</span>
+		{% endif %}
+	</h2>
+	<div class="row mb-3">
+		<div class="col-md-5"><strong>Classname</strong>: {{case.classname}}</div>
+		<div class="col-md-3"><strong>Time</strong>: {{case.time}}</div>
+		<div class="col-md-3"><strong>Status</strong>: {{case.pass}}</div>
+	</div>
+	<pre>{{case.out}}</pre>
+	
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,7 +28,7 @@ TCG TPM v1.2 Specification
 """
 
 import struct
-from chipsec.logger import *
+from chipsec.logger import logger
 
 COMMAND_FORMAT = "=HIIIII"
 
@@ -93,11 +93,11 @@ PCR= {
   29:0x1d000000,
   30:0x1e000000
 }
-    
+
 def pcrread( command_argv ):
     """
     The TPM_PCRRead operation provides non-cryptographic reporting  of the contents of a named PCR
-    """  
+    """
     Size = 0x0E000000
     try:
         Pcr = PCR[int(command_argv[0])]
@@ -112,12 +112,12 @@ def nvread( command_argv ):
     """
     Read a value from the NV store
     Index, Offset, Size
-    """  
+    """
     Size = 0x18000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_NV_READVALUE, int(command_argv[0], 16), int(command_argv[1], 16), int(command_argv[2], 16) )
     size = Size >> 0x18
     return ( command, size )
-    
+
 def startup( command_argv ):
     """
     Execute a tpm_startup command. TPM_Startup is always preceded by TPM_Init, which is the physical indication (a system wide reset) that TPM initialization is necessary
@@ -125,7 +125,7 @@ def startup( command_argv ):
     1: TPM_ST_CLEAR
     2: TPM_ST_STATE
     3: TPM_ST_DEACTIVATED
-    """  
+    """
     try:
         startupType = STARTUP[int(command_argv[0])]
     except:
@@ -134,7 +134,7 @@ def startup( command_argv ):
     Size = 0x0E000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_STARTUP, startupType, 0, 0 )
     size = Size >> 0x18
-    return ( command, size )    
+    return ( command, size )
 
 def continueselftest( command_argv ):
     """
@@ -143,7 +143,7 @@ def continueselftest( command_argv ):
     Size = 0x0A000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_CONTINUESELFTEST, 0, 0, 0 )
     size = Size >> 0x18
-    return ( command, size )  
+    return ( command, size )
 
 def getcap( command_argv ):
     """
@@ -151,35 +151,14 @@ def getcap( command_argv ):
     CapArea    - Capabilities Area
     SubCapSize - Size of SubCapabilities
     SubCap     - Subcapabilities
-    """  
+    """
     Size = 0x18000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_GETCAPABILITY, int(command_argv[0], 16), int(command_argv[1], 16), int(command_argv[2], 16) )
     size = Size >> 0x18
     return ( command, size )
-   
+
 def forceclear( command_argv ):
     Size = 0x0A000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_FORCECLEAR, 0, 0, 0 )
     size = Size >> 0x18
-    return ( command, size )   
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    return ( command, size )

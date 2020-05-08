@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -18,18 +18,6 @@
 #Contact information:
 #chipsec@intel.com
 #
-
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010 - 2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-#
-## \addtogroup
-# __chipsec/defines.py__ - common defines
 
 import struct
 import os
@@ -147,6 +135,7 @@ COMPRESSION_TYPE_LZMA  = 3
 COMPRESSION_TYPE_BROTLI = 4
 COMPRESSION_TYPE_EFI_STANDARD = 5
 COMPRESSION_TYPE_UNKNOWN = 6
+COMPRESSION_TYPES_ALGORITHMS = [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI, COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_NONE]
 COMPRESSION_TYPES = [COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI, COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPE_UNKNOWN]
 
 def DB(val):
@@ -165,6 +154,12 @@ SIZE2FORMAT = {
     8: 'Q'
 }
 
+def bytestostring(mbytes):
+    if type(mbytes) == type(bytes()):
+        return mbytes.decode("latin_1")
+    else:
+        return mbytes
+
 def pack1(value, size):
     """Shortcut to pack a single value into a string based on its size."""
     return struct.pack(SIZE2FORMAT[size], value)
@@ -174,16 +169,25 @@ def unpack1(string, size):
     return struct.unpack(SIZE2FORMAT[size], string)[0]
 
 def get_version():
-    version_files = ["VERSION", "CUSTOM_VERSION"]
     version_strs = []
     chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
-    for fname in version_files:
+    for fname in sorted([x for x in os.listdir(os.path.join(chipsec_folder, "chipsec")) if x.startswith('VERSION')]):
         version_file = os.path.join(chipsec_folder, "chipsec", fname)
-        if os.path.exists(version_file):
-            with open(version_file, "r") as verFile:
-                version_strs.append(verFile.read().strip())
-
+        with open(version_file, "r") as verFile:
+            version_strs.append(verFile.read().strip())
     return '-'.join(version_strs)
 
 def is_printable(seq):
     return set(seq).issubset(set(string.printable))
+
+def is_hex(maybe_hex):
+    return all(char in string.hexdigits for char in maybe_hex)
+
+def get_message():
+    msg_str = ""
+    chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
+    msg_file = os.path.join(chipsec_folder, "chipsec", "MESSAGE")
+    if os.path.exists(msg_file):
+        with open(msg_file, "r") as msgFile:
+            msg_str = msgFile.read()
+    return msg_str

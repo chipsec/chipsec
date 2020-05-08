@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -20,14 +20,6 @@
 #
 
 
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Common UEFI/EFI functionality including UEFI variables, Firmware Volumes, Secure Boot variables, S3 boot-script, UEFI tables, etc.
 """
@@ -38,8 +30,9 @@ import codecs
 import uuid
 from collections import namedtuple
 
-from chipsec.file import *
-from chipsec.logger import *
+from chipsec.file import read_file, write_file
+from chipsec.logger import logger, dump_buffer
+from chipsec.defines import bytestostring
 
 #from chipsec.helper.oshelper import helper
 
@@ -130,12 +123,12 @@ from chipsec.logger import *
 #   UINT16  Reserved;
 #   UINT32  Reserved1;
 # } VARIABLE_STORE_HEADER;
-# 
+#
 # ///
 # /// Variable data start flag.
 # ///
 # #define VARIABLE_DATA                     0x55AA
-# 
+#
 # ///
 # /// Variable State flags.
 # ///
@@ -143,7 +136,7 @@ from chipsec.logger import *
 # #define VAR_DELETED                   0xfd  ///< Variable is obsolete.
 # #define VAR_HEADER_VALID_ONLY         0x7f  ///< Variable header has been valid.
 # #define VAR_ADDED                     0x3f  ///< Variable has been completely added.
-# 
+#
 # ///
 # /// Single Variable Data Header Structure.
 # ///
@@ -174,11 +167,11 @@ from chipsec.logger import *
 #   ///
 #   EFI_GUID    VendorGuid;
 # } VARIABLE_HEADER;
-# 
+#
 # #pragma pack()
-# 
+#
 # typedef struct _VARIABLE_INFO_ENTRY  VARIABLE_INFO_ENTRY;
-# 
+#
 # ///
 # /// This structure contains the variable list that is put in EFI system table.
 # /// The variable driver collects all variables that were used at boot service time and produces this list.
@@ -195,7 +188,7 @@ from chipsec.logger import *
 #   UINT32              CacheCount;  ///< Number of times that cache hits this variable.
 #   BOOLEAN             Volatile;    ///< TRUE if volatile, FALSE if non-volatile.
 # };
-# 
+#
 # #endif // _EFI_VARIABLE_H_
 
 
@@ -245,7 +238,9 @@ Format    : 0x{:02X}
 State     : 0x{:02X}
 Reserved  : 0x{:04X}
 Reserved1 : 0x{:08X}
-""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.Format, self.State, self.Reserved, self.Reserved1 )
+""".format( self.guid0, self.guid1, self.guid2, bytestostring(codecs.encode(self.guid3[:2], 'hex')).upper(), \
+    bytestostring(codecs.encode(self.guid3[-6::], 'hex')).upper(), self.Size, self.Format, self.State, \
+    self.Reserved, self.Reserved1 )
 
 #
 # Variable data start flag.
@@ -276,17 +271,14 @@ MAX_NVRAM_SIZE    = 1024*1024
 
 def get_nvar_name(nvram, name_offset, isAscii):
     if isAscii:
-        nend = nvram.find('\x00', name_offset)
-        name_size = nend - name_offset + 1 # add trailing zero symbol
-        name = nvram[name_offset:nend]
+        nend = nvram.find(b'\x00', name_offset)
+        name = nvram[name_offset:nend].decode('latin1')
+        name_size = len(name) + 1
         return (name, name_size)
     else:
-        nend = nvram.find('\x00\x00', name_offset)
-        while (nend & 1) == 1:
-            nend = nend + 1
-            nend = nvram.find('\x00\x00', nend)
-        name_size = nend - name_offset + 2 # add trailing zero symbol
-        name = unicode(nvram[name_offset:nend], "utf-16-le")
+        nend = nvram.find(b'\x00\x00', name_offset)
+        name = nvram[name_offset:nend].decode('utf-16le')
+        name_size = len(name) + 2
         return (name, name_size)
 
 
@@ -428,15 +420,15 @@ class StatusCode:
   EFI_COMPROMISED_DATA     = 33
   EFI_HTTP_ERROR           = 35
   '''
-  EFI_WARN_UNKNOWN_GLYPH    = 1   
-  EFI_WARN_DELETE_FAILURE   = 2  
-  EFI_WARN_WRITE_FAILURE    = 3   
+  EFI_WARN_UNKNOWN_GLYPH    = 1
+  EFI_WARN_DELETE_FAILURE   = 2
+  EFI_WARN_WRITE_FAILURE    = 3
   EFI_WARN_BUFFER_TOO_SMALL = 4
   EFI_WARN_STALE_DATA       = 5
   EFI_WARN_FILE_SYSTEM      = 6
   '''
 
-EFI_STATUS_DICT = { 
+EFI_STATUS_DICT = {
   StatusCode.EFI_SUCCESS             :"EFI_SUCCESS",
   StatusCode.EFI_LOAD_ERROR          :"EFI_LOAD_ERROR",
   StatusCode.EFI_INVALID_PARAMETER   :"EFI_INVALID_PARAMETER",
@@ -475,7 +467,9 @@ EFI_STATUS_DICT = {
 
 EFI_GUID_FMT = "IHH8s"
 def EFI_GUID( guid0, guid1, guid2, guid3 ):
-    return ("{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ("{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, \
+        bytestostring(codecs.encode(guid3[:2], 'hex')).upper(), \
+        bytestostring(codecs.encode(guid3[-6::], 'hex')).upper()))
 
 
 def align(of, size):
@@ -487,6 +481,7 @@ def bit_set(value, mask, polarity = False):
     return ( (value & mask) == mask )
 
 def get_3b_size(s):
+    s = bytestostring(s)
     return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
 
 def guid_str(guid0, guid1, guid2, guid3):
@@ -506,7 +501,7 @@ def align_image(image, size=8, fill='\x00'):
 def get_guid_bin(guid):
     values = guid.split('-')
     if [len(x) for x in values] == [8, 4, 4, 4, 12]:
-        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in xrange(0, 12, 2)]
+        values = values[0:3] + [values[3][0:2], values[3][2:4]] + [values[4][x:x+2] for x in range(0, 12, 2)]
         values = [int(x, 16) for x in values]
         return struct.pack('<LHHBBBBBBBB', *tuple(values))
     return ''
@@ -516,7 +511,7 @@ def assemble_uefi_file(guid, image):
     FileHeaderSize      = struct.calcsize(EFI_FFS_FILE_HEADER)
 
     Type       = EFI_FV_FILETYPE_FREEFORM
-    CheckSum   = 0x0000;
+    CheckSum   = 0x0000
     Attributes = 0x40
     Size       = FileHeaderSize + len(image)
     State      = 0xF8
@@ -547,7 +542,7 @@ def assemble_uefi_raw(image):
 
 def FvSum8(buffer):
     sum8 = 0
-    for b in buffer:
+    for b in bytestostring(buffer):
         sum8 = (sum8 + ord(b)) & 0xff
     return sum8
 
@@ -556,7 +551,7 @@ def FvChecksum8(buffer):
 
 def FvSum16(buffer):
     sum16 = 0
-    buffer = buffer
+    buffer = bytestostring(buffer)
     blen = len(buffer)//2
     i = 0
     while i < blen:
@@ -586,7 +581,7 @@ def NextFwVolume(buffer, off = 0):
     size = len(buffer)
     res = (None, None, None, None, None, None, None, None, None)
     while ((fof + vf_header_size) < size):
-        fof =  buffer.find("_FVH", fof)
+        fof =   bytestostring(buffer).find("_FVH", fof)
         if fof == -1 or size - fof < vf_header_size:
             #return if signature is not found
             return res
@@ -598,7 +593,6 @@ def NextFwVolume(buffer, off = 0):
         ZeroVector, FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3, \
           FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
            Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof+vf_header_size])
-
         fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector, \
                           FileSystemGuid0, FileSystemGuid1,FileSystemGuid2,FileSystemGuid3,     \
                           FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,    \
@@ -616,7 +610,7 @@ def NextFwVolume(buffer, off = 0):
     return res
 
 FFS_ATTRIB_LARGE_FILE         = 0x01
-  
+
 def GetFvHeader(buffer, off = 0):
     EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
     header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
@@ -659,7 +653,7 @@ def GetFvHeader(buffer, off = 0):
         logger().log("ERROR: Volume is corrupted")
         return (0,0,0)
     return (size, HeaderLength, Attributes)
-    
+
 
 EFI_FFS_FILE_HEADER = "<4s2s2s8sHBB3sB"
 EFI_FFS_FILE_HEADER2 = "<4s2s2s8sHBB3sBQ"
@@ -669,8 +663,8 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
     cur_offset = fof
     next_offset = None
     res = None
-    update_or_deleted = False 
-    
+    update_or_deleted = False
+
     if (fof + file_header_size) <= min(FvLength, len(FvImage)):
         Name0, Name1, Name2, Name3, IntegrityCheck, Type, Attributes, Size, State = struct.unpack(EFI_FFS_FILE_HEADER, FvImage[fof:fof+file_header_size])
         #Get File Header Size
@@ -680,17 +674,19 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
             header_size = struct.calcsize(EFI_FFS_FILE_HEADER)
         #Check for a blank header
         if polarity:
-            blank = "\xff" * file_header_size
+            blank = b"\xff" * file_header_size
         else:
-            blank = "\x00" * file_header_size
-		
+            blank = b"\x00" * file_header_size
+
         if (blank == FvImage[fof:fof+file_header_size]):
             next_offset = fof + 8
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
         #Get File size
-        if Attributes & FFS_ATTRIB_LARGE_FILE:
+        if Attributes & FFS_ATTRIB_LARGE_FILE and len(FvImage) > fof + struct.calcsize(EFI_FFS_FILE_HEADER2):
             fsize = struct.unpack("Q",FvImage[fof+file_header_size:fof+file_header_size+struct.calcsize("Q")])[0]
             fsize &= 0xFFFFFFFF
+            if fsize == 0 or fsize > FvLength-fof:
+                fsize = get_3b_size(Size)
         else:
             fsize = get_3b_size(Size)
         #Validate fsize is a legal value
@@ -705,7 +701,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
         else:
             next_offset = align(fof + 1, 8)
             return (cur_offset, next_offset, None, None, None, None, None, None, None, None, update_or_deleted, None)
-        
+
         Name = guid_str(Name0, Name1, Name2, Name3)
         #TODO need to fix up checksum?
         fheader = struct.pack(EFI_FFS_FILE_HEADER, Name0, Name1, Name2, Name3, 0, Type, Attributes, Size, 0)
@@ -731,7 +727,7 @@ def NextFwFileSection(sections, ssize, sof, polarity):
         Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, header)
         Size = get_3b_size(Size)
         Header_Size = EFI_COMMON_SECTION_HEADER_size
-        if Size == 0xFFFFFF:
+        if Size == 0xFFFFFF and (sof + EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")) < ssize:
             Size = struct.unpack("I",sections[sof+EFI_COMMON_SECTION_HEADER_size:sof+EFI_COMMON_SECTION_HEADER_size+struct.calcsize("I")])[0]
             Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
         sec_name = "S_UNKNOWN_{:02X}".format(Type)
@@ -864,7 +860,6 @@ def parse_sb_db(db, decode_dir):
 
         # Determine the signature type
         SignatureType = guid_str(SignatureType0, SignatureType1, SignatureType2, SignatureType3)
-        short_name = "UNKNOWN"
         sig_parse_f = None
         sig_size = 0
         if (SignatureType in sig_types.keys()):
@@ -873,7 +868,7 @@ def parse_sb_db(db, decode_dir):
             logger().log_bad('Unknown signature type {}, skipping signature decode.'.format(SignatureType))
             dof += SignatureListSize
             continue
-        
+
         # Extract signature data blobs
         if (((sig_size > 0) and (sig_size == SignatureSize)) or ((sig_size == 0) and (SignatureSize >= 0x10))):
             sof = 0
@@ -888,7 +883,7 @@ def parse_sb_db(db, decode_dir):
                 sig_file_name = "{}-{}-{:02d}.bin".format(short_name, owner, nsig)
                 sig_file_name = os.path.join(decode_dir, sig_file_name)
                 write_file(sig_file_name, data)
-                if (sig_parse_f != None):
+                if (sig_parse_f is not None):
                     sig_parse_f(data)
                 sof = sof + SignatureSize
                 nsig = nsig + 1
@@ -964,7 +959,6 @@ def parse_auth_var(db, decode_dir):
         except UnicodeDecodeError:
             logger().warn("Unable to decode {}".format(db[tof:tof+name_size]))
             var_name = "CHIPSEC ERROR!"
-            pass
         tof += name_size
         sig_data = db[tof:tof+cert_data_size]
         entries.append(sig_data)
@@ -1267,7 +1261,7 @@ class op_io_pci_mem():
         if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
         if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x{}'.format( '{{{:d}X}}'.format(scrpt_width_sizes[self.width]*2) )
+            fmt = '0x{}'.format( '{{:0{:d}X}}'.format(script_width_sizes[self.width]*2) )
             str_r += "  Values : {}\n".format("  ".join( [fmt.format(v) for v in self.values] ))
         elif self.buffer is not None:
             str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))
@@ -1421,7 +1415,7 @@ class EFI_TABLE_HEADER( namedtuple('EFI_TABLE_HEADER', 'Signature Revision Heade
   Revision      : {}
   HeaderSize    : 0x{:08X}
   CRC32         : 0x{:08X}
-  Reserved      : 0x{:08X}""".format( self.Signature, EFI_SYSTEM_TABLE_REVISION(self.Revision), self.HeaderSize, self.CRC32, self.Reserved )
+  Reserved      : 0x{:08X}""".format( bytestostring(self.Signature), EFI_SYSTEM_TABLE_REVISION(self.Revision), self.HeaderSize, self.CRC32, self.Reserved )
 
 
 # #################################################################################################
@@ -1524,10 +1518,10 @@ class EFI_SYSTEM_TABLE( namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareR
 #
 # \MdePkg\Include\Uefi\UefiSpec.h
 # -------------------------------
-# 
+#
 # #define EFI_RUNTIME_SERVICES_SIGNATURE  SIGNATURE_64 ('R','U','N','T','S','E','R','V')
 # #define EFI_RUNTIME_SERVICES_REVISION   EFI_2_31_SYSTEM_TABLE_REVISION
-# 
+#
 # ///
 # /// EFI Runtime Services Table.
 # ///
@@ -1536,7 +1530,7 @@ class EFI_SYSTEM_TABLE( namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareR
 #   /// The table header for the EFI Runtime Services Table.
 #   ///
 #   EFI_TABLE_HEADER                Hdr;
-# 
+#
 #   //
 #   // Time Services
 #   //
@@ -1544,32 +1538,32 @@ class EFI_SYSTEM_TABLE( namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareR
 #   EFI_SET_TIME                    SetTime;
 #   EFI_GET_WAKEUP_TIME             GetWakeupTime;
 #   EFI_SET_WAKEUP_TIME             SetWakeupTime;
-# 
+#
 #   //
 #   // Virtual Memory Services
 #   //
 #   EFI_SET_VIRTUAL_ADDRESS_MAP     SetVirtualAddressMap;
 #   EFI_CONVERT_POINTER             ConvertPointer;
-# 
+#
 #   //
 #   // Variable Services
 #   //
 #   EFI_GET_VARIABLE                GetVariable;
 #   EFI_GET_NEXT_VARIABLE_NAME      GetNextVariableName;
 #   EFI_SET_VARIABLE                SetVariable;
-# 
+#
 #   //
 #   // Miscellaneous Services
 #   //
 #   EFI_GET_NEXT_HIGH_MONO_COUNT    GetNextHighMonotonicCount;
 #   EFI_RESET_SYSTEM                ResetSystem;
-# 
+#
 #   //
 #   // UEFI 2.0 Capsule Services
 #   //
 #   EFI_UPDATE_CAPSULE              UpdateCapsule;
 #   EFI_QUERY_CAPSULE_CAPABILITIES  QueryCapsuleCapabilities;
-# 
+#
 #   //
 #   // Miscellaneous UEFI 2.0 Service
 #   //
@@ -1608,10 +1602,10 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #
 # \MdePkg\Include\Uefi\UefiSpec.h
 # -------------------------------
-# 
+#
 # #define EFI_BOOT_SERVICES_SIGNATURE   SIGNATURE_64 ('B','O','O','T','S','E','R','V')
 # #define EFI_BOOT_SERVICES_REVISION    EFI_2_31_SYSTEM_TABLE_REVISION
-# 
+#
 # ///
 # /// EFI Boot Services Table.
 # ///
@@ -1620,13 +1614,13 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #   /// The table header for the EFI Boot Services Table.
 #   ///
 #   EFI_TABLE_HEADER                Hdr;
-# 
+#
 #   //
 #   // Task Priority Services
 #   //
 #   EFI_RAISE_TPL                   RaiseTPL;
 #   EFI_RESTORE_TPL                 RestoreTPL;
-# 
+#
 #   //
 #   // Memory Services
 #   //
@@ -1635,7 +1629,7 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #   EFI_GET_MEMORY_MAP              GetMemoryMap;
 #   EFI_ALLOCATE_POOL               AllocatePool;
 #   EFI_FREE_POOL                   FreePool;
-# 
+#
 #   //
 #   // Event & Timer Services
 #   //
@@ -1645,7 +1639,7 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #   EFI_SIGNAL_EVENT                  SignalEvent;
 #   EFI_CLOSE_EVENT                   CloseEvent;
 #   EFI_CHECK_EVENT                   CheckEvent;
-# 
+#
 #   //
 #   // Protocol Handler Services
 #   //
@@ -1658,7 +1652,7 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #   EFI_LOCATE_HANDLE                 LocateHandle;
 #   EFI_LOCATE_DEVICE_PATH            LocateDevicePath;
 #   EFI_INSTALL_CONFIGURATION_TABLE   InstallConfigurationTable;
-# 
+#
 #   //
 #   // Image Services
 #   //
@@ -1667,27 +1661,27 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #   EFI_EXIT                          Exit;
 #   EFI_IMAGE_UNLOAD                  UnloadImage;
 #   EFI_EXIT_BOOT_SERVICES            ExitBootServices;
-# 
+#
 #   //
 #   // Miscellaneous Services
 #   //
 #   EFI_GET_NEXT_MONOTONIC_COUNT      GetNextMonotonicCount;
 #   EFI_STALL                         Stall;
 #   EFI_SET_WATCHDOG_TIMER            SetWatchdogTimer;
-# 
+#
 #   //
 #   // DriverSupport Services
 #   //
 #   EFI_CONNECT_CONTROLLER            ConnectController;
 #   EFI_DISCONNECT_CONTROLLER         DisconnectController;
-# 
+#
 #   //
 #   // Open and Close Protocol Services
 #   //
 #   EFI_OPEN_PROTOCOL                 OpenProtocol;
 #   EFI_CLOSE_PROTOCOL                CloseProtocol;
 #   EFI_OPEN_PROTOCOL_INFORMATION     OpenProtocolInformation;
-# 
+#
 #   //
 #   // Library Services
 #   //
@@ -1696,12 +1690,12 @@ class EFI_RUNTIME_SERVICES_TABLE( namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetT
 #   EFI_LOCATE_PROTOCOL               LocateProtocol;
 #   EFI_INSTALL_MULTIPLE_PROTOCOL_INTERFACES    InstallMultipleProtocolInterfaces;
 #   EFI_UNINSTALL_MULTIPLE_PROTOCOL_INTERFACES  UninstallMultipleProtocolInterfaces;
-# 
+#
 #   //
 #   // 32-bit CRC Services
 #   //
 #   EFI_CALCULATE_CRC32               CalculateCrc32;
-# 
+#
 #   //
 #   // Miscellaneous Services
 #   //
@@ -1810,7 +1804,7 @@ class EFI_CONFIGURATION_TABLE():
 #
 # \MdePkg\Include\Pi\PiDxeCis.h
 # -----------------------------
-# 
+#
 # //
 # // DXE Services Table
 # //
@@ -1818,14 +1812,14 @@ class EFI_CONFIGURATION_TABLE():
 # #define DXE_SPECIFICATION_MAJOR_REVISION  1
 # #define DXE_SPECIFICATION_MINOR_REVISION  20
 # #define DXE_SERVICES_REVISION             ((DXE_SPECIFICATION_MAJOR_REVISION<<16) | (DXE_SPECIFICATION_MINOR_REVISION))
-# 
+#
 # typedef struct {
 #   ///
 #   /// The table header for the DXE Services Table.
 #   /// This header contains the DXE_SERVICES_SIGNATURE and DXE_SERVICES_REVISION values.
 #   ///
 #   EFI_TABLE_HEADER                Hdr;
-# 
+#
 #   //
 #   // Global Coherency Domain Services
 #   //
@@ -1842,7 +1836,7 @@ class EFI_CONFIGURATION_TABLE():
 #   EFI_REMOVE_IO_SPACE             RemoveIoSpace;
 #   EFI_GET_IO_SPACE_DESCRIPTOR     GetIoSpaceDescriptor;
 #   EFI_GET_IO_SPACE_MAP            GetIoSpaceMap;
-# 
+#
 #   //
 #   // Dispatcher Services
 #   //
@@ -1897,26 +1891,26 @@ class EFI_DXE_SERVICES_TABLE( namedtuple('EFI_DXE_SERVICES_TABLE', 'AddMemorySpa
 # //
 # #define FRAMEWORK_PEI_SPECIFICATION_MAJOR_REVISION    0
 # #define FRAMEWORK_PEI_SPECIFICATION_MINOR_REVISION    91
-# 
-# 
+#
+#
 # //
 # // PEI services signature and Revision defined in Framework PEI spec
 # //
 # #define FRAMEWORK_PEI_SERVICES_SIGNATURE               0x5652455320494550ULL
 # #define FRAMEWORK_PEI_SERVICES_REVISION               ((FRAMEWORK_PEI_SPECIFICATION_MAJOR_REVISION<<16) | (FRAMEWORK_PEI_SPECIFICATION_MINOR_REVISION))
-# 
+#
 # ///
 # ///  FRAMEWORK_EFI_PEI_SERVICES is a collection of functions whose implementation is provided by the PEI
 # ///  Foundation. The table may be located in the temporary or permanent memory, depending upon the capabilities 
 # ///  and phase of execution of PEI.
-# ///  
+# ///
 # ///  These services fall into various classes, including the following:
 # ///  - Managing the boot mode.
 # ///  - Allocating both early and permanent memory.
 # ///  - Supporting the Firmware File System (FFS).
 # ///  - Abstracting the PPI database abstraction.
 # ///  - Creating Hand-Off Blocks (HOBs).
-# ///        
+# ///
 # struct _FRAMEWORK_EFI_PEI_SERVICES {
 #   EFI_TABLE_HEADER                  Hdr;
 #   //
@@ -1960,10 +1954,10 @@ class EFI_DXE_SERVICES_TABLE( namedtuple('EFI_DXE_SERVICES_TABLE', 'AddMemorySpa
 #   //
 #   EFI_PEI_RESET_SYSTEM              ResetSystem;
 #   ///
-#   /// Inconsistent with specification here: 
-#   /// In Framework Spec, PeiCis0.91, CpuIo and PciCfg are NOT pointers. 
+#   /// Inconsistent with specification here:
+#   /// In Framework Spec, PeiCis0.91, CpuIo and PciCfg are NOT pointers.
 #   ///
-#   
+#
 #   //
 #   // I/O Abstractions
 #   //
@@ -1991,7 +1985,7 @@ FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR
 #   /// The table header for the System Management System Table (SMST). 
 #   ///
 #   EFI_TABLE_HEADER                    Hdr;
-# 
+#
 #   ///
 #   /// A pointer to a NULL-terminated Unicode string containing the vendor name. It is
 #   /// permissible for this pointer to be NULL.
@@ -2001,12 +1995,12 @@ FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR
 #   /// The particular revision of the firmware.
 #   ///
 #   UINT32                              SmmFirmwareRevision;
-# 
+#
 #   ///
 #   /// Adds, updates, or removes a configuration table entry from the SMST. 
 #   ///
 #   EFI_SMM_INSTALL_CONFIGURATION_TABLE SmmInstallConfigurationTable;
-# 
+#
 #   //
 #   // I/O Services
 #   //
@@ -2019,7 +2013,7 @@ FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR
 #   /// devices.
 #   ///
 #   EFI_SMM_CPU_IO_INTERFACE            SmmIo;
-# 
+#
 #   //
 #   // Runtime memory service
 #   //
@@ -2030,27 +2024,27 @@ FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR
 #   ///
 #   EFI_SMMCORE_ALLOCATE_POOL           SmmAllocatePool;
 #   ///
-#   /// Returns pool memory to the system. 
+#   /// Returns pool memory to the system.
 #   ///
 #   EFI_SMMCORE_FREE_POOL               SmmFreePool;
 #   ///
-#   /// Allocates memory pages from the system. 
+#   /// Allocates memory pages from the system.
 #   ///
 #   EFI_SMMCORE_ALLOCATE_PAGES          SmmAllocatePages;
 #   ///
 #   /// Frees memory pages for the system.
 #   ///
 #   EFI_SMMCORE_FREE_PAGES              SmmFreePages;
-# 
+#
 #   //
 #   // MP service
 #   //
-#   
+#
 #   /// Inconsistent with specification here:
 #   ///  In Framework Spec, this definition does not exist. This method is introduced in PI1.1 specification for 
 #   ///  the implementation needed.
 #   EFI_SMM_STARTUP_THIS_AP             SmmStartupThisAp;
-# 
+#
 #   //
 #   // CPU information records
 #   //
@@ -2079,7 +2073,7 @@ FRAMEWORK_PEI_SERVICES_REVISION            = ((FRAMEWORK_PEI_SPECIFICATION_MAJOR
 #   /// FloatingPointSave field in EFI_SMM_BASE_PROTOCOL.RegisterCallback() set to TRUE.
 #   ///
 #   EFI_SMM_FLOATING_POINT_SAVE_STATE   *CpuOptionalFloatingPointState;
-# 
+#
 #   //
 #   // Extensibility table
 #   //

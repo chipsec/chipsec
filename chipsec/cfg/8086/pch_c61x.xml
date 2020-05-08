@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<configuration platform="PCH_C61x" >
+<!--
+XML configuration file for C610 series PCH
+  Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub (PCH) datasheet
+  https://ark.intel.com/products/series/98915/Intel-C610-Series-Chipsets
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0x8D40" name="C610" code="PCH_C61x" longname="Intel Wellsburg (C610/X99 series) PCH" />
+    <sku did="0x8D44" name="C610-G" code="PCH_C61x" longname="Intel Wellsburg-G (C610/X99 series) PCH" />
+    <sku did="0x8D47" name="C610-X" code="PCH_C61x" longname="Intel Wellsburg-X (C610/X99 series) PCH" />
+  </info>
+
+  <pci>
+    <device name="LPC"        bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x8D44,0x8D47" />
+  </pci>
+
+  <registers>
+
+    <!-- LPC Interface Bridge -->
+    <register name="GEN_PMCON_LOCK" type="pcicfg" device="LPC" offset="0xA6" size="1" desc="General Power Management Configuration Lock">
+      <field name="ACPI_BASE_LOCK"   bit="1" size="1" desc="Lock down ACPI Base Address (ABASE)"/>
+      <field name="SLP_STR_POL_LOCK" bit="2" size="1" desc="SLP Stretching Policy Lock-Down"/>
+    </register>
+
+    <!-- PCH Root Complex Register Base MMIO registers -->
+
+    <!-- PCH ABASE (PMBASE) I/O registers -->
+    <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
+      <field name="GBL_SMI_EN"         bit="0"  size="1"/>
+      <field name="EOS"                bit="1"  size="1"/>
+      <field name="BIOS_EN"            bit="2"  size="1"/>
+      <field name="LEGACY_USB_EN"      bit="3"  size="1"/>
+      <field name="SLP_SMI_EN"         bit="4"  size="1"/>
+      <field name="APMC_EN"            bit="5"  size="1"/>
+      <field name="SWSMI_TMR_EN"       bit="6"  size="1"/>
+      <field name="BIOS_RLS"           bit="7"  size="1"/>
+      <field name="MCSMI_EN"           bit="11" size="1"/>
+      <field name="TCO_EN"             bit="13" size="1"/>
+      <field name="PERIODIC_EN"        bit="14" size="1"/>
+      <field name="LEGACY_USB2_EN"     bit="17" size="1"/>
+      <field name="INTEL_USB2_EN"      bit="18" size="1"/>
+      <field name="GPIO_UNLOCK_SMI_EN" bit="27" size="1"/>
+      <field name="ME_SMI_EN"          bit="30" size="1"/>
+      <field name="xHCI_SMI_EN"        bit="31" size="1"/>
+    </register>
+
+  </registers>
+
+  <controls>
+    <control name="ACPIBaseLock" register="GEN_PMCON_LOCK" field="ACPI_BASE_LOCK" desc="Lock Down ACPI Base Address" />
+  </controls>
+
+</configuration>

@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018, Intel Corporation
+#Copyright (c) 2018-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,13 +24,14 @@ import xml.etree.ElementTree as ET
 
 import chipsec.file
 from chipsec.logger import logger
+from chipsec.defines import bytestostring
 
 def get_json_results(json_file):
     file_data = chipsec.file.read_file(json_file)
     if file_data == 0:
         return None
     try:
-        json_data = json.loads(file_data)
+        json_data = json.loads(bytestostring(file_data))
     except:
         logger().error("Unable to load JSON file: {}".format(json_file))
         return None
@@ -58,7 +59,7 @@ def display_deltas(deltas, hide_time, start_time):
     logger().log( "" )
     logger().log( "[CHIPSEC] **********************  TEST DELTA SUMMARY  *********************" )
     if not hide_time:
-        logger().log( "[CHIPSEC] Time elapsed          %.3f" % (time.time()-start_time) )
+        logger().log( "[CHIPSEC] Time elapsed          {:.3f}" .format(time.time()-start_time) )
     if deltas:
         logger().log( "[*] {:46}| {:10} | {:10}".format("Test", "Previous", "Current") )
         logger().log( "[*] {}".format('-' * 71) )

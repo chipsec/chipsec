@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,7 +28,7 @@ Simple port I/O VMM emulation fuzzer
 """
 import random
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult
 
 MAX_PORTS = 0x10000
 MAX_PORT_VALUE = 0xFF
@@ -52,8 +52,8 @@ class iofuzz(BaseModule):
 
     def fuzz_ports( self, iterations, write_count, random_order=False ):
 
-        if random_order: self.logger.log( "[*] Fuzzing randomly chosen %d I/O ports..\n" % iterations )
-        else: self.logger.log( "[*] Fuzzing I/O ports in a range 0:0x%X..\n" % (iterations-1) )
+        if random_order: self.logger.log( "[*] Fuzzing randomly chosen {:d} I/O ports..\n".format(iterations) )
+        else: self.logger.log( "[*] Fuzzing I/O ports in a range 0:0x{:X}..\n".format(iterations-1) )
 
         io_addr = 0
         for it in range(iterations):
@@ -64,10 +64,10 @@ class iofuzz(BaseModule):
             else:            io_addr = it
 
             if io_addr in _EXCLUDE_PORTS:
-                self.logger.log( "[*] skipping port 0x%04X" % io_addr )
+                self.logger.log( "[*] skipping port 0x{:04X}".format(io_addr) )
                 continue
 
-            self.logger.log( "[*] fuzzing I/O port 0x%04X" % io_addr )
+            self.logger.log( "[*] fuzzing I/O port 0x{:04X}".format(io_addr) )
 
             self.logger.log( "    reading port" )
             port_value = self.cs.io.read_port_byte( io_addr )
@@ -88,12 +88,11 @@ class iofuzz(BaseModule):
                     self.cs.io.write_port_word ( io_addr, 0x5AA55AA5 )
                 except: pass
 
-            self.logger.log( "    writing values 0..%X (%d times each)" % (MAX_PORT_VALUE,write_count) )
+            self.logger.log( "    writing values 0..{:X} ({:d} times each)".format(MAX_PORT_VALUE,write_count) )
             for v in range(MAX_PORT_VALUE+1):
                 for n in range(write_count):
                     try: self.cs.io.write_port_byte( io_addr, v )
                     except: pass
-                    pass
 
         return ModuleResult.PASSED
 
@@ -104,8 +103,8 @@ class iofuzz(BaseModule):
         self.logger.log( "  mode            SMI handlers testing mode" )
         self.logger.log( "    = exhaustive  fuzz all I/O ports exhaustively (default)")
         self.logger.log( "    = random      fuzz randomly chosen I/O ports" )
-        self.logger.log( "  count           how many times to write to each port (default = %d)" % DEFAULT_PORT_WRITE_COUNT )
-        self.logger.log( "  iterations      number of I/O ports to fuzz (default = %d in random mode)" % DEFAULT_RANDOM_ITERATIONS )
+        self.logger.log( "  count           how many times to write to each port (default = {:d})".format(DEFAULT_PORT_WRITE_COUNT) )
+        self.logger.log( "  iterations      number of I/O ports to fuzz (default = {:d} in random mode)".format(DEFAULT_RANDOM_ITERATIONS) )
 
         _random_order = (len(module_argv) > 0 and 'random' == module_argv[0].lower())
         write_count   = int(module_argv[1]) if len(module_argv) > 1 else DEFAULT_PORT_WRITE_COUNT
@@ -113,9 +112,9 @@ class iofuzz(BaseModule):
         else:                    iterations = DEFAULT_RANDOM_ITERATIONS if _random_order else MAX_PORTS
 
         self.logger.log( "\n[*] Configuration:" )
-        self.logger.log( "    Mode            : %s" % ('random' if _random_order else 'exhaustive') )
-        self.logger.log( "    Write count     : %d" % write_count )
-        self.logger.log( "    Ports/iterations: %d\n" % iterations )
+        self.logger.log( "    Mode            : {}".format('random' if _random_order else 'exhaustive') )
+        self.logger.log( "    Write count     : {:d}".format(write_count) )
+        self.logger.log( "    Ports/iterations: {:d}\n".format(iterations) )
 
         return self.fuzz_ports( iterations, write_count, _random_order )
         

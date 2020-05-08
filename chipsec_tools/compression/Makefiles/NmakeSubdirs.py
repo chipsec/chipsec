@@ -4,13 +4,7 @@
 #
 #  Copyright (c) 2018, Intel Corporation. All rights reserved.<BR>
 #
-#  This program and the accompanying materials
-#  are licensed and made available under the terms and conditions of the BSD License
-#  which accompanies this distribution.  The full text of the license may be found at
-#  http://opensource.org/licenses/bsd-license.php
-#
-#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 
 #
@@ -44,7 +38,7 @@ def RunCommand(WorkDir=None, *Args, **kwargs):
     stdout, stderr = p.communicate()
     message = ""
     if stdout is not None:
-        message = stdout.decode() #for compatibility in python 2 and 3
+        message = stdout.decode(encoding='utf-8', errors='ignore') #for compatibility in python 2 and 3
 
     if p.returncode != 0:
         raise RuntimeError("Error while execute command \'{0}\' in direcotry {1}\n{2}".format(" ".join(Args), WorkDir, message))
@@ -110,7 +104,7 @@ class ThreadControl(object):
         while len(self.running) > 0:
             time.sleep(0.1)
         if self.error:
-            print("subprocess not exit sucessfully")
+            print("subprocess not exit successfully")
             print(self.errorMsg)
 
     def startTask(self):

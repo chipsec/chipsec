@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 
 
 """
@@ -80,7 +72,6 @@ class BaseModule(object):
         platform.
         To access the currently running platform use
 
-        >>> self.cs.get_chipset_id()
         """
         return True
 
@@ -119,10 +110,16 @@ MTAG_METAS = {
 ##! [Available Tags]
 MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])
 
-
-
-
 #
 # Common module command line options
 #
 OPT_MODIFY = 'modify'
+
+#
+# Python 2/3 compatible input
+#
+def cs_input(msg):
+    if sys.version[0] == '2':
+        return raw_input(msg)
+    else:
+        return input(msg)

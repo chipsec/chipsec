@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@
 Setup module to install chipsec package via setuptools
 """
 
+import io
 import os
 import platform
 from setuptools import setup, find_packages
@@ -34,7 +35,10 @@ import shutil
 
 from setuptools.command.install import install as _install
 from distutils.command.build import build as _build
+from distutils.command.sdist import sdist as _sdist
 from setuptools.command.build_ext import build_ext as _build_ext
+
+NO_DRIVER_MARKER_FILE = "README.NO_KERNEL_DRIVER"
 
 def long_description():
     return open("README").read()
@@ -139,6 +143,27 @@ class build_ext(_build_ext):
         for exe in exes:
             self.copy_file(os.path.join(build_exe,"bin",exe),dst)
 
+    def _build_win_driver(self):
+        log.info("building the windows driver")
+        build_driver = os.path.join("drivers", "win7")
+        cur_dir = os.getcwd()
+        os.chdir(build_driver)
+        # Run the makefile there.
+        if platform.machine().endswith("64"):
+            subprocess.call(["install.cmd"])
+        else:
+            subprocess.call(["install.cmd","32"])
+        os.chdir(cur_dir)
+
+    def _build_win_compression(self):
+        log.info("building the windows compression")
+        build_driver = os.path.join("chipsec_tools", "compression")
+        cur_dir = os.getcwd()
+        os.chdir(build_driver)
+        # Run the makefile there.
+        subprocess.call(["build.cmd"])
+        os.chdir(cur_dir)
+
     def run(self):
         # First, we build the standard extensions.
         _build_ext.run(self)
@@ -151,6 +176,9 @@ class build_ext(_build_ext):
             elif platform.system().lower() == "darwin":
                 self._build_darwin_driver()
                 self._build_darwin_compression()
+            elif platform.system().lower() == "windows":
+                self._build_win_driver()
+                self._build_win_compression()
 
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
@@ -166,6 +194,13 @@ class install(_install):
         _install.initialize_options(self)
         self.skip_driver = None
 
+        # Do not build the driver if no-driver marker file is present.
+        # This marker is only created by an sdist command when
+        # "python setup.py sdist" is executed. This allows having
+        # driver-less PIP packages uploaded to PyPi.
+        if os.path.exists(NO_DRIVER_MARKER_FILE):
+            self.skip_driver = True
+
 class build(_build):
     user_options = _build.user_options + skip_driver_opt
     boolean_options = _build.boolean_options + ["skip-driver"]
@@ -174,11 +209,26 @@ class build(_build):
         _build.initialize_options(self)
         self.skip_driver = None
 
+class sdist(_sdist):
+    """Build sdist."""
+
+    def make_release_tree(self, base_dir, files):
+        _sdist.make_release_tree(self, base_dir, files)
+        no_driver_marker = os.path.join(base_dir, NO_DRIVER_MARKER_FILE)
+        with io.open(no_driver_marker, "w", encoding="utf-8") as fd:
+          fd.write(
+u"""PyPI-distributed chipsec PIP package doesn't contain a pre-built
+kernel driver. Please use it only when a kernel driver is already present
+on the system. Otherwise, please install chipsec from source, using the
+following procedure:
+https://github.com/chipsec/chipsec/blob/master/chipsec-manual.pdf
+""")
+
 package_data = {
     # Include any configuration file.
     "": ["*.ini", "*.cfg", "*.json"],
     "chipsec": ["*VERSION", "WARNING.txt"],
-    "chipsec.cfg": ["*.xml", "*.xsd"],
+    "chipsec.cfg":  ["8086/*.xml","*.xml","*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
@@ -188,7 +238,7 @@ if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
     package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
     package_data["chipsec_tools.compression.bin"] = ['*']
-    install_requires.append("pypiwin32")
+    install_requires.append("pywin32")
 
 elif platform.system().lower() == "linux":
     package_data["chipsec_tools.compression.bin"] = ['*']
@@ -241,6 +291,7 @@ setup(
         'install': install,
         'build': build,
         'build_ext'   : build_ext,
+        'sdist': sdist,
     },
     ext_modules = extra_kw
 )

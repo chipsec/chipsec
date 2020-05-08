@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -18,17 +18,10 @@
 #chipsec@intel.com
 #
 
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2018 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Management and communication with Windows kernel mode driver which provides access to hardware resources
 
-.. note:: 
+.. note::
     On Windows you need to install pywin32 Python extension corresponding to your Python version:
     http://sourceforge.net/projects/pywin32/
 """
@@ -37,13 +30,11 @@ import os.path
 import struct
 import sys
 import platform
-import re
 import errno
 import traceback
-import time
-from threading import Lock
 from collections import namedtuple
 from ctypes import *
+import shutil
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -55,8 +46,8 @@ from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Unimp
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger, print_buffer
 import chipsec.file
-import chipsec.defines
-
+from chipsec.defines import bytestostring
+from chipsec.hal.uefi_common import EFI_GUID
 
 class PCI_BDF(Structure):
     _fields_ = [("BUS",  c_ushort, 16),  # Bus
@@ -166,7 +157,7 @@ PyLong_AsByteArray.argtypes = [py_object,
                                c_int]
 
 def packl_ctypes( lnum, bitlength ):
-    length = (bitlength + 7)/8
+    length = (bitlength + 7)//8
     a = create_string_buffer( length )
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
     return a.raw
@@ -185,7 +176,7 @@ FirmwareTableID_XSDT = 0x54445358
 # Windows 8 NtEnumerateSystemEnvironmentValuesEx (infcls = 2)
 #
 def guid_str(guid0, guid1, guid2, guid3):
-    return ( "%08X-%04X-%04X-%04s-%06s" % (guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
+    return ( "{:08X}-{:04X}-{:04X}-{:4}-{:6}".format(guid0, guid1, guid2, guid3[:2].encode('hex').upper(), guid3[-6::].encode('hex').upper()) )
 
 class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid0 guid1 guid2 guid3') ):
     __slots__ = ()
@@ -193,12 +184,12 @@ class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attribute
         return """
 Header (Windows)
 ----------------
-VendorGuid= {%08X-%04X-%04X-%04s-%06s}
-Size      = 0x%08X
-DataOffset= 0x%08X
-DataSize  = 0x%08X
-Attributes= 0x%08X
-""" % ( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
+VendorGuid= {{{:08X}-{:04X}-{:04X}-{:4}-{:6}}}
+Size      = 0x{:08X}
+DataOffset= 0x{:08X}
+DataSize  = 0x{:08X}
+Attributes= 0x{:08X}
+""".format( self.guid0, self.guid1, self.guid2, self.guid3[:2].encode('hex').upper(), self.guid3[-6::].encode('hex').upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
 
 def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
     start = 0
@@ -216,14 +207,17 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         efi_var_data    = buffer[ off + efi_var_hdr.DataOffset : off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
 
         #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
-        str_fmt = "%ds" % (efi_var_hdr.DataOffset - header_size)
+        str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
         s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
-        efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        if sys.version_info[0] < 3:
+            efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
+        else:
+            efi_var_name = str(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
 
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
         #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
-        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
+        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
 
         if 0 == efi_var_hdr.Size: break
         off = next_var_offset
@@ -234,15 +228,15 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 
 
 def _handle_winerror(fn, msg, hr):
-    _handle_error( ("%s failed: %s (%d)" % (fn, msg, hr)), hr )
+    _handle_error( ("{} failed: {} ({:d})".format(fn, msg, hr)), hr )
 def _handle_error( err, hr=0 ):
     logger().error( err )
     raise OsHelperError( err, hr )
 
 
 _tools = {
-  chipsec.defines.ToolType.TIANO_COMPRESS: 'TianoCompress.exe',
-  chipsec.defines.ToolType.LZMA_COMPRESS : 'LzmaCompress.exe'
+  chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.exe',
+  chipsec.defines.COMPRESSION_TYPE_LZMA : 'LzmaCompress.exe'
 }
 
 class RweHelper(Helper):
@@ -256,16 +250,17 @@ class RweHelper(Helper):
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname   = platform.uname()
+        self.name = "RweHelper"
         if "windows" == self.os_system.lower():
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
-            if logger().DEBUG: logger().log( "[helper] OS: %s %s %s" % (self.os_system, self.os_release, self.os_version) )
+            if logger().DEBUG: logger().log( "[helper] OS: {} {} {}".format(self.os_system, self.os_release, self.os_version) )
 
         self.use_existing_service = False
 
         self.win_ver        = win_ver
         self.driver_handle  = None
-        self.device_file    = pywintypes.Unicode(DEVICE_FILE)
+        self.device_file    = str(DEVICE_FILE)
 
         # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
         self.driver_path    = None
@@ -273,10 +268,11 @@ class RweHelper(Helper):
             driver_path = os.path.join(path, DRIVER_FILE_NAME)
             if os.path.isfile(driver_path): 
                 self.driver_path = driver_path
-                if logger().DEBUG: logger().log("[helper] found driver in %s" % driver_path)
-        if self.driver_path == None: 
-            if logger().DEBUG: logger().log("[helper] RWE Driver Not Found")
-            raise DriverNotFound
+                if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
+        if self.driver_path is None: 
+            if logger().DEBUG:
+                logger().log("[helper] RWE Driver Not Found")
+            raise Exception("RWE Driver Not Found")
 
         c_int_p = POINTER(c_int)
 
@@ -293,17 +289,15 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariable = kernel32.SetFirmwareEnvironmentVariableW
             self.SetFirmwareEnvironmentVariable.restype = c_int
             self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
-            pass
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
             self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().DEBUG: logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
-            pass
 
         try:
             self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
@@ -312,23 +306,21 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariableEx = kernel32.SetFirmwareEnvironmentVariableExW
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
-            pass
 
         try:
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
             self.GetSystemFirmwareTbl.restype = c_int
             self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().DEBUG: logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
-            pass
-        
+
         try:
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
             self.EnumSystemFirmwareTbls.restype = c_int
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
-        except AttributeError, msg:
+        except AttributeError as msg:
             if logger().DEBUG: logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
 
 
@@ -354,7 +346,7 @@ class RweHelper(Helper):
 
     #
     # Create (register/install) chipsec service
-    #           
+    #
     def create(self, start_driver):
 
         if not start_driver: return True
@@ -362,11 +354,12 @@ class RweHelper(Helper):
 
         try:
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
-        except win32service.error, (hr, fn, msg):
-            handle_winerror(fn, msg, hr)
+        except win32service.error as err:
+            _handle_winerror(err.args[1], err.args[2], err.args[0])
 
-        if logger().DEBUG: logger().log( "[helper] service control manager opened (handle = 0x%08x)" % hscm )
-        if logger().DEBUG: logger().log( "[helper] driver path: '%s'" % os.path.abspath(self.driver_path) )
+        if logger().DEBUG:
+            logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
+            logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
         try:
             hs = win32service.CreateService(
@@ -380,16 +373,16 @@ class RweHelper(Helper):
                  os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
-                if logger().DEBUG: logger().log( "[helper] service '%s' created (handle = 0x%08x)" % (SERVICE_NAME,hs) )
-        except win32service.error, (hr, fn, msg):
-            if (winerror.ERROR_SERVICE_EXISTS == hr):
-                if logger().DEBUG: logger().log( "[helper] service '%s' already exists: %s (%d)" % (SERVICE_NAME, msg, hr) )
+                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,hs) )
+        except win32service.error as err:
+            if (winerror.ERROR_SERVICE_EXISTS == err.args[0]):
+                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
-                except win32service.error, (hr, fn, msg):
-                    handle_winerror(fn, msg, hr)
+                except win32service.error as err1:
+                    _handle_winerror(err1.args[1], err1.args[2], err1.args[0])
             else:
-                handle_winerror(fn, msg, hr)
+                _handle_winerror(err.args[1], err.args[2], err.args[0])
 
         finally:
             win32service.CloseServiceHandle( hs )
@@ -398,29 +391,29 @@ class RweHelper(Helper):
         return True
 
     #
-    # Remove (detele/unregister/uninstall) chipsec service
+    # Remove (delete/unregister/uninstall) chipsec service
     #
     def delete( self, start_driver ):
         if not start_driver: return True
         if self.use_existing_service: return True
 
         if win32serviceutil.QueryServiceStatus( SERVICE_NAME )[1] != win32service.SERVICE_STOPPED:
-            if logger().DEBUG: logger().warn( "cannot delete service '%s' (not stopped)" % SERVICE_NAME )
+            if logger().DEBUG: logger().warn( "cannot delete service '{}' (not stopped)".format(SERVICE_NAME) )
             return False
 
-        if logger().DEBUG: logger().log( "[helper] deleting service '%s'..." % SERVICE_NAME )
+        if logger().DEBUG: logger().log( "[helper] deleting service '{}'...".format(SERVICE_NAME) )
         try:
             win32serviceutil.RemoveService( SERVICE_NAME )
-            if logger().DEBUG: logger().log( "[helper] service '%s' deleted" % SERVICE_NAME )
-        except win32service.error, (hr, fn, msg):
-            if logger().DEBUG: logger().warn( "RemoveService failed: %s (%d)" % (msg, hr) )
+            if logger().DEBUG: logger().log( "[helper] service '{}' deleted".format(SERVICE_NAME) )
+        except win32service.error as err:
+            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
 
         return True
 
     #
     # Start chipsec service
-    #           
+    #
     def start(self, start_driver, driver_exists=False):
         # we are in native API mode so not starting the service/driver
         if not start_driver: return True
@@ -429,44 +422,44 @@ class RweHelper(Helper):
 
         if self.use_existing_service:
             self.driver_loaded = True
-            if logger().DEBUG: logger().log( "[helper] service '%s' already running" % SERVICE_NAME )
-            if logger().DEBUG: logger().log( "[helper] trying to connect to existing '%s' service..." % SERVICE_NAME )
+            if logger().DEBUG: logger().log( "[helper] service '{}' already running".format(SERVICE_NAME) )
+            if logger().DEBUG: logger().log( "[helper] trying to connect to existing '{}' service...".format(SERVICE_NAME) )
         else:
             #if self.use_existing_service:
-            #    _handle_error( "connecting to existing '%s' service failed (service is not running)" % SERVICE_NAME )
+            #    _handle_error( "connecting to existing '{}' service failed (service is not running)".format(SERVICE_NAME) )
             try:
                 win32serviceutil.StartService( SERVICE_NAME )
                 win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
                 self.driver_loaded = True
-                if logger().DEBUG: logger().log( "[helper] service '%s' started" % SERVICE_NAME )
-            except pywintypes.error, (hr, fn, msg):
-                _handle_error( "service '%s' didn't start: %s (%d)" % (SERVICE_NAME, msg, hr), hr )
-
+                if logger().DEBUG: logger().log( "[helper] service '{}' started".format(SERVICE_NAME) )
+            except pywintypes.error as err:
+                _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]), err.args[0] )
+        self.driverpath = win32serviceutil.LocateSpecificServiceExe(SERVICE_NAME)
         return True
 
     #
     # Stop chipsec service
-    #           
+    #
     def stop( self, start_driver ):
         if not start_driver: return True
         if self.use_existing_service: return True
 
-        if logger().DEBUG: logger().log( "[helper] stopping service '%s'.." % SERVICE_NAME )
+        if logger().DEBUG: logger().log( "[helper] stopping service '{}'..".format(SERVICE_NAME) )
         try:
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
-        except pywintypes.error, (hr, fn, msg):
-            if logger().DEBUG: logger().error( "StopService failed: %s (%d)" % (msg, hr) )
+        except pywintypes.error as err:
+            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
         finally:
             self.driver_loaded = False
 
         try:
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
-            if logger().DEBUG: logger().log( "[helper] service '%s' stopped" % SERVICE_NAME )
-        except pywintypes.error, (hr, fn, msg):
-            if logger().DEBUG: logger().warn( "service '%s' didn't stop: %s (%d)" % (SERVICE_NAME, msg, hr) )
+            if logger().DEBUG: logger().log( "[helper] service '{}' stopped".format(SERVICE_NAME) )
+        except pywintypes.error as err:
+            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
 
         return True
@@ -482,7 +475,7 @@ class RweHelper(Helper):
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
-            if logger().DEBUG: logger().log( "[helper] opened device '%.64s' (handle: %08x)" % (DEVICE_FILE, self.driver_handle) )
+            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, int(self.driver_handle)) )
         return self.driver_handle
 
     def check_driver_handle( self ):
@@ -491,7 +484,7 @@ class RweHelper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             self.get_driver_handle()
-            if logger().DEBUG: logger().warn( "Invalid handle (wtf?): re-opened device '%.64s' (new handle: %08x)" % (self.device_file, self.driver_handle) )
+            if logger().DEBUG: logger().warn( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, self.driver_handle) )
             return False
         return True
 
@@ -519,17 +512,17 @@ class RweHelper(Helper):
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
-        if logger().DEBUG: print_buffer( in_buf )
+        if logger().DEBUG: print_buffer( bytestostring(in_buf) )
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
-        except pywintypes.error, _err:
-            err_status = _err[0] + 0x100000000
+        except pywintypes.error as _err:
+            err_status = _err.args[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
-                err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x%X)" % err_status
+                err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x{:X})".format(err_status)
                 if logger().DEBUG: logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
-                _handle_error( "HW Access Error: DeviceIoControl returned status 0x%X (%s)" % (err_status,_err[2]), err_status )
+                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status,_err.args[2]), err_status )
 
         return out_buf
 
@@ -562,7 +555,7 @@ class RweHelper(Helper):
 
     def native_write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         raise UnimplementedNativeAPIError( "native_write_phys_mem" )
-    
+
     # @TODO: Temporarily the same as read_phys_mem for compatibility 
     def read_mmio_reg( self, phys_address, size ):
         #raise UnimplementedNativeAPIError( "read_mmio_reg" )
@@ -588,69 +581,37 @@ class RweHelper(Helper):
 
     def alloc_phys_mem( self, length, max_pa ):
         #raise UnimplementedNativeAPIError( "alloc_phys_mem" )
-        (va, pa) = (0,0)
         out_length = 16
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '<I', length )
         out_buf = self._ioctl( IOCTL_ALLOC_PHYSMEM, in_buf, out_length )
         (size, pa, va) = struct.unpack( '<IIQ', out_buf )
-        print hex(va), hex(pa)
+        print (hex(va), hex(pa))
         return (va, pa)
 
     def va2pa( self, va ):
         raise UnimplementedNativeAPIError( "va2pa" )
-        error_code = 0
-        in_length  = 8
-        out_length = 8
-        out_buf = (c_char * out_length)()
-        in_buf = struct.pack( 'Q', va )
-        out_buf = self._ioctl( IOCTL_GET_PHYSADDR, in_buf, out_length )
-        pa = struct.unpack( 'Q', out_buf )[0]
-        return (pa,error_code)
 
     #
     # HYPERCALL
     #
     def hypercall( self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
         raise UnimplementedNativeAPIError( "hypercall" )
-        if self.os_machine == 'AMD64':
-            arg_type = 'Q'
-            out_length = 8
-        else:
-            arg_type = 'I'
-            out_length = 4
-        out_buf = (c_char * out_length)()
-        in_buf  = struct.pack( '<11' + arg_type, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
-        out_buf = self._ioctl( IOCTL_HYPERCALL, in_buf, out_length )
-        return struct.unpack( '<' + arg_type, out_buf )[0]
 
     #
     # MAP_IO_SPACE
     #
     def map_io_space( self, physical_address, length, cache_type ):
         raise UnimplementedNativeAPIError( "map_io_space" )
-        out_length = 8
-        out_buf = (c_char * out_length)()
-        in_buf  = struct.pack( '<3Q', physical_address, length, cache_type )
-        out_buf = self._ioctl( IOCTL_MAP_IO_SPACE, in_buf, out_length )
-        virtual_address = struct.unpack( '<Q', out_buf )[0]
-        return virtual_address
 
     #
     # FREE_PHYS_MEM
     #
     def free_phys_mem( self, physical_address ):
         raise UnimplementedNativeAPIError( "free_phys_mem" )
-        out_length = 8
-        out_buf = (c_char * out_length)()
-        in_buf  = struct.pack( '<QQ', 0, physical_address )
-        out_buf = self._ioctl( IOCTL_FREE_PHYSMEM, in_buf, out_length )
-        return
 
     def read_msr( self, cpu_thread_id, msr_addr ):
         (eax,ebx,ecx,edx) = (0,0,0,0)
         out_length = 16
-        out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '<4I', 0, 0, msr_addr, 0 )
         out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
@@ -663,7 +624,6 @@ class RweHelper(Helper):
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
         out_length = 0
-        out_buf = (c_char * out_length)()
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '<4I', eax, 0, msr_addr, edx )
         out_buf = self._ioctl( IOCTL_WRMSR, in_buf, out_length )
@@ -671,7 +631,6 @@ class RweHelper(Helper):
         return
 
     def read_pci_reg( self, bus, device, function, address, size ):
-        value = 0xFFFFFFFF
         bdf = PCI_BDF( bus&0xFFFF, device&0xFFFF, function&0xFFFF, address&0xFFFF )
         cfg_addr = bdf.cfg_address()
         byte_off = address & 0x03
@@ -689,12 +648,6 @@ class RweHelper(Helper):
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
         raise UnimplementedNativeAPIError( "load_ucode_update" )
-        in_length = len(ucode_update_buf) + 3
-        out_length = 0
-        out_buf = (c_char * out_length)()
-        in_buf = struct.pack( '=BH', cpu_thread_id, len(ucode_update_buf) ) + ucode_update_buf
-        out_buf = self._ioctl( IOCTL_LOAD_UCODE_PATCH, in_buf, out_length )
-        return True
 
     def read_io_port( self, io_port, size ):
         in_buf = struct.pack( '<II', io_port, 0 )
@@ -711,7 +664,7 @@ class RweHelper(Helper):
                 out_buf = self._ioctl( IOCTL_READ_IO_PORT_DWORD, in_buf, 8 )
                 mask = 0xffffffff
         except:
-            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size %x (value = '%s')" % (size, out_buf) )
+            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size {:X} (value = '{}')".format(size, out_buf) )
         #print len(out_buf), ":", out_buf.encode('hex')
         value = struct.unpack("<II", out_buf)[1] & mask
 
@@ -738,7 +691,7 @@ class RweHelper(Helper):
         value = 0
         in_buf = struct.pack( '<QQ', cr_number, 0 )
         out_buf = self._ioctl( IOCTL_RDCR, in_buf, 16)
-        print len(out_buf), out_buf.encode('hex')
+        print (len(out_buf), out_buf.encode('hex'))
         code, value = struct.unpack( '<QQ', out_buf )
         return value
 
@@ -753,11 +706,6 @@ class RweHelper(Helper):
     #
     def get_descriptor_table( self, cpu_thread_id, desc_table_code  ):
         raise UnimplementedNativeAPIError( "get_descriptor_table" )
-        in_buf = struct.pack( 'BB', cpu_thread_id, desc_table_code )
-        out_buf = self._ioctl( IOCTL_GET_CPU_DESCRIPTOR_TABLE, in_buf, 18 )
-        (limit,base,pa) = struct.unpack( '=HQQ', out_buf )
-        return (limit,base,pa)
-
 
     #
     # EFI Variable API
@@ -771,16 +719,16 @@ class RweHelper(Helper):
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         if attrs is None:
             if self.GetFirmwareEnvironmentVariable is not None:
-                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='%s', GUID='%s' ).." % (name, "{%s}" % guid) )
-                length = self.GetFirmwareEnvironmentVariable( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE )
+                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='{}', GUID='{}' )..".format(name, "{{{}}}".format(guid)) )
+                length = self.GetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE )
         else:
             if self.GetFirmwareEnvironmentVariableEx is not None:
                 pattrs = c_int(attrs)
-                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', attrs = 0x%X ).." % (name, "{%s}" % guid, attrs) )
-                length = self.GetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
+                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', attrs = 0x{:X} )..".format(name, "{{{}}}".format(guid), attrs) )
+                length = self.GetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
+            logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             efi_var_data = None
             #raise WinError(errno.EIO,"Unable to get EFI variable")
         else:
@@ -798,17 +746,17 @@ class RweHelper(Helper):
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
-                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='%s', GUID='%s', length=0x%X ).." % (name, "{%s}" % guid, var_len) )
-                ntsts = self.SetFirmwareEnvironmentVariable( name, "{%s}" % guid, var, var_len )
+                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='{}', GUID='{}', length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len) )
+                ntsts = self.SetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), var, var_len )
         else:
             if self.SetFirmwareEnvironmentVariableEx is not None:
-                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='%s', GUID='%s', length=0x%X, length=0x%X ).." % (name, "{%s}" % guid, var_len, attrs) )
-                ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{%s}" % guid, var, var_len, attrs )
+                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len, attrs) )
+                ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), var, var_len, attrs )
         if 0 != ntsts:
             status = 0 # EFI_SUCCESS
         else:
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: %s' % WinError() )
+            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
 
@@ -816,9 +764,9 @@ class RweHelper(Helper):
         return self.set_EFI_variable( name, guid, None, datasize=0, attrs=None )
 
     def list_EFI_variables( self, infcls=2 ):
-        if logger().DEBUG: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls=%d )..' % infcls )
+        if logger().DEBUG: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls={:d} )..'.format(infcls) )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
-        length = packl_ctypes( long(EFI_VAR_MAX_BUFFER_SIZE), 32 )
+        length = packl_ctypes( EFI_VAR_MAX_BUFFER_SIZE, 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         status = ( ((1 << 32) - 1) & status)
         if (0xC0000023 == status):
@@ -832,10 +780,10 @@ class RweHelper(Helper):
             return None
         if 0 != status:
             if logger().DEBUG: 
-                logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x%x)' % kernel32.GetLastError() )
-                logger().error( '*** NTSTATUS: %08X' % ( ((1 << 32) - 1) & status) )
+                logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
+                logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
             raise WinError()
-        if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x%X (should be 0x20000)' % len(efi_vars) )
+        if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
 
     #
@@ -843,12 +791,6 @@ class RweHelper(Helper):
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         raise UnimplementedNativeAPIError( "send_sw_smi" )
-        out_length = 0
-        out_buf = (c_char * out_length)()
-        out_size = c_ulong(out_length)
-        in_buf = struct.pack( '=H6Q', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
-        out_buf = self._ioctl( IOCTL_SWSMI, in_buf, out_length )
-        return
 
     def _get_handle_for_pid( self, pid=0, ro=True ):
         if pid == 0:
@@ -859,9 +801,9 @@ class RweHelper(Helper):
                 flags |= wn32con.PROCESS_SET_INFORMATION
             try:
                 pHandle = win32api.OpenProcess(flags, 0, pid)
-            except pywintypes.error, e:
-                print "unable to open a process handle"
-                raise ValueError, e
+            except pywintypes.error as e:
+                print ("unable to open a process handle")
+                raise ValueError(e)
         return pHandle
 
     def set_affinity( self, value ):
@@ -869,26 +811,25 @@ class RweHelper(Helper):
         current = win32process.GetProcessAffinityMask(pHandle)[0]
         try:
             win32process.SetProcessAffinityMask(pHandle, current)
-        except win32process.error, e:
-            print "unable to set process affinity"
-            raise ValueError, e
+        except win32process.error as e:
+            print ("unable to set process affinity")
+            raise ValueError(e)
         return current
 
     def get_affinity( self ):
         pHandle = self._get_handle_for_pid()
         try:
             return win32process.GetProcessAffinityMask(pHandle)[0]
-        except win32process.error, e:
-            print "unable to get the running cpu"
-            raise ValueError, e
-            
+        except win32process.error as e:
+            print ("unable to get the running cpu")
+            raise ValueError(e)
+
     #
     # CPUID
     #
     def cpuid( self, eax, ecx ):
         #raise UnimplementedNativeAPIError( "cpuid" )
         out_length = 16
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack( '<2I', eax, ecx )
         out_buf = self._ioctl( IOCTL_CPUID, in_buf, out_length )
         (eax, ebx, ecx, edx) = struct.unpack( '<4I', out_buf )
@@ -915,7 +856,7 @@ class RweHelper(Helper):
         return tBuffer[:retVal]
 
     # ACPI access is implemented through ACPI HAL rather than through kernel module
-    def get_ACPI_table( self ):
+    def get_ACPI_table( self, table_name ):
         raise UnimplementedAPIError( "get_ACPI_table" )
 
 
@@ -926,15 +867,15 @@ class RweHelper(Helper):
 
     def msgbus_send_read_message( self, mcr, mcrx ):
         if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
-        return None        
+        return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
         if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
-        return None        
+        return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
         if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
-        return None       
+        return None
 
     def get_tool_path( self, tool_type ):
         tool_name, tool_pathdef = self.get_tool_info( tool_type )
@@ -942,14 +883,14 @@ class RweHelper(Helper):
 
         try:
             import pkg_resources
-            tool_path = pkg_resources.resource_filename( '%s.%s' % (chipsec.file.TOOLS_DIR,self.os_system.lower()), tool_name )
+            tool_path = pkg_resources.resource_filename( '{}.{}'.format(chipsec.file.TOOLS_DIR,self.os_system.lower()), tool_name )
         except ImportError:
             pass
 
         if not os.path.isfile( tool_path ):
             tool_path = os.path.join( tool_pathdef, tool_name )
-            if not os.path.isfile( tool_path ): 
-                if logger().DEBUG: logger().error( "Couldn't find %s" % tool_path )
+            if not os.path.isfile( tool_path ):
+                if logger().DEBUG: logger().error( "Couldn't find {}".format(tool_path) )
 
         return tool_path
 
@@ -966,11 +907,11 @@ class RweHelper(Helper):
           shutil.copyfile(CompressedFileName, OutputFileName)
         else:
           exe = self.get_compression_tool_path( CompressionType )
-          if exe is None: return None 
+          if exe is None: return None
           try:
             subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException, msg:
-            if logger().DEBUG: 
+          except BaseException as msg:
+            if logger().DEBUG:
                 logger().error( str(msg) )
                 logger().log_bad( traceback.format_exc() )
             return None

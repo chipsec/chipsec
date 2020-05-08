@@ -1,7 +1,7 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2019, Intel Corporation
-# 
+#Copyright (c) 2019-2020, Intel Corporation
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
@@ -67,7 +67,7 @@ PASSED:
 
     Enhanced IBRS is supported
 
-    Enhanced IBRS is enabled by the OS 
+    Enhanced IBRS is enabled by the OS
 
     STIBP is supported
 
@@ -124,10 +124,9 @@ References:
 
 """
 
-from chipsec.module_common import *
-from chipsec.hal import cpu
-import chipsec.helper.oshelper
-import chipsec.defines
+from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM, ModuleResult
+from chipsec.helper.oshelper import HWAccessViolationError
+from chipsec.defines import BIT26, BIT27, BIT29
 
 TAGS = [MTAG_CPU,MTAG_HWCONFIG,MTAG_SMM]
 
@@ -151,12 +150,12 @@ class spectre_v2(BaseModule):
         # Read CPUID Leaf 07H
         #
         (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid( 0x7, 0x0 )
-        ibrs_ibpb_supported = (r_edx & chipsec.defines.BIT26) > 0
-        stibp_supported     = (r_edx & chipsec.defines.BIT27) > 0
-        arch_cap_supported  = (r_edx & chipsec.defines.BIT29) > 0
-        self.logger.log( "[*] CPUID.7H:EDX[26] = %d Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)" % ibrs_ibpb_supported )
-        self.logger.log( "[*] CPUID.7H:EDX[27] = %d Single Thread Indirect Branch Predictors (STIBP)" % stibp_supported )
-        self.logger.log( "[*] CPUID.7H:EDX[29] = %d IA32_ARCH_CAPABILITIES" % arch_cap_supported )
+        ibrs_ibpb_supported = (r_edx & BIT26) > 0
+        stibp_supported     = (r_edx & BIT27) > 0
+        arch_cap_supported  = (r_edx & BIT29) > 0
+        self.logger.log( "[*] CPUID.7H:EDX[26] = {:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)".format(ibrs_ibpb_supported) )
+        self.logger.log( "[*] CPUID.7H:EDX[27] = {:d} Single Thread Indirect Branch Predictors (STIBP)".format(stibp_supported) )
+        self.logger.log( "[*] CPUID.7H:EDX[29] = {:d} IA32_ARCH_CAPABILITIES".format(arch_cap_supported) )
 
         if ibrs_ibpb_supported: self.logger.log_good( "CPU supports IBRS and IBPB" )
         else:                   self.logger.log_bad( "CPU doesn't support IBRS and IBPB" )
@@ -178,21 +177,21 @@ class spectre_v2(BaseModule):
                 arch_cap_msr = 0
                 try:
                     arch_cap_msr = self.cs.read_register( 'IA32_ARCH_CAPABILITIES', tid )
-                except chipsec.helper.oshelper.HWAccessViolationError:
+                except HWAccessViolationError:
                     self.logger.error( "couldn't read IA32_ARCH_CAPABILITIES" )
                     ibrs_enh_supported = False
                     break
 
                 ibrs_all = self.cs.get_register_field( 'IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL' )
-                self.logger.log( "[*]   cpu%d: IBRS_ALL = %x" % (tid, ibrs_all) )
+                self.logger.log( "[*]   cpu{:d}: IBRS_ALL = {:x}".format(tid, ibrs_all) )
                 if 0 == ibrs_all:
                     ibrs_enh_supported = False
                     break
 
                 # @TODO: this checks for RDCL aka Meltdown (Variant 3) mitigation
-                #self.logger.log( "[*]   cpu%d: checking RDCL mitigation support..." % tid )
+                #self.logger.log( "[*]   cpu{:d}: checking RDCL mitigation support...".format(tid) )
                 #rdcl_no = self.cs.get_register_field( 'IA32_ARCH_CAPABILITIES', arch_cap_msr, 'RDCL_NO' )
-                #self.logger.log( "[*]   cpu%d: RDCL_NO = %x" % (tid, rdcl_no) )
+                #self.logger.log( "[*]   cpu{:d}: RDCL_NO = {:x}".format(tid, rdcl_no) )
                 #if 0 == rdcl_no:
                 #    rdcl_mitigation_supported = False
                 #    break
@@ -213,19 +212,19 @@ class spectre_v2(BaseModule):
                 spec_ctrl_msr = 0
                 try:
                     spec_ctrl_msr = self.cs.read_register( 'IA32_SPEC_CTRL', tid )
-                except chipsec.helper.oshelper.HWAccessViolationError:
+                except HWAccessViolationError:
                     self.logger.error( "couldn't read IA32_SPEC_CTRL" )
                     ibrs_enabled = False
                     break
 
                 ibrs = self.cs.get_register_field( 'IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS' )
-                self.logger.log( "[*]   cpu%d: IA32_SPEC_CTRL[IBRS] = %x" % (tid, ibrs) )
+                self.logger.log( "[*]   cpu{:d}: IA32_SPEC_CTRL[IBRS] = {:x}".format(tid, ibrs) )
                 if 0 == ibrs:
                     ibrs_enabled = False
 
                 # ok to access STIBP bit even if STIBP is not supported
                 stibp = self.cs.get_register_field( 'IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP' )
-                self.logger.log( "[*]   cpu%d: IA32_SPEC_CTRL[STIBP] = %x" % (tid, stibp) )
+                self.logger.log( "[*]   cpu{:d}: IA32_SPEC_CTRL[STIBP] = {:x}".format(tid, stibp) )
                 if 1 == stibp:
                     stibp_enabled_count += 1
 
@@ -242,7 +241,7 @@ class spectre_v2(BaseModule):
 
         #
         # Combining results of all checks into final decision
-        # 
+        #
         # FAILED : IBRS/IBPB is not supported
         # WARNING: IBRS/IBPB is supported
         #          enhanced IBRS is not supported
@@ -253,7 +252,7 @@ class spectre_v2(BaseModule):
         #          STIBP is not supported
         # PASSED : IBRS/IBPB is supported
         #          enhanced IBRS is supported
-        #          enhanced IBRS is enabled by the OS 
+        #          enhanced IBRS is enabled by the OS
         #          STIBP is supported
         #
         if not ibrs_ibpb_supported:
@@ -261,14 +260,14 @@ class spectre_v2(BaseModule):
             self.logger.log_failed_check( "CPU mitigation (IBRS) is missing" )
         elif not ibrs_enh_supported:
             res = ModuleResult.WARNING
-            self.logger.log_warn_check( "CPU supports mitigation (IBRS) but doesn't support enhanced IBRS" ) 
+            self.logger.log_warn_check( "CPU supports mitigation (IBRS) but doesn't support enhanced IBRS" )
         elif ibrs_enh_supported and (not ibrs_enabled):
             res = ModuleResult.WARNING
             self.logger.log_warn_check( "CPU supports mitigation (enhanced IBRS) but OS is not using it" )
         else:
             if (not stibp_supported):
                 res = ModuleResult.WARNING
-                self.logger.log_warn_check( "CPU supports mitigation (enhanced IBRS) but STIBP is not supported" ) 
+                self.logger.log_warn_check( "CPU supports mitigation (enhanced IBRS) but STIBP is not supported" )
             else:
                 res = ModuleResult.PASSED
                 self.logger.log_passed_check( "CPU and OS support hardware mitigations" )

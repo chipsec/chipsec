@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,31 +19,28 @@
 #chipsec@intel.com
 #
 
-
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Main UEFI component using platform specific and common UEFI functionality
 """
 
 import struct
 import sys
+import os
 
 from collections import namedtuple
 import collections
 
 from chipsec.hal import hal_base, mmio, spi, uefi_platform
-from chipsec.hal.uefi_common import *
-from chipsec.logger import *
-from chipsec.file import *
+from chipsec.hal.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES,  MAX_EFI_TABLE_SIZE
+from chipsec.hal.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
+from chipsec.hal.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE, EFI_VARIABLE_NON_VOLATILE
+from chipsec.hal.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, SECURE_BOOT_SIG_VAR
+from chipsec.hal.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
+from chipsec.hal.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
+from chipsec.logger import logger, print_buffer
+from chipsec.file import write_file, read_file
 from chipsec.defines import COMPRESSION_TYPES
+from chipsec.defines import bytestostring
 
 
 ########################################################################################################
@@ -74,7 +71,7 @@ def parse_script( script, log_script=False ):
     if logger().HAL: logger().log( '[uefi] S3 Resume Boot-Script size: 0x{:X}'.format(off) )
     if logger().HAL: 
         logger().log( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
-        print_buffer( script[ : off ] )
+        print_buffer( bytestostring(script[ : off ]) )
 
     return s3_boot_script_entries
 
@@ -172,7 +169,7 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
     logger().log( '--------------------------------' )
 
     # Print Variable Name
-    logger().log( 'Name      : {}'.format(efi_var_name) )
+    logger().log( u'Name      : {}'.format(efi_var_name) )
     # Print Variable GUID
     logger().log( 'Guid      : {}'.format(efi_var_guid) )
 
@@ -194,7 +191,7 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
             if EFI_var_header.__str__:
                 logger().log( EFI_var_header )
             else:
-                logger().log( 'Decoded Header ({}):'.format(uefi_platform.EFI_VAR_DICT[ self._FWType ]['name']) )
+                logger().log( 'Decoded Header ({}):'.format(uefi_platform.EFI_VAR_DICT[ uefi_platform.FWType.EFI_FW_TYPE_UEFI ]['name']) )
                 for attr in EFI_var_header._fields:
                     logger().log( '{} = {:X}'.format('{0:<16}'.format(attr), getattr(EFI_var_header, attr)) )
 
@@ -203,13 +200,13 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
 
     # Print Variable Data
     logger().log( 'Data:' )
-    print_buffer( efi_var_data )
+    print_buffer( bytestostring(efi_var_data) )
 
     # Print Variable Full Contents
     if logger().VERBOSE:
         logger().log( 'Full Contents:' )
         if not efi_var_buf is None:
-            print_buffer( efi_var_buf )
+            print_buffer( bytestostring(efi_var_buf) )
 
 
 def print_sorted_EFI_variables( variables ):
@@ -242,7 +239,7 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
 def identify_EFI_NVRAM( buffer ):
     b = buffer
     for fw_type in uefi_platform.fw_types:
-    #for t in uefi_platform.EFI_VAR_DICT.keys():            
+    #for t in uefi_platform.EFI_VAR_DICT.keys():
         if uefi_platform.EFI_VAR_DICT[ fw_type ]['func_getnvstore']:
             (offset, size, hdr) = uefi_platform.EFI_VAR_DICT[ fw_type ]['func_getnvstore']( b )
             if offset != -1: return fw_type
@@ -289,14 +286,20 @@ class UEFI(hal_base.HALBase):
         return self.read_EFI_variables_from_SPI( 0, 0x800000 )
 
     def read_EFI_variables_from_SPI( self, BIOS_region_base, BIOS_region_size ):
-        rom = spi.read_spi( BIOS_region_base, BIOS_region_size )
-        efi_var_store = self.find_EFI_Variable_Store( rom )
-        return self.read_EFI_NVRAM_variables( efi_var_store )
+        rom = self.cs.spi.read_spi( BIOS_region_base, BIOS_region_size )
+        efi_var_store = self.find_EFI_variable_store( rom )
+        if efi_var_store:
+            efi_vars = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']
+            return efi_vars
+        return efi_var_store
 
     def read_EFI_variables_from_file( self, filename ):
         rom = read_file( filename )
-        efi_var_store = self.find_EFI_Variable_Store( rom )
-        return self.read_EFI_NVRAM_variables( efi_var_store )
+        efi_var_store = self.find_EFI_variable_store( rom )
+        if efi_var_store:
+            efi_vars = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']
+            return efi_vars
+        return efi_var_store
 
     def find_EFI_variable_store( self, rom_buffer ):
         if ( rom_buffer is None ):
@@ -413,7 +416,7 @@ NVRAM: EFI Variable Store
                 if logger().HAL: logger().log( "[uefi] found: {} {{{}}} {} variable".format(efivar_name,guid,get_attr_string(attrs)) )
                 if logger().HAL:
                     logger().log('[uefi] {} variable data:'.format(efivar_name))
-                    print_buffer( data )
+                    print_buffer( bytestostring(data) )
 
                 varsz = len(data)
                 if   4 == varsz: AcpiGlobalAddr_fmt = '<L'
@@ -430,7 +433,7 @@ NVRAM: EFI Variable Store
                 AcpiVariableSet = self.helper.read_physical_mem( AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE )
                 if logger().HAL:
                     logger().log('[uefi] AcpiVariableSet structure:')
-                    print_buffer( AcpiVariableSet )
+                    print_buffer( bytestostring(AcpiVariableSet) )
                 AcpiVariableSet_fmt = '<6Q'
                 #if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
                 #    logger().error( 'Unrecognized format of AcpiVariableSet structure' )
@@ -467,7 +470,7 @@ NVRAM: EFI Variable Store
             # @TODO: should be dumping memory contents in a loop until end opcode is found or id'ing actual size
             script_buffer = self.helper.read_physical_mem( bootscript_pa, 0x200000 )
             if logger().HAL: logger().log( '[uefi] Decoding S3 Resume Boot-Script..' )
-            script_entries = parse_script( script_buffer, log_script )               
+            script_entries = parse_script( script_buffer, log_script )
             parsed_scripts[ bootscript_pa ] = script_entries
         return (bootscript_PAs,parsed_scripts)
 
@@ -485,7 +488,7 @@ NVRAM: EFI Variable Store
             if filename: write_file( filename, var )
             if logger().UTIL_TRACE or logger().HAL:
                 logger().log( '[uefi] EFI variable {}:{} :'.format(guid, name) )
-                print_buffer( var )
+                print_buffer( bytestostring(var) )
         return var
 
     def set_EFI_variable( self, name, guid, var, datasize=None, attrs=None ):
@@ -493,7 +496,7 @@ NVRAM: EFI Variable Store
             logger().log( '[uefi] writing EFI variable {}:{} {}'.format(guid, name, '' if attrs is None else ('(attributes = {})'.format(attrs))) )
             #print_buffer( var )
         return self.helper.set_EFI_variable( name, guid, var, datasize, attrs )
-        
+
     def set_EFI_variable_from_file( self, name, guid, filename, datasize=None, attrs=None ):
         if filename is None:
             logger().error( 'File with EFI variable is not specified' )
@@ -520,7 +523,7 @@ NVRAM: EFI Variable Store
         while pa > CHUNK_SZ:
             if logger().HAL: logger().log( '[uefi] reading 0x{:016X}..'.format(pa) )
             membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
-            pos = membuf.find( table_sig )
+            pos = bytestostring(membuf).find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
                 if logger().HAL: logger().log( "[uefi] found signature '{}' at 0x{:016X}..".format(table_sig,table_pa) )
@@ -547,7 +550,7 @@ NVRAM: EFI Variable Store
                         table_buf = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE + table_size )
                     table = EFI_TABLES[table_sig]['struct']( *struct.unpack_from( EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:] ) )
                     if logger().HAL:
-                       print_buffer( table_buf )
+                       print_buffer( bytestostring(table_buf) )
                        logger().log( '[uefi] {}:'.format(EFI_TABLES[table_sig]['name']) )
                        logger().log( table_header )
                        logger().log( table )
@@ -582,8 +585,16 @@ NVRAM: EFI Variable Store
                 if logger().HAL: logger().log( "[uefi] UEFI appears to be in Runtime mode" )
                 ect_pa = self.cs.mem.va2pa( est.ConfigurationTable )
                 if not ect_pa:
-                    logger().error( "Can't find UEFI ConfigurationTable" )
-                    return (None,ect_pa,ect,ect_buf)
+                    # Most likely the VA in the System Table is not mapped so find the RST by signature and 
+                    # then compute the address of the configuration table.  This assumes the VA mapping keeps
+                    # the pages in the same relative location as in physical memory.
+                    (rst_found, rst_pa, rst_header, rst, rst_buf) = self.find_EFI_RuntimeServices_Table()
+                    if rst_found:
+                        if logger().HAL: logger().warn("Attempting to derive configuration table address")
+                        ect_pa = rst_pa + (est.ConfigurationTable - est.RuntimeServices)
+                    else:
+                        if logger().HAL: logger().warn( "Can't find UEFI ConfigurationTable" )
+                        return (None,ect_pa,ect,ect_buf)
 
         if logger().HAL: logger().log( "[uefi] EFI Configuration Table ({:d} entries): VA = 0x{:016X}, PA = 0x{:016X}".format(est.NumberOfTableEntries,est.ConfigurationTable,ect_pa) )
 
@@ -600,29 +611,29 @@ NVRAM: EFI Variable Store
         (found,pa,hdr,table,table_buf) = self.find_EFI_System_Table()
         if found:
             logger().log( "[uefi] EFI System Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
         (found,ect_pa,ect,ect_buf) = self.find_EFI_Configuration_Table()
         if found:
             logger().log( "\n[uefi] EFI Configuration Table:" )
-            print_buffer( ect_buf )
+            print_buffer( bytestostring(ect_buf) )
             logger().log( ect )
         (found,pa,hdr,table,table_buf) = self.find_EFI_RuntimeServices_Table()
         if found:
             logger().log( "\n[uefi] EFI Runtime Services Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
         (found,pa,hdr,table,table_buf) = self.find_EFI_BootServices_Table()
         if found:
             logger().log( "\n[uefi] EFI Boot Services Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
         (found,pa,hdr,table,table_buf) = self.find_EFI_DXEServices_Table()
         if found:
             logger().log( "\n[uefi] EFI DXE Services Table:" )
-            print_buffer( table_buf )
+            print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )

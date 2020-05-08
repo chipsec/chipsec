@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -27,8 +27,9 @@ This module checks that software cannot write to the flash descriptor.
 
 """
 
-from chipsec.module_common import *
-import chipsec.hal.spi
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.hal.spi import FLASH_DESCRIPTOR
+
 TAGS = [MTAG_BIOS]
 
 class spi_desc(BaseModule):
@@ -50,8 +51,8 @@ class spi_desc(BaseModule):
         brra = self.cs.get_register_field( 'FRAP', frap, 'BRRA' )
         brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
 
-        self.logger.log("[*] Software access to SPI flash regions: read = 0x%02X, write = 0x%02X" % (brra, brwa) )
-        if brwa & (1 << chipsec.hal.spi.FLASH_DESCRIPTOR):
+        self.logger.log("[*] Software access to SPI flash regions: read = 0x{:02X}, write = 0x{:02X}".format(brra, brwa) )
+        if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 

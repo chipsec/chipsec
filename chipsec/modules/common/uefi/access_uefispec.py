@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -26,13 +26,12 @@ Checks protection of UEFI variables defined in the UEFI spec to have certain per
 Returns failure if variable attributes are not as defined in `table 11 "Global Variables" <http://uefi.org/>`_ of the UEFI spec.
 """
 
-from chipsec.module_common import *
-from chipsec.file          import *
-from chipsec.hal.uefi      import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
+from chipsec.hal.uefi import UEFI, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
+from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
 
-TAGS = [MTAG_BIOS]
-TAGS += [MTAG_SECUREBOOT]
 
+TAGS = [MTAG_BIOS, MTAG_SECUREBOOT]
 
 class access_uefispec(BaseModule):
 
@@ -99,8 +98,8 @@ class access_uefispec(BaseModule):
         newstr = ":".join("{:02x}".format(ord(c)) for c in data2)
 
         if oldstr != newstr:
-            print oldstr
-            print newstr
+            print (oldstr)
+            print (newstr)
             return True
         else:
             return False
@@ -115,26 +114,25 @@ class access_uefispec(BaseModule):
         if baddata == origdata:
             baddata = 'A'*datalen #in case we failed to restore previously
         status = self._uefi.set_EFI_variable(name, guid, baddata)
-        if not status: self.logger.log_good('Writing EFI variable %s did not succeed.' % name)
+        if not status: self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
         newdata  = self._uefi.get_EFI_variable(name, guid)
         if self.diff_var(newdata, origdata):
-            self.logger.log_bad('Corruption of EFI variable of concern %s. Trying to recover.' % name)
+            self.logger.log_bad('Corruption of EFI variable of concern {}. Trying to recover.'.format(name))
             ret = True
             self._uefi.set_EFI_variable(name, guid, origdata)
             if self.diff_var(self._uefi.get_EFI_variable(name, guid), origdata):
                 nameguid = name+' ('+guid+')'
-                self.logger.log_bad('RECOVERY FAILED. Variable %s remains corrupted. Original data value: %s' % (nameguid, origdata))
+                self.logger.log_bad('RECOVERY FAILED. Variable {} remains corrupted. Original data value: {}'.format(nameguid, origdata))
         return ret
 
 
     def check_vars(self, do_modify):
         res = ModuleResult.PASSED
-        error = False
         vars = self._uefi.list_EFI_variables()
         if vars is None:
-            self.logger.log_error_check( 'Could not enumerate UEFI Variables from runtime (Legacy OS?)' )
+            self.logger.log_warn_check( 'Could not enumerate UEFI Variables from runtime.' )
             self.logger.log_important( "Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually." )
-            return ModuleResult.ERROR
+            return ModuleResult.SKIPPED
 
         bsnv_vars = []
         bsnv_concern = []
@@ -151,12 +149,12 @@ class access_uefispec(BaseModule):
                 pass
 
             if len(vars[name]) > 1:
-                self.logger.log_important( 'Found two instances of the variable %s.' % name )
+                self.logger.log_important( 'Found two instances of the variable {}.'.format(name) )
             for (off, buf, hdr, data, guid, attrs) in vars[name]:
-                self.logger.log('[*] Variable %s (%s)' % (name,get_attr_string(attrs)))
+                self.logger.log('[*] Variable {} ({})'.format(name,get_attr_string(attrs)))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
-                    #self.logger.log(' UEFI Spec Var %s' % name)
+                    #self.logger.log(' UEFI Spec Var {}'.format(name))
                     if perms != attrs:
                         attr_diffs = (perms ^ attrs)
                         extra_attr = attr_diffs &  attrs
@@ -172,26 +170,26 @@ class access_uefispec(BaseModule):
                 if do_modify:
                     #self.logger.log('uefispec_ro_vars')
                     if name in self.uefispec_ro_vars:
-                        self.logger.log("[*] Testing modification of %s .." %name)
+                        self.logger.log("[*] Testing modification of {} ..".format(name))
                         if self.can_modify(name, guid, data):
                             ro_concern.append(name)
-                            self.logger.log_bad("Variable %s should be read only." % name)
+                            self.logger.log_bad("Variable {} should be read only.".format(name))
                             res = ModuleResult.FAILED
 
-        self.logger.log('')
-        self.logger.log_bad('Variables with attributes that differ from UEFI spec:')
-        for name in uefispec_concern:
-            self.logger.log('    %s' % name)
+        if uefispec_concern:
+            self.logger.log('')
+            self.logger.log_bad('Variables with attributes that differ from UEFI spec:')
+            for name in uefispec_concern:
+                self.logger.log('    {}'.format(name))
 
         if do_modify:
             self.logger.log('')
             self.logger.log_bad('Variables that should have been read-only and were not:')
             for name in ro_concern:
-                self.logger.log('    %s' % name)
+                self.logger.log('    {}'.format(name))
 
         self.logger.log('')
 
-        if error: return ModuleResult.ERROR
         if   ModuleResult.PASSED == res: self.logger.log_passed_check( 'All checked EFI variables are protected according to spec.' )
         elif ModuleResult.FAILED == res: self.logger.log_failed_check('Some EFI variables were not protected according to spec.')
         return res

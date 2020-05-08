@@ -39,6 +39,7 @@
 # To build Windows executable chipsec.exe using py2exe:
 #
 # 1. Install py2exe package from http://www.py2exe.org
+#    * for Python 3 please use https://github.com/albertosottile/py2exe instead
 # 2. run "python build_exe_<platform>.py py2exe"
 # 3. chipsec.exe and all needed libraries will be created in "./bin/<platform>"
 #
@@ -47,54 +48,64 @@
 import os
 import sys
 
-print 'Python', (sys.version)
+print('Python', sys.version)
 
 import py2exe
 WIN_DRIVER_INSTALL_PATH = "chipsec/helper/win"
 VERSION_FILE="VERSION"
 
 build_dir = os.getcwd()
-root_dir = os.path.abspath(os.pardir)
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 bin_dir = os.path.join(root_dir,"bin")
-source_dir = os.path.join(root_dir,"source")
 tool_dir   = root_dir
 cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
+version_file = os.path.join(root_dir, "chipsec", VERSION_FILE)
 
 win_7_amd64 = os.path.join(bin_dir,'win7-amd64');
 
 
-print os.getcwd()
+print(os.getcwd())
 os.chdir( tool_dir )
 sys.path.append(tool_dir)
-print os.getcwd()
+print(os.getcwd())
 
 
-data_files = [(WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys'])]
+data_files = [
+    (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
+    ('chipsec/modules/tools/uefi', ['chipsec/modules/tools/uefi/blacklist.json']),
+    ('chipsec/modules/tools/secureboot', [
+        'chipsec/modules/tools/secureboot/Shell.efi',
+        'chipsec/modules/tools/secureboot/te.cfg'
+    ]),
+]
+
 for current, dirs, files in os.walk(cfg_dir ):
     for file in files:
         if file.endswith('.xml') :
-            #xf = os.path.join('chipsec','cfg') ,os.path.join(cfg_dir,file)
-            xf = 'chipsec/cfg' ,['chipsec/cfg/%s'%file]
+            xf = 'chipsec/cfg' ,['chipsec/cfg/{}'.format(file)]
             data_files.append( xf ) 
 
 version=""
-if os.path.exists(VERSION_FILE):
-    data_files.append(('.',['VERSION']))
-    with open(VERSION_FILE, "r") as verFile:
+if os.path.exists(version_file):
+    data_files.append(('.',[version_file]))
+    with open(version_file, "r") as verFile:
         version = verFile.read()
-print "VERSION: %s"%version 
+print("VERSION: {}".format(version))
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
     if current.startswith(os.path.join(tool_dir,'build')): 
-        #print "*********** skipped: %s"%current
         continue
     for file in files:
         if file == "__init__.py":
             pkg = current.replace(tool_dir+os.path.sep,"")
             pkg = pkg.replace(os.path.sep,'.')
             mypackages.append(pkg)
-            print pkg
+            print(pkg)
+
+# Don't rely on py2exe to create the dist dir
+if not os.path.exists(win_7_amd64):
+    os.makedirs(win_7_amd64)
 
 from distutils.core import setup
 
@@ -106,13 +117,10 @@ setup(
         description     = 'CHIPSEC: Platform Security Assessment Framework',
         version         = version,
         console         = [ 'chipsec_main.py', 'chipsec_util.py' ],
-        #zipfile         = None,
         data_files      =  data_files,
         options         = {
                             'build' : { 'build_base': build_dir },
                             'py2exe': {
-                                        #"bundle_files": 1,
-                                        #'includes'    : includes,
                                         'dist_dir'    : win_7_amd64,
                                         'packages'    : mypackages,
                                         'compressed'  : True

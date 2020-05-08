@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -19,37 +19,20 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2019 Intel Corporation
-#
-# -------------------------------------------------------------------------------
-
 """
 Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
 """
 
 import os
-import fnmatch
 import re
 import errno
-import shutil
 import traceback
 import sys
 
 import chipsec.file
-from chipsec.logger import *
-from chipsec.helper.basehelper import Helper
+from chipsec.logger import logger
 
-_importlib = True
-try:
-    import importlib
-
-except ImportError:
-    _importlib = False
+avail_helpers = []
 
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
@@ -76,7 +59,7 @@ class UnimplementedNativeAPIError (UnimplementedAPIError):
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
 
-import chipsec.helper.helpers
+import chipsec.helper.helpers as chiphelpers
 
 ## OS Helper
 #
@@ -89,7 +72,7 @@ class OsHelper:
         if(not self.helper):
             import platform
             os_system  = platform.system()
-            raise OsHelperError( "Could not load helper for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
+            raise OsHelperError( "Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -97,34 +80,35 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def loadHelpers(self):
-        for name, cls in Helper.registry:
+        for helper in avail_helpers:
             try:
-                self.helper = cls()
+                self.helper = getattr(chiphelpers,helper).get_helper()
                 break
             except OsHelperError:
                 raise
             except:
-                pass
+                if logger().DEBUG:
+                    logger().log("Unable to load helper: {}".format(helper))
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:
-            from chipsec.helper.file.helper import FileCmds
+            from chipsec.helper.file.filehelper import FileCmds
             self.filecmds = FileCmds(to_file)
         if not driver_exists is None:
-            for name, cls in Helper.registry:
+            for name in avail_helpers:
                 if name == driver_exists:
-                    self.helper = cls()
+                    self.helper = getattr(chiphelpers,name).get_helper()
         try:
             if not self.helper.create( start_driver ):
-                raise OsHelperError("failed to create OS helper")
+                raise OsHelperError("failed to create OS helper",1)
             if not self.helper.start( start_driver, from_file ):
-                raise OsHelperError("failed to start OS helper")
-        except (None,Exception) as msg:
+                raise OsHelperError("failed to start OS helper",1)
+        except Exception as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg,'errorcode'):
                 error_no = msg.errorcode
-            raise OsHelperError("Could not start the OS Helper, are you running as Admin/root?\n           Message: \"{}\"".format(msg),error_no)
+            raise OsHelperError("Message: \"{}\"".format(msg),error_no)
 
     def stop( self, start_driver ):
         if not self.filecmds is None:
@@ -254,7 +238,7 @@ class OsHelper:
         else:
             ret = self.helper.free_phys_mem(physical_address)
         if not self.filecmds is None:
-            self.filecmds.AddElement("free_physical_mem",(phys_address),ret)
+            self.filecmds.AddElement("free_physical_mem",(physical_address),ret)
         return ret
 
     def va2pa( self, va ):
@@ -490,7 +474,7 @@ class OsHelper:
         if self.use_native_api() and hasattr(self.helper, 'native_set_affinity'):
             ret = self.helper.native_set_affinity( value )
         else:
-            ret = self.helper.get_affinity()
+            ret = self.helper.set_affinity(value)
         if not self.filecmds is None:
             self.filecmds.AddElement("set_affinity",(value),ret)
         return ret
@@ -562,7 +546,7 @@ _helper = None
 
 def helper():
     global _helper
-    if _helper == None:
+    if _helper is None:
         try:
             _helper  = OsHelper()
         except BaseException as msg:

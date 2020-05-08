@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,11 +28,9 @@ https://trustedcomputinggroup.org
 
 import struct
 import sys
-import time
 from collections import namedtuple
 
-from chipsec.logger import *
-from chipsec.file import *
+from chipsec.logger import print_buffer
 from chipsec.hal import hal_base
 
 import chipsec.hal.tpm12_commands
@@ -186,10 +184,10 @@ class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSi
         _str = """----------------------------------------------------------------
                      TPM response header
 ----------------------------------------------------------------
-   Response TAG: 0x%x
-   Data Size   : 0x%x
-   Return Code : 0x%x
-""" % ( self.ResponseTag, self.DataSize, self.ReturnCode  )
+   Response TAG: 0x{:x}
+   Data Size   : 0x{:x}
+   Return Code : 0x{:x}
+""".format( self.ResponseTag, self.DataSize, self.ReturnCode  )
         _str += "\t"
         try:
             _str += STATUS[self.ReturnCode]
@@ -200,22 +198,22 @@ class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSi
 
 class TPM(hal_base.HALBase):
     def __init__( self, cs ):
-        self.cs = cs
+        super(TPM,self).__init__(cs)
         self.helper = cs.helper
         self.TPM_BASE = int(self.cs.Cfg.MEMORY_RANGES["TPM"]["address"], 16)
 
     def command( self, commandName, locality, command_argv ):
-        """ 
+        """
         Send command to the TPM and receive data
         """
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
         requestedUse = False
-        
+
         #
         # Request locality use if needed
         #
@@ -223,82 +221,85 @@ class TPM(hal_base.HALBase):
         if self.helper.read_mmio_reg( access_address, 4 ) == BEENSEIZED:
             self.helper.write_mmio_reg( access_address, 4, REQUESTUSE )
             requestedUse = True
-        
+
         #
         # Build command (big endian) and send/receive 
         #
         ( command, size ) = COMMANDS[commandName]( command_argv )
         self._send_command( Locality, command, size )
-        
+
         ( header, data, header_blob, data_blob ) = self._read_response( Locality )
-        logger().log( header )
+        self.logger.log( header )
         print_buffer( str(data_blob) )
-        logger().log( '\n' )
-        
+        self.logger.log( '\n' )
+
         #
         # Release locality if needed
         #
         if requestedUse==True:
             self.helper.write_mmio_reg( access_address, 4, BEENSEIZED )
         self.helper.write_mmio_reg( access_address, 1, ACTIVELOCALITY )
-    
+
     def _send_command( self, Locality, command, size ):
         """
         Send a command to the TPM using the locality specified
-        """            
+        """
         count = 0
-        
+
         datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
         sts_address = self.TPM_BASE | Locality| TPM_STS
         access_address = self.TPM_BASE | Locality| TPM_ACCESS
-        
+
         self.helper.write_mmio_reg( access_address, 1, REQUESTUSE )
         #
         # Set status to command ready
         #
-        sts_value = self.helper.read_mmio_reg( sts_address, 1 )       
+        sts_value = self.helper.read_mmio_reg( sts_address, 1 )
         while ( 0 == ( sts_value & COMMANDREADY ) ):
             self.helper.write_mmio_reg( sts_address, 1, COMMANDREADY )
-            sts_value = self.helper.read_mmio_reg( sts_address, 1 )        
- 
+            sts_value = self.helper.read_mmio_reg( sts_address, 1 )
+
         while count < size:
             sts_value = self.helper.read_mmio_reg( sts_address, 4 )
             burst_count = ( ( sts_value>>8 ) & 0xFFFFFF )
             burst_index = 0
             while ( burst_index < burst_count ) and ( count < size ):
-                self.helper.write_mmio_reg( datafifo_address, 1, struct.unpack("=B", command[count])[0] )
+                datafifo_value = command[count]
+                if sys.version_info.major == 2:
+                    datafifo_value = struct.unpack("=B", datafifo_value)[0]
+                self.helper.write_mmio_reg( datafifo_address, 1, datafifo_value )
                 count += 1
                 burst_index += 0x1
-                
+
         self.helper.write_mmio_reg( sts_address, 1, TPMGO )
-        
+
     def _read_response(self, Locality):
         """
         Read the TPM's response using the specified locality
-        """     
+        """
         count = 0
         header = ""
         header_blob = bytearray()
         data = ""
-        data_blob = bytearray()       
+        data_blob = bytearray()
         #
         # Build FIFO address
-        #            
+        #
         datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
-        access_address = self.TPM_BASE | Locality| TPM_ACCESS        
+        access_address = self.TPM_BASE | Locality| TPM_ACCESS
         sts_address = self.TPM_BASE | Locality| TPM_STS
 
         sts_value = self.helper.read_mmio_reg( sts_address, 1 )
         data_avail = bin( sts_value & ( 1<<4 ) )[2]
         #
         # Read data available
-        #        
+        #
         # watchdog?
         while data_avail == '0':
             sts_value = self.helper.read_mmio_reg( sts_address, 1 )
             self.helper.write_mmio_reg( sts_address, 1, DATAAVAIL )
             data_avail = bin( sts_value & ( 1<<4 ) )[2]
-        
+
         while count < HEADERSIZE:
             sts_value = self.helper.read_mmio_reg( sts_address, 4 )
             burst_count = ( ( sts_value>>8 ) & 0xFFFFFF )
@@ -309,7 +310,7 @@ class TPM(hal_base.HALBase):
                 burst_index += 0x1
 
         header = TPM_RESPONSE_HEADER( *struct.unpack_from( HEADERFORMAT, header_blob ) )
-        
+
         count = 0
         if header.DataSize > 10 and header.ReturnCode == 0:
             length = header.DataSize - HEADERSIZE
@@ -321,34 +322,34 @@ class TPM(hal_base.HALBase):
                     data_blob.append( self.helper.read_mmio_reg( datafifo_address, 1 ) )
                     count += 1
                     burst_index += 0x1
-            
-        return ( header, data, header_blob, data_blob )   
-    
+
+        return ( header, data, header_blob, data_blob )
+
     def dump_access( self, locality ):
-        """ 
+        """
         View the contents of the register used to gain ownership of the TPM
         """
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
-         
+
         access_address = self.TPM_BASE | Locality| TPM_ACCESS 
         access_value = self.helper.read_mmio_reg( access_address, 1 )
 
-        logger().log( "================================================================" )
-        logger().log( "                        TPM Access" )
-        logger().log( "================================================================" )
-        logger().log( "\ttpmRegValidSts  : 0x%s" % bin( access_value & ( 1<<7 ) )[2] )
-        logger().log( "\treserved        : 0x%s" % bin( access_value & ( 1<<6 ) )[2] )
-        logger().log( "\tactiveLocality  : 0x%s" % bin( access_value & ( 1<<5 ) )[2] )
-        logger().log( "\tbeenSeized      : 0x%s" % bin( access_value & ( 1<<4 ) )[2] )
-        logger().log( "\tSeize           : 0x%s" % bin( access_value & ( 1<<3 ) )[2] )
-        logger().log( "\tpendingRequest  : 0x%s" % bin( access_value & ( 1<<2 ) )[2] )
-        logger().log( "\trequestUse      : 0x%s" % bin( access_value & ( 1<<1 ) )[2] )
-        logger().log( "\ttpmEstablishment: 0x%s" % bin( access_value & ( 1<<0 ) )[2] )
-             
+        self.logger.log( "================================================================" )
+        self.logger.log( "                        TPM Access" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\ttpmRegValidSts  : 0x{}".format(bin( access_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\treserved        : 0x{}".format(bin( access_value & ( 1<<6 ) )[2]) )
+        self.logger.log( "\tactiveLocality  : 0x{}".format(bin( access_value & ( 1<<5 ) )[2]) )
+        self.logger.log( "\tbeenSeized      : 0x{}".format(bin( access_value & ( 1<<4 ) )[2]) )
+        self.logger.log( "\tSeize           : 0x{}".format(bin( access_value & ( 1<<3 ) )[2]) )
+        self.logger.log( "\tpendingRequest  : 0x{}".format(bin( access_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\trequestUse      : 0x{}".format(bin( access_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\ttpmEstablishment: 0x{}".format(bin( access_value & ( 1<<0 ) )[2]) )
+
     def dump_status( self, locality ):
         """
         View general status details
@@ -356,24 +357,24 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
-         
+
         sts_address = self.TPM_BASE | Locality| TPM_STS 
         sts_value = self.helper.read_mmio_reg( sts_address, 4 )
-        
-        logger().log( "================================================================" )
-        logger().log( "                         TPM Status" )
-        logger().log( "================================================================" )
-        logger().log( "\tburstCount   : 0x%x" % ( ( sts_value>>8 ) & 0xFFFFFF ) )
-        logger().log( "\tstsValid     : 0x%s" % bin( sts_value & ( 1<<7 ) )[2] )
-        logger().log( "\tcommandReady : 0x%s" % bin( sts_value & ( 1<<6 ) )[2] )
-        logger().log( "\ttpmGo        : 0x%s" % bin( sts_value & ( 1<<5 ) )[2] )
-        logger().log( "\tdataAvail    : 0x%s" % bin( sts_value & ( 1<<4 ) )[2] )
-        logger().log( "\tExpect       : 0x%s" % bin( sts_value & ( 1<<3 ) )[2] )
-        logger().log( "\tReserved     : 0x%s" % bin( sts_value & ( 1<<2 ) )[2] )
-        logger().log( "\tresponseRetry: 0x%s" % bin( sts_value & ( 1<<1 ) )[2] )
-        logger().log( "\tReserved     : 0x%s" % bin( sts_value & ( 1<<0 ) )[2] )
+
+        self.logger.log( "================================================================" )
+        self.logger.log( "                         TPM Status" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tburstCount   : 0x{:x}".format( ( sts_value>>8 ) & 0xFFFFFF ) )
+        self.logger.log( "\tstsValid     : 0x{}".format(bin( sts_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\tcommandReady : 0x{}".format(bin( sts_value & ( 1<<6 ) )[2]) )
+        self.logger.log( "\ttpmGo        : 0x{}".format(bin( sts_value & ( 1<<5 ) )[2]) )
+        self.logger.log( "\tdataAvail    : 0x{}".format(bin( sts_value & ( 1<<4 ) )[2]) )
+        self.logger.log( "\tExpect       : 0x{}".format(bin( sts_value & ( 1<<3 ) )[2]) )
+        self.logger.log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\tresponseRetry: 0x{}".format(bin( sts_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\tReserved     : 0x{}".format(bin( sts_value & ( 1<<0 ) )[2]) )
 
     def dump_didvid( self, locality ):
         """ 
@@ -382,87 +383,87 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
-         
+
         didvid_address = self.TPM_BASE | Locality| TPM_DIDVID 
         didvid_value = self.helper.read_mmio_reg( didvid_address, 4 )
-        
-        logger().log( "================================================================" )
-        logger().log( "                           TPM DID VID" )
-        logger().log( "================================================================" )
-        logger().log( "\tdid: 0x%x" % ( ( didvid_value>>16 ) & 0xFFFF ) )
-        logger().log( "\tvid: 0x%x" % ( didvid_value & 0xFFFF) )
- 
+
+        self.logger.log( "================================================================" )
+        self.logger.log( "                           TPM DID VID" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tdid: 0x{:x}".format( ( didvid_value>>16 ) & 0xFFFF ) )
+        self.logger.log( "\tvid: 0x{:x}".format( didvid_value & 0xFFFF) )
+
     def dump_rid( self, locality ):
-        """ 
+        """
         TPM's Revision ID
         """
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
-         
+
         rid_address = self.TPM_BASE | Locality| TPM_RID 
-        rid_value = self.helper.read_mmio_reg( rid_address, 1 )  
-        
-        logger().log( "================================================================" )
-        logger().log( "                             TPM RID" )
-        logger().log( "================================================================" )
-        logger().log( "\trid: 0x%x" % rid_value )        
- 
+        rid_value = self.helper.read_mmio_reg( rid_address, 1 )
+
+        self.logger.log( "================================================================" )
+        self.logger.log( "                             TPM RID" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\trid: 0x{:x}".format(rid_value) )
+
     def dump_intcap( self, locality ):
-        """ 
+        """
         Provides information of which interrupts that particular TPM supports
         """
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
-         
+
         intcap_address = self.TPM_BASE | Locality| TPM_INTCAP
         intcap_value = self.helper.read_mmio_reg( intcap_address, 4 )
 
-        logger().log( "================================================================" )
-        logger().log( "                     TPM INTF CAPABILITY" )
-        logger().log( "================================================================" )
-        logger().log( "\tReserved                : 0x%x" % ( ( intcap_value>>8 ) & 0xFFFFFE ) )
-        logger().log( "\tBurstCountStatic        : 0x%s" % bin( intcap_value & ( 1<<8 ) )[2] )
-        logger().log( "\tCommandReadyIntSupport  : 0x%s" % bin( intcap_value & ( 1<<7 ) )[2] )
-        logger().log( "\tInterruptEdgeFalling    : 0x%s" % bin( intcap_value & ( 1<<6 ) )[2] )
-        logger().log( "\tInterruptEdgeRising     : 0x%s" % bin( intcap_value & ( 1<<5 ) )[2] )
-        logger().log( "\tInterruptLevelLow       : 0x%s" % bin( intcap_value & ( 1<<4 ) )[2] )
-        logger().log( "\tInterruptLevelHigh      : 0x%s" % bin( intcap_value & ( 1<<3 ) )[2] )
-        logger().log( "\tLocalityChangeIntSupport: 0x%s" % bin( intcap_value & ( 1<<2 ) )[2] )
-        logger().log( "\tstsValidIntSupport      : 0x%s" % bin( intcap_value & ( 1<<1 ) )[2] )
-        logger().log( "\tdataAvailIntSupport     : 0x%s" % bin( intcap_value & ( 1<<0 ) )[2] )
+        self.logger.log( "================================================================" )
+        self.logger.log( "                     TPM INTF CAPABILITY" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tReserved                : 0x{:x}".format( ( intcap_value>>8 ) & 0xFFFFFE ) )
+        self.logger.log( "\tBurstCountStatic        : 0x{}".format(bin( intcap_value & ( 1<<8 ) )[2]) )
+        self.logger.log( "\tCommandReadyIntSupport  : 0x{}".format(bin( intcap_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\tInterruptEdgeFalling    : 0x{}".format(bin( intcap_value & ( 1<<6 ) )[2]) )
+        self.logger.log( "\tInterruptEdgeRising     : 0x{}".format(bin( intcap_value & ( 1<<5 ) )[2]) )
+        self.logger.log( "\tInterruptLevelLow       : 0x{}".format(bin( intcap_value & ( 1<<4 ) )[2]) )
+        self.logger.log( "\tInterruptLevelHigh      : 0x{}".format(bin( intcap_value & ( 1<<3 ) )[2]) )
+        self.logger.log( "\tLocalityChangeIntSupport: 0x{}".format(bin( intcap_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\tstsValidIntSupport      : 0x{}".format(bin( intcap_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\tdataAvailIntSupport     : 0x{}".format(bin( intcap_value & ( 1<<0 ) )[2]) )
 
     def dump_intenable( self, locality ):
-        """ 
+        """
         View the contents of the register used to enable specific interrupts
         """
         polType = { 0:"High Level", 1:"Low Level", 2:"Rising edge", 3:"Failing edge" }
-        
+
         try:
             Locality = LOCALITY[locality]
         except:
-            if logger().HAL: logger().log_bad("Invalid locality value\n")
+            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
-         
+
         intenable_address = self.TPM_BASE | Locality| TPM_INTENABLE
         intenable_value = self.helper.read_mmio_reg( intenable_address, 4 )
-        
-        logger().log( "================================================================" )
-        logger().log( "                         TPM INT ENABLE" )
-        logger().log( "================================================================" )
-        logger().log( "\tglobalIntEnable        : 0x%s" % bin( intenable_value & ( 1<<31 ) )[2] )
-        logger().log( "\tReserved               : 0x%x" % ( (intenable_value>>8) & 0x7FFFFF00 ) )
-        logger().log( "\tcommandReadyEnable     : 0x%s" % bin( intenable_value & ( 1<<7 ) )[2] )
-        logger().log( "\tReserved               : 0x%x" % ( (intenable_value>>5) & 0x3  ) )
+
+        self.logger.log( "================================================================" )
+        self.logger.log( "                         TPM INT ENABLE" )
+        self.logger.log( "================================================================" )
+        self.logger.log( "\tglobalIntEnable        : 0x{}".format(bin( intenable_value & ( 1<<31 ) )[2]) )
+        self.logger.log( "\tReserved               : 0x{:x}".format( (intenable_value>>8) & 0x7FFFFF00 ) )
+        self.logger.log( "\tcommandReadyEnable     : 0x{}".format(bin( intenable_value & ( 1<<7 ) )[2]) )
+        self.logger.log( "\tReserved               : 0x{:x}".format( (intenable_value>>5) & 0x3  ) )
         type = ( ( intenable_value>>3 ) & 0x3 )
-        logger().log( "\ttypePolarity           : 0x%x  %s" % ( type, polType[type] ) )
-        logger().log( "\tlocalityChangeIntEnable: 0x%s" % bin( intenable_value & ( 1<<2 ) )[2] )
-        logger().log( "\tstsValidIntEnable      : 0x%s" % bin( intenable_value & ( 1<<1 ) )[2] )
-        logger().log( "\tdataAvailIntEnable     : 0x%s" % bin( intenable_value & ( 1<<0 ) )[2] )
+        self.logger.log( "\ttypePolarity           : 0x{:x}  {}".format( type, polType[type] ) )
+        self.logger.log( "\tlocalityChangeIntEnable: 0x{}".format(bin( intenable_value & ( 1<<2 ) )[2]) )
+        self.logger.log( "\tstsValidIntEnable      : 0x{}".format(bin( intenable_value & ( 1<<1 ) )[2]) )
+        self.logger.log( "\tdataAvailIntEnable     : 0x{}".format(bin( intenable_value & ( 1<<0 ) )[2]) )

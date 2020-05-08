@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2019, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,9 +19,10 @@
 #chipsec@intel.com
 #
 
-import os, platform
-import chipsec.file
-
+try:
+    from chipsec.helper.custom_helpers import *
+except ImportError:
+    pass
 from chipsec.helper.dal import *
 from chipsec.helper.efi import *
 from chipsec.helper.linux import *
@@ -30,4 +31,3 @@ from chipsec.helper.win import *
 # WARNING: Use of RWE driver has known issues. Experimental use only.
 #from chipsec.helper.rwe import *
 from chipsec.helper.file import *
-

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -45,8 +45,7 @@ Usage:
 """
 
 from chipsec.hal import hal_base
-from chipsec.logger import *
-from chipsec.cfg.common import *
+from chipsec.logger import print_buffer
 
 #
 # Embedded Controller ACPI ports
@@ -144,8 +143,8 @@ class EC(hal_base.HALBase):
             else:
                 buffer[i] = chr( self.read_memory_extended( start_offset + i ) )
 
-        if logger().HAL:
-            logger().log( "[ec] read EC memory from offset %X size %X:" % (start_offset, size) )
+        if self.logger.HAL:
+            self.logger.log( "[ec] read EC memory from offset {:X} size {:X}:".format(start_offset, size) )
             print_buffer( buffer )
         return buffer
 
@@ -153,8 +152,8 @@ class EC(hal_base.HALBase):
         size = len(buffer)
         for i in range(size):
             self.write_memory( start_offset + i, ord(buffer[i]) )
-        if logger().HAL:
-            logger().log( "[ec] write EC memory to offset %X size %X:" % (start_offset, size) )
+        if self.logger.HAL:
+            self.logger.log( "[ec] write EC memory to offset {:X} size {:X}:".format(start_offset, size) )
             print_buffer( buffer )
         return True
 
@@ -165,11 +164,11 @@ class EC(hal_base.HALBase):
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRL, offset & 0xFF )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRH, (offset>>8) & 0xFF )
         value = self.cs.io.read_port_byte( IO_PORT_EC_INDEX_DATA )
-        if logger().HAL: logger().log( "[ec] index read: offset 0x%02X > 0x%02X:" % (offset, value) )
+        if self.logger.HAL: self.logger.log( "[ec] index read: offset 0x{:02X} > 0x{:02X}:".format(offset, value) )
         return value
 
     def write_idx( self, offset, value ):
-        if logger().HAL: logger().log( "[ec] index write: offset 0x%02X < 0x%02X:" % (offset, value) )
+        if self.logger.HAL: self.logger.log( "[ec] index write: offset 0x{:02X} < 0x{:02X}:".format(offset, value) )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRL, offset & 0xFF )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRH, (offset>>8) & 0xFF )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_DATA, value & 0xFF )

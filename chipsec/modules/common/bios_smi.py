@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -32,9 +32,7 @@ References:
 `Summary of Attacks Against BIOS and Secure Boot` (https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf)
 """
 
-from chipsec.module_common import *
-from chipsec.hal import iobar
-
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
 TAGS = [MTAG_BIOS,MTAG_SMM]
 
@@ -42,15 +40,14 @@ class bios_smi(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.iobar = iobar.IOBAR(self.cs)
 
     def is_supported(self):
-        return (not self.cs.is_atom())
+        return True
 
     def check_SMI_locks(self):
 
         self.logger.start_test( "SMI Events Configuration" )
-        
+
         if not self.cs.is_control_defined( 'SmmBiosWriteProtection' ) or \
            not self.cs.is_control_defined( 'TCOSMIEnable' ) or \
            not self.cs.is_control_defined( 'GlobalSMIEnable' ) or \
@@ -58,7 +55,7 @@ class bios_smi(BaseModule):
            not self.cs.is_control_defined( 'SMILock' ):
             self.logger.error( "Couldn't find definition of required configuration registers" )
             return ModuleResult.ERROR
-        
+
         #
         # Checking SMM_BWP first in BIOS control to warn if SMM write-protection of the BIOS is not enabled
         #
@@ -74,8 +71,8 @@ class bios_smi(BaseModule):
         self.logger.log( "[*] Checking SMI enables.." )
         tco_en     = self.cs.get_control( 'TCOSMIEnable' )
         gbl_smi_en = self.cs.get_control( 'GlobalSMIEnable' )
-        self.logger.log( "    Global SMI enable: %d" % gbl_smi_en )
-        self.logger.log( "    TCO SMI enable   : %d" % tco_en )
+        self.logger.log( "    Global SMI enable: {:d}".format(gbl_smi_en) )
+        self.logger.log( "    TCO SMI enable   : {:d}".format(tco_en) )
 
         if gbl_smi_en != 1:
             ok = False

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -24,7 +24,7 @@ This module verifies memory map secure configuration,
 i.e. that memory map registers are correctly configured and locked down.
 """
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
 
 _MODULE_NAME = 'memconfig'
 
@@ -65,7 +65,7 @@ class memconfig(BaseModule):
     def check_memmap_locks(self):
         self.logger.start_test( "Host Bridge Memory Map Locks" )
 
-        regs = memmap_registers.keys()
+        regs = list(memmap_registers.keys())
         regs.sort()
         all_locked = True
 
@@ -77,10 +77,10 @@ class memconfig(BaseModule):
             v = self.cs.read_register( r )
             locked = self.cs.get_register_field( r, v, memmap_registers[r] )
             if locked == 1:
-                self.logger.log_good( "%-20s = 0x%016X - LOCKED   - %s" % (r, v, d['desc']) )
+                self.logger.log_good( "{:20} = 0x{:016X} - LOCKED   - {}".format(r, v, d['desc']) )
             else:
                 all_locked = False
-                self.logger.log_bad(  "%-20s = 0x%016X - UNLOCKED - %s" % (r, v, d['desc']) )
+                self.logger.log_bad(  "{:20} = 0x{:016X} - UNLOCKED - {}".format(r, v, d['desc']) )
 
         if all_locked:
             res = ModuleResult.PASSED

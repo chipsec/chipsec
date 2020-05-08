@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2017, Intel Security
+# Copyright (c) 2017-2020, Intel Security
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -136,9 +136,9 @@ class whitelist(BaseModule):
         self.logger.log( "[*] generating a list of EFI executables from firmware image..." )
         efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
         matching_modules = spi_uefi.search_efi_tree(efi_tree, self.genlist_callback, spi_uefi.EFIModuleType.SECTION_EXE, True)
-        self.logger.log( "[*] found %d EFI executables in UEFI firmware image '%s'" % (len(self.efi_list),self.image_file) )
-        self.logger.log( "[*] creating JSON file '%s'..." % json_pth )
-        chipsec.file.write_file( "%s" % json_pth, json.dumps(self.efi_list, indent=2, separators=(',', ': ')) )
+        self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list),self.image_file) )
+        self.logger.log( "[*] creating JSON file '{}'...".format(json_pth) )
+        chipsec.file.write_file( "{}".format(json_pth), json.dumps(self.efi_list, indent=2, separators=(',', ': ')) )
         return ModuleResult.PASSED
 
     #
@@ -149,14 +149,14 @@ class whitelist(BaseModule):
         with open(json_pth) as data_file:    
             self.efi_whitelist = json.load(data_file)
 
-        self.logger.log( "[*] checking EFI executables against the list '%s'" % json_pth )
+        self.logger.log( "[*] checking EFI executables against the list '{}'".format(json_pth) )
 
         # parse the UEFI firmware image and look for EFI modules matching white-list
         # - match only executable EFI sections (PE/COFF, TE)
         # - find all occurrences of matching EFI modules
         efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
         matching_modules = spi_uefi.search_efi_tree(efi_tree, self.genlist_callback, spi_uefi.EFIModuleType.SECTION_EXE, True)
-        self.logger.log( "[*] found %d EFI executables in UEFI firmware image '%s'" % (len(self.efi_list),self.image_file) )
+        self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list),self.image_file) )
 
         for m in self.efi_list:
             if not (m in self.efi_whitelist):
@@ -164,13 +164,13 @@ class whitelist(BaseModule):
                 guid = self.efi_list[m]["guid"] if 'guid' in self.efi_list[m] else '?'
                 name = self.efi_list[m]["name"] if 'name' in self.efi_list[m] else '<unknown>'
                 sha1 = self.efi_list[m]["sha1"] if 'sha1' in self.efi_list[m] else ''
-                self.logger.log_important( "found EFI executable not in the list:\n    %s (sha256)\n    %s (sha1)\n    {%s}\n    %s" % (m,sha1,guid,name))
+                self.logger.log_important( "found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{{}}}\n    {}".format(m,sha1,guid,name))
 
         if len(self.suspect_modules) > 0:
-            self.logger.log_warn_check( "found %d EFI executables not in the list '%s'" % (len(self.suspect_modules),json_pth) )
+            self.logger.log_warn_check( "found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules),json_pth) )
             return ModuleResult.WARNING
         else:
-            self.logger.log_passed_check( "all EFI executables match the list '%s'" % json_pth )
+            self.logger.log_passed_check( "all EFI executables match the list '{}'".format(json_pth) )
             return ModuleResult.PASSED
 
 
@@ -194,14 +194,14 @@ class whitelist(BaseModule):
             if len(module_argv) > 1:
                 json_file  = module_argv[1]
                 image_file = module_argv[2]
-                self.logger.log("[*] reading firmware from '%s'..." % image_file)
+                self.logger.log("[*] reading firmware from '{}'...".format(image_file))
             else:
                 image_file = DEF_FWIMAGE_FILE
                 json_file  = DEF_EFILIST_FILE
                 self.spi = chipsec.hal.spi.SPI(self.cs)
                 (base,limit,freg) = self.spi.get_SPI_region(chipsec.hal.spi.BIOS)
                 image_size = limit + 1 - base
-                self.logger.log("[*] dumping firmware image from ROM to '%s': 0x%08X bytes at [0x%08X:0x%08X]" % (image_file,image_size,base,limit))
+                self.logger.log("[*] dumping firmware image from ROM to '{}': 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file,image_size,base,limit))
                 self.spi.read_spi_to_file(base, image_size, image_file)
 
             self.image_file = image_file
@@ -210,13 +210,13 @@ class whitelist(BaseModule):
 
             if op == 'generate':
                 if os.path.exists(json_pth):
-                    self.logger.error("JSON file '%s' already exists. Exiting..." % json_file)
+                    self.logger.error("JSON file '{}' already exists. Exiting...".format(json_file))
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.generate_efilist(json_pth)
             elif op == 'check':
                 if not os.path.exists(json_pth):
-                    self.logger.error("JSON file '%s' doesn't exists. Exiting..." % json_file)
+                    self.logger.error("JSON file '{}' doesn't exists. Exiting...".format(json_file))
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.check_whitelist(json_pth)

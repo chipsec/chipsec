@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2018, Intel Corporation
 # 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
             msg_sent = messages.pop(0)
             self.vmbus_sendpacket(relid, msg_sent, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             msg_recv = self.vmbus_recvpacket(relid)
-            if msg_recv <> '':
+            if msg_recv != '':
                 (msg1, msg2) = (msg_recv, msg_sent) if order else (msg_sent, msg_recv)
                 if msg1 not in info:
                     info[msg1] = {'next': {}, 'count': 0, 'message': ''}
@@ -65,8 +65,8 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
         return info
 
     def device_fuzzing(self, relid):
-        for x in xrange(1, 0x100):
-            for a in xrange(0, 0x100):
+        for x in range(1, 0x100):
+            for a in range(0, 0x100):
                 self.ringbuffers[relid].ringbuffer_init()
                 self.vmbus_establish_gpadl(relid, self.ringbuffers[relid].gpadl, self.ringbuffers[relid].pfn)
                 self.vmbus_open(relid, self.ringbuffers[relid].gpadl, self.ringbuffers[relid].send_size)
@@ -82,7 +82,7 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
         if len(info) == 0:
             return
         for i in self.responses:
-            self.msg('%s%20s:%20s  %4d' % ('  ' * indent, hexlify(i), hexlify(info[i]['message']), info[i]['count']))
+            self.msg('{}{:20}:{:20}  {:4d}'.format('  ' * indent, hexlify(i), hexlify(info[i]['message']), info[i]['count']))
             self.print_1(info[i]['next'], indent + 1)
         return
 
@@ -93,19 +93,19 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
 
 class synth_dev(BaseModule):
     def usage(self):
-        print '  Usage:'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info'
-        print '      print channel offers'
-        print '    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>'
-        print '      fuzzing device with specified relid'
-        print '  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys'
+        print ('  Usage:')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info')
+        print ('      print channel offers')
+        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>')
+        print ('      fuzzing device with specified relid')
+        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
         self.logger.start_test( "Hyper-V VMBus synthetic device fuzzer" )
 
-        command =             module_argv[0]  if len(module_argv) > 0 and module_argv[0] <> '' else 'none'
-        relid   = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] <> '' else 0x5
+        command =             module_argv[0]  if len(module_argv) > 0 and module_argv[0] != '' else 'none'
+        relid   = get_int_arg(module_argv[1]) if len(module_argv) > 1 and module_argv[1] != '' else 0x5
 
         vb = VMBusDeviceFuzzer()
         vb.debug = False
@@ -115,7 +115,7 @@ class synth_dev(BaseModule):
             vb.vmbus_request_offers()
 
             if relid not in [value['child_relid'] for value in vb.offer_channels.values()]:
-                vb.fatal('child relid #%d has not been found!' % relid)
+                vb.fatal('child relid #{:d} has not been found!'.format(relid))
 
             vb.ringbuffers[relid] = RingBuffer()
             vb.ringbuffers[relid].debug = False
@@ -131,7 +131,7 @@ class synth_dev(BaseModule):
                 vb.vmbus_close(relid)
                 vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)
             elif command == 'fuzz':
-                vb.promt = 'DEVICE %02d' % relid
+                vb.promt = 'DEVICE {:02d}'.format(relid)
                 vb.msg('Fuzzing VMBus devices ...')
                 vb.device_fuzzing(relid)
                 vb.print_statistics()
@@ -139,11 +139,11 @@ class synth_dev(BaseModule):
                 self.usage()
 
         except KeyboardInterrupt:
-            print '***** Control-C *****'
-        except Exception, error:
-            print '\n\n'
+            print ('***** Control-C *****')
+        except Exception as error:
+            print ('\n\n')
             traceback.print_exc()
-            print '\n\n'
+            print ('\n\n')
         finally:
             vb.vmbus_rescind_all_offers()
             del vb

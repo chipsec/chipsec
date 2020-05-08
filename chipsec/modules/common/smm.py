@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -28,7 +28,8 @@ In Compatability SMRAM (CSEG), access to memory is defined by the SMRAMC registe
 This CHIPSEC module simply reads SMRAMC and checks that D_LCK is set.
 """
 from collections import namedtuple
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+
 TAGS = [MTAG_BIOS,MTAG_SMM]
 
 class smm(BaseModule):
@@ -52,7 +53,6 @@ class smm(BaseModule):
 
         self.cs.print_register( 'PCI0.0.0_SMRAMC', regval )
 
-        res = ModuleResult.ERROR
         if 1 == g_smrame:
             self.logger.log( "[*] Compatible SMRAM is enabled" )
             # When D_LCK is set HW clears D_OPEN so generally no need to check for D_OPEN but doesn't hurt double checking

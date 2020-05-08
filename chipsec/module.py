@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -41,6 +41,17 @@ class Module():
         self.module = None
         self.mod_obj = None
 
+    def __lt__(self, other):
+        return self.name < other.name
+
+    def __le__(self, other):
+        return self.name <= other.name
+    
+    def __gt__(self, other):
+        return self.name > other.name
+
+    def __ge__(self, other):
+        return self.name >= other.name
 
     def get_name(self):
         return self.name
@@ -48,15 +59,15 @@ class Module():
     def do_import(self):
         loaded = False
         if not MODPATH_RE.match(self.get_name()):
-            self.logger.error( "Invalid module path: %s" % self.name )
+            self.logger.error( "Invalid module path: {}".format(self.name) )
         else:
             try:
                 if _importlib:
                     self.module = importlib.import_module( self.name )
                 loaded = True
-                if self.logger.DEBUG: self.logger.log_good( "imported: %s" % self.name )
-            except BaseException, msg:
-                self.logger.error( "Exception occurred during import of %s: '%s'" % (self.name, str(msg)) )
+                if self.logger.DEBUG: self.logger.log_good( "imported: {}".format(self.name) )
+            except BaseException as msg:
+                self.logger.error( "Exception occurred during import of {}: '{}'".format(self.name, str(msg)) )
                 if self.logger.DEBUG: self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
@@ -64,9 +75,9 @@ class Module():
     def run( self, module_argv ):
         result = self.get_module_object()
 
-        if self.mod_obj != None and result == ModuleResult.PASSED:
+        if self.mod_obj is not None and result == ModuleResult.PASSED:
             if module_argv is not None:
-                self.logger.log( "[*] Module arguments (%d):" % len(module_argv) )
+                self.logger.log( "[*] Module arguments ({:d}):".format(len(module_argv)) )
                 self.logger.log( module_argv )
             else:
                 module_argv = []
@@ -77,16 +88,16 @@ class Module():
                 else:
                     if self.mod_obj.res == ModuleResult.NOTAPPLICABLE:
                         result = ModuleResult.NOTAPPLICABLE
-                        self.logger.log("Skipping module %s since it is not applicable to this platform"%self.name)
+                        self.logger.log("Skipping module {} since it is not supported in this platform".format(self.name))
                     else:
                         result = ModuleResult.SKIPPED
-                        self.logger.log("Skipping module %s since it is not supported in this platform"%self.name)
+                        self.logger.log("Skipping module {} since it is not supported in this platform".format(self.name))
 
         return result
 
     def get_module_object(self):
         result = ModuleResult.PASSED
-        if self.mod_obj == None :
+        if self.mod_obj is None :
             try:
                 if _importlib:
                     pkg = getattr( self.module, "__package__" )
@@ -99,7 +110,7 @@ class Module():
                             if issubclass(iref, chipsec.module_common.BaseModule):
                                 if iname.lower() == class_name.lower():
                                     self.mod_obj = iref()
-                    if self.mod_obj == None:
+                    if self.mod_obj is None:
                         result = ModuleResult.DEPRECATED
             except (AttributeError, TypeError) as ae:
                 result = ModuleResult.DEPRECATED

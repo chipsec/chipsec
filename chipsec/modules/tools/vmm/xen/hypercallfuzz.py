@@ -70,7 +70,7 @@ class HypercallFuzz (BaseModule):
         try:
             value = int(arg, base)
         except ValueError:
-            self.logger.error( "Invalid integer parameter: '%s' (using default value: %d)" % (arg, defvalue))
+            self.logger.error( "Invalid integer parameter: '{}' (using default value: {:d})".format(arg, defvalue))
             value = defvalue
         return value
 
@@ -104,7 +104,7 @@ class HypercallFuzz (BaseModule):
             if len(info) > 0:
                 xen.hypervisor_present = True
                 xen.print_hypervisor_info(info)
-                xen.scan_hypercalls(xrange(256))
+                xen.scan_hypercalls(range(256))
                 xen.print_hypercall_status()
  
         elif command == 'fuzzing':
@@ -113,7 +113,7 @@ class HypercallFuzz (BaseModule):
                 code = int(arg1, 16)
             except ValueError:
                 if arg1.lower() not in name2code:
-                    self.logger.error( "Unknown hypercall: '%s'" % arg1)
+                    self.logger.error( "Unknown hypercall: '{}'".format(arg1))
                     return ModuleResult.ERROR
                 code = name2code[arg1.lower()]
             count = self.get_int(arg2)
@@ -121,7 +121,7 @@ class HypercallFuzz (BaseModule):
 
         elif command in ['fuzzing-all', 'fuzzing-all-randomly']:
             count = self.get_int(arg1)
-            xen.scan_hypercalls(xrange(256))
+            xen.scan_hypercalls(range(256))
             xen.print_hypercall_status()
             self.logger.log('\nStart fuzzing ...\n')
             #excluded = [MEMORY_OP, CONSOLE_IO, GRANT_TABLE_OP, SCHED_OP, EVENT_CHANNEL_OP]
@@ -133,7 +133,7 @@ class HypercallFuzz (BaseModule):
             else:
                 xen.fuzz_hypercalls_randomly(vectors, count)
         else:
-            self.logger.log('Invalid command: %s\n' % command)
+            self.logger.log('Invalid command: {}\n'.format(command))
             self.usage()
 
         return ModuleResult.PASSED
