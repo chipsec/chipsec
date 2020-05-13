@@ -671,7 +671,7 @@ class LinuxHelper(Helper):
 
     def set_affinity(self, thread_id):
         if thread_id < self.get_affinity():
-            os.sched_setaffinity(thread_id)
+            os.sched_setaffinity(thread_id,{thread_id})
             return thread_id
         else:
             return None
