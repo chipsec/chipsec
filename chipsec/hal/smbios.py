@@ -347,7 +347,7 @@ class SMBIOS(hal_base.HALBase):
         if self.smbios_3_data is not None and not force_32bit:
             if logger().HAL: logger().log('Using 64bit SMBIOS table')
             table = self.smbios_3_data
-        elif self.smbios_3_data is not None:
+        elif self.smbios_2_data is not None:
             if logger().HAL: logger().log('Using 32bit SMBIOS table')
             table = self.smbios_2_data
         else:
