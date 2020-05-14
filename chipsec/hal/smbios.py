@@ -112,21 +112,21 @@ SMBIOS_BIOS_INFO_2_0_ENTRY_FMT = '=BBHBBHBBQ'
 SMBIOS_BIOS_INFO_2_0_ENTRY_SIZE = struct.calcsize(SMBIOS_BIOS_INFO_2_0_ENTRY_FMT)
 SMBIOS_BIOS_INFO_2_0_FORMAT_STRING = """
 SMBIOS BIOS Information:
-  Type                      : 0x{:02X} ({:d})
-  Length                    : 0x{:02X}
-  Handle                    : 0x{:04X}
-  Vendor                    : {:s}
-  BIOS Version              : {:s}
-  BIOS Starting Segment     : 0x{:04X}
-  BIOS Release Date         : {:s}
-  BIOS ROM Size             : 0x{:02X}
-  BIOS Characteristics      : 0x{:016X}
+  Type                      : 0x{0:02X} ({0:d})
+  Length                    : 0x{1:02X}
+  Handle                    : 0x{2:04X}
+  Vendor                    : {3:s}
+  BIOS Version              : {4:s}
+  BIOS Starting Segment     : 0x{5:04X}
+  BIOS Release Date         : {6:s}
+  BIOS ROM Size             : 0x{7:02X}
+  BIOS Characteristics      : 0x{8:016X}
 """
 SMBIOS_BIOS_INFO_2_0_FORMAT_STRING_FAILED = """
 SMBIOS BIOS Information structure decode failed
 """
-class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_ENTRY_2_0', 'type length handle vendor_str version_str segment release_str \
-    rom_sz bios_char strings')):
+class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_INFO_2_0_ENTRY', 'type length handle vendor_str version_str segment \
+    release_str rom_sz bios_char strings')):
     __slots__ = ()
     def __str__(self):
         str_count = len(self.strings)
@@ -139,7 +139,7 @@ class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_ENTRY_2_0', 'type length hand
             ver_str = self.strings[self.version_str - 1]
         if self.release_str != 0 and self.release_str <= str_count:
             rel_str = self.strings[self.release_str - 1]
-        return SMBIOS_BIOS_INFO_2_0_FORMAT_STRING.format(self.type, self.type, self.length, self.handle, ven_str, \
+        return SMBIOS_BIOS_INFO_2_0_FORMAT_STRING.format(self.type, self.length, self.handle, ven_str, \
             ver_str, self.segment, rel_str, self.rom_sz, self.bios_char)
 
 
