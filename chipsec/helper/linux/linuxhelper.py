@@ -83,7 +83,7 @@ class MemoryMapping(mmap.mmap):
     This subclass keeps tracks of the start and end of the mapping.
     """
     def __init__(self, fileno, length, flags, prot, offset):
-        super(MemoryMapping, self).__init__(fileno, length, flags, prot,
+        super(MemoryMapping, self).__init__(fileno, length, flags=flags, prot=prot,
                                             offset=offset)
         self.start = offset
         self.end = offset + length
@@ -336,7 +336,7 @@ class LinuxHelper(Helper):
                 return region
         return None
 
-    def native_map_io_space(self, base, size):
+    def native_map_io_space(self, base, size, cache_type):
         """Map to memory a specific region."""
         if self.devmem_available() and not self.memory_mapping(base, size):
             if logger().DEBUG:
@@ -415,6 +415,15 @@ class LinuxHelper(Helper):
         device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
                       domain=domain, bus=bus, device=device, function=function)
         device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
+        if not os.path.exists(device_path):
+            if offset < 256:
+                from chipsec.helper.linux.legacy_pci import LEGACY_PCI
+                pci = LEGACY_PCI()
+                value = pci.read_pci_config(bus, device, function, offset)
+                return value
+            else:
+                byte = b"\xff"
+                return defines.unpack1(byte * size, size)
         try:
             config = open(device_path, "rb")
         except IOError as err:
@@ -440,6 +449,11 @@ class LinuxHelper(Helper):
         device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
                       domain=domain, bus=bus, device=device, function=function)
         device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
+        if not os.path.exists(device_path):
+            if offset < 256:
+                from chipsec.helper.linux.legacy_pci import LEGACY_PCI
+                pci = LEGACY_PCI()
+                value = pci.write_pci_config(bus, device, function, offset, value)
         try:
             config = open(device_path, "wb")
         except IOError as err:
@@ -589,7 +603,7 @@ class LinuxHelper(Helper):
         if self.devmem_available():
             region = self.memory_mapping(bar_base, bar_size)
             if not region:
-                self.native_map_io_space(bar_base, bar_size)
+                self.native_map_io_space(bar_base, bar_size, 0)
                 region = self.memory_mapping(bar_base, bar_size)
                 if not region: logger().error("Unable to map region {:08x}".format(bar_base))
             region.seek(bar_base + offset - region.start)
@@ -606,7 +620,7 @@ class LinuxHelper(Helper):
             reg = defines.pack1(value, size)
             region = self.memory_mapping(bar_base, bar_size)
             if not region:
-                self.native_map_io_space(bar_base, bar_size)
+                self.native_map_io_space(bar_base, bar_size, 0)
                 region = self.memory_mapping(bar_base, bar_size)
                 if not region: logger().error("Unable to map region {:08x}".format(bar_base))
             region.seek(bar_base + offset - region.start)
@@ -700,6 +714,15 @@ class LinuxHelper(Helper):
             AffinityString= " Set_affinity errno::{}".format(errno.value)
             if logger().DEBUG: logger().log( AffinityString )
             return None
+
+    def native_set_affinity(self, thread_id):
+        os.sched_setaffinity(0, {thread_id})
+        return 0
+
+    def native_get_affinity(self):
+        mask = os.sched_getaffinity(0)
+        # We get a set with the mask from sched_getaffinity, just return the first one
+        return mask.pop()
 
 
     #########################################################
