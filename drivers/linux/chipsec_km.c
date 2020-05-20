@@ -42,7 +42,15 @@ chipsec@intel.com
 
 MODULE_LICENSE("GPL");
 
-// function page_is_ram is not exported
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
+  /* 'ioremap_nocache' was deprecated in kernels >= 5.6, so instead we use 'ioremap' which
+  is no-cache by default since kernels 2.6.25. */
+#    define IOREMAP_NO_CACHE(address, size) ioremap(address, size)
+#else /* KERNEL_VERSION < 2.6.25 */
+#    define IOREMAP_NO_CACHE(address, size) ioremap_nocache(address, size)
+#endif
+
+// function page_is_ram is not exported 
 // for modules, but is available in kallsyms.
 // So we need determine this address using dirty tricks
 int (*guess_page_is_ram)(unsigned long pagenr);
@@ -303,7 +311,7 @@ void *my_xlate_dev_mem_ptr(unsigned long phys)
 	}
 
 	// Not RAM, so it is some device (can be bios for example)
-	addr = (void __force *)ioremap_nocache(start, PAGE_SIZE);
+	addr = (void __force *)IOREMAP_NO_CACHE(start, PAGE_SIZE);
     
     if (addr)
     {
