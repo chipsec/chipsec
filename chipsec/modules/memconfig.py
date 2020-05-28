@@ -60,15 +60,27 @@ class memconfig(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return self.cs.is_core()
+        if self.cs.is_core():
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_memmap_locks(self):
         self.logger.start_test( "Host Bridge Memory Map Locks" )
 
-        regs = list(memmap_registers.keys())
-        regs.sort()
+        # Determine if IA_UNTRUSTED can be used to lock the system.
+        ia_untrusted = None
+        if self.cs.is_register_defined('MSR_BIOS_DONE') and self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+            ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
+
+        regs = sorted(memmap_registers.keys())
         all_locked = True
 
+        self.logger.log('[*]')
+        if ia_untrusted is not None:
+            self.logger.log('[*] Checking legacy register lock state:')
+        else:
+            self.logger.log('[*] Checking register lock state:')
         for r in regs:
             if not self.cs.is_register_defined(r) or not self.cs.register_has_field(r, memmap_registers[r]):
                 self.logger.log_unknown('Skipping Validation: Register {} or field {} was not defined for this platform.'.format(r, memmap_registers[r]))
@@ -77,11 +89,21 @@ class memconfig(BaseModule):
             v = self.cs.read_register( r )
             locked = self.cs.get_register_field( r, v, memmap_registers[r] )
             if locked == 1:
-                self.logger.log_good( "{:20} = 0x{:016X} - LOCKED   - {}".format(r, v, d['desc']) )
+                self.logger.log_good( "{:20} = 0x{:16X} - LOCKED   - {}".format(r, v, d['desc']) )
             else:
                 all_locked = False
-                self.logger.log_bad(  "{:20} = 0x{:016X} - UNLOCKED - {}".format(r, v, d['desc']) )
+                self.logger.log_bad(  "{:20} = 0x{:16X} - UNLOCKED - {}".format(r, v, d['desc']) )
 
+        if ia_untrusted is not None:
+            self.logger.log('[*]')
+            self.logger.log('[*] Checking if IA Untrusted mode is used to lock registers')
+            if ia_untrusted == 1:
+                self.logger.log_good('IA Untrusted mode set')
+                all_locked = True
+            else:
+                self.logger.log_bad('IA Untrusted mode not set')
+
+        self.logger.log('[*]')
         if all_locked:
             res = ModuleResult.PASSED
             self.logger.log_passed_check( "All memory map registers seem to be locked down" )
@@ -96,4 +118,5 @@ class memconfig(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_memmap_locks()
+        self.res = self.check_memmap_locks()
+        return self.res
