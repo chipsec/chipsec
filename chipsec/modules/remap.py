@@ -43,10 +43,10 @@ class remap(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if self.cs.is_atom():
-            self.res = ModuleResult.NOTAPPLICABLE
-            return False
-        return self.cs.is_core()
+        if self.cs.is_core():
+            return True
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_remap_config(self):
         self.logger.start_test( "Memory Remapping Configuration" )
@@ -71,6 +71,9 @@ class remap(BaseModule):
         self.logger.log( "[*]   TOLUD     : 0x{:08X}".format(tolud) )
         self.logger.log( "[*]   TSEGMB    : 0x{:08X}\n".format(tsegmb) )
 
+        ia_untrusted = 0
+        if self.cs.is_register_defined('MSR_BIOS_DONE') and self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+            ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
         remapbase_lock  = remapbase & 0x1
         remaplimit_lock = remaplimit & 0x1
         touud_lock      = touud & 0x1
@@ -112,33 +115,34 @@ class remap(BaseModule):
         else:  self.logger.log_bad( "  Not all addresses are 1MB aligned" )
 
         self.logger.log( "[*] checking if memory remap configuration is locked.." )
-        ok = (0 != touud_lock)
+        ok = (0 != touud_lock) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good( "  TOUUD is locked" )
         else:  self.logger.log_bad( "  TOUUD is not locked" )
 
-        ok = (0 != tolud_lock)
+        ok = (0 != tolud_lock) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good( "  TOLUD is locked" )
         else:  self.logger.log_bad( "  TOLUD is not locked" )
 
-        ok = (0 != remapbase_lock) and (0 != remaplimit_lock)
+        ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good( "  REMAPBASE and REMAPLIMIT are locked" )
         else:  self.logger.log_bad( "  REMAPBASE and REMAPLIMIT are not locked" )
 
         if remap_ok:
-            self.res = ModuleResult.PASSED
+            res = ModuleResult.PASSED
             self.logger.log_passed_check( "Memory Remap is configured correctly and locked" )
         else:
-            self.res = ModuleResult.FAILED
+            res = ModuleResult.FAILED
             self.logger.log_failed_check( "Memory Remap is not properly configured/locked. Remaping attack may be possible" )
 
-        return self.res
+        return res
 
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_remap_config()
+        self.res = self.check_remap_config()
+        return self.res

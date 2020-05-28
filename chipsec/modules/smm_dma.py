@@ -43,6 +43,7 @@ class smm_dma(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
+        self.res = ModuleResult.NOTAPPLICABLE
         if self.cs.is_atom(): return False
         if self.cs.is_server(): return False
         else: return True
@@ -50,8 +51,11 @@ class smm_dma(BaseModule):
     def check_tseg_locks(self):
         tseg_base_lock = self.cs.get_control('TSEGBaseLock')
         tseg_limit_lock = self.cs.get_control('TSEGLimitLock')
+        ia_untrusted = 0
+        if self.cs.is_register_defined('MSR_BIOS_DONE') and self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+            ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
 
-        if tseg_base_lock and tseg_limit_lock:
+        if (tseg_base_lock and tseg_limit_lock) or (0 != ia_untrusted):
             self.logger.log_good( "TSEG range is locked" )
             return ModuleResult.PASSED
         else:

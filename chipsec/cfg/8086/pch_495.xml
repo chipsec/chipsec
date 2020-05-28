@@ -34,7 +34,6 @@ XML configuration file for the 495 series PCH
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-    <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000"                     desc="Graphics Translation Table Range"/>
     <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
     <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
