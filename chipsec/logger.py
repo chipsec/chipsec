@@ -454,7 +454,6 @@ def dump_buffer_bytes( arr, length = 8):
         num_string += ['| ']
         num_string += ascii_string
         output.append( ''.join(num_string) )
-    return output
     return '\n'.join(output)
 
 
