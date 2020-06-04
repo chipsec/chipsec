@@ -59,6 +59,13 @@ class TestHelper(Helper):
                 return 0x8086
             else:
                 return 0x16008086
+        elif (bus, device, function) == (0, 0x1f, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x9D438086
         else:
             raise Exception("Unexpected PCI read")
 
@@ -272,3 +279,60 @@ class SPIHelper(TestHelper):
 
     def map_io_space(self, base, size, cache_type):
         raise oshelper.UnimplementedAPIError("Not implemented")
+
+class ValidChipsetHelper(TestHelper):
+    def read_pci_reg(self, bus, device, function, address, size):
+        if (bus, device, function) == (0, 0, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x19048086
+        elif (bus, device, function) == (0, 0x1f, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x9D438086
+        else:
+            raise Exception("Unexpected PCI read")
+
+class InvalidChipsetHelper(TestHelper):
+    def read_pci_reg(self, bus, device, function, address, size):
+        if (bus, device, function) == (0, 0, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0xBEEF8086
+        elif (bus, device, function) == (0, 0x1f, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x9D438086
+        else:
+            raise Exception("Unexpected PCI read")
+
+class InvalidPchHelper(TestHelper):
+    def read_pci_reg(self, bus, device, function, address, size):
+        if (bus, device, function) == (0, 0, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0x19048086
+        elif (bus, device, function) == (0, 0x1f, 0):
+            if size == 1:
+                return 0x86
+            elif size == 2:
+                return 0x8086
+            else:
+                return 0xBEEF8086
+        else:
+            raise Exception("Unexpected PCI read")
