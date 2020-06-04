@@ -99,11 +99,11 @@ class Interrupts(hal_base.HALBase):
             #need to write data_hdr to comm buffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
             #USING GAS need to write buf_addr into invoc_reg
-            if invoc_reg.addrSpaceID is 0:
+            if invoc_reg.addrSpaceID == 0:
                 self.cs.helper.write_physical_mem(invoc_reg.addr,invoc_reg.access_size,buf_addr)
                 #check for return status
                 ret_buf = self.cs.helper.read_physical_mem(buf_addr,8)
-            elif invoc_reg.addrSpaceID is 1:
+            elif invoc_reg.addrSpaceID == 1:
                 self.cs.helper.write_io_port(invoc_reg.addr,invoc_reg.access_size,buf_addr)
                 #check for return status
                 ret_buf = self.cs.helper.read_io_port(buf_addr,8)

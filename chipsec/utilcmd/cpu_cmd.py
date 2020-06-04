@@ -123,8 +123,8 @@ class CPUCommand(BaseCommand):
 
     def cpu_pt(self):
         if self.cr3 is not None:
-            pt_fname = 'pt_{:08X}'.format(cr3)
-            self.logger.log( "[CHIPSEC] paging physical base (CR3): 0x{:016X}".format(cr3) )
+            pt_fname = 'pt_{:08X}'.format(self.cr3)
+            self.logger.log( "[CHIPSEC] paging physical base (CR3): 0x{:016X}".format(self.cr3) )
             self.logger.log( "[CHIPSEC] dumping paging hierarchy to '{}'...".format(pt_fname) )
             self.cs.cpu.dump_page_tables( self.cr3, pt_fname )
         else:
