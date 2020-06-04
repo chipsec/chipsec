@@ -623,7 +623,7 @@ class string (base_primitive):
         try:
             self.rendered = str(self.value).encode(self.encoding)
         except:
-            if version[0] is '3':
+            if version[0] == '3':
                 self.rendered = str(self.value).encode('latin-1')
             else:
                 self.rendered = self.value

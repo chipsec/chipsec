@@ -49,7 +49,7 @@ MTRR_MEMTYPE_WP = 0x5
 MTRR_MEMTYPE_WB = 0x6
 MemType = {
     MTRR_MEMTYPE_UC: 'Uncacheable (UC)',
-    MTRR_MEMTYPE_WB: 'Write Combining (WC)',
+    MTRR_MEMTYPE_WC: 'Write Combining (WC)',
     MTRR_MEMTYPE_WT: 'Write-through (WT)',
     MTRR_MEMTYPE_WP: 'Write-protected (WP)',
     MTRR_MEMTYPE_WB: 'Writeback (WB)'
