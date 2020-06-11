@@ -1,0 +1,18 @@
+[flake8]
+# Ignore the following errors at this time:
+# E201 whitespace after '('
+# E211 whitespace before '('
+# E262 inline comment should start with '#
+# E265 block comment should start with '# '
+# E266 too many leanding '#' for block comment
+# E271 multiple spaces after keyword
+# E272 multiple spaces before keyword
+# E401 multiple imports on one line
+# E402 module level import not at top of file
+# E701 multiple statements on one line (colon)
+# F402 module level import not at top of file
+# H306 imports not in alphabetical order
+
+ignore = E201, E211, E262, E265, E266, E271, E272, E401, E402, E701, F402, H306
+max_line_length = 120
+exclude = docs, chipsec_tools, scripts
