@@ -241,9 +241,6 @@ class ChipsecMain:
         # Enumerate all modules from the root module directory
         logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(),'.')) )
         self.load_modules_from_path( self.Modules_Path, False )
- 
-        # Print a list of all loaded modules
-        self.print_loaded_modules()
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
@@ -372,6 +369,10 @@ class ChipsecMain:
         else:
             self.load_my_modules()
         self.load_user_modules()
+ 
+        # Print a list of all loaded modules
+        self.print_loaded_modules()
+
         return self.run_loaded_modules()
 
     def parse_args(self):
