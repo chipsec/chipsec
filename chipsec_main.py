@@ -217,7 +217,6 @@ class ChipsecMain:
                 if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
                     self.load_module( os.path.join( dirname, modx ), self._module_argv )
         self.Loaded_Modules.sort()
-        self.print_loaded_modules()
 
     def load_my_modules(self):
         #
@@ -242,7 +241,9 @@ class ChipsecMain:
         # Enumerate all modules from the root module directory
         logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(),'.')) )
         self.load_modules_from_path( self.Modules_Path, False )
-
+ 
+        # Print a list of all loaded modules
+        self.print_loaded_modules()
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
