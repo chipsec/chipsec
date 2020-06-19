@@ -30,7 +30,7 @@ Usage:
                         executables (default = ``efilist.json``)
     - ``fw_image``	Full file path to UEFI firmware image. If not specified,
                         the module will dump firmware image directly from ROM
-    
+
 Examples:
 
 >>> chipsec_main -m tools.uefi.whitelist
@@ -41,7 +41,7 @@ image extracted from ROM
 >>> chipsec_main -i -n -m tools.uefi.whitelist -a generate,efilist.json,uefi.rom
 
 Creates a list of EFI executable binaries in ``efilist.json`` from ``uefi.rom``
-firmware binary 
+firmware binary
 
 >>> chipsec_main -i -n -m tools.uefi.whitelist -a check,efilist.json,uefi.rom
 
@@ -52,14 +52,15 @@ Note: ``-i`` and ``-n`` arguments can be used when specifying firmware file
 because the module doesn't depend on the platform and doesn't need kernel driver
 """
 import json
+import os
 
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 
-import chipsec.hal.uefi
-import chipsec.hal.spi
-from chipsec.hal import uefi_common
-from chipsec.hal import spi_uefi
-from chipsec.hal import uefi_search
+from chipsec.hal.uefi import UEFI
+from chipsec.hal.spi import SPI, BIOS
+from chipsec.hal.uefi_fv import EFI_SECTION, SECTION_NAMES, EFI_SECTION_PE32
+from chipsec.hal.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
+from chipsec.file import write_file, read_file
 
 TAGS = [MTAG_BIOS]
 
@@ -82,7 +83,7 @@ Usage:
                   (default = efilist.json)
     - <fw_image>  Full file path to UEFI firmware image. If not specified, the
                   module will dump firmware image directly from ROM
-   
+
 Examples:
 
   chipsec_main -m tools.uefi.whitelist
@@ -91,7 +92,7 @@ Examples:
 
   chipsec_main -i -n -m tools.uefi.whitelist -a generate,efilist.json,uefi.rom
     Creates a list of EFI executable binaries in efilist.json from uefi.rom
-    firmware binary 
+    firmware binary
 
   chipsec_main -i -n -m tools.uefi.whitelist -a check,efilist.json,uefi.rom
     Decodes uefi.rom UEFI firmware image binary and checks all EFI executables
@@ -105,7 +106,7 @@ class whitelist(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.uefi = chipsec.hal.uefi.UEFI( self.cs )
+        self.uefi = UEFI(self.cs)
         self.image = None
         self.efi_list = None
         self.suspect_modules = {}
@@ -118,12 +119,12 @@ class whitelist(BaseModule):
     #
     def genlist_callback(self, efi_module):
         md = {}
-        if type(efi_module) == spi_uefi.EFI_SECTION:
+        if type(efi_module) == EFI_SECTION:
             #if efi_module.MD5:        md["md5"]     = efi_module.MD5
             if efi_module.SHA256:     md["sha1"]    = efi_module.SHA1
             if efi_module.parentGuid: md["guid"]    = efi_module.parentGuid
             if efi_module.ui_string:  md["name"]    = efi_module.ui_string
-            if efi_module.Name and efi_module.Name != uefi_common.SECTION_NAMES[uefi_common.EFI_SECTION_PE32]:
+            if efi_module.Name and efi_module.Name != SECTION_NAMES[EFI_SECTION_PE32]:
                 md["type"]   = efi_module.Name
             self.efi_list[efi_module.SHA256] = md
         else: pass
@@ -134,11 +135,11 @@ class whitelist(BaseModule):
     def generate_efilist( self, json_pth ):
         self.efi_list = {}
         self.logger.log( "[*] generating a list of EFI executables from firmware image..." )
-        efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
-        matching_modules = spi_uefi.search_efi_tree(efi_tree, self.genlist_callback, spi_uefi.EFIModuleType.SECTION_EXE, True)
+        efi_tree = build_efi_model(self.uefi, self.image, None)
+        matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
         self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list),self.image_file) )
         self.logger.log( "[*] creating JSON file '{}'...".format(json_pth) )
-        chipsec.file.write_file( "{}".format(json_pth), json.dumps(self.efi_list, indent=2, separators=(',', ': ')) )
+        write_file("{}".format(json_pth), json.dumps(self.efi_list, indent=2, separators=(',', ': '), cls=UUIDEncoder))
         return ModuleResult.PASSED
 
     #
@@ -146,7 +147,7 @@ class whitelist(BaseModule):
     #
     def check_whitelist( self, json_pth ):
         self.efi_list = {}
-        with open(json_pth) as data_file:    
+        with open(json_pth) as data_file:
             self.efi_whitelist = json.load(data_file)
 
         self.logger.log( "[*] checking EFI executables against the list '{}'".format(json_pth) )
@@ -154,8 +155,8 @@ class whitelist(BaseModule):
         # parse the UEFI firmware image and look for EFI modules matching white-list
         # - match only executable EFI sections (PE/COFF, TE)
         # - find all occurrences of matching EFI modules
-        efi_tree = spi_uefi.build_efi_model(self.uefi, self.image, None)
-        matching_modules = spi_uefi.search_efi_tree(efi_tree, self.genlist_callback, spi_uefi.EFIModuleType.SECTION_EXE, True)
+        efi_tree = build_efi_model(self.uefi, self.image, None)
+        matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
         self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list),self.image_file) )
 
         for m in self.efi_list:
@@ -198,14 +199,14 @@ class whitelist(BaseModule):
             else:
                 image_file = DEF_FWIMAGE_FILE
                 json_file  = DEF_EFILIST_FILE
-                self.spi = chipsec.hal.spi.SPI(self.cs)
-                (base,limit,freg) = self.spi.get_SPI_region(chipsec.hal.spi.BIOS)
+                self.spi = SPI(self.cs)
+                (base,limit,freg) = self.spi.get_SPI_region(BIOS)
                 image_size = limit + 1 - base
                 self.logger.log("[*] dumping firmware image from ROM to '{}': 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file,image_size,base,limit))
                 self.spi.read_spi_to_file(base, image_size, image_file)
 
             self.image_file = image_file
-            self.image = chipsec.file.read_file(image_file)
+            self.image = read_file(image_file)
             json_pth = os.path.abspath(json_file)
 
             if op == 'generate':
