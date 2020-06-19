@@ -383,6 +383,7 @@ def NextFwFileSection(sections, ssize, sof, polarity):
     EFI_COMMON_SECTION_HEADER_size = struct.calcsize(EFI_COMMON_SECTION_HEADER)
     res = None
     curr_offset = sof
+    ssize = min(ssize,len(sections))
     while curr_offset + EFI_COMMON_SECTION_HEADER_size < ssize:
         Size, Type = struct.unpack(EFI_COMMON_SECTION_HEADER, sections[curr_offset:curr_offset+EFI_COMMON_SECTION_HEADER_size])
         Size = get_3b_size(Size)

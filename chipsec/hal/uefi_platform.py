@@ -24,7 +24,6 @@ Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsu
 """
 
 import struct
-import string
 from collections import namedtuple
 from uuid import UUID
 
