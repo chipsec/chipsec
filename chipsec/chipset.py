@@ -206,6 +206,7 @@ class Chipset:
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
+        cpuid = self.get_cpuid()
 
         #initalize chipset values to unknown
         _unknown_platform = True
@@ -222,10 +223,9 @@ class Chipset:
 
         if platform_code is None:
             #platform code was not passed in try to determine based upon cpu id
-            if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1:
-                value = self.get_cpuid()
+            if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
                 for item in self.chipset_dictionary[vid][did]:
-                    if value == item['detection_value']:
+                    if self.detection_dictionary[cpuid] == item['code']:
                         #matched processor with detection value
                         _unknown_platform = False
                         data_dict       = item
@@ -240,6 +240,12 @@ class Chipset:
                 data_dict       = self.chipset_dictionary[vid][ did ][0]
                 self.code       = data_dict['code'].upper()
                 self.longname   = data_dict['longname']
+                self.vid = vid
+                self.did = did
+                self.rid = rid
+            elif cpuid in self.detection_dictionary.keys():
+                self.code       = self.detection_dictionary[cpuid]
+                self.longname   = self.detection_dictionary[cpuid]
                 self.vid = vid
                 self.did = did
                 self.rid = rid
@@ -339,6 +345,7 @@ class Chipset:
         self.pch_codes = {}
         self.device_code = []
         self.load_list = []
+        self.detection_dictionary = dict()
 
         # find VID
         _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec', 'cfg' )
@@ -384,6 +391,9 @@ class Chipset:
                                 CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
+                        if 'detection_value' in info.attrib:
+                            for dv in list(_info.attrib['detection_value'].split(', ')):
+                                self.detection_dictionary[dv] = _cfg.attrib['platform'].upper()
                         if _info.iter('sku'):
                             for _sku in _info.iter('sku'):
                                 _det = ""

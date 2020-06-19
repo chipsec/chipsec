@@ -13,9 +13,9 @@ XML configuration file for Whiskey Lake
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core">
-    <sku did="0x3E34" name="Whiskey Lake" code="WHL" longname="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)" detection_value="806EA" />
-    <sku did="0x3E34" name="Whiskey Lake" code="WHL" longname="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)" detection_value="806EB" />
+  <info family="core" detection_value="806EA, 806EB">
+    <sku did="0x3E34" name="Whiskey Lake" code="WHL" longname="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)" />
+    <sku did="0x3E34" name="Whiskey Lake" code="WHL" longname="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)" />
   </info>
 
   <!-- #################################### -->
