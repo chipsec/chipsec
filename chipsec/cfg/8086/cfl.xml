@@ -12,7 +12,7 @@ XML configuration file for Coffee Lake
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core">
+  <info family="core" detection_value="906EA, 906EB, 906EC">
     <sku did="0x3E0F" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake S 2 Cores)" />
     <sku did="0x3E1F" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (Coffeelake S 4 Cores)" />
     <sku did="0x3EC2" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (Coffeelake S 6 Cores)" />
@@ -24,7 +24,7 @@ XML configuration file for Coffee Lake
     <sku did="0x3E18" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Workstation 4 Cores)" />
     <sku did="0x3EC6" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Workstation 6 Cores)" />
     <sku did="0x3E31" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Workstation 8 Cores)" />
-    <sku did="0x3E33" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Server 4 Cores)" detection_value="906EA" />
+    <sku did="0x3E33" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Server 4 Cores)" />
     <sku did="0x3ECA" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Server 6 Cores)" />
     <sku did="0x3E32" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake Server 8 Cores)" />
   </info>
