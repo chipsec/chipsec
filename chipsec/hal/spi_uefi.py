@@ -35,7 +35,6 @@ usage:
 
 import os
 import struct
-import hashlib
 import re
 import random
 import json
@@ -44,7 +43,7 @@ from uuid import UUID
 
 from chipsec.logger import logger
 from chipsec.file import write_file, read_file
-from chipsec.defines import bytestostring, COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN
+from chipsec.defines import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN
 from chipsec.hal.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.hal.uefi_platform import FWType, ParsePFS, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 
