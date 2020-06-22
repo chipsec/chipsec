@@ -474,7 +474,9 @@ class ChipsecMain:
         except chipset.UnknownChipsetError as msg:
             logger().error( "Platform is not supported ({}).".format(str(msg)) )
             if self._unknownPlatform:
-                logger().error( 'To run anyways please use -i command-line option\n\n' )
+                logger().error('To specify a cpu please use -p command-line option')
+                logger().error('To specify a pch please use --pch command-line option\n')
+                logger().error('To load legacy configuraiton and run anyways please use -i command-line option')
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
                 return  ExitCode.EXCEPTION
