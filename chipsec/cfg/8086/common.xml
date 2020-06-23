@@ -110,7 +110,9 @@ Common (default) XML platform configuration file
     <register name="PCI0.0.0_GGC"        type="pcicfg" device="HOSTCTRL" offset="0x50" size="2" desc="Graphics Control">
       <field name="GGCLOCK"    bit="0" size="1" desc="GGC Lock"/>
     </register>
-    <register name="PCI0.0.0_DEVEN"      type="pcicfg" device="HOSTCTRL" offset="0x54" size="4" desc="Device Enables"/>
+    <register name="PCI0.0.0_DEVEN"      type="pcicfg" device="HOSTCTRL" offset="0x54" size="4" desc="Device Enables">
+      <field name="D2EN" bit="4" size="1" desc="Device 2 Function 0 Enable" />
+    </register>
     <register name="PCI0.0.0_PAVPC"      type="pcicfg" device="HOSTCTRL" offset="0x58" size="4" desc="PAVP Configuration">
       <field name="PAVPLCK"    bit="2" size="1" desc="Lock"/>
     </register>
@@ -168,7 +170,10 @@ Common (default) XML platform configuration file
       <field name="LOCK"       bit="0"  size="1"  desc="Lock"/>
     </register>
     <register name="PCI0.0.0_SKPD"       type="pcicfg" device="HOSTCTRL" offset="0xDC" size="4" desc="Scratchpad Data"/>
-    <register name="PCI0.0.0_CAPID0_A"   type="pcicfg" device="HOSTCTRL" offset="0xE4" size="4" desc="Capabilities A"/>
+    <register name="PCI0.0.0_CAPID0_A"   type="pcicfg" device="HOSTCTRL" offset="0xE4" size="4" desc="Capabilities A">
+      <field name="VTDD" bit="23" size="1" desc="VTD Disable" />
+      <field name="IGD" bit="11" size="1" desc="Internal Graphics Disable" />
+    </register>
     <register name="PCI0.0.0_CAPID0_B"   type="pcicfg" device="HOSTCTRL" offset="0xE8" size="4" desc="Capabilities B"/>
 
     <!-- IGD registers -->
