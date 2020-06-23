@@ -23,7 +23,7 @@ import hashlib
 import struct
 from uuid import UUID
 from chipsec.defines import bytestostring
-from chipsec.hal.uefi_common import get_3b_size, bit_set, align,VARIABLE_STORE_FV_GUID
+from chipsec.hal.uefi_common import get_3b_size, bit_set, align
 from chipsec.logger import logger
 
 ################################################################################################
@@ -241,9 +241,9 @@ def FvChecksum16(buffer):
     return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
 def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size):
-    zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    # zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
     fv_rsvd = (Reserved == 0)
-    fs_guid = (FsGuid in (EFI_FS_GUIDS + [VARIABLE_STORE_FV_GUID]))
+    # fs_guid = (FsGuid in (EFI_FS_GUIDS + [VARIABLE_STORE_FV_GUID]))
     fv_len = (FvLength <= size)
     fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
     return fv_rsvd and fv_len and fv_header_len
