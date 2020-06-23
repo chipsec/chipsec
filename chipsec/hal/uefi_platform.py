@@ -219,7 +219,7 @@ Reserved   : 0x{:02X}
 Attributes : 0x{:08X}
 NameSize   : 0x{:08X}
 DataSize   : 0x{:08X}
-VendorGuid : {0x{:08X}-0x{:04X}-0x{:04X}-0x{:08X}}
+VendorGuid : {{0x{:08X}-0x{:04X}-0x{:04X}-0x{:08X}}}
 """.format( self.StartId, self.State, self.Reserved, self.Attributes, self.NameSize, self.DataSize, self.VendorGuid0, self.VendorGuid1, self.VendorGuid2, self.VendorGuid3 )
 
 

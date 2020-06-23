@@ -27,7 +27,6 @@ Common UEFI/EFI functionality including UEFI variables, Firmware Volumes, Secure
 import os
 import struct
 import codecs
-import uuid
 from collections import namedtuple
 from uuid import UUID
 
@@ -190,8 +189,8 @@ EFI_STATUS_DICT = {
 EFI_GUID_FMT = "16s"
 EFI_GUID_SIZE = struct.calcsize(EFI_GUID_FMT)
 def EFI_GUID_STR( guid ):
-    guid_str = uuid.UUID(bytes_le=guid)
-    return str(guid).upper()
+    guid_str = UUID(bytes_le=guid)
+    return str(guid_str).upper()
 
 
 def align(of, size):
