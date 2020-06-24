@@ -244,6 +244,7 @@ class Chipset:
                 self.did = did
                 self.rid = rid
             elif cpuid in self.detection_dictionary.keys():
+                _unknown_platform = False
                 self.code       = self.detection_dictionary[cpuid]
                 self.longname   = self.detection_dictionary[cpuid]
                 self.vid = vid
@@ -391,7 +392,7 @@ class Chipset:
                                 CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
                             if _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
-                        if 'detection_value' in info.attrib:
+                        if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(', ')):
                                 self.detection_dictionary[dv] = _cfg.attrib['platform'].upper()
                         if _info.iter('sku'):
