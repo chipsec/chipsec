@@ -394,13 +394,6 @@ class SPI(hal_base.HALBase):
         brwa  = self.cs.get_register_field('FRAP', fracc, 'BRWA' )
         bmrag = self.cs.get_register_field('FRAP', fracc, 'BMRAG' )
         bmwag = self.cs.get_register_field('FRAP', fracc, 'BMWAG' )
-        if self.cs.is_register_defined('FDOC') and self.cs.is_register_defined('FDOD'):
-            if self.logger.HAL:
-                self.logger.log("Reading Observability Contol and Data register (may update braa and brwa)")
-            self.cs.write_register('FDOC', 0x3000)
-            tmp_reg = self.cs.read_register('FDOD')
-            brra |= ((tmp_reg >> 8) & 0xFFF)
-            brwa |= ((tmp_reg >> 20) & 0xFFF)
         self.logger.log( '' )
         self.logger.log( "BIOS Region Write Access Grant ({:02X}):".format(bmwag) )
         regions = self.get_SPI_regions()

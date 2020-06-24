@@ -52,11 +52,6 @@ class spi_access(BaseModule):
         frap = self.cs.read_register( 'FRAP' )
         brra = self.cs.get_register_field( 'FRAP', frap, 'BRRA' )
         brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
-        if self.cs.is_register_defined('FDOC') and self.cs.is_register_defined('FDOD'):
-            self.cs.write_register('FDOC', 0x3000)
-            tmp_reg = self.cs.read_register('FDOD')
-            brra |= ((tmp_reg >> 8) & 0xFFF)
-            brwa |= ((tmp_reg >> 20) & 0xFFF)
 
         # Informational
         # State of Flash Descriptor Valid bit
