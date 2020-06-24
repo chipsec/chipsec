@@ -50,7 +50,6 @@ class spi_access(BaseModule):
         res = ModuleResult.PASSED
         fdv = self.cs.read_register_field( 'HSFS', 'FDV' ) == 1
         frap = self.cs.read_register( 'FRAP' )
-        brra = self.cs.get_register_field( 'FRAP', frap, 'BRRA' )
         brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
 
         # Informational
