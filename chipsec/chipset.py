@@ -393,7 +393,7 @@ class Chipset:
                             if _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
                         if 'detection_value' in _info.attrib:
-                            for dv in list(_info.attrib['detection_value'].split(', ')):
+                            for dv.strip() in list(_info.attrib['detection_value'].split(',')):
                                 self.detection_dictionary[dv] = _cfg.attrib['platform'].upper()
                         if _info.iter('sku'):
                             for _sku in _info.iter('sku'):
