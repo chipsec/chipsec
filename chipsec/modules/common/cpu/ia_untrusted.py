@@ -28,19 +28,42 @@ class ia_untrusted(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if self.cs.is_register_defined('MSR_BIOS_DONE') and self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+        if self.cs.is_register_defined('MSR_BIOS_DONE') and \
+           self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             return True
         self.res = ModuleResult.NOTAPPLICABLE
         return False
 
+    def check_untrusted(self):
+        self.logger.log('[*] Check that untrusted mode has been set.')
+        res = ModuleResult.PASSED
+        if self.cs.register_has_field('MSR_BIOS_DONE', 'SoC_BIOS_DONE'):
+            soc = self.cs.read_register_field('MSR_BIOS_DONE', 'SoC_BIOS_DONE')
+            if soc == 0:
+                res = ModuleResult.FAILED
+                self.logger.log_bad('SoC_BIOS_DONE not set.')
+            else:
+                self.logger.log_good('SoC_BIOS_DONE set.')
+
+        self.logger.log("")
+        for tid in range(self.cs.msr.get_cpu_thread_count()):
+            bd = self.cs.read_register('MSR_BIOS_DONE', tid)
+            if self.logger.VERBOSE:
+                self.cs.print_register('MSR_BIOS_DONE', bd)
+            ia_untrusted = self.cs.get_register_field('MSR_BIOS_DONE', bd, "IA_UNTRUSTED")
+            if ia_untrusted == 0:
+                res = ModuleResult.FAILED
+                self.logger.log_bad('IA_UNTRUSTED not set on thread {:d}.'.format(tid))
+            else:
+                self.logger.log_good('IA_UNTRUSTED set on thread {:d}.'.format(tid))
+        return res
+
     def run(self, module_argv):
         self.logger.start_test('IA_UNTRUSTED Check')
-        self.logger.log('[*] Check that untrusted mode has been set.')
-        ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
-        if ia_untrusted == 0:
-            self.res = ModuleResult.FAILED
-            self.logger.log_failed_check('IA_UNTRUSTED not set.')
-        else:
-            self.logger.log_passed_check('IA_UNTRUSTED set.')
-            self.res = ModuleResult.PASSED
+        self.res = self.check_untrusted()
+        self.logger.log("")
+        if self.res == ModuleResult.PASSED:
+            self.logger.log_passed_check("IA_UNTRUSTED set on all threads")
+        elif self.res == ModuleResult.FAILED:
+            self.logger.log_failed_check("IA_UNTRUSTED not set on all threads")
         return self.res
