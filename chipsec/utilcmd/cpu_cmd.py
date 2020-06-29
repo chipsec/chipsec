@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-# 
+#Copyright (c) 2010-2020, Intel Corporation
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -22,7 +22,6 @@
 from time   import time
 from argparse   import ArgumentParser
 
-import chipsec.hal.cpu
 from chipsec.hal.cpu    import CPU, CPURuntimeError
 from chipsec.command import BaseCommand
 
@@ -63,15 +62,15 @@ class CPUCommand(BaseCommand):
         parser_cr.add_argument('value',type=lambda x: int(x,0),nargs='?',default=None)
         parser_cpuid.add_argument('eax',type=lambda x: int(x,0))
         parser_cpuid.add_argument('ecx',type=lambda x: int(x,0),nargs='?',default=0)
-        parser_pt.add_argument('cr3',type=lambda x: int(x,0),nargs='?',default=None) 
-        
+        parser_pt.add_argument('cr3',type=lambda x: int(x,0),nargs='?',default=None)
+
         parser.parse_args(self.argv[2:],namespace=CPUCommand)
-      
+
         return True
 
     def cpu_info(self):
         self.logger.log( "[CHIPSEC] CPU information:" )
-        ht               = self.cs.cpu.is_HT_active()      
+        ht               = self.cs.cpu.is_HT_active()
         threads_per_core = self.cs.cpu.get_number_logical_processor_per_core()
         threads_per_pkg  = self.cs.cpu.get_number_logical_processor_per_package()
         cores_per_pkg    = self.cs.cpu.get_number_physical_processor_per_package()
@@ -84,7 +83,7 @@ class CPUCommand(BaseCommand):
             sockets_count = self.cs.cpu.get_number_sockets_from_APIC_table()
             self.logger.log( "          Number of sockets       : {:d}".format(sockets_count) )
             self.logger.log( "          Number of CPU threads   : {:d}".format(threads_count) )
-        except:
+        except Exception:
             pass
 
     def cpu_cr(self):
@@ -114,7 +113,7 @@ class CPUCommand(BaseCommand):
         self.logger.log( "[CHIPSEC] CPUID < EAX: 0x{:08X}".format(self.eax))
         self.logger.log( "[CHIPSEC]         ECX: 0x{:08X}".format(self.ecx))
 
-        (_eax,_ebx,_ecx,_edx) = self.cs.cpu.cpuid( self.eax, self.ecx )
+        (_eax, _ebx, _ecx, _edx) = self.cs.cpu.cpuid( self.eax, self.ecx )
 
         self.logger.log( "[CHIPSEC] CPUID > EAX: 0x%08X" % _eax )
         self.logger.log( "[CHIPSEC]         EBX: 0x%08X" % _ebx )
@@ -123,8 +122,8 @@ class CPUCommand(BaseCommand):
 
     def cpu_pt(self):
         if self.cr3 is not None:
-            pt_fname = 'pt_{:08X}'.format(cr3)
-            self.logger.log( "[CHIPSEC] paging physical base (CR3): 0x{:016X}".format(cr3) )
+            pt_fname = 'pt_{:08X}'.format(self.cr3)
+            self.logger.log( "[CHIPSEC] paging physical base (CR3): 0x{:016X}".format(self.cr3) )
             self.logger.log( "[CHIPSEC] dumping paging hierarchy to '{}'...".format(pt_fname) )
             self.cs.cpu.dump_page_tables( self.cr3, pt_fname )
         else:
@@ -137,11 +136,11 @@ class CPUCommand(BaseCommand):
 
     def run(self):
         t = time()
-        try: 
+        try:
             self._cpu = CPU(self.cs)
         except CPURuntimeError as msg:
             print(msg)
-            return 
+            return
 
         self.func()
         self.logger.log( "[CHIPSEC] (cpu) time elapsed {:.3f}".format(time()-t) )

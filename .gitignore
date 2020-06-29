@@ -6,6 +6,7 @@
 *.lib
 chipsec.egg-info
 dist
+build
 
 # Windows driver
 .vs/
@@ -21,3 +22,6 @@ chipsec_tools/compression/Bin/
 # py2exe
 bin/
 scripts/bdist.win-amd64/
+
+# Visual Studio Code
+.vscode

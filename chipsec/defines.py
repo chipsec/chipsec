@@ -155,7 +155,7 @@ SIZE2FORMAT = {
 }
 
 def bytestostring(mbytes):
-    if type(mbytes) == type(bytes()):
+    if isinstance(mbytes,bytes):
         return mbytes.decode("latin_1")
     else:
         return mbytes
@@ -179,6 +179,9 @@ def get_version():
 
 def is_printable(seq):
     return set(seq).issubset(set(string.printable))
+
+def is_hex(maybe_hex):
+    return all(char in string.hexdigits for char in maybe_hex)
 
 def get_message():
     msg_str = ""

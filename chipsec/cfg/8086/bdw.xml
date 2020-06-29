@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<configuration platform="BDW">
+<!--
+XML configuration for Broadwell based platforms
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core">
+    <sku did="0x1600" name="Broadwell" code="BDW" longname="Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)" />
+    <sku did="0x1604" name="Broadwell" code="BDW" longname="Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)" />
+    <sku did="0x1610" name="Broadwell" code="BDW" longname="Desktop 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)" />
+    <sku did="0x1614" name="Broadwell" code="BDW" longname="Mobile 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)" />
+    <sku did="0x1618" name="Broadwell Server" code="BDW" longname="Intel Xeon Processor E3 v4 (Broadwell CPU)" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+  </memory>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+  </registers>
+
+</configuration>

@@ -112,21 +112,21 @@ SMBIOS_BIOS_INFO_2_0_ENTRY_FMT = '=BBHBBHBBQ'
 SMBIOS_BIOS_INFO_2_0_ENTRY_SIZE = struct.calcsize(SMBIOS_BIOS_INFO_2_0_ENTRY_FMT)
 SMBIOS_BIOS_INFO_2_0_FORMAT_STRING = """
 SMBIOS BIOS Information:
-  Type                      : 0x{:02X} ({:d})
-  Length                    : 0x{:02X}
-  Handle                    : 0x{:04X}
-  Vendor                    : {:s}
-  BIOS Version              : {:s}
-  BIOS Starting Segment     : 0x{:04X}
-  BIOS Release Date         : {:s}
-  BIOS ROM Size             : 0x{:02X}
-  BIOS Characteristics      : 0x{:016X}
+  Type                      : 0x{0:02X} ({0:d})
+  Length                    : 0x{1:02X}
+  Handle                    : 0x{2:04X}
+  Vendor                    : {3:s}
+  BIOS Version              : {4:s}
+  BIOS Starting Segment     : 0x{5:04X}
+  BIOS Release Date         : {6:s}
+  BIOS ROM Size             : 0x{7:02X}
+  BIOS Characteristics      : 0x{8:016X}
 """
 SMBIOS_BIOS_INFO_2_0_FORMAT_STRING_FAILED = """
 SMBIOS BIOS Information structure decode failed
 """
-class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_ENTRY_2_0', 'type length handle vendor_str version_str segment release_str \
-    rom_sz bios_char strings')):
+class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_INFO_2_0_ENTRY', 'type length handle vendor_str version_str segment \
+    release_str rom_sz bios_char strings')):
     __slots__ = ()
     def __str__(self):
         str_count = len(self.strings)
@@ -139,12 +139,50 @@ class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_ENTRY_2_0', 'type length hand
             ver_str = self.strings[self.version_str - 1]
         if self.release_str != 0 and self.release_str <= str_count:
             rel_str = self.strings[self.release_str - 1]
-        return SMBIOS_BIOS_INFO_2_0_FORMAT_STRING.format(self.type, self.type, self.length, self.handle, ven_str, \
+        return SMBIOS_BIOS_INFO_2_0_FORMAT_STRING.format(self.type, self.length, self.handle, ven_str, \
             ver_str, self.segment, rel_str, self.rom_sz, self.bios_char)
 
 
+SMBIOS_SYSTEM_INFO_ENTRY_ID = 1
+SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT = '=BBHBBBB'
+SMBIOS_SYSTEM_INFO_2_0_ENTRY_SIZE = struct.calcsize(SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT)
+SMBIOS_SYSTEM_INFO_2_0_FORMAT_STRING = """
+SMBIOS System Information:
+  Type                      : 0x{0:02X} ({0:d})
+  Length                    : 0x{1:02X}
+  Handle                    : 0x{2:04X}
+  Manufacturer              : {3:s}
+  Product Name              : {4:s}
+  Version                   : {5:s}
+  Serial Number             : {6:s}
+"""
+SMBIOS_SYSTEM_INFO_2_0_FORMAT_STRING_FAILED = """
+SMBIOS System Information structure decode failed
+"""
+class SMBIOS_SYSTEM_INFO_2_0(namedtuple('SMBIOS_SYSTEM_INFO_2_0_ENTRY', 'type length handle manufacturer_str product_str \
+    version_str serial_str strings')):
+    __slots__ = ()
+    def __str__(self):
+        str_count = len(self.strings)
+        man_str = ''
+        pro_str = ''
+        ver_str = ''
+        ser_str = ''
+        if self.manufacturer_str != 0 and self.manufacturer_str <= str_count:
+            man_str = self.strings[self.manufacturer_str - 1]
+        if self.product_str != 0 and self.product_str <= str_count:
+            pro_str = self.strings[self.product_str - 1]
+        if self.version_str != 0 and self.version_str <= str_count:
+            ver_str = self.strings[self.version_str - 1]
+        if self.serial_str != 0 and self.serial_str <= str_count:
+            ser_str = self.strings[self.serial_str - 1]
+        return SMBIOS_SYSTEM_INFO_2_0_FORMAT_STRING.format(self.type, self.length, self.handle, man_str, \
+            pro_str, ver_str, ser_str)
+
+
 struct_decode_tree = {
-    SMBIOS_BIOS_INFO_ENTRY_ID: {'class':SMBIOS_BIOS_INFO_2_0, 'format':SMBIOS_BIOS_INFO_2_0_ENTRY_FMT}
+    SMBIOS_BIOS_INFO_ENTRY_ID: {'class': SMBIOS_BIOS_INFO_2_0, 'format': SMBIOS_BIOS_INFO_2_0_ENTRY_FMT},
+    SMBIOS_SYSTEM_INFO_ENTRY_ID: {'class': SMBIOS_SYSTEM_INFO_2_0, 'format': SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT}
 }
 
 class SMBIOS(hal_base.HALBase):
@@ -347,7 +385,7 @@ class SMBIOS(hal_base.HALBase):
         if self.smbios_3_data is not None and not force_32bit:
             if logger().HAL: logger().log('Using 64bit SMBIOS table')
             table = self.smbios_3_data
-        elif self.smbios_3_data is not None:
+        elif self.smbios_2_data is not None:
             if logger().HAL: logger().log('Using 32bit SMBIOS table')
             table = self.smbios_2_data
         else:

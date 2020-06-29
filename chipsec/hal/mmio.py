@@ -43,60 +43,25 @@ usage:
     >>> get_MMCFG_base_address(cs)
     >>> read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4 )
     >>> read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF )
-
-    DEPRECATED: Access MMIO by BAR id:
-
-    >>> read_MMIOBAR_reg( cs, mmio.MMIO_BAR_MCHBAR, 0x0 )
-    >>> write_MMIOBAR_reg( cs, mmio.MMIO_BAR_MCHBAR, 0xFFFFFFFF )
-    >>> get_MMIO_base_address( cs, mmio.MMIO_BAR_MCHBAR )
 """
 
 from chipsec.hal import hal_base
-from chipsec.cfg.common import Cfg
-
-# CPU
-# Device 0
-MMIO_BAR_MCHBAR      = 1   # MCHBAR
-MMIO_BAR_DMIBAR      = 2   # DMIBAR
-MMIO_BAR_PCIEXBAR    = 3   # PCIEXBAR
-# Device 1
-# @TODO
-# Device 2
-MMIO_BAR_GTTMMADR    = 10  # GFx MMIO
-MMIO_BAR_GMADR       = 11  # GFx Aperture
-# Device 3 (Device 27)
-MMIO_BAR_HDABAR      = 20  # HD Audio MMIO BAR
-# PCH
-# @TODO
-# Device 31
-MMIO_BAR_LPCRCBA     = 100 # ICH LPC Interface Root Complex (RCBA)
-MMIO_BAR_LPCRCBA_SPI = 101 # RCBA SPIBASE
-
-MMIO_BAR_name = {
-    MMIO_BAR_MCHBAR      : "MCHBAR",
-    MMIO_BAR_DMIBAR      : "DMIBAR",
-    MMIO_BAR_PCIEXBAR    : "PCIEXBAR",
-    MMIO_BAR_GMADR       : "GMADR",
-    MMIO_BAR_GTTMMADR    : "GTTMMADR",
-    MMIO_BAR_HDABAR      : "HDABAR",
-    MMIO_BAR_LPCRCBA     : "RCBA"
-}
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
+
+PCI_PCIEXBAR_REG_LENGTH_256MB  = 0x0
+PCI_PCIEXBAR_REG_LENGTH_128MB  = 0x1
+PCI_PCIEXBAR_REG_LENGTH_64MB   = 0x2
+PCI_PCIEXBAR_REG_LENGTH_512MB  = 0x3
+PCI_PCIEXBAR_REG_LENGTH_1024MB = 0x4
+PCI_PCIEXBAR_REG_LENGTH_2048MB = 0x5
+PCI_PCIEXBAR_REG_LENGTH_4096MB = 0x6
+PCI_PCIEBAR_REG_MASK = 0x7FFC000000
 
 class MMIO(hal_base.HALBase):
 
     def __init__(self, cs):
         super(MMIO, self).__init__(cs)
-        self.MMIO_BAR_base = {
-            MMIO_BAR_MCHBAR      : self.get_MCHBAR_base_address,
-            MMIO_BAR_DMIBAR      : self.get_DMIBAR_base_address,
-            MMIO_BAR_PCIEXBAR    : self.get_PCIEXBAR_base_address,
-            MMIO_BAR_GMADR       : self.get_GMADR_base_address,
-            MMIO_BAR_GTTMMADR    : self.get_GTTMMADR_base_address,
-            MMIO_BAR_HDABAR      : self.get_HDAudioBAR_base_address,
-            MMIO_BAR_LPCRCBA     : self.get_LPC_RCBA_base_address
-        }
 
     ###########################################################################
     # Access to MMIO BAR defined by configuration files (chipsec/cfg/*.py)
@@ -112,118 +77,6 @@ class MMIO(hal_base.HALBase):
     ###########################################################################
 
 
-    #
-    # Dev0 BARs: MCHBAR, DMIBAR
-    #
-    def get_MCHBAR_base_address(self):
-        base = self.cs.pci.read_dword(0, 0, 0, Cfg.PCI_MCHBAR_REG_OFF)
-        if (0 == base & 0x1):
-            self.logger.warn('MCHBAR is disabled')
-        base = base & 0xFFFFF000
-        if self.logger.HAL:
-            self.logger.log('[mmio] MCHBAR: 0x{:016X}'.format(base))
-        return base
-
-    def get_DMIBAR_base_address(self):
-        base_lo = self.cs.pci.read_dword(0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF)
-        base_hi = self.cs.pci.read_dword(0, 0, 0, Cfg.PCI_DMIBAR_REG_OFF + 4)
-        if (0 == base_lo & 0x1) and self.logger.HAL:
-            self.logger.warn('DMIBAR is disabled')
-        base = (base_hi << 32) | (base_lo & 0xFFFFF000)
-        if self.logger.HAL:
-            self.logger.log( '[mmio] DMIBAR: 0x{:016X}'.format(base) )
-        return base
-
-    #
-    # PCH LPC Interface Root Complex base address (RCBA)
-    #
-    def get_LPC_RCBA_base_address(self):
-        reg_value = self.cs.pci.read_dword(0, 31, 0, Cfg.LPC_RCBA_REG_OFFSET)
-        #RcbaReg = LPC_RCBA_REG( (reg_value>>14)&0x3FFFF, (reg_value>>1)&0x1FFF, reg_value&0x1 )
-        #rcba_base = RcbaReg.BaseAddr << Cfg.RCBA_BASE_ADDR_SHIFT
-        rcba_base = (reg_value >> Cfg.RCBA_BASE_ADDR_SHIFT) << Cfg.RCBA_BASE_ADDR_SHIFT
-        if self.logger.HAL:
-            self.logger.log( "[mmio] LPC RCBA: 0x{:08X}".format(rcba_base) )
-        return rcba_base
-
-    #
-    # GFx MMIO: GMADR/GTTMMADR
-    #
-    def get_GFx_base_address(self, dev2_offset):
-        #bar = PCI_BDF(0, 2, 0, dev2_offset)
-        base_lo = self.cs.pci.read_dword(0, 2, 0, dev2_offset)
-        base_hi = self.cs.pci.read_dword(0, 2, 0, dev2_offset + 4)
-        base = base_hi | (base_lo & 0xFF000000)
-        return base
-
-    def get_GMADR_base_address(self):
-        base = self.get_GFx_base_address(Cfg.PCI_GMADR_REG_OFF)
-        if self.logger.HAL:
-            self.logger.log( '[mmio] GMADR: 0x{:016X}'.format(base) )
-        return base
-
-    def get_GTTMMADR_base_address(self):
-        base = self.get_GFx_base_address(Cfg.PCI_GTTMMADR_REG_OFF)
-        if self.logger.HAL:
-            self.logger.log( '[mmio] GTTMMADR: 0x{:016X}'.format(base) )
-        return base
-
-    #
-    # HD Audio MMIO
-    #
-    def get_HDAudioBAR_base_address(self):
-        base = self.cs.pci.read_dword( 0, Cfg.PCI_HDA_DEV, 0, Cfg.PCI_HDAUDIOBAR_REG_OFF )
-        base = base & (0xFFFFFFFF << 14)
-        if self.logger.HAL:
-            self.logger.log( '[mmio] HD Audio MMIO: 0x{:08X}'.format(base) )
-        return base
-
-    #
-    # PCIEXBAR - technically not MMIO but Memory-mapped CFG space (MMCFG)
-    # but defined by BAR similarly to MMIO BARs
-    #
-    def get_PCIEXBAR_base_address(self):
-        base_lo = self.cs.pci.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF )
-        base_hi = self.cs.pci.read_dword( 0, 0, 0, Cfg.PCI_PCIEXBAR_REG_OFF + 4 )
-        if (0 == base_lo & 0x1) and self.logger.HAL:
-            self.logger.warn('PCIEXBAR is disabled')
-
-        base_lo &= Cfg.PCI_PCIEXBAR_REG_ADMSK256
-        if (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-            base_lo |= Cfg.PCI_PCIEXBAR_REG_ADMSK128
-        elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (base_lo & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-            base_lo |= (Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
-        base = (base_hi << 32) | base_lo
-        if self.logger.HAL:
-            self.logger.log( '[mmio] PCIEXBAR (MMCFG): 0x{:016X}'.format(base) )
-        return base
-
-    #
-    # Get base address of MMIO range by MMIO_BAR_* id
-    #
-    def get_MMIO_base_address(self, bar_id):
-        return self.MMIO_BAR_base[bar_id]
-
-    #
-    # Read MMIO register in MMIO BAR defined by MMIO_BAR_* id
-    #
-    def read_MMIOBAR_reg(self, bar_id, offset ):
-        bar_base  = self.MMIO_BAR_base[ bar_id ]
-        reg_addr  = bar_base + offset
-        reg_value = self.cs.helper.read_mmio_reg( bar_base, 4, offset )
-        if self.logger.HAL:
-            self.logger.log( '[mmio] {} + 0x{:08X} (0x{:08X}) = 0x{:08X}'.format(MMIO_BAR_name[bar_id], offset, reg_addr, reg_value) )
-        return reg_value
-
-    #
-    # Write MMIO register in MMIO BAR defined by MMIO_BAR_* id
-    #
-    def write_MMIOBAR_reg(self, bar_id, offset, dword_value):
-        bar_base  = self.MMIO_BAR_base[bar_id]
-        reg_addr  = bar_base + offset
-        if self.logger.HAL:
-            self.logger.log('[mmio] write {} + 0x{:08X} (0x{:08X}) = 0x{:08X}'.format(MMIO_BAR_name[bar_id], offset, reg_addr, dword_value) )
-        self.cs.helper.write_mmio_reg(reg_addr, 4, dword_value)
 
 
     #
@@ -475,13 +328,22 @@ class MMIO(hal_base.HALBase):
 
     def get_MMCFG_base_address(self):
         (bar_base,bar_size)  = self.get_MMIO_BAR_base_address('MMCFG')
-        # @TODO: temporary w/a
-        #if (Cfg.PCI_PCIEXBAR_REG_LENGTH_256MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-        #    bar_base &= ~(Cfg.PCI_PCIEXBAR_REG_ADMSK128|Cfg.PCI_PCIEXBAR_REG_ADMSK64)
-        #elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_128MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-        #    bar_base &= ~Cfg.PCI_PCIEXBAR_REG_ADMSK64
-        ##elif (Cfg.PCI_PCIEXBAR_REG_LENGTH_64MB == (bar_base & Cfg.PCI_PCIEXBAR_REG_LENGTH_MASK) >> 1):
-        ##   pass
+        if self.cs.register_has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
+            len = self.cs.read_register_field("PCI0.0.0_PCIEXBAR", "LENGTH")
+            if len == PCI_PCIEXBAR_REG_LENGTH_256MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 2)
+            elif len == PCI_PCIEXBAR_REG_LENGTH_128MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 1)
+            if len == PCI_PCIEXBAR_REG_LENGTH_64MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 0)
+            if len == PCI_PCIEXBAR_REG_LENGTH_512MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 3)
+            if len == PCI_PCIEXBAR_REG_LENGTH_1024MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 4)
+            if len == PCI_PCIEXBAR_REG_LENGTH_2048MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 5)
+            if len == PCI_PCIEXBAR_REG_LENGTH_4096MB:
+                bar_base &= (PCI_PCIEBAR_REG_MASK << 6)
         if self.logger.HAL: self.logger.log( '[mmcfg] Memory Mapped CFG Base: 0x{:016X}'.format(bar_base) )
         return bar_base, bar_size
 

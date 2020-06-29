@@ -37,7 +37,7 @@ from chipsec.helper import oshelper
 from chipsec.logger  import logger
 from chipsec.chipset import UnknownChipsetError
 from chipsec.testcase import ExitCode
-from chipsec.chipset import cs, Chipset_Code, pch_codes
+from chipsec.chipset import cs
 from chipsec.file import get_main_dir
 
 logger().UTIL_TRACE = True
@@ -66,7 +66,7 @@ class ChipsecUtil:
         self.CHIPSEC_LOADED_AS_EXE = True if (hasattr(sys, "frozen") or hasattr(sys, "importers")) else False
         # determine if the hosting Python interpreter is a 64-bit executable
         self.PYTHON_64_BITS = True if (sys.maxsize > 2**32) else False
-        
+
         self.argv = argv
         self.print_banner()
         self.import_cmds()
@@ -83,8 +83,8 @@ class ChipsecUtil:
         options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
-        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=Chipset_Code, type=str.upper)
-        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=pch_codes, type=str.upper)
+        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=cs().chipset_codes, type=str.upper)
+        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=cs().pch_codes, type=str.upper)
         options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
@@ -167,7 +167,8 @@ class ChipsecUtil:
             sys.exit(ExitCode.EXCEPTION)
         logger().log("[CHIPSEC] Helper  : {} ({})".format(*self._cs.helper.helper.get_info()))
         logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
-        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
+        if not self._cs.is_atom():
+            logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
         logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd,self.argv[2:]) )
         comm.run()
@@ -189,7 +190,7 @@ class ChipsecUtil:
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(platform.system(), platform.release(), platform.version(), platform.machine()))
         logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log(get_message())
-        
+
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
             logger().warn("Python architecture (32-bit) is different from OS architecture (64-bit)")
 

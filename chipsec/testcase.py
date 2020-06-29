@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2019, Intel Corporation
+#Copyright (c) 2018-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -67,9 +67,6 @@ class ChipsecResults():
 
     def add_testcase(self,test):
         self.test_cases.append(test)
-
-    def get_results(self):
-        return self.test_cases
 
     def get_current(self):
         if len(self.test_cases) == 0 or self.summary:
@@ -209,6 +206,42 @@ class ChipsecResults():
             out_element = ET.SubElement(tc_element, "system-out")
             out_element.text = test.output
         return xml.dom.minidom.parseString(ET.tostring( xml_element, None, None )).toprettyxml()
+
+
+    def markdown_full(self, name):
+        passed = []
+        failed = []
+        error = []
+        warning = []
+        skipped = []
+        information = []
+        notapplicable = []
+        deprecated = []
+        destination = { 'Passed':        passed,
+                        'Failed':        failed,
+                        'Error':         error,
+                        'Warning':       warning,
+                        'Skipped':       skipped,
+                        'Information':   information,
+                        'NotApplicable': notapplicable,
+                        'Deprecated':    deprecated
+                        }
+
+        for test in self.test_cases:
+            # Test case as header level 4
+            out_string = '#### {:s}\n'.format(test.name.replace('chipsec.modules.',''))
+            for line in test.output.splitlines(True):
+                # Format output as code
+                out_string += '    {:s}'.format(line)
+            destination[test.result].append(out_string)
+
+        ret_string = ""
+        for result in destination:
+            # Category as header level 1
+            ret_string += '\n# {:s}:{:d}\n'.format(result, len(destination[result]))
+            ret_string += ''.join(destination[result])
+        return ret_string
+
 
 class TestCase():
     def __init__(self, name):

@@ -35,7 +35,6 @@ import uuid
 
 from chipsec.hal import hal_base
 from chipsec.logger import logger
-from chipsec.cfg.common import Cfg
 from chipsec.hal.acpi import ACPI
 from chipsec.hal.acpi_tables import UEFI_TABLE
 from chipsec.defines import bytestostring
@@ -69,16 +68,11 @@ class Interrupts(hal_base.HALBase):
         return self.cs.io.write_port_word( SMI_APMC_PORT, SMI_code_data )
 
 
-    def get_PMBASE(self):
-        return (self.cs.pci.read_dword( 0, 31, 0, Cfg.CFG_REG_PCH_LPC_PMBASE ) & ~0x1)
-
-    def get_TCOBASE(self):
-        return (self.get_PMBASE() + Cfg.TCOBASE_ABASE_OFFSET)
-
 
     def send_NMI( self ):
         if logger().HAL: logger().log( "[intr] sending NMI# through TCO1_CTL[NMI_NOW]" )
-        tcobase = self.get_TCOBASE()
+        reg, ba = self.cs.get_IO_space("TCOBASE")
+        tcobase = self.cs.read_register_field(reg,ba)
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )
 
     def find_ACPI_SMI_Buffer(self):
@@ -88,7 +82,7 @@ class Interrupts(hal_base.HALBase):
             _uefi = UEFI_TABLE()
             _uefi.parse(_acpi[0][1])
             if logger().HAL: logger().log(str(_uefi))
-            return _uefi.get_commbuf_info() 
+            return _uefi.get_commbuf_info()
         if logger().HAL: logger().log("Unable to find Communication Buffer")
         return None
 
@@ -105,11 +99,11 @@ class Interrupts(hal_base.HALBase):
             #need to write data_hdr to comm buffer
             tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
             #USING GAS need to write buf_addr into invoc_reg
-            if invoc_reg.addrSpaceID is 0:
+            if invoc_reg.addrSpaceID == 0:
                 self.cs.helper.write_physical_mem(invoc_reg.addr,invoc_reg.access_size,buf_addr)
                 #check for return status
                 ret_buf = self.cs.helper.read_physical_mem(buf_addr,8)
-            elif invoc_reg.addrSpaceID is 1:
+            elif invoc_reg.addrSpaceID == 1:
                 self.cs.helper.write_io_port(invoc_reg.addr,invoc_reg.access_size,buf_addr)
                 #check for return status
                 ret_buf = self.cs.helper.read_io_port(buf_addr,8)

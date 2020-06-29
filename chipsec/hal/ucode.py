@@ -33,7 +33,6 @@ import struct
 import os
 
 from chipsec.logger import logger
-from chipsec.cfg.common import Cfg
 from chipsec.file import read_file
 
 IA32_MSR_BIOS_UPDT_TRIG      = 0x79
@@ -87,8 +86,8 @@ class Ucode:
 
     # @TODO remove later/replace with msr.get_cpu_thread_count()
     def get_cpu_thread_count( self ):
-        (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
-        return (core_thread_count & Cfg.IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
+        thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT","Thread_Count")
+        return thread_count
 
     def ucode_update_id(self, cpu_thread_id):
         #self.helper.write_msr( cpu_thread_id, IA32_MSR_BIOS_SIGN_ID, 0, 0 )

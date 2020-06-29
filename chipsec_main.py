@@ -205,7 +205,6 @@ class ChipsecMain:
 
         if module not in self.Loaded_Modules:
             self.Loaded_Modules.append( (module,module_argv) )
-            if not self._list_tags: logger().log( "[+] loaded {}".format(module.get_name()) )
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
@@ -217,6 +216,7 @@ class ChipsecMain:
             for modx in mod_fnames:
                 if fnmatch.fnmatch( modx, '*.py' ) and not fnmatch.fnmatch( modx, '__init__.py' ):
                     self.load_module( os.path.join( dirname, modx ), self._module_argv )
+        self.Loaded_Modules.sort()
 
     def load_my_modules(self):
         #
@@ -231,7 +231,7 @@ class ChipsecMain:
         # Load platform-specific modules from the corresponding platform module directory
         #
         chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
-        if (chipset.CHIPSET_ID_UNKNOWN != self._cs.id) and os.path.exists( chipset_path ):
+        if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.code) and os.path.exists( chipset_path ):
             logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd(),'.')) )
             self.load_modules_from_path( chipset_path )
         else:
@@ -241,7 +241,6 @@ class ChipsecMain:
         # Enumerate all modules from the root module directory
         logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(),'.')) )
         self.load_modules_from_path( self.Modules_Path, False )
-
 
     def load_user_modules(self):
         for import_path in self.IMPORT_PATHS:
@@ -256,7 +255,7 @@ class ChipsecMain:
         if self.Loaded_Modules == []:
             logger().log( "No modules have been loaded" )
         for (modx,modx_argv) in self.Loaded_Modules:
-            logger().log( modx )
+            logger().log( "[+] loaded {}".format(modx) )
 
 
     def run_loaded_modules(self):
@@ -296,7 +295,10 @@ class ChipsecMain:
             chipsec.file.write_file(self._json_out, results.json_full())
             
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))	
+            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
+
+        if self._markdown_out:
+            chipsec.file.write_file(self._markdown_out, results.markdown_full(self._markdown_out))
 
         test_deltas = None
         if self._deltas_file is not None:
@@ -367,6 +369,10 @@ class ChipsecMain:
         else:
             self.load_my_modules()
         self.load_user_modules()
+ 
+        # Print a list of all loaded modules
+        self.print_loaded_modules()
+
         return self.run_loaded_modules()
 
     def parse_args(self):
@@ -385,12 +391,13 @@ class ChipsecMain:
         options.add_argument('-d','--debug', help='debug mode', action='store_true')
         options.add_argument('-l','--log', help='output to log file')
         adv_options = parser.add_argument_group('Advanced Options')
-        adv_options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.Chipset_Code, type=str.upper)
-        adv_options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.pch_codes, type=str.upper)
+        adv_options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.cs().chipset_codes, type=str.upper)
+        adv_options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.cs().pch_codes, type=str.upper)
         adv_options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
         adv_options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
         adv_options.add_argument('-j', '--json',dest='_json_out', help='specify filename for JSON output')
         adv_options.add_argument('-x', '--xml', dest='_xml_out',help='specify filename for xml output (JUnit style)')
+        adv_options.add_argument('-k', '--markdown', dest='_markdown_out',help='specify filename for markdown output')
         adv_options.add_argument('-t', '--moduletype',dest='USER_MODULE_TAGS', help='run tests of a specific type (tag)',type=str.upper,default=[])
         adv_options.add_argument('--list_tags',dest='_list_tags', help='list all the available options for -t,--moduletype',action='store_true')
         adv_options.add_argument('-I', '--include',dest='IMPORT_PATHS', help='specify additional path to load modules from',default=[])
@@ -426,7 +433,8 @@ class ChipsecMain:
         ret["OS"] = "{} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine)
         ret["Python"] = "Python {}".format(platform.python_version())
         ret["Platform"] = "{}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid) 
-        ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid)
+        if not self._cs.is_atom():
+            ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid)
         ret["Version"] ="{}".format(self.version)
         ret["Message"] = "{}".format(self.message)
         return ret
@@ -436,8 +444,9 @@ class ChipsecMain:
         logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log("[CHIPSEC] Helper  : {} ({})".format(*self._cs.helper.helper.get_info()))
         logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
-        logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
-        
+        if not self._cs.is_atom():
+            logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
+
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
             logger().warn("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
@@ -465,7 +474,9 @@ class ChipsecMain:
         except chipset.UnknownChipsetError as msg:
             logger().error( "Platform is not supported ({}).".format(str(msg)) )
             if self._unknownPlatform:
-                logger().error( 'To run anyways please use -i command-line option\n\n' )
+                logger().error('To specify a cpu please use -p command-line option')
+                logger().error('To specify a pch please use --pch command-line option\n')
+                logger().error('To load legacy configuraiton and run anyways please use -i command-line option')
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
                 return  ExitCode.EXCEPTION

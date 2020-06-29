@@ -36,12 +36,24 @@ usage:
 """
 
 from chipsec.logger import logger, print_buffer
-from chipsec.cfg.common import Cfg
 
 
 DESCRIPTOR_TABLE_CODE_IDTR = 0
 DESCRIPTOR_TABLE_CODE_GDTR = 1
 DESCRIPTOR_TABLE_CODE_LDTR = 2
+
+MTRR_MEMTYPE_UC = 0x0
+MTRR_MEMTYPE_WC = 0x1
+MTRR_MEMTYPE_WT = 0x4
+MTRR_MEMTYPE_WP = 0x5
+MTRR_MEMTYPE_WB = 0x6
+MemType = {
+    MTRR_MEMTYPE_UC: 'Uncacheable (UC)',
+    MTRR_MEMTYPE_WC: 'Write Combining (WC)',
+    MTRR_MEMTYPE_WT: 'Write-through (WT)',
+    MTRR_MEMTYPE_WP: 'Write-protected (WP)',
+    MTRR_MEMTYPE_WB: 'Writeback (WB)'
+}
 
 class MsrRuntimeError (RuntimeError):
     pass
@@ -56,8 +68,7 @@ class Msr:
         thread_count = self.helper.get_threads_count()
         if thread_count is None or thread_count < 0:
             if logger().HAL: logger().log( "helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)" )
-            (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
-            thread_count = (core_thread_count & Cfg.IA32_MSR_CORE_THREAD_COUNT_THREADCOUNT_MASK)
+            thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT","Thread_Count")
 
         if 0 == thread_count: thread_count = 1
         if logger().HAL: logger().log( "[cpu] # of logical CPUs: {:d}".format(thread_count) )
@@ -65,8 +76,8 @@ class Msr:
 
     # @TODO: fix
     def get_cpu_core_count( self ):
-        (core_thread_count, dummy) = self.helper.read_msr( 0, Cfg.IA32_MSR_CORE_THREAD_COUNT )
-        return ((core_thread_count & Cfg.IA32_MSR_CORE_THREAD_COUNT_CORECOUNT_MASK) >> 16)
+        core_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT","Core_Count")
+        return core_count
 
 
 ##########################################################################################################
