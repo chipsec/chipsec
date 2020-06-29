@@ -71,7 +71,7 @@ class bios_kbrd_buffer(BaseModule):
         if (0x1E < kbrd_buf_tail) and (kbrd_buf_tail <= 0x1E+32):
             #has_contents = True
             self.logger.log_bad( "Keyboard buffer tail points inside the buffer (= 0x{:X})".format(kbrd_buf_tail) )
-            self.logger.log( "    It may potentially expose lengths of pre-boot passwords. Was your password {:d} characters long?".format((kbrd_buf_tail+2 - 0x1E)/2) )
+            self.logger.log( "    It may potentially expose lengths of pre-boot passwords. Was your password {:d} characters long?".format((kbrd_buf_tail+2 - 0x1E)//2) )
 
         self.logger.log( "[*] Checking contents of the keyboard buffer..\n" )
 
