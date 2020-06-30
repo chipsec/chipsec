@@ -678,8 +678,8 @@ class LinuxHelper(Helper):
                     numCpus += 1
             f.close()
         except Exception:
-            pass
-        return 1
+            numCpus = 1
+        return numCpus
 
     def set_affinity(self, thread_id):
         try:
