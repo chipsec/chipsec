@@ -36,7 +36,6 @@ import shutil
 from collections import namedtuple
 from ctypes import *
 import subprocess
-import codecs
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con
@@ -48,7 +47,6 @@ from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, Unimp
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger
 import chipsec.file
-from chipsec.defines import bytestostring
 from chipsec.hal.uefi_common import EFI_GUID_STR
 
 
