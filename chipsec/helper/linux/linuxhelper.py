@@ -666,14 +666,29 @@ class LinuxHelper(Helper):
     #
 
     def get_affinity(self):
-        affinity = os.sched_getaffinity(0)
-        return len(affinity)
+        try:
+            affinity = os.sched_getaffinity(0)
+            return len(affinity)
+        except Exception:
+            numCpus = 0
+        try:
+            f = open('/proc/cpuinfo', 'r')
+            for line in f:
+                if "processor" in line:
+                    numCpus += 1
+            f.close()
+        except Exception:
+            pass
+        return 1
 
     def set_affinity(self, thread_id):
-        if thread_id < self.get_affinity():
-            os.sched_setaffinity(thread_id,{thread_id})
-            return thread_id
-        else:
+        try:
+            if thread_id < self.get_affinity():
+                os.sched_setaffinity(thread_id,{thread_id})
+                return thread_id
+            else:
+                return None
+        except Exception:
             return None
 
     #########################################################
