@@ -49,7 +49,7 @@ from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger
 import chipsec.file
 from chipsec.defines import bytestostring
-from chipsec.hal.uefi_common import EFI_GUID
+from chipsec.hal.uefi_common import EFI_GUID_STR
 
 
 class PCI_BDF(Structure):
@@ -181,24 +181,24 @@ FirmwareTableID_RSDT = 0x54445352
 FirmwareTableID_XSDT = 0x54445358
 
 
-class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid0 guid1 guid2 guid3') ):
+class EFI_HDR_WIN( namedtuple('EFI_HDR_WIN', 'Size DataOffset DataSize Attributes guid') ):
     __slots__ = ()
     def __str__(self):
         return """
 Header (Windows)
 ----------------
-VendorGuid= {{{:08X}-{:04X}-{:04X}-{:4}-{:6}}}
+VendorGuid= {{{}}}
 Size      = 0x{:08X}
 DataOffset= 0x{:08X}
 DataSize  = 0x{:08X}
 Attributes= 0x{:08X}
-""".format( self.guid0, self.guid1, self.guid2, bytestostring(codecs.encode(self.guid3[:2],'hex')).upper(), bytestostring(codecs.encode(self.guid3[-6::],'hex')).upper(), self.Size, self.DataOffset, self.DataSize, self.Attributes )
+""".format( EFI_GUID_STR(self.guid), self.Size, self.DataOffset, self.DataSize, self.Attributes )
 
 def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
     start = 0
     buffer = nvram_buf
     bsize = len(buffer)
-    header_fmt = "<IIIIIHH8s"
+    header_fmt = "<IIII16s"
     header_size = struct.calcsize( header_fmt )
     variables = dict()
     off = 0
@@ -220,7 +220,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
         #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
-        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes) )
+        variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID_STR(efi_var_hdr.guid), efi_var_hdr.Attributes) )
 
         if 0 == efi_var_hdr.Size: break
         off = next_var_offset
