@@ -113,12 +113,12 @@ from chipsec.hal.uefi_platform import encode_s3bootscript_entry, id_s3bootscript
 ########################################################################################################
 
 cmd2opcode = {
-'pci_wr' : S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE,
+'pci_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE,
 'mmio_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE,
-'io_wr'  : S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE,
-'pci_rw' : S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE,
+'io_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE,
+'pci_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE,
 'mmio_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE,
-'io_rw'  : S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE
+'io_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE
 
 }
 
@@ -136,7 +136,7 @@ class s3script_modify(BaseModule):
 
     def get_bootscript(self):
         if self.bootscript_PAs is None or self.parsed_scripts is None:
-            (self.bootscript_PAs,self.parsed_scripts) = self._uefi.get_s3_bootscript( False )
+            (self.bootscript_PAs, self.parsed_scripts) = self._uefi.get_s3_bootscript( False )
         return (self.bootscript_PAs, self.parsed_scripts)
 
     def is_supported(self):
@@ -159,7 +159,7 @@ class s3script_modify(BaseModule):
             return False
         for bootscript_pa in bootscript_PAs:
             if (bootscript_pa == 0): continue
-            self.logger.log( "[*] Looking for 0x{:X} opcode in the script at 0x{:016X}..".format(opcode,bootscript_pa) )
+            self.logger.log( "[*] Looking for 0x{:X} opcode in the script at 0x{:016X}..".format(opcode, bootscript_pa) )
             for e in parsed_scripts[ bootscript_pa ]:
                 if e.decoded_opcode is not None       and \
                    opcode  == e.decoded_opcode.opcode and \
@@ -198,7 +198,7 @@ class s3script_modify(BaseModule):
         (ep_va, new_entrypoint) = self.cs.mem.alloc_physical_mem( ep_size, smram_base )
         self.cs.mem.write_physical_mem( new_entrypoint, ep_size, self.DISPATCH_ENTRYPOINT_INSTR )
         new_ep = self.cs.mem.read_physical_mem( new_entrypoint, ep_size )
-        self.logger.log_good( "Allocated new DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(new_entrypoint,ep_size) )
+        self.logger.log_good( "Allocated new DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(new_entrypoint, ep_size) )
         print_buffer( new_ep )
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
@@ -247,7 +247,7 @@ class s3script_modify(BaseModule):
                 if e.decoded_opcode is not None and \
                    S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE == e.decoded_opcode.opcode:
                     ep_pa = e.decoded_opcode.entrypoint
-                    self.logger.log_good( "Found DISPATCH opcode at offset 0x{:04X} with entry-point 0x{:016X}".format(e.offset_in_script,ep_pa) )
+                    self.logger.log_good( "Found DISPATCH opcode at offset 0x{:04X} with entry-point 0x{:016X}".format(e.offset_in_script, ep_pa) )
                     self.logger.log( e )
                     break
             if ep_pa is not None: break
@@ -259,7 +259,7 @@ class s3script_modify(BaseModule):
         ep_size = len(self.DISPATCH_ENTRYPOINT_INSTR)
         self.cs.mem.write_physical_mem( ep_pa, ep_size, self.DISPATCH_ENTRYPOINT_INSTR )
         new_ep = self.cs.mem.read_physical_mem( ep_pa, ep_size )
-        self.logger.log( "[*] New DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(ep_pa,ep_size) )
+        self.logger.log( "[*] New DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(ep_pa, ep_size) )
         print_buffer( new_ep )
         return True
 
@@ -271,7 +271,7 @@ class s3script_modify(BaseModule):
             self.logger.log( "[*] Allocated memory at 0x{:016X} as a target of MEM_WRITE opcode".format(address) )
 
         val = self.cs.mem.read_physical_mem_dword( address )
-        self.logger.log( "[*] Original value at 0x{:016X}: 0x{:08X}".format(address,val) )
+        self.logger.log( "[*] Original value at 0x{:016X}: 0x{:08X}".format(address, val) )
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
         if parsed_scripts is None:
@@ -355,17 +355,17 @@ class s3script_modify(BaseModule):
                 if len(module_argv) < 4:
                     self.logger.error( 'Expected module options: -a replace_op,{},<reg_address>,<value>'.format(scmd) )
                     return ModuleResult.ERROR
-                reg_address = int(module_argv[2],16)
-                value       = int(module_argv[3],16)
+                reg_address = int(module_argv[2], 16)
+                value       = int(module_argv[3], 16)
                 sts = self.modify_s3_reg( cmd2opcode[scmd], reg_address, value )
-                if sts: self.logger.log( '[*] After sleep/resume, check the value of register 0x{:X} is 0x{:X}'.format(reg_address,value) )
+                if sts: self.logger.log( '[*] After sleep/resume, check the value of register 0x{:X} is 0x{:X}'.format(reg_address, value) )
             elif 'dispatch' == scmd:
                 sts = self.modify_s3_dispatch()
             elif 'dispatch_ep' == scmd:
                 sts = self.modify_s3_dispatch_ep()
             elif 'mem' == scmd:
-                new_value = int(module_argv[2],16) if len(module_argv) >= 3 else 0xB007B007
-                address   = int(module_argv[3],16) if len(module_argv) == 4 else None
+                new_value = int(module_argv[2], 16) if len(module_argv) >= 3 else 0xB007B007
+                address   = int(module_argv[3], 16) if len(module_argv) == 4 else None
                 sts = self.modify_s3_mem( address, new_value )
             else:
                 self.logger.error( "Unrecognized module command-line argument: {}".format(scmd) )
@@ -378,9 +378,9 @@ class s3script_modify(BaseModule):
                 if len(module_argv) < 5:
                     self.logger.error( 'Expected module options: -a add_op,{},<reg_address>,<value>,<width>'.format(scmd) )
                     return ModuleResult.ERROR
-                address    = int(module_argv[2],16)
-                value      = int(module_argv[3],16)
-                width      = int(module_argv[4],16)
+                address    = int(module_argv[2], 16)
+                value      = int(module_argv[3], 16)
+                width      = int(module_argv[4], 16)
                 width_val  = script_width_values[width]
                 value_buff = struct.pack("<{}".format(script_width_formats[width_val]), value)
                 if ( S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE == cmd2opcode[scmd]
@@ -397,7 +397,7 @@ class s3script_modify(BaseModule):
                     (va, entrypoint) = self.cs.mem.alloc_physical_mem( 0x1000, smram_base )
                     self.cs.mem.write_physical_mem( entrypoint, len(self.DISPATCH_ENTRYPOINT_INSTR), self.DISPATCH_ENTRYPOINT_INSTR )
                 else:
-                    entrypoint = int(module_argv[2],16)
+                    entrypoint = int(module_argv[2], 16)
                 new_opcode = op_dispatch( S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE, None, entrypoint )
             else:
                 self.logger.error( "Unrecognized opcode: {}".format(scmd) )

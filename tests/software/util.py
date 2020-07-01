@@ -64,7 +64,7 @@ class TestChipsecUtil(unittest.TestCase):
         logger.logger().set_log_file(self.log_file)
         err_code = util.main()
         logger.logger().close()
-        log = open(self.log_file,'rb')
+        log = open(self.log_file, 'rb')
         self.log = log.read()
         log.close()
         self.assertEqual(err_code, 0)

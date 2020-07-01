@@ -32,18 +32,18 @@ TAGS = [MTAG_HWCONFIG]
 
 
 memmap_registers = {
-  "PCI0.0.0_GGC"        : 'GGCLOCK',
-  "PCI0.0.0_PAVPC"      : 'PAVPLCK',
-  "PCI0.0.0_DPR"        : 'LOCK',
-  "PCI0.0.0_MESEG_MASK" : 'MELCK',
-  "PCI0.0.0_REMAPBASE"  : 'LOCK',
-  "PCI0.0.0_REMAPLIMIT" : 'LOCK',
-  "PCI0.0.0_TOM"        : 'LOCK',
-  "PCI0.0.0_TOUUD"      : 'LOCK',
-  "PCI0.0.0_BDSM"       : 'LOCK',
-  "PCI0.0.0_BGSM"       : 'LOCK',
-  "PCI0.0.0_TSEGMB"     : 'LOCK',
-  "PCI0.0.0_TOLUD"      : 'LOCK'
+  "PCI0.0.0_GGC": 'GGCLOCK',
+  "PCI0.0.0_PAVPC": 'PAVPLCK',
+  "PCI0.0.0_DPR": 'LOCK',
+  "PCI0.0.0_MESEG_MASK": 'MELCK',
+  "PCI0.0.0_REMAPBASE": 'LOCK',
+  "PCI0.0.0_REMAPLIMIT": 'LOCK',
+  "PCI0.0.0_TOM": 'LOCK',
+  "PCI0.0.0_TOUUD": 'LOCK',
+  "PCI0.0.0_BDSM": 'LOCK',
+  "PCI0.0.0_BGSM": 'LOCK',
+  "PCI0.0.0_TSEGMB": 'LOCK',
+  "PCI0.0.0_TOLUD": 'LOCK'
 }
 
 memmap_registers_dev0bars = [

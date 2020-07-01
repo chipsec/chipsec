@@ -93,7 +93,7 @@ def check_rules( efi, rules, entry_name, _log, bLog=True ):
         offset = 0
         match_mask   = 0x00000000
         match_result = 0x00000000
-        fname = "{}.{}".format(entry_name,rule_name)
+        fname = "{}.{}".format(entry_name, rule_name)
         rule = rules[rule_name]
         #
         # Determine which criteria are defined in the current rule
@@ -129,11 +129,11 @@ def check_rules( efi, rules, entry_name, _log, bLog=True ):
         brule_match = ((match_result & match_mask) == match_mask)
         if brule_match and bLog:
             _log.log_important( "match '{}'".format(fname) )
-            if (match_result & MATCH_NAME       ) == MATCH_NAME       : _log.log( "    name  : '{}'".format(rule['name']) )
-            if (match_result & MATCH_GUID       ) == MATCH_GUID       : _log.log( "    GUID  : {{{}}}".format(rule['guid']) )
-            if (match_result & MATCH_REGEXP     ) == MATCH_REGEXP     : _log.log( "    regexp: bytes '{}' at offset {:X}h".format(what,offset) )
-            if (match_result & MATCH_HASH_MD5   ) == MATCH_HASH_MD5   : _log.log( "    MD5   : {}".format(rule['md5']) )
-            if (match_result & MATCH_HASH_SHA1  ) == MATCH_HASH_SHA1  : _log.log( "    SHA1  : {}".format(rule['sha1']) )
+            if (match_result & MATCH_NAME       ) == MATCH_NAME: _log.log( "    name  : '{}'".format(rule['name']) )
+            if (match_result & MATCH_GUID       ) == MATCH_GUID: _log.log( "    GUID  : {{{}}}".format(rule['guid']) )
+            if (match_result & MATCH_REGEXP     ) == MATCH_REGEXP: _log.log( "    regexp: bytes '{}' at offset {:X}h".format(what, offset) )
+            if (match_result & MATCH_HASH_MD5   ) == MATCH_HASH_MD5: _log.log( "    MD5   : {}".format(rule['md5']) )
+            if (match_result & MATCH_HASH_SHA1  ) == MATCH_HASH_SHA1: _log.log( "    SHA1  : {}".format(rule['sha1']) )
             if (match_result & MATCH_HASH_SHA256) == MATCH_HASH_SHA256: _log.log( "    SHA256: {}".format(rule['sha256']) )
         #
         # Rules are OR'ed unless matching rule is explicitly excluded from match

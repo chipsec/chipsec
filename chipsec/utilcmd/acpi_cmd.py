@@ -56,8 +56,8 @@ class ACPICommand(BaseCommand):
         parser_list = subparsers.add_parser('list')
         parser_list.set_defaults(func=self.acpi_list)
         parser_table = subparsers.add_parser('table')
-        parser_table.add_argument('-f','--file',dest='_file', help='Read from file', action='store_true')
-        parser_table.add_argument('_name',metavar='table|filename',nargs=1,help="table to list")
+        parser_table.add_argument('-f', '--file', dest='_file', help='Read from file', action='store_true')
+        parser_table.add_argument('_name', metavar='table|filename', nargs=1, help="table to list")
         parser_table.set_defaults(func=self.acpi_table)
         parser.parse_args(self.argv[2:], namespace=self)
         if self.func == self.acpi_table and self._file:
@@ -76,7 +76,7 @@ class ACPICommand(BaseCommand):
         elif self._file and not path_exists( name ):
             self.logger.error( "[CHIPSEC] Unable to find file '{}'".format(name) )
             return
-        self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '',name) )
+        self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '', name) )
         self._acpi.dump_ACPI_table( name, self._file )
         return
 
@@ -89,6 +89,6 @@ class ACPICommand(BaseCommand):
             print(msg)
             return
         self.func()
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time()-t) )
+        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() -t) )
 
 commands = { 'acpi': ACPICommand }

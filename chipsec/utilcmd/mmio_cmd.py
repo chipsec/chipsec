@@ -76,17 +76,17 @@ class MMIOCommand(BaseCommand):
             _mmio.dump_MMIO_BAR(bar)
         elif ( 'read' == op ):
             bar   = self.argv[3].upper()
-            off   = int(self.argv[4],16)
-            width = int(self.argv[5],16) if len(self.argv) == 6 else 4
+            off   = int(self.argv[4], 16)
+            width = int(self.argv[5], 16) if len(self.argv) == 6 else 4
             reg = _mmio.read_MMIO_BAR_reg(bar, off, width)
-            self.logger.log( "[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar,off,reg) )
+            self.logger.log( "[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, off, reg) )
         elif ( 'write' == op ):
             bar   = self.argv[3].upper()
-            off   = int(self.argv[4],16)
-            width = int(self.argv[5],16) if len(self.argv) == 6 else 4
+            off   = int(self.argv[4], 16)
+            width = int(self.argv[5], 16) if len(self.argv) == 6 else 4
             if len(self.argv) == 7:
-                reg = int(self.argv[6],16)
-                self.logger.log( "[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar,off,reg) )
+                reg = int(self.argv[6], 16)
+                self.logger.log( "[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, off, reg) )
                 _mmio.write_MMIO_BAR_reg(bar, off, reg, width)
             else:
                 print (MMIOCommand.__doc__)
@@ -96,7 +96,7 @@ class MMIOCommand(BaseCommand):
             print (MMIOCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (mmio) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (mmio) time elapsed {:.3f}".format(time.time() -t) )
 
 
 commands = { 'mmio': MMIOCommand }

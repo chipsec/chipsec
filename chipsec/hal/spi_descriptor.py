@@ -45,7 +45,7 @@ def get_spi_flash_descriptor( rom ):
     if (-1 == pos or pos < 0x10):
         return (-1, None)
     fd_off = pos - 0x10
-    fd = rom[ fd_off : fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
+    fd = rom[ fd_off: fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
     return (fd_off, fd)
 
 def get_SPI_master( flmstr ):
@@ -67,11 +67,11 @@ def get_spi_regions( fd ):
 
     flregs = [None] * spi.SPI_REGION_NUMBER_IN_FD
     for r in range( spi.SPI_REGION_NUMBER_IN_FD ):
-        flreg_off = frba + r*4
+        flreg_off = frba + r *4
         flreg = struct.unpack_from( '=I', fd[flreg_off:flreg_off + 0x4] )[0]
-        (base,limit) = spi.get_SPI_region(flreg)
+        (base, limit) = spi.get_SPI_region(flreg)
         notused = (base > limit)
-        flregs[r] = (r, spi.SPI_REGION_NAMES[r],flreg,base,limit,notused)
+        flregs[r] = (r, spi.SPI_REGION_NAMES[r], flreg, base, limit, notused)
 
     fd_size    = flregs[spi.FLASH_DESCRIPTOR][4] - flregs[spi.FLASH_DESCRIPTOR][3] + 1
     fd_notused = flregs[spi.FLASH_DESCRIPTOR][5]
@@ -83,13 +83,13 @@ def get_spi_regions( fd ):
 
 
 def parse_spi_flash_descriptor( cs, rom ):
-    if not (isinstance(rom,str) or isinstance(rom,bytes)):
+    if not (isinstance(rom, str) or isinstance(rom, bytes)):
         logger().error('Invalid fd object type {}'.format(type(rom)))
         return
 
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I',SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]) )
+        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I', SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]) )
         return None
 
     fd_off = pos - 0x10
@@ -101,7 +101,7 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( '########################################################' )
     logger().log( '' )
 
-    fd     = rom[ fd_off : fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
+    fd     = rom[ fd_off: fd_off + SPI_FLASH_DESCRIPTOR_SIZE ]
     fd_sig = struct.unpack_from( '=I', fd[0x10:0x14] )[0]
 
     logger().log( '+ 0x0000 Reserved : 0x{}'.format(hexlify(fd[0x0:0xF]).upper()) )
@@ -161,12 +161,12 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( '+ 0x{:04X} Component Section:'.format(fcba) )
     logger().log( '========================================================' )
 
-    flcomp = struct.unpack_from( '=I', fd[fcba+0x0:fcba+0x4] )[0]
+    flcomp = struct.unpack_from( '=I', fd[fcba +0x0:fcba +0x4] )[0]
     logger().log( '+ 0x{:04X} FLCOMP   : 0x{:08X}'.format(fcba, flcomp) )
-    flil   = struct.unpack_from( '=I', fd[fcba+0x4:fcba+0x8] )[0]
-    logger().log( '+ 0x{:04X} FLIL     : 0x{:08X}'.format(fcba+0x4, flil) )
-    flpb   = struct.unpack_from( '=I', fd[fcba+0x8:fcba+0xC] )[0]
-    logger().log( '+ 0x{:04X} FLPB     : 0x{:08X}'.format(fcba+0x8, flpb) )
+    flil   = struct.unpack_from( '=I', fd[fcba +0x4:fcba +0x8] )[0]
+    logger().log( '+ 0x{:04X} FLIL     : 0x{:08X}'.format(fcba +0x4, flil) )
+    flpb   = struct.unpack_from( '=I', fd[fcba +0x8:fcba +0xC] )[0]
+    logger().log( '+ 0x{:04X} FLPB     : 0x{:08X}'.format(fcba +0x8, flpb) )
 
     #
     # Flash Descriptor Region Section
@@ -177,14 +177,14 @@ def parse_spi_flash_descriptor( cs, rom ):
 
     flregs = [None] * nr
     for r in range(nr):
-        flreg_off = frba + r*4
+        flreg_off = frba + r *4
         flreg = struct.unpack_from( '=I', fd[flreg_off:flreg_off + 0x4] )[0]
         if not cs.is_register_defined('FLREG{:d}'.format(r)): continue
         base  = cs.get_register_field(('FLREG{:d}'.format(r)), flreg, 'RB' ) << spi.SPI_FLA_SHIFT
         limit = cs.get_register_field(('FLREG{:d}'.format(r)), flreg, 'RL' ) << spi.SPI_FLA_SHIFT
         notused = '(not used)' if base > limit or flreg == 0xFFFFFFFF else ''
-        flregs[r] = (flreg,base,limit,notused)
-        logger().log( '+ 0x{:04X} FLREG{:d}   : 0x{:08X} {}'.format(flreg_off,r,flreg,notused) )
+        flregs[r] = (flreg, base, limit, notused)
+        logger().log( '+ 0x{:04X} FLREG{:d}   : 0x{:08X} {}'.format(flreg_off, r, flreg, notused) )
         #cs.print_register(('FLREG{:d}'.format(r)), flreg)
 
     logger().log('')
@@ -193,7 +193,7 @@ def parse_spi_flash_descriptor( cs, rom ):
     logger().log( ' Region                | FLREGx    | Base     | Limit   ' )
     logger().log( '--------------------------------------------------------' )
     for r in range(nr):
-        if flregs[r]: logger().log( '{:d} {:20s} | {:08X}  | {:08X} | {:08X} {}'.format(r, spi.SPI_REGION_NAMES[r],flregs[r][0],flregs[r][1],flregs[r][2],flregs[r][3]) )
+        if flregs[r]: logger().log( '{:d} {:20s} | {:08X}  | {:08X} | {:08X} {}'.format(r, spi.SPI_REGION_NAMES[r], flregs[r][0], flregs[r][1], flregs[r][2], flregs[r][3]) )
 
     #
     # Flash Descriptor Master Section
@@ -204,12 +204,12 @@ def parse_spi_flash_descriptor( cs, rom ):
 
     flmstrs = [None] * nm
     for m in range(nm):
-        flmstr_off = fmba + m*4
+        flmstr_off = fmba + m *4
         flmstr = struct.unpack_from( '=I', fd[flmstr_off:flmstr_off + 0x4] )[0]
         master_region_ra = cs.get_register_field( 'FLMSTR1', flmstr, 'MRRA' )
         master_region_wa = cs.get_register_field( 'FLMSTR1', flmstr, 'MRWA' )
         flmstrs[m] = (master_region_ra, master_region_wa)
-        logger().log( '+ 0x{:04X} FLMSTR{:d}   : 0x{:08X}'.format(flmstr_off,m+1,flmstr) )
+        logger().log( '+ 0x{:04X} FLMSTR{:d}   : 0x{:08X}'.format(flmstr_off, m +1, flmstr) )
 
     logger().log('')
     logger().log( 'Master Read/Write Access to Flash Regions' )

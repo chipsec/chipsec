@@ -71,8 +71,8 @@ class BaseModuleDebug(BaseModule):
     ##
     def hex(self, title, data, w = 16):
         if title and data:
-            title = '-'*6 + title + '-'*w*3
-            sys.stdout.write('[{}]  {}'.format(self.promt, title[:w*3+15]))
+            title = '-' *6 + title + '-' *w *3
+            sys.stdout.write('[{}]  {}'.format(self.promt, title[:w *3 +15]))
         a = 0
         for c in data:
             if a%w== 0:
@@ -135,8 +135,8 @@ class BaseModuleSupport(BaseModuleDebug):
         return
 
     def get_initial_data(self, statuses, vector, size, padding = '\x00'):
-        connectionid_message = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.items() if v == 1]
-        connectionid_event   = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k,v in self.hv_connectionid.items() if v == 2]
+        connectionid_message = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 1]
+        connectionid_event   = [(' '.join(["{:02x}".format(ord(x)) for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 2]
         result = []
         for status in statuses:
             for item in self.initial_data:

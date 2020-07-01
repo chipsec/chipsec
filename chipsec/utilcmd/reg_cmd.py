@@ -71,7 +71,7 @@ class RegisterCommand(command.BaseCommand):
                 print (RegisterCommand.__doc__)
                 return
             reg_name = self.argv[3]
-            value    = int(self.argv[4],16)
+            value    = int(self.argv[4], 16)
             self.logger.log("[CHIPSEC] writing {} < 0x{:X}".format(reg_name, value))
             self.cs.write_register(reg_name, value)
         elif ( 'write_field' == op ):
@@ -80,7 +80,7 @@ class RegisterCommand(command.BaseCommand):
                 return
             reg_name    = self.argv[3]
             field_name  = self.argv[4]
-            field_value = int(self.argv[5],16)
+            field_value = int(self.argv[5], 16)
             if self.cs.register_has_field(reg_name, field_name):
                 self.logger.log("[CHIPSEC] writing {}.{} < 0x{:X}".format(reg_name, field_name, field_value))
                 self.cs.write_register_field(reg_name, field_name, field_value)
@@ -101,7 +101,7 @@ class RegisterCommand(command.BaseCommand):
                 print (RegisterCommand.__doc__)
                 return
             control_name = self.argv[3]
-            value        = int(self.argv[4],16)
+            value        = int(self.argv[4], 16)
             if self.cs.is_control_defined(control_name):
                 self.cs.set_control(control_name, value)
                 self.logger.log("[CHIPSEC] setting control {} < 0x{:X}".format(control_name, value))

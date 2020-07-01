@@ -61,10 +61,10 @@ class MMCfgCommand(BaseCommand):
             return
 
         try:
-            bus         = int(self.argv[2],16)
-            device      = int(self.argv[3],16)
-            function    = int(self.argv[4],16)
-            offset      = int(self.argv[5],16)
+            bus         = int(self.argv[2], 16)
+            device      = int(self.argv[3], 16)
+            function    = int(self.argv[4], 16)
+            offset      = int(self.argv[5], 16)
 
             if 6 == len(self.argv):
                 width = 1
@@ -78,7 +78,7 @@ class MMCfgCommand(BaseCommand):
                 else:
                     width = int(self.argv[6])
 
-        except Exception as e :
+        except Exception as e:
             print (MMCfgCommand.__doc__)
             return
 
@@ -90,6 +90,6 @@ class MMCfgCommand(BaseCommand):
             value = _mmio.read_mmcfg_reg(bus, device, function, offset, width )
             self.logger.log( "[CHIPSEC] reading MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(bus, device, function, offset, value) )
 
-        self.logger.log( "[CHIPSEC] (mmcfg) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (mmcfg) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'mmcfg': MMCfgCommand }

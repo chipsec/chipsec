@@ -50,7 +50,7 @@ class MSRCommand(BaseCommand):
             print (MSRCommand.__doc__)
             return
 
-        msr_addr = int(self.argv[2],16)
+        msr_addr = int(self.argv[2], 16)
 
         if (3 == len(self.argv)):
             for tid in range(self.cs.msr.get_cpu_thread_count()):

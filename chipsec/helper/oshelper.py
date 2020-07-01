@@ -38,23 +38,23 @@ ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
 def f_mod_zip(x):
     return ( x.find('__init__') == -1 and ZIP_HELPER_RE.match(x) )
 def map_modname_zip(x):
-    return (x.rpartition('.')[0]).replace('/','.')
+    return (x.rpartition('.')[0]).replace('/', '.')
 
 class OsHelperError (RuntimeError):
-    def __init__(self,msg,errorcode):
-        super(OsHelperError,self).__init__(msg)
+    def __init__(self, msg, errorcode):
+        super(OsHelperError, self).__init__(msg)
         self.errorcode = errorcode
 
 class HWAccessViolationError (OsHelperError):
     pass
 
 class UnimplementedAPIError (OsHelperError):
-    def __init__(self,api_name):
-        super(UnimplementedAPIError,self).__init__("'{}' is not implemented".format(api_name), 0)
+    def __init__(self, api_name):
+        super(UnimplementedAPIError, self).__init__("'{}' is not implemented".format(api_name), 0)
 
 class UnimplementedNativeAPIError (UnimplementedAPIError):
-    def __init__(self,api_name):
-        super(UnimplementedNativeAPIError,self).__init__(api_name)
+    def __init__(self, api_name):
+        super(UnimplementedNativeAPIError, self).__init__(api_name)
 
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )
@@ -82,7 +82,7 @@ class OsHelper:
     def loadHelpers(self):
         for helper in avail_helpers:
             try:
-                self.helper = getattr(chiphelpers,helper).get_helper()
+                self.helper = getattr(chiphelpers, helper).get_helper()
                 break
             except OsHelperError:
                 raise
@@ -97,18 +97,18 @@ class OsHelper:
         if not driver_exists is None:
             for name in avail_helpers:
                 if name == driver_exists:
-                    self.helper = getattr(chiphelpers,name).get_helper()
+                    self.helper = getattr(chiphelpers, name).get_helper()
         try:
             if not self.helper.create( start_driver ):
-                raise OsHelperError("failed to create OS helper",1)
+                raise OsHelperError("failed to create OS helper", 1)
             if not self.helper.start( start_driver, from_file ):
-                raise OsHelperError("failed to start OS helper",1)
+                raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
             error_no = errno.ENXIO
-            if hasattr(msg,'errorcode'):
+            if hasattr(msg, 'errorcode'):
                 error_no = msg.errorcode
-            raise OsHelperError("Message: \"{}\"".format(msg),error_no)
+            raise OsHelperError("Message: \"{}\"".format(msg), error_no)
 
     def stop( self, start_driver ):
         if not self.filecmds is None:
@@ -165,7 +165,7 @@ class OsHelper:
         else:
             ret = self.helper.read_pci_reg( bus, device, function, address, size )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_pci_reg",(bus,device,function,address,size),ret)
+            self.filecmds.AddElement("read_pci_reg", (bus, device, function, address, size), ret)
         return ret
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
@@ -178,7 +178,7 @@ class OsHelper:
         else:
             ret = self.helper.write_pci_reg( bus, device, function, address, value, size )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_pci_reg",(bus,device,function,address,size),ret)
+            self.filecmds.AddElement("write_pci_reg", (bus, device, function, address, size), ret)
         return ret
 
     #
@@ -188,18 +188,18 @@ class OsHelper:
         if self.use_native_api() and hasattr(self.helper, 'native_read_mmio_reg'):
             ret = self.helper.native_read_mmio_reg( bar_base, bar_size, offset, size )
         else:
-            ret = self.helper.read_mmio_reg( bar_base+offset, size )
+            ret = self.helper.read_mmio_reg( bar_base +offset, size )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_mmio_reg",(bar_base + offset,size),ret)
+            self.filecmds.AddElement("read_mmio_reg", (bar_base + offset, size), ret)
         return ret
 
     def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None ):
         if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
             ret = self.helper.native_write_mmio_reg( bar_base, bar_size, offset, size, value )
         else:
-            ret = self.helper.write_mmio_reg(bar_base+offset, size, value )
+            ret = self.helper.write_mmio_reg(bar_base +offset, size, value )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_mmio_reg",(bar_base + offset, size, value),ret)
+            self.filecmds.AddElement("write_mmio_reg", (bar_base + offset, size, value), ret)
         return ret
 
     #
@@ -211,7 +211,7 @@ class OsHelper:
         else:
             ret = self.helper.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_physical_mem",((phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF,length),ret)
+            self.filecmds.AddElement("read_physical_mem", ((phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length), ret)
         return ret
 
     def write_physical_mem( self, phys_address, length, buf ):
@@ -220,7 +220,7 @@ class OsHelper:
         else:
             ret = self.helper.write_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length, buf )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_physical_mem",((phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF,length,buf),ret)
+            self.filecmds.AddElement("write_physical_mem", ((phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, length, buf), ret)
         return ret
 
     def alloc_physical_mem( self, length, max_phys_address ):
@@ -229,7 +229,7 @@ class OsHelper:
         else:
             ret = self.helper.alloc_phys_mem( length, max_phys_address )
         if not self.filecmds is None:
-            self.filecmds.AddElement("alloc_physical_mem",(length,max_phys_address),ret)
+            self.filecmds.AddElement("alloc_physical_mem", (length, max_phys_address), ret)
         return ret
 
     def free_physical_mem(self, physical_address):
@@ -238,7 +238,7 @@ class OsHelper:
         else:
             ret = self.helper.free_phys_mem(physical_address)
         if not self.filecmds is None:
-            self.filecmds.AddElement("free_physical_mem",(physical_address),ret)
+            self.filecmds.AddElement("free_physical_mem", (physical_address), ret)
         return ret
 
     def va2pa( self, va ):
@@ -247,7 +247,7 @@ class OsHelper:
         else:
             ret = self.helper.va2pa( va )
         if not self.filecmds is None:
-            self.filecmds.AddElement("va2pa",(va),ret)
+            self.filecmds.AddElement("va2pa", (va), ret)
         return ret
 
     def map_io_space(self, physical_address, length, cache_type):
@@ -257,7 +257,7 @@ class OsHelper:
             elif hasattr(self.helper, 'map_io_space'):
                 ret = self.helper.map_io_space(physical_address, length, cache_type)
             if not self.filecmds is None:
-                self.filecmds.AddElement("map_io_space",(physical_address, length, cache_type),ret)
+                self.filecmds.AddElement("map_io_space", (physical_address, length, cache_type), ret)
             return ret
         except NotImplementedError:
             pass
@@ -272,7 +272,7 @@ class OsHelper:
         else:
             ret = self.helper.read_io_port( io_port, size )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_io_port",(io_port,size),ret)
+            self.filecmds.AddElement("read_io_port", (io_port, size), ret)
         return ret
 
     def write_io_port( self, io_port, value, size ):
@@ -281,7 +281,7 @@ class OsHelper:
         else:
             ret = self.helper.write_io_port( io_port, value, size )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_io_port",(io_port,value,size),ret)
+            self.filecmds.AddElement("write_io_port", (io_port, value, size), ret)
         return ret
 
     #
@@ -293,7 +293,7 @@ class OsHelper:
         else:
             ret = self.helper.read_cr( cpu_thread_id, cr_number )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_cr",(cpu_thread_id, cr_number),ret)
+            self.filecmds.AddElement("read_cr", (cpu_thread_id, cr_number), ret)
         return ret
 
     def write_cr(self, cpu_thread_id, cr_number, value):
@@ -302,7 +302,7 @@ class OsHelper:
         else:
             ret = self.helper.write_cr( cpu_thread_id, cr_number, value )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_cr",(cpu_thread_id, cr_number,value),ret)
+            self.filecmds.AddElement("write_cr", (cpu_thread_id, cr_number, value), ret)
         return ret
 
     #
@@ -314,7 +314,7 @@ class OsHelper:
         else:
             ret = self.helper.read_msr( cpu_thread_id, msr_addr )
         if not self.filecmds is None:
-            self.filecmds.AddElement("read_msr",(cpu_thread_id, msr_addr),ret)
+            self.filecmds.AddElement("read_msr", (cpu_thread_id, msr_addr), ret)
         return ret
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
@@ -323,7 +323,7 @@ class OsHelper:
         else:
             ret = self.helper.write_msr( cpu_thread_id, msr_addr, eax, edx )
         if not self.filecmds is None:
-            self.filecmds.AddElement("write_msr",(cpu_thread_id, msr_addr, eax, edx),ret)
+            self.filecmds.AddElement("write_msr", (cpu_thread_id, msr_addr, eax, edx), ret)
         return ret
 
     #
@@ -335,7 +335,7 @@ class OsHelper:
         else:
             ret = self.helper.load_ucode_update( cpu_thread_id, ucode_update_buf )
         if not self.filecmds is None:
-            self.filecmds.AddElement("load_ucode_update",(cpu_thread_id, ucode_update_buf),ret)
+            self.filecmds.AddElement("load_ucode_update", (cpu_thread_id, ucode_update_buf), ret)
         return ret
 
     #
@@ -347,7 +347,7 @@ class OsHelper:
         else:
             ret = self.helper.get_descriptor_table( cpu_thread_id, desc_table_code )
         if not self.filecmds is None:
-            self.filecmds.AddElement("get_descriptor_table",(cpu_thread_id, desc_table_code),ret)
+            self.filecmds.AddElement("get_descriptor_table", (cpu_thread_id, desc_table_code), ret)
         return ret
 
     #
@@ -356,7 +356,7 @@ class OsHelper:
     def EFI_supported(self):
         ret = self.helper.EFI_supported()
         if not self.filecmds is None:
-            self.filecmds.AddElement("EFI_supported",(),ret)
+            self.filecmds.AddElement("EFI_supported", (), ret)
         return ret
 
     def get_EFI_variable( self, name, guid ):
@@ -365,7 +365,7 @@ class OsHelper:
         else:
             ret = self.helper.get_EFI_variable( name, guid )
         if not self.filecmds is None:
-            self.filecmds.AddElement("get_EFI_variable",(name, guid),ret)
+            self.filecmds.AddElement("get_EFI_variable", (name, guid), ret)
         return ret
 
     def set_EFI_variable( self, name, guid, data, datasize=None, attrs=None ):
@@ -374,7 +374,7 @@ class OsHelper:
         else:
             ret = self.helper.set_EFI_variable( name, guid, data, datasize, attrs )
         if not self.filecmds is None:
-            self.filecmds.AddElement("set_EFI_variable",(name, guid, data, datasize, attrs),ret)
+            self.filecmds.AddElement("set_EFI_variable", (name, guid, data, datasize, attrs), ret)
         return ret
 
     def delete_EFI_variable( self, name, guid ):
@@ -383,7 +383,7 @@ class OsHelper:
         else:
             ret = self.helper.delete_EFI_variable( name, guid )
         if not self.filecmds is None:
-            self.filecmds.AddElement("delete_EFI_variable",(name, guid),ret)
+            self.filecmds.AddElement("delete_EFI_variable", (name, guid), ret)
         return ret
 
     def list_EFI_variables( self ):
@@ -392,7 +392,7 @@ class OsHelper:
         else:
             ret = self.helper.list_EFI_variables()
         if not self.filecmds is None:
-            self.filecmds.AddElement("list_EFI_variables",(),ret)
+            self.filecmds.AddElement("list_EFI_variables", (), ret)
         return ret
 
     #
@@ -401,7 +401,7 @@ class OsHelper:
     def get_ACPI_SDT(self):
         ret = self.helper.get_ACPI_SDT()
         if not self.filecmds is None:
-            self.filecmds.AddElement("get_ACPI_SDT",(),ret)
+            self.filecmds.AddElement("get_ACPI_SDT", (), ret)
         return ret
 
     def get_ACPI_table( self, table_name ):
@@ -411,7 +411,7 @@ class OsHelper:
         else:
             ret = self.helper.get_ACPI_table( table_name )
         if not self.filecmds is None:
-            self.filecmds.AddElement("get_ACPI_table",(table_name),ret)
+            self.filecmds.AddElement("get_ACPI_table", (table_name), ret)
         return ret
 
 
@@ -424,7 +424,7 @@ class OsHelper:
         else:
             ret = self.helper.cpuid( eax, ecx )
         if not self.filecmds is None:
-            self.filecmds.AddElement("cpuid",(eax, ecx),ret)
+            self.filecmds.AddElement("cpuid", (eax, ecx), ret)
         return ret
 
     #
@@ -437,7 +437,7 @@ class OsHelper:
         else:
             ret = self.helper.msgbus_send_read_message( mcr, mcrx )
         if not self.filecmds is None:
-            self.filecmds.AddElement("msgbus_send_read_message",(mcr, mcrx),ret)
+            self.filecmds.AddElement("msgbus_send_read_message", (mcr, mcrx), ret)
         return ret
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
@@ -446,7 +446,7 @@ class OsHelper:
         else:
             ret = self.helper.msgbus_send_write_message( mcr, mcrx, mdr )
         if not self.filecmds is None:
-            self.filecmds.AddElement("msgbus_send_write_message",(mcr, mcrx, mdr),ret)
+            self.filecmds.AddElement("msgbus_send_write_message", (mcr, mcrx, mdr), ret)
         return ret
 
     def msgbus_send_message( self, mcr, mcrx, mdr ):
@@ -455,7 +455,7 @@ class OsHelper:
         else:
             ret = self.helper.msgbus_send_message( mcr, mcrx, mdr )
         if not self.filecmds is None:
-            self.filecmds.AddElement("msgbus_send_message",(mcr, mcrx, mdr),ret)
+            self.filecmds.AddElement("msgbus_send_message", (mcr, mcrx, mdr), ret)
         return ret
 
     #
@@ -467,7 +467,7 @@ class OsHelper:
         else:
             ret = self.helper.get_affinity()
         if not self.filecmds is None:
-            self.filecmds.AddElement("get_affinity",(),ret)
+            self.filecmds.AddElement("get_affinity", (), ret)
         return ret
 
     def set_affinity( self, value ):
@@ -476,7 +476,7 @@ class OsHelper:
         else:
             ret = self.helper.set_affinity(value)
         if not self.filecmds is None:
-            self.filecmds.AddElement("set_affinity",(value),ret)
+            self.filecmds.AddElement("set_affinity", (value), ret)
         return ret
 
     #
@@ -488,7 +488,7 @@ class OsHelper:
         else:
             ret = self.helper.get_threads_count()
         if not self.filecmds is None:
-            self.filecmds.AddElement("get_threads_count",(),ret)
+            self.filecmds.AddElement("get_threads_count", (), ret)
         return ret
 
     #
@@ -500,7 +500,7 @@ class OsHelper:
         else:
             ret = self.helper.send_sw_smi( cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         if not self.filecmds is None:
-            self.filecmds.AddElement("send_sw_smi",(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi),ret)
+            self.filecmds.AddElement("send_sw_smi", (cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi), ret)
         return ret
 
     #
@@ -512,7 +512,7 @@ class OsHelper:
         else:
             ret = self.helper.hypercall( rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer )
         if not self.filecmds is None:
-            self.filecmds.AddElement("hypercall",(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer),ret)
+            self.filecmds.AddElement("hypercall", (rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer), ret)
         return ret
 
 
@@ -522,7 +522,7 @@ class OsHelper:
     def getcwd( self ):
         ret = self.helper.getcwd()
         if not self.filecmds is None:
-            self.filecmds.AddElement("getcwd",(),ret)
+            self.filecmds.AddElement("getcwd", (), ret)
         return ret
     #
     # Decompress binary with OS specific tools
@@ -530,7 +530,7 @@ class OsHelper:
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
         ret = self.helper.decompress_file( CompressedFileName, OutputFileName, CompressionType )
         if not self.filecmds is None:
-            self.filecmds.AddElement("decompress_file",(CompressedFileName, OutputFileName, CompressionType),ret)
+            self.filecmds.AddElement("decompress_file", (CompressedFileName, OutputFileName, CompressionType), ret)
         return ret
 
     #
@@ -539,7 +539,7 @@ class OsHelper:
     def compress_file( self, FileName, OutputFileName, CompressionType ):
         ret = self.helper.compress_file( FileName, OutputFileName, CompressionType )
         if not self.filecmds is None:
-            self.filecmds.AddElement("compress_file",(FileName, OutputFileName, CompressionType),ret)
+            self.filecmds.AddElement("compress_file", (FileName, OutputFileName, CompressionType), ret)
         return ret
 
 _helper = None

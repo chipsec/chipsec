@@ -48,6 +48,6 @@ class SPIDescCommand(BaseCommand):
         t = time.time()
         fd = read_file( fd_file )
         parse_spi_flash_descriptor( self.cs, fd )
-        self.logger.log( "\n[CHIPSEC] (spidesc) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "\n[CHIPSEC] (spidesc) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'spidesc': SPIDescCommand }

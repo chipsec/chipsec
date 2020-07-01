@@ -169,16 +169,16 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
             except UnicodeDecodeError:
                 pass
         elif sec.Type == EFI_SECTION_GUID_DEFINED:
-            if len(sec.Image) < sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:
+            if len(sec.Image) < sec.HeaderSize +EFI_GUID_DEFINED_SECTION_size:
                 logger().warn("EFI Section seems to be malformed")
-                if len(sec.Image) < sec.HeaderSize+EFI_GUID_SIZE:
+                if len(sec.Image) < sec.HeaderSize +EFI_GUID_SIZE:
                     logger().warn("Creating fake GUID of 0000-00-00-0000000")
                     guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 else:
-                    guid0 = struct.unpack(EFI_GUID_FMT, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_SIZE])
-                    sec.DataOffset = len(sec.Image)-1
+                    guid0 = struct.unpack(EFI_GUID_FMT, sec.Image[sec.HeaderSize:sec.HeaderSize +EFI_GUID_SIZE])
+                    sec.DataOffset = len(sec.Image) -1
             else:
-                guid0, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size])
+                guid0, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize +EFI_GUID_DEFINED_SECTION_size])
             sec.Guid = UUID(bytes_le=guid0)
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
@@ -190,20 +190,20 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                     d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD, True )
                 if d is None:
                     sec.Comments = "Unable to decompress image"
-                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN, True )
+                    d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize +EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN, True )
                 if d:
                     sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
             elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
                 offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
                 sec.Comments = "Certificate Type RSA2048/SHA256"
                 if len(sec.Image) > offset:
-                    sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]),0,polarity)
+                    sec.children = build_efi_modules_tree( _uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
             else:
                 sec.children = build_efi_model( _uefi, sec.Image[sec.HeaderSize:], fwtype )
 
         elif sec.Type == EFI_SECTION_COMPRESSION:
             for mct in COMPRESSION_TYPES_ALGORITHMS:
-                d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize+EFI_COMPRESSION_SECTION_size:], mct, True )
+                d = decompress_section_data( _uefi, "", sec_fs_name, sec.Image[sec.HeaderSize +EFI_COMPRESSION_SECTION_size:], mct, True )
                 if d:
                     sec.children = build_efi_modules_tree( _uefi, fwtype, d, len(d), 0, polarity )
                 if sec.children:
@@ -251,7 +251,7 @@ def build_efi_file_tree ( _uefi, fv_img, fwtype):
                 fwbin.isNVRAM   = True
                 fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
                 fv.append(fwbin)
-        fwbin = NextFwFile( fv_img, fv_size, fwbin.Size+fwbin.Offset, polarity )
+        fwbin = NextFwFile( fv_img, fv_size, fwbin.Size +fwbin.Offset, polarity )
     return fv
 #
 # build_efi_tree - extract EFI modules (FV, files, sections) from EFI image and build an object tree
@@ -330,19 +330,19 @@ def build_efi_model( _uefi, data, fwtype ):
     return model
 
 def FILENAME(mod, parent, modn):
-    fname = "{:02d}_{}".format(modn,mod.Guid)
+    fname = "{:02d}_{}".format(modn, mod.Guid)
     if type(mod) == EFI_FILE:
         type_s = FILE_TYPE_NAMES[mod.Type] if mod.Type in FILE_TYPE_NAMES.keys() else ("UNKNOWN_{:02X}".format(mod.Type))
-        fname = "{}.{}".format(fname,type_s)
+        fname = "{}.{}".format(fname, type_s)
     elif type(mod) == EFI_SECTION:
-        fname = "{:02d}_{}".format(modn,mod.Name)
+        fname = "{:02d}_{}".format(modn, mod.Name)
         if mod.Type in EFI_SECTIONS_EXE:
             if parent.ui_string:
                 if (parent.ui_string.endswith(".efi")):
                     fname = parent.ui_string
                 else:
                     fname = "{}.efi".format(parent.ui_string)
-            else:                fname = "{}.{}".format(fname,type2ext[mod.Type])
+            else:                fname = "{}.{}".format(fname, type2ext[mod.Type])
     return fname
 
 def dump_efi_module(mod, parent, modn, path):
@@ -350,8 +350,8 @@ def dump_efi_module(mod, parent, modn, path):
     mod_path = os.path.join(path, fname)
     write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) == EFI_SECTION else mod.Image)
     if type(mod) == EFI_SECTION or WRITE_ALL_HASHES:
-        if mod.MD5   : write_file(("{}.md5"   .format(mod_path)), mod.MD5)
-        if mod.SHA1  : write_file(("{}.sha1"  .format(mod_path)), mod.SHA1)
+        if mod.MD5: write_file(("{}.md5"   .format(mod_path)), mod.MD5)
+        if mod.SHA1: write_file(("{}.sha1"  .format(mod_path)), mod.SHA1)
         if mod.SHA256: write_file(("{}.sha256".format(mod_path)), mod.SHA256)
     return mod_path
 
@@ -388,15 +388,15 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
     modn = 0
     for m in modules:
         md = {}
-        m.indent = DEF_INDENT*lvl
+        m.indent = DEF_INDENT *lvl
         if save_log: logger().log(m)
 
         # extract all non-function non-None members of EFI_MODULE objects
-        attrs = [a for a in dir(m) if not callable(getattr(m,a)) and not a.startswith("__") and (getattr(m,a) is not None)]
-        for a in attrs: md[a] = getattr(m,a)
+        attrs = [a for a in dir(m) if not callable(getattr(m, a)) and not a.startswith("__") and (getattr(m, a) is not None)]
+        for a in attrs: md[a] = getattr(m, a)
         md["class"] = type(m).__name__
         # remove extra attributes
-        for f in ["Image","indent"]: del md[f]
+        for f in ["Image", "indent"]: del md[f]
 
         # save EFI module image, make sub-directory for children
         if save_modules:
@@ -417,11 +417,11 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
                         else: raise Exception("NVRAM type cannot be None")
-                    except: logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid,m.NVRAMType) )
+                    except: logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType) )
 
         # save children modules
         if len(m.children) > 0:
-            md["children"] = save_efi_tree(_uefi, m.children, m, save_modules, mod_dir_path, save_log, lvl+1)
+            md["children"] = save_efi_tree(_uefi, m.children, m, save_modules, mod_dir_path, save_log, lvl +1)
         else:
             del md["children"]
 
@@ -432,9 +432,9 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
 
 class UUIDEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj,UUID):
+        if isinstance(obj, UUID):
             return str(obj).upper()
-        return json.JSONEncoder.default(self,obj)
+        return json.JSONEncoder.default(self, obj)
 
 
 def parse_uefi_region_from_file( _uefi, filename, fwtype, outpath = None):

@@ -70,7 +70,7 @@ def write_file( filename, buffer, append=False ):
     #  f.write( buffer )
     #f.closed
     perm = 'a' if append else 'w'
-    if isinstance(buffer,bytes) or isinstance(buffer,bytearray):
+    if isinstance(buffer, bytes) or isinstance(buffer, bytearray):
         perm += 'b'
     try:
         f = open(filename, perm)

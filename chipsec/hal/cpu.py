@@ -100,14 +100,14 @@ class CPU(hal_base.HALBase):
     def get_number_physical_processor_per_package(self):
         logical_processor_per_core=self.get_number_logical_processor_per_core()
         logical_processor_per_package=self.get_number_logical_processor_per_package()
-        return (logical_processor_per_package//logical_processor_per_core)
+        return (logical_processor_per_package //logical_processor_per_core)
 
     # determine number of logical processors in the core
     def get_number_threads_from_APIC_table(self):
         _acpi = acpi.ACPI( self.cs )
         dACPIID = {}
         for apic in _acpi.get_parse_ACPI_table( acpi.ACPI_TABLE_SIG_APIC ):
-            table_header,APIC_object,table_header_blob,table_blob = apic
+            table_header, APIC_object, table_header_blob, table_blob = apic
             for structure in APIC_object.apic_structs:
                 if 0x00 == structure.Type:
                     if not structure.ACICID in dACPIID:
@@ -119,7 +119,7 @@ class CPU(hal_base.HALBase):
     def get_number_sockets_from_APIC_table(self):
         number_threads=self.get_number_threads_from_APIC_table()
         logical_processor_per_package=self.get_number_logical_processor_per_package()
-        return (number_threads//logical_processor_per_package)
+        return (number_threads //logical_processor_per_package)
 
     #
     # Return SMRR MSR physical base and mask
@@ -202,5 +202,5 @@ class CPU(hal_base.HALBase):
     def dump_page_tables_all( self ):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             cr3 = self.read_cr( tid, 3 )
-            if logger().HAL: logger().log( '[cpu{:d}] found paging hierarchy base (CR3): 0x{:08X}'.format(tid,cr3) )
+            if logger().HAL: logger().log( '[cpu{:d}] found paging hierarchy base (CR3): 0x{:08X}'.format(tid, cr3) )
             self.dump_page_tables( cr3 )

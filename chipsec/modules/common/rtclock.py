@@ -25,7 +25,7 @@ Checks for RTC memory locks. Since we do not know what RTC memory will be used f
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_HWCONFIG
 from chipsec.hal.cmos import CMOS
 from chipsec.chipset import CHIPSET_CODE_AVN
-TAGS = [MTAG_BIOS,MTAG_HWCONFIG]
+TAGS = [MTAG_BIOS, MTAG_HWCONFIG]
 
 
 class rtclock(BaseModule):

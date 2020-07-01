@@ -55,25 +55,25 @@ class ECCommand(BaseCommand):
         subparsers = parser.add_subparsers()
 
         parser_command = subparsers.add_parser('command')
-        parser_command.add_argument("cmd",type=lambda sz: int(sz,0),help="EC command to issue")
+        parser_command.add_argument("cmd", type=lambda sz: int(sz, 0), help="EC command to issue")
         parser_command.set_defaults(func=self.command)
 
         parser_dump = subparsers.add_parser('dump')
-        parser_dump.add_argument("size",type=lambda sz: int(sz,0), nargs='?', default=0x160,help="number of EC RAM bytes to read")
+        parser_dump.add_argument("size", type=lambda sz: int(sz, 0), nargs='?', default=0x160, help="number of EC RAM bytes to read")
         parser_dump.set_defaults(func=self.dump)
 
         parser_read = subparsers.add_parser('read')
-        parser_read.add_argument("start_offset",type=lambda sz: int(sz,0),help="offset to start reading EC memory")
-        parser_read.add_argument("size",type=lambda sz: int(sz,0), nargs='?',help="number of EC RAM bytes to read")
+        parser_read.add_argument("start_offset", type=lambda sz: int(sz, 0), help="offset to start reading EC memory")
+        parser_read.add_argument("size", type=lambda sz: int(sz, 0), nargs='?', help="number of EC RAM bytes to read")
         parser_read.set_defaults(func=self.read)
 
         parser_write = subparsers.add_parser('write')
-        parser_write.add_argument("offset",type=lambda sz: int(sz,0),help="offset of byte to write")
-        parser_write.add_argument("wval",type=lambda sz: int(sz,0),help="byte value to write into EC memory")
+        parser_write.add_argument("offset", type=lambda sz: int(sz, 0), help="offset of byte to write")
+        parser_write.add_argument("wval", type=lambda sz: int(sz, 0), help="byte value to write into EC memory")
         parser_write.set_defaults(func=self.write)
 
         parser_index = subparsers.add_parser('index')
-        parser_index.add_argument("offset",type=lambda sz: int(sz,0),nargs='?',help="offset to start reading EC memory")
+        parser_index.add_argument("offset", type=lambda sz: int(sz, 0), nargs='?', help="offset to start reading EC memory")
         parser_index.set_defaults(func=self.index)
 
 
@@ -86,7 +86,7 @@ class ECCommand(BaseCommand):
     def dump(self):
         self.logger.log("[CHIPSEC] EC dump")
 
-        buf = self._ec.read_range(0,self.size)
+        buf = self._ec.read_range(0, self.size)
         print_buffer(buf)
 
     def command(self):
@@ -131,7 +131,7 @@ class ECCommand(BaseCommand):
             print (msg)
             return
         self.func()
-        self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() -t) )
 
 
 commands = { 'ec': ECCommand }

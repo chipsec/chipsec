@@ -74,13 +74,13 @@ class SPDCommand(BaseCommand):
             _dimms = _spd.detect()
             if _dimms is not None:
                 self.logger.log( "Detected the following SPD devices:" )
-                for _dimm in _dimms: self.logger.log( "{}: 0x{:02X}".format(spd.SPD_DIMMS[_dimm],_dimm) )
+                for _dimm in _dimms: self.logger.log( "{}: 0x{:02X}".format(spd.SPD_DIMMS[_dimm], _dimm) )
 
         elif( 'dump' == op ):
 
             if len(self.argv) > 3:
                 dev = self.argv[3].upper()
-                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
+                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3], 16)
                 if not _spd.isSPDPresent( dev_addr ):
                     self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(dev_addr) )
                     return
@@ -93,17 +93,17 @@ class SPDCommand(BaseCommand):
 
             if len(self.argv) > 3:
                 dev = self.argv[3].upper()
-                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3],16)
+                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3], 16)
             if not _spd.isSPDPresent( dev_addr ):
                 self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(dev_addr) )
                 return
 
-            off = int(self.argv[4],16)
+            off = int(self.argv[4], 16)
             if( 'read' == op ):
                 val      = _spd.read_byte( off, dev_addr )
                 self.logger.log( "[CHIPSEC] SPD read: offset 0x{:X} = 0x{:X}".format(off, val) )
             elif( 'write' == op ):
-                val      = int(self.argv[5],16)
+                val      = int(self.argv[5], 16)
                 self.logger.log( "[CHIPSEC] SPD write: offset 0x{:X} = 0x{:X}".format(off, val) )
                 _spd.write_byte( off, val, dev_addr )
 
@@ -112,6 +112,6 @@ class SPDCommand(BaseCommand):
             self.logger.log( SPDCommand.__doc__ )
             return
 
-        self.logger.log( "[CHIPSEC] (spd) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (spd) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'spd': SPDCommand }

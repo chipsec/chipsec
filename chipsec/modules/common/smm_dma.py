@@ -32,7 +32,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_SMM, MTAG_HWCON
 
 _MODULE_NAME = 'smm_dma'
 
-TAGS = [MTAG_SMM,MTAG_HWCONFIG]
+TAGS = [MTAG_SMM, MTAG_HWCONFIG]
 
 
 _TSEG_MASK  = 0xFFF00000

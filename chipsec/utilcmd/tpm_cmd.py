@@ -68,7 +68,7 @@ class TPMCommand(BaseCommand):
 
         op = self.argv[2]
         if ( 'parse_log' == op ):
-            log = open(self.argv[3],'rb')
+            log = open(self.argv[3], 'rb')
             tpm_eventlog.parse(log)
         elif ('command' == op ):
             if len(self.argv) < 5:

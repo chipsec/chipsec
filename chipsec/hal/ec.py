@@ -133,7 +133,7 @@ class EC(hal_base.HALBase):
         return self.write_data( data )
 
     def read_range( self, start_offset, size ):
-        buffer = [chr(0xFF)]*size
+        buffer = [chr(0xFF)] *size
         #self.write_command( EC_COMMAND_ACPI_READ )
         for i in range (size):
             #self.write_data( start_offset + i )

@@ -48,20 +48,20 @@ class XenHypercall(BaseModuleHwAccess):
             raise Exception("[*] Could not allocate memory!")
         ### define initial args for hypercall fuzzing
         self.hypercall_args = {
-            MEMORY_OP        :  { 'args': [ xenmem_commands.keys(),      self.buff_va ] },
-            SET_TIMER_OP     :  { 'args': [ XL_RANGE,                    XL_RANGE     ] },
-            XEN_VERSION      :  { 'args': [ xen_version_commands.keys(), self.buff_va ] },
-            CONSOLE_IO       :  { 'args': [ console_io_commands.keys(),  MD_RANGE,  self.buff_va ] },
-            GRANT_TABLE_OP   :  { 'args': [ SM_RANGE,               self.buff_va,    XL_RANGE ] },
-            SCHED_OP         :  { 'args': [ schedop_commands.keys(),     self.buff_va ] },
-            EVENT_CHANNEL_OP :  { 'args': [ evtchop_commands.keys(),     self.buff_va ] },
-            NMI_OP           :  { 'args': [ XL_RANGE,                    XL_RANGE     ] },
-            HVM_OP           :  { 'args': [ hvmop_commands.keys(),       self.buff_va ] },
-            TMEM_OP          :  { 'args': [ self.buff_va                              ] },
-            XENPMU_OP        :  { 'args': [ xenpmuop_commands.keys(),    self.buff_va ] },
-            SYSCTL           :  { 'args': [ self.buff_va                              ] },
-            DOMCTL           :  { 'args': [ self.buff_va                              ] },
-            ARCH_1           :  { 'args': [ self.buff_va                              ] },
+            MEMORY_OP:  { 'args': [ xenmem_commands.keys(),      self.buff_va ] },
+            SET_TIMER_OP:  { 'args': [ XL_RANGE,                    XL_RANGE     ] },
+            XEN_VERSION:  { 'args': [ xen_version_commands.keys(), self.buff_va ] },
+            CONSOLE_IO:  { 'args': [ console_io_commands.keys(),  MD_RANGE,  self.buff_va ] },
+            GRANT_TABLE_OP:  { 'args': [ SM_RANGE,               self.buff_va,    XL_RANGE ] },
+            SCHED_OP:  { 'args': [ schedop_commands.keys(),     self.buff_va ] },
+            EVENT_CHANNEL_OP:  { 'args': [ evtchop_commands.keys(),     self.buff_va ] },
+            NMI_OP:  { 'args': [ XL_RANGE,                    XL_RANGE     ] },
+            HVM_OP:  { 'args': [ hvmop_commands.keys(),       self.buff_va ] },
+            TMEM_OP:  { 'args': [ self.buff_va                              ] },
+            XENPMU_OP:  { 'args': [ xenpmuop_commands.keys(),    self.buff_va ] },
+            SYSCTL:  { 'args': [ self.buff_va                              ] },
+            DOMCTL:  { 'args': [ self.buff_va                              ] },
+            ARCH_1:  { 'args': [ self.buff_va                              ] },
         }
 
     def get_value(self, arg):
@@ -139,7 +139,7 @@ class XenHypercall(BaseModuleHwAccess):
     ##  print_hypervisor_info
     ##
     def print_hypervisor_info(self, info):
-        features = ", ".join(['F{:d}={:016X}'.format(k, v) for k,v in info['features'].items() if v != 0])
+        features = ", ".join(['F{:d}={:016X}'.format(k, v) for k, v in info['features'].items() if v != 0])
         self.msg('XEN Hypervisor is present!')
         self.msg('          Version : {}'.format(info['xen_version'])         )
         self.msg('         Compiler : {}'.format(info['compiler'])            )

@@ -30,7 +30,7 @@ class TestHelper(Helper):
     """
 
     def __init__(self):
-        super(TestHelper,self).__init__()
+        super(TestHelper, self).__init__()
         self.os_system = "test_helper"
         self.os_release = "0"
         self.os_version = "0"
@@ -69,8 +69,8 @@ class TestHelper(Helper):
         else:
             raise Exception("Unexpected PCI read")
 
-    def read_physical_mem(self,phys_address, length):
-        return self.read_phys_mem(phys_address>>32,phys_address& 0xFFFFFFFF,length)
+    def read_physical_mem(self, phys_address, length):
+        return self.read_phys_mem(phys_address>>32, phys_address& 0xFFFFFFFF, length)
 
     def get_threads_count(self):
         return 2
@@ -173,7 +173,7 @@ class ACPIHelper(TestHelper):
               pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
             mem = b"\x00" * self.EBDA_PADDING + self.rsdp_descriptor
             offset = pa_lo - self.EBDA_ADDRESS
-            return mem[offset:offset+length]
+            return mem[offset:offset +length]
         elif pa_lo == self.RSDT_ADDRESS:
             return self.rsdt_descriptor[:length]
         elif pa_lo == self.XSDT_ADDRESS:

@@ -99,7 +99,7 @@ class uefivar_fuzz(BaseModule):
     def rnd(self, n=1):
         rnum = b''
         for j in range(n):
-            rnum += struct.pack("B",random.randint(0, 255))
+            rnum += struct.pack("B", random.randint(0, 255))
         return rnum
 
     def usage(self):
@@ -119,7 +119,7 @@ class uefivar_fuzz(BaseModule):
         _GUID   = UUID('414C4694-F4CF-0525-69AF-C99C8596530F')
         _ATTRIB = 0x07
         _SIZE   = 0x08
-        _DATA   = struct.pack("B",0x41) *_SIZE
+        _DATA   = struct.pack("B", 0x41) *_SIZE
 
         ITERATIONS = 1000
         SEED       = int(time())
@@ -134,9 +134,9 @@ class uefivar_fuzz(BaseModule):
         FUZZ_SIZE   = True
 
         # Init fuzzing primitives
-        name_prim = prim.string(value=_NAME,max_len=BOUND_STR)
+        name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
         attrib_prim = prim.dword(value=_ATTRIB) # i think the attrib field is 4 bytes large?
-        data_prim = prim.random_data(value=_DATA,min_length=0,max_length=BOUND_INT)
+        data_prim = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
 
         help_text  = False
 
@@ -178,16 +178,16 @@ class uefivar_fuzz(BaseModule):
             self.logger.log( 'Seed      : {:d}'.format(SEED) )
             self.logger.log( 'Test case : {:d}'.format(CASE) )
             self.logger.log('')
-            for count in range(1,ITERATIONS+CASE):
+            for count in range(1, ITERATIONS +CASE):
                 if FUZZ_NAME:
                     _NAME = ''
                     if name_prim.mutate():
                         _NAME = name_prim.render()
                     else: # if mutate() returns false, we need to reload the primitive
-                        name_prim = prim.string(value=_NAME,max_len=BOUND_STR)
+                        name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
                         _NAME = name_prim.render()
 
-                if FUZZ_GUID  : _GUID   = uuid4()
+                if FUZZ_GUID: _GUID   = uuid4()
 
                 if FUZZ_ATTRIB:
                     if attrib_prim.mutate():
@@ -196,15 +196,15 @@ class uefivar_fuzz(BaseModule):
                         attrib_prim = prim.dword(value=_ATTRIB)
                         _ATTRIB = attrib_prim.render()
 
-                if FUZZ_DATA  :
+                if FUZZ_DATA:
                     if data_prim.mutate():
                         _DATA = data_prim.render()
                     else:
-                        data_prim = prim.random_data(value=_DATA,min_length=0,max_length=BOUND_INT)
+                        data_prim = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
                         data_prim.mutate()
                         _DATA = data_prim.render()
 
-                if FUZZ_SIZE  :
+                if FUZZ_SIZE:
                     if _DATA:
                         _SIZE   = random.randrange(len(_DATA))
                     else:

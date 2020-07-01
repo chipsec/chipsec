@@ -106,7 +106,7 @@ class DecodeCommand(BaseCommand):
             limit   = r[4]
             notused = r[5]
             if not notused:
-                region_data = rom[base:limit+1]
+                region_data = rom[base:limit +1]
                 fname = os.path.join( pth, '{:d}_{:04X}-{:04X}_{}.bin'.format(idx, base, limit, name) )
                 write_file( fname, region_data )
                 if FLASH_DESCRIPTOR == idx:
@@ -124,6 +124,6 @@ class DecodeCommand(BaseCommand):
     def run(self):
         t = time()
         self.func()
-        self.logger.log( "[CHIPSEC] (decode) time elapsed {:.3f}".format(time()-t) )
+        self.logger.log( "[CHIPSEC] (decode) time elapsed {:.3f}".format(time() -t) )
 
 commands = { "decode": DecodeCommand }

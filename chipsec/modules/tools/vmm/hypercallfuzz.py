@@ -50,7 +50,7 @@ DEFAULT_RANDOM_ITERATIONS = 0x7FFFFFFF
 _FLUSH_LOG_EACH_ITER = False
 _LOG_ALL_GPRS        = True
 
-GPRS = { 'rax': 0, 'rbx': 0, 'rcx': 0, 'rdx': 0, 'rdi': 0, 'rsi': 0, 'r8' : 0, 'r9' : 0, 'r10': 0, 'r11': 0 }
+GPRS = { 'rax': 0, 'rbx': 0, 'rcx': 0, 'rdx': 0, 'rdi': 0, 'rsi': 0, 'r8': 0, 'r9': 0, 'r10': 0, 'r11': 0 }
 
 class hypercallfuzz(BaseModule):
 
@@ -71,7 +71,7 @@ class hypercallfuzz(BaseModule):
     def fuzz_generic_hypercalls( self ):
 
         _fmt = '{:02X}' if self.maxval <= 0xFF else ('{:04X}' if self.maxval <= 0xFFFF else ('{:08X}' if self.maxval <= 0xFFFFFFFF else '{:016X}'))
-        _str = "{} hcall rax={},rbx={},rcx={},rdx={},rdi={},rsi={},r8={},r9={},r10={},r11={}".format('{:d}',_fmt,_fmt,_fmt,_fmt,_fmt,_fmt,_fmt,_fmt,_fmt,_fmt)
+        _str = "{} hcall rax={},rbx={},rcx={},rdx={},rdi={},rsi={},r8={},r9={},r10={},r11={}".format('{:d}', _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt)
 
         t = time.time()
         if self.random_order:
@@ -88,7 +88,7 @@ class hypercallfuzz(BaseModule):
                 r9  = random.randint(0, self.gprs['r9'])
                 r10 = random.randint(0, self.gprs['r10'])
                 r11 = random.randint(0, self.gprs['r11'])
-                if _LOG_ALL_GPRS: self.logger.log( _str.format(it,rax,rbx,rcx,rdx,rdi,rsi,r8,r9,r10,r11) )
+                if _LOG_ALL_GPRS: self.logger.log( _str.format(it, rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11) )
                 else:             self.logger.log( "{:d} hcall".format(it) )
                 if _FLUSH_LOG_EACH_ITER: self.logger.flush()
                 try:
@@ -109,7 +109,7 @@ class hypercallfuzz(BaseModule):
                                         for r9 in range(self.gprs['r9']):
                                             for r10 in range(self.gprs['r10']):
                                                 for r11 in range(self.gprs['r11']):
-                                                    if _LOG_ALL_GPRS: self.logger.log( _str.format(it,rax,rbx,rcx,rdx,rdi,rsi,r8,r9,r10,r11) )
+                                                    if _LOG_ALL_GPRS: self.logger.log( _str.format(it, rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11) )
                                                     else:             self.logger.log( "{:d} hcall".format(it) )
                                                     if _FLUSH_LOG_EACH_ITER: self.logger.flush()
                                                     try:
@@ -117,7 +117,7 @@ class hypercallfuzz(BaseModule):
                                                         it += 1
                                                     except: pass
 
-        self.logger.log( "[*] finished fuzzing: time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[*] finished fuzzing: time elapsed {:.3f}".format(time.time() -t) )
         return ModuleResult.PASSED
 
 
@@ -138,7 +138,7 @@ class hypercallfuzz(BaseModule):
         if len(module_argv) > 0: self.random_order = (module_argv[0].lower() == 'random')
         self.maxval = DEFAULT_MAXVAL_RANDOM if self.random_order else DEFAULT_MAXVAL_EXHAUSTIVE
         if len(module_argv) > 1: self.vector_reg   = module_argv[1]
-        if len(module_argv) > 2: self.maxval       = int(module_argv[2],16)
+        if len(module_argv) > 2: self.maxval       = int(module_argv[2], 16)
         if len(module_argv) > 3: self.iterations   = int(module_argv[3])
 
         for r in self.gprs:

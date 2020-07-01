@@ -57,14 +57,14 @@ class CPUCommand(BaseCommand):
         parser_cr.set_defaults(func=self.cpu_cr)
         parser_cpuid.set_defaults(func=self.cpu_cpuid)
         parser_pt.set_defaults(func=self.cpu_pt)
-        parser_cr.add_argument('thread',type=int,nargs='?',default=None)
-        parser_cr.add_argument('cr_number',type=int,nargs='?',default=None)
-        parser_cr.add_argument('value',type=lambda x: int(x,0),nargs='?',default=None)
-        parser_cpuid.add_argument('eax',type=lambda x: int(x,0))
-        parser_cpuid.add_argument('ecx',type=lambda x: int(x,0),nargs='?',default=0)
-        parser_pt.add_argument('cr3',type=lambda x: int(x,0),nargs='?',default=None)
+        parser_cr.add_argument('thread', type=int, nargs='?', default=None)
+        parser_cr.add_argument('cr_number', type=int, nargs='?', default=None)
+        parser_cr.add_argument('value', type=lambda x: int(x, 0), nargs='?', default=None)
+        parser_cpuid.add_argument('eax', type=lambda x: int(x, 0))
+        parser_cpuid.add_argument('ecx', type=lambda x: int(x, 0), nargs='?', default=0)
+        parser_pt.add_argument('cr3', type=lambda x: int(x, 0), nargs='?', default=None)
 
-        parser.parse_args(self.argv[2:],namespace=CPUCommand)
+        parser.parse_args(self.argv[2:], namespace=CPUCommand)
 
         return True
 
@@ -129,9 +129,9 @@ class CPUCommand(BaseCommand):
         else:
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 cr3 = self.cs.cpu.read_cr( tid, 3 )
-                pt_fname = 'cpu{:d}_pt_{:08X}'.format(tid,cr3)
-                self.logger.log( "[CHIPSEC][cpu{:d}] paging physical base (CR3): 0x{:016X}".format(tid,cr3) )
-                self.logger.log( "[CHIPSEC][cpu{:d}] dumping paging hierarchy to '{}'...".format(tid,pt_fname) )
+                pt_fname = 'cpu{:d}_pt_{:08X}'.format(tid, cr3)
+                self.logger.log( "[CHIPSEC][cpu{:d}] paging physical base (CR3): 0x{:016X}".format(tid, cr3) )
+                self.logger.log( "[CHIPSEC][cpu{:d}] dumping paging hierarchy to '{}'...".format(tid, pt_fname) )
                 self.cs.cpu.dump_page_tables( cr3, pt_fname )
 
     def run(self):
@@ -143,6 +143,6 @@ class CPUCommand(BaseCommand):
             return
 
         self.func()
-        self.logger.log( "[CHIPSEC] (cpu) time elapsed {:.3f}".format(time()-t) )
+        self.logger.log( "[CHIPSEC] (cpu) time elapsed {:.3f}".format(time() -t) )
 
 commands = { 'cpu': CPUCommand }

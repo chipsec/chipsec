@@ -106,7 +106,7 @@ class blacklist(BaseModule):
         self.logger.log( "[*] searching for EFI binaries that match criteria from '{}':".format(self.cfg_name) )
         for k in self.efi_blacklist.keys():
             entry = self.efi_blacklist[k]
-            self.logger.log( "    {:16} - {}".format(k,entry['description'] if 'description' in entry else '') )
+            self.logger.log( "    {:16} - {}".format(k, entry['description'] if 'description' in entry else '') )
             #if 'match' in entry:
             #    for c in entry['match'].keys(): self.logger.log( "[*]   {}".format(entry['match'][c]) )
             #if 'exclude' in entry:
@@ -144,9 +144,9 @@ class blacklist(BaseModule):
         if len(module_argv) == 0:
             # Read firmware image directly from SPI flash memory
             self.spi = SPI( self.cs )
-            (base,limit,freg) = self.spi.get_SPI_region( BIOS )
+            (base, limit, freg) = self.spi.get_SPI_region( BIOS )
             image_size = limit + 1 - base
-            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file,base,limit,image_size) )
+            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
             self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
             self.spi.read_spi_to_file( base, image_size, image_file )
         elif len(module_argv) > 0:

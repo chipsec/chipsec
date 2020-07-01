@@ -23,7 +23,7 @@ from chipsec.module_common import BaseModule, ModuleResult
 
 class ModuleClass(BaseModule):
     def __init__(self):
-        super(ModuleClass,self).__init__()
+        super(ModuleClass, self).__init__()
 
     def is_supported(self):
         return True

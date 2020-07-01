@@ -49,15 +49,15 @@ class CMOSCommand(BaseCommand):
         parser_writel.set_defaults(func=self.cmos_writel)
         parser_readh = subparsers.add_parser('readh')
         parser_readh.set_defaults(func=self.cmos_readh)
-        parser_readh.add_argument('offset',type=lambda x: int(x,0),help="offsets read")
-        parser_readl.add_argument('offset',type=lambda x: int(x,0),help="offsets read")
+        parser_readh.add_argument('offset', type=lambda x: int(x, 0), help="offsets read")
+        parser_readl.add_argument('offset', type=lambda x: int(x, 0), help="offsets read")
         parser_writeh = subparsers.add_parser('writeh')
         parser_writeh.set_defaults(func=self.cmos_writeh)
-        parser_writel.add_argument('offset',type=lambda x: int(x,0),help="offsets write")
-        parser_writeh.add_argument('offset',type=lambda x: int(x,0),help="offsets write")
-        parser_writel.add_argument('value',type=lambda x: int(x,0),help="value written")
-        parser_writeh.add_argument('value',type=lambda x: int(x,0),help="value written")
-        parser.parse_args(self.argv[2:],namespace=CMOSCommand)
+        parser_writel.add_argument('offset', type=lambda x: int(x, 0), help="offsets write")
+        parser_writeh.add_argument('offset', type=lambda x: int(x, 0), help="offsets write")
+        parser_writel.add_argument('value', type=lambda x: int(x, 0), help="value written")
+        parser_writeh.add_argument('value', type=lambda x: int(x, 0), help="value written")
+        parser.parse_args(self.argv[2:], namespace=CMOSCommand)
 
         return True
 
@@ -90,6 +90,6 @@ class CMOSCommand(BaseCommand):
             return
 
         self.func()
-        self.logger.log( "[CHIPSEC] (cmos) time elapsed {:.3f}".format(time()-t) )
+        self.logger.log( "[CHIPSEC] (cmos) time elapsed {:.3f}".format(time() -t) )
 
 commands = { 'cmos': CMOSCommand }

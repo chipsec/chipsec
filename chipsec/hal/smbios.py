@@ -440,7 +440,7 @@ class SMBIOS(hal_base.HALBase):
         index = 0
         tmp_offset = header.Length
         while tmp_offset + index + 1 < raw_data_size:
-            (value, ) = struct.unpack_from('=B', raw_data[tmp_offset+index:])
+            (value, ) = struct.unpack_from('=B', raw_data[tmp_offset +index:])
             if value == 0:
                 if logger().HAL: logger().log('+ Unpacking string of size {:d}'.format(index))
                 (string, ) = struct.unpack_from('={:d}s'.format(index), raw_data[tmp_offset:])

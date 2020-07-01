@@ -51,7 +51,7 @@ from chipsec.defines import BOUNDARY_1MB, BOUNDARY_4GB
 from chipsec.hal.uefi import UEFI, parse_script
 from chipsec.hal.uefi_common import S3BootScriptOpcode
 
-TAGS = [MTAG_BIOS,MTAG_SMM,MTAG_SECUREBOOT]
+TAGS = [MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT]
 
 ########################################################################################################
 #
@@ -64,7 +64,7 @@ BOOTSCRIPT_OUTSIDE_SMRAM       = 0x2
 DISPATCH_OPCODES_UNPROTECTED   = 0x4
 DISPATCH_OPCODES_PROTECTED     = 0x8
 
-HIGH_BIOS_RANGE_SIZE = 2*BOUNDARY_1MB
+HIGH_BIOS_RANGE_SIZE = 2 *BOUNDARY_1MB
 
 class s3bootscript(BaseModule):
 
@@ -135,7 +135,7 @@ class s3bootscript(BaseModule):
         if bsaddress:
             bootscript_PAs = [ bsaddress ]
         else:
-            found,bootscript_PAs = self._uefi.find_s3_bootscript()
+            found, bootscript_PAs = self._uefi.find_s3_bootscript()
             if not found:
                 self.logger.log_good( "Didn't find any S3 boot-scripts in EFI variables" )
                 self.logger.log_warn_check( "S3 Boot-Script was not found. Firmware may be using other ways to store/locate it, or OS might be blocking access." )
@@ -177,7 +177,7 @@ class s3bootscript(BaseModule):
         script_pa = None
 
         if len(module_argv) > 0:
-            script_pa = int(module_argv[0],16)
+            script_pa = int(module_argv[0], 16)
             self.logger.log( '[*] Using manually assigned S3 Boot-Script table base: 0x{:016X}'.format(script_pa) )
         (self.smrambase, self.smramlimit, self.smramsize) = self.cs.cpu.get_SMRAM()
         if self.smrambase is not None and self.smramlimit is not None:

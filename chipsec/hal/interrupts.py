@@ -47,13 +47,13 @@ NMI_NOW      = 0x1
 
 class Interrupts(hal_base.HALBase):
 
-    def __init__(self,cs):
+    def __init__(self, cs):
         super(Interrupts, self).__init__(cs)
 
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         if logger().HAL:
-            logger().log( "[intr] sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT+1, SMI_data_port_value, SMI_code_data) )
+            logger().log( "[intr] sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
             logger().log( "       RAX = 0x{:016X} (AX will be overwridden with values of SW SMI ports B2/B3)".format(_rax) )
             logger().log( "       RBX = 0x{:016X}".format(_rbx) )
             logger().log( "       RCX = 0x{:016X}".format(_rcx) )
@@ -72,7 +72,7 @@ class Interrupts(hal_base.HALBase):
     def send_NMI( self ):
         if logger().HAL: logger().log( "[intr] sending NMI# through TCO1_CTL[NMI_NOW]" )
         reg, ba = self.cs.get_IO_space("TCOBASE")
-        tcobase = self.cs.read_register_field(reg,ba)
+        tcobase = self.cs.read_register_field(reg, ba)
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )
 
     def find_ACPI_SMI_Buffer(self):
@@ -94,19 +94,19 @@ class Interrupts(hal_base.HALBase):
         #   UINT8 Data[ANYSIZE_ARRAY];
         # } EFI_SMM_COMMUNICATE_HEADER;
         _guid = uuid.UUID(guid).bytes_le
-        data_hdr = _guid + struct.pack("Q",len(data)) + data
+        data_hdr = _guid + struct.pack("Q", len(data)) + data
         if not invoc_reg is None:
             #need to write data_hdr to comm buffer
-            tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
+            tmp_buf = self.cs.helper.write_physical_mem(buf_addr, len(data_hdr), data_hdr)
             #USING GAS need to write buf_addr into invoc_reg
             if invoc_reg.addrSpaceID == 0:
-                self.cs.helper.write_physical_mem(invoc_reg.addr,invoc_reg.access_size,buf_addr)
+                self.cs.helper.write_physical_mem(invoc_reg.addr, invoc_reg.access_size, buf_addr)
                 #check for return status
-                ret_buf = self.cs.helper.read_physical_mem(buf_addr,8)
+                ret_buf = self.cs.helper.read_physical_mem(buf_addr, 8)
             elif invoc_reg.addrSpaceID == 1:
-                self.cs.helper.write_io_port(invoc_reg.addr,invoc_reg.access_size,buf_addr)
+                self.cs.helper.write_io_port(invoc_reg.addr, invoc_reg.access_size, buf_addr)
                 #check for return status
-                ret_buf = self.cs.helper.read_io_port(buf_addr,8)
+                ret_buf = self.cs.helper.read_io_port(buf_addr, 8)
             else:
                 logger().error("Functionality is currently not implemented")
                 ret_buf = None
@@ -116,17 +116,17 @@ class Interrupts(hal_base.HALBase):
             #Wait for Communication buffer to be empty
             buf = 1
             while not buf ==  b"\x00\x00":
-                buf = self.cs.helper.read_physical_mem(buf_addr,2)
+                buf = self.cs.helper.read_physical_mem(buf_addr, 2)
             #write data to commbuffer
-            tmp_buf = self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),data_hdr)
+            tmp_buf = self.cs.helper.write_physical_mem(buf_addr, len(data_hdr), data_hdr)
             #call SWSMI
-            self.send_SW_SMI(thread_id,smi_num,0,0,0,0,0,0,0)
+            self.send_SW_SMI(thread_id, smi_num, 0, 0, 0, 0, 0, 0, 0)
             #clear CommBuffer
-            self.cs.helper.write_physical_mem(buf_addr,len(data_hdr),b"\x00"*len(data_hdr))
+            self.cs.helper.write_physical_mem(buf_addr, len(data_hdr), b"\x00" *len(data_hdr))
             return None
 
     # scan phys mem range start-end looking for 'smmc'
-    def find_smmc(self,start,end):
+    def find_smmc(self, start, end):
         chunk_sz = 1024 * 8 #8KB chunks
         phys_address = start
         found_at = 0
@@ -159,21 +159,21 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
   EFI_STATUS                      ReturnStatus;
 } SMM_CORE_PRIVATE_DATA;
     '''
-    def send_smmc_SMI(self,smmc,guid,payload,payload_loc):
+    def send_smmc_SMI(self, smmc, guid, payload, payload_loc):
         guid_b = uuid.UUID(guid).bytes_le
         payload_sz = len(payload)
 
 
-        data_hdr = guid_b + struct.pack("Q",payload_sz) + payload
+        data_hdr = guid_b + struct.pack("Q", payload_sz) + payload
         # write payload to payload_loc
         CommBuffer_offset = 56
         BufferSize_offset = CommBuffer_offset + 8
         ReturnStatus_offset = BufferSize_offset + 8
 
-        self.cs.mem.write_physical_mem(smmc + CommBuffer_offset,8,struct.pack("Q",payload_loc))
-        self.cs.mem.write_physical_mem(smmc + BufferSize_offset,8,struct.pack("Q",payload_sz))
-        self.cs.mem.write_physical_mem(payload_loc,len(data_hdr),data_hdr)
-        self.send_SMI_APMC(0x0,0x0)
+        self.cs.mem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
+        self.cs.mem.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", payload_sz))
+        self.cs.mem.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
+        self.send_SMI_APMC(0x0, 0x0)
 
-        ReturnStatus = struct.unpack("Q",self.cs.mem.read_physical_mem(smmc + ReturnStatus_offset,8))[0]
+        ReturnStatus = struct.unpack("Q", self.cs.mem.read_physical_mem(smmc + ReturnStatus_offset, 8))[0]
         return ReturnStatus

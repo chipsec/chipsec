@@ -105,7 +105,7 @@ add_module_names = False
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['chipsec','chipsec.','chipsec_']
+modindex_common_prefix = ['chipsec', 'chipsec.', 'chipsec_']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
@@ -124,7 +124,7 @@ html_theme = 'classic'
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "collapsiblesidebar":"false"
+    "collapsiblesidebar": "false"
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

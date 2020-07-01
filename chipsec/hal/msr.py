@@ -68,7 +68,7 @@ class Msr:
         thread_count = self.helper.get_threads_count()
         if thread_count is None or thread_count < 0:
             if logger().HAL: logger().log( "helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)" )
-            thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT","Thread_Count")
+            thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Thread_Count")
 
         if 0 == thread_count: thread_count = 1
         if logger().HAL: logger().log( "[cpu] # of logical CPUs: {:d}".format(thread_count) )
@@ -76,7 +76,7 @@ class Msr:
 
     # @TODO: fix
     def get_cpu_core_count( self ):
-        core_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT","Core_Count")
+        core_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Core_Count")
         return core_count
 
 
@@ -106,22 +106,22 @@ class Msr:
         return self.helper.get_descriptor_table( cpu_thread_id, code )
 
     def get_IDTR( self, cpu_thread_id ):
-        (limit,base,pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR )
+        (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR )
         if logger().HAL:
-            logger().log( "[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id,limit,base,pa) )
-        return (limit,base,pa)
+            logger().log( "[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        return (limit, base, pa)
 
     def get_GDTR( self, cpu_thread_id ):
-        (limit,base,pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR )
+        (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR )
         if logger().HAL:
-            logger().log( "[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id,limit,base,pa) )
-        return (limit,base,pa)
+            logger().log( "[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        return (limit, base, pa)
 
     def get_LDTR( self, cpu_thread_id ):
-        (limit,base,pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR )
+        (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR )
         if logger().HAL:
-            logger().log( "[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id,limit,base,pa) )
-        return (limit,base,pa)
+            logger().log( "[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        return (limit, base, pa)
 
 
 ##########################################################################################################
@@ -131,25 +131,25 @@ class Msr:
 ##########################################################################################################
 
     def dump_Descriptor_Table( self, cpu_thread_id, code, num_entries=None ):
-        (limit,base,pa) = self.helper.get_descriptor_table( cpu_thread_id, code )
+        (limit, base, pa) = self.helper.get_descriptor_table( cpu_thread_id, code )
         dt = self.helper.read_physical_mem( pa, limit + 1 )
-        total_num = len(dt)//16
+        total_num = len(dt) //16
         if (total_num < num_entries) or (num_entries is None):
             num_entries = total_num
-        logger().log( '[cpu{:d}] Physical Address: 0x{:016X}'.format(cpu_thread_id,pa) )
-        logger().log( '[cpu{:d}] # of entries    : {:d}'.format(cpu_thread_id,total_num) )
-        logger().log( '[cpu{:d}] Contents ({:d} entries):'.format(cpu_thread_id,num_entries) )
+        logger().log( '[cpu{:d}] Physical Address: 0x{:016X}'.format(cpu_thread_id, pa) )
+        logger().log( '[cpu{:d}] # of entries    : {:d}'.format(cpu_thread_id, total_num) )
+        logger().log( '[cpu{:d}] Contents ({:d} entries):'.format(cpu_thread_id, num_entries) )
         print_buffer( dt )
         logger().log( '--------------------------------------' )
         logger().log( '#    segment:offset         attributes' )
         logger().log( '--------------------------------------' )
         for i in range(0, num_entries):
-            offset = (ord(dt[i*16 + 11]) << 56) | (ord(dt[i*16 + 10]) << 48) | (ord(dt[i*16 + 9]) << 40) | (ord(dt[i*16 + 8]) << 32) | (ord(dt[i*16 + 7]) << 24) | (ord(dt[i*16 + 6]) << 16) | (ord(dt[i*16 + 1]) << 8) | ord(dt[i*16 + 0])
-            segsel = (ord(dt[i*16 + 3]) << 8) | ord(dt[i*16 + 2])
-            attr   = (ord(dt[i*16 + 5]) << 8) | ord(dt[i*16 + 4])
-            logger().log( '{:03d}  {:04X}:{:016X}  0x{:04X}'.format(i,segsel,offset,attr) )
+            offset = (ord(dt[i *16 + 11]) << 56) | (ord(dt[i *16 + 10]) << 48) | (ord(dt[i *16 + 9]) << 40) | (ord(dt[i *16 + 8]) << 32) | (ord(dt[i *16 + 7]) << 24) | (ord(dt[i *16 + 6]) << 16) | (ord(dt[i *16 + 1]) << 8) | ord(dt[i *16 + 0])
+            segsel = (ord(dt[i *16 + 3]) << 8) | ord(dt[i *16 + 2])
+            attr   = (ord(dt[i *16 + 5]) << 8) | ord(dt[i *16 + 4])
+            logger().log( '{:03d}  {:04X}:{:016X}  0x{:04X}'.format(i, segsel, offset, attr) )
 
-        return (pa,dt)
+        return (pa, dt)
 
     def IDT( self, cpu_thread_id, num_entries=None ):
         if logger().HAL: logger().log( '[cpu{:d}] IDT:'.format(cpu_thread_id) )

@@ -75,8 +75,8 @@ class bios_wp(BaseModule):
         return write_protected == 1
 
     def check_SPI_protected_ranges(self):
-        (bios_base,bios_limit,bios_freg) = self.spi.get_SPI_region( BIOS )
-        self.logger.log( "\n[*] BIOS Region: Base = 0x{:08X}, Limit = 0x{:08X}".format(bios_base,bios_limit) )
+        (bios_base, bios_limit, bios_freg) = self.spi.get_SPI_region( BIOS )
+        self.logger.log( "\n[*] BIOS Region: Base = 0x{:08X}, Limit = 0x{:08X}".format(bios_base, bios_limit) )
         self.spi.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False
@@ -87,18 +87,18 @@ class bios_wp(BaseModule):
 
 
         for j in range(5):
-            (base,limit,wpe,rpe,pr_reg_off,pr_reg_value) = self.spi.get_SPI_Protected_Range( j )
+            (base, limit, wpe, rpe, pr_reg_off, pr_reg_value) = self.spi.get_SPI_Protected_Range( j )
             if base > limit: continue
             if wpe == 1:
                 for area in areas_to_protect:
                     # overlap bottom
-                    start,end = area
+                    start, end = area
                     if base <= start and limit >= start:
                         if limit >= end:
                             areas_to_protect.remove(area)
                         else:
                             areas_to_protect.remove(area)
-                            area = (limit+1,end)
+                            area = (limit +1, end)
                             areas_to_protect.append(area)
 
                     # overlap top
@@ -107,19 +107,19 @@ class bios_wp(BaseModule):
                             areas_to_protect.remove(area)
                         else:
                             areas_to_protect.remove(area)
-                            area = (start,base-1)
+                            area = (start, base -1)
                             areas_to_protect.append(area)
                     # split
                     elif base > start and limit < end:
                         areas_to_protect.remove(area)
-                        areas_to_protect.append((start,base-1))
-                        areas_to_protect.append((limit+1, end))
+                        areas_to_protect.append((start, base -1))
+                        areas_to_protect.append((limit +1, end))
 
 
         if (len(areas_to_protect)  == 0):
             pr_cover_bios = True
         else:
-            if (len(areas_to_protect) != 1 or areas_to_protect[0] != (bios_base,bios_limit)):
+            if (len(areas_to_protect) != 1 or areas_to_protect[0] != (bios_base, bios_limit)):
                 pr_partial_cover_bios = True
 
         if pr_partial_cover_bios:

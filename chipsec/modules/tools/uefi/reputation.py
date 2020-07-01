@@ -131,9 +131,9 @@ Please run 'pip install virustotal-api' and try again.""")
         else:
             # Read firmware image directly from SPI flash memory
             self.spi = SPI( self.cs )
-            (base,limit,freg) = self.spi.get_SPI_region( BIOS )
+            (base, limit, freg) = self.spi.get_SPI_region( BIOS )
             image_size = limit + 1 - base
-            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file,base,limit,image_size) )
+            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
             self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
             self.spi.read_spi_to_file( base, image_size, image_file )
 

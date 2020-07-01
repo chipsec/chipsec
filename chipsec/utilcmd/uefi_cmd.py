@@ -134,7 +134,7 @@ class UEFICommand(BaseCommand):
         # s3bootscript command args
         parser_bootscript = subparsers.add_parser('s3bootscript')
         parser_bootscript.set_defaults(func=self.s3bootscript)
-        parser_bootscript.add_argument('bootscript_pa',type=lambda x: int(x,0), nargs='?', help='')
+        parser_bootscript.add_argument('bootscript_pa', type=lambda x: int(x, 0), nargs='?', help='')
 
         # insert-before command args
         parser_insert_before = subparsers.add_parser('insert-before')
@@ -240,8 +240,8 @@ class UEFICommand(BaseCommand):
                 n = 0
                 for (off, buf, hdr, data, guid, attrs) in _vars[name]:
                     if _input_var == guid:
-                        var_fname = '{}_{}_{}_{:d}.bin'.format(name,guid,get_attr_string(attrs).strip(),n)
-                        self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid,name,var_fname) )
+                        var_fname = '{}_{}_{}_{:d}.bin'.format(name, guid, get_attr_string(attrs).strip(), n)
+                        self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid, name, var_fname) )
                         write_file( var_fname, data )
                     n += 1
         else:
@@ -250,8 +250,8 @@ class UEFICommand(BaseCommand):
             if name in list(_vars.keys()):
                 n = 0
                 for (off, buf, hdr, data, guid, attrs) in _vars[name]:
-                    var_fname = '{}_{}_{}_{:d}.bin'.format(name,guid,get_attr_string(attrs).strip(),n)
-                    self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid,name,var_fname) )
+                    var_fname = '{}_{}_{}_{:d}.bin'.format(name, guid, get_attr_string(attrs).strip(), n)
+                    self.logger.log_good( "Found UEFI variable {}:{}. Dumped to '{}'".format(guid, name, var_fname) )
                     write_file( var_fname, data )
                     n += 1
 
@@ -321,7 +321,7 @@ class UEFICommand(BaseCommand):
             self.logger.log( '[*] Decoding S3 boot-script opcodes..' )
             script_entries = chipsec.hal.uefi.parse_script( script_all, True )
         else:
-            (bootscript_PAs,parsed_scripts) = self._uefi.get_s3_bootscript( True )
+            (bootscript_PAs, parsed_scripts) = self._uefi.get_s3_bootscript( True )
 
     def insert_before(self):
         if get_guid_bin(self.guid) == '':
@@ -425,7 +425,7 @@ class UEFICommand(BaseCommand):
         t = time.time()
         self._uefi = UEFI( self.cs )
         self.func()
-        self.logger.log( "[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time() -t) )
         return
 
 commands = { 'uefi': UEFICommand }

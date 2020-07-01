@@ -221,7 +221,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         if hc[2] != HV_STATUS_SUCCESS:
             for x in range(total_tests):
                 buffer  = ''
-                buffer += '\x00' * randint(0 ,8) + chr(getrandbits(8))
+                buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
@@ -294,16 +294,16 @@ class HyperVHypercall(BaseModuleHwAccess):
         buffer = self.get_initial_data(GOOD_PARAMS_STATUSES, i, 32)[0]
         self.msg('Start input parameters fuzzing ...')
         for x in range(total_tests):
-            if x % 10000000 == 10000000-1:
-                self.msg('{:4.0f}% DONE'.format(100.0*x/total_tests))
-            l = randint(0, maxlen-1)
-            v = randint(0, 0x100-1)
+            if x % 10000000 == 10000000 -1:
+                self.msg('{:4.0f}% DONE'.format(100.0 *x /total_tests))
+            l = randint(0, maxlen -1)
+            v = randint(0, 0x100 -1)
             if matrix[l][v] == 1:
                 s = list(buffer)
                 s[l]   = chr(v)
                 buffer = ''.join(s)
-                s[randint(0, maxlen-1)] = chr(randint(0, 0xFF))
-                s[randint(0, maxlen-1)] = chr(randint(0, 0xFF))
+                s[randint(0, maxlen -1)] = chr(randint(0, 0xFF))
+                s[randint(0, maxlen -1)] = chr(randint(0, 0xFF))
                 if self.hv_hypercalls[i][0] in status_list:
                     hciv = hv_hciv(0, 1, i, 0)
                 else:
@@ -384,7 +384,7 @@ class HyperVHypercall(BaseModuleHwAccess):
     ##
     def custom_fuzzing(self, call_code, total_tests):
         statistics = {}
-        buffer = ''.join( [chr(randint(0,255)) for i in range(0, 112)] )
+        buffer = ''.join( [chr(randint(0, 255)) for i in range(0, 112)] )
         hcname = get_hypercall_name(call_code)
 
         if hcname == 'HvConnectPort':

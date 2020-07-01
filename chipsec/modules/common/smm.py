@@ -30,7 +30,7 @@ This CHIPSEC module simply reads SMRAMC and checks that D_LCK is set.
 from collections import namedtuple
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
-TAGS = [MTAG_BIOS,MTAG_SMM]
+TAGS = [MTAG_BIOS, MTAG_SMM]
 
 class smm(BaseModule):
 

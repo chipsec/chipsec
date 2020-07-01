@@ -72,11 +72,11 @@ class PortIOCommand(BaseCommand):
             print (PortIOCommand.__doc__)
             return
 
-        io_port = int(self.argv[2],16)
+        io_port = int(self.argv[2], 16)
 
         width = 0x1
         if len(self.argv) > 3:
-            width = chipsec_util.get_option_width(self.argv[3]) if chipsec_util.is_option_valid_width(self.argv[3]) else int(self.argv[3],16)
+            width = chipsec_util.get_option_width(self.argv[3]) if chipsec_util.is_option_valid_width(self.argv[3]) else int(self.argv[3], 16)
 
         if 5 == len(self.argv):
             value = int(self.argv[4], 16)
@@ -96,7 +96,7 @@ class PortIOCommand(BaseCommand):
                 return
             self.logger.log( "[CHIPSEC] IN 0x{:04X} -> 0x{:08X} (size = 0x{:02X})".format(io_port, value, width) )
 
-        self.logger.log( "[CHIPSEC] (io) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (io) time elapsed {:.3f}".format(time.time() -t) )
 
 
 commands = { 'io': PortIOCommand }

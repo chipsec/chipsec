@@ -72,10 +72,10 @@ IOCTL_VA2PA                    = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
 
-LZMA  = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress")
-TIANO = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-EFI   = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-BROTLI = os.path.join(chipsec.file.get_main_dir(),chipsec.file.TOOLS_DIR,"compression","bin","Brotli")
+LZMA  = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress")
+TIANO = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
+EFI   = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
+BROTLI = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli")
 
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
@@ -97,8 +97,8 @@ class LinuxHelper(Helper):
     SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT = False
     DKMS_DIR = "/var/lib/dkms/"
 
-    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI]
-    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI,chipsec.defines.COMPRESSION_TYPE_LZMA,chipsec.defines.COMPRESSION_TYPE_BROTLI]
+    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI]
+    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI, chipsec.defines.COMPRESSION_TYPE_LZMA, chipsec.defines.COMPRESSION_TYPE_BROTLI]
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -126,9 +126,9 @@ class LinuxHelper(Helper):
         version     = defines.get_version()
         from os import listdir
         from os.path import isdir, join
-        p =  os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release)
+        p =  os.path.join( self.DKMS_DIR, self.MODULE_NAME, version, self.os_release)
         os_machine_dir_name = [f for f in listdir( p ) if isdir(join(p, f))][0]
-        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version , self.os_release, os_machine_dir_name, "module", "chipsec.ko" )
+        return os.path.join( self.DKMS_DIR, self.MODULE_NAME, version, self.os_release, os_machine_dir_name, "module", "chipsec.ko" )
 
 
     # This function load CHIPSEC driver
@@ -152,7 +152,7 @@ class LinuxHelper(Helper):
             else:
                 a2 = "a2=0x{}".format(phys_mem_access_prot)
 
-        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper" ,"linux", "chipsec.ko" )
+        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper", "linux", "chipsec.ko" )
         if not os.path.exists(driver_path):
             driver_path += ".xz"
             if not os.path.exists(driver_path):
@@ -219,9 +219,9 @@ class LinuxHelper(Helper):
                 self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
-                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(e)),e.errno)
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(e)), e.errno)
             except BaseException as be:
-                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(be)),errno.ENXIO)
+                raise OsHelperError("Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}".format(str(be)), errno.ENXIO)
 
             self._ioctl_base = self.compute_ioctlbase()
 
@@ -283,7 +283,7 @@ class LinuxHelper(Helper):
                 if logger().DEBUG: logger().log("found cpu = {}".format(cpu))
                 if cpu.isdigit():
                     cpu = int(cpu)
-                    self.dev_msr[cpu] = os.open("/dev/cpu/"+str(cpu)+"/msr", os.O_RDWR)
+                    self.dev_msr[cpu] = os.open("/dev/cpu/" +str(cpu) +"/msr", os.O_RDWR)
                     if logger().DEBUG: logger().log("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
@@ -305,7 +305,7 @@ class LinuxHelper(Helper):
     # by default itype is 'C' see drivers/linux/include/chipsec.h
     # currently all chipsec ioctl functions are _IOWR
     # currently all size are pointer
-    def compute_ioctlbase(self,itype = 'C'):
+    def compute_ioctlbase(self, itype = 'C'):
         #define _IOWR(type,nr,size)	 _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
         #define _IOC(dir,type,nr,size) \
         #    (((dir)  << _IOC_DIRSHIFT) | \
@@ -392,22 +392,22 @@ class LinuxHelper(Helper):
         pa = struct.unpack( self._pack, out_buf )[0]
 
         #Check if PA > max physical address
-        max_pa = self.cpuid( 0x80000008 , 0x0 )[0] & 0xFF
+        max_pa = self.cpuid( 0x80000008, 0x0 )[0] & 0xFF
         if pa > 1<<max_pa:
             if logger().DEBUG: logger().error("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
             error_code = 1
-        return (pa,error_code)
+        return (pa, error_code)
 
 
     def read_pci_reg( self, bus, device, function, offset, size = 4 ):
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
-        d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
+        d = struct.pack("5" +self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, 0)
         try:
             ret = self.ioctl(IOCTL_RDPCI, d)
         except IOError:
             if logger().DEBUG: logger().error("IOError\n")
             return None
-        x = struct.unpack("5"+self._pack, ret)
+        x = struct.unpack("5" +self._pack, ret)
         return x[4]
 
     def native_read_pci_reg(self, bus, device, function, offset, size, domain=0):
@@ -435,13 +435,13 @@ class LinuxHelper(Helper):
 
     def write_pci_reg( self, bus, device, function, offset, value, size = 4 ):
         _PCI_DOM = 0 #Change PCI domain, if there is more than one.
-        d = struct.pack("5"+self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, value)
+        d = struct.pack("5" +self._pack, ((_PCI_DOM << 16) | bus), ((device << 16) | function), offset, size, value)
         try:
             ret = self.ioctl(IOCTL_WRPCI, d)
         except IOError:
             if logger().DEBUG: logger().error("IOError\n")
             return None
-        x = struct.unpack("5"+self._pack, ret)
+        x = struct.unpack("5" +self._pack, ret)
         return x[4]
 
     def native_write_pci_reg(self, bus, device, function, offset, value, size=4, domain=0):
@@ -479,16 +479,16 @@ class LinuxHelper(Helper):
 
 
     def read_io_port(self, io_port, size):
-        in_buf = struct.pack( "3"+self._pack, io_port, size, 0 )
+        in_buf = struct.pack( "3" +self._pack, io_port, size, 0 )
         out_buf = self.ioctl(IOCTL_RDIO, in_buf)
         try:
             #print_buffer(out_buf)
             if 1 == size:
-                value = struct.unpack("3"+self._pack, out_buf)[2] & 0xff
+                value = struct.unpack("3" +self._pack, out_buf)[2] & 0xff
             elif 2 == size:
-                value = struct.unpack("3"+self._pack, out_buf)[2] & 0xffff
+                value = struct.unpack("3" +self._pack, out_buf)[2] & 0xffff
             else:
-                value = struct.unpack("3"+self._pack, out_buf)[2] & 0xffffffff
+                value = struct.unpack("3" +self._pack, out_buf)[2] & 0xffffffff
         except:
             if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf) )
 
@@ -498,17 +498,17 @@ class LinuxHelper(Helper):
         if self.devport_available():
             os.lseek(self.dev_port, io_port, os.SEEK_SET)
 
-            value = os.read(self.dev_port,size)
+            value = os.read(self.dev_port, size)
             if 1 == size:
-                return struct.unpack("B",value)[0]
+                return struct.unpack("B", value)[0]
             elif 2 == size:
-                return struct.unpack("H",value)[0]
+                return struct.unpack("H", value)[0]
             elif 4 == size:
-                return struct.unpack("I",value)[0]
+                return struct.unpack("I", value)[0]
 
 
     def write_io_port( self, io_port, value, size ):
-        in_buf = struct.pack( "3"+self._pack, io_port, size, value )
+        in_buf = struct.pack( "3" +self._pack, io_port, size, value )
         return self.ioctl(IOCTL_WRIO, in_buf)
 
     def native_write_io_port(self, io_port, newval, size):
@@ -517,28 +517,28 @@ class LinuxHelper(Helper):
             if 1 == size: fmt = 'B'
             elif 2 == size: fmt = 'H'
             elif 4 == size: fmt = 'I'
-            written = os.write(self.dev_port, struct.pack(fmt,newval))
+            written = os.write(self.dev_port, struct.pack(fmt, newval))
             if written != size:
                 if logger().DEBUG: logger().error("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
 
     def read_cr(self, cpu_thread_id, cr_number):
         self.set_affinity(cpu_thread_id)
         cr = 0
-        in_buf = struct.pack( "3"+self._pack, cpu_thread_id, cr_number, cr)
-        unbuf = struct.unpack("3"+self._pack, self.ioctl(IOCTL_RDCR, in_buf))
+        in_buf = struct.pack( "3" +self._pack, cpu_thread_id, cr_number, cr)
+        unbuf = struct.unpack("3" +self._pack, self.ioctl(IOCTL_RDCR, in_buf))
         return (unbuf[2])
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack( "3"+self._pack, cpu_thread_id, cr_number, value )
+        in_buf = struct.pack( "3" +self._pack, cpu_thread_id, cr_number, value )
         self.ioctl(IOCTL_WRCR, in_buf)
         return
 
     def read_msr(self, thread_id, msr_addr):
         self.set_affinity(thread_id)
         edx = eax = 0
-        in_buf = struct.pack( "4"+self._pack, thread_id, msr_addr, edx, eax)
-        unbuf = struct.unpack("4"+self._pack, self.ioctl(IOCTL_RDMSR, in_buf))
+        in_buf = struct.pack( "4" +self._pack, thread_id, msr_addr, edx, eax)
+        unbuf = struct.unpack("4" +self._pack, self.ioctl(IOCTL_RDMSR, in_buf))
         return (unbuf[3], unbuf[2])
 
     def native_read_msr(self, thread_id, msr_addr):
@@ -550,7 +550,7 @@ class LinuxHelper(Helper):
 
     def write_msr(self, thread_id, msr_addr, eax, edx):
         self.set_affinity(thread_id)
-        in_buf = struct.pack( "4"+self._pack, thread_id, msr_addr, edx, eax )
+        in_buf = struct.pack( "4" +self._pack, thread_id, msr_addr, edx, eax )
         self.ioctl(IOCTL_WRMSR, in_buf)
         return
 
@@ -564,18 +564,18 @@ class LinuxHelper(Helper):
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
         self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack( "5"+self._pack, cpu_thread_id, desc_table_code, 0 , 0, 0)
+        in_buf = struct.pack( "5" +self._pack, cpu_thread_id, desc_table_code, 0, 0, 0)
         out_buf = self.ioctl(IOCTL_GET_CPU_DESCRIPTOR_TABLE, in_buf)
-        (limit,base_hi,base_lo,pa_hi,pa_lo) = struct.unpack( "5"+self._pack, out_buf )
+        (limit, base_hi, base_lo, pa_hi, pa_lo) = struct.unpack( "5" +self._pack, out_buf )
         pa = (pa_hi << 32) + pa_lo
         base = (base_hi << 32) + base_lo
-        return (limit,base,pa)
+        return (limit, base, pa)
 
     def cpuid(self, eax, ecx):
         # add ecx
-        in_buf = struct.pack( "4"+self._pack, eax, 0, ecx, 0)
+        in_buf = struct.pack( "4" +self._pack, eax, 0, ecx, 0)
         out_buf = self.ioctl(IOCTL_CPUID, in_buf)
-        return struct.unpack( "4"+self._pack, out_buf )
+        return struct.unpack( "4" +self._pack, out_buf )
 
     def native_cpuid(self, eax, ecx):
         import chipsec.helper.linux.cpuid as cpuid
@@ -583,17 +583,17 @@ class LinuxHelper(Helper):
         return _cpuid(eax, ecx)
 
     def alloc_phys_mem(self, num_bytes, max_addr):
-        in_buf = struct.pack( "2"+self._pack, num_bytes, max_addr)
+        in_buf = struct.pack( "2" +self._pack, num_bytes, max_addr)
         out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
-        return struct.unpack( "2"+self._pack, out_buf )
+        return struct.unpack( "2" +self._pack, out_buf )
 
     def free_phys_mem(self, physmem):
-        in_buf = struct.pack( "1"+self._pack, physmem)
+        in_buf = struct.pack( "1" +self._pack, physmem)
         out_buf = self.ioctl(IOCTL_FREE_PHYSMEM, in_buf)
-        return struct.unpack( "1"+self._pack, out_buf)[0]
+        return struct.unpack( "1" +self._pack, out_buf)[0]
 
     def read_mmio_reg(self, phys_address, size):
-        in_buf = struct.pack( "2"+self._pack, phys_address, size)
+        in_buf = struct.pack( "2" +self._pack, phys_address, size)
         out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
         reg = out_buf[:size]
         return defines.unpack1(reg, size)
@@ -612,7 +612,7 @@ class LinuxHelper(Helper):
             return defines.unpack1(reg, size)
 
     def write_mmio_reg(self, phys_address, size, value):
-        in_buf = struct.pack( "3"+self._pack, phys_address, size, value )
+        in_buf = struct.pack( "3" +self._pack, phys_address, size, value )
         out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
 
     def native_write_mmio_reg(self, bar_base, bar_size, offset, size, value):
@@ -644,22 +644,22 @@ class LinuxHelper(Helper):
     #
     def msgbus_send_read_message( self, mcr, mcrx ):
         mdr_out = 0
-        in_buf  = struct.pack( "5"+self._pack, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out )
+        in_buf  = struct.pack( "5" +self._pack, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out )
         out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf )
-        mdr_out = struct.unpack( "5"+self._pack, out_buf )[4]
+        mdr_out = struct.unpack( "5" +self._pack, out_buf )[4]
         return mdr_out
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        in_buf  = struct.pack( "5"+self._pack, MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, 0 )
+        in_buf  = struct.pack( "5" +self._pack, MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, 0 )
         out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf )
         return
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
         mdr_out = 0
-        if mdr is None: in_buf = struct.pack( "5"+self._pack, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out )
-        else:           in_buf = struct.pack( "5"+self._pack, (MSGBUS_MDR_IN_MASK | MSGBUS_MDR_OUT_MASK), mcr, mcrx, mdr, mdr_out )
+        if mdr is None: in_buf = struct.pack( "5" +self._pack, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out )
+        else:           in_buf = struct.pack( "5" +self._pack, (MSGBUS_MDR_IN_MASK | MSGBUS_MDR_OUT_MASK), mcr, mcrx, mdr, mdr_out )
         out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf )
-        mdr_out = struct.unpack( "5"+self._pack, out_buf )[4]
+        mdr_out = struct.unpack( "5" +self._pack, out_buf )[4]
         return mdr_out
 
     #
@@ -685,7 +685,7 @@ class LinuxHelper(Helper):
     def set_affinity(self, thread_id):
         try:
             if thread_id < self.get_affinity():
-                os.sched_setaffinity(thread_id,{thread_id})
+                os.sched_setaffinity(thread_id, {thread_id})
                 return thread_id
             else:
                 return None
@@ -731,7 +731,7 @@ class LinuxHelper(Helper):
     #
 
     def kern_get_EFI_variable_full(self, name, guid):
-        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        status_dict = { 0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION" }
         off = 0
         data = ""
         attr = 0
@@ -741,7 +741,7 @@ class LinuxHelper(Helper):
         namelen = len(name)
         header_size = 52
         data_size = header_size + namelen
-        guid0 = int(guid[:8] , 16)
+        guid0 = int(guid[:8], 16)
         guid1 = int(guid[9:13], 16)
         guid2 = int(guid[14:18], 16)
         guid3 = int(guid[19:21], 16)
@@ -753,14 +753,14 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('13I'+str(namelen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+        in_buf = struct.pack('13I' +str(namelen) +'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
         buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
         new_size, status = struct.unpack( "2I", buffer[:8])
 
         if (status == 0x5):
             data_size = new_size + header_size + namelen # size sent by driver + size of header (size + guid) + size of name
-            in_buf = struct.pack('13I'+str(namelen+new_size)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
+            in_buf = struct.pack('13I' +str(namelen +new_size) +'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
             buffer = array.array("B", in_buf)
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
@@ -779,7 +779,7 @@ class LinuxHelper(Helper):
             guid = 0
             attr = 0
         else:
-            data = buffer[base:base+new_size].tostring()
+            data = buffer[base:base +new_size].tostring()
             attr = struct.unpack( "I", buffer[8:12])[0]
         return (off, buf, hdr, data, guid, attr)
 
@@ -806,7 +806,7 @@ class LinuxHelper(Helper):
         variables = dict()
         for v in varlist:
             name = v[:-37]
-            guid = v[len(name)+1:]
+            guid = v[len(name) +1:]
             if name and name is not None:
                 variables[name] = []
                 var = self.kern_get_EFI_variable_full(name, guid)
@@ -815,7 +815,7 @@ class LinuxHelper(Helper):
         return variables
 
     def kern_set_EFI_variable(self, name, guid, value, attr=0x7):
-        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        status_dict = { 0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION" }
 
         header_size = 60 # 4*15
         namelen = len(name)
@@ -824,7 +824,7 @@ class LinuxHelper(Helper):
             datalen = 0
             value = struct.pack('B', 0x0)
         data_size = header_size + namelen + datalen
-        guid0 = int(guid[:8] , 16)
+        guid0 = int(guid[:8], 16)
         guid1 = int(guid[9:13], 16)
         guid2 = int(guid[14:18], 16)
         guid3 = int(guid[19:21], 16)
@@ -836,7 +836,7 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('15I'+str(namelen)+'s'+str(datalen)+'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
+        in_buf = struct.pack('15I' +str(namelen) +'s' +str(datalen) +'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
         buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
         size, status = struct.unpack( "2I", buffer[:8])
@@ -857,15 +857,15 @@ class LinuxHelper(Helper):
         buf = list()
         hdr = 0
         try:
-            f =open('/sys/firmware/efi/vars/'+filename+'/data', 'r')
+            f =open('/sys/firmware/efi/vars/' +filename +'/data', 'r')
             data = f.read()
             f.close()
 
-            f = open('/sys/firmware/efi/vars/'+filename+'/guid', 'r')
+            f = open('/sys/firmware/efi/vars/' +filename +'/guid', 'r')
             guid = (f.read()).strip()
             f.close()
 
-            f = open('/sys/firmware/efi/vars/'+filename+'/attributes', 'r')
+            f = open('/sys/firmware/efi/vars/' +filename +'/attributes', 'r')
             attrstring = f.read()
             attr = 0
             if fnmatch.fnmatch(attrstring, '*NON_VOLATILE*'):
@@ -885,7 +885,7 @@ class LinuxHelper(Helper):
             f.close()
 
         except Exception as err:
-            if logger().DEBUG: logger().error('Failed to read files under /sys/firmware/efi/vars/'+filename)
+            if logger().DEBUG: logger().error('Failed to read files under /sys/firmware/efi/vars/' +filename)
             data = ""
             guid = 0
             attr = 0
@@ -917,8 +917,8 @@ class LinuxHelper(Helper):
         if not guid:
             guid = '*'
         for var in os.listdir('/sys/firmware/efi/vars'):
-            if fnmatch.fnmatch(var, '{}-{}'.format(name,guid)):
-                (off,buf,hdr,data,guid,attr) = self.VARS_get_efivar_from_sys(var)
+            if fnmatch.fnmatch(var, '{}-{}'.format(name, guid)):
+                (off, buf, hdr, data, guid, attr) = self.VARS_get_efivar_from_sys(var)
                 return data
 
     def VARS_set_EFI_variable(self,  name, guid, value ):
@@ -926,9 +926,9 @@ class LinuxHelper(Helper):
         if not name: name = '*'
         if not guid: guid = '*'
         for var in os.listdir('/sys/firmware/efi/vars'):
-            if fnmatch.fnmatch(var, '{}-{}'.format(name,guid)):
+            if fnmatch.fnmatch(var, '{}-{}'.format(name, guid)):
                 try:
-                    f = open('/sys/firmware/efi/vars/'+var+'/data', 'w')
+                    f = open('/sys/firmware/efi/vars/' +var +'/data', 'w')
                     f.write(value)
                     ret = 0 # EFI_SUCCESS
                 except Exception as err:
@@ -942,19 +942,19 @@ class LinuxHelper(Helper):
     #
 
     def EFIVARS_get_efivar_from_sys( self, filename ):
-        guid = filename[filename.find('-')+1:]
+        guid = filename[filename.find('-') +1:]
         off = 0
         buf = list()
         hdr = 0
         try:
-            f = open('/sys/firmware/efi/efivars/'+filename, 'rb')
+            f = open('/sys/firmware/efi/efivars/' + filename, 'rb')
             data = f.read()
-            attr = struct.unpack_from("<I",data)[0]
+            attr = struct.unpack_from("<I", data)[0]
             data = data[4:]
             f.close()
 
         except Exception as err:
-            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/' +filename)
             data = ""
             guid = 0
             attr = 0
@@ -985,14 +985,14 @@ class LinuxHelper(Helper):
     def EFIVARS_get_EFI_variable( self, name, guid ):
         filename = name + "-" + guid
         try:
-            f = open('/sys/firmware/efi/efivars/'+filename, 'rb')
+            f = open('/sys/firmware/efi/efivars/' + filename, 'rb')
             data = f.read()
-            attr = struct.unpack_from("<I",data)[0]
+            attr = struct.unpack_from("<I", data)[0]
             data = data[4:]
             f.close()
 
         except Exception as err:
-            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/'+filename)
+            if logger().DEBUG: logger().error('Failed to read /sys/firmware/efi/efivars/' +filename)
             data = ""
 
         finally:
@@ -1015,7 +1015,7 @@ class LinuxHelper(Helper):
                     sattrs = f.read(4)
                 else:
                     # Create new variable with attributes NV+BS+RT if attrs were not passed in
-                    sattrs = struct.pack("I", 0x7) if attrs is None else struct.pack("I",attrs)
+                    sattrs = struct.pack("I", 0x7) if attrs is None else struct.pack("I", attrs)
                 f = open(path, 'w')
                 f.write(sattrs + value)
                 f.close()
@@ -1044,9 +1044,9 @@ class LinuxHelper(Helper):
     #
     def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack( "7"+self._pack, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
+        in_buf = struct.pack( "7" +self._pack, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
         out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
-        ret = struct.unpack("7"+self._pack, out_buf)
+        ret = struct.unpack("7" +self._pack, out_buf)
         return ret
 
 
@@ -1056,7 +1056,7 @@ class LinuxHelper(Helper):
     def get_tool_info( self, tool_type ):
         tool_name = _tools[ tool_type ] if tool_type in _tools else None
         tool_path = os.path.join( get_tools_path(), self.os_system.lower() )
-        return tool_name,tool_path
+        return tool_name, tool_path
 
     def getcwd( self ):
         return os.getcwd()
@@ -1078,23 +1078,23 @@ class LinuxHelper(Helper):
     def rotate_list(self, list, n):
         return list[n:] + list[:n]
 
-    def unknown_decompress(self,CompressedFileName,OutputFileName):
+    def unknown_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type2:
-            res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
+            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
             if res == True:
-                self.rotate_list(self.decompression_oder_type2,failed_times)
+                self.rotate_list(self.decompression_oder_type2, failed_times)
                 break
             else:
                 failed_times += 1
         return res
 
-    def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
+    def unknown_efi_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
+            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
             if res == True:
-                self.rotate_list(self.decompression_oder_type1,failed_times)
+                self.rotate_list(self.decompression_oder_type1, failed_times)
                 break
             else:
                 failed_times += 1
@@ -1108,7 +1108,7 @@ class LinuxHelper(Helper):
             return False
         encode_str = " -e -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(FileName,OutputFileName)
+            shutil.copyfile(FileName, OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             encode_str = TIANO + encode_str
@@ -1119,7 +1119,7 @@ class LinuxHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             encode_str = BROTLI + encode_str
         encode_str += FileName
-        data = subprocess.check_output(encode_str,shell=True)
+        data = subprocess.check_output(encode_str, shell=True)
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot compress file({})".format(FileName))
             return False
@@ -1132,14 +1132,14 @@ class LinuxHelper(Helper):
         if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
             return False
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_UNKNOWN:
-            data = self.unknown_decompress(CompressedFileName,OutputFileName)
+            data = self.unknown_decompress(CompressedFileName, OutputFileName)
             return data
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD:
-            data = self.unknown_efi_decompress(CompressedFileName,OutputFileName)
+            data = self.unknown_efi_decompress(CompressedFileName, OutputFileName)
             return data
         decode_str = " -d -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(CompressedFileName,OutputFileName)
+            shutil.copyfile(CompressedFileName, OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             decode_str = TIANO + decode_str
@@ -1150,7 +1150,7 @@ class LinuxHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
-        data = subprocess.call(decode_str,shell=True)
+        data = subprocess.call(decode_str, shell=True)
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False

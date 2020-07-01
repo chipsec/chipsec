@@ -74,21 +74,21 @@ class SPICommand(BaseCommand):
 
         spi_op = self.argv[2]
 
-        if spi_op in ['read', 'write','erase'] and len(self.argv) < 4:
+        if spi_op in ['read', 'write', 'erase'] and len(self.argv) < 4:
             print (SPICommand.__doc__)
             return
         t = time.time()
 
         _msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
         if ( 'erase' == spi_op ):
-            spi_fla = int(self.argv[3],16)
+            spi_fla = int(self.argv[3], 16)
             self.logger.log( "[CHIPSEC] erasing SPI flash memory block at FLA = 0x{:X}".format(spi_fla) )
 
             ok = _spi.erase_spi_block( spi_fla )
             if ok: self.logger.log_result( "completed SPI flash memory erase" )
             else:  self.logger.warn( "SPI flash erase returned error (turn on VERBOSE)" )
         elif ( 'write' == spi_op and 5 == len(self.argv) ):
-            spi_fla = int(self.argv[3],16)
+            spi_fla = int(self.argv[3], 16)
             if 5 == len(self.argv):
                 filename = self.argv[4]
                 if not os.path.exists(filename):
@@ -103,9 +103,9 @@ class SPICommand(BaseCommand):
             if ok: self.logger.log( "[CHIPSEC] completed SPI flash memory write" )
             else:  self.logger.warn( "SPI flash write returned error (turn on VERBOSE)" )
         elif ( 'read' == spi_op ):
-            spi_fla = int(self.argv[3],16)
+            spi_fla = int(self.argv[3], 16)
             if 5 == len(self.argv):
-                length = int(self.argv[4],16)
+                length = int(self.argv[4], 16)
             else:
                 length = 0x4
             self.logger.log( "[CHIPSEC] reading 0x{:x} bytes from SPI Flash starting at FLA = 0x{:X}".format(length, spi_fla) )
@@ -130,9 +130,9 @@ class SPICommand(BaseCommand):
             self.logger.log( "[CHIPSEC] dumping entire SPI flash memory to '{}'".format(out_file) )
             self.logger.log( "[CHIPSEC] {}".format(_msg) )
             # @TODO: don't assume SPI Flash always ends with BIOS region
-            (base,limit,freg) = _spi.get_SPI_region( BIOS )
+            (base, limit, freg) = _spi.get_SPI_region( BIOS )
             spi_size = limit + 1
-            self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base,limit) )
+            self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base, limit) )
             self.logger.log( "[CHIPSEC] dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
             buf = _spi.read_spi_to_file( 0, spi_size, out_file )
             if (buf is None): self.logger.error( "dumping SPI Flash didn't return any data (turn on VERBOSE)" )
@@ -159,7 +159,7 @@ class SPICommand(BaseCommand):
                     (jedec, man, part) = _spi.get_SPI_JEDEC_ID_decoded()
                     if jedec is not False:
                         self.logger.log( '    JEDEC ID     : 0x{:06X}'.format(jedec) )
-                        self.logger.log( '    Manufacturer : 0x{:02X}     - {}'.format( (jedec >> 16) & 0xFF , man) )
+                        self.logger.log( '    Manufacturer : 0x{:02X}     - {}'.format( (jedec >> 16) & 0xFF, man) )
                         self.logger.log( '    Device       : 0x{:04X}   - {}'.format(jedec & 0xFFFF, part) )
                         self.logger.log( '' )
                     else:
@@ -173,6 +173,6 @@ class SPICommand(BaseCommand):
             print (SPICommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (spi {}) time elapsed {:.3f}".format(spi_op, time.time()-t) )
+        self.logger.log( "[CHIPSEC] (spi {}) time elapsed {:.3f}".format(spi_op, time.time() -t) )
 
 commands = { 'spi': SPICommand }

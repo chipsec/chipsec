@@ -76,22 +76,22 @@ class ChipsecUtil:
         self._cs = cs()
 
     def parse_args(self):
-        parser = argparse.ArgumentParser(usage='%(prog)s [options] <command>',add_help=False)
+        parser = argparse.ArgumentParser(usage='%(prog)s [options] <command>', add_help=False)
         options = parser.add_argument_group('Options')
-        options.add_argument('-h', '--help',dest='show_help', help="show this message and exit",action='store_true')
-        options.add_argument('-v','--verbose', help='verbose mode', action='store_true')
+        options.add_argument('-h', '--help', dest='show_help', help="show this message and exit", action='store_true')
+        options.add_argument('-v', '--verbose', help='verbose mode', action='store_true')
         options.add_argument('--hal', help='HAL mode', action='store_true')
-        options.add_argument('-d','--debug', help='debug mode', action='store_true')
-        options.add_argument('-l','--log', help='output to log file')
-        options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=cs().chipset_codes, type=str.upper)
-        options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=cs().pch_codes, type=str.upper)
-        options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
-        options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
-        options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
-        options.add_argument('_cmd',metavar='Command', nargs='?', choices=sorted(self.commands.keys()), type=str.lower, default="help",  help="Util command to run: {{{}}}".format(','.join(sorted(self.commands.keys()))))
-        options.add_argument('_cmd_args',metavar='Command Args', nargs=argparse.REMAINDER, help=self.global_usage)
+        options.add_argument('-d', '--debug', help='debug mode', action='store_true')
+        options.add_argument('-l', '--log', help='output to log file')
+        options.add_argument('-p', '--platform', dest='_platform', help='explicitly specify platform code', choices=cs().chipset_codes, type=str.upper)
+        options.add_argument('--pch', dest='_pch', help='explicitly specify PCH code', choices=cs().pch_codes, type=str.upper)
+        options.add_argument('-n', '--no_driver', dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
+        options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
+        options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
+        options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(self.commands.keys()), type=str.lower, default="help",  help="Util command to run: {{{}}}".format(','.join(sorted(self.commands.keys()))))
+        options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=self.global_usage)
 
-        parser.parse_args(self.argv,namespace=ChipsecUtil)
+        parser.parse_args(self.argv, namespace=ChipsecUtil)
         if self.show_help or self._cmd == "help":
             parser.print_help()
         if self.verbose:
@@ -108,10 +108,10 @@ class ChipsecUtil:
     def import_cmds(self):
         if self.CHIPSEC_LOADED_AS_EXE:
             import zipfile
-            myzip = zipfile.ZipFile(os.path.join(get_main_dir(),"library.zip"))
-            cmds = [i.replace('/','.').replace('chipsec.utilcmd.','')[:-4] for i in myzip.namelist() if 'chipsec/utilcmd/' in i and i[-4:] == ".pyc" and not os.path.basename(i)[:2] == '__' ]
+            myzip = zipfile.ZipFile(os.path.join(get_main_dir(), "library.zip"))
+            cmds = [i.replace('/', '.').replace('chipsec.utilcmd.', '')[:-4] for i in myzip.namelist() if 'chipsec/utilcmd/' in i and i[-4:] == ".pyc" and not os.path.basename(i)[:2] == '__' ]
         else:
-            cmds_dir = os.path.join(get_main_dir(),"chipsec","utilcmd")
+            cmds_dir = os.path.join(get_main_dir(), "chipsec", "utilcmd")
             cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
 
         if logger().DEBUG:
@@ -128,7 +128,7 @@ class ChipsecUtil:
                 # Display the import error and continue to import commands
                 logger().error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
                 continue
-        self.commands.update({"help":""})
+        self.commands.update({"help": ""})
 
 
     ##################################################################################
@@ -170,7 +170,7 @@ class ChipsecUtil:
         if not self._cs.is_atom():
             logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
-        logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd,self.argv[2:]) )
+        logger().log( "[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]) )
         comm.run()
         if comm.requires_driver() and not self._no_driver:
             self._cs.destroy(True)
@@ -188,7 +188,7 @@ class ChipsecUtil:
                      "################################################################")
         logger().log("[CHIPSEC] Version : {}".format(get_version()))
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(platform.system(), platform.release(), platform.version(), platform.machine()))
-        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if self.PYTHON_64_BITS else "32-bit"))
+        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(), "64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log(get_message())
 
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):

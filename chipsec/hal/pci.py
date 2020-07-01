@@ -221,7 +221,7 @@ def print_pci_XROMs( _xroms ):
     logger().log( "BDF     | VID:DID   | XROM base | XROM size | en " )
     logger().log( "-------------------------------------------------" )
     for xrom in _xroms:
-        logger().log( "{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:08X}  | {:08X}  | {:d}".format(xrom.bus,xrom.dev,xrom.fun,xrom.vid,xrom.did,xrom.base,xrom.size,xrom.en) )
+        logger().log( "{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:08X}  | {:08X}  | {:d}".format(xrom.bus, xrom.dev, xrom.fun, xrom.vid, xrom.did, xrom.base, xrom.size, xrom.en) )
 
 
 class Pci:
@@ -290,7 +290,7 @@ class Pci:
         return devices
 
     def dump_pci_config( self, bus, device, function ):
-        cfg = [0xFF]*0x100
+        cfg = [0xFF] *0x100
         for off in range(0x100):
             cfg[off] = self.read_byte( bus, device, function, off )
         return cfg
@@ -300,7 +300,7 @@ class Pci:
         pci_devices = self.enumerate_devices()
         for (b, d, f, vid, did) in pci_devices:
             cfg_buf = self.dump_pci_config( b, d, f )
-            logger().log( "\n[pci] PCI device {:02X}:{:02X}.{:02X} configuration:".format(b,d,f) )
+            logger().log( "\n[pci] PCI device {:02X}:{:02X}.{:02X} configuration:".format(b, d, f) )
             pretty_print_hex_buffer( cfg_buf )
 
 
@@ -321,13 +321,13 @@ class Pci:
 
     def find_XROM( self, bus, dev, fun, try_init=False, xrom_dump=False, xrom_addr=None ):
         # return results
-        xrom_found,xrom = False,None
+        xrom_found, xrom = False, None
 
-        if logger().HAL: logger().log( "[pci] checking XROM in {:02X}:{:02X}.{:02X}".format(bus,dev,fun) )
+        if logger().HAL: logger().log( "[pci] checking XROM in {:02X}:{:02X}.{:02X}".format(bus, dev, fun) )
 
         cmd = self.read_word(bus, dev, fun, PCI_HDR_CMD_OFF)
         ms = ((cmd & PCI_HDR_CMD_MS_MASK) == PCI_HDR_CMD_MS_MASK)
-        if logger().HAL: logger().log( "[pci]   PCI CMD (memory space = {:d}): 0x{:04X}".format(ms,cmd) )
+        if logger().HAL: logger().log( "[pci]   PCI CMD (memory space = {:d}): 0x{:04X}".format(ms, cmd) )
 
         hdr_type = self.read_byte(bus, dev, fun, PCI_HDR_TYPE_OFF)
         _mf   = hdr_type & PCI_HDR_TYPE_MF_MASK
@@ -346,13 +346,13 @@ class Pci:
                 self.write_dword( bus, dev, fun, xrom_bar_off, PCI_HDR_XROM_BAR_BASE_MASK )
                 xrom_bar = self.read_dword( bus, dev, fun, xrom_bar_off )
                 xrom_exists = (xrom_bar != 0)
-                if logger().HAL: logger().log( "[pci]   returned 0x{:08X} after writing {:08X}".format(xrom_bar,PCI_HDR_XROM_BAR_BASE_MASK) )
+                if logger().HAL: logger().log( "[pci]   returned 0x{:08X} after writing {:08X}".format(xrom_bar, PCI_HDR_XROM_BAR_BASE_MASK) )
                 if xrom_exists and (xrom_addr is not None):
                     # device indicates XROM may exist. Initialize its base with supplied MMIO address
                     size_align = ~(xrom_bar & PCI_HDR_XROM_BAR_BASE_MASK) # actual XROM alignment
                     if (xrom_addr & size_align) != 0:
-                        logger().warn( "XROM address 0x{:08X} must be aligned at 0x{:08X}".format(xrom_addr,size_align) )
-                        return False,None
+                        logger().warn( "XROM address 0x{:08X} must be aligned at 0x{:08X}".format(xrom_addr, size_align) )
+                        return False, None
                     self.write_dword( bus, dev, fun, xrom_bar_off, (xrom_addr|PCI_HDR_XROM_BAR_EN_MASK) )
                     xrom_bar = self.read_dword( bus, dev, fun, xrom_bar_off )
                     if logger().HAL: logger().log( "[pci]   programmed XROM BAR with 0x{:08X}".format(xrom_bar) )
@@ -369,7 +369,7 @@ class Pci:
         xrom_size = ~xrom_base + 1
 
         if xrom_exists:
-            if logger().HAL: logger().log( "[pci]   XROM: BAR = 0x{:08X}, base = 0x{:08X}, size = 0x{:X}, en = {:d}".format(xrom_bar,xrom_base,xrom_size,xrom_en) )
+            if logger().HAL: logger().log( "[pci]   XROM: BAR = 0x{:08X}, base = 0x{:08X}, size = 0x{:X}, en = {:d}".format(xrom_bar, xrom_base, xrom_size, xrom_en) )
             xrom = XROM(bus, dev, fun, xrom_en, xrom_base, xrom_size)
             if xrom_en and (xrom_base != PCI_HDR_XROM_BAR_BASE_MASK):
                 xrom.header = self.parse_XROM( xrom, xrom_dump )
@@ -382,14 +382,14 @@ class Pci:
         if not xrom_found:
             if logger().HAL: logger().log( "[pci]   XROM was not found" )
 
-        return xrom_found,xrom
+        return xrom_found, xrom
 
     def enumerate_xroms( self, try_init=False, xrom_dump=False, xrom_addr=None ):
         pci_xroms = []
         logger().log( "[pci] enumerating available PCI devices..." )
         pci_devices = self.enumerate_devices()
         for (b, d, f, vid, did) in pci_devices:
-            exists,xrom = self.find_XROM( b, d, f, try_init, xrom_dump, xrom_addr )
+            exists, xrom = self.find_XROM( b, d, f, try_init, xrom_dump, xrom_addr )
             if exists:
                 xrom.vid = vid
                 xrom.did = did
@@ -432,7 +432,7 @@ class Pci:
                         reg_hi = self.read_dword( bus, dev, fun, off )
                         reg |= (reg_hi << 32)
                         base = (reg & PCI_HDR_BAR_BASE_MASK_MMIO64)
-                        _bars.append( (base, isMMIO, True, off-PCI_HDR_BAR_STEP, reg, size) )
+                        _bars.append( (base, isMMIO, True, off -PCI_HDR_BAR_STEP, reg, size) )
                     elif PCI_HDR_BAR_TYPE_1MB == _type:
                         # MMIO BAR below 1MB - not supported
                         pass

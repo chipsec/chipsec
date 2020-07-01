@@ -121,7 +121,7 @@ MASK_64b = 0xFFFFFFFFFFFFFFFF
 
 
 def scan_single_bit_mask(mask):
-    for bit in range(0,7):
+    for bit in range(0, 7):
         if mask>>bit  == 1:
             return bit
 
@@ -155,7 +155,7 @@ SIZE2FORMAT = {
 }
 
 def bytestostring(mbytes):
-    if isinstance(mbytes,bytes):
+    if isinstance(mbytes, bytes):
         return mbytes.decode("latin_1")
     else:
         return mbytes

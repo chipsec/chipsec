@@ -74,7 +74,7 @@ class PCICommand(BaseCommand):
         if ( 'enumerate' == op ):
             self.logger.log( "[CHIPSEC] Enumerating available PCIe devices.." )
             print_pci_devices( self.cs.pci.enumerate_devices() )
-            self.logger.log( "[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time()-t) )
+            self.logger.log( "[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time() -t) )
             return
 
         elif ( 'dump' == op ):
@@ -84,10 +84,10 @@ class PCICommand(BaseCommand):
                 self.cs.pci.print_pci_config_all()
 
             elif len(self.argv) > 5:
-                bus       = int(self.argv[3],16)
-                device    = int(self.argv[4],16)
-                function  = int(self.argv[5],16)
-                self.logger.log( "[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(bus,device,function) )
+                bus       = int(self.argv[3], 16)
+                device    = int(self.argv[4], 16)
+                function  = int(self.argv[5], 16)
+                self.logger.log( "[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(bus, device, function) )
                 cfg_buf = self.cs.pci.dump_pci_config( bus, device, function )
                 pretty_print_hex_buffer( cfg_buf )
             else:
@@ -98,24 +98,24 @@ class PCICommand(BaseCommand):
 
             if len(self.argv) < 5:
                 self.logger.log( "[CHIPSEC] enumerating PCI expansion ROMs.." )
-                xrom_addr = int(self.argv[3],16) if len(self.argv) == 4 else None
+                xrom_addr = int(self.argv[3], 16) if len(self.argv) == 4 else None
                 _xroms = self.cs.pci.enumerate_xroms( True, True, xrom_addr )
                 self.logger.log( "[CHIPSEC] found {:d} PCI expansion ROMs".format(len(_xroms)) )
                 if len(_xroms) > 0: print_pci_XROMs( _xroms )
             elif len(self.argv) > 5:
-                bus       = int(self.argv[3],16)
-                device    = int(self.argv[4],16)
-                function  = int(self.argv[5],16)
-                xrom_addr = int(self.argv[6],16) if len(self.argv) > 6 else None
-                self.logger.log( "[CHIPSEC] locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(bus,device,function) )
-                exists,xrom = self.cs.pci.find_XROM( bus, device, function, True, True, xrom_addr )
+                bus       = int(self.argv[3], 16)
+                device    = int(self.argv[4], 16)
+                function  = int(self.argv[5], 16)
+                xrom_addr = int(self.argv[6], 16) if len(self.argv) > 6 else None
+                self.logger.log( "[CHIPSEC] locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(bus, device, function) )
+                exists, xrom = self.cs.pci.find_XROM( bus, device, function, True, True, xrom_addr )
                 if exists:
-                    self.logger.log( "[CHIPSEC] found XROM of {:02X}:{:02X}.{:02X}".format(bus,device,function) )
+                    self.logger.log( "[CHIPSEC] found XROM of {:02X}:{:02X}.{:02X}".format(bus, device, function) )
                     if xrom is not None:
-                        self.logger.log( "[CHIPSEC] XROM enabled = {:d}, base = 0x{:08X}, size = 0x{:08X}".format(xrom.en,xrom.base,xrom.size) )
+                        self.logger.log( "[CHIPSEC] XROM enabled = {:d}, base = 0x{:08X}, size = 0x{:08X}".format(xrom.en, xrom.base, xrom.size) )
                         if xrom.header is not None: self.logger.log( "[CHIPSEC] XROM header: {}".format(xrom.header) )
                 else:
-                    self.logger.log( "[CHIPSEC] coudn't find XROM of {:02X}:{:02X}.{:02X}".format(bus,device,function) )
+                    self.logger.log( "[CHIPSEC] coudn't find XROM of {:02X}:{:02X}.{:02X}".format(bus, device, function) )
             else:
                 print (PCICommand.__doc__)
                 return
@@ -125,11 +125,11 @@ class PCICommand(BaseCommand):
             pci_class = None
             pci_sub_class = None
             if len(self.argv) >= 4:
-                cmd_mask = int(self.argv[3],16)
+                cmd_mask = int(self.argv[3], 16)
             if len(self.argv) >= 5:
-                pci_class = int(self.argv[4],16)
+                pci_class = int(self.argv[4], 16)
             if len(self.argv) >= 6:
-                pci_sub_class = int(self.argv[5],16)
+                pci_sub_class = int(self.argv[5], 16)
             self.logger.log('BDF     | VID:DID   | CMD  | CLS | Sub CLS')
             self.logger.log('------------------------------------------')
             for (b, d, f, vid, did) in self.cs.pci.enumerate_devices():
@@ -149,13 +149,13 @@ class PCICommand(BaseCommand):
                 print (PCICommand.__doc__)
                 return
 
-            bus      = int(self.argv[2],16)
-            device   = int(self.argv[3],16)
-            function = int(self.argv[4],16)
-            offset   = int(self.argv[5],16)
+            bus      = int(self.argv[2], 16)
+            device   = int(self.argv[3], 16)
+            function = int(self.argv[4], 16)
+            offset   = int(self.argv[5], 16)
             width    = 4
             if len(self.argv) > 6:
-                width = chipsec_util.get_option_width(self.argv[6]) if chipsec_util.is_option_valid_width(self.argv[6]) else int(self.argv[6],16)
+                width = chipsec_util.get_option_width(self.argv[6]) if chipsec_util.is_option_valid_width(self.argv[6]) else int(self.argv[6], 16)
 
             if 8 == len(self.argv):
                 value = int(self.argv[7], 16)
@@ -173,6 +173,6 @@ class PCICommand(BaseCommand):
                     return
                 self.logger.log( "[CHIPSEC] PCI {:02X}:{:02X}.{:02X} + 0x{:02X}: 0x{:X}".format(bus, device, function, offset, pci_value) )
 
-        self.logger.log( "[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'pci': PCICommand }

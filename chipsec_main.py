@@ -84,7 +84,7 @@ class ChipsecMain:
         self.PYTHON_64_BITS        = True if (sys.maxsize > 2**32) else False
         self.ZIP_MODULES_RE        = None
         self.Import_Path           = "chipsec.modules."
-        self.Modules_Path          = os.path.join(self.CHIPSEC_FOLDER,"chipsec","modules")
+        self.Modules_Path          = os.path.join(self.CHIPSEC_FOLDER, "chipsec", "modules")
         self.Loaded_Modules        = []
         self.AVAILABLE_TAGS        = []
         self.MODPATH_RE            = re.compile(r"^\w+(\.\w+)*$")
@@ -113,17 +113,17 @@ class ChipsecMain:
     ##################################################################################
     # Module API
     ##################################################################################
-    def f_mod(self,x):
+    def f_mod(self, x):
         return ( x.find('__init__') == -1 and ZIP_MODULES_RE.match(x) )
 
-    def map_modname(self,x):
-        return (x.rpartition('.')[0]).replace('/','.')
+    def map_modname(self, x):
+        return (x.rpartition('.')[0]).replace('/', '.')
         #return ((x.split('/', 2)[2]).rpartition('.')[0]).replace('/','.')
 
-    def map_pass(self,x):
+    def map_pass(self, x):
         return x
 
-    def import_module(self,module_path):
+    def import_module(self, module_path):
         module = None
         if not self.MODPATH_RE.match(module_path):
             logger().error( "Invalid module path: {}".format(module_path) )
@@ -136,7 +136,7 @@ class ChipsecMain:
                 if self.failfast: raise msg
         return module
 
-    def verify_module_tags(self,module):
+    def verify_module_tags(self, module):
         run_it = True
         if len(self.USER_MODULE_TAGS) > 0 or self._list_tags:
             run_it = False
@@ -173,14 +173,14 @@ class ChipsecMain:
     def get_module_name( self, full_path):
         name = full_path
         # case #1, the full path: remove prefix
-        if full_path.startswith(self.CHIPSEC_FOLDER+os.path.sep):
-            name = full_path.replace ( self.CHIPSEC_FOLDER+os.path.sep, '')
+        if full_path.startswith(self.CHIPSEC_FOLDER +os.path.sep):
+            name = full_path.replace ( self.CHIPSEC_FOLDER +os.path.sep, '')
         else:
             for path in self.IMPORT_PATHS:
-                if full_path.startswith(os.path.abspath(path)+os.path.sep):
-                    name = full_path.replace ( os.path.abspath(path)+os.path.sep, '')
+                if full_path.startswith(os.path.abspath(path) +os.path.sep):
+                    name = full_path.replace ( os.path.abspath(path) +os.path.sep, '')
         # case #1 and #2: remove the extension
-        if name.lower().endswith('.py') : name = name[:-3]
+        if name.lower().endswith('.py'): name = name[:-3]
         if name.lower().endswith('.pyc'): name = name[:-4]
         # case #1: replace slashes with dots
         name = name.replace( os.path.sep, '.' )
@@ -204,12 +204,12 @@ class ChipsecMain:
         module = chipsec.module.Module(module_name)
 
         if module not in self.Loaded_Modules:
-            self.Loaded_Modules.append( (module,module_argv) )
+            self.Loaded_Modules.append( (module, module_argv) )
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
         if logger().DEBUG: logger().log( "[*] Path: {}".format(os.path.abspath( from_path )) )
-        for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ) :
+        for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ):
             if not recursive:
                 while len(subdirs) > 0:
                     subdirs.pop()
@@ -224,7 +224,7 @@ class ChipsecMain:
         # Load modules common to all supported platforms
         #
         common_path = os.path.join( self.Modules_Path, 'common' )
-        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd(),'.')) )
+        logger().log( "[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd(), '.')) )
         self.load_modules_from_path( common_path )
         #
         # Step 2.
@@ -232,14 +232,14 @@ class ChipsecMain:
         #
         chipset_path = os.path.join( self.Modules_Path, self._cs.code.lower() )
         if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.code) and os.path.exists( chipset_path ):
-            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd(),'.')) )
+            logger().log( "[*] loading platform specific modules from \"{}\" ..".format(chipset_path.replace(os.getcwd(), '.')) )
             self.load_modules_from_path( chipset_path )
         else:
             logger().log( "[*] No platform specific modules to load" )
         #
         # Step 3.
         # Enumerate all modules from the root module directory
-        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(),'.')) )
+        logger().log( "[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(), '.')) )
         self.load_modules_from_path( self.Modules_Path, False )
 
     def load_user_modules(self):
@@ -254,7 +254,7 @@ class ChipsecMain:
     def print_loaded_modules(self):
         if self.Loaded_Modules == []:
             logger().log( "No modules have been loaded" )
-        for (modx,modx_argv) in self.Loaded_Modules:
+        for (modx, modx_argv) in self.Loaded_Modules:
             logger().log( "[+] loaded {}".format(modx) )
 
 
@@ -268,7 +268,7 @@ class ChipsecMain:
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
         t = time.time()
-        for (modx,modx_argv) in self.Loaded_Modules:
+        for (modx, modx_argv) in self.Loaded_Modules:
             test_result = TestCase(modx.get_name())
             results.add_testcase(test_result)
             logger().start_module( modx.get_name( ) )
@@ -316,21 +316,21 @@ class ChipsecMain:
             summary = results.order_summary()
             logger().log( "\n[CHIPSEC] ***************************  SUMMARY  ***************************" )
             if not self.no_time:
-                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time()-t) )
+                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time() -t) )
             for k in summary.keys():
                 if k == 'total':
-                    logger().log( '[CHIPSEC] Modules {:16}{:d}'.format(k,summary[k]) )
+                    logger().log( '[CHIPSEC] Modules {:16}{:d}'.format(k, summary[k]) )
                 elif k == 'warnings':
-                    logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
+                    logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k, len(summary[k])) )
                     for mod in summary[k]:
                         logger().log_warning(mod)
                 elif k == 'exceptions':
                     if len(summary[k]) > 0:
-                        logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
+                        logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k, len(summary[k])) )
                         for mod in summary[k]:
                             logger().error(mod)
                 else:
-                    logger().log( '[CHIPSEC] Modules {:16}{:d}:'.format(k,len(summary[k])) )
+                    logger().log( '[CHIPSEC] Modules {:16}{:d}:'.format(k, len(summary[k])) )
                     for mod in summary[k]:
                         if k == 'failed to run':
                             logger().error(mod)
@@ -359,7 +359,7 @@ class ChipsecMain:
         if self.CHIPSEC_LOADED_AS_EXE:
             myzip = zipfile.ZipFile( os.path.join(self.CHIPSEC_FOLDER, "library.zip" ))
             global ZIP_MODULES_RE
-            ZIP_MODULES_RE = re.compile(r"^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/"+self._cs.code.lower()+r"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
+            ZIP_MODULES_RE = re.compile(r"^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/" +self._cs.code.lower() +r"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
             zip_modules = []
             zip_modules.extend( map(self.map_pass, filter(self.f_mod, myzip.namelist())) )
             logger().log( "Loaded modules from ZIP:" )
@@ -367,7 +367,7 @@ class ChipsecMain:
                 module_name = self.get_module_name(zmodx)
                 mod = chipsec.module.Module(module_name)
                 logger().log(mod.get_name())
-                self.Loaded_Modules.append( (mod,None) )
+                self.Loaded_Modules.append( (mod, None) )
         else:
             self.load_my_modules()
         self.load_user_modules()
@@ -380,34 +380,34 @@ class ChipsecMain:
         Returns: a pair (continue, exit_code). If continue is False,
           the exit_code should be returned.
         """
-        parser = argparse.ArgumentParser(usage='%(prog)s [options]',formatter_class=argparse.RawDescriptionHelpFormatter,epilog=ExitCode.help_epilog,add_help=False)
+        parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter, epilog=ExitCode.help_epilog, add_help=False)
         options = parser.add_argument_group('Options')
-        options.add_argument('-h', '--help', help="show this message and exit",action='store_true')
-        options.add_argument('-m', '--module',dest='_module', help='specify module to run (example: -m common.bios_wp)')
-        options.add_argument('-a','--module_args', nargs='*', dest="_module_argv", help="additional module arguments")
-        options.add_argument('-v','--verbose', help='verbose mode', action='store_true')
+        options.add_argument('-h', '--help', help="show this message and exit", action='store_true')
+        options.add_argument('-m', '--module', dest='_module', help='specify module to run (example: -m common.bios_wp)')
+        options.add_argument('-a', '--module_args', nargs='*', dest="_module_argv", help="additional module arguments")
+        options.add_argument('-v', '--verbose', help='verbose mode', action='store_true')
         options.add_argument('--hal', help='HAL mode', action='store_true')
-        options.add_argument('-d','--debug', help='debug mode', action='store_true')
-        options.add_argument('-l','--log', help='output to log file')
+        options.add_argument('-d', '--debug', help='debug mode', action='store_true')
+        options.add_argument('-l', '--log', help='output to log file')
         adv_options = parser.add_argument_group('Advanced Options')
-        adv_options.add_argument('-p','--platform',dest='_platform', help='explicitly specify platform code',choices=chipset.cs().chipset_codes, type=str.upper)
-        adv_options.add_argument('--pch',dest='_pch', help='explicitly specify PCH code',choices=chipset.cs().pch_codes, type=str.upper)
-        adv_options.add_argument('-n', '--no_driver',dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
-        adv_options.add_argument('-i', '--ignore_platform',dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
-        adv_options.add_argument('-j', '--json',dest='_json_out', help='specify filename for JSON output')
-        adv_options.add_argument('-x', '--xml', dest='_xml_out',help='specify filename for xml output (JUnit style)')
-        adv_options.add_argument('-k', '--markdown', dest='_markdown_out',help='specify filename for markdown output')
-        adv_options.add_argument('-t', '--moduletype',dest='USER_MODULE_TAGS', help='run tests of a specific type (tag)',type=str.upper,default=[])
-        adv_options.add_argument('--list_tags',dest='_list_tags', help='list all the available options for -t,--moduletype',action='store_true')
-        adv_options.add_argument('-I', '--include',dest='IMPORT_PATHS', help='specify additional path to load modules from',default=[])
-        adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)",action='store_true')
-        adv_options.add_argument('--no_time', help="don't log timestamps",action='store_true')
-        adv_options.add_argument('--deltas',dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
-        adv_options.add_argument('--record',dest='_to_file',help='run chipsec and clone helper results into JSON file')
-        adv_options.add_argument('--replay',dest='_from_file', help='replay a chipsec run with JSON file')
-        adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
+        adv_options.add_argument('-p', '--platform', dest='_platform', help='explicitly specify platform code', choices=chipset.cs().chipset_codes, type=str.upper)
+        adv_options.add_argument('--pch', dest='_pch', help='explicitly specify PCH code', choices=chipset.cs().pch_codes, type=str.upper)
+        adv_options.add_argument('-n', '--no_driver', dest='_no_driver', help="chipsec won't need kernel mode functions so don't load chipsec driver", action='store_true')
+        adv_options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', help='run chipsec even if the platform is not recognized', action='store_false')
+        adv_options.add_argument('-j', '--json', dest='_json_out', help='specify filename for JSON output')
+        adv_options.add_argument('-x', '--xml', dest='_xml_out', help='specify filename for xml output (JUnit style)')
+        adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='specify filename for markdown output')
+        adv_options.add_argument('-t', '--moduletype', dest='USER_MODULE_TAGS', help='run tests of a specific type (tag)', type=str.upper, default=[])
+        adv_options.add_argument('--list_tags', dest='_list_tags', help='list all the available options for -t,--moduletype', action='store_true')
+        adv_options.add_argument('-I', '--include', dest='IMPORT_PATHS', help='specify additional path to load modules from', default=[])
+        adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)", action='store_true')
+        adv_options.add_argument('--no_time', help="don't log timestamps", action='store_true')
+        adv_options.add_argument('--deltas', dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
+        adv_options.add_argument('--record', dest='_to_file', help='run chipsec and clone helper results into JSON file')
+        adv_options.add_argument('--replay', dest='_from_file', help='replay a chipsec run with JSON file')
+        adv_options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
 
-        parser.parse_args(self.argv,namespace=ChipsecMain)
+        parser.parse_args(self.argv, namespace=ChipsecMain)
 
         if self.help:
             parser.print_help()
@@ -440,7 +440,7 @@ class ChipsecMain:
 
     def log_properties( self ):
         logger().log("[CHIPSEC] OS      : {} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine) )
-        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),"64-bit" if self.PYTHON_64_BITS else "32-bit"))
+        logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(), "64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log("[CHIPSEC] Helper  : {} ({})".format(*self._cs.helper.helper.get_info()))
         logger().log("[CHIPSEC] Platform: {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
         if not self._cs.is_atom():

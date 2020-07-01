@@ -56,11 +56,11 @@ def parse_script( script, log_script=False ):
     len_s                  = len(script)
 
     if log_script: logger().log( '[uefi] +++ S3 Resume Boot-Script +++\n' )
-    script_type,script_header_length = uefi_platform.id_s3bootscript_type( script, log_script )
+    script_type, script_header_length = uefi_platform.id_s3bootscript_type( script, log_script )
     off += script_header_length
 
     while (off < len_s) and (entry_type != S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE):
-        entry_type,s3script_entry = uefi_platform.parse_s3bootscript_entry( script_type, script, off, log_script )
+        entry_type, s3script_entry = uefi_platform.parse_s3bootscript_entry( script_type, script, off, log_script )
         # couldn't parse the next entry - return what has been parsed so far
         if s3script_entry is None: return s3_boot_script_entries
         s3_boot_script_entries.append( s3script_entry )
@@ -115,13 +115,13 @@ EFI_IMAGE_SECURITY_DATABASE_GUID = 'd719b2cb-3d3a-4596-a3bc-dad00e67656f'
 #EFI_VAR_GUID_db         = EFI_IMAGE_SECURITY_DATABASE_GUID
 
 EFI_VARIABLE_DICT = {
-EFI_VAR_NAME_PK              : EFI_GLOBAL_VARIABLE_GUID,
-EFI_VAR_NAME_KEK             : EFI_GLOBAL_VARIABLE_GUID,
-EFI_VAR_NAME_db              : EFI_IMAGE_SECURITY_DATABASE_GUID,
-EFI_VAR_NAME_dbx             : EFI_IMAGE_SECURITY_DATABASE_GUID,
-EFI_VAR_NAME_SecureBoot      : EFI_GLOBAL_VARIABLE_GUID,
-EFI_VAR_NAME_SetupMode       : EFI_GLOBAL_VARIABLE_GUID,
-EFI_VAR_NAME_CustomMode      : EFI_GLOBAL_VARIABLE_GUID,
+EFI_VAR_NAME_PK: EFI_GLOBAL_VARIABLE_GUID,
+EFI_VAR_NAME_KEK: EFI_GLOBAL_VARIABLE_GUID,
+EFI_VAR_NAME_db: EFI_IMAGE_SECURITY_DATABASE_GUID,
+EFI_VAR_NAME_dbx: EFI_IMAGE_SECURITY_DATABASE_GUID,
+EFI_VAR_NAME_SecureBoot: EFI_GLOBAL_VARIABLE_GUID,
+EFI_VAR_NAME_SetupMode: EFI_GLOBAL_VARIABLE_GUID,
+EFI_VAR_NAME_CustomMode: EFI_GLOBAL_VARIABLE_GUID,
 EFI_VAR_NAME_SignatureSupport: EFI_GLOBAL_VARIABLE_GUID
 
 }
@@ -233,7 +233,7 @@ def decode_EFI_variables( efi_vars, nvram_pth ):
                 parse_efivar_file(var_fname, data, AUTH_SIG_VAR)
             elif name == EFI_VAR_NAME_AuthVarKeyDatabase:
                 parse_efivar_file(var_fname, data, ESAL_SIG_VAR)
-            n = n+1
+            n = n +1
 
 
 def identify_EFI_NVRAM( buffer ):
@@ -320,7 +320,7 @@ class UEFI(hal_base.HALBase):
             logger().log( "[uefi] 'func_getnvstore' is not defined in EFI_VAR_DICT. Assuming start offset 0.." )
 
         if -1 == size: size = len(rom_buffer)
-        nvram_buf = rom[ offset : offset + size ]
+        nvram_buf = rom[ offset: offset + size ]
 
         if logger().UTIL_TRACE:
             logger().log( '[uefi] Found EFI NVRAM at offset 0x{:08X}'.format(offset) )
@@ -369,7 +369,7 @@ NVRAM: EFI Variable Store
 
 
     def decompress_EFI_binary( self, compressed_name, uncompressed_name, compression_type ):
-        if logger().HAL: logger().log( "[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n       {}".format(compression_type,compressed_name,uncompressed_name) )
+        if logger().HAL: logger().log( "[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n       {}".format(compression_type, compressed_name, uncompressed_name) )
         if compression_type in COMPRESSION_TYPES:
             if self.cs.helper.decompress_file( compressed_name, uncompressed_name, compression_type ):
                 return read_file(uncompressed_name)
@@ -380,7 +380,7 @@ NVRAM: EFI Variable Store
             return None
 
     def compress_EFI_binary( self, uncompressed_name, compressed_name, compression_type ):
-        if logger().HAL: logger().log( "[uefi] compressing EFI binary (type = 0x{:X})\n       {} ->\n       {}".format(compression_type,uncompressed_name,compressed_name) )
+        if logger().HAL: logger().log( "[uefi] compressing EFI binary (type = 0x{:X})\n       {} ->\n       {}".format(compression_type, uncompressed_name, compressed_name) )
         if compression_type in COMPRESSION_TYPES:
             if self.cs.helper.compress_file( uncompressed_name, compressed_name, compression_type ):
                 return read_file(compressed_name)
@@ -407,13 +407,13 @@ NVRAM: EFI Variable Store
         efivars = self.list_EFI_variables()
         if efivars is None:
             logger().error( 'Could not enumerate UEFI variables at runtime' )
-            return (found,BootScript_addresses)
+            return (found, BootScript_addresses)
         if logger().HAL: logger().log( "[uefi] searching for EFI variable(s): " + str(S3_BOOTSCRIPT_VARIABLES) )
 
         for efivar_name in efivars:
             (off, buf, hdr, data, guid, attrs) = efivars[efivar_name][0]
             if efivar_name in S3_BOOTSCRIPT_VARIABLES:
-                if logger().HAL: logger().log( "[uefi] found: {} {{{}}} {} variable".format(efivar_name,guid,get_attr_string(attrs)) )
+                if logger().HAL: logger().log( "[uefi] found: {} {{{}}} {} variable".format(efivar_name, guid, get_attr_string(attrs)) )
                 if logger().HAL:
                     logger().log('[uefi] {} variable data:'.format(efivar_name))
                     print_buffer( bytestostring(data) )
@@ -422,7 +422,7 @@ NVRAM: EFI Variable Store
                 if   4 == varsz: AcpiGlobalAddr_fmt = '<L'
                 elif 8 == varsz: AcpiGlobalAddr_fmt = '<Q'
                 else:
-                    logger().error( "Unrecognized format of '{}' UEFI variable (data size = 0x{:X})".format(efivar_name,varsz) )
+                    logger().error( "Unrecognized format of '{}' UEFI variable (data size = 0x{:X})".format(efivar_name, varsz) )
                     break
                 AcpiGlobalAddr = struct.unpack_from( AcpiGlobalAddr_fmt, data )[0]
                 if 0 == AcpiGlobalAddr:
@@ -443,7 +443,7 @@ NVRAM: EFI Variable Store
                 found   = True
                 BootScript_addresses.append( AcpiBootScriptTable )
                 #break
-        return (found,BootScript_addresses)
+        return (found, BootScript_addresses)
 
     #
     # Upper level function to find and parse S3 resume boot script
@@ -457,8 +457,8 @@ NVRAM: EFI Variable Store
         #
         # Find the S3 Resume Boot-Script from UEFI variables
         #
-        found,bootscript_PAs = self.find_s3_bootscript()
-        if not found: return (bootscript_PAs,None)
+        found, bootscript_PAs = self.find_s3_bootscript()
+        if not found: return (bootscript_PAs, None)
         if logger().HAL: logger().log( '[uefi] Found {:d} S3 resume boot-scripts'.format(len(bootscript_PAs)) )
 
         for bootscript_pa in bootscript_PAs:
@@ -472,7 +472,7 @@ NVRAM: EFI Variable Store
             if logger().HAL: logger().log( '[uefi] Decoding S3 Resume Boot-Script..' )
             script_entries = parse_script( script_buffer, log_script )
             parsed_scripts[ bootscript_pa ] = script_entries
-        return (bootscript_PAs,parsed_scripts)
+        return (bootscript_PAs, parsed_scripts)
 
 
     ######################################################################
@@ -514,10 +514,10 @@ NVRAM: EFI Variable Store
     ######################################################################
 
     def find_EFI_Table( self, table_sig ):
-        (smram_base,smram_limit,smram_size) = self.cs.cpu.get_SMRAM()
-        CHUNK_SZ = 1024*1024 # 1MB
+        (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRAM()
+        CHUNK_SZ = 1024 *1024 # 1MB
         if logger().HAL: logger().log( "[uefi] searching memory for EFI table with signature '{}' ..".format(table_sig) )
-        table_pa,table_header,table,table_buf = None,None,None,None
+        table_pa, table_header, table, table_buf = None, None, None, None
         pa = smram_base - CHUNK_SZ
         isFound = False
         while pa > CHUNK_SZ:
@@ -526,9 +526,9 @@ NVRAM: EFI Variable Store
             pos = bytestostring(membuf).find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
-                if logger().HAL: logger().log( "[uefi] found signature '{}' at 0x{:016X}..".format(table_sig,table_pa) )
+                if logger().HAL: logger().log( "[uefi] found signature '{}' at 0x{:016X}..".format(table_sig, table_pa) )
                 if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE):
-                    hdr = membuf[ pos : pos + EFI_TABLE_HEADER_SIZE ]
+                    hdr = membuf[ pos: pos + EFI_TABLE_HEADER_SIZE ]
                 else:
                     hdr = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE )
                 table_header = EFI_TABLE_HEADER( *struct.unpack_from( EFI_TABLE_HEADER_FMT, hdr ) )
@@ -538,14 +538,14 @@ NVRAM: EFI Variable Store
                    table_header.Revision not in EFI_REVISIONS or \
                    table_header.HeaderSize > MAX_EFI_TABLE_SIZE:
                     if logger().HAL:
-                        logger().log( "[uefi] found '{}' at 0x{:016X} but doesn't look like an actual table. keep searching..".format(table_sig,table_pa) )
+                        logger().log( "[uefi] found '{}' at 0x{:016X} but doesn't look like an actual table. keep searching..".format(table_sig, table_pa) )
                         logger().log( table_header )
                 else:
                     isFound = True
-                    if logger().HAL: logger().log( "[uefi] found EFI table at 0x{:016X} with signature '{}'..".format(table_pa,table_sig) )
+                    if logger().HAL: logger().log( "[uefi] found EFI table at 0x{:016X} with signature '{}'..".format(table_pa, table_sig) )
                     table_size = struct.calcsize( EFI_TABLES[table_sig]['fmt'] )
                     if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE - table_size):
-                        table_buf = membuf[ pos : pos + EFI_TABLE_HEADER_SIZE + table_size ]
+                        table_buf = membuf[ pos: pos + EFI_TABLE_HEADER_SIZE + table_size ]
                     else:
                         table_buf = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE + table_size )
                     table = EFI_TABLES[table_sig]['struct']( *struct.unpack_from( EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:] ) )
@@ -557,7 +557,7 @@ NVRAM: EFI Variable Store
                     break
             pa -= CHUNK_SZ
         if (not isFound) and logger().HAL: logger().log( "[uefi] could not find EFI table with signature '{}'".format(table_sig) )
-        return (isFound,table_pa,table_header,table,table_buf)
+        return (isFound, table_pa, table_header, table, table_buf)
 
     def find_EFI_System_Table( self ):
         return self.find_EFI_Table( EFI_SYSTEM_TABLE_SIGNATURE )
@@ -576,7 +576,7 @@ NVRAM: EFI Variable Store
         ect_pa = None
         ect    = None
         ect_buf= None
-        (isFound,est_pa,est_header,est,est_buf) = self.find_EFI_System_Table()
+        (isFound, est_pa, est_header, est, est_buf) = self.find_EFI_System_Table()
         if isFound and est is not None:
             if 0 != est.BootServices:
                 if logger().HAL: logger().log( "[uefi] UEFI appears to be in Boot mode" )
@@ -594,44 +594,44 @@ NVRAM: EFI Variable Store
                         ect_pa = rst_pa + (est.ConfigurationTable - est.RuntimeServices)
                     else:
                         if logger().HAL: logger().warn( "Can't find UEFI ConfigurationTable" )
-                        return (None,ect_pa,ect,ect_buf)
+                        return (None, ect_pa, ect, ect_buf)
 
-        if logger().HAL: logger().log( "[uefi] EFI Configuration Table ({:d} entries): VA = 0x{:016X}, PA = 0x{:016X}".format(est.NumberOfTableEntries,est.ConfigurationTable,ect_pa) )
+        if logger().HAL: logger().log( "[uefi] EFI Configuration Table ({:d} entries): VA = 0x{:016X}, PA = 0x{:016X}".format(est.NumberOfTableEntries, est.ConfigurationTable, ect_pa) )
 
         found = (ect_pa is not None)
         if found:
-            ect_buf = self.cs.mem.read_physical_mem( ect_pa, EFI_VENDOR_TABLE_SIZE*est.NumberOfTableEntries )
+            ect_buf = self.cs.mem.read_physical_mem( ect_pa, EFI_VENDOR_TABLE_SIZE *est.NumberOfTableEntries )
             ect = EFI_CONFIGURATION_TABLE()
             for i in range(est.NumberOfTableEntries):
-                vt = EFI_VENDOR_TABLE( *struct.unpack_from( EFI_VENDOR_TABLE_FORMAT, ect_buf[i*EFI_VENDOR_TABLE_SIZE:] ) )
+                vt = EFI_VENDOR_TABLE( *struct.unpack_from( EFI_VENDOR_TABLE_FORMAT, ect_buf[i *EFI_VENDOR_TABLE_SIZE:] ) )
                 ect.VendorTables[ vt.VendorGuid() ] = vt.VendorTable
-        return (found,ect_pa,ect,ect_buf)
+        return (found, ect_pa, ect, ect_buf)
 
     def dump_EFI_tables( self ):
-        (found,pa,hdr,table,table_buf) = self.find_EFI_System_Table()
+        (found, pa, hdr, table, table_buf) = self.find_EFI_System_Table()
         if found:
             logger().log( "[uefi] EFI System Table:" )
             print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
-        (found,ect_pa,ect,ect_buf) = self.find_EFI_Configuration_Table()
+        (found, ect_pa, ect, ect_buf) = self.find_EFI_Configuration_Table()
         if found:
             logger().log( "\n[uefi] EFI Configuration Table:" )
             print_buffer( bytestostring(ect_buf) )
             logger().log( ect )
-        (found,pa,hdr,table,table_buf) = self.find_EFI_RuntimeServices_Table()
+        (found, pa, hdr, table, table_buf) = self.find_EFI_RuntimeServices_Table()
         if found:
             logger().log( "\n[uefi] EFI Runtime Services Table:" )
             print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
-        (found,pa,hdr,table,table_buf) = self.find_EFI_BootServices_Table()
+        (found, pa, hdr, table, table_buf) = self.find_EFI_BootServices_Table()
         if found:
             logger().log( "\n[uefi] EFI Boot Services Table:" )
             print_buffer( bytestostring(table_buf) )
             logger().log( hdr )
             logger().log( table )
-        (found,pa,hdr,table,table_buf) = self.find_EFI_DXEServices_Table()
+        (found, pa, hdr, table, table_buf) = self.find_EFI_DXEServices_Table()
         if found:
             logger().log( "\n[uefi] EFI DXE Services Table:" )
             print_buffer( bytestostring(table_buf) )
