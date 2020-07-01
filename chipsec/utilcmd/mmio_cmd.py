@@ -45,7 +45,7 @@ class MMIOCommand(BaseCommand):
     >>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>
 
     Examples:
-    
+
     >>> chipsec_util mmio list
     >>> chipsec_util mmio dump MCHBAR
     >>> chipsec_util mmio read SPIBAR 0x74 0x4

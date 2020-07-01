@@ -182,7 +182,7 @@ class build_ext(_build_ext):
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
         if platform.system().lower() == "linux":
-          files.extend(package_files(os.path.join("drivers", "linux")))
+            files.extend(package_files(os.path.join("drivers", "linux")))
         return files
 
 class install(_install):
@@ -215,8 +215,8 @@ class sdist(_sdist):
         _sdist.make_release_tree(self, base_dir, files)
         no_driver_marker = os.path.join(base_dir, NO_DRIVER_MARKER_FILE)
         with io.open(no_driver_marker, "w", encoding="utf-8") as fd:
-          fd.write(
-u"""PyPI-distributed chipsec PIP package doesn't contain a pre-built
+            fd.write(
+  u"""PyPI-distributed chipsec PIP package doesn't contain a pre-built
 kernel driver. Please use it only when a kernel driver is already present
 on the system. Otherwise, please install chipsec from source, using the
 following procedure:

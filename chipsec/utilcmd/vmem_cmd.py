@@ -131,7 +131,7 @@ class VMemCommand(BaseCommand):
                 if not os.path.exists( buf_file ):
                     #buffer = buf_file.decode('hex')
                     try:
-                      buffer = bytearray.fromhex(buf_file)
+                        buffer = bytearray.fromhex(buf_file)
                     except ValueError as e:
                         self.logger.error( "incorrect <value> specified: '{}'".format(buf_file) )
                         self.logger.error( str(e) )
@@ -176,7 +176,7 @@ class VMemCommand(BaseCommand):
                 self.logger.log( '[CHIPSEC] Allocated {:X} bytes of virtual memory: VA = 0x{:016X}, PA = 0x{:016X}'.format(size, virt_address, pa) )
 
         else:
-                print (VMemCommand.__doc__)
-                return
+            print (VMemCommand.__doc__)
+            return
 
 commands = { 'vmem': VMemCommand }

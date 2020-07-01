@@ -186,18 +186,18 @@ class Chipset:
 
     def get_cpuid(self):
             # Get processor version information
-            (eax, ebx, ecx, edx) = self.cpu.cpuid(0x01, 0x00)
-            stepping = eax & 0xF
-            model = (eax >> 4) & 0xF
-            extmodel = (eax >> 16) & 0xF
-            family = (eax >> 8) & 0xF
-            ptype = (eax >>12) & 0x3
-            extfamily = (eax >> 20) & 0xFF
-            ret = '{:01X}{:01X}{:01X}{:01X}{:01X}'.format(extmodel,ptype,family,model,stepping)
-            if extfamily == 0:
-                return ret
-            else:
-                return '{:02X}{}'.format(extfamily,ret)
+        (eax, ebx, ecx, edx) = self.cpu.cpuid(0x01, 0x00)
+        stepping = eax & 0xF
+        model = (eax >> 4) & 0xF
+        extmodel = (eax >> 16) & 0xF
+        family = (eax >> 8) & 0xF
+        ptype = (eax >>12) & 0x3
+        extfamily = (eax >> 20) & 0xFF
+        ret = '{:01X}{:01X}{:01X}{:01X}{:01X}'.format(extmodel,ptype,family,model,stepping)
+        if extfamily == 0:
+            return ret
+        else:
+            return '{:02X}{}'.format(extfamily,ret)
 
     def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
         _unknown_platform = False
@@ -222,7 +222,7 @@ class Chipset:
         self.pch_rid = 0xFF
 
         if platform_code is None:
-            #platform code was not passed in try to determine based upon cpu id
+        #platform code was not passed in try to determine based upon cpu id
             if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
                 for item in self.chipset_dictionary[vid][did]:
                     if self.detection_dictionary[cpuid] == item['code']:
@@ -933,19 +933,19 @@ class Chipset:
     def _register_fields_str(self, reg_def, reg_val):
         reg_fields_str = ''
         if 'FIELDS' in reg_def:
-          reg_fields_str += '\n'
-          # sort fields by their bit position in the register
-          sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
-          for f in sorted_fields:
-            field_attrs = f[1]
-            field_bit = int(field_attrs['bit'])
-            field_size = int(field_attrs['size'])
-            field_mask = 0
-            for i in range(field_size):
-                field_mask = (field_mask << 1) | 1
-            field_value = (reg_val >> field_bit) & field_mask
-            field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
-            reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit,f[0],field_value,field_desc))
+            reg_fields_str += '\n'
+            # sort fields by their bit position in the register
+            sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
+            for f in sorted_fields:
+                field_attrs = f[1]
+                field_bit = int(field_attrs['bit'])
+                field_size = int(field_attrs['size'])
+                field_mask = 0
+                for i in range(field_size):
+                    field_mask = (field_mask << 1) | 1
+                field_value = (reg_val >> field_bit) & field_mask
+                field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
+                reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit,f[0],field_value,field_desc))
 
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str

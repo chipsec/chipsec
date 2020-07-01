@@ -53,7 +53,7 @@ class c_translation(object):
 
     def get_translation(self, addr):
         if len(self.translation) == 0:
-             return addr
+            return addr
         ADDR_4KB = 0xFFFFFFFFFFFFF000
         ADDR_2MB = 0xFFFFFFFFFFE00000
         ADDR_1GB = 0xFFFFFFFFC0000000
@@ -92,7 +92,7 @@ class c_translation(object):
             attr = perm[addr]['attr']
             size = SIZE[perm[addr]['size']]
             if noattr:
-              attr = ''
+                attr = ''
             if (mem_range == []):
                 mem_range += [[addr, addr + size, attr]]
             elif (mem_range[-1][1] == addr) and (mem_range[-1][2] == attr):
@@ -320,12 +320,12 @@ class c_4level_page_tables(c_paging):
     def read_pml4(self, addr):
         pml4 = self.read_entries('pml4', addr)
         for pml4e_index in range(len(pml4)):
-           pml4e = pml4[pml4e_index]
-           if self.is_present(pml4e):
-               addr = pml4e & ADDR_4KB
-               self.pt[addr] = 'pdpt'
-               self.print_entry(1, addr)
-               self.read_pdpt(addr, pml4e_index)
+            pml4e = pml4[pml4e_index]
+            if self.is_present(pml4e):
+                addr = pml4e & ADDR_4KB
+                self.pt[addr] = 'pdpt'
+                self.print_entry(1, addr)
+                self.read_pdpt(addr, pml4e_index)
         return
 
     def get_attr(self, entry):

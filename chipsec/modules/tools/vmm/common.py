@@ -75,12 +75,12 @@ class BaseModuleDebug(BaseModule):
             sys.stdout.write('[{}]  {}'.format(self.promt, title[:w*3+15]))
         a = 0
         for c in data:
-          if a%w== 0:
-              sys.stdout.write('\n[{}]  {:08X}: '.format(self.promt, a))
-          elif a % w % 8 == 0:
-             sys.stdout.write('| ')
-          sys.stdout.write('{:02X} '.format(ord(c)))
-          a = a + 1
+            if a%w== 0:
+                sys.stdout.write('\n[{}]  {:08X}: '.format(self.promt, a))
+            elif a % w % 8 == 0:
+                sys.stdout.write('| ')
+            sys.stdout.write('{:02X} '.format(ord(c)))
+            a = a + 1
         sys.stdout.write('\n')
         return
 
@@ -243,10 +243,10 @@ def overwrite(buffer, string, position):
 
 def get_int_arg(arg):
     try:
-       arg = int(eval(arg))
+        arg = int(eval(arg))
     except:
-       print ("\n  ERROR: Invalid parameter\n")
-       exit(1)
+        print ("\n  ERROR: Invalid parameter\n")
+        exit(1)
     return arg
 
 def hv_hciv(rep_start, rep_count, call_code, fast = 0):

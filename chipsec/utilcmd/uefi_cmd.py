@@ -53,7 +53,7 @@ class UEFICommand(BaseCommand):
     >>> chipsec_util uefi s3bootscript [script_address]
     >>> chipsec_util uefi assemble <GUID> freeform none|lzma|tiano <raw_file> <uefi_file>
     >>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <rom> <new_rom> <uefi_file>
-    
+
     Examples:
 
     >>> chipsec_util uefi types
@@ -310,8 +310,8 @@ class UEFICommand(BaseCommand):
         parse_efivar_file( self.filename )
 
     def tables(self):
-       self.logger.log( "[CHIPSEC] Searching memory for and dumping EFI tables (this may take a minute)..\n" )
-       self._uefi.dump_EFI_tables()
+        self.logger.log( "[CHIPSEC] Searching memory for and dumping EFI tables (this may take a minute)..\n" )
+        self._uefi.dump_EFI_tables()
 
     def s3bootscript(self):
         self.logger.log( "[CHIPSEC] Searching for and parsing S3 resume bootscripts.." )

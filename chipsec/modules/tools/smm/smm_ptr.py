@@ -199,8 +199,8 @@ class smm_ptr(BaseModule):
         self.cs.mem.write_physical_mem( _addr, self.fill_size, fill_buf )
 
         if self.logger.VERBOSE:
-             self.logger.log( "filling in contents at PA 0x{:016X}:".format(_addr) )
-             print_buffer( fill_buf )
+            self.logger.log( "filling in contents at PA 0x{:016X}:".format(_addr) )
+            print_buffer( fill_buf )
 
         if is_ptr_in_buffer and _ptr is not None:
             self.logger.log( "[*] writing buffer at PA 0x{:016X} with 0x{:X} bytes '{}'".format(_ptr, self.fill_size, self.fill_byte) )
@@ -230,10 +230,10 @@ class smm_ptr(BaseModule):
         _changed     = (len(differences) > 0)
 
         if self.logger.VERBOSE:
-             self.logger.log( "checking contents at PA 0x{:016X}:".format(_addr) )
-             print_buffer( buf )
-             self.logger.log( "expected contents:" )
-             print_buffer( expected_buf )
+            self.logger.log( "checking contents at PA 0x{:016X}:".format(_addr) )
+            print_buffer( buf )
+            self.logger.log( "expected contents:" )
+            print_buffer( expected_buf )
 
         if _changed:
             self.logger.log( "    contents changed at 0x{:016X} +{}".format(_addr,differences) )

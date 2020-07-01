@@ -1065,14 +1065,14 @@ class LinuxHelper(Helper):
         symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
             if "page_is_ram" in line:
-               return line.split(" ")[0]
+                return line.split(" ")[0]
 
     def get_phys_mem_access_prot( self ):
         PROC_KALLSYMS = "/proc/kallsyms"
         symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
             if "phys_mem_access_prot" in line:
-               return line.split(" ")[0]
+                return line.split(" ")[0]
 
     def rotate_list(self, list, n):
         return list[n:] + list[:n]

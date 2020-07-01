@@ -125,7 +125,7 @@ class pcie_fuzz(BaseModule):
 
             rand_offset = random.randint(0,32)
             if 1<<rand_offset & reg_value:
-               reg_value = ~(1<<rand_offset)& 0xffffffff & reg_value
+                reg_value = ~(1<<rand_offset)& 0xffffffff & reg_value
             else:
                 reg_value = reg_value | 1<<rand_offset
 

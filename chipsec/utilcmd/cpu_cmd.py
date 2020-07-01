@@ -87,27 +87,27 @@ class CPUCommand(BaseCommand):
             pass
 
     def cpu_cr(self):
-            if self.value is not None:
-                self.logger.log( "[CHIPSEC] CPU{:d}: write CR{:d} <- 0x{:08X}".format(self.thread, self.cr_number, self.value) )
-                self.cs.cpu.write_cr( self.thread, self.cr_number, self.value )
-                return True
-            elif self.cr_number is not None:
-                value = self.cs.cpu.read_cr( self.thread, self.cr_number )
-                self.logger.log( "[CHIPSEC] CPU{:d}: read CR{:d} -> 0x{:08X}".format(self.thread, self.cr_number, value) )
-                return value
-            else:
-                for tid in range(self.cs.msr.get_cpu_thread_count()):
-                    cr0 = self.cs.cpu.read_cr( tid, 0 )
-                    cr2 = self.cs.cpu.read_cr( tid, 2 )
-                    cr3 = self.cs.cpu.read_cr( tid, 3 )
-                    cr4 = self.cs.cpu.read_cr( tid, 4 )
-                    cr8 = self.cs.cpu.read_cr( tid, 8 )
-                    self.logger.log( "[CHIPSEC][cpu{:d}] x86 Control Registers:".format(tid) )
-                    self.logger.log( "  CR0: 0x{:016X}".format(cr0) )
-                    self.logger.log( "  CR2: 0x{:016X}".format(cr2) )
-                    self.logger.log( "  CR3: 0x{:016X}".format(cr3) )
-                    self.logger.log( "  CR4: 0x{:016X}".format(cr4) )
-                    self.logger.log( "  CR8: 0x{:016X}".format(cr8) )
+        if self.value is not None:
+            self.logger.log( "[CHIPSEC] CPU{:d}: write CR{:d} <- 0x{:08X}".format(self.thread, self.cr_number, self.value) )
+            self.cs.cpu.write_cr( self.thread, self.cr_number, self.value )
+            return True
+        elif self.cr_number is not None:
+            value = self.cs.cpu.read_cr( self.thread, self.cr_number )
+            self.logger.log( "[CHIPSEC] CPU{:d}: read CR{:d} -> 0x{:08X}".format(self.thread, self.cr_number, value) )
+            return value
+        else:
+            for tid in range(self.cs.msr.get_cpu_thread_count()):
+                cr0 = self.cs.cpu.read_cr( tid, 0 )
+                cr2 = self.cs.cpu.read_cr( tid, 2 )
+                cr3 = self.cs.cpu.read_cr( tid, 3 )
+                cr4 = self.cs.cpu.read_cr( tid, 4 )
+                cr8 = self.cs.cpu.read_cr( tid, 8 )
+                self.logger.log( "[CHIPSEC][cpu{:d}] x86 Control Registers:".format(tid) )
+                self.logger.log( "  CR0: 0x{:016X}".format(cr0) )
+                self.logger.log( "  CR2: 0x{:016X}".format(cr2) )
+                self.logger.log( "  CR3: 0x{:016X}".format(cr3) )
+                self.logger.log( "  CR4: 0x{:016X}".format(cr4) )
+                self.logger.log( "  CR8: 0x{:016X}".format(cr8) )
 
     def cpu_cpuid(self):
         self.logger.log( "[CHIPSEC] CPUID < EAX: 0x{:08X}".format(self.eax))
