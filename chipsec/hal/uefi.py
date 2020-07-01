@@ -69,7 +69,7 @@ def parse_script( script, log_script=False ):
     if log_script: logger().log( '[uefi] +++ End of S3 Resume Boot-Script +++' )
 
     if logger().HAL: logger().log( '[uefi] S3 Resume Boot-Script size: 0x{:X}'.format(off) )
-    if logger().HAL: 
+    if logger().HAL:
         logger().log( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
         print_buffer( bytestostring(script[ : off ]) )
 
@@ -375,7 +375,7 @@ NVRAM: EFI Variable Store
                 return read_file(uncompressed_name)
             else:
                 return None
-        else: 
+        else:
             logger().error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
             return None
 
@@ -386,7 +386,7 @@ NVRAM: EFI Variable Store
                 return read_file(compressed_name)
             else:
                 return None
-        else: 
+        else:
             logger().error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
             return None
 
@@ -585,7 +585,7 @@ NVRAM: EFI Variable Store
                 if logger().HAL: logger().log( "[uefi] UEFI appears to be in Runtime mode" )
                 ect_pa = self.cs.mem.va2pa( est.ConfigurationTable )
                 if not ect_pa:
-                    # Most likely the VA in the System Table is not mapped so find the RST by signature and 
+                    # Most likely the VA in the System Table is not mapped so find the RST by signature and
                     # then compute the address of the configuration table.  This assumes the VA mapping keeps
                     # the pages in the same relative location as in physical memory.
                     (rst_found, rst_pa, rst_header, rst, rst_buf) = self.find_EFI_RuntimeServices_Table()

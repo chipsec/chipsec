@@ -197,7 +197,7 @@ class spectre_v2(BaseModule):
                 #    break
 
             if ibrs_enh_supported: self.logger.log_good( "CPU supports enhanced IBRS (on all logical CPU)" )
-            else: self.logger.log_bad( "CPU doesn't support enhanced IBRS" ) 
+            else: self.logger.log_bad( "CPU doesn't support enhanced IBRS" )
             #if rdcl_mitigation_supported: self.logger.log_good( "CPU supports mitigation for Rogue Data Cache Load (RDCL)" )
             #else: self.logger.log_bad( "CPU doesn't support mitigation for Rogue Data Cache Load (RDCL)" )
         else:
@@ -283,4 +283,3 @@ class spectre_v2(BaseModule):
     def run( self, module_argv ):
         self.logger.start_test( "Checks for Branch Target Injection / Spectre v2 (CVE-2017-5715)" )
         return self.check_spectre_mitigations()
-

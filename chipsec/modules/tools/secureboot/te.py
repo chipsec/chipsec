@@ -238,7 +238,7 @@ IMAGE_SECTION_HEADER_size = struct.calcsize(IMAGE_SECTION_HEADER)
 #   SECTION TABLE
 #    ...
 # TE header
-# 
+#
 # typedef struct {
 #   UINT16                    Signature;            // signature for TE format = "VZ"
 #   UINT16                    Machine;              // from the original file header
@@ -399,7 +399,7 @@ def get_bootloader_paths( cfg_file ):
     logger().log( "[*] reading paths from '{}'..".format(cfg_file) )
     for line in fcfg:
         bl_path = line.rstrip()
-        if bl_path is not None: 
+        if bl_path is not None:
             logger().log( "    adding path '{}'..".format(bl_path) )
             bootloader_paths.append( bl_path )
     return bootloader_paths

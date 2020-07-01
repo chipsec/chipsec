@@ -52,7 +52,7 @@ class FileCmds:
                 #using insert opposed to append so that it creates last in first out when using pop command within getElement
                 self.data[str(cmd)][margs].insert(0,str(ret))
             else:
-                self.data[str(cmd)][margs] = [str(ret)] 
+                self.data[str(cmd)][margs] = [str(ret)]
         else:
             self.data[str(cmd)] = {margs:[str(ret)]}
 
@@ -170,7 +170,7 @@ class FileHelper(Helper):
         raise UnimplementedAPIError('map_io_space')
 
     #
-    # Read/Write I/O portline 462, 
+    # Read/Write I/O portline 462,
     #
     def read_io_port( self, io_port, size ):
         return self.filecmds.getElement("read_io_port",(io_port,size))

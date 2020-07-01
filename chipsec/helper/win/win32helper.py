@@ -302,7 +302,7 @@ class Win32Helper(Helper):
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
 
         try:
-            self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
+            self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables
             self.EnumSystemFirmwareTbls.restype = c_int
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
         except AttributeError as msg:
@@ -543,7 +543,7 @@ class Win32Helper(Helper):
     def native_write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         raise UnimplementedNativeAPIError( "native_write_phys_mem" )
 
-    # @TODO: Temporarily the same as read_phys_mem for compatibility 
+    # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
         in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )

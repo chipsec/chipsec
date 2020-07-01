@@ -95,7 +95,7 @@ class ChipsecResults():
             if fields['result'] == 'Passed':
                 passed.append(fields['name'])
             elif fields['result'] == 'Failed':
-                failed.append(fields['name']) 
+                failed.append(fields['name'])
             elif fields['result'] == 'Error':
                 errors.append(fields['name'])
             elif fields['result'] == 'Warning':
@@ -105,7 +105,7 @@ class ChipsecResults():
             elif fields['result'] == 'Information':
                 information.append(fields['name'])
             elif fields['result'] == 'NotApplicable':
-                notapplicable.append(fields['name']) 
+                notapplicable.append(fields['name'])
         ret['total']  = executed
         ret['failed to run'] = errors
         ret['passed'] = passed
@@ -114,7 +114,7 @@ class ChipsecResults():
         ret['warnings'] = warnings
         ret['not implemented'] = skipped
         ret['not applicable'] = notapplicable
-        ret['exceptions'] = self.exceptions 
+        ret['exceptions'] = self.exceptions
         return ret
 
     def get_return_code(self):

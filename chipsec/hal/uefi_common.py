@@ -522,7 +522,7 @@ script_opcodes = {
     #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_WRITE_OPCODE:      "S3_BOOTSCRIPT_PCI_CONFIG2_WRITE",
     #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_READ_WRITE_OPCODE: "S3_BOOTSCRIPT_PCI_CONFIG2_READ_WRITE",
     #S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_POLL_OPCODE:                "S3_BOOTSCRIPT_IO_POLL",
-    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE:               "S3_BOOTSCRIPT_MEM_POLL", 
+    #S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_POLL_OPCODE:               "S3_BOOTSCRIPT_MEM_POLL",
     #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_POLL_OPCODE:        "S3_BOOTSCRIPT_PCI_CONFIG_POLL",
     #S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG2_POLL_OPCODE:       "S3_BOOTSCRIPT_PCI_CONFIG2_POLL",
     #S3BootScriptOpcode.EFI_BOOT_SCRIPT_TABLE_OPCODE:                  "S3_BOOTSCRIPT_TABLE",
@@ -567,7 +567,7 @@ script_width_values = {
   1 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8,
   2 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16,
   4 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32,
-  8 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64 
+  8 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64
 }
 
 script_width_formats = {
@@ -587,7 +587,7 @@ script_width_formats = {
 # // EFI_SMBUS_DEVICE_COMMAND
 # //************************************************
 # typedef UINTN EFI_SMBUS_DEVICE_COMMAND;
-# 
+#
 # //************************************************
 # // EFI_SMBUS_OPERATION
 # //************************************************
@@ -631,7 +631,7 @@ class op_io_pci_mem():
         self.count   = count
         self.value   = value
         self.mask    = mask
-        self.name    = script_opcodes[ opcode ] 
+        self.name    = script_opcodes[ opcode ]
         self.buffer  = buffer # data[ self.size : ]
         self.values  = None
         if self.count is not None and self.count > 0 and self.buffer is not None:
@@ -664,7 +664,7 @@ class op_smbus_execute():
         self.command       = command
         self.operation     = operation
         self.peccheck      = peccheck
-        self.name          = script_opcodes[ opcode ] 
+        self.name          = script_opcodes[ opcode ]
     def __str__(self):
         str_r =  "  Opcode       : {} (0x{:04X})\n".format(self.name, self.opcode)
         str_r += "  Slave Address: 0x{:02X}\n".format(self.slave_address)
@@ -683,7 +683,7 @@ class op_stall():
         self.opcode   = opcode
         self.size     = size
         self.duration = duration
-        self.name     = script_opcodes[ self.opcode ] 
+        self.name     = script_opcodes[ self.opcode ]
     def __str__(self):
         str_r =  "  Opcode  : {} (0x{:04X})\n".format(self.name, self.opcode)
         str_r += "  Duration: 0x{:08X} (us)\n".format(self.duration)
@@ -700,7 +700,7 @@ class op_dispatch():
         self.size       = size
         self.entrypoint = entrypoint
         self.context    = context
-        self.name       = script_opcodes[ self.opcode ] 
+        self.name       = script_opcodes[ self.opcode ]
     def __str__(self):
         str_r =  "  Opcode     : {} (0x{:04X})\n".format(self.name, self.opcode)
         str_r += "  Entry Point: 0x{:016X}\n".format(self.entrypoint)
@@ -723,7 +723,7 @@ class op_mem_poll():
         self.address   = address
         self.duration  = duration
         self.looptimes = looptimes
-        self.name      = 'S3_BOOTSCRIPT_MEM_POLL' 
+        self.name      = 'S3_BOOTSCRIPT_MEM_POLL'
     def __str__(self):
         str_r =  "  Opcode    : {} (0x{:04X})\n".format(self.name, self.opcode)
         str_r += "  Width     : 0x{:02X} ({:X} bytes)\n".format(self.width, script_width_sizes[self.width])
@@ -740,7 +740,7 @@ class op_terminate():
     def __init__(self, opcode, size):
         self.opcode     = opcode
         self.size       = size
-        self.name       = script_opcodes[ self.opcode ] 
+        self.name       = script_opcodes[ self.opcode ]
     def __str__(self):
         return "  Opcode     : {} (0x{:02X})\n".format(self.name, self.opcode)
 
@@ -1026,5 +1026,5 @@ EFI_TABLES = {
   EFI_DXE_SERVICES_TABLE_SIGNATURE           : {'name' : 'EFI DXE Services Table',           'struct' : EFI_DXE_SERVICES_TABLE,           'fmt' : EFI_DXE_SERVICES_TABLE_FMT           }
   #EFI_FRAMEWORK_PEI_SERVICES_TABLE_SIGNATURE : {'name' : 'EFI Framework PEI Services Table', 'struct' : EFI_FRAMEWORK_PEI_SERVICES_TABLE, 'fmt' : EFI_FRAMEWORK_PEI_SERVICES_TABLE_FMT },
   #EFI_SMM_SYSTEM_TABLE_SIGNATURE             : {'name' : 'EFI SMM System Table',             'struct' : EFI_SMM_SYSTEM_TABLE,             'fmt' : EFI_SMM_SYSTEM_TABLE_FMT             },
-  #EFI_CONFIG_TABLE_SIGNATURE                 : {'name' : 'EFI Configuration Table',          'struct' : EFI_CONFIG_TABLE,                 'fmt' : EFI_CONFIG_TABLE_FMT                 } 
+  #EFI_CONFIG_TABLE_SIGNATURE                 : {'name' : 'EFI Configuration Table',          'struct' : EFI_CONFIG_TABLE,                 'fmt' : EFI_CONFIG_TABLE_FMT                 }
 }

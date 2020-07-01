@@ -159,7 +159,7 @@ STATUS = {
   0x800:"NON-FATAL ERROR: The TPM is too busy to respond to the command immediately, but the command could be resubmitted at a later time",
   0x801:"NON-FATAL ERROR: TPM_ContinueSelfTest has not been run.",
   0x802:"NON-FATAL ERROR: The TPM is currently executing the actions of TPM_ContinueSelfTest because the ordinal required resources that have not been tested",
-  0x803:"NON-FATAL ERROR: The TPM is defending against dictionary attacks and is in some time-out period." 
+  0x803:"NON-FATAL ERROR: The TPM is defending against dictionary attacks and is in some time-out period."
 }
 
 LOCALITY = {
@@ -217,13 +217,13 @@ class TPM(hal_base.HALBase):
         #
         # Request locality use if needed
         #
-        access_address = self.TPM_BASE | Locality | TPM_ACCESS 
+        access_address = self.TPM_BASE | Locality | TPM_ACCESS
         if self.helper.read_mmio_reg( access_address, 4 ) == BEENSEIZED:
             self.helper.write_mmio_reg( access_address, 4, REQUESTUSE )
             requestedUse = True
 
         #
-        # Build command (big endian) and send/receive 
+        # Build command (big endian) and send/receive
         #
         ( command, size ) = COMMANDS[commandName]( command_argv )
         self._send_command( Locality, command, size )
@@ -335,7 +335,7 @@ class TPM(hal_base.HALBase):
             if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
-        access_address = self.TPM_BASE | Locality| TPM_ACCESS 
+        access_address = self.TPM_BASE | Locality| TPM_ACCESS
         access_value = self.helper.read_mmio_reg( access_address, 1 )
 
         self.logger.log( "================================================================" )
@@ -360,7 +360,7 @@ class TPM(hal_base.HALBase):
             if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
-        sts_address = self.TPM_BASE | Locality| TPM_STS 
+        sts_address = self.TPM_BASE | Locality| TPM_STS
         sts_value = self.helper.read_mmio_reg( sts_address, 4 )
 
         self.logger.log( "================================================================" )
@@ -386,7 +386,7 @@ class TPM(hal_base.HALBase):
             if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
-        didvid_address = self.TPM_BASE | Locality| TPM_DIDVID 
+        didvid_address = self.TPM_BASE | Locality| TPM_DIDVID
         didvid_value = self.helper.read_mmio_reg( didvid_address, 4 )
 
         self.logger.log( "================================================================" )
@@ -405,7 +405,7 @@ class TPM(hal_base.HALBase):
             if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
             return
 
-        rid_address = self.TPM_BASE | Locality| TPM_RID 
+        rid_address = self.TPM_BASE | Locality| TPM_RID
         rid_value = self.helper.read_mmio_reg( rid_address, 1 )
 
         self.logger.log( "================================================================" )

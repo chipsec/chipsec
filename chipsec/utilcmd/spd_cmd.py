@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -88,7 +88,7 @@ class SPDCommand(BaseCommand):
             else:
                 _dimms = _spd.detect()
                 for d in _dimms: _spd.decode( d )
-     
+
         elif( 'read' == op ) or ( 'write' == op ):
 
             if len(self.argv) > 3:

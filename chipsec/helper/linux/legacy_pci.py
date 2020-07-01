@@ -100,4 +100,3 @@ class LEGACY_PCI(object):
     def write_pci_config(self, bus, dev, func, offset, value):
         self.ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
         self.ports.outl(value, 0xcfc)
-

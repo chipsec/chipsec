@@ -147,4 +147,3 @@ class pcie_overlap_fuzz(BaseModule):
         self.fuzz_overlap_pcie_device( pcie_devices )
 
         return ModuleResult.PASSED
-

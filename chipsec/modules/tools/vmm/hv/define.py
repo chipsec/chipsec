@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -84,11 +84,11 @@ msrs = {
         0x400000F3: 'HV_X64_MSR_SYNTH_DEBUG_SEND_BUFFER',
         0x400000F4: 'HV_X64_MSR_SYNTH_DEBUG_RECEIVE_BUFFER',
         0x400000F5: 'HV_X64_MSR_SYNTH_DEBUG_PENDING_BUFFER',
-        0x40000100: 'HV_X64_MSR_CRASH_P0', 
-        0x40000101: 'HV_X64_MSR_CRASH_P1', 
-        0x40000102: 'HV_X64_MSR_CRASH_P2', 
-        0x40000103: 'HV_X64_MSR_CRASH_P3', 
-        0x40000104: 'HV_X64_MSR_CRASH_P4', 
+        0x40000100: 'HV_X64_MSR_CRASH_P0',
+        0x40000101: 'HV_X64_MSR_CRASH_P1',
+        0x40000102: 'HV_X64_MSR_CRASH_P2',
+        0x40000103: 'HV_X64_MSR_CRASH_P3',
+        0x40000104: 'HV_X64_MSR_CRASH_P4',
         0x40000105: 'HV_X64_MSR_CRASH_CTL'
 }
 

@@ -260,7 +260,7 @@ class ChipsecMain:
 
     def run_loaded_modules(self):
 
-        results          = logger().Results       
+        results          = logger().Results
         results.add_properties(self.properties())
 
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
@@ -293,7 +293,7 @@ class ChipsecMain:
 
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_full())
-            
+
         if self._xml_out:
             chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
 
@@ -313,8 +313,8 @@ class ChipsecMain:
         elif not self._list_tags:
             summary = results.order_summary()
             logger().log( "\n[CHIPSEC] ***************************  SUMMARY  ***************************" )
-            if not self.no_time:	
-                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time()-t) )	
+            if not self.no_time:
+                logger().log( "[CHIPSEC] Time elapsed            {:.3f}".format(time.time()-t) )
             for k in summary.keys():
                 if k == 'total':
                     logger().log( '[CHIPSEC] Modules {:16}{:d}'.format(k,summary[k]) )
@@ -323,7 +323,7 @@ class ChipsecMain:
                     for mod in summary[k]:
                         logger().log_warning(mod)
                 elif k == 'exceptions':
-                    if len(summary[k]) > 0: 
+                    if len(summary[k]) > 0:
                         logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k,len(summary[k])) )
                         for mod in summary[k]:
                             logger().error(mod)
@@ -369,7 +369,7 @@ class ChipsecMain:
         else:
             self.load_my_modules()
         self.load_user_modules()
- 
+
         # Print a list of all loaded modules
         self.print_loaded_modules()
 
@@ -409,7 +409,7 @@ class ChipsecMain:
         adv_options.add_argument('--helper',dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
 
         parser.parse_args(self.argv,namespace=ChipsecMain)
- 
+
         if self.help:
             parser.print_help()
         if self.verbose:
@@ -432,7 +432,7 @@ class ChipsecMain:
         ret = OrderedDict()
         ret["OS"] = "{} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release, self._cs.helper.os_version, self._cs.helper.os_machine)
         ret["Python"] = "Python {}".format(platform.python_version())
-        ret["Platform"] = "{}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid) 
+        ret["Platform"] = "{}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid)
         if not self._cs.is_atom():
             ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid)
         ret["Version"] ="{}".format(self.version)

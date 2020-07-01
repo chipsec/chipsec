@@ -74,7 +74,7 @@ class DMAR (ACPI_TABLE):
             if 0 == length: break
             self.dmar_structures.append( self._get_structure_DMAR( _type, table_content[ off : off + length ] ) )
             off += length
-        (self.HostAddrWidth, self.Flags, self.Reserved) = struct.unpack_from( ACPI_TABLE_FORMAT_DMAR, table_content ) 
+        (self.HostAddrWidth, self.Flags, self.Reserved) = struct.unpack_from( ACPI_TABLE_FORMAT_DMAR, table_content )
         return
 
     def __str__(self):
@@ -88,7 +88,7 @@ class DMAR (ACPI_TABLE):
         _str += "\n  Remapping Structures:\n"
         for st in self.dmar_structures: _str += str(st)
         return _str
-    
+
     def _get_structure_DMAR(self, _type, DataStructure ):
         if   0x00 == _type: return self._get_DMAR_structure_DRHD( DataStructure )
         elif 0x01 == _type: return self._get_DMAR_structure_RMRR( DataStructure )
@@ -97,7 +97,7 @@ class DMAR (ACPI_TABLE):
         elif 0x04 == _type: return self._get_DMAR_structure_ANDD( DataStructure )
         else:               return ("\n  Unknown DMAR structure 0x{:02X}\n".format(_type))
 
-    def _get_DMAR_structure_DRHD(self, structure ):  
+    def _get_DMAR_structure_DRHD(self, structure ):
         device_scope = []
         fmt          = '=BB'
         step         = struct.calcsize(fmt)
@@ -111,7 +111,7 @@ class DMAR (ACPI_TABLE):
             off += length
         return ACPI_TABLE_DMAR_DRHD( *struct.unpack_from( self.DMAR_TABLE_FORMAT["DRHD_FORMAT"], structure ), DeviceScope=device_scope )
 
-    def _get_DMAR_structure_RMRR(self, structure ):  
+    def _get_DMAR_structure_RMRR(self, structure ):
         device_scope = []
         fmt          = '=HH'
         step         = struct.calcsize(fmt)
@@ -125,7 +125,7 @@ class DMAR (ACPI_TABLE):
             off += length
         return ACPI_TABLE_DMAR_RMRR( *struct.unpack_from(self.DMAR_TABLE_FORMAT["RMRR_FORMAT"], structure ), DeviceScope=device_scope )
 
-    def _get_DMAR_structure_ATSR(self, structure ):  
+    def _get_DMAR_structure_ATSR(self, structure ):
         device_scope = []
         fmt          = '=HH'
         step         = struct.calcsize(fmt)
@@ -138,11 +138,11 @@ class DMAR (ACPI_TABLE):
             device_scope.append( ACPI_TABLE_DMAR_DeviceScope( *struct.unpack_from(f,structure[off:off+length]) ) )
             off += length
         return ACPI_TABLE_DMAR_ATSR( *struct.unpack_from( self.DMAR_TABLE_FORMAT["ATSR_FORMAT"], structure ), DeviceScope=device_scope )
-    
-    def _get_DMAR_structure_RHSA(self, structure ):  
+
+    def _get_DMAR_structure_RHSA(self, structure ):
         return ACPI_TABLE_DMAR_RHSA( *struct.unpack_from( self.DMAR_TABLE_FORMAT["RHSA_FORMAT"], structure ) )
-    
-    def _get_DMAR_structure_ANDD(self, structure ):  
+
+    def _get_DMAR_structure_ANDD(self, structure ):
         sz = struct.calcsize('=H')
         length = struct.unpack( '=H', structure[sz:sz+sz] )[0]
         f = self.DMAR_TABLE_FORMAT["ANDD_FORMAT"] + ('{:d}s'.format(length - struct.calcsize(self.DMAR_TABLE_FORMAT["ANDD_FORMAT"])))
@@ -267,12 +267,12 @@ class APIC (ACPI_TABLE):
     def __init__(self):
         self.apic_structs = []
         self.ACPI_TABLE_FORMAT={}
-        
+
         # APIC Table Structures
         self.APIC_TABLE_FORMAT={
           "PROCESSOR_LAPIC"            : '<BBBBI',
           "IOAPIC"                     : '<BBBBII',
-          "INTERRUPT_SOURSE_OVERRIDE"  : '<BBBBIH', 
+          "INTERRUPT_SOURSE_OVERRIDE"  : '<BBBBIH',
           "NMI_SOURCE"                 : '<BBHI',
           "LAPIC_NMI"                  : '<BBBHB',
           "LAPIC_ADDRESS_OVERRIDE"     : '<BBHQ',
@@ -286,7 +286,7 @@ class APIC (ACPI_TABLE):
           "GIC_MSI"                    : '<BBHIQIHH',
           "GIC_REDISTRIBUTOR"          : '<BBHQI'
         }
-    
+
     def parse(self , table_content):
         (self.LAPICBase,self.Flags) = struct.unpack( '=II', table_content[ 0 : 8 ] )
         cont = 8
@@ -307,7 +307,7 @@ class APIC (ACPI_TABLE):
         apic_str += "\n  Interrupt Controller Structures:\n"
         for st in self.apic_structs: apic_str += str(st)
         return apic_str
-    
+
     def get_structure_APIC(self, value, DataStructure ):
         if   0x00 == value: return ACPI_TABLE_APIC_PROCESSOR_LAPIC( *struct.unpack_from( self.APIC_TABLE_FORMAT["PROCESSOR_LAPIC"], DataStructure ))
         elif 0x01 == value: return ACPI_TABLE_APIC_IOAPIC( *struct.unpack_from( self.APIC_TABLE_FORMAT["IOAPIC"], DataStructure ))
@@ -355,7 +355,7 @@ class ACPI_TABLE_APIC_IOAPIC(namedtuple('ACPI_TABLE_APIC_IOAPIC', 'Type Length I
     I/O APIC Base       : 0x{:02X}
     Global Sys Int Base : 0x{:02X}
 """.format( self.Type, self.Length, self.IOAPICID, self.Reserved, self.IOAPICAddr, self.GlobalSysIntBase )
-     
+
 class ACPI_TABLE_APIC_INTERRUPT_SOURSE_OVERRIDE(namedtuple('ACPI_TABLE_APIC_INTERRUPT_SOURSE_OVERRIDE', 'Type Length Bus Source GlobalSysIntBase Flags')):
     __slots__ = ()
     def __str__(self):
@@ -821,8 +821,8 @@ Generic Error Status Block
         self.BootRegionAddr = struct.unpack('<Q', table_content[4:12])[0]
         bootRegion = self.cs.mem.read_physical_mem( self.BootRegionAddr, self.BootRegionLen )
         self.parseErrorBlock(bootRegion)
-        
-	
+
+
     def __str__(self):
         return """
 ------------------------------------------------------------------
@@ -917,7 +917,7 @@ class EINJ (ACPI_TABLE):
   Injection Instruction Entries
 """.format( injectionHeaderSz, injectionHeaderSz, injectionFlags, injection_str, reserved, reserved_str, injectionEntryCount, injectionEntryCount )
         self.parseInjectionActionTable(table_content[12:], injectionEntryCount)
-	
+
     def __str__(self):
         return self.results_str
 
@@ -966,7 +966,7 @@ class ERST (ACPI_TABLE):
             flags_str = ' - PRESERVE_REGISTER'
         else:
             flags_str = ''
-		
+
         self.results_str += '''
     Serialization Intruction Entry
       Serialized Action                             : 0x{:02X} - {}
@@ -994,7 +994,7 @@ class ERST (ACPI_TABLE):
   Serialization Action Table
 """.format( headerSz, headerSz, reserved, reserved_str, instrCountEntry, instrCountEntry )
         self.parseActionTable(table_content[12:], instrCountEntry)
-	
+
     def __str__(self):
         return self.results_str
 
@@ -1034,7 +1034,7 @@ class HEST (ACPI_TABLE):
         switchPollThresWind = struct.unpack('<L', table_content[16:20])[0]
         errThreshVal = struct.unpack('<L', table_content[20:24])[0]
         errThreshWind = struct.unpack('<L', table_content[24:28])[0]
-	
+
         if errorType <= 12:
             typeStr = types[errorType]
         else:
@@ -1043,7 +1043,7 @@ class HEST (ACPI_TABLE):
         vector_str = ''
         if errorType == 10:
             vector_str = 'Specifies the GSIV triggerd by error source'
-		
+
         return """Hardware Error Notification Structure
       Type                                        : {:d} - {}
       Length                                      : 0x{:02X}
@@ -1071,12 +1071,12 @@ class HEST (ACPI_TABLE):
         statusRegMSRAddr =struct.unpack('<L', table_content[16:20])[0]
         addrRegMSRAddr = struct.unpack('<L', table_content[20:24])[0]
         miscRegMSTAddr = struct.unpack('<L', table_content[24:28])[0]
-	
+
         if clearStatus == 0:
             clearStatus_str = 'Clear'
         else:
             clearStatus_str = "Don't Clear"
-		
+
         statusDataFormatStrList = ['IA-32 MCA', 'Intel 64 MCA',  'AMD64MCA', 'Reserved']
         if statusDataFormat < 3:
             statusDataFormat_str = statusDataFormatStrList[statusDataFormat]
@@ -1101,8 +1101,8 @@ class HEST (ACPI_TABLE):
         if miscRegMSTAddr != 0:
             miscRegMSTAddr_str = ''
         else:
-            miscRegMSTAddr_str = ' - Ignore' 
-		
+            miscRegMSTAddr_str = ' - Ignore'
+
         self.resultsStr = self.resultsStr + ("""Machine Check Error Bank Structure
       Bank Number                                 : 0x{:04X}
       Clear Status On Initialization              : 0x{:04X} - {}
@@ -1134,24 +1134,24 @@ class HEST (ACPI_TABLE):
         reserved2_5 = struct.unpack('<B', table_content[37:38])[0]
         reserved2_6 = struct.unpack('<B', table_content[38:39])[0]
         reserved2_7 = struct.unpack('<B', table_content[39:40])[0]
-        
+
         if (flags & 1) == 1:
             firmware_first = 1
             firmware_first_str = 'System firmware handles errors from the source first'
         else:
             firmware_first = 0
             firmware_first_str = 'System firmware does not handle errors from the source first'
-		
+
         if (flags & 4) == 4:
             ghes_assist = 1
             ghes_assist_str = 'Additional information given'
         else:
             ghes_assist = 0
             ghes_assist_str = 'Additional information not given'
-		
+
         if firmware_first == 0:
             ghes_assist_str = 'Bit is reserved'
-		
+
         self.resultsStr = self.resultsStr + ("""
   Architecture Machine Check Exception Structure
     Source ID                                     : 0x{:04X}
@@ -1171,7 +1171,7 @@ class HEST (ACPI_TABLE):
             self.machineBankParser(table_content[40 + curBankNum*28:40 + (curBankNum+1)*28])
             curBankNum += 1
         return 40 + numHardwareBanks*28
-	
+
     def parseAMCS(self, table_content, type):
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved1 = struct.unpack('<H', table_content[4:6])[0]
@@ -1184,33 +1184,33 @@ class HEST (ACPI_TABLE):
         reserved2_1 = struct.unpack('<B', table_content[45:46])[0]
         reserved2_2 = struct.unpack('<B', table_content[46:47])[0]
         reserved2_3 = struct.unpack('<B', table_content[47:48])[0]
-		
+
         if (flags & 1) == 1:
             firmware_first = 1
             firmware_first_str = 'System firmware handles errors from the source first'
         else:
             firmware_first = 0
             firmware_first_str = 'System firmware does not handle errors from the source first'
-		
+
         if (flags & 4) == 4:
             ghes_assist = 1
             ghes_assist_str = 'Additional information given'
         else:
             ghes_assist = 0
             ghes_assist_str = 'Additional information not given'
-		
+
         flags_str = ''
         if flags != 1 and flags != 4 and flags != 5:
             flags_str = ' - Error, Reserved Bits are not 0'
-		
+
         if firmware_first == 0:
             ghes_assist_str = 'Bit is reserved'
-			
+
         if type == 1:
             title = 'Architecture Corrected Machine Check Structure'
         else:
             title = 'Architecture Deferred Machine Check Structure'
-		
+
         self.resultsStr = self.resultsStr + ("""
     {}
     Source ID         				  : 0x{:04X}
@@ -1228,21 +1228,21 @@ class HEST (ACPI_TABLE):
         currBank = 0
         while currBank < numHardwareBanks:
             self.machineBankParser(table_content[48 + currBank*28:48 + (currBank+1)*28])
-            numHardwareBanks == 1	
+            numHardwareBanks == 1
         return 48 + numHardwareBanks*28
-	
+
     def parseNMIStructure(self, table_content):
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved = struct.unpack('<L', table_content[4:8])[0]
         numRecordsToPreAllocate = struct.unpack('<L', table_content[8:12])[0]
         maxSectorsPerRecord = struct.unpack('<L', table_content[12:16])[0]
         maxRawDataLength = struct.unpack('<L', table_content[16:20])[0]
-		
+
         if reserved == 0:
             reserved_str = ''
         else:
             reserved_str = ' - Error, not 0'
-		
+
         self.resultsStr = self.resultsStr + ("""
   Architecture NMI Error Structure
     Source ID                                     : 0x{:04X}
@@ -1251,9 +1251,9 @@ class HEST (ACPI_TABLE):
     Max Sections Per Record                       : 0x{:08X}
     Max Raw Data Length                           : 0x{:08X}
 	""".format( sourceID, reserved, reserved_str, numRecordsToPreAllocate, maxSectorsPerRecord, maxRawDataLength ) )
-		
+
         return 20
-		
+
     def parsePCIe(self, table_content, type):
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved1 = struct.unpack('<H', table_content[4:6])[0]
@@ -1290,14 +1290,14 @@ class HEST (ACPI_TABLE):
             title = 'PCI Express Device AER Structure'
             extra_str = ''
             size = 44
-		
+
         if (flags & 1) == 1:
             firmware_first = 1
             firmware_first_str = 'System firmware handles errors from the source first'
         else:
             firmware_first = 0
             firmware_first_str = 'System firmware does not handle errors from the source first'
-		
+
         if (flags & 2) == 2:
             global_flag = 1
             global_flag_str = 'Settings in table are for all PCIe Devices'
@@ -1308,7 +1308,7 @@ class HEST (ACPI_TABLE):
         reserved2_str = ''
         isGlobal_str =''
         isFirmware_str =''
-	
+
         if flags >= 4:
             flags_str = 'Error, reserved bits are not 0'
         if reserved2 != 0:
@@ -1317,7 +1317,7 @@ class HEST (ACPI_TABLE):
             isGlobal_str = ' - This field should be ignored since Global is set'
         if firmware_first != 0:
             isFirmware_str = ' - This field should be ignored since FIRMWARE_FIRST is set'
-		    
+
         self.resultsStr = self.resultsStr + ("""
   {}
     Source ID                                     : 0x{:04X}
@@ -1339,7 +1339,7 @@ class HEST (ACPI_TABLE):
     Advanced Error Capabilities and Control       : 0x{:08X}{}
 	""".format( title, sourceID, reserved1, flags, flags_str, firmware_first, firmware_first_str, isFirmware_str, global_flag, global_flag_str, enabled, numRecordsToPreAllocate, maxSectorsPerRecord, bus, device, isGlobal_str, function , isGlobal_str, deviceControl, reserved2, reserved2_str, uncorrectableErrorMask, uncorrectableErrorServerity, correctableErrorMask, advancedErrorCapabilitiesAndControl, extra_str ) )
         return size
-		
+
     def parseGHESS(self, table_content, type):
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         relatedSourceID = struct.unpack('<H', table_content[4:6])[0]
@@ -1367,7 +1367,7 @@ class HEST (ACPI_TABLE):
             relatedSourceID_str = 'Does not represent an alternate souce'
         else:
             relatedSourceID_str = ''
-		
+
         self.resultsStr = self.resultsStr + ("""
   {}
     Source ID                                     : 0x{:04X}
@@ -1382,7 +1382,7 @@ class HEST (ACPI_TABLE):
     Error Status Block Length                     : 0x{:08X}{}
 	""".format( title, sourceID, relatedSourceID, relatedSourceID_str, flags, enabled, numRecordsToPreAllocate, maxSectorsPerRecord, maxRawDataLength, address_str, notification_str, errStatusBlockLen, extra_str ) )
         return 64
-		
+
     def parse(self, table_content):
         self.ErrorSourceCount = struct.unpack('<L', table_content[0:4])[0]
         self.resultsStr = """
@@ -1395,7 +1395,7 @@ class HEST (ACPI_TABLE):
             nextTable = nextTable + self.parseErrEntry(table_content[nextTable:])
             currErrSource += 1
         #self.ErrorStructure = struct.unpack('<b', table_content[4:?])[0]
-    		
+
     def __str__(self):
         return self.resultsStr
 
@@ -1466,7 +1466,7 @@ class SPMI (ACPI_TABLE):
         pciDeviceFlag_0 = pciDeviceFlag & 1
         if pciDeviceFlag_0 == 1:
             pci_str = 'For PCi IPMI devices'
-            otherStr = self.parseNonUID(table_content[25:28]) 
+            otherStr = self.parseNonUID(table_content[25:28])
         else:
             pci_str = 'non-PCI device'
             otherStr = self.parseUID(table_content[25:28])
@@ -2008,7 +2008,7 @@ class UEFI_TABLE (ACPI_TABLE):
             return
         content_offset = offset - 36
         #check to see if there is enough data to get SW SMI Number and Buffer Ptr Address
-        if content_offset < 0 or content_offset + 12 > len(table_content): 
+        if content_offset < 0 or content_offset + 12 > len(table_content):
             return
         self.smi = struct.unpack('I',table_content[content_offset:content_offset+4])[0]
         content_offset += 4
@@ -2023,7 +2023,7 @@ class UEFI_TABLE (ACPI_TABLE):
             self.results += "\n  Invocation Register        :\n{}".format(str(self.invoc_reg))
         else:
             self.results += "\n  Invocation Register        : None\n"
-                    
+
     def __str__(self):
         return self.results
 

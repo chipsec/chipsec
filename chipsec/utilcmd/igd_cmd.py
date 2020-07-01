@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2020, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -79,7 +79,7 @@ class IgdCommand(BaseCommand):
 
         elif 'dmawrite'    == op:
             phys_address = int(self.argv[3],16)
-            if len(self.argv) > 4: 
+            if len(self.argv) > 4:
                 size = int(self.argv[4],16)
             else:
                 self.logger.error( "must specify <length> argument in 'igddma write'" )
@@ -115,5 +115,3 @@ class IgdCommand(BaseCommand):
         self.logger.log( "[CHIPSEC] (mem) time elapsed {:.3f}".format(time.time()-t) )
 
 commands = { 'igd': IgdCommand }
-
-

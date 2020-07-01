@@ -155,5 +155,3 @@ class VirtIO_Device():
                 self.cs.mmio.dump_MMIO( bar, size )
             else:
                 self.cs.io.dump_IO( bar, size, 4 )
-
-

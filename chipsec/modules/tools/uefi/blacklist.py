@@ -150,7 +150,7 @@ class blacklist(BaseModule):
             self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
             self.spi.read_spi_to_file( base, image_size, image_file )
         elif len(module_argv) > 0:
-            # Use provided firmware image 
+            # Use provided firmware image
             image_file = module_argv[0]
             self.logger.log( "[*] reading FW image from file: {}".format(image_file) )
 
@@ -163,5 +163,3 @@ class blacklist(BaseModule):
              self.efi_blacklist = json.load( blacklist_json )
 
         return self.check_blacklist()
-
-

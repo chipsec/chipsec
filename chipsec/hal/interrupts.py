@@ -177,4 +177,3 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
 
         ReturnStatus = struct.unpack("Q",self.cs.mem.read_physical_mem(smmc + ReturnStatus_offset,8))[0]
         return ReturnStatus
-

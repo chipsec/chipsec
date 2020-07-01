@@ -46,7 +46,7 @@ class Module():
 
     def __le__(self, other):
         return self.name <= other.name
-    
+
     def __gt__(self, other):
         return self.name > other.name
 
@@ -106,7 +106,7 @@ class Module():
                         class_name = class_name.replace(pkg,'')
                     if class_name.startswith('.'): class_name = class_name.replace('.','')
                     for iname, iref in self.module.__dict__.items():
-                        if isinstance(iref, type): 
+                        if isinstance(iref, type):
                             if issubclass(iref, chipsec.module_common.BaseModule):
                                 if iname.lower() == class_name.lower():
                                     self.mod_obj = iref()

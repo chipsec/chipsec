@@ -684,7 +684,7 @@ def isCorrectVSStype(nvram_buf, vss_type):
                         return True
 
     return False
-    
+
 def _getEFIvariables_VSS( nvram_buf, _fwtype):
     variables = dict()
     nvsize = len(nvram_buf)
@@ -1209,7 +1209,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
 
     else: # S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
 
-        fhdr       = '<II' 
+        fhdr       = '<II'
         hdr_length = struct.calcsize(fhdr)
         f          = fhdr + 'B'
         if remaining_len < (hdr_length + 1):

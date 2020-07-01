@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -83,7 +83,7 @@ for current, dirs, files in os.walk(cfg_dir ):
     for file in files:
         if file.endswith('.xml') :
             xf = 'chipsec/cfg' ,['chipsec/cfg/{}'.format(file)]
-            data_files.append( xf ) 
+            data_files.append( xf )
 
 version=""
 if os.path.exists(version_file):
@@ -94,7 +94,7 @@ print("VERSION: {}".format(version))
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
-    if current.startswith(os.path.join(tool_dir,'build')): 
+    if current.startswith(os.path.join(tool_dir,'build')):
         continue
     for file in files:
         if file == "__init__.py":

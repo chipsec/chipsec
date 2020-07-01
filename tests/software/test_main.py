@@ -31,4 +31,3 @@ class TestChipsecMain(unittest.TestCase):
         # Basic test. This should run without loading the driver.
         m = chipsec_main.ChipsecMain(["--help"])
         self.assertEqual(ExitCode.OK, m.main())
-

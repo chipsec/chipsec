@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2019, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -86,7 +86,7 @@ class VMemCommand(BaseCommand):
         elif 'search' == op and len(self.argv) > 5:
             virt_address = int(self.argv[3],16)
             size         = int(self.argv[4],16)
-                      
+
             buffer = _vmem.read_virtual_mem( virt_address, size )
             buffer = chipsec.defines.bytestostring(buffer)
             offset = buffer.find(self.argv[5])
@@ -111,7 +111,7 @@ class VMemCommand(BaseCommand):
         elif 'readval'  == op:
             virt_address = int(self.argv[3],16)
             width        = 0x4
-            if len(self.argv) > 4: 
+            if len(self.argv) > 4:
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
             self.logger.log( '[CHIPSEC] reading {:X}-byte value from VA 0x{:016X}..'.format(width, virt_address) )
             if   0x1 == width: value = _vmem.read_virtual_mem_byte ( virt_address )
@@ -121,7 +121,7 @@ class VMemCommand(BaseCommand):
 
         elif 'write'    == op:
             virt_address = int(self.argv[3],16)
-            if len(self.argv) > 4: 
+            if len(self.argv) > 4:
                 size = int(self.argv[4],16)
             else:
                 self.logger.error( "must specify <length> argument in 'mem write'" )
@@ -153,12 +153,12 @@ class VMemCommand(BaseCommand):
 
         elif 'writeval' == op:
             virt_address = int(self.argv[3],16)
-            if len(self.argv) > 4: 
+            if len(self.argv) > 4:
                 width = chipsec_util.get_option_width(self.argv[4]) if chipsec_util.is_option_valid_width(self.argv[4]) else int(self.argv[4],16)
             else:
                 self.logger.error( "must specify <length> argument in 'mem writeval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH) )
                 return
-            if len(self.argv) > 5: 
+            if len(self.argv) > 5:
                 value = int(self.argv[5],16)
             else:
                 self.logger.error( "must specify <value> argument in 'mem writeval'" )
@@ -174,10 +174,9 @@ class VMemCommand(BaseCommand):
             pa = _vmem.va2pa( virt_address )
             if pa is not None:
                 self.logger.log( '[CHIPSEC] Allocated {:X} bytes of virtual memory: VA = 0x{:016X}, PA = 0x{:016X}'.format(size, virt_address, pa) )
-            
+
         else:
                 print (VMemCommand.__doc__)
                 return
 
 commands = { 'vmem': VMemCommand }
-

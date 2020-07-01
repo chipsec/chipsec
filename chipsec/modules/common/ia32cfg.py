@@ -63,4 +63,3 @@ class ia32cfg(BaseModule):
     def run(self, module_argv):
         self.res = self.check_ia32feature_control()
         return self.res
-

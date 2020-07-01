@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2015, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -129,7 +129,7 @@ class SMICommand(BaseCommand):
                         self.logger.log( "          RCX: {:16X}".format(ret[3]) )
                         self.logger.log( "          RDX: {:16X}".format(ret[4]) )
                         self.logger.log( "          RSI: {:16X}".format(ret[5]) )
-                        self.logger.log( "          RDI: {:16X}".format(ret[6]) )  
+                        self.logger.log( "          RDI: {:16X}".format(ret[6]) )
                 else: print (SMICommand.__doc__)
             else:
                 self.logger.error( "unknown command-line option '{:32}'".format(op) )

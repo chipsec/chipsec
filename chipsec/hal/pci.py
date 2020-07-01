@@ -360,7 +360,7 @@ class Pci:
                 # restore original value of XROM BAR
                 #if orig_xrom_bar != xrom_bar:
                 #    self.write_dword( bus, dev, fun, xrom_bar_off, orig_xrom_bar )
- 
+
         #
         # At this point, a device indicates that XROM exists. Let's check if XROM is really there
         #

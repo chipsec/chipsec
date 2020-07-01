@@ -100,7 +100,7 @@ class IGD(hal_base.HALBase):
     def read_GGTT_PTE(self, pte_num):
         gtt_base = self.get_GGTT_base()
         reg_off = (self.get_PTE_size()*pte_num)
-       
+
         pte_lo = self.cs.mmio.read_MMIO_reg( gtt_base, reg_off )
         pte_hi = 0
         if self.get_PTE_size() == 8:
@@ -179,7 +179,7 @@ class IGD(hal_base.HALBase):
             self.logger.log( '[igd] GFx aperture (GMADR): 0x{:016X}'.format(gmadr) )
             self.logger.log( '[igd] GFx GTT base        : 0x{:016X}'.format(self.get_GGTT_base()) )
             self.logger.log( '[igd] original GTT PTE{:03d}: 0x{:08X}'.format(pte_num,pte_orig) )
-        
+
 
         if (h > 0) and (size > h):
             r = (size - h)%0x1000
@@ -196,7 +196,7 @@ class IGD(hal_base.HALBase):
             print_buffer(bytestostring(self.cs.mem.read_physical_mem(address, size)))
 
         buffer = ''
-        pa = address    
+        pa = address
         for p in range(N):
             pte = self.get_GGTT_PTE_from_PA(pa)
             if self.logger.HAL: self.logger.log( '[igd] GFx PTE for address 0x{:016X}: 0x{:08X}'.format(address,pte) )
@@ -226,4 +226,3 @@ class IGD(hal_base.HALBase):
         self.write_GGTT_PTE(pte_num, pte_orig)
 
         return buffer
-

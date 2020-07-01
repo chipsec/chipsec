@@ -190,5 +190,3 @@ class s3bootscript(BaseModule):
             self.logger.error("The module was not able to recognize the S3 resume boot script on this platform.")
             if self.logger.VERBOSE: raise
             return ModuleResult.ERROR
-            
-

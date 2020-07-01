@@ -170,4 +170,3 @@ class IOBAR(hal_base.HALBase):
         for i in range(n):
             reg = self.cs.io._read_port( range_base + i*size, size )
             logger().log( '{:+04X}: {:{form}}'.format(i*size,reg,form=fmt) )
-

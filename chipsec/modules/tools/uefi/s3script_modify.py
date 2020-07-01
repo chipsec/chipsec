@@ -154,7 +154,7 @@ class s3script_modify(BaseModule):
 
     def modify_s3_reg( self, opcode, address, new_value ):
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
-        if parsed_scripts is None: 
+        if parsed_scripts is None:
             self.logger.log_bad("Did not find boot script.")
             return False
         for bootscript_pa in bootscript_PAs:
@@ -202,9 +202,9 @@ class s3script_modify(BaseModule):
         print_buffer( new_ep )
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
-        if parsed_scripts is None: 
+        if parsed_scripts is None:
             self.logger.log_bad("Did not find boot script.")
-            return False 
+            return False
         for bootscript_pa in bootscript_PAs:
             if (bootscript_pa == 0): continue
             self.logger.log( "[*] Searching the script at 0x{:016X} for DISPATCH opcodes..".format(bootscript_pa) )
@@ -237,9 +237,9 @@ class s3script_modify(BaseModule):
     def modify_s3_dispatch_ep( self ):
         ep_pa = None
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
-        if parsed_scripts is None: 
+        if parsed_scripts is None:
             self.logger.log_bad("Did not find boot script.")
-            return False 
+            return False
         for script_pa in bootscript_PAs:
             if (script_pa == 0): continue
             self.logger.log( "[*] Looking for DISPATCH opcode in the script at 0x{:016X}..".format(script_pa) )
@@ -274,9 +274,9 @@ class s3script_modify(BaseModule):
         self.logger.log( "[*] Original value at 0x{:016X}: 0x{:08X}".format(address,val) )
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
-        if parsed_scripts is None: 
+        if parsed_scripts is None:
             self.logger.log_bad("Did not find boot script.")
-            return False 
+            return False
         for bootscript_pa in bootscript_PAs:
             if (bootscript_pa == 0): continue
             self.logger.log( "[*] Looking for MEM_WRITE opcode in the script at 0x{:016X}..".format(bootscript_pa) )
@@ -312,7 +312,7 @@ class s3script_modify(BaseModule):
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
         if parsed_scripts is None:
             self.logger.log_bad("Did not find boot script.")
-            return False 
+            return False
         for bootscript_pa in bootscript_PAs:
             if (bootscript_pa == 0): continue
             script_buffer = self.cs.mem.read_physical_mem( bootscript_pa, 4 )
@@ -415,4 +415,3 @@ class s3script_modify(BaseModule):
             return ModuleResult.PASSED
         else:
             return ModuleResult.FAILED
-

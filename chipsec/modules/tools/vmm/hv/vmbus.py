@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2018, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -369,7 +369,7 @@ class VMBus(HyperV):
     ##
     def vmbus_recv_events(self):
         return self.hv_recv_events(VMBUS_MESSAGE_SINT)
- 
+
     ##
     ##  vmbus_get_next_version - returns the next version
     ##
@@ -429,7 +429,7 @@ class VMBus(HyperV):
                 result = result and (self.vmbus_onmessage() == CHANNELMSG_OFFERCHANNEL)
             else:
                 result = (msgtype == CHANNELMSG_GPADL_TORNDOWN)
-                
+
         return result
 
     ##
@@ -438,7 +438,7 @@ class VMBus(HyperV):
     def vmbus_open(self, child_relid, gpadl, pageoffset = 2, userdata = '\x00' * 120):
         self.dbg('Open the specified channel ...')
         openid    = child_relid
-        target_vp = 0x0        
+        target_vp = 0x0
         channel_message_header = pack ('<LL', CHANNELMSG_OPENCHANNEL, 0x0)
         channel_open_channel   = pack ('<5L', child_relid, openid, gpadl, target_vp, pageoffset)
         result = self.vmbus_post_msg(channel_message_header + channel_open_channel + userdata)
