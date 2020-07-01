@@ -132,10 +132,10 @@ class VMMCommand(BaseCommand):
 
             self.logger.log( "[CHIPSEC] < RAX: 0x{:016X}".format(rax) )
 
-        elif op in ['pt','ept']:
+        elif op in ['pt', 'ept']:
 
             if len(self.argv) == 4:
-                eptp = int(self.argv[3],16)
+                eptp = int(self.argv[3], 16)
                 pt_fname = 'ept_{:08X}'.format(eptp)
                 self.logger.log( "[CHIPSEC] EPT physical base: 0x{:016X}".format(eptp) )
                 self.logger.log( "[CHIPSEC] dumping EPT to '{}'...".format(pt_fname) )
@@ -154,7 +154,7 @@ class VMMCommand(BaseCommand):
             print (VMMCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (vmm) time elapsed {:.3f}".format((time.time()-t)) )
+        self.logger.log( "[CHIPSEC] (vmm) time elapsed {:.3f}".format((time.time() -t)) )
 
 
 commands = { 'vmm': VMMCommand }

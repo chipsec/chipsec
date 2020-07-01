@@ -108,7 +108,7 @@ class HypercallFuzz (BaseModule):
                 xen.print_hypercall_status()
 
         elif command == 'fuzzing':
-            name2code = {v.lower():k for k,v in hypercall_names.items()}
+            name2code = {v.lower(): k for k, v in hypercall_names.items()}
             try:
                 code = int(arg1, 16)
             except ValueError:

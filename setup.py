@@ -91,9 +91,9 @@ class build_ext(_build_ext):
     def _build_linux_compression(self):
         log.info("building compression executables")
         build_elf = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
-        elfs = ["Brotli","LzmaCompress","TianoCompress"]
+        elfs = ["Brotli", "LzmaCompress", "TianoCompress"]
         #copy the compression files to build directory
-        self.copy_tree(os.path.join("chipsec_tools","compression"),build_elf)
+        self.copy_tree(os.path.join("chipsec_tools", "compression"), build_elf)
         # Run the makefile there
         subprocess.check_output(["make", "-C", build_elf, "-f", "GNUmakefile"])
         # Copy the resulting elf files into the correct place
@@ -104,7 +104,7 @@ class build_ext(_build_ext):
         except:
             pass
         for elf in elfs:
-            self.copy_file(os.path.join(build_elf,"bin",elf),dst)
+            self.copy_file(os.path.join(build_elf, "bin", elf), dst)
 
     def _build_darwin_driver(self):
         log.info("building the OSX driver")
@@ -127,9 +127,9 @@ class build_ext(_build_ext):
     def _build_darwin_compression(self):
         log.info("building compression executables")
         build_exe = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
-        exes = ["Brotli","LzmaCompress","TianoCompress"]
+        exes = ["Brotli", "LzmaCompress", "TianoCompress"]
         #copy the compression files to build directory
-        self.copy_tree(os.path.join("chipsec_tools","compression"),build_exe)
+        self.copy_tree(os.path.join("chipsec_tools", "compression"), build_exe)
         # Run the makefile there
         subprocess.check_output(["make", "-C", build_exe, "-f", "GNUmakefile"])
         # Copy the resulting elf files into the correct place
@@ -140,7 +140,7 @@ class build_ext(_build_ext):
         except:
             pass
         for exe in exes:
-            self.copy_file(os.path.join(build_exe,"bin",exe),dst)
+            self.copy_file(os.path.join(build_exe, "bin", exe), dst)
 
     def _build_win_driver(self):
         log.info("building the windows driver")
@@ -151,7 +151,7 @@ class build_ext(_build_ext):
         if platform.machine().endswith("64"):
             subprocess.call(["install.cmd"])
         else:
-            subprocess.call(["install.cmd","32"])
+            subprocess.call(["install.cmd", "32"])
         os.chdir(cur_dir)
 
     def _build_win_compression(self):
@@ -227,7 +227,7 @@ package_data = {
     # Include any configuration file.
     "": ["*.ini", "*.cfg", "*.json"],
     "chipsec": ["*VERSION", "WARNING.txt"],
-    "chipsec.cfg":  ["8086/*.xml","*.xml","*.xsd"],
+    "chipsec.cfg":  ["8086/*.xml", "*.xml", "*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
@@ -288,7 +288,7 @@ setup(
     cmdclass = {
         'install': install,
         'build': build,
-        'build_ext'   : build_ext,
+        'build_ext': build_ext,
         'sdist': sdist,
     },
     ext_modules = extra_kw

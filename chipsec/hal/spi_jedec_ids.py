@@ -34,5 +34,5 @@ class JEDEC_ID:
                0xEF6017: 'W25Q64FV (QPI)',
                0xEF7016: 'W25Q32JV',
                0xEF4019: 'W25Q256',
-               0xC22017: 'MX25L6408' ,
+               0xC22017: 'MX25L6408',
                0xC22018: 'MX25L12805' }

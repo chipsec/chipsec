@@ -86,7 +86,7 @@ class c_translation(object):
 
     def get_mem_range(self, noattr=False):
         SIZE = {'4KB': SIZE_4KB, '2MB': SIZE_2MB, '1GB': SIZE_1GB}
-        perm = {self.translation[a]['addr']:self.translation[a] for a in self.translation.keys()}
+        perm = {self.translation[a]['addr']: self.translation[a] for a in self.translation.keys()}
         mem_range = []
         for addr in sorted(perm.keys()):
             attr = perm[addr]['attr']
@@ -121,7 +121,7 @@ class c_translation(object):
             pgsize = (1<<12) if size == '2MB' else (1<<20)
             if size == exp_size:
                 for i in range(512):
-                    self.add_page(virt + i*pgsize, phys + i*pgsize, SIZE[exp_size], attr)
+                    self.add_page(virt + i *pgsize, phys + i *pgsize, SIZE[exp_size], attr)
         return
 
 class c_reverse_translation(object):
@@ -512,7 +512,7 @@ class c_extended_page_tables(c_4level_page_tables):
             addr  = pml4e & ADDR_4KB
             pdpt  = self.read_entries('pdpt', addr)
             new_entry = struct.pack('<Q', ((pdpt[i] | 0x87) & ~ADDR_4KB) | (i << 30))
-            self.cs.mem.write_physical_mem(addr + i*8, 8, new_entry)
+            self.cs.mem.write_physical_mem(addr + i *8, 8, new_entry)
         return None
 
 class c_vtd_page_tables(c_extended_page_tables):

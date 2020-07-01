@@ -167,8 +167,8 @@ class HyperV(BaseModuleDebug):
         BaseModuleDebug.__init__(self)
         self.hypercall = VMM(self.cs)
         self.hypercall.init()
-        self.membuf = self.cs.mem.alloc_physical_mem(4*0x1000, 0xFFFFFFFF)
-        self.cs.mem.write_physical_mem(self.membuf[1], 4*0x1000, '\x00' * 4*0x1000)
+        self.membuf = self.cs.mem.alloc_physical_mem(4 *0x1000, 0xFFFFFFFF)
+        self.cs.mem.write_physical_mem(self.membuf[1], 4 *0x1000, '\x00' * 4 *0x1000)
         self.old_sint2 = []
         self.old_simp  = []
         self.old_siefp = []
@@ -226,12 +226,12 @@ class HyperV(BaseModuleDebug):
     ##  hv_recv_msg - recieve message if exist otherwise empty string
     ##
     def hv_recv_msg(self, sint):
-        buffer = self.cs.mem.read_physical_mem(self.simp + 0x100*sint, 0x100)
+        buffer = self.cs.mem.read_physical_mem(self.simp + 0x100 *sint, 0x100)
         message_type, payload_size, message_flags = unpack('<LBB', buffer[0:6])
         if message_type == HVMSG_NONE:
             buffer = ''
         else:
-            self.cs.mem.write_physical_mem(self.simp + 0x100*sint, 0x4, DD(HVMSG_NONE))
+            self.cs.mem.write_physical_mem(self.simp + 0x100 *sint, 0x4, DD(HVMSG_NONE))
             if message_flags & 0x1:
                 self.cs.msr.write_msr(0, HV_X64_MSR_EOM, 0x0, 0x0)
         return buffer
@@ -250,13 +250,13 @@ class HyperV(BaseModuleDebug):
     ##
     def hv_recv_events(self, sint):
         events = set()
-        buffer = self.cs.mem.read_physical_mem(self.siefp + 0x100*sint, 0x100)
+        buffer = self.cs.mem.read_physical_mem(self.siefp + 0x100 *sint, 0x100)
         buffer = unpack('<64L', buffer)
         for i in range(64):
             if buffer[i]:
                 for n in range(32):
                     if (buffer[i] >> n) & 0x1:
-                        events.add(i*32 + n)
+                        events.add(i *32 + n)
         return events
 
 class VMBus(HyperV):
@@ -264,9 +264,9 @@ class VMBus(HyperV):
         HyperV.__init__(self)
         self.promt = 'VMBUS'
         self.onmessage_timeout  = 0.1 #0.02
-        self.int_page           = self.membuf[1] + 1*0x1000
-        self.monitor_page1      = self.membuf[1] + 2*0x1000
-        self.monitor_page2      = self.membuf[1] + 3*0x1000
+        self.int_page           = self.membuf[1] + 1 *0x1000
+        self.monitor_page1      = self.membuf[1] + 2 *0x1000
+        self.monitor_page2      = self.membuf[1] + 3 *0x1000
         self.recv_int_page      = self.int_page + 0x000
         self.send_int_page      = self.int_page + 0x800
         self.supported_versions = {}
@@ -335,7 +335,7 @@ class VMBus(HyperV):
                 self.msg('vmbus_recv_msg: invalid reserved field 0x{:04X}'.format(rsvd))
             #if port_id != VMBUS_MESSAGE_PORT_ID:
             #    self.msg('vmbus_recv_msg: invalid ConnectionID 0x%016x' % port_id)
-            message = message[16 : 16 + payload_size]
+            message = message[16: 16 + payload_size]
         return message
 
     ##
@@ -374,7 +374,7 @@ class VMBus(HyperV):
     ##  vmbus_get_next_version - returns the next version
     ##
     def vmbus_get_next_version(self, current_version):
-        versions = {VERSION_WIN8_1:VERSION_WIN8, VERSION_WIN8:VERSION_WIN7, VERSION_WS2008: VERSION_INVAL}
+        versions = {VERSION_WIN8_1: VERSION_WIN8, VERSION_WIN8: VERSION_WIN7, VERSION_WS2008: VERSION_INVAL}
         return versions[current_version] if current_version in versions else VERSION_INVAL
 
     ##
@@ -402,13 +402,13 @@ class VMBus(HyperV):
         range_buflen = len(gpa_range)
         channel_message_header = pack ('<LL', CHANNELMSG_GPADL_HEADER, 0x0)
         channel_gpadl_header   = pack ('<LLHH', child_relid, gpadl, range_buflen, rangecount)
-        result = self.vmbus_post_msg(channel_message_header + channel_gpadl_header + gpa_range[:27*8])
-        gpa_range = gpa_range[27*8:]
+        result = self.vmbus_post_msg(channel_message_header + channel_gpadl_header + gpa_range[:27 *8])
+        gpa_range = gpa_range[27 *8:]
         while result and gpa_range != '':
             channel_message_header = pack ('<LL', CHANNELMSG_GPADL_BODY, 0x0)
             channel_gpadl_body     = pack ('<LL', 0x0, gpadl)
-            result = self.vmbus_post_msg(channel_message_header + channel_gpadl_body + gpa_range[:28*8])
-            gpa_range = gpa_range[28*8:]
+            result = self.vmbus_post_msg(channel_message_header + channel_gpadl_body + gpa_range[:28 *8])
+            gpa_range = gpa_range[28 *8:]
         if result:
             result = self.vmbus_onmessage() == CHANNELMSG_GPADL_CREATED
         return result
@@ -494,13 +494,13 @@ class VMBus(HyperV):
         msgtype = CHANNELMSG_INVALID
 
         channelmsg = {
-            CHANNELMSG_OFFERCHANNEL         : 188,
-            CHANNELMSG_ALLOFFERS_DELIVERED  :   0,
-            CHANNELMSG_GPADL_CREATED        :  12,
-            CHANNELMSG_OPENCHANNEL_RESULT   :  12,
-            CHANNELMSG_GPADL_TORNDOWN       :   4,
-            CHANNELMSG_RESCIND_CHANNELOFFER :   4,
-            CHANNELMSG_VERSION_RESPONSE     :   8
+            CHANNELMSG_OFFERCHANNEL: 188,
+            CHANNELMSG_ALLOFFERS_DELIVERED:   0,
+            CHANNELMSG_GPADL_CREATED:  12,
+            CHANNELMSG_OPENCHANNEL_RESULT:  12,
+            CHANNELMSG_GPADL_TORNDOWN:   4,
+            CHANNELMSG_RESCIND_CHANNELOFFER:   4,
+            CHANNELMSG_VERSION_RESPONSE:   8
         }
 
         message = self.vmbus_recv_msg(self.onmessage_timeout)
@@ -552,16 +552,16 @@ class VMBus(HyperV):
             # struct vmbus_channel_offer
             guid1 = hv_guid_desc[uuid1] if uuid1 in hv_guid_desc else 'Unknown'
             channel['name']                = guid1
-            channel['flags']               = unpack('<H', offer[0x30 : 0x32])[0]
-            channel['mmio']                = unpack('<H', offer[0x32 : 0x34])[0]
-            channel['userdef']             =              offer[0x34 : 0xAC]
-            channel['sub_channel']         = unpack('<H', offer[0xAC : 0xAE])[0]
+            channel['flags']               = unpack('<H', offer[0x30: 0x32])[0]
+            channel['mmio']                = unpack('<H', offer[0x32: 0x34])[0]
+            channel['userdef']             =              offer[0x34: 0xAC]
+            channel['sub_channel']         = unpack('<H', offer[0xAC: 0xAE])[0]
             # struct vmbus_channel_offer_channel (continue)
-            channel['child_relid']         = unpack('<L', offer[0xB0 : 0xB4])[0]
-            channel['monitor_id']          = unpack('<B', offer[0xB4 : 0xB5])[0]
-            channel['monitor_allocated']   = unpack('<B', offer[0xB5 : 0xB6])[0] & 0x1
-            channel['dedicated_interrupt'] = unpack('<H', offer[0xB6 : 0xB8])[0] & 0x1
-            channel['connection_id']       = unpack('<L', offer[0xB8 : 0xBC])[0]
+            channel['child_relid']         = unpack('<L', offer[0xB0: 0xB4])[0]
+            channel['monitor_id']          = unpack('<B', offer[0xB4: 0xB5])[0]
+            channel['monitor_allocated']   = unpack('<B', offer[0xB5: 0xB6])[0] & 0x1
+            channel['dedicated_interrupt'] = unpack('<H', offer[0xB6: 0xB8])[0] & 0x1
+            channel['connection_id']       = unpack('<L', offer[0xB8: 0xBC])[0]
             self.offer_channels[offer[0x00:0x20]] = channel
 
         return msgtype

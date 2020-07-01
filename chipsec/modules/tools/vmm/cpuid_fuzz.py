@@ -64,7 +64,7 @@ class cpuid_fuzz (BaseModule):
     def fuzz_CPUID( self, eax_start, random_order=False ):
         eax_range = _NO_EAX_TO_FUZZ
         eax_end   = eax_start + eax_range
-        self.logger.log( "[*] Fuzzing CPUID with EAX in range 0x{:08X}:0x{:08X}..".format(eax_start,eax_end) )
+        self.logger.log( "[*] Fuzzing CPUID with EAX in range 0x{:08X}:0x{:08X}..".format(eax_start, eax_end) )
         it = 0
         if random_order: it_max = _NO_ITERATIONS_TO_FUZZ
         else:            it_max = eax_range
@@ -83,7 +83,7 @@ class cpuid_fuzz (BaseModule):
                         self.logger.log( "  > ECX: 0x{:08X}".format(ecx) )
                         if _FLUSH_LOG_EACH_ITER: self.logger.flush()
                         (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid( eax, ecx )
-                        if _LOG_OUT_RESULTS: self.logger.log( "    Out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(r_eax,r_ebx,r_ecx,r_edx) )
+                        if _LOG_OUT_RESULTS: self.logger.log( "    Out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(r_eax, r_ebx, r_ecx, r_edx) )
             it += 1
         return True
 
@@ -108,5 +108,5 @@ class cpuid_fuzz (BaseModule):
         res = ModuleResult.PASSED
         steps = 0x100000000 // _EAX_FUZZ_STEP
         for s in range(steps):
-            self.fuzz_CPUID( s*_EAX_FUZZ_STEP, _random_order )
+            self.fuzz_CPUID( s *_EAX_FUZZ_STEP, _random_order )
         return res

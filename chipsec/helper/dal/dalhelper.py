@@ -158,40 +158,40 @@ class DALHelper(Helper):
     #
 
     def read_physical_mem( self, phys_address, length, bytewise=False ):
-        if bytewise :
+        if bytewise:
             width = 1
-        else :
+        else:
             width = 8
         out_buf = (c_char * length)()
         ptr = 0
-        format = {1: 'B', 2: 'H', 4: 'L', 8:'Q'}
-        while width >= 1 :
-            while (length - ptr) >= width :
-                v = self.base.threads[self.find_thread()].mem(itpii.Address((phys_address + ptr),itpii.AddressType.physical), width)
+        format = {1: 'B', 2: 'H', 4: 'L', 8: 'Q'}
+        while width >= 1:
+            while (length - ptr) >= width:
+                v = self.base.threads[self.find_thread()].mem(itpii.Address((phys_address + ptr), itpii.AddressType.physical), width)
                 struct.pack_into(format[width], out_buf, ptr, v.ToUInt64())
                 ptr += width
             width = width // 2
         return ''.join(out_buf)
 
     def write_physical_mem( self, phys_address, length, buf, bytewise=False ):
-        if bytewise :
+        if bytewise:
             width = 1
-        else :
+        else:
             width = 8
         ptr = 0
-        format = {1: 'B', 2: 'H', 4: 'L', 8:'Q'}
-        while width >= 1 :
-            while (length - ptr) >= width :
+        format = {1: 'B', 2: 'H', 4: 'L', 8: 'Q'}
+        while width >= 1:
+            while (length - ptr) >= width:
                 v = struct.unpack_from(format[width], buf, ptr)
-                self.base.threads[self.find_thread()].mem(itpii.Address((phys_address + ptr),itpii.AddressType.physical), width, v[0])
+                self.base.threads[self.find_thread()].mem(itpii.Address((phys_address + ptr), itpii.AddressType.physical), width, v[0])
                 ptr += width
             width = width // 2
         return
 
-    def read_phys_mem( self, phys_address_hi, phys_address_lo, length ) :
+    def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
         return self.read_physical_mem((phys_address_hi << 32) | phys_address_lo, length)
 
-    def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ) :
+    def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         self.write_physical_mem((phys_address_hi << 32) | phys_address_lo, length, buf)
         return
 
@@ -200,24 +200,24 @@ class DALHelper(Helper):
     #
 
     def read_io_port( self, io_port, size ):
-        if size == 1 :
+        if size == 1:
             val = self.base.threads[self.find_thread()].port(io_port)
-        elif size == 2 :
+        elif size == 2:
             val = self.base.threads[self.find_thread()].wport(io_port)
-        elif size == 4 :
+        elif size == 4:
             val = self.base.threads[self.find_thread()].dport(io_port)
-        else :
+        else:
             raise DALHelperError(size, 'is not a valid IO port size.')
         return val.ToUInt32()
 
     def write_io_port( self, io_port, value, size ):
-        if size == 1 :
+        if size == 1:
             self.base.threads[self.find_thread()].port(io_port, value)
-        elif size == 2 :
+        elif size == 2:
             self.base.threads[self.find_thread()].wport(io_port, value)
-        elif size == 4 :
+        elif size == 4:
             self.base.threads[self.find_thread()].dport(io_port, value)
-        else :
+        else:
             raise DALHelperError(size, 'is not a valid IO port size.')
         return
 
@@ -296,10 +296,10 @@ class DALHelper(Helper):
 
     def cpuid(self, eax, ecx):
         ie_thread = self.find_thread()
-        reax = self.base.threads[ie_thread].cpuid_eax(eax,ecx)
-        rebx = self.base.threads[ie_thread].cpuid_ebx(eax,ecx)
-        recx = self.base.threads[ie_thread].cpuid_ecx(eax,ecx)
-        redx = self.base.threads[ie_thread].cpuid_edx(eax,ecx)
+        reax = self.base.threads[ie_thread].cpuid_eax(eax, ecx)
+        rebx = self.base.threads[ie_thread].cpuid_ebx(eax, ecx)
+        recx = self.base.threads[ie_thread].cpuid_ecx(eax, ecx)
+        redx = self.base.threads[ie_thread].cpuid_edx(eax, ecx)
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
@@ -425,7 +425,7 @@ class DALHelper(Helper):
     #
     def get_tool_info( self, tool_type ):
         if logger().DEBUG: logger().error( '[DAL] API get_tool_info() is not supported' )
-        return None,None
+        return None, None
 
 def get_helper():
     return DALHelper()

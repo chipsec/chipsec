@@ -50,7 +50,7 @@ class spd_wd(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return self.cs.is_device_enabled( 'SMBUS' ) and self.cs.register_has_field('SMBUS_HCFG','SPD_WD')
+        return self.cs.is_device_enabled( 'SMBUS' ) and self.cs.register_has_field('SMBUS_HCFG', 'SPD_WD')
 
     def check_spd_wd(self):
         self.logger.start_test( "SPD Write Disable" )

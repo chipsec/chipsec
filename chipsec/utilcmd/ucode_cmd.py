@@ -62,7 +62,7 @@ class UCodeCommand(BaseCommand):
                 self.cs.ucode.update_ucode_all_cpus( ucode_filename )
             elif (5 == len(self.argv)):
                 ucode_filename = self.argv[3]
-                cpu_thread_id = int(self.argv[4],16)
+                cpu_thread_id = int(self.argv[4], 16)
                 self.logger.log( "[CHIPSEC] Loading Microcode update on CPU{:d} from '{}'".format(cpu_thread_id, ucode_filename) )
                 self.cs.ucode.update_ucode( cpu_thread_id, ucode_filename )
             else:
@@ -83,7 +83,7 @@ class UCodeCommand(BaseCommand):
                     ucode_update_id = self.cs.ucode.ucode_update_id( tid )
                     self.logger.log( "[CHIPSEC] CPU{:d}: Microcode update ID = 0x{:08X}".format(tid, ucode_update_id) )
             elif (4 == len(self.argv)):
-                cpu_thread_id = int(self.argv[3],16)
+                cpu_thread_id = int(self.argv[3], 16)
                 ucode_update_id = self.cs.ucode.ucode_update_id( cpu_thread_id )
                 self.logger.log( "[CHIPSEC] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
         else:
@@ -91,6 +91,6 @@ class UCodeCommand(BaseCommand):
             print (UCodeCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (ucode) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (ucode) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'ucode': UCodeCommand }

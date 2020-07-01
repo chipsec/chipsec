@@ -58,7 +58,7 @@ class msr_fuzz (BaseModule):
     def fuzz_MSRs( self, msr_addr_start, random_order=False ):
         msr_addr_range = 0x10000
         msr_addr_end   = msr_addr_start + msr_addr_range
-        self.logger.log( "[*] Fuzzing MSRs in range 0x{:08X}:0x{:08X}..".format(msr_addr_start,msr_addr_end) )
+        self.logger.log( "[*] Fuzzing MSRs in range 0x{:08X}:0x{:08X}..".format(msr_addr_start, msr_addr_end) )
         it = 0
         if random_order: it_max = _NO_ITERATIONS_TO_FUZZ
         else:            it_max = msr_addr_range

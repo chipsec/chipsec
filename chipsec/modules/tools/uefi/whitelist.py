@@ -137,7 +137,7 @@ class whitelist(BaseModule):
         self.logger.log( "[*] generating a list of EFI executables from firmware image..." )
         efi_tree = build_efi_model(self.uefi, self.image, None)
         matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
-        self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list),self.image_file) )
+        self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list), self.image_file) )
         self.logger.log( "[*] creating JSON file '{}'...".format(json_pth) )
         write_file("{}".format(json_pth), json.dumps(self.efi_list, indent=2, separators=(',', ': '), cls=UUIDEncoder))
         return ModuleResult.PASSED
@@ -157,7 +157,7 @@ class whitelist(BaseModule):
         # - find all occurrences of matching EFI modules
         efi_tree = build_efi_model(self.uefi, self.image, None)
         matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
-        self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list),self.image_file) )
+        self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list), self.image_file) )
 
         for m in self.efi_list:
             if not (m in self.efi_whitelist):
@@ -165,10 +165,10 @@ class whitelist(BaseModule):
                 guid = self.efi_list[m]["guid"] if 'guid' in self.efi_list[m] else '?'
                 name = self.efi_list[m]["name"] if 'name' in self.efi_list[m] else '<unknown>'
                 sha1 = self.efi_list[m]["sha1"] if 'sha1' in self.efi_list[m] else ''
-                self.logger.log_important( "found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{{}}}\n    {}".format(m,sha1,guid,name))
+                self.logger.log_important( "found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{{}}}\n    {}".format(m, sha1, guid, name))
 
         if len(self.suspect_modules) > 0:
-            self.logger.log_warn_check( "found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules),json_pth) )
+            self.logger.log_warn_check( "found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules), json_pth) )
             return ModuleResult.WARNING
         else:
             self.logger.log_passed_check( "all EFI executables match the list '{}'".format(json_pth) )
@@ -190,7 +190,7 @@ class whitelist(BaseModule):
 
         op = module_argv[0] if len(module_argv) > 0 else 'generate'
 
-        if op in ['generate','check']:
+        if op in ['generate', 'check']:
 
             if len(module_argv) > 1:
                 json_file  = module_argv[1]
@@ -200,9 +200,9 @@ class whitelist(BaseModule):
                 image_file = DEF_FWIMAGE_FILE
                 json_file  = DEF_EFILIST_FILE
                 self.spi = SPI(self.cs)
-                (base,limit,freg) = self.spi.get_SPI_region(BIOS)
+                (base, limit, freg) = self.spi.get_SPI_region(BIOS)
                 image_size = limit + 1 - base
-                self.logger.log("[*] dumping firmware image from ROM to '{}': 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file,image_size,base,limit))
+                self.logger.log("[*] dumping firmware image from ROM to '{}': 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, image_size, base, limit))
                 self.spi.read_spi_to_file(base, image_size, image_file)
 
             self.image_file = image_file

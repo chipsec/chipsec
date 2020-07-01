@@ -90,7 +90,7 @@ class sgx_check(BaseModule):
         self.logger.log( "\n[*] Verifying if Protected Memory Range (PRMRR) is configured" )
         prmrr_enable = False
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            mtrrcap = self.cs.read_register_field('MTRRCAP','PRMRR', False, tid)
+            mtrrcap = self.cs.read_register_field('MTRRCAP', 'PRMRR', False, tid)
             if (0 == mtrrcap):
                 if self.logger.VERBOSE: self.logger.log("[*] CPU{:d} Protected Memory Range configuration is not supported".format(tid))
             else:

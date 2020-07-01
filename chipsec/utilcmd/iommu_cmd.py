@@ -109,7 +109,7 @@ class IOMMUCommand(BaseCommand):
             print (IOMMUCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (iommu) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (iommu) time elapsed {:.3f}".format(time.time() -t) )
 
 
 commands = { 'iommu': IOMMUCommand }

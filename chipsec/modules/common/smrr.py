@@ -29,7 +29,7 @@ This module checks to see that SMRRs are enabled and configured.
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
 from chipsec.hal.msr import MemType
 
-TAGS = [MTAG_BIOS,MTAG_SMM]
+TAGS = [MTAG_BIOS, MTAG_SMM]
 
 class smrr(BaseModule):
 

@@ -35,7 +35,7 @@ except ImportError:
 MODPATH_RE      = re.compile("^\w+(\.\w+)*$")
 
 class Module():
-    def __init__(self,name):
+    def __init__(self, name):
         self.logger = chipsec.logger.logger()
         self.name = name
         self.module = None
@@ -82,8 +82,8 @@ class Module():
             else:
                 module_argv = []
 
-            if isinstance(self.mod_obj,chipsec.module_common.BaseModule):
-                if self.mod_obj.is_supported() :
+            if isinstance(self.mod_obj, chipsec.module_common.BaseModule):
+                if self.mod_obj.is_supported():
                     result = self.mod_obj.run(module_argv)
                 else:
                     if self.mod_obj.res == ModuleResult.NOTAPPLICABLE:
@@ -97,14 +97,14 @@ class Module():
 
     def get_module_object(self):
         result = ModuleResult.PASSED
-        if self.mod_obj is None :
+        if self.mod_obj is None:
             try:
                 if _importlib:
                     pkg = getattr( self.module, "__package__" )
                     class_name = getattr( self.module, "__name__" )
                     if pkg:
-                        class_name = class_name.replace(pkg,'')
-                    if class_name.startswith('.'): class_name = class_name.replace('.','')
+                        class_name = class_name.replace(pkg, '')
+                    if class_name.startswith('.'): class_name = class_name.replace('.', '')
                     for iname, iref in self.module.__dict__.items():
                         if isinstance(iref, type):
                             if issubclass(iref, chipsec.module_common.BaseModule):
@@ -121,7 +121,7 @@ class Module():
         try:
             if _importlib:
                 myfile = getattr( self.module, "__file__" )
-        except :
+        except:
             pass
         return myfile
 

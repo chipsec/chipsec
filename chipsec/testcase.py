@@ -62,18 +62,18 @@ class ChipsecResults():
         self.exceptions = []
         self.time = None
 
-    def add_properties(self,properties):
+    def add_properties(self, properties):
         self.properties = properties
 
-    def add_testcase(self,test):
+    def add_testcase(self, test):
         self.test_cases.append(test)
 
     def get_current(self):
         if len(self.test_cases) == 0 or self.summary:
             return None
-        return self.test_cases[len(self.test_cases)-1]
+        return self.test_cases[len(self.test_cases) -1]
 
-    def add_exception(self,name):
+    def add_exception(self, name):
         self.exceptions.append(str(name))
 
     def order_summary(self):
@@ -149,7 +149,7 @@ class ChipsecResults():
     def get_results(self):
         results = {}
         for test in self.test_cases:
-            results[test.name] = {"result":test.result}
+            results[test.name] = {"result": test.result}
         return results
 
     def xml_summary(self):
@@ -188,21 +188,21 @@ class ChipsecResults():
             if k == 'total':
                 summary_dict[k] = "{:d}".format(summary[k])
             else:
-                summary_dict[k.replace(" ","")] = "{:d}".format(len(summary[k]))
+                summary_dict[k.replace(" ", "")] = "{:d}".format(len(summary[k]))
         summary_dict["name"] = os.path.basename( os.path.splitext(name)[0] )
         summary_dict["time"] = "{:5f}".format( self.time )
-        ts_element = ET.SubElement(xml_element,"testsuite",summary_dict)
+        ts_element = ET.SubElement(xml_element, "testsuite", summary_dict)
         #add properties
-        pr_element = ET.SubElement(ts_element,"properties")
+        pr_element = ET.SubElement(ts_element, "properties")
         prop_dict = dict()
         for k in self.properties:
             prop_dict["name"]  = k
             prop_dict["value"] = self.properties[k]
-            p_element = ET.SubElement(pr_element,"property",prop_dict)
+            p_element = ET.SubElement(pr_element, "property", prop_dict)
         #add test cases
         for test in self.test_cases:
-            tc_element =  ET.SubElement(ts_element, "testcase", {'classname':test.name,'name':test.desc, 'time':'{}'.format("{:5f}".format(test.time)if test.time is not None else "0.0")})
-            r_element =   ET.SubElement(tc_element, "pass", {"type":test.result})
+            tc_element =  ET.SubElement(ts_element, "testcase", {'classname': test.name, 'name': test.desc, 'time': '{}'.format("{:5f}".format(test.time)if test.time is not None else "0.0")})
+            r_element =   ET.SubElement(tc_element, "pass", {"type": test.result})
             out_element = ET.SubElement(tc_element, "system-out")
             out_element.text = test.output
         return xml.dom.minidom.parseString(ET.tostring( xml_element, None, None )).toprettyxml()
@@ -229,7 +229,7 @@ class ChipsecResults():
 
         for test in self.test_cases:
             # Test case as header level 4
-            out_string = '#### {:s}\n'.format(test.name.replace('chipsec.modules.',''))
+            out_string = '#### {:s}\n'.format(test.name.replace('chipsec.modules.', ''))
             for line in test.output.splitlines(True):
                 # Format output as code
                 out_string += '    {:s}'.format(line)
@@ -278,4 +278,4 @@ class TestCase():
             self.time = self.endTime - self.startTime
 
     def get_fields(self):
-        return {'name':self.name,'output':self.output,'result':self.result}
+        return {'name': self.name, 'output': self.output, 'result': self.result}

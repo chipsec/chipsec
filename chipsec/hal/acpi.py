@@ -147,7 +147,7 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_WDRT: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_WSPT: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_WDDT: acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_ASF : acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_ASF: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_MSEG: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_DMAR: acpi_tables.DMAR,
   ACPI_TABLE_SIG_UEFI: acpi_tables.UEFI_TABLE,
@@ -219,7 +219,7 @@ class RSDP():
                         "  XSDT Address     : 0x{:016X}\n"
                         "  Extended Checksum: 0x{:02X}\n"
                         "  Reserved         : {}\n"
-                       ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex") if ( isinstance(self.Reserved,str) ) else self.Reserved.hex() )
+                       ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex") if ( isinstance(self.Reserved, str) ) else self.Reserved.hex() )
         return default
 
     # some sanity checking on RSDP
@@ -294,14 +294,14 @@ class ACPI(hal_base.HALBase):
         rsdp_pa = None
         rsdp    = None
         if logger().HAL: logger().log( '[acpi] searching RSDP pointers in EFI Configuration Table..' )
-        (isFound,ect_pa,ect,ect_buf) = self.uefi.find_EFI_Configuration_Table()
+        (isFound, ect_pa, ect, ect_buf) = self.uefi.find_EFI_Configuration_Table()
         if isFound:
             if RSDP_GUID_ACPI2_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI2_0 ]
-                if logger().HAL: logger().log( '[acpi] ACPI 2.0+ RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI2_0,rsdp_pa) )
+                if logger().HAL: logger().log( '[acpi] ACPI 2.0+ RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI2_0, rsdp_pa) )
             elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
-                if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI1_0,rsdp_pa) )
+                if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI1_0, rsdp_pa) )
 
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
@@ -317,7 +317,7 @@ class ACPI(hal_base.HALBase):
         rsdp_pa = None
         rsdp    = None
         if logger().HAL: logger().log( "[acpi] searching all EFI memory for RSDP (this may take a minute).." )
-        CHUNK_SZ = 1024*1024 # 1MB
+        CHUNK_SZ = 1024 *1024 # 1MB
         (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRAM()
         pa = smram_base - CHUNK_SZ
         while pa > CHUNK_SZ:
@@ -325,7 +325,7 @@ class ACPI(hal_base.HALBase):
             pos = bytestostring(membuf).find( ACPI_RSDP_SIG )
             if -1 != pos:
                 rsdp_pa  = pa + pos
-                if logger().HAL: logger().log( "[acpi] found '{}' signature at 0x{:16X}. Checking if valid RSDP..".format(ACPI_RSDP_SIG,rsdp_pa) )
+                if logger().HAL: logger().log( "[acpi] found '{}' signature at 0x{:16X}. Checking if valid RSDP..".format(ACPI_RSDP_SIG, rsdp_pa) )
                 rsdp     = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
                     if logger().HAL: logger().log( "[acpi] found RSDP in EFI memory: 0x{:016X}".format(rsdp_pa) )
@@ -366,7 +366,7 @@ class ACPI(hal_base.HALBase):
                 sdt_pa = rsdp.XsdtAddress
                 is_xsdt = True
             else:
-                return (False,None,None,None)
+                return (False, None, None, None)
             if logger().HAL: logger().log( "[acpi] found {} at PA: 0x{:016X}".format('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
             sdt_header_buf = self.cs.mem.read_physical_mem( sdt_pa, ACPI_TABLE_HEADER_SIZE )
             sdt_header     = self._parse_table_header( sdt_header_buf )
@@ -377,10 +377,10 @@ class ACPI(hal_base.HALBase):
             (sdt_buf, is_xsdt) = self.cs.helper.get_ACPI_SDT()
             sdt_header = self._parse_table_header( sdt_buf[ :ACPI_TABLE_HEADER_SIZE] )
 
-        sdt_contents = sdt_buf[ ACPI_TABLE_HEADER_SIZE : ]
+        sdt_contents = sdt_buf[ ACPI_TABLE_HEADER_SIZE: ]
         sdt = ACPI_TABLES[ACPI_TABLE_SIG_XSDT if is_xsdt else ACPI_TABLE_SIG_RSDT]()
         sdt.parse( sdt_contents )
-        return (is_xsdt,sdt_pa,sdt,sdt_header)
+        return (is_xsdt, sdt_pa, sdt, sdt_header)
 
 
     #
@@ -393,7 +393,7 @@ class ACPI(hal_base.HALBase):
             #    CHIPSEC kernel module and OS native API
             if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables from physical memory..." )
             # find RSDT/XSDT table
-            (is_xsdt,sdt_pa,sdt,sdt_header) = self.get_SDT()
+            (is_xsdt, sdt_pa, sdt, sdt_header) = self.get_SDT()
 
             # cache RSDT/XSDT in the list of ACPI tables
             if sdt_pa is not None: self.tableList[ bytestostring(sdt_header.Signature) ].append(sdt_pa)
@@ -495,7 +495,7 @@ class ACPI(hal_base.HALBase):
 
         acpi_tables = []
         for data in acpi_tables_data:
-            acpi_tables.append((data[ : ACPI_TABLE_HEADER_SIZE ], data[ ACPI_TABLE_HEADER_SIZE : ]))
+            acpi_tables.append((data[ : ACPI_TABLE_HEADER_SIZE ], data[ ACPI_TABLE_HEADER_SIZE: ]))
 
         return acpi_tables
 
@@ -505,7 +505,7 @@ class ACPI(hal_base.HALBase):
     def dump_ACPI_table( self, name, isfile = False ):
         acpi_tables = self.get_parse_ACPI_table( name, isfile )
         for acpi_table in acpi_tables:
-            (table_header,table,table_header_blob,table_blob) = acpi_table
+            (table_header, table, table_header_blob, table_blob) = acpi_table
             logger().log( "==================================================================" )
             logger().log( "ACPI Table: {}".format(name) )
             logger().log( "==================================================================" )
@@ -525,7 +525,7 @@ class ACPI(hal_base.HALBase):
     def _parse_table( self, name, table_header_blob, table_blob ):
         table_header       = self._parse_table_header( table_header_blob )
         table              = self._parse_table_contents( name, table_blob, table_header_blob )
-        return (table_header,table,table_header_blob,table_blob)
+        return (table_header, table, table_header_blob, table_blob)
 
 
     def _parse_table_header( self, header ):

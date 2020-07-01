@@ -67,10 +67,10 @@ _cpudes_msg_t_fmt    = "QQQQQQQ"
 _alloc_mem_msg_t_fmt = "QQQQ"
 
 
-LZMA  = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress")
-TIANO = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-EFI   = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress")
-BROTLI = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","Brotli")
+LZMA  = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress")
+TIANO = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
+EFI   = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
+BROTLI = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli")
 
 class OSXHelper(Helper):
 
@@ -87,8 +87,8 @@ class OSXHelper(Helper):
         self.dev_fh = None
         self.name = "OSXHelper"
 
-    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI]
-    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI,chipsec.defines.COMPRESSION_TYPE_LZMA,chipsec.defines.COMPRESSION_TYPE_BROTLI]
+    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI]
+    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI, chipsec.defines.COMPRESSION_TYPE_LZMA, chipsec.defines.COMPRESSION_TYPE_BROTLI]
 
     def load_driver(self):
         driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
@@ -212,23 +212,23 @@ class OSXHelper(Helper):
     def rotate_list(self, list, n):
         return list[n:] + list[:n]
 
-    def unknown_decompress(self,CompressedFileName,OutputFileName):
+    def unknown_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type2:
-            res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
+            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
             if res == True:
-                self.rotate_list(self.decompression_oder_type2,failed_times)
+                self.rotate_list(self.decompression_oder_type2, failed_times)
                 break
             else:
                 failed_times += 1
         return res
 
-    def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
+    def unknown_efi_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
+            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
             if res == True:
-                self.rotate_list(self.decompression_oder_type1,failed_times)
+                self.rotate_list(self.decompression_oder_type1, failed_times)
                 break
             else:
                 failed_times += 1
@@ -242,7 +242,7 @@ class OSXHelper(Helper):
             return False
         encode_str = " -e -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(FileName,OutputFileName)
+            shutil.copyfile(FileName, OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             encode_str = TIANO + encode_str
@@ -253,7 +253,7 @@ class OSXHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             encode_str = BROTLI + encode_str
         encode_str += FileName
-        data = subprocess.call(encode_str,shell=True)
+        data = subprocess.call(encode_str, shell=True)
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot decompress file({})".format(FileName))
             return False
@@ -266,14 +266,14 @@ class OSXHelper(Helper):
         if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
             return False
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_UNKNOWN:
-            data = self.unknown_decompress(CompressedFileName,OutputFileName)
+            data = self.unknown_decompress(CompressedFileName, OutputFileName)
             return data
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD:
-            data = self.unknown_efi_decompress(CompressedFileName,OutputFileName)
+            data = self.unknown_efi_decompress(CompressedFileName, OutputFileName)
             return data
         decode_str = " -d -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(CompressedFileName,OutputFileName)
+            shutil.copyfile(CompressedFileName, OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             decode_str = TIANO + decode_str
@@ -284,7 +284,7 @@ class OSXHelper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
-        data = subprocess.call(decode_str,shell=True)
+        data = subprocess.call(decode_str, shell=True)
         if not data == 0 and logger().VERBOSE:
             logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False
@@ -338,67 +338,67 @@ class OSXHelper(Helper):
 
     def read_io_port(self, io_port, size):
         in_buf = struct.pack(_io_msg_t_fmt, io_port, size, 0)
-        out_buf = self.ioctl(IOCTL_RDIO,in_buf)
+        out_buf = self.ioctl(IOCTL_RDIO, in_buf)
         try:
             if 1 == size:
-                value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xff
+                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xff
             elif 2 == size:
-                value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffff
+                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xffff
             else:
-                value = struct.unpack(_io_msg_t_fmt,out_buf)[2] & 0xffffffff
+                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xffffffff
         except:
-            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size,out_buf))
+            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf))
         return value
 
     def write_io_port(self, io_port, value, size):
         in_buf = struct.pack(_io_msg_t_fmt, io_port, size, value)
-        return self.ioctl(IOCTL_WRIO,in_buf)
+        return self.ioctl(IOCTL_WRIO, in_buf)
 
     def read_cr(self, cpu_thread_id, cr_number):
         #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_cr_msg_t_fmt,cr_number,0)
-        out_buf = self.ioctl(IOCTL_RDCR,in_buf)
-        value = struct.unpack(_cr_msg_t_fmt,out_buf)[1]
+        in_buf = struct.pack(_cr_msg_t_fmt, cr_number, 0)
+        out_buf = self.ioctl(IOCTL_RDCR, in_buf)
+        value = struct.unpack(_cr_msg_t_fmt, out_buf)[1]
         return value
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_cr_msg_t_fmt,cr_number,value)
-        return self.ioctl(IOCTL_WRCR,in_buf)
+        in_buf = struct.pack(_cr_msg_t_fmt, cr_number, value)
+        return self.ioctl(IOCTL_WRCR, in_buf)
 
     def read_msr(self, thread_id, msr_addr):
         #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_msr_msg_t_fmt,msr_addr,0,0)
-        out_buf = self.ioctl(IOCTL_RDMSR,in_buf)
-        value = struct.unpack(_msr_msg_t_fmt,out_buf)
-        return (value[1],value[2])
+        in_buf = struct.pack(_msr_msg_t_fmt, msr_addr, 0, 0)
+        out_buf = self.ioctl(IOCTL_RDMSR, in_buf)
+        value = struct.unpack(_msr_msg_t_fmt, out_buf)
+        return (value[1], value[2])
 
     def write_msr(self, thread_id, msr_addr, eax, edx):
         #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_msr_msg_t_fmt,msr_addr,0,0)
-        return self.ioctl(IOCTL_WRMSR,in_buf)
+        in_buf = struct.pack(_msr_msg_t_fmt, msr_addr, 0, 0)
+        return self.ioctl(IOCTL_WRMSR, in_buf)
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_cpudes_msg_t_fmt,cpu_thread_id, desc_table_code, 0, 0, 0,0,0)
+        in_buf = struct.pack(_cpudes_msg_t_fmt, cpu_thread_id, desc_table_code, 0, 0, 0, 0, 0)
         out_buf = self.ioctl(IOCTL_CPU_DESCRIPTOR_TABLE, in_buf)
-        (limit,base_hi,base_lo,pa_hi,pa_lo) = struct.unpack(_cpudes_msg_t_fmt,out_buf)[2:]
+        (limit, base_hi, base_lo, pa_hi, pa_lo) = struct.unpack(_cpudes_msg_t_fmt, out_buf)[2:]
         pa = (pa_hi << 32) + pa_lo
         base = (base_hi << 32) + base_lo
-        return (limit,base,pa)
+        return (limit, base, pa)
 
     def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
-        in_buf = struct.pack(_hypercall_msg_t_fmt,rcx,rdx,r8,r9,r10,r11,rax,rbx,rdi,rsi,xmm_buffer,0)
-        out_buf = self.ioctl(IOCTL_HYPERCALL,in_buf)
-        return struct.unpack(_hypercall_msg_t_fmt,out_buf)[11]
+        in_buf = struct.pack(_hypercall_msg_t_fmt, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer, 0)
+        out_buf = self.ioctl(IOCTL_HYPERCALL, in_buf)
+        return struct.unpack(_hypercall_msg_t_fmt, out_buf)[11]
 
     def cpuid(self, eax, ecx):
-        in_buf = struct.pack(_cpuid_msg_t_fmt,eax,0,ecx,0)
-        out_buf = self.ioctl(IOCTL_CPUID,in_buf)
-        return struct.unpack(_cpuid_msg_t_fmt,out_buf)
+        in_buf = struct.pack(_cpuid_msg_t_fmt, eax, 0, ecx, 0)
+        out_buf = self.ioctl(IOCTL_CPUID, in_buf)
+        return struct.unpack(_cpuid_msg_t_fmt, out_buf)
 
     def alloc_phys_mem(self, num_bytes, max_addr):
-        in_buf = struct.pack(_alloc_mem_msg_t_fmt,num_bytes,max_addr,0,0)
+        in_buf = struct.pack(_alloc_mem_msg_t_fmt, num_bytes, max_addr, 0, 0)
         out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
         return struct.unpack(_alloc_mem_msg_t_fmt, out_buf)[2:]
 
@@ -435,7 +435,7 @@ class OSXHelper(Helper):
         #self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
-        ret = struct.unpack(_smi_msg_t_fmt,out_buf)
+        ret = struct.unpack(_smi_msg_t_fmt, out_buf)
         return ret
 
     def map_io_space(self, base, size, cache_type):

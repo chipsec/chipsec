@@ -53,7 +53,7 @@ class iofuzz(BaseModule):
     def fuzz_ports( self, iterations, write_count, random_order=False ):
 
         if random_order: self.logger.log( "[*] Fuzzing randomly chosen {:d} I/O ports..\n".format(iterations) )
-        else: self.logger.log( "[*] Fuzzing I/O ports in a range 0:0x{:X}..\n".format(iterations-1) )
+        else: self.logger.log( "[*] Fuzzing I/O ports in a range 0:0x{:X}..\n".format(iterations -1) )
 
         io_addr = 0
         for it in range(iterations):
@@ -88,8 +88,8 @@ class iofuzz(BaseModule):
                     self.cs.io.write_port_word ( io_addr, 0x5AA55AA5 )
                 except: pass
 
-            self.logger.log( "    writing values 0..{:X} ({:d} times each)".format(MAX_PORT_VALUE,write_count) )
-            for v in range(MAX_PORT_VALUE+1):
+            self.logger.log( "    writing values 0..{:X} ({:d} times each)".format(MAX_PORT_VALUE, write_count) )
+            for v in range(MAX_PORT_VALUE +1):
                 for n in range(write_count):
                     try: self.cs.io.write_port_byte( io_addr, v )
                     except: pass

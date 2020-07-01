@@ -4,9 +4,9 @@ from sys import version
 
 def isinteger(var):
     if version[0] == '2':
-        return isinstance(var,(int,long))
+        return isinstance(var, (int, long))
     else:
-        return isinstance(var,int)
+        return isinstance(var, int)
 
 ########################################################################################################################
 class base_primitive (object):
@@ -110,7 +110,7 @@ class delim (base_primitive):
         @type  name:     String
         @param name:     (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
-        super(delim,self).__init__()
+        super(delim, self).__init__()
         self.value         = self.original_value = value
         self.fuzzable      = fuzzable
         self.name          = name
@@ -204,7 +204,7 @@ class group (base_primitive):
         # sanity check that values list only contains strings (or raw data)
         if self.values != []:
             for val in self.values:
-                assert isinstance(val,str), "Value list may only contain strings or raw data"
+                assert isinstance(val, str), "Value list may only contain strings or raw data"
 
 
     def mutate (self):
@@ -266,7 +266,7 @@ class random_data (base_primitive):
         @param name:          (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        super(random_data,self).__init__()
+        super(random_data, self).__init__()
         self.value         = self.original_value = str(value)
         self.min_length    = min_length
         self.max_length    = max_length
@@ -308,7 +308,7 @@ class random_data (base_primitive):
         # reset the value and generate a random string of the determined length.
         self.value = b""
         for i in range(length):
-            self.value += struct.pack("B",random.randint(0, 255))
+            self.value += struct.pack("B", random.randint(0, 255))
 
         # increment the mutation count.
         self.mutant_index += 1
@@ -339,7 +339,7 @@ class static (base_primitive):
         @param name:  (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        super(static,self).__init__()
+        super(static, self).__init__()
         self.value         = self.original_value = value
         self.name          = name
         self.fuzzable      = False       # every primitive needs this attribute.
@@ -397,7 +397,7 @@ class string (base_primitive):
         @param name:     (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        super(string,self).__init__()
+        super(string, self).__init__()
         self.value         = self.original_value = value
         self.size          = size
         self.padding       = padding
@@ -428,8 +428,8 @@ class string (base_primitive):
                 "",
 
                 # strings ripped from spike (and some others I added)
-                "/.:/"  + "A"*5000 + "\x00\x00",
-                "/.../" + "A"*5000 + "\x00\x00",
+                "/.:/"  + "A" *5000 + "\x00\x00",
+                "/.../" + "A" *5000 + "\x00\x00",
                 "/.../.../.../.../.../.../.../.../.../.../",
                 "/../../../../../../../../../../../../etc/passwd",
                 "/../../../../../../../../../../../../boot.ini",
@@ -517,7 +517,7 @@ class string (base_primitive):
             # add some long strings with null bytes thrown in the middle of it.
             for length in [128, 256, 1024, 2048, 4096, 32767, 0xFFFF]:
                 s = "B" * length
-                s = s[:len(s)//2] + "\x00" + s[len(s)//2:]
+                s = s[:len(s) //2] + "\x00" + s[len(s) //2:]
                 string.fuzz_library.append(s)
 
             # if the optional file '.fuzz_strings' is found, parse each line as a new entry for the fuzz library.
@@ -553,8 +553,8 @@ class string (base_primitive):
         '''
 
         for length in [128, 255, 256, 257, 511, 512, 513, 1023, 1024, 2048, 2049, 4095, 4096, 4097, 5000, 10000, 20000,
-                       32762, 32763, 32764, 32765, 32766, 32767, 32768, 32769, 0xFFFF-2, 0xFFFF-1, 0xFFFF, 0xFFFF+1,
-                       0xFFFF+2, 99999, 100000, 500000, 1000000]:
+                       32762, 32763, 32764, 32765, 32766, 32767, 32768, 32769, 0xFFFF -2, 0xFFFF -1, 0xFFFF, 0xFFFF +1,
+                       0xFFFF +2, 99999, 100000, 500000, 1000000]:
 
             long_string = sequence * length
             string.fuzz_library.append(long_string)
@@ -655,10 +655,10 @@ class bit_field (base_primitive):
         @param name:       (Optional, def=None) Specifying a name gives you direct access to a primitive
         '''
 
-        super(bit_field,self).__init__()
+        super(bit_field, self).__init__()
         assert isinteger(width)
 
-        if isinteger(value) or isinstance(value,(list, tuple)):
+        if isinteger(value) or isinstance(value, (list, tuple)):
             self.value         = self.original_value = value
         else:
             raise ValueError("The supplied value must be either an Int, Long, List or Tuple.")
@@ -686,7 +686,7 @@ class bit_field (base_primitive):
             for i in range(0, self.max_num):
                 self.fuzz_library.append(i)
         else:
-            if isinstance(value,(list, tuple)):
+            if isinstance(value, (list, tuple)):
                 # Use the supplied values as the fuzz library.
                 for val in value:
                     self.fuzz_library.append(val)
@@ -759,7 +759,7 @@ class bit_field (base_primitive):
 
             # convert the bit stream from a string of bits into raw bytes.
             for i in range(len(bit_stream) // 8):
-                chunk = bit_stream[8*i:8*i+8]
+                chunk = bit_stream[8 *i:8 *i +8]
                 rendered += struct.pack("B", self.to_decimal(chunk))
 
             # if necessary, convert the endianess of the raw bytes.
@@ -818,7 +818,7 @@ class bit_field (base_primitive):
         if bit_count is None:
             bit_count = self.width
 
-        return "".join(map(lambda x:str((number >> x) & 1), range(bit_count -1, -1, -1)))
+        return "".join(map(lambda x: str((number >> x) & 1), range(bit_count -1, -1, -1)))
 
 
     def to_decimal (self, binary):

@@ -119,16 +119,16 @@ IOCTL_WRCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x818, METHOD_BUF
 IOCTL_RDCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
-LZMA  = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","LzmaCompress.exe")
-TIANO = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress.exe")
-EFI   = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","TianoCompress.exe")
-BROTLI = os.path.join(chipsec.file.TOOLS_DIR,"compression","bin","Brotli.exe")
+LZMA  = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress.exe")
+TIANO = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress.exe")
+EFI   = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress.exe")
+BROTLI = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli.exe")
 
 #
 # Format for IOCTL Structures
 #
 _pack = 'Q' if sys.maxsize > 2**32 else 'I'
-_smi_msg_t_fmt       = 7*_pack
+_smi_msg_t_fmt       = 7 *_pack
 
 #
 # NT Errors
@@ -141,16 +141,16 @@ _smi_msg_t_fmt       = 7*_pack
 #
 # Default buffer size for EFI variables
 #EFI_VAR_MAX_BUFFER_SIZE = 128*1024
-EFI_VAR_MAX_BUFFER_SIZE = 1024*1024
+EFI_VAR_MAX_BUFFER_SIZE = 1024 *1024
 
 attributes = {
-  "EFI_VARIABLE_NON_VOLATILE"                          : 0x00000001,
-  "EFI_VARIABLE_BOOTSERVICE_ACCESS"                    : 0x00000002,
-  "EFI_VARIABLE_RUNTIME_ACCESS"                        : 0x00000004,
-  "EFI_VARIABLE_HARDWARE_ERROR_RECORD"                 : 0x00000008,
-  "EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS"            : 0x00000010,
-  "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS" : 0x00000020,
-  "EFI_VARIABLE_APPEND_WRITE"                          : 0x00000040
+  "EFI_VARIABLE_NON_VOLATILE": 0x00000001,
+  "EFI_VARIABLE_BOOTSERVICE_ACCESS": 0x00000002,
+  "EFI_VARIABLE_RUNTIME_ACCESS": 0x00000004,
+  "EFI_VARIABLE_HARDWARE_ERROR_RECORD": 0x00000008,
+  "EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS": 0x00000010,
+  "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS": 0x00000020,
+  "EFI_VARIABLE_APPEND_WRITE": 0x00000040
 }
 
 PyLong_AsByteArray = pythonapi._PyLong_AsByteArray
@@ -163,7 +163,7 @@ PyLong_AsByteArray.argtypes = [py_object,
 def packl_ctypes( lnum, bitlength ):
     if sys.version_info.major == 2:
         lnum = long(lnum)
-    length = (bitlength + 7)//8
+    length = (bitlength + 7) //8
     a = create_string_buffer( length )
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
     return a.raw
@@ -201,15 +201,15 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
     variables = dict()
     off = 0
     while (off + header_size) < bsize:
-        efi_var_hdr = EFI_HDR_WIN( *struct.unpack_from( header_fmt, buffer[ off : off + header_size ] ) )
+        efi_var_hdr = EFI_HDR_WIN( *struct.unpack_from( header_fmt, buffer[ off: off + header_size ] ) )
 
         next_var_offset = off + efi_var_hdr.Size
-        efi_var_buf     = buffer[ off : next_var_offset ]
-        efi_var_data    = buffer[ off + efi_var_hdr.DataOffset : off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
+        efi_var_buf     = buffer[ off: next_var_offset ]
+        efi_var_data    = buffer[ off + efi_var_hdr.DataOffset: off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
 
         #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
         str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
-        s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
+        s, = struct.unpack( str_fmt, buffer[ off + header_size: off + efi_var_hdr.DataOffset ] )
         if sys.version_info[0] < 3:
             efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
         else:
@@ -236,8 +236,8 @@ def _handle_error( err, hr=0 ):
 
 class Win32Helper(Helper):
 
-    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI]
-    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO,chipsec.defines.COMPRESSION_TYPE_UEFI,chipsec.defines.COMPRESSION_TYPE_LZMA,chipsec.defines.COMPRESSION_TYPE_BROTLI]
+    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI]
+    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI, chipsec.defines.COMPRESSION_TYPE_LZMA, chipsec.defines.COMPRESSION_TYPE_BROTLI]
 
     def __init__(self):
         super(Win32Helper, self).__init__()
@@ -369,7 +369,7 @@ class Win32Helper(Helper):
                  os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
-                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME,int(hs)) )
+                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME, int(hs)) )
         except win32service.error as err:
             if (winerror.ERROR_SERVICE_EXISTS == err.args[0]):
                 if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
@@ -517,7 +517,7 @@ class Win32Helper(Helper):
                 if logger().DEBUG: logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
-                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status,_err[2]), err_status )
+                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status, _err[2]), err_status )
 
         return out_buf
 
@@ -581,7 +581,7 @@ class Win32Helper(Helper):
         in_buf = struct.pack( 'Q', va )
         out_buf = self._ioctl( IOCTL_GET_PHYSADDR, in_buf, out_length )
         pa = struct.unpack( 'Q', out_buf )[0]
-        return (pa,error_code)
+        return (pa, error_code)
 
     #
     # HYPERCALL
@@ -693,8 +693,8 @@ class Win32Helper(Helper):
     def get_descriptor_table( self, cpu_thread_id, desc_table_code  ):
         in_buf = struct.pack( 'IB', cpu_thread_id, desc_table_code )
         out_buf = self._ioctl( IOCTL_GET_CPU_DESCRIPTOR_TABLE, in_buf, 18 )
-        (limit,base,pa) = struct.unpack( '=HQQ', out_buf )
-        return (limit,base,pa)
+        (limit, base, pa) = struct.unpack( '=HQQ', out_buf )
+        return (limit, base, pa)
 
 
     #
@@ -703,10 +703,10 @@ class Win32Helper(Helper):
     def EFI_supported( self):
         # kern32.GetFirmwareEnvironmentVariable with garbage parameters will cause GetLastError() == 1 reliably on a legacy system
         if self.GetFirmwareEnvironmentVariable is not None:
-            self.GetFirmwareEnvironmentVariable("","{00000000-0000-0000-0000-000000000000}",0,0)
+            self.GetFirmwareEnvironmentVariable("", "{00000000-0000-0000-0000-000000000000}", 0, 0)
             return win32api.GetLastError() !=1
         elif self.GetFirmwareEnvironmentVariableEx is not None:
-            self.GetFirmwareEnvironmentVariableEx("","{00000000-0000-0000-0000-000000000000}",0,0)
+            self.GetFirmwareEnvironmentVariableEx("", "{00000000-0000-0000-0000-000000000000}", 0, 0)
             return win32api.GetLastError() !=1
         else:
             return False
@@ -740,8 +740,8 @@ class Win32Helper(Helper):
     def set_EFI_variable( self, name, guid, data, datasize, attrs ):
         var     = bytes(0) if data     is None else data
         var_len = len(var) if datasize is None else datasize
-        if isinstance(attrs, (str,bytes)):
-            attrs = struct.unpack("Q","{message:\x00<{fill}}".format(message=attrs,fill=8)[:8])[0]
+        if isinstance(attrs, (str, bytes)):
+            attrs = struct.unpack("Q", "{message:\x00<{fill}}".format(message=attrs, fill=8)[:8])[0]
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
@@ -893,23 +893,23 @@ class Win32Helper(Helper):
     def rotate_list(self, list, n):
         return list[n:] + list[:n]
 
-    def unknown_decompress(self,CompressedFileName,OutputFileName):
+    def unknown_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type2:
-            res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
+            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
             if res == True:
-                self.rotate_list(self.decompression_oder_type2,failed_times)
+                self.rotate_list(self.decompression_oder_type2, failed_times)
                 break
             else:
                 failed_times += 1
         return res
 
-    def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
+    def unknown_efi_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(CompressedFileName,OutputFileName,CompressionType)
+            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
             if res == True:
-                self.rotate_list(self.decompression_oder_type1,failed_times)
+                self.rotate_list(self.decompression_oder_type1, failed_times)
                 break
             else:
                 failed_times += 1
@@ -923,7 +923,7 @@ class Win32Helper(Helper):
             return False
         encode_str = " -e -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(FileName,OutputFileName)
+            shutil.copyfile(FileName, OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             encode_str = TIANO + encode_str
@@ -934,7 +934,7 @@ class Win32Helper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             encode_str = BROTLI + encode_str
         encode_str += FileName
-        data = subprocess.call(encode_str,stdout=open(os.devnull, 'wb'),shell=True)
+        data = subprocess.call(encode_str, stdout=open(os.devnull, 'wb'), shell=True)
         if not data == 0 and logger().DEBUG:
             logger().error("Cannot compress file({})".format(FileName))
             return False
@@ -947,14 +947,14 @@ class Win32Helper(Helper):
         if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
             return False
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_UNKNOWN:
-            data = self.unknown_decompress(CompressedFileName,OutputFileName)
+            data = self.unknown_decompress(CompressedFileName, OutputFileName)
             return data
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD:
-            data = self.unknown_efi_decompress(CompressedFileName,OutputFileName)
+            data = self.unknown_efi_decompress(CompressedFileName, OutputFileName)
             return data
         decode_str = " -d -o {} ".format(OutputFileName)
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(CompressedFileName,OutputFileName)
+            shutil.copyfile(CompressedFileName, OutputFileName)
             return True
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
             decode_str = TIANO + decode_str
@@ -965,7 +965,7 @@ class Win32Helper(Helper):
         elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
-        data = subprocess.call(decode_str,stdout=open(os.devnull, 'wb'),shell=True)
+        data = subprocess.call(decode_str, stdout=open(os.devnull, 'wb'), shell=True)
         if not data == 0:
             if logger().DEBUG:
                 logger().error("Cannot decompress file({})".format(CompressedFileName))

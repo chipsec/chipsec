@@ -82,11 +82,11 @@ class SMBus(hal_base.HALBase):
         return self.cs.is_device_enabled( 'SMBUS' )
 
     def is_SMBus_supported( self ):
-        (did,vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
-        if self.logger.HAL: self.logger.log( "[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did,vid) )
+        (did, vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
+        if self.logger.HAL: self.logger.log( "[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
         if (0x8086 == vid): return True
         else:
-            self.logger.error( "Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did,vid) )
+            self.logger.error( "Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
             return False
 
     def is_SMBus_host_controller_enabled( self ):
@@ -213,7 +213,7 @@ class SMBus(hal_base.HALBase):
 
 
     def read_range( self, target_address, start_offset, size ):
-        buffer = [chr(0xFF)]*size
+        buffer = [chr(0xFF)] *size
         for i in range (size):
             buffer[i] = chr( self.read_byte( target_address, start_offset + i ) )
         if self.logger.HAL:

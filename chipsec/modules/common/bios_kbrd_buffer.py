@@ -51,7 +51,7 @@ class bios_kbrd_buffer(BaseModule):
 
         kbrd_buf_head = self.cs.mem.read_physical_mem_dword( 0x41A ) & 0x000000FF
         kbrd_buf_tail = self.cs.mem.read_physical_mem_dword( 0x41C ) & 0x000000FF
-        self.logger.log( "[*] Keyboard buffer head pointer = 0x{:X} (at 0x41A), tail pointer = 0x{:X} (at 0x41C)".format(kbrd_buf_head,kbrd_buf_tail) )
+        self.logger.log( "[*] Keyboard buffer head pointer = 0x{:X} (at 0x41A), tail pointer = 0x{:X} (at 0x41C)".format(kbrd_buf_head, kbrd_buf_tail) )
         bios_kbrd_buf = self.cs.mem.read_physical_mem( 0x41E, 32 )
         self.logger.log( "[*] Keyboard buffer contents (at 0x41E):" )
         bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')
@@ -68,10 +68,10 @@ class bios_kbrd_buffer(BaseModule):
                 has_contents = True
                 break
 
-        if (0x1E < kbrd_buf_tail) and (kbrd_buf_tail <= 0x1E+32):
+        if (0x1E < kbrd_buf_tail) and (kbrd_buf_tail <= 0x1E +32):
             #has_contents = True
             self.logger.log_bad( "Keyboard buffer tail points inside the buffer (= 0x{:X})".format(kbrd_buf_tail) )
-            self.logger.log( "    It may potentially expose lengths of pre-boot passwords. Was your password {:d} characters long?".format((kbrd_buf_tail+2 - 0x1E)//2) )
+            self.logger.log( "    It may potentially expose lengths of pre-boot passwords. Was your password {:d} characters long?".format((kbrd_buf_tail +2 - 0x1E) //2) )
 
         self.logger.log( "[*] Checking contents of the keyboard buffer..\n" )
 

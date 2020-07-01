@@ -56,12 +56,12 @@ VERSION_FILE="VERSION"
 
 build_dir = os.getcwd()
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-bin_dir = os.path.join(root_dir,"bin")
+bin_dir = os.path.join(root_dir, "bin")
 tool_dir   = root_dir
-cfg_dir    = os.path.join(tool_dir,"chipsec","cfg")
+cfg_dir    = os.path.join(tool_dir, "chipsec", "cfg")
 version_file = os.path.join(root_dir, "chipsec", VERSION_FILE)
 
-win_7_x86 = os.path.join(bin_dir,'win7-x86');
+win_7_x86 = os.path.join(bin_dir, 'win7-x86');
 
 
 print(os.getcwd())
@@ -79,28 +79,28 @@ data_files = [
     ]),
 ]
 
-for current, dirs, files in os.walk(cfg_dir ):
+for current, dirs, files in os.walk(cfg_dir):
     for file in files:
-        if file.endswith('.xml') :
+        if file.endswith('.xml'):
             tail = current.replace(cfg_dir, '').replace('\\', '/')
-            xf = 'chipsec/cfg{}'.format(tail) ,['chipsec/cfg{}/{}'.format(tail, file)]
-            data_files.append( xf )
+            xf = 'chipsec/cfg{}'.format(tail), ['chipsec/cfg{}/{}'.format(tail, file)]
+            data_files.append(xf)
 
-version=""
+version = ""
 if os.path.exists(version_file):
-    data_files.append(('.',[version_file]))
+    data_files.append(('.', [version_file]))
     with open(version_file, "r") as verFile:
         version = verFile.read()
 print("VERSION: {}".format(version))
 
 mypackages = []
 for current, dirs, files in os.walk(tool_dir ):
-    if current.startswith(os.path.join(tool_dir,'build')):
+    if current.startswith(os.path.join(tool_dir, 'build')):
         continue
     for file in files:
         if file == "__init__.py":
-            pkg = current.replace(tool_dir+os.path.sep,"")
-            pkg = pkg.replace(os.path.sep,'.')
+            pkg = current.replace(tool_dir +os.path.sep, "")
+            pkg = pkg.replace(os.path.sep, '.')
             mypackages.append(pkg)
             print(pkg)
 
@@ -120,11 +120,11 @@ setup(
         console         = [ 'chipsec_main.py', 'chipsec_util.py' ],
         data_files      =  data_files,
         options         = {
-                            'build' : { 'build_base': build_dir },
+                            'build': { 'build_base': build_dir },
                             'py2exe': {
-                                        'dist_dir'    : win_7_x86,
-                                        'packages'    : mypackages,
-                                        'compressed'  : True
+                                        'dist_dir': win_7_x86,
+                                        'packages': mypackages,
+                                        'compressed': True
                                       }
                           }
 )

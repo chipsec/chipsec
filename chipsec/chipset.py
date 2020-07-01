@@ -193,11 +193,11 @@ class Chipset:
         family = (eax >> 8) & 0xF
         ptype = (eax >>12) & 0x3
         extfamily = (eax >> 20) & 0xFF
-        ret = '{:01X}{:01X}{:01X}{:01X}{:01X}'.format(extmodel,ptype,family,model,stepping)
+        ret = '{:01X}{:01X}{:01X}{:01X}{:01X}'.format(extmodel, ptype, family, model, stepping)
         if extfamily == 0:
             return ret
         else:
-            return '{:02X}{}'.format(extfamily,ret)
+            return '{:02X}{}'.format(extfamily, ret)
 
     def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
         _unknown_platform = False
@@ -353,12 +353,12 @@ class Chipset:
         VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
         # create dictionaries
         for vid in VID:
-            self.chipset_dictionary[int(vid,16)] = collections.defaultdict(list)
-            self.pch_dictionary[int(vid,16)] = collections.defaultdict(list)
-            self.device_dictionary[int(vid,16)] = collections.defaultdict(list)
-            for fxml in os.listdir(os.path.join(_cfg_path,vid)):
+            self.chipset_dictionary[int(vid, 16)] = collections.defaultdict(list)
+            self.pch_dictionary[int(vid, 16)] = collections.defaultdict(list)
+            self.device_dictionary[int(vid, 16)] = collections.defaultdict(list)
+            for fxml in os.listdir(os.path.join(_cfg_path, vid)):
                 if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
-                tree = ET.parse( os.path.join(_cfg_path,vid,fxml) )
+                tree = ET.parse( os.path.join(_cfg_path, vid, fxml) )
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     if 'platform' not in _cfg.attrib:
@@ -369,15 +369,15 @@ class Chipset:
                         if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
                         if not _cfg.attrib['platform'].upper() in self.pch_codes.keys():
                             self.pch_codes[_cfg.attrib['platform'].upper()] = {}
-                            self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid,16)
-                        mdict = self.pch_dictionary[int(vid,16)]
+                            self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid, 16)
+                        mdict = self.pch_dictionary[int(vid, 16)]
                         cdict = self.pch_codes[_cfg.attrib['platform'].upper()]
                     elif _cfg.attrib['platform'].upper():
                         if logger().DEBUG: logger().log("[*] found platform config from '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.chipset_codes.keys():
                             self.chipset_codes[_cfg.attrib['platform'].upper()] = {}
-                            self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid,16)
-                        mdict = self.chipset_dictionary[int(vid,16)]
+                            self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid, 16)
+                        mdict = self.chipset_dictionary[int(vid, 16)]
                         cdict = self.chipset_codes[_cfg.attrib['platform'].upper()]
                     else:
                         continue
@@ -398,7 +398,7 @@ class Chipset:
                         if _info.iter('sku'):
                             for _sku in _info.iter('sku'):
                                 _det = ""
-                                _did = int(_sku.attrib['did'],16)
+                                _did = int(_sku.attrib['did'], 16)
                                 del _sku.attrib['did']
                                 mdict[_did].append(_sku.attrib)
                                 if "detection_value" in _sku.attrib.keys():
@@ -469,12 +469,12 @@ class Chipset:
             if 'platform' not in _cfg.attrib:
                 if logger().DEBUG: logger().log( "[*] loading common platform config from '{}'..".format(fxml) )
             elif code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log( "[*] loading '{}' platform config from '{}'..".format(code,fxml) )
+                if logger().DEBUG: logger().log( "[*] loading '{}' platform config from '{}'..".format(code, fxml) )
                 if 'req_pch' in _cfg.attrib:
                     if 'true' == _cfg.attrib['req_pch'].lower():
                         self.reqs_pch = True
             elif pch_code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code,fxml))
+                if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
             else: continue
 
             if logger().DEBUG: logger().log( "[*] loading integrated devices/controllers.." )
@@ -578,9 +578,9 @@ class Chipset:
             xml_did  = device_data.get( 'did', None )
             if (xml_vid and xml_did):
                 bus_list = []
-                did_list = [int(_,16) for _ in xml_did.split(',')]
+                did_list = [int(_, 16) for _ in xml_did.split(',')]
                 for enum_dev in enum_devices:
-                    if ((int(device_data['dev'],16), int(device_data['fun'],16), int(xml_vid,16)) == enum_dev[1:4]) and (enum_dev[4] in did_list):
+                    if ((int(device_data['dev'], 16), int(device_data['fun'], 16), int(xml_vid, 16)) == enum_dev[1:4]) and (enum_dev[4] in did_list):
                         bus_list.append( hex(enum_dev[0]) )
                         if logger().DEBUG: logger().log( '    + {:16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus 0x{:02X}'.format(config_device, enum_dev[3], enum_dev[4], enum_dev[0]) )
                 if len(bus_list):
@@ -619,18 +619,18 @@ class Chipset:
     def get_device_BDF( self, device_name ):
         device = self.Cfg.CONFIG_PCI[ device_name ]
         if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: {}'.format(device_name))
-        b = int(device['bus'],16)
-        d = int(device['dev'],16)
-        f = int(device['fun'],16)
-        return (b,d,f)
+        b = int(device['bus'], 16)
+        d = int(device['dev'], 16)
+        f = int(device['fun'], 16)
+        return (b, d, f)
 
     def get_DeviceVendorID( self, device_name ):
-        (b,d,f) = self.get_device_BDF( device_name )
+        (b, d, f) = self.get_device_BDF( device_name )
         return self.pci.get_DIDVID( b, d, f )
 
     def is_device_enabled( self, device_name ):
         if self.is_device_defined( device_name ):
-            (b,d,f) = self.get_device_BDF( device_name )
+            (b, d, f) = self.get_device_BDF( device_name )
             return self.pci.is_enabled( b, d, f )
         return False
 
@@ -649,7 +649,7 @@ class Chipset:
         return False
 
     def switch_device_def( self, target_dev, source_dev ):
-        (b,d,f) = self.get_device_BDF( source_dev )
+        (b, d, f) = self.get_device_BDF( source_dev )
         self.Cfg.CONFIG_PCI[ target_dev ]['bus'] = str(b)
         self.Cfg.CONFIG_PCI[ target_dev ]['dev'] = str(d)
         self.Cfg.CONFIG_PCI[ target_dev ]['fun'] = str(f)
@@ -747,29 +747,29 @@ class Chipset:
             if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
             elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
             elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
-            elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o+4 ) << 32) | self.pci.read_dword(b, d, f, o)
+            elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
         elif RegisterType.MMCFG == rtype:
-            reg_value = self.mmio.read_mmcfg_reg(int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16) )
+            reg_value = self.mmio.read_mmcfg_reg(int(reg['bus'], 16), int(reg['dev'], 16), int(reg['fun'], 16), int(reg['offset'], 16), int(reg['size'], 16) )
         elif RegisterType.MMIO == rtype:
-            reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'],16), int(reg['size'],16) )
+            reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
         elif RegisterType.MSR == rtype:
-            (eax, edx) = self.msr.read_msr( cpu_thread, int(reg['msr'],16) )
+            (eax, edx) = self.msr.read_msr( cpu_thread, int(reg['msr'], 16) )
             reg_value = (edx << 32) | eax
         elif RegisterType.PORTIO == rtype:
-            port = int(reg['port'],16)
-            size = int(reg['size'],16)
+            port = int(reg['port'], 16)
+            size = int(reg['size'], 16)
             reg_value = self.io._read_port( port, size )
         elif RegisterType.IOBAR == rtype:
-            reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16) )
+            reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
         elif RegisterType.MSGBUS == rtype:
-            reg_value = self.msgbus.msgbus_reg_read( int(reg['port'],16), int(reg['offset'],16) )
+            reg_value = self.msgbus.msgbus_reg_read( int(reg['port'], 16), int(reg['offset'], 16) )
         elif RegisterType.MM_MSGBUS == rtype:
-            reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'],16), int(reg['offset'],16))
+            reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'], 16), int(reg['offset'], 16))
         elif RegisterType.MEMORY == rtype:
             if reg['access'] == 'dram':
-                reg_value= self.mem.read_physical_mem(int(reg['address'],16), int(reg['size'],16))
+                reg_value= self.mem.read_physical_mem(int(reg['address'], 16), int(reg['size'], 16))
             elif reg['access'] == 'mmio':
-                reg_value = self.mmio.read_MMIO_reg(int(reg['address'],16), int(reg['offset'],16),int(reg['size'],16))
+                reg_value = self.mmio.read_MMIO_reg(int(reg['address'], 16), int(reg['offset'], 16), int(reg['size'], 16))
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
@@ -788,11 +788,11 @@ class Chipset:
         reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         if RegisterType.PCICFG == rtype:
-            b = int(reg['bus'],16)
-            d = int(reg['dev'],16)
-            f = int(reg['fun'],16)
-            o = int(reg['offset'],16)
-            size = int(reg['size'],16)
+            b = int(reg['bus'], 16)
+            d = int(reg['dev'], 16)
+            f = int(reg['fun'], 16)
+            o = int(reg['offset'], 16)
+            size = int(reg['size'], 16)
             if   1 == size: self.pci.write_byte( b, d, f, o, reg_value )
             elif 2 == size: self.pci.write_word( b, d, f, o, reg_value )
             elif 4 == size: self.pci.write_dword( b, d, f, o, reg_value )
@@ -800,28 +800,28 @@ class Chipset:
                 self.pci.write_dword( b, d, f, o, (reg_value & 0xFFFFFFFF) )
                 self.pci.write_dword( b, d, f, o + 4, (reg_value>>32 & 0xFFFFFFFF) )
         elif RegisterType.MMCFG == rtype:
-            self.mmio.write_mmcfg_reg(int(reg['bus'],16), int(reg['dev'],16), int(reg['fun'],16), int(reg['offset'],16), int(reg['size'],16), reg_value )
+            self.mmio.write_mmcfg_reg(int(reg['bus'], 16), int(reg['dev'], 16), int(reg['fun'], 16), int(reg['offset'], 16), int(reg['size'], 16), reg_value )
         elif RegisterType.MMIO == rtype:
-            self.mmio.write_MMIO_BAR_reg(reg['bar'], int(reg['offset'],16), reg_value, int(reg['size'],16) )
+            self.mmio.write_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), reg_value, int(reg['size'], 16) )
         elif RegisterType.MSR == rtype:
             eax = (reg_value & 0xFFFFFFFF)
             edx = ((reg_value >> 32) & 0xFFFFFFFF)
-            self.msr.write_msr( cpu_thread, int(reg['msr'],16), eax, edx )
+            self.msr.write_msr( cpu_thread, int(reg['msr'], 16), eax, edx )
         elif RegisterType.PORTIO == rtype:
-            port = int(reg['port'],16)
-            size = int(reg['size'],16)
+            port = int(reg['port'], 16)
+            size = int(reg['size'], 16)
             self.io._write_port( port, reg_value, size )
         elif RegisterType.IOBAR == rtype:
-            self.iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'],16), int(reg['size'],16), reg_value )
+            self.iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'], 16), int(reg['size'], 16), reg_value )
         elif RegisterType.MSGBUS == rtype:
-            self.msgbus.msgbus_reg_write( int(reg['port'],16), int(reg['offset'],16), reg_value )
+            self.msgbus.msgbus_reg_write( int(reg['port'], 16), int(reg['offset'], 16), reg_value )
         elif RegisterType.MM_MSGBUS == rtype:
-            self.msgbus.mm_msgbus_reg_write(int(reg['port'],16), int(reg['offset'],16), reg_value)
+            self.msgbus.mm_msgbus_reg_write(int(reg['port'], 16), int(reg['offset'], 16), reg_value)
         elif RegisterType.MEMORY == rtype:
             if reg['access'] == 'dram':
-                self.mem.write_physical_mem(int(reg['address'],16), int(reg['size'],16), reg_value)
+                self.mem.write_physical_mem(int(reg['address'], 16), int(reg['size'], 16), reg_value)
             elif reg['access'] == 'mmio':
-                self.mmio.write_MMIO_reg(int(reg['address'],16), int(reg['offset'],16), reg_value, int(reg['size'],16))
+                self.mmio.write_MMIO_reg(int(reg['address'], 16), int(reg['offset'], 16), reg_value, int(reg['size'], 16))
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
@@ -869,7 +869,7 @@ class Chipset:
             mask = (1 << int(field_attrs['size'])) - 1
         else:
             mask_start = 0
-            mask = (1 << (int(reg_def['size'],16) * 8)) - 1
+            mask = (1 << (int(reg_def['size'], 16) * 8)) - 1
         if preserve_field_position:
             return mask << mask_start
         else:
@@ -948,7 +948,7 @@ class Chipset:
                     field_mask = (field_mask << 1) | 1
                 field_value = (reg_val >> field_bit) & field_mask
                 field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
-                reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit,f[0],field_value,field_desc))
+                reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit, f[0], field_value, field_desc))
 
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
@@ -957,26 +957,26 @@ class Chipset:
         reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_str = ''
-        reg_val_str = "0x{:0{width}X}".format(reg_val,width=(int(reg['size'],16)*2))
+        reg_val_str = "0x{:0{width}X}".format(reg_val, width=(int(reg['size'], 16) *2))
         if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
-            b = int(reg['bus'],16)
-            d = int(reg['dev'],16)
-            f = int(reg['fun'],16)
-            o = int(reg['offset'],16)
+            b = int(reg['bus'], 16)
+            d = int(reg['dev'], 16)
+            f = int(reg['fun'], 16)
+            o = int(reg['offset'], 16)
             mmcfg_off_str =  ''
             if RegisterType.MMCFG == rtype:
-                mmcfg_off_str += ", MMCFG + 0x{:X}".format((b*32*8 + d*8 + f) * 0x1000 + o)
+                mmcfg_off_str += ", MMCFG + 0x{:X}".format((b *32 *8 + d *8 + f) * 0x1000 + o)
             reg_str = "[*] {} = {} << {} (b:d.f {:02d}:{:02d}.{:d} + 0x{:X}{})".format(reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
         elif RegisterType.MMIO == rtype:
-            reg_str = "[*] {} = {} << {} ({} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+            reg_str = "[*] {} = {} << {} ({} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'], 16))
         elif RegisterType.MSR == rtype:
-            reg_str = "[*] {} = {} << {} (MSR 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['msr'],16))
+            reg_str = "[*] {} = {} << {} (MSR 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['msr'], 16))
         elif RegisterType.PORTIO == rtype:
-            reg_str = "[*] {} = {} << {} (I/O port 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'],16))
+            reg_str = "[*] {} = {} << {} (I/O port 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'], 16))
         elif RegisterType.IOBAR == rtype:
-            reg_str = "[*] {} = {} << {} (I/O {} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'],16))
+            reg_str = "[*] {} = {} << {} (I/O {} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'], 16))
         elif RegisterType.MSGBUS == rtype or RegisterType.MM_MSGBUS == rtype:
-            reg_str = "[*] {} = {} << {} (msgbus port 0x{:X}, off 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'],16), int(reg['offset'],16))
+            reg_str = "[*] {} = {} << {} (msgbus port 0x{:X}, off 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'], 16), int(reg['offset'], 16))
         else:
             reg_str = "[*] {} = {} << {}".format(reg_name, reg_val_str, reg['desc'])
 
@@ -1022,7 +1022,7 @@ class Chipset:
         if io_name in self.Cfg.IO_BARS.keys():
             reg = self.Cfg.IO_BARS[io_name]["register"]
             bf = self.Cfg.IO_BARS[io_name]["base_field"]
-            return (reg,bf)
+            return (reg, bf)
         else:
             return None, None
 

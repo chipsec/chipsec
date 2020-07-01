@@ -104,6 +104,6 @@ class MsgBusCommand(BaseCommand):
             return
 
         if res is not None: self.logger.log("[CHIPSEC] result: 0x{:08X}".format(res))
-        self.logger.log( "[CHIPSEC] (msgbus) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (msgbus) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'msgbus': MsgBusCommand }

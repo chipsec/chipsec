@@ -52,11 +52,11 @@ MAX_DIMM_SPD_COUNT = 8
 
 SPD_DIMMS = {}
 for i in range(MAX_DIMM_SPD_COUNT):
-    SPD_DIMMS[SPD_SMBUS_ADDRESS + i*2] = 'DIMM{:d}'.format(i)
+    SPD_DIMMS[SPD_SMBUS_ADDRESS + i *2] = 'DIMM{:d}'.format(i)
 
 SPD_DIMM_ADDRESSES = {}
 for i in range(MAX_DIMM_SPD_COUNT):
-    SPD_DIMM_ADDRESSES['DIMM{:d}'.format(i)] = SPD_SMBUS_ADDRESS + i*2
+    SPD_DIMM_ADDRESSES['DIMM{:d}'.format(i)] = SPD_SMBUS_ADDRESS + i *2
 
 ###############################################################################
 #
@@ -154,15 +154,15 @@ DRAM_DEVICE_TYPE_DDR2            = 0x8
 DRAM_DEVICE_TYPE_DDR3            = 0x0B
 DRAM_DEVICE_TYPE_DDR4            = 0x0C
 DRAM_DEVICE_TYPE = {
-  DRAM_DEVICE_TYPE_FPM_DRAM        : 'Standard Fast Page Mode DRAM',
-  DRAM_DEVICE_TYPE_EDO             : 'EDO DRAM',
+  DRAM_DEVICE_TYPE_FPM_DRAM: 'Standard Fast Page Mode DRAM',
+  DRAM_DEVICE_TYPE_EDO: 'EDO DRAM',
   DRAM_DEVICE_TYPE_PIPELINED_NIBBLE: 'Pipelined Nibble',
-  DRAM_DEVICE_TYPE_SDR             : 'Sync DRAM (SDRAM)',
-  DRAM_DEVICE_TYPE_MULTIPLEXED_ROM : 'Multiplexed ROM',
-  DRAM_DEVICE_TYPE_DDR             : 'DDR SDRAM',
-  DRAM_DEVICE_TYPE_DDR2            : 'DDR2 SDRAM',
-  DRAM_DEVICE_TYPE_DDR3            : 'DDR3 SDRAM',
-  DRAM_DEVICE_TYPE_DDR4            : 'DDR4 SDRAM'
+  DRAM_DEVICE_TYPE_SDR: 'Sync DRAM (SDRAM)',
+  DRAM_DEVICE_TYPE_MULTIPLEXED_ROM: 'Multiplexed ROM',
+  DRAM_DEVICE_TYPE_DDR: 'DDR SDRAM',
+  DRAM_DEVICE_TYPE_DDR2: 'DDR2 SDRAM',
+  DRAM_DEVICE_TYPE_DDR3: 'DDR3 SDRAM',
+  DRAM_DEVICE_TYPE_DDR4: 'DDR4 SDRAM'
 }
 
 MODULE_TYPE_UNDEFINED       = 0x0
@@ -187,7 +187,7 @@ SPD_REVISION_1_1 = 0x11
 SPD_REVISION_1_2 = 0x12
 SPD_REVISION_1_3 = 0x13
 def SPD_REVISION(revision):
-    return ('{:d}.{:d}'.format(revision>>4,revision&0xF) )
+    return ('{:d}.{:d}'.format(revision>>4, revision&0xF) )
 
 
 def dram_device_type_name( dram_type ):
@@ -300,7 +300,7 @@ class SPD:
         return self.smbus.write_byte( device, offset, value )
 
     def read_range( self, start_offset, size, device=SPD_SMBUS_ADDRESS ):
-        buffer = [chr(0xFF)]*size
+        buffer = [chr(0xFF)] *size
         for i in range(size):
             buffer[i] = chr( self.read_byte( start_offset + i, device ) )
         return buffer
@@ -320,12 +320,12 @@ class SPD:
     #
     def getDRAMDeviceType( self, device=SPD_SMBUS_ADDRESS ):
         dram_type = self.read_byte( SPD_OFFSET_DRAM_DEVICE_TYPE, device )
-        if logger().HAL: logger().log( "[spd][0x{:02X}] DRAM Device Type (byte 2): 0x{:01X}".format(device,dram_type) )
+        if logger().HAL: logger().log( "[spd][0x{:02X}] DRAM Device Type (byte 2): 0x{:01X}".format(device, dram_type) )
         return dram_type
 
     def getModuleType( self, device=SPD_SMBUS_ADDRESS ):
         module_type = self.read_byte( SPD_OFFSET_DDR3_MODULE_TYPE, device )
-        if logger().HAL: logger().log( "[spd][0x{:02X}] Module Type (byte 3): 0x{:01X}".format(device,module_type) )
+        if logger().HAL: logger().log( "[spd][0x{:02X}] Module Type (byte 3): 0x{:01X}".format(device, module_type) )
         return module_type
 
     def isECC( self, device=SPD_SMBUS_ADDRESS ):
@@ -346,7 +346,7 @@ class SPD:
             ecc = self.read_byte( ecc_off, device )
             ecc_supported = (0x2 == ecc)
             ecc_width = self.read_byte( SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, device )
-            if logger().HAL: logger().log("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH ,ecc_width))
+            if logger().HAL: logger().log("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, ecc_width))
 
         if logger().HAL:
             if ecc is None:
@@ -362,13 +362,13 @@ class SPD:
             if self.isSPDPresent( d ): _dimms.append( d )
         if logger().HAL:
             logger().log( "Detected the following SPD devices:" )
-            for _dimm in _dimms: logger().log( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm],_dimm) )
+            for _dimm in _dimms: logger().log( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm], _dimm) )
         return _dimms
 
     def isSPDPresent( self, device=SPD_SMBUS_ADDRESS ):
         device_type = self.getDRAMDeviceType( device )
         is_spd_present = (device_type != 0xFF)
-        if logger().HAL: logger().log( "[spd][0x{:02X}] Detecting SPD.. {}found (DRAM memory type = 0x{:X})".format(device,'' if is_spd_present else 'not ',device_type) )
+        if logger().HAL: logger().log( "[spd][0x{:02X}] Detecting SPD.. {}found (DRAM memory type = 0x{:X})".format(device, '' if is_spd_present else 'not ', device_type) )
         return is_spd_present
 
 

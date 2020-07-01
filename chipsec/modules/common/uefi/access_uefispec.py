@@ -110,9 +110,9 @@ class access_uefispec(BaseModule):
         #origdata = _uefi.get_EFI_variable(name, guid)
         origdata = data
         datalen = len(bytearray(data))
-        baddata = 'Z'*datalen #0x5A is ASCII 'Z'
+        baddata = 'Z' *datalen #0x5A is ASCII 'Z'
         if baddata == origdata:
-            baddata = 'A'*datalen #in case we failed to restore previously
+            baddata = 'A' *datalen #in case we failed to restore previously
         status = self._uefi.set_EFI_variable(name, guid, baddata)
         if not status: self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
         newdata  = self._uefi.get_EFI_variable(name, guid)
@@ -121,7 +121,7 @@ class access_uefispec(BaseModule):
             ret = True
             self._uefi.set_EFI_variable(name, guid, origdata)
             if self.diff_var(self._uefi.get_EFI_variable(name, guid), origdata):
-                nameguid = name+' ('+guid+')'
+                nameguid = name +' (' +guid +')'
                 self.logger.log_bad('RECOVERY FAILED. Variable {} remains corrupted. Original data value: {}'.format(nameguid, origdata))
         return ret
 
@@ -151,7 +151,7 @@ class access_uefispec(BaseModule):
             if len(vars[name]) > 1:
                 self.logger.log_important( 'Found two instances of the variable {}.'.format(name) )
             for (off, buf, hdr, data, guid, attrs) in vars[name]:
-                self.logger.log('[*] Variable {} ({})'.format(name,get_attr_string(attrs)))
+                self.logger.log('[*] Variable {} ({})'.format(name, get_attr_string(attrs)))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
                     #self.logger.log(' UEFI Spec Var {}'.format(name))

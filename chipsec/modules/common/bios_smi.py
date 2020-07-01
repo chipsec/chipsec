@@ -34,7 +34,7 @@ References:
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
 
-TAGS = [MTAG_BIOS,MTAG_SMM]
+TAGS = [MTAG_BIOS, MTAG_SMM]
 
 class bios_smi(BaseModule):
 

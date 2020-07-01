@@ -69,7 +69,7 @@ def IS_EFI_VARIABLE_AUTHENTICATED( attr ):
     return ( IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS ) or IS_VARIABLE_ATTRIBUTE( attr, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS ) )
 
 MAX_VARIABLE_SIZE = 1024
-MAX_NVRAM_SIZE    = 1024*1024
+MAX_NVRAM_SIZE    = 1024 *1024
 
 def get_nvar_name(nvram, name_offset, isAscii):
     if isAscii:
@@ -150,39 +150,39 @@ class StatusCode:
   '''
 
 EFI_STATUS_DICT = {
-  StatusCode.EFI_SUCCESS             :"EFI_SUCCESS",
-  StatusCode.EFI_LOAD_ERROR          :"EFI_LOAD_ERROR",
-  StatusCode.EFI_INVALID_PARAMETER   :"EFI_INVALID_PARAMETER",
-  StatusCode.EFI_UNSUPPORTED         :"EFI_UNSUPPORTED",
-  StatusCode.EFI_BAD_BUFFER_SIZE     :"EFI_BAD_BUFFER_SIZE",
-  StatusCode.EFI_BUFFER_TOO_SMALL    :"EFI_BUFFER_TOO_SMALL",
-  StatusCode.EFI_NOT_READY           :"EFI_NOT_READY",
-  StatusCode.EFI_DEVICE_ERROR        :"EFI_DEVICE_ERROR",
-  StatusCode.EFI_WRITE_PROTECTED     :"EFI_WRITE_PROTECTED",
-  StatusCode.EFI_OUT_OF_RESOURCES    :"EFI_OUT_OF_RESOURCES",
-  StatusCode.EFI_VOLUME_CORRUPTED    :"EFI_VOLUME_CORRUPTED",
-  StatusCode.EFI_VOLUME_FULL         :"EFI_VOLUME_FULL",
-  StatusCode.EFI_NO_MEDIA            :"EFI_NO_MEDIA",
-  StatusCode.EFI_MEDIA_CHANGED       :"EFI_MEDIA_CHANGED",
-  StatusCode.EFI_NOT_FOUND           :"EFI_NOT_FOUND",
-  StatusCode.EFI_ACCESS_DENIED       :"EFI_ACCESS_DENIED",
-  StatusCode.EFI_NO_RESPONSE         :"EFI_NO_RESPONSE",
-  StatusCode.EFI_NO_MAPPING          :"EFI_NO_MAPPING",
-  StatusCode.EFI_TIMEOUT             :"EFI_TIMEOUT",
-  StatusCode.EFI_NOT_STARTED         :"EFI_NOT_STARTED",
-  StatusCode.EFI_ALREADY_STARTED     :"EFI_ALREADY_STARTED",
-  StatusCode.EFI_ABORTED             :"EFI_ABORTED",
-  StatusCode.EFI_ICMP_ERROR          :"EFI_ICMP_ERROR",
-  StatusCode.EFI_TFTP_ERROR          :"EFI_TFTP_ERROR",
-  StatusCode.EFI_PROTOCOL_ERROR      :"EFI_PROTOCOL_ERROR",
-  StatusCode.EFI_INCOMPATIBLE_VERSION:"EFI_INCOMPATIBLE_VERSION",
-  StatusCode.EFI_SECURITY_VIOLATION  :"EFI_SECURITY_VIOLATION",
-  StatusCode.EFI_CRC_ERROR           :"EFI_CRC_ERROR",
-  StatusCode.EFI_END_OF_MEDIA        :"EFI_END_OF_MEDIA",
-  StatusCode.EFI_END_OF_FILE         :"EFI_END_OF_FILE",
-  StatusCode.EFI_INVALID_LANGUAGE    :"EFI_INVALID_LANGUAGE",
-  StatusCode.EFI_COMPROMISED_DATA    :"EFI_COMPROMISED_DATA",
-  StatusCode.EFI_HTTP_ERROR          :"EFI_HTTP_ERROR"
+  StatusCode.EFI_SUCCESS: "EFI_SUCCESS",
+  StatusCode.EFI_LOAD_ERROR: "EFI_LOAD_ERROR",
+  StatusCode.EFI_INVALID_PARAMETER: "EFI_INVALID_PARAMETER",
+  StatusCode.EFI_UNSUPPORTED: "EFI_UNSUPPORTED",
+  StatusCode.EFI_BAD_BUFFER_SIZE: "EFI_BAD_BUFFER_SIZE",
+  StatusCode.EFI_BUFFER_TOO_SMALL: "EFI_BUFFER_TOO_SMALL",
+  StatusCode.EFI_NOT_READY: "EFI_NOT_READY",
+  StatusCode.EFI_DEVICE_ERROR: "EFI_DEVICE_ERROR",
+  StatusCode.EFI_WRITE_PROTECTED: "EFI_WRITE_PROTECTED",
+  StatusCode.EFI_OUT_OF_RESOURCES: "EFI_OUT_OF_RESOURCES",
+  StatusCode.EFI_VOLUME_CORRUPTED: "EFI_VOLUME_CORRUPTED",
+  StatusCode.EFI_VOLUME_FULL: "EFI_VOLUME_FULL",
+  StatusCode.EFI_NO_MEDIA: "EFI_NO_MEDIA",
+  StatusCode.EFI_MEDIA_CHANGED: "EFI_MEDIA_CHANGED",
+  StatusCode.EFI_NOT_FOUND: "EFI_NOT_FOUND",
+  StatusCode.EFI_ACCESS_DENIED: "EFI_ACCESS_DENIED",
+  StatusCode.EFI_NO_RESPONSE: "EFI_NO_RESPONSE",
+  StatusCode.EFI_NO_MAPPING: "EFI_NO_MAPPING",
+  StatusCode.EFI_TIMEOUT: "EFI_TIMEOUT",
+  StatusCode.EFI_NOT_STARTED: "EFI_NOT_STARTED",
+  StatusCode.EFI_ALREADY_STARTED: "EFI_ALREADY_STARTED",
+  StatusCode.EFI_ABORTED: "EFI_ABORTED",
+  StatusCode.EFI_ICMP_ERROR: "EFI_ICMP_ERROR",
+  StatusCode.EFI_TFTP_ERROR: "EFI_TFTP_ERROR",
+  StatusCode.EFI_PROTOCOL_ERROR: "EFI_PROTOCOL_ERROR",
+  StatusCode.EFI_INCOMPATIBLE_VERSION: "EFI_INCOMPATIBLE_VERSION",
+  StatusCode.EFI_SECURITY_VIOLATION: "EFI_SECURITY_VIOLATION",
+  StatusCode.EFI_CRC_ERROR: "EFI_CRC_ERROR",
+  StatusCode.EFI_END_OF_MEDIA: "EFI_END_OF_MEDIA",
+  StatusCode.EFI_END_OF_FILE: "EFI_END_OF_FILE",
+  StatusCode.EFI_INVALID_LANGUAGE: "EFI_INVALID_LANGUAGE",
+  StatusCode.EFI_COMPROMISED_DATA: "EFI_COMPROMISED_DATA",
+  StatusCode.EFI_HTTP_ERROR: "EFI_HTTP_ERROR"
 }
 
 
@@ -194,7 +194,7 @@ def EFI_GUID_STR( guid ):
 
 
 def align(of, size):
-    of = (((of + size - 1)//size) * size)
+    of = (((of + size - 1) //size) * size)
     return of
 
 def bit_set(value, mask, polarity = False):
@@ -285,7 +285,7 @@ def parse_sb_db(db, decode_dir):
     # some platforms have 0's in the beginnig, skip all 0 (no known SignatureType starts with 0x00):
     while (dof + SIGNATURE_LIST_size) < db_size:
         SignatureType0, SignatureListSize, SignatureHeaderSize, SignatureSize \
-         = struct.unpack(SIGNATURE_LIST, db[dof:dof+SIGNATURE_LIST_size])
+         = struct.unpack(SIGNATURE_LIST, db[dof:dof +SIGNATURE_LIST_size])
 
         # prevent infinite loop when parsing malformed var
         if SignatureListSize == 0:
@@ -306,10 +306,10 @@ def parse_sb_db(db, decode_dir):
         # Extract signature data blobs
         if (((sig_size > 0) and (sig_size == SignatureSize)) or ((sig_size == 0) and (SignatureSize >= 0x10))):
             sof = 0
-            sig_list = db[dof+SIGNATURE_LIST_size+SignatureHeaderSize:dof+SignatureListSize]
+            sig_list = db[dof +SIGNATURE_LIST_size +SignatureHeaderSize:dof +SignatureListSize]
             sig_list_size = len(sig_list)
             while ((sof + EFI_GUID_SIZE) < sig_list_size):
-                sig_data = sig_list[sof:sof+SignatureSize]
+                sig_data = sig_list[sof:sof +SignatureSize]
                 owner0 = struct.unpack(EFI_GUID_FMT, sig_data[:EFI_GUID_SIZE])
                 owner = EFI_GUID_STR(owner0)
                 data = sig_data[EFI_GUID_SIZE:]
@@ -376,7 +376,7 @@ def parse_auth_var(db, decode_dir):
     if db_size < AUTH_CERT_DB_LIST_HEAD_size:
         logger().warn("Cert list empty.")
         return entries
-    expected_size = struct.unpack(AUTH_CERT_DB_LIST_HEAD, db[dof:dof+AUTH_CERT_DB_LIST_HEAD_size])[0]
+    expected_size = struct.unpack(AUTH_CERT_DB_LIST_HEAD, db[dof:dof +AUTH_CERT_DB_LIST_HEAD_size])[0]
     if db_size != expected_size:
         logger().error("Expected size of cert list did not match actual size.")
         return entries
@@ -384,17 +384,17 @@ def parse_auth_var(db, decode_dir):
 
     # Loop through all the certs in the list.
     while dof + AUTH_CERT_DB_DATA_size < db_size:
-        ven_guid0, cert_node_size, name_size, cert_data_size = struct.unpack(AUTH_CERT_DB_DATA, db[dof:dof+AUTH_CERT_DB_DATA_size])
+        ven_guid0, cert_node_size, name_size, cert_data_size = struct.unpack(AUTH_CERT_DB_DATA, db[dof:dof +AUTH_CERT_DB_DATA_size])
         vendor_guid = EFI_GUID_STR(ven_guid0)
         name_size *= 2  # Name size is actually the number of CHAR16 in the name array
         tof = dof + AUTH_CERT_DB_DATA_size
         try:
-            var_name = codecs.decode(db[tof:tof+name_size], 'utf-16')
+            var_name = codecs.decode(db[tof:tof +name_size], 'utf-16')
         except UnicodeDecodeError:
-            logger().warn("Unable to decode {}".format(db[tof:tof+name_size]))
+            logger().warn("Unable to decode {}".format(db[tof:tof +name_size]))
             var_name = "CHIPSEC ERROR!"
         tof += name_size
-        sig_data = db[tof:tof+cert_data_size]
+        sig_data = db[tof:tof +cert_data_size]
         entries.append(sig_data)
         sig_file_name = '{}-{}-{:02X}.bin'.format(vendor_guid, codecs.encode(var_name), nsig)
         sig_file_name = os.path.join(decode_dir, sig_file_name)
@@ -419,9 +419,9 @@ def parse_esal_var(db, decode_dir):
 
     # Extract signatures
     while dof + ESAL_SIG_SIZE <= db_size:
-        key_data = db[dof:dof+ESAL_SIG_SIZE]
+        key_data = db[dof:dof +ESAL_SIG_SIZE]
         entries.append(key_data)
-        key_file_name = os.path.join(decode_dir,'AuthVarKeyDatabase-cert-{:02X}.bin'.format(nsig))
+        key_file_name = os.path.join(decode_dir, 'AuthVarKeyDatabase-cert-{:02X}.bin'.format(nsig))
         write_file(key_file_name, key_data)
         dof += ESAL_SIG_SIZE
         nsig += 1
@@ -557,24 +557,24 @@ class S3BootScriptWidth:
     EFI_BOOT_SCRIPT_WIDTH_UINT64 = 0x03
 
 script_width_sizes = {
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8   : 1,
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16  : 2,
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32  : 4,
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64  : 8
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8: 1,
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16: 2,
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32: 4,
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64: 8
 }
 
 script_width_values = {
-  1 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8,
-  2 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16,
-  4 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32,
-  8 : S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64
+  1: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8,
+  2: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16,
+  4: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32,
+  8: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64
 }
 
 script_width_formats = {
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8   : 'B',
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16  : 'H',
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32  : 'I',
-  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64  : 'Q'
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8: 'B',
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16: 'H',
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32: 'I',
+  S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64: 'Q'
 }
 
 # //************************************************
@@ -639,7 +639,7 @@ class op_io_pci_mem():
             if len(self.buffer) != sz:
                 logger().log( '[?] buffer size (0x{:X}) != Width x Count (0x{:X})'.format(len(self.buffer), sz) )
             else:
-                self.values = list( struct.unpack( ('<{:d}{:1}'.format(self.count,script_width_formats[self.width])), self.buffer ) )
+                self.values = list( struct.unpack( ('<{:d}{:1}'.format(self.count, script_width_formats[self.width])), self.buffer ) )
     def __str__(self):
         str_r =  "  Opcode : {} (0x{:04X})\n".format(self.name, self.opcode)
         str_r += "  Width  : 0x{:02X} ({:X} bytes)\n".format(self.width, script_width_sizes[self.width])
@@ -649,7 +649,7 @@ class op_io_pci_mem():
         if self.unknown is not None: str_r += "  Unknown: 0x{:04X}\n".format(self.unknown)
         if self.count   is not None: str_r += "  Count  : 0x{:X}\n".format(self.count)
         if self.values  is not None:
-            fmt = '0x{}'.format( '{{:0{:d}X}}'.format(script_width_sizes[self.width]*2) )
+            fmt = '0x{}'.format( '{{:0{:d}X}}'.format(script_width_sizes[self.width] *2) )
             str_r += "  Values : {}\n".format("  ".join( [fmt.format(v) for v in self.values] ))
         elif self.buffer is not None:
             str_r += ("  Buffer (size = 0x{:X}):\n".format(len(self.buffer)) + dump_buffer( self.buffer, 16 ))
@@ -828,7 +828,7 @@ EFI_1_02_SYSTEM_TABLE_REVISION = ((1 << 16) | (0o2))
 EFI_REVISIONS = [EFI_2_70_SYSTEM_TABLE_REVISION, EFI_2_60_SYSTEM_TABLE_REVISION, EFI_2_50_SYSTEM_TABLE_REVISION, EFI_2_40_SYSTEM_TABLE_REVISION, EFI_2_31_SYSTEM_TABLE_REVISION, EFI_2_30_SYSTEM_TABLE_REVISION, EFI_2_20_SYSTEM_TABLE_REVISION, EFI_2_10_SYSTEM_TABLE_REVISION, EFI_2_00_SYSTEM_TABLE_REVISION, EFI_1_10_SYSTEM_TABLE_REVISION, EFI_1_02_SYSTEM_TABLE_REVISION ]
 
 def EFI_SYSTEM_TABLE_REVISION(revision):
-    return ('{:d}.{:d}'.format(revision>>16,revision&0xFFFF) )
+    return ('{:d}.{:d}'.format(revision>>16, revision&0xFFFF) )
 
 EFI_SYSTEM_TABLE_FMT  = '=12Q'
 class EFI_SYSTEM_TABLE( namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareRevision ConsoleInHandle ConIn ConsoleOutHandle ConOut StandardErrorHandle StdErr RuntimeServices BootServices NumberOfTableEntries ConfigurationTable') ):
@@ -963,7 +963,7 @@ class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
         self.VendorTables = {}
     def __str__(self):
-        return ( 'Vendor Tables:\n{}'.format(''.join( ['{{{}}} : 0x{:016X}\n'.format(vt,self.VendorTables[vt]) for vt in self.VendorTables])) )
+        return ( 'Vendor Tables:\n{}'.format(''.join( ['{{{}}} : 0x{:016X}\n'.format(vt, self.VendorTables[vt]) for vt in self.VendorTables])) )
 
 
 # #################################################################################################
@@ -1020,10 +1020,10 @@ EFI_SMM_SYSTEM_TABLE_REVISION = (0 << 16) | (0x09)
 
 
 EFI_TABLES = {
-  EFI_SYSTEM_TABLE_SIGNATURE                 : {'name' : 'EFI System Table',                 'struct' : EFI_SYSTEM_TABLE,                 'fmt' : EFI_SYSTEM_TABLE_FMT                 },
-  EFI_RUNTIME_SERVICES_SIGNATURE             : {'name' : 'EFI Runtime Services Table',       'struct' : EFI_RUNTIME_SERVICES_TABLE,       'fmt' : EFI_RUNTIME_SERVICES_TABLE_FMT       },
-  EFI_BOOT_SERVICES_SIGNATURE                : {'name' : 'EFI Boot Services Table',          'struct' : EFI_BOOT_SERVICES_TABLE,          'fmt' : EFI_BOOT_SERVICES_TABLE_FMT          },
-  EFI_DXE_SERVICES_TABLE_SIGNATURE           : {'name' : 'EFI DXE Services Table',           'struct' : EFI_DXE_SERVICES_TABLE,           'fmt' : EFI_DXE_SERVICES_TABLE_FMT           }
+  EFI_SYSTEM_TABLE_SIGNATURE: {'name': 'EFI System Table',                 'struct': EFI_SYSTEM_TABLE,                 'fmt': EFI_SYSTEM_TABLE_FMT                 },
+  EFI_RUNTIME_SERVICES_SIGNATURE: {'name': 'EFI Runtime Services Table',       'struct': EFI_RUNTIME_SERVICES_TABLE,       'fmt': EFI_RUNTIME_SERVICES_TABLE_FMT       },
+  EFI_BOOT_SERVICES_SIGNATURE: {'name': 'EFI Boot Services Table',          'struct': EFI_BOOT_SERVICES_TABLE,          'fmt': EFI_BOOT_SERVICES_TABLE_FMT          },
+  EFI_DXE_SERVICES_TABLE_SIGNATURE: {'name': 'EFI DXE Services Table',           'struct': EFI_DXE_SERVICES_TABLE,           'fmt': EFI_DXE_SERVICES_TABLE_FMT           }
   #EFI_FRAMEWORK_PEI_SERVICES_TABLE_SIGNATURE : {'name' : 'EFI Framework PEI Services Table', 'struct' : EFI_FRAMEWORK_PEI_SERVICES_TABLE, 'fmt' : EFI_FRAMEWORK_PEI_SERVICES_TABLE_FMT },
   #EFI_SMM_SYSTEM_TABLE_SIGNATURE             : {'name' : 'EFI SMM System Table',             'struct' : EFI_SMM_SYSTEM_TABLE,             'fmt' : EFI_SMM_SYSTEM_TABLE_FMT             },
   #EFI_CONFIG_TABLE_SIGNATURE                 : {'name' : 'EFI Configuration Table',          'struct' : EFI_CONFIG_TABLE,                 'fmt' : EFI_CONFIG_TABLE_FMT                 }

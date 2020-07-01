@@ -52,7 +52,7 @@ class EfiHelperError (RuntimeError):
 
 _tools = {
   chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.efi',
-  chipsec.defines.COMPRESSION_TYPE_LZMA : 'LzmaCompress.efi'
+  chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress.efi'
 }
 
 
@@ -134,7 +134,7 @@ class EfiHelper(Helper):
 
     def va2pa( self, va ):
         pa = va # UEFI shell has identity mapping
-        if logger().DEBUG: logger().log( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va,pa) )
+        if logger().DEBUG: logger().log( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa) )
         return pa
 
     def pa2va(self, pa):
@@ -172,7 +172,7 @@ class EfiHelper(Helper):
         if size == 4:
             return edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
-            buf = struct.pack(size*"B", value)
+            buf = struct.pack(size * "B", value)
             edk2.writemem(phys_address_lo, phys_address_hi, buf, size)
 
     #
@@ -241,7 +241,7 @@ class EfiHelper(Helper):
         return 0
 
     def cpuid(self, eax, ecx):
-        (reax, rebx, recx, redx)=edk2.cpuid(eax,ecx)
+        (reax, rebx, recx, redx)=edk2.cpuid(eax, ecx)
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
@@ -255,7 +255,7 @@ class EfiHelper(Helper):
     def get_tool_info( self, tool_type ):
         tool_name = _tools[ tool_type ] if tool_type in _tools else None
         tool_path = os.path.join( get_tools_path(), self.os_system.lower() )
-        return tool_name,tool_path
+        return tool_name, tool_path
 
     def getcwd( self ):
         return os.getcwd()
@@ -274,7 +274,7 @@ class EfiHelper(Helper):
         (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
 
         if Status == 5:
-            size = DataSize+1
+            size = DataSize +1
             (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
 
         return (Status, newdata, Attributes)
@@ -288,7 +288,7 @@ class EfiHelper(Helper):
 
         guid = uuid.UUID(guidstr)
 
-        if data     is None: data = '\0'*4
+        if data     is None: data = '\0' *4
         if datasize is None: datasize = len(data)
         if attrs is None:
             attrs=0x07
@@ -309,9 +309,9 @@ class EfiHelper(Helper):
         attr = 0
         variables = dict()
 
-        status_dict = { 0:"EFI_SUCCESS", 1:"EFI_LOAD_ERROR", 2:"EFI_INVALID_PARAMETER", 3:"EFI_UNSUPPORTED", 4:"EFI_BAD_BUFFER_SIZE", 5:"EFI_BUFFER_TOO_SMALL", 6:"EFI_NOT_READY", 7:"EFI_DEVICE_ERROR", 8:"EFI_WRITE_PROTECTED", 9:"EFI_OUT_OF_RESOURCES", 14:"EFI_NOT_FOUND", 26:"EFI_SECURITY_VIOLATION" }
+        status_dict = { 0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION" }
 
-        name = '\0'*200
+        name = '\0' *200
 
         randguid = uuid.uuid4()
 
@@ -319,12 +319,12 @@ class EfiHelper(Helper):
 
         if status == 5:
             if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
-            name = '\0'*size
+            name = '\0' *size
             (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), randguid.bytes)
 
         while status == 0:
             guid = uuid.UUID(bytes=guidbytes)
-            name = name.encode('ascii','ignore')
+            name = name.encode('ascii', 'ignore')
             (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
 
             if logger().DEBUG: logger().log("{:d}: Found variable {}".format(len(variables), name))

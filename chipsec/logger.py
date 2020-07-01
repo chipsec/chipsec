@@ -48,8 +48,8 @@ class ColorLogger( pyLogging.Formatter ):
     """Colored Output for Python Logging"""
 
     def format( self, record ):
-        message = pyLogging.Formatter.format(self,record)
-        message = self.log_color(message,record)
+        message = pyLogging.Formatter.format(self, record)
+        message = self.log_color(message, record)
         return message
 
     if "windows" == platform.system().lower():
@@ -114,13 +114,13 @@ class ColorLogger( pyLogging.Formatter ):
             pyLogging.ERROR: RED
             }
 
-        def log_color( self, message, record) :
+        def log_color( self, message, record):
             if record.levelno in self.LEVEL_ID:
                 color = self.LEVEL_ID[record.levelno]
                 params = []
                 params.append(str(color + 30))
                 message = ''.join((self.csi, ';'.join(params),
-                                    'm',message,self.reset))
+                                    'm', message, self.reset))
             return message
 
     else:
@@ -143,7 +143,7 @@ class Logger:
         self.rootLogger = pyLogging.getLogger(__name__)
         self.rootLogger.setLevel(self.debug)
         self.ALWAYS_FLUSH = False
-        pyLogging.addLevelName(15,"verbose")
+        pyLogging.addLevelName(15, "verbose")
         self.verbose = 15
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         self.logstream.setFormatter(ColorLogger()) #applys colorization to output
@@ -160,7 +160,7 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-                self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME,mode='w') #creates FileHandler for log file
+                self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME, mode='w') #creates FileHandler for log file
                 self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
 
                 self.LOG_TO_FILE = True
@@ -412,7 +412,7 @@ def bytes2string( buffer, length=16 ):
             num_string   = []
         index += 1
     if 0 != len(buffer)%length:
-        num_string += [ (length - len(buffer)%length) * 3*' ' ]
+        num_string += [ (length - len(buffer)%length) * 3 *' ' ]
         num_string += ['| ']
         num_string += ascii_string
         output.append( ''.join(num_string) )
@@ -450,7 +450,7 @@ def dump_buffer_bytes( arr, length = 8):
             num_string   = []
         index += 1
     if 0 != len(arr)%length:
-        num_string += [ (length - len(arr)%length) * 3*' ' ]
+        num_string += [ (length - len(arr)%length) * 3 *' ' ]
         num_string += ['| ']
         num_string += ascii_string
         output.append( ''.join(num_string) )

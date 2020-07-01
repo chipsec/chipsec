@@ -128,7 +128,7 @@ from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM,
 from chipsec.helper.oshelper import HWAccessViolationError
 from chipsec.defines import BIT26, BIT27, BIT29
 
-TAGS = [MTAG_CPU,MTAG_HWCONFIG,MTAG_SMM]
+TAGS = [MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM]
 
 class spectre_v2(BaseModule):
 

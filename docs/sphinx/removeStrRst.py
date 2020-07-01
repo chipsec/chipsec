@@ -28,7 +28,7 @@ log_path = doc_path.replace( '\\', '/' )
 
 # Remove subheaders from all rst modules
 def modulesRst():
-    for dirname, subdirs, rstFiles in os.walk(os.path.join(doc_path, 'modules')) :
+    for dirname, subdirs, rstFiles in os.walk(os.path.join(doc_path, 'modules')):
         for file in rstFiles:
             index = 0
             log = ''
@@ -72,7 +72,7 @@ def logFile( fileName ):
             line = line[:remLog]
         if 'Module path' in line:
             remPath = line.find('source')
-            line = line.replace( line[17:remPath-1], '<chipsec_path>')
+            line = line.replace( line[17:remPath -1], '<chipsec_path>')
         log += '\t' + line
     f.close()
     return log
@@ -89,10 +89,10 @@ def xmlRst():
                 f.close()
                 commentBegins = xmlContent.find('<!--')
                 commentEnds = xmlContent.find('-->')
-                xmlComment = xmlContent[commentBegins+4:commentEnds] + '\n'
+                xmlComment = xmlContent[commentBegins +4:commentEnds] + '\n'
                 f = open(os.path.join(doc_path, 'modules', 'chipsec.cfg.' + cfg + '.rst'), 'w')
                 title = "chipsec.cfg." + cfg
-                f.write( title + "\n" + "="*len(title) + "\n\n" + xmlComment )
+                f.write( title + "\n" + "=" *len(title) + "\n\n" + xmlComment )
                 f.close()
         f = open(os.path.join(doc_path, 'modules', 'chipsec.cfg.rst'), 'w')
         f.write(".. toctree::\n\n" + moduleStr)

@@ -44,6 +44,6 @@ class CommandClass(BaseCommand):
     def run(self):
         t = time()
         self.func()
-        self.logger.log('[CHIPSEC] (command_display_name) time elapsed {:.3f}'.format(time()-t))
+        self.logger.log('[CHIPSEC] (command_display_name) time elapsed {:.3f}'.format(time() -t))
 
 commands = { 'command_display_name': CommandClass }

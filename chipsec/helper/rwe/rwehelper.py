@@ -137,16 +137,16 @@ IOCTL_CPUID                    = CTL_CODE(FILE_DEVICE_UNKNOWN, 0xa14, METHOD_BUF
 #
 # Default buffer size for EFI variables
 #EFI_VAR_MAX_BUFFER_SIZE = 128*1024
-EFI_VAR_MAX_BUFFER_SIZE = 1024*1024
+EFI_VAR_MAX_BUFFER_SIZE = 1024 *1024
 
 attributes = {
-  "EFI_VARIABLE_NON_VOLATILE"                          : 0x00000001,
-  "EFI_VARIABLE_BOOTSERVICE_ACCESS"                    : 0x00000002,
-  "EFI_VARIABLE_RUNTIME_ACCESS"                        : 0x00000004,
-  "EFI_VARIABLE_HARDWARE_ERROR_RECORD"                 : 0x00000008,
-  "EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS"            : 0x00000010,
-  "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS" : 0x00000020,
-  "EFI_VARIABLE_APPEND_WRITE"                          : 0x00000040
+  "EFI_VARIABLE_NON_VOLATILE": 0x00000001,
+  "EFI_VARIABLE_BOOTSERVICE_ACCESS": 0x00000002,
+  "EFI_VARIABLE_RUNTIME_ACCESS": 0x00000004,
+  "EFI_VARIABLE_HARDWARE_ERROR_RECORD": 0x00000008,
+  "EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS": 0x00000010,
+  "EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS": 0x00000020,
+  "EFI_VARIABLE_APPEND_WRITE": 0x00000040
 }
 
 PyLong_AsByteArray = pythonapi._PyLong_AsByteArray
@@ -157,7 +157,7 @@ PyLong_AsByteArray.argtypes = [py_object,
                                c_int]
 
 def packl_ctypes( lnum, bitlength ):
-    length = (bitlength + 7)//8
+    length = (bitlength + 7) //8
     a = create_string_buffer( length )
     PyLong_AsByteArray(lnum, a, len(a), 1, 1) # 4th param is for endianness 0 - big, non 0 - little
     return a.raw
@@ -200,15 +200,15 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
     variables = dict()
     off = 0
     while (off + header_size) < bsize:
-        efi_var_hdr = EFI_HDR_WIN( *struct.unpack_from( header_fmt, buffer[ off : off + header_size ] ) )
+        efi_var_hdr = EFI_HDR_WIN( *struct.unpack_from( header_fmt, buffer[ off: off + header_size ] ) )
 
         next_var_offset = off + efi_var_hdr.Size
-        efi_var_buf     = buffer[ off : next_var_offset ]
-        efi_var_data    = buffer[ off + efi_var_hdr.DataOffset : off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
+        efi_var_buf     = buffer[ off: next_var_offset ]
+        efi_var_data    = buffer[ off + efi_var_hdr.DataOffset: off + efi_var_hdr.DataOffset + efi_var_hdr.DataSize ]
 
         #efi_var_name = "".join( buffer[ start + header_size : start + efi_var_hdr.DataOffset ] ).decode('utf-16-le')
         str_fmt = "{:d}s".format(efi_var_hdr.DataOffset - header_size)
-        s, = struct.unpack( str_fmt, buffer[ off + header_size : off + efi_var_hdr.DataOffset ] )
+        s, = struct.unpack( str_fmt, buffer[ off + header_size: off + efi_var_hdr.DataOffset ] )
         if sys.version_info[0] < 3:
             efi_var_name = unicode(s, "utf-16-le", errors="replace").split(u'\u0000')[0]
         else:
@@ -236,7 +236,7 @@ def _handle_error( err, hr=0 ):
 
 _tools = {
   chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.exe',
-  chipsec.defines.COMPRESSION_TYPE_LZMA : 'LzmaCompress.exe'
+  chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress.exe'
 }
 
 class RweHelper(Helper):
@@ -522,7 +522,7 @@ class RweHelper(Helper):
                 if logger().DEBUG: logger().error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
-                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status,_err.args[2]), err_status )
+                _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status, _err.args[2]), err_status )
 
         return out_buf
 
@@ -610,13 +610,13 @@ class RweHelper(Helper):
         raise UnimplementedNativeAPIError( "free_phys_mem" )
 
     def read_msr( self, cpu_thread_id, msr_addr ):
-        (eax,ebx,ecx,edx) = (0,0,0,0)
+        (eax, ebx, ecx, edx) = (0, 0, 0, 0)
         out_length = 16
         out_size = c_ulong(out_length)
         in_buf = struct.pack( '<4I', 0, 0, msr_addr, 0 )
         out_buf = self._ioctl( IOCTL_RDMSR, in_buf, out_length )
         try:
-            (eax,ebx,ecx,edx) = struct.unpack( '<4I', out_buf )
+            (eax, ebx, ecx, edx) = struct.unpack( '<4I', out_buf )
         except:
             if logger().DEBUG: logger().error( 'DeviceIoControl did not return 4 DWORD values' )
 
@@ -883,7 +883,7 @@ class RweHelper(Helper):
 
         try:
             import pkg_resources
-            tool_path = pkg_resources.resource_filename( '{}.{}'.format(chipsec.file.TOOLS_DIR,self.os_system.lower()), tool_name )
+            tool_path = pkg_resources.resource_filename( '{}.{}'.format(chipsec.file.TOOLS_DIR, self.os_system.lower()), tool_name )
         except ImportError:
             pass
 
@@ -927,7 +927,7 @@ class RweHelper(Helper):
     def get_tool_info( self, tool_type ):
         tool_name = _tools[ tool_type ] if tool_type in _tools else None
         tool_path = os.path.join( get_tools_path(), self.os_system.lower() )
-        return tool_name,tool_path
+        return tool_name, tool_path
 
 #
 # Get instance of this OS helper

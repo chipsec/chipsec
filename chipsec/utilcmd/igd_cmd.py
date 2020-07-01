@@ -66,8 +66,8 @@ class IgdCommand(BaseCommand):
         t = time.time()
 
         if 'dmaread'     == op:
-            phys_address = int(self.argv[3],16)
-            size         = int(self.argv[4],16) if len(self.argv) > 4 else 0x100
+            phys_address = int(self.argv[3], 16)
+            size         = int(self.argv[4], 16) if len(self.argv) > 4 else 0x100
             self.logger.log( '[CHIPSEC] reading buffer from memory: PA = 0x{:016X}, len = 0x{:X}..'.format(phys_address, size) )
             buffer = self.cs.igd.gfx_aperture_dma_read_write( phys_address, size )
             if len(self.argv) > 5:
@@ -78,9 +78,9 @@ class IgdCommand(BaseCommand):
                 print_buffer( buffer )
 
         elif 'dmawrite'    == op:
-            phys_address = int(self.argv[3],16)
+            phys_address = int(self.argv[3], 16)
             if len(self.argv) > 4:
-                size = int(self.argv[4],16)
+                size = int(self.argv[4], 16)
             else:
                 self.logger.error( "must specify <length> argument in 'igddma write'" )
                 return
@@ -99,7 +99,7 @@ class IgdCommand(BaseCommand):
                     self.logger.log( "[CHIPSEC] read 0x{:X} bytes from file '{}'".format(len(buffer), buf_file) )
 
                 if len(buffer) < size:
-                    self.logger.error( "number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer),size) )
+                    self.logger.error( "number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), size) )
                     return
 
                 self.logger.log( '[CHIPSEC] writing buffer to memory: PA = 0x{:016X}, len = 0x{:X}..'.format(phys_address, size) )
@@ -112,6 +112,6 @@ class IgdCommand(BaseCommand):
             print (IgdCommand.__doc__)
             return
 
-        self.logger.log( "[CHIPSEC] (mem) time elapsed {:.3f}".format(time.time()-t) )
+        self.logger.log( "[CHIPSEC] (mem) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'igd': IgdCommand }

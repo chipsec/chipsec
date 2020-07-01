@@ -348,10 +348,10 @@ VERSION_WIN8       = ((2 << 16) | (4))   # 2 . 4  (Windows 8)
 VERSION_WIN8_1     = ((3 << 16) | (0))   # 3 . 0  (Windows 8 R2)
 
 vmbus_versions = {
-    VERSION_WS2008 : 'Windows Server 2008',
-    VERSION_WIN7   : 'Windows 7',
-    VERSION_WIN8   : 'Windows 8',
-    VERSION_WIN8_1 : 'Windows 8 R2'
+    VERSION_WS2008: 'Windows Server 2008',
+    VERSION_WIN7: 'Windows 7',
+    VERSION_WIN8: 'Windows 8',
+    VERSION_WIN8_1: 'Windows 8 R2'
 }
 
 VMBUS_MESSAGE_CONNECTION_ID	= 1
@@ -366,25 +366,25 @@ VMBUS_MESSAGE_SINT		= 2
 
 # Define hypervisor message types
 hv_message_type = {
-    0x00000000  : 'HVMSG_NONE',
+    0x00000000: 'HVMSG_NONE',
     # Memory access messages
-    0x80000000  : 'HVMSG_UNMAPPED_GPA',
-    0x80000001  : 'HVMSG_GPA_INTERCEPT',
+    0x80000000: 'HVMSG_UNMAPPED_GPA',
+    0x80000001: 'HVMSG_GPA_INTERCEPT',
     # Timer notification messages
-    0x80000010  : 'HVMSG_TIMER_EXPIRED',
+    0x80000010: 'HVMSG_TIMER_EXPIRED',
     # Error messages
-    0x80000020  : 'HVMSG_INVALID_VP_REGISTER_VALUE',
-    0x80000021  : 'HVMSG_UNRECOVERABLE_EXCEPTION',
-    0x80000022  : 'HVMSG_UNSUPPORTED_FEATURE',
+    0x80000020: 'HVMSG_INVALID_VP_REGISTER_VALUE',
+    0x80000021: 'HVMSG_UNRECOVERABLE_EXCEPTION',
+    0x80000022: 'HVMSG_UNSUPPORTED_FEATURE',
     # Trace buffer complete messages
-    0x80000040  : 'HVMSG_EVENTLOG_BUFFERCOMPLETE',
+    0x80000040: 'HVMSG_EVENTLOG_BUFFERCOMPLETE',
     # Platform-specific processor intercept messages
-    0x80010000  : 'HVMSG_X64_IOPORT_INTERCEPT',
-    0x80010001  : 'HVMSG_X64_MSR_INTERCEPT',
-    0x80010002  : 'HVMSG_X64_CPUID_INTERCEPT',
-    0x80010003  : 'HVMSG_X64_EXCEPTION_INTERCEPT',
-    0x80010004  : 'HVMSG_X64_APIC_EOI',
-    0x80010005  : 'HVMSG_X64_LEGACY_FP_ERROR'
+    0x80010000: 'HVMSG_X64_IOPORT_INTERCEPT',
+    0x80010001: 'HVMSG_X64_MSR_INTERCEPT',
+    0x80010002: 'HVMSG_X64_CPUID_INTERCEPT',
+    0x80010003: 'HVMSG_X64_EXCEPTION_INTERCEPT',
+    0x80010004: 'HVMSG_X64_APIC_EOI',
+    0x80010005: 'HVMSG_X64_LEGACY_FP_ERROR'
 }
 
 ### MSG CHANNEL DEFINES ########################################################
@@ -428,13 +428,13 @@ vmbus_channel_message_type = {
 }
 
 channel_flags = {
-    0x00  : 'VMBUS_CHANNEL_ENUMERATE_DEVICE_INTERFACE',
-    0x01  : 'VMBUS_CHANNEL_SERVER_SUPPORTS_TRANSFER_PAGES',
-    0x02  : 'VMBUS_CHANNEL_SERVER_SUPPORTS_GPADLS',
-    0x04  : 'VMBUS_CHANNEL_NAMED_PIPE_MODE',
-    0x08  : 'VMBUS_CHANNEL_LOOPBACK_OFFER',
-    0x09  : 'VMBUS_CHANNEL_PARENT_OFFER',
-    0x0a  : 'VMBUS_CHANNEL_REQUEST_MONITORED_NOTIFICATION'
+    0x00: 'VMBUS_CHANNEL_ENUMERATE_DEVICE_INTERFACE',
+    0x01: 'VMBUS_CHANNEL_SERVER_SUPPORTS_TRANSFER_PAGES',
+    0x02: 'VMBUS_CHANNEL_SERVER_SUPPORTS_GPADLS',
+    0x04: 'VMBUS_CHANNEL_NAMED_PIPE_MODE',
+    0x08: 'VMBUS_CHANNEL_LOOPBACK_OFFER',
+    0x09: 'VMBUS_CHANNEL_PARENT_OFFER',
+    0x0a: 'VMBUS_CHANNEL_REQUEST_MONITORED_NOTIFICATION'
 }
 
 # GUID definitions of various offer types - services offered to the guest
@@ -458,43 +458,43 @@ AVMA_GUID               = '{3375baf4-9e15-4b30-b765-67acb10d607b}'
 DESKTOP_CONTROL_GUID    = '{f8e65716-3cb3-4a06-9a60-1889c5cccab5}'
 
 hv_guid_desc = {
-    HV_NIC_GUID             : 'Microsoft Hyper-V Network',
-    HV_IDE_GUID             : 'Microsoft Hyper-V IDE',
-    HV_SCSI_GUID            : 'Microsoft Hyper-V SCSI Controller',
-    HV_SHUTDOWN_GUID        : 'Microsoft Hyper-V Shutdown',
-    HV_TS_GUID              : 'Microsoft Hyper-V Time Synch',
-    HV_HEART_BEAT_GUID      : 'Microsoft Hyper-V Heartbeat',
-    HV_KVP_GUID             : 'Microsoft Hyper-V KVP',
-    HV_DM_GUID              : 'Microsoft Hyper-V Dynamic memory',
-    HV_MOUSE_GUID           : 'Microsoft Hyper-V Mouse',
-    HV_VSS_GUID             : 'Microsoft Hyper-V VSS Backup/Restore',
-    HV_SYNTHVID_GUID        : 'Microsoft Hyper-V Synthetic Video',
-    HV_SYNTHFC_GUID         : 'Microsoft Hyper-V Synthetic FC',
-    HV_FCOPY_GUID           : 'Microsoft Hyper-V Guest File Copy Service',
-    HV_KBD_GUID             : 'Microsoft Hyper-V Virtual Keyboard',
-    REMOTE_DESKTOP_GUID     : 'Microsoft Hyper-V Remote Desktop Virtualization',
-    VOLUME_SHADOW_COPY_GUID : 'Microsoft Hyper-V Volume Shadow Copy',
-    AVMA_GUID               : 'Microsoft Hyper-V Automatic Virtual Machine Activation (AVMA)',
-    DESKTOP_CONTROL_GUID    : 'Microsoft Hyper-V Remote Desktop Control Channel'
+    HV_NIC_GUID: 'Microsoft Hyper-V Network',
+    HV_IDE_GUID: 'Microsoft Hyper-V IDE',
+    HV_SCSI_GUID: 'Microsoft Hyper-V SCSI Controller',
+    HV_SHUTDOWN_GUID: 'Microsoft Hyper-V Shutdown',
+    HV_TS_GUID: 'Microsoft Hyper-V Time Synch',
+    HV_HEART_BEAT_GUID: 'Microsoft Hyper-V Heartbeat',
+    HV_KVP_GUID: 'Microsoft Hyper-V KVP',
+    HV_DM_GUID: 'Microsoft Hyper-V Dynamic memory',
+    HV_MOUSE_GUID: 'Microsoft Hyper-V Mouse',
+    HV_VSS_GUID: 'Microsoft Hyper-V VSS Backup/Restore',
+    HV_SYNTHVID_GUID: 'Microsoft Hyper-V Synthetic Video',
+    HV_SYNTHFC_GUID: 'Microsoft Hyper-V Synthetic FC',
+    HV_FCOPY_GUID: 'Microsoft Hyper-V Guest File Copy Service',
+    HV_KBD_GUID: 'Microsoft Hyper-V Virtual Keyboard',
+    REMOTE_DESKTOP_GUID: 'Microsoft Hyper-V Remote Desktop Virtualization',
+    VOLUME_SHADOW_COPY_GUID: 'Microsoft Hyper-V Volume Shadow Copy',
+    AVMA_GUID: 'Microsoft Hyper-V Automatic Virtual Machine Activation (AVMA)',
+    DESKTOP_CONTROL_GUID: 'Microsoft Hyper-V Remote Desktop Control Channel'
 }
 
 ### VMBUS PACKET DEFINES #######################################################
 
 vm_pkt = {
-    0x0  :  'VM_PKT_INVALID',
-    0x1  :  'VM_PKT_SYNCH',
-    0x2  :  'VM_PKT_ADD_XFER_PAGESET',
-    0x3  :  'VM_PKT_RM_XFER_PAGESET',
-    0x4  :  'VM_PKT_ESTABLISH_GPADL',
-    0x5  :  'VM_PKT_TEARDOWN_GPADL',
-    0x6  :  'VM_PKT_DATA_INBAND',
-    0x7  :  'VM_PKT_DATA_USING_XFER_PAGES',
-    0x8  :  'VM_PKT_DATA_USING_GPADL',
-    0x9  :  'VM_PKT_DATA_USING_GPA_DIRECT',
-    0xa  :  'VM_PKT_CANCEL_REQUEST',
-    0xb  :  'VM_PKT_COMP',
-    0xc  :  'VM_PKT_DATA_USING_ADDITIONAL_PKT',
-    0xd  :  'VM_PKT_ADDITIONAL_DATA'
+    0x0:  'VM_PKT_INVALID',
+    0x1:  'VM_PKT_SYNCH',
+    0x2:  'VM_PKT_ADD_XFER_PAGESET',
+    0x3:  'VM_PKT_RM_XFER_PAGESET',
+    0x4:  'VM_PKT_ESTABLISH_GPADL',
+    0x5:  'VM_PKT_TEARDOWN_GPADL',
+    0x6:  'VM_PKT_DATA_INBAND',
+    0x7:  'VM_PKT_DATA_USING_XFER_PAGES',
+    0x8:  'VM_PKT_DATA_USING_GPADL',
+    0x9:  'VM_PKT_DATA_USING_GPA_DIRECT',
+    0xa:  'VM_PKT_CANCEL_REQUEST',
+    0xb:  'VM_PKT_COMP',
+    0xc:  'VM_PKT_DATA_USING_ADDITIONAL_PKT',
+    0xd:  'VM_PKT_ADDITIONAL_DATA'
 }
 
 VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED = 1

@@ -43,7 +43,7 @@ class IDTCommand(BaseCommand):
 
     def requires_driver(self):
         parser = ArgumentParser(usage=IDTCommand.__doc__)
-        parser.add_argument('_thread', metavar='thread', type=lambda x: int(x,0), nargs='?', default=None, help="thread")
+        parser.add_argument('_thread', metavar='thread', type=lambda x: int(x, 0), nargs='?', default=None, help="thread")
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
@@ -56,7 +56,7 @@ class IDTCommand(BaseCommand):
         else:
             self.logger.log( "[CHIPSEC] Dumping IDT of {:d} CPU threads".format(num_threads) )
             self.cs.msr.IDT_all( 4 )
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time()-t) )
+        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() -t) )
 
 class GDTCommand(BaseCommand):
     """
@@ -70,7 +70,7 @@ class GDTCommand(BaseCommand):
 
     def requires_driver(self):
         parser = ArgumentParser(usage=GDTCommand.__doc__)
-        parser.add_argument('_thread', metavar='thread', type=lambda x: int(x,0), nargs='?', default=None, help="thread")
+        parser.add_argument('_thread', metavar='thread', type=lambda x: int(x, 0), nargs='?', default=None, help="thread")
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
@@ -83,7 +83,7 @@ class GDTCommand(BaseCommand):
         else:
             self.logger.log( "[CHIPSEC] Dumping IDT of {:d} CPU threads".format(num_threads) )
             self.cs.msr.GDT_all( 4 )
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time()-t) )
+        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() -t) )
 
 class LDTCommand(BaseCommand):
     """

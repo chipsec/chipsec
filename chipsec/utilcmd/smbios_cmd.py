@@ -100,6 +100,6 @@ class smbios_cmd(BaseCommand):
             return
 
         self.func()
-        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time()-t))
+        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time() -t))
 
 commands = {'smbios': smbios_cmd}

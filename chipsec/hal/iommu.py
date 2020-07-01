@@ -33,7 +33,7 @@ IOMMU_ENGINE_GFX     = 'GFXVTD'
 
 
 IOMMU_ENGINES = {
-  IOMMU_ENGINE_GFX    : 'GFXVTBAR',
+  IOMMU_ENGINE_GFX: 'GFXVTBAR',
   IOMMU_ENGINE_DEFAULT: 'VTBAR'
 }
 
@@ -83,7 +83,7 @@ class IOMMU(hal_base.HALBase):
         self.logger.log( "------------------------------------------------------------------" )
         ver_min = self.cs.read_register_field( vtd + '_VER', 'MIN' )
         ver_max = self.cs.read_register_field( vtd + '_VER', 'MAX' )
-        self.logger.log( "Version                   : {:X}.{:X}".format(ver_max,ver_min) )
+        self.logger.log( "Version                   : {:X}.{:X}".format(ver_max, ver_min) )
         enabled = self.is_IOMMU_Engine_Enabled( iommu_engine )
         self.logger.log( "Engine enabled            : {:d}".format(enabled) )
         te      = self.is_IOMMU_Translation_Enabled( iommu_engine )
@@ -124,7 +124,7 @@ class IOMMU(hal_base.HALBase):
         rtaddr_rtt = self.cs.get_register_field( vtd + '_RTADDR', rtaddr_reg, 'RTT' )
         #rtaddr_rta = self.cs.read_register_field( vtd + '_RTADDR', 'RTA', True )
         #rtaddr_rtt = self.cs.read_register_field( vtd + '_RTADDR', 'RTT' )
-        self.logger.log( "[iommu] Root Table Address/Type: 0x{:016X}/{:X}".format(rtaddr_rta,rtaddr_rtt) )
+        self.logger.log( "[iommu] Root Table Address/Type: 0x{:016X}/{:X}".format(rtaddr_rta, rtaddr_rtt) )
 
         ecap_reg   = self.cs.read_register( vtd + '_ECAP' )
         ecs        = self.cs.get_register_field( vtd + '_ECAP', ecap_reg, 'ECS' )
@@ -133,7 +133,7 @@ class IOMMU(hal_base.HALBase):
 
         if 0xFFFFFFFFFFFFFFFF != rtaddr_reg:
             if te:
-                self.logger.log( '[iommu] dumping VT-d page table hierarchy at 0x{:016X} (vtd_context_{:08X})..'.format(rtaddr_rta,rtaddr_rta) )
+                self.logger.log( '[iommu] dumping VT-d page table hierarchy at 0x{:016X} (vtd_context_{:08X})..'.format(rtaddr_rta, rtaddr_rta) )
                 paging_vtd = paging.c_vtd_page_tables( self.cs )
                 paging_vtd.read_vtd_context('vtd_context_{:08X}'.format(rtaddr_rta), rtaddr_rta)
                 self.logger.log( '[iommu] total VTd domains: {:d}'.format(len(paging_vtd.domains)))
