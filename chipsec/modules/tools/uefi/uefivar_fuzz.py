@@ -127,7 +127,7 @@ class uefivar_fuzz(BaseModule):
         BOUND_STR  = 255 #tested value that can be increased or decreased to fit the limit bounds
         BOUND_INT  = 1000
 
-        FUZZ_NAME   = True 
+        FUZZ_NAME   = True
         FUZZ_GUID   = True
         FUZZ_ATTRIB = True
         FUZZ_DATA   = True
@@ -214,7 +214,7 @@ class uefivar_fuzz(BaseModule):
 
                 self.logger.log( '  Running test #{:d}:'.format(count) )
                 self.logger.flush()
-                status = self._uefi.set_EFI_variable(_NAME, str(_GUID), _DATA, _SIZE, _ATTRIB) 
+                status = self._uefi.set_EFI_variable(_NAME, str(_GUID), _DATA, _SIZE, _ATTRIB)
                 self.logger.log( status )
                 status = self._uefi.delete_EFI_variable(_NAME, str(_GUID))
                 self.logger.log( status )

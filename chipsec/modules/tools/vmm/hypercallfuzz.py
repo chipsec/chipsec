@@ -153,4 +153,3 @@ class hypercallfuzz(BaseModule):
         self.logger.log( "    Iterations         : {:d}\n".format(self.iterations) )
 
         return self.fuzz_generic_hypercalls()
-

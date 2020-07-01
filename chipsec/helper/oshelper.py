@@ -114,7 +114,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.Save()
         if not self.helper.stop( start_driver ):
-            logger().warn("failed to stop OS helper") 
+            logger().warn("failed to stop OS helper")
         else:
             if not self.helper.delete( start_driver ):
                 logger().warn("failed to delete OS helper")
@@ -130,7 +130,7 @@ class OsHelper:
     # Currently, CHIPSEC will use native API only if CHIPSEC driver wasn't loaded
     # (e.g. when --no_driver command-line option is specified).
     # In future, it can can more conditions
-    # 
+    #
     def use_native_api(self):
         return self.helper.use_native_api()
 
@@ -176,7 +176,7 @@ class OsHelper:
         if self.use_native_api() and hasattr(self.helper, 'native_write_pci_reg'):
             ret = self.helper.native_write_pci_reg( bus, device, function, address, value, size )
         else:
-            ret = self.helper.write_pci_reg( bus, device, function, address, value, size ) 
+            ret = self.helper.write_pci_reg( bus, device, function, address, value, size )
         if not self.filecmds is None:
             self.filecmds.AddElement("write_pci_reg",(bus,device,function,address,size),ret)
         return ret
@@ -192,7 +192,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("read_mmio_reg",(bar_base + offset,size),ret)
         return ret
-        
+
     def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None ):
         if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
             ret = self.helper.native_write_mmio_reg( bar_base, bar_size, offset, size, value )
@@ -201,7 +201,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("write_mmio_reg",(bar_base + offset, size, value),ret)
         return ret
-        
+
     #
     # physical_address is 64 bit integer
     #
@@ -383,7 +383,7 @@ class OsHelper:
         else:
             ret = self.helper.delete_EFI_variable( name, guid )
         if not self.filecmds is None:
-            self.filecmds.AddElement("delete_EFI_variable",(name, guid),ret)            
+            self.filecmds.AddElement("delete_EFI_variable",(name, guid),ret)
         return ret
 
     def list_EFI_variables( self ):
@@ -394,7 +394,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("list_EFI_variables",(),ret)
         return ret
-    
+
     #
     # ACPI
     #
@@ -413,8 +413,8 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("get_ACPI_table",(table_name),ret)
         return ret
-        
-   
+
+
     #
     # CPUID
     #
@@ -426,7 +426,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("cpuid",(eax, ecx),ret)
         return ret
-        
+
     #
     # IOSF Message Bus access
     #
@@ -469,7 +469,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("get_affinity",(),ret)
         return ret
-        
+
     def set_affinity( self, value ):
         if self.use_native_api() and hasattr(self.helper, 'native_set_affinity'):
             ret = self.helper.native_set_affinity( value )
@@ -478,7 +478,7 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("set_affinity",(value),ret)
         return ret
-        
+
     #
     # Logical CPU count
     #
@@ -550,7 +550,7 @@ def helper():
         try:
             _helper  = OsHelper()
         except BaseException as msg:
-            if logger().DEBUG: 
+            if logger().DEBUG:
                 logger().error( str(msg) )
                 logger().log_bad(traceback.format_exc())
             raise

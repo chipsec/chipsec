@@ -307,13 +307,13 @@ class LinuxHelper(Helper):
     # currently all chipsec ioctl functions are _IOWR
     # currently all size are pointer
     def compute_ioctlbase(self,itype = 'C'):
-        #define _IOWR(type,nr,size)	 _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size))) 
+        #define _IOWR(type,nr,size)	 _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
         #define _IOC(dir,type,nr,size) \
-        #    (((dir)  << _IOC_DIRSHIFT) | \ 
-        #    ((type) << _IOC_TYPESHIFT) | \ 
-        #    ((nr)   << _IOC_NRSHIFT) | \ 
-        #    ((size) << _IOC_SIZESHIFT)) 
-        # IOC_READ | _IOC_WRITE is 3 
+        #    (((dir)  << _IOC_DIRSHIFT) | \
+        #    ((type) << _IOC_TYPESHIFT) | \
+        #    ((nr)   << _IOC_NRSHIFT) | \
+        #    ((size) << _IOC_SIZESHIFT))
+        # IOC_READ | _IOC_WRITE is 3
         # default _IOC_DIRSHIFT is 30
         # default _IOC_TYPESHIFT is 8
         # nr will be 0
@@ -624,7 +624,7 @@ class LinuxHelper(Helper):
                 region = self.memory_mapping(bar_base, bar_size)
                 if not region: logger().error("Unable to map region {:08x}".format(bar_base))
             region.seek(bar_base + offset - region.start)
-            written = region.write(reg)                
+            written = region.write(reg)
             if written != size:
                 logger().error("Unable to write all data to MMIO (wrote {:d} of {:d})".format(written, size))
 
@@ -1008,7 +1008,7 @@ class LinuxHelper(Helper):
             try:
                 if os.path.isfile(path):
                     # Variable already exists
-                    if attrs is not None: 
+                    if attrs is not None:
                         if logger().DEBUG: logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
                     f = open(path, 'r')
                     sattrs = f.read(4)
@@ -1087,7 +1087,7 @@ class LinuxHelper(Helper):
             else:
                 failed_times += 1
         return res
-        
+
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
@@ -1123,7 +1123,7 @@ class LinuxHelper(Helper):
             logger().error("Cannot compress file({})".format(FileName))
             return False
         return True
-        
+
     #
     # Decompress binary
     #

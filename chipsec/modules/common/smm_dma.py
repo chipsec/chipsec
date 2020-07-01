@@ -101,4 +101,3 @@ class smm_dma(BaseModule):
         self.logger.start_test( "SMM TSEG Range Configuration Check" )
         self.res = self.check_tseg_config()
         return self.res
-

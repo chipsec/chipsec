@@ -109,7 +109,7 @@ class Memory(HALBase):
         if self.logger.HAL: self.logger.log( '[mem] VA (0x{:016X}) -> PA (0x{:016X})'.format(va, pa) )
         if error_code:
             if self.logger.HAL: self.logger.log( '[mem] Looks like VA (0x{:016X}) not mapped'.format(va) )
-            return 
+            return
         return pa
 
     # Map physical address to virtual

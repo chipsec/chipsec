@@ -139,7 +139,7 @@ class IOMMU(hal_base.HALBase):
                 self.logger.log( '[iommu] total VTd domains: {:d}'.format(len(paging_vtd.domains)))
                 for domain in paging_vtd.domains:
                     paging_vtd.read_pt_and_show_status('vtd_{:08X}'.format(domain), 'VTd', domain)
-                    #if paging_vtd.failure: self.logger.error( "couldn't dump VT-d page tables" )    
+                    #if paging_vtd.failure: self.logger.error( "couldn't dump VT-d page tables" )
             else:
                 self.logger.log( "[iommu] translation via VT-d engine '{}' is not enabled".format(iommu_engine) )
         else:

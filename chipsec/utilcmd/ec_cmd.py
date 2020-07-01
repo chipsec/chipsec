@@ -106,7 +106,7 @@ class ECCommand(BaseCommand):
     def write(self):
         self.logger.log( "[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval) )
 
-        if self.offset < 0x100: 
+        if self.offset < 0x100:
             self._ec.write_memory( self.offset, self.wval )
         else:
             self._ec.write_memory_extended( self.offset, self.wval )

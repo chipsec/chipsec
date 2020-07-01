@@ -64,7 +64,7 @@ class ACPI_TABLE_HEADER( namedtuple('ACPI_TABLE_HEADER', 'Signature Length Revis
 
 ACPI_TABLE_SIG_SIZE = 0x4
 
-ACPI_TABLE_SIG_ROOT = 'ROOT' 
+ACPI_TABLE_SIG_ROOT = 'ROOT'
 ACPI_TABLE_SIG_RSDP = 'RSDP'
 ACPI_TABLE_SIG_RSDT = 'RSDT'
 ACPI_TABLE_SIG_XSDT = 'XSDT'
@@ -498,7 +498,7 @@ class ACPI(hal_base.HALBase):
             acpi_tables.append((data[ : ACPI_TABLE_HEADER_SIZE ], data[ ACPI_TABLE_HEADER_SIZE : ]))
 
         return acpi_tables
-    
+
     #
     # Dumps contents of ACPI table
     #

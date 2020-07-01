@@ -75,7 +75,7 @@ class PortIOCommand(BaseCommand):
         io_port = int(self.argv[2],16)
 
         width = 0x1
-        if len(self.argv) > 3: 
+        if len(self.argv) > 3:
             width = chipsec_util.get_option_width(self.argv[3]) if chipsec_util.is_option_valid_width(self.argv[3]) else int(self.argv[3],16)
 
         if 5 == len(self.argv):
@@ -100,4 +100,3 @@ class PortIOCommand(BaseCommand):
 
 
 commands = { 'io': PortIOCommand }
-

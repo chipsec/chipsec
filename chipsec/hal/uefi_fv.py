@@ -332,7 +332,7 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
     while cur_offset + file_header_size < min(FvLength, len(FvImage)):
         fsize = 0
     #if (fof + file_header_size) <= min(FvLength, len(FvImage)):
-        #Check for a blank header    
+        #Check for a blank header
         if polarity:
             blank = b"\xff" * file_header_size
         else:

@@ -125,7 +125,7 @@ Please run 'pip install virustotal-api' and try again.""")
 
         image_file = DEF_FWIMAGE_FILE
         if len(module_argv) > 2:
-            # Use provided firmware image 
+            # Use provided firmware image
             image_file = module_argv[2]
             self.logger.log( "[*] reading FW image from file: {}".format(image_file) )
         else:

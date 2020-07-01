@@ -113,7 +113,7 @@ class SMBus(hal_base.HALBase):
 
     #
     # SMBus commands
-    # 
+    #
 
     # waits for SMBus to become ready
     def _is_smbus_ready( self ):
@@ -144,7 +144,7 @@ class SMBus(hal_base.HALBase):
                 return False
             else:
                 if self.cs.register_has_field( self.smb_reg_status, 'DEV_ERR' ):
-                    if 1 == self.cs.get_register_field( self.smb_reg_status, sts, 'DEV_ERR' ): 
+                    if 1 == self.cs.get_register_field( self.smb_reg_status, sts, 'DEV_ERR' ):
                         if self.logger.HAL: self.logger.error( "SMBus device error (invalid cmd, unclaimed cycle or time-out error)" )
                         return False
                 if self.cs.register_has_field( self.smb_reg_status, 'BUS_ERR' ):

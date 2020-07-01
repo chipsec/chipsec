@@ -165,9 +165,9 @@ def DIFF( s, t, sz ):
 
 def FILL_BUFFER( _fill_byte, _fill_size, _ptr_in_buffer, _ptr, _ptr_offset, _sig, _sig_offset ):
     fill_buf = _fill_byte*_fill_size
-    if _ptr_in_buffer and _ptr is not None: 
+    if _ptr_in_buffer and _ptr is not None:
         fill_buf = fill_buf[ : _ptr_offset ] + struct.pack('=I',_ptr&0xFFFFFFFF) +  fill_buf[ _ptr_offset + 4 : ]
-    if _sig is not None: 
+    if _sig is not None:
         fill_buf = fill_buf[ : _sig_offset ] + _sig + fill_buf[ _sig_offset + len(_sig) : ]
     return fill_buf
 
@@ -202,7 +202,7 @@ class smm_ptr(BaseModule):
              self.logger.log( "filling in contents at PA 0x{:016X}:".format(_addr) )
              print_buffer( fill_buf )
 
-        if is_ptr_in_buffer and _ptr is not None: 
+        if is_ptr_in_buffer and _ptr is not None:
             self.logger.log( "[*] writing buffer at PA 0x{:016X} with 0x{:X} bytes '{}'".format(_ptr, self.fill_size, self.fill_byte) )
             self.cs.mem.write_physical_mem( _ptr, self.fill_size, self.fill_byte*self.fill_size )
 
@@ -512,7 +512,7 @@ class smm_ptr(BaseModule):
             self.logger.log_important( "Potentially bad SMI detected! Stopped fuzing (see FUZZ_BAIL_ON_1ST_DETECT option)" )
 
         if bad_ptr_cnt > 0: self.logger.log_bad( "<<< Done: found {:d} potential occurrences of unchecked input pointers".format(bad_ptr_cnt) )
-        else:               self.logger.log_good( "<<< Done: didn't find unchecked input pointers in tested SMI handlers" ) 
+        else:               self.logger.log_good( "<<< Done: didn't find unchecked input pointers in tested SMI handlers" )
 
         res = ModuleResult.FAILED if (bad_ptr_cnt > 0) else ModuleResult.PASSED
         return res

@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -68,7 +68,7 @@ class VMBusFuzz(VMBusDiscovery):
         leftovers = ''.join(chr(getrandbits(8)) for i in range(256 - len(message)))
         return HyperV.hv_post_msg(self, message + leftovers)
 
-    def vmbus_test1_run(self):        
+    def vmbus_test1_run(self):
         self.debug = False
         self.vmbus_request_offers()
         child_relid_list = sorted([value['child_relid'] for value in self.offer_channels.values()])
@@ -131,7 +131,7 @@ class VMBusFuzz(VMBusDiscovery):
         try:
             self.vmbus_init()
             self.scan_supported_versions()
-            if len(self.supported_versions):        
+            if len(self.supported_versions):
                 version = choice(self.supported_versions.keys())
                 self.vmbus_clear()
                 self.vmbus_connect(version)

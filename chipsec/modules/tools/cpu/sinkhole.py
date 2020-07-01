@@ -102,4 +102,3 @@ class sinkhole(BaseModule):
     def run( self, module_argv ):
         self.logger.start_test( "x86 SMM Memory Sinkhole" )
         return self.check_LAPIC_SMRR_overlap()
-

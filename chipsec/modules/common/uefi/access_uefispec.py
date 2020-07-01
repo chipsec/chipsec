@@ -199,4 +199,3 @@ class access_uefispec(BaseModule):
         self.logger.start_test( "Access Control of EFI Variables" )
         do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
         return self.check_vars( do_modify )
-

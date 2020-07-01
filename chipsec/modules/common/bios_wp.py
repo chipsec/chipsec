@@ -153,4 +153,3 @@ class bios_wp(BaseModule):
 
         if wp or spr: return ModuleResult.PASSED
         else: return ModuleResult.FAILED
-

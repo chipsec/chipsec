@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2018, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -60,7 +60,7 @@ class HyperVHypercall(BaseModuleHwAccess):
 
             gprs = self.cpuid_info (0x40000000, 0x0, 'Hypervisor CPUID leaf range and vendor ID signature')
             (max_input_value, id_signature_ebx, id_signature_ecx, id_signature_edx) = gprs
-            id_signature = pack ('<3L', id_signature_ebx, id_signature_ecx, id_signature_edx ) 
+            id_signature = pack ('<3L', id_signature_ebx, id_signature_ecx, id_signature_edx )
             self.msg('The maximum input value for hypervisor CPUID  :  {:08X}'.format(max_input_value))
             self.msg('Hypervisor Vendor ID Signature                :  {}'.format(id_signature))
 
@@ -392,7 +392,7 @@ class HyperVHypercall(BaseModuleHwAccess):
             self.msg('Hypercall: {} '.format(hcname))
             hciv = hv_hciv(0, 0, call_code)
             for i in range(0x0, 0xFFFFF):
-                buffer = pack ('<5Q', i & 0xF, (i >> 4) & 0xF, (i >> 8) & 0xF, (i >> 12) & 0xF, (i >> 16) & 0xF ) 
+                buffer = pack ('<5Q', i & 0xF, (i >> 4) & 0xF, (i >> 8) & 0xF, (i >> 12) & 0xF, (i >> 16) & 0xF )
                 result = self.hv.hypercall64_memory_based(hciv, buffer)
                 statistics[result] = 1 if result not in statistics else statistics[result]  + 1
 

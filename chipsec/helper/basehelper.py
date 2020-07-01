@@ -66,7 +66,7 @@ class Helper(object):
 
     #################################################################################################
     # Actual OS helper functionality accessible to HAL components
-    
+
     #
     # Read/Write PCI configuration registers via legacy CF8/CFC ports
     #
@@ -111,7 +111,7 @@ class Helper(object):
         raise NotImplementedError()
 
     #
-    # Read/Write I/O portline 462, 
+    # Read/Write I/O portline 462,
     #
     def read_io_port( self, io_port, size ):
         raise NotImplementedError()

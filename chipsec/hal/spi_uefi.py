@@ -257,7 +257,7 @@ def build_efi_file_tree ( _uefi, fv_img, fwtype):
 # build_efi_tree - extract EFI modules (FV, files, sections) from EFI image and build an object tree
 #
 # Input arguments:
-#   _uefi          - instance of chipsec.hal.uefi.UEFI class  
+#   _uefi          - instance of chipsec.hal.uefi.UEFI class
 #   data           - an image containing UEFI firmware volumes
 #   fwtype         - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 #

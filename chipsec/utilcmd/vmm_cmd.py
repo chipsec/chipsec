@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2010-2016, Intel Corporation
-# 
+#
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
 #as published by the Free Software Foundation; Version 2.
@@ -64,7 +64,7 @@ class VMMCommand(BaseCommand):
             if match:
                 _bus = int(match.group(1), 16) & 0xFF
                 _dev = int(match.group(2), 16) & 0x1F
-                _fun = int(match.group(3), 16) & 0x07 
+                _fun = int(match.group(3), 16) & 0x07
                 vid  = self.cs.pci.read_word(_bus, _dev, _fun, 0)
                 did  = self.cs.pci.read_word(_bus, _dev, _fun, 2)
                 dev  = (_bus, _dev, _fun, vid, did)
@@ -135,7 +135,7 @@ class VMMCommand(BaseCommand):
         elif op in ['pt','ept']:
 
             if len(self.argv) == 4:
-                eptp = int(self.argv[3],16) 
+                eptp = int(self.argv[3],16)
                 pt_fname = 'ept_{:08X}'.format(eptp)
                 self.logger.log( "[CHIPSEC] EPT physical base: 0x{:016X}".format(eptp) )
                 self.logger.log( "[CHIPSEC] dumping EPT to '{}'...".format(pt_fname) )
@@ -158,4 +158,3 @@ class VMMCommand(BaseCommand):
 
 
 commands = { 'vmm': VMMCommand }
-

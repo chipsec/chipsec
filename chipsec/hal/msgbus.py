@@ -126,7 +126,7 @@ class MsgBus(hal_base.HALBase):
         mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
 
-        if self.logger.HAL: 
+        if self.logger.HAL:
             self.logger.log( "[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
             self.logger.log( "[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx) )
 
@@ -193,7 +193,7 @@ class MsgBus(hal_base.HALBase):
         was_hidden = False
         if self.cs.is_register_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
-        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0] 
+        mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0]
         reg_val = self.cs.mmio.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
         if self.cs.is_register_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)

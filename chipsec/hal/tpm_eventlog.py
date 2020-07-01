@@ -176,7 +176,7 @@ class PcrLogParser(object):
         if not event:
             raise StopIteration()
         return event
-    
+
     def next(self):
         return self.__next__()
 

@@ -286,7 +286,7 @@ class EfiHelper(Helper):
 
         if Status == 5:
             size = DataSize+1
-            (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size) 
+            (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
 
         return (Status, newdata, Attributes)
 
@@ -341,7 +341,7 @@ class EfiHelper(Helper):
             if logger().DEBUG: logger().log("{:d}: Found variable {}".format(len(variables), name))
 
             var = (off, buf, hdr, data, str(guid), attr)
-            if name in variables: 
+            if name in variables:
                 if logger().DEBUG: logger().log("WARNING: found a second instance of name {}.".format(name))
 
             else: variables[name] = []

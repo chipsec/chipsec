@@ -222,7 +222,7 @@ class OSXHelper(Helper):
             else:
                 failed_times += 1
         return res
-        
+
     def unknown_efi_decompress(self,CompressedFileName,OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
@@ -258,7 +258,7 @@ class OSXHelper(Helper):
             logger().error("Cannot decompress file({})".format(FileName))
             return False
         return True
-        
+
     #
     # Decompress binary
     #
@@ -293,14 +293,14 @@ class OSXHelper(Helper):
 
     def get_tool_info( self, tool_type ):
         raise NotImplementedError()
-    
+
     #
     # Logical CPU count
     #
     def get_threads_count (self):
         import subprocess
         return int(subprocess.check_output("sysctl -n hw.ncpu", shell=True))
-    
+
     #########################################################
     # EFI Runtime API
     #########################################################
@@ -386,7 +386,7 @@ class OSXHelper(Helper):
         pa = (pa_hi << 32) + pa_lo
         base = (base_hi << 32) + base_lo
         return (limit,base,pa)
-    
+
     def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
         in_buf = struct.pack(_hypercall_msg_t_fmt,rcx,rdx,r8,r9,r10,r11,rax,rbx,rdi,rsi,xmm_buffer,0)
         out_buf = self.ioctl(IOCTL_HYPERCALL,in_buf)
@@ -408,7 +408,7 @@ class OSXHelper(Helper):
         out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
         mdr_out = struct.unpack( _msgbus_msg_t_fmt, out_buf)[4]
         return mdr_out
-    
+
     def msgbus_send_write_message( self, mcr, mcrx, mdr):
         mdr_out = 0
         in_buf  = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, mdr_out)

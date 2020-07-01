@@ -117,4 +117,3 @@ class iofuzz(BaseModule):
         self.logger.log( "    Ports/iterations: {:d}\n".format(iterations) )
 
         return self.fuzz_ports( iterations, write_count, _random_order )
-        

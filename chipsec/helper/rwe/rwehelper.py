@@ -64,7 +64,7 @@ kernel32 = windll.kernel32
 
 drv_hndl_error_msg = "Cannot open rwe driver handle. Make sure rwe driver is installed and started if you are using option -e (see README)"
 
-DRIVER_FILE_PATHS   = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", "win7_" + platform.machine().lower())] 
+DRIVER_FILE_PATHS   = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join( chipsec.file.get_main_dir(), "chipsec", "helper", "rwe", "win7_" + platform.machine().lower())]
 DRIVER_FILE_NAME    = "RwDrv.sys"
 DEVICE_FILE         = "\\\\.\\RwDrv"
 SERVICE_NAME        = "RwDrv"
@@ -266,10 +266,10 @@ class RweHelper(Helper):
         self.driver_path    = None
         for path in DRIVER_FILE_PATHS:
             driver_path = os.path.join(path, DRIVER_FILE_NAME)
-            if os.path.isfile(driver_path): 
+            if os.path.isfile(driver_path):
                 self.driver_path = driver_path
                 if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
-        if self.driver_path is None: 
+        if self.driver_path is None:
             if logger().DEBUG:
                 logger().log("[helper] RWE Driver Not Found")
             raise Exception("RWE Driver Not Found")
@@ -317,7 +317,7 @@ class RweHelper(Helper):
             if logger().DEBUG: logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
 
         try:
-            self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables 
+            self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables
             self.EnumSystemFirmwareTbls.restype = c_int
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
         except AttributeError as msg:
@@ -556,7 +556,7 @@ class RweHelper(Helper):
     def native_write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         raise UnimplementedNativeAPIError( "native_write_phys_mem" )
 
-    # @TODO: Temporarily the same as read_phys_mem for compatibility 
+    # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg( self, phys_address, size ):
         #raise UnimplementedNativeAPIError( "read_mmio_reg" )
         out_buf = self.read_phys_mem( (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
@@ -774,12 +774,12 @@ class RweHelper(Helper):
             efi_vars = create_string_buffer( retlength )
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
-            if logger().DEBUG: 
+            if logger().DEBUG:
                 logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
                 logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
-            if logger().DEBUG: 
+            if logger().DEBUG:
                 logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
                 logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
             raise WinError()

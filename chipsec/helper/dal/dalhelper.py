@@ -243,7 +243,7 @@ class DALHelper(Helper):
         val = ( edx << 32 ) | eax
         self.base.threads[thread].msr( msr_addr, val )
         return True
-        
+
     def read_cr(self, cpu_thread_id, cr_number):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
