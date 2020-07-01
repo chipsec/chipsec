@@ -274,9 +274,9 @@ class sgx_check(BaseModule):
                 self.logger.log_failed("Intel SGX instructions are not supported on system")
                 sgx_ok = False
             if sgx2_instr_support:
-                    self.logger.log("[*] SGX-2 instructions are supported")
+                self.logger.log("[*] SGX-2 instructions are supported")
             else:
-                    self.logger.log("[*] SGX-2 instructions are not supported")
+                self.logger.log("[*] SGX-2 instructions are not supported")
         else:
             sgx_ok = False
 

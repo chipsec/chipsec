@@ -100,11 +100,11 @@ class IOMMUCommand(BaseCommand):
                     self.logger.log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
 
             for e in _iommu_engines:
-               if   'config'  == op: _iommu.dump_IOMMU_configuration( e )
-               elif 'pt'      == op: _iommu.dump_IOMMU_page_tables( e )
-               elif 'status'  == op: _iommu.dump_IOMMU_status( e )
-               elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
-               elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )
+                if   'config'  == op: _iommu.dump_IOMMU_configuration( e )
+                elif 'pt'      == op: _iommu.dump_IOMMU_page_tables( e )
+                elif 'status'  == op: _iommu.dump_IOMMU_status( e )
+                elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
+                elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )
         else:
             print (IOMMUCommand.__doc__)
             return

@@ -1631,7 +1631,7 @@ class NFIT (ACPI_TABLE):
             if cap1 == 1:
                 cap2_str = 'Platform does not provides mehanisms to automatically flush outstanding write data from the memory controller to persistent memory in the event of power loss'
             else:
-             cap2_str = 'This should be set to 1 - Platform does not support'
+                cap2_str = 'This should be set to 1 - Platform does not support'
         if cap3 == 4:
             cap3_str = 'Platform supports mirroring multiple byte addressable persistent memory regions together'
         else:

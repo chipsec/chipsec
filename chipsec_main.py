@@ -72,9 +72,9 @@ from chipsec.logger import logger
 from chipsec.testcase import *
 
 try:
-  import importlib
+    import importlib
 except ImportError:
-  pass
+    pass
 
 class ChipsecMain:
 

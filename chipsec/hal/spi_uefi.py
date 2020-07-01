@@ -294,15 +294,15 @@ def update_efi_tree(modules, parent_guid=None):
     ui_string = None
     for m in modules:
         if type(m) == EFI_FILE:
-           parent_guid = m.Guid
+            parent_guid = m.Guid
         elif type(m) == EFI_SECTION:
-           # if it's a section update its parent file's GUID
-           m.parentGuid = parent_guid
-           if m.Type == EFI_SECTION_USER_INTERFACE:
-               # if UI section (leaf), update ui_string in sibling sections including in PE/TE,
-               # and propagate it up untill and including parent EFI file
-               for m1 in modules: m1.ui_string = m.ui_string
-               return m.ui_string
+            # if it's a section update its parent file's GUID
+            m.parentGuid = parent_guid
+            if m.Type == EFI_SECTION_USER_INTERFACE:
+                # if UI section (leaf), update ui_string in sibling sections including in PE/TE,
+                # and propagate it up untill and including parent EFI file
+                for m1 in modules: m1.ui_string = m.ui_string
+                return m.ui_string
         # update parent file's GUID in all children nodes
         if len(m.children) > 0:
             ui_string = update_efi_tree(m.children, parent_guid)
@@ -356,10 +356,10 @@ def dump_efi_module(mod, parent, modn, path):
     return mod_path
 
 class EFIModuleType:
-  SECTION_EXE = 0
-  SECTION     = 1
-  FV          = 2
-  FILE        = 4
+    SECTION_EXE = 0
+    SECTION     = 1
+    FV          = 2
+    FILE        = 4
 
 def search_efi_tree(modules, search_callback, match_module_types=EFIModuleType.SECTION_EXE, findall=True):
     matching_modules = []

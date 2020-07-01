@@ -504,7 +504,7 @@ class Win32Helper(Helper):
     def _ioctl( self, ioctl_code, in_buf, out_length ):
 
         if not self.driver_loaded:
-           _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
+            _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()

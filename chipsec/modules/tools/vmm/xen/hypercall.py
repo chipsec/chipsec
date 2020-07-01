@@ -139,20 +139,20 @@ class XenHypercall(BaseModuleHwAccess):
     ##  print_hypervisor_info
     ##
     def print_hypervisor_info(self, info):
-            features = ", ".join(['F{:d}={:016X}'.format(k, v) for k,v in info['features'].items() if v != 0])
-            self.msg('XEN Hypervisor is present!')
-            self.msg('          Version : {}'.format(info['xen_version'])         )
-            self.msg('         Compiler : {}'.format(info['compiler'])            )
-            self.msg('       Compile by : {}'.format(info['compile_by'])          )
-            self.msg('   Compile Domain : {}'.format(info['compile_domain'])      )
-            self.msg('     Compile Date : {}'.format(info['compile_date'])        )
-            self.msg('     Capabilities : {}'.format(info['capabilities'])        )
-            self.msg('       Change Set : {}'.format(info['changeset'])           )
-            self.msg('  Platform Params : {:016X}'.format(info['platform_parameters']) )
-            self.msg('         Features : {}'.format(features)                    )
-            self.msg('        Page size : {:016X}'.format(info['pagesize'])            )
-            self.msg('     Guest Handle : {:016X}'.format(info['guest_handle'])        )
-            self.msg('     Command Line : {}'.format(info['command_line'])        )
+        features = ", ".join(['F{:d}={:016X}'.format(k, v) for k,v in info['features'].items() if v != 0])
+        self.msg('XEN Hypervisor is present!')
+        self.msg('          Version : {}'.format(info['xen_version'])         )
+        self.msg('         Compiler : {}'.format(info['compiler'])            )
+        self.msg('       Compile by : {}'.format(info['compile_by'])          )
+        self.msg('   Compile Domain : {}'.format(info['compile_domain'])      )
+        self.msg('     Compile Date : {}'.format(info['compile_date'])        )
+        self.msg('     Capabilities : {}'.format(info['capabilities'])        )
+        self.msg('       Change Set : {}'.format(info['changeset'])           )
+        self.msg('  Platform Params : {:016X}'.format(info['platform_parameters']) )
+        self.msg('         Features : {}'.format(features)                    )
+        self.msg('        Page size : {:016X}'.format(info['pagesize'])            )
+        self.msg('     Guest Handle : {:016X}'.format(info['guest_handle'])        )
+        self.msg('     Command Line : {}'.format(info['command_line'])        )
 
     def scan_hypercalls(self, vector_list):
         for vector in vector_list:

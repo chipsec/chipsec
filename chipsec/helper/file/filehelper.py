@@ -292,7 +292,7 @@ class FileHelper(Helper):
     # Decompress binary with OS specific tools
     #
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
-       return self.filecmds.getElement("decompress_file",(CompressedFileName, OutputFileName, CompressionType))
+        return self.filecmds.getElement("decompress_file",(CompressedFileName, OutputFileName, CompressionType))
 
     #
     # Compress binary with OS specific tools

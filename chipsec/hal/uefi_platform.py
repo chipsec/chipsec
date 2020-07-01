@@ -712,11 +712,11 @@ def _getEFIvariables_VSS( nvram_buf, _fwtype):
         if (efi_var_hdr.StartId != VARIABLE_DATA): break
 
         if ((efi_var_hdr.State == 0xff) and (efi_var_hdr.DataSize == 0xffffffff) and (efi_var_hdr.NameSize == 0xffffffff) and (efi_var_hdr.Attributes == 0xffffffff)):
-             name_size = 0
-             data_size = 0
-             # just skip variable with empty name and data for now
-             next_var_offset = nvram_buf.find( VARIABLE_SIGNATURE_VSS, start + hdr_size, start + hdr_size + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
-             if (next_var_offset == -1) or (next_var_offset > nvsize):
+            name_size = 0
+            data_size = 0
+            # just skip variable with empty name and data for now
+            next_var_offset = nvram_buf.find( VARIABLE_SIGNATURE_VSS, start + hdr_size, start + hdr_size + len(VARIABLE_SIGNATURE_VSS) + (MAX_VSS_VAR_ALIGNMENT - 1))
+            if (next_var_offset == -1) or (next_var_offset > nvsize):
                 break
         else:
             name_size = efi_var_hdr.NameSize
@@ -939,15 +939,15 @@ class S3BootScriptType:
 
 def decode_s3bs_opcode( s3bootscript_type, script_data ):
     if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == s3bootscript_type:
-       return decode_s3bs_opcode_edkcompat( script_data )
+        return decode_s3bs_opcode_edkcompat( script_data )
     else:
-       return decode_s3bs_opcode_def( script_data )
+        return decode_s3bs_opcode_def( script_data )
 
 def encode_s3bs_opcode( s3bootscript_type, op ):
     if S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT == s3bootscript_type:
-       return encode_s3bs_opcode_edkcompat( op )
+        return encode_s3bs_opcode_edkcompat( op )
     else:
-       return encode_s3bs_opcode_def( op )
+        return encode_s3bs_opcode_def( op )
 
 
 def decode_s3bs_opcode_def( data ):
@@ -1275,8 +1275,8 @@ def id_s3bootscript_type( script, log_script=False ):
         script_header_length = 1 # skip start opcode
         script_header_length += 0x34
     else:
-       if logger().HAL: logger().log('S3 Boot Script DEFAULT Parser')
-       script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
+        if logger().HAL: logger().log('S3 Boot Script DEFAULT Parser')
+        script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
 
     return (script_type,script_header_length)
 

@@ -451,8 +451,8 @@ class SPI(hal_base.HALBase):
 
     def display_BIOS_write_protection( self ):
         if self.cs.is_register_defined('BC'):
-             reg_value = self.cs.read_register('BC')
-             self.cs.print_register('BC', reg_value )
+            reg_value = self.cs.read_register('BC')
+            self.cs.print_register('BC', reg_value )
         else:
             if self.logger.HAL: self.logger.error( "Could not locate the definition of 'BIOS Control' register.." )
 

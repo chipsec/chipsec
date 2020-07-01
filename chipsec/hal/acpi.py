@@ -198,12 +198,12 @@ assert ACPI_RSDP_EXT_SIZE == 36
 class RSDP():
     def __init__( self, table_content ):
         if len(table_content) == ACPI_RSDP_SIZE:
-          (self.Signature, self.Checksum, self.OEMID,
-           self.Revision, self.RsdtAddress) = struct.unpack(ACPI_RSDP_FORMAT, table_content)
+            (self.Signature, self.Checksum, self.OEMID,
+             self.Revision, self.RsdtAddress) = struct.unpack(ACPI_RSDP_FORMAT, table_content)
         else:
-          (self.Signature, self.Checksum, self.OEMID,
-           self.Revision, self.RsdtAddress, self.Length,
-           self.XsdtAddress, self.ExtChecksum, self.Reserved) = struct.unpack(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT, table_content)
+            (self.Signature, self.Checksum, self.OEMID,
+             self.Revision, self.RsdtAddress, self.Length,
+             self.XsdtAddress, self.ExtChecksum, self.Reserved) = struct.unpack(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT, table_content)
     def __str__( self ):
         default = ("==================================================================\n"
                    "  Root System Description Pointer (RSDP)\n"
@@ -215,11 +215,11 @@ class RSDP():
                    "  RSDT Address     : 0x{:08X}\n"
                   ).format(self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress)
         if hasattr(self, "Length"):
-          default += ("  Length           : 0x{:08X}\n"
-                      "  XSDT Address     : 0x{:016X}\n"
-                      "  Extended Checksum: 0x{:02X}\n"
-                      "  Reserved         : {}\n"
-                     ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex") if ( isinstance(self.Reserved,str) ) else self.Reserved.hex() )
+            default += ("  Length           : 0x{:08X}\n"
+                        "  XSDT Address     : 0x{:016X}\n"
+                        "  Extended Checksum: 0x{:02X}\n"
+                        "  Reserved         : {}\n"
+                       ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex") if ( isinstance(self.Reserved,str) ) else self.Reserved.hex() )
         return default
 
     # some sanity checking on RSDP

@@ -297,7 +297,7 @@ class Pci:
 
     def print_pci_config_all( self ):
         logger().log( "[pci] enumerating available PCI devices..." )
-       	pci_devices = self.enumerate_devices()
+        pci_devices = self.enumerate_devices()
         for (b, d, f, vid, did) in pci_devices:
             cfg_buf = self.dump_pci_config( b, d, f )
             logger().log( "\n[pci] PCI device {:02X}:{:02X}.{:02X} configuration:".format(b,d,f) )
@@ -387,7 +387,7 @@ class Pci:
     def enumerate_xroms( self, try_init=False, xrom_dump=False, xrom_addr=None ):
         pci_xroms = []
         logger().log( "[pci] enumerating available PCI devices..." )
-       	pci_devices = self.enumerate_devices()
+        pci_devices = self.enumerate_devices()
         for (b, d, f, vid, did) in pci_devices:
             exists,xrom = self.find_XROM( b, d, f, try_init, xrom_dump, xrom_addr )
             if exists:

@@ -75,8 +75,8 @@ class SPICommand(BaseCommand):
         spi_op = self.argv[2]
 
         if spi_op in ['read', 'write','erase'] and len(self.argv) < 4:
-             print (SPICommand.__doc__)
-             return
+            print (SPICommand.__doc__)
+            return
         t = time.time()
 
         _msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
@@ -95,8 +95,8 @@ class SPICommand(BaseCommand):
                     self.logger.error( "File {} doesn't exist".format(filename))
                     return
             else:
-                 print (SPICommand.__doc__)
-                 return
+                print (SPICommand.__doc__)
+                return
             self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{:64s}'".format(spi_fla, filename) )
 
             ok = _spi.write_spi_from_file( spi_fla, filename )

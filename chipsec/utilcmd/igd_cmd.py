@@ -88,7 +88,7 @@ class IgdCommand(BaseCommand):
                 buf_file = self.argv[5]
                 if not os.path.exists( buf_file ):
                     try:
-                      buffer = bytearray.fromhex(buf_file)
+                        buffer = bytearray.fromhex(buf_file)
                     except ValueError as e:
                         self.logger.error( "incorrect <value> specified: '{}'".format(buf_file) )
                         self.logger.error( str(e) )
@@ -109,8 +109,8 @@ class IgdCommand(BaseCommand):
                 return
 
         else:
-                print (IgdCommand.__doc__)
-                return
+            print (IgdCommand.__doc__)
+            return
 
         self.logger.log( "[CHIPSEC] (mem) time elapsed {:.3f}".format(time.time()-t) )
 

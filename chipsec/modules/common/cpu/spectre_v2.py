@@ -142,9 +142,9 @@ class spectre_v2(BaseModule):
     def check_spectre_mitigations( self ):
 
         try:
-           cpu_thread_count = self.cs.msr.get_cpu_thread_count()
+            cpu_thread_count = self.cs.msr.get_cpu_thread_count()
         except:
-           cpu_thread_count = 1
+            cpu_thread_count = 1
 
         #
         # Read CPUID Leaf 07H

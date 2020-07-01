@@ -100,8 +100,8 @@ class MsgBusCommand(BaseCommand):
             if val is not None: self.logger.log("[CHIPSEC]                 data: 0x{:08X}".format(val))
             res = _msgbus.msgbus_send_message( port, reg, opcode, val )
         else:
-             print (msgbuscmd.__doc__)
-             return
+            print (msgbuscmd.__doc__)
+            return
 
         if res is not None: self.logger.log("[CHIPSEC] result: 0x{:08X}".format(res))
         self.logger.log( "[CHIPSEC] (msgbus) time elapsed {:.3f}".format(time.time()-t) )

@@ -38,7 +38,7 @@ class TPMCommand(BaseCommand):
     continueselftest
     getcap - Capabilities Area, Size of Sub-capabilities, Sub-capabilities
     forceclear
-    
+
     Examples:
 
     >>> chipsec_util tpm parse_log binary_bios_measurements

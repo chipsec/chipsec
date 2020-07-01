@@ -46,18 +46,18 @@ from chipsec.hal import hal_base
 # Reference: http://lxr.free-electrons.com/source/arch/x86/include/asm/iosf_mbi.h
 #
 class MessageBusOpcode:
-  MB_OPCODE_MMIO_READ   = 0x00
-  MB_OPCODE_MMIO_WRITE  = 0x01
-  MB_OPCODE_IO_READ     = 0x02
-  MB_OPCODE_IO_WRITE    = 0x03
-  MB_OPCODE_CFG_READ    = 0x04
-  MB_OPCODE_CFG_WRITE   = 0x05
-  MB_OPCODE_CR_READ     = 0x06
-  MB_OPCODE_CR_WRITE    = 0x07
-  MB_OPCODE_REG_READ    = 0x10
-  MB_OPCODE_REG_WRITE   = 0x11
-  MB_OPCODE_ESRAM_READ  = 0x12
-  MB_OPCODE_ESRAM_WRITE = 0x13
+    MB_OPCODE_MMIO_READ   = 0x00
+    MB_OPCODE_MMIO_WRITE  = 0x01
+    MB_OPCODE_IO_READ     = 0x02
+    MB_OPCODE_IO_WRITE    = 0x03
+    MB_OPCODE_CFG_READ    = 0x04
+    MB_OPCODE_CFG_WRITE   = 0x05
+    MB_OPCODE_CR_READ     = 0x06
+    MB_OPCODE_CR_WRITE    = 0x07
+    MB_OPCODE_REG_READ    = 0x10
+    MB_OPCODE_REG_WRITE   = 0x11
+    MB_OPCODE_ESRAM_READ  = 0x12
+    MB_OPCODE_ESRAM_WRITE = 0x13
 
 #
 # IOSF Message bus unit ports
@@ -65,23 +65,23 @@ class MessageBusOpcode:
 # @TODO: move these to per-platform XML config?
 #
 class MessageBusPort_Atom:
-  UNIT_AUNIT = 0x00
-  UNIT_SMC   = 0x01
-  UNIT_CPU   = 0x02
-  UNIT_BUNIT = 0x03
-  UNIT_PMC   = 0x04
-  UNIT_GFX   = 0x06
-  UNIT_SMI   = 0x0C
-  UNIT_USB   = 0x43
-  UNIT_SATA  = 0xA3
-  UNIT_PCIE  = 0xA6
+    UNIT_AUNIT = 0x00
+    UNIT_SMC   = 0x01
+    UNIT_CPU   = 0x02
+    UNIT_BUNIT = 0x03
+    UNIT_PMC   = 0x04
+    UNIT_GFX   = 0x06
+    UNIT_SMI   = 0x0C
+    UNIT_USB   = 0x43
+    UNIT_SATA  = 0xA3
+    UNIT_PCIE  = 0xA6
 
 class MessageBusPort_Quark:
-  UNIT_HBA   = 0x00
-  UNIT_HB    = 0x03
-  UNIT_RMU   = 0x04
-  UNIT_MM    = 0x05
-  UNIT_SOC   = 0x31
+    UNIT_HBA   = 0x00
+    UNIT_HB    = 0x03
+    UNIT_RMU   = 0x04
+    UNIT_MM    = 0x05
+    UNIT_SOC   = 0x31
 
 
 class MsgBusRuntimeError (RuntimeError):

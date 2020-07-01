@@ -508,7 +508,7 @@ class RweHelper(Helper):
     def _ioctl( self, ioctl_code, in_buf, out_length ):
 
         if not self.driver_loaded:
-           _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
+            _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
@@ -904,17 +904,17 @@ class RweHelper(Helper):
     def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
         import subprocess
         if (CompressionType == 0): # not compressed
-          shutil.copyfile(CompressedFileName, OutputFileName)
+            shutil.copyfile(CompressedFileName, OutputFileName)
         else:
-          exe = self.get_compression_tool_path( CompressionType )
-          if exe is None: return None
-          try:
-            subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
-          except BaseException as msg:
-            if logger().DEBUG:
-                logger().error( str(msg) )
-                logger().log_bad( traceback.format_exc() )
-            return None
+            exe = self.get_compression_tool_path( CompressionType )
+            if exe is None: return None
+            try:
+                subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
+            except BaseException as msg:
+                if logger().DEBUG:
+                    logger().error( str(msg) )
+                    logger().log_bad( traceback.format_exc() )
+                return None
 
         return chipsec.file.read_file( OutputFileName )
 
