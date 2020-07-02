@@ -946,7 +946,7 @@ class LinuxHelper(Helper):
         buf = list()
         hdr = 0
         try:
-            f = open('/sys/firmware/efi/efivars/'+filename, 'r')
+            f = open('/sys/firmware/efi/efivars/'+filename, 'rb')
             data = f.read()
             attr = struct.unpack_from("<I",data)[0]
             data = data[4:]
@@ -984,7 +984,7 @@ class LinuxHelper(Helper):
     def EFIVARS_get_EFI_variable( self, name, guid ):
         filename = name + "-" + guid
         try:
-            f = open('/sys/firmware/efi/efivars/'+filename, 'r')
+            f = open('/sys/firmware/efi/efivars/'+filename, 'rb')
             data = f.read()
             attr = struct.unpack_from("<I",data)[0]
             data = data[4:]
