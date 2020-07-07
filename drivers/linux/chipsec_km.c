@@ -30,6 +30,11 @@ chipsec@intel.com
 #include <linux/smp.h>
 #include <linux/miscdevice.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0)
+// Fix for 'unexport of the kallsyms_lookup_name function' in kernels from 5.7 on
+#include <linux/kprobes.h>
+#endif
+
 #include "include/chipsec.h"
 
 #ifdef HAS_EFI
@@ -1676,6 +1681,23 @@ static struct miscdevice chipsec_dev = {
     .fops = &mem_fops
 };
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0)
+// Fix for 'unexport of the kallsyms_lookup_name function' in kernels from 5.7 on
+
+static struct kprobe kp;
+
+unsigned long lookup_name(const char *name){
+	kp.symbol_name = name;
+
+	if (register_kprobe(&kp) < 0)
+		return 0;
+
+	unregister_kprobe(&kp);
+
+	return (unsigned long)kp.addr;
+}
+#endif
+
 int find_symbols(void) 
 {
 	//Older kernels don't have kallsyms_lookup_name. Use FMEM method (pass from run.sh)
@@ -1689,6 +1711,20 @@ int find_symbols(void)
 		#else
 		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
 		#endif
+	#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,7,0)
+	// Fix for 'unexport of the kallsyms_lookup_name function' in kernels from 5.7 on
+		guess_page_is_ram = (void *)lookup_name("page_is_ram");
+		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
+			guess_phys_mem_access_prot = (void *)lookup_name("phys_mem_access_prot");
+		#else
+			guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
+		#endif
+
+		if(guess_page_is_ram == 0 || guess_phys_mem_access_prot == 0)
+		{
+			printk("Chipsec find_symbols failed. Unloading module");
+			return -1;
+		}
 	#else
 		guess_page_is_ram = (void *)kallsyms_lookup_name("page_is_ram");
 		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
