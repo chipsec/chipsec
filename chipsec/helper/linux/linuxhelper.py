@@ -83,10 +83,9 @@ class MemoryMapping(mmap.mmap):
     This subclass keeps tracks of the start and end of the mapping.
     """
     def __init__(self, fileno, length, flags, prot, offset):
-        super(MemoryMapping, self).__init__(fileno, length, flags=flags, prot=prot,
-                                            offset=offset)
         self.start = offset
         self.end = offset + length
+        super().__init__()
 
 class LinuxHelper(Helper):
 
@@ -454,6 +453,7 @@ class LinuxHelper(Helper):
                 from chipsec.helper.linux.legacy_pci import LEGACY_PCI
                 pci = LEGACY_PCI()
                 value = pci.write_pci_config(bus, device, function, offset, value)
+                return False
         try:
             config = open(device_path, "wb")
         except IOError as err:
@@ -599,7 +599,8 @@ class LinuxHelper(Helper):
         return defines.unpack1(reg, size)
 
     def native_read_mmio_reg(self, bar_base, bar_size, offset, size):
-        if bar_size is None: bar_size = offset + size
+        if bar_size is None or bar_size < offset:
+            bar_size = offset + size
         if self.devmem_available():
             region = self.memory_mapping(bar_base, bar_size)
             if not region:
