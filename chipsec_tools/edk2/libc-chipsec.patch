@@ -1,0 +1,1454 @@
+﻿From be3f02379df204ef7c2521a519a094647d3e3dfe Mon Sep 17 00:00:00 2001
+From: brentholtsclaw <brent.holtsclaw@intel.com>
+Date: Tue, 7 Jul 2020 17:56:03 -0700
+Subject: [PATCH] Changes to edk2-libc to get chipsec mods working
+
+Signed-off-by: brentholtsclaw <brent.holtsclaw@intel.com>
+---
+ AppPkg/AppPkg.dsc                             |  34 +-
+ AppPkg/Applications/Python/Efi/config.c       |  10 +-
+ AppPkg/Applications/Python/Efi/cpu.asm        | 518 ++++++++++++++++++
+ AppPkg/Applications/Python/Efi/cpu_ia32.asm   | 395 +++++++++++++
+ AppPkg/Applications/Python/Efi/cpu_ia32_gcc.s | 324 +++++++++++
+ AppPkg/Applications/Python/Ia32/pyconfig.h    |   2 +-
+ AppPkg/Applications/Python/PythonCore.inf     |  13 +-
+ AppPkg/Applications/Python/X64/pyconfig.h     |   2 +-
+ StdLib/LibC/gdtoa/gdtoa.inf                   |   5 +-
+ StdLib/StdLib.inc                             |   2 +-
+ 10 files changed, 1276 insertions(+), 29 deletions(-)
+ create mode 100644 AppPkg/Applications/Python/Efi/cpu.asm
+ create mode 100644 AppPkg/Applications/Python/Efi/cpu_ia32.asm
+ create mode 100644 AppPkg/Applications/Python/Efi/cpu_ia32_gcc.s
+
+diff --git a/AppPkg/AppPkg.dsc b/AppPkg/AppPkg.dsc
+index 42af080..14b942d 100644
+--- a/AppPkg/AppPkg.dsc
++++ b/AppPkg/AppPkg.dsc
+@@ -99,27 +99,27 @@
+ [Components]
+ 
+ #### Sample Applications.
+-  AppPkg/Applications/Hello/Hello.inf        # No LibC includes or functions.
+-  AppPkg/Applications/Main/Main.inf          # Simple invocation. No other LibC functions.
+-  AppPkg/Applications/Enquire/Enquire.inf    #
+-  AppPkg/Applications/ArithChk/ArithChk.inf  #
++#  AppPkg/Applications/Hello/Hello.inf        # No LibC includes or functions.
++#  AppPkg/Applications/Main/Main.inf          # Simple invocation. No other LibC functions.
++#  AppPkg/Applications/Enquire/Enquire.inf    #
++#  AppPkg/Applications/ArithChk/ArithChk.inf  #
+ 
+ #### A simple fuzzer for OrderedCollectionLib, in particular for
+ #### BaseOrderedCollectionRedBlackTreeLib.
+-  AppPkg/Applications/OrderedCollectionTest/OrderedCollectionTest.inf {
+-    <LibraryClasses>
+-      OrderedCollectionLib|MdePkg/Library/BaseOrderedCollectionRedBlackTreeLib/BaseOrderedCollectionRedBlackTreeLib.inf
+-      DebugLib|MdePkg/Library/UefiDebugLibConOut/UefiDebugLibConOut.inf
+-      DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
+-    <PcdsFeatureFlag>
+-      gEfiMdePkgTokenSpaceGuid.PcdValidateOrderedCollection|TRUE
+-    <PcdsFixedAtBuild>
+-      gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2F
+-      gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400040
+-  }
++#  AppPkg/Applications/OrderedCollectionTest/OrderedCollectionTest.inf {
++#    <LibraryClasses>
++#      OrderedCollectionLib|MdePkg/Library/BaseOrderedCollectionRedBlackTreeLib/BaseOrderedCollectionRedBlackTreeLib.inf
++#      DebugLib|MdePkg/Library/UefiDebugLibConOut/UefiDebugLibConOut.inf
++#      DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
++#    <PcdsFeatureFlag>
++#      gEfiMdePkgTokenSpaceGuid.PcdValidateOrderedCollection|TRUE
++#    <PcdsFixedAtBuild>
++#      gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2F
++#      gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80400040
++#  }
+ 
+ #### Un-comment the following line to build Python 2.7.2.
+-#  AppPkg/Applications/Python/PythonCore.inf
++  AppPkg/Applications/Python/PythonCore.inf
+ 
+ #### Un-comment the following line to build Python 2.7.10.
+ # AppPkg/Applications/Python/Python-2.7.10/Python2710.inf
+@@ -141,4 +141,4 @@
+ #
+ ##############################################################################
+ !include StdLib/StdLib.inc
+-!include AppPkg/Applications/Sockets/Sockets.inc
++# !include AppPkg/Applications/Sockets/Sockets.inc
+diff --git a/AppPkg/Applications/Python/Efi/config.c b/AppPkg/Applications/Python/Efi/config.c
+index 5ca95e8..411e4e3 100644
+--- a/AppPkg/Applications/Python/Efi/config.c
++++ b/AppPkg/Applications/Python/Efi/config.c
+@@ -80,10 +80,10 @@ struct _inittab _PyImport_Inittab[] = {
+     //{"_heapq", init_heapq},                 /* A fast version of heapq.py */
+     //{"_io", init_io},
+     //{"_json", init_json},
+-    //{"_md5", init_md5},
+-    //{"_sha", init_sha},
+-    //{"_sha256", init_sha256},
+-    //{"_sha512", init_sha512},
++    {"_md5", init_md5},
++    {"_sha", init_sha},
++    {"_sha256", init_sha256},
++    {"_sha512", init_sha512},
+     //{"_socket", init_socket},
+     //{"_symtable", init_symtable},
+ 
+@@ -93,7 +93,7 @@ struct _inittab _PyImport_Inittab[] = {
+     //{"datetime", initdatetime},
+     //{"future_builtins", initfuture_builtins},
+     //{"parser", initparser},
+-    //{"pyexpat", initpyexpat},
++    {"pyexpat", initpyexpat},
+     //{"select", initselect},
+     //{"signal", initsignal},
+     //{"strop", initstrop},                   /* redefines some string operations that are 100-1000 times faster */
+diff --git a/AppPkg/Applications/Python/Efi/cpu.asm b/AppPkg/Applications/Python/Efi/cpu.asm
+new file mode 100644
+index 0000000..b479ca4
+--- /dev/null
++++ b/AppPkg/Applications/Python/Efi/cpu.asm
+@@ -0,0 +1,518 @@
++TITLE   cpu.asm: Assembly code for the x64 resources
++
++.CODE cpu_asm_code$__a
++
++PUBLIC WritePortDword
++PUBLIC WritePortWord
++PUBLIC WritePortByte
++PUBLIC ReadPortDword
++PUBLIC ReadPortWord
++PUBLIC ReadPortByte
++PUBLIC WriteHighCMOSByte
++PUBLIC WriteLowCMOSByte
++PUBLIC SendAPMSMI
++PUBLIC WritePCIByte
++PUBLIC WritePCIWord
++PUBLIC WritePCIDword
++PUBLIC ReadPCIByte
++PUBLIC ReadPCIWord
++PUBLIC ReadPCIDword
++PUBLIC _rdmsr
++PUBLIC _wrmsr
++PUBLIC _load_gdt
++PUBLIC _rflags
++PUBLIC _swsmi
++
++
++;------------------------------------------------------------------------------
++; UINT64 _rflags()
++;------------------------------------------------------------------------------
++_rflags PROC
++    pushfq
++    pop rax
++    ret
++_rflags ENDP
++
++;------------------------------------------------------------------------------
++; void _store_idtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_store_idtr PROC
++    sidt fword ptr [rcx]
++    ret
++_store_idtr ENDP
++
++;------------------------------------------------------------------------------
++; void _load_idtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_load_idtr PROC
++    lidt fword ptr [rcx]
++    ret
++_load_idtr ENDP
++
++;------------------------------------------------------------------------------
++; void _store_gdtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_store_gdtr PROC
++    sgdt fword ptr [rcx]
++    ret
++_store_gdtr ENDP
++
++;------------------------------------------------------------------------------
++; void _load_gdtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_load_gdtr PROC
++    lgdt fword ptr [rcx]
++    ret
++_load_gdtr ENDP
++
++;------------------------------------------------------------------------------
++; void _store_ldtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_store_ldtr PROC
++    ;sldt fword ptr [rcx]
++    ret
++_store_ldtr ENDP
++
++;------------------------------------------------------------------------------
++; void _load_ldtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_load_ldtr PROC
++    ;lldt fword ptr [rcx]
++    ret
++_load_ldtr ENDP
++
++
++;------------------------------------------------------------------------------
++; void _load_gdt(
++;   unsigned char *value // rcx
++;   )
++;------------------------------------------------------------------------------
++_load_gdt PROC
++
++    sgdt fword ptr [rcx]
++    lgdt fword ptr [rcx]
++
++    ret
++_load_gdt ENDP
++
++;------------------------------------------------------------------------------
++;  void _rdmsr(
++;    unsigned int msr_num, // rcx
++;    unsigned int* msr_lo, // rdx
++;    unsigned int* msr_hi  // r8
++;    )
++;------------------------------------------------------------------------------
++_rdmsr PROC
++    push r10
++    push r11
++    push rax
++    push rdx
++
++    mov r10, rdx ; msr_lo
++    mov r11, r8  ; msr_hi
++
++    ; rcx has msr_num
++    rdmsr
++
++    ; Write MSR results in edx:eax
++    mov dword ptr [r10], eax
++    mov dword ptr [r11], edx
++
++    pop rdx
++    pop rax
++    pop r11
++    pop r10
++
++    ret
++_rdmsr ENDP
++
++;------------------------------------------------------------------------------
++;  void _wrmsr(
++;    unsigned int msr_num, // rcx
++;    unsigned int msr_hi,  // rdx
++;    unsigned int msr_lo   // r8
++;    )
++;------------------------------------------------------------------------------
++_wrmsr PROC
++    push rax
++
++    ; rcx has msr_num
++    ; rdx has msr_hi
++    ; move msr_lo from r8 to rax
++    mov rax, r8
++    wrmsr
++
++    pop rax
++    ret
++_wrmsr ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  WritePortDword (
++;    unsigned int	out_value          // rcx
++;    unsigned short	port_num           // rdx
++;    )
++;------------------------------------------------------------------------------
++WritePortDword PROC
++    push rax
++
++    mov rax, rcx
++    out dx, rax
++
++    pop rax
++    ret
++WritePortDword ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  WritePortWord (
++;    unsigned short	out_value          // rcx
++;    unsigned short	port_num           // rdx
++;    )
++;------------------------------------------------------------------------------
++WritePortWord PROC
++    push rax
++
++    mov rax, rcx
++    out dx, ax
++
++    pop rax
++    ret
++WritePortWord ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  WritePortByte (
++;    unsigned char	out_value          // rcx
++;    unsigned short	port_num           // rdx
++;    )
++;------------------------------------------------------------------------------
++WritePortByte PROC
++    push rax
++
++    mov rax, rcx
++    out dx, al
++
++    pop rax
++    ret
++WritePortByte ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned int
++;  ReadPortDword (
++;    unsigned short	port_num           // rcx
++;    )
++;------------------------------------------------------------------------------
++ReadPortDword PROC
++    push rdx
++
++    xor rax, rax    
++    mov rdx, rcx
++    in eax, dx
++
++    pop rdx
++    ret
++ReadPortDword ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned short
++;  ReadPortWord (
++;    unsigned short	port_num           // rcx
++;    )
++;------------------------------------------------------------------------------
++ReadPortWord PROC
++    push rdx
++
++    xor rax, rax    
++    mov rdx, rcx
++    in ax, dx
++
++    pop rdx
++    ret
++ReadPortWord ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned char
++;  ReadPortByte (
++;    unsigned short	port_num           // rcx
++;    )
++;------------------------------------------------------------------------------
++ReadPortByte PROC
++    push rdx
++
++    xor rax, rax    
++    mov rdx, rcx
++    in al, dx
++
++    pop rdx
++    ret
++ReadPortByte ENDP
++
++
++;------------------------------------------------------------------------------
++;  void
++;  WriteHighCMOSByte (
++;    unsigned char	cmos_off        // rcx
++;    unsigned char	val   		// rdx
++;    )
++;------------------------------------------------------------------------------
++WriteHighCMOSByte PROC
++    push rax
++
++    mov rax, rcx
++    out 72h, al
++    mov rax, rdx
++    out 73h, al
++
++    pop rax
++    ret
++WriteHighCMOSByte ENDP
++;------------------------------------------------------------------------------
++;  void
++;  WriteLowCMOSByte (
++;    unsigned char	cmos_off        // rcx
++;    unsigned char	val   		// rdx
++;    )
++;------------------------------------------------------------------------------
++WriteLowCMOSByte PROC
++    push rax
++
++    mov rax, rcx
++    or al, 80h
++    out 70h, al
++    mov rax, rdx
++    out 71h, al
++
++    pop rax
++    ret
++WriteLowCMOSByte ENDP
++
++
++; @TODO: looks incorrect
++;------------------------------------------------------------------------------
++;  void
++;  SendAPMSMI (
++;    unsigned int	apm_port_value          // rcx
++;    IN   UINT64	rax_value               // rdx
++;    )
++;------------------------------------------------------------------------------
++SendAPMSMI PROC
++    push rax
++    push rdx
++
++    mov rax, rcx
++    mov dx, 0B2h
++    out dx, rax
++
++    pop rdx
++    pop rax
++    ret
++SendAPMSMI ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  WritePCIByte (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    unsigned char	byte_value       // r8
++;    )
++;------------------------------------------------------------------------------
++WritePCIByte PROC
++    push rax
++    push rdx
++
++    cli
++    mov rax, rcx  ; pci_reg
++    mov dx, 0CF8h
++    out dx, rax
++
++    mov rax, r8   ; byte_value
++    pop rdx       ; cfg_data_port
++    out dx, al
++    sti
++
++    pop rax  
++    ret
++WritePCIByte ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  WritePCIWord (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    unsigned short	word_value       // r8
++;    )
++;------------------------------------------------------------------------------
++WritePCIWord PROC
++    push rax
++    push rdx
++
++    cli
++    mov rax, rcx  ; pci_reg
++    mov dx, 0CF8h
++    out dx, rax
++
++    mov rax, r8   ; byte_value
++    pop rdx       ; cfg_data_port
++    out dx, ax
++    sti
++
++    pop rax  
++    ret
++WritePCIWord ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  WritePCIDword (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    unsigned int	dword_value      // r8
++;    )
++;------------------------------------------------------------------------------
++WritePCIDword PROC
++    push rax
++    push rdx
++
++    cli
++    mov rax, rcx  ; pci_reg
++    mov dx, 0CF8h
++    out dx, rax
++
++    mov rax, r8   ; byte_value
++    pop rdx       ; cfg_data_port
++    out dx, eax
++    sti
++
++    pop rax  
++    ret
++WritePCIDword ENDP
++
++
++
++;------------------------------------------------------------------------------
++;  unsigned char
++;  ReadPCIByte (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    )
++;------------------------------------------------------------------------------
++ReadPCIByte PROC
++    push rdx
++
++    cli
++    mov rax, rcx  ; pci_reg
++    mov dx, 0CF8h
++    out dx, rax
++	
++    xor rax, rax	
++    pop rdx       ; cfg_data_port
++    in  al, dx
++    sti
++
++    ret
++ReadPCIByte ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned short
++;  ReadPCIWord (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    )
++;------------------------------------------------------------------------------
++ReadPCIWord PROC
++    push rdx
++
++    cli
++    mov rax, rcx  ; pci_reg
++    mov dx, 0CF8h
++    out dx, rax
++
++    xor rax, rax	
++    pop rdx       ; cfg_data_port
++    in  ax, dx
++    sti
++
++    ret
++ReadPCIWord ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned int
++;  ReadPCIDword (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    )
++;------------------------------------------------------------------------------
++ReadPCIDword PROC
++    push rdx
++
++    cli
++    mov rax, rcx  ; pci_reg
++    mov dx, 0CF8h
++    out dx, rax
++
++    xor rax, rax	
++    pop rdx       ; cfg_data_port
++    in  eax, dx
++    sti
++
++    ret
++ReadPCIDword ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  _swsmi (
++;    unsigned int	smi_code_data	// rcx
++;    IN   UINT64	rax_value	// rdx
++;    IN   UINT64	rbx_value	// r8
++;    IN   UINT64	rcx_value	// r9
++;    IN   UINT64	rdx_value	// rsp + 0x28
++;    IN   UINT64	rsi_value	// rsp + 0x30
++;    IN   UINT64	rdi_value	// rsp + 0x38
++;    )
++;------------------------------------------------------------------------------
++_swsmi PROC
++    push rbx
++    push rsi
++    push rdi
++
++    ; rsp - 0x18
++
++    ; setting up GPR (arguments) to SMI handler call
++    ; notes:
++    ;   RAX will get partially overwritten (AX) by _smi_code_data (which is passed in RCX)
++    ;   RDX will get partially overwritten (DX) by the value of APMC port (= 0x00B2)
++    mov rax, rdx ; rax_value
++    mov ax, cx   ; smi_code_data
++    mov rdx, r10 ; rdx_value
++    mov rdx, [rsp + 040h] ; rsp + 0x28 + 0x18
++
++    mov rbx, r8  ; rbx_value
++    mov rcx, r9  ; rcx_value
++    mov rsi, [rsp + 048h] ; rsi_value
++    mov rdi, [rsp + 050h] ; rdi_value
++
++    ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
++    out 0B2h, ax
++
++    ; @TODO: some SM handlers return data/errorcode in GPRs, need to return this to the caller
++
++    pop rdi
++    pop rsi
++    pop rbx
++    ret
++_swsmi ENDP
++
++
++END
+diff --git a/AppPkg/Applications/Python/Efi/cpu_ia32.asm b/AppPkg/Applications/Python/Efi/cpu_ia32.asm
+new file mode 100644
+index 0000000..72d26c5
+--- /dev/null
++++ b/AppPkg/Applications/Python/Efi/cpu_ia32.asm
+@@ -0,0 +1,395 @@
++TITLE   cpu.asm: Assembly code for the i386 resources
++
++PUBLIC WritePortDword
++PUBLIC WritePortWord
++PUBLIC WritePortByte
++PUBLIC ReadPortDword
++PUBLIC ReadPortWord
++PUBLIC ReadPortByte
++PUBLIC WriteHighCMOSByte
++PUBLIC WriteLowCMOSByte
++PUBLIC SendAPMSMI
++PUBLIC WritePCIByte
++PUBLIC WritePCIWord
++PUBLIC WritePCIDword
++PUBLIC ReadPCIByte
++PUBLIC ReadPCIWord
++PUBLIC ReadPCIDword
++PUBLIC _rdmsr
++PUBLIC _wrmsr
++
++
++    .586p
++    .model  flat,C
++    .code
++
++;------------------------------------------------------------------------------
++; void _store_idtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_store_idtr PROC
++    mov ecx, dword ptr [esp+4]
++    sidt dword ptr [ecx]
++    ret
++_store_idtr ENDP
++
++
++;------------------------------------------------------------------------------
++; void _load_idtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_load_idtr PROC
++    mov ecx, dword ptr [esp+4]
++    lidt fword ptr [ecx]
++    ret
++_load_idtr ENDP
++
++;------------------------------------------------------------------------------
++; void _store_gdtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_store_gdtr PROC
++    mov ecx, dword ptr [esp+4]
++    sgdt dword ptr [ecx]
++    ret
++_store_gdtr ENDP
++
++;------------------------------------------------------------------------------
++; void _store_ldtr(
++;   unsigned char *address // rcx
++;   )
++;------------------------------------------------------------------------------
++_store_ldtr PROC
++    mov ecx, dword ptr [esp+4]
++    sldt word ptr [ecx]
++    ret
++_store_ldtr ENDP
++
++;------------------------------------------------------------------------------
++;  void __stdcall _rdmsr(
++;    IN UINT32 msr,
++;    OUT UINT32* msrlo,
++;    OUT UINT32* msrhi 
++;    )
++;------------------------------------------------------------------------------
++_rdmsr PROC
++    mov ecx, dword ptr [esp + 4] ; msr
++
++    rdmsr
++
++    mov ecx, dword ptr [esp + 8] 
++    mov dword ptr [ecx], eax ; msrlo
++    mov ecx, dword ptr [esp + 12] 
++    mov dword ptr [ecx], edx ; msrhi
++
++    ret
++_rdmsr ENDP
++
++;------------------------------------------------------------------------------
++;  VOID __stdcall _wrmsr(
++;    IN UINT32 msr,
++;    IN UINT32 msrlo,
++;    IN UINT32 msrhi 
++;    )
++;------------------------------------------------------------------------------
++_wrmsr PROC
++    mov ecx, dword ptr [esp + 4]  ; msr
++    mov eax, dword ptr [esp + 8] ; msrlo
++    mov edx, dword ptr [esp + 12] ; msrhi
++
++    wrmsr
++
++    ret
++_wrmsr ENDP
++
++;------------------------------------------------------------------------------
++;UINT32 _eflags()
++;------------------------------------------------------------------------------
++eflags PROC
++    pushfd
++    pop eax
++    ret
++eflags ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WritePortDword (
++;    IN   UINT32    out_value
++;    IN   UINT16    port_num
++;    )
++;------------------------------------------------------------------------------
++WritePortDword PROC
++    mov eax, dword ptr [esp + 4]    ; out_value
++    mov edx, dword ptr [esp + 8]   ; port_num
++    out dx, eax
++
++    ret
++WritePortDword ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WritePortWord (
++;    IN   UINT16    out_value
++;    IN   UINT16    port_num
++;    )
++;------------------------------------------------------------------------------
++WritePortWord PROC
++    mov eax, dword ptr [esp + 4]   ; out_value
++    mov edx, dword ptr [esp + 8]  ; port_num
++    out dx, ax
++
++    ret
++WritePortWord ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WritePortByte (
++;    IN   UINT8     out_value
++;    IN   UINT16    port_num
++;    )
++;------------------------------------------------------------------------------
++WritePortByte PROC
++    mov eax, dword ptr [esp + 4]   ; out_value
++    mov edx, dword ptr [esp + 8]  ; port_num
++    out dx, al
++
++    ret
++WritePortByte ENDP
++
++;------------------------------------------------------------------------------
++;  UINT32
++;  ReadPortDword (
++;    IN   UINT16    port_num
++;    )
++;------------------------------------------------------------------------------
++ReadPortDword PROC
++    xor eax, eax
++    mov edx, dword ptr [esp + 4] ; port_num
++    in eax, dx
++
++   ret
++ReadPortDword ENDP
++
++;------------------------------------------------------------------------------
++;  UINT16
++;  ReadPortWord (
++;    IN   UINT16    port_num
++;    )
++;------------------------------------------------------------------------------
++ReadPortWord PROC
++    xor eax, eax    
++    mov edx, dword ptr [esp + 4] ; port_num
++    in ax, dx
++
++    ret
++ReadPortWord ENDP
++
++;------------------------------------------------------------------------------
++;  UINT8
++;  ReadPortByte (
++;    IN   UINT16    port_num
++;    )
++;------------------------------------------------------------------------------
++ReadPortByte PROC
++    xor eax, eax    
++    mov edx, dword ptr [esp + 4] ; port_num
++    in al, dx
++
++    ret
++ReadPortByte ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WriteHighCMOSByte (
++;    IN   UINT8     cmos_off
++;    IN   UINT8     val
++;    )
++;------------------------------------------------------------------------------
++WriteHighCMOSByte PROC
++    mov eax, dword ptr [esp + 4]  ; cmos_off
++    out 72h, al
++    mov eax, dword ptr [esp + 8]  ; val
++    out 73h, al
++
++    ret
++WriteHighCMOSByte ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WriteLowCMOSByte (
++;    IN   UINT8     cmos_off
++;    IN   UINT8     val
++;    )
++;------------------------------------------------------------------------------
++WriteLowCMOSByte PROC
++    mov eax, dword ptr [esp + 4]  ; cmos_off
++    or al, 80h
++    out 70h, al
++    mov eax, dword ptr [esp + 8]  ; val
++    out 71h, al
++
++    ret
++WriteLowCMOSByte ENDP
++
++
++;------------------------------------------------------------------------------
++;  VOID
++;  SendAPMSMI (
++;    IN   UINT32	apm_port_value
++;    IN   UINT64	rax_value               // NOT USED???
++;    )
++;------------------------------------------------------------------------------
++SendAPMSMI PROC
++    mov eax, dword ptr [esp + 4]  ; apm_port_value
++    mov dx, 0B2h
++    out dx, eax
++
++    ret
++SendAPMSMI ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WritePCIByte (
++;    IN   UINT32    pci_reg
++;    IN   UINT16    cfg_data_port
++;    IN   UINT8     byte_value
++;    )
++;------------------------------------------------------------------------------
++WritePCIByte PROC
++    mov eax, dword ptr [esp + 4]  ; pci_reg
++    mov dx, 0CF8h
++    out dx, eax
++
++    mov eax, dword ptr [esp + 12]  ; word_value
++    mov edx, dword ptr [esp + 8]  ; cfg_data_port
++    out dx, al
++
++    ret
++WritePCIByte ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WritePCIWord (
++;    IN   UINT32    pci_reg
++;    IN   UINT16    cfg_data_port
++;    IN   UINT16    word_value
++;    )
++;------------------------------------------------------------------------------
++WritePCIWord PROC
++    mov eax, dword ptr [esp + 4]  ; pci_reg
++    mov dx, 0CF8h
++    out dx, eax
++
++    mov eax, dword ptr [esp + 12]  ; word_value
++    mov edx, dword ptr [esp + 8]  ; cfg_data_port
++    out dx, ax
++
++    ret
++WritePCIWord ENDP
++
++;------------------------------------------------------------------------------
++;  VOID
++;  WritePCIDword (
++;    IN   UINT32	pci_reg
++;    IN   UINT16	cfg_data_port    // rdx
++;    IN   UINT32	dword_value      // r8
++;    )
++;------------------------------------------------------------------------------
++WritePCIDword PROC
++
++    mov eax, dword ptr [esp + 4]  ; pci_reg
++    mov dx, 0CF8h
++    out dx, eax
++
++    mov eax, dword ptr [esp + 12]  ; dword_value
++    mov edx, dword ptr [esp + 8]  ; cfg_data_port
++    out dx, eax
++
++    ret
++WritePCIDword ENDP
++
++
++;------------------------------------------------------------------------------
++;  unsigned char
++;  ReadPCIByte (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    )
++;------------------------------------------------------------------------------
++ReadPCIByte PROC
++    cli
++    mov eax, dword ptr [esp + 4]  ; pci_reg
++    mov dx, 0CF8h
++    out dx, eax
++
++    xor eax, eax
++    mov edx, dword ptr [esp + 8]   ; cfg_data_port
++    in  al, dx
++    sti
++
++    ret
++ReadPCIByte ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned short
++;  ReadPCIWord (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    )
++;------------------------------------------------------------------------------
++ReadPCIWord PROC
++    cli
++    mov eax, dword ptr [esp + 4]  ; pci_reg
++    mov dx, 0CF8h
++    out dx, eax
++
++    xor eax, eax	
++    mov edx, dword ptr [esp + 8]   ; cfg_data_port
++    in  ax, dx
++    sti
++
++    ret
++ReadPCIWord ENDP
++
++;------------------------------------------------------------------------------
++;  unsigned int
++;  ReadPCIDword (
++;    unsigned int	pci_reg          // rcx
++;    unsigned short	cfg_data_port    // rdx
++;    )
++;------------------------------------------------------------------------------
++ReadPCIDword PROC
++    cli
++    mov eax, dword ptr [esp + 4]  ; pci_reg
++    mov dx, 0CF8h
++    out dx, eax
++
++    xor eax, eax	
++    mov edx, dword ptr [esp + 8]   ; cfg_data_port
++    in  eax, dx
++    sti
++
++    ret
++ReadPCIDword ENDP
++
++;------------------------------------------------------------------------------
++;  void
++;  _swsmi (
++;    unsigned int	smi_code_data	// rcx
++;    IN   UINT32	rax_value	// rdx
++;    IN   UINT32	rbx_value	// r8
++;    IN   UINT32	rcx_value	// r9
++;    IN   UINT32	rdx_value	// r10
++;    IN   UINT32	rsi_value	// r11
++;    IN   UINT32	rdi_value	// r12
++;    )
++;------------------------------------------------------------------------------
++_swsmi PROC
++    xor eax, eax
++    ret
++_swsmi ENDP
++
++END
+diff --git a/AppPkg/Applications/Python/Efi/cpu_ia32_gcc.s b/AppPkg/Applications/Python/Efi/cpu_ia32_gcc.s
+new file mode 100644
+index 0000000..a536517
+--- /dev/null
++++ b/AppPkg/Applications/Python/Efi/cpu_ia32_gcc.s
+@@ -0,0 +1,324 @@
++
++.global WritePortDword
++.global WritePortWord
++.global WritePortByte
++.global ReadPortDword
++.global ReadPortWord
++.global ReadPortByte
++.global WriteHighCMOSByte
++.global WriteLowCMOSByte
++.global SendAPMSMI
++.global WritePCIByte
++.global WritePCIWord
++.global WritePCIDword
++.global ReadPCIByte
++.global ReadPCIWord
++.global ReadPCIDword
++.global _rdmsr
++.global _wrmsr
++.global _swsmi
++
++
++.intel_syntax noprefix
++.text
++
++
++#------------------------------------------------------------------------------
++# void _store_ldtr(
++#   unsigned char *address // rcx
++#   )
++#------------------------------------------------------------------------------
++_store_ldtr:
++    mov ecx, dword ptr [esp+4]
++    sldt word ptr [ecx]
++    ret
++
++#------------------------------------------------------------------------------
++#  void __stdcall _rdmsr(
++#    IN UINT32 msr,
++#    OUT UINT32* msrlo,
++#    OUT UINT32* msrhi 
++#    )
++#------------------------------------------------------------------------------
++_rdmsr:
++    mov ecx, dword ptr [esp + 4] # msr
++
++    rdmsr
++
++    mov ecx, dword ptr [esp + 8] 
++    mov dword ptr [ecx], eax # msrlo
++    mov ecx, dword ptr [esp + 12] 
++    mov dword ptr [ecx], edx # msrhi
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID __stdcall _wrmsr(
++#    IN UINT32 msr,
++#    IN UINT32 msrlo,
++#    IN UINT32 msrhi 
++#    )
++#------------------------------------------------------------------------------
++_wrmsr:
++    mov ecx, dword ptr [esp + 4]  # msr
++    mov eax, dword ptr [esp + 8] # msrlo
++    mov edx, dword ptr [esp + 12] # msrhi
++
++    wrmsr
++    ret
++
++#------------------------------------------------------------------------------
++#UINT32 _eflags()
++#------------------------------------------------------------------------------
++eflags:
++    pushfd
++    pop eax
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WritePortDword (
++#    IN   UINT32    out_value
++#    IN   UINT16    port_num
++#    )
++#------------------------------------------------------------------------------
++WritePortDword:
++    mov eax, dword ptr [esp + 4]    # out_value
++    mov edx, dword ptr [esp + 8]   # port_num
++    out dx, eax
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WritePortWord (
++#    IN   UINT16    out_value
++#    IN   UINT16    port_num
++#    )
++#------------------------------------------------------------------------------
++WritePortWord:
++    mov eax, dword ptr [esp + 4]   # out_value
++    mov edx, dword ptr [esp + 8]  # port_num
++    out dx, ax
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WritePortByte (
++#    IN   UINT8     out_value
++#    IN   UINT16    port_num
++#    )
++#------------------------------------------------------------------------------
++WritePortByte:
++    mov eax, dword ptr [esp + 4]   # out_value
++    mov edx, dword ptr [esp + 8]  # port_num
++    out dx, al
++    ret
++
++#------------------------------------------------------------------------------
++#  UINT32
++#  ReadPortDword (
++#    IN   UINT16    port_num
++#    )
++#------------------------------------------------------------------------------
++ReadPortDword:
++    xor eax, eax
++    mov edx, dword ptr [esp + 4] # port_num
++    in eax, dx
++   ret
++
++#------------------------------------------------------------------------------
++#  UINT16
++#  ReadPortWord (
++#    IN   UINT16    port_num
++#    )
++#------------------------------------------------------------------------------
++ReadPortWord:
++    xor eax, eax    
++    mov edx, dword ptr [esp + 4] # port_num
++    in ax, dx
++    ret
++
++#------------------------------------------------------------------------------
++#  UINT8
++#  ReadPortByte (
++#    IN   UINT16    port_num
++#    )
++#------------------------------------------------------------------------------
++ReadPortByte:
++    xor eax, eax    
++    mov edx, dword ptr [esp + 4] # port_num
++    in al, dx
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WriteHighCMOSByte (
++#    IN   UINT8     cmos_off
++#    IN   UINT8     val
++#    )
++#------------------------------------------------------------------------------
++WriteHighCMOSByte:
++    mov eax, dword ptr [esp + 4]  # cmos_off
++    out 0x72, al
++    mov eax, dword ptr [esp + 8]  # val
++    out 0x73, al
++    ret
++
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WriteLowCMOSByte (
++#    IN   UINT8     cmos_off
++#    IN   UINT8     val
++#    )
++#------------------------------------------------------------------------------
++WriteLowCMOSByte:
++    mov eax, dword ptr [esp + 4]  # cmos_off
++    or al, 0x80
++    out 0x70, al
++    mov eax, dword ptr [esp + 8]  # val
++    out 0x71, al
++    ret
++
++
++#------------------------------------------------------------------------------
++#  VOID
++#  SendAPMSMI (
++#    IN   UINT32	apm_port_value
++#    IN   UINT64	rax_value               // NOT USED???
++#    )
++#------------------------------------------------------------------------------
++SendAPMSMI:
++    mov eax, dword ptr [esp + 4]  # apm_port_value
++    mov dx, 0x0B2
++    out dx, eax
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WritePCIByte (
++#    IN   UINT32    pci_reg
++#    IN   UINT16    cfg_data_port
++#    IN   UINT8     byte_value
++#    )
++#------------------------------------------------------------------------------
++WritePCIByte:
++    mov eax, dword ptr [esp + 4]  # pci_reg
++    mov dx, 0x0CF8
++    out dx, eax
++
++    mov eax, dword ptr [esp + 12]  # word_value
++    mov edx, dword ptr [esp + 8]  # cfg_data_port
++    out dx, al
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WritePCIWord (
++#    IN   UINT32    pci_reg
++#    IN   UINT16    cfg_data_port
++#    IN   UINT16    word_value
++#    )
++#------------------------------------------------------------------------------
++WritePCIWord:
++    mov eax, dword ptr [esp + 4]  # pci_reg
++    mov dx, 0x0CF8
++    out dx, eax
++
++    mov eax, dword ptr [esp + 12]  # word_value
++    mov edx, dword ptr [esp + 8]  # cfg_data_port
++    out dx, ax
++    ret
++
++#------------------------------------------------------------------------------
++#  VOID
++#  WritePCIDword (
++#    IN   UINT32	pci_reg
++#    IN   UINT16	cfg_data_port    // rdx
++#    IN   UINT32	dword_value      // r8
++#    )
++#------------------------------------------------------------------------------
++WritePCIDword:
++    mov eax, dword ptr [esp + 4]  # pci_reg
++    mov dx, 0x0CF8
++    out dx, eax
++
++    mov eax, dword ptr [esp + 12]  # dword_value
++    mov edx, dword ptr [esp + 8]  # cfg_data_port
++    out dx, eax
++    ret
++
++#------------------------------------------------------------------------------
++#  unsigned char
++#  ReadPCIByte (
++#    unsigned int	pci_reg          // rcx
++#    unsigned short	cfg_data_port    // rdx
++#    )
++#------------------------------------------------------------------------------
++ReadPCIByte:
++    cli
++    mov eax, dword ptr [esp + 4]  # pci_reg
++    mov dx, 0x0CF8
++    out dx, eax
++
++    xor eax, eax
++    mov edx, dword ptr [esp + 8]   # cfg_data_port
++    in  al, dx
++    sti
++
++    ret
++
++#------------------------------------------------------------------------------
++#  unsigned short
++#  ReadPCIWord (
++#    unsigned int	pci_reg          // rcx
++#    unsigned short	cfg_data_port    // rdx
++#    )
++#------------------------------------------------------------------------------
++ReadPCIWord:
++    cli
++    mov eax, dword ptr [esp + 4]  # pci_reg
++    mov dx, 0x0CF8
++    out dx, eax
++
++    xor eax, eax	
++    mov edx, dword ptr [esp + 8]   # cfg_data_port
++    in  ax, dx
++    sti
++
++    ret
++
++#------------------------------------------------------------------------------
++#  unsigned int
++#  ReadPCIDword (
++#    unsigned int	pci_reg          // rcx
++#    unsigned short	cfg_data_port    // rdx
++#    )
++#------------------------------------------------------------------------------
++ReadPCIDword:
++    cli
++    mov eax, dword ptr [esp + 4]  # pci_reg
++    mov dx, 0x0CF8
++    out dx, eax
++
++    xor eax, eax	
++    mov edx, dword ptr [esp + 8]   # cfg_data_port
++    in  eax, dx
++    sti
++
++    ret
++
++#------------------------------------------------------------------------------
++#  void
++#  _swsmi (
++#    unsigned int	smi_code_data	// rcx
++#    IN   UINT32	rax_value	// rdx
++#    IN   UINT32	rbx_value	// r8
++#    IN   UINT32	rcx_value	// r9
++#    IN   UINT32	rdx_value	// r10
++#    IN   UINT32	rsi_value	// r11
++#    IN   UINT32	rdi_value	// r12
++#    )
++#------------------------------------------------------------------------------
++_swsmi:
++    xor eax, eax
++    ret
+diff --git a/AppPkg/Applications/Python/Ia32/pyconfig.h b/AppPkg/Applications/Python/Ia32/pyconfig.h
+index ef241a9..ed6bcf4 100644
+--- a/AppPkg/Applications/Python/Ia32/pyconfig.h
++++ b/AppPkg/Applications/Python/Ia32/pyconfig.h
+@@ -125,7 +125,7 @@
+ #undef HAVE_CONIO_H
+ 
+ /* Define to 1 if you have the 'copysign' function. */
+-#undef HAVE_COPYSIGN
++#define HAVE_COPYSIGN 1
+ 
+ /* Define to 1 if you have the 'ctermid' function. */
+ #undef HAVE_CTERMID
+diff --git a/AppPkg/Applications/Python/PythonCore.inf b/AppPkg/Applications/Python/PythonCore.inf
+index 273f577..035e724 100644
+--- a/AppPkg/Applications/Python/PythonCore.inf
++++ b/AppPkg/Applications/Python/PythonCore.inf
+@@ -194,7 +194,7 @@
+   Python-$(PYTHON_VERSION)/Modules/sha512module.c               #
+   Python-$(PYTHON_VERSION)/Modules/shamodule.c                  #
+   Python-$(PYTHON_VERSION)/Modules/signalmodule.c               #
+-  Python-$(PYTHON_VERSION)/Modules/socketmodule.c               #
++  #Python-$(PYTHON_VERSION)/Modules/socketmodule.c               #
+   Python-$(PYTHON_VERSION)/Modules/stropmodule.c                #
+   Python-$(PYTHON_VERSION)/Modules/symtablemodule.c             #
+   Python-$(PYTHON_VERSION)/Modules/timemodule.c                 #
+@@ -239,10 +239,17 @@
+   Python-$(PYTHON_VERSION)/Modules/zlib/inftrees.c              #
+   Python-$(PYTHON_VERSION)/Modules/zlib/trees.c                 #
+   Python-$(PYTHON_VERSION)/Modules/zlib/uncompr.c               #
+-  Python-$(PYTHON_VERSION)/Modules/zlib/zutil.c                 #
++  Python-$(PYTHON_VERSION)/Modules/zlib/zutil.c
++
++  [Sources.X64]
++    Efi/cpu.asm
++
++  [Sources.IA32]
++    Efi/cpu_ia32.asm   | MSFT
++    Efi/cpu_ia32_gcc.s | GCC
+ 
+ [BuildOptions]
+    MSFT:*_*_IA32_CC_FLAGS         = /Oi- /wd4018 /wd4054 /wd4055 /wd4101 /wd4131 /wd4152 /wd4204 /wd4210 /wd4244 /wd4267 /wd4305 /wd4310 /wd4389 /wd4701 /wd4702 /wd4706 /I$(WORKSPACE)\AppPkg\Applications\Python\Ia32 /I$(WORKSPACE)\AppPkg\Applications\Python\Efi /I$(WORKSPACE)\AppPkg\Applications\Python\Python-$(PYTHON_VERSION)\Include /DHAVE_MEMMOVE /DUSE_PYEXPAT_CAPI /DXML_STATIC
+-   MSFT:*_*_X64_CC_FLAGS          = /Oi- /wd4018 /wd4054 /wd4055 /wd4101 /wd4131 /wd4152 /wd4204 /wd4210 /wd4244 /wd4267 /wd4305 /wd4310 /wd4389 /wd4701 /wd4702 /wd4706 /I$(WORKSPACE)\AppPkg\Applications\Python\X64 /I$(WORKSPACE)\AppPkg\Applications\Python\Efi /I$(WORKSPACE)\AppPkg\Applications\Python\Python-$(PYTHON_VERSION)\Include /DHAVE_MEMMOVE /DUSE_PYEXPAT_CAPI /DXML_STATIC
++   MSFT:*_*_X64_CC_FLAGS          = /Oi- /WX- /wd4018 /wd4054 /wd4055 /wd4101 /wd4131 /wd4152 /wd4204 /wd4210 /wd4244 /wd4267 /wd4305 /wd4310 /wd4389 /wd4701 /wd4702 /wd4706 /I$(WORKSPACE)\AppPkg\Applications\Python\X64 /I$(WORKSPACE)\AppPkg\Applications\Python\Efi /I$(WORKSPACE)\AppPkg\Applications\Python\Python-$(PYTHON_VERSION)\Include /DHAVE_MEMMOVE /DUSE_PYEXPAT_CAPI /DXML_STATIC
+     GCC:*_*_IA32_CC_FLAGS         = -fno-builtin -Wno-format -I$(WORKSPACE)/AppPkg/Applications/Python/Ia32 -I$(WORKSPACE)/AppPkg/Applications/Python/Python-$(PYTHON_VERSION)/Include -DHAVE_MEMMOVE -DUSE_PYEXPAT_CAPI -DXML_STATIC
+     GCC:*_*_X64_CC_FLAGS          = -Wno-format -I$(WORKSPACE)/AppPkg/Applications/Python/X64 -I$(WORKSPACE)/AppPkg/Applications/Python/Python-$(PYTHON_VERSION)/Include -DHAVE_MEMMOVE -DUSE_PYEXPAT_CAPI -DXML_STATIC
+diff --git a/AppPkg/Applications/Python/X64/pyconfig.h b/AppPkg/Applications/Python/X64/pyconfig.h
+index 81dbada..c70f5b4 100644
+--- a/AppPkg/Applications/Python/X64/pyconfig.h
++++ b/AppPkg/Applications/Python/X64/pyconfig.h
+@@ -132,7 +132,7 @@
+ #undef HAVE_CONIO_H
+ 
+ /* Define to 1 if you have the 'copysign' function. */
+-#undef HAVE_COPYSIGN
++#define HAVE_COPYSIGN 1
+ 
+ /* Define to 1 if you have the 'ctermid' function. */
+ #undef HAVE_CTERMID
+diff --git a/StdLib/LibC/gdtoa/gdtoa.inf b/StdLib/LibC/gdtoa/gdtoa.inf
+index 08ef5e0..c49d16d 100644
+--- a/StdLib/LibC/gdtoa/gdtoa.inf
++++ b/StdLib/LibC/gdtoa/gdtoa.inf
+@@ -52,7 +52,7 @@
+ 
+   # Private interfaces interfacing to libc
+   dtoa.c
+-  ldtoa.c
++  # ldtoa.c
+   gdtoa.c
+ 
+   # private interfaces
+@@ -76,3 +76,6 @@
+   LibLocale
+   LibStdLib
+   LibString
++
++[BuildOptions]
++  MSFT:*_*_*_CC_FLAGS = /Od /0b
+diff --git a/StdLib/StdLib.inc b/StdLib/StdLib.inc
+index 32e1ae0..8a0889b 100644
+--- a/StdLib/StdLib.inc
++++ b/StdLib/StdLib.inc
+@@ -123,7 +123,7 @@
+   # These Build Options are used when building the Standard Libraries to be run
+   # on real hardware.
+    INTEL:*_*_*_CC_FLAGS     = /Qfreestanding /D UEFI_C_SOURCE
+-    MSFT:*_*_*_CC_FLAGS     = /X /Zc:wchar_t /D UEFI_C_SOURCE
++    MSFT:*_*_*_CC_FLAGS     = /WX- /X /Zc:wchar_t /D UEFI_C_SOURCE
+      GCC:*_*_*_CC_FLAGS     = -nostdinc -nostdlib -DUEFI_C_SOURCE
+     RVCT:*_*_*_CC_FLAGS     = --library_interface=none -DUEFI_C_SOURCE -J$(WORKSPACE)/StdLib/Include -J$(WORKSPACE)/StdLib/Include/Arm
+    XCODE:*_*_*_CC_FLAGS     = -nostdinc -nostdlib -DUEFI_C_SOURCE -Wno-unused-const-variable -Wno-string-compare -Wno-sometimes-uninitialized
+-- 
+2.25.1.windows.1
+
