@@ -1,7 +1,7 @@
 /***
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2019, Intel Corporation
- 
+Copyright (c) 2010-2020, Intel Corporation
+
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
 as published by the Free Software Foundation; Version 2.
@@ -17,7 +17,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 Contact information:
 chipsec@intel.com
-*/ 
+*/
 
 
 #include <ntddk.h>
@@ -28,7 +28,7 @@ chipsec@intel.com
 #include "driver.h"
 
 //#pragma comment(lib, "wdmsec.lib")
-//#pragma comment(lib, "bufferoverflowK.lib") 
+//#pragma comment(lib, "bufferoverflowK.lib")
 
 #pragma comment(linker, "/section:chipsec_code,EWP")
 
@@ -93,24 +93,24 @@ ReadIOPort(
   return 0;
 }
 
-// pci_read_.. ARE NOT USED	
+// pci_read_.. ARE NOT USED
 BYTE pci_read_byte(WORD bus, WORD dev, WORD func, BYTE offset )
 {
   WORD target = func + ((dev & 0x1F) << 3) + ((bus & 0xFF) << 8) ;
   _outpd( 0xCF8, (DWORD)( target << 8 ) | 0x80000000UL | ((DWORD)offset & ~3 ) );
-  return (BYTE)_inp( 0xCFC + (offset & 0x3) ); 
+  return (BYTE)_inp( 0xCFC + (offset & 0x3) );
 }
 WORD pci_read_word(WORD bus, WORD dev, WORD func, BYTE offset )
 {
   WORD target = func + ((dev & 0x1F) << 3) + ((bus & 0xFF) << 8) ;
   _outpd( 0xCF8, (DWORD)( target << 8 ) | 0x80000000UL | ((DWORD)offset & ~3 ) );
-  return (WORD)_inpw( 0xCFC  + (offset & 0x2) ); 
+  return (WORD)_inpw( 0xCFC  + (offset & 0x2) );
 }
 DWORD pci_read_dword(WORD bus, WORD dev, WORD func, BYTE offset )
 {
   WORD target = func + ((dev & 0x1F) << 3) + ((bus & 0xFF) << 8) ;
   _outpd( 0xCF8, (DWORD)( target << 8 ) | 0x80000000UL | ((DWORD)offset & ~3 ) );
-  return _inpd( 0xCFC ); 
+  return _inpd( 0xCFC );
 }
 
 
@@ -158,7 +158,7 @@ DriverEntry(
 
     //
     // Attempt to create a named device object
-    // 
+    //
 
 //
 // SDDL_DEVOBJ_SYS_ALL_ADM_ALL allows the kernel, system, and admin complete
@@ -176,7 +176,7 @@ DECLARE_CONST_UNICODE_STRING(
 //  _T("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)(A;;GA;;;WD)"));
 
     Status = IoCreateDeviceSecure(
-      DriverObject, 
+      DriverObject,
       0, // sizeof(DEVICE_EXTENSION),
       &DeviceName,
       FILE_DEVICE_UNKNOWN, // FILE_DEVICE_NOTHING
@@ -198,11 +198,11 @@ DECLARE_CONST_UNICODE_STRING(
     //
     RtlInitUnicodeString (&DosDeviceName, DEVICE_NAME_DOS );
     Status = IoCreateSymbolicLink(&DosDeviceName, &DeviceName);
-    if( !NT_SUCCESS(Status) ) 
+    if( !NT_SUCCESS(Status) )
       {
         DbgPrint( "[chipsec] ERROR: DriverEntry: IoCreateSymbolicLink failed\n" );
         if(DeviceObject)
-          {           
+          {
             IoDeleteDevice(DeviceObject);
           }
         return Status;
@@ -247,7 +247,7 @@ DriverClose(
     IN PIRP Irp
     )
 {
-    
+
     DbgPrint( "[chipsec] >> DriverClose (DeviceObject = 0x%p)\n", DeviceObject );
 
     Irp->IoStatus.Status = STATUS_SUCCESS;
@@ -276,7 +276,7 @@ DriverUnload(
       }
 
     if( DriverObject->DeviceObject )
-      {             
+      {
         IoDeleteDevice(DriverObject->DeviceObject);
       }
 
@@ -328,8 +328,9 @@ DriverDeviceControl(
     unsigned int       _cpu_thread_id = 0;
     unsigned int       new_cpu_thread_id = 0;
     ULONG              _num_active_cpus = 0;
+    USHORT             _num_groups = 0;
+    PROCESSOR_NUMBER   _proc_number = {0, 0, 0};
     KAFFINITY          _kaffinity = 0;
-    //UINT32             core_id = 0;
 
     //
     // Get the current IRP stack location of this request
@@ -343,12 +344,17 @@ DriverDeviceControl(
 
     //
     // CPU thread ID
-    // 
-    _num_active_cpus = KeQueryActiveProcessorCount( NULL );
-    _kaffinity       = KeQueryActiveProcessors();
-    _cpu_thread_id   = KeGetCurrentProcessorNumber();
-    DbgPrint( "[chipsec] Active CPU threads         : %ul (KeNumberProcessors = %d)\n", _num_active_cpus, KeNumberProcessors );
+    //
+    _num_active_cpus = KeQueryActiveProcessorCountEx( ALL_PROCESSOR_GROUPS );
+    _num_groups      = KeQueryActiveGroupCount();
+    _cpu_thread_id   = KeGetCurrentProcessorNumberEx( &_proc_number );
+    _kaffinity       = KeQueryGroupAffinity( _proc_number.Group );
+
+    DbgPrint( "[chipsec] Active CPU threads         : %ul\n", _num_active_cpus );
+    DbgPrint( "[chipsec] Active CPU groups          : %ul\n", _num_groups );
     DbgPrint( "[chipsec] Active CPU mask (KAFFINITY): 0x%08X\n", _kaffinity );
+    DbgPrint( "[chipsec] Current CPU group          : %u\n", _proc_number.Group );
+    DbgPrint( "[chipsec] Current CPU number         : %u\n", _proc_number.Number );
     DbgPrint( "[chipsec] Current CPU thread         : %u\n", _cpu_thread_id );
 
     //
@@ -379,7 +385,7 @@ DriverDeviceControl(
               Status = STATUS_INVALID_PARAMETER;
               break;
               }
-            val = ReadPCICfg( bus, dev, fun, off, size );             
+            val = ReadPCICfg( bus, dev, fun, off, size );
 
             IrpSp->Parameters.Read.Length = size;
             RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (VOID*)&val, size );
@@ -482,7 +488,7 @@ DriverDeviceControl(
                 phys_addr.HighPart = ((UINT32*)pInBuf)[0];
                 phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
                 len                = ((UINT32*)pInBuf)[2];
-                
+
 				        pInBuf = pInBuf + (3 * sizeof(UINT32));
 
                 if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3*sizeof(UINT32) )
@@ -678,8 +684,8 @@ DriverDeviceControl(
                 break;
             }
 
-            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
+            _kaffinity = KeSetSystemAffinityThreadEx( (KAFFINITY)(1 << new_cpu_thread_id) );
+            DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumberEx( NULL ) );
 
             RtlCopyBytes( &ucode_size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT16) );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] Ucode update size = 0x%X\n", ucode_size );
@@ -773,8 +779,8 @@ DriverDeviceControl(
                 break;
             }
 
-            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
+            _kaffinity = KeSetSystemAffinityThreadEx( (KAFFINITY)(1 << new_cpu_thread_id) );
+            DbgPrint( "[chipsec][IOCTL_WRMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumberEx( NULL ) );
 
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), 3 * sizeof(UINT32) );
             _msr_addr = msrData[0];
@@ -836,8 +842,8 @@ DriverDeviceControl(
                 break;
             }
 
-            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
+            _kaffinity = KeSetSystemAffinityThreadEx( (KAFFINITY)(1 << new_cpu_thread_id) );
+            DbgPrint( "[chipsec][IOCTL_RDMSR] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumberEx( NULL ) );
 
             RtlCopyBytes( msrData, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(UINT32) );
             _msr_addr = msrData[0];
@@ -889,7 +895,7 @@ DriverDeviceControl(
 
             __try
               {
-                value = ReadIOPort( io_port, size );             
+                value = ReadIOPort( io_port, size );
               }
             __except( EXCEPTION_EXECUTE_HANDLER )
               {
@@ -948,8 +954,8 @@ DriverDeviceControl(
                 break;
             }
 
-            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
-            DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumber() );
+            _kaffinity = KeSetSystemAffinityThreadEx( (KAFFINITY)(1 << new_cpu_thread_id) );
+            DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Changed CPU thread to %ul\n", KeGetCurrentProcessorNumberEx( NULL ) );
             RtlCopyBytes( &dt_code, (BYTE*)Irp->AssociatedIrp.SystemBuffer + sizeof(UINT32), sizeof(BYTE) );
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Descriptor table: %x\n", dt_code );
 
@@ -969,8 +975,8 @@ DriverDeviceControl(
             DbgPrint( "[chipsec][GET_CPU_DESCRIPTOR_TABLE] Descriptor table PA: 0x%I64X (0x%08X_%08X)\n", dt_pa.QuadPart, dt_pa.HighPart, dt_pa.LowPart );
 
             IrpSp->Parameters.Read.Length = sizeof(DESCRIPTOR_TABLE_RECORD) + sizeof(dt_pa.QuadPart);
-            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)pdtr, sizeof(DESCRIPTOR_TABLE_RECORD) );    
-            RtlCopyBytes( (UINT8*)Irp->AssociatedIrp.SystemBuffer + sizeof(DESCRIPTOR_TABLE_RECORD), (VOID*)&dt_pa.QuadPart, sizeof(dt_pa.QuadPart) );    
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)pdtr, sizeof(DESCRIPTOR_TABLE_RECORD) );
+            RtlCopyBytes( (UINT8*)Irp->AssociatedIrp.SystemBuffer + sizeof(DESCRIPTOR_TABLE_RECORD), (VOID*)&dt_pa.QuadPart, sizeof(dt_pa.QuadPart) );
 
             dwBytesWritten = IrpSp->Parameters.Read.Length;
             Status = STATUS_SUCCESS;
@@ -1015,7 +1021,7 @@ DriverDeviceControl(
                 Status = GetExceptionCode();
                 break;
               }
-            
+
             RtlCopyBytes( (BYTE*)Irp->AssociatedIrp.SystemBuffer, &smi_msg, sizeof(smi_msg) );
             dwBytesWritten = sizeof(smi_msg);
 
@@ -1068,7 +1074,7 @@ DriverDeviceControl(
             DbgPrint( "                       EDX = 0x%08X\n", CPUInfo[3] );
 
             IrpSp->Parameters.Read.Length = sizeof(CPUInfo);
-            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)CPUInfo, sizeof(CPUInfo) );    
+            RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (void*)CPUInfo, sizeof(CPUInfo) );
 
             dwBytesWritten = IrpSp->Parameters.Read.Length;
             Status = STATUS_SUCCESS;
@@ -1097,7 +1103,7 @@ DriverDeviceControl(
                  break;
             }
 
-            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
+            _kaffinity = KeSetSystemAffinityThreadEx( (KAFFINITY)(1 << new_cpu_thread_id) );
             value = (CPU_REG_TYPE)val64;
             DbgPrint( "[chipsec][WRITE_CR] CR Reg %#04x, value = %#010x \n", cr_reg, value );
 
@@ -1156,7 +1162,7 @@ DriverDeviceControl(
                  break;
             }
 
-            KeSetSystemAffinityThread( (KAFFINITY)(1 << new_cpu_thread_id) );
+            _kaffinity = KeSetSystemAffinityThreadEx( (KAFFINITY)(1 << new_cpu_thread_id) );
 
             switch (cr_reg) {
             case 0: value = ReadCR0();
@@ -1181,7 +1187,7 @@ DriverDeviceControl(
                 Status = STATUS_INVALID_PARAMETER;
                 break;
             }
-            
+
             if( !NT_SUCCESS(Status) ) {
                 break;
             }
@@ -1264,10 +1270,13 @@ DriverDeviceControl(
       } // -- switch
 
     // -- restore current KAFFINITY
-    KeSetSystemAffinityThread( _kaffinity );
-    DbgPrint( "[chipsec] Restored active CPU mask (KAFFINITY): 0x%08X\n", KeQueryActiveProcessors() );
-    DbgPrint( "[chipsec] Current CPU thread                  : %ul\n", KeGetCurrentProcessorNumber() );
-
+    KeRevertToUserAffinityThreadEx( _kaffinity );
+    _cpu_thread_id = KeGetCurrentProcessorNumberEx( &_proc_number );
+    DbgPrint( "[chipsec] Restored active CPU mask (KAFFINITY): 0x%08X\n", KeQueryGroupAffinity( _proc_number.Group ) );
+    DbgPrint( "[chipsec] Current CPU group                   : %u\n", _proc_number.Group );
+    DbgPrint( "[chipsec] Current CPU number                  : %u\n", _proc_number.Number );
+    DbgPrint( "[chipsec] Current CPU thread                  : %ul\n", _cpu_thread_id );
+ 
     // --
     // -- Complete the I/O request, Record the status of the I/O action.
     // --
