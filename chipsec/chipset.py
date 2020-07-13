@@ -82,6 +82,13 @@ CHIPSET_FAMILY_CORE  = []
 CHIPSET_FAMILY_ATOM  = []
 CHIPSET_FAMILY_QUARK = []
 
+CHIPSET_LITH_10NM = []
+CHIPSET_LITH_14NM = []
+CHIPSET_LITH_LEGACY = []
+
+CHIPSET_IGD_GEN9 = []
+CHIPSET_IGD_GEN11 = []
+CHIPSET_IGD_GEN12 = []
 
 PCH_CODE_PREFIX = 'PCH_'
 
@@ -305,6 +312,38 @@ class Chipset:
     def get_pch_name(self, id):
         return self.pch_longname
 
+    def get_igd(self):
+        if self.code in CHIPSET_IGD_GEN9:
+            return "IGD_GEN9"
+        elif self.code in CHIPSET_IGD_GEN11:
+            return "IGD_GEN11"
+        elif self.code in CHIPSET_IGD_GEN12:
+            return "IGD_GEN12"
+        else:
+            return None
+
+    def get_family(self):
+        if self.code in CHIPSET_FAMILY_ATOM:
+            return "ATOM"
+        elif self.code in CHIPSET_FAMILY_CORE:
+            return "CORE"
+        elif self.code in CHIPSET_FAMILY_XEON:
+            return "XEON"
+        elif self.code in CHIPSET_FAMILY_QUARK:
+            return "QUARK"
+        else:
+            return None
+
+    def get_lith(self):
+        if self.code in CHIPSET_LITH_10NM:
+            return "10nm"
+        elif self.code in CHIPSET_LITH_14NM:
+            return "14nm"
+        elif self.code in CHIPSET_LITH_LEGACY:
+            return "Legacy"
+        else:
+            return "Legacy"
+
     def print_chipset(self):
         logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.vid, self.did, self.rid))
 
@@ -386,15 +425,30 @@ class Chipset:
                         if 'family' in _info.attrib:
                             if _info.attrib['family'].lower() == "core":
                                 CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "atom":
+                            elif _info.attrib['family'].lower() == "atom":
                                 CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "xeon":
+                            elif _info.attrib['family'].lower() == "xeon":
                                 CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "quark":
+                            elif _info.attrib['family'].lower() == "quark":
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
                         if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(',')):
                                 self.detection_dictionary[dv.strip()] = _cfg.attrib['platform'].upper()
+                        if 'lithography' in _info.attrib:
+                            if _info.attrib['lithography'] == "14nm":
+                                CHIPSET_LITH_14NM.append(_cfg.attrib['platform'].upper())
+                            elif _info.attrib['lithography'] == "10nm":
+                                CHIPSET_LITH_10NM.append(_cfg.attrib['platform'].upper())
+                            else:
+                                CHIPSET_LITH_LEGACY.append(_cfg.attrib['platform'].upper())
+                        if 'igd' in _info.attrib:
+                            if _info.attrib['igd'] == "gen9":
+                                CHIPSET_IGD_GEN9.append(_cfg.attrib['platform'].upper())
+                            elif _info.attrib['igd'] == "gen11":
+                                CHIPSET_IGD_GEN11.append(_cfg.attrib['platform'].upper())
+                            elif _info.attrib['igd'] == "gen12":
+                                CHIPSET_IGD_GEN12.append(_cfg.attrib['platform'].upper())
+
                         if _info.iter('sku'):
                             for _sku in _info.iter('sku'):
                                 _det = ""
@@ -414,7 +468,7 @@ class Chipset:
     def load_xml_configuration( self ):
         # Create a sorted config file list (xml only)
         _cfg_files = []
-        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
+        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg', "{:X}".format(self.vid) )
         for root, subdirs, files in os.walk(_cfg_path):
             _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
         _cfg_files.sort()
@@ -429,12 +483,24 @@ class Chipset:
             for _xml in _cfg_files:
                 if fnmatch.fnmatch(os.path.basename(_xml), 'common*.xml'):
                     loaded_files.append(_xml)
+                elif self.get_lith() == "Legacy" and fnmatch.fnmatch(os.path.basename(_xml), 'legacy.xml'):
+                    loaded_files.append(_xml)
 
         # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
             platform_files = []
             for plat in [c.lower() for c in self.chipset_codes]:
                 platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
             loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
+
+        # Locate general platform configuration xml based on family
+        if not self.get_family() is None:
+            for _xml in _cfg_fies:
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}.xml'.format(self.get_family().lower())) or\
+                   fnmatch.fnmatch(os.path.basename(_xml), 'pch_{}*.xml'.format(self.get_family().lower())) or\
+                   fnmatch.fnmatch(os.path.basename(_xml), '{}_{}*.xml'.format(self.get_family().lower(), self.get_lith().lower())) or\
+                   fnmatch.fnmatch(os.path.basename(_xml), 'pch_{}_{}*.xml'.format(self.get_family().lower(), self.get_lith().lower())):
+                    loaded_files.append(_xml)
+
 
         # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
         if self.code and CHIPSET_CODE_UNKNOWN != self.code:
@@ -446,6 +512,12 @@ class Chipset:
         if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
             for _xml in _cfg_files:
                 if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code.lower())):
+                    loaded_files.append(_xml)
+
+        # Locate igd (chipsec/cfg/igd*.xml) configuration XML files.
+        if not self.get_igd() is None:
+            for _xml in _cfg_files:
+                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.get_igd().lower())):
                     loaded_files.append(_xml)
 
         # Load all configuration files for this platform.
