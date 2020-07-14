@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<configuration>
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="PCI0.0.0_REMAPBASE"  type="mmio" bar="MCHBAR" offset="0x5090" size="8" desc="Memory Remap Base Address">
+        <field name="REMAPBASE"  bit="20" size="19" desc="lower boundry of Remap Window"/>
+    </register>
+    <register name="PCI0.0.0_REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0x5098" size="8" desc="Memory Remap Limit Address">
+      <field name="REMAPLMT"  bit="20" size="19" desc="lower boundry of Remap Window"/>
+    </register>
+
+  <!-- CPU Model Specific Registers (MSR) -->
+    <register name="PRMRR_MASK" type="msr" msr="0x1F5" desc="PRMRR MASK register">
+      <field name="PRMRR_LOCK" bit="10" size="1" desc = "PRMRR Lock Bit" />
+      <field name="PRMRR_VLD" bit="11" size="1" desc = "PRMRR Valid Bit set by mcheck" />
+      <field name="PRMRR_mask_bits"   bit="12"  size="40" desc="PRMRR mask bits" />
+    </register>
+    <register name="PRMRR_PHYBASE" type="msr" msr="0x2A0" desc="PRMRR BASE Address 0">
+      <field name="PRMRR_MEMTYPE" bit="0" size="3" desc="PRMRR Memory Type" />
+      <field name="PRMRR_CONFIGURED" bit="3" size="1" desc="PRMRR Base Configured" />
+      <field name="PRMRR_base_address_fields" bit="12" size="40" desc="PRMRR base address bits" />
+    </register>
+
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+  </controls>
+
+</configuration>

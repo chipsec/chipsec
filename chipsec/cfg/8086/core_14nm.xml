@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<configuration>
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="PCI0.0.0_SMRAMC"     type="pcicfg" device="HOSTCTRL" offset="0x88" size="1" desc="System Management RAM Control">
+      <field name="D_OPEN"     bit="6" size="1" desc="SMRAM Open"/>
+      <field name="D_CLS"      bit="5" size="1" desc="SMRAM Closed"/>
+      <field name="D_LCK"      bit="4" size="1" desc="SMRAM Locked"/>
+      <field name="G_SMRAME"   bit="3" size="1" desc="SMRAM Enabled"/>
+      <field name="C_BASE_SEG" bit="0" size="3" desc="SMRAM Base Segment = 010b"/>
+    </register>
+    <register name="PCI0.0.0_REMAPBASE"  type="pcicfg" device="HOSTCTRL" offset="0x90" size="8" desc="Memory Remap Base Address">
+      <field name="REMAPBASE"  bit="20" size="19" desc="lower boundry of Remap Window"/>
+      <field name="LOCK"       bit="0" size="1" desc="Lock"/>
+    </register>
+    <register name="PCI0.0.0_REMAPLIMIT" type="pcicfg" device="HOSTCTRL" offset="0x98" size="8" desc="Memory Remap Limit Address">
+      <field name="REMAPLMT"  bit="20" size="19" desc="lower boundry of Remap Window"/>
+      <field name="LOCK"       bit="0" size="1" desc="Lock"/>
+    </register>
+
+    <register name="PCI0.0.0_MESEG_BASE" type="pcicfg" device="HOSTCTRL" offset="0x70" size="8" desc="Manageability Engine Base Address Register">
+      <field name="MEBASE" bit="20" size="19" desc="Base Address for ME"/>
+    </register>
+
+    <register name="PCI0.0.0_MESEG_MASK" type="pcicfg" device="HOSTCTRL" offset="0x78" size="8" desc="Manageability Engine Limit Address Register">
+      <field name="MEMASK" bit="20" size="19" desc="bits that should match MEBASE in order to quilify as ME Memrory Range access"/>
+      <field name="ME_STLEN_EN" bit="11" size="1" desc="Indicates whether ME stolen Memory range is enabled or not"/>
+      <field name="MELCK"       bit="10" size="1" desc="Lock"/>
+    </register>
+
+    <!-- CPU Model Specific Registers (MSR) -->
+    <register name="MSR_LT_LOCK_MEMORY" type="msr" msr="0x2E7" desc="LT lock memory configuration MSR">
+      <field name="LT_LOCK"  bit="0" size="1" desc="Lock bit" />
+    </register>
+
+    <register name="PRMRR_PHYBASE" type="msr" msr="0x1F4" desc="PRMRR BASE Address">
+      <field name="PRMRR_MEMTYPE"  bit="0"  size="3" desc="PRMRR Memory Type" />
+      <field name="PRMRR_base_address_fields"   bit="12"  size="34" desc="PRMRR base address bits" />
+    </register>
+    <register name="PRMRR_MASK" type="msr" msr="0x1F5" desc="PRMRR MASK register">
+      <field name= "PRMRR_LOCK" bit="10" size="1" desc = "PRMRR Lock Bit" />
+      <field name= "PRMRR_VLD" bit="11" size="1" desc = "PRMRR Valid Bit set by mcheck" />
+      <field name="PRMRR_mask_bits"   bit="12"  size="34" desc="PRMRR mask bits" />
+    </register>
+    <register name="PRMRR_UNCORE_PHYBASE" type="msr" msr="0x2F4" desc="PRMRR uncore BASE Address">
+      <field name="PRMRR_base_address_fields"   bit="12"  size="27" desc="PRMRR uncore base address bits" />
+    </register>
+    <register name="PRMRR_UNCORE_MASK" type="msr" msr="0x2F5" desc="PRMRR uncore MASK register">
+      <field name= "PRMRR_LOCK" bit="10" size="1" desc = "PRMRR uncore Lock Bit" />
+      <field name= "PRMRR_VLD" bit="11" size="1" desc = "PRMRR uncore Valid Bit set by mcheck" />
+      <field name="PRMRR_mask_bits"   bit="12"  size="27" desc="PRMRR uncore mask bits" />
+    </register>
+
+
+  </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+    <control name="SMRAMDLock"             register="PCI0.0.0_SMRAMC"      field="D_LCK"              desc="SMRAM D_LCK"/>
+  </controls>
+
+</configuration>

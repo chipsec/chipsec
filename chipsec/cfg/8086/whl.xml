@@ -13,7 +13,7 @@ XML configuration file for Whiskey Lake
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="806EA, 806EB">
+  <info family="core" lithography="14nm" igd="gen9" detection_value="806EA, 806EB">
     <sku did="0x3E34" name="Whiskey Lake" code="WHL" longname="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)" />
     <sku did="0x3E34" name="Whiskey Lake" code="WHL" longname="Mobile 8th Generation Core Processor (Whiskey Lake U 4 Cores)" />
   </info>
@@ -32,7 +32,6 @@ XML configuration file for Whiskey Lake
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-    <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000"                     desc="Graphics Translation Table Range"/>
   </mmio>
 
   <!-- #################################### -->

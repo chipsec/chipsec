@@ -48,7 +48,6 @@ chipsec@intel.com
   <!--                                      -->
   <!-- #################################### -->
   <mmio>
-    <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000"                     desc="Graphics Translation Table Range"/>
   </mmio>
 
   <!-- #################################### -->
@@ -77,22 +76,7 @@ chipsec@intel.com
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- MSR Definitions              -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <register name="PRMRR_MASK" type="msr" msr="0x1F5" desc="PRMRR MASK register">
-      <field name="PRMRR_LOCK" bit="10" size="1" desc = "PRMRR Lock Bit" />
-      <field name="PRMRR_VLD" bit="11" size="1" desc = "PRMRR Valid Bit set by mcheck" />
-      <field name="PRMRR_mask_bits"   bit="12"  size="40" desc="PRMRR mask bits" />
-    </register>
-    <register name="PRMRR_PHYBASE" type="msr" msr="0x2A0" desc="PRMRR BASE Address 0">
-      <field name="PRMRR_MEMTYPE" bit="0" size="3" desc="PRMRR Memory Type" />
-      <field name="PRMRR_CONFIGURED" bit="3" size="1" desc="PRMRR Base Configured" />
-      <field name="PRMRR_base_address_fields" bit="12" size="40" desc="PRMRR base address bits" />
-    </register>
-    <register name="MSR_BIOS_DONE" type="msr" msr="0x151" desc="BIOS Done Status">
-      <field name="SoC_BIOS_DONE" bit="1" size="1" desc="SoC init done"/>
-      <field name="IA_UNTRUSTED" bit="0" size="1" desc="Untrusted mode enable bit"/>
-    </register>
-    <register name="PRMRR_UNCORE_PHYBASE" undef="Not defined for the platform" />
-    <register name="PRMRR_UNCORE_MASK" undef="Not defined for the platform" />
+
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
@@ -102,16 +86,10 @@ chipsec@intel.com
     <!-- MMIO registers               -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-    <register name="PCI0.0.0_REMAPBASE"  type="mmio" bar="MCHBAR" offset="0x5090" size="8" desc="Memory Remap Base Address" />
-    <register name="PCI0.0.0_REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0x5098" size="8" desc="Memory Remap Limit Address" />
-
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!--      Undefined Registers     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <register name="PCI0.0.0_MESEG_BASE" undef="MESEG mapping method has changed." />
-    <register name="PCI0.0.0_MESEG_MASK" undef="MESEG mapping method has changed." />
-    <register name="PCI0.0.0_SMRAMC" undef="Compatible SMRAM is not supported." />
 
   </registers>
 
