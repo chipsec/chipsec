@@ -996,7 +996,8 @@ class Chipset:
         reg     = control['register']
         field   = control['field']
         reg_data = self.read_register(reg, cpu_thread)
-        if with_print: self.print_register(reg, reg_data)
+        if logger().DEBUG or with_print:
+            self.print_register(reg, reg_data)
         return self.get_register_field(reg, reg_data, field)
 
     def set_control(self, control_name, control_value, cpu_thread=0):
