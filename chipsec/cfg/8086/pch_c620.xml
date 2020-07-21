@@ -144,14 +144,17 @@ XML configuration file for
     </register>
 
     <!-- SPI Interface Controller -->
-    <register name="BC" type="pcicfg" device="SPI" offset="0xDC" size="4" desc="BIOS Control">
-      <field name="BIOSWE"   bit="0" size="1" desc="BIOS Write Enable" />
-      <field name="BLE"      bit="1" size="1" desc="BIOS Lock Enable" />
-      <field name="SRC"      bit="2" size="2" desc="SPI Read Configuration" />
-      <field name="TSS"      bit="4" size="1" desc="Top Swap Status" />
-      <field name="SMM_BWP"  bit="5" size="1" desc="SMM BIOS Write Protection" />
-      <field name="BBS"      bit="6" size="1" desc="Boot BIOS Strap" />
-      <field name="BILD"     bit="7" size="1" desc="BIOS Interface Lock Down"/>
+    <register name="BC" type="pcicfg" device="SPI" offset="0xDC" size="4" desc="BIOS Control (BIOS_SPI_BC)">
+      <field name="WPD"          bit="0"  size="1" desc="Write Protect Disable" />
+      <field name="LE"           bit="1"  size="1" desc="Lock Enable" />
+      <field name="SRC"          bit="2"  size="2" desc="SPI Read Configuration" />
+      <field name="TSS"          bit="4"  size="1" desc="Top Swap Status" />
+      <field name="EISS"         bit="5"  size="1" desc="Enable InSMM.STS" />
+      <field name="BBS"          bit="6"  size="1" desc="Boot BIOS Strap" />
+      <field name="BILD"         bit="7"  size="1" desc="BIOS Interface Lock-Down"/>
+      <field name="SPI_SYNC_SS"  bit="8"  size="1" desc="Synchronous SMI Status"/>
+      <field name="SPI_ASYNC_SS" bit="10" size="1" desc="Asynchronous SMI Status"/>
+      <field name="ASE_BWP"      bit="11" size="1" desc="Async SMI Enable for BIOS Write Protection"/>
     </register>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -403,7 +406,10 @@ XML configuration file for
   <!--                                      -->
   <!-- #################################### -->
   <controls>
-    <control name="BiosInterfaceLockDown"  register="BC"    field="BILD"    desc="BIOS Interface Lock-Down"/>
+    <control name="BiosInterfaceLockDown"  register="BC" field="BILD"  desc="BIOS Interface Lock-Down"/>
+    <control name="SmmBiosWriteProtection" register="BC" field="EISS"  desc="Enable InSMM.STS"/>
+    <control name="BiosLockEnable"         register="BC" field="LE"    desc="Lock Enable"/>
+    <control name="BiosWriteEnable"        register="BC" field="WPD"   desc="Write Protect Disable"/>
     <control name="SpiWriteStatusDis"      register="HSFS"  field="WRSDIS"  desc="Write Status Disable"/>
     <control name="ACPIBaseLock" register="GEN_PMCON_B" field="ACPI_BASE_LOCK" desc="Lock Down ACPI Base Address" />
     <control name="TcoCtlLock"      register="TCOCTL"  field="TCO_BASE_LOCK"  desc="TCO Base Lock"/>
