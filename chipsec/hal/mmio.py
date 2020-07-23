@@ -214,6 +214,8 @@ class MMIO(hal_base.HALBase):
     # Check if MMIO range is enabled by MMIO BAR name
     #
     def is_MMIO_BAR_enabled(self, bar_name):
+        if not self.is_MMIO_BAR_defined( bar_name ):
+            return False
         bar = self.cs.Cfg.MMIO_BARS[ bar_name ]
         is_enabled = True
         if 'register' in bar:
