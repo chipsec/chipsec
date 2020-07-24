@@ -263,6 +263,8 @@ class ChipsecMain:
         results          = logger().Results
         results.add_properties(self.properties())
 
+        # Print a list of all loaded modules
+        self.print_loaded_modules()
         if not self._list_tags: logger().log( "[*] running loaded modules .." )
 
         t = time.time()
@@ -369,9 +371,6 @@ class ChipsecMain:
         else:
             self.load_my_modules()
         self.load_user_modules()
-
-        # Print a list of all loaded modules
-        self.print_loaded_modules()
 
         return self.run_loaded_modules()
 
