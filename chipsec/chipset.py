@@ -643,6 +643,9 @@ class Chipset:
                 d = int(reg['dev'], 16)
                 f = int(reg['fun'], 16)
                 return self.pci.is_enabled( b, d, f )
+            if (rtype == RegisterType.MMIO):
+                bar_name = reg['bar']
+                return self.mmio.is_MMIO_BAR_enabled(bar_name)
         return False
 
     def switch_device_def( self, target_dev, source_dev ):
