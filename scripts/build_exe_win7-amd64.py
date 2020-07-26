@@ -82,7 +82,8 @@ data_files = [
 for current, dirs, files in os.walk(cfg_dir ):
     for file in files:
         if file.endswith('.xml') :
-            xf = 'chipsec/cfg' ,['chipsec/cfg/{}'.format(file)]
+            tail = current.replace(cfg_dir, '').replace('\\', '/')
+            xf = 'chipsec/cfg{}'.format(tail) ,['chipsec/cfg{}/{}'.format(tail, file)]
             data_files.append( xf )
 
 version=""
