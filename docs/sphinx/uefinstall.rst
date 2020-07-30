@@ -83,7 +83,7 @@ You can build bootable USB drive with UEFI shell (X64):
 
 #. Download the UEFI Shell (``Shell.efi``) from the following link
 
-    `UEFI Shell <https://github.com/tianocore/edk2/raw/master/ShellBinPkg/UefiShell/X64/Shell.efi>`
+    `UEFI Shell <https://github.com/tianocore/edk2/blob/UDK2018/ShellBinPkg/UefiShell/X64/Shell.efi>`
 
 #. Rename the UEFI shell file to ``Bootx64.efi``
 
