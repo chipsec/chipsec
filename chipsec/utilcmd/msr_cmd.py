@@ -41,12 +41,12 @@ class MSRCommand(BaseCommand):
     """
     def requires_driver(self):
         # No driver required when printing the util documentation
-        if self.argv[2] == '--help':
+        if (self.argv[2] == '--help') or (len(self.argv) < 3):
             return False
         return True
 
     def run(self):
-        if self.argv[2] == '--help':
+        if (self.argv[2] == '--help') or (len(self.argv) < 3):
             print (MSRCommand.__doc__)
             return
 
