@@ -115,6 +115,33 @@ class CPU(hal_base.HALBase):
                             dACPIID[ structure.APICID ] = structure.ACPIProcID
         return len( dACPIID )
 
+    #determine the cpu threads location within a package/core
+    def get_cpu_topology(self):
+        num_threads = self.cs.helper.get_threads_count()
+        packages = {}
+        cores = {}
+        for thread in range(num_threads):
+            if logger().HAL: self.logger.log("Setting affinity to: {:d}".format(thread))
+            self.cs.helper.set_affinity(thread)
+            eax = 0xb   # cpuid leaf 0B contains x2apic info
+            ecx = 1     # ecx 1 will get us pkg_id in edx after shifting right by _eax
+            (_eax, _ebx, _ecx, _edx) = self.cs.cpu.cpuid(eax, ecx)
+            pkg_id = _edx >> (_eax & 0xf)
+            if pkg_id not in packages:
+                packages[pkg_id] = []
+            packages[pkg_id].append(thread)
+
+            ecx = 0     # ecx 0 will get us the core_id in edx after shifting right by _eax
+            (_eax, _ebx, _ecx, _edx) = self.cs.cpu.cpuid(eax, ecx)
+            core_id = _edx >> (_eax & 0xf)
+            if core_id not in cores:
+                cores[core_id] = []
+            cores[core_id].append(thread)
+            if logger().HAL: self.logger.log("pkg id is {:x}".format(pkg_id))
+            if logger().HAL: self.logger.log("core id is {:x}".format(core_id))
+        topology = {'packages': packages, 'cores':cores}
+        return topology
+
     # determine number of physical sockets using the CPUID and APIC ACPI table
     def get_number_sockets_from_APIC_table(self):
         number_threads=self.get_number_threads_from_APIC_table()
