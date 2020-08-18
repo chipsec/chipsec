@@ -36,6 +36,7 @@ class CPUCommand(BaseCommand):
     >>> chipsec_util cpu cr <thread> <cr_number> [value]
     >>> chipsec_util cpu cpuid <eax> [ecx]
     >>> chipsec_util cpu pt [paging_base_cr3]
+    >>> chipsec_util cpu topology
 
     Examples:
 
@@ -44,6 +45,7 @@ class CPUCommand(BaseCommand):
     >>> chipsec_util cpu cr 0 4 0x0
     >>> chipsec_util cpu cpuid 0x40000000
     >>> chipsec_util cpu pt
+    >>> chipsec_util cpu topology
     """
 
     def requires_driver(self):
@@ -53,10 +55,12 @@ class CPUCommand(BaseCommand):
         parser_cr = subparsers.add_parser('cr')
         parser_cpuid = subparsers.add_parser('cpuid')
         parser_pt = subparsers.add_parser('pt')
+        parser_topology = subparsers.add_parser('topology')
         parser_info.set_defaults(func=self.cpu_info)
         parser_cr.set_defaults(func=self.cpu_cr)
         parser_cpuid.set_defaults(func=self.cpu_cpuid)
         parser_pt.set_defaults(func=self.cpu_pt)
+        parser_topology.set_defaults(func=self.cpu_topology)
         parser_cr.add_argument('thread', type=int, nargs='?', default=None)
         parser_cr.add_argument('cr_number', type=int, nargs='?', default=None)
         parser_cr.add_argument('value', type=lambda x: int(x, 0), nargs='?', default=None)
@@ -85,6 +89,28 @@ class CPUCommand(BaseCommand):
             self.logger.log( "          Number of CPU threads   : {:d}".format(threads_count) )
         except Exception:
             pass
+
+    def cpu_topology(self):
+        self.logger.log( "[CHIPSEC] CPU information:" )
+        ht               = self.cs.cpu.is_HT_active()
+        threads_per_core = self.cs.cpu.get_number_logical_processor_per_core()
+        threads_per_pkg  = self.cs.cpu.get_number_logical_processor_per_package()
+        cores_per_pkg = self.cs.cpu.get_number_physical_processor_per_package()
+        num_threads = self.cs.helper.get_threads_count()
+        self.logger.log("          Hyper-Threading         : {}".format('Enabled' if ht else 'Disabled'))
+        self.logger.log("          CPU cores per package   : {:d}".format(cores_per_pkg))
+        self.logger.log("          CPU threads per core    : {:d}".format(threads_per_core))
+        self.logger.log("          CPU threads per package : {:d}".format(threads_per_pkg))
+        self.logger.log("          Total threads           : {:d}".format(num_threads))
+        topology = self.cs.cpu.get_cpu_topology()
+        self.logger.log("          Packages:")
+        for p in topology['packages']:
+            self.logger.log("              {:d}: {}".format(p, topology['packages'][p]))
+        self.logger.log("          Cores:")
+        for c in topology['cores']:
+            self.logger.log("              {:d}: {}".format(c, topology['cores'][c]))
+
+        return topology
 
     def cpu_cr(self):
         if self.value is not None:
