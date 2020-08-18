@@ -206,7 +206,11 @@ class Chipset:
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
         vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
-        cpuid = self.get_cpuid()
+        # get cpuid only if driver using driver (otherwise it will cause problems)
+        if start_driver or self.helper.is_linux():
+            cpuid = self.get_cpuid()
+        else:
+            cpuid = None
 
         #initalize chipset values to unknown
         _unknown_platform = True
