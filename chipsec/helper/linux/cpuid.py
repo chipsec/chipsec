@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*- 
 # Copyright (c) 2020 Intel Corporation
 # SPDX-License-Identifier: GPL-2.0-only
 #
