@@ -125,7 +125,7 @@ References:
 """
 
 from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM, ModuleResult
-from chipsec.helper.oshelper import HWAccessViolationError
+from chipsec.helper.oshelper import HWAccessViolationError, UnimplementedAPIError
 from chipsec.defines import BIT26, BIT27, BIT29
 
 TAGS = [MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM]
@@ -273,6 +273,14 @@ class spectre_v2(BaseModule):
                 self.logger.log_passed_check( "CPU and OS support hardware mitigations" )
 
         self.logger.log_important( "OS may be using software based mitigation (eg. retpoline)" )
+        try:
+            if self.cs.helper.retpoline_supported():
+                res = ModuleResult.PASSED
+                self.logger.log_passed_check( "Retpoline is supported by the OS" )
+            else:
+                self.logger.log_bad( "Retpoline is NOT supported by the OS" )
+        except UnimplementedAPIError as e:
+            self.logger.log_warn_check(str(e))
 
         return res
 

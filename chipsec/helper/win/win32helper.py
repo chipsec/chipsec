@@ -260,6 +260,7 @@ class Win32Helper(Helper):
         self.device_file    = str(DEVICE_FILE)
 
         c_int_p = POINTER(c_int)
+        c_uint32_p = POINTER(c_uint32)
 
         # enable required SeSystemEnvironmentPrivilege privilege
         privilege = win32security.LookupPrivilegeValue( None, 'SeSystemEnvironmentPrivilege' )
@@ -308,6 +309,12 @@ class Win32Helper(Helper):
         except AttributeError as msg:
             logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
 
+        try:
+            self.NtQuerySystemInformation = windll.ntdll.NtQuerySystemInformation
+            self.NtQuerySystemInformation.restype = c_int
+            self.NtQuerySystemInformation.argtypes = [c_uint32, c_void_p, c_uint32, c_uint32_p]
+        except AttributeError as msg:
+            logger().warn( "NtQuerySystemInformation function doesn't seem to exist" )
 
     def __del__(self):
         if self.driver_handle:
@@ -971,6 +978,16 @@ class Win32Helper(Helper):
                 logger().error("Cannot decompress file({})".format(CompressedFileName))
             return False
         return True
+
+    #
+    # Speculation control
+    #
+    def retpoline_supported( self ):
+        # See https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
+        speculation_control = c_uint32(0)
+        SystemSpeculationControlInformation = 0xC9
+        self.NtQuerySystemInformation(SystemSpeculationControlInformation, addressof(speculation_control), sizeof(speculation_control), None)
+        return speculation_control.value & 0x4000
 
 #
 # Get instance of this OS helper
