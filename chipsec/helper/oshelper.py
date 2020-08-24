@@ -515,6 +515,18 @@ class OsHelper:
             self.filecmds.AddElement("hypercall", (rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer), ret)
         return ret
 
+    #
+    # Speculation control
+    #
+
+    def retpoline_supported( self ):
+        if self.use_native_api() and hasattr(self.helper, 'native_retpoline_supported'):
+            ret = self.helper.native_retpoline_supported()
+        else:
+            ret = self.helper.retpoline_supported()
+        if not self.filecmds is None:
+            self.filecmds.AddElement("retpoline_supported", (), ret)
+        return ret
 
     #
     # File system
