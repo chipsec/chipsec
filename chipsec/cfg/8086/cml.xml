@@ -7,7 +7,7 @@
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="806EC, A0652, A0653, A0655, A0660">
+  <info family="core" detection_value="A0652, A0653, A0655, A0660">
     <sku did="0x3E35" name="CometLake" code="CML" longname="CometLake v1 U2 Core" />
     <sku did="0x3E34" name="CometLake" code="CML" longname="CometLake v1 U4 Core" />
     <sku did="0x3E33" name="CometLake" code="CML" longname="CometLake v1 U6 Core" />
