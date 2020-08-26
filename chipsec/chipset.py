@@ -851,7 +851,25 @@ class Chipset:
 
     def read_register_all(self, reg_name, cpu_thread=0):
         values = []
+        reg = self.get_register_def(reg_name)
+        rtype = reg['type']
         bus_data = self.get_register_bus( reg_name )
+        if RegisterType.MSR == rtype:
+            topology = self.cpu.get_cpu_topology()
+            if 'scope' not in reg or reg['scope'] == "core":
+                cores = topology['cores']
+                threads_to_use = [cores[p][0] for p in cores]
+            # else is package
+            else:
+                packages = topology['packages']
+                threads_to_use = [packages[p][0] for p in packages]
+            if logger().DEBUG:
+                logger().log("Reading MSR {} with scope {} on cpus {}".format(
+                    reg['msr'], reg['scope'], threads_to_use ))
+            for t in threads_to_use:
+                (eax, edx) = self.msr.read_msr(t, int(reg['msr'], 16))
+                values.append( (edx << 32) | eax )
+            return(values)
         if not bus_data:
             return [self.read_register( reg_name, cpu_thread )]
         for index in range( len(bus_data) ):
