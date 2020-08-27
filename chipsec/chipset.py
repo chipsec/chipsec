@@ -940,10 +940,6 @@ class Chipset:
         return (field_name in reg_def['FIELDS'])
 
     def register_has_all_fields(self, reg_name, field_list):
-        try:
-            self.get_register_def(reg_name)
-        except KeyError:
-            return False
         ret = True
         for field in field_list:
             ret = ret and self.register_has_field(reg_name, field)
