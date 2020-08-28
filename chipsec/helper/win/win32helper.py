@@ -982,7 +982,7 @@ class Win32Helper(Helper):
     #
     # Speculation control
     #
-    def retpoline_supported( self ):
+    def retpoline_enabled(self):
         # See https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
         speculation_control = c_uint32(0)
         SystemSpeculationControlInformation = 0xC9
