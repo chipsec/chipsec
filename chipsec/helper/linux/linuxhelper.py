@@ -1155,8 +1155,8 @@ class LinuxHelper(Helper):
     #
     # Speculation control
     #
-    def retpoline_supported( self ):
-        raise UnimplementedAPIError("retpoline_supported")
+    def retpoline_enabled(self):
+        raise UnimplementedAPIError("retpoline_enabled")
 
 def get_helper():
     return LinuxHelper()

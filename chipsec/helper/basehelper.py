@@ -242,5 +242,5 @@ class Helper(object):
     #
     # Speculation control
     #
-    def retpoline_supported( self ):
+    def retpoline_enabled(self):
         raise NotImplementedError()

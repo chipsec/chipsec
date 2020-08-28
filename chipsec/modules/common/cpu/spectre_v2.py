@@ -274,11 +274,11 @@ class spectre_v2(BaseModule):
 
         self.logger.log_important( "OS may be using software based mitigation (eg. retpoline)" )
         try:
-            if self.cs.helper.retpoline_supported():
+            if self.cs.helper.retpoline_enabled():
                 res = ModuleResult.PASSED
-                self.logger.log_passed_check( "Retpoline is supported by the OS" )
+                self.logger.log_passed_check( "Retpoline is enabled by the OS" )
             else:
-                self.logger.log_bad( "Retpoline is NOT supported by the OS" )
+                self.logger.log_bad( "Retpoline is NOT enabled by the OS" )
         except UnimplementedAPIError as e:
             self.logger.log_warn_check(str(e))
 

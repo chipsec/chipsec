@@ -519,13 +519,13 @@ class OsHelper:
     # Speculation control
     #
 
-    def retpoline_supported( self ):
-        if self.use_native_api() and hasattr(self.helper, 'native_retpoline_supported'):
-            ret = self.helper.native_retpoline_supported()
+    def retpoline_enabled(self):
+        if self.use_native_api() and hasattr(self.helper, 'native_retpoline_enabled'):
+            ret = self.helper.native_retpoline_enabled()
         else:
-            ret = self.helper.retpoline_supported()
+            ret = self.helper.retpoline_enabled()
         if not self.filecmds is None:
-            self.filecmds.AddElement("retpoline_supported", (), ret)
+            self.filecmds.AddElement("retpoline_enabled", (), ret)
         return ret
 
     #
