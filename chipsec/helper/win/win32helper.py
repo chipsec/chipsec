@@ -986,8 +986,9 @@ class Win32Helper(Helper):
         # See https://docs.microsoft.com/en-us/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
         speculation_control = c_uint32(0)
         SystemSpeculationControlInformation = 0xC9
+        SpecCtrlRetpolineEnabled = 0x4000
         self.NtQuerySystemInformation(SystemSpeculationControlInformation, addressof(speculation_control), sizeof(speculation_control), None)
-        return speculation_control.value & 0x4000
+        return speculation_control.value & SpecCtrlRetpolineEnabled
 
 #
 # Get instance of this OS helper
