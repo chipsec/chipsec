@@ -406,6 +406,7 @@ class ChipsecMain:
         adv_options.add_argument('--record', dest='_to_file', help='run chipsec and clone helper results into JSON file')
         adv_options.add_argument('--replay', dest='_from_file', help='replay a chipsec run with JSON file')
         adv_options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
+        adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', help="chipsec won't display banner information", action='store_false')
 
         parser.parse_args(self.argv, namespace=ChipsecMain)
 
@@ -459,7 +460,8 @@ class ChipsecMain:
 
         self.init_cs()
 
-        self.print_banner()
+        if self._show_banner:
+            self.print_banner()
 
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath( import_path ) )
@@ -490,7 +492,8 @@ class ChipsecMain:
             if self.failfast: raise be
             return ExitCode.EXCEPTION
 
-        self.log_properties()
+        if self._show_banner:
+            self.log_properties()
 
         logger().log( " " )
 
