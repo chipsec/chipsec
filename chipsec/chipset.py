@@ -256,7 +256,7 @@ class Chipset:
                 self.rid = rid
 
         elif platform_code in self.chipset_codes:
-            # Check if platform code passed in is valid and override configuraiton
+            # Check if platform code passed in is valid and override configuration
             _unknown_platform = False
             self.vid = self.chipset_codes[ platform_code ]['vid']
             self.did = self.chipset_codes[ platform_code ]['did']
