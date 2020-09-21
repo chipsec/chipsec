@@ -38,10 +38,6 @@ XML configuration file for Denverton
     <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x40" size="1" desc="Host Configuration">
       <field name="SPD_WD" bit="4" size="1" desc="SPD Write Disable"/>
     </register>
-    <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
-      <field name="GBL_SMI_EN" bit="0"  size="1"/>
-      <field name="TCO_EN"     bit="13" size="1"/>
-    </register>
     <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="4" desc="SMI Control and Enable">
       <field name="TCO_LOCK" bit="12" size="1"/>
     </register>
