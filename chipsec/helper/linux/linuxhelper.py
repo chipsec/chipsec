@@ -1152,5 +1152,11 @@ class LinuxHelper(Helper):
         import multiprocessing
         return multiprocessing.cpu_count()
 
+    #
+    # Speculation control
+    #
+    def retpoline_enabled(self):
+        raise UnimplementedAPIError("retpoline_enabled")
+
 def get_helper():
     return LinuxHelper()

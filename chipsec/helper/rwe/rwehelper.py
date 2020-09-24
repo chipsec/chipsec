@@ -918,9 +918,6 @@ class RweHelper(Helper):
 
         return chipsec.file.read_file( OutputFileName )
 
-
-
-
     #
     # File system
     #
@@ -928,6 +925,12 @@ class RweHelper(Helper):
         tool_name = _tools[ tool_type ] if tool_type in _tools else None
         tool_path = os.path.join( get_tools_path(), self.os_system.lower() )
         return tool_name, tool_path
+
+    #
+    # Speculation control
+    #
+    def retpoline_enabled(self):
+        raise UnimplementedAPIError("retpoline_enabled")
 
 #
 # Get instance of this OS helper

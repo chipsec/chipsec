@@ -444,5 +444,11 @@ class OSXHelper(Helper):
     def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
         raise NotImplementedError()
 
+    #
+    # Speculation control
+    #
+    def retpoline_enabled(self):
+        raise UnimplementedAPIError("retpoline_enabled")
+
 def get_helper():
     return OSXHelper()

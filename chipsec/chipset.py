@@ -683,6 +683,8 @@ class Chipset:
 #   reads/writes the value of the field (by name) of all configuration register instances (by register name)
 # register_has_field
 #   checks if the register has specific field
+# register_has_all_fields
+#   Checks if the register as all fields specified in list
 # print_register
 #   prints configuration register
 # print_register_all
@@ -936,6 +938,14 @@ class Chipset:
         if 'FIELDS' not in reg_def:
             return False
         return (field_name in reg_def['FIELDS'])
+
+    def register_has_all_fields(self, reg_name, field_list):
+        ret = True
+        for field in field_list:
+            ret = ret and self.register_has_field(reg_name, field)
+            if not ret:
+                break
+        return ret
 
     def _register_fields_str(self, reg_def, reg_val):
         reg_fields_str = ''

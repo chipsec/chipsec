@@ -238,3 +238,9 @@ class Helper(object):
     #
     def compress_file( self, FileName, OutputFileName, CompressionType ):
         raise NotImplementedError()
+
+    #
+    # Speculation control
+    #
+    def retpoline_enabled(self):
+        raise NotImplementedError()
