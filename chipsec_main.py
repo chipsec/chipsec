@@ -479,7 +479,7 @@ class ChipsecMain:
                 if self._unknownPlatform:
                     logger().error('To specify a cpu please use -p command-line option')
                     logger().error('To specify a pch please use --pch command-line option\n')
-                    logger().error('To load legacy configuraiton and run anyways please use -i command-line option')
+                    logger().error('To load legacy configuration and run anyways please use -i command-line option')
                     if logger().DEBUG: logger().log_bad(traceback.format_exc())
                     if self.failfast: raise msg
                     return  ExitCode.EXCEPTION
