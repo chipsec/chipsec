@@ -49,10 +49,10 @@ Skip this section if you don't plan on extending native UEFI functionality for C
 
 Native functions accessing HW resources are built directly into Python UEFI port in built-in edk2 module. If you want to add more native functionality to Python UEFI port for chipsec, you'll need to re-build Python for UEFI:
 
-#. Check out `AppPkg with Python 2.7.2 <https://github.com/tianocore/edk2-libc/tree/master/AppPkg/Applications/Python`_ port for UEFI from SVN
+#. Check out `AppPkg with Python 2.7.2 <https://github.com/tianocore/edk2-libc/tree/master/AppPkg/Applications/Python>`_ port for UEFI from SVN
 
     - You'll also need to check out ``StdLib`` and ``StdLibPrivateInternalFiles`` packages from SVN
-    - Alternatively download latest EADK (`EDK II Application Development Kit <https://sourceforge.net/projects/edk2/files/EDK%20II%20Releases/EADK/EADK_1.02/`_). EADK includes ``AppPkg/StdLib/StdLibPrivateInternalFiles``. Unfortunately, EADK Alpha 2 doesn't have Python 2.7.2 port so you'll need to check it out SVN.
+    - Alternatively download latest EADK (`EDK II Application Development Kit <https://sourceforge.net/projects/edk2/files/EDK%20II%20Releases/EADK/EADK_1.02/>`_). EADK includes ``AppPkg/StdLib/StdLibPrivateInternalFiles``. Unfortunately, EADK Alpha 2 doesn't have Python 2.7.2 port so you'll need to check it out SVN.
 
 #. Add functionality to Python port for UEFI
 
