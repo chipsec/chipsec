@@ -734,11 +734,13 @@ class Chipset:
         return reg_def
 
     def get_register_bus(self, reg_name):
-        name = self.Cfg.REGISTERS[reg_name].get( 'device', None )
+        name = self.Cfg.REGISTERS[reg_name].get( 'device', '' )
+        if not name:
+            logger().error( "No device found for '{}'".format(reg_name) )
         return self.get_device_bus( name )
 
     def get_device_bus(self, dev_name):
-        return self.Cfg.BUS.get( dev_name, None )
+        return self.Cfg.BUS.get( dev_name, [self.get_device_BDF(dev_name)[0]] )
 
     def read_register(self, reg_name, cpu_thread=0, bus_index=0):
         reg = self.get_register_def( reg_name, bus_index )
@@ -784,7 +786,7 @@ class Chipset:
     def read_register_all(self, reg_name, cpu_thread=0):
         values = []
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return [self.read_register( reg_name, cpu_thread )]
         for index in range( len(bus_data) ):
             values.append( self.read_register( reg_name, cpu_thread, index) )
@@ -833,7 +835,7 @@ class Chipset:
 
     def write_register_all(self, reg_name, reg_values, cpu_thread=0):
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return False
         values = len(bus_data)
         if len(reg_values) == values:
@@ -845,7 +847,7 @@ class Chipset:
 
     def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return False
         values = len(bus_data)
         for index in range( values ):
@@ -1001,7 +1003,7 @@ class Chipset:
     def print_register_all(self, reg_name, cpu_thread=0):
         reg_str = ''
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return reg_str
         for index in range( len(bus_data) ):
             reg_val = self.read_register( reg_name, cpu_thread, index )
