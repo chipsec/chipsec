@@ -124,7 +124,7 @@ class EfiHelper(Helper):
             dword_value = struct.unpack('I', buf)[0]
             edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
         else:
-            edk2.writemem( phys_address, buf, length )
+            edk2.writemem( phys_address_lo, phys_address_hi, buf, length )
 
     def alloc_phys_mem( self, length, max_pa ):
         # temporary WA using malloc
