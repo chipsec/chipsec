@@ -212,7 +212,7 @@ class Chipset:
         else:
             cpuid = None
 
-        #initalize chipset values to unknown
+        #initialize chipset values to unknown
         _unknown_platform = True
         self.longname   = 'UnknownPlatform'
         self.vid = 0xFFFF
@@ -287,7 +287,7 @@ class Chipset:
             msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
             logger().error( msg )
             raise UnknownChipsetError (msg)
-        if not _unknown_platform: # don't intialize config if platform is unknown
+        if not _unknown_platform: # don't initialize config if platform is unknown
             self.init_cfg()
         if self.reqs_pch and _unknown_pch and start_driver:
             msg = 'Chipset requires a supported PCH to be loaded: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
