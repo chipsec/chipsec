@@ -734,13 +734,21 @@ class Chipset:
         return reg_def
 
     def get_register_bus(self, reg_name):
-        name = self.Cfg.REGISTERS[reg_name].get( 'device', '' )
-        if not name:
-            logger().error( "No device found for '{}'".format(reg_name) )
-        return self.get_device_bus( name )
+        device = self.Cfg.REGISTERS[reg_name].get( 'device', '' )
+        if not device:
+            if logger().DEBUG:
+                logger().warn( "No device found for '{}'".format(reg_name) )
+            if 'bus' in self.Cfg.REGISTERS[reg_name]:
+                return [self.Cfg.REGISTERS[reg_name]['bus']]
+            else:
+                return []
+        return self.get_device_bus( device )
 
     def get_device_bus(self, dev_name):
-        return self.Cfg.BUS.get( dev_name, [self.get_device_BDF(dev_name)[0]] )
+        bus = []
+        if self.is_device_defined(dev_name):
+            bus = [self.get_device_BDF(dev_name)[0]]
+        return self.Cfg.BUS.get(dev_name, bus)
 
     def read_register(self, reg_name, cpu_thread=0, bus_index=0):
         reg = self.get_register_def( reg_name, bus_index )
