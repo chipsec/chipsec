@@ -20,24 +20,25 @@
 #
 
 
-
 """
 The uefi command provides access to UEFI variables, both on the live system and in a SPI flash image file.
 """
 
 import os
 import time
-
-import chipsec_util
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
-from chipsec.hal.uefi          import *
-from chipsec.hal.spi_uefi      import *
+import uuid
+from argparse import ArgumentParser
 
 from chipsec.command    import BaseCommand
-from argparse import ArgumentParser
+from chipsec.hal.uefi_common import EFI_STATUS_DICT, parse_efivar_file
+from chipsec.file       import write_file, read_file
+from chipsec.hal.spi_uefi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
+from chipsec.hal.spi_uefi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
+from chipsec.hal.uefi import UEFI, decode_EFI_variables, get_attr_string, identify_EFI_NVRAM
+from chipsec.hal.uefi import SECURE_BOOT_KEY_VARIABLES, parse_script
+from chipsec.hal.uefi_fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
+from chipsec.hal.uefi_platform import fw_types
+
 
 # Unified Extensible Firmware Interface (UEFI)
 class UEFICommand(BaseCommand):
@@ -84,8 +85,8 @@ class UEFICommand(BaseCommand):
 
         # var-write command args
         parser_var_write = subparsers.add_parser('var-write')
-        parser_var_write.add_argument('name', type=str,  help='name of variable to write')
-        parser_var_write.add_argument('guid', type=str,  help='guid of variable to write')
+        parser_var_write.add_argument('name', type=str, help='name of variable to write')
+        parser_var_write.add_argument('guid', type=str, help='guid of variable to write')
         parser_var_write.add_argument('filename', type=str, help='input file containing data to write to variable')
         parser_var_write.set_defaults(func=self.var_write)
 
@@ -183,10 +184,6 @@ class UEFICommand(BaseCommand):
             return False
         return True
 
-
-
-
-
     def var_read(self):
         self.logger.log( "[CHIPSEC] Reading EFI variable Name='{}' GUID={{{}}} to '{}' via Variable API..".format(self.name, self.guid, self.filename) )
         var = self._uefi.get_EFI_variable( self.name, self.guid, self.filename )
@@ -194,7 +191,7 @@ class UEFICommand(BaseCommand):
     def var_write(self):
         self.logger.log( "[CHIPSEC] writing EFI variable Name='{}' GUID={{{}}} from '{}' via Variable API..".format(self.name, self.guid, self.filename) )
         status = self._uefi.set_EFI_variable_from_file( self.name, self.guid, self.filename )
-        self.logger.log("[CHIPSEC] status: {}".format(chipsec.hal.uefi_common.EFI_STATUS_DICT[status]))
+        self.logger.log("[CHIPSEC] status: {}".format(EFI_STATUS_DICT[status]))
         if status == 0:
             self.logger.log( "[CHIPSEC] writing EFI variable was successful" )
         else:
@@ -203,7 +200,7 @@ class UEFICommand(BaseCommand):
     def var_delete(self):
         self.logger.log( "[CHIPSEC] Deleting EFI variable Name='{}' GUID={{{}}} via Variable API..".format(self.name, self.guid) )
         status = self._uefi.delete_EFI_variable( self.name, self.guid )
-        self.logger.log("Returned {}".format(chipsec.hal.uefi_common.EFI_STATUS_DICT[status]))
+        self.logger.log("Returned {}".format(EFI_STATUS_DICT[status]))
         if status == 0: self.logger.log( "[CHIPSEC] deleting EFI variable was successful" )
         else: self.logger.error( "deleting EFI variable failed" )
 
@@ -319,7 +316,7 @@ class UEFICommand(BaseCommand):
             self.logger.log( '[*] Reading S3 boot-script from memory at 0x{:016X}..'.format(self.bootscript_pa) )
             script_all = self.cs.mem.read_physical_mem( self.bootscript_pa, 0x100000 )
             self.logger.log( '[*] Decoding S3 boot-script opcodes..' )
-            script_entries = chipsec.hal.uefi.parse_script( script_all, True )
+            script_entries = parse_script( script_all, True )
         else:
             (bootscript_PAs, parsed_scripts) = self._uefi.get_s3_bootscript( True )
 
@@ -336,10 +333,10 @@ class UEFICommand(BaseCommand):
             print ('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
-        rom_image = chipsec.file.read_file(self.rom_file)
-        efi_image = chipsec.file.read_file(self.efi_file)
+        rom_image = read_file(self.rom_file)
+        efi_image = read_file(self.efi_file)
         new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_INSERT_BEFORE, self.guid, efi_image)
-        chipsec.file.write_file(self.new_file, new_image)
+        write_file(self.new_file, new_image)
 
     def insert_after(self):
         if get_guid_bin(self.guid) == '':
@@ -354,10 +351,10 @@ class UEFICommand(BaseCommand):
             print ('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
-        rom_image = chipsec.file.read_file(self.rom_file)
-        efi_image = chipsec.file.read_file(self.efi_file)
+        rom_image = read_file(self.rom_file)
+        efi_image = read_file(self.efi_file)
         new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_INSERT_AFTER, self.guid, efi_image)
-        chipsec.file.write_file(self.new_file, new_image)
+        write_file(self.new_file, new_image)
 
     def replace(self):
         if get_guid_bin(self.guid) == '':
@@ -372,10 +369,10 @@ class UEFICommand(BaseCommand):
             print ('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
-        rom_image = chipsec.file.read_file(self.rom_file)
-        efi_image = chipsec.file.read_file(self.efi_file)
+        rom_image = read_file(self.rom_file)
+        efi_image = read_file(self.efi_file)
         new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REPLACE, self.guid, efi_image)
-        chipsec.file.write_file(self.new_file, new_image)
+        write_file(self.new_file, new_image)
 
     def remove(self):
         if get_guid_bin(self.guid) == '':
@@ -386,9 +383,9 @@ class UEFICommand(BaseCommand):
             print ('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
             return
 
-        rom_image = chipsec.file.read_file(self.rom_file)
+        rom_image = read_file(self.rom_file)
         new_image = modify_uefi_region(rom_image, CMD_UEFI_FILE_REMOVE, self.guid)
-        chipsec.file.write_file(self.new_file, new_image)
+        write_file(self.new_file, new_image)
 
     def assemble(self):
         compression = {'none': 0, 'tiano': 1, 'lzma': 2}
@@ -408,13 +405,13 @@ class UEFICommand(BaseCommand):
         compression_type = compression[self.comp]
 
         if self.file_type == 'freeform':
-            raw_image  = chipsec.file.read_file(self.raw_file)
+            raw_image = read_file(self.raw_file)
             wrap_image = assemble_uefi_raw(raw_image)
             if compression_type > 0:
                 comp_image = compress_image(self._uefi, wrap_image, compression_type)
                 wrap_image = assemble_uefi_section(comp_image, len(wrap_image), compression_type)
             uefi_image = assemble_uefi_file(self.guid, wrap_image)
-            chipsec.file.write_file(self.efi_file, uefi_image)
+            write_file(self.efi_file, uefi_image)
         else:
             print ('*** Error *** Unknow file type: {}'.format(self.file_type))
             return
@@ -425,7 +422,8 @@ class UEFICommand(BaseCommand):
         t = time.time()
         self._uefi = UEFI( self.cs )
         self.func()
-        self.logger.log( "[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time() -t) )
+        self.logger.log( "[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time() - t) )
         return
+
 
 commands = { 'uefi': UEFICommand }
