@@ -20,16 +20,10 @@
 #
 
 
-import time
-
-import chipsec_util
-
-
-from chipsec.logger     import *
-from chipsec.file       import *
-
-from chipsec.hal import mmio
-from chipsec.command    import BaseCommand
+from chipsec.command import BaseCommand
+from chipsec.hal     import mmio
+from argparse        import ArgumentParser
+from time            import time
 
 
 # ###################################################################
@@ -53,50 +47,63 @@ class MMIOCommand(BaseCommand):
     """
 
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if len(self.argv) < 3:
-            return False
-        return True
+        parser = ArgumentParser( prog='chipsec_util mmio', usage=MMIOCommand.__doc__ )
+        subparsers = parser.add_subparsers()
+
+        parser_list = subparsers.add_parser('list')
+        parser_list.set_defaults(func=self.list_bars)
+
+        parser_dump = subparsers.add_parser('dump')
+        parser_dump.add_argument('bar_name', type=str, help='MMIO BAR to dump')
+        parser_dump.set_defaults(func=self.dump_bar)
+
+        parser_read = subparsers.add_parser('read')
+        parser_read.add_argument('bar_name', type=str, help='MMIO BAR to read')
+        parser_read.add_argument('offset', type=lambda x: int(x,16), help='Offset value (hex)')
+        parser_read.add_argument('width', type=lambda x: int(x,16), choices=[1,2,4,8], help='Width value [1, 2, 4, 8] (hex)')
+        parser_read.set_defaults(func=self.read_bar)
+
+        parser_write = subparsers.add_parser('write')
+        parser_write.add_argument('bar_name', type=str, help='MMIO BAR to write')
+        parser_write.add_argument('offset', type=lambda x: int(x,16), help='Offset value (hex)')
+        parser_write.add_argument('width', type=lambda x: int(x,16), choices=[1,2,4,8], help='Width value [1, 2, 4, 8] (hex)')
+        parser_write.add_argument('value', type=lambda x: int(x,16), help='Value to write (hex)')
+        parser_write.set_defaults(func=self.write_bar)
+
+        parser.parse_args(self.argv[2:], namespace=self)
+        if hasattr(self, 'func'):
+            return True
+        return False
+
+
+    def list_bars(self):
+        self.mmio_.list_MMIO_BARs()
+
+
+    def dump_bar(self):
+        self.logger.log( "[CHIPSEC] Dumping {} MMIO space..".format(self.bar_name) )
+        self.mmio_.dump_MMIO_BAR(self.bar_name.upper())
+
+
+    def read_bar(self):
+        bar = self.bar_name.upper()
+        reg = self.mmio_.read_MMIO_BAR_reg(bar, self.offset, self.width)
+        self.logger.log( "[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, reg) )
+
+
+    def write_bar(self):
+        bar = self.bar_name.upper()
+        self.logger.log( "[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, self.value) )
+        self.mmio_.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width)
+
 
     def run(self):
-        _mmio = mmio.MMIO(self.cs)
+        self.mmio_ = mmio.MMIO(self.cs)
 
-        if len(self.argv) < 3:
-            print (MMIOCommand.__doc__)
-            return
+        t = time()
 
-        op = self.argv[2]
-        t = time.time()
+        self.func()
 
-        if ( 'list' == op ):
-            _mmio.list_MMIO_BARs()
-        elif ( 'dump' == op ):
-            bar = self.argv[3].upper()
-            self.logger.log( "[CHIPSEC] Dumping {} MMIO space..".format(bar) )
-            _mmio.dump_MMIO_BAR(bar)
-        elif ( 'read' == op ):
-            bar   = self.argv[3].upper()
-            off   = int(self.argv[4], 16)
-            width = int(self.argv[5], 16) if len(self.argv) == 6 else 4
-            reg = _mmio.read_MMIO_BAR_reg(bar, off, width)
-            self.logger.log( "[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, off, reg) )
-        elif ( 'write' == op ):
-            bar   = self.argv[3].upper()
-            off   = int(self.argv[4], 16)
-            width = int(self.argv[5], 16) if len(self.argv) == 6 else 4
-            if len(self.argv) == 7:
-                reg = int(self.argv[6], 16)
-                self.logger.log( "[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, off, reg) )
-                _mmio.write_MMIO_BAR_reg(bar, off, reg, width)
-            else:
-                print (MMIOCommand.__doc__)
-                return
-        else:
-            self.logger.error( "unknown command-line option '{:32}'".format(op) )
-            print (MMIOCommand.__doc__)
-            return
-
-        self.logger.log( "[CHIPSEC] (mmio) time elapsed {:.3f}".format(time.time() -t) )
-
+        self.logger.log( "[CHIPSEC] (mmio) time elapsed {:.3f}".format(time() -t) )
 
 commands = { 'mmio': MMIOCommand }
