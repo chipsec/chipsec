@@ -166,18 +166,21 @@ class build_ext(_build_ext):
     def run(self):
         # First, we build the standard extensions.
         _build_ext.run(self)
-        # Then, we build the driver if required.
+        # Then, we build the compression tools and the driver if required
+        driver_build_function = lambda *args: None
+        self.real_build_lib = os.path.realpath(self.build_lib)
+        if platform.system().lower() == "linux":
+            driver_build_function = self._build_linux_driver
+            self._build_linux_compression()
+        elif platform.system().lower() == "darwin":
+            driver_build_function = self._build_darwin_driver 
+            self._build_darwin_compression()
+        elif platform.system().lower() == "windows":
+            driver_build_function = self._build_win_driver 
+            self._build_win_compression()
+
         if not self.skip_driver:
-            self.real_build_lib = os.path.realpath(self.build_lib)
-            if platform.system().lower() == "linux":
-                self._build_linux_driver()
-                self._build_linux_compression()
-            elif platform.system().lower() == "darwin":
-                self._build_darwin_driver()
-                self._build_darwin_compression()
-            elif platform.system().lower() == "windows":
-                self._build_win_driver()
-                self._build_win_compression()
+            driver_build_function()
 
     def get_source_files(self):
         files = _build_ext.get_source_files(self)
