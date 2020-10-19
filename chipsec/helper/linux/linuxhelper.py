@@ -555,7 +555,7 @@ class LinuxHelper(Helper):
         return
 
     def native_write_msr(self, thread_id, msr_addr, eax, edx):
-        if self.devport_available():
+        if self.devmsr_available():
             os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
             buf = struct.pack( "2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
