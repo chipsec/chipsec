@@ -37,6 +37,7 @@ from chipsec.hal.spi_uefi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSER
 from chipsec.hal.uefi import UEFI, decode_EFI_variables, get_attr_string, identify_EFI_NVRAM
 from chipsec.hal.uefi import SECURE_BOOT_KEY_VARIABLES, parse_script
 from chipsec.hal.uefi_fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
+from chipsec.hal.uefi_fv import FILE_TYPE_NAMES
 from chipsec.hal.uefi_platform import fw_types
 
 
@@ -47,7 +48,7 @@ class UEFICommand(BaseCommand):
     >>> chipsec_util uefi var-list
     >>> chipsec_util uefi var-find <name>|<GUID>
     >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
-    >>> chipsec_util uefi decode <rom_file> [fwtype]
+    >>> chipsec_util uefi decode --fwtype <rom_file> [filetypes]
     >>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
     >>> chipsec_util uefi keys <keyvar_file>
     >>> chipsec_util uefi tables
@@ -64,6 +65,7 @@ class UEFICommand(BaseCommand):
     >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
     >>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
     >>> chipsec_util uefi decode uefi.rom
+    >>> chipsec_util uefi decode uefi.rom FV_MM
     >>> chipsec_util uefi nvram uefi.rom vss_auth
     >>> chipsec_util uefi keys db.bin
     >>> chipsec_util uefi tables
@@ -120,7 +122,8 @@ class UEFICommand(BaseCommand):
         # decode command args
         parser_decode = subparsers.add_parser('decode')
         parser_decode.add_argument('filename', type=str, help='bios image to decompress')
-        parser_decode.add_argument('fwtype', type=str, nargs='?', default=None)
+        parser_decode.add_argument('--fwtype', dest='fwtype', type=str, nargs='?', default=None)
+        parser_decode.add_argument('filetypes', type=str, nargs='*', default=[], help=FILE_TYPE_NAMES.values())
         parser_decode.set_defaults(func=self.decode)
 
         # keys command args
@@ -295,7 +298,15 @@ class UEFICommand(BaseCommand):
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file( self.filename + '.UEFI.lst' )
         cur_dir = self.cs.helper.getcwd()
-        decode_uefi_region(self._uefi, cur_dir, self.filename, self.fwtype)
+        ftypes = []
+        inv_filetypes = {v : k for k, v in FILE_TYPE_NAMES.items()}
+        if self.filetypes:
+            for mtype in self.filetypes:
+                if mtype in inv_filetypes.keys():
+                    if inv_filetypes[mtype] not in ftypes:
+                        ftypes.append(inv_filetypes[mtype])
+                    break
+        decode_uefi_region(self._uefi, cur_dir, self.filename, self.fwtype, ftypes)
         self.logger.set_log_file( _orig_logname )
 
     def keys(self):
