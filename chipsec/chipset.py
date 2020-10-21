@@ -283,16 +283,25 @@ class Chipset:
             self.pch_longname   = data_dict['longname']
             _unknown_pch = False
 
-        if _unknown_platform and start_driver:
-            msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
-            logger().error( msg )
-            raise UnknownChipsetError (msg)
+        if _unknown_platform:
+            msg = 'Unknown Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
+            if start_driver:
+                logger().error(msg)
+                raise UnknownChipsetError(msg)
+            else:
+                logger().log("[!]       {}; Using Default.".format(msg))
         if not _unknown_platform: # don't initialize config if platform is unknown
             self.init_cfg()
-        if self.reqs_pch and _unknown_pch and start_driver:
-            msg = 'Chipset requires a supported PCH to be loaded: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
-            logger().error( msg )
-            raise UnknownChipsetError (msg)
+        if _unknown_pch:
+            msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
+            if self.reqs_pch and start_driver:
+                logger().error("Chipset requires a supported PCH to be loaded. {}".format(msg))
+                raise UnknownChipsetError(msg)
+            else:
+                logger().log("[!]       {}; Using Default.".format(msg))
+        if _unknown_pch or _unknown_platform:
+            msg = 'Results from this system may be incorrect.'
+            logger().log("[!]            {}".format(msg))
 
     def destroy( self, start_driver ):
         self.helper.stop( start_driver )
