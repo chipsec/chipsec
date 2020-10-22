@@ -27,4 +27,4 @@ Mailing lists:
  * CHIPSEC users: [chipsec-users](https://groups.google.com/forum/#!forum/chipsec-users)
  * [CHIPSEC discussion list on 01.org](https://lists.01.org/mailman/listinfo/chipsec)
 
-Follow us on [twitter](https://twitter.com/CHIPSEC)
+Follow us on [Twitter](https://twitter.com/ChipsecR) for CHIPSEC release alerts
