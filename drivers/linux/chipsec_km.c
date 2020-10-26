@@ -32,7 +32,7 @@ chipsec@intel.com
 
 #include "include/chipsec.h"
 
-#ifdef HAS_EFI
+#ifdef CONFIG_EFI
     #include <linux/efi.h>
 #endif
 
