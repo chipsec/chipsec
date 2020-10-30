@@ -310,7 +310,7 @@ def parse_sb_db(db, decode_dir):
             sig_list_size = len(sig_list)
             while ((sof + EFI_GUID_SIZE) < sig_list_size):
                 sig_data = sig_list[sof:sof +SignatureSize]
-                owner0 = struct.unpack(EFI_GUID_FMT, sig_data[:EFI_GUID_SIZE])
+                owner0 = struct.unpack(EFI_GUID_FMT, sig_data[:EFI_GUID_SIZE])[0]
                 owner = EFI_GUID_STR(owner0)
                 data = sig_data[EFI_GUID_SIZE:]
                 entries.append( data )
