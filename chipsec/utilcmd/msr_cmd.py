@@ -20,13 +20,13 @@
 #
 
 
-
 """
 The msr command allows direct access to read and write MSRs.
 """
 
-from chipsec.command    import BaseCommand
-from chipsec.hal.msr    import Msr
+from chipsec.command import BaseCommand
+from chipsec.hal.msr import Msr
+from argparse        import ArgumentParser
 
 
 # CPU Model Specific Registers
@@ -37,42 +37,40 @@ class MSRCommand(BaseCommand):
     Examples:
 
     >>> chipsec_util msr 0x3A
+    >>> chipsec_util msr 0x3A 0
     >>> chipsec_util msr 0x8B 0x0 0x0 0
     """
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if self.argv[2] == '--help':
-            return False
+        parser = ArgumentParser(prog='chipsec_util msr', usage=MSRCommand.__doc__)
+        parser.add_argument('msr_addr', type=lambda x: int(x, 16), metavar='<msr>', help='MSR address (hex)')
+        parser.add_argument('msr_input1', type=lambda x: int(x, 16), metavar='MSR Value', nargs='?', default=None, help='EAX (hex)')
+        parser.add_argument('msr_input2', type=lambda x: int(x, 16), metavar='MSR Value', nargs='?', default=None, help='EDX (hex)')
+        parser.add_argument('cpu_id', type=lambda x: int(x, 16), metavar='CPU ID', nargs='?', default=None, help='CPU ID (hex)')
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
     def run(self):
-        if self.argv[2] == '--help':
-            print (MSRCommand.__doc__)
-            return
-
-        msr_addr = int(self.argv[2], 16)
-
-        if (3 == len(self.argv)):
+        if self.msr_input1 is None:
             for tid in range(self.cs.msr.get_cpu_thread_count()):
-                (eax, edx) = self.cs.msr.read_msr( tid, msr_addr )
+                (eax, edx) = self.cs.msr.read_msr( tid, self.msr_addr )
                 val64 = ((edx << 32) | eax)
-                self.logger.log( "[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(tid, msr_addr, val64, eax, edx) )
-        elif (4 == len(self.argv)):
-            cpu_thread_id = int(self.argv[3], 16)
-            (eax, edx) = self.cs.msr.read_msr( cpu_thread_id, msr_addr )
+                self.logger.log( "[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(tid, self.msr_addr, val64, eax, edx) )
+        elif self.msr_input2 is None:
+            cpu_thread_id = self.msr_input1
+            (eax, edx) = self.cs.msr.read_msr( cpu_thread_id, self.msr_addr )
             val64 = ((edx << 32) | eax)
-            self.logger.log( "[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(cpu_thread_id, msr_addr, val64, eax, edx) )
+            self.logger.log( "[CHIPSEC] CPU{:d}: RDMSR( 0x{:x} ) = {:016X} (EAX={:08X}, EDX={:08X})".format(cpu_thread_id, self.msr_addr, val64, eax, edx) )
         else:
-            eax = int(self.argv[3], 16)
-            edx = int(self.argv[4], 16)
+            eax = self.msr_input1
+            edx = self.msr_input2
             val64 = ((edx << 32) | eax)
-            if (5 == len(self.argv)):
-                self.logger.log( "[CHIPSEC] All CPUs: WRMSR( 0x{:x} ) = {:016X}".format(msr_addr, val64) )
+            if self.cpu_id is None:
+                self.logger.log( "[CHIPSEC] All CPUs: WRMSR( 0x{:x} ) = {:016X}".format(self.msr_addr, val64) )
                 for tid in range(self.cs.msr.get_cpu_thread_count()):
-                    self.cs.msr.write_msr( tid, msr_addr, eax, edx )
-            elif (6 == len(self.argv)):
-                cpu_thread_id = int(self.argv[5], 16)
-                self.logger.log( "[CHIPSEC] CPU{:d}: WRMSR( 0x{:x} ) = {:016X}".format(cpu_thread_id, msr_addr, val64) )
-                self.cs.msr.write_msr( cpu_thread_id, msr_addr, eax, edx )
+                    self.cs.msr.write_msr( tid, self.msr_addr, eax, edx )
+            else:
+                cpu_thread_id = self.cpu_id
+                self.logger.log( "[CHIPSEC] CPU{:d}: WRMSR( 0x{:x} ) = {:016X}".format(cpu_thread_id, self.msr_addr, val64) )
+                self.cs.msr.write_msr( cpu_thread_id, self.msr_addr, eax, edx )
 
 commands = { 'msr': MSRCommand }
