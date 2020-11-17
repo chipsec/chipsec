@@ -152,7 +152,7 @@ class LinuxHelper(Helper):
             else:
                 a2 = "a2=0x{}".format(phys_mem_access_prot)
 
-        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper", "linux", "chipsec.ko" )
+        driver_path = os.path.join(chipsec.file.get_main_dir(), "drivers", "linux", "chipsec.ko" )
         if not os.path.exists(driver_path):
             driver_path += ".xz"
             if not os.path.exists(driver_path):
