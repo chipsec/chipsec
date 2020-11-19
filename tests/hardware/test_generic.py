@@ -19,7 +19,12 @@ import os
 import platform
 import tempfile
 import unittest
-import distro
+try:
+    import distro
+    mSystem = distro.linux_distribution
+except:
+    mSystem = platform.dist()
+
 
 import chipsec_main
 from chipsec import logger
@@ -34,7 +39,7 @@ class GenericHardwareTest(unittest.TestCase):
         if hasattr(self, "SYSTEM") and platform.system() != self.SYSTEM:
             self.skipTest("Unsupported system {}".format(self.SYSTEM))
 
-        if hasattr(self, "DIST") and distro.linux_distribution != self.DIST:
+        if hasattr(self, "DIST") and mSystem != self.DIST:
             self.skipTest("Unsupported distribution {}".format(self.DIST))
 
         if (hasattr(self, "PRODUCT_NAME") and
