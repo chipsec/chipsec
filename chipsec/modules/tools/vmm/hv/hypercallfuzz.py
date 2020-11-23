@@ -34,7 +34,7 @@ Usage:
     - ``vector``		hypercall vector
     - ``iterations``		number of hypercall iterations
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from define                 import *
 from hypercall              import *
@@ -56,7 +56,7 @@ class HypercallFuzz(BaseModule):
         print ('        = custom-fuzzing  fuzzing of known hypercalls')
         print ('      vector              hypercall vector')
         print ('      iterations          number of hypercall iterations')
-        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):

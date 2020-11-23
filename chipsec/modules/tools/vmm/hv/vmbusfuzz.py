@@ -32,7 +32,7 @@ Usage:
     - ``vmbus``        fuzzing HyperV message body / VMBUS message
     - ``<pos>,<size>`` fuzzing number of bytes at specific position
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from struct import *
 from random import *
@@ -108,7 +108,7 @@ class VMBusFuzz(VMBusDiscovery):
         self.logger.log('        hv           fuzzing HyperV message header')
         self.logger.log('        vmbus        fuzzing HyperV message body / VMBUS message')
         self.logger.log('        <pos>,<size> fuzzing number of bytes at specific position')
-        self.logger.log('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        self.logger.log('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
 
     def run(self, module_argv):
         self.logger.start_test( "Hyper-V VMBus fuzzer" )
