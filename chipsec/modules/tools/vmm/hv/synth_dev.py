@@ -32,7 +32,7 @@ Usage:
 
   ``chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid> -l log.txt``
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 import time
 from struct    import *
@@ -98,7 +98,7 @@ class synth_dev(BaseModule):
         print ('      print channel offers')
         print ('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>')
         print ('      fuzzing device with specified relid')
-        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
