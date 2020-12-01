@@ -272,7 +272,7 @@ def getEFIvariables_UEFI_Ex( nvram_buf, auth = False ):
     length = len(nvram_buf)
     storen = 0
     variables = dict()
-    while ((dof+UEFI_VARIABLE_STORE_HEADER_SIZE) < length):  
+    while ((dof+UEFI_VARIABLE_STORE_HEADER_SIZE) < length):
         store_start = dof
         StoreGuid0, StoreGuid1, StoreGuid2, StoreGuid03, Size, Format, State, R0, R1 = \
             struct.unpack(UEFI_VARIABLE_STORE_HEADER, nvram_buf[dof:dof + UEFI_VARIABLE_STORE_HEADER_SIZE])
@@ -998,8 +998,8 @@ def decode_s3bs_opcode_def( data ):
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
         frmt = '<BBQBB'
         size = struct.calcsize( frmt )
-        opcode, slave_address, command, operation, peccheck = struct.unpack( frmt, data[ : size ] )
-        op = op_smbus_execute( opcode, size, slave_address, command, operation, peccheck )
+        opcode, address, command, operation, peccheck = struct.unpack( frmt, data[ : size ] )
+        op = op_smbus_execute( opcode, size, address, command, operation, peccheck )
     elif S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<BBQ'
         size = struct.calcsize( frmt )
