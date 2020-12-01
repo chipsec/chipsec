@@ -657,20 +657,20 @@ class op_io_pci_mem():
 
 
 class op_smbus_execute():
-    def __init__(self, opcode, size, slave_address, command, operation, peccheck):
+    def __init__(self, opcode, size, address, command, operation, peccheck):
         self.opcode        = opcode
         self.size          = size
-        self.slave_address = slave_address
+        self.address       = address
         self.command       = command
         self.operation     = operation
         self.peccheck      = peccheck
         self.name          = script_opcodes[ opcode ]
     def __str__(self):
-        str_r =  "  Opcode       : {} (0x{:04X})\n".format(self.name, self.opcode)
-        str_r += "  Slave Address: 0x{:02X}\n".format(self.slave_address)
-        str_r += "  Command      : 0x{:08X}\n".format(self.command)
-        str_r += "  Operation    : 0x{:02X}\n".format(self.operation)
-        str_r += "  PEC Check    : {:d}\n".format(self.peccheck)
+        str_r =  "  Opcode           : {} (0x{:04X})\n".format(self.name, self.opcode)
+        str_r += "  Secondary Address: 0x{:02X}\n".format(self.address)
+        str_r += "  Command          : 0x{:08X}\n".format(self.command)
+        str_r += "  Operation        : 0x{:02X}\n".format(self.operation)
+        str_r += "  PEC Check        : {:d}\n".format(self.peccheck)
         return str_r
 
 #typedef struct {
