@@ -96,7 +96,11 @@ class me_mfg_mode(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return self.cs.is_device_enabled("MEI1")
+        if self.cs.is_device_enabled("MEI1"):
+            return True
+        else:
+            self.res = ModuleResult.NOTAPPLICABLE
+            return False
 
     def check_me_mfg_mode(self):
         self.logger.start_test( "ME Manufacturing Mode" )
@@ -107,11 +111,12 @@ class me_mfg_mode(BaseModule):
 
         if 0 == me_mfg_mode:
             me_mfg_mode_res = ModuleResult.PASSED
-            self.logger.log_passed_check( "ME is not in Manufacturing Mode" )
+            self.logger.log_passed( "ME is not in Manufacturing Mode" )
         else:
-            self.logger.log_failed_check( "ME is in Manufacturing Mode" )
+            self.logger.log_failed( "ME is in Manufacturing Mode" )
 
         return me_mfg_mode_res
 
     def run( self, module_argv ):
-        return self.check_me_mfg_mode()
+        self.res = self.check_me_mfg_mode()
+        return self.res
