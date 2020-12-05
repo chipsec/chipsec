@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2017, Google Inc
-# Copyright (c) 2010-2015, Intel Corporation
+# Copyright (c) 2010-2020, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,8 +21,9 @@
 #
 
 from chipsec.command import BaseCommand
-from chipsec.hal import tpm_eventlog
-from chipsec.hal import tpm
+from chipsec.hal     import tpm_eventlog
+from chipsec.hal     import tpm
+from argparse        import ArgumentParser
 
 class TPMCommand(BaseCommand):
     """
@@ -49,41 +50,47 @@ class TPMCommand(BaseCommand):
     no_driver_cmd = ['parse_log']
 
     def requires_driver(self):
-        if len(self.argv) < 4:
-            return False
-        if self.argv[2] in self.no_driver_cmd:
-            return False
+        parser = ArgumentParser(usage=TPMCommand.__doc__)
+        subparsers = parser.add_subparsers()
+        parser_parse = subparsers.add_parser('parse_log')
+        parser_parse.add_argument('file', type=str, help='File name')
+        parser_parse.set_defaults(func=self.tpm_parse)
+
+        parser_command = subparsers.add_parser('command')
+        parser_command.add_argument('command_name', type=str, help='Command')
+        parser_command.add_argument('locality', type=int, choices=[0,1,2,3,4], help='Locality')
+        parser_command.add_argument('command_parameters', nargs='*', type=int, help='Command Parameters')
+        parser_command.set_defaults(func=self.tpm_command)
+
+        parser_state = subparsers.add_parser('state')
+        parser_state.add_argument('locality', type=int, choices=[0,1,2,3,4], help='Locality')
+        parser_state.set_defaults(func=self.tpm_state)
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-    def run(self):
-        if len(self.argv) < 4:
-            print (TPMCommand.__doc__)
-            return
-
-        try:
-            _tpm = tpm.TPM(self.cs)
-        except tpm.TpmRuntimeError as msg:
-            print(msg)
-            return
-
-        op = self.argv[2]
-        if ( 'parse_log' == op ):
-            log = open(self.argv[3], 'rb')
+    def tpm_parse(self):
+        with open(self.file, 'rb') as log:
             tpm_eventlog.parse(log)
-        elif ('command' == op ):
-            if len(self.argv) < 5:
-                print (TPMCommand.__doc__)
-                return
-            _tpm.command( self.argv[3], self.argv[4], self.argv[5:] )
-        elif ('state' == op ):
-            _tpm.dump_access ( self.argv[3] )
-            _tpm.dump_status ( self.argv[3] )
-            _tpm.dump_didvid ( self.argv[3] )
-            _tpm.dump_rid ( self.argv[3] )
-            _tpm.dump_intcap ( self.argv[3] )
-            _tpm.dump_intenable( self.argv[3] )
-        else:
-            print (TPMCommand.__doc__)
+
+    def tpm_command(self):
+        self._tpm.command( self.command_name, self.locality, self.command_parameters )
+
+    def tpm_state(self):
+        self._tpm.dump_access ( self.locality )
+        self._tpm.dump_status ( self.locality )
+        self._tpm.dump_didvid ( self.locality )
+        self._tpm.dump_rid ( self.locality )
+        self._tpm.dump_intcap ( self.locality )
+        self._tpm.dump_intenable( self.locality )
+
+
+    def run(self):
+        try:
+            self._tpm = tpm.TPM(self.cs)
+        except tpm.TpmRuntimeError as msg:
+            self.logger.log(msg)
             return
+
+        self.func()
 
 commands = { 'tpm': TPMCommand }
