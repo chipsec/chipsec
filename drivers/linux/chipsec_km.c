@@ -66,6 +66,11 @@ module_param(a2,ulong,0); //a2 is addr of phys_mem_access_prot function
 /// Char we show before each debug print
 const char program_name[] = "chipsec";
 
+// read kernel symbols from the /proc
+#define KALLSYMS_PATH "/proc/kallsyms"
+#define BUFF_SIZE 128
+char read_buf[BUFF_SIZE] = {0};
+
 // list of allocated memory
 struct allocated_mem_list allocated_mem_list;
 
@@ -1676,6 +1681,86 @@ static struct miscdevice chipsec_dev = {
     .fops = &mem_fops
 };
 
+/*
+ * 0ld dog never die:
+ * https://gist.githubusercontent.com/GoldenOak/a8cd563d671af04a3d387d198aa3ecf8/raw/8dcc90dbbf9b9ffd65cc2c03f1cd48445b84c2b6/obtain_syscall_table_by_proc.c
+*/
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0)
+
+unsigned long chipsec_lookup_name(const char *name)
+{
+	char *file_name                       = KALLSYMS_PATH;
+	int i                                 = 0;         /* Read Index */
+	struct file *proc_ksyms               = NULL;      /* struct file the '/proc/kallsyms' or '/proc/ksyms' */
+	char *sct_addr_str                    = NULL;      /* buffer for save sct addr as str */
+	char proc_ksyms_entry[BUFF_SIZE]  = {0};       /* buffer for each line at file */
+	unsigned long* res                    = NULL;      /* return value */
+	char *proc_ksyms_entry_ptr            = NULL;
+	int read                              = 0;
+	int err = 0;
+	mm_segment_t oldfs;
+
+
+	/* Allocate place for sct addr as str */
+	if((sct_addr_str = (char*)kmalloc(BUFF_SIZE * sizeof(char), GFP_KERNEL)) == NULL)
+		goto CLEAN_UP;
+
+	proc_ksyms = filp_open(file_name, O_RDONLY, 0);
+       	if (proc_ksyms == NULL)
+		goto CLEAN_UP;
+
+	oldfs = get_fs();
+	set_fs (KERNEL_DS);
+	read = proc_ksyms->f_op->read(proc_ksyms, proc_ksyms_entry + i, 1, &(proc_ksyms->f_pos));
+	set_fs(oldfs);
+
+	while( read == 1)
+	{
+		if(proc_ksyms_entry[i] == '\n' || i == BUFF_SIZE)
+		{
+			if(strstr(proc_ksyms_entry, name) != NULL)
+			{
+
+                        	printk(KERN_INFO"[+] %s: %s", name, proc_ksyms_entry);
+
+				proc_ksyms_entry_ptr = proc_ksyms_entry;
+				strncpy(sct_addr_str, strsep(&proc_ksyms_entry_ptr, " "), BUFF_SIZE);
+				if((res = kmalloc(sizeof(unsigned long), GFP_KERNEL)) == NULL)
+					goto CLEAN_UP;
+				err = kstrtoul(sct_addr_str, 16, res);
+				goto CLEAN_UP;
+			}
+
+			i = -1;
+			memset(proc_ksyms_entry, 0, BUFF_SIZE);
+		}
+
+		i++;
+
+	oldfs = get_fs();
+	set_fs (KERNEL_DS);
+	read = proc_ksyms->f_op->read(proc_ksyms, proc_ksyms_entry + i, 1, &(proc_ksyms->f_pos));
+	set_fs(oldfs);	
+	}
+
+
+CLEAN_UP:
+	if(sct_addr_str != NULL)
+		kfree(sct_addr_str);
+	if(proc_ksyms != NULL)
+		filp_close(proc_ksyms, 0);
+
+	return *res;
+}
+
+#else
+
+unsigned long chipsec_lookup_name(const char *name){
+	return kallsyms_lookup_name(name);
+}
+
+#endif
+
 int find_symbols(void) 
 {
 	//Older kernels don't have kallsyms_lookup_name. Use FMEM method (pass from run.sh)
@@ -1690,9 +1775,9 @@ int find_symbols(void)
 		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
 		#endif
 	#else
-		guess_page_is_ram = (void *)kallsyms_lookup_name("page_is_ram");
+		guess_page_is_ram = (void *)chipsec_lookup_name("page_is_ram");
 		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
-		guess_phys_mem_access_prot = (void *)kallsyms_lookup_name("phys_mem_access_prot");
+		guess_phys_mem_access_prot = (void *)chipsec_lookup_name("phys_mem_access_prot");
 		#else
 		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
 		#endif
