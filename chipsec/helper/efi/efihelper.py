@@ -126,16 +126,15 @@ class EfiHelper(Helper):
         else:
             edk2.writemem( phys_address_lo, phys_address_hi, buf, length )
 
-    def alloc_phys_mem( self, length, max_pa ):
-        # temporary WA using malloc
+    def alloc_phys_mem(self, length, max_pa):
         va = edk2.allocphysmem(length, max_pa)[0]
-        pa = self.va2pa(va)
+        (pa, _) = self.va2pa(va)
         return (va, pa)
 
-    def va2pa( self, va ):
+    def va2pa(self, va):
         pa = va # UEFI shell has identity mapping
         if logger().DEBUG: logger().log( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa) )
-        return pa
+        return (pa, 0)
 
     def pa2va(self, pa):
         va = pa # UEFI Shell has identity mapping
