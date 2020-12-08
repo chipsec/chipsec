@@ -171,7 +171,7 @@ class VMemCommand(BaseCommand):
         else:
             try:
                 width = int(self.length, 16)
-            except:
+            except ValueError:
                 width = 0
 
         self.logger.log( '[CHIPSEC] Writing {:X}-byte value 0x{:X} to VA 0x{:016X}..'.format(width, self.value, self.virt_address) )
