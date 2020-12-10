@@ -560,11 +560,22 @@ int __weak phys_mem_access_prot_allowed(struct file *file,
         return 1;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,12) && defined(ARCH_HAS_VALID_PHYS_ADDR_RANGE) && !defined(__HAVE_ARCH_PAX_OPEN_USERLAND)
+#if defined(__HAVE_ARCH_PAX_OPEN_USERLAND)
+#if LINUX_VERSION_CODE > KERNEL_VERSION(4,14,0) && defined(ARCH_HAS_VALID_PHYS_ADDR_RANGE)
 int valid_mmap_phys_addr_range(unsigned long pfn, size_t size)
 {
 	return 1;
 }
+#endif
+
+#else
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,1,12) && defined(ARCH_HAS_VALID_PHYS_ADDR_RANGE)
+int valid_mmap_phys_addr_range(unsigned long pfn, size_t size)
+{
+	return 1;
+}
+#endif
 #endif
 
 #ifndef ARCH_HAS_VALID_PHYS_ADDR_RANGE
