@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -43,8 +43,6 @@ class bios_smi(BaseModule):
 
     def is_supported(self):
         if not self.cs.is_control_defined( 'SmmBiosWriteProtection' ) or \
-           not self.cs.is_control_defined( 'TCOSMIEnable' ) or \
-           not self.cs.is_control_defined( 'GlobalSMIEnable' ) or \
            not self.cs.is_control_defined( 'TCOSMILock' ) or \
            not self.cs.is_control_defined( 'SMILock' ) or \
            not self.cs.is_control_defined( 'BiosWriteEnable'):
@@ -69,26 +67,27 @@ class bios_smi(BaseModule):
         #
         # Checking if global SMI and TCO SMI are enabled (GBL_SMI_EN and TCO_EN bits in SMI_EN register)
         #
-        self.logger.log( "[*] Checking SMI enables.." )
-        tco_en     = self.cs.get_control( 'TCOSMIEnable' )
-        gbl_smi_en = self.cs.get_control( 'GlobalSMIEnable' )
-        self.logger.log( "    Global SMI enable: {:d}".format(gbl_smi_en) )
-        self.logger.log( "    TCO SMI enable   : {:d}".format(tco_en) )
+        if self.cs.is_control_defined( 'TCOSMIEnable' ) and self.cs.is_control_defined( 'GlobalSMIEnable' ):
+            self.logger.log( "[*] Checking SMI enables.." )
+            tco_en     = self.cs.get_control( 'TCOSMIEnable' )
+            gbl_smi_en = self.cs.get_control( 'GlobalSMIEnable' )
+            self.logger.log( "    Global SMI enable: {:d}".format(gbl_smi_en) )
+            self.logger.log( "    TCO SMI enable   : {:d}".format(tco_en) )
 
-        if gbl_smi_en != 1:
-            ok = False
-            self.logger.log_bad( "Global SMI is not enabled" )
-        elif tco_en != 1 and smm_bwp != 1:
-            warn = True
-            self.logger.warn( "TCO SMI is not enabled. BIOS may not be using it" )
-        elif tco_en != 1 and smm_bwp == 1:
-            ok = False
-            self.logger.log_bad("TCO SMI should be enabled if using SMM BIOS region protection")
-        else:
-            self.logger.log_good( "All required SMI events are enabled" )
-        self.logger.log('')
+            if gbl_smi_en != 1:
+                ok = False
+                self.logger.log_bad( "Global SMI is not enabled" )
+            elif tco_en != 1 and smm_bwp != 1:
+                warn = True
+                self.logger.warn( "TCO SMI is not enabled. BIOS may not be using it" )
+            elif tco_en != 1 and smm_bwp == 1:
+                ok = False
+                self.logger.log_bad("TCO SMI should be enabled if using SMM BIOS region protection")
+            else:
+                self.logger.log_good( "All required SMI events are enabled" )
+            self.logger.log('')
 
-        self.logger.log( "[*] Checking SMI configuration locks.." )
+            self.logger.log( "[*] Checking SMI configuration locks.." )
 
         #
         # Checking TCO_LOCK
@@ -113,13 +112,13 @@ class bios_smi(BaseModule):
 
         if ok and not warn:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "All required SMI sources seem to be enabled and locked" )
+            self.logger.log_passed( "All required SMI sources seem to be enabled and locked" )
         elif ok and warn:
             res = ModuleResult.WARNING
-            self.logger.log_warn_check("One or more warnings detected when checking SMI enable state")
+            self.logger.log_warning("One or more warnings detected when checking SMI enable state")
         else:
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "Not all required SMI sources are enabled and locked" )
+            self.logger.log_failed( "Not all required SMI sources are enabled and locked" )
         return res
 
 
