@@ -134,7 +134,7 @@ class Msr:
         (limit, base, pa) = self.helper.get_descriptor_table( cpu_thread_id, code )
         dt = self.helper.read_physical_mem( pa, limit + 1 )
         total_num = len(dt) //16
-        if (total_num < num_entries) or (num_entries is None):
+        if (num_entries is None) or (total_num < num_entries):
             num_entries = total_num
         logger().log( '[cpu{:d}] Physical Address: 0x{:016X}'.format(cpu_thread_id, pa) )
         logger().log( '[cpu{:d}] # of entries    : {:d}'.format(cpu_thread_id, total_num) )
