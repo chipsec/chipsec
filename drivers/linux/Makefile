@@ -24,6 +24,7 @@ check_kernel_dir:
 
 chipsec: check_kernel_dir clean
 	nasm -f $(elf-size) -o $(asm-path)/cpu.o $(asm-path)/cpu.asm
+	touch $(asm-path)/.cpu.o.cmd
 	@if [ `grep -c 'efi_call' /proc/kallsyms` != "0" ]; then \
 	    make CFLAGS_MODULE=-DHAS_EFI=1 -C $(KERNEL_SRC_DIR) M=${CURDIR} modules; \
 	else \
