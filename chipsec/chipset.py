@@ -263,6 +263,10 @@ class Chipset:
             self.rid = 0x00
             self.code = platform_code
             self.longname = platform_code
+            msg = 'Platform: Actual values: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
+            if cpuid:
+                msg += ', CPUID = 0x{}'.format(cpuid)
+            logger().log("[CHIPSEC] {}".format(msg))
 
         if req_pch_code is not None:
             # Check if pch code passed in is valid
@@ -273,6 +277,8 @@ class Chipset:
                 self.pch_code = req_pch_code
                 self.pch_longname = req_pch_code
                 _unknown_pch = False
+                msg = 'PCH     : Actual values: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
+                logger().log("[CHIPSEC] {}".format(msg))
         elif pch_vid in self.pch_dictionary.keys() and pch_did in self.pch_dictionary[pch_vid].keys():
             #Check if pch did for device 0:31:0 is in configuration
             self.pch_vid = pch_vid
