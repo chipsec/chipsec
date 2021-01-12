@@ -144,9 +144,9 @@ class Msr:
         logger().log( '#    segment:offset         attributes' )
         logger().log( '--------------------------------------' )
         for i in range(0, num_entries):
-            offset = (ord(dt[i *16 + 11]) << 56) | (ord(dt[i *16 + 10]) << 48) | (ord(dt[i *16 + 9]) << 40) | (ord(dt[i *16 + 8]) << 32) | (ord(dt[i *16 + 7]) << 24) | (ord(dt[i *16 + 6]) << 16) | (ord(dt[i *16 + 1]) << 8) | ord(dt[i *16 + 0])
-            segsel = (ord(dt[i *16 + 3]) << 8) | ord(dt[i *16 + 2])
-            attr   = (ord(dt[i *16 + 5]) << 8) | ord(dt[i *16 + 4])
+            offset = (dt[i *16 + 11] << 56) | (dt[i *16 + 10] << 48) | (dt[i *16 + 9] << 40) | (dt[i *16 + 8] << 32) | (dt[i *16 + 7] << 24) | (dt[i *16 + 6] << 16) | (dt[i *16 + 1] << 8) | dt[i *16 + 0]
+            segsel = (dt[i *16 + 3] << 8) | dt[i *16 + 2]
+            attr   = (dt[i *16 + 5] << 8) | dt[i *16 + 4]
             logger().log( '{:03d}  {:04X}:{:016X}  0x{:04X}'.format(i, segsel, offset, attr) )
 
         return (pa, dt)
