@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -20,15 +20,15 @@
 #
 
 
-
 """
 The mmcfg command allows direct access to memory mapped config space.
 """
 
 import time
 
-from chipsec.command    import BaseCommand
-from chipsec.hal import mmio
+from chipsec.command import BaseCommand
+from chipsec.hal     import mmio
+from argparse        import ArgumentParser
 
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
@@ -45,51 +45,43 @@ class MMCfgCommand(BaseCommand):
     """
 
     def requires_driver(self):
+        parser = ArgumentParser( prog='chipsec_util mmcfg', usage=MMCfgCommand.__doc__ )
+        parser.add_argument('bus', type=lambda x: int(x,16), help='Bus (hex)')
+        parser.add_argument('device', type=lambda x: int(x,16), help='Device (hex)')
+        parser.add_argument('function', type=lambda x: int(x,16), help='Function (hex)')
+        parser.add_argument('offset', type=lambda x: int(x,16), help='Offset (hex)')
+        parser.add_argument('width', type=str, choices=['byte','word','dword','1','2','4'], help='Width [byte,word,dword] or (int)')
+        parser.add_argument('value', type=lambda x: int(x,16), nargs='?', default=None, help='Value to write (hex)')
+        parser.set_defaults()
+
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
     def run(self):
         t = time.time()
         _mmio = mmio.MMIO(self.cs)
 
-        if 2 == len(self.argv):
-            pciexbar, pciexbar_sz = _mmio.get_MMCFG_base_address()
-            self.logger.log( "[CHIPSEC] Memory Mapped Config Base: 0x{:016X}".format(pciexbar) )
-            if self.logger.VERBOSE: self.logger.log("[CHIPSEC] Memory Mapped Config Size: {:016X}".format(pciexbar_sz))
-            return
-        elif 6 > len(self.argv):
-            print (MMCfgCommand.__doc__)
-            return
-
         try:
-            bus         = int(self.argv[2], 16)
-            device      = int(self.argv[3], 16)
-            function    = int(self.argv[4], 16)
-            offset      = int(self.argv[5], 16)
-
-            if 6 == len(self.argv):
-                width = 1
+            if self.width == 'byte':
+                _width = 1
+            elif self.width == 'word':
+                _width = 2
+            elif self.width == 'dword':
+                _width = 4
             else:
-                if 'byte' == self.argv[6]:
-                    width = 1
-                elif 'word' == self.argv[6]:
-                    width = 2
-                elif 'dword' == self.argv[6]:
-                    width = 4
-                else:
-                    width = int(self.argv[6])
-
-        except Exception as e:
-            print (MMCfgCommand.__doc__)
+                _width = int(self.width)
+        except ValueError:
+            self.logger.error( "ValueError: Invalid inputs." )
             return
 
-        if 8 == len(self.argv):
-            value = int(self.argv[7], 16)
-            _mmio.write_mmcfg_reg(bus, device, function, offset, width, value )
-            self.logger.log( "[CHIPSEC] writing MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(bus, device, function, offset, value) )
+        if self.value is not None:
+            _mmio.write_mmcfg_reg(self.bus, self.device, self.function, self.offset, _width, self.value )
+            self.logger.log( "[CHIPSEC] Writing MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(self.bus, self.device, self.function, self.offset, self.value) )
         else:
-            value = _mmio.read_mmcfg_reg(bus, device, function, offset, width )
-            self.logger.log( "[CHIPSEC] reading MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(bus, device, function, offset, value) )
+            data = _mmio.read_mmcfg_reg(self.bus, self.device, self.function, self.offset, _width )
+            self.logger.log( "[CHIPSEC] Reading MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(self.bus, self.device, self.function, self.offset, data) )
 
+        self.logger.log( '' )
         self.logger.log( "[CHIPSEC] (mmcfg) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'mmcfg': MMCfgCommand }
