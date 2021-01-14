@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -20,16 +20,10 @@
 #
 
 
-import os
-import sys
 import time
 
-import chipsec_util
 from chipsec.command    import BaseCommand
-
-from chipsec.logger     import *
-from chipsec.file       import *
-from chipsec.hal.msgbus import MsgBus
+from argparse           import ArgumentParser
 
 
 # Message Bus
@@ -53,57 +47,76 @@ class MsgBusCommand(BaseCommand):
     >>> chipsec_util msgbus message  0x3 0x2E 0x10
     >>> chipsec_util msgbus message  0x3 0x2E 0x11 0x0
     """
+
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if len(self.argv) < 3:
-            return False
+        parser = ArgumentParser( prog='chipsec_util msgbus', usage=MsgBusCommand.__doc__ )
+        subparsers = parser.add_subparsers()
+
+        parser_read = subparsers.add_parser('read')
+        parser_read.add_argument('port', type=lambda x: int(x,16), help='Port (hex)')
+        parser_read.add_argument('reg', type=lambda x: int(x,16), help='Register (hex)')
+        parser_read.set_defaults(func=self.msgbus_read)
+
+        parser_write = subparsers.add_parser('write')
+        parser_write.add_argument('port', type=lambda x: int(x,16), help='Port (hex)')
+        parser_write.add_argument('reg', type=lambda x: int(x,16), help='Register (hex)')
+        parser_write.add_argument('val', type=lambda x: int(x,16), help='Value (hex)')
+        parser_write.set_defaults(func=self.msgbus_write)
+
+        parser_mmread = subparsers.add_parser('mm_read')
+        parser_mmread.add_argument('port', type=lambda x: int(x,16), help='Port (hex)')
+        parser_mmread.add_argument('reg', type=lambda x: int(x,16), help='Register (hex)')
+        parser_mmread.set_defaults(func=self.msgbus_mm_read)
+
+        parser_mmwrite = subparsers.add_parser('mm_write')
+        parser_mmwrite.add_argument('port', type=lambda x: int(x,16), help='Port (hex)')
+        parser_mmwrite.add_argument('reg', type=lambda x: int(x,16), help='Register (hex)')
+        parser_mmwrite.add_argument('val', type=lambda x: int(x,16), help='Value (hex)')
+        parser_mmwrite.set_defaults(func=self.msgbus_mm_write)
+
+        parser_message = subparsers.add_parser('message')
+        parser_message.add_argument('port', type=lambda x: int(x,16), help='Port (hex)')
+        parser_message.add_argument('reg', type=lambda x: int(x,16), help='Register (hex)')
+        parser_message.add_argument('opcode', type=lambda x: int(x,16), help='OPCODE (hex)')
+        parser_message.add_argument('val', type=lambda x: int(x,16), nargs='?', default=None, help='Value (hex)')
+        parser_message.set_defaults(func=self.msgbus_message)
+
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
+
+    def msgbus_read(self):
+        self.logger.log("[CHIPSEC] msgbus read: port 0x{:02X} + 0x{:08X}".format(self.port, self.reg))
+        return self._msgbus.msgbus_reg_read( self.port, self.reg )
+
+    def msgbus_write(self):
+        self.logger.log("[CHIPSEC] msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(self.port, self.reg, self.val))
+        return self._msgbus.msgbus_reg_write( self.port, self.reg, self.val )
+
+    def msgbus_mm_read(self):
+        self.logger.log("[CHIPSEC] MMIO msgbus read: port 0x{:02X} + 0x{:08X}".format(self.port, self.reg))
+        return self._msgbus.mm_msgbus_reg_read( self.port, self.reg )
+
+    def msgbus_mm_write(self):
+        self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(self.port, self.reg, self.val))
+        return self._msgbus.mm_msgbus_reg_write( self.port, self.reg, self.val )
+
+    def msgbus_message(self):
+        self.logger.log("[CHIPSEC] msgbus message: port 0x{:02X} + 0x{:08X}, opcode: 0x{:02X}".format(self.port, self.reg, self.opcode))
+        if self.val is not None:
+            self.logger.log("[CHIPSEC]                 Data: 0x{:08X}".format(self.val))
+        return self._msgbus.msgbus_send_message( self.port, self.reg, self.opcode, self.val )
+
+
     def run(self):
-        if len(self.argv) > 7 or len(self.argv) < 5:
-            print (MsgBusCommand.__doc__)
-            return
-
-        op = self.argv[2]
         t = time.time()
+        self._msgbus = self.cs.msgbus
 
-        _msgbus = self.cs.msgbus
+        res = self.func()
 
-        res  = None
-        port = int(self.argv[3], 16)
-        reg  = int(self.argv[4], 16)
+        if res is not None: 
+            self.logger.log("[CHIPSEC] Result: 0x{:08X}".format(res))
 
-        if 'read' == op:
-            self.logger.log("[CHIPSEC] msgbus read: port 0x{:02X} + 0x{:08X}".format(port, reg))
-            res = _msgbus.msgbus_reg_read( port, reg )
-        elif 'write' == op:
-            if len(self.argv) < 6:
-                print (msgbuscmd.__doc__)
-                return
-            val = int(self.argv[5], 16)
-            self.logger.log("[CHIPSEC] msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(port, reg, val))
-            res = _msgbus.msgbus_reg_write( port, reg, val )
-        elif 'mm_read' == op:
-            self.logger.log("[CHIPSEC] MMIO msgbus read: port 0x{:02X} + 0x{:08X}".format(port, reg))
-            res = _msgbus.mm_msgbus_reg_read( port, reg )
-        elif 'mm_write' == op:
-            if len(self.argv) < 6:
-                print (msgbuscmd.__doc__)
-                return
-            val = int(self.argv[5], 16)
-            self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(port, reg, val))
-            res = _msgbus.mm_msgbus_reg_write( port, reg, val )
-        elif 'message' == op:
-            opcode = int(self.argv[5], 16)
-            val = None if len(self.argv) < 7 else int(self.argv[6], 16)
-            self.logger.log("[CHIPSEC] msgbus message: port 0x{:02X} + 0x{:08X}, opcode: 0x{:02X}".format(port, reg, opcode))
-            if val is not None: self.logger.log("[CHIPSEC]                 data: 0x{:08X}".format(val))
-            res = _msgbus.msgbus_send_message( port, reg, opcode, val )
-        else:
-            print (msgbuscmd.__doc__)
-            return
-
-        if res is not None: self.logger.log("[CHIPSEC] result: 0x{:08X}".format(res))
         self.logger.log( "[CHIPSEC] (msgbus) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'msgbus': MsgBusCommand }
