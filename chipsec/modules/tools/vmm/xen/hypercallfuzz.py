@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -44,11 +44,11 @@ Examples:
   ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a set_timer_op,10,0x10000000 -l log.txt``
 """
 
-from define                           import *
-from hypercall                        import *
-from chipsec.hal.vmm                  import *
-from chipsec.module_common            import *
-from chipsec.modules.tools.vmm.common import *
+from chipsec.modules.tools.vmm.xen.define      import *
+from chipsec.modules.tools.vmm.xen.hypercall   import *
+from chipsec.hal.vmm                           import *
+from chipsec.module_common                     import *
+from chipsec.modules.tools.vmm.common          import *
 
 class HypercallFuzz (BaseModule):
 

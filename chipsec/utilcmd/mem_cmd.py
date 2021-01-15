@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -56,7 +56,7 @@ class MemCommand(BaseCommand):
     >>> chipsec_util mem allocate                    0x1000
     >>> chipsec_util mem pagedump 0xFED00000         0x100000
     >>> chipsec_util mem search   0xF0000            0x10000  _SM_
-:
+
     """
 
     def requires_driver(self):
