@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -36,9 +36,9 @@ Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To us
 """
 from struct import *
 from random import *
-from define import *
-from chipsec.modules.tools.vmm.common import *
-from vmbus  import *
+from chipsec.modules.tools.vmm.hv.define import *
+from chipsec.modules.tools.vmm.common    import *
+from chipsec.modules.tools.vmm.hv.vmbus  import *
 import chipsec_util
 
 sys.stdout = session_logger(True, 'vmbusfuzz')

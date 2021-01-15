@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,9 +28,9 @@ http://www.jedec.org/sites/default/files/docs/4_01_02R19.pdf
 http://www.jedec.org/sites/default/files/docs/4_01_02_10R17.pdf
 http://www.jedec.org/sites/default/files/docs/4_01_02_11R24.pdf
 http://www.jedec.org/sites/default/files/docs/4_01_02_12R23A.pdf
-http://www.simmtester.com/page/news/showpubnews.asp?num=184
-http://www.simmtester.com/page/news/showpubnews.asp?num=153
-http://www.simmtester.com/page/news/showpubnews.asp?num=101
+https://www.simmtester.com/News/PublicationArticle/184
+https://www.simmtester.com/News/PublicationArticle/153
+https://www.simmtester.com/News/PublicationArticle/101
 http://en.wikipedia.org/wiki/Serial_presence_detect
 """
 

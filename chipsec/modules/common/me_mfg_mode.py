@@ -1,6 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2018, Eclypsium, Inc.
-# Copyright (c) 2019-2020, Intel Corporation
+# Copyright (c) 2019-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,9 +22,9 @@ References:
 
 https://blog.ptsecurity.com/2018/10/intel-me-manufacturing-mode-macbook.html
 
-https://github.com/coreboot/coreboot/blob/master/src/soc/intel/*/include/soc/pci_devs.h
+`PCI_DEVS.H <https://github.com/coreboot/coreboot/blob/master/src/soc/intel/*/include/soc/pci_devs.h>`_
 
-Code::
+.. code-block::
 
     #define PCH_DEV_SLOT_CSE        0x16
     #define  PCH_DEVFN_CSE          _PCH_DEVFN(CSE, 0)
@@ -32,24 +32,23 @@ Code::
 
 https://github.com/coreboot/coreboot/blob/master/src/soc/intel/apollolake/cse.c
 
-Code::
+.. code-block::
 
     fwsts1 = dump_status(1, PCI_ME_HFSTS1);
+    # Minimal decoding is done here in order to call out most important
+    # pieces. Manufacturing mode needs to be locked down prior to shipping
+    # the product so it's called out explicitly.
+    printk(BIOS_DEBUG, "ME: Manufacturing Mode      : %s", (fwsts1 & (1 << 0x4)) ? "YES" : "NO");
 
-    /* Minimal decoding is done here in order to call out most important
-       pieces. Manufacturing mode needs to be locked down prior to shipping
-       the product so it's called out explicitly. */
-       printk(BIOS_DEBUG, "ME: Manufacturing Mode      : %s", (fwsts1 & (1 << 0x4)) ? "YES" : "NO");
+`PCH.H <https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/pch.h>`_
 
-https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/pch.h
-
-Code::
+.. code-block::
 
     #define PCH_ME_DEV                PCI_DEV(0, 0x16, 0)
 
-https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/me.h
+`ME.H <https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/me.h>`_
 
-Code::
+.. code-block::
 
     struct me_hfs {
             u32 working_state: 4;
@@ -67,9 +66,9 @@ Code::
             u32 bios_msg_ack: 4;
     } __packed;
 
-https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/me_status.c
+`ME_STATUS.C <https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/me_status.c>`_
 
-Code::
+.. code-block::
 
      printk(BIOS_DEBUG, "ME: Manufacturing Mode      : %s", hfs->mfg_mode ? "YES" : "NO");
 

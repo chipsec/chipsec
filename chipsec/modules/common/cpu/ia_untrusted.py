@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2020, Intel Corporation
+#Copyright (c) 2018-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -18,6 +18,9 @@
 #chipsec@intel.com
 #
 
+"""
+IA Untrusted checks
+"""
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
 
