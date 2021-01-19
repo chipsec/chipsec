@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -22,8 +22,10 @@
 
 import time
 
-from chipsec.command     import BaseCommand
-from chipsec.hal import smbus, spd
+from chipsec.command  import BaseCommand
+from chipsec.hal      import smbus, spd
+from argparse         import ArgumentParser
+
 
 class SPDCommand(BaseCommand):
     """
@@ -36,81 +38,99 @@ class SPDCommand(BaseCommand):
 
     >>> chipsec_util spd detect
     >>> chipsec_util spd dump DIMM0
-    >>> chipsec_util spd read  0xA0 0x0
+    >>> chipsec_util spd dump 0xA0
+    >>> chipsec_util spd read DIMM2 0x0
+    >>> chipsec_util spd read 0xA0 0x0
     >>> chipsec_util spd write 0xA0 0x0 0xAA
     """
 
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if len(self.argv) < 3:
-            return False
+        parser = ArgumentParser(usage=SPDCommand.__doc__)
+        subparsers = parser.add_subparsers()
+
+        parser_detect = subparsers.add_parser('detect')
+        parser_detect.set_defaults(func=self.spd_detect)
+
+        parser_dump = subparsers.add_parser('dump')
+        parser_dump.add_argument('dev', type=str, nargs='?', default=None, help="Device")
+        parser_dump.set_defaults(func=self.spd_dump)
+
+        parser_read = subparsers.add_parser('read')
+        parser_read.add_argument('dev', type=str, help="Device Address")
+        parser_read.add_argument('off', type=lambda x: int(x, 16), nargs='?', default=None, help="Offset (hex)")
+        parser_read.set_defaults(func=self.spd_read)
+
+        parser_write = subparsers.add_parser('write')
+        parser_write.add_argument('dev', type=str, help="Device Address")
+        parser_write.add_argument('off', type=lambda x: int(x, 16), help="Offset (hex)")
+        parser_write.add_argument('val', type=lambda x: int(x, 16), help="Byte Value (hex)")
+        parser_write.set_defaults(func=self.spd_write)
+
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
+
+    def spd_detect(self):
+        self.logger.log( "[CHIPSEC] Searching for DIMMs with SPD..." )
+        _dimms = self._spd.detect()
+        if _dimms is not None:
+            self.logger.log( "Detected the following SPD devices:" )
+            for _dimm in _dimms: self.logger.log( "{}: 0x{:02X}".format(spd.SPD_DIMMS[_dimm], _dimm) )
+        else:
+            self.logger.log( "Unable to detect SPD devices." )
+
+
+    def spd_dump(self):
+        if self.dev is not None:
+            _dev = self.dev.upper()
+            self.dev_addr = spd.SPD_DIMM_ADDRESSES[ _dev ] if _dev in spd.SPD_DIMM_ADDRESSES else int(self.dev, 16)
+            if not self._spd.isSPDPresent( self.dev_addr ):
+                self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(self.dev_addr) )
+                return
+            self._spd.decode( self.dev_addr )
+        else:
+            _dimms = self._spd.detect()
+            for _dimm in _dimms: self._spd.decode( _dimm )
+
+
+    def spd_read(self):
+        _dev = self.dev.upper()
+        self.dev_addr = spd.SPD_DIMM_ADDRESSES[ _dev ] if _dev in spd.SPD_DIMM_ADDRESSES else int(self.dev, 16)
+        if not self._spd.isSPDPresent( self.dev_addr ):
+            self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(self.dev_addr) )
+            return
+
+        val = self._spd.read_byte( self.off, self.dev_addr )
+        self.logger.log( "[CHIPSEC] SPD read: offset 0x{:X} = 0x{:X}".format(self.off, val) )
+
+
+    def spd_write(self):
+        _dev = self.dev.upper()
+        self.dev_addr = spd.SPD_DIMM_ADDRESSES[ _dev ] if _dev in spd.SPD_DIMM_ADDRESSES else int(self.dev, 16)
+        if not self._spd.isSPDPresent( self.dev_addr ):
+            self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(self.dev_addr) )
+            return
+
+        self.logger.log( "[CHIPSEC] SPD write: offset 0x{:X} = 0x{:X}".format(self.off, self.val) )
+        self._spd.write_byte( self.off, self.val, self.dev_addr )
+
+
     def run(self):
-        if len(self.argv) < 3:
-            print (SPDCommand.__doc__)
-            return
-
         try:
-            _smbus = smbus.SMBus( self.cs )
-            _spd   = spd.SPD( _smbus )
+            _smbus    = smbus.SMBus( self.cs )
+            self._spd = spd.SPD( _smbus )
         except BaseException as msg:
-            print (msg)
+            self.logger.error(msg)
             return
 
-        op = self.argv[2]
         t = time.time()
 
         if not _smbus.is_SMBus_supported():
             self.logger.log( "[CHIPSEC] SMBus controller is not supported" )
             return
-        #smbus.display_SMBus_info()
 
-        dev_addr = spd.SPD_SMBUS_ADDRESS
-
-        if( 'detect' == op ):
-
-            self.logger.log( "[CHIPSEC] Searching for DIMMs with SPD.." )
-            _dimms = _spd.detect()
-            if _dimms is not None:
-                self.logger.log( "Detected the following SPD devices:" )
-                for _dimm in _dimms: self.logger.log( "{}: 0x{:02X}".format(spd.SPD_DIMMS[_dimm], _dimm) )
-
-        elif( 'dump' == op ):
-
-            if len(self.argv) > 3:
-                dev = self.argv[3].upper()
-                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3], 16)
-                if not _spd.isSPDPresent( dev_addr ):
-                    self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(dev_addr) )
-                    return
-                _spd.decode( dev_addr )
-            else:
-                _dimms = _spd.detect()
-                for d in _dimms: _spd.decode( d )
-
-        elif( 'read' == op ) or ( 'write' == op ):
-
-            if len(self.argv) > 3:
-                dev = self.argv[3].upper()
-                dev_addr = spd.SPD_DIMM_ADDRESSES[ dev ] if dev in spd.SPD_DIMM_ADDRESSES else int(self.argv[3], 16)
-            if not _spd.isSPDPresent( dev_addr ):
-                self.logger.log( "[CHIPSEC] SPD for DIMM 0x{:X} is not found".format(dev_addr) )
-                return
-
-            off = int(self.argv[4], 16)
-            if( 'read' == op ):
-                val      = _spd.read_byte( off, dev_addr )
-                self.logger.log( "[CHIPSEC] SPD read: offset 0x{:X} = 0x{:X}".format(off, val) )
-            elif( 'write' == op ):
-                val      = int(self.argv[5], 16)
-                self.logger.log( "[CHIPSEC] SPD write: offset 0x{:X} = 0x{:X}".format(off, val) )
-                _spd.write_byte( off, val, dev_addr )
-
-        else:
-            self.logger.error( "unknown command-line option '{:.32}'".format(op) )
-            self.logger.log( SPDCommand.__doc__ )
-            return
+        self.dev_addr = spd.SPD_SMBUS_ADDRESS
+        self.func()
 
         self.logger.log( "[CHIPSEC] (spd) time elapsed {:.3f}".format(time.time() -t) )
 
