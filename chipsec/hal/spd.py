@@ -35,6 +35,7 @@ http://en.wikipedia.org/wiki/Serial_presence_detect
 """
 
 import struct
+import sys
 from collections import namedtuple
 
 from chipsec.logger import logger, print_buffer
@@ -378,7 +379,11 @@ class SPD:
         spd_rom = self.dump_spd_rom( device )
         logger().log( "[spd][0x{:02X}] Serial Presence Detect (SPD) EEPROM contents:".format(device) )
         print_buffer( spd_rom )
-        spd_buffer = ''.join(spd_rom)
+        if sys.version[0] == '2':
+            spd_buffer = ''.join(spd_rom)
+        else:
+            spd_buffer = ''.join(spd_rom).encode('utf_8')
+
 
         if   DRAM_DEVICE_TYPE_DDR  == device_type:
             spd = SPD_DDR ( *struct.unpack_from( SPD_DDR_FORMAT,  spd_buffer ) )
