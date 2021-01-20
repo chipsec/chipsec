@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -83,6 +83,7 @@ class ChipsecUtil:
         options.add_argument('-v', '--verbose', help='verbose mode', action='store_true')
         options.add_argument('--hal', help='HAL mode', action='store_true')
         options.add_argument('-d', '--debug', help='debug mode', action='store_true')
+        options.add_argument('-vv', '--vverbose', help='very verbose HAL debug mode', action='store_true')
         options.add_argument('-l', '--log', help='output to log file')
         options.add_argument('-p', '--platform', dest='_platform', help='explicitly specify platform code', choices=cs().chipset_codes, type=str.upper)
         options.add_argument('--pch', dest='_pch', help='explicitly specify PCH code', choices=cs().pch_codes, type=str.upper)
@@ -102,6 +103,10 @@ class ChipsecUtil:
         if self.hal:
             logger().HAL     = True
         if self.debug:
+            logger().DEBUG   = True
+        if self.vverbose:
+            logger().VERBOSE = True
+            logger().HAL     = True
             logger().DEBUG   = True
         if self.log:
             logger().set_log_file( self.log )
