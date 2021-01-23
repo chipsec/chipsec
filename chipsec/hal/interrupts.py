@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -53,11 +53,11 @@ class Interrupts(hal_base.HALBase):
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         if logger().HAL:
-            logger().log( "[intr] sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
-            logger().log( "       RAX = 0x{:016X} (AX will be overwridden with values of SW SMI ports B2/B3)".format(_rax) )
+            logger().log( "[intr] Sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
+            logger().log( "       RAX = 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(_rax) )
             logger().log( "       RBX = 0x{:016X}".format(_rbx) )
             logger().log( "       RCX = 0x{:016X}".format(_rcx) )
-            logger().log( "       RDX = 0x{:016X} (DX will be overwridden with 0x00B2)".format(_rdx) )
+            logger().log( "       RDX = 0x{:016X} (DX will be overridden with 0x00B2)".format(_rdx) )
             logger().log( "       RSI = 0x{:016X}".format(_rsi) )
             logger().log( "       RDI = 0x{:016X}".format(_rdi) )
         return self.cs.helper.send_sw_smi( thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
@@ -70,7 +70,7 @@ class Interrupts(hal_base.HALBase):
 
 
     def send_NMI( self ):
-        if logger().HAL: logger().log( "[intr] sending NMI# through TCO1_CTL[NMI_NOW]" )
+        if logger().HAL: logger().log( "[intr] Sending NMI# through TCO1_CTL[NMI_NOW]" )
         reg, ba = self.cs.get_IO_space("TCOBASE")
         tcobase = self.cs.read_register_field(reg, ba)
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )
