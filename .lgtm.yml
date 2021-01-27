@@ -1,0 +1,12 @@
+extraction:
+  python:
+    python_setup:
+      version: "3"
+  cpp:
+    prepare:
+      packages:
+        nasm
+        linux-headers-$(uname -r)
+  index:
+    build_command:
+      python setup.py build_ext -i
