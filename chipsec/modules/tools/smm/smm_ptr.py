@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -348,8 +348,8 @@ class smm_ptr(BaseModule):
         gprs_addr = {'rax': gpr_value, 'rbx': gpr_value, 'rcx': gpr_value, 'rdx': gpr_value, 'rsi': gpr_value, 'rdi': gpr_value}
         gprs_fill = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': _FILL_VALUE_QWORD, 'rdx': _FILL_VALUE_QWORD, 'rsi': _FILL_VALUE_QWORD, 'rdi': _FILL_VALUE_QWORD}
         self.logger.log( "\n[*] >>> Fuzzing SMI handlers.." )
-        self.logger.log( "[*] AX in RAX will be overwridden with values of SW SMI ports 0xB2/0xB3" )
-        self.logger.log( "    DX in RDX will be overwridden with value 0x00B2" )
+        self.logger.log( "[*] AX in RAX will be overridden with values of SW SMI ports 0xB2/0xB3" )
+        self.logger.log( "    DX in RDX will be overridden with value 0x00B2" )
 
         bad_ptr_cnt = 0
         _smi_desc = smi_desc()
@@ -423,7 +423,7 @@ class smm_ptr(BaseModule):
         return bad_ptr_cnt
 
     def run( self, module_argv ):
-        self.logger.start_test( "A tool to test SMI handlers for pointer validation vulnerabilies" )
+        self.logger.start_test( "A tool to test SMI handlers for pointer validation vulnerabilities" )
         self.logger.log( "Usage: chipsec_main -m tools.smm.smm_ptr [ -a <mode>,<config_file>|<smic_start:smic_end>,<size>,<address> ]" )
         self.logger.log( "  mode          SMI handlers testing mode" )
         self.logger.log( "    = config    use SMI configuration file <config_file>" )
@@ -440,6 +440,8 @@ class smm_ptr(BaseModule):
         thread_id            = 0x0
 
         global DUMP_GPRS_EVERY_SMI
+        smic_start = 0
+        smic_end   = 0
         if len(module_argv) > 1:
             test_mode = module_argv[0].lower()
             if 'config' == test_mode:
@@ -506,7 +508,7 @@ class smm_ptr(BaseModule):
             if 'config' == test_mode:
                 bad_ptr_cnt = self.test_config( thread_id, _smi_config_fname, _addr, _addr1 )
             elif 'fuzz' == test_mode or 'fuzzmore' == test_mode:
-                bad_ptr_cnt = self.test_fuzz  ( thread_id, smic_start, smic_end, _addr, _addr1 )
+                bad_ptr_cnt = self.test_fuzz( thread_id, smic_start, smic_end, _addr, _addr1 )
         except BadSMIDetected as msg:
             bad_ptr_cnt = 1
             self.logger.log_important( "Potentially bad SMI detected! Stopped fuzing (see FUZZ_BAIL_ON_1ST_DETECT option)" )
