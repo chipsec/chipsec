@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -66,6 +66,8 @@ class Cfg:
         self.MEMORY_RANGES = {}
         self.CONTROLS      = {}
         self.BUS           = {}
+        self.LOCKS         = {}
+        self.LOCKEDBY      = {}
         self.XML_CONFIG_LOADED = False
 
 
@@ -560,6 +562,12 @@ class Chipset:
                     if _register.find('field') is not None:
                         for _field in _register.iter('field'):
                             _field_name = _field.attrib['name']
+                            if 'lockedby' in _field.attrib:
+                                _lockedby = _field.attrib['lockedby']
+                                if _lockedby in self.Cfg.LOCKEDBY.keys():
+                                    self.Cfg.LOCKEDBY[_lockedby].append((_name, _field_name))
+                                else:
+                                    self.Cfg.LOCKEDBY[_lockedby] = [(_name, _field_name)]
                             del _field.attrib['name']
                             if 'desc' not in _field.attrib: _field.attrib['desc'] = ''
                             reg_fields[ _field_name ] = _field.attrib
@@ -578,6 +586,18 @@ class Chipset:
                         continue
                     self.Cfg.CONTROLS[ _name ] = _control.attrib
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _control.attrib) )
+            if logger().DEBUG: logger().log("[*] loading locks..")
+            for _locks in _cfg.iter('locks'):
+                for _lock in _locks.iter('lock'):
+                    _name = _lock.attrib['name']
+                    del _lock.attrib['name']
+                    if 'undef' in _lock.attrib:
+                        if _name in self.Cfg.LOCKS:
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
+                            self.Cfg.LOCKS.pop(_name, None)
+                        continue
+                    self.Cfg.LOCKS[_name] = _lock.attrib
+                    if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _lock.attrib))
 
     def init_cfg_bus( self ):
         if logger().DEBUG: logger().log( '[*] loading device buses..' )
@@ -1053,6 +1073,57 @@ class Chipset:
             return (self.Cfg.CONTROLS[ control_name ] is not None)
         except KeyError:
             return False
+
+    def get_lock(self, lock_name, cpu_thread=0, with_print=0, bus_index=None):
+        lock = self.Cfg.LOCKS[lock_name]
+        reg     = lock['register']
+        field   = lock['field']
+        if bus_index is None:
+            reg_data = self.read_register_all(reg, cpu_thread)
+        else:
+            reg_data = self.read_register(reg, cpu_thread, bus_index)
+            reg_data = [reg_data]
+        if logger().DEBUG or with_print:
+            for rd in reg_data:
+                self.print_register(reg, rd)
+        return self.get_register_field_all(reg, reg_data, field)
+
+    def set_lock(self, lock_name, lock_value, cpu_thread=0, bus_index=None):
+        lock = self.Cfg.LOCKS[lock_name]
+        reg     = lock['register']
+        field   = lock['field']
+        reg_data = self.read_register(reg, cpu_thread, bus_index)
+        reg_data = self.set_register_field(reg, reg_data, field, lock_value, True)
+        if bus_index is None:
+            return self.write_register_all_single(reg, reg_data, cpu_thread)
+        else:
+            return self.write_register(reg, reg_data, cpu_thread, bus_index)
+
+    def is_lock_defined(self, lock_name):
+        return lock_name in self.Cfg.LOCKS.keys()
+
+    def get_locked_value(self, lock_name):
+        if logger().DEBUG:
+            logger().log('Retrieve value for lock {}'.format(lock_name))
+        return int(self.Cfg.LOCKS[lock_name]['value'], 16)
+
+    def get_lock_desc(self, lock_name):
+        return self.Cfg.LOCKS[lock_name]['desc']
+
+    def get_lock_list(self):
+        return self.Cfg.LOCKS.keys()
+
+    def get_lock_mask(self, lock_name):
+        lock = self.Cfg.LOCKS[lock_name]
+        reg     = lock['register']
+        field   = lock['field']
+        return(self.get_register_field_mask(reg,field))
+
+    def get_lockedby(self, lock_name):
+        if lock_name in self.Cfg.LOCKEDBY.keys():
+            return self.Cfg.LOCKEDBY[lock_name]
+        else:
+            return None
 
     def is_all_value(self, reg_values, value):
         return all(n == value for n in reg_values)

@@ -51,7 +51,7 @@ Template for XML configuration file
   <!--                                      -->
   <!-- #################################### -->
   <registers>
-    <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg|msgbus|memory" desc="[REGISTER DESCRIPTION]" />
+    <register name="[UNIQUE REGISTER NAME]" type="msr|mmio|io|iobar|pcicfg|mmcfg|msgbus|memory" desc="[REGISTER DESCRIPTION]" lockedby="[LOCK NAME]" />
   </registers>
 
   <!-- #################################### -->
@@ -62,5 +62,14 @@ Template for XML configuration file
   <controls>
     <control name="[UNIQUE CONTROL NAME]" register="[REGISTER NAME WITH THIS CONTROL]" field="[CONTROL FIELD NAME WITHIN REGISTER]" desc="[CONTROL DESCRIPTION]" />
   </controls>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Locks                                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <locks>
+    <lock name="[UNIQUE LOCK NAME]" register="[REGISTER NAME WITH THIS LOCK]" field="[LOCK FIELD NAME WITHIN REGISTER]" value="[VALUE TO INDICATE LOCK IS SET]" desc="[LOCK DESCRIPTION]" />
+  </locks>
 
 </configuration>
