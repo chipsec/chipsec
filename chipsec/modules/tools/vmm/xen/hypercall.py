@@ -43,7 +43,7 @@ class XenHypercall(BaseModuleHwAccess):
         self.hypercalls = {}
         self.buff_va = 0
         self.buff_pa = 0
-        (self.buff_va, self.buff_pa) = self.cs.helper.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
+        (self.buff_va, self.buff_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
         if self.buff_pa == 0:
             raise Exception("[*] Could not allocate memory!")
         ### define initial args for hypercall fuzzing
