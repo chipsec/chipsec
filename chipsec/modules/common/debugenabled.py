@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2018-2019, Intel Corporation
+#Copyright (c) 2018-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@ class debugenabled(BaseModule):
     def is_supported(self):
         # Use CPUID Function 1 to determine if the IA32_DEBUG_INTERFACE MSR is supported.
         # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
-        (eax, ebx, ecx, edx) = self.cs.helper.cpuid( 1, 0 )
+        (eax, ebx, ecx, edx) = self.cs.cpu.cpuid( 1, 0 )
         supported = (ecx & BIT11) != 0
         if not supported:
             self.res = ModuleResult.NOTAPPLICABLE
