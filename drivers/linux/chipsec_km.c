@@ -36,6 +36,8 @@ chipsec@intel.com
     #include <linux/efi.h>
 #endif
 
+#include <linux/kprobes.h>
+
 #define _GNU_SOURCE
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
@@ -1696,7 +1698,7 @@ static struct miscdevice chipsec_dev = {
  * 0ld dog never die:
  * https://gist.githubusercontent.com/GoldenOak/a8cd563d671af04a3d387d198aa3ecf8/raw/8dcc90dbbf9b9ffd65cc2c03f1cd48445b84c2b6/obtain_syscall_table_by_proc.c
 */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0) && LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
 
 unsigned long chipsec_lookup_name(const char *name)
 {
@@ -1764,8 +1766,28 @@ CLEAN_UP:
 	return *res;
 }
 
-#else
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+static struct kprobe kp = {
+    .symbol_name = "kallsyms_lookup_name"
+};
 
+unsigned long chipsec_lookup_name(const char *name)
+{
+	int kp_ret = 0;
+	unsigned long (*chipsec_lookup_name_fp)(const char *name);
+
+	kp_ret = register_kprobe(&kp);
+	if(kp_ret < 0){
+		printk(KERN_ALERT"register_kprobe failed, returned %d\n", kp_ret);
+		return kp_ret;
+	}
+
+	chipsec_lookup_name_fp = (unsigned long (*) (const char *name))kp.addr;
+	unregister_kprobe(&kp);
+
+	return chipsec_lookup_name_fp(name);
+}
+#else
 unsigned long chipsec_lookup_name(const char *name){
 	return kallsyms_lookup_name(name);
 }
