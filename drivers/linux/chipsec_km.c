@@ -36,7 +36,6 @@ chipsec@intel.com
     #include <linux/efi.h>
 #endif
 
-#include <linux/kprobes.h>
 
 #define _GNU_SOURCE
 #define CHIPSEC_VER_ 		1
@@ -50,6 +49,29 @@ MODULE_LICENSE("GPL");
 #    define IOREMAP_NO_CACHE(address, size) ioremap(address, size)
 #else /* KERNEL_VERSION < 2.6.25 */
 #    define IOREMAP_NO_CACHE(address, size) ioremap_nocache(address, size)
+#endif
+
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+#include <linux/static_call.h>
+#include <linux/kprobes.h>
+
+static struct kprobe kp = {
+    .symbol_name = "kallsyms_lookup_name",
+    .flags = KPROBE_FLAG_DISABLED
+};
+
+unsigned long kallsyms_lookup_name_c(const char *name)
+{
+	return 0;
+}
+int page_is_ram_c(unsigned long pagenr)
+{
+	return 0;
+}
+
+DEFINE_STATIC_CALL(chipsec_lookup_name_sc, kallsyms_lookup_name_c);
+DEFINE_STATIC_CALL(chipsec_page_is_ram_sc, page_is_ram_c);
 #endif
 
 // function page_is_ram is not exported 
@@ -307,8 +329,11 @@ void *my_xlate_dev_mem_ptr(unsigned long phys)
 	unsigned long pfn = PFN_DOWN(phys);
 	
         /* If page is RAM, we can use __va. Otherwise ioremap and unmap. */
-        if ((*guess_page_is_ram)(start >> PAGE_SHIFT)) {
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+	if (static_call(chipsec_page_is_ram_sc)(start >> PAGE_SHIFT)) {
+#else
+	if ((*guess_page_is_ram)(start >> PAGE_SHIFT)) {
+#endif
 		if (PageHighMem(pfn_to_page(pfn))) {
                 /* The buffer does not have a mapping.  Map it! */
 		        addr = kmap(pfn_to_page(pfn));	
@@ -341,7 +366,11 @@ void my_unxlate_dev_mem_ptr(unsigned long phys,void *addr)
 
 	/* If page is RAM, check for highmem, and eventualy do nothing. 
 	   Otherwise need to iounmap. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+	if (static_call(chipsec_page_is_ram_sc)((phys >> PAGE_SHIFT))) {
+#else
 	if ((*guess_page_is_ram)(phys >> PAGE_SHIFT)) {
+#endif
 	
 		if (PageHighMem(pfn_to_page(pfn))) { 
 		/* Need to kunmap kmaped memory*/
@@ -742,6 +771,17 @@ void print_stat(efi_status_t stat)
 }
 #endif
 
+static void apply_ucode_patch(void *info)
+{
+	CPUID_CTX *cpuinfo = (CPUID_CTX *)info;
+	__cpuid__(cpuinfo);
+}
+
+static unsigned long hypercall_page_c(void)
+{
+	return hypercall_page();
+}
+
 static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param)
 {
 	int numargs = 0;
@@ -753,7 +793,6 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 	//unsigned int counter;
 	char small_buffer[6]; //32 bits + char + \0
 	unsigned long CPUInfo[4]={1,0,0,0};
-	void (*apply_ucode_patch_p)(void *info);
 
 	switch(ioctl_num)
 	{
@@ -870,8 +909,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		printk(KERN_INFO "[chipsec] [patch_apply_ucode] clear IA32_BIOS_SIGN_ID, CPUID EAX=1, read back IA32_BIOS_SIGN_ID\n" );
 
 		wrmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32)_eax[1], (u32)_edx[1]);
-		apply_ucode_patch_p=(void *)__cpuid__;
-		smp_call_function_single(thread_id, apply_ucode_patch_p, (CPUID_CTX *)CPUInfo,0);
+		smp_call_function_single(thread_id, apply_ucode_patch, (void *)CPUInfo,0);
 		rdmsr_on_cpu(thread_id, MSR_IA32_BIOS_SIGN_ID, (u32*)&_eax[1], (u32*)&_edx[1]);
 
 		if (_edx[1] != _edx[0])
@@ -1594,8 +1632,6 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		}
 
-		ptrbuf[11] = (unsigned long)&hypercall_page;
-
 		#ifdef HYPERCALL_DEBUG
 		printk( KERN_DEBUG "[chipsec] > IOCTL_HYPERCALL\n");
 		#ifdef __x86_64__
@@ -1612,7 +1648,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		printk( KERN_DEBUG "    Hypercall page VA   = 0x%016lX\n", ptrbuf[11]);
 		#endif
 
-		ptrbuf[0]  = hypercall(ptrbuf[0], ptrbuf[1], ptrbuf[2], ptrbuf[3], ptrbuf[4], ptrbuf[5], ptrbuf[6], ptrbuf[7], ptrbuf[8], ptrbuf[9], ptrbuf[10], ptrbuf[11]);
+		ptrbuf[0]  = hypercall(ptrbuf[0], ptrbuf[1], ptrbuf[2], ptrbuf[3], ptrbuf[4], ptrbuf[5], ptrbuf[6], ptrbuf[7], ptrbuf[8], ptrbuf[9], ptrbuf[10], (unsigned long)&hypercall_page_c);
 
 		#ifdef HYPERCALL_DEBUG
 		printk( KERN_DEBUG "    Hypercall status    = 0x%016lX\n", ptrbuf[0]);
@@ -1767,13 +1803,12 @@ CLEAN_UP:
 }
 
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
-static struct kprobe kp = {
-    .symbol_name = "kallsyms_lookup_name"
-};
 
 unsigned long chipsec_lookup_name(const char *name)
 {
 	int kp_ret = 0;
+	unsigned long kaddr = 0;
+
 	unsigned long (*chipsec_lookup_name_fp)(const char *name);
 
 	kp_ret = register_kprobe(&kp);
@@ -1785,7 +1820,10 @@ unsigned long chipsec_lookup_name(const char *name)
 	chipsec_lookup_name_fp = (unsigned long (*) (const char *name))kp.addr;
 	unregister_kprobe(&kp);
 
-	return chipsec_lookup_name_fp(name);
+	static_call_update(chipsec_lookup_name_sc, chipsec_lookup_name_fp);
+	kaddr = static_call(chipsec_lookup_name_sc)(name);
+
+	return kaddr;
 }
 #else
 unsigned long chipsec_lookup_name(const char *name){
@@ -1809,6 +1847,9 @@ int find_symbols(void)
 		#endif
 	#else
 		guess_page_is_ram = (void *)chipsec_lookup_name("page_is_ram");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+		static_call_update(chipsec_page_is_ram_sc, guess_page_is_ram);
+#endif	
 		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
 		guess_phys_mem_access_prot = (void *)chipsec_lookup_name("phys_mem_access_prot");
 		#else
