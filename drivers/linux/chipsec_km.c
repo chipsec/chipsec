@@ -440,14 +440,21 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 			dbgprint ("xlate FAIL, p: %lX",p);
 			return -EFAULT;
 		}
-                
-                plb = kmalloc(sz, GFP_KERNEL );
-                memset(plb, 0, sz);
-                memcpy(plb,(char *)ptr, sz);
+
+		plb = kmalloc(sz, GFP_KERNEL );
+		if( !plb )
+		{
+			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+			return -EFAULT;
+		}
+
+		memset(plb, 0, sz);
+		memcpy(plb,(char *)ptr, sz);
 
 		if (copy_to_user(buf, plb, sz)) {
 			dbgprint ("copy_to_user FAIL, ptr: %p",ptr);
 			my_unxlate_dev_mem_ptr(p, ptr);
+			kfree(plb);
 			return -EFAULT;
 		}
 
@@ -457,6 +464,8 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		p += sz;
 		count -= sz;
 		read += sz;
+
+		kfree(plb);
 	}
 
 	*ppos += read;
@@ -1705,7 +1714,8 @@ unsigned long chipsec_lookup_name(const char *name)
 	struct file *proc_ksyms               = NULL;      /* struct file the '/proc/kallsyms' or '/proc/ksyms' */
 	char *sct_addr_str                    = NULL;      /* buffer for save sct addr as str */
 	char proc_ksyms_entry[BUFF_SIZE]  = {0};       /* buffer for each line at file */
-	unsigned long* res                    = NULL;      /* return value */
+	unsigned long* res                    = NULL;
+	unsigned long ret;
 	char *proc_ksyms_entry_ptr            = NULL;
 	int read                              = 0;
 	int err = 0;
@@ -1756,12 +1766,16 @@ unsigned long chipsec_lookup_name(const char *name)
 
 
 CLEAN_UP:
+	if(res != NULL){
+		ret = *res;
+		kfree(res);
+	}
 	if(sct_addr_str != NULL)
 		kfree(sct_addr_str);
 	if(proc_ksyms != NULL)
 		filp_close(proc_ksyms, 0);
 
-	return *res;
+	return ret;
 }
 
 #else
