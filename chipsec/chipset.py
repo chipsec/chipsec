@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -556,7 +556,10 @@ class Chipset:
                         continue
                     if 'size' not in _register.attrib: _register.attrib['size'] = "0x4"
                     if 'desc' not in _register.attrib: _register.attrib['desc'] = ''
-                    reg_fields = {}
+                    if _name in self.Cfg.REGISTERS and 'FIELDS' in self.Cfg.REGISTERS[_name]:
+                        reg_fields = self.Cfg.REGISTERS[_name]['FIELDS']
+                    else:
+                        reg_fields = {}
                     if _register.find('field') is not None:
                         for _field in _register.iter('field'):
                             _field_name = _field.attrib['name']
