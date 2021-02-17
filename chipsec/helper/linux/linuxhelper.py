@@ -555,7 +555,7 @@ class LinuxHelper(Helper):
         return
 
     def native_write_msr(self, thread_id, msr_addr, eax, edx):
-        if self.devport_available():
+        if self.devmsr_available():
             os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
             buf = struct.pack( "2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
@@ -825,7 +825,7 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('15I' +str(namelen) +'s' +str(datalen) +'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name, value)
+        in_buf = struct.pack('15I' +str(namelen) +'s' +str(datalen) +'s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name.encode('utf-8'), value)
         buffer = array.array("B", in_buf)
         stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
         size, status = struct.unpack( "2I", buffer[:8])

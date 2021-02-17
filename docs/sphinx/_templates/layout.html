@@ -2,7 +2,7 @@
     basic/layout.html
     ~~~~~~~~~~~~~~~~~
 
-    Master layout template for Sphinx themes.
+    Primary layout template for Sphinx themes.
 
     :copyright: Copyright 2007-2015 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
@@ -29,7 +29,7 @@
       <h3>{{ _('Navigation') }}</h3>
       <ul>
         {%- block rootrellink %}
-        <li class="nav-item nav-item-0"><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
+        <li class="nav-item nav-item-0"><a href="{{ pathto(main_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
         {%- endblock %}
         {%- for parent in parents %}
           <li class="nav-item nav-item-{{ loop.index }}"><a href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>{{ reldelim1 }}</li>
@@ -44,7 +44,7 @@
         <div class="sphinxsidebarwrapper">
           {%- block sidebarlogo %}
           {%- if logo %}
-            <p class="logo"><a href="{{ pathto(master_doc) }}">
+            <p class="logo"><a href="{{ pathto(main_doc) }}">
               <img class="logo" src="{{ pathto('_static/' + logo, 1) }}" alt="Logo"/>
             </a></p>
           {%- endif %}
@@ -133,7 +133,7 @@
     {%- if hasdoc('copyright') %}
     <link rel="copyright" title="{{ _('Copyright') }}" href="{{ pathto('copyright') }}" />
     {%- endif %}
-    <link rel="top" title="{{ docstitle|e }}" href="{{ pathto(master_doc) }}" />
+    <link rel="top" title="{{ docstitle|e }}" href="{{ pathto(main_doc) }}" />
     {%- if parents %}
     <link rel="up" title="{{ parents[-1].title|striptags|e }}" href="{{ parents[-1].link|e }}" />
     {%- endif %}

@@ -212,7 +212,7 @@ class Chipset:
         else:
             cpuid = None
 
-        #initalize chipset values to unknown
+        #initialize chipset values to unknown
         _unknown_platform = True
         self.longname   = 'UnknownPlatform'
         self.vid = 0xFFFF
@@ -263,6 +263,10 @@ class Chipset:
             self.rid = 0x00
             self.code = platform_code
             self.longname = platform_code
+            msg = 'Platform: Actual values: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
+            if cpuid:
+                msg += ', CPUID = 0x{}'.format(cpuid)
+            logger().log("[CHIPSEC] {}".format(msg))
 
         if req_pch_code is not None:
             # Check if pch code passed in is valid
@@ -273,6 +277,8 @@ class Chipset:
                 self.pch_code = req_pch_code
                 self.pch_longname = req_pch_code
                 _unknown_pch = False
+                msg = 'PCH     : Actual values: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
+                logger().log("[CHIPSEC] {}".format(msg))
         elif pch_vid in self.pch_dictionary.keys() and pch_did in self.pch_dictionary[pch_vid].keys():
             #Check if pch did for device 0:31:0 is in configuration
             self.pch_vid = pch_vid
@@ -283,16 +289,25 @@ class Chipset:
             self.pch_longname   = data_dict['longname']
             _unknown_pch = False
 
-        if _unknown_platform and start_driver:
-            msg = 'Unsupported Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
-            logger().error( msg )
-            raise UnknownChipsetError (msg)
-        if not _unknown_platform: # don't intialize config if platform is unknown
+        if _unknown_platform:
+            msg = 'Unknown Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
+            if start_driver:
+                logger().error(msg)
+                raise UnknownChipsetError(msg)
+            else:
+                logger().log("[!]       {}; Using Default.".format(msg))
+        if not _unknown_platform: # don't initialize config if platform is unknown
             self.init_cfg()
-        if self.reqs_pch and _unknown_pch and start_driver:
-            msg = 'Chipset requires a supported PCH to be loaded: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
-            logger().error( msg )
-            raise UnknownChipsetError (msg)
+        if _unknown_pch:
+            msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
+            if self.reqs_pch and start_driver:
+                logger().error("Chipset requires a supported PCH to be loaded. {}".format(msg))
+                raise UnknownChipsetError(msg)
+            else:
+                logger().log("[!]       {}; Using Default.".format(msg))
+        if _unknown_pch or _unknown_platform:
+            msg = 'Results from this system may be incorrect.'
+            logger().log("[!]            {}".format(msg))
 
     def destroy( self, start_driver ):
         self.helper.stop( start_driver )
@@ -734,11 +749,21 @@ class Chipset:
         return reg_def
 
     def get_register_bus(self, reg_name):
-        name = self.Cfg.REGISTERS[reg_name].get( 'device', None )
-        return self.get_device_bus( name )
+        device = self.Cfg.REGISTERS[reg_name].get( 'device', '' )
+        if not device:
+            if logger().DEBUG:
+                logger().warn( "No device found for '{}'".format(reg_name) )
+            if 'bus' in self.Cfg.REGISTERS[reg_name]:
+                return [self.Cfg.REGISTERS[reg_name]['bus']]
+            else:
+                return []
+        return self.get_device_bus( device )
 
     def get_device_bus(self, dev_name):
-        return self.Cfg.BUS.get( dev_name, None )
+        bus = []
+        if self.is_device_defined(dev_name):
+            bus = [self.get_device_BDF(dev_name)[0]]
+        return self.Cfg.BUS.get(dev_name, bus)
 
     def read_register(self, reg_name, cpu_thread=0, bus_index=0):
         reg = self.get_register_def( reg_name, bus_index )
@@ -784,7 +809,7 @@ class Chipset:
     def read_register_all(self, reg_name, cpu_thread=0):
         values = []
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return [self.read_register( reg_name, cpu_thread )]
         for index in range( len(bus_data) ):
             values.append( self.read_register( reg_name, cpu_thread, index) )
@@ -833,7 +858,7 @@ class Chipset:
 
     def write_register_all(self, reg_name, reg_values, cpu_thread=0):
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return False
         values = len(bus_data)
         if len(reg_values) == values:
@@ -845,7 +870,7 @@ class Chipset:
 
     def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return False
         values = len(bus_data)
         for index in range( values ):
@@ -1001,7 +1026,7 @@ class Chipset:
     def print_register_all(self, reg_name, cpu_thread=0):
         reg_str = ''
         bus_data = self.get_register_bus( reg_name )
-        if bus_data is None:
+        if not bus_data:
             return reg_str
         for index in range( len(bus_data) ):
             reg_val = self.read_register( reg_name, cpu_thread, index )

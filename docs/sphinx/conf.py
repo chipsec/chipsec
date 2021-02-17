@@ -52,12 +52,12 @@ source_suffix = '.rst'
 
 autodoc_mock_imports = ['efi', 'common', 'itpii', 'fcntl', 'resource', 'chipsec_tools']
 
-# The master toctree document.
-master_doc = 'index'
+# The toctree document.
+main_doc = 'index'
 
 # General information about the project.
 project = u'CHIPSEC'
-copyright = u'(c) 2010-2019 Intel Corporation'
+copyright = u'(c) 2010-2020 Intel Corporation'
 author = u'CHIPSEC'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -65,7 +65,7 @@ author = u'CHIPSEC'
 # built documents.
 #
 # The short X.Y version.
-version = '1.3.7'
+version = '1.5.5'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -234,7 +234,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'CHIPSEC.tex', u'CHIPSEC Documentation',
+  (main_doc, 'CHIPSEC.tex', u'CHIPSEC Documentation',
    u'', 'manual'),
 ]
 
@@ -264,7 +264,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'chipsec', u'CHIPSEC Documentation',
+    (main_doc, 'chipsec', u'CHIPSEC Documentation',
      [author], 1)
 ]
 
@@ -278,7 +278,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'CHIPSEC', u'CHIPSEC Documentation',
+  (main_doc, 'CHIPSEC', u'CHIPSEC Documentation',
    author, 'CHIPSEC', 'Platform Security Assessment Framework',
    'Miscellaneous'),
 ]
@@ -384,7 +384,7 @@ epub_exclude_files = ['search.html']
 
 
 pdf_documents = [
-('index', u'chipsec-manual', u'CHIPSEC', u'Platform Security Assesment Framework'),
+('index', u'chipsec-manual', u'CHIPSEC', u'Platform Security Assessment Framework'),
 ]
 
 

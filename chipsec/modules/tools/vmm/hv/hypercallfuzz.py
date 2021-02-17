@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -34,11 +34,11 @@ Usage:
     - ``vector``		hypercall vector
     - ``iterations``		number of hypercall iterations
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
-from define                 import *
-from hypercall              import *
-from chipsec.module_common  import *
+from chipsec.modules.tools.vmm.hv.define       import *
+from chipsec.modules.tools.vmm.hv.hypercall    import *
+from chipsec.module_common                     import *
 
 # Hypercall vectors excluded from scan/fuzzing
 excluded_hypercalls_from_scan = []
@@ -56,7 +56,7 @@ class HypercallFuzz(BaseModule):
         print ('        = custom-fuzzing  fuzzing of known hypercalls')
         print ('      vector              hypercall vector')
         print ('      iterations          number of hypercall iterations')
-        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):

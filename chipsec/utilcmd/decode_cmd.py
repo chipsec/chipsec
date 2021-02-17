@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -60,13 +60,8 @@ class DecodeCommand(BaseCommand):
 
     def requires_driver(self):
         parser = ArgumentParser(usage=DecodeCommand.__doc__)
-        subparsers = parser.add_subparsers()
-        parser_types = subparsers.add_parser('types')
-        parser_types.set_defaults(func=self.decode_types)
-        parser_decode = subparsers.add_parser('decode')
-        parser_decode.add_argument('_rom', metavar='<rom>', nargs=1, help='file to decode')
-        parser_decode.add_argument('_fwtype', metavar='fw_type', nargs='?', help='firmware type')
-        parser_decode.set_defaults(func=self.decode_rom)
+        parser.add_argument('_rom', metavar='<rom>', help='file to decode')
+        parser.add_argument('_fwtype', metavar='fw_type', nargs='?', help='firmware type', default=None)
         parser.parse_args(self.argv[2:], namespace=self)
         return False
 
@@ -77,6 +72,8 @@ class DecodeCommand(BaseCommand):
         _uefi = UEFI( self.cs )
         self.logger.log( "[CHIPSEC] Decoding SPI ROM image from a file '{}'".format(self._rom) )
         f = read_file( self._rom )
+        if not f:
+            return False
         (fd_off, fd) = get_spi_flash_descriptor( f )
         if (-1 == fd_off) or (fd is None):
             self.logger.error( "Could not find SPI Flash descriptor in the binary '{}'".format(self._rom) )
@@ -123,7 +120,10 @@ class DecodeCommand(BaseCommand):
 
     def run(self):
         t = time()
-        self.func()
+        if self._rom.lower() == 'types':
+            self.decode_types()
+        else:
+            self.decode_rom()
         self.logger.log( "[CHIPSEC] (decode) time elapsed {:.3f}".format(time() -t) )
 
 commands = { "decode": DecodeCommand }

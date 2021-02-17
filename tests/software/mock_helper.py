@@ -75,6 +75,10 @@ class TestHelper(Helper):
     def get_threads_count(self):
         return 2
 
+    def cpuid(self, eax, ecx):
+        return 0x406F1, 0, 0, 0
+
+
 class ACPIHelper(TestHelper):
     """Generic ACPI emulation
 

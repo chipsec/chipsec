@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2019-2020, Intel Corporation
+#Copyright (c) 2019-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -281,6 +281,8 @@ class spectre_v2(BaseModule):
                 self.logger.log_bad( "Retpoline is NOT enabled by the OS" )
         except UnimplementedAPIError as e:
             self.logger.log_warn_check(str(e))
+        except NotImplementedError:
+            self.logger.log_warn_check("Retpoline check not implemented in current environment")
 
         return res
 

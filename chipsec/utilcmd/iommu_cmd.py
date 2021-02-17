@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2015, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -20,19 +20,14 @@
 #
 
 
-
 """
 Command-line utility providing access to IOMMU engines
 """
 
+from chipsec.command import BaseCommand
+from chipsec.hal     import acpi, iommu
+from argparse        import ArgumentParser
 import time
-
-import chipsec_util
-
-from chipsec.logger     import *
-from chipsec.file       import *
-from chipsec.hal import acpi, iommu
-from chipsec.command    import BaseCommand
 
 
 # I/O Memory Management Unit (IOMMU), e.g. Intel VT-d
@@ -54,61 +49,95 @@ class IOMMUCommand(BaseCommand):
     """
 
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if len(self.argv) < 3:
-            return False
+        parser = ArgumentParser(prog='chipsec_util iommu', usage=IOMMUCommand.__doc__)
+        subparsers = parser.add_subparsers()
+
+        parser_list = subparsers.add_parser('list')
+        parser_list.set_defaults(func=self.iommu_list)
+
+        parser_config = subparsers.add_parser('config')
+        parser_config.add_argument('engine', type=str, default='', nargs='?', help='IOMMU Engine')
+        parser_config.set_defaults(func=self.iommu_config)
+
+        parser_status = subparsers.add_parser('status')
+        parser_status.add_argument('engine', type=str, default='', nargs='?', help='IOMMU Engine')
+        parser_status.set_defaults(func=self.iommu_status)
+
+        parser_enable = subparsers.add_parser('enable')
+        parser_enable.add_argument('engine', type=str, help='IOMMU Engine')
+        parser_enable.set_defaults(func=self.iommu_enable)
+
+        parser_disable = subparsers.add_parser('disable')
+        parser_disable.add_argument('engine', type=str, help='IOMMU Engine')
+        parser_disable.set_defaults(func=self.iommu_disable)
+
+        parser_pt = subparsers.add_parser('pt')
+        parser_pt.add_argument('engine', type=str, default='', nargs='?', help='IOMMU Engine')
+        parser_pt.set_defaults(func=self.iommu_pt)
+
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-    def run(self):
-        if len(self.argv) < 3:
-            print (IOMMUCommand.__doc__)
-            return
-        op = self.argv[2]
-        t = time.time()
+    def iommu_list(self):
+        self.logger.log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
+        self.logger.log( iommu.IOMMU_ENGINES.keys() )
 
+    def iommu_engine(self, cmd):
         try:
             _iommu = iommu.IOMMU(self.cs)
         except iommu.IOMMUError as msg:
             print (msg)
             return
 
-        if ( 'list' == op ):
-            self.logger.log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
-            self.logger.log( iommu.IOMMU_ENGINES.keys() )
-        elif ( 'config' == op or 'status' == op or 'enable' == op or 'disable' == op or 'pt' == op ):
-            if len(self.argv) > 3:
-                if self.argv[3] in iommu.IOMMU_ENGINES.keys():
-                    _iommu_engines = [ self.argv[3] ]
-                else:
-                    self.logger.error( "IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.argv[3]) )
-                    return
+        if self.engine:
+            if self.engine in iommu.IOMMU_ENGINES.keys():
+                _iommu_engines = [ self.engine ]
             else:
-                _iommu_engines = iommu.IOMMU_ENGINES.keys()
-
-            if 'config' == op:
-
-                try:
-                    _acpi  = acpi.ACPI( self.cs )
-                except acpi.AcpiRuntimeError as msg:
-                    print (msg)
-                    return
-
-                if _acpi.is_ACPI_table_present(acpi.ACPI_TABLE_SIG_DMAR):
-                    self.logger.log( "[CHIPSEC] Dumping contents of DMAR ACPI table..\n" )
-                    _acpi.dump_ACPI_table(acpi.ACPI_TABLE_SIG_DMAR)
-                else:
-                    self.logger.log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
-
-            for e in _iommu_engines:
-                if   'config'  == op: _iommu.dump_IOMMU_configuration( e )
-                elif 'pt'      == op: _iommu.dump_IOMMU_page_tables( e )
-                elif 'status'  == op: _iommu.dump_IOMMU_status( e )
-                elif 'enable'  == op: _iommu.set_IOMMU_Translation( e, 1 )
-                elif 'disable' == op: _iommu.set_IOMMU_Translation( e, 0 )
+                self.logger.error( "IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.engine) )
+                return
         else:
-            print (IOMMUCommand.__doc__)
-            return
+            _iommu_engines = iommu.IOMMU_ENGINES.keys()
 
+        if 'config' == cmd:
+            try:
+                _acpi = acpi.ACPI( self.cs )
+            except acpi.AcpiRuntimeError as msg:
+                print (msg)
+                return
+
+            if _acpi.is_ACPI_table_present(acpi.ACPI_TABLE_SIG_DMAR):
+                self.logger.log( "[CHIPSEC] Dumping contents of DMAR ACPI table..\n" )
+                _acpi.dump_ACPI_table(acpi.ACPI_TABLE_SIG_DMAR)
+            else:
+                self.logger.log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
+
+        for e in _iommu_engines:
+            if   (cmd == 'config' ): _iommu.dump_IOMMU_configuration( e )
+            elif (cmd == 'pt'     ): _iommu.dump_IOMMU_page_tables( e )
+            elif (cmd == 'status' ): _iommu.dump_IOMMU_status( e )
+            elif (cmd == 'enable' ): _iommu.set_IOMMU_Translation( e, 1 )
+            elif (cmd == 'disable'): _iommu.set_IOMMU_Translation( e, 0 )
+
+
+    def iommu_config(self):
+        self.iommu_engine('config')
+
+    def iommu_status(self):
+        self.iommu_engine('status')
+
+    def iommu_enable(self):
+        self.iommu_engine('enable')
+
+    def iommu_disable(self):
+        self.iommu_engine('disable')
+
+    def iommu_pt(self):
+        self.iommu_engine('pt')
+
+
+    def run(self):
+        t = time.time()
+        self.func()
         self.logger.log( "[CHIPSEC] (iommu) time elapsed {:.3f}".format(time.time() -t) )
 
 

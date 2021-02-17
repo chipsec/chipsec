@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,13 +28,14 @@ http://www.jedec.org/sites/default/files/docs/4_01_02R19.pdf
 http://www.jedec.org/sites/default/files/docs/4_01_02_10R17.pdf
 http://www.jedec.org/sites/default/files/docs/4_01_02_11R24.pdf
 http://www.jedec.org/sites/default/files/docs/4_01_02_12R23A.pdf
-http://www.simmtester.com/page/news/showpubnews.asp?num=184
-http://www.simmtester.com/page/news/showpubnews.asp?num=153
-http://www.simmtester.com/page/news/showpubnews.asp?num=101
+https://www.simmtester.com/News/PublicationArticle/184
+https://www.simmtester.com/News/PublicationArticle/153
+https://www.simmtester.com/News/PublicationArticle/101
 http://en.wikipedia.org/wiki/Serial_presence_detect
 """
 
 import struct
+import sys
 from collections import namedtuple
 
 from chipsec.logger import logger, print_buffer
@@ -378,7 +379,11 @@ class SPD:
         spd_rom = self.dump_spd_rom( device )
         logger().log( "[spd][0x{:02X}] Serial Presence Detect (SPD) EEPROM contents:".format(device) )
         print_buffer( spd_rom )
-        spd_buffer = ''.join(spd_rom)
+        if sys.version[0] == '2':
+            spd_buffer = ''.join(spd_rom)
+        else:
+            spd_buffer = ''.join(spd_rom).encode('utf_8')
+
 
         if   DRAM_DEVICE_TYPE_DDR  == device_type:
             spd = SPD_DDR ( *struct.unpack_from( SPD_DDR_FORMAT,  spd_buffer ) )

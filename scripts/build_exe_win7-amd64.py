@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2020, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,14 +19,6 @@
 #chipsec@intel.com
 #
 
-
-
-# -------------------------------------------------------------------------------
-#
-# CHIPSEC: Platform Hardware Security Assessment Framework
-# (c) 2010-2012 Intel Corporation
-#
-# -------------------------------------------------------------------------------
 ## \addtogroup build Build scripts
 # Executable build scripts
 
@@ -72,7 +64,7 @@ print(os.getcwd())
 
 data_files = [
     (WIN_DRIVER_INSTALL_PATH + "/win7_amd64", ['chipsec/helper/win/win7_amd64/chipsec_hlpr.sys']),
-    ('chipsec/modules/tools/uefi', ['chipsec/modules/tools/uefi/blacklist.json']),
+    ('chipsec/modules/tools/uefi', ['chipsec/modules/tools/uefi/blockedlist.json']),
     ('chipsec/modules/tools/secureboot', [
         'chipsec/modules/tools/secureboot/Shell.efi',
         'chipsec/modules/tools/secureboot/te.cfg'

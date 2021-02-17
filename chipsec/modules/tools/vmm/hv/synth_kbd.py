@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -25,14 +25,14 @@ Hyper-V VMBus synthetic keyboard fuzzer. Fuzzes inbound ring buffer in VMBus vir
 Usage:
   ``chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz -l log.txt``
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from struct  import *
 from random  import *
-from define  import *
-from chipsec.modules.tools.vmm.common import *
-from vmbus   import *
-from chipsec.defines import *
+from chipsec.modules.tools.vmm.hv.define  import *
+from chipsec.modules.tools.vmm.common     import *
+from chipsec.modules.tools.vmm.hv.vmbus   import *
+from chipsec.defines                      import *
 import chipsec_util
 
 SYNTH_KBD_VERSION              = 0x00010000
@@ -61,7 +61,7 @@ class RingBufferFuzzer(RingBuffer):
             result = ''
             self.count += 1
             if self.count > 1000000:
-                raise
+                raise Exception 
         else:
             result = RingBuffer.ringbuffer_read(self)
         return result
@@ -70,7 +70,7 @@ class synth_kbd(BaseModule):
     def usage(self):
         print ('  Usage:')
         print ('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
-        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):

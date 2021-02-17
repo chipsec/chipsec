@@ -17,6 +17,9 @@ Projects That Include CHIPSEC
 -----------------------------
 
  * [Linux UEFI Validation (LUV)](https://01.org/linux-uefi-validation)
+ 
+ * [ArchStrike](https://archstrike.org)
+ 
  * [BlackArch Linux](https://www.blackarch.org/index.html)
 
 Contact Us
@@ -27,4 +30,7 @@ Mailing lists:
  * CHIPSEC users: [chipsec-users](https://groups.google.com/forum/#!forum/chipsec-users)
  * [CHIPSEC discussion list on 01.org](https://lists.01.org/mailman/listinfo/chipsec)
 
-Follow us on [twitter](https://twitter.com/CHIPSEC)
+Twitter:
+
+ * For CHIPSEC release alerts: Follow us at [CHIPSEC Release](https://twitter.com/ChipsecR)
+ * For general CHIPSEC info: Follow [CHIPSEC](https://twitter.com/Chipsec)

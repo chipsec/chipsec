@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -25,10 +25,10 @@ Xen specific hypercall functionality
 
 import binascii
 import collections
-from define                           import *
-from chipsec.hal.vmm                  import *
-from chipsec.module_common            import *
-from chipsec.modules.tools.vmm.common import *
+from chipsec.modules.tools.vmm.xen.define  import *
+from chipsec.hal.vmm                       import *
+from chipsec.module_common                 import *
+from chipsec.modules.tools.vmm.common      import *
 
 SM_RANGE = { 'masks': [ 0x00000000000000FF ] }
 MD_RANGE = { 'masks': [ 0x000000000000FFFF ] }
@@ -43,7 +43,7 @@ class XenHypercall(BaseModuleHwAccess):
         self.hypercalls = {}
         self.buff_va = 0
         self.buff_pa = 0
-        (self.buff_va, self.buff_pa) = self.cs.helper.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
+        (self.buff_va, self.buff_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
         if self.buff_pa == 0:
             raise Exception("[*] Could not allocate memory!")
         ### define initial args for hypercall fuzzing

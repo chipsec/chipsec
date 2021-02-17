@@ -20,7 +20,6 @@
 #
 
 
-
 """
 CHIPSEC includes functionality for reading and writing the SPI flash. When an image file is created from reading the SPI flash, this image can be parsed to reveal sections, files, variables, etc.
 
@@ -34,9 +33,10 @@ The file rom.bin will contain the full binary of the SPI flash. It can then be p
 """
 
 import time
-
-from chipsec.command    import BaseCommand
-from chipsec.hal.spi    import *
+import os
+from chipsec.command import BaseCommand
+from chipsec.hal.spi import SPI, SpiRuntimeError, BIOS
+from argparse        import ArgumentParser
 
 
 # SPI Flash Controller
@@ -56,123 +56,131 @@ class SPICommand(BaseCommand):
     >>> chipsec_util spi jedec decode
     """
     def requires_driver(self):
-        # No driver required when printing the util documentation
-        if len(self.argv) < 3:
-            return False
+        parser = ArgumentParser(prog='chipsec_util spi', usage=SPICommand.__doc__)
+        subparsers = parser.add_subparsers()
+        parser_info = subparsers.add_parser('info')
+        parser_info.set_defaults(func=self.spi_info)
+
+        parser_dump = subparsers.add_parser('dump')
+        parser_dump.add_argument('out_file', type=str, nargs='?', default='rom.bin', help='Output file name [default=rom.bin]')
+        parser_dump.set_defaults(func=self.spi_dump)
+
+        parser_read = subparsers.add_parser('read')
+        parser_read.add_argument('spi_fla', type=lambda x: int(x, 16), help='Start Address (hex)')
+        parser_read.add_argument('length', type=lambda x: int(x, 16), nargs='?', default=0x4, help='Length [default=0x4] (hex)')
+        parser_read.add_argument('out_file', type=str, nargs='?', default='read.bin', help='Output file [default=read.bin')
+        parser_read.set_defaults(func=self.spi_read)
+
+        parser_write = subparsers.add_parser('write')
+        parser_write.add_argument('spi_fla', type=lambda x: int(x, 16), help='Start Address (hex)')
+        parser_write.add_argument('filename', type=str, help='File name (hex)')
+        parser_write.set_defaults(func=self.spi_write)
+
+        parser_erase = subparsers.add_parser('erase')
+        parser_erase.add_argument('spi_fla', type=lambda x: int(x, 16), help='Start Address (hex)')
+        parser_erase.set_defaults(func=self.spi_erase)
+
+        parser_disable_wp = subparsers.add_parser('disable-wp')
+        parser_disable_wp.set_defaults(func=self.spi_disable_wp)
+
+        parser_sfdp = subparsers.add_parser('sfdp')
+        parser_sfdp.set_defaults(func=self.spi_sfdp)
+
+        parser_jedec = subparsers.add_parser('jedec')
+        parser_jedec.add_argument('option', type=str, nargs='?', default='', help='Optional decode')
+        parser_jedec.set_defaults(func=self.spi_jedec)
+
+        parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-    def run(self):
-        if len(self.argv) < 3:
-            print (SPICommand.__doc__)
-            return
+    def spi_info(self):
+        self.logger.log( "[CHIPSEC] SPI flash memory information\n" )
+        self._spi.display_SPI_map()
 
-        try:
-            _spi = SPI( self.cs )
-        except SpiRuntimeError as msg:
-            print (msg)
-            return
-
-        spi_op = self.argv[2]
-
-        if spi_op in ['read', 'write', 'erase'] and len(self.argv) < 4:
-            print (SPICommand.__doc__)
-            return
-        t = time.time()
-
-        _msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
-        if ( 'erase' == spi_op ):
-            spi_fla = int(self.argv[3], 16)
-            self.logger.log( "[CHIPSEC] erasing SPI flash memory block at FLA = 0x{:X}".format(spi_fla) )
-
-            ok = _spi.erase_spi_block( spi_fla )
-            if ok: self.logger.log_result( "completed SPI flash memory erase" )
-            else:  self.logger.warn( "SPI flash erase returned error (turn on VERBOSE)" )
-        elif ( 'write' == spi_op and 5 == len(self.argv) ):
-            spi_fla = int(self.argv[3], 16)
-            if 5 == len(self.argv):
-                filename = self.argv[4]
-                if not os.path.exists(filename):
-                    self.logger.error( "File {} doesn't exist".format(filename))
-                    return
-            else:
-                print (SPICommand.__doc__)
-                return
-            self.logger.log( "[CHIPSEC] writing to SPI flash memory at FLA = 0x{:X} from '{:64s}'".format(spi_fla, filename) )
-
-            ok = _spi.write_spi_from_file( spi_fla, filename )
-            if ok: self.logger.log( "[CHIPSEC] completed SPI flash memory write" )
-            else:  self.logger.warn( "SPI flash write returned error (turn on VERBOSE)" )
-        elif ( 'read' == spi_op ):
-            spi_fla = int(self.argv[3], 16)
-            if 5 == len(self.argv):
-                length = int(self.argv[4], 16)
-            else:
-                length = 0x4
-            self.logger.log( "[CHIPSEC] reading 0x{:x} bytes from SPI Flash starting at FLA = 0x{:X}".format(length, spi_fla) )
-            self.logger.log( "[CHIPSEC] {}".format(_msg) )
-            out_file = None
-            if 6 == len(self.argv):
-                if os.path.exists(self.argv[5]):
-                    out_file = self.argv[5]
-                else:
-                    self.logger.error( "File {} doesn't exist".format(self.argv[5]))
-                    return
-            buf = _spi.read_spi_to_file( spi_fla, length, out_file )
-            if (buf is None): self.logger.error( "SPI flash read didn't return any data (turn on VERBOSE)" )
-            else: self.logger.log( "[CHIPSEC] completed SPI flash memory read" )
-        elif ( 'info' == spi_op ):
-            self.logger.log( "[CHIPSEC] SPI flash memory information\n" )
-            _spi.display_SPI_map()
-        elif ( 'dump' == spi_op ):
-            out_file = 'rom.bin'
-            if 4 == len(self.argv):
-                out_file = self.argv[3]
-            self.logger.log( "[CHIPSEC] dumping entire SPI flash memory to '{}'".format(out_file) )
-            self.logger.log( "[CHIPSEC] {}".format(_msg) )
-            # @TODO: don't assume SPI Flash always ends with BIOS region
-            (base, limit, freg) = _spi.get_SPI_region( BIOS )
-            spi_size = limit + 1
-            self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base, limit) )
-            self.logger.log( "[CHIPSEC] dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
-            buf = _spi.read_spi_to_file( 0, spi_size, out_file )
-            if (buf is None): self.logger.error( "dumping SPI Flash didn't return any data (turn on VERBOSE)" )
-            else: self.logger.log( "[CHIPSEC] completed SPI flash dump to '{}'".format(out_file) )
-
-        elif ( 'disable-wp' == spi_op ):
-            self.logger.log( "[CHIPSEC] trying to disable BIOS write protection.." )
-            #
-            # This write protection only matters for BIOS range in SPI flash memory
-            #
-            if _spi.disable_BIOS_write_protection():
-                self.logger.log_good( "BIOS region write protection is disabled in SPI flash" )
-            else:
-                self.logger.log_bad( "couldn't disable BIOS region write protection in SPI flash" )
-        elif ( 'jedec' == spi_op ):
-            if ( len(self.argv) < 4 ):
-                jedec_id = _spi.get_SPI_JEDEC_ID()
-                if jedec_id is not False:
-                    self.logger.log( '    JEDEC ID: 0x{:06X}'.format(jedec_id) )
-                else:
-                    self.logger.log( ' JEDEC ID command is not supported ')
-            else:
-                if 'decode' == self.argv[3]:
-                    (jedec, man, part) = _spi.get_SPI_JEDEC_ID_decoded()
-                    if jedec is not False:
-                        self.logger.log( '    JEDEC ID     : 0x{:06X}'.format(jedec) )
-                        self.logger.log( '    Manufacturer : 0x{:02X}     - {}'.format( (jedec >> 16) & 0xFF, man) )
-                        self.logger.log( '    Device       : 0x{:04X}   - {}'.format(jedec & 0xFFFF, part) )
-                        self.logger.log( '' )
-                    else:
-                        self.logger.log( ' JEDEC ID command is not supported ')
-                else:
-                    print (SPICommand.__doc__)
-                    return
-        elif ( 'sfdp' == spi_op):
-            _spi.get_SPI_SFDP()
+    def spi_dump(self):
+        self.logger.log( "[CHIPSEC] Dumping entire SPI flash memory to '{}'".format(self.out_file) )
+        self.logger.log( "[CHIPSEC] {}".format(self._msg) )
+        # @TODO: don't assume SPI Flash always ends with BIOS region
+        (base, limit, _) = self._spi.get_SPI_region( BIOS )
+        spi_size = limit + 1
+        self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base, limit) )
+        self.logger.log( "[CHIPSEC] Dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
+        buf = self._spi.read_spi_to_file( 0, spi_size, self.out_file )
+        if (buf is None):
+            self.logger.error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
         else:
-            print (SPICommand.__doc__)
+            self.logger.log( "[CHIPSEC] Completed SPI flash dump to '{}'".format(self.out_file) )
+
+    def spi_read(self):
+        self.logger.log( "[CHIPSEC] Reading 0x{:x} bytes from SPI Flash starting at FLA = 0x{:X}".format(self.length, self.spi_fla) )
+        self.logger.log( "[CHIPSEC] {}".format(self._msg) )
+        buf = self._spi.read_spi_to_file( self.spi_fla, self.length, self.out_file )
+        if (buf is None):
+            self.logger.error( "SPI flash read didn't return any data (turn on VERBOSE)" )
+        else:
+            self.logger.log( "[CHIPSEC] Completed SPI flash memory read" )
+
+    def spi_write(self):
+        if not os.path.exists(self.filename):
+            self.logger.error( "File '{}' doesn't exist".format(self.filename))
+            return
+        self.logger.log( "[CHIPSEC] Writing to SPI flash memory at FLA = 0x{:X} from '{:64s}'".format(self.spi_fla, self.filename) )
+
+        if self._spi.write_spi_from_file( self.spi_fla, self.filename ):
+            self.logger.log( "[CHIPSEC] Completed SPI flash memory write" )
+        else:
+            self.logger.warn( "SPI flash write returned error (turn on VERBOSE)" )
+
+    def spi_erase(self):
+        self.logger.log( "[CHIPSEC] Erasing SPI flash memory block at FLA = 0x{:X}".format(self.spi_fla) )
+
+        if self._spi.erase_spi_block( self.spi_fla ):
+            self.logger.log_result( "Completed SPI flash memory erase" )
+        else:
+            self.logger.warn( "SPI flash erase returned error (turn on VERBOSE)" )
+
+    def spi_disable_wp(self):
+        self.logger.log( "[CHIPSEC] Trying to disable BIOS write protection.." )
+        #
+        # This write protection only matters for BIOS range in SPI flash memory
+        #
+        if self._spi.disable_BIOS_write_protection():
+            self.logger.log_good( "BIOS region write protection is disabled in SPI flash" )
+        else:
+            self.logger.log_bad( "Couldn't disable BIOS region write protection in SPI flash" )
+
+    def spi_sfdp(self):
+        self._spi.get_SPI_SFDP()
+
+    def spi_jedec(self):
+        if self.option.lower() == 'decode':
+            (jedec, man, part) = self._spi.get_SPI_JEDEC_ID_decoded()
+            if jedec is not False:
+                self.logger.log( '    JEDEC ID     : 0x{:06X}'.format(jedec) )
+                self.logger.log( '    Manufacturer : 0x{:02X}     - {}'.format( (jedec >> 16) & 0xFF, man) )
+                self.logger.log( '    Device       : 0x{:04X}   - {}'.format(jedec & 0xFFFF, part) )
+                self.logger.log( '' )
+            else:
+                self.logger.log( ' JEDEC ID command is not supported ')
+        else:
+            jedec_id = self._spi.get_SPI_JEDEC_ID()
+            if jedec_id is not False:
+                self.logger.log( '    JEDEC ID: 0x{:06X}'.format(jedec_id) )
+                self.logger.log( '' )
+            else:
+                self.logger.log( ' JEDEC ID command is not supported ')
+
+    def run(self):
+        try:
+            self._spi = SPI( self.cs )
+        except SpiRuntimeError as msg:
+            self.logger.error(msg)
             return
 
-        self.logger.log( "[CHIPSEC] (spi {}) time elapsed {:.3f}".format(spi_op, time.time() -t) )
+        self._msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
+        t = time.time()
+        self.func()
+
+        self.logger.log( "[CHIPSEC] (spi) time elapsed {:.3f}".format(time.time() -t) )
 
 commands = { 'spi': SPICommand }

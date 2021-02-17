@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -32,15 +32,15 @@ Usage:
 
   ``chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid> -l log.txt``
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 import time
 from struct    import *
 from random    import *
 from binascii  import *
-from define    import *
-from chipsec.modules.tools.vmm.common import *
-from vmbus     import *
+from chipsec.modules.tools.vmm.hv.define    import *
+from chipsec.modules.tools.vmm.common       import *
+from chipsec.modules.tools.vmm.hv.vmbus     import *
 import chipsec_util
 
 sys.stdout = session_logger(True, 'synth_dev')
@@ -98,7 +98,7 @@ class synth_dev(BaseModule):
         print ('      print channel offers')
         print ('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>')
         print ('      fuzzing device with specified relid')
-        print ('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):

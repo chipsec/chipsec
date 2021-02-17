@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 <configuration>
+<!--
+XML configuration for Serial Flash Discoverable Parameter feature
+document: https://www.jedec.org/system/files/docs/JESD216D-01.pdf
+-->
   <registers>
 	<register name="DWORD1"             offset="0x00" type="R Byte"    desc="JEDEC Basic Flash Parameter Table: 1st DWORD " >
 	<field name="BLK_ERASE_SUPPORT"              bit="0" size="2" desc="Block Sector Erase Sizes" />

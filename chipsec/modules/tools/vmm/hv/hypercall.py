@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2018, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,14 +28,14 @@ import sys
 import time
 import binascii
 import chipsec_util
-from random                           import *
-from struct                           import *
-from define                           import *
-from chipsec.modules.tools.vmm.common import *
-from chipsec.logger                   import *
-from chipsec.file                     import *
-from chipsec.module_common            import *
-from chipsec.hal.vmm                  import *
+from random                                import *
+from struct                                import *
+from chipsec.modules.tools.vmm.hv.define   import *
+from chipsec.modules.tools.vmm.common      import *
+from chipsec.logger                        import *
+from chipsec.file                          import *
+from chipsec.module_common                 import *
+from chipsec.hal.vmm                       import *
 
 class HyperVHypercall(BaseModuleHwAccess):
     def __init__(self):

@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -32,13 +32,13 @@ Usage:
     - ``vmbus``        fuzzing HyperV message body / VMBUS message
     - ``<pos>,<size>`` fuzzing number of bytes at specific position
 
-Note: the fuzzer is incompatibe with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
+Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 from struct import *
 from random import *
-from define import *
-from chipsec.modules.tools.vmm.common import *
-from vmbus  import *
+from chipsec.modules.tools.vmm.hv.define import *
+from chipsec.modules.tools.vmm.common    import *
+from chipsec.modules.tools.vmm.hv.vmbus  import *
 import chipsec_util
 
 sys.stdout = session_logger(True, 'vmbusfuzz')
@@ -108,7 +108,7 @@ class VMBusFuzz(VMBusDiscovery):
         self.logger.log('        hv           fuzzing HyperV message header')
         self.logger.log('        vmbus        fuzzing HyperV message body / VMBUS message')
         self.logger.log('        <pos>,<size> fuzzing number of bytes at specific position')
-        self.logger.log('  Note: the fuzzer is incompatibe with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        self.logger.log('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
 
     def run(self, module_argv):
         self.logger.start_test( "Hyper-V VMBus fuzzer" )

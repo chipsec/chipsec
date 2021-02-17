@@ -23,7 +23,7 @@
 """
 `UEFI 2.4 spec Section 28 <http://uefi.org/>`_
 
-Verify that all Secure Boot key/whitelist/blacklist UEFI variables are authenticated (BS+RT+AT)
+Verify that all Secure Boot key UEFI variables are authenticated (BS+RT+AT)
 and protected from unauthorized modification.
 
 Use '-a modify' option for the module to also try to write/corrupt the variables.
