@@ -8,14 +8,13 @@ pageSetup:
 pageTemplates: 
     scover:
         margin-top: 50mm
-        background: _templates/cover.pdf
         frames: [] 
           [0cm, 0cm, 100%, 100%] 
         showHeader: false 
         showFooter: false
     cutePage:
         margin-top: 50mm
-        background: _templates/page.pdf        
+      
 styles:
     bodytext:
         alignment: TA_LEFT
@@ -80,6 +79,7 @@ styles:
     desctype: {fontName: stdMono, parent: literal}
     directive: parent: bodytext
     exception: parent: bodytext
+
     heading:
         backColor: #ffffff
         borderColor: #ffffff
@@ -97,25 +97,25 @@ styles:
         textColor: #ffffff
         fontSize: 200%
     heading2:
-        backColor: #0071c5
+        backColor: #0063ad
         textColor: #ffffff
         fontSize: 160%
     heading3:
-        backColor: #00aeef
+        backColor: #008ebd
         textColor: #ffffff
         fontSize: 140%
     heading4: 
-        backColor: #c4d600
+        backColor: #009682
         textColor: #ffffff
         fontSize: 120%
     heading5: 
-        backColor: #f3d54e
-        textColor: #ffffff
-        fontSize: 110%
-    heading6:
-        backColor: #FFA300
+        backColor: #65b85a
         textColor: #ffffff
         fontSize: 100%
+    heading6:
+        backColor: #de8e16
+        textColor: #ffffff
+        fontSize: 80%
 
     hlist:
         alignment: TA_CENTER
@@ -321,10 +321,40 @@ styles:
     pygments-w: {parent: code, textColor: #bbbbbb}
     returns: parent: bodytext
     role: parent: bodytext
+
+    std:
+        parent: bodytext
+        textColor: #00498a
+
+    function:
+        parent: bodytext
+        textColor: #d6b300
+
+    n:
+        parent: bodytext
+        textColor: #6596a3
+
+    o:
+        parent: bodytext
+        textColor: #9e6a88
+
+    default-value:
+        parent: bodytext
+        textColor: #6b9fff
+
     seealso:
         backColor: #FFFFCC
         borderColor: #FFFF66
         parent: admonition
+
+    seealso-heading:
+        backColor: null
+        borderColor: null
+        borderPadding: 0
+        borderWidth: 0
+        leftIndent: 0
+        parent: heading3
+        textColor: black
 
     sidebar:
         backColor: #EEFFCC

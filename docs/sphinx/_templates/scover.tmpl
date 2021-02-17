@@ -1,31 +1,19 @@
 .. role:: normal
 
-<?py if title: ?>
-
 .. cssclass:: title
 
-#{title}
-
-<?py #end ?>
-
-<?py if subtitle: ?>
+CHIPSEC
 
 .. cssclass:: subtitle
 
-#{subtitle}
+version 1.5.10
 
-<?py #end ?>
+.. image:: _images/chipsec_logo.jpg
+   :scale: 30%
 
-.. raw:: pdf
-
-   Spacer 0 3cm
-
-<?py for author in authors: ?>
 .. cssclass:: author
 
-#{author}
-
-<?py #end ?>
+Platform Security Assesment Framework
 
 .. raw:: pdf
 
@@ -33,7 +21,9 @@
 
 .. cssclass:: author
 
-:normal:`#{date}`
+.. |date| date:: %B %d, %Y
+
+|date|
 
 .. raw:: pdf
 
