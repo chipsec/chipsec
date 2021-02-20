@@ -616,6 +616,10 @@ Common (default) XML platform configuration file
       <field name="LOCK"           bit="30" size="1"  desc="Lock (set automatically on the first SMI)" />
       <field name="DEBUG_OCCURRED" bit="31" size="1"  desc="Debug Occurred (set by hardware)" />
     </register>
+    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
+      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
+      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+    </register>
 
     <!-- SGX related Model Specific Registers (MSR) -->
     <!-- Check if CPUID(EAX=7,ECX=0):EBX[2] is set before accessing these registers-->
