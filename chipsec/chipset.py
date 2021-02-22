@@ -291,7 +291,10 @@ class Chipset:
             self.pch_vid = pch_vid
             self.pch_did = pch_did
             self.pch_rid = pch_rid
-            data_dict           = self.pch_dictionary[self.pch_vid][self.pch_did][0]
+            pch_list = self.pch_dictionary[self.pch_vid][self.pch_did]
+            if len(pch_list) > 1:
+                logger().log("[!]       Multiple PCHs contain the same DID. Using first in the list.")
+            data_dict           = pch_list[0]
             self.pch_code       = data_dict['code']
             self.pch_longname   = data_dict['longname']
             _unknown_pch = False
