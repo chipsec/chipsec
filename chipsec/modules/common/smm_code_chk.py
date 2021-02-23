@@ -59,10 +59,10 @@ class smm_code_chk(BaseModule):
         # Check that all CPUs have the same value of MSR_SMM_FEATURE_CONTROL.
         if not all(_ == results[0] for _ in results):
             self.logger.log_failed_check( "MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs" )
-            return ModuleResult.ERROR
+            return ModuleResult.FAILED
         
         res = results[0] 
-        if res == ModuleResult.ERROR:
+        if res == ModuleResult.FAILED:
             self.logger.log_failed_check( "SMM_Code_Chk_En is enabled but not locked down" )
         elif res == ModuleResult.WARNING:
             self.logger.warn( """[*] SMM_Code_Chk_En is not enabled.
