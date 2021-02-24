@@ -332,6 +332,16 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
       <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
     </register>
 
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- CPU Model Specific Registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- MSR_SMM_FEATURE_CONTROL -->
+    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
+      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
+      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+    </register>
+
   </registers>
 
 

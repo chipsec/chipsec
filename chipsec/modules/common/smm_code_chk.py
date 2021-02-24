@@ -31,6 +31,13 @@ class smm_code_chk(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
+        if not self.cs.is_register_defined( 'MSR_SMM_FEATURE_CONTROL' ):
+            # The MSR_SMM_FEATURE_CONTROL register is available starting from:
+            # * 4th Generation Intel® Core™ Processors (Haswell microarchitecture)
+            # * Atom Processors Based on the Goldmont Microarchitecture
+            self.res = ModuleResult.NOTAPPLICABLE
+            return False
+
         # The Intel SDM states that MSR_SMM_FEATURE_CONTROL can only be accessed while the CPU executes in SMM.
         # However, in reality many users report that there is no problem reading this register from outside of SMM.
         # Just to be on the safe side of things, we'll verify we can read this register successfully before moving on.
