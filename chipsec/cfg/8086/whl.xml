@@ -62,6 +62,10 @@ XML configuration file for Whiskey Lake
       <Field name="RESERVED" bit="3" size="23" desc="Reserved" />
       <Field name="PCIEXBAR" bit="26" size="13" desc="Base Address for PCI Express" />
     </register>
+    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
+      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
+      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+    </register>
   </registers>
 
   <!-- #################################### -->

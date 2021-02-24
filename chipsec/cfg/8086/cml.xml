@@ -83,6 +83,16 @@
     <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- CPU Model Specific Registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- MSR_SMM_FEATURE_CONTROL -->
+    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
+      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
+      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!--      Undefined Registers     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
