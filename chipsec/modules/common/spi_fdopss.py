@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -40,16 +40,19 @@ class spi_fdopss(BaseModule):
         if not self.cs.is_register_defined( 'HSFS' ):
             self.logger.error( "Couldn't find definition of required configuration registers (HSFS)" )
             return ModuleResult.ERROR
+        elif not self.cs.register_has_field('HSFS', 'FDOPSS'):
+            self.logger.log( 'HSFS.FDOPSS field not defined for platform' )
+            return ModuleResult.WARNING
 
         hsfs_reg = self.cs.read_register( 'HSFS' )
         self.cs.print_register( 'HSFS', hsfs_reg )
         fdopss = self.cs.get_register_field( 'HSFS', hsfs_reg, 'FDOPSS' )
 
-        if 0 != fdopss:
-            self.logger.log_passed_check( "SPI Flash Descriptor Security Override is disabled" )
+        if (fdopss != 0):
+            self.logger.log_passed( "SPI Flash Descriptor Security Override is disabled" )
             return ModuleResult.PASSED
         else:
-            self.logger.log_failed_check( "SPI Flash Descriptor Security Override is enabled" )
+            self.logger.log_failed( "SPI Flash Descriptor Security Override is enabled" )
             return ModuleResult.FAILED
 
     # --------------------------------------------------------------------------
@@ -57,4 +60,5 @@ class spi_fdopss(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_fd_security_override_strap()
+        self.res = self.check_fd_security_override_strap()
+        return self.res
