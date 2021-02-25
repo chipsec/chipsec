@@ -1,6 +1,6 @@
 # !/usr/bin/python
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2020, Intel Corporation
+# Copyright (c) 2010-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -41,16 +41,11 @@ class PortIOCommand(BaseCommand):
 
     >>> chipsec_util io list
     >>> chipsec_util io read 0x61 1
-    >>> chipsec_util io write 0x430 byte 0x0
+    >>> chipsec_util io write 0x430 1 0x0
     """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util uefi', usage=PortIOCommand.__doc__)
-
-        parser_iow = ArgumentParser(add_help=False)
-        parser_iow.add_argument('io_port', metavar='_port', type=lambda x: int(x, 0), help="io port")
-        parser_iow.add_argument('width', metavar='_width', type=int, choices=[0x1, 0x2, 0x4], help="width")
-
+        parser = ArgumentParser(prog='chipsec_util io', usage=PortIOCommand.__doc__)
         subparsers = parser.add_subparsers()
 
         # list
@@ -58,12 +53,16 @@ class PortIOCommand(BaseCommand):
         parser_dump.set_defaults(func=self.io_list)
 
         # read
-        parser_r = subparsers.add_parser('read', parents=[parser_iow])
+        parser_r = subparsers.add_parser('read')
+        parser_r.add_argument('_port', metavar='port', type=lambda x: int(x, 0), help="io port")
+        parser_r.add_argument('_width', metavar='width', type=int, choices=[0x1, 0x2, 0x4], help="width")
         parser_r.set_defaults(func=self.io_read)
 
         # write
-        parser_w = subparsers.add_parser('write', parents=[parser_iow])
-        parser_w.add_argument('value', metavar='_value', type=lambda x: int(x, 0), help="value")
+        parser_w = subparsers.add_parser('write')
+        parser_w.add_argument('_port', metavar='port', type=lambda x: int(x, 0), help="io port")
+        parser_w.add_argument('_width', metavar='width', type=int, choices=[0x1, 0x2, 0x4], help="width")
+        parser_w.add_argument('_value', metavar='value', type=lambda x: int(x, 0), help="value")
         parser_w.set_defaults(func=self.io_write)
 
         parser.parse_args(self.argv[2:], namespace=self)
