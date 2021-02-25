@@ -134,11 +134,6 @@ class access_uefispec(BaseModule):
             self.logger.log_important( "Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually." )
             return ModuleResult.SKIPPED
 
-        bsnv_vars = []
-        bsnv_concern = []
-        rtnv_vars = []
-        rtnv_concern = []
-        modified_concern = []
         uefispec_concern = []
         ro_concern = []
 
