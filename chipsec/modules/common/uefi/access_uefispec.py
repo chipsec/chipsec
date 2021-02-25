@@ -94,8 +94,8 @@ class access_uefispec(BaseModule):
         if data1 is None or data2 is None:
             return data1 != data2
 
-        oldstr = ":".join("{:02x}".format(ord(c)) for c in data1)
-        newstr = ":".join("{:02x}".format(ord(c)) for c in data2)
+        oldstr = ":".join("{:02x}".format(c) for c in data1)
+        newstr = ":".join("{:02x}".format(c) for c in data2)
 
         if oldstr != newstr:
             print (oldstr)
