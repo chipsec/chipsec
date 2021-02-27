@@ -136,6 +136,7 @@ class access_uefispec(BaseModule):
 
         uefispec_concern = []
         ro_concern = []
+        rw_variables = []
 
         self.logger.log('[*] Testing UEFI variables ..')
         for name in vars.keys():
@@ -164,12 +165,15 @@ class access_uefispec(BaseModule):
 
                 if do_modify:
                     #self.logger.log('uefispec_ro_vars')
+                    self.logger.log("[*] Testing modification of {} ..".format(name))
                     if name in self.uefispec_ro_vars:
-                        self.logger.log("[*] Testing modification of {} ..".format(name))
                         if self.can_modify(name, guid, data):
                             ro_concern.append(name)
                             self.logger.log_bad("Variable {} should be read only.".format(name))
                             res = ModuleResult.FAILED
+                    else:
+                        if self.can_modify(name, guid, data):
+                            rw_variables.append(name)
 
         if uefispec_concern:
             self.logger.log('')
@@ -182,6 +186,12 @@ class access_uefispec(BaseModule):
                 self.logger.log('')
                 self.logger.log_bad('Variables that should have been read-only and were not:')
                 for name in ro_concern:
+                    self.logger.log('    {}'.format(name))
+
+            if rw_variables:
+                self.logger.log('')
+                self.logger.log_unknown('Variables that are read-write (manual investigation is required):')
+                for name in rw_variables:
                     self.logger.log('    {}'.format(name))
 
         self.logger.log('')
