@@ -178,10 +178,11 @@ class access_uefispec(BaseModule):
                 self.logger.log('    {}'.format(name))
 
         if do_modify:
-            self.logger.log('')
-            self.logger.log_bad('Variables that should have been read-only and were not:')
-            for name in ro_concern:
-                self.logger.log('    {}'.format(name))
+            if ro_concern:
+                self.logger.log('')
+                self.logger.log_bad('Variables that should have been read-only and were not:')
+                for name in ro_concern:
+                    self.logger.log('    {}'.format(name))
 
         self.logger.log('')
 
