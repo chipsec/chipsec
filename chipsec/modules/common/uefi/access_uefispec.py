@@ -29,6 +29,7 @@ Returns failure if variable attributes are not as defined in `table 11 "Global V
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
 from chipsec.hal.uefi import UEFI, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
 from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
+from chipsec.hal.uefi_common import StatusCode
 
 
 TAGS = [MTAG_BIOS, MTAG_SECUREBOOT]
@@ -114,7 +115,7 @@ class access_uefispec(BaseModule):
         if baddata == origdata:
             baddata = 'A' *datalen #in case we failed to restore previously
         status = self._uefi.set_EFI_variable(name, guid, baddata)
-        if not status: self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
+        if status != StatusCode.EFI_SUCCESS: self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
         newdata  = self._uefi.get_EFI_variable(name, guid)
         if self.diff_var(newdata, origdata):
             self.logger.log_bad('Corruption of EFI variable of concern {}. Trying to recover.'.format(name))
