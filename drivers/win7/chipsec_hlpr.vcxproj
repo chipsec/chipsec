@@ -98,7 +98,7 @@
     </ClCompile>
     <PostBuildEvent>
       <Command>mkdir ..\..\chipsec\helper\win\win7_amd64
-copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_amd64</Command>
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -113,7 +113,7 @@ copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_amd64</Command>
     </Link>
     <PostBuildEvent>
       <Command>mkdir ..\..\chipsec\helper\win\win7_x86
-copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_x86</Command>
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -126,7 +126,7 @@ copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_x86</Command>
     </MASM>
     <PostBuildEvent>
       <Command>mkdir ..\..\chipsec\helper\win\win7_x86
-copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_x86</Command>
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,7 +135,7 @@ copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_x86</Command>
     </Link>
     <PostBuildEvent>
       <Command>mkdir ..\..\chipsec\helper\win\win7_amd64
-copy $(DbgengLocalCommand) ..\..\chipsec\helper\win\win7_amd64</Command>
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
