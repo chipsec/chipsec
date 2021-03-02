@@ -1,6 +1,6 @@
 #CHIPSEC: Platform Security Assessment Framework
 #Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2019-2020, Intel Corporation
+#Copyright (c) 2019-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,6 +66,8 @@ class memlock(BaseModule):
             except HWAccessViolationError:
                 self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
                 break
+            if self.logger.VERBOSE:
+                self.cs.print_register('MSR_LT_LOCK_MEMORY', lt_lock_msr)
             lt_lock = self.cs.get_register_field( 'MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK' )
             self.logger.log( "[*]   cpu{:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {:x}".format(tid, lt_lock) )
             if 0 == lt_lock:
