@@ -13,6 +13,13 @@ First version of CHIPSEC was released in March 2014:
 Recent presentation on how to use CHIPSEC to find vulnerabilities in firmware, hypervisors and hardware configuration, explore low level system assets and even detect firmware implants:
 [Exploring Your System Deeper](https://www.slideshare.net/CanSecWest/csw2017-bazhaniuk-exploringyoursystemdeeperupdated)
 
+Release Convention
+------------------
+
+  * CHIPSEC uses a major.minor.patch release version number
+  * Changes to the arguments or calling conventions will be held for a minor version update
+
+
 Projects That Include CHIPSEC
 -----------------------------
 
