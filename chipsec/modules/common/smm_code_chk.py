@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2021, SentinelOne
 # Copyright (c) 2021, Intel
