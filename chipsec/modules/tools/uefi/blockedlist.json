@@ -9,6 +9,16 @@
     }
   },
 
+  "MR_UEFI_Rootkit": {
+    "description": "MosaicRegressor UEFI Rootkit (https://securelist.com/mosaicregressor/98849/)",
+    "match": {
+      "SmmInterfaceBase" : { "name": "SmmInterfaceBase", "guid": "F50258A9-2F4D-4DA9-861E-BDA84D07A44C" },
+      "Ntfs"             : { "name": "Ntfs", "guid": "F50248A9-2F4D-4DE9-86AE-BDA84D07A41C" },
+      "SmmReset"         : { "name": "SmmReset", "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0C" },
+      "SmmAccessSub"     : { "name": "SmmAccessSub", "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0B" }
+    }
+  },
+
   "ThinkPwn": {
     "description": "ThinkPwn: SystemSmmRuntimeRt SMM vulnerability (http://blog.cr4.sh/2016/06/exploring-and-exploiting-lenovo.html)",
     "match": {
