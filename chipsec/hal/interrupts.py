@@ -159,7 +159,7 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
   EFI_STATUS                      ReturnStatus;
 } SMM_CORE_PRIVATE_DATA;
     '''
-    def send_smmc_SMI(self, smmc, guid, payload, payload_loc):
+    def send_smmc_SMI(self, smmc, guid, payload, payload_loc, CommandPort=0x0, DataPort=0x0):
         guid_b = uuid.UUID(guid).bytes_le
         payload_sz = len(payload)
 
@@ -173,7 +173,7 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         self.cs.mem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
         self.cs.mem.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", payload_sz))
         self.cs.mem.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
-        self.send_SMI_APMC(0x0, 0x0)
+        self.send_SMI_APMC(CommandPort, DataPort)
 
         ReturnStatus = struct.unpack("Q", self.cs.mem.read_physical_mem(smmc + ReturnStatus_offset, 8))[0]
         return ReturnStatus
