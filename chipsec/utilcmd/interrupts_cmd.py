@@ -39,7 +39,7 @@ class SMICommand(BaseCommand):
     """
     >>> chipsec_util smi count
     >>> chipsec_util smi send <thread_id> <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]
-    >>> chipsec_util smi smmc <RT_code_start> <RT_code_end> <GUID> <payload_loc> <payload_file|payload_string>
+    >>> chipsec_util smi smmc <RT_code_start> <RT_code_end> <GUID> <payload_loc> <payload_file|payload_string> [port]
 
     Examples:
 
@@ -73,6 +73,7 @@ class SMICommand(BaseCommand):
         parser_smmc.add_argument('guid', type=str, help='GUID')
         parser_smmc.add_argument('payload_loc', type=lambda x: int(x, 16), help='Payload Location (hex)')
         parser_smmc.add_argument('payload', type=str, help='Payload')
+        parser_smmc.add_argument('port', type=lambda x: int(x, 16), nargs='?', default=0x0, help='Port (hex) [default=0]')
         parser_smmc.set_defaults(func=self.smi_smmc)
 
         parser.parse_args(self.argv[2:], namespace=self)
@@ -99,7 +100,7 @@ class SMICommand(BaseCommand):
             return
         self.logger.log("Found \'smmc\' structure at 0x{:x}".format(smmc_loc))
 
-        ReturnStatus = self.interrupts.send_smmc_SMI(smmc_loc, self.guid, self.payload, self.payload_loc)
+        ReturnStatus = self.interrupts.send_smmc_SMI(smmc_loc, self.guid, self.payload, self.payload_loc, CommandPort=self.port)
         #TODO Translate ReturnStatus to EFI_STATUS enum
         self.logger.log("ReturnStatus: {:x}".format(ReturnStatus))
 
