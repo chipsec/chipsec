@@ -84,9 +84,8 @@ class SMICommand(BaseCommand):
             payload_loc = int(self.argv[6], 16)
             payload = self.argv[7]
             if os.path.isfile(payload):
-                f = open(payload, 'rb')
-                payload = f.read()
-                f.close()
+                with open(payload, 'rb') as f:
+                    payload = f.read()
 
             self.logger.log("Searching for \'smmc\' in range 0x{:x}-0x{:x}".format(RTC_start, RTC_end))
             # scan for SMM_CORE_PRIVATE_DATA smmc signature
