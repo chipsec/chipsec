@@ -23,9 +23,10 @@
 import time
 import os
 
-from chipsec.command        import BaseCommand
-from chipsec.hal.interrupts import Interrupts
-from argparse               import ArgumentParser
+from chipsec.command         import BaseCommand
+from chipsec.hal.interrupts  import Interrupts
+from chipsec.hal.uefi_common import EFI_ERROR_STR
+from argparse                import ArgumentParser
 
 
 # ###################################################################
@@ -102,7 +103,7 @@ class SMICommand(BaseCommand):
 
         ReturnStatus = self.interrupts.send_smmc_SMI(smmc_loc, self.guid, self.payload, self.payload_loc, CommandPort=self.port)
         #TODO Translate ReturnStatus to EFI_STATUS enum
-        self.logger.log("ReturnStatus: {:x}".format(ReturnStatus))
+        self.logger.log("ReturnStatus: 0x{:x} ({})".format(ReturnStatus, EFI_ERROR_STR(ReturnStatus)))
 
 
     def smi_send(self):
