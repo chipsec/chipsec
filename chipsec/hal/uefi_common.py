@@ -185,6 +185,17 @@ EFI_STATUS_DICT = {
   StatusCode.EFI_HTTP_ERROR: "EFI_HTTP_ERROR"
 }
 
+EFI_MAX_BIT = 0x80000000_00000000
+
+def EFI_ERROR_STR( error ):
+    """
+    Translates an EFI_STATUS value into its corresponding textual representation.
+    """
+    error &= ~EFI_MAX_BIT
+    try:
+        return EFI_STATUS_DICT[error]
+    except KeyError:
+        return "UNKNOWN"
 
 EFI_GUID_FMT = "16s"
 EFI_GUID_SIZE = struct.calcsize(EFI_GUID_FMT)
