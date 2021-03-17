@@ -1272,8 +1272,8 @@ def id_s3bootscript_type( script, log_script=False ):
         if logger().HAL: logger().log('S3 Boot Script AA Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT
         if log_script: logger().log( '[uefi] Start opcode 0x{:X}'.format(start_op) )
-        script_header_length = 1 # skip start opcode
-        script_header_length += 0x34
+        # MdeModulePkg\Library\PiDxeS3BootScriptLib\BootScriptInternalFormat.h
+        script_header_length = struct.calcsize("<HBHLHH")
     else:
         if logger().HAL: logger().log('S3 Boot Script DEFAULT Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
