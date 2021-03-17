@@ -31,7 +31,7 @@ from collections import namedtuple
 from uuid import UUID
 
 from chipsec.file import read_file, write_file
-from chipsec.logger import logger, dump_buffer
+from chipsec.logger import logger, dump_buffer, dump_buffer_bytes
 from chipsec.defines import bytestostring
 
 #from chipsec.helper.oshelper import helper
@@ -766,7 +766,7 @@ class S3BOOTSCRIPT_ENTRY():
     def __str__(self):
         entry_str = '' if self.index is None else ('[{:03d}] '.format(self.index))
         entry_str += ( 'Entry at offset 0x{:04X} (len = 0x{:X}, header len = 0x{:X}):'.format(self.offset_in_script, self.length, self.header_length) )
-        if self.data: entry_str = entry_str + '\nData:\n' + dump_buffer(self.data, 16)
+        if self.data: entry_str = entry_str + '\nData:\n' + dump_buffer_bytes(self.data, 16)
         if self.decoded_opcode: entry_str = entry_str + 'Decoded:\n' + str(self.decoded_opcode)
         return entry_str
 
