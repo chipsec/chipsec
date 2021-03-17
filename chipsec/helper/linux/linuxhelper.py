@@ -168,7 +168,7 @@ class LinuxHelper(Helper):
         try:
             subprocess.check_output( [ "insmod", driver_path, a1, a2 ] )
         except Exception as err:
-            raise Exception("Could not start Linux Helper, are you running as Admin/root?\n\t{}.format(err)")
+            raise Exception("Could not start Linux Helper, are you running as Admin/root?\n\t{}".format(err))
         uid = gid = 0
         os.chown(self.DEVICE_NAME, uid, gid)
         os.chmod(self.DEVICE_NAME, 600)
