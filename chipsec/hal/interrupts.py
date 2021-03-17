@@ -176,14 +176,14 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on input")
-            print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, payload_sz))
+            print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))
             self.logger.log("")
 
         self.send_SMI_APMC(0x0, 0x0)
         
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on output")
-            print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, payload_sz))
+            print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))
             self.logger.log("")
 
         ReturnStatus = struct.unpack("Q", self.cs.mem.read_physical_mem(smmc + ReturnStatus_offset, 8))[0]
