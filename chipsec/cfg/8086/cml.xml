@@ -13,7 +13,9 @@
     <sku did="0x3E33" name="CometLake" code="CML" longname="CometLake v1 U6 Core" />
     <sku did="0x9B51" name="CometLake" code="CML" longname="CometLake v1/v2 U6 Core" />
     <sku did="0x9B61" name="CometLake" code="CML" longname="CometLake U" />
+    <sku did="0x9B63" name="CometLake" code="CML" longname="CometLake" />
     <sku did="0x9B71" name="CometLake" code="CML" longname="CometLake U" />
+    <sku did="0x9B73" name="CometLake" code="CML" longname="CometLake" />
   </info>
 
   <!-- #################################### -->

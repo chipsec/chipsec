@@ -31,6 +31,7 @@ chipsec@intel.com
   <info>
     <sku did="0xA3C8" name="B460" code="PCH_4xx" longname="400 series PCH B460" />
     <sku did="0xA3DA" name="H410" code="PCH_4xx" longname="400 series PCH H410" />
+    <sku did="0x0684" name="H470" code="PCH_4xx" longname="400 series PCH H470" />
   </info>
 
   <!-- #################################### -->
