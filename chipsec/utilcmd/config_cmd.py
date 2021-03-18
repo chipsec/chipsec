@@ -78,7 +78,7 @@ class CONFIGCommand(BaseCommand):
                     self.logger.log('\t{} - {}'.format(name, self.bus_details(cfg[name])))
 
     def register_details(self, regi):
-        if regi['type'] == 'pcicfg':
+        if regi['type'] == 'pcicfg' or regi['type'] == 'mmcfg':
             if 'device' in regi.keys():
                 ret = "device: {}, offset: {}, size: {}".format(regi['device'], regi['offset'], regi['size'])
             else:
@@ -95,6 +95,8 @@ class CONFIGCommand(BaseCommand):
             ret = "msr: {}, size: {}".format(regi['msr'], regi['size'])
         elif regi['type'] == 'R Byte':
             ret = "offset: {}, size: {}".format(regi['offset'], regi['size'])
+        elif regi['type'] == 'memory':
+            ret = "access: {}, address: {}, offset: {}, size: {}".format(regi['access'], regi['address'], regi['offset'], regi['size'])
         if 'FIELDS' in regi.keys():
             for key in regi['FIELDS'].keys():
                 ret += ('\n\t\t{} - bit {}:{}'.format(key, regi['FIELDS'][key]['bit'], int(regi['FIELDS'][key]['size']) + int(regi['FIELDS'][key]['bit']) - 1))
