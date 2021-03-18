@@ -5,7 +5,7 @@ MODDIR	= $(DESTDIR)/lib/modules
 KVERS	= $(shell uname -r)
 KVER	= $(KVERS)
 VMODDIR = $(MODDIR)/$(KVER)
-KSRC	= $(VMODDIR)/build
+KSRC	?= $(VMODDIR)/build
 
 ifeq (,$(filter %i686 %i386 %i586,$(MACHINE)))
 	elf-size := elf64
