@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -57,8 +57,11 @@ class spi_desc(BaseModule):
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 
         self.logger.log('')
-        if   ModuleResult.PASSED == res: self.logger.log_passed_check("SPI flash permissions prevent SW from writing to flash descriptor")
-        elif ModuleResult.FAILED == res: self.logger.log_failed_check("SPI flash permissions allow SW to write flash descriptor")
+        if   ModuleResult.PASSED == res:
+            self.logger.log_passed("SPI flash permissions prevent SW from writing to flash descriptor")
+        elif ModuleResult.FAILED == res:
+            self.logger.log_failed("SPI flash permissions allow SW to write flash descriptor")
+            self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
         return res
 
     # --------------------------------------------------------------------------
@@ -66,4 +69,5 @@ class spi_desc(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_flash_access_permissions()
+        self.res = self.check_flash_access_permissions()
+        return self.res
