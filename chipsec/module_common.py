@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -35,6 +35,7 @@ import chipsec.logger
 import chipsec.chipset
 import chipsec.defines
 
+
 class ModuleResult:
     FAILED        = 0
     PASSED        = 1
@@ -46,6 +47,17 @@ class ModuleResult:
     ERROR         = -1
 
 
+result_priority = {
+    ModuleResult.PASSED: 0,
+    ModuleResult.NOTAPPLICABLE: 0,
+    ModuleResult.DEPRECATED: 0,
+    ModuleResult.SKIPPED: 0,
+    ModuleResult.INFORMATION: 1,
+    ModuleResult.WARNING: 2,
+    ModuleResult.FAILED: 3,
+    ModuleResult.ERROR: 4
+}
+
 ModuleResultName = {
     ModuleResult.FAILED:        "Failed",
     ModuleResult.PASSED:        "Passed",
@@ -56,8 +68,11 @@ ModuleResultName = {
     ModuleResult.ERROR:         "Error",
     ModuleResult.NOTAPPLICABLE: "NotApplicable"
 }
+
+
 def getModuleResultName(res):
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
+
 
 class BaseModule(object):
     def __init__(self):
@@ -76,17 +91,23 @@ class BaseModule(object):
         return True
 
     def update_res(self, value):
-        if self.res == ModuleResult.WARNING:
-            if value == ModuleResult.FAILED \
-            or value == ModuleResult.ERROR:
-                self.res = value
+        if value not in result_priority:
+            self.logger.verbose_log('Attempting to set invalid result status: {}'.format(value))
+            return
+        cur_priority = result_priority[self.res]
+        new_priority = result_priority[value]
+        if new_priority >= cur_priority:
+            self.res = value
+
+    def display_res_check(self, pass_msg, error_msg):
+        if self.res == ModuleResult.PASSED:
+            self.logger.log_passed_check(pass_msg)
         elif self.res == ModuleResult.FAILED:
-            if value == ModuleResult.ERROR:
-                self.res = value
+            self.logger.log_failed_check(error_msg)
+        elif self.res == ModuleResult.WARNING:
+            self.logger.log_warn_check(error_msg)
         elif self.res == ModuleResult.INFORMATION:
-            self.res = value
-        else: # PASSED or SKIPPED or DEPRECATED or NOTAPPLICABLE
-            self.res = value
+            self.logger.log_information_check(error_msg)
 
     def run(self, module_argv):
         raise NotImplementedError('sub class should overwrite the run() method')
