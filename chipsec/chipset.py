@@ -45,7 +45,7 @@ import traceback
 # DEBUG Flags
 QUIET_PCI_ENUM = True
 LOAD_COMMON = True
-CONSISTANCY_CHECKING = False
+CONSISTENCY_CHECKING = False
 
 class RegisterType:
     PCICFG    = 'pcicfg'
@@ -800,7 +800,7 @@ class Chipset:
             f = int(reg['fun'], 16)
             o = int(reg['offset'], 16)
             size = int(reg['size'], 16)
-            if self.pci.get_DIDVID(b, d, f) != (0xFFFF, 0xFFFF) and do_check and not CONSISTANCY_CHECKING:
+            if self.pci.get_DIDVID(b, d, f) != (0xFFFF, 0xFFFF) and do_check and not CONSISTENCY_CHECKING:
                 if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
                 elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
                 elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
