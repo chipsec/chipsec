@@ -256,6 +256,8 @@ class SPIHelper(TestHelper):
                 return self.RCBA_ADDR
             elif address == 0xDC:
                 return 0xDEADBEEF
+            elif address == 0x0:
+                return 0xAAAA8086
             else:
                 raise Exception("Unexpected PCI read")
         else:
