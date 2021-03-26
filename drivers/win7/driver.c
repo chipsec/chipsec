@@ -1,6 +1,6 @@
 /***
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2020, Intel Corporation
+Copyright (c) 2010-2021, Intel Corporation
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -313,6 +313,25 @@ NTSTATUS _write_phys_mem( PHYSICAL_ADDRESS pa, unsigned int len, void * pData )
   return STATUS_SUCCESS;
 }
 
+NTSTATUS _write_mmio_mem(PHYSICAL_ADDRESS pa, unsigned int len, void* pData)
+{
+    ULONG count = 1;
+    void* va = MmMapIoSpace(pa, len, MmNonCached);
+    if (!va)
+      {
+        DbgPrint("[chipsec] ERROR: no space for mapping\n");
+        return STATUS_UNSUCCESSFUL;
+      }
+    if (len == 8) 
+      { 
+        count = 2; 
+      }
+    DbgPrint("[chipsec] writing %u bytes to MMIO address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va);
+    WRITE_REGISTER_BUFFER_ULONG((volatile ULONG*)(va), (PULONG)pData, count);
+    MmUnmapIoSpace(va, len);
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS
 DriverDeviceControl(
     IN PDEVICE_OBJECT DeviceObject,
@@ -515,6 +534,54 @@ DriverDeviceControl(
                 break;
               }
           }
+        case IOCTL_WRITE_MMIO:
+        {
+            UINT32 len = 0;
+            PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
+
+            DbgPrint("[chipsec] > IOCTL_WRITE_MMIO\n");
+            if (Irp->AssociatedIrp.SystemBuffer)
+            {
+                pInBuf = Irp->AssociatedIrp.SystemBuffer;
+                pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+
+                if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < 3 * sizeof(UINT32))
+                {
+                    DbgPrint("[chipsec][IOCTL_WRITE_MMIO] ERROR: STATUS_INVALID_PARAMETER\n");
+                    Status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+
+                phys_addr.HighPart = ((UINT32*)pInBuf)[0];
+                phys_addr.LowPart = ((UINT32*)pInBuf)[1];
+                len = ((UINT32*)pInBuf)[2];
+
+                pInBuf = pInBuf + (3 * sizeof(UINT32));
+
+                if (IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3 * sizeof(UINT32))
+                {
+                    DbgPrint("[chipsec][IOCTL_WRITE_MMIO] ERROR: STATUS_INVALID_PARAMETER\n");
+                    Status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+
+                DbgPrint("[chipsec][IOCTL_WRITE_MMIO] Writing contents:\n");
+                _dump_buffer((unsigned char*)pInBuf, min(len, 0x100));
+
+                __try
+                {
+                    Status = _write_mmio_mem(phys_addr, len, pInBuf);
+                }
+                __except (EXCEPTION_EXECUTE_HANDLER)
+                {
+                    Status = GetExceptionCode();
+                    DbgPrint("[chipsec][IOCTL_WRITE_MMIO] ERROR: exception code 0x%X\n", Status);
+                    break;
+                }
+
+                break;
+            }
+        }
         case IOCTL_ALLOC_PHYSMEM:
           {
             SIZE_T NumberOfBytes = 0;

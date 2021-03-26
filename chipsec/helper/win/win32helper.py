@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -118,6 +118,7 @@ IOCTL_FREE_PHYSMEM             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x817, METHOD_BUF
 IOCTL_WRCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x818, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_RDCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_WRITE_MMIO               = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x821, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
 LZMA  = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress.exe")
 TIANO = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress.exe")
@@ -565,13 +566,16 @@ class Win32Helper(Helper):
             value = struct.unpack( '=B', out_buf )[0]
         else: value = 0
         return value
+        
     def write_mmio_reg( self, phys_address, size, value ):
         if   size == 8: buf = struct.pack( '=Q', value )
         elif size == 4: buf = struct.pack( '=I', value&0xFFFFFFFF )
         elif size == 2: buf = struct.pack( '=H', value&0xFFFF )
         elif size == 1: buf = struct.pack( '=B', value&0xFF )
         else: return False
-        return self.write_phys_mem( ((phys_address>>32)&0xFFFFFFFF), (phys_address&0xFFFFFFFF), size, buf )
+        in_buf = struct.pack('3I', ((phys_address>>32) & 0xFFFFFFFF), (phys_address & 0xFFFFFFFF), size) + buf
+        out_buf = self._ioctl(IOCTL_WRITE_MMIO, in_buf, 4)
+        return out_buf
 
     def alloc_phys_mem( self, length, max_pa ):
         in_length  = 12
