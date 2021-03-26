@@ -1,6 +1,6 @@
 /*
 CHIPSEC: Platform Security Assessment Framework
-Copyright (c) 2010-2014, Intel Corporation
+Copyright (c) 2010-2021, Intel Corporation
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -55,5 +55,6 @@ chipsec@intel.com
 #define IOCTL_WRCR                CTL_CODE( FILE_DEVICE_UNKNOWN, 0x818, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS )
 #define IOCTL_RDCR                CTL_CODE( FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS )
 #define IOCTL_MSGBUS_SEND_MESSAGE CTL_CODE( FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS )
+#define IOCTL_WRITE_MMIO          CTL_CODE( FILE_DEVICE_UNKNOWN, 0x821, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS )
 
 #endif  // CHIPSEC_H
