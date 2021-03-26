@@ -13,7 +13,7 @@ matrix:
       python: 2.7
     - name: "Xenial  - python2"
       os: linux
-      dist: xenial  
+      dist: xenial
       python: 2.7
     - name: "Trusty  - python3"
       os: linux
@@ -21,11 +21,12 @@ matrix:
       python: 3.5
     - name: "Xenial  - python3"
       os: linux
-      dist: xenial  
-      python: 3.5 
+      dist: xenial
+      python: 3.5
     - name: "MacOS Build"
       os : osx
       language: generic
+      osx_image: xcode11
       install:
         - brew update
         - brew install nasm
