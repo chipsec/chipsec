@@ -31,11 +31,6 @@ chipsec@intel.com
   <info>
     <sku did="0xA3C8" name="B460" code="PCH_4xx" longname="400 series PCH B460" />
     <sku did="0xA3DA" name="H410" code="PCH_4xx" longname="400 series PCH H410" />
-    <sku did="0x0684" name="H470" code="PCH_4xx" longname="400 series PCH H470" />
-    <sku did="0x0685" name="Z490" code="PCH_4xx" longname="400 series PCH Z490" />
-    <sku did="0x0687" name="Q470" code="PCH_4xx" longname="400 series PCH Q470" />
-    <sku did="0x068C" name="QM480" code="PCH_4xx" longname="400 series PCH QM480" />
-    <sku did="0x0697" name="W480" code="PCH_4xx" longname="400 series PCH W480" />
   </info>
 
   <!-- #################################### -->
