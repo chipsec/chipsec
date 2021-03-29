@@ -123,6 +123,10 @@ document id 334818/334819
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- SPI Flash Controller MMIO registers -->
+    <register name="BFPR" type="mmio" bar="SPIBAR" offset="0x00" size="4" desc="BIOS Flash Primary Region Register (= FREG1)">
+      <field name="PRB"  bit="0"  size="15" desc="BIOS Flash Primary Region Base"/>
+      <field name="PRL"  bit="16" size="15" desc="BIOS Flash Primary Region Limit"/>
+    </register>
     <register name="HSFS" type="mmio" bar="SPIBAR" offset="0x4" size="4" desc="HW sequencing flash status">
       <field name="FDONE"   bit="0"  size="1" desc="Flash Cycle Done"/>
       <field name="FCERR"   bit="1"  size="1" desc="Flash Cycle Error"/>
@@ -369,12 +373,6 @@ document id 334818/334819
     <!-- CPU MSRs                     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <register name="MSR_POWER_MISC" type="msr" msr="0x120" desc="MISC" />
-    
-    <!-- MSR_SMM_FEATURE_CONTROL -->
-    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
-      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
-      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
-    </register>
   </registers>
 
   <!-- #################################### -->
