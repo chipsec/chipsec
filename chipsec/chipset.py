@@ -229,7 +229,7 @@ class Chipset:
 
         if platform_code is None:
         #platform code was not passed in try to determine based upon cpu id
-            if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
+            if vid in self.chipset_dictionary and did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
                 for item in self.chipset_dictionary[vid][did]:
                     if self.detection_dictionary[cpuid] == item['code']:
                         #matched processor with detection value
@@ -241,7 +241,7 @@ class Chipset:
                         self.did = did
                         self.rid = rid
                         break
-            elif did in self.chipset_dictionary[vid]:
+            elif vid in self.chipset_dictionary and did in self.chipset_dictionary[vid]:
                 _unknown_platform = False
                 data_dict       = self.chipset_dictionary[vid][ did ][0]
                 self.code       = data_dict['code'].upper()
