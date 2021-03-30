@@ -171,7 +171,7 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         ReturnStatus_offset = BufferSize_offset + 8
 
         self.cs.mem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
-        self.cs.mem.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", payload_sz))
+        self.cs.mem.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", len(data_hdr)))
         self.cs.mem.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
         
         if self.logger.VERBOSE:
