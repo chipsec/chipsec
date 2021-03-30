@@ -117,18 +117,18 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- PCI MCH Registers -->
-    <register name="PCI0.0.0_MCHBAR"     type="pcicfg" device="HOSTCTRL" offset="0x48" size="8" desc="MCH Base Address">
+    <register name="PCI0.0.0_MCHBAR" type="pcicfg" device="HOSTCTRL" offset="0x48" size="8" desc="MCH Base Address">
         <field name="MCHBAR" bit="16" size="23" desc="MCHBAR" />
         <field name="MCHBAREN" bit="0" size="1" desc="MCHBAR is Enabled" />
-    <register/>
-    <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0" fun="0" offset="0x50" size="2" desc="Graphics Control">
+    </register>
+    <register name="PCI0.0.0_GGC" type="pcicfg" device="HOSTCTRL" offset="0x50" size="2" desc="Graphics Control">
         <field name="GMS"     bit="8" size="8" desc="GMS" />
         <field name="GGMS"    bit="6" size="2" desc="GGMS" />
         <field name="VAMEN"   bit="2" size="1" desc="VAMEN" />
         <field name="IVD"     bit="1" size="1" desc="IVD" />
         <field name="GGCLOCK" bit="0" size="1" desc="GGC Lock"/>
     </register>
-    <register name="PCI0.0.0_PAVPC" type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Control">
+    <register name="PCI0.0.0_PAVPC" type="pcicfg" device="HOSTCTRL" offset="0x58" size="4" desc="PAVP Control">
         <field name="PCMBASE" bit="20" size="12" desc="PCMBASE" />
         <field name="ASMFEN" bit="6" size="1" desc="ASMF Method Enable" />
         <field name="OVTATTACK" bit="4" size="1" desc="Override Unsolicited Connection State Attack and Terminate" />
@@ -137,14 +137,14 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
         <field name="PAVPE" bit="1" size="1" desc="PAVP Enable" />
         <field name="PCME" bit="0" size="1" desc="PCM Enable" />
     </register>
-    <register name="PCI0.0.0_DPR" type="pcicfg" bus="0" dev="0" fun="0" offset="0x5C" size="4" desc="DMA Protected Region">
+    <register name="PCI0.0.0_DPR" type="pcicfg" device="HOSTCTRL" offset="0x5C" size="4" desc="DMA Protected Region">
         <field name="TOPOFDPR" bit="20" size="12" desc="Top of DPR" />
         <field name="DPRSIZE" bit="4" size="8" desc="DPR Size" />
         <field name="EPM" bit="2" size="1" desc="DPR Enable" />
         <field name="PRS" bit="1" size="1" desc="DPR Status" />
         <field name="LOCK" bit="0" size="1" desc="DPR Lock" />
     </register>
-    <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0" fun="0" offset="0xB0" size="4" desc="Base of Graphics Stolen Memory">
+    <register name="PCI0.0.0_BDSM" type="pcicfg" device="HOSTCTRL" offset="0xB0" size="4" desc="Base of Graphics Stolen Memory">
         <field name="BDSM" bit="20" size="12" desc="DSM Base" />
         <field name="LOCK" bit="0"  size="1"  desc="Lock" />
     </register>
