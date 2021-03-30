@@ -334,7 +334,7 @@ class smm_ptr(BaseModule):
                     _smi_desc.ptr_in_buffer = True
                     _smi_desc.ptr_offset    = int(var, 16)
                     _smi_desc.ptr           = _addr1
-                elif 'sig'        == _n: _smi_desc.sig        = str( bytearray.fromhex( var ) )
+                elif 'sig'        == _n: _smi_desc.sig        = bytearray.fromhex(var)
                 elif 'sig_offset' == _n: _smi_desc.sig_offset = int(var, 16)
                 else:                    _smi_desc.gprs[ _n ] = ( _addr if 'PTR'==var else (_FILL_VALUE_BYTE if 'VAL'==var else int(var, 16)) ) if '*'!=var else _FILL_VALUE_QWORD
 
