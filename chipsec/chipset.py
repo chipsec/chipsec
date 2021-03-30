@@ -415,7 +415,16 @@ class Chipset:
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
                         if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(',')):
-                                self.detection_dictionary[dv.strip()] = _cfg.attrib['platform'].upper()
+                                if dv[-1].upper() == 'X':
+                                    rdv = int(dv[:-1],16)<<4   #  Assume valid hex value with last nibble removed
+                                    for rdv_value in range( rdv, rdv+0xF ):
+                                        self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
+                                elif '-' in dv:
+                                    rdv = dv.split('-')
+                                    for rdv_value in range( int(rdv[0],16), int(rdv[1],16)+1 ): #  Assume valid hex values
+                                        self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
+                                else:
+                                    self.detection_dictionary[dv.strip().upper()] = _cfg.attrib['platform'].upper()
                         if _info.iter('sku'):
                             for _sku in _info.iter('sku'):
                                 _det = ""
