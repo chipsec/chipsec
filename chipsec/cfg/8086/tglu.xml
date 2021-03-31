@@ -186,7 +186,8 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
     <register name="PCI0.0.0_MESEG_MASK" undef="MESEG mapping method has changed." />
     <register name="PCI0.0.0_SMRAMC" undef="Compatible SMRAM is not supported." />
     <register name="MSR_LT_LOCK_MEMORY" undef="Not defined for platform" />
-    
+    <register name="PRMRR_UNCORE_PHYBASE" undef="Not defined for the platform" />
+    <register name="PRMRR_UNCORE_MASK" undef="Not defined for the platform" />   
   </registers>
 
 
