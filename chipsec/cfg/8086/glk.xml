@@ -129,6 +129,10 @@
       <field name="SMM_BWP" bit="5" size="1" desc="SMM BIOS Write Protect"/>
       <field name="BILD"    bit="7" size="1" desc="BIOS Interface Lock-Down"/>
     </register>
+    <register name="BFPR" type="mmio" bar="SPIBAR" offset="0x00" size="4" desc="BIOS Flash Primary Region Register (= FREG1)">
+      <field name="PRB"  bit="0"  size="15" desc="BIOS Flash Primary Region Base"/>
+      <field name="PRL"  bit="16" size="15" desc="BIOS Flash Primary Region Limit"/>
+    </register>
     <register name="HSFS" type="mmio" bar="SPIBAR" offset="0x4" size="4" desc="HW sequencing flash status">
       <field name="FDONE"   bit="0"  size="1" desc="Flash Cycle Done"/>
       <field name="FCERR"   bit="1"  size="1" desc="Flash Cycle Error"/>

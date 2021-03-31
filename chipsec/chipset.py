@@ -45,6 +45,7 @@ import traceback
 # DEBUG Flags
 QUIET_PCI_ENUM = True
 LOAD_COMMON = True
+CONSISTENCY_CHECKING = False
 
 class RegisterType:
     PCICFG    = 'pcicfg'
@@ -69,6 +70,10 @@ class Cfg:
         self.LOCKS         = {}
         self.LOCKEDBY      = {}
         self.XML_CONFIG_LOADED = False
+
+class CSReadError(RuntimeError):
+    def __init__(self, msg):
+        super(CSReadError, self).__init__(msg)
 
 
 ##################################################################################
@@ -229,7 +234,7 @@ class Chipset:
 
         if platform_code is None:
         #platform code was not passed in try to determine based upon cpu id
-            if did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
+            if vid in self.chipset_dictionary and did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
                 for item in self.chipset_dictionary[vid][did]:
                     if self.detection_dictionary[cpuid] == item['code']:
                         #matched processor with detection value
@@ -241,7 +246,7 @@ class Chipset:
                         self.did = did
                         self.rid = rid
                         break
-            elif did in self.chipset_dictionary[vid]:
+            elif vid in self.chipset_dictionary and did in self.chipset_dictionary[vid]:
                 _unknown_platform = False
                 data_dict       = self.chipset_dictionary[vid][ did ][0]
                 self.code       = data_dict['code'].upper()
@@ -415,7 +420,16 @@ class Chipset:
                                 CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
                         if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(',')):
-                                self.detection_dictionary[dv.strip()] = _cfg.attrib['platform'].upper()
+                                if dv[-1].upper() == 'X':
+                                    rdv = int(dv[:-1],16)<<4   #  Assume valid hex value with last nibble removed
+                                    for rdv_value in range( rdv, rdv+0xF ):
+                                        self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
+                                elif '-' in dv:
+                                    rdv = dv.split('-')
+                                    for rdv_value in range( int(rdv[0],16), int(rdv[1],16)+1 ): #  Assume valid hex values
+                                        self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
+                                else:
+                                    self.detection_dictionary[dv.strip().upper()] = _cfg.attrib['platform'].upper()
                         if _info.iter('sku'):
                             for _sku in _info.iter('sku'):
                                 _det = ""
@@ -785,7 +799,7 @@ class Chipset:
             bus = [self.get_device_BDF(dev_name)[0]]
         return self.Cfg.BUS.get(dev_name, bus)
 
-    def read_register(self, reg_name, cpu_thread=0, bus_index=0):
+    def read_register(self, reg_name, cpu_thread=0, bus_index=0, do_check=True):
         reg = self.get_register_def( reg_name, bus_index )
         rtype = reg['type']
         reg_value = 0
@@ -795,14 +809,20 @@ class Chipset:
             f = int(reg['fun'], 16)
             o = int(reg['offset'], 16)
             size = int(reg['size'], 16)
-            if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
-            elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
-            elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
-            elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
+            if self.pci.get_DIDVID(b, d, f) != (0xFFFF, 0xFFFF) and do_check and not CONSISTENCY_CHECKING:
+                if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
+                elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
+                elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
+                elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
+            else:
+                raise CSReadError("PCI Device is not available ({}:{}.{}".format(b, d, f))
         elif RegisterType.MMCFG == rtype:
             reg_value = self.mmio.read_mmcfg_reg(int(reg['bus'], 16), int(reg['dev'], 16), int(reg['fun'], 16), int(reg['offset'], 16), int(reg['size'], 16) )
         elif RegisterType.MMIO == rtype:
-            reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
+            if self.mmio.get_MMIO_BAR_base_address(reg['bar'])[0] != 0:
+                reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
+            else:
+                raise CSReadError("MMIO Bar ({}) base address is 0".format(reg['bar']))
         elif RegisterType.MSR == rtype:
             (eax, edx) = self.msr.read_msr( cpu_thread, int(reg['msr'], 16) )
             reg_value = (edx << 32) | eax
@@ -811,7 +831,10 @@ class Chipset:
             size = int(reg['size'], 16)
             reg_value = self.io._read_port( port, size )
         elif RegisterType.IOBAR == rtype:
-            reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
+            if self.iobar.get_IO_BAR_base_address(reg['bar'])[0] != 0:
+                reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
+            else:
+                raise CSReadError("IO Bar ({}) base address is 0".format(reg['bar']))
         elif RegisterType.MSGBUS == rtype:
             reg_value = self.msgbus.msgbus_reg_read( int(reg['port'], 16), int(reg['offset'], 16) )
         elif RegisterType.MM_MSGBUS == rtype:

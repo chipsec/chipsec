@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2021, SentinelOne
+# Copyright (c) 2021, Intel
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -81,18 +83,18 @@ class smm_code_chk(BaseModule):
 
         # Check that all CPUs have the same value of MSR_SMM_FEATURE_CONTROL.
         if not all(_ == results[0] for _ in results):
-            self.logger.log_failed_check( "MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs" )
+            self.logger.log_failed( "MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs" )
             return ModuleResult.FAILED
-        
-        res = results[0] 
+
+        res = results[0]
         if res == ModuleResult.FAILED:
-            self.logger.log_failed_check( "SMM_Code_Chk_En is enabled but not locked down" )
+            self.logger.log_failed( "SMM_Code_Chk_En is enabled but not locked down" )
         elif res == ModuleResult.WARNING:
             self.logger.warn( """[*] SMM_Code_Chk_En is not enabled.
 This can happen either because this feature is not supported by the CPU or because the BIOS forgot to enable it.
 Please consult the Intel SDM to determine whether or not your CPU supports SMM_Code_Chk_En.""" )
         else:
-            self.logger.log_passed_check( "SMM_Code_Chk_En is enabled and locked down" )
+            self.logger.log_passed( "SMM_Code_Chk_En is enabled and locked down" )
 
         return res
 
@@ -101,4 +103,5 @@ Please consult the Intel SDM to determine whether or not your CPU supports SMM_C
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        return self.check_SMM_Code_Chk_En()
+        self.res = self.check_SMM_Code_Chk_En()
+        return self.res
