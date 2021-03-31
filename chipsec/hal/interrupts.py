@@ -159,7 +159,7 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
   EFI_STATUS                      ReturnStatus;
 } SMM_CORE_PRIVATE_DATA;
     '''
-    def send_smmc_SMI(self, smmc, guid, payload, payload_loc):
+    def send_smmc_SMI(self, smmc, guid, payload, payload_loc, CommandPort=0x0, DataPort=0x0):
         guid_b = uuid.UUID(guid).bytes_le
         payload_sz = len(payload)
 
@@ -179,7 +179,7 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
             print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))
             self.logger.log("")
 
-        self.send_SMI_APMC(0x0, 0x0)
+        self.send_SMI_APMC(CommandPort, DataPort)
         
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on output")

@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -24,7 +24,6 @@
 #
 
 
-
 """
 Checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
 """
@@ -38,7 +37,7 @@ class spi_access(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.spi    = SPI( self.cs )
+        self.spi = SPI( self.cs )
 
     def is_supported(self):
         return True
@@ -79,12 +78,16 @@ class spi_access(BaseModule):
             self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
 
         if fdv:
-            if   ModuleResult.PASSED  == res: self.logger.log_passed_check("SPI Flash Region Access Permissions in flash descriptor look ok")
-            elif ModuleResult.FAILED  == res: self.logger.log_failed_check("SPI Flash Region Access Permissions are not programmed securely in flash descriptor")
-            elif ModuleResult.WARNING == res: self.logger.log_warn_check("Certain SPI flash regions are writeable by software")
+            if ModuleResult.PASSED == res:
+                self.logger.log_passed("SPI Flash Region Access Permissions in flash descriptor look ok")
+            elif ModuleResult.FAILED == res:
+                self.logger.log_failed("SPI Flash Region Access Permissions are not programmed securely in flash descriptor")
+                self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
+            elif ModuleResult.WARNING == res:
+                self.logger.log_warning("Certain SPI flash regions are writeable by software")
         else:
             res = ModuleResult.WARNING
-            self.logger.log_warn_check("Either flash descriptor is not valid or not present on this system")
+            self.logger.log_warning("Either flash descriptor is not valid or not present on this system")
 
         return res
 

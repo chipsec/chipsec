@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<configuration platform="RKL" req_pch="True">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2021, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for RocketLake based platforms
+
+http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+https://cdrdv2.intel.com/v1/dl/getContent/636761
+
+* 11th Generation Intel(R) Core Processor Family Datasheet
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info family="core" detection_value="A0671">
+    <sku did="0x4C43" name="RocketLake" code="RKL" longname="RocketLake S 8 Core"/>
+    <sku did="0x4C53" name="RocketLake" code="RKL" longname="RocketLake S 6 Core" />
+  </info>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Integrated devices                   -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <pci>
+    <device name="HOSTCTRL" bus="0" dev="0x00" fun="0" vid="0x8086" did="0x4C43,0x4C53" />
+    <device name="PEG10"    bus="0" dev="0x01" fun="0" vid="0x8086" did="0x4C01" />
+    <device name="PEG11"    bus="0" dev="0x01" fun="1" vid="0x8086" did="0x4C05"/>
+    <device name="PEG12"    bus="0" dev="0x01" fun="2" vid="0x8086" did="0x4C07"/>
+    <device name="IGD"      bus="0" dev="0x02" fun="0" vid="0x8086" did="0x4C8A"/>
+    <device name="DPTF"     bus="0" dev="0x04" fun="0" vid="0x8086" did="0x4C03"/>
+    <device name="PEG60"    bus="0" dev="0x06" fun="0" vid="0x8086" did="0x4C09" />
+    <device name="GNA"      bus="0" dev="0x08" fun="0" vid="0x8086" did="0x4C11" />
+    <device name="NPK"      bus="0" dev="0x09" fun="0" vid="0x8086" did="0x4C19" />
+  </pci>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <mmio>
+    <bar name="MCHBAR" register="PCI0.0.0_MCHBAR" base_field="MCHBAR" size="0x8000" enable_field="MCHBAREN" desc="Host Memory Mapped Register Range"/>
+    <bar name="GTTMMADR" register="GTTMMADR" base_field="BA" size="0x1000000"  desc="Graphics Translation Table Range"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- I/O spaces (I/O BARs)                -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <io>
+  </io>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+  </memory>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MSR Definitions              -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- CPU Model Specific Registers -->
+    <register name="PRMRR_MASK" type="msr" msr="0x1F5" desc="PRMRR MASK register">
+      <field name="PRMRR_LOCK" bit="10" size="1" desc = "PRMRR Lock Bit" />
+      <field name="PRMRR_VLD" bit="11" size="1" desc = "PRMRR Valid Bit set by mcheck" />
+      <field name="PRMRR_mask_bits"   bit="12"  size="40" desc="PRMRR mask bits" />
+    </register>
+    <register name="PRMRR_PHYBASE" type="msr" msr="0x2A0" desc="PRMRR BASE Address 0">
+      <field name="PRMRR_MEMTYPE" bit="0" size="3" desc="PRMRR Memory Type" />
+      <field name="PRMRR_CONFIGURED" bit="3" size="1" desc="PRMRR Base Configured" />
+      <field name="PRMRR_base_address_fields" bit="12" size="40" desc="PRMRR base address bits" />
+    </register>
+    <register name="MSR_BIOS_DONE" type="msr" msr="0x151" desc="BIOS Done Status">
+      <field name="SoC_BIOS_DONE" bit="1" size="1" desc="SoC init done"/>
+      <field name="IA_UNTRUSTED" bit="0" size="1" desc="Untrusted mode enable bit"/>
+    </register>
+    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
+      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
+      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- PCIe Configuration registers -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- PCI MCH Registers -->
+    <register name="PCI0.0.0_MCHBAR" type="pcicfg" device="HOSTCTRL" offset="0x48" size="8" desc="MCH Base Address">
+        <field name="MCHBAR" bit="16" size="23" desc="MCHBAR" />
+        <field name="MCHBAREN" bit="0" size="1" desc="MCHBAR is Enabled" />
+    </register>
+    <register name="PCI0.0.0_GGC" type="pcicfg" device="HOSTCTRL" offset="0x50" size="2" desc="Graphics Control">
+        <field name="GMS"     bit="8" size="8" desc="GMS" />
+        <field name="GGMS"    bit="6" size="2" desc="GGMS" />
+        <field name="VAMEN"   bit="2" size="1" desc="VAMEN" />
+        <field name="IVD"     bit="1" size="1" desc="IVD" />
+        <field name="GGCLOCK" bit="0" size="1" desc="GGC Lock"/>
+    </register>
+    <register name="PCI0.0.0_PAVPC" type="pcicfg" device="HOSTCTRL" offset="0x58" size="4" desc="PAVP Control">
+        <field name="PCMBASE" bit="20" size="12" desc="PCMBASE" />
+        <field name="ASMFEN" bit="6" size="1" desc="ASMF Method Enable" />
+        <field name="OVTATTACK" bit="4" size="1" desc="Override Unsolicited Connection State Attack and Terminate" />
+        <field name="HVYMODSEL" bit="3" size="1" desc="HVY mode selection" />
+        <field name="PAVPLCK" bit="2" size="1" desc="PAVP Lock" />
+        <field name="PAVPE" bit="1" size="1" desc="PAVP Enable" />
+        <field name="PCME" bit="0" size="1" desc="PCM Enable" />
+    </register>
+    <register name="PCI0.0.0_DPR" type="pcicfg" device="HOSTCTRL" offset="0x5C" size="4" desc="DMA Protected Region">
+        <field name="TOPOFDPR" bit="20" size="12" desc="Top of DPR" />
+        <field name="DPRSIZE" bit="4" size="8" desc="DPR Size" />
+        <field name="EPM" bit="2" size="1" desc="DPR Enable" />
+        <field name="PRS" bit="1" size="1" desc="DPR Status" />
+        <field name="LOCK" bit="0" size="1" desc="DPR Lock" />
+    </register>
+    <register name="PCI0.0.0_BDSM" type="pcicfg" device="HOSTCTRL" offset="0xB0" size="4" desc="Base of Graphics Stolen Memory">
+        <field name="BDSM" bit="20" size="12" desc="DSM Base" />
+        <field name="LOCK" bit="0"  size="1"  desc="Lock" />
+    </register>
+
+    <!-- Processor Graphics registers-->
+    <register name="GTTMMADR" type="pcicfg" device="IGD" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address" >
+        <field name="BA" bit="24" size="40" desc="Memory Base Address"/>
+        <field name="ADM" bit="4" size="20" desc="Address Mask"/>
+        <field name="PREFMEM" bit="3" size="1" desc="Prefetchable Memory"/>
+        <field name="MEMTYP" bit="1" size="2" desc="Memory Type"/>
+        <field name="MIOS" bit="0" size="1" desc="Memory I/O Space"/>
+    </register>
+
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- MMIO registers               -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <register name="PCI0.0.0_REMAPBASE"  type="mmio" bar="MCHBAR" offset="0x5090" size="8" desc="Memory Remap Base Address" />
+    <register name="PCI0.0.0_REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0x5098" size="8" desc="Memory Remap Limit Address" />
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- I/O registers (I/O ports)    -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
+
+    <!-- MCHBAR registers -->
+    <register name="IMR_IA_EX_BASE" type="mmio" bar="MCHBAR" offset="0x6A40" size="8" desc="IMR IA Exclude Range base">
+        <field name="LOCK" bit="0" size="1" desc="Lock" />
+        <field name="BASE" bit="10" size="29" desc="Base" />
+    </register>
+    <register name="IMR_IA_EX_LIMIT" type="mmio" bar="MCHBAR" offset="0x6A48" size="8" desc="IMR IA Exclude Range mask">
+        <field name="LOCK" bit="0" size="1" desc="Lock" />
+        <field name="LIMIT" bit="10" size="29" desc="Mask" />
+    </register>
+    <register name="IMR_GT_EX_BASE" type="mmio" bar="MCHBAR" offset="0x6A50" size="8" desc="IMR GT Exclude Range base">
+        <field name="LOCK" bit="0" size="1" desc="Lock" />
+        <field name="BASE" bit="10" size="29" desc="Base" />
+    </register>
+    <register name="IMR_GT_EX_LIMIT" type="mmio" bar="MCHBAR" offset="0x6A58" size="8" desc="IMR GT Exclude Range mask">
+        <field name="LOCK" bit="0" size="1" desc="Lock" />
+        <field name="LIMIT" bit="10" size="29" desc="Mask" />
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!--      Undefined Registers     -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <register name="PCI0.0.0_MESEG_BASE" undef="MESEG mapping method has changed." />
+    <register name="PCI0.0.0_MESEG_MASK" undef="MESEG mapping method has changed." />
+    <register name="PCI0.0.0_SMRAMC" undef="Compatible SMRAM is not supported." />
+    <register name="MSR_LT_LOCK_MEMORY" undef="Not defined for platform" />
+    <register name="PRMRR_UNCORE_PHYBASE" undef="Not defined for the platform" />
+    <register name="PRMRR_UNCORE_MASK" undef="Not defined for the platform" />
+
+  </registers>
+
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <controls>
+  </controls>
+
+</configuration>
