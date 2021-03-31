@@ -151,7 +151,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
 
     <!-- Processor Graphics registers-->
     <register name="GTTMMADR" type="pcicfg" device="IGD" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address" >
-        <field name="BA" bit="24" size="15" desc="Memory Base Address"/>
+        <field name="BA" bit="24" size="40" desc="Memory Base Address"/>
         <field name="ADM" bit="4" size="20" desc="Address Mask"/>
         <field name="PREFMEM" bit="3" size="1" desc="Prefetchable Memory"/>
         <field name="MEMTYP" bit="1" size="2" desc="Memory Type"/>
