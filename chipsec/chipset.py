@@ -809,13 +809,13 @@ class Chipset:
             f = int(reg['fun'], 16)
             o = int(reg['offset'], 16)
             size = int(reg['size'], 16)
-            if self.pci.get_DIDVID(b, d, f) != (0xFFFF, 0xFFFF) and do_check and not CONSISTENCY_CHECKING:
-                if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
-                elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
-                elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
-                elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
-            else:
-                raise CSReadError("PCI Device is not available ({}:{}.{}".format(b, d, f))
+            if do_check and CONSISTENCY_CHECKING:
+                if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
+                    raise CSReadError("PCI Device is not available ({}:{}.{})".format(b, d, f))
+            if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
+            elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
+            elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
+            elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
         elif RegisterType.MMCFG == rtype:
             reg_value = self.mmio.read_mmcfg_reg(int(reg['bus'], 16), int(reg['dev'], 16), int(reg['fun'], 16), int(reg['offset'], 16), int(reg['size'], 16) )
         elif RegisterType.MMIO == rtype:
