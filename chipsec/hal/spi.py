@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -48,7 +48,7 @@ import time
 
 from chipsec.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
 from chipsec.file import write_file, read_file
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer, print_buffer_bytes
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import JEDEC_ID
@@ -631,7 +631,7 @@ class SPI(hal_base.HALBase):
 
         if self.logger.HAL:
             self.logger.log( "[spi] buffer read from SPI:" )
-            print_buffer( "{}".format(buf) )
+            print_buffer_bytes(buf)
 
         return buf
 
