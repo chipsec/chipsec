@@ -1076,12 +1076,12 @@ class Chipset:
             reg_str += self.print_register( reg_name, reg_val, index )
         return reg_str
 
-    def get_control(self, control_name, cpu_thread=0, with_print=0):
+    def get_control(self, control_name, cpu_thread=0, with_print=False):
         control = self.Cfg.CONTROLS[ control_name ]
         reg     = control['register']
         field   = control['field']
         reg_data = self.read_register(reg, cpu_thread)
-        if logger().DEBUG or with_print:
+        if logger().VERBOSE or with_print:
             self.print_register(reg, reg_data)
         return self.get_register_field(reg, reg_data, field)
 
@@ -1097,7 +1097,7 @@ class Chipset:
         except KeyError:
             return False
 
-    def get_lock(self, lock_name, cpu_thread=0, with_print=0, bus_index=None):
+    def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus_index=None):
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
@@ -1106,7 +1106,7 @@ class Chipset:
         else:
             reg_data = self.read_register(reg, cpu_thread, bus_index)
             reg_data = [reg_data]
-        if logger().DEBUG or with_print:
+        if logger().VERBOSE or with_print:
             for rd in reg_data:
                 self.print_register(reg, rd)
         return self.get_register_field_all(reg, reg_data, field)
