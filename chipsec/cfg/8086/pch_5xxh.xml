@@ -171,7 +171,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
     </register>
 
     <!-- SPI Interface Controller -->
-    <register name="BIOS_SPI_BAR0" device="SPI" offset="0x10" size="4" desc="SPI BAR0 MMIO">
+    <register name="BIOS_SPI_BAR0" type="pcicfg" device="SPI" offset="0x10" size="4" desc="SPI BAR0 MMIO">
       <field name="MEMBAR" bit="12" size="20" desc="Memory Bar" />
       <field name="MEMSIZE" bit="4" size="8" desc="Memory Size" />
       <field name="PREFETCH" bit="3" size="1" desc="Prefetchable" />
