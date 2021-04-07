@@ -120,7 +120,7 @@ class PCICommand(BaseCommand):
             else:
                 devices = list(_ for _ in all_devices if (_[0] == self.bus) )
 
-            for (_bus,_device,_function, _, _) in devices:
+            for (_bus,_device,_function) in devices:
                 self.logger.log( "[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(_bus,_device,_function) )
                 cfg_buf = self.cs.pci.dump_pci_config(_bus,_device,_function)
                 pretty_print_hex_buffer( cfg_buf )
