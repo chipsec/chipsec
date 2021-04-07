@@ -870,7 +870,7 @@ class Win32Helper(Helper):
     def native_get_ACPI_table( self, table_name ):
         table_size = 36
         tBuffer = create_string_buffer( table_size )
-        tbl = struct.unpack("<I", table_name)[0]
+        tbl = struct.unpack("<I", bytes(table_name, 'ascii'))[0]
         retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         if retVal == 0:
             if logger().DEBUG:
