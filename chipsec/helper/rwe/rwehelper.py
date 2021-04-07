@@ -848,7 +848,10 @@ class RweHelper(Helper):
         tBuffer = create_string_buffer( table_size )
         tbl = struct.unpack("<I", table_name)[0]
         retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
-        if retVal == 0: return None
+        if retVal == 0:
+            if logger().DEBUG:
+                logger().error( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
+            return None
         if retVal > table_size:
             table_size = retVal
             tBuffer    = create_string_buffer( table_size )
