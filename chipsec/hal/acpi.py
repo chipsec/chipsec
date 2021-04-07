@@ -403,11 +403,10 @@ class ACPI(hal_base.HALBase):
         except oshelper.UnimplementedNativeAPIError:
             # 2. If didn't work, try using get_ACPI_table if a helper implemented
             #    reading ACPI tables via native API which some OS may provide
-            if self.cs.use_native_api():
-                if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables using get_ACPI_table..." )
-                for t in ACPI_TABLES.keys():
-                    table = self.cs.helper.get_ACPI_table( t )
-                    if table: self.tableList[ t ].append( 0 )
+            if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables using get_ACPI_table..." )
+            for t in ACPI_TABLES.keys():
+                table = self.cs.helper.get_ACPI_table( t )
+                if table: self.tableList[ t ].append( 0 )
 
         return self.tableList
 
@@ -488,10 +487,9 @@ class ACPI(hal_base.HALBase):
             except oshelper.UnimplementedNativeAPIError:
                 # 2. If didn't work, try using get_ACPI_table if a helper implemented
                 #    reading ACPI tables via native API which some OS may provide
-                if self.cs.use_native_api():
-                    if logger().HAL: logger().log( "[acpi] trying to extract ACPI table using get_ACPI_table..." )
-                    t_data = self.cs.helper.get_ACPI_table( name )
-                    acpi_tables_data.append( t_data )
+                if logger().HAL: logger().log( "[acpi] trying to extract ACPI table using get_ACPI_table..." )
+                t_data = self.cs.helper.get_ACPI_table( name )
+                acpi_tables_data.append( t_data )
 
         acpi_tables = []
         for data in acpi_tables_data:
