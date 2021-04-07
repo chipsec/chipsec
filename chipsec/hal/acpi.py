@@ -164,7 +164,7 @@ ACPI_TABLES = {
   ACPI_TABLE_SIG_ERST: acpi_tables.ERST,
   ACPI_TABLE_SIG_EINJ: acpi_tables.EINJ,
   ACPI_TABLE_SIG_TPM2: acpi_tables.ACPI_TABLE,
-  ACPI_TABLE_SIG_WSMT: acpi_tables.ACPI_TABLE,
+  ACPI_TABLE_SIG_WSMT: acpi_tables.WSMT,
   ACPI_TABLE_SIG_DBG2: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_NHLT: acpi_tables.ACPI_TABLE,
   ACPI_TABLE_SIG_MSCT: acpi_tables.MSCT,
