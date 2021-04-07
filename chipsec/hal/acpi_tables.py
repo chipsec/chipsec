@@ -2032,6 +2032,41 @@ class UEFI_TABLE (ACPI_TABLE):
 
 ########################################################################################################
 #
+# WSMT Table
+#
+########################################################################################################
+class WSMT (ACPI_TABLE):
+
+    FIXED_COMM_BUFFERS = 1
+    COMM_BUFFER_NESTED_PTR_PROTECTION = 2
+    SYSTEM_RESOURCE_PROTECTION = 4
+
+    def __init__( self ):
+        self.fixed_comm_buffers = False
+        self.comm_buffer_nested_ptr_protection = False
+        self.system_resource_protection = False
+
+    def parse(self, table_content):
+        if len(table_content) < 4:
+            return
+
+        mitigations = struct.unpack("<L", table_content)[0]
+        
+        self.fixed_comm_buffers = bool(mitigations & WSMT.FIXED_COMM_BUFFERS)
+        self.comm_buffer_nested_ptr_protection = bool(mitigations & WSMT.COMM_BUFFER_NESTED_PTR_PROTECTION)
+        self.system_resource_protection = bool(mitigations & WSMT.SYSTEM_RESOURCE_PROTECTION)
+
+    def __str__( self ):
+        return """------------------------------------------------------------------
+Windows SMM Mitigations Table (WSMT) Contents
+------------------------------------------------------------------
+FIXED_COMM_BUFFERS                  : {}
+COMM_BUFFER_NESTED_PTR_PROTECTION   : {}
+SYSTEM_RESOURCE_PROTECTION          : {}
+    """.format( self.fixed_comm_buffers, self.comm_buffer_nested_ptr_protection, self.system_resource_protection )
+
+########################################################################################################
+#
 # Generic Address Structure
 #
 ########################################################################################################
