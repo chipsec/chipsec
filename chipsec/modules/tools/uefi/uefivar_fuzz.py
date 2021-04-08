@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -80,8 +80,9 @@ from uuid import uuid4, UUID
 import struct
 
 from chipsec.module_common import BaseModule, ModuleResult, cs_input
-from chipsec.file import write_file
-from chipsec.hal.uefi import UEFI
+from chipsec.file          import write_file
+from chipsec.hal.uefi      import UEFI
+from chipsec.defines       import bytestostring
 
 from chipsec.fuzzing import primitives as prim
 
@@ -93,7 +94,8 @@ class uefivar_fuzz(BaseModule):
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
-        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        if not supported:
+            self.logger.log_skipped("OS does not support UEFI Runtime API")
         return supported
 
     def rnd(self, n=1):
@@ -107,11 +109,12 @@ class uefivar_fuzz(BaseModule):
         return True
 
     def run( self, module_argv ):
-        self.logger.start_test( "Fuzz UEFI Variable Interface" )
+        self.logger.start_test("Fuzz UEFI Variable Interface")
 
-        self.logger.warn( "Are you sure you want to continue fuzzing UEFI variable interface?" )
-        s = cs_input( "Type 'yes' to continue > " )
-        if s != 'yes': return
+        self.logger.warn("Are you sure you want to continue fuzzing UEFI variable interface?")
+        s = cs_input("Type 'yes' to continue > ")
+        if s.lower() not in ['yes', 'y']:
+            return
 
 
         # Default options
@@ -157,16 +160,22 @@ class uefivar_fuzz(BaseModule):
                 else: help_text = self.usage()
 
             if len(module_argv) > 1:
-                if (module_argv[1].isdigit()): ITERATIONS = int(module_argv[1])
-                else: help_text = self.usage()
+                if (module_argv[1].isdigit()):
+                    ITERATIONS = int(module_argv[1])
+                else:
+                    help_text = self.usage()
 
             if len(module_argv) > 2:
-                if (module_argv[2].isdigit()): SEED = int(module_argv[2])
-                else: help_text = self.usage()
+                if (module_argv[2].isdigit()):
+                    SEED = int(module_argv[2])
+                else:
+                    help_text = self.usage()
 
             if len(module_argv) > 3:
-                if (module_argv[3].isdigit()): CASE = int(module_argv[3])
-                else: help_text = self.usage()
+                if (module_argv[3].isdigit()):
+                    CASE = int(module_argv[3])
+                else:
+                    help_text = self.usage()
 
         if not help_text:
             random.seed( SEED )
@@ -210,13 +219,14 @@ class uefivar_fuzz(BaseModule):
                     else:
                         _SIZE   = random.randrange(1024)
 
-                if (count < CASE): continue
+                if (count < CASE):
+                    continue
 
                 self.logger.log( '  Running test #{:d}:'.format(count) )
                 self.logger.flush()
-                status = self._uefi.set_EFI_variable(_NAME, str(_GUID), _DATA, _SIZE, _ATTRIB)
-                self.logger.log( status )
-                status = self._uefi.delete_EFI_variable(_NAME, str(_GUID))
-                self.logger.log( status )
+                status = self._uefi.set_EFI_variable(bytestostring(_NAME), str(_GUID), _DATA, _SIZE, _ATTRIB)
+                self.logger.log(status)
+                status = self._uefi.delete_EFI_variable(bytestostring(_NAME), str(_GUID))
+                self.logger.log(status)
 
         return ModuleResult.PASSED
