@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -76,6 +76,12 @@ LZMA  = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compr
 TIANO = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
 EFI   = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
 BROTLI = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli")
+
+_tools = {
+  chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress',
+  chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress',
+  chipsec.defines.COMPRESSION_TYPE_BROTLI: 'Brotli'
+}
 
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
@@ -841,7 +847,8 @@ class LinuxHelper(Helper):
         size, status = struct.unpack( "2I", buffer[:8])
 
         if (status != 0):
-            if logger().DEBUG: logger().error( "Setting EFI (SET_EFIVAR) variable did not succeed: {}".format(status_dict[status]) )
+            if logger().DEBUG:
+                logger().error("Setting EFI (SET_EFIVAR) variable did not succeed: '{}' ({:d})".format(status_dict.get(status, 'UNKNOWN'), status))
         else:
             os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
         return status
