@@ -779,7 +779,7 @@ class LinuxHelper(Helper):
             return (off, buf, hdr, None, guid, attr)
 
         if (status > 0):
-            if logger().DEBUG: logger().error( "Reading variable (GET_EFIVAR) did not succeed: {}".format(status_dict[status]))
+            if logger().DEBUG: logger().error( "Reading variable (GET_EFIVAR) did not succeed: {} ({:d})".format(status_dict.get(status, 'UNKNOWN'), status))
             data = ""
             guid = 0
             attr = 0
