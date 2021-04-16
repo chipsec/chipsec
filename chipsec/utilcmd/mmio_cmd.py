@@ -34,7 +34,7 @@ from time            import time
 class MMIOCommand(BaseCommand):
     """
     >>> chipsec_util mmio list
-    >>> chipsec_util mmio dump <MMIO_BAR_name>
+    >>> chipsec_util mmio dump <MMIO_BAR_name> [offset] [length]
     >>> chipsec_util mmio read <MMIO_BAR_name> <offset> <width>
     >>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>
 
@@ -55,6 +55,10 @@ class MMIOCommand(BaseCommand):
 
         parser_dump = subparsers.add_parser('dump')
         parser_dump.add_argument('bar_name', type=str, help='MMIO BAR to dump')
+        parser_dump.add_argument('offset', type=lambda x: int(x, 16), nargs='?', default=0,
+                                 help='Offset in BAR to start dump')
+        parser_dump.add_argument('length', type=lambda x: int(x, 16), nargs='?', default=None,
+                                 help='Length of the region to dump')
         parser_dump.set_defaults(func=self.dump_bar)
 
         parser_read = subparsers.add_parser('read')
@@ -81,8 +85,14 @@ class MMIOCommand(BaseCommand):
         self._mmio.list_MMIO_BARs()
 
     def dump_bar(self):
-        self.logger.log("[CHIPSEC] Dumping {} MMIO space..".format(self.bar_name))
-        self._mmio.dump_MMIO_BAR(self.bar_name.upper())
+        self.logger.log("[CHIPSEC] Dumping {} MMIO space..".format(self.bar_name.upper()))
+        (bar_base, bar_size) = self._mmio.get_MMIO_BAR_base_address(self.bar_name.upper())
+        if self.length is not None:
+            bar_size = self.length
+        else:
+            bar_size -= self.offset
+        bar_base += self.offset
+        self._mmio.dump_MMIO(bar_base, bar_size)
 
     def read_bar(self):
         bar = self.bar_name.upper()
