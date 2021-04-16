@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -47,7 +47,7 @@ class MMIOCommand(BaseCommand):
     """
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util mmio', usage=MMIOCommand.__doc__ )
+        parser = ArgumentParser(prog='chipsec_util mmio', usage=MMIOCommand.__doc__)
         subparsers = parser.add_subparsers()
 
         parser_list = subparsers.add_parser('list')
@@ -59,15 +59,17 @@ class MMIOCommand(BaseCommand):
 
         parser_read = subparsers.add_parser('read')
         parser_read.add_argument('bar_name', type=str, help='MMIO BAR to read')
-        parser_read.add_argument('offset', type=lambda x: int(x,16), help='Offset value (hex)')
-        parser_read.add_argument('width', type=lambda x: int(x,16), choices=[1,2,4,8], help='Width value [1, 2, 4, 8] (hex)')
+        parser_read.add_argument('offset', type=lambda x: int(x, 16), help='Offset value (hex)')
+        parser_read.add_argument('width', type=lambda x: int(x, 16), choices=[1, 2, 4, 8],
+                                 help='Width value [1, 2, 4, 8] (hex)')
         parser_read.set_defaults(func=self.read_bar)
 
         parser_write = subparsers.add_parser('write')
         parser_write.add_argument('bar_name', type=str, help='MMIO BAR to write')
-        parser_write.add_argument('offset', type=lambda x: int(x,16), help='Offset value (hex)')
-        parser_write.add_argument('width', type=lambda x: int(x,16), choices=[1,2,4,8], help='Width value [1, 2, 4, 8] (hex)')
-        parser_write.add_argument('value', type=lambda x: int(x,16), help='Value to write (hex)')
+        parser_write.add_argument('offset', type=lambda x: int(x, 16), help='Offset value (hex)')
+        parser_write.add_argument('width', type=lambda x: int(x, 16), choices=[1, 2, 4, 8],
+                                  help='Width value [1, 2, 4, 8] (hex)')
+        parser_write.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
         parser_write.set_defaults(func=self.write_bar)
 
         parser.parse_args(self.argv[2:], namespace=self)
@@ -75,35 +77,28 @@ class MMIOCommand(BaseCommand):
             return True
         return False
 
-
     def list_bars(self):
-        self.mmio_.list_MMIO_BARs()
-
+        self._mmio.list_MMIO_BARs()
 
     def dump_bar(self):
-        self.logger.log( "[CHIPSEC] Dumping {} MMIO space..".format(self.bar_name) )
-        self.mmio_.dump_MMIO_BAR(self.bar_name.upper())
-
+        self.logger.log("[CHIPSEC] Dumping {} MMIO space..".format(self.bar_name))
+        self._mmio.dump_MMIO_BAR(self.bar_name.upper())
 
     def read_bar(self):
         bar = self.bar_name.upper()
-        reg = self.mmio_.read_MMIO_BAR_reg(bar, self.offset, self.width)
-        self.logger.log( "[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, reg) )
-
+        reg = self._mmio.read_MMIO_BAR_reg(bar, self.offset, self.width)
+        self.logger.log("[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, reg))
 
     def write_bar(self):
         bar = self.bar_name.upper()
-        self.logger.log( "[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, self.value) )
-        self.mmio_.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width)
-
+        self.logger.log("[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, self.value))
+        self._mmio.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width)
 
     def run(self):
-        self.mmio_ = mmio.MMIO(self.cs)
-
+        self._mmio = mmio.MMIO(self.cs)
         t = time()
-
         self.func()
+        self.logger.log("[CHIPSEC] (mmio) time elapsed {:.3f}".format(time() - t))
 
-        self.logger.log( "[CHIPSEC] (mmio) time elapsed {:.3f}".format(time() -t) )
 
-commands = { 'mmio': MMIOCommand }
+commands = {'mmio': MMIOCommand}
