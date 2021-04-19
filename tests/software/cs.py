@@ -60,10 +60,11 @@ class TestChipsecCs(unittest.TestCase):
         logger.logger().HAL = True
         logger.logger().VERBOSE = True
         logger.logger().set_log_file(self.log_file)
-        _cs.init(platform, pch, True)
-        ret = getattr(_cs, arg.split()[0])()
-        logger.logger().close()
-        log = open(self.log_file, 'rb')
-        self.log = log.read()
-        log.close()
+        try:
+            _cs.init(platform, pch, True)
+            ret = getattr(_cs, arg.split()[0])()
+        finally:
+            logger.logger().close()
+        with open(self.log_file, 'rb') as log:
+            self.log = log.read()
         return ret

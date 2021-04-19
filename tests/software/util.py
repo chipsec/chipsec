@@ -62,11 +62,12 @@ class TestChipsecUtil(unittest.TestCase):
         util.VERBOSE = True
         logger.logger().HAL = True
         logger.logger().set_log_file(self.log_file)
-        err_code = util.main()
-        logger.logger().close()
-        log = open(self.log_file, 'rb')
-        self.log = log.read()
-        log.close()
+        try:
+            err_code = util.main()
+        finally:
+            logger.logger().close()
+        with open(self.log_file, 'rb') as log:
+            self.log = log.read()
         self.assertEqual(err_code, 0)
 
     def _assertLogValue(self, name, value):
