@@ -21,9 +21,13 @@ import tempfile
 import unittest
 try:
     import distro
-    mSystem = distro.linux_distribution
+    mSystem = distro.linux_distribution()
 except:
-    mSystem = platform.dist()
+    if platform.system() == "Windows":
+        # Windows does not have a "distribution"
+        mSystem = None
+    else:
+        mSystem = platform.dist()
 
 
 import chipsec_main
