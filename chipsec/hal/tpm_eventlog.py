@@ -18,7 +18,7 @@ Trusted Platform Module Event Log
 Based on the following specifications:
 
 TCG EFI Platform Specification For TPM Family 1.1 or 1.2
-https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final\_-v15.pdf
+https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
 
 TCG PC Client Specific Implementation Specification for Conventional BIOS", version 1.21
 https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientImplementation_1-21_1_00.pdf
