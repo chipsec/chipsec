@@ -1,0 +1,222 @@
+name: Run tests
+
+on: [push, pull_request]
+
+jobs:
+  build-linux-km:
+    name: Linux kernel module
+    strategy:
+      matrix:
+        distro:
+          - {name: "alpine", tag: "3.13", variant: "-lts"}
+          - {name: "alpine", tag: "3.12", variant: "-lts"}
+          - {name: "alpine", tag: "3.11", variant: "-lts"}
+          - {name: "alpine", tag: "3.10", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.9", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.8", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.7", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.7", variant: "-hardened"}
+          - {name: "alpine", tag: "3.6", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.6", variant: "-hardened"}
+          - {name: "alpine", tag: "3.5", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.5", variant: "-grsec"}
+          - {name: "alpine", tag: "3.4", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.4", variant: "-grsec"}
+          - {name: "alpine", tag: "3.3", variant: "-vanilla"}
+          - {name: "alpine", tag: "3.3", variant: "-grsec"}
+          - {name: "archlinux", tag: "latest"}
+          - {name: "archlinux", tag: "latest", variant: "-lts"}
+          - {name: "archlinux", tag: "latest", variant: "-zen"}
+          - {name: "centos", tag: "7"}
+          #- {name: "centos", tag: "8"} # FIXME: yum could not find nasm?
+          - {name: "debian", tag: "10"}
+          - {name: "debian", tag: "9"}
+          - {name: "debian", tag: "8"}
+          - {name: "ubuntu", tag: "20.10"}
+          - {name: "ubuntu", tag: "20.04"}
+          - {name: "ubuntu", tag: "18.04"}
+          - {name: "ubuntu", tag: "16.04"}
+    runs-on: ubuntu-20.04
+    container:
+      image: docker://docker.io/library/${{ matrix.distro.name }}:${{ matrix.distro.tag }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Alpine dependencies
+      if: matrix.distro.name == 'alpine'
+      run: |
+        apk --no-cache --update add linux${{ matrix.distro.variant }} linux${{ matrix.distro.variant }}-dev nasm
+
+        # DKMS is not yet packaged in Alpine
+        apk --no-cache --update add bash gcc git make
+        git clone --depth=1 --branch=v2.8.4 https://github.com/dell/dkms /opt/dkms
+        make -C /opt/dkms install
+
+    - name: Install Arch Linux dependencies
+      if: matrix.distro.name == 'archlinux'
+      run: |
+        pacman -Syu --noconfirm dkms linux${{ matrix.distro.variant }}-headers nasm
+
+    - name: Install CentOS dependencies
+      if: matrix.distro.name == 'centos'
+      run: |
+        yum install -y --enablerepo=extras epel-release
+        yum install -y dkms kernel kernel-devel nasm
+
+    - name: Install Debian dependencies
+      if: matrix.distro.name == 'debian'
+      run: |
+        apt-get update -q
+        apt-get install -qqy dkms nasm
+
+    - name: Install Ubuntu dependencies
+      if: matrix.distro.name == 'ubuntu'
+      run: |
+        apt-get update -q
+        apt-get install -qqy dkms linux-headers-generic nasm
+
+    - name: Compute packaged kernel version
+      id: versions
+      run: |
+        KERNEL_VER=''
+        if [ "${{ matrix.distro.name }}" = alpine ] ; then
+            KERNEL_VER="$(apk info --contents "linux${{ matrix.distro.variant }}-dev" | sed -n 's:^lib/modules/\([^/][^/]*\)/.*:\1:p' | head -n 1)"
+        elif [ "${{ matrix.distro.name }}" = archlinux ] ; then
+            KERNEL_VER="$(pacman -Qql "linux${{ matrix.distro.variant }}-headers" | sed -n 's:^/usr/lib/modules/\([^/]\+\)/.*:\1:p' | head -n 1)"
+        elif [ "${{ matrix.distro.name }}" = centos ] ; then
+            KERNEL_VER="$(LANG=C rpm -qi kernel-devel | sed -n 's/^Source RPM *: kernel-\(.*\).src.rpm$/\1.x86_64/p' | tail -n 1)"
+        elif [ "${{ matrix.distro.name }}" = debian ] ; then
+            KERNEL_VER="$(LANG=C dpkg --status linux-headers-amd64 | sed -n 's/^Depends: linux-headers-\(.*\)/\1/p' | head -n 1)"
+        elif [ "${{ matrix.distro.name }}" = ubuntu ] ; then
+            KERNEL_VER="$(LANG=C dpkg --status linux-headers-generic | sed -n 's/^Depends: linux-headers-\(.*\)/\1/p' | head -n 1)"
+        fi
+        if [ -z "${KERNEL_VER}" ] ; then
+            echo >&2 "Error: no kernel package found"
+            exit 1
+        fi
+        echo "Found packaged kernel ${KERNEL_VER}"
+        echo "KERNEL_VER=${KERNEL_VER}" >> "$GITHUB_ENV"
+
+        CHIPSEC_MODULE_VER="$(cat chipsec/VERSION)"
+        echo "CHIPSEC_MODULE_VER=${CHIPSEC_MODULE_VER}" >> "$GITHUB_ENV"
+
+        echo "::set-output name=kernel::${KERNEL_VER}"
+        echo "::set-output name=chipsec::${CHIPSEC_MODULE_VER}"
+        echo "::set-output name=uname_m::$(uname -m)"
+
+    - name: Build Linux driver with DKMS for ${{ steps.versions.outputs.kernel }}
+      run: |
+        echo "Building chipsec ${CHIPSEC_MODULE_VER} for Linux kernel ${KERNEL_VER}"
+        dkms add drivers/linux
+        dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
+
+    - name: Show dkms status
+      run: dkms status
+
+    - name: Show modinfo on the kernel module
+      id: modinfo
+      run: |
+        MODULE="$(ls -1 "/var/lib/dkms/chipsec/${CHIPSEC_MODULE_VER}/${KERNEL_VER}/$(uname -m)/module/chipsec.ko"* | head -n1)"
+        echo "::set-output name=module_path::${MODULE}"
+        modinfo "${MODULE}"
+
+    - name: Upload Linux driver from ${{ steps.modinfo.outputs.module_path }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: chipsec-${{ steps.versions.outputs.chipsec }}.${{ matrix.distro.name }}-${{ matrix.distro.tag }}${{ matrix.distro.variant }}-${{ steps.versions.outputs.kernel }}.${{ steps.versions.outputs.uname_m }}
+        path: ${{ steps.modinfo.outputs.module_path }}
+        if-no-files-found: error
+
+  windows-driver:
+    name: Windows driver
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        python:
+          - 3.9
+          - 3.8
+          - 3.7
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+
+    - name: Install dependencies
+      shell: bash
+      run: pip install pywin32
+
+    - name: Build Windows driver
+      shell: bash
+      run: python setup.py build_ext -i
+
+    - name: Upload Windows driver
+      uses: actions/upload-artifact@v2
+      with:
+        name: drivers_win7_x64__from_py${{ matrix.python }}
+        path: drivers/win7/x64
+        if-no-files-found: error
+
+    - name: Run Python tests
+      shell: bash
+      run: python setup.py test
+
+  ubuntu-test:
+    name: Test on Ubuntu
+    strategy:
+      matrix:
+        versions:
+          - {ubuntu: 20.04, python: 3.9}
+          - {ubuntu: 20.04, python: 3.8}
+          - {ubuntu: 20.04, python: 3.7}
+          - {ubuntu: 20.04, python: 2.7}
+
+          - {ubuntu: 18.04, python: 3.7}
+          - {ubuntu: 18.04, python: 2.7}
+
+          - {ubuntu: 16.04, python: 3.7}
+          - {ubuntu: 18.04, python: 2.7}
+    runs-on: ubuntu-${{ matrix.versions.ubuntu }}
+
+    steps:
+    - name: Set up Python ${{ matrix.versions.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.versions.python }}
+
+    - uses: actions/checkout@v2
+
+    - name: Patch chipsec_main to return true even when some module failed
+      run: |
+        sed 's/^        return modules_failed$/        return 0/' -i chipsec_main.py
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -qqy dkms nasm
+        pip install distro
+
+    - name: Build the driver with Python
+      run: python setup.py build_ext -i
+
+    - name: Build the driver with DKMS
+      run: |
+        KERNEL_VER="$(uname -r)"
+        CHIPSEC_MODULE_VER="$(cat chipsec/VERSION)"
+        echo "Building chipsec ${CHIPSEC_MODULE_VER} for Linux kernel ${KERNEL_VER}"
+        sudo dkms add drivers/linux
+        sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
+
+    - name: Run Python tests
+      run: python setup.py test
+
+    - name: Install chipsec
+      run: sudo python setup.py install
+
+    - name: Run chipsec_main
+      run: sudo chipsec_main --ignore_platform
