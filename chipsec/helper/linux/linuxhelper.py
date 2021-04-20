@@ -778,7 +778,7 @@ class LinuxHelper(Helper):
             guid = 0
             attr = 0
         else:
-            data = buffer[base:base +new_size].tostring()
+            data = buffer[base:base +new_size].tobytes()
             attr = struct.unpack( "I", buffer[8:12])[0]
         return (off, buf, hdr, data, guid, attr)
 
