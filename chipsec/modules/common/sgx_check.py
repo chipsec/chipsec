@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -224,24 +224,24 @@ class sgx_check(BaseModule):
                     self.logger.log_failed( "Mcheck marked PRMRR address as invalid" )
                     self.res = ModuleResult.FAILED
                 self.logger.log("[*]  Verifying if PRMR mask register is locked")
-                self.logger.log("[*]      PRMRR mask lock: 0x%u" % prmrr_mask_lock)
+                self.logger.log("[*]      PRMRR mask lock: 0x{:X}".format(prmrr_mask_lock))
                 if prmrr_locked:
                     self.logger.log_good( "PRMRR MASK register is locked" )
                 else:
                     self.logger.log_failed( "PRMRR MASK register is not locked" )
                     self.res = ModuleResult.FAILED
                 if check_uncore_vals:
-                    self.logger.log("[*]  PRMRR uncore base address: 0x%012X" % prmrr_uncore_base)
-                    self.logger.log("[*]  PRMRR uncore mask address: 0x%012X" % prmrr_uncore_mask)
+                    self.logger.log("[*]  PRMRR uncore base address: 0x{:012X}".format(prmrr_uncore_base))
+                    self.logger.log("[*]  PRMRR uncore mask address: 0x{:012X}".format(prmrr_uncore_mask))
                     self.logger.log("[*]  Verifying PRMR uncore address are valid")
-                    self.logger.log("[*]      PRMRR uncore mask valid: 0x%u" % prmrr_uncore_mask_vld)
+                    self.logger.log("[*]      PRMRR uncore mask valid: 0x{:X}".format(prmrr_uncore_mask_vld))
                     if prmrr_uncore_mask_vld == 0x1:
                         self.logger.log_good( "Mcheck marked uncore PRMRR address as valid" )
                     else:
                         self.logger.log_failed( "Mcheck marked uncore PRMRR address as invalid" )
                         self.res = ModuleResult.FAILED
                     self.logger.log("[*]  Verifying if PRMR uncore mask register is locked")
-                    self.logger.log("[*]      PRMRR uncore mask lock: 0x%u" % prmrr_uncore_mask_lock)
+                    self.logger.log("[*]      PRMRR uncore mask lock: 0x{:X}".format(prmrr_uncore_mask_lock))
                     if prmrr_uncore_mask_lock == 0x1:
                         self.logger.log_good( "PMRR uncore MASK register is locked" )
                     else:
