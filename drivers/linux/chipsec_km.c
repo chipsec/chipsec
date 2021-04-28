@@ -90,11 +90,6 @@ module_param(a2,ulong,0); //a2 is addr of phys_mem_access_prot function
 /// Char we show before each debug print
 const char program_name[] = "chipsec";
 
-// read kernel symbols from the /proc
-#define KALLSYMS_PATH "/proc/kallsyms"
-#define BUFF_SIZE 128
-char read_buf[BUFF_SIZE] = {0};
-
 // list of allocated memory
 struct allocated_mem_list allocated_mem_list;
 
@@ -1742,77 +1737,80 @@ static struct miscdevice chipsec_dev = {
 /*
  * 0ld dog never die:
  * https://gist.githubusercontent.com/GoldenOak/a8cd563d671af04a3d387d198aa3ecf8/raw/8dcc90dbbf9b9ffd65cc2c03f1cd48445b84c2b6/obtain_syscall_table_by_proc.c
-*/
+ *
+ * Using kernel_read directly was disabled in Linux 5.10 with commit
+ * https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=4d03e3cc59828c82ee89ea6e27a2f3cdf95aaadf
+ * because /proc/kallsyms does not implement ->f_op->read_iter.
+ */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0) && LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
 
 unsigned long chipsec_lookup_name(const char *name)
 {
-	char *file_name                       = KALLSYMS_PATH;
-	int i                                 = 0;         /* Read Index */
-	struct file *proc_ksyms               = NULL;      /* struct file the '/proc/kallsyms' or '/proc/ksyms' */
-	char *sct_addr_str                    = NULL;      /* buffer for save sct addr as str */
-	char proc_ksyms_entry[BUFF_SIZE]  = {0};       /* buffer for each line at file */
-	unsigned long* res                    = NULL;
-	unsigned long ret;
-	char *proc_ksyms_entry_ptr            = NULL;
-	int read                              = 0;
+	unsigned int i = 0, first_space_idx = 0, second_space_idx = 0; /* Read Index and indexes of spaces */
+	struct file *proc_ksyms = NULL;
+	loff_t pos = 0;
+	unsigned long ret = 0;
+	ssize_t read = 0;
 	int err = 0;
-	mm_segment_t oldfs;
+	const size_t name_len = strlen(name);
 
+	/*
+	 * Buffer for each line of kallsyms file.
+	 * The symbol names are limited to KSYM_NAME_LEN=128. When Linux is
+	 * compiled with clang's Control Flow Integrity, there are large symbols
+	 * such as
+	 * __typeid__ZTSFvPvP15ieee80211_local11set_key_cmdP21ieee80211_sub_if_dataP13ieee80211_staP18ieee80211_key_confE_global_addr
+	 * which lead to a line with 142 characters.
+	 * Some use a buffer which can hold 256 characters, to be safe.
+	 */
+	char proc_ksyms_entry[256] = {0};
 
-	/* Allocate place for sct addr as str */
-	if((sct_addr_str = (char*)kmalloc(BUFF_SIZE * sizeof(char), GFP_KERNEL)) == NULL)
-		goto CLEAN_UP;
+	proc_ksyms = filp_open("/proc/kallsyms", O_RDONLY, 0);
+	if (proc_ksyms == NULL)
+		goto cleanup;
 
-	proc_ksyms = filp_open(file_name, O_RDONLY, 0);
-       	if (proc_ksyms == NULL)
-		goto CLEAN_UP;
-
-	oldfs = get_fs();
-	set_fs (KERNEL_DS);
-	read = proc_ksyms->f_op->read(proc_ksyms, proc_ksyms_entry + i, 1, &(proc_ksyms->f_pos));
-	set_fs(oldfs);
-
-	while( read == 1)
-	{
-		if(proc_ksyms_entry[i] == '\n' || i == BUFF_SIZE)
-		{
-			if(strstr(proc_ksyms_entry, name) != NULL)
-			{
-
-                        	printk(KERN_INFO"[+] %s: %s", name, proc_ksyms_entry);
-
-				proc_ksyms_entry_ptr = proc_ksyms_entry;
-				strncpy(sct_addr_str, strsep(&proc_ksyms_entry_ptr, " "), BUFF_SIZE);
-				if((res = kmalloc(sizeof(unsigned long), GFP_KERNEL)) == NULL)
-					goto CLEAN_UP;
-				err = kstrtoul(sct_addr_str, 16, res);
-				goto CLEAN_UP;
+	read = kernel_read(proc_ksyms, proc_ksyms_entry + i, 1, &pos);
+	while (read == 1) {
+		if (proc_ksyms_entry[i] == '\n' || (size_t)i == sizeof(proc_ksyms_entry) - 1) {
+			/* Prefix-match the name with the 3rd field of the line, after the second space */
+			if (second_space_idx > 0 &&
+			    second_space_idx + 1 + name_len <= sizeof(proc_ksyms_entry) &&
+			    !strncmp(proc_ksyms_entry + second_space_idx + 1, name, name_len)) {
+				printk(KERN_INFO "[+] %s: %.*s\n", name,
+				       i, proc_ksyms_entry);
+				/* Decode the address, which is in hexadecimal */
+				proc_ksyms_entry[first_space_idx] = '\0';
+				err = kstrtoul(proc_ksyms_entry, 16, &ret);
+				if (err) {
+					printk(KERN_ERR "kstrtoul returned error %d while parsing %.*s\n",
+					       err, first_space_idx, proc_ksyms_entry);
+					ret = 0;
+					goto cleanup;
+				}
+				goto cleanup;
 			}
 
-			i = -1;
-			memset(proc_ksyms_entry, 0, BUFF_SIZE);
+			i = 0;
+			first_space_idx = 0;
+			second_space_idx = 0;
+			memset(proc_ksyms_entry, 0, sizeof(proc_ksyms_entry));
+		} else {
+			if (proc_ksyms_entry[i] == ' ') {
+				if (first_space_idx == 0) {
+					first_space_idx = i;
+				} else if (second_space_idx == 0) {
+					second_space_idx = i;
+				}
+			}
+			i++;
 		}
-
-		i++;
-
-	oldfs = get_fs();
-	set_fs (KERNEL_DS);
-	read = proc_ksyms->f_op->read(proc_ksyms, proc_ksyms_entry + i, 1, &(proc_ksyms->f_pos));
-	set_fs(oldfs);	
+		read = kernel_read(proc_ksyms, proc_ksyms_entry + i, 1, &pos);
 	}
+	printk(KERN_ERR "symbol not found in kallsyms: %s\n", name);
 
-
-CLEAN_UP:
-	if(res != NULL){
-		ret = *res;
-		kfree(res);
-	}
-	if(sct_addr_str != NULL)
-		kfree(sct_addr_str);
-	if(proc_ksyms != NULL)
+cleanup:
+	if (proc_ksyms != NULL)
 		filp_close(proc_ksyms, 0);
-
 	return ret;
 }
 
