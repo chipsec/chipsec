@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_4xxLP">
 <!--
-XML configuration file for the 400 series LP (U/H) PCH
+  XML configuration file for the 400 series LP (U/H) PCH
 -->
 
   <!-- #################################### -->
@@ -34,7 +34,7 @@ XML configuration file for the 400 series LP (U/H) PCH
   <mmio>
     <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
-    <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
+    <bar name="PWRMBASE" register="PWRMBASE"  base_field="BA"  size="0x1000"    fixed_address="0xFE000000" desc="Power Management Register Range"/>
     <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
   </mmio>
 
@@ -89,7 +89,7 @@ XML configuration file for the 400 series LP (U/H) PCH
     </register>
     <register name="PWRMBASE" type="pcicfg" device="PMC" offset="0x10" size="4" desc="PM Base Address">
       <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
-      <field name="BA"    bit="13" size="19" desc="Base Address"/>
+      <field name="BA"    bit="12" size="19" desc="Base Address"/>
     </register>
     <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration A">
       <field name="ESPI_SMI_LOCK"    bit="8" size="1" desc="ESPI_SMI_LOCK"/>
