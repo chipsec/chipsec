@@ -851,29 +851,32 @@ class Chipset:
 
     def read_register_all(self, reg_name, cpu_thread=0):
         values = []
+        bus_data = self.get_register_bus(reg_name)
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
-        bus_data = self.get_register_bus( reg_name )
         if RegisterType.MSR == rtype:
             topology = self.cpu.get_cpu_topology()
-            if 'scope' not in reg or reg['scope'] == "core":
-                cores = topology['cores']
-                threads_to_use = [cores[p][0] for p in cores]
-            # else is package
-            else:
+            if 'scope' in reg.keys() and reg['scope'] == "packages":
                 packages = topology['packages']
                 threads_to_use = [packages[p][0] for p in packages]
-            if logger().DEBUG:
-                logger().log("Reading MSR {} with scope {} on cpus {}".format(
-                    reg['msr'], reg['scope'], threads_to_use ))
+            elif 'scope' in reg.keys() and reg['scope'] == "cores":
+                cores = topology['cores']
+                threads_to_use = [cores[p][0] for p in cores]
+            else: # Default to threads
+                threads_to_use = range(self.helper.get_threads_count())
             for t in threads_to_use:
-                (eax, edx) = self.msr.read_msr(t, int(reg['msr'], 16))
-                values.append( (edx << 32) | eax )
-            return(values)
-        if not bus_data:
-            return [self.read_register( reg_name, cpu_thread )]
-        for index in range( len(bus_data) ):
-            values.append( self.read_register( reg_name, cpu_thread, index) )
+                values.append(self.read_register(reg_name, t))
+        elif RegisterType.MMIO == rtype:
+            addresses = self.mmio.get_MMIO_BAR_base_addresses(reg['bar'])
+            for addr in addresses:
+                if addr['base'] == 0:
+                    raise CSReadError("MMIO Bar ({}) base address is 0".format(reg['bar']))
+                values.append(self.mmio.read_MMIO_reg(addr['base'], int(reg['offset'], 16), int(reg['size'], 16)))
+        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG] and bus_data:
+            for index in range(len(bus_data)):
+                values.append(self.read_register(reg_name, cpu_thread, index))
+        else:
+            values.append(self.read_register( reg_name, cpu_thread))
         return values
 
     def write_register(self, reg_name, reg_value, cpu_thread=0, bus_index=0):
@@ -918,26 +921,77 @@ class Chipset:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
     def write_register_all(self, reg_name, reg_values, cpu_thread=0):
-        bus_data = self.get_register_bus( reg_name )
-        if not bus_data:
-            return False
-        values = len(bus_data)
-        if len(reg_values) == values:
-            for index in range( values ):
-                self.write_register( reg_name, reg_values[index], cpu_thread, index )
-            return True
+        reg = self.get_register_def(reg_name)
+        rtype = reg['type']
+        bus_data = self.get_register_bus(reg_name)
+        ret = False
+        if RegisterType.MSR == rtype:
+            topology = self.cpu.get_cpu_topology()
+            if 'scope' in reg.keys() and reg['scope'] == "packages":
+                packages = topology['packages']
+                threads_to_use = [packages[p][0] for p in packages]
+            elif 'scope' in reg.keys() and reg['scope'] == "cores":
+                cores = topology['cores']
+                threads_to_use = [cores[p][0] for p in cores]
+            else: # Default to threads
+                threads_to_use = range(self.helper.get_threads_count())
+            if len(reg_values) == len(threads_to_use):
+                value = 0
+                for t in threads_to_use:
+                    self.write_register(reg_name, reg_values[value], t)
+                    value += 1
+                ret = True
+        elif RegisterType.MMIO == rtype:
+            addresses = self.mmio.get_MMIO_BAR_base_addresses(reg['bar'])
+            if len(reg_values) == len(addresses):
+                index = 0
+                for addr in addresses:
+                    if addr['base'] == 0:
+                        raise CSReadError("MMIO Bar ({}) base address is 0".format(reg['bar']))
+                    self.mmio.write_MMIO_reg(addr['base'], int(reg['offset'], 16), reg_values[index], int(reg['size'], 16))
+                    index += 1
+                ret = True
+        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG] and bus_data:
+            values = len(bus_data)
+            if len(reg_values) == values:
+                for index in range(values):
+                    self.write_register(reg_name, reg_values[index], cpu_thread, index)
+                ret = True
         else:
-            return False
+            if len(reg_values) == 1:
+                self.write_register(reg_name, reg_values[0])
+                ret = True
+        return ret
 
     def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
-        bus_data = self.get_register_bus( reg_name )
-        if not bus_data:
-            return False
-        values = len(bus_data)
-        for index in range( values ):
-            self.write_register( reg_name, reg_value, cpu_thread, index )
+        reg = self.get_register_def(reg_name)
+        rtype = reg['type']
+        bus_data = self.get_register_bus(reg_name)
+        if RegisterType.MSR == rtype:
+            topology = self.cpu.get_cpu_topology()
+            if 'scope' in reg.keys() and reg['scope'] == "packages":
+                packages = topology['packages']
+                threads_to_use = [packages[p][0] for p in packages]
+            elif 'scope' in reg.keys() and reg['scope'] == "cores":
+                cores = topology['cores']
+                threads_to_use = [cores[p][0] for p in cores]
+            else: # Default to threads
+                threads_to_use = range(self.helper.get_threads_count())
+            for t in threads_to_use:
+                self.write_register(reg_name, reg_value, t)
+        elif RegisterType.MMIO == rtype:
+            addresses = self.mmio.get_MMIO_BAR_base_addresses(reg['bar'])
+            for addr in addresses:
+                if addr['base'] == 0:
+                    raise CSReadError("MMIO Bar ({}) base address is 0".format(reg['bar']))
+                self.mmio.write_MMIO_reg(addr['base'], int(reg['offset'], 16), reg_value, int(reg['size'], 16))
+        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG] and bus_data:
+            values = len(bus_data)
+            for index in range(values):
+                self.write_register(reg_name, reg_value, cpu_thread, index)
+        else:
+            self.write_register(reg_name, reg_value)
         return True
-
     def read_register_dict( self, reg_name):
         reg_value = self.read_register(reg_name)
         reg_def = self.get_register_def(reg_name)
