@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -69,11 +69,23 @@ class IOBAR(hal_base.HALBase):
             bar_reg   = bar['register']
             if 'base_field' in bar:
                 base_field = bar['base_field']
-                base = self.cs.read_register_field( bar_reg, base_field, preserve_field_position=True )
-                empty_base = self.cs.get_register_field_mask( bar_reg, base_field, preserve_field_position=True )
+                try:
+                    base = self.cs.read_register_field( bar_reg, base_field, preserve_field_position=True )
+                except Exception:
+                    base = 0
+                try:
+                    empty_base = self.cs.get_register_field_mask( bar_reg, base_field, preserve_field_position=True )
+                except Exception:
+                    empty_base = 0
             else:
-                base = self.cs.read_register( bar_reg )
-                empty_base = self.cs.get_register_field_mask( bar_reg, preserve_field_position=True )
+                try:
+                    base = self.cs.read_register( bar_reg )
+                except Exception:
+                    base = 0
+                try:
+                    empty_base = self.cs.get_register_field_mask( bar_reg, preserve_field_position=True )
+                except Exception:
+                    empty_base = 0
         else:
             # this method is not preferred
             base = self.cs.pci.read_word( int(bar['bus'], 16), int(bar['dev'], 16), int(bar['fun'], 16), int(bar['reg'], 16) )

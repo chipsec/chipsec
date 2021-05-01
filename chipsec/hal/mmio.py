@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -177,11 +177,16 @@ class MMIO(hal_base.HALBase):
 
         if 'register' in bar:
             bar_reg = bar['register']
-            reg_def = self.cs.get_register_def(bar_reg)
             if 'base_field' in bar:
                 base_field = bar['base_field']
-                base = self.cs.read_register_field(bar_reg, base_field, preserve_field_position=True)
-                reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve_field_position=True)
+                try:
+                    base = self.cs.read_register_field(bar_reg, base_field, preserve)
+                except Exception:
+                    base = 0
+                try:
+                    reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve)
+                except:
+                    reg_mask = 0xFFFF
             else:
                 base = self.cs.read_register(bar_reg)
                 reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=True)
@@ -200,7 +205,7 @@ class MMIO(hal_base.HALBase):
             else:
                 base = self.cs.pci.read_dword( b, d, f, r )
 
-        if 'fixed_address' in bar and base == reg_mask:
+        if 'fixed_address' in bar and (base == reg_mask or base == 0):
             base = int(bar['fixed_address'], 16)
             if self.logger.HAL: self.logger.log('[mmio] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
         if 'mask' in bar: base &= int(bar['mask'], 16)
@@ -208,6 +213,8 @@ class MMIO(hal_base.HALBase):
         size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
         if self.logger.HAL: self.logger.log( '[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size) )
+        if base == 0:
+            raise Exception
         return base, size
 
     #

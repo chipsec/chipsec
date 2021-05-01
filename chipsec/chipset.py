@@ -820,6 +820,15 @@ class Chipset:
             elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
             elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
         elif RegisterType.MMCFG == rtype:
+            try:
+                b = int(reg['bus'], 16)
+                d = int(reg['dev'], 16)
+                f = int(reg['fun'], 16)
+            except:
+                raise CSReadError("Key Error, configuration for {} does not exist".format(reg_name))
+            if do_check and CONSISTENCY_CHECKING:
+                if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
+                    raise CSReadError("PCI Device is not available ({}:{}.{})".format(b, d, f))
             reg_value = self.mmio.read_mmcfg_reg(int(reg['bus'], 16), int(reg['dev'], 16), int(reg['fun'], 16), int(reg['offset'], 16), int(reg['size'], 16) )
         elif RegisterType.MMIO == rtype:
             if self.mmio.get_MMIO_BAR_base_address(reg['bar'])[0] != 0:
@@ -991,10 +1000,13 @@ class Chipset:
         return self.get_register_field_all(reg_name, reg_values, field_name, preserve_field_position)
 
     def write_register_field( self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
-        reg_value = self.read_register(reg_name, cpu_thread)
-        reg_value_new = self.set_register_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
-        #logger().log("set register {} (0x{:x}) field {} = 0x{:x} ==> 0x{:x}".format(reg_name, reg_value, field_name, field_value, reg_value_new))
-        return self.write_register(reg_name, reg_value_new, cpu_thread)
+        try:
+            reg_value = self.read_register(reg_name, cpu_thread)
+            reg_value_new = self.set_register_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
+            ret = self.write_register(reg_name, reg_value_new, cpu_thread)
+        except:
+            ret = None
+        return ret
 
     def write_register_field_all(self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0):
         reg_values = self.read_register_all(reg_name, cpu_thread)
@@ -1118,11 +1130,13 @@ class Chipset:
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
-        reg_data = self.read_register(reg, cpu_thread, bus_index)
-        reg_data = self.set_register_field(reg, reg_data, field, lock_value, True)
         if bus_index is None:
+            reg_data = self.read_register(reg, cpu_thread, 0)
+            reg_data = self.set_register_field(reg, reg_data, field, lock_value)
             return self.write_register_all_single(reg, reg_data, cpu_thread)
         else:
+            reg_data = self.read_register(reg, cpu_thread, bus_index)
+            reg_data = self.set_register_field(reg, reg_data, field, lock_value)
             return self.write_register(reg, reg_data, cpu_thread, bus_index)
 
     def is_lock_defined(self, lock_name):
@@ -1135,6 +1149,13 @@ class Chipset:
 
     def get_lock_desc(self, lock_name):
         return self.Cfg.LOCKS[lock_name]['desc']
+
+    def get_lock_type(self, lock_name):
+        if 'type' in self.Cfg.LOCKS[lock_name].keys():
+            mtype = self.Cfg.LOCKS[lock_name]['type']
+        else:
+            mtype = "RW/L"
+        return mtype
 
     def get_lock_list(self):
         return self.Cfg.LOCKS.keys()
