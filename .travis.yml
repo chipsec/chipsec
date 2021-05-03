@@ -7,17 +7,17 @@ install:
 
 matrix:
   include:
-    - name: "Trusty - python2"
+    - name: "Bionic - python2"
       os: linux
-      dist: trusty
+      dist: bionic
       python: 2.7
     - name: "Xenial  - python2"
       os: linux
       dist: xenial
       python: 2.7
-    - name: "Trusty  - python3"
+    - name: "Focal  - python3"
       os: linux
-      dist: trusty
+      dist: focal
       python: 3.5
     - name: "Xenial  - python3"
       os: linux
