@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -181,6 +181,11 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                     sec.DataOffset = len(sec.Image) - 1
             else:
                 guid0, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size])
+            if not isinstance(guid0, bytes):
+                logger().warn("GUID is corrupted")
+                logger().warn("Creating fake GUID of 0000-00-00-0000000")
+                guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
             sec.Guid = UUID(bytes_le=guid0)
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
