@@ -45,6 +45,7 @@ import win32api, win32process, win32security, win32file, win32serviceutil
 
 from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.helper.basehelper import Helper
+from chipsec.defines import stringtobytes
 from chipsec.logger import logger
 import chipsec.file
 from chipsec.hal.uefi_common import EFI_GUID_STR
@@ -218,15 +219,13 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 
         if efi_var_name not in variables.keys():
             variables[efi_var_name] = []
-        #                                off, buf,         hdr,         data,         guid,                                                                                 attrs
+        #                                off, buf,         hdr,         data,         guid,                           attrs
         variables[efi_var_name].append( (off, efi_var_buf, efi_var_hdr, efi_var_data, EFI_GUID_STR(efi_var_hdr.guid), efi_var_hdr.Attributes) )
 
         if 0 == efi_var_hdr.Size: break
         off = next_var_offset
 
     return variables
-#    return ( start, next_var_offset, efi_var_buf, efi_var_hdr, efi_var_name, efi_var_data, guid_str(efi_var_hdr.guid0, efi_var_hdr.guid1, efi_var_hdr.guid2, efi_var_hdr.guid3), efi_var_hdr.Attributes )
-
 
 
 def _handle_winerror(fn, msg, hr):
@@ -566,7 +565,7 @@ class Win32Helper(Helper):
             value = struct.unpack( '=B', out_buf )[0]
         else: value = 0
         return value
-        
+
     def write_mmio_reg( self, phys_address, size, value ):
         if   size == 8: buf = struct.pack( '=Q', value )
         elif size == 4: buf = struct.pack( '=I', value&0xFFFFFFFF )
@@ -752,7 +751,8 @@ class Win32Helper(Helper):
         var     = bytes(0) if data     is None else data
         var_len = len(var) if datasize is None else datasize
         if isinstance(attrs, (str, bytes)):
-            attrs = struct.unpack("Q", "{message:\x00<{fill}}".format(message=attrs, fill=8)[:8])[0]
+            attrs_data = "{message:\x00<{fill}}".format(message=attrs, fill=8)[:8]
+            attrs = struct.unpack("Q", stringtobytes(attrs_data))[0]
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
@@ -760,7 +760,7 @@ class Win32Helper(Helper):
                 ntsts = self.SetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), var, var_len )
         else:
             if self.SetFirmwareEnvironmentVariableEx is not None:
-                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len, attrs) )
+                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, attrs=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len, attrs) )
                 ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), var, var_len, attrs )
         if 0 != ntsts:
             status = 0 # EFI_SUCCESS

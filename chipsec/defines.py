@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -159,6 +159,12 @@ def bytestostring(mbytes):
         return mbytes.decode("latin_1")
     else:
         return mbytes
+
+def stringtobytes(mstr):
+    if isinstance(mstr, str):
+        return mstr.encode("latin_1")
+    else:
+        return mstr
 
 def pack1(value, size):
     """Shortcut to pack a single value into a string based on its size."""
