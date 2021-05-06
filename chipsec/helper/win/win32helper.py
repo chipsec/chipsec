@@ -543,7 +543,7 @@ class Win32Helper(Helper):
 
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         in_length = length + 12
-        in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + buf
+        in_buf = struct.pack( '3I', phys_address_hi, phys_address_lo, length ) + stringtobytes(buf)
         out_buf = self._ioctl( IOCTL_WRITE_PHYSMEM, in_buf, 4 )
         return out_buf
 
