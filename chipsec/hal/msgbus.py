@@ -89,6 +89,7 @@ class MsgBus(hal_base.HALBase):
     def __init__(self, cs):
         super(MsgBus, self).__init__(cs)
         self.helper = cs.helper
+        self.p2sbHide = None
 
     def __MB_MESSAGE_MCR(self, port, reg, opcode):
         mcr = 0x0
@@ -109,11 +110,19 @@ class MsgBus(hal_base.HALBase):
         return mdr
 
     def __hide_p2sb(self, hide):
+        if not self.p2sbHide:
+            if self.cs.register_has_field("P2SBC", "HIDE"):
+                self.p2sbHide = {'reg': 'P2SBC', 'field': 'HIDE'}
+            elif self.cs.register_has_field("P2SB_HIDE", "HIDE"):
+                self.p2sbHide = {'reg': 'P2SB_HIDE', 'field': 'HIDE'}
+            else:
+                raise self.cs.RegisterNotFoundError ('RegisterNotFound: P2SBC')
+
         hidden = not self.cs.is_device_enabled('P2SBC')
         if hide:
-            self.cs.write_register_field('P2SB_HIDE', 'HIDE', 1)
+            self.cs.write_register_field(self.p2sbHide['reg'], self.p2sbHide['field'], 1)
         else:
-            self.cs.write_register_field('P2SB_HIDE', 'HIDE', 0)
+            self.cs.write_register_field(self.p2sbHide['reg'], self.p2sbHide['field'], 0)
         return hidden
 
     #
