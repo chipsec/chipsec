@@ -359,8 +359,8 @@ class MMIO(hal_base.HALBase):
     def read_mmcfg_reg(self, bus, dev, fun, off, size):
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address()
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        value = self.read_MMIO_reg(pciexbar, pciexbar_off, 4, pciexbar_sz)
-        if self.logger.HAL: self.logger.log( "[mmcfg] reading {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(bus, dev, fun, off, pciexbar_off, value) )
+        value = self.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
+        if self.logger.HAL: self.logger.log( "[mmcfg] reading {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(bus, dev, fun, off, pciexbar_off, value))
         if 1 == size:
             return (value & 0xFF)
         elif 2 == size:
@@ -370,6 +370,12 @@ class MMIO(hal_base.HALBase):
     def write_mmcfg_reg(self, bus, dev, fun, off, size, value):
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address()
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
-        self.write_MMIO_reg(pciexbar, pciexbar_off, (value&0xFFFFFFFF), 4, pciexbar_sz)
-        if self.logger.HAL: self.logger.log( "[mmcfg] writing {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(bus, dev, fun, off, pciexbar_off, value) )
+        if size == 1:
+            mask = 0xFF
+        elif size == 2:
+            mask = 0xFFFF
+        else:
+            mask = 0xFFFFFFFF
+        self.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size, pciexbar_sz)
+        if self.logger.HAL: self.logger.log( "[mmcfg] writing {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(bus, dev, fun, off, pciexbar_off, value))
         return True
