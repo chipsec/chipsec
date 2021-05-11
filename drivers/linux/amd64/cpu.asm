@@ -401,7 +401,7 @@ __swsmi__:
 
     push rsi
     push rbx
-   
+
     ; setting up GPR (arguments) to SMI handler call
     ; notes:
     ;   RAX will get partially overwritten (AX) by _smi_code_data (which is passed in RCX)
@@ -409,7 +409,6 @@ __swsmi__:
     mov rax, rdx ; rax_value
     mov ax, cx   ; smi_code_data
     mov rdx, r10 ; rdx_value
-    mov dx, 0B2h ; 0xB2
 
     mov rbx, r8  ; rbx_value
     mov rcx, r9  ; rcx_value
@@ -420,10 +419,15 @@ __swsmi__:
     mov rdi, r12 ; rdi_value
 
     ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
-    out dx, ax
+    out 0B2h, ax
 
+    mov r12, rdi ; rdi_value
     pop rdi
 
+    mov r9, rcx  ; rcx_value
+    mov r8, rbx  ; rbx_value
+    mov r10, rdx ; rdx_value
+    mov rdx, rax ; rax_value
     call setctx
 
     pop rbx
