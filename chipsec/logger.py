@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -216,17 +216,16 @@ class Logger:
     def set_always_flush( self, val ):
         self.ALWAYS_FLUSH = val
 
-    def log( self, text, level=pyLogging.INFO):
+    def log(self, text, level=pyLogging.INFO):
         """Sends plain text to logging."""
         if self.Results.get_current() is not None:
             self.Results.get_current().add_output(text)
-        if self.LOG_TO_FILE: self._save_to_log_file( text )
-        else:
-            if self.rootLogger:
-                self.rootLogger.log(level, text)
-                if self.ALWAYS_FLUSH: sys.stdout.flush()
-            else:
-                print(text)
+        try:
+            self.rootLogger.log(level, text)
+            if self.ALWAYS_FLUSH:
+                self.flush()
+        except BaseException:
+            print(text)
 
     def error( self, text ):
         """Logs an Error message"""
