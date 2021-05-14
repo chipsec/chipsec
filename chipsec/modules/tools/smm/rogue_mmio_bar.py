@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2017-2020, Intel Security
+# Copyright (c) 2017-2021, Intel Security
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -46,7 +46,7 @@ from chipsec.hal.interrupts import Interrupts
 FLUSH_OUTPUT_AFTER_SMI = False
 
 _FILL_VALUE_QWORD   = 0x0000000000000000
-_MEM_FILL_VALUE     = chr(0xFF)
+_MEM_FILL_VALUE     = b"\xFF"
 MAX_MMIO_RANGE_SIZE = 0x10000 # 0x400000
 
 SMI_CODE_LIMIT      = 0x0
