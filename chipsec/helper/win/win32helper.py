@@ -45,7 +45,7 @@ import win32api, win32process, win32security, win32file, win32serviceutil
 
 from chipsec.helper.oshelper import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
 from chipsec.helper.basehelper import Helper
-from chipsec.defines import stringtobytes
+from chipsec.defines import stringtobytes, bytestostring
 from chipsec.logger import logger
 import chipsec.file
 from chipsec.hal.uefi_common import EFI_GUID_STR
@@ -751,7 +751,7 @@ class Win32Helper(Helper):
         var     = bytes(0) if data     is None else data
         var_len = len(var) if datasize is None else datasize
         if isinstance(attrs, (str, bytes)):
-            attrs_data = "{message:\x00<{fill}}".format(message=attrs, fill=8)[:8]
+            attrs_data = "{message:\x00<{fill}}".format(message=bytestostring(attrs), fill=8)[:8]
             attrs = struct.unpack("Q", stringtobytes(attrs_data))[0]
 
         if attrs is None:
