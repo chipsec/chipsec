@@ -52,7 +52,7 @@ XML configuration file for
     <bar name="TCO_BAR"  bus="0" dev="0x1F" fun="4" reg="0x50" width="4" mask="0xFFE0"             size="0x1000" desc="TCO Base Register Register Range"/>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
     <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" desc="Power Management Register Range"/>
-    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" desc="Sideband Register Access BAR"/>
+    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" desc="Sideband Register Access BAR" fixed_address="0xFD000000"/>
   </mmio>
 
   <!-- #################################### -->
