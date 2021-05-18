@@ -176,6 +176,7 @@ class MMIO(hal_base.HALBase):
         if bar is None or bar == {}: return -1, -1
 
         if 'register' in bar:
+            preserve = True
             bar_reg = bar['register']
             if 'base_field' in bar:
                 base_field = bar['base_field']
@@ -189,7 +190,7 @@ class MMIO(hal_base.HALBase):
                     reg_mask = 0xFFFF
             else:
                 base = self.cs.read_register(bar_reg)
-                reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=True)
+                reg_mask = self.cs.get_register_field_mask(bar_reg, preserve)
         else:
             # this method is not preferred (less flexible)
             b = int(bar['bus'], 16)
