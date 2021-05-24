@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <configuration platform="PCH_5XXH">
 <!--
+XML configuration file for 5XXH series pch
+-->
+<!--
 CHIPSEC: Platform Security Assessment Framework
 Copyright (c) 2021, Intel Corporation
 
@@ -25,7 +28,6 @@ chipsec@intel.com
 XML configuration file for Intel 500 Series Chipset Family Platform Controller Hub
 
 http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
-https://cdrdv2.intel.com/v1/dl/getContent/636174
 
 * Intel 500 Series Chipset Family Platform Controller Hub Datasheet
 -->
@@ -36,11 +38,13 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
   <!--                                      -->
   <!-- #################################### -->
   <info>
-    <!-- Desktop/Workstation -->
-    <sku did="0x4388" name="5xx" code="PCH_5XXH" longname="5xx PCH 4388" />
+    <!-- Desktop/Workstation 4384 - 438F -->
+    <sku did="0x4388" name="5xx" code="PCH_5XXH" longname="5xx PCH H510" />
     <sku did="0x4387" name="5xx" code="PCH_5XXH" longname="5xx PCH B560" />
     <sku did="0x4386" name="5xx" code="PCH_5XXH" longname="5xx PCH H570" />
     <sku did="0x4385" name="5xx" code="PCH_5XXH" longname="5xx PCH Z590" />
+    <sku did="0x4384" name="5xx" code="PCH_5XXH" longname="5xx PCH Q570" />
+    <sku did="0x438F" name="5xx" code="PCH_5XXH" longname="5xx PCH W580" />
   </info>
 
   <!-- #################################### -->
@@ -49,7 +53,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="eSPI"     bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x4388,0x4387,0x4386,0x4385" />
+    <device name="eSPI"     bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x4388,0x4387,0x4386,0x4385,438F" />
     <device name="P2SBC"    bus="0" dev="0x1F" fun="1" vid="0x8086" did="0x43A0" />
     <device name="PMC"      bus="0" dev="0x1F" fun="2" vid="0x8086" did="0x43A1" />
     <device name="HDA"      bus="0" dev="0x1F" fun="3" vid="0x8086" did="0x43C8,0x43C9,0x43CA,0x43CB,0x43CC,0x43CD,0x43CE,0x43CF" />
@@ -109,7 +113,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
     </register>
     <register name="P2SBC" type="pcicfg" device="P2SBC" offset="0xE0" size="4" desc="P2SB Configuration Register">
       <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR"/>
-	    <field name="MASKLOCK" bit="17" size="1" desc="P2SB Mask Lock"/>
+      <field name="MASKLOCK" bit="17" size="1" desc="P2SB Mask Lock"/>
       <field name="SBILOCK" bit="31" size="1" desc="SBI register Lock"/>
     </register>
     <register name="P2SB_HIDE"  type="pcicfg" device="P2SBC" offset="0xE1" size="1" desc="P2SB Configuration Register hide-unhide">
@@ -121,18 +125,14 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
       <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
       <field name="BA"    bit="13" size="19" desc="Base Address"/>
     </register>
-    <register name="ABASEHIGH" type="pcicfg" device="PMC" offset="0x14" desc="Base Address High" >
-      <field name="BA_HIGH" bit="0" size="32" desc="Base Address High" />
-    </register>
-    <register name="ABASE" type="pcicfg" device="PMC" offset="0x20" size="4" desc="ACPI Base Address">
+    <register name="ABASE" type="pcicfg" device="PMC" offset="0x20" size="8" desc="ACPI Base Address">
       <field name="STYPE" bit="0" size="1" desc="Space Type (default 0)"/>
-      <field name="BA"    bit="7" size="25" desc="Base Address"/>
+      <field name="BA"    bit="7" size="57" desc="Base Address"/>
     </register>
-    <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration 1" />
+    <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration 1"/>
     <register name="GEN_PMCON_2" type="mmio" bar="PWRMBASE" offset="0x1024" size="4" desc="General PM Configuration B">
-      <field name="SMI_LOCK"        bit="4"  size="1" />
+      <field name="SMI_LOCK"     bit="4"     size="1" />
     </register>
-
     <register name="ACTL" type="mmio" bar="PWRMBASE" offset="0x1BD8" size="4" desc="ACPI Control">
       <field name="SCIS"    bit="0" size="3" desc="SCI IRQ Select"/>
       <field name="EN"      bit="7" size="1" desc="ACPI Enable"/>
@@ -194,7 +194,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- PCH SPIBAR registers -->
-    <register name="BFPR" type="mmio" bar="SPIBAR" offset="0x00" size="4" desc="BIOS Flash Primary Region Register">
+    <register name="BFPR" type="mmio" bar="SPIBAR" offset="0x00" size="4" desc="BIOS Flash Primary Region Register (= FREG1)">
       <field name="PRB"  bit="0"  size="15" desc="BIOS Flash Primary Region Base"/>
       <field name="PRL"  bit="16" size="15" desc="BIOS Flash Primary Region Limit"/>
     </register>
@@ -239,34 +239,34 @@ https://cdrdv2.intel.com/v1/dl/getContent/636174
       <field name="RL" bit="16" size="15" desc="Region Limit"/>
     </register>
     <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
-      <field name="PRB" bit="0"  size="15"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected range base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read protection enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected range limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write protection enabled"/>
     </register>
     <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
-      <field name="PRB" bit="0"  size="15"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected range base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read protection enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected range limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write protection enabled"/>
     </register>
     <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
-      <field name="PRB" bit="0"  size="15"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected range base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read protection enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected range limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write protection enabled"/>
     </register>
     <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
-      <field name="PRB" bit="0"  size="15"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected range base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read protection enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected range limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write protection enabled"/>
     </register>
     <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
-      <field name="PRB" bit="0"  size="15"/>
-      <field name="RPE" bit="15" size="1"/>
-      <field name="PRL" bit="16" size="15"/>
-      <field name="WPE" bit="31" size="1"/>
+      <field name="PRB" bit="0"  size="15" desc="Protected range base"/>
+      <field name="RPE" bit="15" size="1"  desc="Read protection enabled"/>
+      <field name="PRL" bit="16" size="15" desc="Protected range limit"/>
+      <field name="WPE" bit="31" size="1"  desc="Write protection enabled"/>
     </register>
     <register name="FDOC" type="mmio" bar="SPIBAR" offset="0xB4" size="4" desc="Flash Descriptor Observability Control Register">
       <field name="FDSI" bit="2"  size="10" desc="Flash Descriptor Section Index"/>
