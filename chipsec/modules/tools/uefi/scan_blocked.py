@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -146,15 +146,22 @@ class scan_blocked(BaseModule):
             self.spi = SPI( self.cs )
             (base, limit, freg) = self.spi.get_SPI_region( BIOS )
             image_size = limit + 1 - base
-            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
-            self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
+            self.logger.log( "[*] Dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
+            self.logger.log( "[*] This may take a few minutes (instead, use 'chipsec_util spi dump')..." )
             self.spi.read_spi_to_file( base, image_size, image_file )
         elif len(module_argv) > 0:
             # Use provided firmware image
             image_file = module_argv[0]
-            self.logger.log( "[*] reading FW image from file: {}".format(image_file) )
+            self.logger.log( "[*] Reading FW image from file: {}".format(image_file) )
 
         self.image = read_file( image_file )
+
+        if not self.image:
+            if len(module_argv) == 0:
+                self.logger.log_important('Unable to read SPI and generate FW image. Access may be blocked.')
+            self.logger.error('No FW image file to read.  Exiting!')
+            self.res = ModuleResult.ERROR
+            return self.res
 
         # Load JSON config with blocked EFI modules
         if len(module_argv) > 1: self.cfg_name = module_argv[1]
@@ -162,4 +169,5 @@ class scan_blocked(BaseModule):
         with open(cfg_pth, 'r') as blockedlist_json:
             self.efi_blockedlist = json.load( blockedlist_json )
 
-        return self.check_blockedlist()
+        self.res = self.check_blockedlist()
+        return self.res
