@@ -8,19 +8,23 @@ Original CHIPSEC author is Yuriy Bulygin (@c7zero).
 Current core developers:
 * Sara Balltori (@Sae86)
 * Aaron Frinzell (@frinzell)
-* Ignacio Hernandez (@iherna2)
-* Brent Holtsclaw (@BrentHoltsclaw)
 * Nathaniel Mitchell (@npmitche)
+
+Current Contributors:
+* Erik Bjorge (@ErikBjorge)
+* Brent Holtsclaw (@BrentHoltsclaw)
+* Moonjung Kyung (@Mjkyung)
+* Kevin Sun (@kevinsun49)
 
 Previous core developers:
 * Nick Armour (@NicholasArmour)
 * Oleksandr Bazhaniuk (@abazhaniuk)
-* Erik Bjorge (@ErikBjorge)
 * Yuriy Bulygin (@c7zero)
 * Jeff Forristal
 * Andrew Furtak (@andrew-furtak)
 * Oscar A Gomez (@oscaragomez)
 * Mikhail Gorobets (@mikhail-gorobets)
+* Ignacio Hernandez (@iherna2)
 * Kevin Jacobs (@kevinjacobs)
 * John Loucaides (@johnloucaides)
 * Thiébaud Weksteen (@tweksteen)
