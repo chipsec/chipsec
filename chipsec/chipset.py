@@ -924,7 +924,8 @@ class Chipset:
             elif RegisterType.MMCFG == rtype:
                 self.mmio.write_mmcfg_reg(b, d, f, o, size, reg_value )
         elif RegisterType.MMIO == rtype:
-            self.mmio.write_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), reg_value, int(reg['size'], 16), bus)        elif RegisterType.MSR == rtype:
+            self.mmio.write_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), reg_value, int(reg['size'], 16), bus)
+        elif RegisterType.MSR == rtype:
             eax = (reg_value & 0xFFFFFFFF)
             edx = ((reg_value >> 32) & 0xFFFFFFFF)
             self.msr.write_msr( cpu_thread, int(reg['msr'], 16), eax, edx )
