@@ -745,6 +745,10 @@ class Chipset:
 #   reads/writes some control field (by name)
 # is_all_value
 #   checks if all elements in a list equal a given value
+# register_is_msr
+#   Returns True if register is type 'msr'
+# register_is_pci
+#   Returns True if register is type 'pcicfg' or 'mmcfg'
 #
 ##################################################################################
 
@@ -1111,6 +1115,20 @@ class Chipset:
             return (self.Cfg.CONTROLS[ control_name ] is not None)
         except KeyError:
             return False
+
+    def register_is_msr(self, reg_name):
+        if self.is_register_defined(reg_name):
+            if self.Cfg.REGISTERS[reg_name]['type'].lower() == 'msr':
+                return True
+        return False
+
+    def register_is_pci(self, reg_name):
+        if self.is_register_defined(reg_name):
+            reg_def = self.Cfg.REGISTERS[reg_name]
+            if (reg_def['type'].lower() == 'pcicfg') or (reg_def['type'].lower() == 'mmcfg'):
+                return True
+        return False
+
 
     def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus_index=None):
         lock = self.Cfg.LOCKS[lock_name]
