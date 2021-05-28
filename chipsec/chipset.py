@@ -46,7 +46,6 @@ import traceback
 QUIET_PCI_ENUM = True
 LOAD_COMMON = True
 CONSISTENCY_CHECKING = False
-MISSING_DID = False
 
 class RegisterType:
     PCICFG    = 'pcicfg'
@@ -632,7 +631,7 @@ class Chipset:
 
         # store entries dev_fun_vid_did = [list of bus entries]
         for enum_dev in enum_devices:
-            cfg_str = "_".join("{:02X}".format(i) for i in enum_dev[1:5])
+            cfg_str = "{:0>2}_{:0>2}_{:04X}_{:04X}".format(*enum_dev[1:5])
             if cfg_str in self.Cfg.BUS.keys():
                 self.Cfg.BUS[cfg_str].append(enum_dev[0])
             else:
@@ -643,8 +642,10 @@ class Chipset:
             device_data = self.Cfg.CONFIG_PCI[config_device]
             xml_vid  = device_data.get( 'vid', None )
             xml_did  = device_data.get( 'did', None )
+            # if the vid and did are present within the configuration file attempt to replace generic name with configuration name
             if xml_vid and xml_did:
                 did_list = []
+                # gather list of device id: device id may have single entry, multiple entries, end in "X", or specified by a range "-"
                 if xml_did:
                     for tdid in xml_did.split(','):
                         if tdid[-1].upper() == "X":
@@ -656,16 +657,11 @@ class Chipset:
                                 did_list.append(rdv_value)
                         else:
                             did_list.append(int(tdid, 16))
-                for did in did_list:
-                    cfg_str = "{:0>2}_{:0>2}_{}_{}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'],device_data['fun'],device_data['vid'][2:],device_data['did'][2:])
+                # If there is a match between the configuration entry and generic entry, replace the name with the configuration entry
+                for tdid in did_list:
+                    cfg_str = "{:0>2}_{:0>2}_{}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
                     if cfg_str in self.Cfg.BUS.keys():
                         self.Cfg.BUS[config_device] = self.Cfg.BUS.pop(cfg_str)
-            elif xml_vid and MISSING_DID:
-                cfg_str = "{:0>2}_{:0>2}_{}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'],device_data['fun'],device_data['vid'][2:])
-                key = (k for k in self.Cfg.BUS.keys() if cfg_str in k)
-                for k in key:
-                    if int(device_data['bus'], 16) in self.Cfg.BUS[k]:
-                        self.Cfg.BUS[config_device] = self.Cfg.BUS.pop(k)
                         break
 
     #
