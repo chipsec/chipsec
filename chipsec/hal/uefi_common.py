@@ -968,7 +968,7 @@ EFI_VENDOR_TABLE_SIZE   = struct.calcsize(EFI_VENDOR_TABLE_FORMAT)
 class EFI_VENDOR_TABLE( namedtuple('EFI_VENDOR_TABLE', 'VendorGuid VendorTable') ):
     __slots__ = ()
     def VendorGuid(self):
-        return EFI_GUID_STR(self.VendorGuid)
+        return EFI_GUID_STR(self[0])
 
 class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
