@@ -1322,6 +1322,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
                 if (namelen > (data_size - sizeof(uint32_t) * 13))
 		{
+			kfree(kbuf);
 			printk(KERN_ALERT "[chipsec] ERROR: INVALID SIZE PARAMETER (namelen %u too big for data_size %lu)\n", namelen, data_size);
 			return -EINVAL;
 		}
