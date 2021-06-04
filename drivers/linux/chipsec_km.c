@@ -323,17 +323,13 @@ void *my_xlate_dev_mem_ptr(unsigned long phys)
 
 	// Not RAM, so it is some device (can be bios for example)
 	addr = (void __force *)IOREMAP_NO_CACHE(start, PAGE_SIZE);
-    
-    if (addr)
-    {
-        addr = (void *)((unsigned long)addr | (phys & ~PAGE_MASK));
-        return addr;
-    }
-    
-    addr = (void __force *)ioremap_prot(start, PAGE_SIZE,0);
-    
+
+	if (!addr)
+		addr = (void __force *)ioremap_prot(start, PAGE_SIZE,0);
+
 	if (addr)
 		addr = (void *)((unsigned long)addr | (phys & ~PAGE_MASK));
+
 	return addr;
 }
 
