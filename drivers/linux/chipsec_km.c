@@ -37,7 +37,6 @@ chipsec@intel.com
 #endif
 
 
-#define _GNU_SOURCE
 #define CHIPSEC_VER_ 		1
 #define CHIPSEC_VER_MINOR	2
 
