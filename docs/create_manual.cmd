@@ -1,6 +1,6 @@
 @echo off
-if "%1" == "" goto usage
-set TARGET=%1
+
+for %%I in ("%~dp0\..") do set "TARGET=%%~fI"
 
 echo "************************ BUILDING DOCUMENTATION ******************************"
 
@@ -28,10 +28,10 @@ del .\modules\chipsec_main.rst
 del .\modules\chipsec_util.rst
 
 :: create chipsec-manual.pdf
-if "%2" == "pdf" call sphinx-build -b pdf -T . %TARGET%
-if "%2" == "html" call sphinx-build -b html -T . %TARGET%\manual
+if "%1" == "pdf" call sphinx-build -b pdf -T . %TARGET%
+if "%1" == "html" call sphinx-build -b html -T . %TARGET%\manual
 :: create chipsec-manual.pdf and html pages
-if "%2" == "" (
+if "%1" == "" (
 call sphinx-build -b pdf -T . %TARGET%
 call sphinx-build -b html -T . %TARGET%\manual
 )

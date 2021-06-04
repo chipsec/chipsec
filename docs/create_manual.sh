@@ -1,9 +1,6 @@
 #!/bin/bash
 
-if [$1 == ""]; then 
-    echo "Usage: create_manual.cmd [CHIPSEC_PATH] [type] type - pdf, html or empty (both)"
-    exit 0; fi
-TARGET="$1"
+TARGET=$(readlink -f $(dirname $0)/..)
 
 echo "************************ BUILDING DOCUMENTATION ******************************"
 
@@ -31,9 +28,9 @@ rm ./modules/chipsec_main.rst
 rm ./modules/chipsec_util.rst
 
 # create chipsec-manual.pdf or html manual
-if [[ "$2" == "pdf" ]]; then 
+if [[ "$1" == "pdf" ]]; then 
     sphinx-build -b pdf -T . $TARGET
-elif [[ "$2" == "html" ]]; then
+elif [[ "$1" == "html" ]]; then
     sphinx-build -b html -T . $TARGET/manual
     touch $TARGET/manual/.nojekyll
 # create chipsec-manual.pdf and html pages
