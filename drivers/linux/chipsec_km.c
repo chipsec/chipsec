@@ -1890,36 +1890,32 @@ static int chipsec_page_is_ram(unsigned long pagenr)
 
 #endif
 
-int find_symbols(void) 
+int find_symbols(void)
 {
 	//Older kernels don't have kallsyms_lookup_name. Use FMEM method (pass from run.sh)
-	#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
-		printk("Chipsec warning: Using function addresses provided by run.sh");
-		guess_page_is_ram=(void *)a1;
-		dbgprint ("set guess_page_is_ram: %p\n",guess_page_is_ram);
-		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
-		guess_phys_mem_access_prot=(void *)a2;
-		dbgprint ("set guess_phys_mem_acess_prot: %p\n",guess_phys_mem_access_prot);
-		#else
-		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
-		#endif
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
+	printk("Chipsec warning: Using function addresses provided by run.sh");
+	guess_page_is_ram=(void *)a1;
+	dbgprint ("set guess_page_is_ram: %p",guess_page_is_ram);
+	#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
+	guess_phys_mem_access_prot=(void *)a2;
+	dbgprint ("set guess_phys_mem_acess_prot: %p",guess_phys_mem_access_prot);
 	#else
-		guess_page_is_ram = (void *)chipsec_lookup_name("page_is_ram");
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
-		static_call_update(chipsec_page_is_ram_sc, guess_page_is_ram);
-#endif	
-		#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
-		guess_phys_mem_access_prot = (void *)chipsec_lookup_name("phys_mem_access_prot");
-		#else
-		guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
-		#endif
+	guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
+	#endif
+#else
+	guess_page_is_ram = (void *)chipsec_lookup_name("page_is_ram");
+	#ifdef __HAVE_PHYS_MEM_ACCESS_PROT
+	guess_phys_mem_access_prot = (void *)chipsec_lookup_name("phys_mem_access_prot");
+	#else
+	guess_phys_mem_access_prot = &cs_phys_mem_access_prot;
+	#endif
+#endif
+	if (guess_page_is_ram == 0 || guess_phys_mem_access_prot == 0) {
+		printk("Chipsec find_symbols failed. Unloading module");
+		return -1;
+	}
 
-		if(guess_page_is_ram == 0 || guess_phys_mem_access_prot == 0)
-		{
-			printk("Chipsec find_symbols failed. Unloading module");
-			return -1;
-		}
-	#endif 
 	return 0;
 }
 
