@@ -55,28 +55,17 @@ MODULE_LICENSE("GPL");
 #include <linux/static_call.h>
 #include <linux/kprobes.h>
 
-static struct kprobe kp = {
-    .symbol_name = "kallsyms_lookup_name",
-    .flags = KPROBE_FLAG_DISABLED
-};
-
-unsigned long kallsyms_lookup_name_c(const char *name)
-{
-	return 0;
-}
-int page_is_ram_c(unsigned long pagenr)
-{
-	return 0;
-}
-
-DEFINE_STATIC_CALL(chipsec_lookup_name_sc, kallsyms_lookup_name_c);
-DEFINE_STATIC_CALL(chipsec_page_is_ram_sc, page_is_ram_c);
+static unsigned long chipsec_lookup_name_scinit(const char *name);
+static int chipsec_page_is_ram_scinit(unsigned long pagenr);
+DEFINE_STATIC_CALL(chipsec_lookup_name_sc, chipsec_lookup_name_scinit);
+DEFINE_STATIC_CALL(chipsec_page_is_ram_sc, chipsec_page_is_ram_scinit);
 #endif
 
-// function page_is_ram is not exported 
+// function page_is_ram is not exported
 // for modules, but is available in kallsyms.
 // So we need determine this address using dirty tricks
-int (*guess_page_is_ram)(unsigned long pagenr);
+static int (*guess_page_is_ram)(unsigned long pagenr);
+static int chipsec_page_is_ram(unsigned long pagenr);
 // same with phys_mem_accesss_prot
 pgprot_t (*guess_phys_mem_access_prot)(struct file *file, unsigned long pfn,
 				       unsigned long size, pgprot_t vma_prot);
@@ -321,13 +310,9 @@ void *my_xlate_dev_mem_ptr(unsigned long phys)
 	void *addr=NULL;
 	unsigned long start = phys & PAGE_MASK;
 	unsigned long pfn = PFN_DOWN(phys);
-	
-        /* If page is RAM, we can use __va. Otherwise ioremap and unmap. */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
-	if (static_call(chipsec_page_is_ram_sc)(start >> PAGE_SHIFT)) {
-#else
-	if ((*guess_page_is_ram)(start >> PAGE_SHIFT)) {
-#endif
+
+	/* If page is RAM, we can use __va. Otherwise ioremap and unmap. */
+	if (chipsec_page_is_ram(start >> PAGE_SHIFT)) {
 		if (PageHighMem(pfn_to_page(pfn))) {
                 /* The buffer does not have a mapping.  Map it! */
 		        addr = kmap(pfn_to_page(pfn));	
@@ -358,17 +343,12 @@ void my_unxlate_dev_mem_ptr(unsigned long phys,void *addr)
 {
 	unsigned long pfn = PFN_DOWN(phys); //get page number
 
-	/* If page is RAM, check for highmem, and eventualy do nothing. 
+	/* If page is RAM, check for highmem, and eventualy do nothing.
 	   Otherwise need to iounmap. */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
-	if (static_call(chipsec_page_is_ram_sc)((phys >> PAGE_SHIFT))) {
-#else
-	if ((*guess_page_is_ram)(phys >> PAGE_SHIFT)) {
-#endif
-	
-		if (PageHighMem(pfn_to_page(pfn))) { 
-		/* Need to kunmap kmaped memory*/
-		        kunmap(pfn_to_page(pfn));
+	if (chipsec_page_is_ram((phys >> PAGE_SHIFT))) {
+		if (PageHighMem(pfn_to_page(pfn))) {
+			/* Need to kunmap kmaped memory*/
+			kunmap(pfn_to_page(pfn));
 			dbgprint ("unxlate: Highmem detected");
 		}
 		return;
@@ -1743,7 +1723,7 @@ static struct miscdevice chipsec_dev = {
  */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,4,0) && LINUX_VERSION_CODE < KERNEL_VERSION(5,10,0)
 
-unsigned long chipsec_lookup_name(const char *name)
+static unsigned long chipsec_lookup_name(const char *name)
 {
 	unsigned int i = 0, first_space_idx = 0, second_space_idx = 0; /* Read Index and indexes of spaces */
 	struct file *proc_ksyms = NULL;
@@ -1815,30 +1795,65 @@ cleanup:
 
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
 
-unsigned long chipsec_lookup_name(const char *name)
-{
-	int kp_ret = 0;
-	unsigned long kaddr = 0;
+static struct kprobe kp = {
+	.symbol_name = "kallsyms_lookup_name",
+	.flags = KPROBE_FLAG_DISABLED
+};
 
-	unsigned long (*chipsec_lookup_name_fp)(const char *name);
+static unsigned long chipsec_lookup_name_scinit(const char *name)
+{
+	unsigned long (*chipsec_lookup_name_fp)(const char *name) = NULL;
+	int kp_ret;
 
 	kp_ret = register_kprobe(&kp);
-	if(kp_ret < 0){
-		printk(KERN_ALERT"register_kprobe failed, returned %d\n", kp_ret);
-		return kp_ret;
+	if (kp_ret < 0) {
+		dbgprint("register_kprobe failed, returned %d", kp_ret);
+	} else {
+		chipsec_lookup_name_fp = (unsigned long (*) (const char *name))kp.addr;
+		unregister_kprobe(&kp);
 	}
 
-	chipsec_lookup_name_fp = (unsigned long (*) (const char *name))kp.addr;
-	unregister_kprobe(&kp);
+	if (chipsec_lookup_name_fp) {
+		static_call_update(chipsec_lookup_name_sc, chipsec_lookup_name_fp);
+		return static_call(chipsec_lookup_name_sc)(name);
+	}
 
-	static_call_update(chipsec_lookup_name_sc, chipsec_lookup_name_fp);
-	kaddr = static_call(chipsec_lookup_name_sc)(name);
-
-	return kaddr;
+	return 0;
 }
+
+static unsigned long chipsec_lookup_name(const char *name)
+{
+	return static_call(chipsec_lookup_name_sc)(name);
+}
+
 #else
-unsigned long chipsec_lookup_name(const char *name){
+
+static unsigned long chipsec_lookup_name(const char *name){
 	return kallsyms_lookup_name(name);
+}
+
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,10,0)
+
+static int chipsec_page_is_ram_scinit(unsigned long pagenr)
+{
+	BUG_ON(guess_page_is_ram == NULL);	// resolved in find_symbols()
+	static_call_update(chipsec_page_is_ram_sc, guess_page_is_ram);
+	return static_call(chipsec_page_is_ram_sc)(pagenr);
+}
+
+static int chipsec_page_is_ram(unsigned long pagenr)
+{
+	return static_call(chipsec_page_is_ram_sc)(pagenr);
+}
+
+#else
+
+static int chipsec_page_is_ram(unsigned long pagenr)
+{
+	BUG_ON(guess_page_is_ram == NULL);	// resolved in find_symbols()
+	return guess_page_is_ram(pagenr);
 }
 
 #endif
