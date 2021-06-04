@@ -811,7 +811,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -841,7 +841,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -902,7 +902,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -923,7 +923,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -942,7 +942,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -961,7 +961,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 
 	}
@@ -987,10 +987,10 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
 		ptr[4] = val;	
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
-			return -EFAULT;	
+			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -1015,7 +1015,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
     
@@ -1069,8 +1069,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
-#endif	
+		return -EOPNOTSUPP;
+#endif
 	}
     
     	case IOCTL_SWSMI:
@@ -1089,10 +1089,10 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		__swsmi__((SMI_CTX *)ptr);
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
-			return -EFAULT;	
+			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
     
@@ -1130,7 +1130,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
         }
 	case IOCTL_WRCR:
@@ -1167,7 +1167,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-        return -EFAULT;
+        return -EOPNOTSUPP;
 #endif
         }
     case IOCTL_ALLOC_PHYSMEM:
@@ -1296,7 +1296,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		if (data_size < sizeof(uint32_t) * 13)
 		{
 			printk(KERN_ALERT "[chipsec] ERROR: INVALID SIZE PARAMETER\n");
-			return -EFAULT;
+			return -EINVAL;
 		}
         
 		// allocate that much memory
@@ -1304,7 +1304,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		if (!kbuf)
 		{
 			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-			return -EFAULT;
+			return -ENOMEM;
 		}
 
 		// fill kbuf with user's buffer
@@ -1323,7 +1323,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
                 if (namelen > (data_size - sizeof(uint32_t) * 13))
 		{
 			printk(KERN_ALERT "[chipsec] ERROR: INVALID SIZE PARAMETER (namelen %u too big for data_size %lu)\n", namelen, data_size);
-			return -EFAULT;
+			return -EINVAL;
 		}
         
         // if name overflowed, we only work with the part that fit in kbuf
@@ -1332,7 +1332,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         {
             kfree(kbuf);
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-            return -EFAULT;
+            return -ENOMEM;
         }
 
 		for(index=0; index < namelen; index++)
@@ -1409,7 +1409,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         if (data_size < (sizeof(uint32_t) * 14))
         {
             printk(KERN_ALERT "[chipsec] ERROR: INVALID data_size PARAMETER\n");
-            return -EFAULT;
+            return -EINVAL;
         }
         
         // allocate that much memory
@@ -1417,7 +1417,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         if (!kbuf)
         {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-            return -EFAULT;
+            return -ENOMEM;
         }
 
         // fill kbuf with user's buffer
@@ -1440,7 +1440,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         { 
             printk(KERN_ALERT "[chipsec] ERROR: INVALID name PARAMETER (namelen = %u)\n", namelen);
             kfree(kbuf);
-            return -EFAULT;
+            return -EINVAL;
         }
         
         // make sure size that was passed in actually fits
@@ -1448,7 +1448,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         {
             printk(KERN_ALERT "[chipsec] ERROR: INVALID datalen PARAMETER (%u != %lu)\n", datalen, data_size - namelen - sizeof(uint32_t)*14);
             kfree(kbuf);
-            return -EFAULT;
+            return -EINVAL;
         }
         
         // if name overflowed, we only work with the part that fit in kbuf
@@ -1457,7 +1457,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
             kfree(kbuf);
-            return -EFAULT;
+            return -ENOMEM;
         }
 
         for(index=0; index < namelen; index++)
@@ -1602,7 +1602,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		break;
 #else
-		return -EFAULT;
+		return -EOPNOTSUPP;
 #endif
 	}
 
@@ -1678,16 +1678,16 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         }
 
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
-          return -EFAULT;	
+          return -EFAULT;
         break;
 #else
-        return -EFAULT;
+        return -EOPNOTSUPP;
 #endif
     }
 
    
 	default:
-		return -EFAULT;
+		return -EINVAL;
 	}
 	return 0;
 }
