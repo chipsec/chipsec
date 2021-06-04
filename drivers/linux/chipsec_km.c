@@ -1933,7 +1933,7 @@ init_module (void)
 	if (ret)
 	{
 		printk("Chipsec symbol lookup failed\n");
-		return -1;
+		return -EOPNOTSUPP;
 	}
 	ret = misc_register(&chipsec_dev);
 	if (ret)
