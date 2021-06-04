@@ -304,7 +304,7 @@ ReadIOPort(
  *         physical address is mapped
  */
 
-void *my_xlate_dev_mem_ptr(unsigned long phys)
+static void *my_xlate_dev_mem_ptr(unsigned long phys)
 {
 
 	void *addr=NULL;
@@ -335,7 +335,7 @@ void *my_xlate_dev_mem_ptr(unsigned long phys)
 
 // Our own implementation of unxlate_dev_mem_ptr
 // (so we can read highmem and other)
-void my_unxlate_dev_mem_ptr(unsigned long phys,void *addr)
+static void my_unxlate_dev_mem_ptr(unsigned long phys,void *addr)
 {
 	unsigned long pfn = PFN_DOWN(phys); //get page number
 
