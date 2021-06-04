@@ -1805,12 +1805,44 @@ static unsigned long chipsec_lookup_name_scinit(const char *name)
 	unsigned long (*chipsec_lookup_name_fp)(const char *name) = NULL;
 	int kp_ret;
 
+	// try kprobes first, but have a fallback as they might be disabled
 	kp_ret = register_kprobe(&kp);
 	if (kp_ret < 0) {
 		dbgprint("register_kprobe failed, returned %d", kp_ret);
 	} else {
 		chipsec_lookup_name_fp = (unsigned long (*) (const char *name))kp.addr;
 		unregister_kprobe(&kp);
+	}
+
+	// brute force by doing a symbolic search via sprint_symbol
+	if (!chipsec_lookup_name_fp) {
+		char name[KSYM_SYMBOL_LEN];
+		unsigned long start = (unsigned long) sprint_symbol;
+		unsigned long end = start - 32 * 1024;
+		unsigned long addr, offset;
+		char *off_ptr;
+
+		for (addr = start; addr > end; addr--) {
+			if (sprint_symbol(name, addr) <= 0)
+				break;
+			if (!strncmp(name, "0x", 2))
+				break;
+			off_ptr = strchr(name, '+');
+			if (!off_ptr)
+				break;
+			if (sscanf(off_ptr, "+%lx", &offset) != 1)
+				break;
+			addr -= offset;
+			if (off_ptr - name == 20 &&
+			    !strncmp(name, "kallsyms_lookup_name", 20))
+			{
+				chipsec_lookup_name_fp = (void *)addr;
+				break;
+			}
+		}
+
+		if (!chipsec_lookup_name_fp)
+			dbgprint("lookup via sprint_symbol() failed, too");
 	}
 
 	if (chipsec_lookup_name_fp) {
