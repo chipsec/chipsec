@@ -965,10 +965,10 @@ class EFI_BOOT_SERVICES_TABLE( namedtuple('EFI_BOOT_SERVICES_TABLE', 'RaiseTPL R
 EFI_VENDOR_TABLE_FORMAT = '<' + EFI_GUID_FMT + 'Q'
 EFI_VENDOR_TABLE_SIZE   = struct.calcsize(EFI_VENDOR_TABLE_FORMAT)
 
-class EFI_VENDOR_TABLE( namedtuple('EFI_VENDOR_TABLE', 'VendorGuid VendorTable') ):
+class EFI_VENDOR_TABLE( namedtuple('EFI_VENDOR_TABLE', 'VendorGuidData VendorTable') ):
     __slots__ = ()
     def VendorGuid(self):
-        return EFI_GUID_STR(self[0])
+        return EFI_GUID_STR(self.VendorGuidData)
 
 class EFI_CONFIGURATION_TABLE():
     def __init__( self ):
