@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -28,9 +28,8 @@ References:
 The Memory Sinkhole by Christopher Domas: https://www.blackhat.com/docs/us-15/materials/us-15-Domas-The-Memory-Sinkhole-Unleashing-An-x86-Design-Flaw-Allowing-Universal-Privilege-Escalation.pdf (presentation) and https://www.blackhat.com/docs/us-15/materials/us-15-Domas-The-Memory-Sinkhole-Unleashing-An-x86-Design-Flaw-Allowing-Universal-Privilege-Escalation-wp.pdf (whitepaper).
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_SMM
-from chipsec.hal import cpu
-import chipsec.helper.oshelper
+from chipsec.module_common   import BaseModule, ModuleResult, MTAG_SMM
+from chipsec.helper.oshelper import HWAccessViolationError
 
 TAGS = [MTAG_SMM]
 
@@ -42,19 +41,24 @@ class sinkhole(BaseModule):
 
     def is_supported(self):
         # @TODO: Currently this module doesn't work properly on (U)EFI
-        return (self.cs.helper.is_windows() or self.cs.helper.is_linux())
+        if not (self.cs.helper.is_windows() or self.cs.helper.is_linux()):
+            self.logger('Not a supported OS: Windows or Linux')
+            self.res = ModuleResult.NOTAPPLICABLE
+            return False
+        else:
+            return True
 
     def check_LAPIC_SMRR_overlap( self ):
         if not self.cs.is_register_defined( 'IA32_APIC_BASE' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
-            self.logger.error( "Couldn't find definition of required configuration registers" )
+            self.logger.error("Couldn't find definition of required configuration registers")
             return ModuleResult.ERROR
 
         if self.cs.cpu.check_SMRR_supported():
-            self.logger.log_good( "SMRR range protection is supported" )
+            self.logger.log_good("SMRR range protection is supported")
         else:
-            self.logger.log_skipped_check("CPU does not support SMRR range protection of SMRAM")
+            self.logger.log_skipped("CPU does not support SMRR range protection of SMRAM")
             return ModuleResult.SKIPPED
 
         smrr_physbase_msr = self.cs.read_register( 'IA32_SMRR_PHYSBASE', 0 )
@@ -70,28 +74,28 @@ class sinkhole(BaseModule):
         self.logger.log( "[*] Local APIC Base: 0x{:016X}".format(apic_base) )
         self.logger.log( "[*] SMRR Base      : 0x{:016X}".format(smrr_base) )
 
-        self.logger.log( "[*] Attempting to overlap Local APIC page with SMRR region" )
-        self.logger.log( "    writing 0x{:X} to IA32_APIC_BASE[APICBase]..".format(smrrbase) )
+        self.logger.log("[*] Attempting to overlap Local APIC page with SMRR region")
+        self.logger.log( "    Writing 0x{:X} to IA32_APIC_BASE[APICBase]..".format(smrrbase) )
         self.logger.log_important( "NOTE: The system may hang or process may crash when running this test. In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
         try:
             self.cs.write_register_field( 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
             ex = False
-            self.logger.log_bad( "Could modify IA32_APIC_BASE to overlap SMRR" )
-        except chipsec.helper.oshelper.HWAccessViolationError:
+            self.logger.log_bad("Could modify IA32_APIC_BASE to overlap SMRR")
+        except HWAccessViolationError:
             ex = True
-            self.logger.log_good( "Could not modify IA32_APIC_BASE to overlap SMRR" )
+            self.logger.log_good("Could not modify IA32_APIC_BASE to overlap SMRR")
 
         apic_base_msr_new = self.cs.read_register( 'IA32_APIC_BASE', 0 )
-        self.logger.log( "[*] new IA32_APIC_BASE: 0x{:016X}".format(apic_base_msr_new) )
+        self.logger.log( "[*] New IA32_APIC_BASE: 0x{:016X}".format(apic_base_msr_new) )
 
-        if apic_base_msr_new == apic_base_msr and ex:
+        if (apic_base_msr_new == apic_base_msr) and ex:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "CPU does not seem to have SMM memory sinkhole vulnerability" )
+            self.logger.log_passed("CPU does not seem to have SMM memory sinkhole vulnerability")
         else:
             self.cs.write_register( 'IA32_APIC_BASE', apic_base_msr, 0 )
             self.logger.log( "[*] Restored original value 0x{:016X}".format(apic_base_msr) )
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "CPU is succeptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly." )
+            self.logger.log_failed("CPU is susceptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly.")
 
         return res
 
@@ -100,5 +104,6 @@ class sinkhole(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        self.logger.start_test( "x86 SMM Memory Sinkhole" )
-        return self.check_LAPIC_SMRR_overlap()
+        self.logger.start_test("x86 SMM Memory Sinkhole")
+        self.res = self.check_LAPIC_SMRR_overlap()
+        return self.res
