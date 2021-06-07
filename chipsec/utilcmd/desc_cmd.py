@@ -56,7 +56,7 @@ class IDTCommand(BaseCommand):
         else:
             self.logger.log( "[CHIPSEC] Dumping IDT of {:d} CPU threads".format(num_threads) )
             self.cs.msr.IDT_all( 4 )
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() -t) )
+        self.logger.log( "[CHIPSEC] (idt) time elapsed {:.3f}".format(time() -t) )
 
 class GDTCommand(BaseCommand):
     """
@@ -83,7 +83,7 @@ class GDTCommand(BaseCommand):
         else:
             self.logger.log( "[CHIPSEC] Dumping IDT of {:d} CPU threads".format(num_threads) )
             self.cs.msr.GDT_all( 4 )
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() -t) )
+        self.logger.log( "[CHIPSEC] (gdt) time elapsed {:.3f}".format(time() -t) )
 
 class LDTCommand(BaseCommand):
     """
