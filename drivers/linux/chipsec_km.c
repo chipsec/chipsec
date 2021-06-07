@@ -639,6 +639,15 @@ static pgprot_t cs_phys_mem_access_prot(struct file *file, unsigned long pfn,
 }
 #endif
 
+static phys_addr_t virt_2_phys(void *vaddr)
+{
+#if defined(CONFIG_X86) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
+    if (!virt_addr_valid(vaddr))
+	return slow_virt_to_phys(vaddr);
+#endif
+    return virt_to_phys(vaddr);
+}
+
 static const struct vm_operations_struct mmap_mem_ops = {
 #ifdef CONFIG_HAVE_IOREMAP_PROT
 	.access = generic_access_phys
@@ -1070,9 +1079,11 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 				_store_idtr(&pdtr->limit);
 				break; 
 			}
+			default:
+				return -EINVAL;
               	}
 		
-		dt_pa.quadpart = virt_to_phys((void*)dtr.base);
+		dt_pa.quadpart = virt_2_phys((void*)dtr.base);
 		ptr[0] = dtr.limit;
         #ifdef __x86_64__
 		ptr[1] = (uint32_t)(dtr.base >> 32);
