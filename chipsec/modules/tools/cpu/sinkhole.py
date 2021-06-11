@@ -38,29 +38,22 @@ class sinkhole(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
 
-
     def is_supported(self):
         # @TODO: Currently this module doesn't work properly on (U)EFI
         if not (self.cs.helper.is_windows() or self.cs.helper.is_linux()):
             self.logger('Not a supported OS: Windows or Linux')
             self.res = ModuleResult.NOTAPPLICABLE
             return False
+        elif not self.cs.is_register_defined( 'IA32_APIC_BASE' ) or \
+           not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
+           not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
+            self.logger.error("Couldn't find definition of required configuration registers")
+            self.res = ModuleResult.ERROR
+            return False
         else:
             return True
 
     def check_LAPIC_SMRR_overlap( self ):
-        if not self.cs.is_register_defined( 'IA32_APIC_BASE' ) or \
-           not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
-           not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
-            self.logger.error("Couldn't find definition of required configuration registers")
-            return ModuleResult.ERROR
-
-        if self.cs.cpu.check_SMRR_supported():
-            self.logger.log_good("SMRR range protection is supported")
-        else:
-            self.logger.log_skipped("CPU does not support SMRR range protection of SMRAM")
-            return ModuleResult.SKIPPED
-
         smrr_physbase_msr = self.cs.read_register( 'IA32_SMRR_PHYSBASE', 0 )
         apic_base_msr     = self.cs.read_register( 'IA32_APIC_BASE', 0 )
         self.cs.print_register( 'IA32_APIC_BASE', apic_base_msr )
@@ -75,23 +68,23 @@ class sinkhole(BaseModule):
         self.logger.log( "[*] SMRR Base      : 0x{:016X}".format(smrr_base) )
 
         self.logger.log("[*] Attempting to overlap Local APIC page with SMRR region")
-        self.logger.log( "    Writing 0x{:X} to IA32_APIC_BASE[APICBase]..".format(smrrbase) )
+        self.logger.log( "   Writing 0x{:X} to IA32_APIC_BASE[APICBase]..".format(smrrbase) )
         self.logger.log_important( "NOTE: The system may hang or process may crash when running this test. In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
-        try:
-            self.cs.write_register_field( 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
-            ex = False
-            self.logger.log_bad("Could modify IA32_APIC_BASE to overlap SMRR")
-        except HWAccessViolationError:
-            ex = True
-            self.logger.log_good("Could not modify IA32_APIC_BASE to overlap SMRR")
+
+        res = self.cs.write_register_field( 'IA32_APIC_BASE', 'APICBase', smrrbase, preserve_field_position=False, cpu_thread=0 )
+
+        if res is None:
+            self.logger.log_important("Error encountered when attempting to modify IA32_APIC_BASE")
 
         apic_base_msr_new = self.cs.read_register( 'IA32_APIC_BASE', 0 )
         self.logger.log( "[*] New IA32_APIC_BASE: 0x{:016X}".format(apic_base_msr_new) )
 
-        if (apic_base_msr_new == apic_base_msr) and ex:
+        if apic_base_msr_new == apic_base_msr:
             res = ModuleResult.PASSED
+            self.logger.log_good("Could not modify IA32_APIC_BASE to overlap SMRR")
             self.logger.log_passed("CPU does not seem to have SMM memory sinkhole vulnerability")
         else:
+            self.logger.log_bad("Could modify IA32_APIC_BASE to overlap SMRR")
             self.cs.write_register( 'IA32_APIC_BASE', apic_base_msr, 0 )
             self.logger.log( "[*] Restored original value 0x{:016X}".format(apic_base_msr) )
             res = ModuleResult.FAILED
@@ -105,5 +98,11 @@ class sinkhole(BaseModule):
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
         self.logger.start_test("x86 SMM Memory Sinkhole")
-        self.res = self.check_LAPIC_SMRR_overlap()
+
+        if self.cs.cpu.check_SMRR_supported():
+            self.logger.log_good("SMRR range protection is supported")
+            self.res = self.check_LAPIC_SMRR_overlap()
+        else:
+            self.logger.log_important("CPU does not support SMRR range protection of SMRAM")
+            self.res = ModuleResult.NOTAPPLICABLE
         return self.res
