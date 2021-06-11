@@ -631,7 +631,7 @@ class Chipset:
 
         # store entries dev_fun_vid_did = [list of bus entries]
         for enum_dev in enum_devices:
-            cfg_str = "{:0>2}_{:0>2}_{:04X}_{:04X}".format(*enum_dev[1:5])
+            cfg_str = "{:0>2X}_{:0>2X}_{:04X}_{:04X}".format(*enum_dev[1:5])
             if cfg_str in self.Cfg.BUS.keys():
                 self.Cfg.BUS[cfg_str].append(enum_dev[0])
             else:
