@@ -20,7 +20,7 @@ XML configuration file for Denverton
   </pci>
 
   <mmio>
-    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFC000" size="0x200"  desc="SPI Controller Register Range"/>
+    <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000" size="0x200"  desc="SPI Controller Register Range"/>
   </mmio>
 
   <io>
