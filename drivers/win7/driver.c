@@ -322,12 +322,51 @@ NTSTATUS _write_mmio_mem(PHYSICAL_ADDRESS pa, unsigned int len, void* pData)
         DbgPrint("[chipsec] ERROR: no space for mapping\n");
         return STATUS_UNSUCCESSFUL;
       }
-    if (len == 8) 
-      { 
-        count = 2; 
-      }
     DbgPrint("[chipsec] writing %u bytes to MMIO address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va);
-    WRITE_REGISTER_BUFFER_ULONG((volatile ULONG*)(va), (PULONG)pData, count);
+    
+    switch(len)
+    {
+      case 1:
+        WRITE_REGISTER_BUFFER_UCHAR((volatile UCHAR*)(va), (PUCHAR)pData, count);
+        break;
+      case 2:
+        WRITE_REGISTER_BUFFER_USHORT((volatile USHORT*)(va), (PUSHORT)pData, count);
+        break;
+      case 8:
+        count = 2; // Missing break intentionally. 64bit write = 2x 32bit writes. 
+      case 4:
+        WRITE_REGISTER_BUFFER_ULONG((volatile ULONG*)(va), (PULONG)pData, count);
+        break;
+    }
+    MmUnmapIoSpace(va, len);
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS _read_mmio_mem(PHYSICAL_ADDRESS pa, unsigned int len, void* pData)
+{
+    ULONG count = 1;
+    void* va = MmMapIoSpace(pa, len, MmNonCached);
+    if (!va)
+      {
+        DbgPrint("[chipsec] ERROR: no space for mapping\n");
+        return STATUS_UNSUCCESSFUL;
+      }
+
+    DbgPrint("[chipsec] reading %u bytes to MMIO address 0x%08x_%08x (virtual = %#010x)", len, pa.HighPart, pa.LowPart, (UINTN)va);
+    switch(len)
+    {
+      case 1:
+        READ_REGISTER_BUFFER_UCHAR((volatile UCHAR*)(va), (PUCHAR)pData, count);
+        break;
+      case 2:
+        READ_REGISTER_BUFFER_USHORT((volatile USHORT*)(va), (PUSHORT)pData, count);
+        break;
+      case 8:
+        count = 2; // Missing break intentionally. 64bit write = 2x 32bit writes. 
+      case 4:
+        READ_REGISTER_BUFFER_ULONG((volatile ULONG*)(va), (PULONG)pData, count);
+        break;
+    }
     MmUnmapIoSpace(va, len);
     return STATUS_SUCCESS;
 }
@@ -439,7 +478,6 @@ DriverDeviceControl(
         case IOCTL_READ_PHYSMEM:
           {
             UINT32 len = 0;
-            //PVOID virt_addr;
             PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
 
             DbgPrint( "[chipsec] > IOCTL_READ_PHYSMEM\n" );
@@ -488,7 +526,6 @@ DriverDeviceControl(
         case IOCTL_WRITE_PHYSMEM:
           {
             UINT32 len = 0;
-            //PVOID virt_addr = 0;
             PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
 
             DbgPrint( "[chipsec] > IOCTL_WRITE_PHYSMEM\n" );
@@ -530,9 +567,8 @@ DriverDeviceControl(
                     DbgPrint( "[chipsec][IOCTL_WRITE_PHYSMEM] ERROR: exception code 0x%X\n", Status );
                     break;
                   }
-
-                break;
               }
+            break;
           }
         case IOCTL_WRITE_MMIO:
         {
@@ -578,10 +614,53 @@ DriverDeviceControl(
                     DbgPrint("[chipsec][IOCTL_WRITE_MMIO] ERROR: exception code 0x%X\n", Status);
                     break;
                 }
-
-                break;
             }
+          break;
         }
+        case IOCTL_READ_MMIO:
+          {
+            UINT32 len = 0;
+            PHYSICAL_ADDRESS phys_addr = { 0x0, 0x0 };
+
+            DbgPrint( "[chipsec] > IOCTL_READ_MMIO\n" );
+            if( !Irp->AssociatedIrp.SystemBuffer ||
+                IrpSp->Parameters.DeviceIoControl.InputBufferLength < 3*sizeof(UINT32))
+              {
+                DbgPrint( "[chipsec][IOCTL_READ_MMIO] ERROR: STATUS_INVALID_PARAMETER\n" );
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+              }
+            pInBuf = Irp->AssociatedIrp.SystemBuffer;
+            pOutBuf = Irp->AssociatedIrp.SystemBuffer;
+            phys_addr.HighPart = ((UINT32*)pInBuf)[0];
+            phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
+            len                = ((UINT32*)pInBuf)[2];
+            if( !len ) len = 4;
+
+            if( IrpSp->Parameters.DeviceIoControl.OutputBufferLength < len )
+              {
+                DbgPrint( "[chipsec][IOCTL_READ_MMIO] ERROR: STATUS_BUFFER_TOO_SMALL\n" );
+                Status = STATUS_BUFFER_TOO_SMALL;
+                break;
+              }
+            __try
+              {
+                Status = _read_mmio_mem( phys_addr, len, pOutBuf );
+              }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+              {
+                Status = GetExceptionCode();
+                DbgPrint( "[chipsec][IOCTL_READ_MMIO] ERROR: exception code 0x%X\n", Status );
+                break;
+              }
+            if( NT_SUCCESS(Status) )
+              {
+                DbgPrint( "[chipsec][IOCTL_READ_MMIO] Contents:\n" );
+                _dump_buffer( (unsigned char *)pOutBuf, min(len,0x100) );
+                dwBytesWritten = len;
+              }
+              break;
+          }
         case IOCTL_ALLOC_PHYSMEM:
           {
             SIZE_T NumberOfBytes = 0;
@@ -868,12 +947,6 @@ DriverDeviceControl(
                 DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: exception code 0x%X\n", Status );
                 break;
               }
-
-            // --
-            // -- read MSR to check if it was written
-            // --
-//            _rdmsr( _msr_addr, &_eax, &_edx );
-//            DbgPrint( "[chipsec][IOCTL_WRMSR] RDMSR( 0x%x ) --> 0x%08x%08x\n", _msr_addr, _edx, _eax );
 
             Status = STATUS_SUCCESS;
             break;

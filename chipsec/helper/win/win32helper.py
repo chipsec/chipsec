@@ -118,8 +118,9 @@ IOCTL_MAP_IO_SPACE             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x816, METHOD_BUF
 IOCTL_FREE_PHYSMEM             = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x817, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_WRCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x818, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 IOCTL_RDCR                     = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x819, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
-IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x820, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
-IOCTL_WRITE_MMIO               = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x821, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_MSGBUS_SEND_MESSAGE      = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x81a, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_WRITE_MMIO               = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x81b, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
+IOCTL_READ_MMIO                = CTL_CODE(FILE_DEVICE_UNKNOWN, 0x81c, METHOD_BUFFERED, CHIPSEC_CTL_ACCESS)
 
 LZMA  = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress.exe")
 TIANO = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress.exe")
@@ -553,8 +554,9 @@ class Win32Helper(Helper):
     # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
+        logger().log("size: {} addr: {}".format(size, phys_address))
         in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
-        out_buf = self._ioctl( IOCTL_READ_PHYSMEM, in_buf, out_size )
+        out_buf = self._ioctl( IOCTL_READ_MMIO, in_buf, out_size )
         if size == 8:
             value = struct.unpack( '=Q', out_buf )[0]
         elif size == 4:
