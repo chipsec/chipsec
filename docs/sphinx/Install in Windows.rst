@@ -2,8 +2,8 @@ Windows Installation
 ====================
 
 | CHIPSEC supports the following versions:
-| Windows 7, 8, 8.1, 10 x86 and AMD64
-| Windows Server 2008, 2012, 2016 x86 and AMD64
+| Windows 8, 8.1, 10 - x86 and AMD64
+| Windows Server 2012, 2016 - x86 and AMD64
 
 .. note::
 
@@ -18,19 +18,23 @@ Python 3.7 or higher (https://www.python.org/downloads/)
 
    CHIPSEC has deprecated support for Python2 since June 2020 
 
-`pywin32 <https://pypi.org/project/pywin32/#files>`_: for Windows API support
+To install requirements: 
 
-   ``pip install pywin32``
+   `pip install windows_requirements.txt`
 
-`setuptools <https://pypi.org/project/setuptools/>`_
+which includes:
 
-   `pip install setuptools`
+   * `pywin32 <https://pypi.org/project/pywin32/#files>`_: for Windows API support (`pip install pywin32`)
+   * `setuptools <https://pypi.org/project/setuptools/>`_ (`pip install setuptools`)
+   * `WConio2 <https://pypi.org/project/WConio2/>`_: Optional. For colored console output (`pip install Wconio2`)
 
-`WConio <http://newcenturycomputers.net/projects/wconio.html>`_: Optional. For colored console output
+To compile the driver:
 
-`Visual Studio and WDK <https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk>`_: for building the driver
+   `Visual Studio and WDK <https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk>`_: for building the driver. For best results use the latest available (at least `WDK 8 and VS 2012 <https://docs.microsoft.com/en-us/windows-hardware/drivers/other-wdk-downloads>`_)
 
-`git <https://git-scm.com/>`_: open source distributed version control system
+To clone the repo:
+
+   `git <https://git-scm.com/>`_: open source distributed version control system
 
 Building
 --------
@@ -59,17 +63,17 @@ In CMD shell:
 
 **Windows 10 64-bit / Windows 8, 8.1 64-bit (with Secure Boot enabled) / Windows Server 2016 64-bit / Windows Server 2012 64-bit (with Secure Boot enabled):**
 
-Method 1: - In CMD shell:
+Method 1:
 
-   - ``shutdown /r /t 0 /o``
+   - In CMD shell: ``shutdown /r /t 0 /o`` or Start button > Power icon > SHIFT key + Restart
    - Navigate: Troubleshooting > Advanced Settings > Startup Settings > Reboot 
-   - After reset choose F7 “Disable driver signature checks”
+   - After reset choose F7 or 7 “Disable driver signature checks”
 
 Method 2: 
 
    - Disable Secure Boot in the BIOS setup screen then disable driver signature checks as in Windows 8 with Secure Boot disabled
 
-**Windows 7 64-bit / Windows Server 2008 64-bit / Windows 8 (with Secure Boot disabled) / Windows Server 2012 (with Secure Boot disabled)):**
+**Windows 10 (with Secure Boot disabled) / Windows 8 (with Secure Boot disabled) / Windows Server 2012 (with Secure Boot disabled):**
 
 Method 1: 
 
@@ -77,8 +81,8 @@ Method 1:
       - Start CMD.EXE as Adminstrator ``BcdEdit /set TESTSIGNING ON`` 
       - Reboot
       - If this doesn’t work, run these additional commands:
-         ``BcdEdit /set noIntegrityChecks ON``
-         ``BcdEdit /set loadoptions DDISABLE_INTEGRITY_CHECKS``
+         - ``BcdEdit /set noIntegrityChecks ON``
+         - ``BcdEdit /set loadoptions DDISABLE_INTEGRITY_CHECKS``
 
 Method 2: 
 
@@ -89,44 +93,27 @@ Alternate Build Methods
 
 **Build CHIPSEC kernel driver with Visual Studio**
 
-- Open the Visual Studio project file (drivers/win7/chipsec_hlpr.vcxproj) using Visual Studio
-- Select Platform and configuration (X86 or x64, Release)
-- Go to Build -> Build Solution
+Method 1:
+
+   - Open the Visual Studio project file (drivers/win7/chipsec_hlpr.vcxproj) using Visual Studio
+   - Select Platform and configuration (X86 or x64, Release)
+   - Go to Build -> Build Solution
+
+Method 2:
+
+   - Open a VS developer command prompt
+   - ``> cd <CHIPSEC_ROOT_DIR>\drivers\win7``
+   - Build driver using msbuild command:
+      - For 32 bit:
+         - ``> msbuild``
+      - For 64 bit:
+         - ``> msbuild /p:Platform=x64``
 
 If build process is completed without any errors, the driver binary will be moved into the chipsec helper directory: 
    
    ``<CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 (or i386)``
 
-**Build CHIPSEC kernel driver (Old Method)**
-
-Install WDK 7600 - (e.g. `WDK 7600.16385.1 <http://www.microsoft.com/en-us/download/details.aspx?id=11800>`_)
-Open WDK build environment command prompt:
-
-   ``"x86 Free Build Environment" or "x64 Free Build Environment" (for release build)``   
-   ``"x86 Checked Build Environment" or "x64 Checked Build Environment" (for debug build)``   
-   ``cd <CHIPSEC_ROOT_DIR>\drivers\win7``
-   ``build -cZg``
-  
-If build process completed without errors, the driver binary (“chipsec_hlpr.sys”) will be in:
-   
-   ``<CHIPSEC_ROOT_DIR>\drivers\win7\sys\amd64``
-
-Sign the driver
-
-   - As Administrator, run in "x64 Free Build Environment" (or "x64 Checked Build Environment"):
-   
-      ``makecert -r -n "CN=Chipsec" -ss ChipsecCertStore -sr LocalMachine``
-      ``cd <CHIPSEC_ROOT_DIR>\drivers\win7\sign``
-   
-   - Run "sign64_sys.bat" to sign "chipsec_hlpr.sys" file
-   - If any error/warning is returned, create a new certificate store and modify "sign64_sys.bat" accordingly
-
-Copy the driver to CHIPSEC framework
-      
-   - On Windows x64, copy signed "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 directory
-   - On Windows x86, copy "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_x86 directory
-
-Build the compression tools 
+**Build the compression tools**
 
 Method 1:
 
