@@ -878,9 +878,10 @@ class Chipset:
                 threads_to_use = range(self.helper.get_threads_count())
             for t in threads_to_use:
                 values.append(self.read_register(reg_name, t))
-        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG, RegisterType.MMIO] and bus_data:
-            for bus in bus_data:
-                values.append(self.read_register(reg_name, cpu_thread, bus))
+        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG, RegisterType.MMIO]:
+            if bus_data:
+                for bus in bus_data:
+                    values.append(self.read_register(reg_name, cpu_thread, bus))
         else:
             values.append(self.read_register(reg_name, cpu_thread))
         return values
