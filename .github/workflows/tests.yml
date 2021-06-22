@@ -174,13 +174,10 @@ jobs:
           - {ubuntu: 20.04, python: 3.9}
           - {ubuntu: 20.04, python: 3.8}
           - {ubuntu: 20.04, python: 3.7}
-          - {ubuntu: 20.04, python: 2.7}
 
           - {ubuntu: 18.04, python: 3.7}
-          - {ubuntu: 18.04, python: 2.7}
 
           - {ubuntu: 16.04, python: 3.7}
-          - {ubuntu: 18.04, python: 2.7}
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
@@ -219,4 +216,7 @@ jobs:
       run: sudo python setup.py install
 
     - name: Run chipsec_main
-      run: sudo chipsec_main --ignore_platform
+      run: |
+        PYTHONEXE="$(which python)"
+        sudo ${PYTHONEXE} chipsec_main.py --ignore_platform
+
