@@ -73,6 +73,13 @@ class OsHelper:
             os_system  = platform.system()
             raise OsHelperError( "Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
+            if self.helper.name != "EfiHelper" and sys.version[0] == "2": # Python 2 is only supported in the EFI shell.
+                logger().warn("***************************************************************************************")
+                logger().warn("* !! Python 2 is deprecated. Please update to Python 3 !!")
+                logger().warn("* Some chipsec results may be incorrect if you continue.")
+                logger().warn("***************************************************************************************")
+                s = raw_input( "Type 'yes' to continue running under Python 2 > " ) # Will only run on python 2, so raw_input will be defined.
+                if s.lower() not in ['yes', 'y']: sys.exit( 0 )
             self.os_system  = self.helper.os_system
             self.os_release = self.helper.os_release
             self.os_version = self.helper.os_version
