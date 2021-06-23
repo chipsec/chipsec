@@ -1,2 +1,3 @@
 pywin32
+setuptools
 WConio2
