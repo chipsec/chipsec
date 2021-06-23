@@ -66,6 +66,7 @@ class MMIOCommand(BaseCommand):
         parser_read.add_argument('offset', type=lambda x: int(x, 16), help='Offset value (hex)')
         parser_read.add_argument('width', type=lambda x: int(x, 16), choices=[1, 2, 4, 8],
                                  help='Width value [1, 2, 4, 8] (hex)')
+        parser_read.add_argument('bus', type=lambda x: int(x, 16), nargs='?', default=None, help='bus value')
         parser_read.set_defaults(func=self.read_bar)
 
         parser_write = subparsers.add_parser('write')
@@ -74,6 +75,7 @@ class MMIOCommand(BaseCommand):
         parser_write.add_argument('width', type=lambda x: int(x, 16), choices=[1, 2, 4, 8],
                                   help='Width value [1, 2, 4, 8] (hex)')
         parser_write.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
+        parser_write.add_argument('bus', type=lambda x: int(x, 16), nargs='?', default=None, help='bus value')
         parser_write.set_defaults(func=self.write_bar)
 
         parser.parse_args(self.argv[2:], namespace=self)
@@ -96,13 +98,13 @@ class MMIOCommand(BaseCommand):
 
     def read_bar(self):
         bar = self.bar_name.upper()
-        reg = self._mmio.read_MMIO_BAR_reg(bar, self.offset, self.width)
+        reg = self._mmio.read_MMIO_BAR_reg(bar, self.offset, self.width, self.bus)
         self.logger.log("[CHIPSEC] Read {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, reg))
 
     def write_bar(self):
         bar = self.bar_name.upper()
         self.logger.log("[CHIPSEC] Write {} + 0x{:X}: 0x{:08X}".format(bar, self.offset, self.value))
-        self._mmio.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width)
+        self._mmio.write_MMIO_BAR_reg(bar, self.offset, self.value, self.width, self.bus)
 
     def run(self):
         self._mmio = mmio.MMIO(self.cs)

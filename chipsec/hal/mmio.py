@@ -301,7 +301,7 @@ class MMIO(hal_base.HALBase):
     # Write MMIO register from MMIO range defined by MMIO BAR name
     #
     def write_MMIO_BAR_reg(self, bar_name, offset, value, size=4, bus=None ):
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name)
+        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
         # @TODO: check offset exceeds BAR size
         return self.write_MMIO_reg(bar_base, offset, value, size, bar_size)
 
@@ -331,7 +331,7 @@ class MMIO(hal_base.HALBase):
                 bus_data = [0]
             for bus in bus_data:
                 try:
-                    (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name)
+                    (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name, bus)
                 except:
                     if self.logger.HAL: self.logger.log("Unable to find MMIO BAR {}".format(_bar))
                     continue
@@ -339,7 +339,7 @@ class MMIO(hal_base.HALBase):
 
                 if 'register' in _bar:
                     _s = _bar['register']
-                    if 'offset' in _bar: 
+                    if 'offset' in _bar:
                         _s += (' + 0x{:X}'.format(int(_bar['offset'], 16)))
                 else:
                     _s = '{:02X}:{:02X}.{:01X} + {}'.format( int(_bar['bus'], 16), int(_bar['dev'], 16), int(_bar['fun'], 16), _bar['reg'] )
