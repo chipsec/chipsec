@@ -1125,7 +1125,7 @@ class Chipset:
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
-    def print_register(self, reg_name, reg_val, bus=None):
+    def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_str = ''
@@ -1145,7 +1145,7 @@ class Chipset:
         elif RegisterType.MMIO == rtype:
             reg_str = "[*] {} = {} << {} ({} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'], 16))
         elif RegisterType.MSR == rtype:
-            reg_str = "[*] {} = {} << {} (MSR 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['msr'], 16))
+            reg_str = "[*] {} = {} << {} (MSR 0x{:X} Thread 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['msr'], 16), cpu_thread)
         elif RegisterType.PORTIO == rtype:
             reg_str = "[*] {} = {} << {} (I/O port 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'], 16))
         elif RegisterType.IOBAR == rtype:
@@ -1162,11 +1162,29 @@ class Chipset:
     def print_register_all(self, reg_name, cpu_thread=0):
         reg_str = ''
         bus_data = self.get_register_bus( reg_name )
-        if not bus_data:
-            return reg_str
-        for bus in bus_data:
-            reg_val = self.read_register(reg_name, cpu_thread, bus)
-            reg_str += self.print_register(reg_name, reg_val, bus)
+        reg = self.get_register_def(reg_name)
+        rtype = reg['type']
+        if RegisterType.MSR == rtype:
+            topology = self.cpu.get_cpu_topology()
+            if 'scope' in reg.keys() and reg['scope'] == "packages":
+                packages = topology['packages']
+                threads_to_use = [packages[p][0] for p in packages]
+            elif 'scope' in reg.keys() and reg['scope'] == "cores":
+                cores = topology['cores']
+                threads_to_use = [cores[p][0] for p in cores]
+            else: # Default to threads
+                threads_to_use = range(self.helper.get_threads_count())
+            for t in threads_to_use:
+                reg_val = self.read_register(reg_name, t)
+                reg_str += self.print_register(reg_name, reg_val, cpu_thread=t)
+        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG, RegisterType.MMIO]:
+            if bus_data:
+                for bus in bus_data:
+                    reg_val = self.read_register(reg_name, cpu_thread, bus)
+                    reg_str += self.print_register(reg_name, reg_val, bus)
+        else:
+            reg_val = self.read_register(reg_name, cpu_thread)
+            reg_str = self.print_register(reg_name, reg_val, bus)
         return reg_str
 
     def get_control(self, control_name, cpu_thread=0, with_print=False):
