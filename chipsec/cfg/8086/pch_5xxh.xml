@@ -121,13 +121,13 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
     </register>
 
     <!-- Power Management Controller -->
-    <register name="PWRMBASE" type="pcicfg" device="PMC" offset="0x10" size="4" desc="PM Base Address">
+    <register name="PWRMBASE" type="pcicfg" device="PMC" offset="0x10" size="8" desc="PM Base Address">
       <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
-      <field name="BA"    bit="13" size="19" desc="Base Address"/>
+      <field name="BA"    bit="13" size="51" desc="Base Address"/>
     </register>
-    <register name="ABASE" type="pcicfg" device="PMC" offset="0x20" size="8" desc="ACPI Base Address">
+    <register name="ABASE" type="pcicfg" device="PMC" offset="0x20" size="4" desc="ACPI Base Address">
       <field name="STYPE" bit="0" size="1" desc="Space Type (default 0)"/>
-      <field name="BA"    bit="7" size="57" desc="Base Address"/>
+      <field name="BA"    bit="7" size="25" desc="Base Address"/>
     </register>
     <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration 1"/>
     <register name="GEN_PMCON_2" type="mmio" bar="PWRMBASE" offset="0x1024" size="4" desc="General PM Configuration B">
