@@ -3,7 +3,6 @@
 <!--
 XML configuration file for Skylake/Purely Server
 Intel (c) Xeon Processor Scalable Family datasheet Vol. 2
-
 -->
 
   <!-- #################################### -->
@@ -19,8 +18,8 @@ Intel (c) Xeon Processor Scalable Family datasheet Vol. 2
   </pci>
 
   <mmio>
-    <bar name="MMCFG"    bus="0" dev="5"    fun="0" reg="0x90" width="8" mask="0x7FFFFFC000000" size="0x1000" desc="PCI Express Register Range"/>
-    <bar name="DMIBAR"   bus="0" dev="0"    fun="0" reg="0x50" width="4" mask="0xFFFFF000"      size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
+    <bar name="MMCFG"    bus="0" dev="5"  fun="0" reg="0x90" width="8" mask="0x7FFFFFC000000" size="0x1000" desc="PCI Express Register Range"/>
+    <bar name="DMIBAR"   bus="0" dev="0"  fun="0" reg="0x50" width="4" mask="0xFFFFF000"      size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
   </mmio>
 
   <io>
@@ -30,10 +29,6 @@ Intel (c) Xeon Processor Scalable Family datasheet Vol. 2
   </memory>
 
   <registers>
-
-      <!-- PCH -->
-
-    <!-- Sideband Register Access Registers -->
 
     <!-- MMCFG -->
     <register name="MMCFG_BASE"  type="pcicfg" bus="0" dev="5" fun="0" offset="0x90" size="8" desc="MMCFG Address Base">
@@ -65,28 +60,6 @@ Intel (c) Xeon Processor Scalable Family datasheet Vol. 2
       <field name="Base"   bit="13" size="19" desc="Intel VT-d Base Address"/>
       <field name="Enable" bit="0"  size="1"  desc="VTBAR enable"/>
     </register>
-
-    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
-      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
-      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
-    </register>
-
-    <!-- PCH ABASE (PMBASE) I/O registers -->
-
-
-    <!-- SPI Flash Controller MMIO registers -->
-
-    <!-- SMBus Host Controller -->
-
-
-
-
-
-
-    <!-- SPI Interface Controller -->
-
-    <!-- DCI registers -->
-
 
   </registers>
 
