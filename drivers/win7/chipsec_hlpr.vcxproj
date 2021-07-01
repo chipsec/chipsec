@@ -100,6 +100,9 @@
       <Command>mkdir ..\..\chipsec\helper\win\win7_amd64
 copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
     </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <MASM>
@@ -115,6 +118,9 @@ copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
       <Command>mkdir ..\..\chipsec\helper\win\win7_x86
 copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
     </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Link>
