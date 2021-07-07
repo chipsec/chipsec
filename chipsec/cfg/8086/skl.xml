@@ -49,7 +49,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!-- #################################### -->
   <mmio>
     <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000"                     desc="Graphics Translation Table Range"/>
-    <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/> 
+    <bar name="HDABAR"   bus="0" dev="0x1F" fun="3" reg="0x10" width="8" mask="0xFFFFFFFFFFFFC000" size="0x1000" desc="HD Audio Base"/>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"         size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
     <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
     <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
@@ -196,31 +196,31 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
     </register>
     <register name="FREG6" undef="Flash Region 6 not defined for this platform" />
     <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
