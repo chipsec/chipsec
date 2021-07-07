@@ -79,10 +79,10 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!--                                      -->
   <!-- #################################### -->
   <io>
-    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
-    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x80" fixed_address="0x1800" desc="ACPI Base Address"/>
+    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x80" fixed_address="0x1800" desc="ACPI Base Address"/>
     <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
-    <bar name="SMBUS_BASE" register="SBA"      base_filed="BA"    size="0x20"  desc="SMBus Base Address"/>
+    <bar name="SMBUS_BASE" register="SBA"      base_field="BA"    size="0x20"  desc="SMBus Base Address"/>
   </io>
 
   <!-- #################################### -->

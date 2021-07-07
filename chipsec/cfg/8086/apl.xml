@@ -307,11 +307,11 @@ document id 334818/334819
     </register>
 
     <!-- MCHBAR -->
-    <register name="GFXVTBAR" type="mmio" bar="MCHBAR" offset="0x6C80" size="8" desc="Processor Graphics VT-d MMIO Base Address">
+    <register name="GFXVTBAR" type="mmio" bar="MCHBAR" offset="0x6C88" size="8" desc="Processor Graphics VT-d MMIO Base Address">
       <field name="Enable" bit="0"  size="1" desc="Enable"/>
       <field name="Base"   bit="12" size="27" desc="GFX VTD Base Address"/>
     </register>
-    <register name="VTBAR" type="mmio" bar="MCHBAR" offset="0x6C88" size="8" desc="VT-d MMIO Base Address">
+    <register name="VTBAR" type="mmio" bar="MCHBAR" offset="0x6C80" size="8" desc="VT-d MMIO Base Address">
       <field name="Enable" bit="0"  size="1"  desc="Enable"/>
       <field name="Base"   bit="12" size="27" desc="VTD Base Address"/>
     </register>
@@ -373,7 +373,7 @@ document id 334818/334819
     <!-- CPU MSRs                     -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <register name="MSR_POWER_MISC" type="msr" msr="0x120" desc="MISC" />
-    
+
     <!-- MSR_SMM_FEATURE_CONTROL -->
     <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
       <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />

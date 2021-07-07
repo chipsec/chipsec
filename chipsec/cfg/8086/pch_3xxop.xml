@@ -45,8 +45,8 @@ https://www.intel.com/content/www/us/en/products/docs/chipsets/300-series-chipse
   <!--                                      -->
   <!-- #################################### -->
   <io>
-    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
-    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+    <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x80" fixed_address="0x1800" desc="ACPI Base Address"/>
+    <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x80" fixed_address="0x1800" desc="ACPI Base Address"/>
     <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
 
     <!-- old definition -->
@@ -84,9 +84,9 @@ https://www.intel.com/content/www/us/en/products/docs/chipsets/300-series-chipse
     </register>
 
     <!-- Power Management Controller -->
-    <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x40" size="4" desc="ACPI Base Address">
-      <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
-      <field name="BA"    bit="8" size="8" desc="Base Address"/>
+    <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x20" size="4" desc="ACPI Base Address">
+      <field name="STYPE" bit="0" size="1" desc="Space Type"/>
+      <field name="BA"    bit="7" size="25" desc="Base Address"/>
     </register>
     <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x10" size="8" desc="PM Base Address">
       <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
@@ -261,7 +261,7 @@ https://www.intel.com/content/www/us/en/products/docs/chipsets/300-series-chipse
     </register>
 
     <!-- DCI registers -->
-    <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
+    <register name="ECTRL" type="mm_msgbus" port="0x71" offset="0x0004" size="4" desc="DCI Control Register">
       <field name="ENABLE" bit="4" size="1"/>
     </register>
 

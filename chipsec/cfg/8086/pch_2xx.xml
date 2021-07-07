@@ -185,31 +185,31 @@ XML configuration file for 200 series PCH based platforms
     </register>
     <register name="FREG6" undef="Flash Region 6 not defined for this platform" />
     <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>
     </register>
     <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
-      <field name="PRB" bit="0"  size="13"/>
+      <field name="PRB" bit="0"  size="15"/>
       <field name="RPE" bit="15" size="1"/>
       <field name="PRL" bit="16" size="15"/>
       <field name="WPE" bit="31" size="1"/>

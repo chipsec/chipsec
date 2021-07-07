@@ -49,6 +49,7 @@ chipsec@intel.com
   <!-- #################################### -->
   <mmio>
     <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000"                     desc="Graphics Translation Table Range"/>
+    <bar name="MCHBAR"   bus="0" dev="0"    fun="0" reg="0x48" width="8" mask="0x7FFFFF0000" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
   </mmio>
 
   <!-- #################################### -->
