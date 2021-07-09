@@ -280,6 +280,11 @@ class Logger:
         text = "[-] FAILED: " + text
         self.log(text, pyLogging.ERROR)
 
+    def log_error( self, text ):
+        """Logs an Error message"""
+        text = "[!] ERROR: " + text
+        self.log(text, pyLogging.ERROR)
+
     def log_warning( self, text ):
         """Logs a Warning message"""
         text = "[!] WARNING: " + text
