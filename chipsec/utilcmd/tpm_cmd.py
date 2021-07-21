@@ -85,11 +85,12 @@ class TPMCommand(BaseCommand):
 
 
     def run(self):
-        try:
-            self._tpm = tpm.TPM(self.cs)
-        except tpm.TpmRuntimeError as msg:
-            self.logger.log(msg)
-            return
+        if self.func != self.tpm_parse:
+            try:
+                self._tpm = tpm.TPM(self.cs)
+            except tpm.TpmRuntimeError as msg:
+                self.logger.log(msg)
+                return
 
         self.func()
 
