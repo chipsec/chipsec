@@ -193,7 +193,7 @@ class MMIO(hal_base.HALBase):
                 reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
         else:
             # this method is not preferred (less flexible)
-            if bus:
+            if bus is not None:
                 b = bus
             else:
                 b = int(bar['bus'], 16)
@@ -327,8 +327,15 @@ class MMIO(hal_base.HALBase):
             bus_data = None
             if 'register' in _bar:
                 bus_data = self.cs.get_register_bus(_bar['register'])
-            if bus_data is None:
-                bus_data = [0]
+                if bus_data is None:
+                    if 'bus' in self.cs.get_register_def(_bar['register']):
+                        bus_data = [int(self.cs.get_register_def(_bar['register'])['bus'],16)]
+                    else:
+                        continue
+            elif 'bus' in _bar:
+                bus_data = [_bar['bus']]
+            else:
+                continue
             for bus in bus_data:
                 try:
                     (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name, bus)
@@ -344,7 +351,7 @@ class MMIO(hal_base.HALBase):
                 else:
                     _s = '{:02X}:{:02X}.{:01X} + {}'.format( int(_bar['bus'], 16), int(_bar['dev'], 16), int(_bar['fun'], 16), _bar['reg'] )
 
-                self.logger.log( ' {:12} | {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus, _s, _base, _size, _en, _bar['desc']) )
+                self.logger.log( ' {:12} |  {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus, _s, _base, _size, _en, _bar['desc']) )
 
 
     ##################################################################################
