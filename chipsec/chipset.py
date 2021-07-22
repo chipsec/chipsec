@@ -1184,7 +1184,7 @@ class Chipset:
                     reg_str += self.print_register(reg_name, reg_val, bus)
         else:
             reg_val = self.read_register(reg_name, cpu_thread)
-            reg_str = self.print_register(reg_name, reg_val, bus)
+            reg_str = self.print_register(reg_name, reg_val)
         return reg_str
 
     def get_control(self, control_name, cpu_thread=0, with_print=False):
