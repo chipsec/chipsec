@@ -424,8 +424,8 @@ class Chipset:
                         if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(',')):
                                 if dv[-1].upper() == 'X':
-                                    rdv = int(dv[:-1],16)<<4   #  Assume valid hex value with last nibble removed
-                                    for rdv_value in range( rdv, rdv+0xF ):
+                                    rdv = int(dv[:-1], 16) << 4   #  Assume valid hex value with last nibble removed
+                                    for rdv_value in range( rdv, rdv+0x10 ):
                                         self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
                                 elif '-' in dv:
                                     rdv = dv.split('-')
@@ -649,7 +649,8 @@ class Chipset:
                 if xml_did:
                     for tdid in xml_did.split(','):
                         if tdid[-1].upper() == "X":
-                            for rdv_value in range(tdid, tdid+0xF):
+                            tndid = int(tdid[:-1], 16) << 4
+                            for rdv_value in range(tndid, tndid+0x10):
                                 did_list.append(rdv_value)
                         elif '-' in tdid:
                             rdv = tdid.split('-')
@@ -659,9 +660,10 @@ class Chipset:
                             did_list.append(int(tdid, 16))
                 # If there is a match between the configuration entry and generic entry, replace the name with the configuration entry
                 for tdid in did_list:
-                    cfg_str = "{:0>2}_{:0>2}_{}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
+                    cfg_str = "{:0>2}_{:0>2}_{:s}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
                     if cfg_str in self.Cfg.BUS.keys():
                         self.Cfg.BUS[config_device] = self.Cfg.BUS.pop(cfg_str)
+                        if logger().DEBUG: logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, device_data['vid'][2:], tdid, ','.join('0X{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
                         break
 
     #
