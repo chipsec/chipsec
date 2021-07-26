@@ -980,6 +980,8 @@ class Chipset:
             if len(reg_values) == 1:
                 self.write_register(reg_name, reg_values[0])
                 ret = True
+        if not ret and logger().DEBUG:
+            logger().log("[write_register_all] There is a mismatch in the number of register values and registers to write")
         return ret
 
     def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
