@@ -646,18 +646,17 @@ class Chipset:
             if xml_vid and xml_did:
                 did_list = []
                 # gather list of device id: device id may have single entry, multiple entries, end in "X", or specified by a range "-"
-                if xml_did:
-                    for tdid in xml_did.split(','):
-                        if tdid[-1].upper() == "X":
-                            tndid = int(tdid[:-1], 16) << 4
-                            for rdv_value in range(tndid, tndid+0x10):
-                                did_list.append(rdv_value)
-                        elif '-' in tdid:
-                            rdv = tdid.split('-')
-                            for rdv_value in range(int(rdv[0], 16), int(rdv[1], 16) + 1):
-                                did_list.append(rdv_value)
-                        else:
-                            did_list.append(int(tdid, 16))
+                for tdid in xml_did.split(','):
+                    if tdid[-1].upper() == "X":
+                        tndid = int(tdid[:-1], 16) << 4
+                        for rdv_value in range(tndid, tndid+0x10):
+                            did_list.append(rdv_value)
+                    elif '-' in tdid:
+                        rdv = tdid.split('-')
+                        for rdv_value in range(int(rdv[0], 16), int(rdv[1], 16) + 1):
+                            did_list.append(rdv_value)
+                    else:
+                        did_list.append(int(tdid, 16))
                 # If there is a match between the configuration entry and generic entry, replace the name with the configuration entry
                 for tdid in did_list:
                     cfg_str = "{:0>2}_{:0>2}_{:s}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
