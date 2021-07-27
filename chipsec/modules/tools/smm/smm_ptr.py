@@ -72,7 +72,7 @@ import os
 
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.file import write_file
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from chipsec.hal.interrupts import Interrupts
 
 #logger.VERBOSE = False
@@ -200,7 +200,7 @@ class smm_ptr(BaseModule):
 
         if self.logger.VERBOSE:
             self.logger.log( "filling in contents at PA 0x{:016X}:".format(_addr) )
-            print_buffer( fill_buf )
+            print_buffer_bytes(fill_buf, 16)
 
         if is_ptr_in_buffer and _ptr is not None:
             self.logger.log( "[*] writing buffer at PA 0x{:016X} with 0x{:X} bytes '{}'".format(_ptr, self.fill_size, self.fill_byte) )
@@ -231,9 +231,9 @@ class smm_ptr(BaseModule):
 
         if self.logger.VERBOSE:
             self.logger.log( "checking contents at PA 0x{:016X}:".format(_addr) )
-            print_buffer( buf )
+            print_buffer_bytes(buf, 16)
             self.logger.log( "expected contents:" )
-            print_buffer( expected_buf )
+            print_buffer_bytes(expected_buf, 16)
 
         if _changed:
             self.logger.log( "    contents changed at 0x{:016X} +{}".format(_addr, differences) )
@@ -256,7 +256,7 @@ class smm_ptr(BaseModule):
 
             if self.logger.VERBOSE:
                 self.logger.log( "checking contents at PA 0x{:016X}:".format(_ptr) )
-                print_buffer( buf1 )
+                print_buffer_bytes(buf1, 16)
 
             if _changed1:
                 self.logger.log( "    contents changed at 0x{:016X} +{}".format(_ptr, differences1) )
