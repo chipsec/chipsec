@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -41,6 +41,7 @@ from chipsec.logger import logger, print_buffer
 from chipsec.file import write_file, read_file
 from chipsec.defines import COMPRESSION_TYPES
 from chipsec.defines import bytestostring
+from chipsec.helper.oshelper import OsHelperError
 
 
 ########################################################################################################
@@ -522,7 +523,12 @@ NVRAM: EFI Variable Store
         isFound = False
         while pa > CHUNK_SZ:
             if logger().HAL: logger().log( '[uefi] reading 0x{:016X}..'.format(pa) )
-            membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
+            try:
+                membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
+            except OsHelperError as err:
+                if logger().HAL: logger().log("[uefi] Unable to read memory at pa: {:016X} Error: {}".format(pa, err))
+                pa -= CHUNK_SZ
+                continue
             pos = bytestostring(membuf).find( table_sig )
             if -1 != pos:
                 table_pa = pa + pos
