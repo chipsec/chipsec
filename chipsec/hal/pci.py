@@ -44,7 +44,6 @@ from chipsec import defines
 from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
 from chipsec.hal.pcidb import VENDORS, DEVICES
-from chipsec.helper import oshelper
 from chipsec.exceptions import OsHelperError
 
 #

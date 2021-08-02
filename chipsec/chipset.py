@@ -33,7 +33,7 @@ from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
-from chipsec.exceptions import RegisterNotFoundError, RegisterTypeNotFoundError
+from chipsec.exceptions import RegisterTypeNotFoundError
 
 from chipsec.logger import logger
 from chipsec.defines import is_hex
