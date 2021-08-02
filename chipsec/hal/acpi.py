@@ -35,7 +35,6 @@ from chipsec.defines import bytestostring
 from chipsec.exceptions import UnimplementedNativeAPIError
 
 from chipsec.hal import acpi_tables, hal_base, uefi
-from chipsec.helper import oshelper
 
 # ACPI Table Header Format
 ACPI_TABLE_HEADER_FORMAT = '=4sIBB6s8sI4sI'
