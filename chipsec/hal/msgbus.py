@@ -36,6 +36,8 @@ usage:
 """
 
 from chipsec.hal import hal_base
+from chipsec.exceptions import RegisterNotFoundError
+
 
 #
 # IOSF Message bus message opcodes
@@ -80,9 +82,6 @@ class MessageBusPort_Quark:
     UNIT_SOC   = 0x31
 
 
-class MsgBusRuntimeError (RuntimeError):
-    pass
-
 class MsgBus(hal_base.HALBase):
 
     def __init__(self, cs):
@@ -115,7 +114,7 @@ class MsgBus(hal_base.HALBase):
             elif self.cs.register_has_field("P2SB_HIDE", "HIDE"):
                 self.p2sbHide = {'reg': 'P2SB_HIDE', 'field': 'HIDE'}
             else:
-                raise self.cs.RegisterNotFoundError ('RegisterNotFound: P2SBC')
+                raise RegisterNotFoundError ('RegisterNotFound: P2SBC')
 
         hidden = not self.cs.is_device_enabled('P2SBC')
         if hide:

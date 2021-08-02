@@ -32,6 +32,8 @@ import xml.etree.ElementTree as ET
 from chipsec.helper.oshelper import OsHelper, OsHelperError
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 from chipsec.hal.pci import PCI_HDR_RID_OFF
+from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
+from chipsec.exceptions import RegisterNotFoundError, RegisterTypeNotFoundError
 
 from chipsec.logger import logger
 from chipsec.defines import is_hex
@@ -70,10 +72,6 @@ class Cfg:
         self.LOCKEDBY      = {}
         self.XML_CONFIG_LOADED = False
 
-class CSReadError(RuntimeError):
-    def __init__(self, msg):
-        super(CSReadError, self).__init__(msg)
-
 
 ##################################################################################
 # Functionality defining current chipset
@@ -103,18 +101,6 @@ def f_xml(self, x):
 def map_xmlname(self, x):
     return x.split('.')[0]
 
-
-class UnknownChipsetError(RuntimeError):
-    pass
-
-class DeviceNotFoundError(RuntimeError):
-    pass
-
-class RegisterNotFoundError(RuntimeError):
-    pass
-
-class RegisterTypeNotFoundError(RuntimeError):
-    pass
 
 class Chipset:
 

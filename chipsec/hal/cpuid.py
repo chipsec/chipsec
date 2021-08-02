@@ -28,9 +28,6 @@ usage:
 from chipsec.hal import hal_base
 from chipsec.logger import logger
 
-class CpuIDRuntimeError (RuntimeError):
-    pass
-
 class CpuID(hal_base.HALBase):
 
     def __init__(self, cs):

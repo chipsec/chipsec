@@ -33,12 +33,9 @@ import struct
 
 from chipsec.logger import logger, print_buffer
 from chipsec.hal import hal_base
+from chipsec.exceptions import VirtualMemoryAccessError, VirtualMemoryRuntimeError
 
-class MemoryRuntimeError (RuntimeError):
-    pass
 
-class MemoryAccessError (RuntimeError):
-    pass
 
 class VirtMemory(hal_base.HALBase):
     def __init__( self, cs ):

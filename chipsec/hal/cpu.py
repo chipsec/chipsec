@@ -34,9 +34,6 @@ VMM_VMWARE  = 0x3
 VMM_KVM     = 0x4
 
 
-class CPURuntimeError (RuntimeError):
-    pass
-
 ########################################################################################################
 #
 # CORES HAL Component

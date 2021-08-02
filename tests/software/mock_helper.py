@@ -19,6 +19,7 @@ import struct
 
 from chipsec.helper import oshelper
 from chipsec.helper.basehelper import Helper
+from chipsec.exceptions import UnimplementedAPIError
 
 
 class TestHelper(Helper):
@@ -283,7 +284,7 @@ class SPIHelper(TestHelper):
             raise Exception("Write to outside of SPIBAR")
 
     def map_io_space(self, base, size, cache_type):
-        raise oshelper.UnimplementedAPIError("Not implemented")
+        raise UnimplementedAPIError("Not implemented")
 
 class ValidChipsetHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):

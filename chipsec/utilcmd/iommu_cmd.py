@@ -26,6 +26,7 @@ Command-line utility providing access to IOMMU engines
 from chipsec.command import BaseCommand
 from chipsec.hal     import acpi, iommu
 from argparse        import ArgumentParser
+from chipsec.exceptions import IOMMUError, AcpiRuntimeError
 import time
 
 
@@ -84,7 +85,7 @@ class IOMMUCommand(BaseCommand):
     def iommu_engine(self, cmd):
         try:
             _iommu = iommu.IOMMU(self.cs)
-        except iommu.IOMMUError as msg:
+        except IOMMUError as msg:
             print (msg)
             return
 
@@ -100,7 +101,7 @@ class IOMMUCommand(BaseCommand):
         if 'config' == cmd:
             try:
                 _acpi = acpi.ACPI( self.cs )
-            except acpi.AcpiRuntimeError as msg:
+            except AcpiRuntimeError as msg:
                 print (msg)
                 return
 

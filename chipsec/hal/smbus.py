@@ -31,6 +31,7 @@ Access to SMBus Controller
 """
 
 from chipsec.hal import iobar, hal_base
+from chipsec.exceptions import IOBARNotFoundError, RegisterNotFoundError
 
 SMBUS_COMMAND_QUICK         = 0
 SMBUS_COMMAND_BYTE          = 1
@@ -63,7 +64,7 @@ class SMBus(hal_base.HALBase):
             (sba_base, sba_size) = self.iobar.get_IO_BAR_base_address( 'SMBUS_BASE' )
             return sba_base
         else:
-            raise iobar.IOBARNotFoundError ('IOBARAccessError: SMBUS_BASE')
+            raise IOBARNotFoundError ('IOBARAccessError: SMBUS_BASE')
 
     def get_SMBus_HCFG( self ):
         if self.cs.is_register_defined( 'SMBUS_HCFG' ):
@@ -71,7 +72,7 @@ class SMBus(hal_base.HALBase):
             if self.logger.HAL: self.cs.print_register( 'SMBUS_HCFG', reg_value )
             return reg_value
         else:
-            raise self.cs.RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
+            raise RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
 
     def display_SMBus_info( self ):
         if self.logger.HAL: self.logger.log( "[smbus] SMBus Base Address: 0x{:04X}".format(self.get_SMBus_Base_Address()) )

@@ -402,7 +402,7 @@ def parse_auth_var(db, decode_dir):
             var_name = codecs.decode(db[tof:tof +name_size], 'utf-16')
         except UnicodeDecodeError:
             logger().warn("Unable to decode {}".format(db[tof:tof +name_size]))
-            var_name = "CHIPSEC ERROR!"
+            var_name = "chipsec.exceptions!"
         tof += name_size
         sig_data = db[tof:tof +cert_data_size]
         entries.append(sig_data)
