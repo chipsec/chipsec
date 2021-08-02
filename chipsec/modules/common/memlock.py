@@ -32,7 +32,7 @@ MSR_LT_LOCK_MEMORY
 """
 
 from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.helper.oshelper import HWAccessViolationError
+from chipsec.exceptions import HWAccessViolationError
 
 _MODULE_NAME = 'memlock'
 

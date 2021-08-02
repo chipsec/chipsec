@@ -74,6 +74,7 @@ from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.file import write_file
 from chipsec.logger import print_buffer_bytes
 from chipsec.hal.interrupts import Interrupts
+from chipsec.exceptions import BadSMIDetected
 
 #logger.VERBOSE = False
 
@@ -142,9 +143,6 @@ _DEFAULT_GPRS     = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': 
 
 _pth = 'smm_ptr'
 
-
-class BadSMIDetected (RuntimeError):
-    pass
 
 class smi_desc( object ):
     def __init__(self):

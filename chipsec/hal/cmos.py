@@ -42,11 +42,6 @@ usage:
 from chipsec.hal import hal_base
 import chipsec.logger
 
-class CmosRuntimeError (RuntimeError):
-    pass
-class CmosAccessError (RuntimeError):
-    pass
-
 CMOS_ADDR_PORT_LOW  = 0x70
 CMOS_DATA_PORT_LOW  = 0x71
 CMOS_ADDR_PORT_HIGH = 0x72

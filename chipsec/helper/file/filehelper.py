@@ -26,7 +26,7 @@ from sys import version
 
 import chipsec.file
 from chipsec.logger import logger
-from chipsec.helper.oshelper import OsHelperError, UnimplementedAPIError
+from chipsec.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
 from chipsec.defines import bytestostring
 

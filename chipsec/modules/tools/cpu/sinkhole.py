@@ -29,7 +29,7 @@ The Memory Sinkhole by Christopher Domas: https://www.blackhat.com/docs/us-15/ma
 """
 
 from chipsec.module_common   import BaseModule, ModuleResult, MTAG_SMM
-from chipsec.helper.oshelper import HWAccessViolationError
+
 
 TAGS = [MTAG_SMM]
 

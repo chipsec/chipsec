@@ -58,7 +58,7 @@ import traceback
 from collections import OrderedDict
 try:
     import zipfile
-except:
+except ImportError:
     pass
 
 import chipsec.file
@@ -70,6 +70,7 @@ from chipsec import chipset
 from chipsec.helper import oshelper
 from chipsec.logger import logger
 from chipsec.testcase import *
+from chipsec.exceptions import UnknownChipsetError, OsHelperError
 
 try:
     import importlib
@@ -479,7 +480,7 @@ class ChipsecMain:
         if self._load_config:
             try:
                 self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists, self._to_file, self._from_file )
-            except chipset.UnknownChipsetError as msg:
+            except UnknownChipsetError as msg:
                 logger().error( "Platform is not supported ({}).".format(str(msg)) )
                 if self._unknownPlatform:
                     logger().error('To specify a cpu please use -p command-line option')
@@ -489,7 +490,7 @@ class ChipsecMain:
                     if self.failfast: raise msg
                     return  ExitCode.EXCEPTION
                 logger().warn("Platform dependent functionality is likely to be incorrect")
-            except oshelper.OsHelperError as os_helper_error:
+            except OsHelperError as os_helper_error:
                 logger().error(str(os_helper_error))
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise os_helper_error

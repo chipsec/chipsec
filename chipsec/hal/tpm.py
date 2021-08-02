@@ -32,12 +32,8 @@ from collections import namedtuple
 
 from chipsec.logger import print_buffer
 from chipsec.hal import hal_base
-from chipsec.hal import acpi
-
 import chipsec.hal.tpm12_commands
 
-class TpmRuntimeError (RuntimeError):
-    pass
 
 COMMANDREADY = 0x40
 TPMGO = 0x20

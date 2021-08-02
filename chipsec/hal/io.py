@@ -33,8 +33,6 @@ usage:
 
 from chipsec.logger import logger
 
-class PortIORuntimeError (RuntimeError):
-    pass
 
 class PortIO:
 
