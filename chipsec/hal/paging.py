@@ -27,6 +27,7 @@ import struct
 
 import chipsec.defines
 from chipsec.logger import logger
+from chipsec.exceptions import InvalidMemoryAddress
 
 ADDR_MASK  = chipsec.defines.MASK_64b
 MAXPHYADDR = 0x000FFFFFFFFFF000
