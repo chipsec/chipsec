@@ -31,6 +31,7 @@ import sys
 
 import chipsec.file
 from chipsec.logger import logger
+from chipsec.exceptions import UnimplementedAPIError, OsHelperError
 
 avail_helpers = []
 
@@ -40,21 +41,6 @@ def f_mod_zip(x):
 def map_modname_zip(x):
     return (x.rpartition('.')[0]).replace('/', '.')
 
-class OsHelperError (RuntimeError):
-    def __init__(self, msg, errorcode):
-        super(OsHelperError, self).__init__(msg)
-        self.errorcode = errorcode
-
-class HWAccessViolationError (OsHelperError):
-    pass
-
-class UnimplementedAPIError (OsHelperError):
-    def __init__(self, api_name):
-        super(UnimplementedAPIError, self).__init__("'{}' is not implemented".format(api_name), 0)
-
-class UnimplementedNativeAPIError (UnimplementedAPIError):
-    def __init__(self, api_name):
-        super(UnimplementedNativeAPIError, self).__init__(api_name)
 
 def get_tools_path():
     return os.path.normpath( os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR) )

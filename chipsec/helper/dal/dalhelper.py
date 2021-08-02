@@ -33,11 +33,9 @@ from chipsec.logger import logger
 import itpii
 from ctypes import *
 from chipsec.helper.basehelper import Helper
+from chipsec.exceptions import DALHelperError
 
 SYSTEM_HALTED = True
-
-class DALHelperError (RuntimeError):
-    pass
 
 
 class DALHelper(Helper):

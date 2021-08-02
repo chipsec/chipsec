@@ -32,13 +32,9 @@ usage:
 
 from chipsec.hal import hal_base
 from chipsec.logger import logger
+from chispec.error import IOBARNotFoundError
 
 DEFAULT_IO_BAR_SIZE = 0x100
-
-class IOBARRuntimeError (RuntimeError):
-    pass
-class IOBARNotFoundError (RuntimeError):
-    pass
 
 class IOBAR(hal_base.HALBase):
 

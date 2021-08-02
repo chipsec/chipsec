@@ -133,9 +133,6 @@ class ColorLogger( pyLogging.Formatter ):
         def log_color( self, message, record ):
             return message
 
-class LoggerError (RuntimeWarning):
-    pass
-
 class Logger:
 
     """Class for logging to console, text file, XML."""

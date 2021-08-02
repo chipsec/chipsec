@@ -29,6 +29,7 @@ from argparse import ArgumentParser
 
 from chipsec.hal import iobar
 from chipsec.command import BaseCommand
+from chipsec.exceptions import IOBARRuntimeError
 
 
 class PortIOCommand(BaseCommand):
@@ -102,7 +103,7 @@ class PortIOCommand(BaseCommand):
     def run(self):
         try:
             self._iobar = iobar.IOBAR( self.cs)
-        except iobar.IOBARRuntimeError as msg:
+        except IOBARRuntimeError as msg:
             self.logger.log(msg)
             return
 

@@ -29,7 +29,8 @@ from os.path import exists as path_exists
 from time import time
 from argparse import ArgumentParser
 
-from chipsec.hal.acpi   import ACPI, AcpiRuntimeError
+from chipsec.hal.acpi   import ACPI
+from chipsec.exceptions import AcpiRuntimeError
 from chipsec.command    import BaseCommand
 
 # ###################################################################

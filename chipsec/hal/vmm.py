@@ -33,10 +33,6 @@ import struct
 from chipsec.logger import logger, pretty_print_hex_buffer
 import chipsec.hal.pcidb
 
-class VMMRuntimeError (RuntimeError):
-    pass
-
-
 class VMM:
 
     def __init__( self, cs ):

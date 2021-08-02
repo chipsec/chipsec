@@ -39,9 +39,6 @@ ADDR_4KB   = 0xFFFFFFFFFFFFF000 & MAXPHYADDR
 ADDR_2MB   = 0xFFFFFFFFFFE00000 & MAXPHYADDR
 ADDR_1GB   = 0xFFFFFFFFC0000000 & MAXPHYADDR
 
-class InvalidMemoryAddress (RuntimeError):
-    pass
-
 
 class c_translation(object):
 

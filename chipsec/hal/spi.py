@@ -52,6 +52,7 @@ from chipsec.logger import print_buffer, print_buffer_bytes
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import JEDEC_ID
+from chipsec.exceptions import SpiRuntimeError
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -184,12 +185,6 @@ def get_SPI_region(flreg):
     range_limit = ((flreg & PCH_RCBA_SPI_FREGx_LIMIT_MASK) >> 4)
     range_limit |= SPI_FLA_PAGE_MASK
     return (range_base, range_limit)
-
-class SpiRuntimeError (RuntimeError):
-    pass
-
-class SpiAccessError (RuntimeError):
-    pass
 
 
 class SPI(hal_base.HALBase):

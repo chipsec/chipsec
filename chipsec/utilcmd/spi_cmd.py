@@ -35,7 +35,8 @@ The file rom.bin will contain the full binary of the SPI flash. It can then be p
 import time
 import os
 from chipsec.command import BaseCommand
-from chipsec.hal.spi import SPI, SpiRuntimeError, BIOS
+from chipsec.hal.spi import SPI, BIOS
+from chipsec.exceptions   import SpiRuntimeError
 from argparse        import ArgumentParser
 
 

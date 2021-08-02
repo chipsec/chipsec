@@ -22,7 +22,8 @@
 from time   import time
 from argparse   import ArgumentParser
 
-from chipsec.hal.cpu    import CPU, CPURuntimeError
+from chipsec.hal.cpu    import CPU
+from chipsec.exceptions import CPURuntimeError
 from chipsec.command import BaseCommand
 
 # ###################################################################

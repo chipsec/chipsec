@@ -35,11 +35,6 @@ import sys
 from chipsec.hal.hal_base import HALBase
 from chipsec.logger import print_buffer
 
-class MemoryRuntimeError (RuntimeError):
-    pass
-
-class MemoryAccessError (RuntimeError):
-    pass
 
 class Memory(HALBase):
     def __init__( self, cs ):

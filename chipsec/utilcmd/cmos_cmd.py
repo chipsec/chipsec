@@ -23,7 +23,8 @@ from time   import time
 from argparse   import ArgumentParser
 
 from chipsec.command    import BaseCommand
-from chipsec.hal.cmos   import CMOS, CmosRuntimeError
+from chipsec.hal.cmos   import CMOS
+from chipsec.exceptions import CmosRuntimeError
 
 
 class CMOSCommand(BaseCommand):

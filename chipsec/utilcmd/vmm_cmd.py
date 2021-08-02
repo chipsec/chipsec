@@ -24,8 +24,9 @@ import time
 import re
 
 from chipsec.command    import BaseCommand
-from chipsec.hal.vmm    import VMM, VMMRuntimeError, get_virtio_devices, VirtIO_Device
+from chipsec.hal.vmm    import VMM, get_virtio_devices, VirtIO_Device
 from chipsec.hal.pci    import print_pci_devices
+from chipsec.exceptions      import VMMRuntimeError
 from argparse           import ArgumentParser
 
 

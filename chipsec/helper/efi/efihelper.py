@@ -47,8 +47,6 @@ from chipsec.logger import logger
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.helper.basehelper import Helper
 
-class EfiHelperError (RuntimeError):
-    pass
 
 _tools = {
   chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.efi',

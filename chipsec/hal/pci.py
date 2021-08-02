@@ -46,12 +46,7 @@ from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
 from chipsec.hal.pcidb import VENDORS, DEVICES
 from chipsec.helper import oshelper
-
-
-class PciRuntimeError (RuntimeError):
-    pass
-class PciDeviceNotFoundError (RuntimeError):
-    pass
+from chipsec.exceptions import OsHelperError
 
 #
 # PCI configuration header registers
@@ -284,7 +279,7 @@ class Pci:
                     vid = did_vid & 0xFFFF
                     did = (did_vid >> 16) & 0xFFFF
                     devices.append((b, d, f, vid, did))
-            except oshelper.OsHelperError:
+            except OsHelperError:
                 if logger().HAL:
                     logger().log("[pci] unable to access B/D/F: {:d}/{:d}/{:d}".format(b, d, f))
         return devices

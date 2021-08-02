@@ -55,9 +55,6 @@ MemType = {
     MTRR_MEMTYPE_WB: 'Writeback (WB)'
 }
 
-class MsrRuntimeError (RuntimeError):
-    pass
-
 class Msr:
 
     def __init__( self, cs ):

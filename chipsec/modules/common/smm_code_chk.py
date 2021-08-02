@@ -22,7 +22,7 @@ Once set to '1', any CPU that attempts to execute SMM code not within the ranges
 As such, enabling and locking this bit is an important step in mitigating SMM call-out vulnerabilities.
 This CHIPSEC module simply reads the register and checks that SMM_Code_Chk_En is set and locked.
 """
-from chipsec.helper.oshelper import HWAccessViolationError
+from chipsec.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
 TAGS = [MTAG_BIOS, MTAG_SMM]

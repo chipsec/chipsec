@@ -36,8 +36,6 @@ from chipsec.hal import hal_base
 from chipsec.logger import print_buffer
 from chipsec.defines import bytestostring
 
-class IGDRuntimeError (RuntimeError):
-    pass
 
 class IGD(hal_base.HALBase):
 
