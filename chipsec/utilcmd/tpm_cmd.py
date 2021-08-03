@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2017, Google Inc
 # Copyright (c) 2010-2021, Intel Corporation
