@@ -24,6 +24,7 @@ from argparse import ArgumentParser
 from chipsec.command import BaseCommand
 from chipsec.hal.locks import locks, LockResult
 from chipsec.defines import is_set
+from chipsec.chipset import CONSISTENCY_CHECKING
 
 
 class LOCKCHECKCommand(BaseCommand):
@@ -142,8 +143,7 @@ KEY:
         return res
 
     def run(self):
-        self.logger.log("This module works best when CONSISTENCY_CHECKING is turned on")
-        self.logger.log("To enable CONSISTENCY_CHECKING change the option to True within chipset.py")
+        CONSISTENCY_CHECKING = True
         self.logger.set_always_flush(True)
         try:
             self._locks = locks(self.cs)
