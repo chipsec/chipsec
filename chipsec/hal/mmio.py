@@ -45,6 +45,7 @@ usage:
 """
 
 from chipsec.hal import hal_base
+from chipsec.exceptions import CSReadError
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
 
@@ -217,7 +218,7 @@ class MMIO(hal_base.HALBase):
 
         if self.logger.HAL: self.logger.log( '[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size) )
         if base == 0:
-            raise Exception
+            raise CSReadError("MMIO BAR ({}) base address is 0".format(bar_name))
         return base, size
 
     #

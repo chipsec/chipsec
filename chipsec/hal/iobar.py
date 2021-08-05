@@ -32,6 +32,7 @@ usage:
 from chipsec.hal import hal_base
 from chipsec.logger import logger
 from chipsec.exceptions import IOBARNotFoundError
+from chipsec.exceptions import CSReadError
 
 DEFAULT_IO_BAR_SIZE = 0x100
 
@@ -95,6 +96,8 @@ class IOBAR(hal_base.HALBase):
         size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
         if logger().HAL: logger().log( '[iobar] {}: 0x{:04X} (size = 0x{:X})'.format(bar_name, base, size) )
+        if base == 0:
+            raise CSReadError("MMIO BAR ({}) base address is 0".format(bar_name))
         return base, size
 
 
