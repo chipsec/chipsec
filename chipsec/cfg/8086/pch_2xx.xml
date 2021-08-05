@@ -85,7 +85,7 @@ XML configuration file for 200 series PCH based platforms
     <!-- Power Management Controller -->
     <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x40" size="4" desc="ACPI Base Address">
       <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
-      <field name="BA"    bit="8" size="8" desc="Base Address"/>
+      <field name="BA"    bit="8" size="24" desc="Base Address"/>
     </register>
     <register name="ACTL" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x44" size="4" desc="ACPI Control">
       <field name="SCIS"    bit="0" size="2" desc="SCI IRQ Select"/>
