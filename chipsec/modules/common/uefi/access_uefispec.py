@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,11 +19,25 @@
 #
 
 
-
 """
-Checks protection of UEFI variables defined in the UEFI spec to have certain permissions. 
+Checks protection of UEFI variables defined in the UEFI spec to have certain permissions.
 
 Returns failure if variable attributes are not as defined in `table 11 "Global Variables" <http://uefi.org/>`_ of the UEFI spec.
+
+usage:
+    ``chipsec_main -m common.uefi.access_uefispec [-a modify]``
+
+    - ``-a modify``: Attempt to modify each variable in addition to checking attributes
+
+Where:
+    - ``[]``: optional line
+
+Examples:
+    >>> chipsec_main.py -m common.uefi.access_uefispec
+    >>> chipsec_main.py -m common.uefi.access_uefispec -a modify
+
+NOTE:
+Requires an OS with UEFI Runtime API support.
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
@@ -88,7 +102,9 @@ class access_uefispec(BaseModule):
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
-        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        if not supported:
+            self.logger.log("OS does not support UEFI Runtime API")
+            self.res = ModuleResult.NOTAPPLICABLE
         return supported
 
     def diff_var( self, data1, data2):
@@ -131,8 +147,8 @@ class access_uefispec(BaseModule):
         res = ModuleResult.PASSED
         vars = self._uefi.list_EFI_variables()
         if vars is None:
-            self.logger.log_warn_check( 'Could not enumerate UEFI Variables from runtime.' )
-            self.logger.log_important( "Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually." )
+            self.logger.log_warning('Could not enumerate UEFI Variables from runtime.')
+            self.logger.log_important("Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually.")
             return ModuleResult.SKIPPED
 
         uefispec_concern = []
@@ -151,7 +167,6 @@ class access_uefispec(BaseModule):
                 self.logger.log('[*] Variable {} ({})'.format(name, get_attr_string(attrs)))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
-                    #self.logger.log(' UEFI Spec Var {}'.format(name))
                     if perms != attrs:
                         attr_diffs = (perms ^ attrs)
                         extra_attr = attr_diffs &  attrs
@@ -165,7 +180,6 @@ class access_uefispec(BaseModule):
                         if res != ModuleResult.FAILED: res = ModuleResult.WARNING
 
                 if do_modify:
-                    #self.logger.log('uefispec_ro_vars')
                     self.logger.log("[*] Testing modification of {} ..".format(name))
                     if name in self.uefispec_ro_vars:
                         if self.can_modify(name, guid, data):
@@ -197,12 +211,16 @@ class access_uefispec(BaseModule):
 
         self.logger.log('')
 
-        if   ModuleResult.PASSED == res: self.logger.log_passed_check( 'All checked EFI variables are protected according to spec.' )
-        elif ModuleResult.FAILED == res: self.logger.log_failed_check('Some EFI variables were not protected according to spec.')
+        if ModuleResult.PASSED == res:
+            self.logger.log_passed('All checked EFI variables are protected according to spec.')
+        elif ModuleResult.FAILED == res:
+            self.logger.log_failed('Some EFI variables were not protected according to spec.')
         return res
 
 
     def run( self,  module_argv ):
-        self.logger.start_test( "Access Control of EFI Variables" )
+        self.logger.start_test("Access Control of EFI Variables")
+
         do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
-        return self.check_vars( do_modify )
+        self.res = self.check_vars( do_modify )
+        return self.res
