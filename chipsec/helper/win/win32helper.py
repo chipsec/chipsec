@@ -232,7 +232,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 def _handle_winerror(fn, msg, hr):
     _handle_error( ("{} failed: {} ({:d})".format(fn, msg, hr)), hr )
 def _handle_error( err, hr=0 ):
-    logger().error( err )
+    if logger().DEBUG: logger().error( err )
     raise OsHelperError( err, hr )
 
 class Win32Helper(Helper):
