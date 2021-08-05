@@ -119,10 +119,19 @@ MASK_32b = 0xFFFFFFFF
 MASK_64b = 0xFFFFFFFFFFFFFFFF
 
 
-def scan_single_bit_mask(mask):
-    for bit in range(0, 7):
-        if mask>>bit  == 1:
-            return bit
+def bit(bit_num):
+    return int(1 << bit_num)
+
+
+def is_set(val, bit_mask):
+    return bool(val & bit_mask != 0)
+
+
+def scan_single_bit_mask(bit_mask):
+    for bit_num in range(0, 7):
+        if bit_mask >> bit_num == 1:
+            return bit_num
+
 
 #
 # Compression Types
