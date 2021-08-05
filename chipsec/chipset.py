@@ -1220,18 +1220,23 @@ class Chipset:
             reg_data = self.read_register(reg, cpu_thread, bus)
             reg_data = [reg_data]
         if logger().VERBOSE or with_print:
-            for rd in reg_data:
-                self.print_register(reg, rd)
-        return self.get_register_field_all(reg, reg_data, field)
+            if reg_data:
+                for rd in reg_data:
+                    self.print_register(reg, rd)
+            else:
+                self.logger.log("Register has no data")
+        if reg_data:
+            return self.get_register_field_all(reg, reg_data, field)
+        return reg_data
 
     def set_lock(self, lock_name, lock_value, cpu_thread=0, bus=None):
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
         if bus is None:
-            reg_data = self.read_register(reg, cpu_thread, 0)
-            reg_data = self.set_register_field(reg, reg_data, field, lock_value)
-            return self.write_register_all_single(reg, reg_data, cpu_thread)
+            reg_data = self.read_register_all(reg, cpu_thread)
+            reg_data = self.set_register_field_all(reg, reg_data, field, lock_value)
+            return self.write_register_all(reg, reg_data, cpu_thread)
         else:
             reg_data = self.read_register(reg, cpu_thread, bus)
             reg_data = self.set_register_field(reg, reg_data, field, lock_value)
