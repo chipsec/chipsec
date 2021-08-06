@@ -12,7 +12,18 @@ XML configuration file for Jaketown (Sandy Bridge-E) based platforms
     <sku did="0x3C00" name="Jaketown" code="JKT" longname="Server 2nd Generation Core Processor (Jaketown CPU / Patsburg PCH)" />
   </info>
 
+  <mmio>
+    <bar name="MMCFG" register="MMCFG_BASE" base_field="mmcfg_base_addr" size="0x1000" desc="PCI Express Register Range"/>
+  </mmio>>
+
   <registers>
+    <!-- MMCFG -->
+    <register name="MMCFG_BASE"  type="pcicfg" bus="0" dev="5" fun="0" offset="0x84" size="4" desc="MMCFG Address Base">
+      <field name="mmcfg_base_addr" bit="26" size="6" desc="MMCFG Base Address"/>
+    </register>
+    <register name="MMCFG_LIMIT" type="pcicfg" bus="0" dev="5" fun="0" offset="0x88" size="4" desc="MMCFG Address Limit">
+      <field name="mmcfg_limit_addr" bit="26" size="6" desc="MMCFG Limit Address"/>
+    </register>
 
     <!-- B:D.F 00:12.6 -->
     <register name="PCI0.0.0_SMRAMC" type="pcicfg" bus="0" dev="12" fun="6" offset="0x4c" size="1" desc="System Management RAM Control">
