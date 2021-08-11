@@ -81,11 +81,7 @@ CHIPSET_ID_UNKNOWN = 0
 
 CHIPSET_CODE_UNKNOWN = ''
 
-CHIPSET_FAMILY_XEON  = []
-CHIPSET_FAMILY_CORE  = []
-CHIPSET_FAMILY_ATOM  = []
-CHIPSET_FAMILY_QUARK = []
-
+CHIPSET_FAMILY  = {}
 
 PCH_CODE_PREFIX = 'PCH_'
 
@@ -330,13 +326,13 @@ class Chipset:
         logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
 
     def is_core(self):
-        return  self.get_chipset_code() in CHIPSET_FAMILY_CORE
+        return  self.get_chipset_code() in CHIPSET_FAMILY["core"]
 
     def is_server(self):
-        return  self.get_chipset_code() in CHIPSET_FAMILY_XEON
+        return  self.get_chipset_code() in CHIPSET_FAMILY["xeon"]
 
     def is_atom(self):
-        return self.get_chipset_code() in CHIPSET_FAMILY_ATOM
+        return self.get_chipset_code() in CHIPSET_FAMILY["atom"]
 
     def use_native_api(self):
         return self.helper.use_native_api()
@@ -406,14 +402,10 @@ class Chipset:
                     if logger().DEBUG: logger().log( "[*] Populating configuration dictionary.." )
                     for _info in _cfg.iter('info'):
                         if 'family' in _info.attrib:
-                            if _info.attrib['family'].lower() == "core":
-                                CHIPSET_FAMILY_CORE.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "atom":
-                                CHIPSET_FAMILY_ATOM.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "xeon":
-                                CHIPSET_FAMILY_XEON.append(_cfg.attrib['platform'].upper())
-                            if _info.attrib['family'].lower() == "quark":
-                                CHIPSET_FAMILY_QUARK.append(_cfg.attrib['platform'].upper())
+                            family = _info.attrib['family'].lower()
+                            if not family in CHIPSET_FAMILY:
+                                CHIPSET_FAMILY[family] = []
+                            CHIPSET_FAMILY[family].append(_cfg.attrib['platform'].upper())
                         if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(',')):
                                 if dv[-1].upper() == 'X':
