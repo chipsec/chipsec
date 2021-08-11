@@ -89,17 +89,17 @@ CHIPSET_FAMILY_QUARK = []
 
 PCH_CODE_PREFIX = 'PCH_'
 
+PCH_ADDRESS = {
+    # Intel: 0:1F.0
+    0x8086: (0, 0x1F, 0),
+    # AMD: 0:14.3
+    0x1022: (0, 0x14, 3)
+}
+
 try:
     from chipsec.custom_chipsets import *
 except ImportError:
     pass
-
-
-def f_xml(self, x):
-    XMLFILE_RE = re.compile("^\w+\.xml")
-    return ( x.find('common') == -1 and XMLFILE_RE.match(x) )
-def map_xmlname(self, x):
-    return x.split('.')[0]
 
 
 class Chipset:
@@ -167,13 +167,17 @@ class Chipset:
             rid = self.pci.read_byte(0, 0, 0, PCI_HDR_RID_OFF)
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
-        try:
-            vid_did = self.pci.read_dword(0, 31, 0, 0)
-            pch_vid = vid_did & 0xFFFF
-            pch_did = (vid_did >> 16) & 0xFFFF
-            pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
-        except:
-            if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
+        if not vid in PCH_ADDRESS:
+            if logger().DEBUG: logger().error("PCH address unknown for VID {}.".format(vid))
+        else:
+            try:
+                 (bus,dev,fun) = PCH_ADDRESS[vid]
+                 vid_did = self.pci.read_dword(bus, dev, fun, 0)
+                 pch_vid = vid_did & 0xFFFF
+                 pch_did = (vid_did >> 16) & 0xFFFF
+                 pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
+            except:
+                 if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
         return (vid, did, rid, pch_vid, pch_did, pch_rid)
 
     def get_cpuid(self):
