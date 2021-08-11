@@ -164,7 +164,7 @@ class Chipset:
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
         if not vid in PCH_ADDRESS:
-            if logger().DEBUG: logger().error("PCH address unknown for VID {}.".format(vid))
+            if logger().DEBUG: logger().error("PCH address unknown for VID 0x{:04X}.".format(vid))
         else:
             try:
                  (bus,dev,fun) = PCH_ADDRESS[vid]
@@ -363,7 +363,6 @@ class Chipset:
         self.chipset_codes = {}
         self.pch_codes = {}
         self.device_code = []
-        self.load_list = []
         self.detection_dictionary = dict()
 
         # find VID
@@ -371,6 +370,7 @@ class Chipset:
         VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
         # create dictionaries
         for vid in VID:
+            if logger().DEBUG: logger().log( "[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)) )
             self.chipset_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.pch_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.device_dictionary[int(vid, 16)] = collections.defaultdict(list)
@@ -380,8 +380,7 @@ class Chipset:
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     if 'platform' not in _cfg.attrib:
-                        if logger().DEBUG: logger().log( "[*] found common platform config '{}'..".format(fxml) )
-                        self.load_list.append(fxml)
+                        if logger().DEBUG: logger().log( "[*] skipping common platform config '{}'..".format(fxml) )
                         continue
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
                         if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
@@ -441,7 +440,7 @@ class Chipset:
     def load_xml_configuration( self ):
         # Create a sorted config file list (xml only)
         _cfg_files = []
-        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
+        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg', "{:04X}".format(self.vid) )
         for root, subdirs, files in os.walk(_cfg_path):
             _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
         _cfg_files.sort()
@@ -450,7 +449,7 @@ class Chipset:
             for _xml in _cfg_files:
                 logger().log("[*] - {}".format(_xml))
 
-        # Locate common (chipsec/cfg/common*.xml) configuration XML files.
+        # Locate common (chipsec/cfg/{vid}/common*.xml) configuration XML files.
         loaded_files = []
         if LOAD_COMMON:
             for _xml in _cfg_files:
@@ -463,13 +462,13 @@ class Chipset:
                 platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
             loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
-        # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
+        # Locate platform specific (chipsec/cfg/{vid}/<code>*.xml) configuration XML files.
         if self.code and CHIPSET_CODE_UNKNOWN != self.code:
             for _xml in _cfg_files:
                 if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code.lower())):
                     loaded_files.append(_xml)
 
-        # Locate PCH specific (chipsec/cfg/pch_<code>*.xml) configuration XML files.
+        # Locate PCH specific (chipsec/cfg/{vid}/pch_<code>*.xml) configuration XML files.
         if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
             for _xml in _cfg_files:
                 if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code.lower())):
