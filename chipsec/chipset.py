@@ -353,6 +353,10 @@ class Chipset:
     ##################################################################################
 
     def init_xml_configuration(self):
+        # CAVEAT: this method may be called before command-line flags have been
+        # parsed. In that case, logger().DEBUG will be False even if `-d` is
+        # used. Switch it to True in logger.py directly if you need to debug
+        # this function.
         self.pch_dictionary = dict()
         self.chipset_dictionary = dict()
         self.device_dictionary = dict()
