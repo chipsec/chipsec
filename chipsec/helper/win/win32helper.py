@@ -553,7 +553,8 @@ class Win32Helper(Helper):
     # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
-        logger().log("size: {} addr: {}".format(size, phys_address))
+        if logger().DEBUG:
+            logger().log("[helper] -> read_mmio_reg( phys_address=0x{:X}, size={} )".format(phys_address, size))
         in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
         out_buf = self._ioctl( IOCTL_READ_MMIO, in_buf, out_size )
         if size == 8:
