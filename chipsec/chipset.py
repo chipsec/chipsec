@@ -159,7 +159,7 @@ class Chipset:
         except:
             if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
         if not vid in PCH_ADDRESS:
-            if logger().DEBUG: logger().error("PCH address unknown for VID {}.".format(vid))
+            if logger().DEBUG: logger().error("PCH address unknown for VID 0x{:04X}.".format(vid))
         else:
             try:
                  (bus,dev,fun) = PCH_ADDRESS[vid]
@@ -358,7 +358,6 @@ class Chipset:
         self.chipset_codes = {}
         self.pch_codes = {}
         self.device_code = []
-        self.load_list = []
         self.detection_dictionary = dict()
 
         # find VID
@@ -366,6 +365,7 @@ class Chipset:
         VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
         # create dictionaries
         for vid in VID:
+            if logger().DEBUG: logger().log( "[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)) )
             self.chipset_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.pch_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.device_dictionary[int(vid, 16)] = collections.defaultdict(list)
@@ -377,8 +377,7 @@ class Chipset:
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     if 'platform' not in _cfg.attrib:
-                        if logger().DEBUG: logger().log( "[*] found common platform config '{}'..".format(fxml) )
-                        self.load_list.append(fxml)
+                        if logger().DEBUG: logger().log( "[*] skipping common platform config '{}'..".format(fxml) )
                         continue
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
                         if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
