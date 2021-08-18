@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -19,11 +19,20 @@
 #
 
 
-
 """
+Check Memory Remapping Configuration
+
+Reference:
 `Preventing & Detecting Xen Hypervisor Subversions <http://www.invisiblethingslab.com/resources/bh08/part2-full.pdf>`_ by Joanna Rutkowska & Rafal Wojtczuk
 
-Check Memory Remapping Configuration
+Usage:
+  ``chipsec_main -m common.remap``
+
+Example:
+    >>> chipsec_main.py -m common.remap
+
+.. note:: This module will only run on Core platforms.
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG, MTAG_SMM
@@ -45,25 +54,25 @@ class remap(BaseModule):
     def is_supported(self):
         if self.cs.is_core():
             return True
+        self.logger.log('Not a Core (client) platform.  Skipping module.')
         self.res = ModuleResult.NOTAPPLICABLE
         return False
 
     def check_remap_config(self):
-        self.logger.start_test( "Memory Remapping Configuration" )
 
-        if not self.cs.is_register_defined( 'PCI0.0.0_REMAPBASE'  ) or \
-           not self.cs.is_register_defined( 'PCI0.0.0_REMAPLIMIT' ) or \
-           not self.cs.is_register_defined( 'PCI0.0.0_TOUUD'      ) or \
-           not self.cs.is_register_defined( 'PCI0.0.0_TOLUD'      ) or \
-           not self.cs.is_register_defined( 'PCI0.0.0_TSEGMB'     ):
+        if not self.cs.is_register_defined('PCI0.0.0_REMAPBASE' ) or \
+           not self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT') or \
+           not self.cs.is_register_defined('PCI0.0.0_TOUUD'     ) or \
+           not self.cs.is_register_defined('PCI0.0.0_TOLUD'     ) or \
+           not self.cs.is_register_defined('PCI0.0.0_TSEGMB'    ):
             self.logger.error( "Couldn't find definition of required registers (REMAP*, TOLUD, TOUUD, TSEGMB)" )
             return ModuleResult.ERROR
 
-        remapbase  = self.cs.read_register( 'PCI0.0.0_REMAPBASE' )
-        remaplimit = self.cs.read_register( 'PCI0.0.0_REMAPLIMIT' )
-        touud      = self.cs.read_register( 'PCI0.0.0_TOUUD' )
-        tolud      = self.cs.read_register( 'PCI0.0.0_TOLUD' )
-        tsegmb     = self.cs.read_register( 'PCI0.0.0_TSEGMB' )
+        remapbase  = self.cs.read_register('PCI0.0.0_REMAPBASE')
+        remaplimit = self.cs.read_register('PCI0.0.0_REMAPLIMIT')
+        touud      = self.cs.read_register('PCI0.0.0_TOUUD')
+        tolud      = self.cs.read_register('PCI0.0.0_TOLUD')
+        tsegmb     = self.cs.read_register('PCI0.0.0_TSEGMB')
         self.logger.log( "[*] Registers:" )
         self.logger.log( "[*]   TOUUD     : 0x{:016X}".format(touud) )
         self.logger.log( "[*]   REMAPLIMIT: 0x{:016X}".format(remaplimit) )
@@ -72,7 +81,7 @@ class remap(BaseModule):
         self.logger.log( "[*]   TSEGMB    : 0x{:08X}\n".format(tsegmb) )
 
         ia_untrusted = 0
-        if self.cs.is_register_defined('MSR_BIOS_DONE') and self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+        if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
         remapbase_lock  = remapbase & 0x1
         remaplimit_lock = remaplimit & 0x1
@@ -103,39 +112,39 @@ class remap(BaseModule):
             remaplimit_addr = (remaplimit|0xFFFFF)
             ok = ((remaplimit_addr + 1) == touud)
             remap_ok = remap_ok and ok
-            if ok: self.logger.log_good( "  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD" )
-            else:  self.logger.log_bad( "  Remap window configuration is not correct" )
+            if ok: self.logger.log_good("  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD")
+            else:  self.logger.log_bad("  Remap window configuration is not correct")
 
         ok = (0 == tolud & ALIGNED_1MB)     and \
              (0 == touud & ALIGNED_1MB)     and \
              (0 == remapbase & ALIGNED_1MB) and \
              (0 == remaplimit & ALIGNED_1MB)
         remap_ok = remap_ok and ok
-        if ok: self.logger.log_good( "  All addresses are 1MB aligned" )
-        else:  self.logger.log_bad( "  Not all addresses are 1MB aligned" )
+        if ok: self.logger.log_good("  All addresses are 1MB aligned")
+        else:  self.logger.log_bad("  Not all addresses are 1MB aligned")
 
         self.logger.log( "[*] checking if memory remap configuration is locked.." )
         ok = (0 != touud_lock) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
-        if ok: self.logger.log_good( "  TOUUD is locked" )
-        else:  self.logger.log_bad( "  TOUUD is not locked" )
+        if ok: self.logger.log_good("  TOUUD is locked")
+        else:  self.logger.log_bad("  TOUUD is not locked")
 
         ok = (0 != tolud_lock) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
-        if ok: self.logger.log_good( "  TOLUD is locked" )
-        else:  self.logger.log_bad( "  TOLUD is not locked" )
+        if ok: self.logger.log_good("  TOLUD is locked")
+        else:  self.logger.log_bad("  TOLUD is not locked")
 
         ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
-        if ok: self.logger.log_good( "  REMAPBASE and REMAPLIMIT are locked" )
-        else:  self.logger.log_bad( "  REMAPBASE and REMAPLIMIT are not locked" )
+        if ok: self.logger.log_good("  REMAPBASE and REMAPLIMIT are locked")
+        else:  self.logger.log_bad("  REMAPBASE and REMAPLIMIT are not locked")
 
         if remap_ok:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "Memory Remap is configured correctly and locked" )
+            self.logger.log_passed("Memory Remap is configured correctly and locked")
         else:
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "Memory Remap is not properly configured/locked. Remaping attack may be possible" )
+            self.logger.log_failed("Memory Remap is not properly configured/locked. Remaping attack may be possible")
 
         return res
 
@@ -144,5 +153,7 @@ class remap(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
+        self.logger.start_test("Memory Remapping Configuration")
+
         self.res = self.check_remap_config()
         return self.res
