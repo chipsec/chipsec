@@ -316,6 +316,27 @@ document id 334818/334819
       <field name="Base"   bit="12" size="27" desc="VTD Base Address"/>
     </register>
 
+    <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0" fun="0" offset="0x50" size="2" desc="Graphics Control">
+        <field name="GMS"     bit="8" size="8" desc="GMS" />
+        <field name="GGMS"    bit="6" size="2" desc="GGMS" />
+        <field name="VAMEN"   bit="2" size="1" desc="VAMEN" />
+        <field name="IVD"     bit="1" size="1" desc="IVD" />
+        <field name="GGCLOCK" bit="0" size="1" desc="GGC Lock"/>
+    </register>
+    <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0" fun="0" offset="0xB0" size="4" desc="Base of Graphics Stolen Memory">
+        <field name="BDSM" bit="20" size="12" desc="DSM Base" />
+        <field name="LOCK" bit="0"  size="1"  desc="Lock" />
+    </register>
+    <register name="PCI0.0.0_PAVPC" type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Control">
+        <field name="PCMBASE" bit="20" size="12" desc="PCMBASE" />
+        <field name="ASMFEN" bit="6" size="1" desc="ASMF Method Enable" />
+        <field name="OVTATTACK" bit="4" size="1" desc="Override Unsolicited Connection State Attack and Terminate" />
+        <field name="HVYMODSEL" bit="3" size="1" desc="HVY mode selection" />
+        <field name="PAVPLCK" bit="2" size="1" desc="PAVP Lock" />
+        <field name="PAVPE" bit="1" size="1" desc="PAVP Enable" />
+        <field name="PCME" bit="0" size="1" desc="PCM Enable" />
+    </register>
+
     <!-- GFx MMIO registers -->
     <register name="PCBR" type="mmio" bar="GTTMMADR" offset="0x182120" desc="PCBR">
         <field name="PCBR_LOCK" bit="0" size="1"/>
@@ -379,6 +400,11 @@ document id 334818/334819
       <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
       <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
     </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- UNDEFS                       -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <register name="PCI0.0.0_DPR" undef="DRP not supported on SoC" />
   </registers>
 
   <!-- #################################### -->
