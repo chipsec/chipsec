@@ -26,11 +26,11 @@ from chipsec.exceptions import CSReadError, HWAccessViolationError
 
 
 class LockResult:
-    DEFINED = bit(0)
-    HAS_CONFIG = bit(1)
-    LOCKED = bit(2)
-    CAN_READ = bit(3)
-    INCONSISTENT = bit(4)
+    DEFINED = bit(0)  # lock exists within configuration
+    HAS_CONFIG = bit(1)  # lock configuration exists
+    LOCKED = bit(2)  # lock matches value within xml
+    CAN_READ = bit(3)  # system is able to access the lock
+    INCONSISTENT = bit(4)  # all lock results do not match
 
 
 class locks(HALBase):
@@ -49,15 +49,15 @@ class locks(HALBase):
             res |= LockResult.DEFINED
         try:
             self.cs.get_locked_value(lock_name)
-            self.cs.get_lock(lock_name, bus=bus)
             res |= LockResult.HAS_CONFIG
+            self.cs.get_lock(lock_name, bus=bus)
             res |= LockResult.CAN_READ
         except KeyError:
             pass
         except CSReadError:
-            res |= LockResult.HAS_CONFIG
+            pass
         except HWAccessViolationError:
-            res |= LockResult.HAS_CONFIG
+            pass
         return res
 
     def is_locked(self, lock_name, bus=None):
