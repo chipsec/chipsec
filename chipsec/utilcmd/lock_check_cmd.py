@@ -31,6 +31,7 @@ class LOCKCHECKCommand(BaseCommand):
     """
     >>> chipsec_util check list
     >>> chipsec_util check lock <lockname>
+    >>> chipsec_util check lock <lockname1, lockname2, ...>
     >>> chipsec_util check all
 
     Examples:
