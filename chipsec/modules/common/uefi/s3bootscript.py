@@ -43,12 +43,11 @@ Where:
     - ``[]``: optional line
 
 Examples:
-
     >>> chipsec_main.py -m common.uefi.s3bootscript
     >>> chipsec_main.py -m common.uefi.s3bootscript -a 0x00000000BDE10000
 
-NOTE:
-Requires an OS with UEFI Runtime API support.
+.. NOTE::
+    Requires an OS with UEFI Runtime API support.
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT
