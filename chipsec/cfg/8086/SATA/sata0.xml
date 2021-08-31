@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<configuration>
+  <mmio>
+    <bar name="ABAR" register="ABAR" base_field="BA" size="0x1000" desc="SATA_ABAR" />
+  </mmio>
+    <registers>
+        <!-- SATA Registers -->
+        <register name="ABAR"   type="pcicfg" device="SATA" offset="0x24" size="4" desc="AHCI Base Address">
+            <field name="BA" bit="19" size="13" desc="Base Address"/>
+        </register>
+        <register name="SATAGC" type="pcicfg" device="SATA" offset="0x9C" size="4" desc="SATA General Configuration">
+            <field name="ASSEL" bit="0" size="3" desc="ABAR Size Select"/>
+        </register>
+    </registers>
+
+</configuration>

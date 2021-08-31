@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<configuration>
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+        <bar name="DMIBAR" register="DMIRCBAR" base_field="dmircbar" size="0x1000" enable_bit="0" desc="Root Complex Register Range"/>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+    <register name="DMIRCBAR" type="pcicfg" bus="0" dev="0" fun="0" offset="0x50" size="4" desc="DMI Root Complex Register Block Base Address">
+      <field name="dmircbaren" bit="0"  size="1"  desc="Enable DMIRCBAR"/>
+      <field name="dmircbar"   bit="12" size="20" desc="Base address DMI Root Complex register space"/>
+    </register>
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+    </controls>
+
+</configuration>

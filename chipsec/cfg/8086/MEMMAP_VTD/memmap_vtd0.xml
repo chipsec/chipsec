@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<configuration>
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+        <bar name="MMCFG" register="MMCFG_BASE" base_field="base" size="0x4000000" desc="PCI Express Register Range"/>
+        <bar name="VTBAR" register="VTBAR"    base_field="Base" size="0x1000" enable_field="Enable" desc="Intel VT-d Register Register Range"/>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+      <register name="MMCFG_BASE" type="pcicfg" offset="0x84" size="4" desc="MMCFG Memory Base">
+        <field name="base"  bit="26" size="6" desc="Base address"/>
+      </register>
+      <register name="MMCFG_LIMIT" type="pcicfg" offset="0x88" size="4" desc="MMCFG Memory Limit">
+        <field name="limit" bit="26" size="6" desc="Limit address"/>
+      </register>
+
+      <register name="TSEG" type="pcicfg" offset="0xA8" size="8" desc="TSEG Memory">
+        <field name="base"  bit="20" size="12" desc="Base address"/>
+        <field name="limit" bit="52" size="12" desc="Limit address"/>
+      </register>
+      <register name="TSEG_BASE" type="pcicfg" offset="0xA8" size="4" desc="TSEG Memory Base">
+        <field name="base"  bit="20" size="12" desc="Base address"/>
+      </register>
+      <register name="TSEG_LIMIT" type="pcicfg" offset="0xAC" size="4" desc="TSEG Memory Limit">
+        <field name="limit" bit="20" size="12" desc="Limit address"/>
+      </register>
+
+      <register name="TOLM" type="pcicfg" offset="0xD0" size="4" desc="Top of Low Memory">
+        <field name="TOLM"        bit="26" size="6" desc="Top of Low Memory"/>
+      </register>
+      <register name="TOHM" type="pcicfg" offset="0xD0" size="4" desc="Top of High Memory">
+        <field name="TOHM"        bit="26" size="6" desc="Top of High Memory"/>
+      </register>
+
+      <register name="VTBAR" type="mmcfg" offset="0x180" size="4" desc="VT BAR Register">
+        <field name="Enable" bit="0"  size="1"  desc="Enable"/>
+        <field name="Base"   bit="13" size="19" desc="VTD Base Address"/>
+      </register>
+
+      <register name="VTGENCTRL" type="mmcfg" offset="0x184" size="4" desc="VTGENCTRL Register">
+        <field name="gpa_limit" bit="0"  size="4" desc="Guest virtual addressing limit"/>
+        <field name="hpa_limit" bit="4"  size="4" desc="Host processor addressing limit"/>
+        <field name="lockvtd"   bit="15" size="1" desc="lockvtd"/>
+      </register>
+
+      <register name="LTDPR" type="mmcfg" offset="0x290" size="4" desc="Intel TXT DMA Protected Range Register">
+        <field name="lock"       bit="0"  size="1"  desc="Lock LTDPR register"/>
+        <field name="protregsts" bit="1"  size="1"  desc="Protection enabled in HW"/>
+        <field name="commandbit" bit="2"  size="1"  desc="Command bit"/>
+        <field name="size"       bit="4"  size="8"  desc="Size of memory"/>
+        <field name="topofdpr"   bit="20" size="12" desc="Top address +1 of DPR"/>
+      </register>
+
+
+      <!-- GENPROTRANGE Registers -->
+      <register name="GENPROTRANGE1_BASE" type="pcicfg" offset="0xB0" size="8" desc="Generic Protected Memory Range 1 Base Address">
+        <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 1 base address"/>
+      </register>
+      <register name="GENPROTRANGE1_LIMIT" type="pcicfg" offset="0xB8" size="8" desc="Generic Protected Memory Range 1 Limit Address">
+        <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 1 limit address"/>
+      </register>
+      <register name="GENPROTRANGE2_BASE" type="pcicfg" offset="0xC0" size="8" desc="Generic Protected Memory Range 2 Base Address">
+        <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 2 base address"/>
+      </register>
+      <register name="GENPROTRANGE2_LIMIT" type="pcicfg" offset="0xC8" size="8" desc="Generic Protected Memory Range 2 Limit Address">
+        <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 2 limit address"/>
+      </register>
+      <register name="GENPROTRANGE0_BASE" type="mmcfg" offset="0x120" size="8" desc="Generic Protected Memory Range 0 Base Address">
+        <field name="base_address" bit="16" size="35" desc="GENPROTRANGE 0 base address"/>
+      </register>
+      <register name="GENPROTRANGE0_LIMIT" type="mmcfg" offset="0x128" size="8" desc="Generic Protected Memory Range 0 Limit Address">
+        <field name="limit_address" bit="16" size="35" desc="GENPROTRANGE 0 limit address"/>
+      </register>
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+    </controls>
+
+</configuration>
