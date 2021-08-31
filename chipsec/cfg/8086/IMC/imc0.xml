@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<configuration>
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="SMBSTAT_0" type="mmcfg" offset="0x180" size="4" desc="SMBus Host Status">
+            <field name="RDATA"        bit="0"  size="16" desc="Read Data" />
+            <field name="TSOD_SA"      bit="24" size="4" desc="Last Issued TSOD Slave Address" />
+            <field name="BUSY"         bit="28" size="1" desc="SMBus Busy" />
+            <field name="SBE"          bit="29" size="1" desc="SMBus Error/Failed" />
+            <field name="WOD"          bit="30" size="1" desc="Write Operation Done" />
+            <field name="RDO"          bit="31" size="1" desc="Read Data Valid" />
+        </register>
+        <register name="SMBCMD_0" type="mmcfg" offset="0x184" size="4" desc="SMBus Host Command">
+            <field name="WDATA"        bit="0"  size="16" desc="Write Data" />
+            <field name="BA"           bit="16" size="8"  desc="Bus Transaction Address" />
+            <field name="SA"           bit="24" size="3"  desc="Slave Address" />
+            <field name="WRT_CMD"      bit="27" size="1"  desc="Read/Write Command" />
+            <field name="WRT_PNTR"     bit="28" size="1"  desc="Write Pointer" />
+            <field name="WORD_ACCESS"  bit="29" size="1"  desc="Word Access" />
+            <field name="PNTR_SEL"     bit="30" size="1"  desc="Pointer Select" />
+            <field name="CMD_TRIGGER"  bit="31" size="1"  desc="Start/Trigger" />
+        </register>
+        <register name="SMBCNTL_0" type="mmcfg" offset="0x188" size="4" desc="SMBus Host Control">
+            <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
+        </register>
+        <register name="SMBSTAT_1" type="mmcfg" offset="0x190" size="4" desc="SMBus Host Status 1">
+            <field name="RDATA"        bit="0"  size="16" desc="Read Data" />
+            <field name="TSOD_SA"      bit="24" size="4" desc="Last Issued TSOD Slave Address" />
+            <field name="BUSY"         bit="28" size="1" desc="SMBus Busy" />
+            <field name="SBE"          bit="29" size="1" desc="SMBus Error/Failed" />
+            <field name="WOD"          bit="30" size="1" desc="Write Operation Done" />
+            <field name="RDO"          bit="31" size="1" desc="Read Data Valid" />
+        </register>
+        <register name="SMBCMD_1" type="mmcfg" offset="0x194" size="4" desc="SMBus Host Command 1">
+            <field name="WDATA"        bit="0"  size="16" desc="Write Data" />
+            <field name="BA"           bit="16" size="8"  desc="Bus Transaction Address" />
+            <field name="SA"           bit="24" size="3"  desc="Slave Address" />
+            <field name="WRT_CMD"      bit="27" size="1"  desc="Read/Write Command" />
+            <field name="WRT_PNTR"     bit="28" size="1"  desc="Write Pointer" />
+            <field name="WORD_ACCESS"  bit="29" size="1"  desc="Word Access" />
+            <field name="PNTR_SEL"     bit="30" size="1"  desc="Pointer Select" />
+            <field name="CMD_TRIGGER"  bit="31" size="1"  desc="Start/Trigger" />
+        </register>
+        <register name="SMBCNTL_1" type="mmcfg" offset="0x198" size="4" desc="SMBus Host Control 1">
+            <field name="DTI"          bit="28" size="4"  desc="Device Type Identifier" />
+        </register>
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+    </controls>
+
+</configuration>

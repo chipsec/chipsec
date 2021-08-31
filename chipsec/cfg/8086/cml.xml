@@ -7,7 +7,7 @@
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="A0652, A0653, A0655, A0660">
+  <info family="core" detection_value="A0652, A0653, A0655, A0660, A0661, 806EC">
     <sku did="0x3E35" name="CometLake" code="CML" longname="CometLake v1 U2 Core" />
     <sku did="0x3E34" name="CometLake" code="CML" longname="CometLake v1 U4 Core" />
     <sku did="0x3E33" name="CometLake" code="CML" longname="CometLake v1 U6 Core" />
@@ -27,20 +27,18 @@
   <!--                                      -->
   <!-- #################################### -->
   <pci>
+    <device name="HOSTCTRL" bus="0x0" dev="0x00" fun="0" config="HOSTCTL.hostctl0.xml"/>
+    <device name="IGD" bus="0x0" dev="0x2" fun="0x0" config="IGD.igd0.xml" />
+    <device name="MEI1" bus="0x0" dev="0x16" fun="0" config="ME.mei0.xml" />
   </pci>
 
-  <!-- #################################### -->
-  <!--                                      -->
-  <!-- Memory Mapped I/O spaces (MMIO BARs) -->
-  <!--                                      -->
-  <!-- #################################### -->
-  <mmio>
-    <bar name="GTTMMADR" bus="0" dev="2" fun="0" reg="0x10" width="8" mask="0x7FFF000000" desc="Graphics Translation Table Range"/>
-  </mmio>
+  <msr>
+    <definition name="MSR" config="MSR.msr1.xml" />
+  </msr>
 
   <!-- #################################### -->
   <!--                                      -->
-  <!-- I/O spaces (I/O BARs)                -->
+  <!-- I/O                                  -->
   <!--                                      -->
   <!-- #################################### -->
   <io>
@@ -53,57 +51,5 @@
   <!-- #################################### -->
   <memory>
   </memory>
-
-  <!-- #################################### -->
-  <!--                                      -->
-  <!-- Configuration registers              -->
-  <!--                                      -->
-  <!-- #################################### -->
-  <registers>
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- PCIe Configuration registers -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- Sideband Register Access Registers -->
-
-    <!-- Power Management Controller -->
-
-    <!-- SMBus Host Controller -->
-
-    <!-- SPI Interface Controller -->
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- MMIO registers               -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- PCH SPIBAR registers -->
-
-    <!-- PCH RTC registers -->
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- I/O registers (I/O ports)    -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- CPU Model Specific Registers -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <!-- MSR_SMM_FEATURE_CONTROL -->
-    <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
-      <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
-      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
-    </register>
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!--      Undefined Registers     -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-  </registers>
-
-  <controls>
-  </controls>
 
 </configuration>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<configuration>
+    <registers>
+        <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
+            <field name="LOCK" bit="0" size="1" desc="DCI Lock"/>
+            <field name="ENABLE" bit="4" size="1" desc="HDICEN - Host DCI Enable" lockedby="ECTRLLock"/>
+            <field name="AVAILABLE" bit="8" size="1" desc="DCISTS - DCI Available Status"/>
+        </register>
+    </registers>
+</configuration>

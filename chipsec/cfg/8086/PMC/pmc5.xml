@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<configuration>
+PCH_4xxlp
+
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+        <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x1000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+        <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+        <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="ABASE" type="pcicfg" offset="0x20" size="4" desc="ACPI Base Address">
+            <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
+            <field name="BA"    bit="7" size="25" desc="Base Address"/>
+        </register>
+        <register name="PWRMBASE" type="pcicfg" offset="0x10" size="8" desc="PM Base Address">
+            <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
+            <field name="BA"    bit="12" size="51" desc="Base Address"/>
+        </register>
+        <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration A">
+            <field name="ESPI_SMI_LOCK"    bit="8" size="1" desc="ESPI_SMI_LOCK"/>
+        </register>
+        <register name="GEN_PMCON_2" type="mmio" bar="PWRMBASE" offset="0x1024" size="4" desc="General PM Configuration B">
+            <field name="SMI_LOCK"    bit="4"     size="1"/>
+        </register>
+        <register name="ACTL" type="mmio" bar="PWRMBASE" offset="0x1BD8" size="4" desc="ACPI Control">
+            <field name="SCIS"    bit="0" size="3" desc="SCI IRQ Select"/>
+        </register>
+        <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x1818" size="4" desc="Power Management Configuration Reg 1"/>
+
+        <register name="PM1_STS" type="iobar" bar="ABASE" offset="0x0" size="2" desc="PM1 Status">
+            <field name="WAK_STS"            bit="15"  size="1"  desc="Wake Status"/>
+            <field name="PCIEXPWAK_STS"      bit="14"  size="1"  desc="PCI Express Wake Status"/>
+            <field name="PWRBTNOR_STS"       bit="11"  size="1"  desc="Power Button Override Status"/>
+            <field name="RTC_STS"            bit="10"  size="1"  desc="RTC Status"/>
+            <field name="PWRBTN_STS"         bit="8"   size="1"  desc="Power Button Status"/>
+            <field name="GBL_STS"            bit="5"   size="1"  desc="Global Status"/>
+            <field name="BM_STS"             bit="4"   size="1"  desc="Bus Master Status"/>
+            <field name="TMROF_STS"          bit="0"   size="1"  desc="Timer Overflow Status"/>
+        </register>
+        <register name="PM1_EN" type="iobar" bar="ABASE" offset="0x2" size="2" desc="PM1 Enable">
+            <field name="PCIEXPWAK_DIS"      bit="14"  size="1"  desc="PCI Express Wake Disable"/>
+            <field name="RTC_EN"             bit="10"  size="1"  desc="RTC Event Enable"/>
+            <field name="PWRBTN_EN"          bit="8"   size="1"  desc="Power Button Enable"/>
+            <field name="GBL_EN"             bit="5"   size="1"  desc="Global Enable"/>
+            <field name="TMROF_EN"           bit="0"   size="1"  desc="Timer Overflow Interrupt Enable"/>
+        </register>
+        <register name="PM1_CNT" type="iobar" bar="ABASE" offset="0x4" size="4" desc="PM1 Control">
+            <field name="SLP_EN"             bit="13"  size="1"  desc="Sleep Enable"/>
+            <field name="SLP_TYP"            bit="10"  size="3"  desc="Sleep Type"/>
+            <field name="GBL_RLS"            bit="2"   size="1"  desc="Global Release"/>
+            <field name="BM_RLD"             bit="1"   size="1"  desc="Bus Master Reload"/>
+            <field name="SCI_EN"             bit="0"   size="1"  desc="SCI Enable"/>
+        </register>
+        <register name="PM1_TMR" type="iobar" bar="ABASE" offset="0x8" size="4" desc="PM1 Timer">
+            <field name="TMR_VAL"            bit="0"   size="24" desc="Timer Value"/>
+        </register>
+
+        <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI Control and Enable">
+            <field name="GBL_SMI_EN"         bit="0"   size="1"/>
+            <field name="EOS"                bit="1"   size="1"/>
+            <field name="BIOS_EN"            bit="2"   size="1"/>
+            <field name="LEGACY_USB_EN"      bit="3"   size="1"/>
+            <field name="SLP_SMI_EN"         bit="4"   size="1"/>
+            <field name="APMC_EN"            bit="5"   size="1"/>
+            <field name="SWSMI_TMR_EN"       bit="6"   size="1"/>
+            <field name="BIOS_RLS"           bit="7"   size="1"/>
+            <field name="MCSMI_EN"           bit="11"  size="1"/>
+            <field name="TCO_EN"             bit="13"  size="1"/>
+            <field name="PERIODIC_EN"        bit="14"  size="1"/>
+            <field name="LEGACY_USB2_EN"     bit="17"  size="1"/>
+            <field name="INTEL_USB2_EN"      bit="18"  size="1"/>
+            <field name="GPIO_UNLOCK_SMI_EN" bit="27"  size="1"/>
+            <field name="ME_SMI_EN"          bit="30"  size="1"/>
+            <field name="xHCI_SMI_EN"        bit="31"  size="1"/>
+        </register>
+
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+        <control name="GlobalSMIEnable"        register="SMI_EN"               field="GBL_SMI_EN"         desc="Global SMI Enable"/>
+        <control name="GPIOSMIEnable"          register="SMI_EN"               field="GPIO_UNLOCK_SMI_EN" desc="GPIO Config SMI Enable"/>
+        <control name="SMILock"                register="GEN_PMCON_2"          field="SMI_LOCK"           desc="SMI Global Configuration Lock"/>
+        <control name="TCOSMIEnable"           register="SMI_EN"               field="TCO_EN"             desc="TCO SMI Enable"/>
+    </controls>
+
+</configuration>
