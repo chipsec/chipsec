@@ -38,6 +38,8 @@ from chipsec.exceptions import RegisterTypeNotFoundError
 from chipsec.logger import logger
 from chipsec.defines import is_hex
 
+from chipsec.config import Cfg
+
 import chipsec.file
 
 import importlib
@@ -45,7 +47,7 @@ import traceback
 
 # DEBUG Flags
 QUIET_PCI_ENUM = True
-LOAD_COMMON = True
+LOAD_COMMON = False
 CONSISTENCY_CHECKING = False
 
 class RegisterType:
@@ -59,18 +61,6 @@ class RegisterType:
     MM_MSGBUS = 'mm_msgbus'
     MEMORY    = 'memory'
 
-class Cfg:
-    def __init__(self):
-        self.CONFIG_PCI    = {}
-        self.REGISTERS     = {}
-        self.MMIO_BARS     = {}
-        self.IO_BARS       = {}
-        self.MEMORY_RANGES = {}
-        self.CONTROLS      = {}
-        self.BUS           = {}
-        self.LOCKS         = {}
-        self.LOCKEDBY      = {}
-        self.XML_CONFIG_LOADED = False
 
 
 ##################################################################################
@@ -375,6 +365,8 @@ class Chipset:
             self.pch_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.device_dictionary[int(vid, 16)] = collections.defaultdict(list)
             for fxml in os.listdir(os.path.join(_cfg_path, vid)):
+                if os.path.isdir(os.path.join(_cfg_path, vid, fxml)):
+                    continue
                 if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
                 tree = ET.parse( os.path.join(_cfg_path, vid, fxml) )
                 root = tree.getroot()
@@ -440,170 +432,50 @@ class Chipset:
 
     def load_xml_configuration( self ):
         # Create a sorted config file list (xml only)
-        _cfg_files = []
         _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg' )
-        for root, subdirs, files in os.walk(_cfg_path):
-            _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
-        _cfg_files.sort()
-        if logger().DEBUG:
-            logger().log("[*] Configuration Files:")
-            for _xml in _cfg_files:
-                logger().log("[*] - {}".format(_xml))
+        VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
+        for vid in VID:
+            _cfg_files = []
+            for root, subdirs, files in os.walk(_cfg_path):
+                _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
+            _cfg_files.sort()
+            if logger().DEBUG:
+                logger().log("[*] Configuration Files:")
+                for _xml in _cfg_files:
+                    logger().log("[*] - {}".format(_xml))
 
-        # Locate common (chipsec/cfg/common*.xml) configuration XML files.
-        loaded_files = []
-        if LOAD_COMMON:
-            for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), 'common*.xml'):
-                    loaded_files.append(_xml)
+            loaded_files = []
 
-        # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
+            # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
             platform_files = []
             for plat in [c.lower() for c in self.chipset_codes]:
                 platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
             loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
 
-        # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
-        if self.code and CHIPSET_CODE_UNKNOWN != self.code:
-            for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code.lower())):
-                    loaded_files.append(_xml)
+            # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
+            if self.code and CHIPSET_CODE_UNKNOWN != self.code:
+                for _xml in _cfg_files:
+                    if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.code.lower())):
+                        loaded_files.append(_xml)
 
-        # Locate PCH specific (chipsec/cfg/pch_<code>*.xml) configuration XML files.
-        if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
-            for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code.lower())):
-                    loaded_files.append(_xml)
+            # Locate PCH specific (chipsec/cfg/pch_<code>*.xml) configuration XML files.
+            if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
+                for _xml in _cfg_files:
+                    if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code.lower())):
+                        loaded_files.append(_xml)
 
-        # Load all configuration files for this platform.
-        if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
-        for _xml in loaded_files:
-            self.init_cfg_xml(_xml, self.code.lower(), self.pch_code.lower())
+            # Load all configuration files for this platform.
+            if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
+            for _xml in loaded_files:
+                self.Cfg.init_cfg_xml(_xml, self.code.lower(), self.pch_code.lower(), vid)
 
-        # Load Bus numbers for this platform.
-        if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
-        self.init_cfg_bus()
+            # Load Bus numbers for this platform.
+            if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
+            self.init_cfg_bus()
 
-        self.Cfg.XML_CONFIG_LOADED = True
+            self.Cfg.XML_CONFIG_LOADED = True
 
 
-    def init_cfg_xml(self, fxml, code, pch_code):
-        if not os.path.exists( fxml ): return
-        if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
-        tree = ET.parse( fxml )
-        root = tree.getroot()
-        for _cfg in root.iter('configuration'):
-            if 'platform' not in _cfg.attrib:
-                if logger().DEBUG: logger().log( "[*] loading common platform config from '{}'..".format(fxml) )
-            elif code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log( "[*] loading '{}' platform config from '{}'..".format(code, fxml) )
-                if 'req_pch' in _cfg.attrib:
-                    if 'true' == _cfg.attrib['req_pch'].lower():
-                        self.reqs_pch = True
-            elif pch_code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
-            else: continue
-
-            if logger().DEBUG: logger().log( "[*] loading integrated devices/controllers.." )
-            for _pci in _cfg.iter('pci'):
-                for _device in _pci.iter('device'):
-                    _name = _device.attrib['name']
-                    del _device.attrib['name']
-                    if 'undef' in _device.attrib:
-                        if _name in self.Cfg.CONFIG_PCI:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _device.attrib['undef']))
-                            self.Cfg.CONFIG_PCI.pop(_name, None)
-                        continue
-                    self.Cfg.CONFIG_PCI[ _name ] = _device.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _device.attrib) )
-            if logger().DEBUG: logger().log( "[*] loading MMIO BARs.." )
-            for _mmio in _cfg.iter('mmio'):
-                for _bar in _mmio.iter('bar'):
-                    _name = _bar.attrib['name']
-                    del _bar.attrib['name']
-                    if 'undef' in _bar.attrib:
-                        if _name in self.Cfg.MMIO_BARS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
-                            self.Cfg.MMIO_BARS.pop(_name, None)
-                        continue
-                    self.Cfg.MMIO_BARS[ _name ] = _bar.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _bar.attrib) )
-            if logger().DEBUG: logger().log( "[*] loading I/O BARs.." )
-            for _io in _cfg.iter('io'):
-                for _bar in _io.iter('bar'):
-                    _name = _bar.attrib['name']
-                    del _bar.attrib['name']
-                    if 'undef' in _bar.attrib:
-                        if _name in self.Cfg.IO_BARS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
-                            self.Cfg.IO_BARS.pop(_name, None)
-                        continue
-                    self.Cfg.IO_BARS[ _name ] = _bar.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _bar.attrib) )
-            if logger().DEBUG: logger().log( "[*] loading memory ranges.." )
-            for _memory in _cfg.iter('memory'):
-                for _range in _memory.iter('range'):
-                    _name = _range.attrib['name']
-                    del _range.attrib['name']
-                    if 'undef' in _range.attrib:
-                        if _name in self.Cfg.MEMORY_RANGES:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _range.attrib['undef']))
-                            self.Cfg.MEMORY_RANGES.pop(_name, None)
-                        continue
-                    self.Cfg.MEMORY_RANGES[ _name ] = _range.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _range.attrib) )
-            if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
-            for _registers in _cfg.iter('registers'):
-                for _register in _registers.iter('register'):
-                    _name = _register.attrib['name']
-                    del _register.attrib['name']
-                    if 'undef' in _register.attrib:
-                        if _name in self.Cfg.REGISTERS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _register.attrib['undef']))
-                            self.Cfg.REGISTERS.pop(_name, None)
-                        continue
-                    if 'size' not in _register.attrib: _register.attrib['size'] = "0x4"
-                    if 'desc' not in _register.attrib: _register.attrib['desc'] = ''
-                    reg_fields = {}
-                    if _register.find('field') is not None:
-                        for _field in _register.iter('field'):
-                            _field_name = _field.attrib['name']
-                            if 'lockedby' in _field.attrib:
-                                _lockedby = _field.attrib['lockedby']
-                                if _lockedby in self.Cfg.LOCKEDBY.keys():
-                                    self.Cfg.LOCKEDBY[_lockedby].append((_name, _field_name))
-                                else:
-                                    self.Cfg.LOCKEDBY[_lockedby] = [(_name, _field_name)]
-                            del _field.attrib['name']
-                            if 'desc' not in _field.attrib: _field.attrib['desc'] = ''
-                            reg_fields[ _field_name ] = _field.attrib
-                        _register.attrib['FIELDS'] = reg_fields
-                    self.Cfg.REGISTERS[ _name ] = _register.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _register.attrib) )
-            if logger().DEBUG: logger().log( "[*] loading controls.." )
-            for _controls in _cfg.iter('controls'):
-                for _control in _controls.iter('control'):
-                    _name = _control.attrib['name']
-                    del _control.attrib['name']
-                    if 'undef' in _control.attrib:
-                        if _name in self.Cfg.CONTROLS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
-                            self.Cfg.CONTROLS.pop(_name, None)
-                        continue
-                    self.Cfg.CONTROLS[ _name ] = _control.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _control.attrib) )
-            if logger().DEBUG: logger().log("[*] loading locks..")
-            for _locks in _cfg.iter('locks'):
-                for _lock in _locks.iter('lock'):
-                    _name = _lock.attrib['name']
-                    del _lock.attrib['name']
-                    if 'undef' in _lock.attrib:
-                        if _name in self.Cfg.LOCKS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
-                            self.Cfg.LOCKS.pop(_name, None)
-                        continue
-                    self.Cfg.LOCKS[_name] = _lock.attrib
-                    if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _lock.attrib))
 
     def init_cfg_bus( self ):
         if logger().DEBUG: logger().log( '[*] loading device buses..' )
@@ -829,12 +701,12 @@ class Chipset:
             if do_check and CONSISTENCY_CHECKING:
                 if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
                     raise CSReadError("PCI Device is not available ({}:{}.{})".format(b, d, f))
-            if RegisterType.PCICFG == rtype:
-                if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
-                elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
-                elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
-                elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
-            elif RegisterType.MMCFG == rtype:
+        if RegisterType.PCICFG == rtype:
+            if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
+            elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
+            elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
+            elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
+        elif RegisterType.MMCFG == rtype:
                 reg_value = self.mmio.read_mmcfg_reg(b, d, f, o, size)
         elif RegisterType.MMIO == rtype:
             if self.mmio.get_MMIO_BAR_base_address(reg['bar'])[0] != 0:
@@ -1114,7 +986,7 @@ class Chipset:
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
-    def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
+   def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_str = ''
@@ -1210,32 +1082,33 @@ class Chipset:
                 return True
         return False
 
-    def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus=None):
+
+    def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus_index=None):
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
-        if bus is None:
+        if bus_index is None:
             reg_data = self.read_register_all(reg, cpu_thread)
         else:
-            reg_data = self.read_register(reg, cpu_thread, bus)
+            reg_data = self.read_register(reg, cpu_thread, bus_index)
             reg_data = [reg_data]
         if logger().VERBOSE or with_print:
             for rd in reg_data:
                 self.print_register(reg, rd)
         return self.get_register_field_all(reg, reg_data, field)
 
-    def set_lock(self, lock_name, lock_value, cpu_thread=0, bus=None):
+    def set_lock(self, lock_name, lock_value, cpu_thread=0, bus_index=None):
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
-        if bus is None:
+        if bus_index is None:
             reg_data = self.read_register(reg, cpu_thread, 0)
             reg_data = self.set_register_field(reg, reg_data, field, lock_value)
             return self.write_register_all_single(reg, reg_data, cpu_thread)
         else:
-            reg_data = self.read_register(reg, cpu_thread, bus)
+            reg_data = self.read_register(reg, cpu_thread, bus_index)
             reg_data = self.set_register_field(reg, reg_data, field, lock_value)
-            return self.write_register(reg, reg_data, cpu_thread, bus)
+            return self.write_register(reg, reg_data, cpu_thread, bus_index)
 
     def is_lock_defined(self, lock_name):
         return lock_name in self.Cfg.LOCKS.keys()
