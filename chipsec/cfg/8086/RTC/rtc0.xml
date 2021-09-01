@@ -24,13 +24,13 @@
     <!--                                      -->
     <!-- #################################### -->
     <registers>
-        <register name="RC" type="mm_msgbus" port="0xC3" offset="0x3400" size="4" desc="RTC Configuration">
+        <register name="RC" type="mm_msgbus" offset="0x3400" size="4" desc="RTC Configuration">
             <field name="UE"   bit="2"  size="1" desc="Upper 128 Byte Enable"/>
             <field name="LL"   bit="3"  size="1" desc="Lower 128 Byte Lock"/>
             <field name="UL"   bit="4"  size="1" desc="Upper 128 Byte Lock"/>
             <field name="BILD" bit="31" size="1" desc="BIOS Interface Lock-Down"/>
         </register>
-        <register name="BUC" type="mm_msgbus" port="0xC3" offset="0x3414" size="4" desc="Backed Up Control">
+        <register name="BUC" type="mm_msgbus" offset="0x3414" size="4" desc="Backed Up Control">
             <field name="TS" bit="0" size="1" desc="Top Swap"/>
         </register>
 
