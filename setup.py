@@ -230,7 +230,7 @@ package_data = {
     # Include any configuration file.
     "": ["*.ini", "*.cfg", "*.json"],
     "chipsec": ["*VERSION", "WARNING.txt"],
-    "chipsec.cfg":  ["8086/*.xml", "*.xml", "*.xsd"],
+    "chipsec.cfg":  ["8086/*.xml", "1022/*.xml", "*.xml", "*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
 install_requires = []
