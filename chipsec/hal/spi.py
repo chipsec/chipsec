@@ -231,8 +231,7 @@ class SPI(hal_base.HALBase):
             self.logger.log( "      FDATA0 offset = 0x{:04X}".format(self.fdata0_off) )
 
     def get_SPI_MMIO_base(self):
-        if self.mmio.is_MMIO_BAR_defined('SPIBAR'):
-            (spi_base, spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
+        (spi_base, spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
         if self.logger.HAL: self.logger.log( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
         return spi_base
 
