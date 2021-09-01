@@ -58,10 +58,12 @@ class memconfig(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope("8086.HOSTCTL")
 
     def is_supported(self):
         if self.cs.is_core():
             return True
+        self.logger.log("Not a 'Core' (Desktop) platform.  Skipping test.")
         self.res = ModuleResult.NOTAPPLICABLE
         return False
 
@@ -106,10 +108,10 @@ class memconfig(BaseModule):
         self.logger.log('[*]')
         if all_locked:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "All memory map registers seem to be locked down" )
+            self.logger.log_passed( "All memory map registers seem to be locked down" )
         else:
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "Not all memory map registers are locked down" )
+            self.logger.log_failed( "Not all memory map registers are locked down" )
 
         return res
 

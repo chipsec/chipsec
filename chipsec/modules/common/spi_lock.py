@@ -36,6 +36,7 @@ class spi_lock(BaseModule):
 
     def __init__(self):
         super(spi_lock, self).__init__()
+        self.cs.set_scope("8086.SPI")
 
     def is_supported(self):
         return self.cs.is_control_defined('FlashLockDown')

@@ -36,6 +36,7 @@ class spi_desc(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope("8086.SPI")
 
     def is_supported(self):
         return True

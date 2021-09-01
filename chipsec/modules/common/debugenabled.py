@@ -48,6 +48,8 @@ class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.ECTRL = "8086.DCI.ECTRL"
+        self.IA32_DEBUG_INTERFACE = "8086.MSR.IA32_DEBUG_INTERFACE"
 
     def is_supported(self):
         # Use CPUID Function 1 to determine if the IA32_DEBUG_INTERFACE MSR is supported.
@@ -62,9 +64,9 @@ class debugenabled(BaseModule):
     def check_dci( self ):
         TestFail = ModuleResult.PASSED
         self.logger.log('\n[*] Checking DCI register status')
-        ectrl = self.cs.read_register('ECTRL')
-        HDCIEN = self.cs.get_register_field('ECTRL', ectrl, 'ENABLE') == 1
-        if self.logger.VERBOSE: self.cs.print_register('ECTRL', ectrl)
+        ectrl = self.cs.read_register(self.ECTRL)
+        HDCIEN = self.cs.get_register_field(self.ECTRL, ectrl, 'ENABLE') == 1
+        if self.logger.VERBOSE: self.cs.print_register(self.ECTRL, ectrl)
         if HDCIEN:
             self.logger.log_bad('DCI Debug is enabled')
             TestFail = ModuleResult.FAILED
@@ -76,12 +78,12 @@ class debugenabled(BaseModule):
         self.logger.log('\n[*] Checking IA32_DEBUG_INTERFACE msr status')
         TestFail = ModuleResult.PASSED
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            dbgiface = self.cs.read_register('IA32_DEBUG_INTERFACE', tid)
-            IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
-            IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1
-            IA32_DEBUG_INTERFACE_DEBUGEOCCURED = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'DEBUG_OCCURRED') == 1
+            dbgiface = self.cs.read_register(self.IA32_DEBUG_INTERFACE, tid)
+            IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.get_register_field(self.IA32_DEBUG_INTERFACE, dbgiface, 'ENABLE') == 1
+            IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.get_register_field(self.IA32_DEBUG_INTERFACE, dbgiface, 'LOCK') == 1
+            IA32_DEBUG_INTERFACE_DEBUGEOCCURED = self.cs.get_register_field(self.IA32_DEBUG_INTERFACE, dbgiface, 'DEBUG_OCCURRED') == 1
             if self.logger.VERBOSE:
-                self.cs.print_register('IA32_DEBUG_INTERFACE', dbgiface)
+                self.cs.print_register(self.IA32_DEBUG_INTERFACE, dbgiface)
 
             if IA32_DEBUG_INTERFACE_DEBUGENABLE:
                 self.logger.log_bad("CPU debug enable requested by software.")
@@ -108,7 +110,7 @@ class debugenabled(BaseModule):
         cpu_debug_test_fail = self.check_cpu_debug_enable()
 
         dci_test_fail = ModuleResult.PASSED
-        if self.cs.is_register_defined('ECTRL'):
+        if self.cs.is_register_defined(self.ECTRL):
             dci_test_fail = self.check_dci()
 
         self.logger.log("\n[*] Module Result")

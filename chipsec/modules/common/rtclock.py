@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -36,9 +36,10 @@ class rtclock(BaseModule):
         self.user_request = False
         self.test_offset = 0x38
         self.test_value = 0xAA
+        self.cs.set_scope("8086.HOSTCTL")
 
     def is_supported(self):
-        if self.cs.is_core() or self.cs.get_chipset_code() == CHIPSET_CODE_AVN:
+        if self.cs.is_core():
             return True
         self.res = ModuleResult.NOTAPPLICABLE
         return False
