@@ -23,14 +23,21 @@ vulnerabilities described in the following presentation:
 `BARing the System: New vulnerabilities in Coreboot & UEFI based systems <http://www.intelsecurity.com/advanced-threat-research/content/data/REConBrussels2017_BARing_the_system.pdf>`_ by Intel Advanced Threat Research team at RECon Brussels 2017
 
 Usage:
-  ``chipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]``
+    ``chipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]``
 
-- ``smi_start:smi_end``: range of SMI codes (written to IO port 0xB2)
-- ``b:d.f``: PCIe bus/device/function in b:d.f format (in hex)
+    - ``smi_start:smi_end``: range of SMI codes (written to IO port 0xB2)
+    - ``b:d.f``: PCIe bus/device/function in b:d.f format (in hex)
 
 Example:
     >>> chipsec_main.py -m tools.smm.rogue_mmio_bar -a 0x00:0x80
     >>> chipsec_main.py -m tools.smm.rogue_mmio_bar -a 0x00:0xFF,0:1C.0
+
+.. NOTE::
+    Look for 'changes found' messages for items that should be further investigated.
+
+.. WARNING::
+    When running this test, system may freeze, reboot, etc. This is not unexpected behavior and not generally considered a failure.
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult
@@ -120,16 +127,7 @@ class rogue_mmio_bar(BaseModule):
             r = self.cs.mem.read_physical_mem_dword(bar_base + off)
             self.cs.mem.write_physical_mem_dword(bar_base_mem + off, r)
         return self.cs.mem.read_physical_mem(bar_base_mem, size)
-    """
-    def copy_bar_name(self, name, bar_base_mem):
-        bar_regs = self.cs.mmio.read_MMIO_BAR(bar_name)
-        size = len(bar_regs)
-        off = 0
-        for r in bar_regs:
-            self.cs.mem.write_physical_mem_dword(bar_base_mem + off, r)
-            off += 4
-        return self.cs.mem.read_physical_mem(bar_base_mem, size)
-    """
+
 
     def modify_bar(self, b, d, f, off, is64bit, bar, new_bar):
         # Modify MMIO BAR address
@@ -152,7 +150,7 @@ class rogue_mmio_bar(BaseModule):
         return True
 
     def run( self, module_argv ):
-        self.logger.start_test( "experimental tool to help checking for SMM MMIO BAR issues" )
+        self.logger.start_test("Experimental tool to help checking for SMM MMIO BAR issues")
 
         pcie_devices = []
 
@@ -167,12 +165,12 @@ class rogue_mmio_bar(BaseModule):
                 d, f = df.split('.')
                 pcie_devices = [ (int(b, 16), int(d, 16), int(f, 16), 0, 0) ]
             except:
-                self.logger.error("incorrect b:d.f format\nUsage:\nchipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]")
+                self.logger.error("Incorrect b:d.f format\nUsage:\nchipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]")
         else:
-            self.logger.log("[*] discovering PCIe devices..")
+            self.logger.log("[*] Discovering PCIe devices..")
             pcie_devices = self.cs.pci.enumerate_devices()
 
-        self.logger.log("[*] testing MMIO of PCIe devices:")
+        self.logger.log("[*] Testing MMIO of PCIe devices:")
         for (b, d, f, _, _) in pcie_devices: self.logger.log("    {:02X}:{:02X}.{:X}".format(b, d, f))
 
         # allocate a page or SMM communication buffer (often supplied in EBX register)
@@ -182,7 +180,7 @@ class rogue_mmio_bar(BaseModule):
         # allocate range in physical memory (should cover all MMIO ranges including GTTMMADR)
         bsz = 2 *MAX_MMIO_RANGE_SIZE
         (va, pa) = self.cs.mem.alloc_physical_mem( bsz, BOUNDARY_4GB -1 )
-        self.logger.log( "[*] allocated memory range : 0x{:016X} (0x{:X} bytes)".format(pa, bsz) )
+        self.logger.log( "[*] Allocated memory range : 0x{:016X} (0x{:X} bytes)".format(pa, bsz) )
         self.cs.mem.write_physical_mem(pa, bsz, _MEM_FILL_VALUE *bsz)
         # align at the MAX_MMIO_RANGE_SIZE boundary within allocated range
         self.reloc_mmio = pa & (~(MAX_MMIO_RANGE_SIZE -1))
@@ -190,12 +188,12 @@ class rogue_mmio_bar(BaseModule):
         self.logger.log("[*] MMIO relocation address: 0x{:016X}\n".format(self.reloc_mmio))
 
         for (b, d, f, vid, did) in pcie_devices:
-            self.logger.log("[*] enumerating device {:02X}:{:02X}.{:X} MMIO BARs..".format(b, d, f))
+            self.logger.log("[*] Enumerating device {:02X}:{:02X}.{:X} MMIO BARs..".format(b, d, f))
             device_bars = self.cs.pci.get_device_bars(b, d, f, True)
             for (base, isMMIO, is64bit, bar_off, bar, size) in device_bars:
                 if isMMIO and size <= MAX_MMIO_RANGE_SIZE:
                     self.logger.flush()
-                    self.logger.log( "[*] found MMIO BAR +0x{:02X} (base 0x{:016X}, size 0x{:X})".format(bar_off, base, size) )
+                    self.logger.log( "[*] Found MMIO BAR +0x{:02X} (base 0x{:016X}, size 0x{:X})".format(bar_off, base, size) )
                     new_bar = ((self.reloc_mmio & PCI_HDR_BAR_BASE_MASK_MMIO64)|(bar & PCI_HDR_BAR_CFGBITS_MASK))
                     if self.smi_mmio_range_fuzz(0, b, d, f, bar_off, is64bit, bar, new_bar, base, size):
                         return ModuleResult.FAILED
