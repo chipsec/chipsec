@@ -184,6 +184,8 @@ class MsgBus(hal_base.HALBase):
         return self.msgbus_write_message(port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data)
 
     def mm_msgbus_reg_read(self, port, register):
+        tscope = self.cs.get_scope()
+        self.cs.set_scope("8086.P2SBC")
         was_hidden = False
         if self.cs.is_register_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
@@ -191,6 +193,7 @@ class MsgBus(hal_base.HALBase):
         reg_val = self.cs.mmio.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
         if self.cs.is_register_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
+        self.cs.set_scope(tscope)
         return reg_val
 
     def mm_msgbus_reg_write(self, port, register, data):

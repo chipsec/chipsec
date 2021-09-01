@@ -156,28 +156,35 @@ class CPU(hal_base.HALBase):
     # Return SMRAM region base, limit and size as defined by SMRR
     #
     def get_SMRR_SMRAM( self ):
+        tscope = self.cs.get_scope()
+        self.cs.set_scope("8086.MSR")
         (smram_base, smrrmask) = self.get_SMRR()
         smram_base &= smrrmask
         smram_size = ((~smrrmask)&0xFFFFFFFF) + 1
         smram_limit = smram_base + smram_size - 1
+        self.cs.set_scope(tscope)
         return (smram_base, smram_limit, smram_size)
 
     #
     # Returns TSEG base, limit and size
     #
     def get_TSEG( self ):
+        tscope = self.cs.get_scope()
         if self.cs.is_server():
+            self.cs.set_scope("8086.MemMap_VTd")
             # tseg register has base and limit
             tseg_base  = self.cs.read_register_field( 'TSEG_BASE',  'base',  preserve_field_position=True )
             tseg_limit = self.cs.read_register_field( 'TSEG_LIMIT', 'limit', preserve_field_position=True )
             tseg_limit += 0xFFFFF
         else:
+            self.cs.set_scope("8086.HOSTCTRL")
             # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
             tseg_base  = self.cs.read_register_field( 'PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True )
             bgsm       = self.cs.read_register_field( 'PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True )
             tseg_limit =  bgsm - 1
 
         tseg_size = tseg_limit - tseg_base + 1
+        self.cs.set_scope(tscope)
         return (tseg_base, tseg_limit, tseg_size)
 
     #

@@ -115,6 +115,7 @@ class Chipset:
         self.pch_longname   = 'Unrecognized PCH'
         self.pch_id         = CHIPSET_ID_UNKNOWN
         self.Cfg        = Cfg()
+        self.scope          = None
 
         #
         # Initializing 'basic primitive' HAL components
@@ -575,8 +576,11 @@ class Chipset:
         return False
 
     def is_register_device_enabled( self, reg_name, bus=None ):
+        if self.scope is not None:
+            if not  reg_name.startswith(self.scope):
+                reg_name = "{}.{}".format(self.scope, reg_name)
         if reg_name in self.Cfg.REGISTERS:
-            reg = self.get_register_def(reg_name)
+            reg = self.get_register_def( reg_name)
             rtype = reg['type']
             if (rtype == RegisterType.MMCFG) or (rtype == RegisterType.PCICFG):
                 if bus is not None:
@@ -639,9 +643,17 @@ class Chipset:
 #
 ##################################################################################
 
+    def get_scope(self):
+        return self.scope
+
+    def set_scope(self, scope):
+        self.scope = scope
 
     def is_register_defined(self, reg_name):
         try:
+            if self.scope is not None:
+                if not  reg_name.startswith(self.scope):
+                    reg_name = "{}.{}".format(self.scope, reg_name)
             return (self.Cfg.REGISTERS[reg_name] is not None)
         except KeyError:
             return False
@@ -652,7 +664,28 @@ class Chipset:
         else:
             return True
 
-    def get_register_def(self, reg_name):
+    def get_mmio_def(self, bar_name):
+        if self.scope is not None:
+            if not  bar_name.startswith(self.scope):
+                bar_name = "{}.{}".format(self.scope, bar_name)
+        if bar_name in self.Cfg.MMIO_BARS:
+            return self.Cfg.MMIO_BARS[bar_name]
+        else:
+            return None
+
+    def get_io_def(self, bar_name):
+        if self.scope is not None:
+            if not  bar_name.startswith(self.scope):
+                bar_name = "{}.{}".format(self.scope, bar_name)
+        if bar_name in self.Cfg.IO_BARS:
+            return self.Cfg.IO_BARS[bar_name]
+        else:
+            return None
+
+    def get_register_def(self, reg_name, bus_index=0):
+        if self.scope is not None:
+            if not  reg_name.startswith(self.scope):
+                reg_name = "{}.{}".format(self.scope, reg_name)
         reg_def = self.Cfg.REGISTERS[reg_name]
         if "device" in reg_def:
             dev_name = reg_def["device"]
@@ -662,6 +695,11 @@ class Chipset:
                     reg_def['bus'] = dev['bus']
                     reg_def['dev'] = dev['dev']
                     reg_def['fun'] = dev['fun']
+                    if dev_name in self.Cfg.BUS:
+                        if bus_index < len(self.Cfg.BUS[dev_name]):
+                            reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
+                        else:
+                            logger().error( "Bus index {:d} for '{}' not found.".format(bus_index, dev_name) )
             elif reg_def["type"] == "memory":
                 if dev_name in self.Cfg.MEMORY_RANGES:
                     dev = self.Cfg.MEMORY_RANGES[dev_name]
@@ -672,6 +710,9 @@ class Chipset:
         return reg_def
 
     def get_register_bus(self, reg_name):
+        if self.scope is not None:
+            if not  reg_name.startswith(self.scope):
+                reg_name = "{}.{}".format(self.scope, reg_name)
         device = self.Cfg.REGISTERS[reg_name].get( 'device', '' )
         if not device:
             if logger().DEBUG:
@@ -683,7 +724,10 @@ class Chipset:
         return self.get_device_bus(device)
 
     def get_device_bus(self, dev_name):
-        return self.Cfg.BUS.get(dev_name, None)
+        bus = []
+        if self.is_device_defined(dev_name):
+            bus = [self.get_device_BDF(dev_name)[0]]
+        return self.Cfg.BUS.get(dev_name, bus)
 
     def read_register(self, reg_name, cpu_thread=0, bus=None, do_check=True):
         reg = self.get_register_def(reg_name)
@@ -951,7 +995,10 @@ class Chipset:
 
     def register_has_field( self, reg_name, field_name ):
         try:
-            reg_def = self.get_register_def(reg_name)
+            if self.scope is not None:
+                if not  reg_name.startswith(self.scope):
+                    reg_name = "{}.{}".format(self.scope, reg_name)
+            reg_def = self.get_register_def(reg_name )
         except KeyError:
             return False
         if 'FIELDS' not in reg_def:
@@ -986,11 +1033,14 @@ class Chipset:
         if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
-   def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
-        reg = self.get_register_def(reg_name)
+    def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
+        reg = self.get_register_def(reg_name, bus)
         rtype = reg['type']
         reg_str = ''
-        reg_val_str = "0x{:0{width}X}".format(reg_val, width=(int(reg['size'], 16) *2))
+        if 'size' in reg:
+            reg_val_str = "0x{:0{width}X}".format(reg_val, width=(int(reg['size'], 16) *2))
+        else:
+            reg_val_str = "0x{:08X}".format(reg_val)
         if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
             if bus is not None:
                 b = bus
@@ -1052,10 +1102,14 @@ class Chipset:
         control = self.Cfg.CONTROLS[ control_name ]
         reg     = control['register']
         field   = control['field']
+        tscope = self.get_scope()
+        self.set_scope(None)
         reg_data = self.read_register(reg, cpu_thread)
         if logger().VERBOSE or with_print:
             self.print_register(reg, reg_data)
-        return self.get_register_field(reg, reg_data, field)
+        ret = self.get_register_field(reg, reg_data, field)
+        self.set_scope(tscope)
+        return ret
 
     def set_control(self, control_name, control_value, cpu_thread=0):
         control = self.Cfg.CONTROLS[control_name]
@@ -1071,6 +1125,9 @@ class Chipset:
 
     def register_is_msr(self, reg_name):
         if self.is_register_defined(reg_name):
+            if self.scope is not None:
+                if not  reg_name.startswith(self.scope):
+                    reg_name = "{}.{}".format(self.scope, reg_name)
             if self.Cfg.REGISTERS[reg_name]['type'].lower() == 'msr':
                 return True
         return False

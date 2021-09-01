@@ -158,6 +158,7 @@ class ChipsecMain:
 
             if self.verify_module_tags( modx ):
                 result = modx.run( module_argv )
+                self._cs.set_scope(None)
             else:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:

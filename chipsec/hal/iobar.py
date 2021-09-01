@@ -56,7 +56,7 @@ class IOBAR(hal_base.HALBase):
     # Get base address of I/O range by IO BAR name
     #
     def get_IO_BAR_base_address( self, bar_name ):
-        bar = self.cs.Cfg.IO_BARS[ bar_name ]
+        bar = self.cs.get_io_def(bar_name)
         if bar is None or bar == {}:
             raise IOBARNotFoundError ('IOBARNotFound: {}'.format(bar_name))
 
