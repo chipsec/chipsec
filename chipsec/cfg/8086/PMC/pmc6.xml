@@ -27,11 +27,11 @@
     <!--                                      -->
     <!-- #################################### -->
     <registers>
-        <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x0D" fun="1" offset="0x10" size="8" desc="PM Base Address">
+        <register name="PWRMBASE" type="pcicfg" offset="0x10" size="8" desc="PM Base Address">
             <field name="STYPE" bit="1"  size="2"  desc="Space Type (if 0 - 32bit, 10 - 64bit)"/>
             <field name="BA"    bit="12" size="52" desc="Base Address"/>
         </register>
-        <register name="ABASE" type="pcicfg" bus="0" dev="0x0D" fun="1" offset="0x20" size="4" desc="ACPI Base Address">
+        <register name="ABASE" type="pcicfg" offset="0x20" size="4" desc="ACPI Base Address">
             <field name="BA" bit="2" size="30" desc="Base Address"/>
         </register>
         <!-- Power Management Registers -->

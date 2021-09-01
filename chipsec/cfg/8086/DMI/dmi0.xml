@@ -25,7 +25,7 @@
     <!--                                      -->
     <!-- #################################### -->
     <registers>
-    <register name="DMIRCBAR" type="pcicfg" bus="0" dev="0" fun="0" offset="0x50" size="4" desc="DMI Root Complex Register Block Base Address">
+    <register name="DMIRCBAR" type="pcicfg" offset="0x50" size="4" desc="DMI Root Complex Register Block Base Address">
       <field name="dmircbaren" bit="0"  size="1"  desc="Enable DMIRCBAR"/>
       <field name="dmircbar"   bit="12" size="20" desc="Base address DMI Root Complex register space"/>
     </register>
