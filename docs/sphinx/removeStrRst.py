@@ -36,7 +36,10 @@ def modulesRst():
             contents = contents.replace('Submodules\n----------\n\n', '')
             contents = contents.replace('Subpackages\n-----------\n\n', '')
             contents = contents.replace('Module contents\n---------------\n\n', '')
-
+            contents = contents.replace(':show-inheritance:', '')
+            contents = contents.replace(':undoc-members:', '')
+            contents = contents.replace(':members:', '')
+            
             f = open(os.path.join('modules', file), 'w')
             f.write(title[-1] + contents)
             f.close()
