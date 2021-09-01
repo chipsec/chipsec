@@ -50,6 +50,7 @@ class remap(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope("8086.HOSTCTL")
 
     def is_supported(self):
         if self.cs.is_core():
@@ -81,6 +82,7 @@ class remap(BaseModule):
         self.logger.log( "[*]   TSEGMB    : 0x{:08X}\n".format(tsegmb) )
 
         ia_untrusted = 0
+        self.cs.set_scope("8086.MSR")
         if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
         remapbase_lock  = remapbase & 0x1

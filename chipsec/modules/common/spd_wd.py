@@ -48,6 +48,7 @@ class spd_wd(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope("8086.SMBUS")
 
     def is_supported(self):
         return self.cs.is_device_enabled( 'SMBUS' ) and self.cs.register_has_field('SMBUS_HCFG', 'SPD_WD')

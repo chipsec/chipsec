@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -35,6 +35,7 @@ class ia32cfg(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.res = ModuleResult.PASSED
+        self.cs.set_scope("8086.MSR")
 
     def is_supported(self):
         return True

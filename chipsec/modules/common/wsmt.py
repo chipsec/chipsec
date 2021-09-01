@@ -55,7 +55,7 @@ Manual analysis of SMI handlers is required to determine if they can be abused b
         wsmt_table = WSMT()
         wsmt_table.parse(table_data)
         self.logger.log(wsmt_table)
-        
+
         if (not wsmt_table.fixed_comm_buffers) or (not wsmt_table.comm_buffer_nested_ptr_protection) or (not wsmt_table.system_resource_protection):
             self.logger.warn( """WSMT table is present but certain mitigations are missing.
 Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS""" )

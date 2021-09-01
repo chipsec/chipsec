@@ -29,6 +29,7 @@ TAGS = [MTAG_HWCONFIG]
 class ia_untrusted(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope("8086.MSR")
 
     def is_supported(self):
         if self.cs.is_register_defined('MSR_BIOS_DONE') and \
