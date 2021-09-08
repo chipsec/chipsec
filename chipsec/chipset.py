@@ -500,6 +500,24 @@ class Chipset:
                             if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _named_item.attrib['undef']))
                             config_to_modify.pop(_name, None)
                         continue
+                    if type == 'registers':
+                        if 'size' not in _named_item.attrib: _named_item.attrib['size'] = "0x4"
+                        if 'desc' not in _named_item.attrib: _named_item.attrib['desc'] = ''
+                    fields = {}
+                    if _named_item.find('field') is not None:
+                        for _field in _named_item.iter('field'):
+                            _field_name = _field.attrib['name']
+                            if 'lockedby' in _field.attrib:
+                                _lockedby = _field.attrib['lockedby']
+                                if _lockedby in self.Cfg.LOCKEDBY.keys():
+                                    self.Cfg.LOCKEDBY[_lockedby].append((_name, _field_name))
+                                else:
+                                    self.Cfg.LOCKEDBY[_lockedby] = [(_name, _field_name)]
+                            del _field.attrib['name']
+                            if 'desc' not in _field.attrib: _field.attrib['desc'] = ''
+                            fields[ _field_name ] = _field.attrib
+                        _named_item.attrib['FIELDS'] = fields
+
                     config_to_modify[ _name ] = _named_item.attrib
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _named_item.attrib) )
 
@@ -533,33 +551,7 @@ class Chipset:
             self.populate_cfg_type(_cfg, 'memory', self.Cfg.MEMORY_RANGES, 'range')
 
             if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
-            for _registers in _cfg.iter('registers'):
-                for _register in _registers.iter('register'):
-                    _name = _register.attrib['name']
-                    del _register.attrib['name']
-                    if 'undef' in _register.attrib:
-                        if _name in self.Cfg.REGISTERS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _register.attrib['undef']))
-                            self.Cfg.REGISTERS.pop(_name, None)
-                        continue
-                    if 'size' not in _register.attrib: _register.attrib['size'] = "0x4"
-                    if 'desc' not in _register.attrib: _register.attrib['desc'] = ''
-                    reg_fields = {}
-                    if _register.find('field') is not None:
-                        for _field in _register.iter('field'):
-                            _field_name = _field.attrib['name']
-                            if 'lockedby' in _field.attrib:
-                                _lockedby = _field.attrib['lockedby']
-                                if _lockedby in self.Cfg.LOCKEDBY.keys():
-                                    self.Cfg.LOCKEDBY[_lockedby].append((_name, _field_name))
-                                else:
-                                    self.Cfg.LOCKEDBY[_lockedby] = [(_name, _field_name)]
-                            del _field.attrib['name']
-                            if 'desc' not in _field.attrib: _field.attrib['desc'] = ''
-                            reg_fields[ _field_name ] = _field.attrib
-                        _register.attrib['FIELDS'] = reg_fields
-                    self.Cfg.REGISTERS[ _name ] = _register.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _register.attrib) )
+            self.populate_cfg_type(_cfg, 'registers', self.Cfg.REGISTERS, 'register')
 
             if logger().DEBUG: logger().log( "[*] loading controls.." )
             self.populate_cfg_type(_cfg, 'controls', self.Cfg.CONTROLS, 'control')
