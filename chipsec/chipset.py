@@ -490,6 +490,18 @@ class Chipset:
 
         self.Cfg.XML_CONFIG_LOADED = True
 
+    def populate_cfg_type(self, xml_cfg, type, config_to_modify, item_name):
+            for _item in xml_cfg.iter(type):
+                for _named_item in _item.iter(item_name):
+                    _name = _named_item.attrib['name']
+                    del _named_item.attrib['name']
+                    if 'undef' in _named_item.attrib:
+                        if _name in config_to_modify:
+                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _named_item.attrib['undef']))
+                            config_to_modify.pop(_name, None)
+                        continue
+                    config_to_modify[ _name ] = _named_item.attrib
+                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _named_item.attrib) )
 
     def init_cfg_xml(self, fxml, code, pch_code):
         if not os.path.exists( fxml ): return
@@ -509,53 +521,17 @@ class Chipset:
             else: continue
 
             if logger().DEBUG: logger().log( "[*] loading integrated devices/controllers.." )
-            for _pci in _cfg.iter('pci'):
-                for _device in _pci.iter('device'):
-                    _name = _device.attrib['name']
-                    del _device.attrib['name']
-                    if 'undef' in _device.attrib:
-                        if _name in self.Cfg.CONFIG_PCI:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _device.attrib['undef']))
-                            self.Cfg.CONFIG_PCI.pop(_name, None)
-                        continue
-                    self.Cfg.CONFIG_PCI[ _name ] = _device.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _device.attrib) )
+            self.populate_cfg_type(_cfg, 'pci', self.Cfg.CONFIG_PCI, 'device')
+
             if logger().DEBUG: logger().log( "[*] loading MMIO BARs.." )
-            for _mmio in _cfg.iter('mmio'):
-                for _bar in _mmio.iter('bar'):
-                    _name = _bar.attrib['name']
-                    del _bar.attrib['name']
-                    if 'undef' in _bar.attrib:
-                        if _name in self.Cfg.MMIO_BARS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
-                            self.Cfg.MMIO_BARS.pop(_name, None)
-                        continue
-                    self.Cfg.MMIO_BARS[ _name ] = _bar.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _bar.attrib) )
+            self.populate_cfg_type(_cfg, 'mmio', self.Cfg.MMIO_BARS, 'bar')
+
             if logger().DEBUG: logger().log( "[*] loading I/O BARs.." )
-            for _io in _cfg.iter('io'):
-                for _bar in _io.iter('bar'):
-                    _name = _bar.attrib['name']
-                    del _bar.attrib['name']
-                    if 'undef' in _bar.attrib:
-                        if _name in self.Cfg.IO_BARS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _bar.attrib['undef']))
-                            self.Cfg.IO_BARS.pop(_name, None)
-                        continue
-                    self.Cfg.IO_BARS[ _name ] = _bar.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _bar.attrib) )
+            self.populate_cfg_type(_cfg, 'io', self.Cfg.IO_BARS, 'bar')
+
             if logger().DEBUG: logger().log( "[*] loading memory ranges.." )
-            for _memory in _cfg.iter('memory'):
-                for _range in _memory.iter('range'):
-                    _name = _range.attrib['name']
-                    del _range.attrib['name']
-                    if 'undef' in _range.attrib:
-                        if _name in self.Cfg.MEMORY_RANGES:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _range.attrib['undef']))
-                            self.Cfg.MEMORY_RANGES.pop(_name, None)
-                        continue
-                    self.Cfg.MEMORY_RANGES[ _name ] = _range.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _range.attrib) )
+            self.populate_cfg_type(_cfg, 'memory', self.Cfg.MEMORY_RANGES, 'range')
+
             if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
             for _registers in _cfg.iter('registers'):
                 for _register in _registers.iter('register'):
@@ -584,30 +560,12 @@ class Chipset:
                         _register.attrib['FIELDS'] = reg_fields
                     self.Cfg.REGISTERS[ _name ] = _register.attrib
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _register.attrib) )
+
             if logger().DEBUG: logger().log( "[*] loading controls.." )
-            for _controls in _cfg.iter('controls'):
-                for _control in _controls.iter('control'):
-                    _name = _control.attrib['name']
-                    del _control.attrib['name']
-                    if 'undef' in _control.attrib:
-                        if _name in self.Cfg.CONTROLS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
-                            self.Cfg.CONTROLS.pop(_name, None)
-                        continue
-                    self.Cfg.CONTROLS[ _name ] = _control.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _control.attrib) )
+            self.populate_cfg_type(_cfg, 'controls', self.Cfg.CONTROLS, 'control')
+
             if logger().DEBUG: logger().log("[*] loading locks..")
-            for _locks in _cfg.iter('locks'):
-                for _lock in _locks.iter('lock'):
-                    _name = _lock.attrib['name']
-                    del _lock.attrib['name']
-                    if 'undef' in _lock.attrib:
-                        if _name in self.Cfg.LOCKS:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _control.attrib['undef']))
-                            self.Cfg.LOCKS.pop(_name, None)
-                        continue
-                    self.Cfg.LOCKS[_name] = _lock.attrib
-                    if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _lock.attrib))
+            self.populate_cfg_type(_cfg, 'locks', self.Cfg.LOCKS, 'lock')
 
     def init_cfg_bus( self ):
         if logger().DEBUG: logger().log( '[*] Loading device buses..' )
