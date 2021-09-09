@@ -63,22 +63,6 @@ class MMIO(hal_base.HALBase):
     def __init__(self, cs):
         super(MMIO, self).__init__(cs)
 
-    ###########################################################################
-    # Access to MMIO BAR defined by configuration files (chipsec/cfg/*.py)
-    ###########################################################################
-    #
-    # To add your own MMIO bar:
-    #   1. Add new MMIO BAR id (any)
-    #   2. Write a function get_yourBAR_base_address() with no args that
-    #      returns base addres of new bar
-    #   3. Add a pointer to this function to MMIO_BAR_base map
-    #   4. Don't touch read/write_MMIO_reg functions ;)
-    #
-    ###########################################################################
-
-
-
-
     #
     # Read MMIO register as an offset off of MMIO range base address
     #
@@ -169,41 +153,47 @@ class MMIO(hal_base.HALBase):
         return is_bar_defined
 
     #
+    # Get the base address and mask for a BAR register.
+    #
+    def _get_BAR_and_mask(self, bar_reg, base_field, bus):
+        _bus = bus
+        preserve = True
+        if _bus is None:
+            _buses = self.cs.get_register_bus(bar_reg)
+            _bus = _buses[0] if _buses else None
+        if 'align_bits' in bar:
+            preserve = False
+        if base_field is None:
+            base = self.cs.read_register(bar_reg, bus=_bus)
+            reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
+        else:
+            try:
+                base = self.cs.read_register_field(bar_reg, base_field, preserve, _bus)
+            except CSReadError:
+                if self.logger.HAL:
+                    self.logger.log('[mmio] Unable to determine MMIO Base.  Using Base = 0x0')
+                base = 0
+            try:
+                reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve)
+            except CSReadError:
+                if self.logger.HAL:
+                    self.logger.log('[mmio] Unable to determine MMIO Mask.  Using Mask = 0xFFFF')
+                reg_mask = 0xFFFF
+        return base, reg_mask
+
+    #
     # Get base address of MMIO range by MMIO BAR name
     #
     def get_MMIO_BAR_base_address(self, bar_name, bus=None):
+        _bus = bus
         bar = self.cs.Cfg.MMIO_BARS[ bar_name ]
         if bar is None or bar == {}: return -1, -1
-        _bus = bus
-
         if 'register' in bar:
-            preserve = True
-            bar_reg = bar['register']
-            if _bus is None:
-                _buses = self.cs.get_register_bus(bar_reg)
-                _bus = _buses[0] if _buses else None
-            if 'align_bits' in bar:
-                preserve = False
-            if 'base_field' in bar:
-                base_field = bar['base_field']
-                try:
-                    base = self.cs.read_register_field(bar_reg, base_field, preserve, _bus)
-                except CSReadError:
-                    if self.logger.HAL:
-                        self.logger.log('[mmio] Unable to determine MMIO Base.  Using Base = 0x0')
-                    base = 0
-                try:
-                    reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve)
-                except CSReadError:
-                    if self.logger.HAL:
-                        self.logger.log('[mmio] Unable to determine MMIO Mask.  Using Mask = 0xFFFF')
-                    reg_mask = 0xFFFF
-            else:
-                base = self.cs.read_register(bar_reg, bus=_bus)
-                reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
-            if 'limit_field' in bar:
-                limit_field = bar['limit_field']
-                limit = self.cs.read_register_field(bar_reg, limit_field, bus=_bus)
+            base,reg_mask = self._get_BAR_and_mask(bar['register'], bar.get('base_field'), bus)
+            if 'register_high' in bar:
+                base_hi,mask_hi = self._get_BAR_and_mask(bar['register_high'], bar.get('base_field_high'), bus)
+                base |= base_hi << reg_mask.bit_length()
+                reg_mask |= mask_hi << reg_mask.bit_length()
         else:
             # this method is not preferred (less flexible)
             if _bus is not None:
@@ -359,9 +349,13 @@ class MMIO(hal_base.HALBase):
                     if 'bus' in self.cs.get_register_def(_bar['register']):
                         bus_data = [int(self.cs.get_register_def(_bar['register'])['bus'],16)]
                     else:
-                        continue
+                        # On AMD, some BARs are defined in MSRs or SMNs. These are associated
+                        # with a cpu thread or a die (respectively), which can be mapped to a
+                        # northbridge bus, but we don't support it currently. Just pass a default
+                        # bus, and let downstream code fallback on die 0.
+                        bus_data = [None]
             elif 'bus' in _bar:
-                bus_data = [_bar['bus']]
+                bus_data = [int(_bar['bus'],16)]
             else:
                 continue
             for bus in bus_data:
@@ -379,7 +373,7 @@ class MMIO(hal_base.HALBase):
                 else:
                     _s = '{:02X}:{:02X}.{:01X} + {}'.format( int(_bar['bus'], 16), int(_bar['dev'], 16), int(_bar['fun'], 16), _bar['reg'] )
 
-                self.logger.log( ' {:12} |  {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus, _s, _base, _size, _en, _bar['desc']) )
+                self.logger.log( ' {:12} |  {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus or 0, _s, _base, _size, _en, _bar['desc']) )
 
 
     ##################################################################################
