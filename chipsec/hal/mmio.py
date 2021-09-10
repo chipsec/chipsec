@@ -428,6 +428,12 @@ class MMIO(hal_base.HALBase):
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 5)
             if len == PCI_PCIEXBAR_REG_LENGTH_4096MB:
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 6)
+        if self.cs.register_has_field("MmioCfgBaseAddr", "BusRange"):
+            num_buses = self.cs.read_register_field("MmioCfgBaseAddr", "BusRange")
+            if num_buses <= 8:
+                bar_size = 2**20 * 2**num_buses
+            else:
+                if self.logger.HAL: self.logger.log( '[mmcfg] Unexpected MmioCfgBaseAddr bus range: 0x{:01X}'.format(num_buses) )
         if self.logger.HAL: self.logger.log( '[mmcfg] Memory Mapped CFG Base: 0x{:016X}'.format(bar_base) )
         self.cs.set_scope(tscope)
         return bar_base, bar_size
