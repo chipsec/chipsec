@@ -18,6 +18,10 @@
 #chipsec@intel.com
 #
 
+"""
+UEFI Firmware Volume Parsing/Modification Functionality
+"""
+
 import hashlib
 import struct
 from uuid import UUID

@@ -17,6 +17,11 @@
 #Contact information:
 #chipsec@intel.com
 #
+
+"""
+HAL component providing access to and decoding of SMBIOS structures
+"""
+
 import struct
 from collections import namedtuple
 
