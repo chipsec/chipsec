@@ -20,7 +20,7 @@ Python 3.7 or higher (https://www.python.org/downloads/)
 
 To install requirements: 
 
-   `pip install windows_requirements.txt`
+   `pip install -r windows_requirements.txt`
 
 which includes:
 
