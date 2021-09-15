@@ -49,10 +49,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      -
    * - BIOS interface is not locked
      - common.bios_ts
-     -
-   * - SMI configuration is not locked (SMI race condition)
-     - common.smi_lock
-     -
+     - 
 
 .. list-table:: **Attack Surface/Vector: Runtime protection of SMRAM**
    :header-rows: 1
