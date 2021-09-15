@@ -423,13 +423,17 @@ class Chipset:
                                 else:
                                     self.detection_dictionary[dv.strip().upper()] = _cfg.attrib['platform'].upper()
                         if _info.iter('sku'):
+                            _det = ""
+                            _did = ""
                             for _sku in _info.iter('sku'):
-                                _det = ""
                                 _did = int(_sku.attrib['did'], 16)
                                 del _sku.attrib['did']
                                 mdict[_did].append(_sku.attrib)
                                 if "detection_value" in _sku.attrib.keys():
                                     _det = _sku.attrib['detection_value']
+                            if _did == "":
+                                if logger().DEBUG:
+                                    logger().warn("No SKU found in configuration")
                             cdict['did'] = _did
                             cdict['detection_value'] = _det
             for cc in self.chipset_codes:
