@@ -268,7 +268,7 @@
     </register>
 
     <!-- DCI registers -->
-    <register name="ECTRL" type="mm_msgbus" port="0x71" offset="0x0004" size="4" desc="DCI Control Register">
+    <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
       <field name="LOCK"   bit="0" size="1"/>
       <field name="ENABLE" bit="4" size="1"/>
     </register>
