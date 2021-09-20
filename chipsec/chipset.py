@@ -610,7 +610,7 @@ class Chipset:
                     if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _lock.attrib))
 
     def init_cfg_bus( self ):
-        if logger().DEBUG: logger().log( '[*] loading device buses..' )
+        if logger().DEBUG: logger().log( '[*] Loading device buses..' )
         if QUIET_PCI_ENUM:
             old_hal_state = logger().HAL
             logger().HAL = False
@@ -655,7 +655,7 @@ class Chipset:
                     cfg_str = "{:0>2}_{:0>2}_{:s}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
                     if cfg_str in self.Cfg.BUS.keys():
                         self.Cfg.BUS[config_device] = self.Cfg.BUS.pop(cfg_str)
-                        if logger().DEBUG: logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, device_data['vid'][2:], tdid, ','.join('0X{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
+                        if logger().DEBUG: logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, device_data['vid'][2:], tdid, ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
                         break
 
     #
@@ -804,7 +804,7 @@ class Chipset:
         return reg_def
 
     def get_register_bus(self, reg_name):
-        device = self.Cfg.REGISTERS[reg_name].get( 'device', '' )
+        device = self.Cfg.REGISTERS[reg_name].get('device', '')
         if not device:
             if logger().DEBUG:
                 logger().warn( "No device found for '{}'".format(reg_name) )
@@ -841,8 +841,9 @@ class Chipset:
             elif RegisterType.MMCFG == rtype:
                 reg_value = self.mmio.read_mmcfg_reg(b, d, f, o, size)
         elif RegisterType.MMIO == rtype:
-            if self.mmio.get_MMIO_BAR_base_address(reg['bar'])[0] != 0:
-                reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16), bus)
+            _bus = bus
+            if self.mmio.get_MMIO_BAR_base_address(reg['bar'], _bus)[0] != 0:
+                reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16), _bus)
             else:
                 raise CSReadError("MMIO Bar ({}) base address is 0".format(reg['bar']))
         elif RegisterType.MSR == rtype:
