@@ -18,6 +18,19 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util vmm hypercall <rax> <rbx> <rcx> <rdx> <rdi> <rsi> [r8] [r9] [r10] [r11]
+>>> chipsec_util vmm hypercall <eax> <ebx> <ecx> <edx> <edi> <esi>
+>>> chipsec_util vmm pt|ept <ept_pointer>
+>>> chipsec_util vmm virtio [<bus>:<device>.<function>]
+
+Examples:
+
+>>> chipsec_util vmm hypercall 32 0 0 0 0 0
+>>> chipsec_util vmm pt 0x524B01E
+>>> chipsec_util vmm virtio
+>>> chipsec_util vmm virtio 0:6.0
+"""
 
 import time
 import re
@@ -30,23 +43,9 @@ from argparse           import ArgumentParser
 
 
 class VMMCommand(BaseCommand):
-    """
-    >>> chipsec_util vmm hypercall <rax> <rbx> <rcx> <rdx> <rdi> <rsi> [r8] [r9] [r10] [r11]
-    >>> chipsec_util vmm hypercall <eax> <ebx> <ecx> <edx> <edi> <esi>
-    >>> chipsec_util vmm pt|ept <ept_pointer>
-    >>> chipsec_util vmm virtio [<bus>:<device>.<function>]
-
-    Examples:
-
-    >>> chipsec_util vmm hypercall 32 0 0 0 0 0
-    >>> chipsec_util vmm pt 0x524B01E
-    >>> chipsec_util vmm virtio
-    >>> chipsec_util vmm virtio 0:6.0
-
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util vmm', usage=VMMCommand.__doc__ )
+        parser = ArgumentParser( prog='chipsec_util vmm', usage=__doc__ )
         subparsers = parser.add_subparsers()
 
         parser_hypercall = subparsers.add_parser('hypercall')

@@ -22,6 +22,27 @@
 
 """
 The pci command can enumerate PCI/PCIe devices, enumerate expansion ROMs and allow direct access to PCI configuration registers via bus/device/function.
+
+>>> chipsec_util pci enumerate
+>>> chipsec_util pci read <bus> <device> <function> <offset> [width]
+>>> chipsec_util pci write <bus> <device> <function> <offset> <width> <value>
+>>> chipsec_util pci dump [<bus>] [<device>] [<function>]
+>>> chipsec_util pci xrom [<bus>] [<device>] [<function>] [xrom_address]
+>>> chipsec_util pci cmd [mask] [class] [subclass]
+
+Examples:
+
+>>> chipsec_util pci enumerate
+>>> chipsec_util pci read 0 0 0 0x00
+>>> chipsec_util pci read 0 0 0 0x88 byte
+>>> chipsec_util pci write 0 0x1F 0 0xDC 1 0x1
+>>> chipsec_util pci write 0 0 0 0x98 dword 0x004E0040
+>>> chipsec_util pci dump
+>>> chipsec_util pci dump 0 0 0
+>>> chipsec_util pci xrom
+>>> chipsec_util pci xrom 3 0 0 0xFEDF0000
+>>> chipsec_util pci cmd
+>>> chipsec_util pci cmd 1
 """
 
 import time
@@ -35,31 +56,9 @@ from chipsec.hal.pci    import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD
 
 # PCIe Devices and Configuration Registers
 class PCICommand(BaseCommand):
-    """
-    >>> chipsec_util pci enumerate
-    >>> chipsec_util pci read <bus> <device> <function> <offset> [width]
-    >>> chipsec_util pci write <bus> <device> <function> <offset> <width> <value>
-    >>> chipsec_util pci dump [<bus>] [<device>] [<function>]
-    >>> chipsec_util pci xrom [<bus>] [<device>] [<function>] [xrom_address]
-    >>> chipsec_util pci cmd [mask] [class] [subclass]
-
-    Examples:
-
-    >>> chipsec_util pci enumerate
-    >>> chipsec_util pci read 0 0 0 0x00
-    >>> chipsec_util pci read 0 0 0 0x88 byte
-    >>> chipsec_util pci write 0 0x1F 0 0xDC 1 0x1
-    >>> chipsec_util pci write 0 0 0 0x98 dword 0x004E0040
-    >>> chipsec_util pci dump
-    >>> chipsec_util pci dump 0 0 0
-    >>> chipsec_util pci xrom
-    >>> chipsec_util pci xrom 3 0 0 0xFEDF0000
-    >>> chipsec_util pci cmd
-    >>> chipsec_util pci cmd 1
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util pci', usage=PCICommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util pci', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_enumerate = subparsers.add_parser('enumerate')
         parser_enumerate.set_defaults(func=self.pci_enumerate)

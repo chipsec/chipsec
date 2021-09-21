@@ -18,6 +18,21 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util spd detect
+>>> chipsec_util spd dump [device_addr]
+>>> chipsec_util spd read <device_addr> <offset>
+>>> chipsec_util spd write <device_addr> <offset> <byte_val>
+
+Examples:
+
+>>> chipsec_util spd detect
+>>> chipsec_util spd dump DIMM0
+>>> chipsec_util spd dump 0xA0
+>>> chipsec_util spd read DIMM2 0x0
+>>> chipsec_util spd read 0xA0 0x0
+>>> chipsec_util spd write 0xA0 0x0 0xAA
+"""
 
 import time
 
@@ -27,24 +42,9 @@ from argparse         import ArgumentParser
 
 
 class SPDCommand(BaseCommand):
-    """
-    >>> chipsec_util spd detect
-    >>> chipsec_util spd dump [device_addr]
-    >>> chipsec_util spd read <device_addr> <offset>
-    >>> chipsec_util spd write <device_addr> <offset> <byte_val>
-
-    Examples:
-
-    >>> chipsec_util spd detect
-    >>> chipsec_util spd dump DIMM0
-    >>> chipsec_util spd dump 0xA0
-    >>> chipsec_util spd read DIMM2 0x0
-    >>> chipsec_util spd read 0xA0 0x0
-    >>> chipsec_util spd write 0xA0 0x0 0xAA
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=SPDCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
 
         parser_detect = subparsers.add_parser('detect')

@@ -29,6 +29,19 @@ A basic forensic operation might be to dump the entire SPI flash to a file. This
 ``# python chipsec_util.py spi dump rom.bin``
 
 The file rom.bin will contain the full binary of the SPI flash. It can then be parsed using the decode util command.
+
+>>> chipsec_util spi info|dump|read|write|erase|disable-wp [flash_address] [length] [file]
+
+Examples:
+
+>>> chipsec_util spi info
+>>> chipsec_util spi dump rom.bin
+>>> chipsec_util spi read 0x700000 0x100000 bios.bin
+>>> chipsec_util spi write 0x0 flash_descriptor.bin
+>>> chipsec_util spi disable-wp
+>>> chipsec_util spi sfdp
+>>> chipsec_util spi jedec
+>>> chipsec_util spi jedec decode
 """
 
 import time
@@ -41,22 +54,9 @@ from argparse        import ArgumentParser
 
 # SPI Flash Controller
 class SPICommand(BaseCommand):
-    """
-    >>> chipsec_util spi info|dump|read|write|erase|disable-wp [flash_address] [length] [file]
 
-    Examples:
-
-    >>> chipsec_util spi info
-    >>> chipsec_util spi dump rom.bin
-    >>> chipsec_util spi read 0x700000 0x100000 bios.bin
-    >>> chipsec_util spi write 0x0 flash_descriptor.bin
-    >>> chipsec_util spi disable-wp
-    >>> chipsec_util spi sfdp
-    >>> chipsec_util spi jedec
-    >>> chipsec_util spi jedec decode
-    """
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util spi', usage=SPICommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util spi', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_info = subparsers.add_parser('info')
         parser_info.set_defaults(func=self.spi_info)

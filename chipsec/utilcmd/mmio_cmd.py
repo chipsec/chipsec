@@ -18,6 +18,19 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util mmio list
+>>> chipsec_util mmio dump <MMIO_BAR_name> [offset] [length]
+>>> chipsec_util mmio read <MMIO_BAR_name> <offset> <width>
+>>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>
+
+Examples:
+
+>>> chipsec_util mmio list
+>>> chipsec_util mmio dump MCHBAR
+>>> chipsec_util mmio read SPIBAR 0x74 0x4
+>>> chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000
+"""
 
 from chipsec.command import BaseCommand
 from chipsec.hal     import mmio
@@ -31,22 +44,9 @@ from time            import time
 #
 # ###################################################################
 class MMIOCommand(BaseCommand):
-    """
-    >>> chipsec_util mmio list
-    >>> chipsec_util mmio dump <MMIO_BAR_name> [offset] [length]
-    >>> chipsec_util mmio read <MMIO_BAR_name> <offset> <width>
-    >>> chipsec_util mmio write <MMIO_BAR_name> <offset> <width> <value>
-
-    Examples:
-
-    >>> chipsec_util mmio list
-    >>> chipsec_util mmio dump MCHBAR
-    >>> chipsec_util mmio read SPIBAR 0x74 0x4
-    >>> chipsec_util mmio write SPIBAR 0x74 0x4 0xFFFF0000
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util mmio', usage=MMIOCommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util mmio', usage=__doc__)
         subparsers = parser.add_subparsers()
 
         parser_list = subparsers.add_parser('list')

@@ -17,6 +17,17 @@
 #Contact information:
 #chipsec@intel.com
 #
+
+"""
+>>> chipsec_util smbios entrypoint
+>>> chipsec_util smbios get [raw|decoded] [type]
+
+Examples:
+
+>>> chipsec_util smbios entrypoint
+>>> chipsec_util smbios get raw
+"""
+
 from argparse import ArgumentParser
 from time import time
 from chipsec.command import BaseCommand
@@ -25,18 +36,9 @@ from chipsec.logger import print_buffer
 from chipsec.defines import bytestostring
 
 class smbios_cmd(BaseCommand):
-    """
-    >>> chipsec_util smbios entrypoint
-    >>> chipsec_util smbios get [raw|decoded] [type]
-
-    Examples:
-
-    >>> chipsec_util smbios entrypoint
-    >>> chipsec_util smbios get raw
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util smbios', usage=smbios_cmd.__doc__)
+        parser = ArgumentParser(prog='chipsec_util smbios', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_entrypoint = subparsers.add_parser('entrypoint')
         parser_entrypoint.set_defaults(func=self.smbios_ep)
