@@ -21,7 +21,16 @@
 
 
 """
-Command-line utility providing access to ACPI tables 
+Command-line utility providing access to ACPI tables
+
+>>> chipsec_util acpi list
+>>> chipsec_util acpi table <name>|<file_path>
+
+Examples:
+
+>>> chipsec_util acpi list
+>>> chipsec_util acpi table XSDT
+>>> chipsec_util acpi table acpi_table.bin
 """
 
 from os.path import exists as path_exists
@@ -39,19 +48,9 @@ from chipsec.command    import BaseCommand
 # ###################################################################
 
 class ACPICommand(BaseCommand):
-    """
-    >>> chipsec_util acpi list
-    >>> chipsec_util acpi table <name>|<file_path>
-
-    Examples:
-
-    >>> chipsec_util acpi list
-    >>> chipsec_util acpi table XSDT
-    >>> chipsec_util acpi table acpi_table.bin
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=ACPICommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_list = subparsers.add_parser('list')
         parser_list.set_defaults(func=self.acpi_list)

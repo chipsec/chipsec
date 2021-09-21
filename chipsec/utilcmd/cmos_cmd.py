@@ -18,6 +18,16 @@
 # Contact information:
 # chipsec@intel.com
 
+"""
+>>> chipsec_util cmos dump
+>>> chipsec_util cmos readl|writel|readh|writeh <byte_offset> [byte_val]
+
+Examples:
+
+>>> chipsec_util cmos dump
+>>> chipsec_util cmos readl 0x0
+>>> chipsec_util cmos writeh 0x0 0xCC
+"""
 
 from time   import time
 from argparse   import ArgumentParser
@@ -28,19 +38,9 @@ from chipsec.exceptions import CmosRuntimeError
 
 
 class CMOSCommand(BaseCommand):
-    """
-    >>> chipsec_util cmos dump
-    >>> chipsec_util cmos readl|writel|readh|writeh <byte_offset> [byte_val]
-
-    Examples:
-
-    >>> chipsec_util cmos dump
-    >>> chipsec_util cmos readl 0x0
-    >>> chipsec_util cmos writeh 0x0 0xCC
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=CMOSCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
 
         parser_offset = ArgumentParser(add_help=False)
         parser_offset.add_argument('offset', type=lambda x: int(x, 0), help="offsets read")

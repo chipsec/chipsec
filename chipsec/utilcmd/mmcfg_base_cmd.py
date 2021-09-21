@@ -21,6 +21,14 @@
 
 """
 The mmcfg_base command displays PCIe MMCFG Base/Size.
+
+Usage:
+
+>>> chipsec_util mmcfg_base
+
+Examples:
+
+>>> chipsec_util mmcfg_base
 """
 
 from chipsec.command import BaseCommand
@@ -29,13 +37,6 @@ from chipsec.hal     import mmio
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 class MMCfgBaseCommand(BaseCommand):
-    """
-    >>> chipsec_util mmcfg_base
-
-    Examples:
-
-    >>> chipsec_util mmcfg_base
-    """
 
     def requires_driver(self):
         return True

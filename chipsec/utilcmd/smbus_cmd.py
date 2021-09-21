@@ -18,6 +18,14 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util smbus read <device_addr> <start_offset> [size]
+>>> chipsec_util smbus write <device_addr> <offset> <byte_val>
+
+Examples:
+
+>>> chipsec_util smbus read 0xA0 0x0 0x100
+"""
 
 import time
 
@@ -27,17 +35,9 @@ from chipsec.hal.smbus import SMBus
 from argparse          import ArgumentParser
 
 class SMBusCommand(BaseCommand):
-    """
-    >>> chipsec_util smbus read <device_addr> <start_offset> [size]
-    >>> chipsec_util smbus write <device_addr> <offset> <byte_val>
-
-    Examples:
-
-    >>> chipsec_util smbus read 0xA0 0x0 0x100
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util smbus', usage=SMBusCommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util smbus', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_read = subparsers.add_parser('read')
         parser_read.add_argument('dev_addr', type=lambda x: int(x, 16), help='Start Address (hex)')

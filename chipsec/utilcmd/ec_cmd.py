@@ -1,6 +1,6 @@
 # !/usr/bin/python
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2020, Intel Corporation
+# Copyright (c) 2010-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,6 +19,21 @@
 # chipsec@intel.com
 #
 
+"""
+>>> chipsec_util ec dump    [<size>]
+>>> chipsec_util ec command <command>
+>>> chipsec_util ec read    <offset> [<size>]
+>>> chipsec_util ec write   <offset> <byte_val>
+>>> chipsec_util ec index   [<offset>]
+
+Examples:
+
+>>> chipsec_util ec dump
+>>> chipsec_util ec command 0x001
+>>> chipsec_util ec read    0x2F
+>>> chipsec_util ec write   0x2F 0x00
+>>> chipsec_util ec index
+"""
 
 import time
 from argparse import ArgumentParser
@@ -31,24 +46,9 @@ from chipsec.hal.ec  import EC
 
 # Embedded Controller
 class ECCommand(BaseCommand):
-    """
-    >>> chipsec_util ec dump    [<size>]
-    >>> chipsec_util ec command <command>
-    >>> chipsec_util ec read    <offset> [<size>]
-    >>> chipsec_util ec write   <offset> <byte_val>
-    >>> chipsec_util ec index   [<offset>]
-
-    Examples:
-
-    >>> chipsec_util ec dump
-    >>> chipsec_util ec command 0x001
-    >>> chipsec_util ec read    0x2F
-    >>> chipsec_util ec write   0x2F 0x00
-    >>> chipsec_util ec index
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=ECCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
 
         parser_offset = ArgumentParser(add_help=False)
         parser_offset.add_argument('offset', type=lambda x: int(x, 0), nargs='?', default=0, help="offset")

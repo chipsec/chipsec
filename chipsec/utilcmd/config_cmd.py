@@ -18,6 +18,16 @@
 # Contact information:
 # chipsec@intel.com
 
+"""
+>>> chipsec_util config show [config] <name>
+
+Examples:
+
+>>> chipsec_util config show ALL
+>>> chipsec_util config show MMIO_BARS
+>>> chipsec_util config show REGISTERS BC
+"""
+
 from time   import time
 from argparse   import ArgumentParser
 
@@ -25,18 +35,9 @@ from chipsec.command    import BaseCommand
 
 
 class CONFIGCommand(BaseCommand):
-    """
-    >>> chipsec_util config show [config] <name>
-
-    Examples:
-
-    >>> chipsec_util config show ALL
-    >>> chipsec_util config show MMIO_BARS
-    >>> chipsec_util config show REGISTERS BC
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=CONFIGCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
 
         subparsers = parser.add_subparsers()
 

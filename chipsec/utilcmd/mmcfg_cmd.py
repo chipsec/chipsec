@@ -21,6 +21,15 @@
 
 """
 The mmcfg command allows direct access to memory mapped config space.
+
+>>> chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]
+
+Examples:
+
+>>> chipsec_util mmcfg 0 0 0 0x88 4
+>>> chipsec_util mmcfg 0 0 0 0x88 byte 0x1A
+>>> chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1
+>>> chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040
 """
 
 import time
@@ -32,19 +41,9 @@ from argparse        import ArgumentParser
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 class MMCfgCommand(BaseCommand):
-    """
-    >>> chipsec_util mmcfg <bus> <device> <function> <offset> <width> [value]
-
-    Examples:
-
-    >>> chipsec_util mmcfg 0 0 0 0x88 4
-    >>> chipsec_util mmcfg 0 0 0 0x88 byte 0x1A
-    >>> chipsec_util mmcfg 0 0x1F 0 0xDC 1 0x1
-    >>> chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util mmcfg', usage=MMCfgCommand.__doc__ )
+        parser = ArgumentParser( prog='chipsec_util mmcfg', usage=__doc__ )
         parser.add_argument('bus', type=lambda x: int(x,16), help='Bus (hex)')
         parser.add_argument('device', type=lambda x: int(x,16), help='Device (hex)')
         parser.add_argument('function', type=lambda x: int(x,16), help='Function (hex)')

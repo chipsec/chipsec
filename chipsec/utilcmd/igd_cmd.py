@@ -21,6 +21,15 @@
 
 """
 The igd command allows memory read/write operations using igd dma.
+
+>>> chipsec_util igd
+>>> chipsec_util igd dmaread <address> [width] [file_name]
+>>> chipsec_util igd dmawrite <address> <width> <value|file_name>
+
+Examples:
+
+>>> chipsec_util igd dmaread 0x20000000 4
+>>> chipsec_util igd dmawrite 0x2217F1000 0x4 deadbeef
 """
 
 from chipsec.command import BaseCommand
@@ -34,19 +43,9 @@ import os
 
 # Port I/O
 class IgdCommand(BaseCommand):
-    """
-    >>> chipsec_util igd
-    >>> chipsec_util igd dmaread <address> [width] [file_name]
-    >>> chipsec_util igd dmawrite <address> <width> <value|file_name>
-
-    Examples:
-
-    >>> chipsec_util igd dmaread 0x20000000 4
-    >>> chipsec_util igd dmawrite 0x2217F1000 0x4 deadbeef
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util igd', usage=IgdCommand.__doc__ )
+        parser = ArgumentParser( prog='chipsec_util igd', usage=__doc__ )
         subparsers = parser.add_subparsers()
 
         parser_read = subparsers.add_parser('dmaread')
