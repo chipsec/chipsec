@@ -19,6 +19,28 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util tpm parse_log <file>
+>>> chipsec_util tpm state <locality>
+>>> chipsec_util tpm command <commandName> <locality> <command_parameters>
+
+locality: 0 | 1 | 2 | 3 | 4
+commands - parameters:
+pccrread - pcr number ( 0 - 23 )
+nvread - Index, Offset, Size
+startup - startup type ( 1 - 3 )
+continueselftest
+getcap - Capabilities Area, Size of Sub-capabilities, Sub-capabilities
+forceclear
+
+Examples:
+
+>>> chipsec_util tpm parse_log binary_bios_measurements
+>>> chipsec_util tpm state 0
+>>> chipsec_util tpm command pcrread 0 17
+>>> chipsec_util tpm command continueselftest 0
+"""
+
 from chipsec.command import BaseCommand
 from chipsec.hal     import tpm_eventlog
 from chipsec.hal     import tpm
@@ -26,31 +48,11 @@ from chipsec.exceptions   import TpmRuntimeError
 from argparse        import ArgumentParser
 
 class TPMCommand(BaseCommand):
-    """
-    >>> chipsec_util tpm parse_log <file>
-    >>> chipsec_util tpm state <locality>
-    >>> chipsec_util tpm command <commandName> <locality> <command_parameters>
 
-    locality: 0 | 1 | 2 | 3 | 4
-    commands - parameters:
-    pccrread - pcr number ( 0 - 23 )
-    nvread - Index, Offset, Size
-    startup - startup type ( 1 - 3 )
-    continueselftest
-    getcap - Capabilities Area, Size of Sub-capabilities, Sub-capabilities
-    forceclear
-
-    Examples:
-
-    >>> chipsec_util tpm parse_log binary_bios_measurements
-    >>> chipsec_util tpm state 0
-    >>> chipsec_util tpm command pcrread 0 17
-    >>> chipsec_util tpm command continueselftest 0
-    """
     no_driver_cmd = ['parse_log']
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=TPMCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_parse = subparsers.add_parser('parse_log')
         parser_parse.add_argument('file', type=str, help='File name')

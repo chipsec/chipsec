@@ -18,6 +18,25 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util msgbus read     <port> <register>
+>>> chipsec_util msgbus write    <port> <register> <value>
+>>> chipsec_util msgbus mm_read  <port> <register>
+>>> chipsec_util msgbus mm_write <port> <register> <value>
+>>> chipsec_util msgbus message  <port> <register> <opcode> [value]
+>>>
+>>> <port>    : message bus port of the target unit
+>>> <register>: message bus register/offset in the target unit port
+>>> <value>   : value to be written to the message bus register/offset
+>>> <opcode>  : opcode of the message on the message bus
+
+Examples:
+
+>>> chipsec_util msgbus read     0x3 0x2E
+>>> chipsec_util msgbus mm_write 0x3 0x27 0xE0000001
+>>> chipsec_util msgbus message  0x3 0x2E 0x10
+>>> chipsec_util msgbus message  0x3 0x2E 0x11 0x0
+"""
 
 import time
 
@@ -27,28 +46,9 @@ from argparse           import ArgumentParser
 
 # Message Bus
 class MsgBusCommand(BaseCommand):
-    """
-    >>> chipsec_util msgbus read     <port> <register>
-    >>> chipsec_util msgbus write    <port> <register> <value>
-    >>> chipsec_util msgbus mm_read  <port> <register>
-    >>> chipsec_util msgbus mm_write <port> <register> <value>
-    >>> chipsec_util msgbus message  <port> <register> <opcode> [value]
-    >>>
-    >>> <port>    : message bus port of the target unit
-    >>> <register>: message bus register/offset in the target unit port
-    >>> <value>   : value to be written to the message bus register/offset
-    >>> <opcode>  : opcode of the message on the message bus
-
-    Examples:
-
-    >>> chipsec_util msgbus read     0x3 0x2E
-    >>> chipsec_util msgbus mm_write 0x3 0x27 0xE0000001
-    >>> chipsec_util msgbus message  0x3 0x2E 0x10
-    >>> chipsec_util msgbus message  0x3 0x2E 0x11 0x0
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util msgbus', usage=MsgBusCommand.__doc__ )
+        parser = ArgumentParser( prog='chipsec_util msgbus', usage=__doc__ )
         subparsers = parser.add_subparsers()
 
         parser_read = subparsers.add_parser('read')

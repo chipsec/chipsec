@@ -18,10 +18,35 @@
 #chipsec@intel.com
 #
 
-
-
 """
-The idt and gdt commands print the IDT and GDT, respectively.
+The idt, gdt and ldt commands print the IDT, GDT and LDT, respectively.
+
+IDT command:
+
+>>> chipsec_util idt [cpu_id]
+
+Examples:
+
+>>> chipsec_util idt 0
+>>> chipsec_util idt
+
+GDT command:
+
+>>> chipsec_util gdt [cpu_id]
+
+Examples:
+
+>>> chipsec_util gdt 0
+>>> chipsec_util gdt
+
+LDT command:
+
+>>> chipsec_util ldt [cpu_id]
+
+Examples:
+
+>>> chipsec_util ldt 0
+>>> chipsec_util ldt
 """
 
 from time import time
@@ -39,7 +64,6 @@ class IDTCommand(BaseCommand):
     >>> chipsec_util idt 0
     >>> chipsec_util idt
     """
-
     def requires_driver(self):
         parser = ArgumentParser(usage=IDTCommand.__doc__)
         parser.add_argument('_thread', metavar='thread', type=lambda x: int(x, 0), nargs='?', default=None, help="thread")
@@ -66,7 +90,6 @@ class GDTCommand(BaseCommand):
     >>> chipsec_util gdt 0
     >>> chipsec_util gdt
     """
-
     def requires_driver(self):
         parser = ArgumentParser(usage=GDTCommand.__doc__)
         parser.add_argument('_thread', metavar='thread', type=lambda x: int(x, 0), nargs='?', default=None, help="thread")

@@ -22,6 +22,16 @@
 
 """
 The io command allows direct access to read and write I/O port space.
+
+>>> chipsec_util io list
+>>> chipsec_util io read  <io_port> <width>
+>>> chipsec_util io write <io_port> <width> <value>
+
+Examples:
+
+>>> chipsec_util io list
+>>> chipsec_util io read 0x61 1
+>>> chipsec_util io write 0x430 1 0x0
 """
 
 import time
@@ -33,20 +43,9 @@ from chipsec.exceptions import IOBARRuntimeError
 
 
 class PortIOCommand(BaseCommand):
-    """
-    >>> chipsec_util io list
-    >>> chipsec_util io read  <io_port> <width>
-    >>> chipsec_util io write <io_port> <width> <value>
-
-    Examples:
-
-    >>> chipsec_util io list
-    >>> chipsec_util io read 0x61 1
-    >>> chipsec_util io write 0x430 1 0x0
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util io', usage=PortIOCommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util io', usage=__doc__)
         subparsers = parser.add_subparsers()
 
         # list

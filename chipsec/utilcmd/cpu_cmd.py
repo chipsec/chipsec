@@ -18,6 +18,23 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util cpu info
+>>> chipsec_util cpu cr <thread> <cr_number> [value]
+>>> chipsec_util cpu cpuid <eax> [ecx]
+>>> chipsec_util cpu pt [paging_base_cr3]
+>>> chipsec_util cpu topology
+
+Examples:
+
+>>> chipsec_util cpu info
+>>> chipsec_util cpu cr 0 0
+>>> chipsec_util cpu cr 0 4 0x0
+>>> chipsec_util cpu cpuid 0x40000000
+>>> chipsec_util cpu pt
+>>> chipsec_util cpu topology
+"""
+
 from time   import time
 from argparse   import ArgumentParser
 
@@ -31,25 +48,9 @@ from chipsec.command import BaseCommand
 #
 # ###################################################################
 class CPUCommand(BaseCommand):
-    """
-    >>> chipsec_util cpu info
-    >>> chipsec_util cpu cr <thread> <cr_number> [value]
-    >>> chipsec_util cpu cpuid <eax> [ecx]
-    >>> chipsec_util cpu pt [paging_base_cr3]
-    >>> chipsec_util cpu topology
-
-    Examples:
-
-    >>> chipsec_util cpu info
-    >>> chipsec_util cpu cr 0 0
-    >>> chipsec_util cpu cr 0 4 0x0
-    >>> chipsec_util cpu cpuid 0x40000000
-    >>> chipsec_util cpu pt
-    >>> chipsec_util cpu topology
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=CPUCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_info = subparsers.add_parser('info')
         parser_cr = subparsers.add_parser('cr')

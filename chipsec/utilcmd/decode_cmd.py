@@ -29,7 +29,20 @@ chipsec_util decode spi.bin vss
 
 This will create multiple log files, binaries, and directories that correspond to the sections, firmware volumes, files, variables, etc. stored in the SPI flash.
 
-.. note: It may be necessary to try various options for fw_type in order to correctly parse NVRAM variables. Currently, CHIPSEC does not autodetect the correct format. If the nvram directory does not appear and the list of nvram variables is empty, try again with another type.
+.. note: 
+
+    It may be necessary to try various options for fw_type in order to correctly parse NVRAM variables. Currently, CHIPSEC does not autodetect the correct format. If the nvram directory does not appear and the list of nvram variables is empty, try again with another type.
+
+>>> chipsec_util decode <rom> [fw_type]
+
+For a list of fw types run:
+
+>>> chipsec_util decode types
+
+Examples:
+
+>>> chipsec_util decode spi.bin vss
+
 """
 
 import os
@@ -45,20 +58,9 @@ from chipsec.hal.spi_uefi import decode_uefi_region
 from chipsec.hal.uefi import UEFI, uefi_platform
 
 class DecodeCommand(BaseCommand):
-    """
-    >>> chipsec_util decode <rom> [fw_type]
-
-    For a list of fw types run:
-
-    >>> chipsec_util decode types
-
-    Examples:
-
-    >>> chipsec_util decode spi.bin vss
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=DecodeCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_rom', metavar='<rom>', help='file to decode')
         parser.add_argument('_fwtype', metavar='fw_type', nargs='?', help='firmware type', default=None)
         parser.parse_args(self.argv[2:], namespace=self)

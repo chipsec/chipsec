@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2019, Intel Corporation
+#Copyright (c) 2018-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -18,6 +18,17 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util deltas <previous> <current> [out-format] [out-name]
+
+out-format - JSON | XML
+out-name - Output file name
+
+Example:
+>>> chipsec_util deltas run1.json run2.json
+
+"""
+
 from time import time
 from argparse import ArgumentParser
 
@@ -25,19 +36,9 @@ from chipsec.command import BaseCommand
 import chipsec.result_deltas
 
 class DeltasCommand(BaseCommand):
-    """
-    >>> chipsec_util deltas <previous> <current> [out-format] [out-name]
-
-    out-format - JSON | XML
-    out-name - Output file name
-
-    Example:
-    >>> chipsec_util deltas run1.json run2.json
-
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(usage=DeltasCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_prev_log', metavar='<previous>', help='previous log file')
         parser.add_argument('_cur_log', metavar='<current>', help='current log file')
         parser.add_argument('_out_format', metavar='out-format', choices=['JSON', 'XML'], default='JSON', help='output format')

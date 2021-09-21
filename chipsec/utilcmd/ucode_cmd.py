@@ -18,6 +18,16 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util ucode id|load|decode [ucode_update_file (in .PDB or .BIN format)] [cpu_id]
+
+Examples:
+
+>>> chipsec_util ucode id
+>>> chipsec_util ucode load ucode.bin 0
+>>> chipsec_util ucode decode ucode.pdb
+"""
+
 import time
 
 from chipsec.command   import BaseCommand
@@ -31,17 +41,9 @@ from argparse          import ArgumentParser
 #
 # ###################################################################
 class UCodeCommand(BaseCommand):
-    """
-    >>> chipsec_util ucode id|load|decode [ucode_update_file (in .PDB or .BIN format)] [cpu_id]
 
-    Examples:
-
-    >>> chipsec_util ucode id
-    >>> chipsec_util ucode load ucode.bin 0
-    >>> chipsec_util ucode decode ucode.pdb
-    """
     def requires_driver(self):
-        parser = ArgumentParser(usage=UCodeCommand.__doc__)
+        parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_id = subparsers.add_parser('id')
         parser_id.add_argument('cpu_thread_id', nargs='?', type=lambda x: int(x, 16), default=None, help='CPU ID (hex)')

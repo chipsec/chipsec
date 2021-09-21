@@ -18,6 +18,28 @@
 #chipsec@intel.com
 #
 
+"""
+SMI command:
+
+>>> chipsec_util smi count
+>>> chipsec_util smi send <thread_id> <SMI_code> <SMI_data> [RAX] [RBX] [RCX] [RDX] [RSI] [RDI]
+>>> chipsec_util smi smmc <RT_code_start> <RT_code_end> <GUID> <payload_loc> <payload_file|payload_string> [port]
+
+Examples:
+
+>>> chipsec_util smi count
+>>> chipsec_util smi send 0x0 0xDE 0x0
+>>> chipsec_util smi send 0x0 0xDE 0x0 0xAAAAAAAAAAAAAAAA ..
+>>> chipsec_util smi smmc 0x79dfe000 0x79efdfff ed32d533-99e6-4209-9cc02d72cdd998a7 0x79dfaaaa payload.bin
+
+NMI command:
+
+>>> chipsec_util nmi
+
+Examples:
+
+>>> chipsec_util nmi
+"""
 
 import time
 import os
@@ -124,7 +146,6 @@ class SMICommand(BaseCommand):
                 self.logger.log( "          RDX: {:16X}".format(ret[4]) )
                 self.logger.log( "          RSI: {:16X}".format(ret[5]) )
                 self.logger.log( "          RDI: {:16X}".format(ret[6]) )
-
 
     def run(self):
         try:
