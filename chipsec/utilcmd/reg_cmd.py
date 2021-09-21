@@ -16,32 +16,33 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
+"""
+>>> chipsec_util reg read <reg_name> [<field_name>]
+>>> chipsec_util reg read_field <reg_name> <field_name>
+>>> chipsec_util reg write <reg_name> <value>
+>>> chipsec_util reg write_field <reg_name> <field_name> <value>
+>>> chipsec_util reg get_control <control_name>
+>>> chipsec_util reg set_control <control_name> <value>
+
+Examples:
+
+>>> chipsec_util reg read SMBUS_VID
+>>> chipsec_util reg read HSFC FGO
+>>> chipsec_util reg read_field HSFC FGO
+>>> chipsec_util reg write SMBUS_VID 0x8088
+>>> chipsec_util reg write_field BC BLE 0x1
+>>> chipsec_util reg get_control BiosWriteEnable
+>>> chipsec_util reg set_control BiosLockEnable 0x1
+"""
+
 from chipsec.command  import BaseCommand
 from argparse         import ArgumentParser
 
 
 class RegisterCommand(BaseCommand):
-    """
-    >>> chipsec_util reg read <reg_name> [<field_name>]
-    >>> chipsec_util reg read_field <reg_name> <field_name>
-    >>> chipsec_util reg write <reg_name> <value>
-    >>> chipsec_util reg write_field <reg_name> <field_name> <value>
-    >>> chipsec_util reg get_control <control_name>
-    >>> chipsec_util reg set_control <control_name> <value>
-
-    Examples:
-
-    >>> chipsec_util reg read SMBUS_VID
-    >>> chipsec_util reg read HSFC FGO
-    >>> chipsec_util reg read_field HSFC FGO
-    >>> chipsec_util reg write SMBUS_VID 0x8088
-    >>> chipsec_util reg write_field BC BLE 0x1
-    >>> chipsec_util reg get_control BiosWriteEnable
-    >>> chipsec_util reg set_control BiosLockEnable 0x1
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util reg', usage=RegisterCommand.__doc__ )
+        parser = ArgumentParser( prog='chipsec_util reg', usage=__doc__ )
         subparsers = parser.add_subparsers()
 
         parser_read = subparsers.add_parser('read')

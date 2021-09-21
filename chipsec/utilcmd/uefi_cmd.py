@@ -21,6 +21,35 @@
 
 """
 The uefi command provides access to UEFI variables, both on the live system and in a SPI flash image file.
+
+>>> chipsec_util uefi types
+>>> chipsec_util uefi var-list
+>>> chipsec_util uefi var-find <name>|<GUID>
+>>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
+>>> chipsec_util uefi decode --fwtype <rom_file> [filetypes]
+>>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
+>>> chipsec_util uefi keys <keyvar_file>
+>>> chipsec_util uefi tables
+>>> chipsec_util uefi s3bootscript [script_address]
+>>> chipsec_util uefi assemble <GUID> freeform none|lzma|tiano <raw_file> <uefi_file>
+>>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <rom> <new_rom> <uefi_file>
+
+Examples:
+
+>>> chipsec_util uefi types
+>>> chipsec_util uefi var-list
+>>> chipsec_util uefi var-find PK
+>>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
+>>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
+>>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
+>>> chipsec_util uefi decode uefi.rom
+>>> chipsec_util uefi decode uefi.rom FV_MM
+>>> chipsec_util uefi nvram uefi.rom vss_auth
+>>> chipsec_util uefi keys db.bin
+>>> chipsec_util uefi tables
+>>> chipsec_util uefi s3bootscript
+>>> chipsec_util uefi assemble AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE freeform lzma uefi.raw mydriver.efi
+>>> chipsec_util uefi replace  AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE bios.bin new_bios.bin mydriver.efi
 """
 
 import os
@@ -42,39 +71,9 @@ from chipsec.hal.uefi_platform import fw_types
 
 # Unified Extensible Firmware Interface (UEFI)
 class UEFICommand(BaseCommand):
-    """
-    >>> chipsec_util uefi types
-    >>> chipsec_util uefi var-list
-    >>> chipsec_util uefi var-find <name>|<GUID>
-    >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
-    >>> chipsec_util uefi decode --fwtype <rom_file> [filetypes]
-    >>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
-    >>> chipsec_util uefi keys <keyvar_file>
-    >>> chipsec_util uefi tables
-    >>> chipsec_util uefi s3bootscript [script_address]
-    >>> chipsec_util uefi assemble <GUID> freeform none|lzma|tiano <raw_file> <uefi_file>
-    >>> chipsec_util uefi insert_before|insert_after|replace|remove <GUID> <rom> <new_rom> <uefi_file>
-
-    Examples:
-
-    >>> chipsec_util uefi types
-    >>> chipsec_util uefi var-list
-    >>> chipsec_util uefi var-find PK
-    >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
-    >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
-    >>> chipsec_util uefi var-delete db D719B2CB-3D3A-4596-A3BC-DAD00E67656F
-    >>> chipsec_util uefi decode uefi.rom
-    >>> chipsec_util uefi decode uefi.rom FV_MM
-    >>> chipsec_util uefi nvram uefi.rom vss_auth
-    >>> chipsec_util uefi keys db.bin
-    >>> chipsec_util uefi tables
-    >>> chipsec_util uefi s3bootscript
-    >>> chipsec_util uefi assemble AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE freeform lzma uefi.raw mydriver.efi
-    >>> chipsec_util uefi replace  AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE bios.bin new_bios.bin mydriver.efi
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util uefi', usage=UEFICommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util uefi', usage=__doc__)
         subparsers = parser.add_subparsers()
 
         # var-read command args

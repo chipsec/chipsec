@@ -18,6 +18,14 @@
 #chipsec@intel.com
 #
 
+"""
+>>> chipsec_util spidesc <rom>
+
+Examples:
+
+>>> chipsec_util spidesc spi.bin
+"""
+
 import time
 
 from chipsec.command            import BaseCommand
@@ -27,15 +35,9 @@ from argparse                   import ArgumentParser
 
 
 class SPIDescCommand(BaseCommand):
-    """
-    >>> chipsec_util spidesc <rom>
 
-    Examples:
-
-    >>> chipsec_util spidesc spi.bin
-    """
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util spidesc', usage=SPIDescCommand.__doc__ )
+        parser = ArgumentParser( prog='chipsec_util spidesc', usage=__doc__ )
         parser.add_argument('fd_file', type=str, help='File name')
         parser.set_defaults()
         parser.parse_args(self.argv[2:], namespace=self)

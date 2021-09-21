@@ -21,6 +21,25 @@
 
 """
 The mem command provides direct access to read and write physical memory.
+
+>>> chipsec_util mem <op> <physical_address> <length> [value|buffer_file]
+>>> <physical_address> : 64-bit physical address
+>>> <op>               : read|readval|write|writeval|allocate|pagedump|search
+>>> <length>           : byte|word|dword or length of the buffer from <buffer_file>
+>>> <value>            : byte, word or dword value to be written to memory at <physical_address>
+>>> <buffer_file>      : file with the contents to be written to memory at <physical_address>
+
+Examples:
+
+>>> chipsec_util mem <op>     <physical_address> <length> [value|file]
+>>> chipsec_util mem readval  0xFED40000         dword
+>>> chipsec_util mem read     0x41E              0x20     buffer.bin
+>>> chipsec_util mem writeval 0xA0000            dword    0x9090CCCC
+>>> chipsec_util mem write    0x100000000        0x1000   buffer.bin
+>>> chipsec_util mem write    0x100000000        0x10     000102030405060708090A0B0C0D0E0F
+>>> chipsec_util mem allocate                    0x1000
+>>> chipsec_util mem pagedump 0xFED00000         0x100000
+>>> chipsec_util mem search   0xF0000            0x10000  _SM_
 """
 
 import os
@@ -35,31 +54,9 @@ from argparse        import ArgumentParser
 
 # Physical Memory
 class MemCommand(BaseCommand):
-    """
-    >>> chipsec_util mem <op> <physical_address> <length> [value|buffer_file]
-    >>>
-    >>> <physical_address> : 64-bit physical address
-    >>> <op>               : read|readval|write|writeval|allocate|pagedump|search
-    >>> <length>           : byte|word|dword or length of the buffer from <buffer_file>
-    >>> <value>            : byte, word or dword value to be written to memory at <physical_address>
-    >>> <buffer_file>      : file with the contents to be written to memory at <physical_address>
-
-    Examples:
-
-    >>> chipsec_util mem <op>     <physical_address> <length> [value|file]
-    >>> chipsec_util mem readval  0xFED40000         dword
-    >>> chipsec_util mem read     0x41E              0x20     buffer.bin
-    >>> chipsec_util mem writeval 0xA0000            dword    0x9090CCCC
-    >>> chipsec_util mem write    0x100000000        0x1000   buffer.bin
-    >>> chipsec_util mem write    0x100000000        0x10     000102030405060708090A0B0C0D0E0F
-    >>> chipsec_util mem allocate                    0x1000
-    >>> chipsec_util mem pagedump 0xFED00000         0x100000
-    >>> chipsec_util mem search   0xF0000            0x10000  _SM_
-
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util mem', usage=MemCommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util mem', usage=__doc__)
         subparsers = parser.add_subparsers()
 
         parser_read = subparsers.add_parser('read')

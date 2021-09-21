@@ -21,6 +21,14 @@
 
 """
 The msr command allows direct access to read and write MSRs.
+
+>>> chipsec_util msr <msr> [eax] [edx] [cpu_id]
+
+Examples:
+
+>>> chipsec_util msr 0x3A
+>>> chipsec_util msr 0x3A 0
+>>> chipsec_util msr 0x8B 0x0 0x0 0
 """
 
 from chipsec.command import BaseCommand
@@ -30,17 +38,9 @@ from argparse        import ArgumentParser
 
 # CPU Model Specific Registers
 class MSRCommand(BaseCommand):
-    """
-    >>> chipsec_util msr <msr> [eax] [edx] [cpu_id]
 
-    Examples:
-
-    >>> chipsec_util msr 0x3A
-    >>> chipsec_util msr 0x3A 0
-    >>> chipsec_util msr 0x8B 0x0 0x0 0
-    """
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util msr', usage=MSRCommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util msr', usage=__doc__)
         parser.add_argument('msr_addr', type=lambda x: int(x, 16), metavar='<msr>', help='MSR address (hex)')
         parser.add_argument('msr_input1', type=lambda x: int(x, 16), metavar='MSR Value', nargs='?', default=None, help='EAX (hex)')
         parser.add_argument('msr_input2', type=lambda x: int(x, 16), metavar='MSR Value', nargs='?', default=None, help='EDX (hex)')

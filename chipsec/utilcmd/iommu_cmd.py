@@ -21,6 +21,20 @@
 
 """
 Command-line utility providing access to IOMMU engines
+
+>>> chipsec_util iommu list
+>>> chipsec_util iommu config [iommu_engine]
+>>> chipsec_util iommu status [iommu_engine]
+>>> chipsec_util iommu enable|disable <iommu_engine>
+>>> chipsec_util iommu pt
+
+Examples:
+
+>>> chipsec_util iommu list
+>>> chipsec_util iommu config VTD
+>>> chipsec_util iommu status GFXVTD
+>>> chipsec_util iommu enable VTD
+>>> chipsec_util iommu pt
 """
 
 from chipsec.command import BaseCommand
@@ -32,24 +46,9 @@ import time
 
 # I/O Memory Management Unit (IOMMU), e.g. Intel VT-d
 class IOMMUCommand(BaseCommand):
-    """
-    >>> chipsec_util iommu list
-    >>> chipsec_util iommu config [iommu_engine]
-    >>> chipsec_util iommu status [iommu_engine]
-    >>> chipsec_util iommu enable|disable <iommu_engine>
-    >>> chipsec_util iommu pt
-
-    Examples:
-
-    >>> chipsec_util iommu list
-    >>> chipsec_util iommu config VTD
-    >>> chipsec_util iommu status GFXVTD
-    >>> chipsec_util iommu enable VTD
-    >>> chipsec_util iommu pt
-    """
 
     def requires_driver(self):
-        parser = ArgumentParser(prog='chipsec_util iommu', usage=IOMMUCommand.__doc__)
+        parser = ArgumentParser(prog='chipsec_util iommu', usage=__doc__)
         subparsers = parser.add_subparsers()
 
         parser_list = subparsers.add_parser('list')
