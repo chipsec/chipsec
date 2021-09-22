@@ -162,14 +162,15 @@ class Cfg:
                     del _control.attrib['name']
                     _control.attrib['register'] = "{}.{}.{}".format(vid, name, _control.attrib['register'])
                     self.CONTROLS[ _name ] = _control.attrib
-                    #print( "    + {:16}: {}".format(_name, _control.attrib) )
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _control.attrib) )
 
             if logger().DEBUG: logger().log("[*] loading locks..")
             for _locks in _cfg.iter('locks'):
                 for _lock in _locks.iter('lock'):
-                    _name = _lock.attrib['name']
-                    del _lock.attrib['name']
+                    _lock.attrib['register'] = "{}.{}.{}".format(vid, name, _lock.attrib['register'])
+                    # name is derived from register and field for consistency
+                    _name = "{}.{}".format(_lock.attrib['register'], _lock.attrib['field'])
+                    if "name" in _lock.attrib: del _lock.attrib['name']
                     self.LOCKS[_name] = _lock.attrib
                     if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _lock.attrib))
 
