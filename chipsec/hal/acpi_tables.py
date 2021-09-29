@@ -470,7 +470,7 @@ class ACPI_TABLE_APIC_Lx2APIC_NMI(namedtuple('ACPI_TABLE_APIC_Lx2APIC_NMI', 'Typ
     Flags             : 0x{:02X}
     ACPI Proc UID     : 0x{:02X}
     Local x2APIC LINT : 0x{:02X}
-    Reserved          : 0x{:02X}
+    Reserved          : 0x{:}
 """.format( self.Type, self.Length, self.Flags, self.ACPIProcUID, self.Localx2APICLINT, self.Reserved )
 
 class ACPI_TABLE_APIC_GICC_CPU(namedtuple('ACPI_TABLE_APIC_GICC_CPU', 'Type Length Reserved CPUIntNumber ACPIProcUID Flags ParkingProtocolVersion PerformanceInterruptGSIV ParkedAddress PhysicalAddress GICV GICH VGICMaintenanceINterrupt GICRBaseAddress MPIDR')):
@@ -592,9 +592,15 @@ class FADT (ACPI_TABLE):
     def __init__( self ):
         self.dsdt = None
         self.x_dsdt = None
+        self.smi = None
+        self.acpi_enable = None
+        self.acpi_disable = None
 
     def parse( self, table_content ):
         self.dsdt = struct.unpack('<I', table_content[4:8])[0]
+        self.smi = struct.unpack('<I', table_content[12:16])[0]
+        self.acpi_enable = struct.unpack('B', table_content[16:17])[0]
+        self.acpi_disable = struct.unpack('B', table_content[17:18])[0]
         if len(table_content) >= 112:
             self.x_dsdt = struct.unpack('<Q', table_content[104:112])[0]
         else:
@@ -618,9 +624,13 @@ class FADT (ACPI_TABLE):
         return """------------------------------------------------------------------
   Fixed ACPI Description Table (FADT) Contents
 ------------------------------------------------------------------
-  DSDT   : {}
-  X_DSDT : {}
-""".format( ('0x{:08X}'.format(self.dsdt)), ('0x{:016X}'.format(self.x_dsdt)) if self.x_dsdt is not None else 'Not found')
+  DSDT    : {}
+  X_DSDT  : {}
+  SMI_CMD : {}
+  ACPI_EN : {}
+  ACPI_DIS: {}
+""".format( ('0x{:08X}'.format(self.dsdt)), ('0x{:016X}'.format(self.x_dsdt)) if self.x_dsdt is not None else 'Not found', 
+        '0x{:04X}'.format(self.smi), '0x{:01X}'.format(self.acpi_enable), '0x{:01X}'.format(self.acpi_disable))
 
 ########################################################################################################
 #
