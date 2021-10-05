@@ -814,7 +814,15 @@ class Chipset:
             reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'], 16), int(reg['offset'], 16))
         elif RegisterType.MEMORY == rtype:
             if reg['access'] == 'dram':
-                reg_value= self.mem.read_physical_mem(int(reg['address'], 16), int(reg['size'], 16))
+                size = int(reg['size'], 16)
+                if 1 == size:
+                    reg_value = self.mem.read_physical_mem_byte(int(reg['address'], 16))
+                elif 2 == size:
+                    reg_value = self.mem.read_physical_mem_word(int(reg['address'], 16))
+                elif 4 == size:
+                    reg_value = self.mem.read_physical_mem_dword(int(reg['address'], 16))
+                elif 8 == size:
+                    reg_value = self.mem.read_physical_mem_qword(int(reg['address'], 16))
             elif reg['access'] == 'mmio':
                 reg_value = self.mmio.read_MMIO_reg(int(reg['address'], 16), int(reg['offset'], 16), int(reg['size'], 16))
         else:
