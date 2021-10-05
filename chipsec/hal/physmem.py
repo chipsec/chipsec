@@ -51,22 +51,28 @@ class Memory(HALBase):
 
     def read_physical_mem( self, phys_address, length ):
         if self.logger.HAL: self.logger.log("[mem] 0x{:016X}".format(phys_address))
-        return self.helper.read_physical_mem( phys_address, length )
+        return self.helper.read_physical_mem(phys_address, length)
 
-    def read_physical_mem_dword( self, phys_address ):
-        out_buf = self.read_physical_mem( phys_address, 4 )
+    def read_physical_mem_qword(self, phys_address):
+        out_buf = self.read_physical_mem(phys_address, 8)
+        value = struct.unpack( '=Q', out_buf )[0]
+        if self.logger.HAL: self.logger.log( '[mem] dword at PA = 0x{:016X}: 0x{:16X}'.format(phys_address, value) )
+        return value
+
+    def read_physical_mem_dword(self, phys_address):
+        out_buf = self.read_physical_mem(phys_address, 4)
         value = struct.unpack( '=I', out_buf )[0]
         if self.logger.HAL: self.logger.log( '[mem] dword at PA = 0x{:016X}: 0x{:08X}'.format(phys_address, value) )
         return value
 
-    def read_physical_mem_word( self, phys_address ):
-        out_buf = self.read_physical_mem( phys_address, 2 )
+    def read_physical_mem_word(self, phys_address):
+        out_buf = self.read_physical_mem(phys_address, 2)
         value = struct.unpack( '=H', out_buf )[0]
         if self.logger.HAL: self.logger.log( '[mem] word at PA = 0x{:016X}: 0x{:04X}'.format(phys_address, value) )
         return value
 
-    def read_physical_mem_byte( self, phys_address ):
-        out_buf = self.read_physical_mem( phys_address, 1 )
+    def read_physical_mem_byte(self, phys_address):
+        out_buf = self.read_physical_mem(phys_address, 1)
         value = struct.unpack( '=B', out_buf )[0]
         if self.logger.HAL: self.logger.log( '[mem] byte at PA = 0x{:016X}: 0x{:02X}'.format(phys_address, value) )
         return value
