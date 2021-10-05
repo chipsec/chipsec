@@ -451,6 +451,12 @@ class Chipset:
 
             loaded_files = []
 
+            # Locate configuration files from all other XML files recursively (if any) excluding other platform configuration files.
+            platform_files = []
+            for plat in [c.lower() for c in self.chipset_codes]:
+                platform_files.extend([x for x in _cfg_files if fnmatch.fnmatch(os.path.basename(x), '{}*.xml'.format(plat)) or os.path.basename(x).startswith(PCH_CODE_PREFIX.lower())])
+            loaded_files.extend([x for x in _cfg_files if x not in loaded_files and x not in platform_files])
+
             # Locate platform specific (chipsec/cfg/<code>*.xml) configuration XML files.
             if self.code and CHIPSET_CODE_UNKNOWN != self.code:
                 for _xml in _cfg_files:
@@ -783,7 +789,15 @@ class Chipset:
             reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'], 16), int(reg['offset'], 16))
         elif RegisterType.MEMORY == rtype:
             if reg['access'] == 'dram':
-                reg_value= self.mem.read_physical_mem(int(reg['address'], 16), int(reg['size'], 16))
+                size = int(reg['size'], 16)
+                if 1 == size:
+                    reg_value = self.mem.read_physical_mem_byte(int(reg['address'], 16))
+                elif 2 == size:
+                    reg_value = self.mem.read_physical_mem_word(int(reg['address'], 16))
+                elif 4 == size:
+                    reg_value = self.mem.read_physical_mem_dword(int(reg['address'], 16))
+                elif 8 == size:
+                    reg_value = self.mem.read_physical_mem_qword(int(reg['address'], 16))
             elif reg['access'] == 'mmio':
                 reg_value = self.mmio.read_MMIO_reg(int(reg['address'], 16), int(reg['offset'], 16), int(reg['size'], 16))
         else:
