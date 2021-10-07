@@ -57,3 +57,11 @@ Base Class
        def __init__(self):
            super(NewHelper, self).__init__()
            self.name = "NewHelper"
+
+Helper components
+-----------------
+
+.. toctree::
+    :maxdepth: 2
+
+    List of Helper components <../modules/chipsec.helper.rst>
