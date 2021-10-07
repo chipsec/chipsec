@@ -18,7 +18,6 @@
 #chipsec@intel.com
 #
 
-
 import os
 
 doc_path = os.getcwd()
@@ -51,40 +50,21 @@ def xmlRst():
         for cfg in cfgFiles:
             if ".py" not in cfg:
                 moduleStr += '\tchipsec.cfg.8086.{0}.rst\n'.format(cfg)
-                f = open(os.path.join(src_path, 'chipsec', 'cfg', '8086', cfg), 'r')
-                xmlContent = f.read()
-                f.close()
+                
+                with open(os.path.join(src_path, 'chipsec', 'cfg', '8086', cfg), 'r') as f:
+                    xmlContent = f.read()
+
                 commentBegins = xmlContent.find('<!--')
                 commentEnds = xmlContent.find('-->')
-                xmlComment = xmlContent[commentBegins +4:commentEnds] + '\n'
-                f = open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.' + cfg + '.rst'), 'w')
-                path = "chipsec\\\\cfg\\\\8086\\\\" + cfg
-                f.write( cfg[:-4] + "\n" + "=" *len(cfg) + "\n\n" + "Path: " + path + "\n\n" + xmlComment )
-                f.close()
-        f = open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.rst'), 'w')
-        f.write(".. toctree::\n\n" + moduleStr)
-        f.close()
+                xmlComment = xmlContent[commentBegins+4:commentEnds] + '\n'
+                
+                with open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.' + cfg + '.rst'), 'w') as f:
+                    path = "chipsec\\\\cfg\\\\8086\\\\" + cfg
+                    f.write( cfg[:-4] + "\n" + "=" *len(cfg) + "\n\n" + "Path: " + path + "\n\n" + xmlComment )
 
-def getVersion():
-    ver_path = os.path.join(src_path, 'chipsec', 'VERSION')
-    scover_path = os.path.join(doc_path, '_templates','scover.tmpl')
-
-    f = open(os.path.join(ver_path), 'r')
-    version = f.read()
-    f.close()
-
-    f = open(os.path.join(scover_path), 'r')
-    contents = f.read()
-    f.close()
-
-    splitContents = contents.split('\n')
-    contents = contents.replace(splitContents[8], 'version ' + version)
-    f = open(os.path.join(scover_path), 'w')
-    f.write(contents)
-    f.close()
-    
+        with open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.rst'), 'w') as f:
+            f.write(".. toctree::\n\n" + moduleStr)
 
 if __name__ == "__main__":
     modulesRst()
     xmlRst()
-    getVersion()

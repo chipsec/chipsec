@@ -42,11 +42,11 @@ support is Beta.
    to hardware resources, Operating System can hang or panic.
 
 .. toctree::
+    :glob:
     :maxdepth: 1
     :caption: Start here
 
-    Download
-    Contact
+    start/*
 
 .. _Installing-Chipsec:
 
@@ -58,15 +58,11 @@ Circumstances surrounding the target platform may change which of these
 environments is most appropriate.
 
 .. toctree::
+    :glob:
     :maxdepth: 1
     :caption: Installation
 
-    Install in Windows
-    Install in DAL Win
-    Install in Linux
-    Install in MacOS
-    USB with UEFI Shell
-    Using-CHIPSEC-with-Kali-Linux
+    installation/*
 
 Using CHIPSEC
 -------------
@@ -81,21 +77,20 @@ Use ``--no-driver`` command-line option to skip loading the kernel
 module. This option will only work for certain commands or modules.
 
 .. toctree::
+    :glob:
     :maxdepth: 1
     :caption: Using CHIPSEC
 
-    Running-Chipsec
-    Interpreting-Results
+    usage/*
 
 Module & Command Development
 ----------------------------
 
 .. toctree::
+    :glob:
     :maxdepth: 1
     :caption: Architecture and Modules
     
-    Architecture-Overview
-    Vulnerabilities-and-CHIPSEC-Modules
-    Developing
+    development/*
 
 
