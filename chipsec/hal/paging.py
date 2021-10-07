@@ -19,9 +19,7 @@
 #
 
 """
-====================
 x64/IA-64 Paging functionality including x86 page tables, Extended Page Tables (EPT) and VT-d page tables
-====================
 """
 
 import sys

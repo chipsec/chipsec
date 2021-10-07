@@ -7,9 +7,10 @@ echo "************************ BUILDING DOCUMENTATION **************************
 pushd $TARGET/docs/sphinx
 
 sphinx-apidoc -e -f -T -o modules -d 99 $TARGET
-python removeStrRst.py
+python _scripts/removeStrRst.py
+python _scripts/getVersion.py
 
-# Clean up files that we do not want to process into documenation
+# Clean up files that we do not want to process into documentation
 rm ./modules/chipsec_tools.*
 rm ./modules/tests.*
 rm ./modules/setup.rst
@@ -18,6 +19,7 @@ rm ./modules/chipsec.cfg.rst
 rm ./modules/chipsec.chipset.rst
 rm ./modules/chipsec.command.rst
 rm ./modules/chipsec.defines.rst
+rm ./modules/chipsec.exceptions.rst
 rm ./modules/chipsec.file.rst
 rm ./modules/chipsec.logger.rst
 rm ./modules/chipsec.module.rst
@@ -32,18 +34,21 @@ if [[ "$1" == "pdf" ]]; then
     sphinx-build -b pdf -T . $TARGET
 elif [[ "$1" == "html" ]]; then
     sphinx-build -b html -T . $TARGET/manual
-    touch $TARGET/manual/.nojekyll
+elif [[ "$1" == "json" ]]; then
+    sphinx-build -b json -T . $TARGET/manualJson
 # create chipsec-manual.pdf and html pages
 else
     sphinx-build -b pdf -T . $TARGET
     sphinx-build -b html -T . $TARGET/manual
-    touch $TARGET/manual/.nojekyll; 
+    sphinx-build -b json -T . $TARGET/manualJson
 fi
 popd
 
-# remove sphinx folder
+# remove sphinx folders
 pushd $TARGET
 rm -r $TARGET/.doctrees
+rm -r $TARGET/docs/sphinx/logs
+rm -r $TARGET/docs/sphinx/modules
 popd
 
 exit 0

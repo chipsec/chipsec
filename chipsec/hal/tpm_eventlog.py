@@ -1,6 +1,6 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2017, Google Inc
-# Copyright (c) 2019-2020, Intel Corporation
+# Copyright (c) 2019-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,17 +17,13 @@ Trusted Platform Module Event Log
 
 Based on the following specifications:
 
-TCG EFI Platform Specification For TPM Family 1.1 or 1.2
-https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf
+`TCG EFI Platform Specification For TPM Family 1.1 or 1.2 <https://trustedcomputinggroup.org/wp-content/uploads/TCG_EFI_Platform_1_22_Final_-v15.pdf>`_
 
-TCG PC Client Specific Implementation Specification for Conventional BIOS", version 1.21
-https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientImplementation_1-21_1_00.pdf
+`TCG PC Client Specific Implementation Specification for Conventional BIOS", version 1.21 <https://trustedcomputinggroup.org/wp-content/uploads/TCG_PCClientImplementation_1-21_1_00.pdf>`_
 
-TCG EFI Protocol Specification, Family "2.0"
-https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf
+`TCG EFI Protocol Specification, Family "2.0" <https://trustedcomputinggroup.org/wp-content/uploads/EFI-Protocol-Specification-rev13-160330final.pdf>`_
 
-TCG PC Client Platform Firmware Profile Specification
-https://trustedcomputinggroup.org/wp-content/uploads/PC-ClientSpecific_Platform_Profile_for_TPM_2p0_Systems_v51.pdf
+`TCG PC Client Platform Firmware Profile Specification <https://trustedcomputinggroup.org/wp-content/uploads/PC-ClientSpecific_Platform_Profile_for_TPM_2p0_Systems_v51.pdf>`_
 """
 
 import binascii

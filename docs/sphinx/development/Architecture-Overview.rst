@@ -1,7 +1,7 @@
 Architecture Overview
 =====================
 
-.. figure:: _images/architecture.png
+.. figure:: ../_images/architecture.png
    :alt: CHIPSEC Architecture
 
    CHIPSEC Architecture
@@ -25,38 +25,8 @@ Core components
     ``chipsec/helper/oshelper.py``                   OS helper: wrapper around platform specific code that invokes kernel driver
     ===============================================  =================================================================================
 
-Modules & Tools
----------------
-
-Implementation of tests or other functionality for chipsec_main
-
-Platform detection
-^^^^^^^^^^^^^^^^^^
-
-.. toctree:: 
-
-    Platform-Detection
-
-
-Configuration Files
-^^^^^^^^^^^^^^^^^^^
-
-Provide a human readable abstraction for registers in the system
-
-    ==================================== ================================================
-    ``chipsec/cfg/8086``                   platform specific configuration xml files
-    ``chipsec/cfg/8086/common.xml``        common configuration 
-    ``chipsec/cfg/8086/<platform>.xml``    configuration for a specific <platform>
-    ==================================== ================================================
-
-.. toctree::
-    :maxdepth: 1
-
-    Configuration-Files
-    List of Cfg components <modules/chipsec.cfg.8086.rst>
-
 Commands
-^^^^^^^^
+--------
 
 Implement functionality of chipsec_util
 
@@ -68,35 +38,23 @@ CHIPSEC utilities provide the capability for manual testing and direct hardware 
 
 .. toctree:: 
 
-    List of Utility components <modules/chipsec.utilcmd.rst>
+    List of Utility components <../modules/chipsec.utilcmd.rst>
 
 HAL (Hardware Abstraction Layer)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 Useful abstractions for common tasks such as accessing the SPI
     
 .. toctree:: 
 
-    List of HAL components <modules/chipsec.hal.rst>
-
-OS Helpers & Drivers
-^^^^^^^^^^^^^^^^^^^^
-
-Provides a translation layer to convert a common interface to OS
-specific driver calls
-
-.. toctree::
-    :maxdepth: 2
-
-    OS-Helpers-and-Drivers
-    List of Helper components <modules/chipsec.helper.rst>
+    List of HAL components <../modules/chipsec.hal.rst>
 
 Fuzzing
-^^^^^^^
+-------
 
 .. toctree:: 
 
-    List of Fuzzing components <modules/chipsec.fuzzing.rst>
+    List of Fuzzing components <../modules/chipsec.fuzzing.rst>
 
 CHIPSEC_MAIN Program Flow
 -------------------------
