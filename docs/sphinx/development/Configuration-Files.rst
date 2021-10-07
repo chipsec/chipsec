@@ -3,6 +3,14 @@
 Configuration Files
 ===================
 
+Provide a human readable abstraction for registers in the system
+
+    ==================================== ================================================
+    ``chipsec/cfg/8086``                   platform specific configuration xml files
+    ``chipsec/cfg/8086/common.xml``        common configuration 
+    ``chipsec/cfg/8086/<platform>.xml``    configuration for a specific <platform>
+    ==================================== ================================================
+    
 Broken into common and platform specific configuration files
 
 Used to define controls, registers and bit fields
@@ -13,7 +21,7 @@ values
 Correct platform configuration files loaded based off of platform
 detection
 
-Configuraiton File Example
+Configuration File Example
 --------------------------
 
 ::
@@ -31,3 +39,11 @@ Configuraiton File Example
    <controls>
    <control name="BiosInterfaceLockDown" register="BC" field="BILD" desc="BIOS Interface Lock-Down"/>
    </controls>
+
+List of Cfg components
+----------------------
+
+.. toctree:: 
+
+   ../modules/chipsec.cfg.8086.rst
+   
