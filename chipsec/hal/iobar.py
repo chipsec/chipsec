@@ -97,7 +97,7 @@ class IOBAR(hal_base.HALBase):
 
         if logger().HAL: logger().log( '[iobar] {}: 0x{:04X} (size = 0x{:X})'.format(bar_name, base, size) )
         if base == 0:
-            raise CSReadError("MMIO BAR ({}) base address is 0".format(bar_name))
+            raise CSReadError("IOBAR ({}) base address is 0".format(bar_name))
         return base, size
 
 
@@ -143,9 +143,14 @@ class IOBAR(hal_base.HALBase):
         logger().log( ' I/O Range    | BAR Register   | Base             | Size     | En? | Description' )
         logger().log( '--------------------------------------------------------------------------------' )
         for _bar_name in self.cs.Cfg.IO_BARS:
-            if not self.is_IO_BAR_defined( _bar_name ): continue
-            _bar = self.cs.Cfg.IO_BARS[ _bar_name ]
-            (_base, _size) = self.get_IO_BAR_base_address( _bar_name )
+            if not self.is_IO_BAR_defined(_bar_name): continue
+            _bar = self.cs.Cfg.IO_BARS[_bar_name]
+            try:
+                (_base, _size) = self.get_IO_BAR_base_address(_bar_name)
+            except CSReadError:
+                if self.logger.HAL:
+                    self.logger.log("Unable to find IO BAR {}".format(_bar_name))
+                continue
             _en = self.is_IO_BAR_enabled( _bar_name )
 
             if 'register' in _bar:
