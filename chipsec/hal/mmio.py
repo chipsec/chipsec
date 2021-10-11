@@ -192,7 +192,7 @@ class MMIO(hal_base.HALBase):
                     base = 0
                 try:
                     reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve)
-                except:
+                except CSReadError:
                     if self.logger.HAL:
                         self.logger.log('[mmio] Unable to determine MMIO Mask.  Using Mask = 0xFFFF')
                     reg_mask = 0xFFFF
