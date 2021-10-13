@@ -229,7 +229,7 @@ class MMIO(hal_base.HALBase):
         if base == 0:
             if self.logger.HAL:
                 self.logger.log('[mmio] Base address was determined to be 0.')
-            raise Exception
+            raise CSReadError('[mmio] Base address was determined to be 0')
         return base, size
 
     def get_MMIO_BAR_from_bdf(self, bar):
@@ -389,7 +389,7 @@ class MMIO(hal_base.HALBase):
         if self.cs.is_server():
             self.cs.set_scope("8086.MemMap_VTd")
         else:
-            self.cs.set_scope("8086.HOSTCTRL")
+            self.cs.set_scope("8086.HOSTCTL")
         (bar_base, bar_size)  = self.get_MMIO_BAR_base_address('MMCFG')
         if self.cs.register_has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
             len = self.cs.read_register_field("PCI0.0.0_PCIEXBAR", "LENGTH")

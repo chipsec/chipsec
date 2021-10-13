@@ -52,7 +52,7 @@ chipsec@intel.com
   </io>
 
   <mm_msgbus>
-    <definition name="RTC" port="0xC3" config="MM_MSGBUG.rtc0.xml" />
+    <definition name="RTC" port="0xC3" config="RTC.rtc0.xml" />
   </mm_msgbus>
 
 </configuration>

@@ -23,7 +23,7 @@
   </pci>
 
   <pci>
-    <device name="HOSTCTRL" bus="0x0" dev="0x00" fun="0" config="HOSTCTL.hostctl5.xml"/>
+    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" config="HOSTCTL.hostctl5.xml"/>
     <device name="IGD"      bus="0x0" dev="0x2"  fun="0" config="IGD.igd0.xml" />
     <device name="MEI1"     bus="0x0" dev="0xF"  fun="0" config="ME.mei0.xml" />
     <device name="MEI2"     bus="0x0" dev="0xF"  fun="1" />
