@@ -49,15 +49,15 @@ class locks(HALBase):
             res |= LockResult.DEFINED
         try:
             self.cs.get_locked_value(lock_name)
-            res |= LockResult.HAS_CONFIG
             self.cs.get_lock(lock_name, bus=bus)
+            res |= LockResult.HAS_CONFIG
             res |= LockResult.CAN_READ
         except KeyError:
             pass
         except CSReadError:
-            pass
+            res |= LockResult.HAS_CONFIG
         except HWAccessViolationError:
-            pass
+            res |= LockResult.HAS_CONFIG
         return res
 
     def is_locked(self, lock_name, bus=None):
