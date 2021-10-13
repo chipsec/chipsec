@@ -285,7 +285,7 @@
         <control name="BiosWriteEnable"        register="BC"    field="BIOSWE"   desc="BIOS Write Enable"/>
         <control name="TopSwapStatus"          register="BC"    field="TSS"      desc="Top Swap Status"/>
         <control name="FlashLockDown"          register="HSFS"  field="FLOCKDN"  desc="Flash Configuration Lock-Down"/>
-        <control name="BiosInterfaceLockDown"  register="GCS"   field="BILD"     desc="BIOS Interface Lock-Down"/>
+        <control name="BiosInterfaceLockDown"  register="BC"   field="BILD"     desc="BIOS Interface Lock-Down"/>
     </controls>
 
 </configuration>

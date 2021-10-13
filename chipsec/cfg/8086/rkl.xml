@@ -46,7 +46,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="HOSTCTRL" bus="0" dev="0x00" fun="0" vid="0x8086" did="0x4C43,0x4C53" config="HOSTCTL.hostctl2.xml"/>
+    <device name="HOSTCTL" bus="0" dev="0x00" fun="0" vid="0x8086" did="0x4C43,0x4C53" config="HOSTCTL.hostctl2.xml"/>
     <device name="PEG10"    bus="0" dev="0x01" fun="0" vid="0x8086" did="0x4C01" />
     <device name="PEG11"    bus="0" dev="0x01" fun="1" vid="0x8086" did="0x4C05"/>
     <device name="PEG12"    bus="0" dev="0x01" fun="2" vid="0x8086" did="0x4C07"/>

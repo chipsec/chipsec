@@ -24,7 +24,6 @@ Checks for RTC memory locks. Since we do not know what RTC memory will be used f
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_HWCONFIG
 from chipsec.hal.cmos import CMOS
-from chipsec.chipset import CHIPSET_CODE_AVN
 TAGS = [MTAG_BIOS, MTAG_HWCONFIG]
 
 
@@ -36,7 +35,7 @@ class rtclock(BaseModule):
         self.user_request = False
         self.test_offset = 0x38
         self.test_value = 0xAA
-        self.cs.set_scope("8086.HOSTCTL")
+        self.cs.set_scope("8086.RTC")
 
     def is_supported(self):
         if self.cs.is_core():
