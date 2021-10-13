@@ -48,7 +48,7 @@ import traceback
 # DEBUG Flags
 QUIET_PCI_ENUM = True
 LOAD_COMMON = False
-CONSISTENCY_CHECKING = False
+CONSISTENCY_CHECKING = True
 
 class RegisterType:
     PCICFG    = 'pcicfg'
@@ -693,7 +693,7 @@ class Chipset:
         reg_def = self.Cfg.REGISTERS[reg_name]
         if "device" in reg_def:
             dev_name = reg_def["device"]
-            if reg_def["type"] == "pcicfg" or reg_def["type"] == "mmcfg":
+            if reg_def["type"] in ["pcicfg", "mmcfg"]:
                 if dev_name in self.Cfg.CONFIG_PCI:
                     dev = self.Cfg.CONFIG_PCI[dev_name]
                     reg_def['bus'] = dev['bus']
@@ -711,6 +711,12 @@ class Chipset:
                     reg_def['access'] = dev['access']
                 else:
                     logger().error("Memory device {} not found".format(dev_name))
+            elif reg_def["type"] == "mm_msgbus":
+                if dev_name in self.Cfg.MM_MSGBUS:
+                    dev = self.Cfg.MM_MSGBUS[dev_name]
+                    reg_def['port'] = dev['port']
+                else:
+                    logger().error("MM_MSGBUS device {} not found".format_dev_name)
         return reg_def
 
     def get_register_bus(self, reg_name):
@@ -719,8 +725,11 @@ class Chipset:
                 reg_name = "{}.{}".format(self.scope, reg_name)
         device = self.Cfg.REGISTERS[reg_name].get('device', '')
         if not device:
+            if reg_name.count(".") > 0:
+                device = reg_name.split('.')[1]
+        if not device:
             if logger().DEBUG:
-                logger().warn( "No device found for '{}'".format(reg_name) )
+                logger().warn("No device found for '{}'".format(reg_name))
             if 'bus' in self.Cfg.REGISTERS[reg_name]:
                 return [int(self.Cfg.REGISTERS[reg_name]['bus'], 16)]
             else:
@@ -1145,26 +1154,26 @@ class Chipset:
         return False
 
 
-    def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus_index=None):
+    def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus=None):
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
-        if bus_index is None:
+        if bus is None:
             reg_data = self.read_register_all(reg, cpu_thread)
         else:
-            reg_data = self.read_register(reg, cpu_thread, bus_index)
+            reg_data = self.read_register(reg, cpu_thread, bus)
             reg_data = [reg_data]
         if logger().VERBOSE or with_print:
             if reg_data:
                 for rd in reg_data:
                     self.print_register(reg, rd)
             else:
-                self.logger.log("Register has no data")
+                logger().log("Register has no data")
         if reg_data:
             return self.get_register_field_all(reg, reg_data, field)
         return reg_data
 
-    def set_lock(self, lock_name, lock_value, cpu_thread=0, bus_index=None):
+    def set_lock(self, lock_name, lock_value, cpu_thread=0, bus=None):
         lock = self.Cfg.LOCKS[lock_name]
         reg     = lock['register']
         field   = lock['field']
@@ -1173,9 +1182,9 @@ class Chipset:
             reg_data = self.set_register_field_all(reg, reg_data, field, lock_value)
             return self.write_register_all(reg, reg_data, cpu_thread)
         else:
-            reg_data = self.read_register(reg, cpu_thread, bus_index)
+            reg_data = self.read_register(reg, cpu_thread, bus)
             reg_data = self.set_register_field(reg, reg_data, field, lock_value)
-            return self.write_register(reg, reg_data, cpu_thread, bus_index)
+            return self.write_register(reg, reg_data, cpu_thread, bus)
 
     def is_lock_defined(self, lock_name):
         return lock_name in self.Cfg.LOCKS.keys()
