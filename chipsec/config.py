@@ -22,6 +22,7 @@ import os
 from chipsec.logger import logger
 import xml.etree.ElementTree as ET
 from chipsec.file import get_main_dir
+from chipsec.exceptions import CSConfigError
 
 class Cfg:
     def __init__(self):
@@ -31,6 +32,8 @@ class Cfg:
         self.IO_BARS       = {}
         self.MEMORY_RANGES = {}
         self.MM_MSGBUS     = {}
+        self.IO            = {}
+        self.MSGBUS        = {}
         self.CONTROLS      = {}
         self.BUS           = {}
         self.LOCKS         = {}
@@ -77,10 +80,30 @@ class Cfg:
 
             if logger().DEBUG: logger().log( "[*] loading mm_msgbus ports.." )
             for _mm_msgbus in _cfg.iter('mm_msgbus'):
-                for _device in _mm_msgbus.iter('device'):
+                for _device in _mm_msgbus.iter('definition'):
                     _name = _device.attrib['name']
                     del _device.attrib['name']
                     self.MM_MSGBUS[ _name ] = _device.attrib
+                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _device.attrib) )
+                    if 'config' in _device.attrib.keys():
+                        self.load_cfg_xml(_device.attrib['config'], _name, vid)
+
+            if logger().DEBUG: logger().log( "[*] loading msgbus ports.." )
+            for _msgbus in _cfg.iter('msgbus'):
+                for _device in _msgbus.iter('definition'):
+                    _name = _device.attrib['name']
+                    del _device.attrib['name']
+                    self.MSGBUS[ _name ] = _device.attrib
+                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _device.attrib) )
+                    if 'config' in _device.attrib.keys():
+                        self.load_cfg_xml(_device.attrib['config'], _name, vid)
+
+            if logger().DEBUG: logger().log( "[*] loading io ports.." )
+            for _io in _cfg.iter('io'):
+                for _device in _io.iter('definition'):
+                    _name = _device.attrib['name']
+                    del _device.attrib['name']
+                    self.IO[ _name ] = _device.attrib
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _device.attrib) )
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
@@ -132,9 +155,8 @@ class Cfg:
                         _register.attrib['device'] = name
                     elif _register.attrib['type'] in ['memory']:
                         _register.attrib['range'] = name
-                    else:
-                        if self.get_cfg_type(_register.attrib['type']) is not None:
-                            _register.attrib[self.get_cfg_type(_register.attrib['type'])] = "{}.{}.{}".format(vid, name, _register.attrib[self.get_cfg_type(_register.attrib['type'])])
+                    elif _register.attrib['type'] in ["mm_msgbus"]:
+                        _register.attrib['device'] = name
                     if _name in self.REGISTERS and 'FIELDS' in self.REGISTERS[_name]:
                         reg_fields = self.REGISTERS[_name]['FIELDS']
                     else:
@@ -143,7 +165,12 @@ class Cfg:
                         for _field in _register.iter('field'):
                             _field_name = _field.attrib['name']
                             if 'lockedby' in _field.attrib:
-                                _lockedby = _field.attrib['lockedby']
+                                if _field.attrib['lockedby'].count(".") == 3:
+                                    _lockedby = _field.attrib['lockedby']
+                                elif _field.attrib['lockedby'].count(".") <= 1:
+                                    _lockedby = "{}.{}.{}".format(vid, name, _field.attrib['lockedby'])
+                                else:
+                                    raise CSConfigError("Invalid LockedBy register {}".format(_field.attrib['lockedby']))
                                 if _lockedby in self.LOCKEDBY.keys():
                                     self.LOCKEDBY[_lockedby].append((_name, _field_name))
                                 else:
@@ -169,19 +196,10 @@ class Cfg:
                 for _lock in _locks.iter('lock'):
                     _lock.attrib['register'] = "{}.{}.{}".format(vid, name, _lock.attrib['register'])
                     # name is derived from register and field for consistency
-                    _name = "{}.{}".format(_lock.attrib['register'], _lock.attrib['field'])
+                    if "field" in _lock.attrib:
+                        _name = "{}.{}".format(_lock.attrib['register'], _lock.attrib['field'])
+                    else:
+                        _name = "{}".format(_lock.attrib['register'])
                     if "name" in _lock.attrib: del _lock.attrib['name']
                     self.LOCKS[_name] = _lock.attrib
                     if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _lock.attrib))
-
-    def get_cfg_type(self, _name):
-        ret = None
-        if _name in ['io', 'msgbus']:
-            ret = 'port_id'
-        elif _name in ['iobar', 'mmio']:
-            ret = 'bar'
-        elif _name in ['pcicfg', 'mmcfg']:
-            ret = 'device'
-        elif _name in ['memory']:
-            ret = 'range'
-        return ret

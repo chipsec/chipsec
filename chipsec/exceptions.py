@@ -35,6 +35,11 @@ class CSReadError(RuntimeError):
     def __init__(self, msg):
         super(CSReadError, self).__init__(msg)
 
+# Config
+class CSConfigError(RuntimeError):
+    def __init__(self, msg):
+        super(CSConfigError, self).__init__(msg)
+
 #HAL
 class AcpiRuntimeError (RuntimeError):
     pass
