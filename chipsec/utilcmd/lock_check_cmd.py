@@ -24,7 +24,6 @@ from argparse import ArgumentParser
 from chipsec.command import BaseCommand
 from chipsec.hal.locks import locks, LockResult
 from chipsec.defines import is_set
-from chipsec.chipset import CONSISTENCY_CHECKING
 
 
 class LOCKCHECKCommand(BaseCommand):
@@ -77,7 +76,7 @@ KEY:
 \t\tHidden - Lock is in a disabled or hidden state (unable to read the lock)
 \t\tUnlocked - Lock does not match value within configuration
 \t\tLocked - Lock matches value within configuration
-\t\tRW/O - Lock is identified as register is RW/O""")
+\t\tRW/O - Lock is identified as register is RW/O\n\n""")
 
     def log_header(self):
         ret = '{:^27}|{:^16}|{:^16}\n{}'.format('Lock Name', 'State', 'Consistent', '-' * 58)
@@ -97,9 +96,9 @@ KEY:
         if not locks:
             self.logger.log('Did not find any locks')
             return
-        res = self.log_header()
         if self.logger.VERBOSE:
             self.log_key()
+        res = self.log_header()
         for lock in locks:
             is_locked = self._locks.is_locked(lock)
             res = "{}\n{}".format(res, self.check_log(lock, is_locked))
@@ -108,9 +107,9 @@ KEY:
         return
 
     def check_lock(self):
-        res = self.log_header()
         if self.logger.VERBOSE:
             self.log_key()
+        res = self.log_header()
         for lock in self.lockname:
             is_locked = self._locks.is_locked(lock)
             res = "{}\n{}".format(res, self.check_log(lock, is_locked))

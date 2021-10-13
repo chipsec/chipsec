@@ -186,7 +186,7 @@ class MMIO(hal_base.HALBase):
                 base_field = bar['base_field']
                 try:
                     base = self.cs.read_register_field(bar_reg, base_field, preserve, _bus)
-                except Exception:
+                except CSReadError:
                     if self.logger.HAL:
                         self.logger.log('[mmio] Unable to determine MMIO Base.  Using Base = 0x0')
                     base = 0
@@ -229,7 +229,7 @@ class MMIO(hal_base.HALBase):
         if base == 0:
             if self.logger.HAL:
                 self.logger.log('[mmio] Base address was determined to be 0.')
-            raise Exception
+            raise CSReadError('[mmio] Base address was determined to be 0')
         return base, size
 
     #
