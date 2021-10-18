@@ -18,9 +18,6 @@
 #chipsec@intel.com
 #
 
-
-
-
 # -------------------------------------------------------------------------------
 #
 # CHIPSEC: Platform Hardware Security Assessment Framework
@@ -36,20 +33,17 @@ import sys
 import uuid
 import os
 
-try:
-    import edk2        # for Python 2.7 on UEFI
-except ImportError:
-    import efi as edk2 # for Python 2.4 on EFI 1.10
+import edk2   # Python 3.6.8 on UEFI
 
-import chipsec.defines
-from chipsec.logger import logger
-from chipsec.helper.oshelper import get_tools_path
+from chipsec.defines           import COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA
+from chipsec.logger            import logger
+from chipsec.helper.oshelper   import get_tools_path
 from chipsec.helper.basehelper import Helper
 
 
 _tools = {
-  chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.efi',
-  chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress.efi'
+  COMPRESSION_TYPE_TIANO: 'TianoCompress.efi',
+  COMPRESSION_TYPE_LZMA: 'LzmaCompress.efi'
 }
 
 
@@ -152,7 +146,7 @@ class EfiHelper(Helper):
         phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
         out_buf = edk2.readmem(phys_address_lo, phys_address_hi, size)
         if size == 8:
-            value = struct.unpack('=Q', out_buf[:size])[0]
+            value = struct.unpack( '=Q', out_buf[:size] )[0]
         elif size == 4:
             value = struct.unpack( '=I', out_buf[:size] )[0]
         elif size == 2:
@@ -264,33 +258,31 @@ class EfiHelper(Helper):
         return True
 
     def get_EFI_variable_full(self, name, guidstr):
-        guid = uuid.UUID(guidstr)
 
         size = 100
-        (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
+        (Status, Attributes, newdata, DataSize) = edk2.GetVariable(name, guidstr, size)
 
         if Status == 5:
             size = DataSize +1
-            (Status, Attributes, newdata, DataSize) = edk2.GetVariable(unicode(name), guid.bytes, size)
+            (Status, Attributes, newdata, DataSize) = edk2.GetVariable(name, guidstr, size)
 
         return (Status, newdata, Attributes)
 
 
     def get_EFI_variable(self, name, guidstr):
-        (status, data, attrs) = self.get_EFI_variable_full(name, guidstr)
+        (_, data, _) = self.get_EFI_variable_full(name, guidstr)
         return data
 
     def set_EFI_variable(self, name, guidstr, data, datasize=None, attrs=0x7):
-
-        guid = uuid.UUID(guidstr)
 
         if data     is None: data = '\0' *4
         if datasize is None: datasize = len(data)
         if attrs is None:
             attrs=0x07
-            if logger().VERBOSE: logger().log_warning("Setting attributes to: {:04X}".format(attrs))
+            if logger().VERBOSE:
+                logger().log_warning("Setting attributes to: {:04X}".format(attrs))
 
-        (Status, datasize, guidbytes) = edk2.SetVariable(unicode(name), guid.bytes, int(attrs), data, datasize)
+        (Status, datasize, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), data, datasize)
 
         return Status
 
@@ -303,43 +295,60 @@ class EfiHelper(Helper):
         buf = list()
         hdr = 0
         attr = 0
+        var_list  = list()
         variables = dict()
 
         status_dict = { 0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION" }
 
-        name = '\0' *200
+        namestr = ''
+        size    = 200
+        guidstr = str(uuid.uuid4())
 
-        randguid = uuid.uuid4()
-
-        (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), randguid.bytes)
-
-        if status == 5:
-            if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
-            name = '\0' *size
-            (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), randguid.bytes)
-
-        while status == 0:
-            guid = uuid.UUID(bytes=guidbytes)
-            name = name.encode('ascii', 'ignore')
-            (status, data, attr) = self.get_EFI_variable_full(name, guid.hex)
-
-            if logger().DEBUG: logger().log("{:d}: Found variable {}".format(len(variables), name))
-
-            var = (off, buf, hdr, data, str(guid), attr)
-            if name in variables:
-                if logger().DEBUG: logger().log("WARNING: found a second instance of name {}.".format(name))
-
-            else: variables[name] = []
-            if data != "" or guid != 0 or attr != 0:
-                variables[name].append(var)
-
-            (status, name, size, guidbytes) = edk2.GetNextVariableName(200, unicode(name), guid.bytes)
-            if logger().DEBUG: logger().log("returned {}. status is {}".format(name, status_dict[status]))
+        search_complete = False
+        while not search_complete:
+            namestr += '\x00'
+            name = namestr.encode('utf-16-le')
+            guid = uuid.UUID(guidstr).bytes_le
+            (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
 
             if status == 5:
-                if logger().DEBUG: logger().log("size was too small increasing to {:d}".format(size))
-                (status, name, size, guidbytes) = edk2.GetNextVariableName(size, unicode(name), guid.bytes)
+                if logger().DEBUG:
+                    logger().log("[helper] EFI Variable name size was too small increasing to {:d}".format(size))
+                (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
+
+            if logger().DEBUG:
+                logger().log("[helper] Returned {}. Status is {}".format(name, status_dict[status]))
+
+            if status:
+                search_complete = True
+            else:
+                if (namestr, guidstr) in var_list:
+                    continue
+                else:
+                    var_list.append((namestr, guidstr))
+
+                if logger().DEBUG:
+                    logger().log("[helper] Found variable '{}' - [{}]".format(name, guidstr))
+
+        for (name, guidstr) in var_list:
+            (status, data, attr) = self.get_EFI_variable_full(name, guidstr)
+
+            if status:
+                logger().verbose_log('[helper] Error reading variable {}.  Status = {:d} - {}'.format(name, status, status_dict[status]))
+
+            var_data = (off, buf, hdr, data, guidstr, attr)
+
+            if name in variables:
+                logger().verbose_log('[helper] Duplicate variable name {} - {}'.format(name, guidstr))
+                continue
+            else:
+                variables[name] = []
+
+            if data != '' or guidstr != '' or attr != 0:
+                variables[name].append(var_data)
+
         return variables
+
 
     #
     # ACPI tables access

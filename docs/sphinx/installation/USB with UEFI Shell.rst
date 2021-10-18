@@ -16,9 +16,9 @@ Building a Bootable USB drive with UEFI Shell (x64)
 Installing CHIPSEC
 ------------------
 
-1. Extract the contents of ``__install__/UEFI/chipsec_uefi_[x64|i586|IA32].zip`` to the USB drive, as appropriate.
+1. Extract the contents of ``__install__/UEFI/chipsec_py368_uefi_x64.zip`` to the USB drive, as appropriate.
 
-   -  This will create a /efi/Tools directory with Python.efi and /efi/StdLib with subdirectories for dependencies.
+   -  This will create a /efi/Tools directory with Python368.efi and /efi/StdLib with subdirectories for dependencies.
 
 2. Copy the contents of CHIPSEC to the USB drive.
 
@@ -29,19 +29,20 @@ Installing CHIPSEC
       -  fs0:
          -  efi
             -  boot
-               -  bootx64.efi
+               -  bootx64.efi (optional)
             -  StdLib
                -  lib
-                  -  python.27
+                  -  python36.8
                      -  [lots of python files and directories]
             -  Tools
-               -  Python.efi
+               -  Python368.efi
          -  chipsec
             -  chipsec
                -  …
             -  chipsec_main.py
             -  chipsec_util.py
             -  …
+
 
 3. Reboot to the USB drive (this will boot to UEFI shell).
 
@@ -54,5 +55,31 @@ Run CHIPSEC in UEFI Shell
    ``fs0:``
 
    ``cd chipsec``
+   
+   ``python368.efi chipsec_main.py`` or ``python368.efi chipsec_util.py``
 
    Next follow steps in section "Basic Usage" of :ref:`Running CHIPSEC <Running-Chipsec>`
+
+(OPTIONAL) Extending CHIPSEC UEFI Python 3.6.8 functionality 
+------------------------------------------------------------
+
+Skip this section if you don't plan on extending native UEFI functionality for CHIPSEC.
+
+Native functions accessing HW resources are built directly into Python UEFI port in built-in edk2 module. If you want to add more native functionality to Python UEFI port for CHIPSEC, you'll need to re-build Python for UEFI:
+
+#. Start with `Py368Readme.txt <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/Py368ReadMe.txt>`_
+
+    - For a UDK2018 overview, visit `UDK2018 How to Build <https://github.com/tianocore/tianocore.github.io/wiki/UDK2018-How-to-Build>`_
+
+#. Import files from the `CHIPSEC Python 3.6.8 port for EFI Shell  <https://github.com/chipsec/chipsec/tree/master/chipsec_tools/edk2/PythonEFI>`_
+
+    - Replace existing  ``AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/edk2module.c`` file with `edk2module.c <https://github.com/chipsec/chipsec/blob/master/chipsec_tools/edk2/PythonEFI/edk2module.c>`_
+    - Copy `cpu.asm <https://github.com/chipsec/chipsec/blob/master/chipsec_tools/edk2/PythonEFI/cpu.asm>`_ file to ``AppPkg/Applications/Python/Python-3.6.8/PyMode-3.6.8/Modules/``
+    - Add ``PyMod-$(PYTHON_VERSION)/Modules/cpu.asm`` line under the ``[Sources.X64]`` section in ``AppPkg/Applications/Python/Python-3.6.8/Python368.inf``
+
+#. Make modifications as needed
+
+    - All CHIPSEC related functions are in ``edk2module.c`` (``#ifdef CHIPSEC``)
+    - Asm functions are in ``cpu.asm``
+
+#. Build and directory creation steps are covered in the ``Py368ReadMe.txt``
