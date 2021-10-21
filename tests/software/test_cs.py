@@ -25,8 +25,8 @@ class TestPlatformChipsecCs(cs.TestChipsecCs):
     """Test the platform commands exposed by chipsec chipset."""
 
     def test_platform(self):
-        p = self._chipsec_cs("get_chipset_code", mock_helper.ValidChipsetHelper)
-        self.assertEqual('SKL', p)
+        p = self._chipsec_cs("get_chipset_code", mock_helper.TestHelper)
+        self.assertEqual('TGLU', p)
 
     def test_platform_given(self):
         p = self._chipsec_cs("get_chipset_code", mock_helper.InvalidChipsetHelper, 'CML')
@@ -40,8 +40,8 @@ class TestPlatformChipsecCs(cs.TestChipsecCs):
             self.assertTrue(True)
 
     def test_pch(self):
-        p = self._chipsec_cs("get_pch_code", mock_helper.ValidChipsetHelper)
-        self.assertEqual('PCH_1xx', p)
+        p = self._chipsec_cs("get_pch_code", mock_helper.TestHelper)
+        self.assertEqual('PCH_5XXLP', p)
 
     def test_pch_invalid(self):
         p = self._chipsec_cs("get_pch_code", mock_helper.InvalidPchHelper)

@@ -422,7 +422,10 @@ class SPI(hal_base.HALBase):
         self.logger.log('')
         self.display_SPI_Flash_Descriptor()
         self.logger.log('')
-        self.display_SPI_opcode_info()
+        try:
+            self.display_SPI_opcode_info()
+        except:
+            pass
         self.logger.log('')
         self.logger.log( "============================================================" )
         self.logger.log( "SPI Flash Protection" )

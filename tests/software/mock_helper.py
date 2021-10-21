@@ -58,14 +58,14 @@ class TestHelper(Helper):
             elif size == 2:
                 return 0x8086
             else:
-                return 0x16008086
+                return 0x9A128086
         elif (bus, device, function) == (0, 0x1f, 0):
             if size == 1:
                 return 0x86
             elif size == 2:
                 return 0x8086
             else:
-                return 0x9D438086
+                return 0xA0828086
         else:
             raise Exception("Unexpected PCI read")
 
@@ -242,20 +242,20 @@ class SPIHelper(TestHelper):
       * The flash descriptor [0x1000, 0x1FFF]
       * The BIOS image [0x2000, 0x2FFF]
     """
-    RCBA_ADDR = 0xFED0000
-    SPIBAR_ADDR = RCBA_ADDR + 0x3800
+    SPIBAR_ADDR = 0xFED0000
     SPIBAR_END = SPIBAR_ADDR + 0x200
     HSFS = SPIBAR_ADDR + 0x4
     FRAP = SPIBAR_ADDR + 0x50
     FREG0 = SPIBAR_ADDR + 0x54
     LPC_BRIDGE_DEVICE = (0, 0x1F, 0)
+    SPI_DEV = (0, 0x1F, 5)
 
     def read_pci_reg(self, bus, device, function, address, size):
-        if (bus, device, function) == self.LPC_BRIDGE_DEVICE:
-            if address == 0xF0:
-                return self.RCBA_ADDR
-            elif address == 0xDC:
+        if (bus, device, function) == self.SPI_DEV:
+            if address == 0xDC:
                 return 0xDEADBEEF
+            elif address == 0x10:
+                return self.SPIBAR_ADDR
             elif address == 0x0:
                 return 0xAAAA8086
             else:
@@ -286,25 +286,6 @@ class SPIHelper(TestHelper):
     def map_io_space(self, base, size, cache_type):
         raise UnimplementedAPIError("Not implemented")
 
-class ValidChipsetHelper(TestHelper):
-    def read_pci_reg(self, bus, device, function, address, size):
-        if (bus, device, function) == (0, 0, 0):
-            if size == 1:
-                return 0x86
-            elif size == 2:
-                return 0x8086
-            else:
-                return 0x19048086
-        elif (bus, device, function) == (0, 0x1f, 0):
-            if size == 1:
-                return 0x86
-            elif size == 2:
-                return 0x8086
-            else:
-                return 0x9D438086
-        else:
-            raise Exception("Unexpected PCI read")
-
 class InvalidChipsetHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
         if (bus, device, function) == (0, 0, 0):
@@ -315,24 +296,18 @@ class InvalidChipsetHelper(TestHelper):
             else:
                 return 0xBEEF8086
         elif (bus, device, function) == (0, 0x1f, 0):
-            if size == 1:
-                return 0x86
-            elif size == 2:
-                return 0x8086
-            else:
-                return 0x9D438086
+            return super(InvalidChipsetHelper, self).read_pci_reg(bus, device,
+                                                       function,
+                                                       address, size)
         else:
             raise Exception("Unexpected PCI read")
 
 class InvalidPchHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
         if (bus, device, function) == (0, 0, 0):
-            if size == 1:
-                return 0x86
-            elif size == 2:
-                return 0x8086
-            else:
-                return 0x19048086
+            return super(InvalidPchHelper, self).read_pci_reg(bus, device,
+                                                       function,
+                                                       address, size)
         elif (bus, device, function) == (0, 0x1f, 0):
             if size == 1:
                 return 0x86
