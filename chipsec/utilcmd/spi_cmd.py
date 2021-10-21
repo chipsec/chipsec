@@ -171,6 +171,7 @@ class SPICommand(BaseCommand):
                 self.logger.log( ' JEDEC ID command is not supported ')
 
     def run(self):
+        self.cs.set_scope("8086.SPI")
         try:
             self._spi = SPI( self.cs )
         except SpiRuntimeError as msg:
