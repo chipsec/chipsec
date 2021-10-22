@@ -151,12 +151,12 @@ class Cfg:
                     _name = "{}.{}.{}".format(vid, name, _register.attrib['name'])
                     if 'desc' not in _register.attrib: _register.attrib['desc'] = _name
                     del _register.attrib['name']
-                    if _register.attrib['type'] in ['pcicfg', 'mmcfg']:
+                    if _register.attrib['type'] in ['pcicfg', 'mmcfg', 'mm_msg_bus']:
                         _register.attrib['device'] = name
                     elif _register.attrib['type'] in ['memory']:
                         _register.attrib['range'] = name
-                    elif _register.attrib['type'] in ["mm_msgbus"]:
-                        _register.attrib['device'] = name
+                    elif _register.attrib['type'] in ['mmio']:
+                        _register.attrib['bar'] = "{}.{}.{}".format(vid, name, _register.attrib['bar'])
                     if _name in self.REGISTERS and 'FIELDS' in self.REGISTERS[_name]:
                         reg_fields = self.REGISTERS[_name]['FIELDS']
                     else:
