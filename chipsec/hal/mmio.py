@@ -182,6 +182,8 @@ class MMIO(hal_base.HALBase):
             if _bus is None:
                 _buses = self.cs.get_register_bus(bar_reg)
                 _bus = _buses[0] if _buses else None
+            if 'align_bits' in bar:
+                preserve = False
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 try:
@@ -199,10 +201,13 @@ class MMIO(hal_base.HALBase):
             else:
                 base = self.cs.read_register(bar_reg, bus=_bus)
                 reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
+            if 'limit_field' in bar:
+                limit_field = bar['limit_field']
+                limit = self.cs.read_register_field(bar_reg, limit_field, bus=_bus)
         else:
             # this method is not preferred (less flexible)
-            if bus is not None:
-                b = bus
+            if _bus is not None:
+                b = _bus
             else:
                 b = int(bar['bus'], 16)
             d = int(bar['dev'], 16)
@@ -222,7 +227,19 @@ class MMIO(hal_base.HALBase):
             if self.logger.HAL: self.logger.log('[mmio] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
         if 'mask' in bar: base &= int(bar['mask'], 16)
         if 'offset' in bar: base = base + int(bar['offset'], 16)
-        size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
+        if 'align_bits' in bar:
+            _buses = self.cs.get_register_bus(bar['base_reg'])
+            _bus = _buses[0] if _buses else None
+            start = self.cs.read_register_field( bar['base_reg'], bar['base_addr'], bus=_bus)
+            start <<= int(bar['base_align'])
+            base  <<= int(bar['align_bits'])
+            limit <<= int(bar['align_bits'])
+            base  += start
+            limit += ((0x1 << int(bar['align_bits'])) - 1)
+            limit += start
+            size = limit - base
+        else:
+            size = int(bar['size'],16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
         if self.logger.HAL:
             self.logger.log( '[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size) )
