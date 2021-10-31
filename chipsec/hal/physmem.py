@@ -55,7 +55,7 @@ class Memory(HALBase):
     def read_physical_mem_qword(self, phys_address):
         out_buf = self.read_physical_mem(phys_address, 8)
         value = struct.unpack('=Q', out_buf)[0]
-        if self.logger.HAL: self.logger.log('[mem] dword at PA = 0x{:016X}: 0x{:16X}'.format(phys_address, value))
+        if self.logger.HAL: self.logger.log('[mem] qword at PA = 0x{:016X}: 0x{:016X}'.format(phys_address, value))
         return value
 
     def read_physical_mem_dword(self, phys_address):
