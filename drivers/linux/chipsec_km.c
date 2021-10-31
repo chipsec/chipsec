@@ -24,6 +24,7 @@ chipsec@intel.com
 #include <linux/kallsyms.h>
 #include <linux/tty.h>
 #include <linux/ptrace.h>
+#include <linux/uaccess.h>
 #include <linux/version.h>
 #include <linux/slab.h>
 #include <asm/io.h>
@@ -389,6 +390,19 @@ static inline int uncached_access(struct file *file, unsigned long addr)
 #endif
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0)
+/* copy_from_kernel_nofault and copy_to_kernel_nofault were introduced in Linux
+ * 5.8.0. Before, they were called probe_kernel_read and probe_kernel_write
+ * (cf. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=fe557319aa06c23cffc9346000f119547e0f289a).
+ *
+ * As copy_to_kernel_nofault symbol is not exported, do not use it.
+ */
+long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
+{
+	return probe_kernel_read(dst, src, size);
+}
+#endif
+
 /*
  * This function reads the *physical* memory. The f_pos points directly to the 
  * memory location. 
@@ -396,29 +410,35 @@ static inline int uncached_access(struct file *file, unsigned long addr)
 static ssize_t read_mem(struct file * file, char __user * buf, size_t count, loff_t *ppos)
 {
 	unsigned long p = *ppos;
-	ssize_t read, sz;
-	char *ptr;
-        void *plb;
-        
-	read = 0;
+	ssize_t read = 0;
+	size_t sz;
+	void *ptr, *bounce;
+	int err;
 
 #ifdef __ARCH_HAS_NO_PAGE_ZERO_MAPPED
 	/* we don't have page 0 mapped on sparc and m68k.. */
 	if (p < PAGE_SIZE) {
 		sz = PAGE_SIZE - p;
-		if (sz > count) 
-			sz = count; 
+		if (sz > count)
+			sz = count;
 		if (sz > 0) {
 			if (clear_user(buf, sz))
 				return -EFAULT;
-			buf += sz; 
-			p += sz; 
-			count -= sz; 
-			read += sz; 
+			buf += sz;
+			p += sz;
+			count -= sz;
+			read += sz;
 		}
 	}
 #endif
-    
+
+	/* Allocate a bounce buffer to chain copy_from_kernel_nofault with copy_to_user */
+	bounce = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!bounce) {
+		printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n");
+		return -ENOMEM;
+	}
+
 	while (count > 0) {
 		/*
 		 * Handle first page in case it's not aligned
@@ -428,7 +448,8 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		else
 			sz = PAGE_SIZE;
 
-		sz = min_t(unsigned long, sz, count);
+		if (sz > count)
+			sz = count;
 
 		/*
 		 * On ia64 if a page has been mapped somewhere as
@@ -436,26 +457,27 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		 * by the kernel or data corruption may occur
 		 */
 		ptr = my_xlate_dev_mem_ptr(p);
-
 		if (!ptr){
-			dbgprint ("xlate FAIL, p: %lX",p);
+			dbgprint("xlate FAIL, p: %lX", p);
+			kfree(bounce);
 			return -EFAULT;
 		}
 
-		plb = kmalloc(sz, GFP_KERNEL );
-		if( !plb )
-		{
-			printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-			return -EFAULT;
-		}
-
-		memset(plb, 0, sz);
-		memcpy(plb,(char *)ptr, sz);
-
-		if (copy_to_user(buf, plb, sz)) {
-			dbgprint ("copy_to_user FAIL, ptr: %p",ptr);
+		memset(bounce, 0, sz);
+		err = copy_from_kernel_nofault(bounce, ptr, sz);
+		if (err) {
+			dbgprint("copy_from_kernel_nofault FAIL %d, ptr: %lX / %lx",
+				 err, p, (unsigned long)ptr);
 			my_unxlate_dev_mem_ptr(p, ptr);
-			kfree(plb);
+			kfree(bounce);
+			return -EFAULT;
+		}
+		err = copy_to_user(buf, bounce, sz);
+		if (err) {
+			dbgprint("copy_to_user FAIL %d, ptr: %lX / %lx",
+				 err, p, (unsigned long)ptr);
+			my_unxlate_dev_mem_ptr(p, ptr);
+			kfree(bounce);
 			return -EFAULT;
 		}
 
@@ -465,34 +487,30 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		p += sz;
 		count -= sz;
 		read += sz;
-
-		kfree(plb);
 	}
-
 	*ppos += read;
+	kfree(bounce);
 	return read;
 }
 
 static ssize_t write_mem(struct file * file, const char __user * buf, size_t count, loff_t *ppos)
 {
 	unsigned long p = *ppos;
-	ssize_t read, sz;
-	char *ptr;
+	ssize_t written = 0;
+	size_t sz;
+	void *ptr;
 
-	read = 0;
 #ifdef __ARCH_HAS_NO_PAGE_ZERO_MAPPED
 	/* we don't have page 0 mapped on sparc and m68k.. */
 	if (p < PAGE_SIZE) {
 		sz = PAGE_SIZE - p;
-		if (sz > count) 
-			sz = count; 
+		if (sz > count)
+			sz = count;
 		if (sz > 0) {
-			//if (clear_user(buf, sz))
-			//	return -EFAULT;
-			buf += sz; 
-			p += sz; 
-			count -= sz; 
-			read += sz; 
+			buf += sz;
+			p += sz;
+			count -= sz;
+			written += sz;
 		}
 	}
 #endif
@@ -506,7 +524,8 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 		else
 			sz = PAGE_SIZE;
 
-		sz = min_t(unsigned long, sz, count);
+		if (sz > count)
+			sz = count;
 
 		/*
 		 * On ia64 if a page has been mapped somewhere as
@@ -514,14 +533,21 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 		 * by the kernel or data corruption may occur
 		 */
 		ptr = my_xlate_dev_mem_ptr(p);
-
-		if (!ptr){
-			dbgprint ("xlate FAIL, p: %lX",p);
+		if (!ptr) {
+			dbgprint("xlate FAIL, p: %lX", p);
 			return -EFAULT;
 		}
 
+		/*
+		 * It would be safer to use probe_kernel_write() or
+		 * copy_to_kernel_nofault() with a bounce buffer instead of
+		 * directly copying user data to the destination. But these
+		 * functions are no longer exported since Linux 5.8.0
+		 * (cf. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0493cb086353e786be56010780a0b7025b5db34c)
+		 */
 		if (copy_from_user(ptr, buf, sz)) {
-			dbgprint ("copy_from_user FAIL, ptr: %p",ptr);
+			dbgprint("copy_from_user FAIL, ptr: %lX / %lx",
+				 p, (unsigned long)ptr);
 			my_unxlate_dev_mem_ptr(p, ptr);
 			return -EFAULT;
 		}
@@ -531,11 +557,11 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 		buf += sz;
 		p += sz;
 		count -= sz;
-		read += sz;
+		written += sz;
 	}
 
-	*ppos += read;
-	return read;
+	*ppos += written;
+	return written;
 }
 
 #ifndef CONFIG_MMU
