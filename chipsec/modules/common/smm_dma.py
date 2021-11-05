@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -18,14 +18,42 @@
 #chipsec@intel.com
 #
 
-
-
 """
-Just like SMRAM needs to be protected from software executing on the CPU, it also needs to be protected from devices that have direct access to DRAM (DMA). Protection from DMA is configured through proper programming of SMRAM memory range. If BIOS does not correctly configure and lock the configuration, then malware could reprogram configuration and open SMRAM area to DMA access, allowing manipulation of memory that should have been protected.
+SMM TSEG Range Configuration Checks
 
-DMA attacks were discussed in `Programmed I/O accesses: a threat to Virtual Machine Monitors? <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/pacsec2007-duflot-papier.pdf>`_ and `System Management Mode Design and Security Issues <http://www.ssi.gouv.fr/uploads/IMG/pdf/IT_Defense_2010_final.pdf>`_. This is also discussed in `Summary of Attack against BIOS and Secure Boot` https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf
+This module examines the configuration and locking of SMRAM range configuration protecting from DMA attacks.
+If it fails, then DMA protection may not be securely configured to protect SMRAM.
 
-This module examines the configuration and locking of SMRAM range configuration protecting from DMA attacks. If it fails, then DMA protection may not be securely configured to protect SMRAM.
+Reference:
+    Just like SMRAM needs to be protected from software executing on the CPU,
+    it also needs to be protected from devices that have direct access to DRAM (DMA).
+    Protection from DMA is configured through proper programming of SMRAM memory range.
+    If BIOS does not correctly configure and lock the configuration,
+    then malware could reprogram configuration and open SMRAM area to DMA access,
+    allowing manipulation of memory that should have been protected.
+
+    DMA attacks were discussed in `Programmed I/O accesses: a threat to Virtual Machine Monitors? <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/pacsec2007-duflot-papier.pdf>`_
+    and `System Management Mode Design and Security Issues <http://www.ssi.gouv.fr/uploads/IMG/pdf/IT_Defense_2010_final.pdf>`_
+    and `Summary of Attack against BIOS and Secure Boot` https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf
+
+Usage:
+    ``chipsec_main -m smm_dma``
+
+Examples:
+    >>> chipsec_main.py -m smm_dma
+
+Registers used:
+    - TSEGBaseLock (control)
+    - TSEGLimitLock (control)
+    - MSR_BIOS_DONE.IA_UNTRUSTED
+    - PCI0.0.0_TSEGMB.TSEGMB
+    - PCI0.0.0_BGSM.BGSM
+    - IA32_SMRR_PHYSBASE.PhysBase
+    - IA32_SMRR_PHYSMASK.PhysMask
+
+Supported Platforms:
+    - Core (client)
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_SMM, MTAG_HWCONFIG
@@ -34,9 +62,6 @@ _MODULE_NAME = 'smm_dma'
 
 TAGS = [MTAG_SMM, MTAG_HWCONFIG]
 
-
-_TSEG_MASK  = 0xFFF00000
-
 class smm_dma(BaseModule):
 
     def __init__(self):
@@ -44,22 +69,26 @@ class smm_dma(BaseModule):
 
     def is_supported(self):
         self.res = ModuleResult.NOTAPPLICABLE
-        if self.cs.is_atom(): return False
-        if self.cs.is_server(): return False
+        if self.cs.is_atom():
+            self.logger.log_important('Module not supported on Atom platforms.  Skipping module.')
+            return False
+        if self.cs.is_server():
+            self.logger.log_important('Xeon (server) platform detected.  Skipping module.')
+            return False
         else: return True
 
     def check_tseg_locks(self):
         tseg_base_lock = self.cs.get_control('TSEGBaseLock')
         tseg_limit_lock = self.cs.get_control('TSEGLimitLock')
         ia_untrusted = 0
-        if self.cs.is_register_defined('MSR_BIOS_DONE') and self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+        if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
 
         if (tseg_base_lock and tseg_limit_lock) or (0 != ia_untrusted):
-            self.logger.log_good( "TSEG range is locked" )
+            self.logger.log_good("TSEG range is locked")
             return ModuleResult.PASSED
         else:
-            self.logger.log_bad( "TSEG range is not locked" )
+            self.logger.log_bad("TSEG range is not locked")
             return ModuleResult.FAILED
 
     def check_tseg_config(self):
@@ -74,22 +103,21 @@ class smm_dma(BaseModule):
             smram_limit = 0
             self.logger.log("[*] SMRR is not supported\n")
 
-        self.logger.log( "[*] checking TSEG range configuration.." )
+        self.logger.log("[*] Checking TSEG range configuration..")
         if (0 == smram_base) and (0 == smram_limit):
             res = ModuleResult.WARNING
-            self.logger.log_warn_check( "TSEG is properly configured but can't determine if it covers entire SMRAM" )
+            self.logger.log_warning("TSEG is properly configured but can't determine if it covers entire SMRAM")
         else:
             if (tseg_base <= smram_base) and (smram_limit <= tseg_limit):
-            #if (tseg_base == smram_base) and (tseg_size == smram_size):
-                self.logger.log_good( "TSEG range covers entire SMRAM" )
+                self.logger.log_good("TSEG range covers entire SMRAM")
                 if self.check_tseg_locks() == ModuleResult.PASSED:
                     res = ModuleResult.PASSED
-                    self.logger.log_passed_check( "TSEG is properly configured. SMRAM is protected from DMA attacks" )
+                    self.logger.log_passed("TSEG is properly configured. SMRAM is protected from DMA attacks")
                 else:
-                    self.logger.log_failed_check( "TSEG is properly configured, but the configuration is not locked." )
+                    self.logger.log_failed("TSEG is properly configured, but the configuration is not locked.")
             else:
-                self.logger.log_bad( "TSEG range doesn't cover entire SMRAM" )
-                self.logger.log_failed_check( "TSEG is not properly configured. Portions of SMRAM may be vulnerable to DMA attacks" )
+                self.logger.log_bad("TSEG range doesn't cover entire SMRAM")
+                self.logger.log_failed("TSEG is not properly configured. Portions of SMRAM may be vulnerable to DMA attacks")
 
         return res
 
@@ -98,6 +126,7 @@ class smm_dma(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        self.logger.start_test( "SMM TSEG Range Configuration Check" )
+        self.logger.start_test("SMM TSEG Range Configuration Check")
         self.res = self.check_tseg_config()
         return self.res
+
