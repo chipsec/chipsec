@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
+#Copyright (c) 2010-2021, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -127,15 +127,16 @@ class Module():
 
 
     def get_tags(self):
-        module_tags=[]
+        module_tags = []
+        metadata_tags = []
         try:
             if _importlib:
                 module_tags = getattr( self.module, 'TAGS' )
+                metadata_tags = getattr( self.module, 'MD_TAGS' )
         except:
-            #self.logger.log(module_path)
-            #self.logger.log_bad(traceback.format_exc())
             pass
-        return module_tags
+        
+        return module_tags, metadata_tags
 
     def __str__(self):
         return self.get_name()

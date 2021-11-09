@@ -138,10 +138,12 @@ class ChipsecMain:
         return module
 
     def verify_module_tags(self, module):
-        run_it = True
+        run_it = True      
+        module_tags, metadata_tags = module.get_tags()
+        if len(metadata_tags) > 0:
+            logger().log("[*] Metadata tags: {}".format(metadata_tags))
         if len(self.USER_MODULE_TAGS) > 0 or self._list_tags:
             run_it = False
-            module_tags= module.get_tags()
             for mt in module_tags:
                 if self._list_tags:
                     if mt not in self.AVAILABLE_TAGS: self.AVAILABLE_TAGS.append(mt)
