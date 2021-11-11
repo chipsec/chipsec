@@ -268,9 +268,23 @@ class Pci:
     # Enumerating PCI devices and dumping configuration space
     #
 
-    def enumerate_devices( self ):
+    def enumerate_devices(self, bus=None, device=None, function=None):
         devices = []
-        for b, d, f in itertools.product(range(256), range(32), range(8)):
+
+        if bus is not None:
+            bus_range = [bus]
+        else:
+            bus_range = range(256)
+        if device is not None:
+            dev_range = [device]
+        else:
+            dev_range = range(32)
+        if function is not None:
+            func_range = [function]
+        else:
+            func_range = range(8)
+
+        for b, d, f in itertools.product(bus_range, dev_range, func_range):
             try:
                 did_vid = self.read_dword(b, d, f, 0x0)
                 if 0xFFFFFFFF != did_vid:
