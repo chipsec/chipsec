@@ -102,42 +102,33 @@ class PCICommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-
     def pci_enumerate(self):
         self.logger.log( "[CHIPSEC] Enumerating available PCIe devices..." )
         print_pci_devices( self.cs.pci.enumerate_devices() )
 
     def pci_dump(self):
         if self.bus is not None:
-            all_devices = self.cs.pci.enumerate_devices()
-            if self.device is not None:
-                if self.function is None:
-                    devices = list(_ for _ in all_devices if (_[0] == self.bus) and (_[1] == self.device) )
-                else:
-                    devices = [(self.bus, self.device, self.function)]
+            if self.device is not None and self.function is not None:
+                devices = [(self.bus, self.device, self.function, 0x0000, 0x0000)]
             else:
-                devices = list(_ for _ in all_devices if (_[0] == self.bus) )
+                devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
 
-            for (_bus,_device,_function) in devices:
-                self.logger.log( "[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(_bus,_device,_function) )
-                cfg_buf = self.cs.pci.dump_pci_config(_bus,_device,_function)
-                pretty_print_hex_buffer( cfg_buf )
+            for (_bus, _device, _function, _vid, _did) in devices:
+                self.logger.log("[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(_bus, _device, _function))
+                cfg_buf = self.cs.pci.dump_pci_config(_bus, _device, _function)
+                pretty_print_hex_buffer(cfg_buf)
         else:
             self.logger.log( "[CHIPSEC] Dumping configuration of available PCI devices..." )
             self.cs.pci.print_pci_config_all()
 
     def pci_xrom(self):
         if self.bus is not None:
-            all_devices = self.cs.pci.enumerate_devices()
-            if self.device is not None:
-                if self.function is None:
-                    devices = list(_ for _ in all_devices if (_[0] == self.bus) and (_[1] == self.device) )
-                else:
-                    devices = [(self.bus, self.device, self.function)]
+            if self.device is not None and self.function is not None:
+                devices = [(self.bus, self.device, self.function, 0x0000, 0x0000)]
             else:
-                devices = list(_ for _ in all_devices if (_[0] == self.bus) )
+                devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
 
-            for (_bus,_device,_function, _, _) in devices:
+            for (_bus, _device, _function, _vid, _did) in devices:
                 self.logger.log( "[CHIPSEC] Locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(_bus, _device, _function) )
                 exists, xrom = self.cs.pci.find_XROM( _bus, _device, _function, True, True, self.xrom_addr )
                 if exists:
