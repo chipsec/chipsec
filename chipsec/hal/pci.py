@@ -297,9 +297,11 @@ class Pci:
         return devices
 
     def dump_pci_config( self, bus, device, function ):
-        cfg = [0xFF] *0x100
-        for off in range(0x100):
-            cfg[off] = self.read_byte( bus, device, function, off )
+        cfg = []
+        for off in range(0, 0x100, 4):
+            tmp_val = self.read_dword(bus, device, function, off)
+            for shift in range(0, 32, 8):
+                cfg.append((tmp_val >> shift) & 0xFF)
         return cfg
 
     def print_pci_config_all( self ):
