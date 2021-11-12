@@ -155,14 +155,11 @@ class MMIO(hal_base.HALBase):
     #
     # Get the base address and mask for a BAR register.
     #
-    def _get_BAR_and_mask(self, bar_reg, base_field, bus):
+    def _get_BAR_and_mask(self, bar_reg, base_field, preserve, bus):
         _bus = bus
-        preserve = True
         if _bus is None:
             _buses = self.cs.get_register_bus(bar_reg)
             _bus = _buses[0] if _buses else None
-        if 'align_bits' in bar:
-            preserve = False
         if base_field is None:
             base = self.cs.read_register(bar_reg, bus=_bus)
             reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
@@ -189,9 +186,13 @@ class MMIO(hal_base.HALBase):
         bar = self.cs.Cfg.MMIO_BARS[ bar_name ]
         if bar is None or bar == {}: return -1, -1
         if 'register' in bar:
-            base,reg_mask = self._get_BAR_and_mask(bar['register'], bar.get('base_field'), bus)
+            preserve = True
+            if 'align_bits' in bar:
+                preserve = False
+            base,reg_mask = self._get_BAR_and_mask(bar['register'], bar.get('base_field'), preserve, bus)
             if 'register_high' in bar:
-                base_hi,mask_hi = self._get_BAR_and_mask(bar['register_high'], bar.get('base_field_high'), bus)
+                # TODO(kerneis): what shall we do here if align_bits is set?
+                base_hi,mask_hi = self._get_BAR_and_mask(bar['register_high'], bar.get('base_field_high'), preserve, bus)
                 base |= base_hi << reg_mask.bit_length()
                 reg_mask |= mask_hi << reg_mask.bit_length()
         else:
