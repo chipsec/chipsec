@@ -299,6 +299,7 @@ class ACPI(hal_base.HALBase):
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
                 if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI1_0, rsdp_pa) )
 
+        if rsdp_pa:
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
                 if logger().HAL: logger().log( "[acpi] found RSDP in EFI Config Table: 0x{:016X}".format(rsdp_pa) )
