@@ -57,6 +57,8 @@ jobs:
       if: matrix.distro.name == 'archlinux'
       run: |
         pacman -Syu --noconfirm dkms linux${{ matrix.distro.variant }}-headers nasm
+        # Fix regression from DKMS 3.0, fixed upstream in https://github.com/dell/dkms/pull/178
+        sed '/^    check_module_args \$action$/d' -i /usr/bin/dkms
 
     - name: Install CentOS dependencies
       if: matrix.distro.name == 'centos'
