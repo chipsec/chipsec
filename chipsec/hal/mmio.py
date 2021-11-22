@@ -187,9 +187,13 @@ class MMIO(hal_base.HALBase):
         if bar is None or bar == {}: return -1, -1
         if 'register' in bar:
             preserve = True
+            bar_reg = bar['register']
             if 'align_bits' in bar:
                 preserve = False
-            base,reg_mask = self._get_BAR_and_mask(bar['register'], bar.get('base_field'), preserve, bus)
+            base,reg_mask = self._get_BAR_and_mask(bar_reg, bar.get('base_field'), preserve, bus)
+            if 'limit_field' in bar:
+                limit_field = bar['limit_field']
+                limit = self.cs.read_register_field(bar_reg, limit_field, bus=_bus)
             if 'register_high' in bar:
                 # TODO(kerneis): what shall we do here if align_bits is set?
                 base_hi,mask_hi = self._get_BAR_and_mask(bar['register_high'], bar.get('base_field_high'), preserve, bus)
