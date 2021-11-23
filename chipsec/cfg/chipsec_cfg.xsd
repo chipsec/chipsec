@@ -45,7 +45,7 @@
   <xs:attribute name="mask" type="xs:string" use="optional"/>
   <xs:attribute name="size" type="xs:string" use="optional"/>
   <xs:attribute name="enable_bit" type="xs:string" use="optional"/>
-  <xs:attribute name="desc" type="xs:string" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="required"/>
   <xs:attribute name="offset" type="xs:string" use="optional"/>
   <xs:attribute name="fixed_address" type="xs:string" use="optional"/>
 </xs:attributeGroup>
@@ -72,7 +72,7 @@
   <xs:attribute name="reg" type="xs:string" use="optional"/>
   <xs:attribute name="mask" type="xs:string" use="optional"/>
   <xs:attribute name="size" type="xs:string" use="optional"/>
-  <xs:attribute name="desc" type="xs:string" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="required"/>
   <xs:attribute name="offset" type="xs:string" use="optional"/>
   <xs:attribute name="fixed_address" type="xs:string" use="optional"/>
 </xs:attributeGroup>
