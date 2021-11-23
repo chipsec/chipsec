@@ -82,12 +82,12 @@ The following registers are defined in the reference PPR but have not been inclu
     <!-- page 53 -->
     <bar name="APIC" register="APIC_BAR" base_field="ApicBar[47:12]" size="0x1000" enable_field="ApicEn" desc="APIC Base Address"/>
     <!-- page 290 -->
-    <bar name="IOMMUBAR" register="IOMMU_CAP_BASE_LO" base_field="IOMMU_BASE_ADDR_LO" register_high="IOMMU_CAP_BASE_HI"  base_field_high="IOMMU_BASE_ADDR_HI" enable_field="IOMMU_ENABLE" size="0x100000" />
+    <bar name="IOMMUBAR" register="IOMMU_CAP_BASE_LO" base_field="IOMMU_BASE_ADDR_LO" register_high="IOMMU_CAP_BASE_HI"  base_field_high="IOMMU_BASE_ADDR_HI" enable_field="IOMMU_ENABLE" size="0x100000" desc="IOMMU Base Address" />
     <!-- page 453 -->
     <bar name="ESPI" register="SPIBaseAddr" base_field="Spi_eSpi_BaseAddr" size="0x100" fixed_address="0xFEC10000" offset="0x10000" desc="eSPI Controller Register Range" />
     <!-- page 567 -->
     <!-- TODO: support field TP[1] to switch between 32 and 64 bits -->
-    <bar name="SDHC" register="SD_PCI_BAR" base_field="BAR" register_high="SD_PCI_UPPER_BAR" base_field_high="UBAR" size="0x100" />
+    <bar name="SDHC" register="SD_PCI_BAR" base_field="BAR" register_high="SD_PCI_UPPER_BAR" base_field_high="UBAR" size="0x100" desc="SD Host Controller Base Address" />
     <!-- page 446 -->
     <bar name="SPI" register="SPIBaseAddr" base_field="Spi_eSpi_BaseAddr" enable_field="SpiRomEnable" size="0x100" desc="SPI Controller Register Range" fixed_address="0xFEC10000" />
 
@@ -98,7 +98,7 @@ The following registers are defined in the reference PPR but have not been inclu
     <!-- IOMMU section 8.1.2.3 defines a number of BARs which are not used
     to access registers but MMIO data structures. Defining them here is
     useful to simplify dumping the relevant parts of memory, even if they are
-    referenced in the <register> section. -->
+    not referenced in the <register> section. -->
     <bar name="IOMMU_MMIO_DEVTBL_BASE" bus="0" register="IOMMU_MMIO_DEVTBL_BASE_0" base_field="DEV_TBL_BASE_LO" register_high="IOMMU_MMIO_DEVTBL_BASE_1" base_field_high="DEV_TBL_BASE_HI" desc="" />
   </mmio>
 
@@ -243,13 +243,13 @@ The following registers are defined in the reference PPR but have not been inclu
   <!--                                      -->
   <!-- #################################### -->
   <io>
-    <!-- The BARs below are not necessary because can also be accessed via memory mapping.
+    <!-- The BARs below are not necessary because they can also be accessed via memory mapping.
     We include them for completeness since they are in the reference. As an example: -->
     <!-- page 517 -->
-    <bar name="AcpiPm1EvtBlk" register="AcpiPm1EvtBlk" base_field="AcpiPm1EvtBlk" />
-    <bar name="AcpiPm1CntBlk" register="AcpiPm1CntBlk" base_field="AcpiPm1CntBlk" />
+    <bar name="AcpiPm1EvtBlk" register="AcpiPm1EvtBlk" base_field="AcpiPm1EvtBlk" desc="" />
+    <bar name="AcpiPm1CntBlk" register="AcpiPm1CntBlk" base_field="AcpiPm1CntBlk" desc="" />
     <!-- CLKVALUE, PLvl2 and PLvl3 can be accessed via CpuControl, or MMIO, but are not defined: -->
-    <bar name="CpuControl" register="PCntBlk" base_field="CpuControl" />
+    <bar name="CpuControl" register="PCntBlk" base_field="CpuControl" desc="" />
   </io>
 
   <!-- #################################### -->
