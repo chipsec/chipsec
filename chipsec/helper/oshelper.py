@@ -527,23 +527,6 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.AddElement("getcwd", (), ret)
         return ret
-    #
-    # Decompress binary with OS specific tools
-    #
-    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
-        ret = self.helper.decompress_file( CompressedFileName, OutputFileName, CompressionType )
-        if not self.filecmds is None:
-            self.filecmds.AddElement("decompress_file", (CompressedFileName, OutputFileName, CompressionType), ret)
-        return ret
-
-    #
-    # Compress binary with OS specific tools
-    #
-    def compress_file( self, FileName, OutputFileName, CompressionType ):
-        ret = self.helper.compress_file( FileName, OutputFileName, CompressionType )
-        if not self.filecmds is None:
-            self.filecmds.AddElement("compress_file", (FileName, OutputFileName, CompressionType), ret)
-        return ret
 
 _helper = None
 

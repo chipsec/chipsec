@@ -235,10 +235,7 @@ def _handle_error( err, hr=0 ):
     raise OsHelperError( err, hr )
 
 
-_tools = {
-  chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress.exe',
-  chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress.exe'
-}
+_tools = {}
 
 class RweHelper(Helper):
 
@@ -894,28 +891,6 @@ class RweHelper(Helper):
 
         return tool_path
 
-
-    def get_compression_tool_path( self, compression_type ):
-        return self.get_tool_path( compression_type )
-
-    #
-    # Decompress binary with OS specific tools
-    #
-    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
-        import subprocess
-        if (CompressionType == 0): # not compressed
-            shutil.copyfile(CompressedFileName, OutputFileName)
-        else:
-            exe = self.get_compression_tool_path( CompressionType )
-            if exe is None: return None
-            try:
-                subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
-            except BaseException as msg:
-                logger().log_debug( str(msg) )
-                logger().log_debug( traceback.format_exc() )
-                return None
-
-        return chipsec.file.read_file( OutputFileName )
 
     #
     # File system
