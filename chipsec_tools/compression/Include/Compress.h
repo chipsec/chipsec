@@ -1,3 +1,25 @@
+/** CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2019, Intel Corporation
+ 
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+
+This file incorporates work covered by the following copyright and permission notice
+**/
+
 /** @file
 Header file for compression routine.
 Providing both EFI and Tiano Compress algorithms.
@@ -13,7 +35,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <string.h>
 #include <stdlib.h>
 
-#include "CommonLib.h"
+//#include "CommonLib.h"
 #include <Common/UefiBaseTypes.h>
 /*++
 
@@ -77,6 +99,15 @@ EFI_STATUS
   IN      UINT32  SrcSize,
   IN      UINT8   *DstBuffer,
   IN OUT  UINT32  *DstSize
+  );
+
+EFI_STATUS
+Pack (
+  IN      VOID    *Source,
+  IN      UINT32  SrcSize,
+     OUT  VOID    **Destination,
+     OUT  UINT32  *DstSize,
+  IN      UINTN   Algorithm
   );
 
 #endif

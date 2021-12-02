@@ -27,7 +27,7 @@ Setup module to install chipsec package via setuptools
 import io
 import os
 import platform
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 from distutils import log, dir_util
 import subprocess
 import shutil
@@ -171,13 +171,13 @@ class build_ext(_build_ext):
         self.real_build_lib = os.path.realpath(self.build_lib)
         if platform.system().lower() == "linux":
             driver_build_function = self._build_linux_driver
-            self._build_linux_compression()
+            #self._build_linux_compression()
         elif platform.system().lower() == "darwin":
             driver_build_function = self._build_darwin_driver 
-            self._build_darwin_compression()
+            #self._build_darwin_compression()
         elif platform.system().lower() == "windows":
             driver_build_function = self._build_win_driver 
-            self._build_win_compression()
+            #self._build_win_compression()
 
         if not self.skip_driver:
             driver_build_function()
@@ -239,14 +239,48 @@ extra_kw = []
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
     package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
-    package_data["chipsec_tools.compression.bin"] = ['*']
+    #package_data["chipsec_tools.compression.bin"] = ['*']
     install_requires.append("pywin32")
+    extra_kw = [
+        Extension(
+            'EfiCompressor',
+            sources=[
+                os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'Compress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'TianoCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompressor.c'),
+                ],
+            include_dirs=[
+                os.path.join('chipsec_tools', 'compression', 'Include'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'Common'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'X64'),
+                ],
+            )
+        ]
 
 elif platform.system().lower() == "linux":
     package_data["chipsec_tools.compression.bin"] = ['*']
+    extra_kw = [
+        Extension(
+            'EfiCompressor',
+            sources=[
+                os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'Compress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'TianoCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompressor.c'),
+                ],
+            include_dirs=[
+                os.path.join('chipsec_tools', 'compression', 'Include'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'Common'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'X64'),
+                ],
+            )
+        ]
 
-elif platform.system().lower() == "darwin":
-    package_data["chipsec_tools.compression.bin"] = ['*']
+#elif platform.system().lower() == "darwin":
+    #package_data["chipsec_tools.compression.bin"] = ['*']
 
 setup(
     name = 'chipsec',
