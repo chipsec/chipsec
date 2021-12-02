@@ -114,7 +114,7 @@ class DecodeCommand(BaseCommand):
                 elif BIOS == idx:
                     # Decoding EFI Firmware Volumes
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )
-                    decode_uefi_region(_uefi, pth, fname, self._fwtype)
+                    decode_uefi_region(pth, fname, self._fwtype)
 
         self.logger.set_log_file( _orig_logname )
 

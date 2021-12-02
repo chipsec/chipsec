@@ -63,7 +63,7 @@ from chipsec.file       import write_file, read_file
 from chipsec.hal.spi_uefi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
 from chipsec.hal.spi_uefi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
 from chipsec.hal.uefi import UEFI, decode_EFI_variables, get_attr_string, identify_EFI_NVRAM
-from chipsec.hal.uefi import SECURE_BOOT_KEY_VARIABLES, parse_script
+from chipsec.hal.uefi import SECURE_BOOT_KEY_VARIABLES, parse_script, parse_EFI_variables
 from chipsec.hal.uefi_fv import get_guid_bin, assemble_uefi_file, assemble_uefi_section, assemble_uefi_raw
 from chipsec.hal.uefi_fv import FILE_TYPE_NAMES
 from chipsec.hal.uefi_platform import fw_types
@@ -267,7 +267,7 @@ class UEFICommand(BaseCommand):
 
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file( (self.romfilename + '.nv.lst') )
-        self._uefi.parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
+        parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
         self.logger.set_log_file( _orig_logname )
 
     def nvram_auth(self):
@@ -284,7 +284,7 @@ class UEFICommand(BaseCommand):
 
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file( (self.romfilename + '.nv.lst') )
-        self._uefi.parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
+        parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
         self.logger.set_log_file( _orig_logname )
 
     def decode(self):
@@ -304,7 +304,7 @@ class UEFICommand(BaseCommand):
                     if inv_filetypes[mtype] not in ftypes:
                         ftypes.append(inv_filetypes[mtype])
                     break
-        decode_uefi_region(self._uefi, cur_dir, self.filename, self.fwtype, ftypes)
+        decode_uefi_region(cur_dir, self.filename, self.fwtype, ftypes)
         self.logger.set_log_file( _orig_logname )
 
     def keys(self):
@@ -417,7 +417,7 @@ class UEFICommand(BaseCommand):
             raw_image = read_file(self.raw_file)
             wrap_image = assemble_uefi_raw(raw_image)
             if compression_type > 0:
-                comp_image = compress_image(self._uefi, wrap_image, compression_type)
+                comp_image = compress_image(wrap_image, compression_type)
                 wrap_image = assemble_uefi_section(comp_image, len(wrap_image), compression_type)
             uefi_image = assemble_uefi_file(self.guid, wrap_image)
             write_file(self.efi_file, uefi_image)
