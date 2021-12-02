@@ -223,18 +223,6 @@ class Helper(object):
         raise NotImplementedError()
 
     #
-    # Decompress binary with OS specific tools
-    #
-    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
-        raise NotImplementedError()
-
-    #
-    # Compress binary with OS specific tools
-    #
-    def compress_file( self, FileName, OutputFileName, CompressionType ):
-        raise NotImplementedError()
-
-    #
     # Speculation control
     #
     def retpoline_enabled(self):
