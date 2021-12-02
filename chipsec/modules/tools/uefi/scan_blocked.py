@@ -114,7 +114,7 @@ class scan_blocked(BaseModule):
             #    for c in entry['exclude']: self.logger.log( "[*]   {}".format(entry['exclude'][c]) )
 
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
-        efi_tree = build_efi_model(self.uefi, self.image, None)
+        efi_tree = build_efi_model(self.image, None)
         #match_types = (spi_uefi.EFIModuleType.SECTION_EXE|spi_uefi.EFIModuleType.FILE)
         match_types = EFIModuleType.SECTION_EXE
         matching_modules = search_efi_tree(efi_tree, self.blockedlist_callback, match_types)

@@ -135,7 +135,7 @@ class scan_image(BaseModule):
     def generate_efilist( self, json_pth ):
         self.efi_list = {}
         self.logger.log( "[*] generating a list of EFI executables from firmware image..." )
-        efi_tree = build_efi_model(self.uefi, self.image, None)
+        efi_tree = build_efi_model(self.image, None)
         matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
         self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list), self.image_file) )
         self.logger.log( "[*] creating JSON file '{}'...".format(json_pth) )
@@ -155,7 +155,7 @@ class scan_image(BaseModule):
         # parse the UEFI firmware image and look for EFI modules matching list
         # - match only executable EFI sections (PE/COFF, TE)
         # - find all occurrences of matching EFI modules
-        efi_tree = build_efi_model(self.uefi, self.image, None)
+        efi_tree = build_efi_model(self.image, None)
         matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
         self.logger.log( "[*] found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list), self.image_file) )
 

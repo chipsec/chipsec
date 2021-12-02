@@ -91,7 +91,7 @@ Please run 'pip install virustotal-api' and try again.""")
         res = ModuleResult.PASSED
 
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
-        efi_tree = build_efi_model(self.uefi, self.image, None)
+        efi_tree = build_efi_model(self.image, None)
         match_types = EFIModuleType.SECTION_EXE
         matching_modules = search_efi_tree(efi_tree, self.reputation_callback, match_types)
         found = len(matching_modules) > 0
