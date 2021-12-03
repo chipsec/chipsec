@@ -23,7 +23,7 @@
 Check Memory Remapping Configuration
 
 Reference:
-`Preventing & Detecting Xen Hypervisor Subversions <http://www.invisiblethingslab.com/resources/bh08/part2-full.pdf>`_ by Joanna Rutkowska & Rafal Wojtczuk
+    `Preventing & Detecting Xen Hypervisor Subversions <http://www.invisiblethingslab.com/resources/bh08/part2-full.pdf>`_ by Joanna Rutkowska & Rafal Wojtczuk
 
 Usage:
   ``chipsec_main -m common.remap``
@@ -31,7 +31,15 @@ Usage:
 Example:
     >>> chipsec_main.py -m common.remap
 
-.. note:: This module will only run on Core platforms.
+Registers used:
+    - PCI0.0.0_REMAPBASE
+    - PCI0.0.0_REMAPLIMIT
+    - PCI0.0.0_TOUUD
+    - PCI0.0.0_TOLUD
+    - PCI0.0.0_TSEGMB
+
+.. note::
+    This module will only run on Core platforms.
 
 """
 
@@ -59,7 +67,7 @@ class remap(BaseModule):
         return False
 
     def check_remap_config(self):
-
+        is_warning = False
         if not self.cs.is_register_defined('PCI0.0.0_REMAPBASE' ) or \
            not self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT') or \
            not self.cs.is_register_defined('PCI0.0.0_TOUUD'     ) or \
@@ -104,11 +112,15 @@ class remap(BaseModule):
 
         remap_ok = True
 
-        self.logger.log( "[*] checking memory remap configuration.." )
-        if remapbase > remaplimit:
-            self.logger.log( "[*]   Memory Remap is disabled" )
+        self.logger.log("[*] Checking memory remap configuration..")
+
+        if remapbase == remaplimit:
+            self.logger.log("[!]   Memory Remap status is Unknown")
+            is_warning = True
+        elif remapbase > remaplimit:
+            self.logger.log("[*]   Memory Remap is disabled")
         else:
-            self.logger.log( "[*]   Memory Remap is enabled" )
+            self.logger.log("[*]   Memory Remap is enabled")
             remaplimit_addr = (remaplimit|0xFFFFF)
             ok = ((remaplimit_addr + 1) == touud)
             remap_ok = remap_ok and ok
@@ -123,7 +135,7 @@ class remap(BaseModule):
         if ok: self.logger.log_good("  All addresses are 1MB aligned")
         else:  self.logger.log_bad("  Not all addresses are 1MB aligned")
 
-        self.logger.log( "[*] checking if memory remap configuration is locked.." )
+        self.logger.log( "[*] Checking if memory remap configuration is locked.." )
         ok = (0 != touud_lock) or (0 != ia_untrusted)
         remap_ok = remap_ok and ok
         if ok: self.logger.log_good("  TOUUD is locked")
@@ -140,8 +152,13 @@ class remap(BaseModule):
         else:  self.logger.log_bad("  REMAPBASE and REMAPLIMIT are not locked")
 
         if remap_ok:
-            res = ModuleResult.PASSED
-            self.logger.log_passed("Memory Remap is configured correctly and locked")
+            if is_warning:
+                self.logger.log_warning("Most Memory Remap registers are configured correctly and locked")
+                self.logger.log("[!] Manual verification of REMAP BASE and LIMIT register values may be needed.")
+                res = ModuleResult.WARNING
+            else:
+                res = ModuleResult.PASSED
+                self.logger.log_passed("Memory Remap is configured correctly and locked")
         else:
             res = ModuleResult.FAILED
             self.logger.log_failed("Memory Remap is not properly configured/locked. Remaping attack may be possible")
