@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2017-2020, Intel Security
+# Copyright (c) 2017-2021, Intel Security
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -192,7 +192,10 @@ class scan_image(BaseModule):
 
         if op in ['generate', 'check']:
 
-            if len(module_argv) > 1:
+            if len(module_argv) == 2:
+                self.usage()
+                return self.res
+            elif len(module_argv) > 2:
                 json_file  = module_argv[1]
                 image_file = module_argv[2]
                 self.logger.log("[*] reading firmware from '{}'...".format(image_file))
