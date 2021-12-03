@@ -82,12 +82,17 @@ The following registers are defined in the reference PPR but have not been inclu
     <!-- page 53 -->
     <bar name="APIC" register="APIC_BAR" base_field="ApicBar[47:12]" size="0x1000" enable_field="ApicEn" desc="APIC Base Address"/>
     <!-- page 290 -->
-    <bar name="IOMMUBAR" register="IOMMU_CAP_BASE_LO" base_field="IOMMU_BASE_ADDR_LO" register_high="IOMMU_CAP_BASE_HI"  base_field_high="IOMMU_BASE_ADDR_HI" enable_field="IOMMU_ENABLE" size="0x100000" desc="IOMMU Base Address" />
+    <bar name="IOMMUBAR" register="IOMMU_CAP_BASE" base_field="IOMMU_BASE_ADDR" enable_field="IOMMU_ENABLE" size="0x100000" desc="IOMMU Base Address" />
+    <!-- page 378 -->
+    <!-- If EMMC_BAR is not enabled, EMMC_BAR_32 should be used. -->
+    <bar name="EMMC" register="EMMC_BAR" base_field="BAR" enable_field="TP1" size="0x100" desc="EMMC Base Address" />
+    <bar name="EMMC32" register="EMMC_BAR_32" base_field="BAR" size="0x100" desc="EMMC Base Address" />
     <!-- page 453 -->
     <bar name="ESPI" register="SPIBaseAddr" base_field="Spi_eSpi_BaseAddr" size="0x100" fixed_address="0xFEC10000" offset="0x10000" desc="eSPI Controller Register Range" />
     <!-- page 567 -->
-    <!-- TODO: support field TP[1] to switch between 32 and 64 bits -->
-    <bar name="SDHC" register="SD_PCI_BAR" base_field="BAR" register_high="SD_PCI_UPPER_BAR" base_field_high="UBAR" size="0x100" desc="SD Host Controller Base Address" />
+    <!-- If SD_PCI_BAR is not enabled, SD_PCI_BAR_32 should be used. -->
+    <bar name="SDHC" register="SD_PCI_BAR" base_field="BAR" enable_field="TP1" size="0x100" desc="SD Host Controller Base Address" />
+    <bar name="SDHC32" register="SD_PCI_BAR_32" base_field="BAR" size="0x100" desc="SD Host Controller Base Address" />
     <!-- page 446 -->
     <bar name="SPI" register="SPIBaseAddr" base_field="Spi_eSpi_BaseAddr" enable_field="SpiRomEnable" size="0x100" desc="SPI Controller Register Range" fixed_address="0xFEC10000" />
 
@@ -99,7 +104,7 @@ The following registers are defined in the reference PPR but have not been inclu
     to access registers but MMIO data structures. Defining them here is
     useful to simplify dumping the relevant parts of memory, even if they are
     not referenced in the <register> section. -->
-    <bar name="IOMMU_MMIO_DEVTBL_BASE" bus="0" register="IOMMU_MMIO_DEVTBL_BASE_0" base_field="DEV_TBL_BASE_LO" register_high="IOMMU_MMIO_DEVTBL_BASE_1" base_field_high="DEV_TBL_BASE_HI" desc="" />
+    <bar name="IOMMU_MMIO_DEVTBL_BASE" bus="0" register="IOMMU_MMIO_DEVTBL_BASE" base_field="DEV_TBL_BASE" desc="" />
   </mmio>
 
   <!-- #################################### -->
@@ -109,13 +114,13 @@ The following registers are defined in the reference PPR but have not been inclu
   <!-- #################################### -->
   <memory>
     <!-- page 360 -->
-    <range name="LPC/SPI ROM_1"       access="mmio" address="0x0" size="0xFFFFF" />
-    <range name="LPC/SPI ROM_2"       access="mmio" address="0x00FF000000" size="0xFFFFFF" />
-    <range name="LPC/SPI ROM_3"       access="mmio" address="0xFD00000000" size="0x3FFFFFF" />
+    <range name="ROM_1"       access="dram" address="0x0" size="0xFFFFF" />
+    <range name="ROM_2"       access="dram" address="0x00FF000000" size="0xFFFFFF" />
+    <range name="ROM_3"       access="dram" address="0xFD00000000" size="0x3FFFFFF" />
 
     <!-- page 393 -->
     <!-- enabled through PmDecodeEn[IoApicEn] -->
-    <range name="IOAPIC" address="0xFEC00000" access="mmio" sie="0x7F" />
+    <range name="IOAPIC" address="0xFEC00000" access="mmio" size="0x7F" />
     <!-- page 446 -->
     <!-- Can be accessed as a mmiobar but the address should be fixed, see above. -->
     <range name="SPI" address="0xFEC10000" access="mmio" size="0xFF" />
@@ -131,10 +136,10 @@ The following registers are defined in the reference PPR but have not been inclu
     <!-- See page 491, and below, for a more detailed breakdown of ACPI MMIO Space -->
     <range name="ACPI"                access="mmio" address="0xFED80000" size="0x1FFF" />
     <range name="AL2AHB"              access="mmio" address="0xFEDC0000" size="0x0FFF" />
-    <range name="I2C_2 Master"        access="mmio" address="0xFEDC4000" size="0x0FFF" />
-    <range name="I2C_3 Master"        access="mmio" address="0xFEDC5000" size="0x0FFF" />
-    <range name="I2C_4 Slave for USB" access="mmio" address="0xFEDC6000" size="0x0FFF" />
-    <range name="Power Delivery"      access="mmio" address="0xFEDC7000" size="0x0FFF" />
+    <range name="I2C_2"        access="mmio" address="0xFEDC4000" size="0x0FFF" />
+    <range name="I2C_3"        access="mmio" address="0xFEDC5000" size="0x0FFF" />
+    <range name="I2C_4" access="mmio" address="0xFEDC6000" size="0x0FFF" />
+    <range name="PowerDelivery"      access="mmio" address="0xFEDC7000" size="0x0FFF" />
     <range name="DMAC0"               access="mmio" address="0xFEDC8000" size="0x0FFF" />
     <range name="DMAC1"               access="mmio" address="0xFEDC9000" size="0x0FFF" />
     <range name="UART0"               access="mmio" address="0xFEDCA000" size="0x0FFF" />
@@ -144,12 +149,12 @@ The following registers are defined in the reference PPR but have not been inclu
     <range name="UART_2"              access="mmio" address="0xFEDCF000" size="0x0FFF" />
     <range name="UART_3"              access="mmio" address="00FEDD0000" size="0x4FFF" />
     <!-- See below for a more detailed breakdown of EMMC Control Space -->
-    <range name="EMMC Control"        access="mmio" address="0xFEDD5000" size="0x0FFF" />
+    <range name="EMMC_Control"        access="mmio" address="0xFEDD5000" size="0x0FFF" />
 
     <!-- ACPI MMIO Space -->
     <!-- For this whole section, enable-bit: Mmio[En]-->
     <!-- page 491 -->
-    <range name="SMBus PCI" address="0xFED80000" access="mmio" size="0xFF" />
+    <range name="SMBus_PCI" address="0xFED80000" access="mmio" size="0xFF" />
     <!-- page 578 -->
     <!-- Legacy range inside SMBus PCI. Should really start on FED80040 and have
     a size of 0x14 but we keep it consistent with the official doc. -->
@@ -4166,6 +4171,12 @@ The following registers are defined in the reference PPR but have not been inclu
 
     <!-- page 281 -->
 
+    <!-- This register is not in the spec, but is used to merge the next two as a single BAR. -->
+    <register name="IOMMU_CAP_BASE" type="pcicfg" device="IOMMU" offset="0x044" size="8" desc="IOMMUL2::IOMMU_CAP_BASE. Read-write. Reset: 0000_0000_0000_0000h.">
+      <field name="IOMMU_BASE_ADDR" bit="19" size="45" desc="Read-write. Reset: 0000h. Specifies the 512KB-aligned base address of the IOMMU memory-mapped control registers." />
+      <!-- Bits 18:1 reserved. -->
+      <field name="IOMMU_ENABLE" bit="0" size="1" desc="Read-write. Reset: 0. 0=Disable. 1=Enable. IOMMU accepts memory accesses to the address specified in the Base Address Register. Upon writting IOMMU_ENABLE = 1, all IOMMU Read/Write capability registers in PCI configuration space are locked until the next system reset." />
+    </register>
     <register name="IOMMU_CAP_BASE_LO" type="pcicfg" device="IOMMU" offset="0x044" size="4" desc="IOMMUL2::IOMMU_CAP_BASE_LO. Read-write. Reset: 0000_0000h.">
       <field name="IOMMU_BASE_ADDR_LO" bit="19" size="13" desc="Read-write. Reset: 0000h. Specifies address bits[31:19] of the 512KB-aligned base address of the IOMMU memory-mapped control registers." />
       <!-- Bits 18:1 reserved. -->
@@ -4365,6 +4376,12 @@ The following registers are defined in the reference PPR but have not been inclu
 
     <!-- page 290 -->
 
+    <!-- This register is not in the spec, but is used to merge the next two as a single BAR. -->
+    <register name="IOMMU_MMIO_DEVTBL_BASE" type="mmio" bar="IOMMUBAR" offset="0x00000" size="8" desc="IOMMUMMIO::IOMMU_MMIO_DEVTBL_BASE. Read-write. Reset: 0000_0000h.">
+      <field name="DEV_TBL_BASE" bit="12" size="52" desc="Read-write. Reset: 0_0000h. Specifies address bits[31:12] of the 4K byte-aligned base address of the first level device table." />
+      <!-- Bits 11:9 reserved. -->
+      <field name="DEV_TBL_SIZE" bit="0" size="9" desc="Read-write. Reset: 000h. This field contains 1 less than the length of the device table, in multiples of 4K bytes. A minimum size of 0 corresponds to a 4K-byte device table and a maximum size of 1FFh corresponds to a 2M-byte device table." />
+    </register>
     <register name="IOMMU_MMIO_DEVTBL_BASE_0" type="mmio" bar="IOMMUBAR" offset="0x00000" size="4" desc="IOMMUMMIO::IOMMU_MMIO_DEVTBL_BASE_0. Read-write. Reset: 0000_0000h.">
       <field name="DEV_TBL_BASE_LO" bit="12" size="20" desc="Read-write. Reset: 0_0000h. Specifies address bits[31:12] of the 4K byte-aligned base address of the first level device table." />
       <!-- Bits 11:9 reserved. -->
@@ -5869,7 +5886,16 @@ The following registers are defined in the reference PPR but have not been inclu
       <field name="Latency_Timer_HW" bit="8" size="3" desc="Read-only. Reset: Fixed,0h. Specifies the value of the Latency Timer in units of PCICLKs." />
       <field name="Cache_Size" bit="0" size="8" desc="Read-write. Reset: 00h. This Read-write field specifies the system cacheline size in units of DWORDs and must be initialized to 00h." />
     </register>
-    <register name="EMMC_BAR" type="memory" device="EMMCCFG" offset="0x00000010" size="4" desc="FCH::EMMC::EMMC_BAR.">
+    <!-- This register is not in the spec, but is used to merge the next two as a single BAR. -->
+    <register name="EMMC_BAR" type="memory" device="EMMCCFG" offset="0x00000010" size="8" desc="FCH::EMMC::EMMC_BAR.">
+      <field name="BAR" bit="8" size="56" desc="Read-write. Reset: 00_0000h. Base Address. Specifies the 64-bit starting base address." />
+      <field name="BAR_Reserved" bit="4" size="4" desc="Read-only. Reset: Fixed,0h. Reserved." />
+      <field name="PM" bit="3" size="1" desc="Read-only. Reset: Fixed,0. Prefetch memory. A constant value of 0 indicates that there is no support for prefetchable memory." />
+      <field name="TP1" bit="2" size="1" desc="Read-only. Reset: 1h. 2'b1 indicates that the base register is 64-bit width." />
+      <field name="TP0" bit="1" size="1" desc="Read-only. Reset: 0h. Reserved." />
+      <field name="IND" bit="0" size="1" desc="Read-only. Reset: Fixed,0. Resource Type Indicator. A constant value of 0 indicates that the operational registers of the device are mapped into memory space of the main memory of the PC host system." />
+    </register>
+    <register name="EMMC_BAR_32" type="memory" device="EMMCCFG" offset="0x00000010" size="4" desc="FCH::EMMC::EMMC_BAR.">
       <field name="BAR" bit="8" size="24" desc="Read-write. Reset: 00_0000h. Base Address. Specifies the upper 15 bits of the 32-bit starting base address." />
       <field name="BAR_Reserved" bit="4" size="4" desc="Read-only. Reset: Fixed,0h. Reserved." />
       <field name="PM" bit="3" size="1" desc="Read-only. Reset: Fixed,0. Prefetch memory. A constant value of 0 indicates that there is no support for prefetchable memory." />
@@ -9706,7 +9732,16 @@ The following registers are defined in the reference PPR but have not been inclu
 
     <!-- page 564 -->
 
-    <register name="SD_PCI_BAR" type="pcicfg" device="SD" offset="0x010" size="4" desc="FCH::SD::SD_PCI_BAR.">
+    <!-- This register is not in the spec, but is used to merge the next two as a single BAR. -->
+    <register name="SD_PCI_BAR" type="pcicfg" device="SD" offset="0x010" size="8" desc="FCH::SD::SD_PCI_BAR.">
+      <field name="BAR" bit="8" size="56" desc="Read-write. Reset: 00_0000h. Base Address. Specifies the 64-bit starting base address." />
+      <field name="BAR_Reserved" bit="4" size="4" desc="Read-only. Reset: Fixed,0h. Reserved." />
+      <field name="PM" bit="3" size="1" desc="Read-only. Reset: Fixed,0. Prefetch memory. A constant value of 0 indicates that there is no support for memory prefetch." />
+      <field name="TP1" bit="2" size="1" desc="Read-only. Reset: 1h. 2'b1 indicates that the base register is 64-bit width" />
+      <field name="TP0" bit="1" size="1" desc="Read-only. Reset: 0h. Reserved." />
+      <field name="IND" bit="0" size="1" desc="Read-only. Reset: Fixed,0. Resource Type Indicator. A constant value of 0 indicates that the operational registers of the device are mapped into memory space of the main memory of the PC host system." />
+    </register>
+    <register name="SD_PCI_BAR_32" type="pcicfg" device="SD" offset="0x010" size="4" desc="FCH::SD::SD_PCI_BAR.">
       <field name="BAR" bit="8" size="24" desc="Read-write. Reset: 00_0000h. Base Address. Specifies the upper 15 bits of the 32-bit starting base address." />
       <field name="BAR_Reserved" bit="4" size="4" desc="Read-only. Reset: Fixed,0h. Reserved." />
       <field name="PM" bit="3" size="1" desc="Read-only. Reset: Fixed,0. Prefetch memory. A constant value of 0 indicates that there is no support for memory prefetch." />
