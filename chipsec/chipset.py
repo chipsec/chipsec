@@ -26,6 +26,7 @@ import sys
 import collections
 import os
 import fnmatch
+import re
 import xml.etree.ElementTree as ET
 
 from chipsec.helper.oshelper import OsHelper, OsHelperError
