@@ -18,9 +18,18 @@
 #chipsec@intel.com
 #
 
-import brotli
+try:
+    import brotli
+    has_brotli = True
+except ImportError:
+    has_brotli = False
 import lzma
-import EfiCompressor
+try:
+    import EfiCompressor
+except ImportError:
+    has_eficomp = True
+except ImportError:
+    has_eficomp = False
 
 from chipsec.defines import COMPRESSION_TYPES, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI, COMPRESSION_TYPE_EFI_STANDARD
 from chipsec.defines import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_UNKNOWN
@@ -41,12 +50,12 @@ class UEFICompression:
                 data = self.unknown_efi_decompress(compressed_data)
             elif compression_type == COMPRESSION_TYPE_NONE:
                 data = compressed_data
-            elif compression_type == COMPRESSION_TYPE_TIANO:
+            elif compression_type == COMPRESSION_TYPE_TIANO and has_eficomp:
                 try:
                     data = EfiCompressor.TianoDecompress(compressed_data)
                 except Exception:
                     data = None
-            elif compression_type == COMPRESSION_TYPE_UEFI:
+            elif compression_type == COMPRESSION_TYPE_UEFI and has_eficomp:
                 try:
                     data = EfiCompressor.UefiDecompress(compressed_data)
                 except Exception:
@@ -56,11 +65,13 @@ class UEFICompression:
                     data = lzma.decompress(compressed_data)
                 except lzma.LZMAError:
                     data = None
-            elif compression_type == COMPRESSION_TYPE_BROTLI:
+            elif compression_type == COMPRESSION_TYPE_BROTLI and has_brotli:
                 try:
                     data = brotli.decompress(compressed_data)
                 except brotli.error:
                     data = None
+            else:
+                data = None
             if logger().HAL and data is None:
                 logger().error("Cannot decompress data with {}".format(compression_type))
 
