@@ -26,7 +26,6 @@ except ImportError:
 import lzma
 try:
     import EfiCompressor
-except ImportError:
     has_eficomp = True
 except ImportError:
     has_eficomp = False
