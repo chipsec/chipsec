@@ -89,7 +89,7 @@ Pack (
   if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;
   }
-  
+
   return Status;
 }
 

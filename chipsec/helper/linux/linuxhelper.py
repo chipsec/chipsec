@@ -34,7 +34,6 @@ import resource
 import struct
 import subprocess
 import sys
-import shutil
 
 from chipsec import defines
 from chipsec.helper.oshelper import get_tools_path

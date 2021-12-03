@@ -55,7 +55,7 @@ from chipsec.command import BaseCommand
 from chipsec.hal.spi import FLASH_DESCRIPTOR, BIOS
 from chipsec.hal.spi_descriptor import get_spi_flash_descriptor, get_spi_regions, parse_spi_flash_descriptor
 from chipsec.hal.spi_uefi import decode_uefi_region
-from chipsec.hal.uefi import UEFI, uefi_platform
+from chipsec.hal.uefi import uefi_platform
 
 class DecodeCommand(BaseCommand):
 
@@ -70,7 +70,6 @@ class DecodeCommand(BaseCommand):
         self.logger.log("\n<fw_type> should be in [ {} ]\n".format( " | ".join( ["{}".format (t) for t in uefi_platform.fw_types] ) ))
 
     def decode_rom(self):
-        _uefi = UEFI( self.cs )
         self.logger.log( "[CHIPSEC] Decoding SPI ROM image from a file '{}'".format(self._rom) )
         f = read_file( self._rom )
         if not f:
