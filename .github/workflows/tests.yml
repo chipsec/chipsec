@@ -148,11 +148,11 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install pywin32
+      run: pip install -r windows_requirements.txt
 
     - name: Build Windows driver
       shell: bash
-      run: python setup.py build_ext -i
+      run: python3 setup.py build_ext -i
 
     - name: Upload Windows driver
       uses: actions/upload-artifact@v2
@@ -192,11 +192,12 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -q
-        sudo apt-get install -qqy dkms nasm
+        sudo apt-get install -qqy dkms nasm python3-setuptools
         pip install distro
+        pip install -r linux_requirements.txt
 
     - name: Build the driver with Python
-      run: python setup.py build_ext -i
+      run: python3 setup.py build_ext -i
 
     - name: Build the driver with DKMS
       run: |
@@ -207,10 +208,10 @@ jobs:
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
     - name: Run Python tests
-      run: python setup.py test
+      run: python3 setup.py test
 
     - name: Install chipsec
-      run: sudo python setup.py install
+      run: sudo python3 setup.py install
 
     - name: Run chipsec_main
       run: |
