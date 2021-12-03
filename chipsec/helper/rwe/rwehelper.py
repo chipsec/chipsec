@@ -31,10 +31,8 @@ import struct
 import sys
 import platform
 import errno
-import traceback
 from collections import namedtuple
 from ctypes import *
-import shutil
 
 import pywintypes
 import win32service #win32serviceutil, win32api, win32con

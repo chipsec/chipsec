@@ -22,7 +22,6 @@ import os
 import platform
 import struct
 import subprocess
-import shutil
 
 import chipsec
 import chipsec.defines

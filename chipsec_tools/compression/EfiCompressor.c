@@ -65,7 +65,7 @@ UefiDecompress(
      PyErr_SetString(PyExc_Exception, "Failed to decompress\n");
      goto ERROR;
   }
-  
+
   PyBuffer_Release(&SrcData);
   return PyBytes_FromStringAndSize(DstBuf, DstDataSize);
 
@@ -107,7 +107,7 @@ FrameworkDecompress(
      PyErr_SetString(PyExc_Exception, "Failed to decompress\n");
      goto ERROR;
   }
-  
+
   PyBuffer_Release(&SrcData);
   return PyBytes_FromStringAndSize(DstBuf, DstDataSize);
 
@@ -149,7 +149,7 @@ Status = Pack((VOID *)SrcData.buf, SrcData.len, (VOID **)&DstBuf, &DstDataSize, 
      PyErr_SetString(PyExc_Exception, "Failed to compress\n");
      goto ERROR;
   }
-  
+
   PyBuffer_Release(&SrcData);
   return PyBytes_FromStringAndSize(DstBuf, DstDataSize);
 

@@ -33,7 +33,6 @@
 ##
 # Import Modules
 #
-import platform
 from distutils.core import setup, Extension
 import os
 
@@ -58,5 +57,3 @@ setup(
             )
         ],
   )
-
-

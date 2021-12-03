@@ -38,7 +38,6 @@ from chipsec.hal.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT,
 from chipsec.hal.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
 from chipsec.logger import logger, print_buffer
 from chipsec.file import write_file, read_file
-from chipsec.defines import COMPRESSION_TYPES
 from chipsec.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
 
@@ -269,7 +268,7 @@ def parse_EFI_variables(self, fname, rom, authvars, _fw_type=None):
     return True
 
 
-def find_EFI_variable_store( self, rom_buffer, _FWType ):
+def find_EFI_variable_store(rom_buffer, _FWType):
     if rom_buffer is None:
         logger().error('rom_buffer is None')
         return None
