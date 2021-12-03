@@ -1,3 +1,4 @@
 pywin32
 setuptools
 WConio2
+brotli >=1.0.9

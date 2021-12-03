@@ -185,7 +185,7 @@ package_data = {
     "chipsec.cfg":  ["8086/*.xml", "1022/*.xml", "*.xml", "*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
-install_requires = ["brotli >=1.0.9"]
+install_requires = []
 extra_kw = []
 
 if platform.system().lower() == "windows":
