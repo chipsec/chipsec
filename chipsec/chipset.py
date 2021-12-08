@@ -418,7 +418,7 @@ class Chipset:
                                         self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
                                 else:
                                     self.detection_dictionary[dv.strip().upper()] = _cfg.attrib['platform'].upper()
-                        if _info.iter('sku'):
+                        if _info.find('sku') is not None:
                             _det = ""
                             _did = ""
                             for _sku in _info.iter('sku'):
