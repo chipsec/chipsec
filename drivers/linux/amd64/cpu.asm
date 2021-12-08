@@ -419,7 +419,11 @@ __swsmi__:
     mov rdi, r12 ; rdi_value
 
     ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
-    out 0B2h, ax
+    push rax
+    shr ax, 8
+    out 0B3h, al
+    pop rax
+    out 0B2h, al
 
     mov r12, rdi ; rdi_value
     pop rdi
