@@ -39,6 +39,7 @@ from chipsec.hal.acpi_tables import UEFI_TABLE
 from chipsec.defines import bytestostring
 
 SMI_APMC_PORT = 0xB2
+SMI_DATA_PORT = 0xB3
 
 NMI_TCO1_CTL = 0x8 # NMI_NOW is bit [8] in TCO1_CTL (or bit [1] in TCO1_CTL + 1)
 NMI_NOW      = 0x1
@@ -62,9 +63,10 @@ class Interrupts(hal_base.HALBase):
         return self.cs.helper.send_sw_smi( thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
     def send_SMI_APMC( self, SMI_code_port_value, SMI_data_port_value ):
-        SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().HAL: logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X} (0x{:04X})".format(SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
-        return self.cs.io.write_port_word( SMI_APMC_PORT, SMI_code_data )
+        if logger().HAL:
+            logger().log("[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X}".format(SMI_code_port_value, SMI_data_port_value))
+        self.cs.io.write_port_byte( SMI_DATA_PORT, SMI_data_port_value )
+        return self.cs.io.write_port_byte( SMI_APMC_PORT, SMI_code_port_value )
 
 
 
