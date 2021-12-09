@@ -164,7 +164,7 @@ class access_uefispec(BaseModule):
             if len(vars[name]) > 1:
                 self.logger.log_important( 'Found two instances of the variable {}.'.format(name) )
             for (off, buf, hdr, data, guid, attrs) in vars[name]:
-                self.logger.log('[*] Variable {} ({})'.format(name, get_attr_string(attrs)))
+                self.logger.log('[*] Variable {} ({}) Guid {} Size {} '.format(name, get_attr_string(attrs), guid, hex(len(data))))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
                     if perms != attrs:
