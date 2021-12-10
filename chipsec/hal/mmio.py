@@ -375,9 +375,13 @@ class MMIO(hal_base.HALBase):
                     if 'bus' in self.cs.get_register_def(_bar['register']):
                         bus_data = [int(self.cs.get_register_def(_bar['register'])['bus'],16)]
                     else:
-                        continue
+                        # On AMD, some BARs are defined in MSRs or SMNs. These are associated
+                        # with a cpu thread or a die (respectively), which can be mapped to a
+                        # northbridge bus, but we don't support it currently. Just pass a default
+                        # bus, and let downstream code fallback on die 0.
+                        bus_data = [None]
             elif 'bus' in _bar:
-                bus_data = [_bar['bus']]
+                bus_data = [int(_bar['bus'], 16)]
             else:
                 continue
             for bus in bus_data:
@@ -390,11 +394,11 @@ class MMIO(hal_base.HALBase):
 
                 if 'register' in _bar:
                     _s = _bar['register']
-                    if 'offset' in _bar: 
+                    if 'offset' in _bar:
                         _s += (' + 0x{:X}'.format(int(_bar['offset'], 16)))
                 else:
                     _s = '{:02X}:{:02X}.{:01X} + {}'.format( int(_bar['bus'], 16), int(_bar['dev'], 16), int(_bar['fun'], 16), _bar['reg'] )
-                self.logger.log( ' {:12} |  {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus, _s, _base, _size, _en, _bar['desc']) )
+                self.logger.log( ' {:12} |  {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus or 0, _s, _base, _size, _en, _bar['desc']) )
 
 
     ##################################################################################
