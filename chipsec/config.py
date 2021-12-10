@@ -26,18 +26,19 @@ from chipsec.exceptions import CSConfigError
 
 class Cfg:
     def __init__(self):
-        self.CONFIG_PCI    = {}
-        self.REGISTERS     = {}
-        self.MMIO_BARS     = {}
-        self.IO_BARS       = {}
-        self.MEMORY_RANGES = {}
-        self.MM_MSGBUS     = {}
-        self.IO            = {}
-        self.MSGBUS        = {}
-        self.CONTROLS      = {}
         self.BUS           = {}
+        self.CONFIG_PCI    = {}
+        self.CONTROLS      = {}
+        self.IMA_REGISTERS = {}
+        self.IO            = {}
+        self.IO_BARS       = {}
         self.LOCKS         = {}
         self.LOCKEDBY      = {}
+        self.MEMORY_RANGES = {}
+        self.MMIO_BARS     = {}
+        self.MSGBUS        = {}
+        self.MM_MSGBUS     = {}
+        self.REGISTERS     = {}
         self.XML_CONFIG_LOADED = False
 
     def init_cfg_xml(self, fxml, code, pch_code, vid):
@@ -143,7 +144,18 @@ class Cfg:
                     _bar.attrib['register'] = "{}.{}.{}".format(vid, name, _bar.attrib['register'])
                     del _bar.attrib['name']
                     self.IO_BARS[ _name ] = _bar.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _bar.attrib) )
+                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _bar.attrib))
+
+            if logger().DEBUG: logger().log( "[*] loading indirect memory accesses definitions.." )
+            for _indirect in _cfg.iter('indirect'):
+                for _ima in _indirect.iter('ima'):
+                    _name = "{}.{}.{}".format(vid, name, _ima.attrib['name'])
+                    _ima.attrib['index'] = "{}.{}.{}".format(vid, name, _ima.attrib['index'])
+                    _ima.attrib['data'] = "{}.{}.{}".format(vid, name, _ima.attrib['data'])
+                    del _ima.attrib['name']
+                    self.IMA_REGISTERS[_name]= _ima.attrib
+                    if logger().DEBUG:
+                        logger().log( "    + {:16}: {}".format(_name, _ima.attrib))
 
             if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
             for _registers in _cfg.iter('registers'):

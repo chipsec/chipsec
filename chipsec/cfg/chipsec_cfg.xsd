@@ -79,6 +79,25 @@
   <xs:attributeGroup ref="iobar_attr"/>
 </xs:complexType>
 
+<!-- Indirect memory accesses -->
+<xs:complexType name="ima_type">
+  <xs:sequence>
+     <xs:element name="indirect" type="ima_indirect_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:attributeGroup name="ima_indirect_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="index" type="xs:string" use="required"/>
+  <xs:attribute name="data" type="xs:string" use="required"/>
+  <xs:attribute name="base" type="xs:string" use="optional"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<xs:complexType name="ima_indirect_type">
+  <xs:attributeGroup ref="ima_indirect_type"/>
+</xs:complexType>
+
 <!-- MEMORY -->
 <xs:complexType name="memory_type">
   <xs:sequence>
@@ -121,6 +140,7 @@
     <xs:enumeration value="mmcfg" />
     <xs:enumeration value="msgbus" />
     <xs:enumeration value="mm_msgbus" />
+    <xs:enumeration value="indirect" />
   </xs:restriction>
 </xs:simpleType>
 
@@ -199,6 +219,7 @@
       <xs:element name="mmio" type="mmio_type" minOccurs="0"/>
       <xs:element name="io" type="io_type" minOccurs="0"/>
       <xs:element name="memory" type="memory_type" minOccurs="0"/>
+      <xs:element name="ima" type="ima_type" minOccurs="0"/>
       <xs:element name="registers" type="regs_type" minOccurs="0"/>
       <xs:element name="controls" type="controls_type" minOccurs="0"/>
     </xs:all>
