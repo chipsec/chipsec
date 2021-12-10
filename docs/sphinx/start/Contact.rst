@@ -16,3 +16,7 @@ Twitter:
 
  * For CHIPSEC release alerts: Follow `CHIPSEC Release <https://twitter.com/ChipsecR>`_
  * For general CHIPSEC info: Follow `CHIPSEC <https://twitter.com/Chipsec>`_
+
+.. note::
+
+    For **AMD** related questions or suggestions please contact Gabriel Kerneis at: Gabriel.Kerneis@ssi.gouv.fr

@@ -32,6 +32,8 @@ Projects That Include CHIPSEC
 Contact Us
 ----------
 
+For any questions or suggestions please contact us at: chipsec@intel.com
+
 Mailing lists:
 
  * CHIPSEC users: [chipsec-users](https://groups.google.com/forum/#!forum/chipsec-users)
@@ -41,3 +43,5 @@ Twitter:
 
  * For CHIPSEC release alerts: Follow us at [CHIPSEC Release](https://twitter.com/ChipsecR)
  * For general CHIPSEC info: Follow [CHIPSEC](https://twitter.com/Chipsec)
+
+For AMD related questions or suggestions please contact Gabriel Kerneis at: Gabriel.Kerneis@ssi.gouv.fr
