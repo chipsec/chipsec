@@ -60,6 +60,7 @@ class RegisterType:
     MSGBUS    = 'msgbus'
     MM_MSGBUS = 'mm_msgbus'
     MEMORY    = 'memory'
+    IMA       = 'indirect'
 
 
 
@@ -720,6 +721,23 @@ class Chipset:
                     reg_def['port'] = dev['port']
                 else:
                     logger().error("MM_MSGBUS device {} not found".format_dev_name)
+            elif reg_def["type"] == "indirect":
+                if dev_name in self.Cfg.IMA_REGISTERS:
+                    dev = self.Cfg.IMA_REGISTERS[dev_name]
+                    if ('base' in dev):
+                        reg_def['base'] = dev['base']
+                    else:
+                        reg_def['base'] = "0"
+                    if (dev['index'] in self.Cfg.REGISTERS):
+                        reg_def['index'] = dev['index']
+                    else:
+                        logger().error("Index register {} not found".format(dev['index']))
+                    if (dev['data'] in self.Cfg.REGISTERS):
+                        reg_def['data'] = dev['data']
+                    else:
+                        logger().error("Data register {} not found".format(dev['data']))
+                else:
+                    logger().error("Indirect access device {} not found".format(dev_name))
         return reg_def
 
     def get_register_bus(self, reg_name):
@@ -803,6 +821,9 @@ class Chipset:
                     reg_value = self.mem.read_physical_mem_qword(int(reg['address'], 16))
             elif reg['access'] == 'mmio':
                 reg_value = self.mmio.read_MMIO_reg(int(reg['address'], 16), int(reg['offset'], 16), int(reg['size'], 16))
+        elif RegisterType.IMA == rtype:
+            self.write_register(reg['index'], int(reg['offset'], 16) + int(reg['base'], 16))
+            reg_value = self.read_register(reg['data'])
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
 
@@ -875,6 +896,9 @@ class Chipset:
                 self.mem.write_physical_mem(int(reg['address'], 16), int(reg['size'], 16), reg_value)
             elif reg['access'] == 'mmio':
                 self.mmio.write_MMIO_reg(int(reg['address'], 16), int(reg['offset'], 16), reg_value, int(reg['size'], 16))
+        elif RegisterType.IMA == rtype:
+            self.write_register(reg['index'], int(reg['offset'], 16) + int(reg['base'], 16))
+            self.write_register(reg['data'], reg_value)
         else:
             raise RegisterTypeNotFoundError("Register type not found: {}".format(rtype))
         return True
@@ -1088,6 +1112,8 @@ class Chipset:
             reg_str = "[*] {} = {} << {} (I/O {} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'], 16))
         elif RegisterType.MSGBUS == rtype or RegisterType.MM_MSGBUS == rtype:
             reg_str = "[*] {} = {} << {} (msgbus port 0x{:X}, off 0x{:X})".format(reg_name, reg_val_str, reg['desc'], int(reg['port'], 16), int(reg['offset'], 16))
+        elif RegisterType.IMA == rtype:
+            reg_str = "[*] {} = {} << {} (indirect access via {}/{}, base 0x{:X}, off 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['index'], reg['data'], int(reg['base'], 16), int(reg['offset'], 16))
         else:
             reg_str = "[*] {} = {} << {}".format(reg_name, reg_val_str, reg['desc'])
 
@@ -1118,6 +1144,10 @@ class Chipset:
                 for bus in bus_data:
                     reg_val = self.read_register(reg_name, cpu_thread, bus)
                     reg_str += self.print_register(reg_name, reg_val, bus)
+        elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG, RegisterType.MMIO] and bus_data:
+            for bus in bus_data:
+                reg_val = self.read_register(reg_name, cpu_thread, bus)
+                reg_str += self.print_register(reg_name, reg_val, bus)
         else:
             reg_val = self.read_register(reg_name, cpu_thread)
             reg_str = self.print_register(reg_name, reg_val)
