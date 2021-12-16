@@ -13,6 +13,6 @@
 # F402 module level import not at top of file
 # H306 imports not in alphabetical order
 
-ignore = E201, E211, E262, E265, E266, E271, E272, E401, E402, E701, F402, H306
+ignore = E262, E266, E401
 max_line_length = 120
 exclude = docs, chipsec_tools, scripts
