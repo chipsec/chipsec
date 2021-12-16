@@ -26,14 +26,14 @@ Access to of PCI/PCIe device hierarchy
 - identifying PCI/PCIe devices MMIO and I/O ranges (BARs)
 
 usage:
-    >>> self.cs.pci.read_byte( 0, 0, 0, 0x88 )
-    >>> self.cs.pci.write_byte( 0, 0, 0, 0x88, 0x1A )
-    >>> self.cs.pci.enumerate_devices()
-    >>> self.cs.pci.enumerate_xroms()
-    >>> self.cs.pci.find_XROM( 2, 0, 0, True, True, 0xFED00000 )
-    >>> self.cs.pci.get_device_bars( 2, 0, 0 )
-    >>> self.cs.pci.get_DIDVID( 2, 0, 0 )
-    >>> self.cs.pci.is_enabled( 2, 0, 0 )
+    >>> pci.read_byte( 0, 0, 0, 0x88 )
+    >>> pci.write_byte( 0, 0, 0, 0x88, 0x1A )
+    >>> pci.enumerate_devices()
+    >>> pci.enumerate_xroms()
+    >>> pci.find_XROM( 2, 0, 0, True, True, 0xFED00000 )
+    >>> pci.get_device_bars( 2, 0, 0 )
+    >>> pci.get_DIDVID( 2, 0, 0 )
+    >>> pci.is_enabled( 2, 0, 0 )
 """
 
 import struct
@@ -77,7 +77,7 @@ PCI_HDR_BAR_IOMMIO_MASK    = 0x1
 PCI_HDR_BAR_IOMMIO_MMIO    = 0
 PCI_HDR_BAR_IOMMIO_IO      = 1
 
-PCI_HDR_BAR_TYPE_MASK      = (0x3<<1)
+PCI_HDR_BAR_TYPE_MASK      = (0x3 << 1)
 PCI_HDR_BAR_TYPE_SHIFT     = 1
 PCI_HDR_BAR_TYPE_64B       = 2
 PCI_HDR_BAR_TYPE_1MB       = 1
