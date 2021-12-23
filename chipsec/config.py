@@ -19,6 +19,7 @@
 #
 
 import os
+import re
 from chipsec.logger import logger
 import xml.etree.ElementTree as ET
 from chipsec.file import get_main_dir
@@ -42,13 +43,40 @@ class Cfg:
         self.REGISTERS     = {}
         self.XML_CONFIG_LOADED = False
 
-    def init_cfg_xml(self, fxml, code, pch_code, vid):
+    def _get_vid_from_filename(self, fname):
+        search_string = re.compile(r'cfg.[0-9a-fA-F]+')
+        match = search_string.search(fname)
+        vid = match.group(0)[4:]
+        return vid
+
+    def _update_bus_name(self, xml, vid):
+        if "did" in xml.attrib.keys():
+            for dv in list(xml.attrib['did'].split(',')):
+                if dv[-1].upper() == 'X':
+                    rdv = int(dv[:-1], 16) << 4   #  Assume valid hex value with last nibble removed
+                    for rdv_value in range(rdv, rdv + 0x10):
+                        if rdv_value in self.BUS[vid].keys():
+                            self.BUS[vid][xml.attrib['name']] = self.BUS[vid].pop(rdv_value)
+                elif '-' in dv:
+                    rdv = dv.split('-')
+                    for rdv_value in range(int(rdv[0], 16), int(rdv[1], 16) + 1):  #  Assume valid hex values
+                        if rdv_value in self.BUS[vid].keys():
+                            self.BUS[vid][xml.attrib['name']] = self.BUS[vid].pop(rdv_value)
+                else:
+                    if dv in self.BUS[vid].keys():
+                        self.BUS[vid][xml.attrib['name']] = self.BUS[vid].pop(dv)
+        else:
+            if "bus" in xml.attrib.keys():
+                self.BUS[vid][xml.attrib['name']] = [int(xml.attrib['bus'], 16)]
+
+    def init_cfg_xml(self, fxml, code, pch_code):
         if not os.path.exists(fxml):
             if logger().DEBUG:
                 logger().log("[*] Invalid File: '{}'..".format(fxml))
             return
         if logger().DEBUG:
             logger().log("[*] looking for platform config in '{}'..".format(fxml))
+        vid = self._get_vid_from_filename(fxml)
         tree = ET.parse(fxml)
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
@@ -70,6 +98,7 @@ class Cfg:
                 logger().log("[*] loading integrated devices/controllers..")
             for _pci in _cfg.iter('pci'):
                 for _device in _pci.iter('device'):
+                    self._update_bus_name(_device, vid)
                     _name = _device.attrib['name']
                     del _device.attrib['name']
                     _device.attrib['vid'] = vid
