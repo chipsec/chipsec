@@ -49,6 +49,23 @@ class Cfg:
         vid = match.group(0)[4:]
         return vid
 
+    def _create_vid(self, vid):
+        if vid not in self.CONFIG_PCI.keys():
+            self.CONFIG_PCI[vid]    = {}
+            self.CONTROLS[vid]      = {}
+            self.IMA_REGISTERS[vid] = {}
+            self.IO[vid]            = {}
+            self.IO_BARS[vid]       = {}
+            self.LOCKS[vid]         = {}
+            self.LOCKEDBY[vid]      = {}
+            self.MEMORY_RANGES[vid] = {}
+            self.MMIO_BARS[vid]     = {}
+            self.MSGBUS[vid]        = {}
+            self.MM_MSGBUS[vid]     = {}
+            self.REGISTERS[vid]     = {}
+            if vid not in self.BUS.keys():
+                self.BUS[vid] = {}  
+
     def _update_bus_name(self, xml, vid):
         if "did" in xml.attrib.keys():
             for dv in list(xml.attrib['did'].split(',')):
@@ -77,7 +94,8 @@ class Cfg:
         if logger().DEBUG:
             logger().log("[*] looking for platform config in '{}'..".format(fxml))
         vid = self._get_vid_from_filename(fxml)
-        tree = ET.parse(fxml)
+        self._create_vid(vid)
+        tree = ET.parse(fxml)  #put into try and except
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
@@ -101,8 +119,14 @@ class Cfg:
                     self._update_bus_name(_device, vid)
                     _name = _device.attrib['name']
                     del _device.attrib['name']
-                    _device.attrib['vid'] = vid
-                    self.CONFIG_PCI[_name] = _device.attrib
+                    if name not in self.CONFIG_PCI[vid].keys():
+                        self.CONFIG_PCI[vid][_name] = _device.attrib
+                        self.MMIO_BARS[vid][_name] = {}
+                        self.IO_BARS[vid][_name] = {}
+                        self.REGISTERS[vid][_name] = {}
+                    #_device.attrib['vid'] = vid
+                    else:
+                        self.CONFIG_PCI[vid][_name] = _device.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
@@ -114,7 +138,11 @@ class Cfg:
                 for _range in _memory.iter('range'):
                     _name = _range.attrib['name']
                     del _range.attrib['name']
-                    self.MEMORY_RANGES[_name] = _range.attrib
+                    if _name not in self.MEMORY_RANGES[vid].keys():
+                        self.MEMORY_RANGES[vid][_name] = _range.attrib
+                        self.REGISTERS[vid][_name] = {}
+                    else:
+                        self.MEMORY_RANGES[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _range.attrib))
                     if 'config' in _device.attrib.keys():
@@ -126,7 +154,11 @@ class Cfg:
                 for _device in _mm_msgbus.iter('definition'):
                     _name = _device.attrib['name']
                     del _device.attrib['name']
-                    self.MM_MSGBUS[_name] = _device.attrib
+                    if _name not in self.MM_MSGBUS[vid].keys():
+                        self.MM_MSGBUS[vid][_name] = _range.attrib
+                        self.REGISTERS[vid][_name] = {}
+                    else:
+                        self.MM_MSGBUS[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
                     if logger().DEBUG: logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
@@ -137,7 +169,11 @@ class Cfg:
                 for _device in _msgbus.iter('definition'):
                     _name = _device.attrib['name']
                     del _device.attrib['name']
-                    self.MSGBUS[_name] = _device.attrib
+                    if _name not in self.MSGBUS[vid].keys():
+                        self.MSGBUS[vid][_name] = _range.attrib
+                        self.REGISTERS[vid][_name] = {}
+                    else:
+                        self.MSGBUS[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
@@ -149,7 +185,11 @@ class Cfg:
                 for _device in _io.iter('definition'):
                     _name = _device.attrib['name']
                     del _device.attrib['name']
-                    self.IO[_name] = _device.attrib
+                    if _name not in self.IO[vid].keys():
+                        self.IO[vid][_name] = _range.attrib
+                        self.REGISTERS[vid][_name] = {}
+                    else:
+                        self.IO[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
@@ -161,7 +201,9 @@ class Cfg:
                 for _definition in _msr.iter('definition'):
                     _name = _definition.attrib['name']
                     del _definition.attrib['name']
-                    _definition.attrib['vid'] = vid
+                    #_definition.attrib['vid'] = vid
+                    if _name not in self.REGISTERS[vid].keys():
+                        self.REGISTERS[vid][_name] = {}
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _definition.attrib))
                     if 'config' in _definition.attrib.keys():
@@ -180,10 +222,14 @@ class Cfg:
                 logger().log("[*] loading MMIO BARs..")
             for _mmio in _cfg.iter('mmio'):
                 for _bar in _mmio.iter('bar'):
-                    _name = "{}.{}.{}".format(vid, name, _bar.attrib['name'])
-                    _bar.attrib['register'] = "{}.{}.{}".format(vid, name, _bar.attrib['register'])
+                    #_name = "{}.{}.{}".format(vid, name, _bar.attrib['name'])
+                    _name = _bar.attrib['name']
+                    #_bar.attrib['register'] = "{}.{}.{}".format(vid, name, _bar.attrib['register'])
                     del _bar.attrib['name']
-                    self.MMIO_BARS[_name] = _bar.attrib
+                    if _name not in self.MMIO_BARS[vid][name].keys():
+                        self.MMIO_BARS[vid][name][_name] = _bar.attrib
+                    else:
+                        self.MMIO_BARS[vid][name][_name] = _bar.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _bar.attrib))
 
@@ -191,10 +237,15 @@ class Cfg:
                 logger().log("[*] loading I/O BARs..")
             for _io in _cfg.iter('io'):
                 for _bar in _io.iter('bar'):
-                    _name = "{}.{}.{}".format(vid, name, _bar.attrib['name'])
+                    #_name = "{}.{}.{}".format(vid, name, _bar.attrib['name'])
+                    _name = _bar.attrib['name']
                     _bar.attrib['register'] = "{}.{}.{}".format(vid, name, _bar.attrib['register'])
                     del _bar.attrib['name']
-                    self.IO_BARS[_name] = _bar.attrib
+                    #self.IO_BARS[_name] = _bar.attrib
+                    if _name not in self.IO_BARS[vid][name].keys():
+                        self.IO_BARS[vid][name][_name] = _bar.attrib
+                    else:
+                        self.IO_BARS[vid][name][_name] = _bar.attrib
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _bar.attrib))
 
@@ -214,16 +265,17 @@ class Cfg:
                 logger().log("[*] loading configuration registers..")
             for _registers in _cfg.iter('registers'):
                 for _register in _registers.iter('register'):
-                    _name = "{}.{}.{}".format(vid, name, _register.attrib['name'])
+                    #_name = "{}.{}.{}".format(vid, name, _register.attrib['name'])
+                    _name = _register.attrib['name']
                     if 'desc' not in _register.attrib: _register.attrib['desc'] = _name
                     del _register.attrib['name']
                     if _register.attrib['type'] in ['pcicfg', 'mmcfg', 'mm_msg_bus']:
                         _register.attrib['device'] = name
                     elif _register.attrib['type'] in ['memory']:
                         _register.attrib['range'] = name
-                    elif _register.attrib['type'] in ['mmio']:
-                        _register.attrib['bar'] = "{}.{}.{}".format(vid, name, _register.attrib['bar'])
-                    if _name in self.REGISTERS and 'FIELDS' in self.REGISTERS[_name]:
+                    #elif _register.attrib['type'] in ['mmio']:
+                        #_register.attrib['bar'] = "{}.{}.{}".format(vid, name, _register.attrib['bar'])
+                    if 'FIELDS' in self.REGISTERS[vid][_name]:
                         reg_fields = self.REGISTERS[_name]['FIELDS']
                     else:
                         reg_fields = {}
@@ -231,21 +283,24 @@ class Cfg:
                         for _field in _register.iter('field'):
                             _field_name = _field.attrib['name']
                             if 'lockedby' in _field.attrib:
+                                # lockedby supplied is a different device
                                 if _field.attrib['lockedby'].count(".") == 3:
                                     _lockedby = _field.attrib['lockedby']
+                                # lockedby is within the same device
                                 elif _field.attrib['lockedby'].count(".") <= 1:
                                     _lockedby = "{}.{}.{}".format(vid, name, _field.attrib['lockedby'])
                                 else:
                                     raise CSConfigError("Invalid LockedBy register {}".format(_field.attrib['lockedby']))
-                                if _lockedby in self.LOCKEDBY.keys():
-                                    self.LOCKEDBY[_lockedby].append((_name, _field_name))
+                                if _lockedby in self.LOCKEDBY[vid].keys():
+                                    self.LOCKEDBY[vid][_lockedby].append((_name, _field_name))
                                 else:
-                                    self.LOCKEDBY[_lockedby] = [(_name, _field_name)]
+                                    self.LOCKEDBY[vid][_lockedby] = [(_name, _field_name)]
                             del _field.attrib['name']
-                            if 'desc' not in _field.attrib: _field.attrib['desc'] = _field_name
+                            if 'desc' not in _field.attrib:
+                                _field.attrib['desc'] = _field_name
                             reg_fields[_field_name] = _field.attrib
                         _register.attrib['FIELDS'] = reg_fields
-                    self.REGISTERS[_name] = _register.attrib
+                    self.REGISTERS[vid][_name] = _register.attrib
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _register.attrib))
 
@@ -256,7 +311,7 @@ class Cfg:
                     _name = _control.attrib['name']
                     del _control.attrib['name']
                     _control.attrib['register'] = "{}.{}.{}".format(vid, name, _control.attrib['register'])
-                    self.CONTROLS[_name] = _control.attrib
+                    self.CONTROLS[vid][_name] = _control.attrib
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _control.attrib))
 
@@ -271,6 +326,6 @@ class Cfg:
                     else:
                         _name = "{}".format(_lock.attrib['register'])
                     if "name" in _lock.attrib: del _lock.attrib['name']
-                    self.LOCKS[_name] = _lock.attrib
+                    self.LOCKS[vid][_name] = _lock.attrib
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _lock.attrib))
