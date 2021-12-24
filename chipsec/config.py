@@ -36,19 +36,6 @@ class Cfg:
         self.child_keys = ["MMIO_BARS", "IO_BARS", "IMA_REGISTERS", "REGISTERS", "CONTROLS", "LOCKS", "LOCKEDBY"]
         for key in self.parent_keys + self.child_keys:
             setattr(self, key, {})
-        # self.BUS           = {}
-        # self.CONFIG_PCI    = {}
-        # self.CONTROLS      = {}
-        # self.IMA_REGISTERS = {}
-        # self.IO            = {}
-        # self.IO_BARS       = {}
-        # self.LOCKS         = {}
-        # self.LOCKEDBY      = {}
-        # self.MEMORY_RANGES = {}
-        # self.MMIO_BARS     = {}
-        # self.MSGBUS        = {}
-        # self.MM_MSGBUS     = {}
-        # self.REGISTERS     = {}
 
     def _get_vid_from_filename(self, fname):
         search_string = re.compile(r'cfg.[0-9a-fA-F]+')
@@ -108,20 +95,6 @@ class Cfg:
             logger().log("[*] parser error within '{}'\n{}".format(fxml, pe))
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
-            # if 'platform' not in _cfg.attrib:
-            #     if logger().DEBUG:
-            #         logger().log("[*] loading common platform config from '{}'..".format(fxml))
-            # elif code == _cfg.attrib['platform'].lower():
-            #     if logger().DEBUG:
-            #         logger().log("[*] loading '{}' platform config from '{}'..".format(code, fxml))
-            #     if 'req_pch' in _cfg.attrib:
-            #         if 'true' == _cfg.attrib['req_pch'].lower():
-            #             self.reqs_pch = True
-            # elif pch_code == _cfg.attrib['platform'].lower():
-            #     if logger().DEBUG:
-            #         logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
-            # else: continue
-
             if logger().DEBUG:
                 logger().log("[*] loading integrated devices/controllers..")
             for _pci in _cfg.iter('pci'):
@@ -378,7 +351,7 @@ class Cfg:
 
     def is_device_defined(self, dev_name):
         vid, device, _, _ = self.get_scope(dev_name)
-        if self.CONFIG_PCI[vid].get(dev_name, None) is None:
+        if self.CONFIG_PCI[vid].get(device, None) is None:
             return False
         else:
             return True

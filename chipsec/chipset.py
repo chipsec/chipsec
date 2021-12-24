@@ -28,8 +28,7 @@ import xml.etree.ElementTree as ET
 
 from chipsec.helper.oshelper import OsHelper
 from chipsec.hal import cpu, cpuid, io, iobar, mmio, msgbus, msr, pci, physmem, ucode
-from chipsec.exceptions import UnknownChipsetError, CSReadError
-from chipsec.exceptions import RegisterTypeNotFoundError
+from chipsec.exceptions import UnknownChipsetError, CSReadError, RegisterTypeNotFoundError
 
 from chipsec.logger import logger
 from chipsec.defines import is_hex
@@ -40,7 +39,6 @@ import chipsec.file
 
 # DEBUG Flags
 QUIET_PCI_ENUM = True
-# LOAD_COMMON = False
 CONSISTENCY_CHECKING = True
 
 
@@ -89,13 +87,11 @@ class Chipset:
         self.rid = 0xFF
         self.code = CHIPSET_CODE_UNKNOWN
         self.longname = "Unrecognized Platform"
-        # self.id = CHIPSET_ID_UNKNOWN
         self.pch_vid = 0xFFFF
         self.pch_did = 0xFFFF
         self.pch_rid = 0xFF
         self.pch_code = CHIPSET_CODE_UNKNOWN
         self.pch_longname = 'Unrecognized PCH'
-        # self.pch_id = CHIPSET_ID_UNKNOWN
         self.reqs_pch = False
 
         # Initialize HAL artifacts
@@ -380,15 +376,6 @@ class Chipset:
     #
     ##################################################################################
 
-    # def get_device_BDF(self, device_name):
-    #     device = self.Cfg.CONFIG_PCI[device_name]
-    #     if device is None or device == {}:
-    #         raise DeviceNotFoundError('DeviceNotFound: {}'.format(device_name))
-    #     b = int(device['bus'], 16)
-    #     d = int(device['dev'], 16)
-    #     f = int(device['fun'], 16)
-    #     return (b, d, f)
-
     # def get_DeviceVendorID(self, device_name):
     #     (b, d, f) = self.Cfg.get_device_BDF(device_name)
     #     return self.pci.get_DIDVID(b, d, f)
@@ -464,123 +451,38 @@ class Chipset:
 #
 ##################################################################################
 
-    # def get_scope(self):
-    #     return self.scope
+    def get_scope(self):
+        return self.Cfg.get_scope()
 
-    # def set_scope(self, scope):
-    #     self.scope = scope
+    def set_scope(self, scope):
+        self.Cfg.set_scope(scope)
 
-    # def clear_scope(self):
-    #     self.scope = None
+    def clear_scope(self):
+        self.Cfg.clear_scope()
 
-    # def is_register_defined(self, reg_name):
-    #     try:
-    #         if self.scope is not None:
-    #             if not reg_name.startswith(self.scope):
-    #                 reg_name = "{}.{}".format(self.scope, reg_name)
-    #         return (self.Cfg.REGISTERS[reg_name] is not None)
-    #     except KeyError:
-    #         return False
+    def is_register_defined(self, regname):
+        return self.Cfg.is_register_defined(regname)
 
-    # def is_device_defined(self, dev_name):
-    #     if self.Cfg.CONFIG_PCI.get(dev_name, None) is None:
-    #         return False
-    #     else:
-    #         return True
+    def is_device_defined(self, dev_name):
+        return self.Cfg.is_device_defined(dev_name)
 
-    # def get_mmio_def(self, bar_name):
-    #     if self.scope is not None:
-    #         if not bar_name.startswith(self.scope):
-    #             bar_name = "{}.{}".format(self.scope, bar_name)
-    #     if bar_name in self.Cfg.MMIO_BARS:
-    #         return self.Cfg.MMIO_BARS[bar_name]
-    #     else:
-    #         return None
+    def get_mmio_def(self, bar_name):
+        return self.Cfg.get_mmio_def(bar_name)
 
-    # def get_io_def(self, bar_name):
-    #     if self.scope is not None:
-    #         if not bar_name.startswith(self.scope):
-    #             bar_name = "{}.{}".format(self.scope, bar_name)
-    #     if bar_name in self.Cfg.IO_BARS:
-    #         return self.Cfg.IO_BARS[bar_name]
-    #     else:
-    #         return None
+    def get_io_def(self, bar_name):
+        return self.Cfg.get_mmio_def(bar_name)
 
-    # def get_register_def(self, reg_name, bus_index=0):
-    #     if self.scope is not None:
-    #         if not reg_name.startswith(self.scope):
-    #             reg_name = "{}.{}".format(self.scope, reg_name)
-    #     reg_def = self.Cfg.REGISTERS[reg_name]
-    #     if "device" in reg_def:
-    #         dev_name = reg_def["device"]
-    #         if reg_def["type"] in ["pcicfg", "mmcfg"]:
-    #             if dev_name in self.Cfg.CONFIG_PCI:
-    #                 dev = self.Cfg.CONFIG_PCI[dev_name]
-    #                 reg_def['bus'] = dev['bus']
-    #                 reg_def['dev'] = dev['dev']
-    #                 reg_def['fun'] = dev['fun']
-    #                 if dev_name in self.Cfg.BUS:
-    #                     if bus_index < len(self.Cfg.BUS[dev_name]):
-    #                         reg_def['bus'] = self.Cfg.BUS[dev_name][bus_index]
-    #                     else:
-    #                         logger().error("Bus index {:d} for '{}' not found.".format(bus_index, dev_name))
-    #         elif reg_def["type"] == "memory":
-    #             if dev_name in self.Cfg.MEMORY_RANGES:
-    #                 dev = self.Cfg.MEMORY_RANGES[dev_name]
-    #                 reg_def['address'] = dev['address']
-    #                 reg_def['access'] = dev['access']
-    #             else:
-    #                 logger().error("Memory device {} not found".format(dev_name))
-    #         elif reg_def["type"] == "mm_msgbus":
-    #             if dev_name in self.Cfg.MM_MSGBUS:
-    #                 dev = self.Cfg.MM_MSGBUS[dev_name]
-    #                 reg_def['port'] = dev['port']
-    #             else:
-    #                 logger().error("MM_MSGBUS device {} not found".format_dev_name)
-    #         elif reg_def["type"] == "indirect":
-    #             if dev_name in self.Cfg.IMA_REGISTERS:
-    #                 dev = self.Cfg.IMA_REGISTERS[dev_name]
-    #                 if ('base' in dev):
-    #                     reg_def['base'] = dev['base']
-    #                 else:
-    #                     reg_def['base'] = "0"
-    #                 if (dev['index'] in self.Cfg.REGISTERS):
-    #                     reg_def['index'] = dev['index']
-    #                 else:
-    #                     logger().error("Index register {} not found".format(dev['index']))
-    #                 if (dev['data'] in self.Cfg.REGISTERS):
-    #                     reg_def['data'] = dev['data']
-    #                 else:
-    #                     logger().error("Data register {} not found".format(dev['data']))
-    #             else:
-    #                 logger().error("Indirect access device {} not found".format(dev_name))
-    #     return reg_def
+    def get_register_def(self, reg_name, bus=0):
+        return self.Cfg.get_register_def(reg_name, bus)
 
-    # def get_register_bus(self, reg_name):
-    #     if self.scope is not None:
-    #         if not reg_name.startswith(self.scope):
-    #             reg_name = "{}.{}".format(self.scope, reg_name)
-    #     device = self.Cfg.REGISTERS[reg_name].get('device', '')
-    #     if not device:
-    #         if reg_name.count(".") > 0:
-    #             device = reg_name.split('.')[1]
-    #     if not device:
-    #         if logger().DEBUG:
-    #             logger().warn("No device found for '{}'".format(reg_name))
-    #         if 'bus' in self.Cfg.REGISTERS[reg_name]:
-    #             return [int(self.Cfg.REGISTERS[reg_name]['bus'], 16)]
-    #         else:
-    #             return None
-    #     return self.get_device_bus(device)
+    def get_register_bus(self, reg_name):
+        return self.Cfg.get_register_bus(reg_name)
 
-    # def get_device_bus(self, dev_name):
-    #     bus = []
-    #     if self.is_device_defined(dev_name):
-    #         bus = [self.get_device_BDF(dev_name)[0]]
-    #     return self.Cfg.BUS.get(dev_name, bus)
+    def get_device_bus(self, dev_name):
+        return self.Cfg.get_device_bus(dev_name)
 
     def read_register(self, reg_name, cpu_thread=0, bus=None, do_check=True):
-        reg = self.Cfg.get_register_def(reg_name)
+        reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_value = 0
         if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
@@ -869,17 +771,8 @@ class Chipset:
         reg_values_new = self.set_register_field_all(reg_name, reg_values, field_name, field_value, preserve_field_position)
         return self.write_register_all(reg_name, reg_values_new, cpu_thread)
 
-    # def register_has_field(self, reg_name, field_name):
-    #     try:
-    #         if self.scope is not None:
-    #             if not reg_name.startswith(self.scope):
-    #                 reg_name = "{}.{}".format(self.scope, reg_name)
-    #         reg_def = self.get_register_def(reg_name)
-    #     except KeyError:
-    #         return False
-    #     if 'FIELDS' not in reg_def:
-    #         return False
-    #     return (field_name in reg_def['FIELDS'])
+    def register_has_field(self, reg_name, field_name):
+        return self.Cfg.register_has_field(reg_name, field_name)
 
     def register_has_all_fields(self, reg_name, field_list):
         ret = True
@@ -889,26 +782,26 @@ class Chipset:
                 break
         return ret
 
-    # def _register_fields_str(self, reg_def, reg_val):
-    #     reg_fields_str = ''
-    #     if 'FIELDS' in reg_def:
-    #         reg_fields_str += '\n'
-    #         # sort fields by their bit position in the register
-    #         sorted_fields = sorted(reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']))
-    #         for f in sorted_fields:
-    #             field_attrs = f[1]
-    #             field_bit = int(field_attrs['bit'])
-    #             field_size = int(field_attrs['size'])
-    #             field_mask = 0
-    #             for i in range(field_size):
-    #                 field_mask = (field_mask << 1) | 1
-    #             field_value = (reg_val >> field_bit) & field_mask
-    #             field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
-    #             reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit, f[0], field_value, field_desc))
+    def _register_fields_str(self, reg_def, reg_val):
+        reg_fields_str = ''
+        if 'FIELDS' in reg_def:
+            reg_fields_str += '\n'
+            # sort fields by their bit position in the register
+            sorted_fields = sorted(reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']))
+            for f in sorted_fields:
+                field_attrs = f[1]
+                field_bit = int(field_attrs['bit'])
+                field_size = int(field_attrs['size'])
+                field_mask = 0
+                for i in range(field_size):
+                    field_mask = (field_mask << 1) | 1
+                field_value = (reg_val >> field_bit) & field_mask
+                field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
+                reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit, f[0], field_value, field_desc))
 
-    #     if '' != reg_fields_str:
-    #         reg_fields_str = reg_fields_str[:-1]
-    #     return reg_fields_str
+        if '' != reg_fields_str:
+            reg_fields_str = reg_fields_str[:-1]
+        return reg_fields_str
 
     def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
         reg = self.get_register_def(reg_name, bus)
@@ -997,11 +890,8 @@ class Chipset:
         field = control['field']
         return self.write_register_field(reg, field, control_value, cpu_thread)
 
-    # def is_control_defined(self, control_name):
-    #     try:
-    #         return (self.Cfg.CONTROLS[control_name] is not None)
-    #     except KeyError:
-    #         return False
+    def is_control_defined(self, control_name):
+        return self.Cfg.is_control_defined(control_name)
 
     # def register_is_msr(self, reg_name):
     #     if self.is_register_defined(reg_name):
@@ -1051,26 +941,22 @@ class Chipset:
             reg_data = self.set_register_field(reg, reg_data, field, lock_value)
             return self.write_register(reg, reg_data, cpu_thread, bus)
 
-    # def is_lock_defined(self, lock_name):
-    #     return lock_name in self.Cfg.LOCKS.keys()
+    def is_lock_defined(self, lock_name):
+        return self.Cfg.is_lock_defined(lock_name)
 
     def get_locked_value(self, lock_name):
         if logger().DEBUG:
             logger().log('Retrieve value for lock {}'.format(lock_name))
         return int(self.Cfg.LOCKS[lock_name]['value'], 16)
 
-    # def get_lock_desc(self, lock_name):
-    #     return self.Cfg.LOCKS[lock_name]['desc']
+    def get_lock_desc(self, lock_name):
+        return self.Cfg.get_lock_desc(lock_name)
 
-    # def get_lock_type(self, lock_name):
-    #     if 'type' in self.Cfg.LOCKS[lock_name].keys():
-    #         mtype = self.Cfg.LOCKS[lock_name]['type']
-    #     else:
-    #         mtype = "RW/L"
-    #     return mtype
+    def get_lock_type(self, lock_name):
+        return self.Cfg.get_lock_type(lock_name)
 
-    # def get_lock_list(self):
-    #     return self.Cfg.LOCKS.keys()
+    def get_lock_list(self):
+        return self.Cfg.get_lock_list()
 
     def get_lock_mask(self, lock_name):
         lock = self.Cfg.LOCKS[lock_name]
@@ -1078,22 +964,14 @@ class Chipset:
         field = lock['field']
         return(self.get_register_field_mask(reg, field))
 
-    # def get_lockedby(self, lock_name):
-    #     if lock_name in self.Cfg.LOCKEDBY.keys():
-    #         return self.Cfg.LOCKEDBY[lock_name]
-    #     else:
-    #         return None
+    def get_lockedby(self, lock_name):
+        return self.Cfg.get_lockedby(lock_name)
 
     def is_all_value(self, reg_values, value):
         return all(n == value for n in reg_values)
 
-    # def get_IO_space(self, io_name):
-    #     if io_name in self.Cfg.IO_BARS.keys():
-    #         reg = self.Cfg.IO_BARS[io_name]["register"]
-    #         bf = self.Cfg.IO_BARS[io_name]["base_field"]
-    #         return (reg, bf)
-    #     else:
-    #         return None, None
+    def get_IO_space(self, io_name):
+        return self.Cfg.get_IO_space(io_name)
 
 
 _chipset = None
