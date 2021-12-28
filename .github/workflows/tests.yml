@@ -32,7 +32,6 @@ jobs:
           - {name: "debian", tag: "10"}
           - {name: "debian", tag: "9"}
           - {name: "debian", tag: "8"}
-          - {name: "ubuntu", tag: "20.10"}
           - {name: "ubuntu", tag: "20.04"}
           - {name: "ubuntu", tag: "18.04"}
           - {name: "ubuntu", tag: "16.04"}
