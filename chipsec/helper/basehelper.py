@@ -19,6 +19,7 @@
 #
 from chipsec.logger import logger
 
+
 # Base class for the helpers
 class Helper(object):
     class __metaclass__(type):
@@ -65,41 +66,39 @@ class Helper(object):
     #
     # Read/Write PCI configuration registers via legacy CF8/CFC ports
     #
-    def read_pci_reg( self, bus, device, function, address, size ):
+    def read_pci_reg(self, bus, device, function, address, size):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
         raise NotImplementedError()
 
-
-    def write_pci_reg( self, bus, device, function, address, value, size ):
+    def write_pci_reg(self, bus, device, function, address, value, size):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
         raise NotImplementedError()
-
 
     #
     # read/write mmio
     #
-    def read_mmio_reg( self, phys_address, size ):
+    def read_mmio_reg(self, bar_base, size, offset=0, bar_size=None):
         raise NotImplementedError()
 
-    def write_mmio_reg( self, phys_address, size, value ):
+    def write_mmio_reg(self, bar_base, size, value, offset=0, bar_size=None):
         raise NotImplementedError()
 
     #
     # physical_address is 64 bit integer
     #
-    def read_phys_mem( self, phys_address_hi, phys_address_lo, length ):
+    def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         raise NotImplementedError()
 
-    def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
+    def write_phys_mem(self, phys_address_hi, phys_address_lo, length, buf):
         raise NotImplementedError()
 
-    def alloc_phys_mem( self, length, max_phys_address ):
+    def alloc_phys_mem(self, length, max_phys_address):
         raise NotImplementedError()
 
     def free_phys_mem(self, physical_address):
         raise NotImplementedError()
 
-    def va2pa( self, va ):
+    def va2pa(self, va):
         raise NotImplementedError()
 
     def map_io_space(self, physical_address, length, cache_type):
@@ -108,10 +107,10 @@ class Helper(object):
     #
     # Read/Write I/O portline 462,
     #
-    def read_io_port( self, io_port, size ):
+    def read_io_port(self, io_port, size):
         raise NotImplementedError()
 
-    def write_io_port( self, io_port, value, size ):
+    def write_io_port(self, io_port, value, size):
         raise NotImplementedError()
 
     #
@@ -126,22 +125,22 @@ class Helper(object):
     #
     # Read/Write MSR on a specific CPU thread
     #
-    def read_msr( self, cpu_thread_id, msr_addr ):
+    def read_msr(self, cpu_thread_id, msr_addr):
         raise NotImplementedError()
 
-    def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
+    def write_msr(self, cpu_thread_id, msr_addr, eax, edx):
         raise NotImplementedError()
 
     #
     # Load CPU microcode update on a specific CPU thread
     #
-    def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
+    def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
         raise NotImplementedError()
 
     #
     # Read IDTR/GDTR/LDTR on a specific CPU thread
     #
-    def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
+    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         raise NotImplementedError()
 
     #
@@ -150,16 +149,16 @@ class Helper(object):
     def EFI_supported(self):
         raise NotImplementedError()
 
-    def get_EFI_variable( self, name, guid ):
+    def get_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
-    def set_EFI_variable( self, name, guid, data, datasize=None, attrs=None ):
+    def set_EFI_variable(self, name, guid, data, datasize=None, attrs=None):
         raise NotImplementedError()
 
-    def delete_EFI_variable( self, name, guid ):
+    def delete_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
-    def list_EFI_variables( self ):
+    def list_EFI_variables(self):
         raise NotImplementedError()
 
     #
@@ -168,58 +167,58 @@ class Helper(object):
     def get_ACPI_SDT(self):
         raise NotImplementedError()
 
-    def get_ACPI_table( self, table_name ):
+    def get_ACPI_table(self, table_name):
         raise NotImplementedError()
 
     #
     # CPUID
     #
-    def cpuid( self, eax, ecx ):
+    def cpuid(self, eax, ecx):
         raise NotImplementedError()
 
     #
     # IOSF Message Bus access
     #
-    def msgbus_send_read_message( self, mcr, mcrx ):
+    def msgbus_send_read_message(self, mcr, mcrx):
         raise NotImplementedError()
 
-    def msgbus_send_write_message( self, mcr, mcrx, mdr ):
+    def msgbus_send_write_message(self, mcr, mcrx, mdr):
         raise NotImplementedError()
 
-    def msgbus_send_message( self, mcr, mcrx, mdr ):
+    def msgbus_send_message(self, mcr, mcrx, mdr):
         raise NotImplementedError()
 
     #
     # Affinity
     #
-    def get_affinity( self ):
+    def get_affinity(self):
         raise NotImplementedError()
 
-    def set_affinity( self, value ):
+    def set_affinity(self, value):
         raise NotImplementedError()
 
     #
     # Logical CPU count
     #
-    def get_threads_count( self ):
+    def get_threads_count(self):
         raise NotImplementedError()
 
     #
     # Send SW SMI
     #
-    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
+    def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
         raise NotImplementedError()
 
     #
     # Hypercall
     #
-    def hypercall( self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0 ):
+    def hypercall(self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0):
         raise NotImplementedError()
 
     #
     # File system
     #
-    def getcwd( self ):
+    def getcwd(self):
         raise NotImplementedError()
 
     #

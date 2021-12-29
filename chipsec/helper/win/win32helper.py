@@ -538,7 +538,8 @@ class Win32Helper(Helper):
         raise UnimplementedNativeAPIError( "native_write_phys_mem" )
 
     # @TODO: Temporarily the same as read_phys_mem for compatibility
-    def read_mmio_reg( self, phys_address, size ):
+    def read_mmio_reg( self, bar_base, size, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         out_size = size
         logger().log_debug("[helper] -> read_mmio_reg( phys_address=0x{:X}, size={} )".format(phys_address, size))
         in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
@@ -554,7 +555,8 @@ class Win32Helper(Helper):
         else: value = 0
         return value
 
-    def write_mmio_reg( self, phys_address, size, value ):
+    def write_mmio_reg( self, bar_base, size, value, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         if   size == 8: buf = struct.pack( '=Q', value )
         elif size == 4: buf = struct.pack( '=I', value&0xFFFFFFFF )
         elif size == 2: buf = struct.pack( '=H', value&0xFFFF )

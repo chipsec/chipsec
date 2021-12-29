@@ -166,13 +166,13 @@ class OsHelper:
     # read/write mmio
     #
     def read_mmio_reg(self, bar_base, size, offset=0, bar_size=None):
-        ret = self.helper.read_mmio_reg(bar_base + offset, size)
+        ret = self.helper.read_mmio_reg(bar_base, size, offset, bar_size)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_mmio_reg", (bar_base + offset, size), ret)
         return ret
 
     def write_mmio_reg(self, bar_base, size, value, offset=0, bar_size=None):
-        ret = self.helper.write_mmio_reg(bar_base + offset, size, value)
+        ret = self.helper.write_mmio_reg(bar_base, size, value, offset, bar_size)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_mmio_reg", (bar_base + offset, size, value), ret)
         return ret

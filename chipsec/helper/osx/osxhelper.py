@@ -182,13 +182,15 @@ class OSXHelper(Helper):
         except IOError:
             logger().log_debug("IOError")
 
-    def read_mmio_reg(self, phys_address, size):
+    def read_mmio_reg(self, bar_base, size, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         data = struct.pack(_mmio_msg_t_fmt, phys_address, 0, size)
         ret = self.ioctl(IOCTL_RDMMIO, data)
         x = struct.unpack(_mmio_msg_t_fmt, ret)
         return x[1]
 
-    def write_mmio_reg(self, phys_address, size, value):
+    def write_mmio_reg(self, bar_base, size, value, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         data = struct.pack(_mmio_msg_t_fmt, phys_address, value, size)
         ret = self.ioctl(IOCTL_WRMMIO, data)
 

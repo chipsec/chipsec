@@ -136,7 +136,8 @@ class EfiHelper(Helper):
     def map_io_space(self, physical_address, length, cache_type):
         return self.pa2va(physical_address)
 
-    def read_mmio_reg(self, phys_address, size):
+    def read_mmio_reg(self, bar_base, size, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         phys_address_lo = phys_address & 0xFFFFFFFF
         phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
         out_buf = edk2.readmem(phys_address_lo, phys_address_hi, size)
@@ -151,7 +152,8 @@ class EfiHelper(Helper):
         else: value = 0
         return value
 
-    def write_mmio_reg(self, phys_address, size, value):
+    def write_mmio_reg(self, bar_base, size, value, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         phys_address_lo = phys_address & 0xFFFFFFFF
         phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
         if size == 4:
