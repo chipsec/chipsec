@@ -491,13 +491,15 @@ class LinuxHelper(Helper):
         out_buf = self.ioctl(IOCTL_FREE_PHYSMEM, in_buf)
         return struct.unpack("1" + self._pack, out_buf)[0]
 
-    def read_mmio_reg(self, phys_address, size):
+    def read_mmio_reg(self, bar_base, size, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         in_buf = struct.pack("2" + self._pack, phys_address, size)
         out_buf = self.ioctl(IOCTL_RDMMIO, in_buf)
         reg = out_buf[:size]
         return defines.unpack1(reg, size)
 
-    def write_mmio_reg(self, phys_address, size, value):
+    def write_mmio_reg(self, bar_base, size, value, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         in_buf = struct.pack("3" + self._pack, phys_address, size, value)
         out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
 

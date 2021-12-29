@@ -133,11 +133,11 @@ class FileHelper(Helper):
     #
     # read/write mmio
     #
-    def read_mmio_reg( self, phys_address, size ):
-        return self.filecmds.getElement("read_mmio_reg", (phys_address, size))
+    def read_mmio_reg( self, bar_base, size, offset=0, bar_size=None ):
+        return self.filecmds.getElement("read_mmio_reg", (bar_base, size, offset, bar_size))
 
-    def write_mmio_reg( self, phys_address, size, value ):
-        return self.filecmds.getElement("write_mmio_reg", (phys_address, size, value))
+    def write_mmio_reg( self,  bar_base, size, value, offset=0, bar_size=None ):
+        return self.filecmds.getElement("write_mmio_reg", (bar_base, size, value, offset, bar_size))
 
     #
     # physical_address is 64 bit integer

@@ -349,7 +349,7 @@ class LinuxNativeHelper(Helper):
     def free_phys_mem(self, physmem):
         raise UnimplementedAPIError("free_phys_mem")
 
-    def read_mmio_reg(self, bar_base, bar_size, offset, size):
+    def read_mmio_reg(self, bar_base, size, offset, bar_size):
         if bar_size is None or bar_size < offset:
             bar_size = offset + size
         if self.devmem_available():
@@ -368,7 +368,7 @@ class LinuxNativeHelper(Helper):
             reg = region_dw[offset_in_region]
             return reg
 
-    def write_mmio_reg(self, bar_base, bar_size, offset, size, value):
+    def write_mmio_reg(self, bar_base, size, value, offset, bar_size):
         if bar_size is None:
             bar_size = offset + size
         if self.devmem_available():

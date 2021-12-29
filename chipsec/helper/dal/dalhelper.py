@@ -341,7 +341,8 @@ class DALHelper(Helper):
     def map_io_space(self, physical_address, length, cache_type):
         return physical_address
 
-    def read_mmio_reg(self, phys_address, size):
+    def read_mmio_reg(self, bar_base, size, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         out_buf = self.read_physical_mem( phys_address, size )
         if size == 8:
             value = struct.unpack( '=Q', out_buf[:size] )[0]
@@ -354,7 +355,8 @@ class DALHelper(Helper):
         else: value = 0
         return value
 
-    def write_mmio_reg(self, phys_address, size, value):
+    def write_mmio_reg(self, bar_base, size, value, offset=0, bar_size=None):
+        phys_address = bar_base + offset
         if size == 8:
             buf = struct.pack( '=Q', value )
         elif size == 4:
