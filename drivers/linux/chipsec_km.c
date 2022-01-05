@@ -73,19 +73,20 @@ DEFINE_STATIC_CALL(chipsec_page_is_ram_sc, chipsec_page_is_ram_scinit);
 static int (*guess_page_is_ram)(unsigned long pagenr);
 static int chipsec_page_is_ram(unsigned long pagenr);
 // same with phys_mem_accesss_prot
+static
 pgprot_t (*guess_phys_mem_access_prot)(struct file *file, unsigned long pfn,
 				       unsigned long size, pgprot_t vma_prot);
 
-unsigned long a1=0;
-unsigned long a2=0;
+static unsigned long a1;
+static unsigned long a2;
 module_param(a1,ulong,0); //a1 is addr of page_is_ram function
 module_param(a2,ulong,0); //a2 is addr of phys_mem_access_prot function
 
 /// Char we show before each debug print
-const char program_name[] = "chipsec";
+static const char program_name[] = "chipsec";
 
 // list of allocated memory
-struct allocated_mem_list allocated_mem_list;
+static struct allocated_mem_list allocated_mem_list;
 
 typedef struct tagCONTEXT {
    unsigned long a;   // rax - 0x00; eax - 0x0
@@ -1945,7 +1946,7 @@ static int chipsec_page_is_ram(unsigned long pagenr)
 
 #endif
 
-int find_symbols(void)
+static int find_symbols(void)
 {
 	//Older kernels don't have kallsyms_lookup_name. Use FMEM method (pass from run.sh)
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,33)
