@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+#Copyright (c) 2010-2022, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -196,6 +196,10 @@ def is_printable(seq):
 
 def is_hex(maybe_hex):
     return all(char in string.hexdigits for char in maybe_hex)
+
+def is_all_ones(value, size, width=8):
+    mask = (1<<(size * width)) - 1
+    return (mask == (mask & value))
 
 def get_message():
     msg_str = ""
