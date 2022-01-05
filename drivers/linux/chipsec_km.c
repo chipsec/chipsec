@@ -1548,10 +1548,14 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		}
 
-        addr = (unsigned long)ptr[0];
-        ioaddr = my_xlate_dev_mem_ptr(addr);
-        
-        switch(ptr[1])
+		addr = (unsigned long)ptr[0];
+		ioaddr = my_xlate_dev_mem_ptr(addr);
+		if (!ioaddr) {
+			printk(KERN_ALERT "[chipsec] ERROR: failed to xlate 0x%lx\n", addr);
+			return -EIO;
+		}
+
+		switch(ptr[1])
 		{
 			case 1:
 				ptr[0] = ioread8(ioaddr);
@@ -1591,11 +1595,15 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 			return -EFAULT;
 		}
 
-        addr = (unsigned long)ptr[0];
-        value = (unsigned long)ptr[2];
-        ioaddr = my_xlate_dev_mem_ptr(addr);
-        
-        switch(ptr[1])
+		addr = (unsigned long)ptr[0];
+		value = (unsigned long)ptr[2];
+		ioaddr = my_xlate_dev_mem_ptr(addr);
+		if (!ioaddr) {
+			printk(KERN_ALERT "[chipsec] ERROR: failed to xlate 0x%lx\n", addr);
+			return -EIO;
+		}
+
+		switch(ptr[1])
 		{
 			case 1:
 				iowrite8(value, ioaddr);
