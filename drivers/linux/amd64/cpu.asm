@@ -369,26 +369,15 @@ SendAPMSMI:
     pop rax
     ret
 
-setctx:
-        xchg rcx, [rdi]
-        xchg rdx, [rdi+0x8]
-        xchg r8,  [rdi+0x10]
-        xchg r9,  [rdi+0x18]
-        xchg r10, [rdi+0x20]
-        xchg r11, [rdi+0x28]
-        xchg r12, [rdi+0x30]
-        ret
-
-
 ;------------------------------------------------------------------------------
-;This function has one argument: SMI_CTX structure which contain 7 regs: rcx, rdx, r8, r9, r10, r11, r12:
-;    unsigned int	smi_code_data	// rcx
-;    IN   UINT64	rax_value	// rdx
-;    IN   UINT64	rbx_value	// r8
-;    IN   UINT64	rcx_value	// r9
-;    IN   UINT64	rdx_value	// r10
-;    IN   UINT64	rsi_value	// r11
-;    IN   UINT64	rdi_value	// r12
+;This function has one argument: SMI_CTX structure pointer which contain SMI code and data values and 6 regs: rax, rbx, rcx, rdx, rsi, rdi:
+;    IN       UINT64	smi_code_data (only lower 16 bit used)
+;    IN/OUT   UINT64	rax_value
+;    IN/OUT   UINT64	rbx_value
+;    IN/OUT   UINT64	rcx_value
+;    IN/OUT   UINT64	rdx_value
+;    IN/OUT   UINT64	rsi_value
+;    IN/OUT   UINT64	rdi_value
 ;------------------------------------------------------------------------------
 ;  void
 ; __swsmi__ (
@@ -396,46 +385,37 @@ setctx:
 ;    )
 ;------------------------------------------------------------------------------
 __swsmi__:
-
-    call setctx
-
-    push rsi
-    push rbx
+    mov  r10, rdi
 
     ; setting up GPR (arguments) to SMI handler call
     ; notes:
-    ;   RAX will get partially overwritten (AX) by _smi_code_data (which is passed in RCX)
-    ;   RDX will get partially overwritten (DX) by the value of APMC port (= 0x00B2)
-    mov rax, rdx ; rax_value
-    mov ax, cx   ; smi_code_data
-    mov rdx, r10 ; rdx_value
+    ;   RAX will get partially overwritten (AX) by smi_code_data
+    xchg rax, [r10+08h]  ; rax_value (partially overwritten with smi_code_data)
+    mov  ax,  [r10+0h]   ; smi_code_data
+    xchg rbx, [r10+010h] ; rbx_value
+    xchg rcx, [r10+018h] ; rcx_value
+    xchg rdx, [r10+020h] ; rdx_value
+    xchg rsi, [r10+028h] ; rsi_value
+    xchg rdi, [r10+030h] ; rdi_value
 
-    mov rbx, r8  ; rbx_value
-    mov rcx, r9  ; rcx_value
-    mov rsi, r11 ; rsi_value
-
-    push rdi
-
-    mov rdi, r12 ; rdi_value
-
-    ; these OUT instructions will write BYTE value (smi_code_data) to port 0xB3 then port 0xB3 (SW SMI control and data ports)
-    ; the writes need to be broken up as some systems will drop the interrupt if the port size is larger than a BYTE
+    ; Output smi_code_data split up to their designated ports, SW SMI data
+    ; (0xB3) and SW SMI control (0xB2), respectively.
+    ;
+    ; Resist from outputting both at once as a single word, as some systems
+    ; reject the request if the i/o spans more than a byte, e.g.:
+    ; https://github.com/tianocore/edk2-platforms/blob/aa3f6fd542e99dde4206537b095f1a2201275e75/Silicon/Intel/CoffeelakeSiliconPkg/Pch/PchSmiDispatcher/Smm/PchSmmSw.c#L314
     ror ax, 8
     out 0B3h, al
     ror ax, 8
     out 0B2h, al
 
-    mov r12, rdi ; rdi_value
-    pop rdi
-
-    mov r9, rcx  ; rcx_value
-    mov r8, rbx  ; rbx_value
-    mov r10, rdx ; rdx_value
-    mov rdx, rax ; rax_value
-    call setctx
-
-    pop rbx
-    pop rsi
+    ; some SMI handlers return data/errorcode in GPRs, need to return this to the caller
+    xchg rax, [r10+08h]  ; rax_value
+    xchg rbx, [r10+010h] ; rbx_value
+    xchg rcx, [r10+018h] ; rcx_value
+    xchg rdx, [r10+020h] ; rdx_value
+    xchg rsi, [r10+028h] ; rsi_value
+    xchg rdi, [r10+030h] ; rdi_value
 
     ret
 
