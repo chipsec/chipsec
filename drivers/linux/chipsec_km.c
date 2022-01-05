@@ -19,6 +19,11 @@ Contact information:
 chipsec@intel.com
 */
 
+/* grsecurity compatibility: prevent sprint_symbol() from becoming a no-op */
+#if defined(CONFIG_KALLSYMS) && defined(CONFIG_GRKERNSEC_HIDESYM)
+#define __INCLUDED_BY_HIDESYM 1
+#endif
+
 #include <linux/module.h>
 #include <linux/highmem.h>
 #include <linux/kallsyms.h>
