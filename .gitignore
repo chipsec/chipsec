@@ -8,6 +8,15 @@ chipsec.egg-info
 dist
 build
 
+# Linux driver
+chipsec/helper/linux/*.ko
+drivers/linux/**/.*.cmd
+drivers/linux/*.ko
+drivers/linux/*.mod
+drivers/linux/*.mod.c
+drivers/linux/Module.symvers
+drivers/linux/modules.order
+
 # Windows driver
 .vs/
 chipsec/helper/win/win7_amd64/
