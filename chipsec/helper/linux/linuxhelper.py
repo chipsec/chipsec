@@ -118,6 +118,7 @@ class LinuxHelper(Helper):
         self.dev_mem = None
         self.dev_port = None
         self.dev_msr = None
+        self.module_loaded = False
 
         # A list of all the mappings allocated via map_io_space. When using
         # read/write MMIO, if the region is already mapped in the process's
@@ -139,6 +140,11 @@ class LinuxHelper(Helper):
 
     # This function load CHIPSEC driver
     def load_chipsec_module(self):
+        if os.path.exists(self.DEVICE_NAME):
+            if logger().DEBUG:
+                logger().log("Module for {} already loaded".format(self.DEVICE_NAME))
+            return
+
         page_is_ram = ""
         phys_mem_access_prot = ""
         a1 = ""
@@ -173,6 +179,7 @@ class LinuxHelper(Helper):
                         raise Exception("Cannot find chipsec.ko module")
         try:
             subprocess.check_output( [ "insmod", driver_path, a1, a2 ] )
+            self.module_loaded = True
         except Exception as err:
             raise Exception("Could not start Linux Helper, are you running as Admin/root?\n\t{}".format(err))
         uid = gid = 0
@@ -185,6 +192,12 @@ class LinuxHelper(Helper):
             logger().error( "Fail to load module: {}".format(driver_path) )
         self.driverpath = driver_path
 
+    def unload_chipsec_module(self):
+        if self.module_loaded:
+            subprocess.call(["rmmod", self.MODULE_NAME])
+            self.module_loaded = False
+            if logger().DEBUG:
+                logger().log("Module for {} unloaded successfully".format(self.DEVICE_NAME))
 
     def create(self, start_driver):
         if logger().DEBUG:
@@ -193,8 +206,6 @@ class LinuxHelper(Helper):
 
     def start(self, start_driver, driver_exists=False):
         if start_driver:
-            if os.path.exists(self.DEVICE_NAME):
-                subprocess.call(["rmmod", self.MODULE_NAME])
             self.load_chipsec_module()
         self.init(start_driver)
         if logger().DEBUG:
@@ -203,8 +214,7 @@ class LinuxHelper(Helper):
 
     def stop(self, start_driver):
         self.close()
-        if self.driver_loaded:
-            subprocess.call(["rmmod", self.MODULE_NAME])
+        self.unload_chipsec_module()
         if logger().DEBUG:
             logger().log("[helper] Linux Helper stopped/unloaded")
         return True
