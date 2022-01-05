@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+#Copyright (c) 2010-2022, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -42,9 +42,10 @@ import itertools
 
 from chipsec import defines
 from chipsec.logger import logger, pretty_print_hex_buffer
-from chipsec.file import write_file
-from chipsec.hal.pcidb import VENDORS, DEVICES
+from chipsec.file   import write_file
+from chipsec.hal.pcidb  import VENDORS, DEVICES
 from chipsec.exceptions import OsHelperError
+from chipsec.defines    import is_all_ones
 
 #
 # PCI configuration header registers
@@ -466,6 +467,6 @@ class Pci:
 
     def is_enabled( self, bus, dev, fun ):
         (did, vid) = self.get_DIDVID( bus, dev, fun )
-        if (0xFFFF == vid) or (0xFFFF == did):
+        if (is_all_ones(vid,2)) or (is_all_ones(did,2)):
             return False
         return True

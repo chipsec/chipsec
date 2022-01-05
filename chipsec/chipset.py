@@ -1,5 +1,5 @@
 #CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+#Copyright (c) 2010-2022, Intel Corporation
 #
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -36,7 +36,7 @@ from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadE
 from chipsec.exceptions import RegisterTypeNotFoundError
 
 from chipsec.logger import logger
-from chipsec.defines import is_hex
+from chipsec.defines import is_hex, is_all_ones
 
 import chipsec.file
 
@@ -1273,6 +1273,17 @@ class Chipset:
         else:
             return None, None
 
+    def is_register_all_ffs(self, reg_name, value):
+        if self.register_is_msr(reg_name):
+            size = 8
+        else:
+            size = self.get_register_def(reg_name)['size']
+        return is_all_ones(value, size)
+
+    def is_field_all_ones(self, reg_name, field_name, value):
+        reg_def = self.get_register_def(reg_name)
+        size    = reg_def['FIELDS'][field_name]['size']
+        return is_all_ones(value, size, 1)
 
 _chipset = None
 
