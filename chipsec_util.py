@@ -1,6 +1,6 @@
-# !/usr/bin/env python3
-# CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+#!/usr/bin/env python3
+#CHIPSEC: Platform Security Assessment Framework
+#Copyright (c) 2010-2022, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -100,14 +100,18 @@ class ChipsecUtil:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
+            logger().setlevel("verbose")
         if self.hal:
-            logger().HAL = True
+            logger().HAL     = True
+            logger().setlevel("hal")
         if self.debug:
-            logger().DEBUG = True
+            logger().DEBUG   = True
+            logger().setlevel("debug")
         if self.vverbose:
             logger().VERBOSE = True
-            logger().HAL = True
-            logger().DEBUG = True
+            logger().HAL     = True
+            logger().DEBUG   = True
+            logger().setlevel("debug")
         if self.log:
             logger().set_log_file(self.log)
         if not self._cmd_args:
