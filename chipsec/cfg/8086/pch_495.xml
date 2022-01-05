@@ -300,6 +300,7 @@ XML configuration file for the 495 series PCH
     <control name="TopSwap"                register="BC"          field="TSS"       desc="Top Swap Status"/>
     <control name="SpiWriteStatusDis"      register="HSFS"        field="WRSDIS"    desc="Write Status Disable"/>
     <control name="SMILock"                register="GEN_PMCON_2" field="SMI_LOCK"  desc="SMI Global Configuration Lock"/>
+    <control name="TcoCtlLock"             register="TCOCTL"      field="TCO_BASE_LOCK"  desc="TCO Base Lock"/>
   </controls>
 
 </configuration>
