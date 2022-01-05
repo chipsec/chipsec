@@ -1855,12 +1855,19 @@ static unsigned long chipsec_lookup_name_scinit(const char *name)
 
 	// brute force by doing a symbolic search via sprint_symbol
 	if (!chipsec_lookup_name_fp) {
-		char name[KSYM_SYMBOL_LEN];
-		unsigned long start = (unsigned long) sprint_symbol;
-		unsigned long end = start - 32 * 1024;
+		char name[KSYM_NAME_LEN];
+		unsigned long search_range = 32 * 1024;	// covers all of kallsyms.o
+		unsigned long start = (unsigned long) sprint_symbol + search_range;
+		unsigned long end = start - 2 * search_range;
 		unsigned long addr, offset;
 		char *off_ptr;
 
+		/* gcc's -freorder-functions, which is enabled by default at -O2 / -Os
+		 * may put kallsyms_lookup_name() after sprint_symbol(). So we have to
+		 * search in both directions.
+		 *
+		 * Do it top down to start with a valid kernel .text address for sure.
+		 */
 		for (addr = start; addr > end; addr--) {
 			if (sprint_symbol(name, addr) <= 0)
 				break;
