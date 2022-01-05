@@ -1231,7 +1231,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         if( !va )
         {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-            return -EFAULT;
+            return -ENOMEM;
         }
          
         memset(va, 0, NumberOfBytes);
@@ -1245,7 +1245,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         tmp = kmalloc(sizeof(struct allocated_mem_list), GFP_KERNEL);
         if (tmp == NULL) {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n");
-            return -EFAULT;
+            kfree(va);
+            return -ENOMEM;
         }
 
         tmp->va = va;
