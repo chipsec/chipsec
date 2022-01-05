@@ -93,13 +93,13 @@ typedef CONTEXT CPUID_CTX, *PCPUID_CTX;
   void __cpuid__(CPUID_CTX * ctx);
 
 typedef struct tagSMI_CONTEXT {
-   unsigned long c;     // rcx - 0x00;
-   unsigned long d;     // rdx - 0x08;
-   unsigned long r8;     // r8 - 0x10;
-   unsigned long r9;     // r9 - 0x18;
-   unsigned long r10;   // r10 - 0x20;
-   unsigned long r11;   // r11 - 0x28;
-   unsigned long r12;   // r12 - 0x30;
+   unsigned long smi_code_data; // smi_code_data - 0x00;
+   unsigned long rax;           // rax - 0x08; eax - 0x04
+   unsigned long rbx;           // rbx - 0x10; ebx - 0x08
+   unsigned long rcx;           // rcx - 0x18; ecx - 0x0c
+   unsigned long rdx;           // rdx - 0x20; edx - 0x10
+   unsigned long rsi;           // rsi - 0x28; edi - 0x14
+   unsigned long rdi;           // rdi - 0x30; esi - 0x18
 } SMI_CONTEXT, *SMI_PCONTEXT;
 
 typedef SMI_CONTEXT SMI_CTX, *PSMI_CTX; 
