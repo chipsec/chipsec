@@ -279,8 +279,7 @@ class EfiHelper(Helper):
         if datasize is None: datasize = len(data)
         if attrs is None:
             attrs=0x07
-            if logger().VERBOSE:
-                logger().log_warning("Setting attributes to: {:04X}".format(attrs))
+            logger().log_verbose("Setting attributes to: {:04X}".format(attrs))
 
         (Status, datasize, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), data, datasize)
 
@@ -334,12 +333,12 @@ class EfiHelper(Helper):
             (status, data, attr) = self.get_EFI_variable_full(name, guidstr)
 
             if status:
-                logger().verbose_log('[helper] Error reading variable {}.  Status = {:d} - {}'.format(name, status, status_dict[status]))
+                logger().log_verbose('[helper] Error reading variable {}.  Status = {:d} - {}'.format(name, status, status_dict[status]))
 
             var_data = (off, buf, hdr, data, guidstr, attr)
 
             if name in variables:
-                logger().verbose_log('[helper] Duplicate variable name {} - {}'.format(name, guidstr))
+                logger().log_verbose('[helper] Duplicate variable name {} - {}'.format(name, guidstr))
                 continue
             else:
                 variables[name] = []

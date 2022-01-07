@@ -203,8 +203,7 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
     print_buffer( bytestostring(efi_var_data) )
 
     # Print Variable Full Contents
-    if logger().VERBOSE:
-        logger().log( 'Full Contents:' )
+    logger().log_verbose( 'Full Contents:' )
         if not efi_var_buf is None:
             print_buffer( bytestostring(efi_var_buf) )
 
