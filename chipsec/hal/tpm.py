@@ -206,7 +206,7 @@ class TPM(hal_base.HALBase):
         try:
             Locality = LOCALITY[locality]
         except:
-            if self.logger.HAL: self.logger.log_bad("Invalid locality value\n")
+            self.logger.log_hal_bad("Invalid locality value\n")
             return
 
         requestedUse = False

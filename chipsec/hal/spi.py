@@ -298,7 +298,7 @@ class SPI(hal_base.HALBase):
 
     def get_SPI_MMIO_base(self):
         (spi_base, spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
-        if self.logger.HAL: self.logger.log( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
+        self.logger.log_hal( "[spi] SPI MMIO base: 0x{:016X} (assuming below 4GB)".format(spi_base) )
         return spi_base
 
     def spi_reg_read( self, reg, size=4 ):
@@ -526,15 +526,15 @@ class SPI(hal_base.HALBase):
         smmbwp = self.cs.get_control('SmmBiosWriteProtection' )
 
         if smmbwp == 1:
-            if self.logger.HAL: self.logger.log( "[spi] SMM BIOS write protection (SmmBiosWriteProtection) is enabled" )
+            self.logger.log_hal( "[spi] SMM BIOS write protection (SmmBiosWriteProtection) is enabled" )
 
         if bioswe == 1:
-            if self.logger.HAL: self.logger.log( "[spi] BIOS write protection (BiosWriteEnable) is not enabled" )
+            self.logger.log_hal( "[spi] BIOS write protection (BiosWriteEnable) is not enabled" )
             return True
         elif ble == 0:
-            if self.logger.HAL: self.logger.log( "[spi] BIOS write protection is enabled but not locked. Disabling.." )
+            self.logger.log_hal( "[spi] BIOS write protection is enabled but not locked. Disabling.." )
         else: # bioswe == 0 and ble == 1
-            if self.logger.HAL: self.logger.log( "[spi] BIOS write protection is enabled. Attempting to disable.." )
+            self.logger.log_hal( "[spi] BIOS write protection is enabled. Attempting to disable.." )
 
         # Set BiosWriteEnable control bit
         self.cs.set_control('BiosWriteEnable', 1 )
@@ -543,7 +543,7 @@ class SPI(hal_base.HALBase):
         bioswe = self.cs.get_control('BiosWriteEnable' )
 
         if self.logger.HAL: self.display_BIOS_write_protection()
-        if self.logger.HAL: self.logger.log_important( "BIOS write protection is {} (BiosWriteEnable = {:d})".format('disabled' if bioswe else 'still enabled', bioswe) )
+        self.logger.log_hal_important( "BIOS write protection is {} (BiosWriteEnable = {:d})".format('disabled' if bioswe else 'still enabled', bioswe) )
 
         return (bioswe==1)
 
@@ -553,7 +553,7 @@ class SPI(hal_base.HALBase):
     ##############################################################################################################
 
     def _wait_SPI_flash_cycle_done(self):
-        if self.logger.HAL: self.logger.log( "[spi] wait for SPI cycle ready/done.." )
+        self.logger.log_hal( "[spi] wait for SPI cycle ready/done.." )
 
         for i in range(1000):
             #time.sleep(0.001)
@@ -565,23 +565,23 @@ class SPI(hal_base.HALBase):
                 break
 
         if not cycle_done:
-            if self.logger.HAL: self.logger.log( "[spi] SPI cycle still in progress. Waiting 0.1 sec.." )
+            self.logger.log_hal( "[spi] SPI cycle still in progress. Waiting 0.1 sec.." )
             time.sleep(0.1)
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
             cycle_done = not (hsfsts & PCH_RCBA_SPI_HSFSTS_SCIP)
 
         if cycle_done:
-            if self.logger.HAL: self.logger.log( "[spi] clear FDONE/FCERR/AEL bits.." )
+            self.logger.log_hal( "[spi] clear FDONE/FCERR/AEL bits.." )
             self.spi_reg_write( self.hsfs_off, HSFSTS_CLEAR, 1 )
             hsfsts = self.spi_reg_read( self.hsfs_off, 1 )
             cycle_done = not ((hsfsts & PCH_RCBA_SPI_HSFSTS_AEL) or (hsfsts & PCH_RCBA_SPI_HSFSTS_FCERR))
 
-        if self.logger.HAL: self.logger.log( "[spi] HSFS: 0x{:02X}".format(hsfsts) )
+        self.logger.log_hal( "[spi] HSFS: 0x{:02X}".format(hsfsts) )
 
         return cycle_done
 
     def _send_spi_cycle(self, hsfctl_spi_cycle_cmd, dbc, spi_fla ):
-        if self.logger.HAL: self.logger.log( "[spi] > send SPI cycle 0x{:x} to address 0x{:08X}..".format(hsfctl_spi_cycle_cmd, spi_fla) )
+        self.logger.log_hal( "[spi] > send SPI cycle 0x{:x} to address 0x{:08X}..".format(hsfctl_spi_cycle_cmd, spi_fla) )
 
         # No need to check for SPI cycle DONE status before each cycle
         # DONE status is checked once before entire SPI operation
@@ -596,7 +596,7 @@ class SPI(hal_base.HALBase):
             _faddr = self.spi_reg_read( self.faddr_off )
             self.logger.log( "[spi] FADDR: 0x{:08X}".format(_faddr) )
 
-        if self.logger.HAL: self.logger.log( "[spi] SPI cycle GO (DBC <- 0x{:02X}, HSFC <- 0x{:x})".format(dbc, hsfctl_spi_cycle_cmd) )
+        self.logger.log_hal( "[spi] SPI cycle GO (DBC <- 0x{:02X}, HSFC <- 0x{:x})".format(dbc, hsfctl_spi_cycle_cmd) )
 
         if ( HSFCTL_ERASE_CYCLE != hsfctl_spi_cycle_cmd ):
             self.spi_reg_write( self.hsfc_off + 0x1, dbc, 1 )
@@ -613,7 +613,7 @@ class SPI(hal_base.HALBase):
         if not cycle_done:
             self.logger.warn( "SPI cycle not done" )
         else:
-            if self.logger.HAL: self.logger.log( "[spi] < SPI cycle done" )
+            self.logger.log_hal( "[spi] < SPI cycle done" )
 
         return cycle_done
 

@@ -144,7 +144,7 @@ class MsgBus(hal_base.HALBase):
 
         mdr_out = self.helper.msgbus_send_read_message( mcr, mcrx )
 
-        if self.logger.HAL: self.logger.log( "[msgbus]       < 0x{:08X}".format(mdr_out) )
+        self.logger.log_hal( "[msgbus]       < 0x{:08X}".format(mdr_out) )
 
         return mdr_out
 
@@ -177,7 +177,7 @@ class MsgBus(hal_base.HALBase):
 
         mdr_out = self.helper.msgbus_send_message( mcr, mcrx, mdr )
 
-        if self.logger.HAL: self.logger.log( "[msgbus]          < 0x{:08X}".format(mdr_out) )
+        self.logger.log_hal( "[msgbus]          < 0x{:08X}".format(mdr_out) )
 
         return mdr_out
 

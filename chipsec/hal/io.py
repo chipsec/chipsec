@@ -42,11 +42,11 @@ class PortIO:
 
     def _read_port(self, io_port, size ):
         value = self.helper.read_io_port( io_port, size )
-        if logger().HAL: logger().log( "[io] IN 0x{:04X}: value = 0x{:08X}, size = 0x{:02X}".format(io_port, value, size) )
+        logger().log_hal( "[io] IN 0x{:04X}: value = 0x{:08X}, size = 0x{:02X}".format(io_port, value, size) )
         return value
 
     def _write_port(self, io_port, value, size ):
-        if logger().HAL: logger().log( "[io] OUT 0x{:04X}: value = 0x{:08X}, size = 0x{:02X}".format(io_port, value, size) )
+        logger().log_hal( "[io] OUT 0x{:04X}: value = 0x{:08X}, size = 0x{:02X}".format(io_port, value, size) )
         status = self.helper.write_io_port( io_port, value, size )
         return status
 
