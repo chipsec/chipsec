@@ -69,8 +69,8 @@ def parse_script( script, log_script=False ):
     if log_script: logger().log( '[uefi] +++ End of S3 Resume Boot-Script +++' )
 
     logger().log_hal( '[uefi] S3 Resume Boot-Script size: 0x{:X}'.format(off) )
+    logger().log_hal( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
     if logger().HAL:
-        logger().log( '\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]' )
         print_buffer( bytestostring(script[ : off ]) )
 
     return s3_boot_script_entries
@@ -413,8 +413,8 @@ NVRAM: EFI Variable Store
             (off, buf, hdr, data, guid, attrs) = efivars[efivar_name][0]
             if efivar_name in S3_BOOTSCRIPT_VARIABLES:
                 logger().log_hal( "[uefi] found: {} {{{}}} {} variable".format(efivar_name, guid, get_attr_string(attrs)) )
+                logger().log_hal('[uefi] {} variable data:'.format(efivar_name))
                 if logger().HAL:
-                    logger().log('[uefi] {} variable data:'.format(efivar_name))
                     print_buffer( bytestostring(data) )
 
                 varsz = len(data)
@@ -430,8 +430,8 @@ NVRAM: EFI Variable Store
                 logger().log_hal( "[uefi] Pointer to ACPI Global Data structure: 0x{:016X}".format( AcpiGlobalAddr ) )
                 logger().log_hal( "[uefi] Decoding ACPI Global Data structure.." )
                 AcpiVariableSet = self.helper.read_physical_mem( AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE )
+                logger().log_hal('[uefi] AcpiVariableSet structure:')
                 if logger().HAL:
-                    logger().log('[uefi] AcpiVariableSet structure:')
                     print_buffer( bytestostring(AcpiVariableSet) )
                 AcpiVariableSet_fmt = '<6Q'
                 #if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
@@ -491,8 +491,7 @@ NVRAM: EFI Variable Store
         return var
 
     def set_EFI_variable( self, name, guid, var, datasize=None, attrs=None ):
-        if logger().HAL:
-            logger().log( '[uefi] writing EFI variable {}:{} {}'.format(guid, name, '' if attrs is None else ('(attributes = {})'.format(attrs))) )
+        logger().log_hal( '[uefi] writing EFI variable {}:{} {}'.format(guid, name, '' if attrs is None else ('(attributes = {})'.format(attrs))) )
             #print_buffer( var )
         return self.helper.set_EFI_variable( name, guid, var, datasize, attrs )
 
@@ -541,9 +540,8 @@ NVRAM: EFI Variable Store
                    0 == table_header.CRC32    or                 \
                    table_header.Revision not in EFI_REVISIONS or \
                    table_header.HeaderSize > MAX_EFI_TABLE_SIZE:
-                    if logger().HAL:
-                        logger().log( "[uefi] found '{}' at 0x{:016X} but doesn't look like an actual table. keep searching..".format(table_sig, table_pa) )
-                        logger().log( table_header )
+                    logger().log_hal( "[uefi] found '{}' at 0x{:016X} but doesn't look like an actual table. keep searching..".format(table_sig, table_pa) )
+                    logger().log_hal( table_header )
                 else:
                     isFound = True
                     logger().log_hal( "[uefi] found EFI table at 0x{:016X} with signature '{}'..".format(table_pa, table_sig) )

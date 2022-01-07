@@ -360,9 +360,9 @@ class SPD:
         _dimms = []
         for d in SPD_DIMMS:
             if self.isSPDPresent( d ): _dimms.append( d )
-        if logger().HAL:
-            logger().log( "Detected the following SPD devices:" )
-            for _dimm in _dimms: logger().log( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm], _dimm) )
+        logger().log_hal( "Detected the following SPD devices:" )
+        for _dimm in _dimms:
+            logger().log_hal( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm], _dimm) )
         return _dimms
 
     def isSPDPresent( self, device=SPD_SMBUS_ADDRESS ):

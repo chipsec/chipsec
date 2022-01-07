@@ -221,8 +221,7 @@ class SMBus(hal_base.HALBase):
         buffer = [chr(0xFF)] *size
         for i in range (size):
             buffer[i] = chr( self.read_byte( target_address, start_offset + i ) )
-        if self.logger.HAL:
-            self.logger.log( "[smbus] reading {:d} bytes from device 0x{:X} at offset {:X}".format(size, target_address, start_offset) )
+        self.logger.log_hal( "[smbus] reading {:d} bytes from device 0x{:X} at offset {:X}".format(size, target_address, start_offset) )
             #print_buffer( buffer )
         return buffer
 
@@ -230,7 +229,6 @@ class SMBus(hal_base.HALBase):
         size = len(buffer)
         for i in range(size):
             self.write_byte( target_address, start_offset + i, ord(buffer[i]) )
-        if self.logger.HAL:
-            self.logger.log( "[smbus] writing {:d} bytes to device 0x{:X} at offset {:X}".format(size, target_address, start_offset) )
+        self.logger.log_hal( "[smbus] writing {:d} bytes to device 0x{:X} at offset {:X}".format(size, target_address, start_offset) )
             #print_buffer( buffer )
         return True

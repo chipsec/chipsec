@@ -293,8 +293,7 @@ def GetFvHeader(buffer, off = 0):
     FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
     Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[off:off +struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)])
     numblocks, lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY, buffer[fof:fof +struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)])
-    if logger().HAL:
-        logger().log('{}'.format(
+    logger().log_hal('{}'.format(
         '''
         \nFV volume offset: 0x{:08X}
         \tFvLength:         0x{:08X}
@@ -312,9 +311,8 @@ def GetFvHeader(buffer, off = 0):
         if (fof + EFI_FV_BLOCK_MAP_ENTRY_SZ) >= len(buffer):
             return (0, 0, 0)
         if numblocks != 0:
-            if logger().HAL:
-                logger().log("Num blocks:   0x{:08X}\n".format(numblocks))
-                logger().log( "block Len:    0x{:08X}\n".format(lenblock))
+            logger().log_hal("Num blocks:   0x{:08X}\n".format(numblocks))
+            logger().log_hal( "block Len:    0x{:08X}\n".format(lenblock))
             size = size + (numblocks * lenblock)
         numblocks, lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY, buffer[fof:fof +EFI_FV_BLOCK_MAP_ENTRY_SZ])
     if FvLength != size:

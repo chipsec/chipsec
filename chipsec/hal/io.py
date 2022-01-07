@@ -52,38 +52,32 @@ class PortIO:
 
     def read_port_dword(self, io_port ):
         value = self.helper.read_io_port( io_port, 4 )
-        if logger().HAL:
-            logger().log( "[io] reading dword from I/O port 0x{:04X} -> 0x{:08X}".format(io_port, value) )
+        logger().log_hal( "[io] reading dword from I/O port 0x{:04X} -> 0x{:08X}".format(io_port, value) )
         return value
 
     def read_port_word(self, io_port ):
         value = self.helper.read_io_port( io_port, 2 )
-        if logger().HAL:
-            logger().log( "[io] reading word from I/O port 0x{:04X} -> 0x{:04X}".format(io_port, value) )
+        logger().log_hal( "[io] reading word from I/O port 0x{:04X} -> 0x{:04X}".format(io_port, value) )
         return value
 
     def read_port_byte(self, io_port ):
         value = self.helper.read_io_port( io_port, 1 )
-        if logger().HAL:
-            logger().log( "[io] reading byte from I/O port 0x{:04X} -> 0x{:02X}".format(io_port, value) )
+        logger().log_hal( "[io] reading byte from I/O port 0x{:04X} -> 0x{:02X}".format(io_port, value) )
         return value
 
 
     def write_port_byte(self, io_port, value ):
-        if logger().HAL:
-            logger().log( "[io] writing byte to I/O port 0x{:04X} <- 0x{:02X}".format(io_port, value) )
+        logger().log_hal( "[io] writing byte to I/O port 0x{:04X} <- 0x{:02X}".format(io_port, value) )
         self.helper.write_io_port( io_port, value, 1 )
         return
 
     def write_port_word(self, io_port, value ):
-        if logger().HAL:
-            logger().log( "[io] writing word to I/O port 0x{:04X} <- 0x{:04X}".format(io_port, value) )
+        logger().log_hal( "[io] writing word to I/O port 0x{:04X} <- 0x{:04X}".format(io_port, value) )
         self.helper.write_io_port( io_port, value, 2 )
         return
 
     def write_port_dword(self, io_port, value ):
-        if logger().HAL:
-            logger().log( "[io] writing dword to I/O port 0x{:04X} <- 0x{:08X}".format(io_port, value) )
+        logger().log_hal( "[io] writing dword to I/O port 0x{:04X} <- 0x{:08X}".format(io_port, value) )
         self.helper.write_io_port( io_port, value, 4 )
         return
 

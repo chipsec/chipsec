@@ -63,15 +63,13 @@ Reserved3           : 0x{:08X}
 UCODE_HEADER_SIZE = 0x30
 def dump_ucode_update_header( pdb_ucode_buffer ):
     ucode_header = UcodeUpdateHeader( *struct.unpack_from( '12I', pdb_ucode_buffer ) )
-    if logger().HAL:
-        logger().log(ucode_header)
+    logger().log_hal(ucode_header)
     return ucode_header
 
 def read_ucode_file( ucode_filename ):
     ucode_buf = read_file( ucode_filename )
     if (ucode_filename.endswith('.pdb')):
-        if logger().HAL:
-            logger().log( "[ucode] PDB file '{:256}' has ucode update header (size = 0x{:X})".format(ucode_filename, UCODE_HEADER_SIZE) )
+        logger().log_hal( "[ucode] PDB file '{:256}' has ucode update header (size = 0x{:X})".format(ucode_filename, UCODE_HEADER_SIZE) )
         dump_ucode_update_header( ucode_buf )
         return ucode_buf[UCODE_HEADER_SIZE:]
     else:
