@@ -95,8 +95,7 @@ class FileHelper(Helper):
         self.name = "FileHelper"
 
     def create(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] File Helper created")
+        logger().log_verbose("[helper] File Helper created")
         return True
 
     def start(self, start_driver, from_file=None):
@@ -105,13 +104,11 @@ class FileHelper(Helper):
         return True
 
     def stop( self, start_driver ):
-        if logger().VERBOSE:
-            logger().log("[helper] File Helper stopped/unloaded")
+        logger().log_verbose("[helper] File Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] File Helper deleted")
+        logger().log_verbose("[helper] File Helper deleted")
         return True
 
     #################################################################################################

@@ -84,8 +84,7 @@ Please run 'pip install virustotal-api' and try again.""")
             self.logger.log_bad("Suspicious EFI binary found in the UEFI firmware image\n{}".format(efi_module))
             return True
 
-        if self.logger.VERBOSE:
-            self.logger.log("Benign EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+        self.logger.log_verbose("Benign EFI binary found in the UEFI firmware image\n{}".format(efi_module))
 
         return False
 
