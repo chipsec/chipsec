@@ -407,12 +407,9 @@ _swsmi PROC FRAME
     xchg rdi, [r10+30h]  ; //rdi value
 
     ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
-    push rax
-    .pushreg rax
-    .endprolog
-    shr ax, 8
+    ror ax, 8
     out 0B3h, al ; 0xB3
-    pop rax
+    ror ax, 8
     out 0B2h, al ; 0xB2
 
     ; some SM handlers return data/errorcode in GPRs, need to return this to the caller
