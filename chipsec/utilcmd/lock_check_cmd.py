@@ -102,8 +102,7 @@ KEY:
         for lock in locks:
             is_locked = self._locks.is_locked(lock)
             res = "{}\n{}".format(res, self.check_log(lock, is_locked))
-        if self.logger.HAL:
-            self.logger.log(res)
+        self.logger.log_hal(res)
         return
 
     def check_lock(self):
@@ -113,8 +112,7 @@ KEY:
         for lock in self.lockname:
             is_locked = self._locks.is_locked(lock)
             res = "{}\n{}".format(res, self.check_log(lock, is_locked))
-        if self.logger.HAL:
-            self.logger.log(res)
+        self.logger.log_hal(res)
         return
 
     def check_log(self, lock, is_locked):

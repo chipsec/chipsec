@@ -79,8 +79,8 @@ class Memory(HALBase):
     # Writing physical memory
 
     def write_physical_mem(self, phys_address, length, buf):
+        self.logger.log_hal('[mem] buffer len = 0x{:X} to PA = 0x{:016X}'.format(length, phys_address))
         if self.logger.HAL:
-            self.logger.log('[mem] buffer len = 0x{:X} to PA = 0x{:016X}'.format(length, phys_address))
             print_buffer(buf)
         return self.helper.write_physical_mem(phys_address, length, buf)
 

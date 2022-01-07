@@ -106,20 +106,17 @@ class Msr:
 
     def get_IDTR( self, cpu_thread_id ):
         (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR )
-        if logger().HAL:
-            logger().log( "[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        logger().log_hal( "[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
         return (limit, base, pa)
 
     def get_GDTR( self, cpu_thread_id ):
         (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR )
-        if logger().HAL:
-            logger().log( "[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        logger().log_hal( "[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
         return (limit, base, pa)
 
     def get_LDTR( self, cpu_thread_id ):
         (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR )
-        if logger().HAL:
-            logger().log( "[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        logger().log_hal( "[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
         return (limit, base, pa)
 
 

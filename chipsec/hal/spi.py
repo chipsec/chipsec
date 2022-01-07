@@ -289,12 +289,11 @@ class SPI(hal_base.HALBase):
         self.bios_ptinx  = int(self.cs.get_register_def("BIOS_PTINX")['offset'], 16)
         self.bios_ptdata  = int(self.cs.get_register_def("BIOS_PTDATA")['offset'], 16)
 
-        if self.logger.HAL:
-            self.logger.log( "[spi] Reading SPI flash controller registers definitions:" )
-            self.logger.log( "      HSFC   offset = 0x{:04X}".format(self.hsfc_off) )
-            self.logger.log( "      HSFS   offset = 0x{:04X}".format(self.hsfs_off) )
-            self.logger.log( "      FADDR  offset = 0x{:04X}".format(self.faddr_off) )
-            self.logger.log( "      FDATA0 offset = 0x{:04X}".format(self.fdata0_off) )
+        self.logger.log_hal( "[spi] Reading SPI flash controller registers definitions:" )
+        self.logger.log_hal( "      HSFC   offset = 0x{:04X}".format(self.hsfc_off) )
+        self.logger.log_hal( "      HSFS   offset = 0x{:04X}".format(self.hsfs_off) )
+        self.logger.log_hal( "      FADDR  offset = 0x{:04X}".format(self.faddr_off) )
+        self.logger.log_hal( "      FDATA0 offset = 0x{:04X}".format(self.fdata0_off) )
 
     def get_SPI_MMIO_base(self):
         (spi_base, spi_size) = self.mmio.get_MMIO_BAR_base_address('SPIBAR')
@@ -663,20 +662,17 @@ class SPI(hal_base.HALBase):
             return None
 
         for i in range(n):
-            if self.logger.HAL:
-                self.logger.log( "[spi] reading chunk {:d} of 0x{:x} bytes from 0x{:x}".format(i, dbc, spi_fla + i *dbc) )
+            self.logger.log_hal( "[spi] reading chunk {:d} of 0x{:x} bytes from 0x{:x}".format(i, dbc, spi_fla + i *dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, dbc -1, spi_fla + i *dbc ):
                 self.logger.error( "SPI flash read failed" )
             else:
                 for fdata_idx in range(0, dbc //4):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx *4 )
-                    if self.logger.HAL:
-                        self.logger.log( "[spi] FDATA00 + 0x{:x}: 0x{:x}".format(fdata_idx *4, dword_value) )
+                    self.logger.log_hal( "[spi] FDATA00 + 0x{:x}: 0x{:x}".format(fdata_idx *4, dword_value) )
                     buf += struct.pack("I", dword_value)
 
         if (0 != r):
-            if self.logger.HAL:
-                self.logger.log( "[spi] reading remaining 0x{:x} bytes from 0x{:x}".format(r, spi_fla + n *dbc) )
+            self.logger.log_hal( "[spi] reading remaining 0x{:x} bytes from 0x{:x}".format(r, spi_fla + n *dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, r -1, spi_fla + n *dbc ):
                 self.logger.error( "SPI flash read failed" )
             else:
@@ -684,15 +680,14 @@ class SPI(hal_base.HALBase):
                 n_dwords = (r +3) //4
                 for fdata_idx in range(0, n_dwords):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx *4 )
-                    if self.logger.HAL:
-                        self.logger.log( "[spi] FDATA00 + 0x{:x}: 0x{:08X}".format(fdata_idx *4, dword_value) )
+                    self.logger.log_hal( "[spi] FDATA00 + 0x{:x}: 0x{:08X}".format(fdata_idx *4, dword_value) )
                     if (fdata_idx == (n_dwords -1)) and (0 != r%4):
                         t = r%4
                     for j in range(t):
                         buf += struct.pack('B', (dword_value >> (8 *j)) & 0xff)
 
+        self.logger.log_hal( "[spi] buffer read from SPI:" )
         if self.logger.HAL:
-            self.logger.log( "[spi] buffer read from SPI:" )
             print_buffer_bytes(buf)
 
         return buf
@@ -718,8 +713,7 @@ class SPI(hal_base.HALBase):
             if self.logger.UTIL_TRACE or self.logger.HAL:
                 self.logger.log( "[spi] writing chunk {:d} of 0x{:x} bytes to 0x{:x}".format(i, dbc, spi_fla + i *dbc) )
             dword_value = (ord(buf[i *dbc + 3]) << 24) | (ord(buf[i *dbc + 2]) << 16) | (ord(buf[i *dbc + 1]) << 8) | ord(buf[i *dbc])
-            if self.logger.HAL:
-                self.logger.log( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
+            self.logger.log_hal( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, dbc -1, spi_fla + i *dbc ):
                 write_ok = False
@@ -731,8 +725,7 @@ class SPI(hal_base.HALBase):
             dword_value = 0
             for j in range(r):
                 dword_value |= (ord(buf[n *dbc + j]) << 8 *j)
-            if self.logger.HAL:
-                self.logger.log( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
+            self.logger.log_hal( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, r -1, spi_fla + n *dbc ):
                 write_ok = False

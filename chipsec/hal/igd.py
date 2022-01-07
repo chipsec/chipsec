@@ -177,11 +177,10 @@ class IGD(hal_base.HALBase):
         igd_addr = gmadr + pte_num *0x1000
         pte_orig = self.read_GGTT_PTE( pte_num )
 
-        if self.logger.HAL:
-            self.logger.log( '[igd] reading 0x{:X} bytes at PA 0x{:016X} through IGD aperture (DMA) using PTE{:d}'.format(size, address, pte_num) )
-            self.logger.log( '[igd] GFx aperture (GMADR): 0x{:016X}'.format(gmadr) )
-            self.logger.log( '[igd] GFx GTT base        : 0x{:016X}'.format(self.get_GGTT_base()) )
-            self.logger.log( '[igd] original GTT PTE{:03d}: 0x{:08X}'.format(pte_num, pte_orig) )
+        self.logger.log_hal( '[igd] reading 0x{:X} bytes at PA 0x{:016X} through IGD aperture (DMA) using PTE{:d}'.format(size, address, pte_num) )
+        self.logger.log_hal( '[igd] GFx aperture (GMADR): 0x{:016X}'.format(gmadr) )
+        self.logger.log_hal( '[igd] GFx GTT base        : 0x{:016X}'.format(self.get_GGTT_base()) )
+        self.logger.log_hal( '[igd] original GTT PTE{:03d}: 0x{:08X}'.format(pte_num, pte_orig) )
 
 
         if (h > 0) and (size > h):
@@ -194,8 +193,8 @@ class IGD(hal_base.HALBase):
         N = pages
         self.logger.log_hal( '[igd] pages = 0x{:X}, r = 0x{:X}, N = {:d}'.format(pages, r, N) )
 
+        self.logger.log_hal( '[igd] original data at address 0x{:016X}:'.format(address) )
         if self.logger.HAL:
-            self.logger.log( '[igd] original data at address 0x{:016X}:'.format(address) )
             print_buffer(bytestostring(self.cs.mem.read_physical_mem(address, size)))
 
         buffer = ''

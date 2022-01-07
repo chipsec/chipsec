@@ -148,8 +148,7 @@ class IOBAR(hal_base.HALBase):
             try:
                 (_base, _size) = self.get_IO_BAR_base_address(_bar_name)
             except CSReadError:
-                if self.logger.HAL:
-                    self.logger.log("Unable to find IO BAR {}".format(_bar_name))
+                self.logger.log_hal("Unable to find IO BAR {}".format(_bar_name))
                 continue
             _en = self.is_IO_BAR_enabled( _bar_name )
 

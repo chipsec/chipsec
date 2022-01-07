@@ -54,8 +54,7 @@ class Interrupts(hal_base.HALBase):
 
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().HAL:
-            logger().log( "[intr] Sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
+        logger().log_hal( "[intr] Sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
             logger().log( "       RAX = 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(_rax) )
             logger().log( "       RBX = 0x{:016X}".format(_rbx) )
             logger().log( "       RCX = 0x{:016X}".format(_rcx) )

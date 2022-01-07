@@ -229,38 +229,32 @@ class Pci:
 
     def read_dword(self, bus, device, function, address ):
         value = self.helper.read_pci_reg( bus, device, function, address, 4 )
-        if logger().HAL:
-            logger().log( "[pci] reading B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:08X}".format(bus, device, function, address, value) )
+        logger().log_hal( "[pci] reading B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:08X}".format(bus, device, function, address, value) )
         return value
 
     def read_word(self, bus, device, function, address ):
         word_value = self.helper.read_pci_reg( bus, device, function, address, 2 )
-        if logger().HAL:
-            logger().log( "[pci] reading B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:04X}".format(bus, device, function, address, word_value) )
+        logger().log_hal( "[pci] reading B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:04X}".format(bus, device, function, address, word_value) )
         return word_value
 
     def read_byte(self, bus, device, function, address ):
         byte_value = self.helper.read_pci_reg( bus, device, function, address, 1 )
-        if logger().HAL:
-            logger().log( "[pci] reading B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:02X}".format(bus, device, function, address, byte_value) )
+        logger().log_hal( "[pci] reading B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:02X}".format(bus, device, function, address, byte_value) )
         return byte_value
 
     def write_byte(self, bus, device, function, address, byte_value ):
         self.helper.write_pci_reg( bus, device, function, address, byte_value, 1 )
-        if logger().HAL:
-            logger().log( "[pci] writing B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:02X}".format(bus, device, function, address, byte_value) )
+        logger().log_hal( "[pci] writing B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:02X}".format(bus, device, function, address, byte_value) )
         return
 
     def write_word(self, bus, device, function, address, word_value ):
         self.helper.write_pci_reg( bus, device, function, address, word_value, 2 )
-        if logger().HAL:
-            logger().log( "[pci] writing B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:04X}".format(bus, device, function, address, word_value) )
+        logger().log_hal( "[pci] writing B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:04X}".format(bus, device, function, address, word_value) )
         return
 
     def write_dword( self, bus, device, function, address, dword_value ):
         self.helper.write_pci_reg( bus, device, function, address, dword_value, 4 )
-        if logger().HAL:
-            logger().log( "[pci] writing B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:08X}".format(bus, device, function, address, dword_value) )
+        logger().log_hal( "[pci] writing B/D/F: {:d}/{:d}/{:d}, offset: 0x{:02X}, value: 0x{:08X}".format(bus, device, function, address, dword_value) )
         return
 
 
@@ -292,8 +286,7 @@ class Pci:
                     did = (did_vid >> 16) & 0xFFFF
                     devices.append((b, d, f, vid, did))
             except OsHelperError:
-                if logger().HAL:
-                    logger().log("[pci] unable to access B/D/F: {:d}/{:d}/{:d}".format(b, d, f))
+                logger().log_hal("[pci] unable to access B/D/F: {:d}/{:d}/{:d}".format(b, d, f))
         return devices
 
     def dump_pci_config( self, bus, device, function ):
@@ -384,9 +377,8 @@ class Pci:
                 xrom.header = self.parse_XROM( xrom, xrom_dump )
                 xrom_found  = (xrom.header is not None)
                 if xrom_found:
-                    if logger().HAL:
-                        logger().log( "[pci]   XROM found at 0x{:08X}".format(xrom_base) )
-                        logger().log( xrom.header )
+                    logger().log_hal( "[pci]   XROM found at 0x{:08X}".format(xrom_base) )
+                    logger().log_hal( xrom.header )
 
         if not xrom_found:
             logger().log_hal( "[pci]   XROM was not found" )

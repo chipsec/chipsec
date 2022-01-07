@@ -78,8 +78,8 @@ class VirtMemory(hal_base.HALBase):
     # Writing virtual memory
 
     def write_virtual_mem( self, virt_address, length, buf ):
+        logger().log_hal( '[mem] buffer len = 0x{:X} to VA = 0x{:016X}'.format(length, virt_address) )
         if logger().HAL:
-            logger().log( '[mem] buffer len = 0x{:X} to VA = 0x{:016X}'.format(length, virt_address) )
             print_buffer( buf )
         phys_address = self.va2pa(virt_address)
         return self.helper.write_physical_mem( phys_address, length, buf )
