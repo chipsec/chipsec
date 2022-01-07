@@ -98,9 +98,9 @@ class Ucode:
         ucode_update_id = bios_sign_id_hi
 
         if (bios_sign_id_lo & IA32_MSR_BIOS_SIGN_ID_STATUS):
-            if logger().HAL: logger().log( "[ucode] CPU{:d}: last Microcode update failed (current microcode id = 0x{:08X})".format(cpu_thread_id, ucode_update_id) )
+            logger().log_hal( "[ucode] CPU{:d}: last Microcode update failed (current microcode id = 0x{:08X})".format(cpu_thread_id, ucode_update_id) )
         else:
-            if logger().HAL: logger().log( "[ucode] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
+            logger().log_hal( "[ucode] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
 
         return ucode_update_id
 
@@ -122,6 +122,6 @@ class Ucode:
         return self.load_ucode_update( cpu_thread_id, _ucode_buf )
 
     def load_ucode_update(self, cpu_thread_id, ucode_buf ):
-        if logger().HAL: logger().log( "[ucode] loading microcode update on CPU{:d}".format(cpu_thread_id) )
+        logger().log_hal( "[ucode] loading microcode update on CPU{:d}".format(cpu_thread_id) )
         self.helper.load_ucode_update( cpu_thread_id, ucode_buf )
         return self.ucode_update_id( cpu_thread_id )

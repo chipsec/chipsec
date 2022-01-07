@@ -163,11 +163,11 @@ class EC(hal_base.HALBase):
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRL, offset & 0xFF )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRH, (offset>>8) & 0xFF )
         value = self.cs.io.read_port_byte( IO_PORT_EC_INDEX_DATA )
-        if self.logger.HAL: self.logger.log( "[ec] index read: offset 0x{:02X} > 0x{:02X}:".format(offset, value) )
+        self.logger.log_hal( "[ec] index read: offset 0x{:02X} > 0x{:02X}:".format(offset, value) )
         return value
 
     def write_idx( self, offset, value ):
-        if self.logger.HAL: self.logger.log( "[ec] index write: offset 0x{:02X} < 0x{:02X}:".format(offset, value) )
+        self.logger.log_hal( "[ec] index write: offset 0x{:02X} < 0x{:02X}:".format(offset, value) )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRL, offset & 0xFF )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_ADDRH, (offset>>8) & 0xFF )
         self.cs.io.write_port_byte( IO_PORT_EC_INDEX_DATA, value & 0xFF )

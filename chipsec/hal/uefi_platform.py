@@ -961,7 +961,7 @@ def decode_s3bs_opcode_def( data ):
     op = None
     opcode, = struct.unpack( '<B', data[ : 1 ] )
     try:
-        if logger().HAL: logger().log( script_opcodes[opcode] )
+        logger().log_hal( script_opcodes[opcode] )
     except:
         pass
     if S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == opcode:
@@ -1086,7 +1086,7 @@ def decode_s3bs_opcode_edkcompat( data ):
     opcode, size = struct.unpack( hdr_frmt, data[ : header_size ] )
     opcode_data = data[ header_size: ]
     try:
-        if logger().HAL: logger().log( script_opcodes[opcode] )
+        logger().log_hal( script_opcodes[opcode] )
     except:
         pass
 
@@ -1268,13 +1268,13 @@ def id_s3bootscript_type( script, log_script=False ):
 
     start_op, = struct.unpack('<B', script[ : 1 ])
     if S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TABLE_OPCODE == start_op:
-        if logger().HAL: logger().log('S3 Boot Script AA Parser')
+        logger().log_hal('S3 Boot Script AA Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT
         if log_script: logger().log( '[uefi] Start opcode 0x{:X}'.format(start_op) )
         # MdeModulePkg\Library\PiDxeS3BootScriptLib\BootScriptInternalFormat.h
         script_header_length = struct.calcsize("<HBHLHH")
     else:
-        if logger().HAL: logger().log('S3 Boot Script DEFAULT Parser')
+        logger().log_hal('S3 Boot Script DEFAULT Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
 
     return (script_type, script_header_length)

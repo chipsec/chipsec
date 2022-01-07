@@ -89,13 +89,13 @@ class IOBAR(hal_base.HALBase):
 
         if 'fixed_address' in bar and (base == empty_base or base == 0):
             base = int(bar['fixed_address'], 16)
-            if logger().HAL: logger().log('[iobar] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
+            logger().log_hal('[iobar] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
 
         if 'mask'   in bar: base = base & int(bar['mask'], 16)
         if 'offset' in bar: base = base + int(bar['offset'], 16)
         size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
-        if logger().HAL: logger().log( '[iobar] {}: 0x{:04X} (size = 0x{:X})'.format(bar_name, base, size) )
+        logger().log_hal( '[iobar] {}: 0x{:04X} (size = 0x{:X})'.format(bar_name, base, size) )
         if base == 0:
             raise CSReadError("IOBAR ({}) base address is 0".format(bar_name))
         return base, size
@@ -105,7 +105,7 @@ class IOBAR(hal_base.HALBase):
     # Read I/O register from I/O range defined by I/O BAR name
     #
     def read_IO_BAR_reg( self, bar_name, offset, size ):
-        if logger().HAL: logger().log('[iobar] read {} + 0x{:X} ({:d})'.format(bar_name, offset, size))
+        logger().log_hal('[iobar] read {} + 0x{:X} ({:d})'.format(bar_name, offset, size))
         (bar_base, bar_size) = self.get_IO_BAR_base_address( bar_name )
         io_port = bar_base + offset
         if offset > bar_size and logger().HAL: logger().warn( 'offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size) )
@@ -117,7 +117,7 @@ class IOBAR(hal_base.HALBase):
     #
     def write_IO_BAR_reg( self, bar_name, offset, size, value ):
         (bar_base, bar_size) = self.get_IO_BAR_base_address( bar_name )
-        if logger().HAL: logger().log( '[iobar] write {} + 0x{:X} ({:d}): 0x{:X}'.format(bar_name, offset, size, value) )
+        logger().log_hal( '[iobar] write {} + 0x{:X} ({:d}): 0x{:X}'.format(bar_name, offset, size, value) )
         io_port = bar_base + offset
         if offset > bar_size and logger().HAL: logger().warn( 'offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size) )
         return self.cs.io._write_port( io_port, value, size )

@@ -80,7 +80,7 @@ class SMBus(hal_base.HALBase):
             raise RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
 
     def display_SMBus_info( self ):
-        if self.logger.HAL: self.logger.log( "[smbus] SMBus Base Address: 0x{:04X}".format(self.get_SMBus_Base_Address()) )
+        self.logger.log_hal( "[smbus] SMBus Base Address: 0x{:04X}".format(self.get_SMBus_Base_Address()) )
         self.get_SMBus_HCFG()
 
     def is_SMBus_enabled( self ):
@@ -88,7 +88,7 @@ class SMBus(hal_base.HALBase):
 
     def is_SMBus_supported( self ):
         (did, vid) = self.cs.get_DeviceVendorID( 'SMBUS' )
-        if self.logger.HAL: self.logger.log( "[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
+        self.logger.log_hal( "[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
         if (0x8086 == vid): return True
         else:
             self.logger.error( "Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
@@ -184,7 +184,7 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if self.logger.HAL: self.logger.log( "[smbus] read device {:X} off {:X} = {:X}".format(target_address, offset, value) )
+        self.logger.log_hal( "[smbus] read device {:X} off {:X} = {:X}".format(target_address, offset, value) )
         return value
 
     def write_byte( self, target_address, offset, value ):
@@ -213,7 +213,7 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if self.logger.HAL: self.logger.log( "[smbus] write to device {:X} off {:X} = {:X}".format(target_address, offset, value) )
+        self.logger.log_hal( "[smbus] write to device {:X} off {:X} = {:X}".format(target_address, offset, value) )
         return True
 
 

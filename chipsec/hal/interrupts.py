@@ -66,26 +66,26 @@ class Interrupts(hal_base.HALBase):
 
     def send_SMI_APMC( self, SMI_code_port_value, SMI_data_port_value ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().HAL: logger().log( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X} (0x{:04X})".format(SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
+        logger().log_hal( "[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X} (0x{:04X})".format(SMI_code_port_value, SMI_data_port_value, SMI_code_data) )
         return self.cs.io.write_port_word( SMI_APMC_PORT, SMI_code_data )
 
 
 
     def send_NMI( self ):
-        if logger().HAL: logger().log( "[intr] Sending NMI# through TCO1_CTL[NMI_NOW]" )
+        logger().log_hal( "[intr] Sending NMI# through TCO1_CTL[NMI_NOW]" )
         reg, ba = self.cs.get_IO_space("TCOBASE")
         tcobase = self.cs.read_register_field(reg, ba)
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )
 
     def find_ACPI_SMI_Buffer(self):
-        if logger().HAL: logger().log("Parsing ACPI tables to identify Communication Buffer")
+        logger().log_hal("Parsing ACPI tables to identify Communication Buffer")
         _acpi = ACPI(self.cs).get_ACPI_table("UEFI")
         if len(_acpi):
             _uefi = UEFI_TABLE()
             _uefi.parse(_acpi[0][1])
-            if logger().HAL: logger().log(str(_uefi))
+            logger().log_hal(str(_uefi))
             return _uefi.get_commbuf_info()
-        if logger().HAL: logger().log("Unable to find Communication Buffer")
+        logger().log_hal("Unable to find Communication Buffer")
         return None
 
     def send_ACPI_SMI(self, thread_id, smi_num, buf_addr, invoc_reg, guid, data):

@@ -88,7 +88,7 @@ class VMM:
     def dump_EPT_page_tables( self, eptp, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
         paging_ept = chipsec.hal.paging.c_extended_page_tables( self.cs )
-        if logger().HAL: logger().log( '[vmm] dumping EPT paging hierarchy at EPTP 0x{:08X}...'.format(eptp) )
+        logger().log_hal( '[vmm] dumping EPT paging hierarchy at EPTP 0x{:08X}...'.format(eptp) )
         if pt_fname is None: pt_fname = ('ept_{:08X}'.format(eptp))
         logger().set_log_file( pt_fname )
         paging_ept.read_pt_and_show_status( pt_fname, 'EPT', eptp )
