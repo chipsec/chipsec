@@ -102,16 +102,14 @@ class OSXHelper(Helper):
                     os.chown(os.path.join(root, f), 0, 0)
         subprocess.check_call(["kextload", driver_path])
         if os.path.exists(self.DEVICE_NAME):
-            if logger().DEBUG:
-                logger().log("Module {} loaded successfully".format(self.DRIVER_NAME))
+            logger().log_debug("Module {} loaded successfully".format(self.DRIVER_NAME))
         else:
             logger().error("Failed to load the module {}".format(self.DRIVER_NAME))
         self.driverpath = driver_path
 
     def create(self, start_driver):
         #self.init(start_driver)
-        if logger().DEBUG:
-            logger().log("[helper] OSX Helper created")
+        logger().log_debug("[helper] OSX Helper created")
         return True
 
     def start(self, start_driver, driver_exists=False):
@@ -122,8 +120,7 @@ class OSXHelper(Helper):
                 subprocess.check_call(["kextunload", driver_path])
             self.load_driver()
         self.init(start_driver)
-        if logger().DEBUG:
-            logger().log("[helper] OSX Helper started/loaded")
+        logger().log_debug("[helper] OSX Helper started/loaded")
         return True
 
     def stop(self, start_driver):
@@ -132,13 +129,11 @@ class OSXHelper(Helper):
             driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
                                        "helper", "osx", self.DRIVER_NAME)
             subprocess.check_call(["kextunload", driver_path])
-        if logger().DEBUG:
-            logger().log("[helper] OSX Helper stopped/unloaded")
+        logger().log_debug("[helper] OSX Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] OSX Helper deleted")
+        logger().log_debug("[helper] OSX Helper deleted")
         return True
 
     def init(self, start_driver):

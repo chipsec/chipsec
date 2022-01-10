@@ -271,8 +271,7 @@ class RweHelper(Helper):
                 self.driver_path = driver_path
                 if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
         if self.driver_path is None:
-            if logger().DEBUG:
-                logger().log("[helper] RWE Driver Not Found")
+            logger().log_debug("[helper] RWE Driver Not Found")
             raise Exception("RWE Driver Not Found")
 
         c_int_p = POINTER(c_int)
@@ -358,9 +357,8 @@ class RweHelper(Helper):
         except win32service.error as err:
             _handle_winerror(err.args[1], err.args[2], err.args[0])
 
-        if logger().DEBUG:
-            logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
-            logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
+        logger().log_debug( "[helper] service control manager opened (handle = {})".format(hscm) )
+        logger().log_debug( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
         try:
             hs = win32service.CreateService(

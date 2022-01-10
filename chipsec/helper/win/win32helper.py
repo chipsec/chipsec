@@ -350,8 +350,7 @@ class Win32Helper(Helper):
                 self.driver_path = driver_path
                 if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
         if self.driver_path is None:
-            if logger().DEBUG:
-                logger().log("[helper] CHIPSEC Windows Driver Not Found")
+            logger().log_debug("[helper] CHIPSEC Windows Driver Not Found")
             raise Exception("CHIPSEC Windows Driver Not Found")
 
         self.show_warning()
@@ -360,9 +359,8 @@ class Win32Helper(Helper):
             hscm = win32service.OpenSCManager( None, None, win32service.SC_MANAGER_ALL_ACCESS ) # SC_MANAGER_CREATE_SERVICE
         except win32service.error as err:
             _handle_winerror(err.args[1], err.args[2], err.args[0])
-        if logger().DEBUG:
-            logger().log( "[helper] service control manager opened (handle = {})".format(hscm) )
-            logger().log( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
+        logger().log_debug( "[helper] service control manager opened (handle = {})".format(hscm) )
+        logger().log_debug( "[helper] driver path: '{}'".format(os.path.abspath(self.driver_path)) )
 
         try:
             hs = win32service.CreateService(
@@ -424,9 +422,8 @@ class Win32Helper(Helper):
 
         if self.use_existing_service:
             self.driver_loaded = True
-            if logger().DEBUG:
-                logger().log( "[helper] service '{}' already running".format(SERVICE_NAME) )
-                logger().log( "[helper] trying to connect to existing '{}' service...".format(SERVICE_NAME) )
+            logger().log_debug( "[helper] service '{}' already running".format(SERVICE_NAME) )
+            logger().log_debug( "[helper] trying to connect to existing '{}' service...".format(SERVICE_NAME) )
         else:
             #if self.use_existing_service:
             #    _handle_error( "connecting to existing '{}' service failed (service is not running)".format(SERVICE_NAME) )
@@ -553,8 +550,7 @@ class Win32Helper(Helper):
     # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg( self, phys_address, size ):
         out_size = size
-        if logger().DEBUG:
-            logger().log("[helper] -> read_mmio_reg( phys_address=0x{:X}, size={} )".format(phys_address, size))
+        logger().log_debug("[helper] -> read_mmio_reg( phys_address=0x{:X}, size={} )".format(phys_address, size))
         in_buf = struct.pack( '3I', (phys_address>>32)&0xFFFFFFFF, phys_address&0xFFFFFFFF, size )
         out_buf = self._ioctl( IOCTL_READ_MMIO, in_buf, out_size )
         if size == 8:

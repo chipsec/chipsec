@@ -146,15 +146,13 @@ class LinuxHelper(Helper):
         if self.SUPPORT_KERNEL26_GET_PAGE_IS_RAM:
             page_is_ram = self.get_page_is_ram()
             if not page_is_ram:
-                if logger().DEBUG:
-                    logger().log("Cannot find symbol 'page_is_ram'")
+                logger().log_debug("Cannot find symbol 'page_is_ram'")
             else:
                 a1 = "a1=0x{}".format(page_is_ram)
         if self.SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT:
             phys_mem_access_prot = self.get_phys_mem_access_prot()
             if not phys_mem_access_prot:
-                if logger().DEBUG:
-                    logger().log("Cannot find symbol 'phys_mem_access_prot'")
+                logger().log_debug("Cannot find symbol 'phys_mem_access_prot'")
             else:
                 a2 = "a2=0x{}".format(phys_mem_access_prot)
 
@@ -179,16 +177,14 @@ class LinuxHelper(Helper):
         os.chown(self.DEVICE_NAME, uid, gid)
         os.chmod(self.DEVICE_NAME, 600)
         if os.path.exists(self.DEVICE_NAME):
-            if logger().DEBUG:
-                logger().log("Module {} loaded successfully".format(self.DEVICE_NAME))
+            logger().log_debug("Module {} loaded successfully".format(self.DEVICE_NAME))
         else:
             logger().error( "Fail to load module: {}".format(driver_path) )
         self.driverpath = driver_path
 
 
     def create(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper created")
+        logger().log_debug("[helper] Linux Helper created")
         return True
 
     def start(self, start_driver, driver_exists=False):
@@ -197,21 +193,18 @@ class LinuxHelper(Helper):
                 subprocess.call(["rmmod", self.MODULE_NAME])
             self.load_chipsec_module()
         self.init(start_driver)
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper started/loaded")
+        logger().log_debug("[helper] Linux Helper started/loaded")
         return True
 
     def stop(self, start_driver):
         self.close()
         if self.driver_loaded:
             subprocess.call(["rmmod", self.MODULE_NAME])
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper stopped/unloaded")
+        logger().log_debug("[helper] Linux Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper deleted")
+        logger().log_debug("[helper] Linux Helper deleted")
         return True
 
     def init(self, start_driver):
@@ -344,8 +337,7 @@ class LinuxHelper(Helper):
     def native_map_io_space(self, base, size, cache_type):
         """Map to memory a specific region."""
         if self.devmem_available() and not self.memory_mapping(base, size):
-            if logger().DEBUG:
-                logger().log("[helper] Mapping 0x{:x} to memory".format(base))
+            logger().log_debug("[helper] Mapping 0x{:x} to memory".format(base))
             length = max(size, resource.getpagesize())
             page_aligned_base = base - (base % resource.getpagesize())
             mapping = MemoryMapping(self.dev_mem, length, mmap.MAP_SHARED,

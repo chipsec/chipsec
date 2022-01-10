@@ -76,26 +76,22 @@ class EfiHelper(Helper):
 ###############################################################################################
 
     def create(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper created")
+        logger().log_debug("[helper] UEFI Helper created")
         return True
 
     def start(self, start_driver, driver_exists=False):
         # The driver is part of the modified version of edk2.
         # It is always considered as loaded.
         self.driver_loaded = True
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper started/loaded")
+        logger().log_debug("[helper] UEFI Helper started/loaded")
         return True
 
     def stop(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper stopped/unloaded")
+        logger().log_debug("[helper] UEFI Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper deleted")
+        logger().log_debug("[helper] UEFI Helper deleted")
         return True
 
 
@@ -129,8 +125,7 @@ class EfiHelper(Helper):
 
     def pa2va(self, pa):
         va = pa # UEFI Shell has identity mapping
-        if logger().DEBUG:
-            logger().log('[helper] PA (0X{:016X}) -> VA (0X{:016X})'.format(pa, va))
+        logger().log_debug('[helper] PA (0X{:016X}) -> VA (0X{:016X})'.format(pa, va))
         return va
 
 
@@ -311,12 +306,10 @@ class EfiHelper(Helper):
             (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
 
             if status == 5:
-                if logger().DEBUG:
-                    logger().log("[helper] EFI Variable name size was too small increasing to {:d}".format(size))
+                logger().log_debug("[helper] EFI Variable name size was too small increasing to {:d}".format(size))
                 (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
 
-            if logger().DEBUG:
-                logger().log("[helper] Returned {}. Status is {}".format(name, status_dict[status]))
+            logger().log_debug("[helper] Returned {}. Status is {}".format(name, status_dict[status]))
 
             if status:
                 search_complete = True
@@ -326,8 +319,7 @@ class EfiHelper(Helper):
                 else:
                     var_list.append((namestr, guidstr))
 
-                if logger().DEBUG:
-                    logger().log("[helper] Found variable '{}' - [{}]".format(name, guidstr))
+                logger().log_debug("[helper] Found variable '{}' - [{}]".format(name, guidstr))
 
         for (name, guidstr) in var_list:
             (status, data, attr) = self.get_EFI_variable_full(name, guidstr)

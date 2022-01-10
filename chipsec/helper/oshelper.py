@@ -79,8 +79,7 @@ class OsHelper:
             except OsHelperError:
                 raise
             except:
-                if logger().DEBUG:
-                    logger().log("Unable to load helper: {}".format(helper))
+                logger().log_debug("Unable to load helper: {}".format(helper))
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:

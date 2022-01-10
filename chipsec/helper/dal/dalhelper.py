@@ -41,8 +41,7 @@ class DALHelper(Helper):
     def __init__(self):
         super(DALHelper, self).__init__()
         self.base = itpii.baseaccess()
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper')
+        logger().log_debug('[helper] DAL Helper')
         if not len(self.base.threads):
             logger().log('[helper] No threads detected!  DAL Helper will fail to load!')
         elif self.base.threads[self.find_thread()].cv.isrunning:
@@ -69,8 +68,7 @@ class DALHelper(Helper):
 ###############################################################################################
 
     def create( self, start_driver ):
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper created')
+        logger().log_debug('[helper] DAL Helper created')
         return True
 
     def start( self, start_driver, driver_exhists=False ):
@@ -78,20 +76,17 @@ class DALHelper(Helper):
         if self.base.threads[self.find_thread()].cv.isrunning:
             self.base.halt()
             SYSTEM_HALTED = False
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper started/loaded')
+        logger().log_debug('[helper] DAL Helper started/loaded')
         return True
 
     def stop( self, start_driver ):
         if not SYSTEM_HALTED:
             self.base.go()
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper stopped/unloaded')
+        logger().log_debug('[helper] DAL Helper stopped/unloaded')
         return True
 
     def delete( self, start_driver ):
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper deleted')
+        logger().log_debug('[helper] DAL Helper deleted')
         return True
 
 
@@ -287,8 +282,7 @@ class DALHelper(Helper):
 
     def get_threads_count( self ):
         no_threads = len(self.base.threads)
-        if logger().DEBUG:
-            logger().log( '[helper] Threads discovered : 0x{:X} ({:d})'.format(no_threads, no_threads) )
+        logger().log_debug( '[helper] Threads discovered : 0x{:X} ({:d})'.format(no_threads, no_threads) )
         return no_threads
 
     def cpuid(self, eax, ecx):

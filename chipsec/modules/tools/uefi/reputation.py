@@ -68,8 +68,7 @@ Please run 'pip install virustotal-api' and try again.""")
 
         while vt_report["response_code"] == 204:
             # The Public API is limited to 4 requests per minute.
-            if self.logger.DEBUG:
-                self.logger.log("VT API quota exceeded, sleeping for 1 minute... (-.-)zzZZ")
+            self.logger.log_debug("VT API quota exceeded, sleeping for 1 minute... (-.-)zzZZ")
 
             time.sleep(60)
             # Retry.
