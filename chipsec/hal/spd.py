@@ -348,11 +348,10 @@ class SPD:
             ecc_width = self.read_byte( SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, device )
             logger().log_hal("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, ecc_width))
 
-        if logger().HAL:
-            if ecc is None:
-                logger().log("[spd][0x{:02X}] Unable to determine ECC support".format(device))
-            else:
-                logger().log("[spd][0x{:02X}] ECC is {}supported by the DIMM (byte {:d} = 0x{:02X})".format(device, '' if ecc_supported else 'not ', ecc_off, ecc))
+        if ecc is None:
+            logger().log_hal("[spd][0x{:02X}] Unable to determine ECC support".format(device))
+        else:
+            logger().log_hal("[spd][0x{:02X}] ECC is {}supported by the DIMM (byte {:d} = 0x{:02X})".format(device, '' if ecc_supported else 'not ', ecc_off, ecc))
         return ecc_supported
 
 

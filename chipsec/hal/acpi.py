@@ -416,7 +416,7 @@ class ACPI(hal_base.HALBase):
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             _sig = bytestostring(_sig)
             if _sig not in ACPI_TABLES.keys():
-                if logger().HAL: logger().warn( 'Unknown ACPI table signature: {}'.format(_sig) )
+                logger().log_hal( 'Unknown ACPI table signature: {}'.format(_sig) )
             self.tableList[ _sig ].append(a)
 
     #
@@ -428,7 +428,7 @@ class ACPI(hal_base.HALBase):
         if ACPI_TABLE_SIG_FACP in self.tableList:
             (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
         else:
-            if logger().HAL: logger().warn( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
+            logger().log_hal( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
             return
 
         dsdt_address_to_use = parsed_fadt_content.get_DSDT_address_to_use()
@@ -436,9 +436,9 @@ class ACPI(hal_base.HALBase):
         if dsdt_address_to_use is None:
             dsdt_address = parsed_fadt_content.dsdt
             x_dsdt_address = parsed_fadt_content.x_dsdt
-            if logger().HAL: logger().error( 'Unable to determine the correct DSDT address' )
-            if logger().HAL: logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
-            if logger().HAL: logger().error( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
+            logger().log_hal( 'Unable to determine the correct DSDT address' )
+            logger().log_hal( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
+            logger().log_hal( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)

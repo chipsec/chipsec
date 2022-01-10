@@ -515,7 +515,7 @@ class SPI(hal_base.HALBase):
             reg_value = self.cs.read_register('BC')
             self.cs.print_register('BC', reg_value )
         else:
-            if self.logger.HAL: self.logger.error( "Could not locate the definition of 'BIOS Control' register.." )
+            self.logger.log_hal( "Could not locate the definition of 'BIOS Control' register.." )
 
 
     def disable_BIOS_write_protection( self ):
@@ -593,7 +593,7 @@ class SPI(hal_base.HALBase):
 
         if self.logger.HAL:
             _faddr = self.spi_reg_read( self.faddr_off )
-            self.logger.log( "[spi] FADDR: 0x{:08X}".format(_faddr) )
+        self.logger.log_hal( "[spi] FADDR: 0x{:08X}".format(_faddr) )
 
         self.logger.log_hal( "[spi] SPI cycle GO (DBC <- 0x{:02X}, HSFC <- 0x{:x})".format(dbc, hsfctl_spi_cycle_cmd) )
 
@@ -606,7 +606,7 @@ class SPI(hal_base.HALBase):
         # Read HSFC back (logging only)
         if self.logger.HAL:
             _hsfc = self.spi_reg_read( self.hsfc_off, 1 )
-            self.logger.log( "[spi] HSFC: 0x{:04X}".format(_hsfc) )
+        self.logger.log_hal( "[spi] HSFC: 0x{:04X}".format(_hsfc) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
@@ -653,8 +653,8 @@ class SPI(hal_base.HALBase):
 
         n = data_byte_count // dbc
         r = data_byte_count % dbc
-        if self.logger.UTIL_TRACE or self.logger.HAL:
-            self.logger.log( "[spi] reading 0x{:x} bytes from SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
+        if self.logger.UTIL_TRACE:
+            self.logger.log_hal( "[spi] reading 0x{:x} bytes from SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
@@ -701,8 +701,8 @@ class SPI(hal_base.HALBase):
         dbc = 4
         n = data_byte_count // dbc
         r = data_byte_count % dbc
-        if self.logger.UTIL_TRACE or self.logger.HAL:
-            self.logger.log( "[spi] writing 0x{:x} bytes to SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
+        if self.logger.UTIL_TRACE:
+            self.logger.log_hal( "[spi] writing 0x{:x} bytes to SPI at FLA = 0x{:x} (in {:d} 0x{:x}-byte chunks + 0x{:x}-byte remainder)".format(data_byte_count, spi_fla, n, dbc, r) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
@@ -710,8 +710,8 @@ class SPI(hal_base.HALBase):
             return None
 
         for i in range(n):
-            if self.logger.UTIL_TRACE or self.logger.HAL:
-                self.logger.log( "[spi] writing chunk {:d} of 0x{:x} bytes to 0x{:x}".format(i, dbc, spi_fla + i *dbc) )
+            if self.logger.UTIL_TRACE:
+                self.logger.log_hal( "[spi] writing chunk {:d} of 0x{:x} bytes to 0x{:x}".format(i, dbc, spi_fla + i *dbc) )
             dword_value = (ord(buf[i *dbc + 3]) << 24) | (ord(buf[i *dbc + 2]) << 16) | (ord(buf[i *dbc + 1]) << 8) | ord(buf[i *dbc])
             self.logger.log_hal( "[spi] in FDATA00 = 0x{:08X}".format(dword_value) )
             self.spi_reg_write( self.fdata0_off, dword_value )
@@ -720,8 +720,8 @@ class SPI(hal_base.HALBase):
                 self.logger.error( "SPI flash write cycle failed" )
 
         if (0 != r):
-            if self.logger.UTIL_TRACE or self.logger.HAL:
-                self.logger.log( "[spi] writing remaining 0x{:x} bytes to FLA = 0x{:x}".format(r, spi_fla + n *dbc) )
+            if self.logger.UTIL_TRACE:
+                self.logger.log_hal( "[spi] writing remaining 0x{:x} bytes to FLA = 0x{:x}".format(r, spi_fla + n *dbc) )
             dword_value = 0
             for j in range(r):
                 dword_value |= (ord(buf[n *dbc + j]) << 8 *j)
@@ -737,8 +737,8 @@ class SPI(hal_base.HALBase):
 
         self.check_hardware_sequencing()
 
-        if self.logger.UTIL_TRACE or self.logger.HAL:
-            self.logger.log( "[spi] Erasing SPI Flash block @ 0x{:x}".format(spi_fla) )
+        if self.logger.UTIL_TRACE:
+            self.logger.log_hal( "[spi] Erasing SPI Flash block @ 0x{:x}".format(spi_fla) )
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:

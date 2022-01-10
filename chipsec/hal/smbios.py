@@ -367,12 +367,12 @@ class SMBIOS(hal_base.HALBase):
         logger().log_hal('Reading SMBIOS data tables:')
         if self.smbios_2_ep is not None and self.smbios_2_ep.TableAddr != 0 and self.smbios_2_ep.TableLen != 0:
             self.smbios_2_data = self.cs.mem.read_physical_mem(self.smbios_2_ep.TableAddr, self.smbios_2_ep.TableLen)
-            if self.smbios_2_data is None and logger().HAL:
-                logger().log('- Failed to read 32bit SMBIOS data')
+            if self.smbios_2_data is None:
+                logger().log_hal('- Failed to read 32bit SMBIOS data')
         if self.smbios_3_ep is not None and self.smbios_3_ep.TableAddr != 0 and self.smbios_3_ep.MaxSize != 0:
             self.smbios_3_data = self.cs.mem.read_physical_mem(self.smbios_3_ep.TableAddr, self.smbios_3_ep.MaxSize)
-            if self.smbios_3_data is None and logger().HAL:
-                logger().log('- Failed to read 64bit SMBIOS data')
+            if self.smbios_3_data is None:
+                logger().log_hal('- Failed to read 64bit SMBIOS data')
 
         return True
 

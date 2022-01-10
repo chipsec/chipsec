@@ -231,7 +231,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 def _handle_winerror(fn, msg, hr):
     _handle_error( ("{} failed: {} ({:d})".format(fn, msg, hr)), hr )
 def _handle_error( err, hr=0 ):
-    if logger().DEBUG: logger().error( err )
+    logger().log_debug( err )
     raise OsHelperError( err, hr )
 
 class Win32Helper(Helper):
@@ -293,7 +293,7 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
+            logger().log_debug( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
 
         try:
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
@@ -407,7 +407,7 @@ class Win32Helper(Helper):
             win32serviceutil.RemoveService( SERVICE_NAME )
             logger().log_debug( "[helper] service '{}' deleted".format(SERVICE_NAME) )
         except win32service.error as err:
-            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            logger().log_debug( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
 
         return True
@@ -450,7 +450,7 @@ class Win32Helper(Helper):
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            logger().log_debug( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
         finally:
             self.driver_loaded = False
@@ -459,7 +459,7 @@ class Win32Helper(Helper):
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             logger().log_debug( "[helper] service '{}' stopped".format(SERVICE_NAME) )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
+            logger().log_debug( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
 
         return True
@@ -518,7 +518,7 @@ class Win32Helper(Helper):
             err_status = _err.args[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x{:X})".format(err_status)
-                if logger().DEBUG: logger().error( err_msg )
+                logger().log_debug( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
                 _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status, _err.args[2]), err_status )
@@ -733,7 +733,7 @@ class Win32Helper(Helper):
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            logger().log_debug( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             efi_var_data = None
             #raise WinError(errno.EIO,"Unable to get EFI variable")
         else:
@@ -764,7 +764,7 @@ class Win32Helper(Helper):
             status = 0 # EFI_SUCCESS
         else:
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            logger().log_debug( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
 
@@ -782,19 +782,18 @@ class Win32Helper(Helper):
             efi_vars = create_string_buffer( retlength )
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
-            if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
+            logger().log_debug( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
             logger().log_debug( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
             lasterror = kernel32.GetLastError()
             if (0xC0000001 == status and lasterror == 0x000003E6): # ERROR_NOACCESS: Invalid access to memory location.  https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
-                if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)' )
+                logger().log_debug( 'NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)' )
                 logger().log_debug( '[*] Your Windows has restricted access to UEFI variables.\nTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment' )
                 return None
             else:
-                if logger().DEBUG:
-                    logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(lasterror) )
-                    logger().error( '*** NTSTATUS: {:08X}'.format(status) )
+                logger().log_debug( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(lasterror) )
+                logger().log_debug( '*** NTSTATUS: {:08X}'.format(status) )
                 raise WinError()
         logger().log_debug( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
@@ -871,8 +870,7 @@ class Win32Helper(Helper):
         tbl = struct.unpack("<I", bytes(table_name, 'ascii'))[0]
         retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         if retVal == 0:
-            if logger().DEBUG:
-                logger().error( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
+            logger().log_debug( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
             return None
         if retVal > table_size:
             table_size = retVal
@@ -891,15 +889,15 @@ class Win32Helper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        logger().log_debug( "[helper] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        logger().log_debug( "[helper] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        logger().log_debug( "[helper] Message Bus is not supported yet" )
         return None
 
     def rotate_list(self, list, n):
@@ -947,8 +945,8 @@ class Win32Helper(Helper):
             encode_str = BROTLI + encode_str
         encode_str += FileName
         data = subprocess.call(encode_str, stdout=open(os.devnull, 'wb'), shell=True)
-        if not data == 0 and logger().DEBUG:
-            logger().error("Cannot compress file({})".format(FileName))
+        if not data == 0:
+            logger().log_debug("Cannot compress file({})".format(FileName))
             return False
         return True
 
@@ -979,8 +977,7 @@ class Win32Helper(Helper):
         decode_str += CompressedFileName
         data = subprocess.call(decode_str, stdout=open(os.devnull, 'wb'), shell=True)
         if not data == 0:
-            if logger().DEBUG:
-                logger().error("Cannot decompress file({})".format(CompressedFileName))
+            logger().log_debug("Cannot decompress file({})".format(CompressedFileName))
             return False
         return True
 

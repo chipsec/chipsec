@@ -290,14 +290,14 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariable.restype = c_int
             self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
+            logger().log_debug( "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
             self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
+            logger().log_debug( "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
 
         try:
             self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
@@ -307,21 +307,21 @@ class RweHelper(Helper):
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
+            logger().log_debug( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
 
         try:
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
             self.GetSystemFirmwareTbl.restype = c_int
             self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
+            logger().log_debug( "GetSystemFirmwareTable function doesn't seem to exist" )
 
         try:
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables
             self.EnumSystemFirmwareTbls.restype = c_int
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "GetSystemFirmwareTable function doesn't seem to exist" )
+            logger().log_debug( "GetSystemFirmwareTable function doesn't seem to exist" )
 
 
     def __del__(self):
@@ -397,7 +397,7 @@ class RweHelper(Helper):
         if self.use_existing_service: return True
 
         if win32serviceutil.QueryServiceStatus( SERVICE_NAME )[1] != win32service.SERVICE_STOPPED:
-            if logger().DEBUG: logger().warn( "cannot delete service '{}' (not stopped)".format(SERVICE_NAME) )
+            logger().log_debug( "cannot delete service '{}' (not stopped)".format(SERVICE_NAME) )
             return False
 
         logger().log_debug( "[helper] deleting service '{}'...".format(SERVICE_NAME) )
@@ -405,7 +405,7 @@ class RweHelper(Helper):
             win32serviceutil.RemoveService( SERVICE_NAME )
             logger().log_debug( "[helper] service '{}' deleted".format(SERVICE_NAME) )
         except win32service.error as err:
-            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            logger().log_debug( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
 
         return True
@@ -449,7 +449,7 @@ class RweHelper(Helper):
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            logger().log_debug( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
         finally:
             self.driver_loaded = False
@@ -458,7 +458,7 @@ class RweHelper(Helper):
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             logger().log_debug( "[helper] service '{}' stopped".format(SERVICE_NAME) )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
+            logger().log_debug( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
 
         return True
@@ -483,7 +483,7 @@ class RweHelper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             self.get_driver_handle()
-            if logger().DEBUG: logger().warn( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, self.driver_handle) )
+            logger().log_debug( "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, self.driver_handle) )
             return False
         return True
 
@@ -511,14 +511,15 @@ class RweHelper(Helper):
 
         out_buf = (c_char * out_length)()
         self.get_driver_handle()
-        if logger().DEBUG: print_buffer( bytestostring(in_buf) )
+        if logger().DEBUG:
+            print_buffer(bytestostring(in_buf))
         try:
             out_buf = win32file.DeviceIoControl( self.driver_handle, ioctl_code, in_buf, out_length, None )
         except pywintypes.error as _err:
             err_status = _err.args[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x{:X})".format(err_status)
-                if logger().DEBUG: logger().error( err_msg )
+                logger().log_debug( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
                 _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status, _err.args[2]), err_status )
@@ -617,7 +618,7 @@ class RweHelper(Helper):
         try:
             (eax, ebx, ecx, edx) = struct.unpack( '<4I', out_buf )
         except:
-            if logger().DEBUG: logger().error( 'DeviceIoControl did not return 4 DWORD values' )
+            logger().log_debug( 'DeviceIoControl did not return 4 DWORD values' )
 
         return (eax, edx)
 
@@ -663,7 +664,7 @@ class RweHelper(Helper):
                 out_buf = self._ioctl( IOCTL_READ_IO_PORT_DWORD, in_buf, 8 )
                 mask = 0xffffffff
         except:
-            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size {:X} (value = '{}')".format(size, out_buf) )
+            logger().log_debug( "DeviceIoControl did not return value of proper size {:X} (value = '{}')".format(size, out_buf) )
         #print len(out_buf), ":", out_buf.encode('hex')
         value = struct.unpack("<II", out_buf)[1] & mask
 
@@ -755,7 +756,7 @@ class RweHelper(Helper):
             status = 0 # EFI_SUCCESS
         else:
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            logger().log_debug( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
 
@@ -773,14 +774,12 @@ class RweHelper(Helper):
             efi_vars = create_string_buffer( retlength )
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
-            if logger().DEBUG:
-                logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
-                logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
+            logger().log_debug( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
+            logger().log_debug( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
-            if logger().DEBUG:
-                logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
-                logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
+            logger().log_debug( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
+            logger().log_debug( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
             raise WinError()
         logger().log_debug( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
@@ -848,8 +847,7 @@ class RweHelper(Helper):
         tbl = struct.unpack("<I", bytes(table_name, 'ascii'))[0]
         retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         if retVal == 0:
-            if logger().DEBUG:
-                logger().error( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
+            logger().log_debug( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
             return None
         if retVal > table_size:
             table_size = retVal
@@ -868,15 +866,15 @@ class RweHelper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        logger().log_debug( "[helper] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        logger().log_debug( "[helper] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        logger().log_debug( "[helper] Message Bus is not supported yet" )
         return None
 
     def get_tool_path( self, tool_type ):
@@ -892,7 +890,7 @@ class RweHelper(Helper):
         if not os.path.isfile( tool_path ):
             tool_path = os.path.join( tool_pathdef, tool_name )
             if not os.path.isfile( tool_path ):
-                if logger().DEBUG: logger().error( "Couldn't find {}".format(tool_path) )
+                logger().log_debug( "Couldn't find {}".format(tool_path) )
 
         return tool_path
 
@@ -913,9 +911,8 @@ class RweHelper(Helper):
             try:
                 subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
             except BaseException as msg:
-                if logger().DEBUG:
-                    logger().error( str(msg) )
-                    logger().log_bad( traceback.format_exc() )
+                logger().log_debug( str(msg) )
+                logger().log_debug( traceback.format_exc() )
                 return None
 
         return chipsec.file.read_file( OutputFileName )

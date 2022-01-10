@@ -31,8 +31,6 @@ import random
 
 from chipsec.module_common import BaseModule, ModuleResult
 
-#logger.VERBOSE = True
-
 _MODULE_NAME = 'cpuid_fuzz'
 
 #

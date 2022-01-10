@@ -74,7 +74,8 @@ class SMBus(hal_base.HALBase):
     def get_SMBus_HCFG( self ):
         if self.cs.is_register_defined( 'SMBUS_HCFG' ):
             reg_value = self.cs.read_register( 'SMBUS_HCFG' )
-            if self.logger.HAL: self.cs.print_register( 'SMBUS_HCFG', reg_value )
+            if self.logger.HAL:
+                self.cs.print_register( 'SMBUS_HCFG', reg_value )
             return reg_value
         else:
             raise RegisterNotFoundError ('RegisterNotFound: SMBUS_HCFG')
@@ -145,16 +146,16 @@ class SMBus(hal_base.HALBase):
                 #kill = 0
                 #if chipsec.chipset.register_has_field( self.cs, self.smb_reg_control, 'KILL' ):
                 #    kill = chipsec.chipset.read_register_field( self.cs, self.smb_reg_control, 'KILL' )
-                if self.logger.HAL: self.logger.error( "SMBus transaction failed (FAILED/ERROR bit = 1)" )
+                self.logger.log_hal( "SMBus transaction failed (FAILED/ERROR bit = 1)" )
                 return False
             else:
                 if self.cs.register_has_field( self.smb_reg_status, 'DEV_ERR' ):
                     if 1 == self.cs.get_register_field( self.smb_reg_status, sts, 'DEV_ERR' ):
-                        if self.logger.HAL: self.logger.error( "SMBus device error (invalid cmd, unclaimed cycle or time-out error)" )
+                        self.logger.log_hal( "SMBus device error (invalid cmd, unclaimed cycle or time-out error)" )
                         return False
                 if self.cs.register_has_field( self.smb_reg_status, 'BUS_ERR' ):
                     if 1 == self.cs.get_register_field( self.smb_reg_status, sts, 'BUS_ERR' ):
-                        if self.logger.HAL: self.logger.error( "SMBus bus error" )
+                        self.logger.log_hal( "SMBus bus error" )
                         return False
         return (0 == busy)
 

@@ -76,8 +76,6 @@ from chipsec.logger import print_buffer_bytes
 from chipsec.hal.interrupts import Interrupts
 from chipsec.exceptions import BadSMIDetected
 
-#logger.VERBOSE = False
-
 #################################################################
 # Fuzzing configuration
 #################################################################

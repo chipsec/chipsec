@@ -178,7 +178,7 @@ class OSXHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_RDPCI, data)
         except IOError:
-            if logger().DEBUG: logger().error("IOError")
+            logger().log_debug("IOError")
             return None
         x = struct.unpack(_pci_msg_t_fmt, ret)
         return x[5]
@@ -189,7 +189,7 @@ class OSXHelper(Helper):
         try:
             ret = self.ioctl(IOCTL_WRPCI, data)
         except IOError:
-            if logger().DEBUG: logger().error("IOError")
+            logger().log_debug("IOError")
 
     def read_mmio_reg(self, phys_address, size):
         data = struct.pack(_mmio_msg_t_fmt, phys_address, 0, size)
@@ -249,8 +249,8 @@ class OSXHelper(Helper):
             encode_str = BROTLI + encode_str
         encode_str += FileName
         data = subprocess.call(encode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(FileName))
+        if not data == 0:
+            logger().log_verbose("Cannot decompress file({})".format(FileName))
             return False
         return True
 
@@ -280,8 +280,8 @@ class OSXHelper(Helper):
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
         data = subprocess.call(decode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+        if not data == 0:
+            logger().log_verbose("Cannot decompress file({})".format(CompressedFileName))
             return False
         return True
 
@@ -342,7 +342,7 @@ class OSXHelper(Helper):
             else:
                 value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xffffffff
         except:
-            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf))
+            logger().log_debug("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf))
         return value
 
     def write_io_port(self, io_port, value, size):

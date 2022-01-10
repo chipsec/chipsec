@@ -31,8 +31,6 @@ import random
 
 from chipsec.module_common import BaseModule
 
-#logger.VERBOSE = True
-
 _MODULE_NAME = 'msr_fuzz'
 
 # Number of iterations to fuzz randomly

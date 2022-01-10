@@ -243,18 +243,15 @@ class Logger:
 
     def log_verbose(self, text):
         """Logs an Verbose message"""
-        if self.VERBOSE:
-            self._log(text, pyLogging.getLevelName("verbose"))
+        self._log(text, pyLogging.getLevelName("verbose"))
 
     def log_hal(self, text):
         """Logs an Verbose message"""
-        if self.VERBOSE:
-            self._log(text, pyLogging.getLevelName("hal"))
+        self._log(text, pyLogging.getLevelName("hal"))
 
     def log_debug(self, text):
         """Logs an Verbose message"""
-        if self.VERBOSE:
-            self._log(text, pyLogging.getLevelName("debug"))
+        self._log(text, pyLogging.getLevelName("debug"))
 
     def log_passed_check(self, text):
         """Logs a Test as PASSED"""

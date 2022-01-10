@@ -254,7 +254,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
             self.translation                    = {}
             self.pt                             = {}
             self.failure = True
-            if logger().HAL: logger().error( '    ERROR: Invalid {} Page Tables!'.format(name) )
+            logger().log_hal( '    ERROR: Invalid {} Page Tables!'.format(name) )
         #finally:
         #    #txt.close()
         return
