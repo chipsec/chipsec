@@ -105,7 +105,7 @@ class DALHelper(Helper):
         for en_thread in range(len(self.base.threads)):
             if self.base.threads[en_thread].isenabled:
                 return en_thread
-        if logger().DEBUG: logger().log('[WARNING] No enabled threads found.')
+        logger().log_debug('[WARNING] No enabled threads found.')
         return 0
 
 ###############################################################################################
@@ -118,7 +118,7 @@ class DALHelper(Helper):
 
     def pci_addr( self, bus, device, function, offset ):
         if (bus >= 256) or (device >= 32) or (function >= 8) or (offset >= 256):
-            if logger().DEBUG: logger().log('[WARNING] PCI access out of range. Use mmio functions to access PCIEXBAR.')
+            logger().log_debug('[WARNING] PCI access out of range. Use mmio functions to access PCIEXBAR.')
         config_addr = self.base.threads[self.find_thread()].dport(0xCF8)
         config_addr &= 0x7f000003
         config_addr |= 0x80000000
@@ -220,7 +220,7 @@ class DALHelper(Helper):
     def read_msr( self, thread, msr_addr ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(thread, en_thread))
+            logger().log_debug('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(thread, en_thread))
             thread = en_thread
         val = self.base.threads[thread].msr( msr_addr )
         edx = ( val.ToUInt64() >> 32 )
@@ -230,7 +230,7 @@ class DALHelper(Helper):
     def write_msr( self, thread, msr_addr, eax, edx ):
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(thread, en_thread))
+            logger().log_debug('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(thread, en_thread))
             thread = en_thread
         val = ( edx << 32 ) | eax
         self.base.threads[thread].msr( msr_addr, val )
@@ -239,7 +239,7 @@ class DALHelper(Helper):
     def read_cr(self, cpu_thread_id, cr_number):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(cpu_thread_id, en_thread))
+            logger().log_debug('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             val = self.base.threads[cpu_thread_id].state.regs.cr0.value
@@ -252,14 +252,14 @@ class DALHelper(Helper):
         elif cr_number == 8:
             val = self.base.threads[cpu_thread_id].state.regs.cr8.value
         else:
-            if logger().DEBUG: logger().log('[ERROR] Selected CR{:d} is not supported.'.format(cr_number))
+            logger().log_debug('[ERROR] Selected CR{:d} is not supported.'.format(cr_number))
             val = 0
         return val
 
     def write_cr(self, cpu_thread_id, cr_number, value):
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            if logger().DEBUG: logger().log('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(cpu_thread_id, en_thread))
+            logger().log_debug('[WARNING] Selected thread [{:d}] was disabled, using [{:d}].'.format(cpu_thread_id, en_thread))
             cpu_thread_id = en_thread
         if cr_number == 0:
             self.base.threads[cpu_thread_id].state.regs.cr0 = value
@@ -272,7 +272,7 @@ class DALHelper(Helper):
         elif cr_number == 8:
             self.base.threads[cpu_thread_id].state.regs.cr8 = value
         else:
-            if logger().DEBUG: logger().log('[ERROR] Selected CR{:d} is not supported.'.format(cr_number))
+            logger().log_debug('[ERROR] Selected CR{:d} is not supported.'.format(cr_number))
             return False
         return True
 
