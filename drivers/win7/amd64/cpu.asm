@@ -406,7 +406,8 @@ _swsmi PROC FRAME
     xchg rsi, [r10+28h]  ; //rsi value
     xchg rdi, [r10+30h]  ; //rdi value
 
-    ; this OUT instruction will write WORD value (smi_code_data) to ports 0xB2 and 0xB3 (SW SMI control and data ports)
+    ; these OUT instructions will write BYTE value (smi_code_data) to port 0xB3 then port 0xB3 (SW SMI control and data ports)
+    ; the writes need to be broken up as some systems will drop the interrupt if the port size is larger than a BYTE
     ror ax, 8
     out 0B3h, al ; 0xB3
     ror ax, 8
