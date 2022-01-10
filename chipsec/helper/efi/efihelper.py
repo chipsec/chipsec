@@ -120,7 +120,7 @@ class EfiHelper(Helper):
 
     def va2pa(self, va):
         pa = va # UEFI shell has identity mapping
-        if logger().DEBUG: logger().log( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa) )
+        logger().log_debug( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa) )
         return (pa, 0)
 
     def pa2va(self, pa):
@@ -221,7 +221,7 @@ class EfiHelper(Helper):
         return 0
 
     def get_threads_count ( self ):
-        if logger().DEBUG: logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
+        logger().log_debug_warning( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
         return 0
 
@@ -230,7 +230,7 @@ class EfiHelper(Helper):
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
-        if logger().DEBUG: logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
+        logger().log_debug_warning("EFI helper has not implemented get_descriptor_table yet")
         return 0
 
     #

@@ -95,7 +95,7 @@ class OsHelper:
             if not self.helper.start( start_driver, from_file ):
                 raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
-            if logger().DEBUG: logger().log_bad(traceback.format_exc())
+            logger().log_debug_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg, 'errorcode'):
                 error_no = msg.errorcode

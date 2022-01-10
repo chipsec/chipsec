@@ -251,7 +251,7 @@ class Win32Helper(Helper):
         if "windows" == self.os_system.lower():
             win_ver = "win7_" + self.os_machine.lower()
             if ("5" == self.os_release): win_ver = "winxp"
-            if logger().DEBUG: logger().log( "[helper] OS: {} {} {}".format(self.os_system, self.os_release, self.os_version) )
+            logger().log_debug( "[helper] OS: {} {} {}".format(self.os_system, self.os_release, self.os_version) )
 
         self.use_existing_service = False
 
@@ -348,7 +348,7 @@ class Win32Helper(Helper):
             driver_path = os.path.join(path, DRIVER_FILE_NAME)
             if os.path.isfile(driver_path):
                 self.driver_path = driver_path
-                if logger().DEBUG: logger().log("[helper] found driver in {}".format(driver_path))
+                logger().log_debug("[helper] found driver in {}".format(driver_path))
         if self.driver_path is None:
             logger().log_debug("[helper] CHIPSEC Windows Driver Not Found")
             raise Exception("CHIPSEC Windows Driver Not Found")
@@ -374,10 +374,10 @@ class Win32Helper(Helper):
                  os.path.abspath(self.driver_path),
                  None, 0, u"", None, None )
             if hs:
-                if logger().DEBUG: logger().log( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME, int(hs)) )
+                logger().log_debug( "[helper] service '{}' created (handle = 0x{:08X})".format(SERVICE_NAME, int(hs)) )
         except win32service.error as err:
             if (winerror.ERROR_SERVICE_EXISTS == err.args[0]):
-                if logger().DEBUG: logger().log( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
+                logger().log_debug( "[helper] service '{}' already exists: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
                 try:
                     hs = win32service.OpenService( hscm, SERVICE_NAME, (win32service.SERVICE_QUERY_STATUS|win32service.SERVICE_START|win32service.SERVICE_STOP) ) # SERVICE_ALL_ACCESS
                 except win32service.error as _err:
@@ -402,10 +402,10 @@ class Win32Helper(Helper):
             logger().warn( "cannot delete service '{}' (not stopped)".format(SERVICE_NAME) )
             return False
 
-        if logger().DEBUG: logger().log( "[helper] deleting service '{}'...".format(SERVICE_NAME) )
+        logger().log_debug( "[helper] deleting service '{}'...".format(SERVICE_NAME) )
         try:
             win32serviceutil.RemoveService( SERVICE_NAME )
-            if logger().DEBUG: logger().log( "[helper] service '{}' deleted".format(SERVICE_NAME) )
+            logger().log_debug( "[helper] service '{}' deleted".format(SERVICE_NAME) )
         except win32service.error as err:
             if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
@@ -431,7 +431,7 @@ class Win32Helper(Helper):
                 win32serviceutil.StartService( SERVICE_NAME )
                 win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_RUNNING, 1 )
                 self.driver_loaded = True
-                if logger().DEBUG: logger().log( "[helper] service '{}' started".format(SERVICE_NAME) )
+                logger().log_debug( "[helper] service '{}' started".format(SERVICE_NAME) )
             except pywintypes.error as err:
                 _handle_error( "service '{}' didn't start: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]), err.args[0] )
         self.driverpath = win32serviceutil.LocateSpecificServiceExe(SERVICE_NAME)
@@ -444,7 +444,7 @@ class Win32Helper(Helper):
         if not start_driver: return True
         if self.use_existing_service: return True
 
-        if logger().DEBUG: logger().log( "[helper] stopping service '{}'..".format(SERVICE_NAME) )
+        logger().log_debug( "[helper] stopping service '{}'..".format(SERVICE_NAME) )
         try:
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
@@ -457,7 +457,7 @@ class Win32Helper(Helper):
 
         try:
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
-            if logger().DEBUG: logger().log( "[helper] service '{}' stopped".format(SERVICE_NAME) )
+            logger().log_debug( "[helper] service '{}' stopped".format(SERVICE_NAME) )
         except pywintypes.error as err:
             if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
@@ -475,7 +475,7 @@ class Win32Helper(Helper):
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error( drv_hndl_error_msg, errno.ENXIO )
         else:
-            if logger().DEBUG: logger().log( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, int(self.driver_handle)) )
+            logger().log_debug( "[helper] opened device '{:.64}' (handle: {:08X})".format(DEVICE_FILE, int(self.driver_handle)) )
         return self.driver_handle
 
     def check_driver_handle( self ):
@@ -724,12 +724,12 @@ class Win32Helper(Helper):
         efi_var = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         if attrs is None:
             if self.GetFirmwareEnvironmentVariable is not None:
-                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariable( name='{}', GUID='{}' )..".format(name, "{{{}}}".format(guid)) )
+                logger().log_debug( "[helper] -> GetFirmwareEnvironmentVariable( name='{}', GUID='{}' )..".format(name, "{{{}}}".format(guid)) )
                 length = self.GetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE )
         else:
             if self.GetFirmwareEnvironmentVariableEx is not None:
                 pattrs = c_int(attrs)
-                if logger().DEBUG: logger().log( "[helper] -> GetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', attrs = 0x{:X} )..".format(name, "{{{}}}".format(guid), attrs) )
+                logger().log_debug( "[helper] -> GetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', attrs = 0x{:X} )..".format(name, "{{{}}}".format(guid), attrs) )
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
@@ -754,11 +754,11 @@ class Win32Helper(Helper):
 
         if attrs is None:
             if self.SetFirmwareEnvironmentVariable is not None:
-                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariable( name='{}', GUID='{}', length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len) )
+                logger().log_debug( "[helper] -> SetFirmwareEnvironmentVariable( name='{}', GUID='{}', length=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len) )
                 ntsts = self.SetFirmwareEnvironmentVariable( name, "{{{}}}".format(guid), var, var_len )
         else:
             if self.SetFirmwareEnvironmentVariableEx is not None:
-                if logger().DEBUG: logger().log( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, attrs=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len, attrs) )
+                logger().log_debug( "[helper] -> SetFirmwareEnvironmentVariableEx( name='{}', GUID='{}', length=0x{:X}, attrs=0x{:X} )..".format(name, "{{{}}}".format(guid), var_len, attrs) )
                 ntsts = self.SetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), var, var_len, attrs )
         if 0 != ntsts:
             status = 0 # EFI_SUCCESS
@@ -772,7 +772,7 @@ class Win32Helper(Helper):
         return self.set_EFI_variable( name, guid, None, datasize=0, attrs=None )
 
     def list_EFI_variables( self, infcls=2 ):
-        if logger().DEBUG: logger().log( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls={:d} )..'.format(infcls) )
+        logger().log_debug( '[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls={:d} )..'.format(infcls) )
         efi_vars = create_string_buffer( EFI_VAR_MAX_BUFFER_SIZE )
         length = packl_ctypes( EFI_VAR_MAX_BUFFER_SIZE, 32 )
         status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
@@ -783,20 +783,20 @@ class Win32Helper(Helper):
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
             if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
-            if logger().DEBUG: logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
+            logger().log_debug( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
             lasterror = kernel32.GetLastError()
             if (0xC0000001 == status and lasterror == 0x000003E6): # ERROR_NOACCESS: Invalid access to memory location.  https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
                 if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)' )
-                if logger().DEBUG: logger().log( '[*] Your Windows has restricted access to UEFI variables.\nTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment' )
+                logger().log_debug( '[*] Your Windows has restricted access to UEFI variables.\nTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment' )
                 return None
             else:
                 if logger().DEBUG:
                     logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(lasterror) )
                     logger().error( '*** NTSTATUS: {:08X}'.format(status) )
                 raise WinError()
-        if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
+        logger().log_debug( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
 
     #

@@ -61,7 +61,7 @@ def read_file( filename, size=0 ):
         _file = f.read()
     f.close()
 
-    if logger().DEBUG: logger().log( "[file] read {:d} bytes from '{:256}'".format( len(_file), filename ) )
+    logger().log_debug( "[file] read {:d} bytes from '{:256}'".format( len(_file), filename ) )
     return _file
 
 def write_file( filename, buffer, append=False ):
@@ -79,7 +79,7 @@ def write_file( filename, buffer, append=False ):
     f.write( buffer )
     f.close()
 
-    if logger().DEBUG: logger().log( "[file] wrote {:d} bytes to '{:.256}'".format( len(buffer), filename ) )
+    logger().log_debug( "[file] wrote {:d} bytes to '{:.256}'".format( len(buffer), filename ) )
     return True
 
 

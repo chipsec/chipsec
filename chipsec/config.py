@@ -121,7 +121,7 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.MEMORY_RANGES[vid][_name] = _range.attrib  # may want to append opposed to overwrite
-                    logger().log_debugg("    + {:16}: {}".format(_name, _range.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _range.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_range.attrib['config'], _name, vid)
 
@@ -135,7 +135,7 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.MM_MSGBUS[vid][_name] = _device.attrib  # may want to append opposed to overwrite
-                    logger().log_debugg("    + {:16}: {}".format(_name, _device.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
 

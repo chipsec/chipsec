@@ -279,11 +279,11 @@ class LinuxHelper(Helper):
             if not os.path.exists("/dev/cpu/0/msr"):
                 os.system("modprobe msr")
             for cpu in os.listdir("/dev/cpu"):
-                if logger().DEBUG: logger().log("found cpu = {}".format(cpu))
+                logger().log_debug("found cpu = {}".format(cpu))
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/" +str(cpu) +"/msr", os.O_RDWR)
-                    if logger().DEBUG: logger().log("Added dev_msr {}".format(str(cpu)))
+                    logger().log_debug("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
