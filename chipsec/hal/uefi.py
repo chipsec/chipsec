@@ -187,13 +187,12 @@ def print_efi_variable( offset, efi_var_buf, EFI_var_header, efi_var_name, efi_v
             logger().log( state_str )
 
         # Print Variable Complete Header
-        if logger().VERBOSE:
-            if EFI_var_header.__str__:
-                logger().log( EFI_var_header )
-            else:
-                logger().log( 'Decoded Header ({}):'.format(uefi_platform.EFI_VAR_DICT[ uefi_platform.FWType.EFI_FW_TYPE_UEFI ]['name']) )
-                for attr in EFI_var_header._fields:
-                    logger().log( '{} = {:X}'.format('{0:<16}'.format(attr), getattr(EFI_var_header, attr)) )
+        if EFI_var_header.__str__:
+            logger().log_verbose( EFI_var_header )
+        else:
+            logger().log_verbose( 'Decoded Header ({}):'.format(uefi_platform.EFI_VAR_DICT[ uefi_platform.FWType.EFI_FW_TYPE_UEFI ]['name']) )
+            for attr in EFI_var_header._fields:
+                logger().log_verbose( '{} = {:X}'.format('{0:<16}'.format(attr), getattr(EFI_var_header, attr)) )
 
     attr_str = ('Attributes: 0x{:X} ( {} )'.format(efi_var_attributes, get_attr_string( efi_var_attributes )))
     logger().log( attr_str )
@@ -486,8 +485,8 @@ NVRAM: EFI Variable Store
         if var:
             if filename: write_file( filename, var )
             if logger().UTIL_TRACE or logger().HAL:
-                logger().log( '[uefi] EFI variable {}:{} :'.format(guid, name) )
                 print_buffer( bytestostring(var) )
+            logger().log_hal( '[uefi] EFI variable {}:{} :'.format(guid, name) )
         return var
 
     def set_EFI_variable( self, name, guid, var, datasize=None, attrs=None ):
@@ -553,12 +552,13 @@ NVRAM: EFI Variable Store
                     table = EFI_TABLES[table_sig]['struct']( *struct.unpack_from( EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:] ) )
                     if logger().HAL:
                         print_buffer( bytestostring(table_buf) )
-                        logger().log( '[uefi] {}:'.format(EFI_TABLES[table_sig]['name']) )
-                        logger().log( table_header )
-                        logger().log( table )
+                    logger().log_hal( '[uefi] {}:'.format(EFI_TABLES[table_sig]['name']) )
+                    logger().log_hal( table_header )
+                    logger().log_hal( table )
                     break
             pa -= CHUNK_SZ
-        if (not isFound) and logger().HAL: logger().log( "[uefi] could not find EFI table with signature '{}'".format(table_sig) )
+        if (not isFound):
+            logger().log_hal( "[uefi] could not find EFI table with signature '{}'".format(table_sig) )
         return (isFound, table_pa, table_header, table, table_buf)
 
     def find_EFI_System_Table( self ):
@@ -592,10 +592,10 @@ NVRAM: EFI Variable Store
                     # the pages in the same relative location as in physical memory.
                     (rst_found, rst_pa, rst_header, rst, rst_buf) = self.find_EFI_RuntimeServices_Table()
                     if rst_found:
-                        if logger().HAL: logger().warn("Attempting to derive configuration table address")
+                        logger().log_hal("Attempting to derive configuration table address")
                         ect_pa = rst_pa + (est.ConfigurationTable - est.RuntimeServices)
                     else:
-                        if logger().HAL: logger().warn( "Can't find UEFI ConfigurationTable" )
+                        logger().log_hal( "Can't find UEFI ConfigurationTable" )
                         return (None, ect_pa, ect, ect_buf)
 
         logger().log_hal( "[uefi] EFI Configuration Table ({:d} entries): VA = 0x{:016X}, PA = 0x{:016X}".format(est.NumberOfTableEntries, est.ConfigurationTable, ect_pa) )

@@ -217,7 +217,7 @@ class EfiHelper(Helper):
         return False
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
-        if logger().DEBUG: logger().error( "[efi] load_ucode_update is not supported yet" )
+        logger().log_debug( "[efi] load_ucode_update is not supported yet" )
         return 0
 
     def get_threads_count ( self ):
@@ -346,7 +346,7 @@ class EfiHelper(Helper):
     #
 
     def get_ACPI_SDT( self ):
-        if logger().DEBUG: logger().error( "[efi] ACPI is not supported yet" )
+        logger().log_debug( "[efi] ACPI is not supported yet" )
         return 0
 
     #
@@ -354,19 +354,19 @@ class EfiHelper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        logger().log_debug( "[efi] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        logger().log_debug( "[efi] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        logger().log_debug( "[efi] Message Bus is not supported yet" )
         return None
 
     def set_affinity( self, value ):
-        if logger().DEBUG: logger().error( '[efi] API set_affinity() is not supported' )
+        logger().log_debug( '[efi] API set_affinity() is not supported' )
         return 0
 
 def get_helper():

@@ -213,7 +213,8 @@ class CPU(hal_base.HALBase):
     #
     def check_SMRR_supported( self ):
         mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
-        if logger().HAL: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
+        if logger().HAL:
+            self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
         smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
 
