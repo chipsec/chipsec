@@ -55,12 +55,12 @@ class Interrupts(hal_base.HALBase):
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         logger().log_hal( "[intr] Sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
-            logger().log( "       RAX = 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(_rax) )
-            logger().log( "       RBX = 0x{:016X}".format(_rbx) )
-            logger().log( "       RCX = 0x{:016X}".format(_rcx) )
-            logger().log( "       RDX = 0x{:016X} (DX will be overridden with 0x00B2)".format(_rdx) )
-            logger().log( "       RSI = 0x{:016X}".format(_rsi) )
-            logger().log( "       RDI = 0x{:016X}".format(_rdi) )
+        logger().log_hal( "       RAX = 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(_rax) )
+        logger().log_hal( "       RBX = 0x{:016X}".format(_rbx) )
+        logger().log_hal( "       RCX = 0x{:016X}".format(_rcx) )
+        logger().log_hal( "       RDX = 0x{:016X} (DX will be overridden with 0x00B2)".format(_rdx) )
+        logger().log_hal( "       RSI = 0x{:016X}".format(_rsi) )
+        logger().log_hal( "       RDI = 0x{:016X}".format(_rdi) )
         return self.cs.helper.send_sw_smi( thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
     def send_SMI_APMC( self, SMI_code_port_value, SMI_data_port_value ):
@@ -174,16 +174,18 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         self.cs.mem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
         self.cs.mem.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", len(data_hdr)))
         self.cs.mem.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
-        
+
         self.logger.log_verbose("[*] Communication buffer on input")
+        if self.logger.VERBOSE:
             print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))
-            self.logger.log("")
+        self.logger.log_verbose("")
 
         self.send_SMI_APMC(CommandPort, DataPort)
-        
+
         self.logger.log_verbose("[*] Communication buffer on output")
+        if self.logger.VERBOSE:
             print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))
-            self.logger.log("")
+        self.logger.log_verbose("")
 
         ReturnStatus = struct.unpack("Q", self.cs.mem.read_physical_mem(smmc + ReturnStatus_offset, 8))[0]
         return ReturnStatus
