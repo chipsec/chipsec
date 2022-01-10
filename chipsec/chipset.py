@@ -217,31 +217,27 @@ class Chipset:
         VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f)]
         # create dictionaries
         for vid in VID:
-            if logger().DEBUG:
-                logger().log("[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)))
+            logger().log_debug("[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)))
             self.chipset_dictionary[vid] = collections.defaultdict(list)
             self.pch_dictionary[vid] = collections.defaultdict(list)
             self.device_dictionary[vid] = collections.defaultdict(list)
             for fxml in os.listdir(os.path.join(_cfg_path, vid)):
                 if os.path.isdir(os.path.join(_cfg_path, vid, fxml)):
                     continue
-                if logger().DEBUG:
-                    logger().log("[*] looking for platform config in '{}'..".format(fxml))
+                logger().log_debug("[*] looking for platform config in '{}'..".format(fxml))
                 tree = ET.parse(os.path.join(_cfg_path, vid, fxml))
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     platform = ""
                     req_pch = False
                     if 'platform' not in _cfg.attrib:
-                        if logger().DEBUG:
-                            logger().log("[*] found Device config at '{}'..".format(fxml))
+                        logger().log_debug("[*] found Device config at '{}'..".format(fxml))
                         if vid not in self.device_dictionary.keys():
                             self.device_dictionary[vid] = {}
                         mdict = self.device_dictionary[vid]
                         platform_type = "device"
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
-                        if logger().DEBUG:
-                            logger().log("[*] found PCH config at '{}'..".format(fxml))
+                        logger().log_debug("[*] found PCH config at '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.pch_codes.keys():
                             self.pch_codes[_cfg.attrib['platform'].upper()] = {}
                             self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = vid
@@ -250,8 +246,7 @@ class Chipset:
                         platform = _cfg.attrib['platform']
                         platform_type = "pch"
                     elif _cfg.attrib['platform'].upper():
-                        if logger().DEBUG:
-                            logger().log("[*] found platform config from '{}'..".format(fxml))
+                        logger().log_debug("[*] found platform config from '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.chipset_codes.keys():
                             self.chipset_codes[_cfg.attrib['platform'].upper()] = {}
                             self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = vid
@@ -263,8 +258,7 @@ class Chipset:
                         continue
                     if "req_pch" in _cfg.attrib:
                         req_pch = _cfg.attrib['req_pch']
-                    if logger().DEBUG:
-                        logger().log("[*] Populating configuration dictionary..")
+                    logger().log_debug("[*] Populating configuration dictionary..")
                     for _info in _cfg.iter('info'):
                         dv_list = []
                         if 'family' in _info.attrib:
@@ -325,8 +319,7 @@ class Chipset:
                                     if _did in self.Cfg.BUS[vid].keys():
                                         self.load_list.append(os.path.join(_cfg_path, vid, fxml))
                             if _did == "":
-                                if logger().DEBUG:
-                                    logger().warn("No SKU found in configuration")
+                                logger().log_debug("No SKU found in configuration")
                             else:
                                 if not platform == "":
                                     cdict['did'] = _did
@@ -341,16 +334,14 @@ class Chipset:
 
     def init_cfg_bus(self):
         _pci = pci.Pci(self)
-        if logger().DEBUG:
-            logger().log('[*] Loading device buses..')
+        logger().log_debug('[*] Loading device buses..')
         if QUIET_PCI_ENUM:
             old_hal_state = logger().HAL
             logger().HAL = False
         try:
             enum_devices = _pci.enumerate_devices()
         except Exception:
-            if logger().DEBUG:
-                logger().log('[*] Unable to enumerate PCI devices.')
+            logger().log_debug('[*] Unable to enumerate PCI devices.')
             enum_devices = []
         if QUIET_PCI_ENUM:
             logger().HAL = old_hal_state
@@ -943,8 +934,7 @@ class Chipset:
         return self.Cfg.is_lock_defined(lock_name)
 
     def get_locked_value(self, lock_name):
-        if logger().DEBUG:
-            logger().log('Retrieve value for lock {}'.format(lock_name))
+        logger().log_debug('Retrieve value for lock {}'.format(lock_name))
         return int(self.Cfg.LOCKS[lock_name]['value'], 16)
 
     def get_lock_desc(self, lock_name):

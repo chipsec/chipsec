@@ -83,11 +83,9 @@ class Cfg:
 
     def init_cfg_xml(self, fxml, code, pch_code):
         if not os.path.exists(fxml):
-            if logger().DEBUG:
-                logger().log("[*] Invalid File: '{}'..".format(fxml))
+            logger().log_debug("[*] Invalid File: '{}'..".format(fxml))
             return
-        if logger().DEBUG:
-            logger().log("[*] loading platform config from '{}'..".format(fxml))
+        logger().log_debug("[*] loading platform config from '{}'..".format(fxml))
         vid = self._get_vid_from_filename(fxml)
         self._create_vid(vid)
         try:
@@ -96,8 +94,7 @@ class Cfg:
             logger().log("[*] parser error within '{}'\n{}".format(fxml, pe))
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
-            if logger().DEBUG:
-                logger().log("[*] loading integrated devices/controllers..")
+            logger().log_debug("[*] loading integrated devices/controllers..")
             for _pci in _cfg.iter('pci'):
                 for _device in _pci.iter('device'):
                     self._update_bus_name(_device, vid)
@@ -110,13 +107,11 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.CONFIG_PCI[vid][_name] = _device.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _device.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
 
-            if logger().DEBUG:
-                logger().log("[*] loading memory ranges..")
+            logger().log_debug("[*] loading memory ranges..")
             for _memory in _cfg.iter('memory'):
                 for _range in _memory.iter('range'):
                     _name = _range.attrib['name']
@@ -126,13 +121,11 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.MEMORY_RANGES[vid][_name] = _range.attrib  # may want to append opposed to overwrite
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _range.attrib))
+                    logger().log_debugg("    + {:16}: {}".format(_name, _range.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_range.attrib['config'], _name, vid)
 
-            if logger().DEBUG:
-                logger().log("[*] loading mm_msgbus ports..")
+            logger().log_debug("[*] loading mm_msgbus ports..")
             for _mm_msgbus in _cfg.iter('mm_msgbus'):
                 for _device in _mm_msgbus.iter('definition'):
                     _name = _device.attrib['name']
@@ -142,13 +135,11 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.MM_MSGBUS[vid][_name] = _device.attrib  # may want to append opposed to overwrite
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _device.attrib))
+                    logger().log_debugg("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
 
-            if logger().DEBUG:
-                logger().log("[*] loading msgbus ports..")
+            logger().log_debug("[*] loading msgbus ports..")
             for _msgbus in _cfg.iter('msgbus'):
                 for _device in _msgbus.iter('definition'):
                     _name = _device.attrib['name']
@@ -158,13 +149,11 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.MSGBUS[vid][_name] = _device.attrib  # may want to append opposed to overwrite
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _device.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
 
-            if logger().DEBUG:
-                logger().log("[*] loading io ports..")
+            logger().log_debug("[*] loading io ports..")
             for _io in _cfg.iter('io'):
                 for _device in _io.iter('definition'):
                     _name = _device.attrib['name']
@@ -174,21 +163,18 @@ class Cfg:
                         self.REGISTERS[vid][_name] = {}
                     else:
                         self.IO[vid][_name] = _device.attrib  # may want to append opposed to overwrite
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _device.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
                         self.load_cfg_xml(_device.attrib['config'], _name, vid)
 
-            if logger().DEBUG:
-                logger().log("[*] loading model specific registers..")
+            logger().log_debug("[*] loading model specific registers..")
             for _msr in _cfg.iter('msr'):
                 for _definition in _msr.iter('definition'):
                     _name = _definition.attrib['name']
                     del _definition.attrib['name']
                     if _name not in self.REGISTERS[vid].keys():
                         self.REGISTERS[vid][_name] = {}
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _definition.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _definition.attrib))
                     if 'config' in _definition.attrib.keys():
                         self.load_cfg_xml(_definition.attrib['config'], _name, vid)
 
@@ -201,8 +187,7 @@ class Cfg:
         tree = ET.parse(fxml)
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
-            if logger().DEBUG:
-                logger().log("[*] loading MMIO BARs..")
+            logger().log_debug("[*] loading MMIO BARs..")
             for _mmio in _cfg.iter('mmio'):
                 for _bar in _mmio.iter('bar'):
                     _name = _bar.attrib['name']
@@ -212,11 +197,9 @@ class Cfg:
                         self.MMIO_BARS[vid][name][_name] = _bar.attrib
                     else:
                         self.MMIO_BARS[vid][name][_name] = _bar.attrib  # may want to append opposed to overwrite
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _bar.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _bar.attrib))
 
-            if logger().DEBUG:
-                logger().log("[*] loading I/O BARs..")
+            logger().log_debug("[*] loading I/O BARs..")
             for _io in _cfg.iter('io'):
                 for _bar in _io.iter('bar'):
                     _name = _bar.attrib['name']
@@ -226,23 +209,19 @@ class Cfg:
                         self.IO_BARS[vid][name][_name] = _bar.attrib
                     else:
                         self.IO_BARS[vid][name][_name] = _bar.attrib
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _bar.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _bar.attrib))
 
-            if logger().DEBUG:
-                logger().log("[*] loading indirect memory accesses definitions..")
+            logger().log_debug("[*] loading indirect memory accesses definitions..")
             for _indirect in _cfg.iter('indirect'):
                 for _ima in _indirect.iter('ima'):
                     _name = _ima.attrib['name']
                     _ima.attrib['index'] = "{}.{}.{}".format(vid, name, _ima.attrib['index'])
                     _ima.attrib['data'] = "{}.{}.{}".format(vid, name, _ima.attrib['data'])
                     del _ima.attrib['name']
-                    self.IMA_REGISTERS[vid][name][_name] = _ima.attrib
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _ima.attrib))
+                    self.IMA_REGISTERS[_name]= _ima.attrib
+                    logger().log_debug( "    + {:16}: {}".format(_name, _ima.attrib))
 
-            if logger().DEBUG:
-                logger().log("[*] loading configuration registers..")
+            logger().log_debug("[*] loading configuration registers..")
             for _registers in _cfg.iter('registers'):
                 for _register in _registers.iter('register'):
                     _name = _register.attrib['name']
@@ -281,22 +260,18 @@ class Cfg:
                             reg_fields[_field_name] = _field.attrib
                     _register.attrib['FIELDS'] = reg_fields
                     self.REGISTERS[vid][name][_name] = _register.attrib
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _register.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _register.attrib))
 
-            if logger().DEBUG:
-                logger().log("[*] loading controls..")
+            logger().log_debug("[*] loading controls..")
             for _controls in _cfg.iter('controls'):
                 for _control in _controls.iter('control'):
                     _name = _control.attrib['name']
                     del _control.attrib['name']
                     _control.attrib['register'] = "{}.{}.{}".format(vid, name, _control.attrib['register'])
                     self.CONTROLS[_name] = _control.attrib
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _control.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _control.attrib))
 
-            if logger().DEBUG:
-                logger().log("[*] loading locks..")
+            logger().log_debug("[*] loading locks..")
             for _locks in _cfg.iter('locks'):
                 for _lock in _locks.iter('lock'):
                     _lock.attrib['register'] = "{}.{}.{}".format(vid, name, _lock.attrib['register'])
@@ -308,8 +283,7 @@ class Cfg:
                     if "name" in _lock.attrib:
                         del _lock.attrib['name']
                     self.LOCKS[_name] = _lock.attrib
-                    if logger().DEBUG:
-                        logger().log("    + {:16}: {}".format(_name, _lock.attrib))
+                    logger().log_debug("    + {:16}: {}".format(_name, _lock.attrib))
 
     #
     # Scoping functions
