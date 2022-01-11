@@ -192,9 +192,6 @@ class Chipset:
     def is_atom(self):
         return self.get_chipset_code() in CHIPSET_FAMILY["atom"]
 
-    def use_native_api(self):
-        return self.helper.use_native_api()
-
     def print_supported_chipsets(self):
         logger().log("\nSupported platforms:\n")
         logger().log(" VID  | DID  | Name           | Code   | Long Name")

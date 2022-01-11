@@ -38,9 +38,6 @@ class Helper(object):
         self.name = "Helper"
         self.driverpath = None
 
-    def use_native_api(self):
-        return (not self.driver_loaded)
-
     def create(self, start_driver):
         logger().log_verbose("[helper] Helper created")
         raise NotImplementedError()
