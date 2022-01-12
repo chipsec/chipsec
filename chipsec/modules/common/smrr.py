@@ -62,7 +62,7 @@ class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.cs.set_scope("8086.MSR")
+        self.cs.set_scope({None: "8086.MSR"})
 
     def is_supported(self):
         return True

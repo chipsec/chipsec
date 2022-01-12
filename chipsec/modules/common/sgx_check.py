@@ -37,7 +37,7 @@ class sgx_check(BaseModule):
         BaseModule.__init__(self)
         self.helper = self.cs.helper
         self.res = ModuleResult.PASSED
-        self.cs.set_scope("8086.MSR")
+        self.cs.set_scope({None: "8086.MSR"})
 
     def is_supported(self):
         sgx_cpu_support = False

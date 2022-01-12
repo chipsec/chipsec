@@ -37,6 +37,9 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            None: "8086.MSR"
+        })
 
     def is_supported(self):
         # @TODO: Currently this module doesn't work properly on (U)EFI

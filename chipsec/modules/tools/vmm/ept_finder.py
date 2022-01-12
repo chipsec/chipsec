@@ -53,6 +53,9 @@ class ept_finder(BaseModule):
         BaseModule.__init__(self)
         self.read_from_file = False
         self.par = []
+        self.cs.set_scope({
+            None: "8086.HOSTCTL"
+        })
 
     def read_physical_mem(self, addr, size = 0x1000):
         if self.read_from_file:

@@ -82,6 +82,9 @@ class Ucode:
     def __init__( self, cs ):
         self.helper = cs.helper
         self.cs = cs
+        self.cs.set_scope({
+            "IA32_MSR_CORE_THREAD_COUNT": "8086.MSR"
+        })
 
     # @TODO remove later/replace with msr.get_cpu_thread_count()
     def get_cpu_thread_count( self ):

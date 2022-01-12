@@ -55,7 +55,7 @@ class memlock(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.res = ModuleResult.NOTAPPLICABLE
-        self.cs.set_scope("8086.MSR")
+        self.cs.set_scope({None: "8086.MSR"})
 
     def is_supported(self):
         # Workaround for Atom based processors.  Accessing this MSR on these systems

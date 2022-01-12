@@ -11,7 +11,7 @@
   <!--                                      -->
   <!-- #################################### -->
   <registers>
-    <register name="PCI0.2.0_DID" type="pcicfg" device="IGD" offset="2" size="2" desc="Device Identification Number" />
+    <register name="DID" type="pcicfg" device="IGD" offset="2" size="2" desc="Device Identification Number" />
 
     <register name="GTTMMADR" type="pcicfg" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address">
         <field name="MBA" bit="24" size="40" desc="Memory Base Address (MBA_0)" />

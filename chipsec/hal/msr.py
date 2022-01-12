@@ -59,6 +59,9 @@ class Msr:
     def __init__( self, cs ):
         self.helper = cs.helper
         self.cs = cs
+        self.cs.set_scope({
+            "IA32_MSR_CORE_THREAD_COUNT": "8086.MSR"
+        })
 
     def get_cpu_thread_count( self ):
         thread_count = self.helper.get_threads_count()

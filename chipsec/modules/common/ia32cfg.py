@@ -35,7 +35,7 @@ class ia32cfg(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.res = ModuleResult.PASSED
-        self.cs.set_scope("8086.MSR")
+        self.cs.set_scope({None: "8086.MSR"})
 
     def is_supported(self):
         return True

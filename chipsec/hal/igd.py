@@ -43,12 +43,18 @@ class IGD(hal_base.HALBase):
         self.helper = cs.helper
         self.is_legacy = None
         self.enabled = None
+        self.cs.set_scope({
+            "DEVEN": "8086.HOSTCTL",
+            "CAPID0_A": "8086.HOSTCTL",
+            'GMADR': "8086.IGD",
+            'GTTMMADR': "8086.IGD"
+        })
 
     def __identify_device(self):
         if self.enabled is None:
             self.is_legacy = False
             try:
-                self.dev_id = self.cs.read_register("PCI0.2.0_DID")
+                self.dev_id = self.cs.read_register("8086.IGD.DID")
                 self.enabled = (self.dev_id != 0xFFFF)
                 if (self.enabled):
                     self.is_legacy = (self.dev_id < 0x1600)

@@ -93,7 +93,7 @@ class me_mfg_mode(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.cs.set_scope("8086.MEI1")
+        self.cs.set_scope({None: "8086.MEI1"})
 
     def is_supported(self):
         if self.cs.is_device_enabled("MEI1"):

@@ -29,7 +29,7 @@ from chipsec.defines import bytestostring
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
-        self.cs.set_scope("8086.MSR")
+        self.cs.set_scope({None: "8086.MSR"})
 
     def is_supported(self):
         return True

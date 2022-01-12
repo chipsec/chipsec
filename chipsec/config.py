@@ -26,7 +26,7 @@ import xml.etree.ElementTree as ET
 from chipsec.file import get_main_dir
 from chipsec.exceptions import CSConfigError, DeviceNotFoundError
 
-scope_name = namedtuple("scope_name", ["vid", "parent", "name", "fields"], defaults=(None, None, None, None))
+scope_name = namedtuple("scope_name", ["vid", "parent", "name", "fields"])
 
 
 class Cfg:
@@ -279,7 +279,7 @@ class Cfg:
                             if 'desc' not in _field.attrib:
                                 _field.attrib['desc'] = _field_name
                             reg_fields[_field_name] = _field.attrib
-                        _register.attrib['FIELDS'] = reg_fields
+                    _register.attrib['FIELDS'] = reg_fields
                     self.REGISTERS[vid][name][_name] = _register.attrib
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _register.attrib))
@@ -327,14 +327,14 @@ class Cfg:
             return self.scope[None]
 
     def clear_scope(self):
-        self.scope = {None: ''}
+        self.scope[None] = ''
 
     def convert_internal_scope(self, scope, name):
         if scope:
             sname = scope + '.' + name
         else:
             sname = name
-        return scope_name(*sname.split('.', 3))
+        return scope_name(*(sname.split('.', 3) + [None] * (4 - len(sname.split('.', 3)))))
 
     ##################################################################################
     #
@@ -393,38 +393,37 @@ class Cfg:
         scope = self.get_scope(reg_name)
         vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
         reg_def = self.REGISTERS[vid][dev_name][register]
-        if "device" in reg_def:
-            if reg_def["type"] in ["pcicfg", "mmcfg"]:
-                dev = self.CONFIG_PCI[vid][dev_name]
-                reg_def['bus'] = dev['bus']
-                reg_def['dev'] = dev['dev']
-                reg_def['fun'] = dev['fun']
-                if dev_name in self.BUS:
-                    if bus in self.BUS[vid][dev_name]:
-                        reg_def['bus'] = bus
-                    else:
-                        logger().error("Bus {:d} for '{}' not found.".format(bus, dev_name))
-            elif reg_def["type"] == "memory":
-                dev = self.MEMORY_RANGES[vid][dev_name]
-                reg_def['address'] = dev['address']
-                reg_def['access'] = dev['access']
-            elif reg_def["type"] == "mm_msgbus":
-                dev = self.MM_MSGBUS[vid][dev_name]
-                reg_def['port'] = dev['port']
-            elif reg_def["type"] == "indirect":
-                dev = self.IMA_REGISTERS[vid][dev_name]
-                if ('base' in dev):
-                    reg_def['base'] = dev['base']
+        if reg_def["type"] in ["pcicfg", "mmcfg"]:
+            dev = self.CONFIG_PCI[vid][dev_name]
+            reg_def['bus'] = dev['bus']
+            reg_def['dev'] = dev['dev']
+            reg_def['fun'] = dev['fun']
+            if dev_name in self.BUS:
+                if bus in self.BUS[vid][dev_name]:
+                    reg_def['bus'] = bus
                 else:
-                    reg_def['base'] = "0"
-                if (dev['index'] in self.REGISTERS[vid][dev_name]):
-                    reg_def['index'] = dev['index']
-                else:
-                    logger().error("Index register {} not found".format(dev['index']))
-                if (dev['data'] in self.REGISTERS[vid][dev_name]):
-                    reg_def['data'] = dev['data']
-                else:
-                    logger().error("Data register {} not found".format(dev['data']))
+                    logger().error("Bus {:d} for '{}' not found.".format(bus, dev_name))
+        elif reg_def["type"] == "memory":
+            dev = self.MEMORY_RANGES[vid][dev_name]
+            reg_def['address'] = dev['address']
+            reg_def['access'] = dev['access']
+        elif reg_def["type"] == "mm_msgbus":
+            dev = self.MM_MSGBUS[vid][dev_name]
+            reg_def['port'] = dev['port']
+        elif reg_def["type"] == "indirect":
+            dev = self.IMA_REGISTERS[vid][dev_name]
+            if ('base' in dev):
+                reg_def['base'] = dev['base']
+            else:
+                reg_def['base'] = "0"
+            if (dev['index'] in self.REGISTERS[vid][dev_name]):
+                reg_def['index'] = dev['index']
+            else:
+                logger().error("Index register {} not found".format(dev['index']))
+            if (dev['data'] in self.REGISTERS[vid][dev_name]):
+                reg_def['data'] = dev['data']
+            else:
+                logger().error("Data register {} not found".format(dev['data']))
         return reg_def
 
     def get_register_bus(self, reg_name):
