@@ -148,6 +148,9 @@ class SMICommand(BaseCommand):
                 self.logger.log( "          RDI: {:16X}".format(ret[6]) )
 
     def run(self):
+        self.cs.set_scope({
+            "MSR_SMI_COUNT": "8086.MSR"
+        })
         try:
             self.interrupts = Interrupts( self.cs )
         except RuntimeError as msg:

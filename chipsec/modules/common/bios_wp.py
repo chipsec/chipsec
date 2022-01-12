@@ -46,7 +46,7 @@ class bios_wp(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.cs.set_scope("8086.SPI")
+        self.cs.set_scope({None: "8086.SPI"})
         self.spi = SPI(self.cs)
 
     def is_supported(self):

@@ -62,6 +62,16 @@ class MMIO(hal_base.HALBase):
 
     def __init__(self, cs):
         super(MMIO, self).__init__(cs)
+        if self.cs.is_server():
+            self.cs.set_scope({
+                "PCIEXBAR": "8086.MemMap_VTd",
+                "MmioCfgBaseAddr": "8086.MemMap_VTd"
+            })
+        else:
+            self.cs.set_scope({
+                "PCIEXBAR": "8086.HOSTCTL",
+                "MmioCfgBaseAddr": "8086.HOSTCTL"
+            })
 
     ###########################################################################
     # Access to MMIO BAR defined by configuration files (chipsec/cfg/*.py)
@@ -406,11 +416,6 @@ class MMIO(hal_base.HALBase):
     ##################################################################################
 
     def get_MMCFG_base_address(self):
-        tscope = self.cs.get_scope()
-        if self.cs.is_server():
-            self.cs.set_scope("8086.MemMap_VTd")
-        else:
-            self.cs.set_scope("8086.HOSTCTL")
         (bar_base, bar_size)  = self.get_MMIO_BAR_base_address('MMCFG')
         if self.cs.register_has_field("PCIEXBAR", "LENGTH") and not self.cs.is_server():
             len = self.cs.read_register_field("PCIEXBAR", "LENGTH")
@@ -435,7 +440,6 @@ class MMIO(hal_base.HALBase):
             else:
                 if self.logger.HAL: self.logger.log( '[mmcfg] Unexpected MmioCfgBaseAddr bus range: 0x{:01X}'.format(num_buses) )
         if self.logger.HAL: self.logger.log( '[mmcfg] Memory Mapped CFG Base: 0x{:016X}'.format(bar_base) )
-        self.cs.set_scope(tscope)
         return bar_base, bar_size
 
     def read_mmcfg_reg(self, bus, dev, fun, off, size):

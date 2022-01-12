@@ -45,7 +45,7 @@ class smm(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.cs.set_scope("8086.HOSTCTL")
+        self.cs.set_scope({None: "8086.HOSTCTL"})
 
     def is_supported(self):
         if self.cs.is_core() and self.cs.is_register_defined('SMRAMC'):

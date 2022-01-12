@@ -58,6 +58,11 @@ class SMBus(hal_base.HALBase):
         self.smb_reg_control = 'SMBUS_HST_CNT'
         self.smb_reg_data0   = 'SMBUS_HST_D0'
         self.smb_reg_data1   = 'SMBUS_HST_D1'
+        self.cs.set_scope({
+            "SMBUS_BASE": "8086.SMBUS",
+            "SMBUS_HCFG": "8086.SMBUS",
+            "SMBUS_CMD": "8086.SMBUS"
+        })
 
     def get_SMBus_Base_Address( self ):
         if self.iobar.is_IO_BAR_defined( 'SMBUS_BASE' ):

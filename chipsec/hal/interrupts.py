@@ -48,6 +48,9 @@ class Interrupts(hal_base.HALBase):
 
     def __init__(self, cs):
         super(Interrupts, self).__init__(cs)
+        self.cs.set_scope({
+            "TCOBASE": "8086.SMBUS.TCOBASE"
+        })
 
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
