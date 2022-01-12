@@ -112,7 +112,6 @@ class ChipsecUtil:
             logger().set_log_file(self.log)
         if not self._cmd_args:
             self._cmd_args = ["--help"]
-        print(dir(self))
 
     def import_cmds(self):
         if self.CHIPSEC_LOADED_AS_EXE:
@@ -157,8 +156,6 @@ class ChipsecUtil:
         # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
         self.argv = ['dummy'] + [self._cmd] + self._cmd_args
         comm = self.commands[self._cmd](self.argv, cs=self._cs)
-
-        print("util", self._platform, self._pch)
 
         if self._load_config:
             try:

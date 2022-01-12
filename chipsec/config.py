@@ -57,6 +57,7 @@ class Cfg:
             self.MSGBUS[vid] = {}
             self.MM_MSGBUS[vid] = {}
             self.REGISTERS[vid] = {}
+            self.scope = {None: ''}
             if vid not in self.BUS.keys():
                 self.BUS[vid] = {}
 
@@ -124,7 +125,7 @@ class Cfg:
                         self.MEMORY_RANGES[vid][_name] = _range.attrib
                         self.REGISTERS[vid][_name] = {}
                     else:
-                        self.MEMORY_RANGES[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
+                        self.MEMORY_RANGES[vid][_name] = _range.attrib  # may want to append opposed to overwrite
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _range.attrib))
                     if 'config' in _device.attrib.keys():
@@ -137,10 +138,10 @@ class Cfg:
                     _name = _device.attrib['name']
                     del _device.attrib['name']
                     if _name not in self.MM_MSGBUS[vid].keys():
-                        self.MM_MSGBUS[vid][_name] = _range.attrib
+                        self.MM_MSGBUS[vid][_name] = _device.attrib
                         self.REGISTERS[vid][_name] = {}
                     else:
-                        self.MM_MSGBUS[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
+                        self.MM_MSGBUS[vid][_name] = _device.attrib  # may want to append opposed to overwrite
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
@@ -153,10 +154,10 @@ class Cfg:
                     _name = _device.attrib['name']
                     del _device.attrib['name']
                     if _name not in self.MSGBUS[vid].keys():
-                        self.MSGBUS[vid][_name] = _range.attrib
+                        self.MSGBUS[vid][_name] = _device.attrib
                         self.REGISTERS[vid][_name] = {}
                     else:
-                        self.MSGBUS[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
+                        self.MSGBUS[vid][_name] = _device.attrib  # may want to append opposed to overwrite
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
@@ -169,10 +170,10 @@ class Cfg:
                     _name = _device.attrib['name']
                     del _device.attrib['name']
                     if _name not in self.IO[vid].keys():
-                        self.IO[vid][_name] = _range.attrib
+                        self.IO[vid][_name] = _device.attrib
                         self.REGISTERS[vid][_name] = {}
                     else:
-                        self.IO[vid][_name] = _range.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
+                        self.IO[vid][_name] = _device.attrib  # may want to append opposed to overwrite
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _device.attrib))
                     if 'config' in _device.attrib.keys():
@@ -206,10 +207,11 @@ class Cfg:
                 for _bar in _mmio.iter('bar'):
                     _name = _bar.attrib['name']
                     del _bar.attrib['name']
+                    _bar.attrib['register'] = "{}.{}.{}".format(vid, name, _bar.attrib['register'])
                     if _name not in self.MMIO_BARS[vid][name].keys():
                         self.MMIO_BARS[vid][name][_name] = _bar.attrib
                     else:
-                        self.MMIO_BARS[vid][name][_name] = _bar.attrib  # may want to append opposed to overwrite also may raise error if b:d:f is different and not blank
+                        self.MMIO_BARS[vid][name][_name] = _bar.attrib  # may want to append opposed to overwrite
                     if logger().DEBUG:
                         logger().log("    + {:16}: {}".format(_name, _bar.attrib))
 
@@ -251,7 +253,9 @@ class Cfg:
                         _register.attrib['device'] = name
                     elif _register.attrib['type'] in ['memory']:
                         _register.attrib['range'] = name
-                    if 'FIELDS' in self.REGISTERS[vid][name][_name]:
+                    elif _register.attrib['type'] in ['mmio']:
+                        _register.attrib['bar'] = "{}.{}.{}".format(vid, name, _register.attrib['bar'])
+                    if _name in self.REGISTERS[vid][name]:
                         reg_fields = self.REGISTERS[vid][name][_name]['FIELDS']
                     else:
                         reg_fields = {}
@@ -312,15 +316,25 @@ class Cfg:
     #
 
     def set_scope(self, scope):
-        self.scope = scope
+        self.scope.update(scope)
 
     def get_scope(self, name):
-        if name in self.scope.keys():
-            name = self.scope[name]
-        return scope_name(*name.split('.'))
+        if name.count('.') > 0:
+            return ''
+        elif name in self.scope.keys():
+            return self.scope[name]
+        else:
+            return self.scope[None]
 
     def clear_scope(self):
-        self.scope = None
+        self.scope = {None: ''}
+
+    def convert_internal_scope(self, scope, name):
+        if scope:
+            sname = scope + '.' + name
+        else:
+            sname = name
+        return scope_name(*sname.split('.', 3))
 
     ##################################################################################
     #
@@ -330,7 +344,8 @@ class Cfg:
     ##################################################################################
 
     def get_device_BDF(self, device_name):
-        vid, device, _, _ = self.get_scope(device_name)
+        scope = self.get_scope(device_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, device_name)
         try:
             device = self.CONFIG_PCI[vid][device]
         except KeyError:
@@ -343,35 +358,40 @@ class Cfg:
         return (b, d, f)
 
     def is_register_defined(self, reg_name):
-        vid, device, register, _ = self.get_scope(reg_name)
+        scope = self.get_scope(reg_name)
+        vid, device, register, _ = self.convert_internal_scope(scope, reg_name)
         try:
             return (self.REGISTERS[vid][device].get(register, None) is not None)
         except KeyError:
             return False
 
     def is_device_defined(self, dev_name):
-        vid, device, _, _ = self.get_scope(dev_name)
+        scope = self.get_scope(dev_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, dev_name)
         if self.CONFIG_PCI[vid].get(device, None) is None:
             return False
         else:
             return True
 
     def get_mmio_def(self, bar_name):
-        vid, device, bar, _ = self.get_scope(bar_name)
+        scope = self.get_scope(bar_name)
+        vid, device, bar, _ = self.convert_internal_scope(scope, bar_name)
         if bar in self.MMIO_BARS[vid][device]:
             return self.MMIO_BARS[vid][device][bar]
         else:
             return None
 
     def get_io_def(self, bar_name):
-        vid, device, bar, _ = self.get_scope(bar_name)
+        scope = self.get_scope(bar_name)
+        vid, device, bar, _ = self.convert_internal_scope(scope, bar_name)
         if bar in self.IO_BARS[vid][device]:
             return self.IO_BARS[vid][device][bar]
         else:
             return None
 
     def get_register_def(self, reg_name, bus=0):
-        vid, dev_name, register, _ = self.get_scope(reg_name)
+        scope = self.get_scope(reg_name)
+        vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
         reg_def = self.REGISTERS[vid][dev_name][register]
         if "device" in reg_def:
             if reg_def["type"] in ["pcicfg", "mmcfg"]:
@@ -409,16 +429,19 @@ class Cfg:
 
     def get_register_bus(self, reg_name):
         bus = []
-        vid, device, _, _ = self.get_scope(reg_name)
+        scope = self.get_scope(reg_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, reg_name)
         return self.BUS[vid].get(device, bus)
 
     def get_device_bus(self, dev_name):
         bus = []
-        vid, device, _, _ = self.get_scope(dev_name)
+        scope = self.get_scope(dev_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, dev_name)
         return self.BUS[vid].get(dev_name, bus)
 
     def register_has_field(self, reg_name, field_name):
-        vid, device, register, _ = self.get_scope(reg_name)
+        scope = self.get_scope(reg_name)
+        vid, device, register, _ = self.convert_internal_scope(scope, reg_name)
         try:
             reg_def = self.REGISTERS[vid][device][register]
         except KeyError:
@@ -456,7 +479,8 @@ class Cfg:
             return None
 
     def get_IO_space(self, io_name):
-        vid, device, io, _ = self.get_scope(io_name)
+        scope = self.get_scope(io_name)
+        vid, device, io, _ = self.convert_internal_scope(io_name)
         if io in self.Cfg.IO_BARS[vid][device].keys():
             reg = self.Cfg.IO_BARS[io_name]["register"]
             bf = self.Cfg.IO_BARS[io_name]["base_field"]
