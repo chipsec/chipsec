@@ -412,8 +412,8 @@ class MMIO(hal_base.HALBase):
         else:
             self.cs.set_scope("8086.HOSTCTL")
         (bar_base, bar_size)  = self.get_MMIO_BAR_base_address('MMCFG')
-        if self.cs.register_has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
-            len = self.cs.read_register_field("PCI0.0.0_PCIEXBAR", "LENGTH")
+        if self.cs.register_has_field("PCIEXBAR", "LENGTH") and not self.cs.is_server():
+            len = self.cs.read_register_field("PCIEXBAR", "LENGTH")
             if len == PCI_PCIEXBAR_REG_LENGTH_256MB:
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 2)
             elif len == PCI_PCIEXBAR_REG_LENGTH_128MB:

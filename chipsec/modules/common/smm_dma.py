@@ -46,8 +46,8 @@ Registers used:
     - TSEGBaseLock (control)
     - TSEGLimitLock (control)
     - MSR_BIOS_DONE.IA_UNTRUSTED
-    - PCI0.0.0_TSEGMB.TSEGMB
-    - PCI0.0.0_BGSM.BGSM
+    - TSEGMB.TSEGMB
+    - BGSM.BGSM
     - IA32_SMRR_PHYSBASE.PhysBase
     - IA32_SMRR_PHYSMASK.PhysMask
 

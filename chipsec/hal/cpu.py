@@ -179,8 +179,8 @@ class CPU(hal_base.HALBase):
         else:
             self.cs.set_scope("8086.HOSTCTL")
             # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
-            tseg_base  = self.cs.read_register_field( 'PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True )
-            bgsm       = self.cs.read_register_field( 'PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True )
+            tseg_base  = self.cs.read_register_field( 'TSEGMB', 'TSEGMB', preserve_field_position=True )
+            bgsm       = self.cs.read_register_field( 'BGSM', 'BGSM', preserve_field_position=True )
             tseg_limit =  bgsm - 1
 
         tseg_size = tseg_limit - tseg_base + 1

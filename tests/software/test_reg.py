@@ -25,16 +25,16 @@ class TestRegChipsecUtil(util.TestChipsecUtil):
     """Test the reg commands exposed by chipsec_utils."""
 
     def test_reg_read(self):
-        self._chipsec_util("reg read 8086.HOSTCTL.PCI0.0.0_VID", mock_helper.TestHelper)
-        self._assertLogValue("PCI0.0.0_VID", "0x8086")
+        self._chipsec_util("reg read 8086.HOSTCTL.VID", mock_helper.TestHelper)
+        self._assertLogValue("VID", "0x8086")
 
     def test_reg_read_field(self):
-        self._chipsec_util("reg read 8086.HOSTCTL.PCI0.0.0_TOUUD LOCK", mock_helper.TestHelper)
-        self._assertLogValue("PCI0.0.0_TOUUD.LOCK", "0x0")
+        self._chipsec_util("reg read 8086.HOSTCTL.TOUUD LOCK", mock_helper.TestHelper)
+        self._assertLogValue("TOUUD.LOCK", "0x0")
 
     def test_reg_read_field1(self):
-        self._chipsec_util("reg read_field 8086.HOSTCTL.PCI0.0.0_TOUUD LOCK", mock_helper.TestHelper)
-        self._assertLogValue("PCI0.0.0_TOUUD.LOCK", "0x0")
+        self._chipsec_util("reg read_field 8086.HOSTCTL.TOUUD LOCK", mock_helper.TestHelper)
+        self._assertLogValue("TOUUD.LOCK", "0x0")
 
     def test_reg_get_control(self):
         self._chipsec_util("reg get_control FlashLockDown",
