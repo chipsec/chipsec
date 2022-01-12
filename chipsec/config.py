@@ -253,7 +253,7 @@ class Cfg:
                         _register.attrib['device'] = name
                     elif _register.attrib['type'] in ['memory']:
                         _register.attrib['range'] = name
-                    elif _register.attrib['type'] in ['mmio']:
+                    elif _register.attrib['type'] in ['mmio', 'iobar']:
                         _register.attrib['bar'] = "{}.{}.{}".format(vid, name, _register.attrib['bar'])
                     if _name in self.REGISTERS[vid][name]:
                         reg_fields = self.REGISTERS[vid][name][_name]['FIELDS']
@@ -480,7 +480,7 @@ class Cfg:
 
     def get_IO_space(self, io_name):
         scope = self.get_scope(io_name)
-        vid, device, io, _ = self.convert_internal_scope(io_name)
+        vid, device, io, _ = self.convert_internal_scope(scope, io_name)
         if io in self.Cfg.IO_BARS[vid][device].keys():
             reg = self.Cfg.IO_BARS[io_name]["register"]
             bf = self.Cfg.IO_BARS[io_name]["base_field"]

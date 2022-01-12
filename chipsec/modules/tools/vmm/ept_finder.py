@@ -72,13 +72,13 @@ class ept_finder(BaseModule):
         tsegmb = None
         touud  = None
 
-        if self.cs.is_register_defined('PCI0.0.0_TSEGMB'):
-            tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB') & MASK
+        if self.cs.is_register_defined('TSEGMB'):
+            tsegmb = self.cs.read_register('TSEGMB') & MASK
         else:
             self.logger.error( "Couldn't find definition of required registers: TSEGMB" )
 
-        if self.cs.is_register_defined('PCI0.0.0_TOUUD'):
-            touud  = self.cs.read_register('PCI0.0.0_TOUUD')  & MASK
+        if self.cs.is_register_defined('TOUUD'):
+            touud  = self.cs.read_register('TOUUD')  & MASK
         else:
             self.logger.error( "Couldn't find definition of required registers: TOUUD" )
 

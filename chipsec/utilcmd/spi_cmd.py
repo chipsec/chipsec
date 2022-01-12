@@ -98,14 +98,16 @@ class SPICommand(BaseCommand):
         self._spi.display_SPI_map()
 
     def spi_dump(self):
+        buf = None
         self.logger.log( "[CHIPSEC] Dumping entire SPI flash memory to '{}'".format(self.out_file) )
         self.logger.log( "[CHIPSEC] {}".format(self._msg) )
         # @TODO: don't assume SPI Flash always ends with BIOS region
         (base, limit, _) = self._spi.get_SPI_region( BIOS )
-        spi_size = limit + 1
-        self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base, limit) )
-        self.logger.log( "[CHIPSEC] Dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
-        buf = self._spi.read_spi_to_file( 0, spi_size, self.out_file )
+        if base and limit:
+            spi_size = limit + 1
+            self.logger.log( "[CHIPSEC] BIOS region: base = 0x{:08X}, limit = 0x{:08X}".format(base, limit) )
+            self.logger.log( "[CHIPSEC] Dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
+            buf = self._spi.read_spi_to_file( 0, spi_size, self.out_file )
         if (buf is None):
             self.logger.error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
         else:
@@ -171,7 +173,7 @@ class SPICommand(BaseCommand):
                 self.logger.log( ' JEDEC ID command is not supported ')
 
     def run(self):
-        self.cs.set_scope("8086.SPI")
+        self.cs.set_scope(None:"8086.SPI")
         try:
             self._spi = SPI( self.cs )
         except SpiRuntimeError as msg:

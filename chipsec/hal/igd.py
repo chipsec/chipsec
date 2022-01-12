@@ -58,14 +58,14 @@ class IGD(hal_base.HALBase):
         return (self.enabled, self.is_legacy)
 
     def is_enabled(self):
-        if self.cs.register_has_field("PCI0.0.0_DEVEN", "D2EN") and self.cs.register_has_field("PCI0.0.0_CAPID0_A", "IGD"):
-            if self.cs.read_register_field("PCI0.0.0_DEVEN", "D2EN") == 1 and self.cs.read_register_field("PCI0.0.0_CAPID0_A", "IGD") == 0:
+        if self.cs.register_has_field("DEVEN", "D2EN") and self.cs.register_has_field("CAPID0_A", "IGD"):
+            if self.cs.read_register_field("DEVEN", "D2EN") == 1 and self.cs.read_register_field("CAPID0_A", "IGD") == 0:
                 return True
-        elif self.cs.register_has_field("PCI0.0.0_DEVEN", "D2EN"):
-            if self.cs.read_register_field("PCI0.0.0_DEVEN", "D2EN") == 1:
+        elif self.cs.register_has_field("DEVEN", "D2EN"):
+            if self.cs.read_register_field("DEVEN", "D2EN") == 1:
                 return True
-        elif self.cs.register_has_field("PCI0.0.0_CAPID0_A", "IGD"):
-            if self.cs.read_register_field("PCI0.0.0_CAPID0_A", "IGD") == 0:
+        elif self.cs.register_has_field("CAPID0_A", "IGD"):
+            if self.cs.read_register_field("CAPID0_A", "IGD") == 0:
                 return True
         return self.is_device_enabled()
 

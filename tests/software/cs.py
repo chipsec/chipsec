@@ -55,7 +55,7 @@ class TestChipsecCs(unittest.TestCase):
         """
         _cs = chipset.cs()
         _cs.helper.helper = helper_class()
-        _cs.init_xml_configuration()
+        _cs.init(platform, pch)
         logger.logger().HAL = True
         logger.logger().VERBOSE = True
         logger.logger().set_log_file(self.log_file)

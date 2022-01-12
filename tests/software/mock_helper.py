@@ -67,7 +67,7 @@ class TestHelper(Helper):
             else:
                 return 0xA0828086
         else:
-            raise Exception("Unexpected PCI read")
+            return 0xFFFFFFFF
 
     def read_physical_mem(self, phys_address, length):
         return self.read_phys_mem(phys_address>>32, phys_address& 0xFFFFFFFF, length)
@@ -300,7 +300,7 @@ class InvalidChipsetHelper(TestHelper):
                                                        function,
                                                        address, size)
         else:
-            raise Exception("Unexpected PCI read")
+            return 0xFFFFFFFF
 
 class InvalidPchHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
@@ -316,4 +316,4 @@ class InvalidPchHelper(TestHelper):
             else:
                 return 0xBEEF8086
         else:
-            raise Exception("Unexpected PCI read")
+            return 0xFFFFFFFF

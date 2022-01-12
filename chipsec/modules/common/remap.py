@@ -32,11 +32,11 @@ Example:
     >>> chipsec_main.py -m common.remap
 
 Registers used:
-    - PCI0.0.0_REMAPBASE
-    - PCI0.0.0_REMAPLIMIT
-    - PCI0.0.0_TOUUD
-    - PCI0.0.0_TOLUD
-    - PCI0.0.0_TSEGMB
+    - REMAPBASE
+    - REMAPLIMIT
+    - TOUUD
+    - TOLUD
+    - TSEGMB
 
 .. note::
     This module will only run on Core platforms.
@@ -69,19 +69,19 @@ class remap(BaseModule):
 
     def check_remap_config(self):
         is_warning = False
-        if not self.cs.is_register_defined('PCI0.0.0_REMAPBASE' ) or \
-           not self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT') or \
-           not self.cs.is_register_defined('PCI0.0.0_TOUUD'     ) or \
-           not self.cs.is_register_defined('PCI0.0.0_TOLUD'     ) or \
-           not self.cs.is_register_defined('PCI0.0.0_TSEGMB'    ):
+        if not self.cs.is_register_defined('REMAPBASE' ) or \
+           not self.cs.is_register_defined('REMAPLIMIT') or \
+           not self.cs.is_register_defined('TOUUD'     ) or \
+           not self.cs.is_register_defined('TOLUD'     ) or \
+           not self.cs.is_register_defined('TSEGMB'    ):
             self.logger.error( "Couldn't find definition of required registers (REMAP*, TOLUD, TOUUD, TSEGMB)" )
             return ModuleResult.ERROR
 
-        remapbase  = self.cs.read_register('PCI0.0.0_REMAPBASE')
-        remaplimit = self.cs.read_register('PCI0.0.0_REMAPLIMIT')
-        touud      = self.cs.read_register('PCI0.0.0_TOUUD')
-        tolud      = self.cs.read_register('PCI0.0.0_TOLUD')
-        tsegmb     = self.cs.read_register('PCI0.0.0_TSEGMB')
+        remapbase  = self.cs.read_register('REMAPBASE')
+        remaplimit = self.cs.read_register('REMAPLIMIT')
+        touud      = self.cs.read_register('TOUUD')
+        tolud      = self.cs.read_register('TOLUD')
+        tsegmb     = self.cs.read_register('TSEGMB')
         self.logger.log( "[*] Registers:" )
         self.logger.log( "[*]   TOUUD     : 0x{:016X}".format(touud) )
         self.logger.log( "[*]   REMAPLIMIT: 0x{:016X}".format(remaplimit) )
