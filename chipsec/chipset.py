@@ -363,11 +363,9 @@ class Chipset:
             if vstr not in self.Cfg.BUS.keys():
                 self.Cfg.BUS[vstr] = {}
             if dstr not in self.Cfg.BUS[vstr].keys():
-                self.Cfg.BUS[vstr][dstr] = {}
-            if cfg_str in self.Cfg.BUS[vstr][dstr].keys():
-                self.Cfg.BUS[cfg_str].append(b)
-            else:
                 self.Cfg.BUS[vstr][dstr] = [b]
+            else:
+                self.Cfg.BUS[vstr][dstr].append(b)
 
     ##################################################################################
     #
@@ -470,7 +468,7 @@ class Chipset:
         return self.Cfg.get_mmio_def(bar_name)
 
     def get_io_def(self, bar_name):
-        return self.Cfg.get_mmio_def(bar_name)
+        return self.Cfg.get_io_def(bar_name)
 
     def get_register_def(self, reg_name, bus=0):
         return self.Cfg.get_register_def(reg_name, bus)
