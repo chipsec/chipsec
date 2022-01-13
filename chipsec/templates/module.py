@@ -28,7 +28,7 @@ class ModuleClass(BaseModule):
         return True
 
     def action(self):
-        self.logger.log_passed_check("Module was successful")
+        self.logger.log_passed("Module was successful")
         return ModuleResult.PASSED
 
     def run(self, module_argv):

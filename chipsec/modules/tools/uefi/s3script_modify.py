@@ -411,7 +411,7 @@ class s3script_modify(BaseModule):
             return ModuleResult.ERROR
 
         if sts:
-            self.logger.log_passed_check( 'The script has been modified. Go to sleep..' )
+            self.logger.log_passed( 'The script has been modified. Go to sleep..' )
             return ModuleResult.PASSED
         else:
             return ModuleResult.FAILED

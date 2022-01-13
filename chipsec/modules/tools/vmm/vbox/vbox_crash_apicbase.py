@@ -47,5 +47,5 @@ class vbox_crash_apicbase (BaseModule):
         self.cs.write_register( 'IA32_APIC_BASE', apicbase_msr, tid )
 
         # If we are here, then we are fine ;)
-        self.logger.log_passed_check( "VMM/Host OS didn't crash (not vulnerable)" )
+        self.logger.log_passed( "VMM/Host OS didn't crash (not vulnerable)" )
         return ModuleResult.PASSED

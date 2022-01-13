@@ -129,7 +129,7 @@ def startup( command_argv ):
     try:
         startupType = STARTUP[int(command_argv[0])]
     except:
-        logger().log_hal_bad("Invalid startup type option value\n")
+        logger().log_hal("Invalid startup type option value\n")
         return
     Size = 0x0E000000
     command = struct.pack( COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_STARTUP, startupType, 0, 0 )

@@ -542,7 +542,7 @@ class SPI(hal_base.HALBase):
         bioswe = self.cs.get_control('BiosWriteEnable' )
 
         if self.logger.HAL: self.display_BIOS_write_protection()
-        self.logger.log_hal_important( "BIOS write protection is {} (BiosWriteEnable = {:d})".format('disabled' if bioswe else 'still enabled', bioswe) )
+        self.logger.log_hal( "BIOS write protection is {} (BiosWriteEnable = {:d})".format('disabled' if bioswe else 'still enabled', bioswe) )
 
         return (bioswe==1)
 
