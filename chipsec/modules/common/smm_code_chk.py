@@ -27,6 +27,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
+
 class smm_code_chk(BaseModule):
 
     def __init__(self):
@@ -56,7 +57,7 @@ class smm_code_chk(BaseModule):
         lock        = self.cs.get_register_field( 'MSR_SMM_FEATURE_CONTROL', regval, 'LOCK' )
         code_chk_en = self.cs.get_register_field( 'MSR_SMM_FEATURE_CONTROL', regval, 'SMM_Code_Chk_En' )
 
-        self.cs.print_register( 'MSR_SMM_FEATURE_CONTROL', regval )
+        self.cs.print_register( 'MSR_SMM_FEATURE_CONTROL', regval, cpu_thread=thread_id )
 
         if 1 == code_chk_en:
             if 1 == lock:
