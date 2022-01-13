@@ -78,5 +78,5 @@ class cpu_info(BaseModule):
             self.logger.log('[*]            Microcode: {:08X}'.format(microcode_rev))
             self.logger.log('[*]')
 
-        self.logger.log_information_check('Processor information displayed')
+        self.logger.log_information('Processor information displayed')
         return self.res

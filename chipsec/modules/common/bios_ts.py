@@ -57,10 +57,10 @@ class bios_ts(BaseModule):
 
         if 0 == bild:
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "BIOS Interface is not locked (including Top Swap Mode)" )
+            self.logger.log_failed( "BIOS Interface is not locked (including Top Swap Mode)" )
         else:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "BIOS Interface is locked (including Top Swap Mode)" )
+            self.logger.log_passed( "BIOS Interface is locked (including Top Swap Mode)" )
         return res
 
     # --------------------------------------------------------------------------

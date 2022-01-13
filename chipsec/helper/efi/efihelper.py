@@ -221,7 +221,7 @@ class EfiHelper(Helper):
         return 0
 
     def get_threads_count ( self ):
-        logger().log_debug_warning( "EFI helper hasn't implemented get_threads_count yet" )
+        logger().log_debug( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
         return 0
 
@@ -230,7 +230,7 @@ class EfiHelper(Helper):
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
-        logger().log_debug_warning("EFI helper has not implemented get_descriptor_table yet")
+        logger().log_debug("EFI helper has not implemented get_descriptor_table yet")
         return 0
 
     #

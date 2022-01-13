@@ -144,13 +144,13 @@ class bios_wp(BaseModule):
 
         self.logger.log('')
         if wp:
-            if spr:  self.logger.log_passed_check( "BIOS is write protected (by SMM and SPI Protected Ranges)" )
-            else:    self.logger.log_passed_check( "BIOS is write protected" )
+            if spr:  self.logger.log_passed( "BIOS is write protected (by SMM and SPI Protected Ranges)" )
+            else:    self.logger.log_passed( "BIOS is write protected" )
         else:
-            if spr:  self.logger.log_passed_check( "SPI Protected Ranges are configured to write protect BIOS" )
+            if spr:  self.logger.log_passed( "SPI Protected Ranges are configured to write protect BIOS" )
             else:
                 self.logger.log_important( 'BIOS should enable all available SMM based write protection mechanisms or configure SPI protected ranges to protect the entire BIOS region' )
-                self.logger.log_failed_check( "BIOS is NOT protected completely" )
+                self.logger.log_failed( "BIOS is NOT protected completely" )
 
         if wp or spr: return ModuleResult.PASSED
         else: return ModuleResult.FAILED

@@ -74,7 +74,7 @@ class rtclock(BaseModule):
                 self.logger.log_warning('Restoring original value')
                 self.cmos.write_cmos_high(self.test_offset, original_val)
         else:
-            self.logger.log_warn_check("Unable to test lock bits without attempting to modify CMOS.")
+            self.logger.log_warn("Unable to test lock bits without attempting to modify CMOS.")
             self.logger.log("[*] Run chipsec_main manually with the following commandline flags.")
             self.logger.log("[*] python chipsec_main -m common.rtclock -a modify")
             return ModuleResult.WARNING
@@ -86,10 +86,10 @@ class rtclock(BaseModule):
 
         if ll == 1 and ul == 1:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "Protected locations in RTC memory are locked" )
+            self.logger.log_passed( "Protected locations in RTC memory are locked" )
         else:
             res = ModuleResult.WARNING
-            self.logger.log_warn_check( "Protected locations in RTC memory are accessible (BIOS may not be using them)" )
+            self.logger.log_warn( "Protected locations in RTC memory are accessible (BIOS may not be using them)" )
 
         return res
 

@@ -53,7 +53,7 @@ class variables(BaseModule):
 
     def is_supported( self ):
         supported = self.cs.helper.EFI_supported()
-        if not supported: self.logger.log_skipped_check( "OS does not support UEFI Runtime API" )
+        if not supported: self.logger.log_skipped( "OS does not support UEFI Runtime API" )
         return supported
 
 
@@ -100,14 +100,14 @@ class variables(BaseModule):
 
         sbvars = self._uefi.list_EFI_variables()
         if sbvars is None:
-            self.logger.log_warn_check( 'Could not enumerate UEFI variables.' )
+            self.logger.log_warn( 'Could not enumerate UEFI variables.' )
             return ModuleResult.SKIPPED
 
         for name in SECURE_BOOT_VARIABLES:
 
             if name in sbvars.keys() and sbvars[name] is not None:
                 if len(sbvars[name]) > 1:
-                    self.logger.log_failed_check( 'There should only be one instance of variable {}'.format(name) )
+                    self.logger.log_failed( 'There should only be one instance of variable {}'.format(name) )
                     return ModuleResult.FAILED
                 for (off, buf, hdr, data, guid, attrs) in sbvars[name]:
                     self.logger.log( "[*] Checking protections of UEFI variable {}:{}".format(guid, name) )
@@ -144,7 +144,7 @@ class variables(BaseModule):
 
         if len(SECURE_BOOT_VARIABLES) == not_found:
             # None of Secure Boot variables were not found
-            self.logger.log_skipped_check( 'None of required Secure Boot variables found. Secure Boot is not enabled' )
+            self.logger.log_skipped( 'None of required Secure Boot variables found. Secure Boot is not enabled' )
             return ModuleResult.SKIPPED
         else:
             # Some Secure Boot variables exist
@@ -155,14 +155,14 @@ class variables(BaseModule):
                 if not_wp    > 0: self.logger.log_bad( 'Some Secure Boot variables can be modified' )
 
                 if is_secureboot_enabled:
-                    self.logger.log_failed_check( 'Not all Secure Boot UEFI variables are protected' )
+                    self.logger.log_failed( 'Not all Secure Boot UEFI variables are protected' )
                     return ModuleResult.FAILED
                 else:
-                    self.logger.log_warn_check( 'Not all Secure Boot UEFI variables are protected' )
+                    self.logger.log_warn( 'Not all Secure Boot UEFI variables are protected' )
                     return ModuleResult.WARNING
 
             else:
-                self.logger.log_passed_check( 'All Secure Boot UEFI variables are protected' )
+                self.logger.log_passed( 'All Secure Boot UEFI variables are protected' )
                 return ModuleResult.PASSED
 
 
