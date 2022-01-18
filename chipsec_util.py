@@ -100,18 +100,15 @@ class ChipsecUtil:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
-            logger().setlevel("verbose")
         if self.hal:
             logger().HAL     = True
-            logger().setlevel("hal")
         if self.debug:
             logger().DEBUG   = True
-            logger().setlevel("debug")
         if self.vverbose:
             logger().VERBOSE = True
             logger().HAL     = True
             logger().DEBUG   = True
-            logger().setlevel("debug")
+        logger().setlevel()
         if self.log:
             logger().set_log_file(self.log)
         if not self._cmd_args:
