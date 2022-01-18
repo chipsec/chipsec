@@ -418,18 +418,15 @@ class ChipsecMain:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
-            logger().setlevel("verbose")
         if self.hal:
             logger().HAL     = True
-            logger().setlevel("hal")
         if self.debug:
             logger().DEBUG   = True
-            logger().setlevel("debug")
         if self.vverbose:
             logger().VERBOSE = True
             logger().DEBUG   = True
             logger().HAL     = True
-            logger().setlevel("debug")
+        logger().setlevel()
         if self.log:
             logger().set_log_file(self.log)
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):

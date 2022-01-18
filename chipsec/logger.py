@@ -150,12 +150,12 @@ class Logger:
         self.Results = ChipsecResults()
 
     def setlevel(self, level):
-        if level == "verbose":
-            self.rootLogger.setLevel(pyLogging.getLevelName("verbose"))
-        elif level == "hal":
-            self.rootLogger.setLevel(pyLogging.getLevelName("hal"))
-        elif level == pyLogging.DEBUG:
+        if self.DEBUG:
             self.rootLogger.setLevel(pyLogging.DEBUG)
+        elif self.HAL:
+            self.rootLogger.setLevel(pyLogging.getLevelName("hal"))
+        elif self.VERBOSE:
+            self.rootLogger.setLevel(pyLogging.getLevelName("verbose"))
 
     def set_log_file(self, name=None):
         """Sets the log file for the output."""
@@ -251,7 +251,7 @@ class Logger:
 
     def log_debug(self, text):
         """Logs an Verbose message"""
-        self._log(text, pyLogging.getLevelName("debug"))
+        self._log(text, pyLogging.DEBUG)
 
     def log_passed(self, text):
         """Logs a passed message."""
