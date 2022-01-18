@@ -485,7 +485,6 @@ class ChipsecMain:
                 if self.failfast:
                     raise msg
                 return  ExitCode.EXCEPTION
-                logger().warn("Platform dependent functionality is likely to be incorrect")
             except OsHelperError as os_helper_error:
                 logger().error(str(os_helper_error))
                 logger().log_debug(traceback.format_exc())
