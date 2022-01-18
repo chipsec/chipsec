@@ -27,19 +27,24 @@ src_path = os.path.abspath(os.path.join(doc_path, '..', '..'))
 def getVersion():
     ver_path = os.path.join(src_path, 'chipsec', 'VERSION')
     scover_path = os.path.join(doc_path, '_templates','scover.tmpl')
+    index_path = os.path.join(doc_path, 'index.rst')
 
     with open(os.path.join(ver_path), 'r') as f:
         version = f.read()
     
     with open(os.path.join(scover_path), 'r') as f:
         contents = f.read()
-
     splitContents = contents.split('\n')
     contents = contents.replace(splitContents[8], 'version ' + version)
-    f = open(os.path.join(scover_path), 'w')
-    f.write(contents)
-    f.close()
+    with open(os.path.join(scover_path), 'w') as f:
+        f.write(contents)
+
+    with open(os.path.join(index_path), 'r') as f:
+        contents = f.read()
     
+    contents = contents.replace(splitContents[5], 'CHIPSEC ' + version)
+    with open(os.path.join(index_path), 'w') as f:
+        f.write(contents)
 
 if __name__ == "__main__":
     getVersion()
