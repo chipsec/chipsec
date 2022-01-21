@@ -66,15 +66,6 @@ IOCTL_MSGBUS_SEND_MESSAGE      = 0x15
 IOCTL_FREE_PHYSMEM             = 0x16
 
 _tools = {}
-class MemoryMapping(mmap.mmap):
-    """Memory mapping based on Python's mmap.
-
-    This subclass keeps tracks of the start and end of the mapping.
-    """
-    def __init__(self, fileno, length, flags, prot, offset):
-        self.start = offset
-        self.end = offset + length
-        super().__init__()
 
 
 class LinuxHelper(Helper):
@@ -222,55 +213,6 @@ class LinuxHelper(Helper):
                                 "Are you running this command as root?\n"
                                 "{}".format(str(err)), err.errno)
 
-
-    def devport_available(self):
-        """Check if /dev/port is usable.
-
-           In case the driver is not loaded, we might be able to perform the
-           requested operation via /dev/port. Returns True if /dev/port is
-           accessible.
-        """
-        if self.dev_port:
-            return True
-
-        try:
-            self.dev_port = os.open(self.DEV_PORT, os.O_RDWR)
-            return True
-        except IOError as err:
-            raise OsHelperError("Unable to open /dev/port.\n"
-                                "This command requires access to /dev/port.\n"
-                                "Are you running this command as root?\n"
-                                "{}".format(str(err)), err.errno)
-
-    def devmsr_available(self):
-        """Check if /dev/cpu/CPUNUM/msr is usable.
-
-           In case the driver is not loaded, we might be able to perform the
-           requested operation via /dev/cpu/CPUNUM/msr. This requires loading
-           the (more standard) msr driver. Returns True if /dev/cpu/CPUNUM/msr
-           is accessible.
-        """
-        if self.dev_msr:
-            return True
-
-        try:
-            self.dev_msr = dict()
-            if not os.path.exists("/dev/cpu/0/msr"):
-                os.system("modprobe msr")
-            for cpu in os.listdir("/dev/cpu"):
-                logger().log_debug("found cpu = {}".format(cpu))
-                if cpu.isdigit():
-                    cpu = int(cpu)
-                    self.dev_msr[cpu] = os.open("/dev/cpu/" +str(cpu) +"/msr", os.O_RDWR)
-                    logger().log_debug("Added dev_msr {}".format(str(cpu)))
-            return True
-        except IOError as err:
-            raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
-                                "This command requires access to /dev/cpu/CPUNUM/msr.\n"
-                                "Are you running this command as root?\n"
-                                "Do you have the msr kernel module installed?\n"
-                                "{}".format(str(err)), err.errno)
-
     def close(self):
         if self.dev_fh:
             self.dev_fh.close()
@@ -303,27 +245,6 @@ class LinuxHelper(Helper):
 ###############################################################################################
 # Actual API functions to access HW resources
 ###############################################################################################
-    def memory_mapping(self, base, size):
-        """Returns the mmap region that fully encompasses this area.
-
-        Returns None if no region matches.
-        """
-        for region in self.mappings:
-            if region.start <= base and region.end >= base + size:
-                return region
-        return None
-
-    def native_map_io_space(self, base, size, cache_type):
-        """Map to memory a specific region."""
-        if self.devmem_available() and not self.memory_mapping(base, size):
-            logger().log_debug("[helper] Mapping 0x{:x} to memory".format(base))
-            length = max(size, resource.getpagesize())
-            page_aligned_base = base - (base % resource.getpagesize())
-            mapping = MemoryMapping(self.dev_mem, length, mmap.MAP_SHARED,
-                                mmap.PROT_READ | mmap.PROT_WRITE,
-                                offset=page_aligned_base)
-            self.mappings.append(mapping)
-
     def map_io_space(self, base, size, cache_type):
         raise UnimplementedAPIError("map_io_space")
 
@@ -342,15 +263,6 @@ class LinuxHelper(Helper):
         self.dev_fh.seek(addr)
         return self.__mem_block(length, newval)
 
-    def native_write_phys_mem(self, phys_address_hi, phys_address_lo, length, newval):
-        if newval is None: return None
-        if self.devmem_available():
-            addr = (phys_address_hi << 32) | phys_address_lo
-            os.lseek(self.dev_mem, addr, os.SEEK_SET)
-            written = os.write(self.dev_mem, newval)
-            if written != length:
-                logger().log_debug("Cannot write {} to memory {:016X} (wrote {:d} of {:d})".format(newval, addr, written, length))
-
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         addr = (phys_address_hi << 32) | phys_address_lo
         self.dev_fh.seek(addr)
@@ -364,8 +276,8 @@ class LinuxHelper(Helper):
         pa = struct.unpack(self._pack, out_buf)[0]
 
         #Check if PA > max physical address
-        max_pa = self.cpuid( 0x80000008, 0x0 )[0] & 0xFF
-        if pa > 1<<max_pa:
+        max_pa = self.cpuid(0x80000008, 0x0)[0] & 0xFF
+        if pa > 1 << max_pa:
             logger().log_debug("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
             error_code = 1
         return (pa, error_code)
@@ -412,25 +324,15 @@ class LinuxHelper(Helper):
             elif 2 == size:
                 value = struct.unpack("3" + self._pack, out_buf)[2] & 0xffff
             else:
-                value = struct.unpack("3" +self._pack, out_buf)[2] & 0xffffffff
-        except:
-            logger().log_debug( "DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf) )
+                value = struct.unpack("3" + self._pack, out_buf)[2] & 0xffffffff
+        except Exception:
+            logger().log_debug("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf))
 
         return value
 
     def write_io_port(self, io_port, value, size):
         in_buf = struct.pack("3" + self._pack, io_port, size, value)
         return self.ioctl(IOCTL_WRIO, in_buf)
-
-    def native_write_io_port(self, io_port, newval, size):
-        if self.devport_available():
-            os.lseek(self.dev_port, io_port, os.SEEK_SET)
-            if 1 == size: fmt = 'B'
-            elif 2 == size: fmt = 'H'
-            elif 4 == size: fmt = 'I'
-            written = os.write(self.dev_port, struct.pack(fmt, newval))
-            if written != size:
-                logger().log_debug("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
 
     def read_cr(self, cpu_thread_id, cr_number):
         self.set_affinity(cpu_thread_id)
@@ -458,15 +360,7 @@ class LinuxHelper(Helper):
         self.ioctl(IOCTL_WRMSR, in_buf)
         return
 
-    def native_write_msr(self, thread_id, msr_addr, eax, edx):
-        if self.devmsr_available():
-            os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
-            buf = struct.pack( "2I", eax, edx)
-            written = os.write(self.dev_msr[thread_id], buf)
-            if written != 8:
-                logger().log_debug("Cannot write {:8X} to MSR {:x}".format(buf, msr_addr))
-
-    def get_descriptor_table(self, cpu_thread_id, desc_table_code  ):
+    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         self.set_affinity(cpu_thread_id)
         in_buf = struct.pack("5" + self._pack, cpu_thread_id, desc_table_code, 0, 0, 0)
         out_buf = self.ioctl(IOCTL_GET_CPU_DESCRIPTOR_TABLE, in_buf)
@@ -627,11 +521,11 @@ class LinuxHelper(Helper):
             new_size, status = struct.unpack("2I", buffer[:8])
 
         if (new_size > data_size):
-            logger().log_debug( "Incorrect size returned from driver" )
+            logger().log_debug("Incorrect size returned from driver")
             return (off, buf, hdr, None, guid, attr)
 
         if (status > 0):
-            logger().log_debug( "Reading variable (GET_EFIVAR) did not succeed: {} ({:d})".format(status_dict.get(status, 'UNKNOWN'), status))
+            logger().log_debug("Reading variable (GET_EFIVAR) did not succeed: {} ({:d})".format(status_dict.get(status, 'UNKNOWN'), status))
             data = ""
             guid = 0
             attr = 0
