@@ -43,16 +43,8 @@ from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARI
 from chipsec.hal.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
 from chipsec.hal.uefi_common import EFI_VARIABLE_RUNTIME_ACCESS
 
-LZMA = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress")
-TIANO = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
-EFI = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
-BROTLI = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli")
 
-_tools = {
-    chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress',
-    chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress',
-    chipsec.defines.COMPRESSION_TYPE_BROTLI: 'Brotli'
-}
+_tools = {}
 
 
 class MemoryMapping(mmap.mmap):
@@ -71,11 +63,6 @@ class LinuxNativeHelper(Helper):
     DEV_MEM = "/dev/mem"
     DEV_PORT = "/dev/port"
 
-    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI]
-    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO,
-                                chipsec.defines.COMPRESSION_TYPE_UEFI,
-                                chipsec.defines.COMPRESSION_TYPE_LZMA,
-                                chipsec.defines.COMPRESSION_TYPE_BROTLI]
 
     def __init__(self):
         super(LinuxNativeHelper, self).__init__()
@@ -99,25 +86,21 @@ class LinuxNativeHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
     def create(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper created")
+        logger().log_debug("[helper] Linux Helper created")
         return True
 
     def start(self, start_driver, driver_exists=False):
         self.init(start_driver)
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper started/loaded")
+        logger().log_debug("[helper] Linux Helper started/loaded")
         return True
 
     def stop(self, start_driver):
         self.close()
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper stopped/unloaded")
+        logger().log_debug("[helper] Linux Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] Linux Helper deleted")
+        logger().log_debug("[helper] Linux Helper deleted")
         return True
 
     def init(self, start_driver):
@@ -178,13 +161,11 @@ class LinuxNativeHelper(Helper):
             if not os.path.exists("/dev/cpu/0/msr"):
                 os.system("modprobe msr")
             for cpu in os.listdir("/dev/cpu"):
-                if logger().DEBUG:
-                    logger().log("found cpu = {}".format(cpu))
+                logger().log_debug("found cpu = {}".format(cpu))
                 if cpu.isdigit():
                     cpu = int(cpu)
                     self.dev_msr[cpu] = os.open("/dev/cpu/" + str(cpu) + "/msr", os.O_RDWR)
-                    if logger().DEBUG:
-                        logger().log("Added dev_msr {}".format(str(cpu)))
+                    logger().log_debug("Added dev_msr {}".format(str(cpu)))
             return True
         except IOError as err:
             raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
@@ -214,8 +195,7 @@ class LinuxNativeHelper(Helper):
     def map_io_space(self, base, size, cache_type):
         """Map to memory a specific region."""
         if self.devmem_available() and not self.memory_mapping(base, size):
-            if logger().DEBUG:
-                logger().log("[helper] Mapping 0x{:x} to memory".format(base))
+            logger().log_debug("[helper] Mapping 0x{:x} to memory".format(base))
             length = max(size, resource.getpagesize())
             page_aligned_base = base - (base % resource.getpagesize())
             mapping = MemoryMapping(self.dev_mem, length, mmap.MAP_SHARED,
@@ -231,8 +211,7 @@ class LinuxNativeHelper(Helper):
             os.lseek(self.dev_mem, addr, os.SEEK_SET)
             written = os.write(self.dev_mem, newval)
             if written != length:
-                if logger().DEBUG:
-                    logger().error("Cannot write {} to memory {:016X} (wrote {:d} of {:d})".format(newval, addr, written, length))
+                logger().log_debug("Cannot write {} to memory {:016X} (wrote {:d} of {:d})".format(newval, addr, written, length))
 
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         if self.devmem_available():
@@ -310,8 +289,7 @@ class LinuxNativeHelper(Helper):
                 fmt = 'I'
             written = os.write(self.dev_port, struct.pack(fmt, newval))
             if written != size:
-                if logger().DEBUG:
-                    logger().error("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
+                logger().log_debug("Cannot write {} to port {:x} (wrote {:d} of {:d})".format(newval, io_port, written, size))
 
     def read_cr(self, cpu_thread_id, cr_number):
         raise UnimplementedAPIError("read_cr")
@@ -332,8 +310,7 @@ class LinuxNativeHelper(Helper):
             buf = struct.pack("2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
             if written != 8:
-                if logger().DEBUG:
-                    logger().error("Cannot write {:8X} to MSR {:x}".format(buf, msr_addr))
+                logger().log_debug("Cannot write {:8X} to MSR {:x}".format(buf, msr_addr))
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         raise UnimplementedAPIError("get_descriptor_table")
@@ -496,8 +473,7 @@ class LinuxNativeHelper(Helper):
             f.close()
 
         except Exception:
-            if logger().DEBUG:
-                logger().error('Failed to read files under /sys/firmware/efi/vars/' + filename)
+            logger().log_debug('Failed to read files under /sys/firmware/efi/vars/' + filename)
             data = ""
             guid = 0
             attr = 0
@@ -510,8 +486,7 @@ class LinuxNativeHelper(Helper):
         try:
             varlist = os.listdir('/sys/firmware/efi/vars')
         except Exception:
-            if logger().DEBUG:
-                logger().error('Failed to read /sys/firmware/efi/vars. Folder does not exist')
+            logger().log_debug('Failed to read /sys/firmware/efi/vars. Folder does not exist')
         variables = dict()
         for v in varlist:
             name = v[:-37]
@@ -547,8 +522,7 @@ class LinuxNativeHelper(Helper):
                     f.write(value)
                     ret = 0  # EFI_SUCCESS
                 except Exception as err:
-                    if logger().DEBUG:
-                        logger().error('Failed to write EFI variable. {}'.format(err))
+                    logger().log_debug('Failed to write EFI variable. {}'.format(err))
         return ret
 
     #
@@ -568,8 +542,7 @@ class LinuxNativeHelper(Helper):
             f.close()
 
         except Exception:
-            if logger().DEBUG:
-                logger().error('Failed to read /sys/firmware/efi/efivars/' + filename)
+            logger().log_debug('Failed to read /sys/firmware/efi/efivars/' + filename)
             data = ""
             guid = 0
             attr = 0
@@ -582,8 +555,7 @@ class LinuxNativeHelper(Helper):
         try:
             varlist = os.listdir('/sys/firmware/efi/efivars')
         except Exception:
-            if logger().DEBUG:
-                logger().error('Failed to read /sys/firmware/efi/efivars. Folder does not exist')
+            logger().log_debug('Failed to read /sys/firmware/efi/efivars. Folder does not exist')
             return None
         variables = dict()
         for v in varlist:
@@ -606,8 +578,7 @@ class LinuxNativeHelper(Helper):
             f.close()
 
         except Exception:
-            if logger().DEBUG:
-                logger().error('Failed to read /sys/firmware/efi/efivars/' + filename)
+            logger().log_debug('Failed to read /sys/firmware/efi/efivars/' + filename)
             data = ""
 
         finally:
@@ -626,8 +597,7 @@ class LinuxNativeHelper(Helper):
                 if os.path.isfile(path):
                     # Variable already exists
                     if attrs is not None:
-                        if logger().DEBUG:
-                            logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
+                        logger().log_debug("Changing attributes on an existing variable is not supported. Keeping old attributes...")
                     f = open(path, 'r')
                     sattrs = f.read(4)
                 else:
@@ -638,15 +608,13 @@ class LinuxNativeHelper(Helper):
                 f.close()
                 ret = 0  # EFI_SUCCESS
             except Exception as err:
-                if logger().DEBUG:
-                    logger().error('Failed to write EFI variable. {}'.format(err))
+                logger().log_debug('Failed to write EFI variable. {}'.format(err))
         else:
             try:
                 os.remove(path)
                 ret = 0  # EFI_SUCCESS
             except Exception as err:
-                if logger().DEBUG:
-                    logger().error('Failed to delete EFI variable. {}'.format(err))
+                logger().log_debug('Failed to delete EFI variable. {}'.format(err))
 
         return ret
 
@@ -673,86 +641,7 @@ class LinuxNativeHelper(Helper):
     def getcwd(self):
         return os.getcwd()
 
-    def rotate_list(self, list, n):
-        return list[n:] + list[:n]
 
-    def unknown_decompress(self, CompressedFileName, OutputFileName):
-        failed_times = 0
-        for CompressionType in self.decompression_oder_type2:
-            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
-            if res is True:
-                self.rotate_list(self.decompression_oder_type2, failed_times)
-                break
-            else:
-                failed_times += 1
-        return res
-
-    def unknown_efi_decompress(self, CompressedFileName, OutputFileName):
-        failed_times = 0
-        for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
-            if res is True:
-                self.rotate_list(self.decompression_oder_type1, failed_times)
-                break
-            else:
-                failed_times += 1
-        return res
-
-    #
-    # Compress binary file
-    #
-    def compress_file(self, FileName, OutputFileName, CompressionType):
-        if CompressionType not in [i for i in chipsec.defines.COMPRESSION_TYPES]:
-            return False
-        encode_str = " -e -o {} ".format(OutputFileName)
-        if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(FileName, OutputFileName)
-            return True
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
-            encode_str = TIANO + encode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            encode_str = EFI + encode_str + "--uefi "
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
-            encode_str = LZMA + encode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
-            encode_str = BROTLI + encode_str
-        encode_str += FileName
-        data = subprocess.check_output(encode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot compress file({})".format(FileName))
-            return False
-        return True
-
-    #
-    # Decompress binary
-    #
-    def decompress_file(self, CompressedFileName, OutputFileName, CompressionType):
-        if CompressionType not in [i for i in chipsec.defines.COMPRESSION_TYPES]:
-            return False
-        if CompressionType == chipsec.defines.COMPRESSION_TYPE_UNKNOWN:
-            data = self.unknown_decompress(CompressedFileName, OutputFileName)
-            return data
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD:
-            data = self.unknown_efi_decompress(CompressedFileName, OutputFileName)
-            return data
-        decode_str = " -d -o {} ".format(OutputFileName)
-        if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(CompressedFileName, OutputFileName)
-            return True
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
-            decode_str = TIANO + decode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            decode_str = EFI + decode_str + "--uefi "
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
-            decode_str = LZMA + decode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
-            decode_str = BROTLI + decode_str
-        decode_str += CompressedFileName
-        data = subprocess.call(decode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
-            return False
-        return True
 
     #
     # Logical CPU count
