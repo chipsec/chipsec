@@ -473,7 +473,7 @@ class Chipset:
         # Locate PCH specific (chipsec/cfg/{vid}/pch_<code>*.xml) configuration XML files.
         if self.pch_code and CHIPSET_CODE_UNKNOWN != self.pch_code:
             for _xml in _cfg_files:
-                if fnmatch.fnmatch(os.path.basename(_xml), '{}*.xml'.format(self.pch_code.lower())):
+                if fnmatch.fnmatch(os.path.basename(_xml).lower(), '{}*.xml'.format(self.pch_code.lower())):
                     loaded_files.append(_xml)
 
         # Load all configuration files for this platform.
