@@ -79,7 +79,7 @@ class bios_smi(BaseModule):
                 self.logger.log_bad( "Global SMI is not enabled" )
             elif tco_en != 1 and smm_bwp != 1:
                 warn = True
-                self.logger.warn( "TCO SMI is not enabled. BIOS may not be using it" )
+                self.logger.log_warning( "TCO SMI is not enabled. BIOS may not be using it" )
             elif tco_en != 1 and smm_bwp == 1:
                 ok = False
                 self.logger.log_bad("TCO SMI should be enabled if using SMM BIOS region protection")

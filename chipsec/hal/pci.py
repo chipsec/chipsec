@@ -325,7 +325,7 @@ class Pci:
                     # device indicates XROM may exist. Initialize its base with supplied MMIO address
                     size_align = ~(xrom_bar & PCI_HDR_XROM_BAR_BASE_MASK) # actual XROM alignment
                     if (xrom_addr & size_align) != 0:
-                        logger().warn( "XROM address 0x{:08X} must be aligned at 0x{:08X}".format(xrom_addr, size_align) )
+                        logger().log_warning( "XROM address 0x{:08X} must be aligned at 0x{:08X}".format(xrom_addr, size_align) )
                         return False, None
                     self.write_dword( bus, dev, fun, xrom_bar_off, (xrom_addr|PCI_HDR_XROM_BAR_EN_MASK) )
                     xrom_bar = self.read_dword( bus, dev, fun, xrom_bar_off )

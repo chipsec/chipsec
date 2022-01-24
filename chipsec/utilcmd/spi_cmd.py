@@ -131,7 +131,7 @@ class SPICommand(BaseCommand):
         if self._spi.write_spi_from_file( self.spi_fla, self.filename ):
             self.logger.log( "[CHIPSEC] Completed SPI flash memory write" )
         else:
-            self.logger.warn( "SPI flash write returned error (turn on VERBOSE)" )
+            self.logger.log_warning( "SPI flash write returned error (turn on VERBOSE)" )
 
     def spi_erase(self):
         self.logger.log( "[CHIPSEC] Erasing SPI flash memory block at FLA = 0x{:X}".format(self.spi_fla) )
@@ -139,7 +139,7 @@ class SPICommand(BaseCommand):
         if self._spi.erase_spi_block( self.spi_fla ):
             self.logger.log_result( "Completed SPI flash memory erase" )
         else:
-            self.logger.warn( "SPI flash erase returned error (turn on VERBOSE)" )
+            self.logger.log_warning( "SPI flash erase returned error (turn on VERBOSE)" )
 
     def spi_disable_wp(self):
         self.logger.log( "[CHIPSEC] Trying to disable BIOS write protection.." )

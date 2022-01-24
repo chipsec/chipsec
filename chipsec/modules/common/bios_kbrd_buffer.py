@@ -75,7 +75,7 @@ class bios_kbrd_buffer(BaseModule):
 
         self.logger.log( "[*] Checking contents of the keyboard buffer..\n" )
 
-        if has_contents: self.logger.log_warn( "Keyboard buffer is not empty. The test cannot determine conclusively if it contains pre-boot passwords.\n    The contents might have not been cleared by pre-boot firmware or overwritten with garbage.\n    Visually inspect the contents of keyboard buffer for pre-boot passwords (BIOS, HDD, full-disk encryption)." )
+        if has_contents: self.logger.log_log_warning( "Keyboard buffer is not empty. The test cannot determine conclusively if it contains pre-boot passwords.\n    The contents might have not been cleared by pre-boot firmware or overwritten with garbage.\n    Visually inspect the contents of keyboard buffer for pre-boot passwords (BIOS, HDD, full-disk encryption)." )
         else:            self.logger.log_passed( "Keyboard buffer looks empty. Pre-boot passwords don't seem to be exposed" )
 
         return (ModuleResult.WARNING if has_contents else ModuleResult.PASSED)

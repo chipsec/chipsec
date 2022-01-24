@@ -238,7 +238,7 @@ class Logger:
         text = "ERROR: " + text
         self._log(text, pyLogging.ERROR)
 
-    def warn(self, text):
+    def log_warning(self, text):
         """Logs an Warning message"""
         text = "WARNING: " + text
         self._log(text, pyLogging.WARNING)
@@ -269,11 +269,6 @@ class Logger:
         """Logs an Error message"""
         text = "[-] ERROR: " + text
         self._log(text, pyLogging.ERROR)
-
-    def log_warning(self, text):
-        """Logs a Warning message"""
-        text = "[!] WARNING: " + text
-        self._log(text, pyLogging.WARNING)
 
     def log_skipped(self, text):
         """Logs a NOT IMPLEMENTED message."""

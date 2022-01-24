@@ -100,7 +100,7 @@ class variables(BaseModule):
 
         sbvars = self._uefi.list_EFI_variables()
         if sbvars is None:
-            self.logger.log_warn( 'Could not enumerate UEFI variables.' )
+            self.logger.log_log_warning( 'Could not enumerate UEFI variables.' )
             return ModuleResult.SKIPPED
 
         for name in SECURE_BOOT_VARIABLES:
@@ -158,7 +158,7 @@ class variables(BaseModule):
                     self.logger.log_failed( 'Not all Secure Boot UEFI variables are protected' )
                     return ModuleResult.FAILED
                 else:
-                    self.logger.log_warn( 'Not all Secure Boot UEFI variables are protected' )
+                    self.logger.log_log_warning( 'Not all Secure Boot UEFI variables are protected' )
                     return ModuleResult.WARNING
 
             else:
