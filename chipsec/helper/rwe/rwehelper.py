@@ -46,7 +46,7 @@ from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger, print_buffer
 import chipsec.file
 from chipsec.defines import bytestostring
-from chipsec.hal.uefi_common import EFI_GUID_STR
+from chipsec.lib.uefi_common import EFI_GUID_STR
 
 class PCI_BDF(Structure):
     _fields_ = [("BUS",  c_ushort, 16),  # Bus

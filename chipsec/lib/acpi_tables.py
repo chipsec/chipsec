@@ -32,7 +32,7 @@ from collections import namedtuple
 from uuid import UUID
 
 from chipsec.logger import logger
-from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
+from chipsec.lib.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
 from chipsec.defines import bytestostring
 
 class ACPI_TABLE():
