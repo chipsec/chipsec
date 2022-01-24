@@ -28,13 +28,14 @@ import struct
 
 from collections import defaultdict
 from collections import namedtuple
+from chipsec.lib import acpi_tables
 
 from chipsec.logger import logger, print_buffer
 from chipsec.file import read_file
 from chipsec.defines import bytestostring
 from chipsec.exceptions import UnimplementedNativeAPIError
 
-from chipsec.hal import acpi_tables, hal_base, uefi
+from chipsec.hal import hal_base, uefi
 
 # ACPI Table Header Format
 ACPI_TABLE_HEADER_FORMAT = '=4sIBB6s8sI4sI'

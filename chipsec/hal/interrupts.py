@@ -35,7 +35,7 @@ import uuid
 from chipsec.hal import hal_base
 from chipsec.logger import logger, print_buffer_bytes
 from chipsec.hal.acpi import ACPI
-from chipsec.hal.acpi_tables import UEFI_TABLE
+from chipsec.lib.acpi_tables import UEFI_TABLE
 from chipsec.defines import bytestostring
 
 SMI_APMC_PORT = 0xB2
