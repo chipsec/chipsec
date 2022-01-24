@@ -68,7 +68,7 @@ class spi_lock(BaseModule):
         elif res == ModuleResult.PASSED:
             self.logger.log_passed("SPI Flash Controller locked correctly.")
         else:
-            self.logger.log_warn("Unable to determine if SPI Flash Controller is locked correctly.")
+            self.logger.log_log_warning("Unable to determine if SPI Flash Controller is locked correctly.")
 
         return res
 

@@ -340,7 +340,7 @@ class sgx_check(BaseModule):
             if self.res == ModuleResult.PASSED:
                 self.logger.log_passed('All SGX checks passed')
             elif self.res == ModuleResult.WARNING:
-                self.logger.log_warn('One or more SGX checks detected a warning')
+                self.logger.log_log_warning('One or more SGX checks detected a warning')
             elif self.res == ModuleResult.SKIPPED:
                 self.logger.log_skipped('SGX test is being skipped')
             elif self.res == ModuleResult.NOTAPPLICABLE:

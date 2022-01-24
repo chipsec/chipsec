@@ -66,10 +66,10 @@ class OsHelper:
             raise OsHelperError("Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV)
         else:
             if self.helper.name != "EfiHelper" and sys.version[0] == "2":  # Python 2 is only supported in the EFI shell.
-                logger().warn("***************************************************************************************")
-                logger().warn("* !! Python 2 is deprecated. Please update to Python 3 !!")
-                logger().warn("* Some chipsec results may be incorrect if you continue.")
-                logger().warn("***************************************************************************************")
+                logger().log_warning("***************************************************************************************")
+                logger().log_warning("* !! Python 2 is deprecated. Please update to Python 3 !!")
+                logger().log_warning("* Some chipsec results may be incorrect if you continue.")
+                logger().log_warning("***************************************************************************************")
                 s = raw_input("Type 'yes' to continue running under Python 2 > ")  # Will only run on python 2, so raw_input will be defined.
                 if s.lower() not in ['yes', 'y']:
                     sys.exit(0)
@@ -112,10 +112,10 @@ class OsHelper:
         if self.filecmds is not None:
             self.filecmds.Save()
         if not self.helper.stop(start_driver):
-            logger().warn("failed to stop OS helper")
+            logger().log_warning("failed to stop OS helper")
         else:
             if not self.helper.delete(start_driver):
-                logger().warn("failed to delete OS helper")
+                logger().log_warning("failed to delete OS helper")
 
     def is_dal(self):
         return ('itpii' in sys.modules)

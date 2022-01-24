@@ -118,7 +118,7 @@ class debugenabled(BaseModule):
             self.logger.log_failed('One or more of the debug checks have failed and a debug feature is enabled')
             self.res = ModuleResult.FAILED
         elif (dci_test_fail == ModuleResult.WARNING or cpu_debug_test_fail == ModuleResult.WARNING):
-            self.logger.log_warn('An unexpected debug state was discovered on this platform')
+            self.logger.log_log_warning('An unexpected debug state was discovered on this platform')
             self.res = ModuleResult.WARNING
         else:
             self.logger.log_passed('All checks have successfully passed')

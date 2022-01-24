@@ -76,7 +76,7 @@ Please run 'pip install virustotal-api' and try again.""")
 
         if vt_report["results"]["response_code"] == 0:
             # Hash is unknown to VT.
-            self.logger.log_warn("Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log_log_warning("Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(efi_module))
             return False
 
         if vt_report["results"]["positives"] >= self.vt_threshold:
@@ -98,7 +98,7 @@ Please run 'pip install virustotal-api' and try again.""")
         self.logger.log( '' )
         if found:
             res = ModuleResult.WARNING
-            self.logger.log_warn("Suspicious EFI binary found in the UEFI firmware image")
+            self.logger.log_log_warning("Suspicious EFI binary found in the UEFI firmware image")
         else:
             self.logger.log_passed("Didn't find any suspicious EFI binary")
         return res

@@ -168,7 +168,7 @@ class scan_image(BaseModule):
                 self.logger.log_important( "found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{{}}}\n    {}".format(m, sha1, guid, name))
 
         if len(self.suspect_modules) > 0:
-            self.logger.log_warn( "found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules), json_pth) )
+            self.logger.log_log_warning( "found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules), json_pth) )
             return ModuleResult.WARNING
         else:
             self.logger.log_passed( "all EFI executables match the list '{}'".format(json_pth) )

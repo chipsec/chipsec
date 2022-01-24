@@ -120,13 +120,13 @@ class FileHelper(Helper):
     def read_pci_reg( self, bus, device, function, address, size ):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            logger().warn( "Config register address is not naturally aligned" )
+            logger().log_warning( "Config register address is not naturally aligned" )
         return self.filecmds.getElement("read_pci_reg", (bus, device, function, address, size))
 
     def write_pci_reg( self, bus, device, function, address, value, size ):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            logger().warn( "Config register address is not naturally aligned" )
+            logger().log_warning( "Config register address is not naturally aligned" )
 
         return self.filecmds.getElement("write_pci_reg", (bus, device, function, address, size))
 

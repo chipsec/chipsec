@@ -91,7 +91,7 @@ class smm_code_chk(BaseModule):
         if res == ModuleResult.FAILED:
             self.logger.log_failed( "SMM_Code_Chk_En is enabled but not locked down" )
         elif res == ModuleResult.WARNING:
-            self.logger.warn( """[*] SMM_Code_Chk_En is not enabled.
+            self.logger.log_warning( """[*] SMM_Code_Chk_En is not enabled.
 This can happen either because this feature is not supported by the CPU or because the BIOS forgot to enable it.
 Please consult the Intel SDM to determine whether or not your CPU supports SMM_Code_Chk_En.""" )
         else:

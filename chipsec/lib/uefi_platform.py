@@ -1246,7 +1246,7 @@ def encode_s3bootscript_entry( entry ):
     if entry_val_buf is not None:
         entry_buf = entry_hdr_buf + entry_val_buf
     else:
-        logger().warn( 'Could not encode opcode of boot script entry (type 0x{:X})'.format(entry.script_type) )
+        logger().log_warning( 'Could not encode opcode of boot script entry (type 0x{:X})'.format(entry.script_type) )
 
     return entry_buf
 
