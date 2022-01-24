@@ -95,16 +95,14 @@ class Chipset:
         self.reqs_pch = False
 
         # Initialize HAL artifacts
-        self.pci = None
-        self.mem = None
-        self.msr = None
-        self.ucode = None
-        self.io = None
         self.cpu = None
-        self.msgbus = None
-        self.mmio = None
+        self.io = None
         self.iobar = None
-        self.igd = None
+        self.mem = None
+        self.mmio = None
+        self.msgbus = None
+        self.msr = None
+        self.pci = None
 
         # Initialize the Helper
         if helper is None:
@@ -152,15 +150,14 @@ class Chipset:
 
         self.load_xml_configuration()
 
-        self.pci = pci.Pci(self)
-        self.mem = physmem.Memory(self)
-        self.msr = msr.Msr(self)
-        self.ucode = ucode.Ucode(self)
-        self.io = io.PortIO(self)
         self.cpu = cpu.CPU(self)
-        self.msgbus = msgbus.MsgBus(self)
-        self.mmio = mmio.MMIO(self)
+        self.io = io.PortIO(self)
         self.iobar = iobar.IOBAR(self)
+        self.mem = physmem.Memory(self)
+        self.mmio = mmio.MMIO(self)
+        self.msgbus = msgbus.MsgBus(self)
+        self.msr = msr.Msr(self)
+        self.pci = pci.Pci(self)
 
     def destroy(self, start_driver):
         self.helper.stop(start_driver)
@@ -178,10 +175,10 @@ class Chipset:
         return self.pch_longname
 
     def print_chipset(self):
-        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.vid, self.did, self.rid))
+        self.logger.log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.vid, self.did, self.rid))
 
     def print_pch(self):
-        logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
+        self.logger.log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
 
     def is_core(self):
         return self.get_chipset_code() in CHIPSET_FAMILY["core"]
@@ -193,13 +190,13 @@ class Chipset:
         return self.get_chipset_code() in CHIPSET_FAMILY["atom"]
 
     def print_supported_chipsets(self):
-        logger().log("\nSupported platforms:\n")
-        logger().log(" VID  | DID  | Name           | Code   | Long Name")
-        logger().log("-------------------------------------------------------------------------------------")
+        self.logger.log("\nSupported platforms:\n")
+        self.logger.log(" VID  | DID  | Name           | Code   | Long Name")
+        self.logger.log("-------------------------------------------------------------------------------------")
         for _vid in sorted(self.chipset_dictionary.keys()):
             for _did in sorted(self.chipset_dictionary[_vid]):
                 for item in self.chipset_dictionary[_vid][_did]:
-                    logger().log(" {:4} | {:4} | {:14} | {:6} | {:40}".format(_vid, _did, item['name'], item['code'].lower(), item['longname'][:40]))
+                    self.logger.log(" {:4} | {:4} | {:14} | {:6} | {:40}".format(_vid, _did, item['name'], item['code'].lower(), item['longname'][:40]))
 
     ##################################################################################
     #
@@ -214,27 +211,27 @@ class Chipset:
         VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f)]
         # create dictionaries
         for vid in VID:
-            logger().log_debug("[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)))
+            self.logger.log_debug("[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)))
             self.chipset_dictionary[vid] = collections.defaultdict(list)
             self.pch_dictionary[vid] = collections.defaultdict(list)
             self.device_dictionary[vid] = collections.defaultdict(list)
             for fxml in os.listdir(os.path.join(_cfg_path, vid)):
                 if os.path.isdir(os.path.join(_cfg_path, vid, fxml)):
                     continue
-                logger().log_debug("[*] looking for platform config in '{}'..".format(fxml))
+                self.logger.log_debug("[*] looking for platform config in '{}'..".format(fxml))
                 tree = ET.parse(os.path.join(_cfg_path, vid, fxml))
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     platform = ""
                     req_pch = False
                     if 'platform' not in _cfg.attrib:
-                        logger().log_debug("[*] found Device config at '{}'..".format(fxml))
+                        self.logger.log_debug("[*] found Device config at '{}'..".format(fxml))
                         if vid not in self.device_dictionary.keys():
                             self.device_dictionary[vid] = {}
                         mdict = self.device_dictionary[vid]
                         platform_type = "device"
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
-                        logger().log_debug("[*] found PCH config at '{}'..".format(fxml))
+                        self.logger.log_debug("[*] found PCH config at '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.pch_codes.keys():
                             self.pch_codes[_cfg.attrib['platform'].upper()] = {}
                             self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = vid
@@ -243,7 +240,7 @@ class Chipset:
                         platform = _cfg.attrib['platform']
                         platform_type = "pch"
                     elif _cfg.attrib['platform'].upper():
-                        logger().log_debug("[*] found platform config from '{}'..".format(fxml))
+                        self.logger.log_debug("[*] found platform config from '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.chipset_codes.keys():
                             self.chipset_codes[_cfg.attrib['platform'].upper()] = {}
                             self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = vid
@@ -255,7 +252,7 @@ class Chipset:
                         continue
                     if "req_pch" in _cfg.attrib:
                         req_pch = _cfg.attrib['req_pch']
-                    logger().log_debug("[*] Populating configuration dictionary..")
+                    self.logger.log_debug("[*] Populating configuration dictionary..")
                     for _info in _cfg.iter('info'):
                         dv_list = []
                         if 'family' in _info.attrib:
@@ -316,7 +313,7 @@ class Chipset:
                                     if _did in self.Cfg.BUS[vid].keys():
                                         self.load_list.append(os.path.join(_cfg_path, vid, fxml))
                             if _did == "":
-                                logger().log_debug("No SKU found in configuration")
+                                self.logger.log_debug("No SKU found in configuration")
                             else:
                                 if not platform == "":
                                     cdict['did'] = _did
@@ -331,17 +328,17 @@ class Chipset:
 
     def init_cfg_bus(self):
         _pci = pci.Pci(self)
-        logger().log_debug('[*] Loading device buses..')
+        self.logger.log_debug('[*] Loading device buses..')
         if QUIET_PCI_ENUM:
-            old_hal_state = logger().HAL
-            logger().HAL = False
+            old_hal_state = self.logger.HAL
+            self.logger.HAL = False
         try:
             enum_devices = _pci.enumerate_devices()
         except Exception:
-            logger().log_debug('[*] Unable to enumerate PCI devices.')
+            self.logger.log_debug('[*] Unable to enumerate PCI devices.')
             enum_devices = []
         if QUIET_PCI_ENUM:
-            logger().HAL = old_hal_state
+            self.logger.HAL = old_hal_state
 
         # store entries dev_fun_vid_did = [list of bus entries]
         for b, d, f, vid, did in enum_devices:
@@ -646,7 +643,7 @@ class Chipset:
                 self.write_register(reg_name, reg_values[0])
                 ret = True
         if not ret:
-            logger().log_debug("[write_register_all] There is a mismatch in the number of register values and registers to write")
+            self.logger.log_debug("[write_register_all] There is a mismatch in the number of register values and registers to write")
         return ret
 
     def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
@@ -825,7 +822,7 @@ class Chipset:
             reg_str = "[*] {} = {} << {}".format(reg_name, reg_val_str, reg['desc'])
 
         reg_str += self._register_fields_str(reg, reg_val)
-        logger().log(reg_str)
+        self.logger.log(reg_str)
         return reg_str
 
     def print_register_all(self, reg_name, cpu_thread=0):
@@ -865,7 +862,7 @@ class Chipset:
         reg = control['register']
         field = control['field']
         reg_data = self.read_register(reg, cpu_thread)
-        if logger().VERBOSE or with_print:
+        if self.logger.VERBOSE or with_print:
             self.print_register(reg, reg_data)
         ret = self.get_register_field(reg, reg_data, field)
         return ret
@@ -904,12 +901,12 @@ class Chipset:
         else:
             reg_data = self.read_register(reg, cpu_thread, bus)
             reg_data = [reg_data]
-        if logger().VERBOSE or with_print:
+        if self.logger.VERBOSE or with_print:
             if reg_data:
                 for rd in reg_data:
                     self.print_register(reg, rd)
             else:
-                logger().log("Register has no data")
+                self.logger.log("Register has no data")
         if reg_data:
             return self.get_register_field_all(reg, reg_data, field)
         return reg_data
@@ -931,7 +928,7 @@ class Chipset:
         return self.Cfg.is_lock_defined(lock_name)
 
     def get_locked_value(self, lock_name):
-        logger().log_debug('Retrieve value for lock {}'.format(lock_name))
+        self.logger.log_debug('Retrieve value for lock {}'.format(lock_name))
         return int(self.Cfg.LOCKS[lock_name]['value'], 16)
 
     def get_lock_desc(self, lock_name):
