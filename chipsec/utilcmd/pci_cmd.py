@@ -51,7 +51,7 @@ from chipsec.command    import BaseCommand
 from chipsec.logger     import pretty_print_hex_buffer
 from argparse           import ArgumentParser
 from chipsec_util       import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
-from chipsec.hal.pci    import print_pci_devices, print_pci_XROMs
+from chipsec.lib.pci    import print_pci_devices, print_pci_XROMs
 from chipsec.hal.pci    import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD_OFF
 
 # PCIe Devices and Configuration Registers
