@@ -330,18 +330,20 @@ class Chipset:
         _pci = pci.Pci(self)
         self.logger.log_debug('[*] Loading device buses..')
         if QUIET_PCI_ENUM:
-            old_hal_state = self.logger.HAL
-            self.logger.HAL = False
+            old_log_state = (self.logger.HAL, self.logger.DEBUG, self.logger.VERBOSE)
+            self.logger.HAL, self.logger.DEBUG, self.logger.VERBOSE  = (False, False, False)
+            self.logger.setlevel()
         try:
             enum_devices = _pci.enumerate_devices()
         except Exception:
             self.logger.log_debug('[*] Unable to enumerate PCI devices.')
             enum_devices = []
         if QUIET_PCI_ENUM:
-            self.logger.HAL = old_hal_state
+            self.logger.HAL, self.logger.DEBUG, self.logger.VERBOSE  = old_log_state
+            self.logger.setlevel()
 
         # store entries dev_fun_vid_did = [list of bus entries]
-        for b, d, f, vid, did in enum_devices:
+        for b, d, f, vid, did, rid in enum_devices:
             dstr = "{:04X}".format(did)
             vstr = "{:04X}".format(vid)
             cfg_str = "{:0>2X}_{:0>2X}".format(d, f)

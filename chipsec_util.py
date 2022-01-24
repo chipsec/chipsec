@@ -1,23 +1,23 @@
-#!/usr/bin/env python3
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2022, Intel Corporation
-#
+# !/usr/bin/env python3
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2022, Intel Corporation
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+
 # Contact information:
 # chipsec@intel.com
-#
+
 
 """
 Standalone utility
@@ -62,7 +62,7 @@ class ChipsecUtil:
 
     def __init__(self, argv):
         self.global_usage = "All numeric values are in hex\n" + \
-                   "<width> is in {1, byte, 2, word, 4, dword}\n\n"
+            "<width> is in {1, byte, 2, word, 4, dword}\n\n"
         self.commands = {}
         # determine if CHIPSEC is loaded as chipsec_*.exe or in python
         self.CHIPSEC_LOADED_AS_EXE = True if (hasattr(sys, "frozen") or hasattr(sys, "importers")) else False
@@ -100,15 +100,18 @@ class ChipsecUtil:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
+            logger().setlevel()
         if self.hal:
-            logger().HAL     = True
+            logger().HAL = True
+            logger().setlevel()
         if self.debug:
-            logger().DEBUG   = True
+            logger().DEBUG = True
+            logger().setlevel()
         if self.vverbose:
             logger().VERBOSE = True
-            logger().HAL     = True
-            logger().DEBUG   = True
-        logger().setlevel()
+            logger().HAL = True
+            logger().DEBUG = True
+            logger().setlevel()
         if self.log:
             logger().set_log_file(self.log)
         if not self._cmd_args:
@@ -123,8 +126,8 @@ class ChipsecUtil:
             cmds_dir = os.path.join(get_main_dir(), "chipsec", "utilcmd")
             cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
 
-        logger().log_debug( '[CHIPSEC] Loaded command-line extensions:' )
-        logger().log_debug( '   {}'.format(cmds) )
+        logger().log_debug('[CHIPSEC] Loaded command-line extensions:')
+        logger().log_debug('   {}'.format(cmds))
         module = None
         for cmd in cmds:
             try:
@@ -161,7 +164,6 @@ class ChipsecUtil:
             try:
                 self._cs.init(self._platform, self._pch)
                 comm.requires_driver()
-                # self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver, self._driver_exists)
             except UnknownChipsetError as msg:
                 logger().warn("*******************************************************************")
                 logger().warn("* Unknown platform!")
@@ -169,7 +171,7 @@ class ChipsecUtil:
                 logger().warn("* Error Message: \"{}\"".format(str(msg)))
                 logger().warn("*******************************************************************")
                 if self._unknownPlatform:
-                    logger().error('To run anyways please use -i command-line option\n\n')
+                    logger().error('To run anyways please specify a cpu and pch (if necessary)\n\n')
                     sys.exit(ExitCode.OK)
             except Exception as msg:
                 logger().error(str(msg))

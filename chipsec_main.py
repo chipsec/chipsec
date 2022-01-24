@@ -1,24 +1,22 @@
-#!/usr/bin/env python3
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2022, Intel Corporation
-#
+# !/usr/bin/env python3
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2022, Intel Corporation
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+
 # Contact information:
 # chipsec@intel.com
-#
-
 
 """
 Main application logic and automation functions
@@ -99,10 +97,10 @@ class ChipsecMain:
         Prints chipsec banner
         """
         logger().log("################################################################\n"
-                      "##                                                            ##\n"
-                      "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
-                      "##                                                            ##\n"
-                      "################################################################")
+                     "##                                                            ##\n"
+                     "##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n"
+                     "##                                                            ##\n"
+                     "################################################################")
         logger().log("[CHIPSEC] Version {}".format(self.version))
         logger().log("[CHIPSEC] Arguments: {}".format(" ".join(self.argv)))
         logger().log(self.message)
@@ -163,7 +161,7 @@ class ChipsecMain:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:
             logger().log_debug(traceback.format_exc())
-            logger().log_error( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
+            logger().log_error("Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)))
             raise msg
         return result
 
@@ -418,15 +416,18 @@ class ChipsecMain:
             parser.print_help()
         if self.verbose:
             logger().VERBOSE = True
+            logger().setlevel()
         if self.hal:
-            logger().HAL     = True
+            logger().HAL = True
+            logger().setlevel()
         if self.debug:
-            logger().DEBUG   = True
+            logger().DEBUG = True
+            logger().setlevel()
         if self.vverbose:
             logger().VERBOSE = True
-            logger().DEBUG   = True
-            logger().HAL     = True
-        logger().setlevel()
+            logger().DEBUG = True
+            logger().HAL = True
+            logger().setlevel()
         if self.log:
             logger().set_log_file(self.log)
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):
@@ -455,7 +456,7 @@ class ChipsecMain:
             logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
-            logger().warn("Python architecture (32-bit) is different from OS architecture (64-bit)")
+            logger().log_warning("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
     ##################################################################################
     # Entry point for command-line execution
@@ -484,7 +485,7 @@ class ChipsecMain:
                 logger().log_debug(traceback.format_exc())
                 if self.failfast:
                     raise msg
-                return  ExitCode.EXCEPTION
+                return ExitCode.EXCEPTION
             except OsHelperError as os_helper_error:
                 logger().error(str(os_helper_error))
                 logger().log_debug(traceback.format_exc())
@@ -497,7 +498,7 @@ class ChipsecMain:
                     raise be
                 return ExitCode.EXCEPTION
         else:
-            logger().warn("Platform dependent functionality is likely to be incorrect")
+            logger().log_warning("Platform dependent functionality is likely to be incorrect")
 
         if self._show_banner:
             self.log_properties()
