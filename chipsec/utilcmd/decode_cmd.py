@@ -109,7 +109,7 @@ class DecodeCommand(BaseCommand):
                 if FLASH_DESCRIPTOR == idx:
                     # Decoding Flash Descriptor
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )
-                    self._spi.parse_spi_flash_descriptor( self.cs, region_data )
+                    self._spi.parse_spi_flash_descriptor(region_data)
                 elif BIOS == idx:
                     # Decoding EFI Firmware Volumes
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )

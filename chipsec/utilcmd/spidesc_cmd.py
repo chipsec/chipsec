@@ -50,7 +50,7 @@ class SPIDescCommand(BaseCommand):
         self.logger.log( "[CHIPSEC] Parsing SPI Flash Descriptor from file '{}'\n".format(self.fd_file) )
         fd = read_file( self.fd_file )
         if fd:
-            _spi.parse_spi_flash_descriptor( self.cs, fd )
+            _spi.parse_spi_flash_descriptor(fd)
 
         self.logger.log( "\n[CHIPSEC] (spidesc) time elapsed {:.3f}".format(time.time() -t) )
 
