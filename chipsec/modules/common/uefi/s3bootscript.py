@@ -53,7 +53,7 @@ Examples:
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT
 from chipsec.defines import BOUNDARY_1MB, BOUNDARY_4GB
 from chipsec.hal.uefi import UEFI, parse_script
-from chipsec.hal.uefi_common import S3BootScriptOpcode
+from chipsec.lib.uefi_common import S3BootScriptOpcode
 
 TAGS = [MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT]
 

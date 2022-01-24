@@ -32,7 +32,7 @@ from collections import namedtuple
 
 from chipsec.logger import print_buffer
 from chipsec.hal import hal_base
-import chipsec.hal.tpm12_commands
+import chipsec.lib.tpm12_commands
 
 
 COMMANDREADY = 0x40
@@ -168,11 +168,11 @@ LOCALITY = {
 }
 
 COMMANDS = {
-  "pcrread": chipsec.hal.tpm12_commands.pcrread,
-  "nvread": chipsec.hal.tpm12_commands.nvread,
-  "startup": chipsec.hal.tpm12_commands.startup,
-  "continueselftest": chipsec.hal.tpm12_commands.continueselftest,
-  "forceclear": chipsec.hal.tpm12_commands.forceclear
+  "pcrread": chipsec.lib.tpm12_commands.pcrread,
+  "nvread": chipsec.lib.tpm12_commands.nvread,
+  "startup": chipsec.lib.tpm12_commands.startup,
+  "continueselftest": chipsec.lib.tpm12_commands.continueselftest,
+  "forceclear": chipsec.lib.tpm12_commands.forceclear
 }
 
 class TPM_RESPONSE_HEADER( namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSize ReturnCode') ):

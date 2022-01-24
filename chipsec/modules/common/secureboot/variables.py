@@ -34,7 +34,7 @@ Use '-a modify' option for the module to also try to write/corrupt the variables
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, OPT_MODIFY
 from chipsec.hal.uefi import UEFI, SECURE_BOOT_VARIABLES, IS_VARIABLE_ATTRIBUTE, EFI_VAR_NAME_SecureBoot, SECURE_BOOT_KEY_VARIABLES
 from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
-from chipsec.hal.uefi_common import StatusCode
+from chipsec.lib.uefi_common import StatusCode
 
 # ############################################################
 # SPECIFY PLATFORMS THIS MODULE IS APPLICABLE TO

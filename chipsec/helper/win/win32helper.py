@@ -45,7 +45,7 @@ from chipsec.helper.basehelper import Helper
 from chipsec.defines import stringtobytes, bytestostring
 from chipsec.logger import logger
 import chipsec.file
-from chipsec.hal.uefi_common import EFI_GUID_STR
+from chipsec.lib.uefi_common import EFI_GUID_STR
 
 
 class PCI_BDF(Structure):

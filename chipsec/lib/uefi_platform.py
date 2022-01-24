@@ -28,12 +28,12 @@ from uuid import UUID
 
 from chipsec import defines
 from chipsec.logger import logger
-from chipsec.hal.uefi_common import bit_set, VARIABLE_SIGNATURE_VSS, S3BootScriptOpcode_MDE, op_io_pci_mem, S3BootScriptOpcode_EdkCompat, EFI_GUID_STR, EFI_GUID_SIZE
-from chipsec.hal.uefi_common import op_stall, op_dispatch, op_terminate, op_mem_poll, op_unknown, get_3b_size, get_nvar_name, op_smbus_execute, script_width_formats
-from chipsec.hal.uefi_common import S3BOOTSCRIPT_ENTRY, MAX_S3_BOOTSCRIPT_ENTRY_LENGTH, VARIABLE_STORE_FV_GUID, IS_VARIABLE_ATTRIBUTE, VARIABLE_DATA
-from chipsec.hal.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_RUNTIME_ACCESS
-from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
-from chipsec.hal.uefi_fv import NextFwVolume, NextFwFile, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
+from chipsec.lib.uefi_common import bit_set, VARIABLE_SIGNATURE_VSS, S3BootScriptOpcode_MDE, op_io_pci_mem, S3BootScriptOpcode_EdkCompat, EFI_GUID_STR, EFI_GUID_SIZE
+from chipsec.lib.uefi_common import op_stall, op_dispatch, op_terminate, op_mem_poll, op_unknown, get_3b_size, get_nvar_name, op_smbus_execute, script_width_formats
+from chipsec.lib.uefi_common import S3BOOTSCRIPT_ENTRY, MAX_S3_BOOTSCRIPT_ENTRY_LENGTH, VARIABLE_STORE_FV_GUID, IS_VARIABLE_ATTRIBUTE, VARIABLE_DATA
+from chipsec.lib.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_RUNTIME_ACCESS
+from chipsec.lib.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
+from chipsec.lib.uefi_fv import NextFwVolume, NextFwFile, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 
 #################################################################################################
 # Dell PFS support,

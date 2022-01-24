@@ -42,7 +42,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand
-from chipsec.hal     import tpm_eventlog
+from chipsec.lib     import tpm_eventlog
 from chipsec.hal     import tpm
 from chipsec.exceptions   import TpmRuntimeError
 from argparse        import ArgumentParser
