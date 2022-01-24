@@ -52,7 +52,7 @@ Examples:
 
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.hal.smbus import SMBus
-from chipsec.hal.spd import SPD
+from chipsec.lib.spd import SPD
 
 class spd_wd(BaseModule):
 

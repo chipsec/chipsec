@@ -37,8 +37,10 @@ Examples:
 import time
 
 from chipsec.command  import BaseCommand
-from chipsec.hal      import smbus, spd
+from chipsec.hal      import smbus
 from argparse         import ArgumentParser
+
+from chipsec.lib import spd
 
 
 class SPDCommand(BaseCommand):
