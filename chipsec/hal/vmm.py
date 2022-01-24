@@ -30,7 +30,7 @@ VMM specific functionality
 import struct
 
 from chipsec.logger import logger, pretty_print_hex_buffer
-import chipsec.hal.pcidb
+import chipsec.lib.pcidb
 
 class VMM:
 
@@ -41,8 +41,8 @@ class VMM:
         (self.membuf0_va, self.membuf0_pa) = (0, 0)
         (self.membuf1_va, self.membuf1_pa) = (0, 0)
 
-        chipsec.hal.pcidb.VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
-        chipsec.hal.pcidb.DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
+        chipsec.lib.pcidb.VENDORS[VIRTIO_VID] = VIRTIO_VENDOR_NAME
+        chipsec.lib.pcidb.DEVICES[VIRTIO_VID] = VIRTIO_DEVICES
 
 
     def __del__(self):

@@ -30,7 +30,7 @@ import time
 
 from chipsec.command            import BaseCommand
 from chipsec.file               import read_file
-from chipsec.hal.spi_descriptor import parse_spi_flash_descriptor
+from chipsec.hal.spi import SPI
 from argparse                   import ArgumentParser
 
 
@@ -44,12 +44,13 @@ class SPIDescCommand(BaseCommand):
         return False
 
     def run(self):
+        _spi = SPI(self.cs)
         t = time.time()
 
         self.logger.log( "[CHIPSEC] Parsing SPI Flash Descriptor from file '{}'\n".format(self.fd_file) )
         fd = read_file( self.fd_file )
         if fd:
-            parse_spi_flash_descriptor( self.cs, fd )
+            _spi.parse_spi_flash_descriptor( self.cs, fd )
 
         self.logger.log( "\n[CHIPSEC] (spidesc) time elapsed {:.3f}".format(time.time() -t) )
 

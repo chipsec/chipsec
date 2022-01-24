@@ -52,8 +52,8 @@ from argparse import ArgumentParser
 from chipsec.file import read_file, write_file
 from chipsec.command import BaseCommand
 
-from chipsec.hal.spi import FLASH_DESCRIPTOR, BIOS
-from chipsec.hal.spi_descriptor import get_spi_flash_descriptor, get_spi_regions, parse_spi_flash_descriptor
+from chipsec.hal.spi import FLASH_DESCRIPTOR, BIOS, SPI
+from chipsec.lib.spi_descriptor import get_spi_flash_descriptor, get_spi_regions
 from chipsec.hal.spi_uefi import decode_uefi_region
 from chipsec.hal.uefi import uefi_platform
 
@@ -109,7 +109,7 @@ class DecodeCommand(BaseCommand):
                 if FLASH_DESCRIPTOR == idx:
                     # Decoding Flash Descriptor
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )
-                    parse_spi_flash_descriptor( self.cs, region_data )
+                    self._spi.parse_spi_flash_descriptor( self.cs, region_data )
                 elif BIOS == idx:
                     # Decoding EFI Firmware Volumes
                     self.logger.set_log_file( os.path.join( pth, fname + '.log' ) )
@@ -119,6 +119,7 @@ class DecodeCommand(BaseCommand):
 
 
     def run(self):
+        self._spi = SPI(self.cs)
         t = time()
         if self._rom.lower() == 'types':
             self.decode_types()

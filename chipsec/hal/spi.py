@@ -50,7 +50,7 @@ from chipsec.file import write_file, read_file
 from chipsec.logger import print_buffer, print_buffer_bytes
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
-from chipsec.hal.spi_jedec_ids import JEDEC_ID
+from chipsec.lib.spi_jedec_ids import JEDEC_ID
 from chipsec.exceptions import SpiRuntimeError
 
 SPI_READ_WRITE_MAX_DBC = 64
@@ -853,3 +853,184 @@ class SPI(hal_base.HALBase):
         part = JEDEC_ID.DEVICE.get( jedec_id, 'Unknown')
 
         return (jedec_id, manu, part)
+
+    def parse_spi_flash_descriptor(self, rom):
+        if not (isinstance(rom, str) or isinstance(rom, bytes)):
+            self.logger.error('Invalid fd object type {}'.format(type(rom)))
+            return
+
+        pos = rom.find(SPI_FLASH_DESCRIPTOR_SIGNATURE)
+        if (-1 == pos or pos < 0x10):
+            self.logger.error('Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I', SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]))
+            return None
+
+        fd_off = pos - 0x10
+        self.logger.log('[spi_fd] Valid SPI flash descriptor found at offset 0x{:08X}'.format(fd_off))
+
+        self.logger.log('')
+        self.logger.log('########################################################')
+        self.logger.log('# SPI FLASH DESCRIPTOR')
+        self.logger.log('########################################################')
+        self.logger.log('')
+
+        fd = rom[fd_off: fd_off + SPI_FLASH_DESCRIPTOR_SIZE]
+        fd_sig = struct.unpack_from('=I', fd[0x10:0x14])[0]
+
+        self.logger.log('+ 0x0000 Reserved : 0x{}'.format(hexlify(fd[0x0:0xF]).upper()))
+        self.logger.log('+ 0x0010 Signature: 0x{:08X}'.format(fd_sig))
+
+        #
+        # Flash Descriptor Map Section
+        #
+        flmap0 = struct.unpack_from('=I', fd[0x14:0x18])[0]
+        flmap1 = struct.unpack_from('=I', fd[0x18:0x1C])[0]
+        flmap2 = struct.unpack_from('=I', fd[0x1C:0x20])[0]
+        self.cs.print_register('FLMAP0', flmap0)
+        self.cs.print_register('FLMAP1', flmap1)
+        self.cs.print_register('FLMAP2', flmap2)
+
+        fcba = self.cs.get_register_field('FLMAP0', flmap0, 'FCBA')
+        nc = self.cs.get_register_field('FLMAP0', flmap0, 'NC')
+        frba = self.cs.get_register_field('FLMAP0', flmap0, 'FRBA')
+        fcba = fcba << 4
+        frba = frba << 4
+        nc += 1
+        self.logger.log('')
+        self.logger.log('+ 0x0014 Flash Descriptor Map:')
+        self.logger.log('========================================================')
+        self.logger.log('  Flash Component Base Address: 0x{:08X}'.format(fcba))
+        self.logger.log('  Flash Region Base Address   : 0x{:08X}'.format(frba))
+        self.logger.log('  Number of Flash Components  : {:d}'.format(nc))
+
+        nr = SPI_REGION_NUMBER_IN_FD
+        if self.cs.register_has_field('FLMAP0', 'NR'):
+            nr = self.cs.get_register_field('FLMAP0', flmap0, 'NR')
+            if nr == 0:
+                self.logger.log_warning('only 1 region (FD) is found. Looks like flash descriptor binary is from Skylake platform or later. Try with option --platform')
+            nr += 1
+            self.logger.log('  Number of Regions           : {:d}'.format(nr))
+
+        fmba = self.cs.get_register_field('FLMAP1', flmap1, 'FMBA')
+        nm = self.cs.get_register_field('FLMAP1', flmap1, 'NM')
+        fpsba = self.cs.get_register_field('FLMAP1', flmap1, 'FPSBA')
+        psl = self.cs.get_register_field('FLMAP1', flmap1, 'PSL')
+        fmba = fmba << 4
+        fpsba = fpsba << 4
+        self.logger.log('  Flash Master Base Address   : 0x{:08X}'.format(fmba))
+        self.logger.log('  Number of Masters           : {:d}'.format(nm))
+        self.logger.log('  Flash PCH Strap Base Address: 0x{:08X}'.format(fpsba))
+        self.logger.log('  PCH Strap Length            : 0x{:X}'.format(psl))
+
+        fcpusba = self.cs.get_register_field('FLMAP2', flmap2, 'FCPUSBA')
+        cpusl = self.cs.get_register_field('FLMAP2', flmap2, 'CPUSL')
+        self.logger.log('  Flash CPU Strap Base Address: 0x{:08X}'.format(fcpusba))
+        self.logger.log('  CPU Strap Length            : 0x{:X}'.format(cpusl))
+
+        #
+        # Flash Descriptor Component Section
+        #
+        self.logger.log('')
+        self.logger.log('+ 0x{:04X} Component Section:'.format(fcba))
+        self.logger.log('========================================================')
+
+        flcomp = struct.unpack_from('=I', fd[fcba + 0x0:fcba + 0x4])[0]
+        self.logger.log('+ 0x{:04X} FLCOMP   : 0x{:08X}'.format(fcba, flcomp))
+        flil = struct.unpack_from('=I', fd[fcba + 0x4:fcba + 0x8])[0]
+        self.logger.log('+ 0x{:04X} FLIL     : 0x{:08X}'.format(fcba + 0x4, flil))
+        flpb = struct.unpack_from('=I', fd[fcba + 0x8:fcba + 0xC])[0]
+        self.logger.log('+ 0x{:04X} FLPB     : 0x{:08X}'.format(fcba + 0x8, flpb))
+
+        #
+        # Flash Descriptor Region Section
+        #
+        self.logger.log('')
+        self.logger.log('+ 0x{:04X} Region Section:'.format(frba))
+        self.logger.log('========================================================')
+
+        flregs = [None] * nr
+        for r in range(nr):
+            flreg_off = frba + r * 4
+            flreg = struct.unpack_from('=I', fd[flreg_off:flreg_off + 0x4])[0]
+            if not self.cs.is_register_defined('FLREG{:d}'.format(r)):
+                continue
+            base = self.cs.get_register_field(('FLREG{:d}'.format(r)), flreg, 'RB') << SPI_FLA_SHIFT
+            limit = self.cs.get_register_field(('FLREG{:d}'.format(r)), flreg, 'RL') << SPI_FLA_SHIFT
+            notused = '(not used)' if base > limit or flreg == 0xFFFFFFFF else ''
+            flregs[r] = (flreg, base, limit, notused)
+            self.logger.log('+ 0x{:04X} FLREG{:d}   : 0x{:08X} {}'.format(flreg_off, r, flreg, notused))
+
+        self.logger.log('')
+        self.logger.log('Flash Regions')
+        self.logger.log('--------------------------------------------------------')
+        self.logger.log(' Region                | FLREGx    | Base     | Limit   ')
+        self.logger.log('--------------------------------------------------------')
+        for r in range(nr):
+            if flregs[r]:
+                self.logger.log('{:d} {:20s} | {:08X}  | {:08X} | {:08X} {}'.format(r, SPI_REGION_NAMES[r], flregs[r][0], flregs[r][1], flregs[r][2], flregs[r][3]))
+
+        #
+        # Flash Descriptor Master Section
+        #
+        self.logger.log('')
+        self.logger.log('+ 0x{:04X} Master Section:'.format(fmba))
+        self.logger.log('========================================================')
+
+        flmstrs = [None] * nm
+        for m in range(nm):
+            flmstr_off = fmba + m * 4
+            flmstr = struct.unpack_from('=I', fd[flmstr_off:flmstr_off + 0x4])[0]
+            master_region_ra = self.cs.get_register_field('FLMSTR1', flmstr, 'MRRA')
+            master_region_wa = self.cs.get_register_field('FLMSTR1', flmstr, 'MRWA')
+            flmstrs[m] = (master_region_ra, master_region_wa)
+            self.logger.log('+ 0x{:04X} FLMSTR{:d}   : 0x{:08X}'.format(flmstr_off, m + 1, flmstr))
+
+        self.logger.log('')
+        self.logger.log('Master Read/Write Access to Flash Regions')
+        self.logger.log('--------------------------------------------------------')
+        s = ' Region                 '
+        for m in range(nm):
+            if m in SPI_MASTER_NAMES:
+                s = s + '| ' + ('{:9}'.format(SPI_MASTER_NAMES[m]))
+            else:
+                s = s + '| Master {:-2d}'.format(m)
+        self.logger.log(s)
+        self.logger.log('--------------------------------------------------------')
+        for r in range(nr):
+            s = '{:-2d} {:20s} '.format(r, SPI_REGION_NAMES[r])
+            for m in range(nm):
+                access_s = ''
+                mask = (0x1 << r)
+                if (flmstrs[m][0] & mask):
+                    access_s += 'R'
+                if (flmstrs[m][1] & mask):
+                    access_s += 'W'
+                s = s + '| ' + ('{:9}'.format(access_s))
+            self.logger.log(s)
+
+        #
+        # Flash Descriptor Upper Map Section
+        #
+        self.logger.log('')
+        self.logger.log('+ 0x{:04X} Flash Descriptor Upper Map:'.format(0xEFC))
+        self.logger.log('========================================================')
+
+        flumap1 = struct.unpack_from('=I', fd[0xEFC:0xF00])[0]
+        self.logger.log('+ 0x{:04X} FLUMAP1   : 0x{:08X}'.format(0xEFC, flumap1))
+
+        vtba = ((flumap1 & 0x000000FF) << 4)
+        vtl = (((flumap1 & 0x0000FF00) >> 8) & 0xFF)
+        self.logger.log('  VSCC Table Base Address    = 0x{:08X}'.format(vtba))
+        self.logger.log('  VSCC Table Length          = 0x{:02X}'.format(vtl))
+
+        #
+        # OEM Section
+        #
+        self.logger.log('')
+        self.logger.log('+ 0x{:04X} OEM Section:'.format(0xF00))
+        self.logger.log('========================================================')
+        print_buffer_bytes(fd[0xF00:])
+
+        self.logger.log('')
+        self.logger.log('########################################################')
+        self.logger.log('# END OF SPI FLASH DESCRIPTOR')
+        self.logger.log('########################################################')
