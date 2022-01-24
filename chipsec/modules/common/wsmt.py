@@ -24,7 +24,7 @@ See <https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences
 """
 from chipsec.module_common   import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 from chipsec.hal.acpi        import ACPI
-from chipsec.hal.acpi_tables import WSMT
+from chipsec.lib.acpi_tables import WSMT
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
