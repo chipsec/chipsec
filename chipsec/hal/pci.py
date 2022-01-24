@@ -43,7 +43,6 @@ import itertools
 from chipsec import defines
 from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
-from chipsec.hal.pcidb import VENDORS, DEVICES
 from chipsec.exceptions import OsHelperError
 
 #
@@ -188,33 +187,6 @@ class XROM(object):
         self.base   = base
         self.size   = size
         self.header = None
-
-
-def get_vendor_name_by_vid( vid ):
-    if vid in VENDORS:
-        return VENDORS[vid]
-    return ''
-
-def get_device_name_by_didvid( vid, did ):
-    if vid in DEVICES:
-        if did in DEVICES[vid]:
-            return DEVICES[vid][did]
-    return ''
-
-def print_pci_devices( _devices ):
-    logger().log( "BDF     | VID:DID   | Vendor                       | Device" )
-    logger().log( "-------------------------------------------------------------------------" )
-    for (b, d, f, vid, did) in _devices:
-        vendor_name = get_vendor_name_by_vid( vid )
-        device_name = get_device_name_by_didvid( vid, did )
-        logger().log( "{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:28} | {}".format(b, d, f, vid, did, vendor_name, device_name) )
-
-def print_pci_XROMs( _xroms ):
-    if len(_xroms) == 0: return
-    logger().log( "BDF     | VID:DID   | XROM base | XROM size | en " )
-    logger().log( "-------------------------------------------------" )
-    for xrom in _xroms:
-        logger().log( "{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:08X}  | {:08X}  | {:d}".format(xrom.bus, xrom.dev, xrom.fun, xrom.vid, xrom.did, xrom.base, xrom.size, xrom.en) )
 
 
 class Pci:

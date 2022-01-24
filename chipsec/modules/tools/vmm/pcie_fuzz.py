@@ -31,7 +31,7 @@ import time
 import random
 
 from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.hal.pci import print_pci_devices
+from chipsec.lib.pci import print_pci_devices
 
 
 
