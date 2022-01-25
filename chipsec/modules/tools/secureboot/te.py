@@ -1,27 +1,24 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2019, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2019, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
-Tool to test for 'TE Header' vulnerability in Secure Boot implementations as described in 
+Tool to test for 'TE Header' vulnerability in Secure Boot implementations as described in
 `All Your Boot Are Belong To Us <https://cansecwest.com/slides/2014/AllYourBoot_csw14-intel-final.pdf>`_
 
 Usage:
@@ -59,7 +56,6 @@ import sys
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.module_common import cs_input
 from chipsec.logger import logger
-
 
 DEFAULT_PE_FILE_PATH     = "chipsec/modules/tools/secureboot/Shell.efi"
 DEFAULT_CONFIG_FILE_PATH = 'chipsec/modules/tools/secureboot/te.cfg'
@@ -264,7 +260,7 @@ EFI_IMAGE_DIRECTORY_ENTRY_DEBUG       = 6
 EFI_IMAGE_DIRECTORY_ENTRY_COPYRIGHT   = 7
 EFI_IMAGE_DIRECTORY_ENTRY_GLOBALPTR   = 8
 EFI_IMAGE_DIRECTORY_ENTRY_TLS         = 9
-EFI_IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG =10
+EFI_IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG = 10
 
 EFI_TE_IMAGE_DIRECTORY_ENTRY_BASERELOC = 0
 EFI_TE_IMAGE_DIRECTORY_ENTRY_DEBUG     = 1
@@ -273,24 +269,25 @@ EFI_TE_IMAGE_DIRECTORY_ENTRY_DEBUG     = 1
 def IsValidPEHeader(data):
     size = len(data)
     if size < IMAGE_DOS_HEADER_size:
-        #print "size < IMAGE_DOS_HEADER_size"
+        logger().log_debug("size < IMAGE_DOS_HEADER_size")
         return False
     signature, = struct.unpack("<H", data[:2])
     if (signature != E_MAGIC):
-        #print "signature != E_MAGIC, 0x%04X != 0x%04X" % (E_MAGIC)
+        logger().log_debug("signature != E_MAGIC, 0x%04X != 0x%04X" % (E_MAGIC))
         return False
     e_lfanew, = struct.unpack("<I", data[IMAGE_DOS_HEADER_size - 4:IMAGE_DOS_HEADER_size])
     if (e_lfanew >= size):
-        #print "e_lfanew >= size"
+        logger().log_debug("e_lfanew >= size")
         return False
     if ((size - e_lfanew) < IMAGE_NT_HEADERS_size):
-        #print "(size - e_lfanew) < IMAGE_NT_HEADERS_size"
+        logger().log_debug("(size - e_lfanew) < IMAGE_NT_HEADERS_size")
         return False
-    pe_signature, = struct.unpack("<I", data[e_lfanew:e_lfanew +4])
+    pe_signature, = struct.unpack("<I", data[e_lfanew:e_lfanew + 4])
     if (pe_signature != IMAGE_NT_SIGNATURE):
-        #print "pe_signature != IMAGE_NT_SIGNATURE"
+        logger().log_debug("pe_signature != IMAGE_NT_SIGNATURE")
         return False
     return True
+
 
 def replace_header(data):
     if (not IsValidPEHeader(data)):
@@ -299,16 +296,16 @@ def replace_header(data):
     e_lfanew, = struct.unpack("<I", data[IMAGE_DOS_HEADER_size - 4:IMAGE_DOS_HEADER_size])
     #                          TimeDateStamp, PointerToSymbolTable, NumberOfSymbols, SizeOfOptionalHeader, Characteristics
     Machine, NumberOfSections, u1, u2, u3, SizeOfOptionalHeader, u5 \
-     = struct.unpack(IMAGE_FILE_HEADER, data[e_lfanew +4:e_lfanew +4 +IMAGE_FILE_HEADER_size])
+     = struct.unpack(IMAGE_FILE_HEADER, data[e_lfanew + 4:e_lfanew + 4 + IMAGE_FILE_HEADER_size])
     StrippedSize = e_lfanew + 4 + IMAGE_FILE_HEADER_size + SizeOfOptionalHeader
     if (StrippedSize > size):
-        #print " *** strip more bytes than the file size"
+        logger().log_debug(" *** strip more bytes than the file size")
         return None
     if (StrippedSize & ~0xffff):
-        #print " *** strip more than 64K bytes"
+        logger().log_debug(" *** strip more than 64K bytes")
         return None
-    dof = e_lfanew +4 +IMAGE_FILE_HEADER_size
-    Magic, = struct.unpack("<H", data[dof:dof +2])
+    dof = e_lfanew + 4 + IMAGE_FILE_HEADER_size
+    Magic, = struct.unpack("<H", data[dof:dof + 2])
     if   (Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC):
         Magic, MajorLinkerVersion, MinorLinkerVersion, SizeOfCode, SizeOfInitializedData, \
         SizeOfUninitializedData, AddressOfEntryPoint, BaseOfCode, BaseOfData, ImageBase,  \
@@ -316,7 +313,7 @@ def replace_header(data):
         MajorImageVersion, MinorImageVersion, MajorSubsystemVersion, MinorSubsystemVersion, \
         Win32VersionValue, SizeOfImage, SizeOfHeaders, CheckSum, Subsystem, DllCharacteristics, \
         SizeOfStackReserve, SizeOfStackCommit, SizeOfHeapReserve, SizeOfHeapCommit, LoaderFlags, \
-        NumberOfRvaAndSizes = struct.unpack(IMAGE_OPTIONAL_HEADER, data[dof:dof +IMAGE_OPTIONAL_HEADER_size])
+        NumberOfRvaAndSizes = struct.unpack(IMAGE_OPTIONAL_HEADER, data[dof:dof + IMAGE_OPTIONAL_HEADER_size])
         dof = dof + IMAGE_OPTIONAL_HEADER_size
     elif (Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC):
         Magic, MajorLinkerVersion, MinorLinkerVersion, SizeOfCode, SizeOfInitializedData, \
@@ -325,30 +322,31 @@ def replace_header(data):
         MinorImageVersion, MajorSubsystemVersion, MinorSubsystemVersion, Win32VersionValue, \
         SizeOfImage, SizeOfHeaders, CheckSum, Subsystem, DllCharacteristics, SizeOfStackReserve, \
         SizeOfStackCommit, SizeOfHeapReserve, SizeOfHeapCommit, LoaderFlags, NumberOfRvaAndSizes \
-         = struct.unpack(IMAGE_OPTIONAL_HEADER64, data[dof:dof +IMAGE_OPTIONAL_HEADER64_size])
+         = struct.unpack(IMAGE_OPTIONAL_HEADER64, data[dof:dof + IMAGE_OPTIONAL_HEADER64_size])
         dof = dof + IMAGE_OPTIONAL_HEADER64_size
     else:
-        #print " *** Unsupported magic: {:X}".format(Magic)
+        logger().log_debug(" *** Unsupported magic: {:X}".format(Magic))
         return None
-    if (NumberOfSections &~0xFF):
-        #print " *** NumberOfSections cannot be packed: {:X}".format(NumberOfSections)
+    if (NumberOfSections & ~0xFF):
+        logger().log_debug(" *** NumberOfSections cannot be packed: {:X}".format(NumberOfSections))
         return None
-    if (Subsystem &~0xFF):
-        #print " *** Subsystem cannot be packed: {:X}".format(NumberOfSections)
+    if (Subsystem & ~0xFF):
+        logger().log_debug(" *** Subsystem cannot be packed: {:X}".format(NumberOfSections))
         return None
 
-    basereloc_off = dof + EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC *IMAGE_DATA_DIRECTORY_size
-    debug_off = dof + EFI_IMAGE_DIRECTORY_ENTRY_DEBUG *IMAGE_DATA_DIRECTORY_size
+    basereloc_off = dof + EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC * IMAGE_DATA_DIRECTORY_size
+    debug_off = dof + EFI_IMAGE_DIRECTORY_ENTRY_DEBUG * IMAGE_DATA_DIRECTORY_size
     BASERELOC = "\x00\x00\x00\x00\x00\x00\x00\x00"
-    DEBUG     = "\x00\x00\x00\x00\x00\x00\x00\x00"
+    DEBUG = "\x00\x00\x00\x00\x00\x00\x00\x00"
     if (NumberOfRvaAndSizes > EFI_IMAGE_DIRECTORY_ENTRY_BASERELOC):
-        BASERELOC = data[basereloc_off:basereloc_off +IMAGE_DATA_DIRECTORY_size]
+        BASERELOC = data[basereloc_off:basereloc_off + IMAGE_DATA_DIRECTORY_size]
     if (NumberOfRvaAndSizes > EFI_IMAGE_DIRECTORY_ENTRY_DEBUG):
-        DEBUG = data[debug_off:debug_off +IMAGE_DATA_DIRECTORY_size]
+        DEBUG = data[debug_off:debug_off + IMAGE_DATA_DIRECTORY_size]
     te_header = struct.pack(EFI_TE_IMAGE_HEADER,\
       EFI_TE_IMAGE_HEADER_SIGNATURE, Machine, NumberOfSections, Subsystem, StrippedSize, AddressOfEntryPoint, BaseOfCode, ImageBase)
     te_data = te_header + BASERELOC + DEBUG + data[StrippedSize:]
     return te_data
+
 
 def produce_te(fname, outfname):
     data = ''
@@ -361,89 +359,106 @@ def produce_te(fname, outfname):
         fte.write(te_data)
     return 1
 
+
 def replace_efi_binary(orig_efi_binary, new_efi_binary):
-    logger().log( "[*] replacing EFI binary '{}'..".format(orig_efi_binary) )
+    logger().log("[*] replacing EFI binary '{}'..".format(orig_efi_binary))
     te_binary = new_efi_binary + '.te'
-    if not os.path.exists(te_binary): produce_te(new_efi_binary, te_binary)
+    if not os.path.exists(te_binary):
+        produce_te(new_efi_binary, te_binary)
     # back up original binary
     backup = orig_efi_binary + '.bak'
-    if not os.path.exists(backup): os.rename(orig_efi_binary, backup)
+    if not os.path.exists(backup):
+        os.rename(orig_efi_binary, backup)
     try:
         shutil.copy(te_binary, orig_efi_binary)
     except OSError as err:
-        logger().error( 'Cannot replace binary ({})'.format(err) )
+        logger().error('Cannot replace binary ({})'.format(err))
         return False
     return True
+
 
 def umount(drive):
     import subprocess
     if os.path.exists(drive):
-        res = subprocess.call( ["mountvol.exe", drive, "/D"] )
-        if res != 0: logger().log_warning( "Cannot unmount EFI System partition: {:d}".format(res) )
+        res = subprocess.call(["mountvol.exe", drive, "/D"])
+        if res != 0:
+            logger().log_warning("Cannot unmount EFI System partition: {:d}".format(res))
+
 
 def get_efi_mount():
     import subprocess
     for l in range(ord('z'), ord('a'), -1):
         if not os.path.exists('%c:\\' % l):
-            res = subprocess.call( ["mountvol.exe", "%c:\\" % l, "/S"] )
+            res = subprocess.call(["mountvol.exe", "%c:\\" % l, "/S"])
             if res != 0:
-                logger().error( "Cannot mount EFI System partition (status = {:d})".format(res) )
+                logger().error("Cannot mount EFI System partition (status = {:d})".format(res))
                 return None
             return '%c:\\' % l
-    logger().error( "Cannot mount EFI System partition. No drive letters to use." )
+    logger().error("Cannot mount EFI System partition. No drive letters to use.")
     return None
 
-def get_bootloader_paths( cfg_file ):
+
+def get_bootloader_paths(cfg_file):
     bootloader_paths = []
-    fcfg = open( cfg_file, 'r' )
-    logger().log( "[*] reading paths from '{}'..".format(cfg_file) )
+    fcfg = open(cfg_file, 'r')
+    logger().log("[*] reading paths from '{}'..".format(cfg_file))
     for line in fcfg:
         bl_path = line.rstrip()
         if bl_path is not None:
-            logger().log( "    adding path '{}'..".format(bl_path) )
-            bootloader_paths.append( bl_path )
+            logger().log("    adding path '{}'..".format(bl_path))
+            bootloader_paths.append(bl_path)
     return bootloader_paths
 
-def replace_bootloader( bootloader_paths, new_bootloader_file, do_mount=True ):
-    logger().log( "[*] Replacing bootloaders on EFI System Partition (ESP).." )
+
+def replace_bootloader(bootloader_paths, new_bootloader_file, do_mount=True):
+    logger().log("[*] Replacing bootloaders on EFI System Partition (ESP)..")
     dsk = get_efi_mount() if do_mount else ''
-    if dsk is None: return False
+    if dsk is None:
+        return False
     try:
         for pth in bootloader_paths:
             bootloader_path = os.path.join(dsk, pth)
             if os.path.exists(bootloader_path):
-                replace_efi_binary( bootloader_path, new_bootloader_file )
+                replace_efi_binary(bootloader_path, new_bootloader_file)
             else:
-                logger().log_warning( "Bootloader {} does not exist on ESP".format(bootloader_path) )
+                logger().log_warning("Bootloader {} does not exist on ESP".format(bootloader_path))
     finally:
-        if do_mount: umount( dsk )
-    logger().log( "[*] You will need to reboot the system to see the changes" )
+        if do_mount:
+            umount(dsk)
+    logger().log("[*] You will need to reboot the system to see the changes")
     return True
 
-def restore_efi_binary( orig_efi_binary ):
-    logger().log( "[*] Restoring {}..".format(orig_efi_binary) )
+
+def restore_efi_binary(orig_efi_binary):
+    logger().log("[*] Restoring {}..".format(orig_efi_binary))
     backup = orig_efi_binary + ".bak"
     if not os.path.exists(backup):
-        logger().error( "Cannot restore original binary: '{}' not found".format(backup) )
+        logger().error("Cannot restore original binary: '{}' not found".format(backup))
         return False
     try:
-        if os.path.exists(orig_efi_binary): os.remove(orig_efi_binary)
+        if os.path.exists(orig_efi_binary):
+            os.remove(orig_efi_binary)
         os.rename(backup, orig_efi_binary)
     except OSError as err:
-        logger().error( 'Cannot restore original binary ({})'.format(err) )
+        logger().error('Cannot restore original binary ({})'.format(err))
         return False
     return True
 
-def restore_bootloader( bootloader_paths, do_mount=True ):
-    logger().log( "[*] Restoring bootloaders on EFI System Partition (ESP).." )
+
+def restore_bootloader(bootloader_paths, do_mount=True):
+    logger().log("[*] Restoring bootloaders on EFI System Partition (ESP)..")
     dsk = get_efi_mount() if do_mount else ''
-    if dsk is None: return False
+    if dsk is None:
+        return False
     for pth in bootloader_paths:
         bootloader_path = os.path.join(dsk, pth)
-        if os.path.exists(bootloader_path): restore_efi_binary( bootloader_path )
-    if do_mount: umount( dsk )
-    logger().log( "[*] You will need to reboot the system to see the changes" )
+        if os.path.exists(bootloader_path):
+            restore_efi_binary(bootloader_path)
+    if do_mount:
+        umount(dsk)
+    logger().log("[*] You will need to reboot the system to see the changes")
     return True
+
 
 def confirm():
     logger().log_warning("***************************************************************************************")
@@ -465,19 +480,22 @@ def confirm():
     logger().log_warning("* - On Windows, use recovery mode which should automatically restore correct executables")
     logger().log_warning("*")
     logger().log_warning("***************************************************************************************")
-    s = cs_input( "Type 'yes' to continue running the tool > " )
-    if s != 'yes': sys.exit( 0 )
+    s = cs_input("Type 'yes' to continue running the tool > ")
+    if s != 'yes':
+        sys.exit(0)
+
 
 def usage():
-    logger().log( 'Usage:\n' +       \
-                  'chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]\n' + \
-                  '    <mode>\n' + \
-                  '      generate_te        - (default) convert PE EFI binary <efi_file> to TE binary\n' + \
-                  '      replace_bootloader - replace bootloader files listed in <cfg_file> on ESP with modified <efi_file>\n' + \
-                  '      restore_bootloader - restore original bootloader files from .bak files\n' + \
-                  '    <cfg_file>           - path to config file listing paths to bootloader files to replace\n' + \
-                  '    <efi_file>           - path to EFI binary to convert to TE binary\n' + \
-                  '                           If no file path is provided, the tool will look for Shell.efi\n' )
+    logger().log('Usage:\n' +
+                 'chipsec_main.py -m tools.secureboot.te [-a <mode>,<cfg_file>,<efi_file>]\n' +
+                 '    <mode>\n' +
+                 '      generate_te        - (default) convert PE EFI binary <efi_file> to TE binary\n' +
+                 '      replace_bootloader - replace bootloader files listed in <cfg_file> on ESP with modified <efi_file>\n' +
+                 '      restore_bootloader - restore original bootloader files from .bak files\n' +
+                 '    <cfg_file>           - path to config file listing paths to bootloader files to replace\n' +
+                 '    <efi_file>           - path to EFI binary to convert to TE binary\n' +
+                 '                           If no file path is provided, the tool will look for Shell.efi\n')
+
 
 class te(BaseModule):
 
@@ -485,50 +503,53 @@ class te(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        #win8 = self.cs.helper.is_win8_or_greater()
         efi_mode = self.cs.helper.EFI_supported()
-        if not efi_mode: self.logger.log_skipped( "OS did not boot in UEFI mode" )
+        if not efi_mode:
+            self.logger.log_skipped("OS did not boot in UEFI mode")
         return efi_mode
 
-    def run( self, module_argv ):
-        self.logger.start_test( "'TE Header' Secure Boot Bypass Test" )
+    def run(self, module_argv):
+        self.logger.start_test("'TE Header' Secure Boot Bypass Test")
         usage()
 
-        sts       = False
-        do_mount  = True
+        sts = False
+        do_mount = True
         file_path = DEFAULT_PE_FILE_PATH
-        te_cfg    = DEFAULT_CONFIG_FILE_PATH
-        mode      = module_argv[0] if len(module_argv) > 0 else 'generate_te'
+        te_cfg = DEFAULT_CONFIG_FILE_PATH
+        mode = module_argv[0] if len(module_argv) > 0 else 'generate_te'
 
         if 'generate_te' == mode:
-            if len(module_argv) > 1: file_path = module_argv[1]
-            if not os.path.exists( file_path ):
-                self.logger.error( "Cannot find file '{}'".format(file_path) )
+            if len(module_argv) > 1:
+                file_path = module_argv[1]
+            if not os.path.exists(file_path):
+                self.logger.error("Cannot find file '{}'".format(file_path))
                 return ModuleResult.ERROR
 
-            sts = replace_efi_binary( file_path, file_path )
+            sts = replace_efi_binary(file_path, file_path)
 
         elif 'restore_bootloader' == mode or 'replace_bootloader' == mode:
             confirm()
 
-            if len(module_argv) > 1: te_cfg    = module_argv[1]
-            if not os.path.exists( te_cfg ):
-                self.logger.error( "Cannot find file '{}'".format(te_cfg) )
+            if len(module_argv) > 1:
+                te_cfg = module_argv[1]
+            if not os.path.exists(te_cfg):
+                self.logger.error("Cannot find file '{}'".format(te_cfg))
                 return ModuleResult.ERROR
 
-            bootloader_paths = get_bootloader_paths( te_cfg )
+            bootloader_paths = get_bootloader_paths(te_cfg)
             if 0 == len(bootloader_paths):
-                self.logger.log( "[*] no bootloaders to replace. Exit.." )
+                self.logger.log("[*] no bootloaders to replace. Exit..")
                 return ModuleResult.SKIPPED
 
-            do_mount = self.cs.helper.is_windows() # @TODO
-            if   'restore_bootloader' == mode:
-                sts = restore_bootloader( bootloader_paths, do_mount )
+            do_mount = self.cs.helper.is_windows()  # @TODO
+            if 'restore_bootloader' == mode:
+                sts = restore_bootloader(bootloader_paths, do_mount)
             elif 'replace_bootloader' == mode:
-                if len(module_argv) > 2: file_path = module_argv[2]
-                sts = replace_bootloader( bootloader_paths, file_path, do_mount )
+                if len(module_argv) > 2:
+                    file_path = module_argv[2]
+                sts = replace_bootloader(bootloader_paths, file_path, do_mount)
 
         else:
-            self.logger.error( "Invalid mode: '{}'".format(mode) )
+            self.logger.error("Invalid mode: '{}'".format(mode))
 
         return (ModuleResult.PASSED if sts else ModuleResult.ERROR)

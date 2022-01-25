@@ -260,14 +260,14 @@ class spectre_v2(BaseModule):
             self.logger.log_failed( "CPU mitigation (IBRS) is missing" )
         elif not ibrs_enh_supported:
             res = ModuleResult.WARNING
-            self.logger.log_log_warning( "CPU supports mitigation (IBRS) but doesn't support enhanced IBRS" )
+            self.logger.log_warning( "CPU supports mitigation (IBRS) but doesn't support enhanced IBRS" )
         elif ibrs_enh_supported and (not ibrs_enabled):
             res = ModuleResult.WARNING
-            self.logger.log_log_warning( "CPU supports mitigation (enhanced IBRS) but OS is not using it" )
+            self.logger.log_warning( "CPU supports mitigation (enhanced IBRS) but OS is not using it" )
         else:
             if (not stibp_supported):
                 res = ModuleResult.WARNING
-                self.logger.log_log_warning( "CPU supports mitigation (enhanced IBRS) but STIBP is not supported" )
+                self.logger.log_warning( "CPU supports mitigation (enhanced IBRS) but STIBP is not supported" )
             else:
                 res = ModuleResult.PASSED
                 self.logger.log_passed( "CPU and OS support hardware mitigations" )
@@ -280,9 +280,9 @@ class spectre_v2(BaseModule):
             else:
                 self.logger.log_bad( "Retpoline is NOT enabled by the OS" )
         except UnimplementedAPIError as e:
-            self.logger.log_log_warning(str(e))
+            self.logger.log_warning(str(e))
         except NotImplementedError:
-            self.logger.log_log_warning("Retpoline check not implemented in current environment")
+            self.logger.log_warning("Retpoline check not implemented in current environment")
 
         return res
 

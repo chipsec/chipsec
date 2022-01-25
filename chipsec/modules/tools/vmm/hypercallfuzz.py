@@ -1,29 +1,27 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2020, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2020, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Pretty simple VMM hypercall fuzzer
 
 Usage:
-  ``chipsec_main.py -i -m tools.vmm.hypercallfuzz \``
+  ``chipsec_main.py -i -m tools.vmm.hypercallfuzz \\``
   ``[-a <mode>,<vector_reg>,<maxval>,<iterations>] -l log.txt``
 
     - ``mode``			hypercall fuzzing mode
@@ -39,18 +37,18 @@ import time
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.hal.vmm import VMM
 
-DEFAULT_VECTOR_MAXVAL     = 0xFF
+DEFAULT_VECTOR_MAXVAL = 0xFF
 
 DEFAULT_MAXVAL_EXHAUSTIVE = 0xFF
-DEFAULT_MAXVAL_RANDOM     = 0xFFFFFFFF
+DEFAULT_MAXVAL_RANDOM = 0xFFFFFFFF
 
 DEFAULT_RANDOM_ITERATIONS = 0x7FFFFFFF
 
 # Flush log file before each port
 _FLUSH_LOG_EACH_ITER = False
-_LOG_ALL_GPRS        = True
+_LOG_ALL_GPRS = True
 
-GPRS = { 'rax': 0, 'rbx': 0, 'rcx': 0, 'rdx': 0, 'rdi': 0, 'rsi': 0, 'r8': 0, 'r9': 0, 'r10': 0, 'r11': 0 }
+GPRS = {'rax': 0, 'rbx': 0, 'rcx': 0, 'rdx': 0, 'rdi': 0, 'rsi': 0, 'r8': 0, 'r9': 0, 'r10': 0, 'r11': 0}
 
 class hypercallfuzz(BaseModule):
 

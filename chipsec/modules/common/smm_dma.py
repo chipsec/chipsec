@@ -1,22 +1,22 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
+
 
 """
 SMM TSEG Range Configuration Checks
@@ -62,6 +62,7 @@ _MODULE_NAME = 'smm_dma'
 
 TAGS = [MTAG_SMM, MTAG_HWCONFIG]
 
+
 class smm_dma(BaseModule):
 
     def __init__(self):
@@ -76,7 +77,8 @@ class smm_dma(BaseModule):
         if self.cs.is_server():
             self.logger.log_important('Xeon (server) platform detected.  Skipping module.')
             return False
-        else: return True
+        else:
+            return True
 
     def check_tseg_locks(self):
         tseg_base_lock = self.cs.get_control('TSEGBaseLock')
@@ -94,8 +96,8 @@ class smm_dma(BaseModule):
 
     def check_tseg_config(self):
         res = ModuleResult.FAILED
-        (tseg_base,  tseg_limit,  tseg_size ) = self.cs.cpu.get_TSEG()
-        self.logger.log("[*] TSEG      : 0x{:016X} - 0x{:016X} (size = 0x{:08X})".format(tseg_base,  tseg_limit,  tseg_size ))
+        (tseg_base, tseg_limit, tseg_size) = self.cs.cpu.get_TSEG()
+        self.logger.log("[*] TSEG      : 0x{:016X} - 0x{:016X} (size = 0x{:08X})".format(tseg_base, tseg_limit, tseg_size))
         if (self.cs.cpu.check_SMRR_supported()):
             (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
             self.logger.log("[*] SMRR range: 0x{:016X} - 0x{:016X} (size = 0x{:08X})\n".format(smram_base, smram_limit, smram_size))
@@ -123,11 +125,10 @@ class smm_dma(BaseModule):
         return res
 
     # --------------------------------------------------------------------------
-    # run( module_argv )
+    # run(module_argv)
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("SMM TSEG Range Configuration Check")
         self.res = self.check_tseg_config()
         return self.res
-

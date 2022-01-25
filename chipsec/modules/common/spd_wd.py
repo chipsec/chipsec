@@ -1,16 +1,16 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2019, Eclypsium, Inc.
 # Copyright (c) 2019-2021, Intel Corporation
-#
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -74,7 +74,7 @@ class spd_wd(BaseModule):
     def check_spd_wd(self):
         try:
             _smbus = SMBus(self.cs)
-            _spd   = SPD(_smbus)
+            _spd = SPD(_smbus)
         except BaseException as msg:
             self.logger.log_error(msg)
             self.res = ModuleResult.ERROR
@@ -83,7 +83,7 @@ class spd_wd(BaseModule):
         spd_wd_reg = self.cs.read_register('SMBUS_HCFG')
         spd_wd = self.cs.get_register_field('SMBUS_HCFG', spd_wd_reg, 'SPD_WD')
 
-        self.cs.print_register('SMBUS_HCFG',spd_wd_reg)
+        self.cs.print_register('SMBUS_HCFG', spd_wd_reg)
 
         if 1 == spd_wd:
             self.logger.log_passed("SPD Write Disable is set")
@@ -98,7 +98,7 @@ class spd_wd(BaseModule):
 
         return self.res
 
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("SPD Write Disable")
         self.logger.log('')
 
