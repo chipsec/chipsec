@@ -1,16 +1,16 @@
 # !/usr/bin/python
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2021, Intel Corporation
-#
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -29,11 +29,11 @@ Examples:
 >>> chipsec_util cmos writeh 0x0 0xCC
 """
 
-from time   import time
-from argparse   import ArgumentParser
+from time import time
+from argparse import ArgumentParser
 
-from chipsec.command    import BaseCommand
-from chipsec.hal.cmos   import CMOS
+from chipsec.command import BaseCommand
+from chipsec.hal.cmos import CMOS
 from chipsec.exceptions import CmosRuntimeError
 
 
@@ -66,7 +66,7 @@ class CMOSCommand(BaseCommand):
         parser_writeh = subparsers.add_parser('writeh', parents=[parser_offset, parser_val])
         parser_writeh.set_defaults(func=self.cmos_writeh)
 
-        parser.parse_args(self.argv[2:], namespace=CMOSCommand)
+        parser.parse_args(self.argv, namespace=CMOSCommand)
 
         return True
 
@@ -79,7 +79,7 @@ class CMOSCommand(BaseCommand):
         self.logger.log("[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (self.offset, val))
 
     def cmos_writel(self):
-        val = self._cmos.write_cmos_low(self.offset, self.value)
+        self._cmos.write_cmos_low(self.offset, self.value)
         self.logger.log("[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (self.offset, self.value))
 
     def cmos_readh(self):

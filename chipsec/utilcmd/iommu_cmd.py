@@ -1,23 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Command-line utility providing access to IOMMU engines
@@ -37,9 +35,9 @@ Examples:
 >>> chipsec_util iommu pt
 """
 
+from argparse import ArgumentParser
 from chipsec.command import BaseCommand
-from chipsec.hal     import acpi, iommu
-from argparse        import ArgumentParser
+from chipsec.hal import acpi, iommu
 from chipsec.exceptions import IOMMUError, AcpiRuntimeError
 import time
 
@@ -74,49 +72,53 @@ class IOMMUCommand(BaseCommand):
         parser_pt.add_argument('engine', type=str, default='', nargs='?', help='IOMMU Engine')
         parser_pt.set_defaults(func=self.iommu_pt)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def iommu_list(self):
-        self.logger.log( "[CHIPSEC] Enumerating supported IOMMU engines.." )
-        self.logger.log( iommu.IOMMU_ENGINES.keys() )
+        self.logger.log("[CHIPSEC] Enumerating supported IOMMU engines..")
+        self.logger.log(iommu.IOMMU_ENGINES.keys())
 
     def iommu_engine(self, cmd):
         try:
             _iommu = iommu.IOMMU(self.cs)
         except IOMMUError as msg:
-            print (msg)
+            self.logger.error(msg)
             return
 
         if self.engine:
             if self.engine in iommu.IOMMU_ENGINES.keys():
-                _iommu_engines = [ self.engine ]
+                _iommu_engines = [self.engine]
             else:
-                self.logger.error( "IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.engine) )
+                self.logger.error("IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.engine))
                 return
         else:
             _iommu_engines = iommu.IOMMU_ENGINES.keys()
 
         if 'config' == cmd:
             try:
-                _acpi = acpi.ACPI( self.cs )
+                _acpi = acpi.ACPI(self.cs)
             except AcpiRuntimeError as msg:
-                print (msg)
+                self.logger.error(msg)
                 return
 
             if _acpi.is_ACPI_table_present(acpi.ACPI_TABLE_SIG_DMAR):
-                self.logger.log( "[CHIPSEC] Dumping contents of DMAR ACPI table..\n" )
+                self.logger.log("[CHIPSEC] Dumping contents of DMAR ACPI table..\n")
                 _acpi.dump_ACPI_table(acpi.ACPI_TABLE_SIG_DMAR)
             else:
-                self.logger.log( "[CHIPSEC] Couldn't find DMAR ACPI table\n" )
+                self.logger.log("[CHIPSEC] Couldn't find DMAR ACPI table\n")
 
         for e in _iommu_engines:
-            if   (cmd == 'config' ): _iommu.dump_IOMMU_configuration( e )
-            elif (cmd == 'pt'     ): _iommu.dump_IOMMU_page_tables( e )
-            elif (cmd == 'status' ): _iommu.dump_IOMMU_status( e )
-            elif (cmd == 'enable' ): _iommu.set_IOMMU_Translation( e, 1 )
-            elif (cmd == 'disable'): _iommu.set_IOMMU_Translation( e, 0 )
-
+            if (cmd == 'config'):
+                _iommu.dump_IOMMU_configuration(e)
+            elif (cmd == 'pt'):
+                _iommu.dump_IOMMU_page_tables(e)
+            elif (cmd == 'status'):
+                _iommu.dump_IOMMU_status(e)
+            elif (cmd == 'enable'):
+                _iommu.set_IOMMU_Translation(e, 1)
+            elif (cmd == 'disable'):
+                _iommu.set_IOMMU_Translation(e, 0)
 
     def iommu_config(self):
         self.iommu_engine('config')
@@ -133,11 +135,10 @@ class IOMMUCommand(BaseCommand):
     def iommu_pt(self):
         self.iommu_engine('pt')
 
-
     def run(self):
         t = time.time()
         self.func()
-        self.logger.log( "[CHIPSEC] (iommu) time elapsed {:.3f}".format(time.time() -t) )
+        self.logger.log("[CHIPSEC] (iommu) time elapsed {:.3f}".format(time.time() - t))
 
 
-commands = { 'iommu': IOMMUCommand }
+commands = {'iommu': IOMMUCommand}

@@ -1,22 +1,22 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
+
 
 """
 >>> chipsec_util mmio list
@@ -39,9 +39,9 @@ Examples:
 """
 
 from chipsec.command import BaseCommand
-from chipsec.hal     import mmio
-from argparse        import ArgumentParser
-from time            import time
+from chipsec.hal import mmio
+from argparse import ArgumentParser
+from time import time
 
 
 # ###################################################################
@@ -106,7 +106,7 @@ class MMIOCommand(BaseCommand):
         parser_write_abs.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
         parser_write_abs.set_defaults(func=self.write_abs)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         if hasattr(self, 'func'):
             return True
         return False
