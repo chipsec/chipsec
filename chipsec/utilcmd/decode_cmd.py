@@ -54,7 +54,7 @@ from chipsec.command import BaseCommand
 
 from chipsec.hal.spi import FLASH_DESCRIPTOR, BIOS, SPI
 from chipsec.lib.spi_descriptor import get_spi_flash_descriptor, get_spi_regions
-from chipsec.hal.spi_uefi import decode_uefi_region
+from chipsec.lib.spi_uefi import decode_uefi_region
 from chipsec.hal.uefi import uefi_platform
 
 class DecodeCommand(BaseCommand):

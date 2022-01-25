@@ -1,23 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2022, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 # -------------------------------------------------------------------------------
 #
@@ -70,7 +68,7 @@ type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pi
 WRITE_ALL_HASHES = False
 
 
-def decompress_section_data( section_dir_path, sec_fs_name, compressed_data, compression_type):
+def decompress_section_data(section_dir_path, sec_fs_name, compressed_data, compression_type):
     uefi_uc = UEFICompression()
     uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
     logger().log_hal("[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n".format(compression_type, uncompressed_name))
@@ -81,7 +79,7 @@ def decompress_section_data( section_dir_path, sec_fs_name, compressed_data, com
 def compress_image(image, compression_type):
     uefi_uc = UEFICompression()
     logger().log_hal("[uefi] compressing EFI binary (type = 0x{:X})\n".format(compression_type))
-    compressed_image = uefi_uc.compress_EFI_binary(image,  compression_type)
+    compressed_image = uefi_uc.compress_EFI_binary(image, compression_type)
     return compressed_image
 
 
@@ -96,23 +94,23 @@ def modify_uefi_region(data, command, guid, uefi_file=''):
                 next_offset = fwbin.Size + fwbin.Offset
                 if (fwbin.Guid == guid):
                     uefi_file_size = (len(uefi_file) + 7) & 0xFFFFFFF8
-                    CurFileOffset  = fv.Offset + fwbin.Offset  + FvLengthChange
-                    NxtFileOffset  = fv.Offset + next_offset + FvLengthChange
+                    CurFileOffset = fv.Offset + fwbin.Offset + FvLengthChange
+                    NxtFileOffset = fv.Offset + next_offset + FvLengthChange
                     if command == CMD_UEFI_FILE_REMOVE:
                         FvLengthChange -= (next_offset - fwbin.Offset)
-                        logger().log( "Removing UEFI file with GUID={} at offset={:08X}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, FvLengthChange))
+                        logger().log("Removing UEFI file with GUID={} at offset={:08X}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, FvLengthChange))
                         data = data[:CurFileOffset] + data[NxtFileOffset:]
                     elif command == CMD_UEFI_FILE_INSERT_BEFORE:
                         FvLengthChange += uefi_file_size
-                        logger().log( "Inserting UEFI file before file with GUID={} at offset={:08X}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, FvLengthChange))
+                        logger().log("Inserting UEFI file before file with GUID={} at offset={:08X}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, FvLengthChange))
                         data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[CurFileOffset:]
                     elif command == CMD_UEFI_FILE_INSERT_AFTER:
                         FvLengthChange += uefi_file_size
-                        logger().log( "Inserting UEFI file after file with GUID={} at offset={:08X}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, FvLengthChange))
+                        logger().log("Inserting UEFI file after file with GUID={} at offset={:08X}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, FvLengthChange))
                         data = data[:NxtFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[NxtFileOffset:]
                     elif command == CMD_UEFI_FILE_REPLACE:
                         FvLengthChange += uefi_file_size - (next_offset - fwbin.Offset)
-                        logger().log( "Replacing UEFI file with GUID={} at offset={:08X}, new size: {:d}, old size: {:d}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, len(uefi_file), fwbin.Size, FvLengthChange))
+                        logger().log("Replacing UEFI file with GUID={} at offset={:08X}, new size: {:d}, old size: {:d}, size change: {:d} bytes".format(fwbin.Guid, CurFileOffset, len(uefi_file), fwbin.Size, FvLengthChange))
                         data = data[:CurFileOffset] + uefi_file.ljust(uefi_file_size, '\xFF') + data[NxtFileOffset:]
                     else:
                         raise Exception('Invalid command')
@@ -129,8 +127,8 @@ def modify_uefi_region(data, command, guid, uefi_file=''):
 
             FvLengthChange = 0
 
-            #if FvLengthChange != 0:
-            #    logger().log( "Rebuilding Firmware Volume with GUID={} at offset={:08X}".format(FsGuid, FvOffset) )
+            # if FvLengthChange != 0:
+            #    logger().log("Rebuilding Firmware Volume with GUID={} at offset={:08X}".format(FsGuid, FvOffset))
             #    FvHeader = data[FvOffset: FvOffset + FvHeaderLength]
             #    FvHeader = FvHeader[:0x20] + struct.pack('<Q', FvLength) + FvHeader[0x28:]
             #    NewChecksum = FvChecksum16(FvHeader[:0x32] + '\x00\x00' + FvHeader[0x34:])
@@ -219,7 +217,7 @@ def build_efi_modules_tree(fwtype, data, Size, offset, polarity):
                 sec.children = build_efi_model(data, fwtype)
 
         sections.append(sec)
-        sec = NextFwFileSection( data, Size, sec.Size + sec.Offset, polarity)
+        sec = NextFwFileSection(data, Size, sec.Size + sec.Offset, polarity)
         secn += 1
     return sections
 
@@ -230,7 +228,7 @@ def build_efi_modules_tree(fwtype, data, Size, offset, polarity):
 # fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 
 
-def build_efi_file_tree (fv_img, fwtype):
+def build_efi_file_tree(fv_img, fwtype):
     fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
     polarity = Attributes & EFI_FVB2_ERASE_POLARITY
     fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
@@ -267,7 +265,7 @@ def build_efi_tree(data, fwtype):
 
         # Detect File System firmware volumes
         if fv.Guid in EFI_PLATFORM_FS_GUIDS or fv.Guid in EFI_FS_GUIDS:
-            fwbin = build_efi_file_tree (fv.Image, fwtype)
+            fwbin = build_efi_file_tree(fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
 
@@ -301,7 +299,8 @@ def update_efi_tree(modules, parent_guid=None):
             if m.Type == EFI_SECTION_USER_INTERFACE:
                 # if UI section (leaf), update ui_string in sibling sections including in PE/TE,
                 # and propagate it up untill and including parent EFI file
-                for m1 in modules: m1.ui_string = m.ui_string
+                for m1 in modules:
+                    m1.ui_string = m.ui_string
                 return m.ui_string
         # update parent file's GUID in all children nodes
         if len(m.children) > 0:
@@ -354,9 +353,12 @@ def dump_efi_module(mod, parent, modn, path):
     mod_path = os.path.join(path, fname)
     write_file(mod_path, mod.Image[mod.HeaderSize:] if type(mod) == EFI_SECTION else mod.Image)
     if type(mod) == EFI_SECTION or WRITE_ALL_HASHES:
-        if mod.MD5: write_file(("{}.md5"   .format(mod_path)), mod.MD5)
-        if mod.SHA1: write_file(("{}.sha1"  .format(mod_path)), mod.SHA1)
-        if mod.SHA256: write_file(("{}.sha256".format(mod_path)), mod.SHA256)
+        if mod.MD5:
+            write_file(("{}.md5"   .format(mod_path)), mod.MD5)
+        if mod.SHA1:
+            write_file(("{}.sha1"  .format(mod_path)), mod.SHA1)
+        if mod.SHA256:
+            write_file(("{}.sha256".format(mod_path)), mod.SHA256)
     return mod_path
 
 
@@ -371,21 +373,22 @@ def search_efi_tree(modules, search_callback, match_module_types=EFIModuleType.S
     matching_modules = []
     for m in modules:
         if search_callback is not None:
-            if ((match_module_types & EFIModuleType.SECTION     == EFIModuleType.SECTION)     and type(m) == EFI_SECTION) or \
+            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(m) == EFI_SECTION) or \
                ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(m) == EFI_SECTION and m.Type in EFI_SECTIONS_EXE)) or \
-               ((match_module_types & EFIModuleType.FV          == EFIModuleType.FV)          and type(m) == EFI_FV) or \
-               ((match_module_types & EFIModuleType.FILE        == EFIModuleType.FILE)        and type(m) == EFI_FILE):
+               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(m) == EFI_FV) or \
+               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(m) == EFI_FILE):
                 if search_callback(m):
                     matching_modules.append(m)
-                    if not findall: return True
+                    if not findall:
+                        return True
 
         # recurse search if current module node has children nodes
         if len(m.children) > 0:
             matches = search_efi_tree(m.children, search_callback, match_module_types, findall)
             if len(matches) > 0:
                 matching_modules.extend(matches)
-                if not findall: return True
-
+                if not findall:
+                    return True
     return matching_modules
 
 
@@ -396,14 +399,17 @@ def save_efi_tree(modules, parent=None, save_modules=True, path=None, save_log=T
     for m in modules:
         md = {}
         m.indent = DEF_INDENT * lvl
-        if save_log: logger().log(m)
+        if save_log:
+            logger().log(m)
 
         # extract all non-function non-None members of EFI_MODULE objects
         attrs = [a for a in dir(m) if not callable(getattr(m, a)) and not a.startswith("__") and (getattr(m, a) is not None)]
-        for a in attrs: md[a] = getattr(m, a)
+        for a in attrs:
+            md[a] = getattr(m, a)
         md["class"] = type(m).__name__
         # remove extra attributes
-        for f in ["Image", "indent"]: del md[f]
+        for f in ["Image", "indent"]:
+            del md[f]
 
         # save EFI module image, make sub-directory for children
         if save_modules:
@@ -414,7 +420,8 @@ def save_efi_tree(modules, parent=None, save_modules=True, path=None, save_log=T
                 md["file_path"] = mod_path.split(os.sep)[-1]
             if m.isNVRAM or len(m.children) > 0:
                 mod_dir_path = "{}.dir".format(mod_path)
-                if not os.path.exists(mod_dir_path): os.makedirs(mod_dir_path)
+                if not os.path.exists(mod_dir_path):
+                    os.makedirs(mod_dir_path)
                 if m.isNVRAM:
                     try:
                         if m.NVRAMType is not None:
@@ -422,10 +429,11 @@ def save_efi_tree(modules, parent=None, save_modules=True, path=None, save_log=T
                             # getNVstore_xxx functions expect FV than a FW file within FV
                             # so for EFI_FILE type of module using parent's Image as NVRAM
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
-                            parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType)
-                        else: raise Exception("NVRAM type cannot be None")
+                            parse_EFI_variables(os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType)
+                        else:
+                            raise Exception("NVRAM type cannot be None")
                     except Exception:
-                        logger().log_warning( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType))
+                        logger().log_warning("couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType))
 
         # save children modules
         if len(m.children) > 0:
@@ -448,8 +456,10 @@ class UUIDEncoder(json.JSONEncoder):
 
 def parse_uefi_region_from_file(filename, fwtype, outpath=None, filetype=[]):
     # Create an output folder to dump EFI module tree
-    if outpath is None: outpath = "{}.dir".format(filename)
-    if not os.path.exists(outpath): os.makedirs(outpath)
+    if outpath is None:
+        outpath = "{}.dir".format(filename)
+    if not os.path.exists(outpath):
+        os.makedirs(outpath)
 
     # Read UEFI image binary to parse
     rom = read_file(filename)
@@ -462,7 +472,7 @@ def parse_uefi_region_from_file(filename, fwtype, outpath=None, filetype=[]):
         tree_json = save_efi_tree_filetype(tree, path=outpath, filetype=filetype)
     else:
         tree_json = save_efi_tree(tree, path=outpath)
-    write_file( "{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
+    write_file("{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
 
 
 def decode_uefi_region(pth, fname, fwtype, filetype=[]):
@@ -486,11 +496,12 @@ def decode_uefi_region(pth, fname, fwtype, filetype=[]):
     region_data = read_file(fname)
     if fwtype is None:
         fwtype = identify_EFI_NVRAM(region_data)
-        if fwtype is None: return
+        if fwtype is None:
+            return
     elif fwtype not in fw_types:
-        logger().log_hal( "unrecognized NVRAM type {}".format(fwtype) )
+        logger().log_hal("unrecognized NVRAM type {}".format(fwtype))
         return
-    nvram_fname = os.path.join( bios_pth, ('nvram_{}'.format(fwtype)))
+    nvram_fname = os.path.join(bios_pth, ('nvram_{}'.format(fwtype)))
     logger().set_log_file((nvram_fname + '.nvram.lst'))
     parse_EFI_variables(nvram_fname, region_data, False, fwtype)
 
@@ -507,10 +518,12 @@ def save_efi_tree_filetype(modules, parent=None, path=None, lvl=0, filetype=[], 
 
         # extract all non-function non-None members of EFI_MODULE objects
         attrs = [a for a in dir(m) if not callable(getattr(m, a)) and not a.startswith("__") and (getattr(m, a) is not None)]
-        for a in attrs: md[a] = getattr(m, a)
+        for a in attrs:
+            md[a] = getattr(m, a)
         md["class"] = type(m).__name__
         # remove extra attributes
-        for f in ["Image", "indent"]: del md[f]
+        for f in ["Image", "indent"]:
+            del md[f]
 
         # save EFI module image, make sub-directory for children
         if (isinstance(m, EFI_FILE) and m.Type in filetype) or save:
@@ -521,7 +534,8 @@ def save_efi_tree_filetype(modules, parent=None, path=None, lvl=0, filetype=[], 
                 md["file_path"] = mod_path.split(os.sep)[-1]
             if m.isNVRAM or len(m.children) > 0:
                 mod_dir_path = "{}.dir".format(mod_path)
-                if not os.path.exists(mod_dir_path): os.makedirs(mod_dir_path)
+                if not os.path.exists(mod_dir_path):
+                    os.makedirs(mod_dir_path)
         # save children modules
         if len(m.children) > 0:
             md["children"] = save_efi_tree_filetype(m.children, m, mod_dir_path, lvl + 1, filetype)

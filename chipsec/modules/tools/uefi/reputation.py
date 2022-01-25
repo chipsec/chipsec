@@ -18,7 +18,7 @@ Usage:
 import time
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
-from chipsec.hal.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
+from chipsec.lib.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.spi import SPI, BIOS
 from chipsec.file import read_file
