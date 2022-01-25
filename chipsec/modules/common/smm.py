@@ -1,23 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Compatible SMM memory (SMRAM) Protection check module
@@ -41,6 +39,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
+
 class smm(BaseModule):
 
     def __init__(self):
@@ -58,8 +57,8 @@ class smm(BaseModule):
 
         regval = self.cs.read_register('SMRAMC')
         g_smrame = self.cs.get_register_field('SMRAMC', regval, 'G_SMRAME')
-        d_open   = self.cs.get_register_field('SMRAMC', regval, 'D_OPEN')
-        d_lock   = self.cs.get_register_field('SMRAMC', regval, 'D_LCK')
+        d_open = self.cs.get_register_field('SMRAMC', regval, 'D_OPEN')
+        d_lock = self.cs.get_register_field('SMRAMC', regval, 'D_LCK')
 
         self.cs.print_register('SMRAMC', regval)
 
@@ -71,19 +70,18 @@ class smm(BaseModule):
                 self.logger.log_passed("Compatible SMRAM is locked down")
             else:
                 res = ModuleResult.FAILED
-                self.logger.log_failed("Compatible SMRAM is not properly locked. Expected ( D_LCK = 1, D_OPEN = 0 )")
+                self.logger.log_failed("Compatible SMRAM is not properly locked. Expected (D_LCK = 1, D_OPEN = 0 )")
         else:
             res = ModuleResult.SKIPPED
             self.logger.log("[*] Compatible SMRAM is not enabled. Skipping..")
 
         return res
 
-
     # --------------------------------------------------------------------------
-    # run( module_argv )
+    # run(module_argv)
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("Compatible SMM memory (SMRAM) Protection")
 
         self.res = self.check_SMRAMC()

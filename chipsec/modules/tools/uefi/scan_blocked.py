@@ -1,23 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 This module checks current contents of UEFI firmware ROM or specified firmware image for blocked EFI binaries
@@ -85,11 +83,12 @@ Important! This module can only detect what it knows about from its config file.
 If a bad or vulnerable binary is not detected then its 'signature' needs to be added to the config.
 '''
 
+
 class scan_blocked(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.uefi = UEFI( self.cs )
+        self.uefi = UEFI(self.cs)
         self.cfg_name = 'blockedlist.json'
         self.image = None
         self.efi_blockedlist = None
@@ -100,61 +99,54 @@ class scan_blocked(BaseModule):
     def blockedlist_callback(self, efi_module):
         return check_match_criteria(efi_module, self.efi_blockedlist, self.logger)
 
-    def check_blockedlist( self ):
+    def check_blockedlist(self):
         res = ModuleResult.PASSED
 
-        self.logger.log( "[*] searching for EFI binaries that match criteria from '{}':".format(self.cfg_name) )
+        self.logger.log("[*] searching for EFI binaries that match criteria from '{}':".format(self.cfg_name))
         for k in self.efi_blockedlist.keys():
             entry = self.efi_blockedlist[k]
-            self.logger.log( "    {:16} - {}".format(k, entry['description'] if 'description' in entry else '') )
-            #if 'match' in entry:
-            #    for c in entry['match'].keys(): self.logger.log( "[*]   {}".format(entry['match'][c]) )
-            #if 'exclude' in entry:
-            #    self.logger.log( "[*]   excluding binaries:" )
-            #    for c in entry['exclude']: self.logger.log( "[*]   {}".format(entry['exclude'][c]) )
+            self.logger.log("    {:16} - {}".format(k, entry['description'] if 'description' in entry else ''))
 
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
         efi_tree = build_efi_model(self.image, None)
-        #match_types = (spi_uefi.EFIModuleType.SECTION_EXE|spi_uefi.EFIModuleType.FILE)
         match_types = EFIModuleType.SECTION_EXE
         matching_modules = search_efi_tree(efi_tree, self.blockedlist_callback, match_types)
         found = len(matching_modules) > 0
-        self.logger.log( '' )
+        self.logger.log('')
         if found:
             res = ModuleResult.WARNING
-            self.logger.log_log_warning("Blocked EFI binary found in the UEFI firmware image")
+            self.logger.log_warning("Blocked EFI binary found in the UEFI firmware image")
         else:
             self.logger.log_passed("Didn't find any blocked EFI binary")
         return res
 
     def usage(self):
-        self.logger.log( USAGE_TEXT )
-
+        self.logger.log(USAGE_TEXT)
 
     # --------------------------------------------------------------------------
-    # run( module_argv )
+    # run(module_argv)
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
-        self.logger.start_test( "Check for blocked EFI binaries in UEFI firmware" )
+    def run(self, module_argv):
+        self.logger.start_test("Check for blocked EFI binaries in UEFI firmware")
 
         self.usage()
 
         image_file = DEF_FWIMAGE_FILE
         if len(module_argv) == 0:
             # Read firmware image directly from SPI flash memory
-            self.spi = SPI( self.cs )
-            (base, limit, freg) = self.spi.get_SPI_region( BIOS )
+            self.spi = SPI(self.cs)
+            (base, limit, freg) = self.spi.get_SPI_region(BIOS)
             image_size = limit + 1 - base
-            self.logger.log( "[*] Dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
-            self.logger.log( "[*] This may take a few minutes (instead, use 'chipsec_util spi dump')..." )
-            self.spi.read_spi_to_file( base, image_size, image_file )
+            self.logger.log("[*] Dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size))
+            self.logger.log("[*] This may take a few minutes (instead, use 'chipsec_util spi dump')...")
+            self.spi.read_spi_to_file(base, image_size, image_file)
         elif len(module_argv) > 0:
             # Use provided firmware image
             image_file = module_argv[0]
-            self.logger.log( "[*] Reading FW image from file: {}".format(image_file) )
+            self.logger.log("[*] Reading FW image from file: {}".format(image_file))
 
-        self.image = read_file( image_file )
+        self.image = read_file(image_file)
 
         if not self.image:
             if len(module_argv) == 0:
@@ -164,10 +156,11 @@ class scan_blocked(BaseModule):
             return self.res
 
         # Load JSON config with blocked EFI modules
-        if len(module_argv) > 1: self.cfg_name = module_argv[1]
-        cfg_pth = os.path.join( get_main_dir(), "chipsec/modules/tools/uefi", self.cfg_name )
+        if len(module_argv) > 1:
+            self.cfg_name = module_argv[1]
+        cfg_pth = os.path.join(get_main_dir(), "chipsec/modules/tools/uefi", self.cfg_name)
         with open(cfg_pth, 'r') as blockedlist_json:
-            self.efi_blockedlist = json.load( blockedlist_json )
+            self.efi_blockedlist = json.load(blockedlist_json)
 
         self.res = self.check_blockedlist()
         return self.res

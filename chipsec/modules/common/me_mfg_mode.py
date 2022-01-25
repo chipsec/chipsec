@@ -1,16 +1,16 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2018, Eclypsium, Inc.
 # Copyright (c) 2019-2021, Intel Corporation
-#
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -89,6 +89,7 @@ Hardware registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult
 
+
 class me_mfg_mode(BaseModule):
 
     def __init__(self):
@@ -103,20 +104,20 @@ class me_mfg_mode(BaseModule):
             return False
 
     def check_me_mfg_mode(self):
-        self.logger.start_test( "ME Manufacturing Mode" )
+        self.logger.start_test("ME Manufacturing Mode")
 
         me_mfg_mode_res = ModuleResult.FAILED
-        me_hfs_reg = self.cs.read_register( 'HFS' )
-        me_mfg_mode = self.cs.get_register_field( 'HFS', me_hfs_reg, 'MFG_MODE' )
+        me_hfs_reg = self.cs.read_register('HFS')
+        me_mfg_mode = self.cs.get_register_field('HFS', me_hfs_reg, 'MFG_MODE')
 
         if 0 == me_mfg_mode:
             me_mfg_mode_res = ModuleResult.PASSED
-            self.logger.log_passed( "ME is not in Manufacturing Mode" )
+            self.logger.log_passed("ME is not in Manufacturing Mode")
         else:
-            self.logger.log_failed( "ME is in Manufacturing Mode" )
+            self.logger.log_failed("ME is in Manufacturing Mode")
 
         return me_mfg_mode_res
 
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.res = self.check_me_mfg_mode()
         return self.res

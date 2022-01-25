@@ -1,3 +1,19 @@
+# CHIPSEC: Platform Security Assessment Framework
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
 """
 This module checks current contents of UEFI firmware ROM or specified firmware image for bad EFI binaries as per the
 VirusTotal API. These can be EFI firmware volumes, EFI executable binaries (PEI modules, DXE drivers..) or EFI sections.
@@ -46,11 +62,12 @@ Usage:
                      If not specified, the module will dump firmware image directly from ROM
 '''
 
+
 class reputation(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.uefi = UEFI( self.cs )
+        self.uefi = UEFI(self.cs)
         self.image = None
         self.vt_threshold = 10
         self.vt = None
@@ -76,7 +93,7 @@ Please run 'pip install virustotal-api' and try again.""")
 
         if vt_report["results"]["response_code"] == 0:
             # Hash is unknown to VT.
-            self.logger.log_log_warning("Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log_warning("Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(efi_module))
             return False
 
         if vt_report["results"]["positives"] >= self.vt_threshold:
@@ -87,7 +104,7 @@ Please run 'pip install virustotal-api' and try again.""")
 
         return False
 
-    def check_reputation( self ):
+    def check_reputation(self):
         res = ModuleResult.PASSED
 
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
@@ -95,24 +112,23 @@ Please run 'pip install virustotal-api' and try again.""")
         match_types = EFIModuleType.SECTION_EXE
         matching_modules = search_efi_tree(efi_tree, self.reputation_callback, match_types)
         found = len(matching_modules) > 0
-        self.logger.log( '' )
+        self.logger.log('')
         if found:
             res = ModuleResult.WARNING
-            self.logger.log_log_warning("Suspicious EFI binary found in the UEFI firmware image")
+            self.logger.log_warning("Suspicious EFI binary found in the UEFI firmware image")
         else:
             self.logger.log_passed("Didn't find any suspicious EFI binary")
         return res
 
     def usage(self):
-        self.logger.log( USAGE_TEXT )
-
+        self.logger.log(USAGE_TEXT)
 
     # --------------------------------------------------------------------------
-    # run( module_argv )
+    # run(module_argv)
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
-        self.logger.start_test( "Check for suspicious EFI binaries in UEFI firmware" )
+    def run(self, module_argv):
+        self.logger.start_test("Check for suspicious EFI binaries in UEFI firmware")
 
         self.usage()
 
@@ -125,16 +141,16 @@ Please run 'pip install virustotal-api' and try again.""")
         if len(module_argv) > 2:
             # Use provided firmware image
             image_file = module_argv[2]
-            self.logger.log( "[*] reading FW image from file: {}".format(image_file) )
+            self.logger.log("[*] reading FW image from file: {}".format(image_file))
         else:
             # Read firmware image directly from SPI flash memory
-            self.spi = SPI( self.cs )
-            (base, limit, freg) = self.spi.get_SPI_region( BIOS )
+            self.spi = SPI(self.cs)
+            (base, limit, freg) = self.spi.get_SPI_region(BIOS)
             image_size = limit + 1 - base
-            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
-            self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
-            self.spi.read_spi_to_file( base, image_size, image_file )
+            self.logger.log("[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size))
+            self.logger.log("[*] this may take a few minutes (instead, use 'chipsec_util spi dump')...")
+            self.spi.read_spi_to_file(base, image_size, image_file)
 
-        self.image = read_file( image_file )
+        self.image = read_file(image_file)
 
         return self.check_reputation()

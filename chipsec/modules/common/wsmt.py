@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2021, SentinelOne
-# Copyright (c) 2021, Intel Corporation
+# Copyright (c) 2021-2022, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,8 +22,8 @@ system firmware to confirm to the operating system that certain security best pr
 implemented in System Management Mode (SMM) software.
 See <https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-uefi-wsmt> for more details.
 """
-from chipsec.module_common   import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
-from chipsec.hal.acpi        import ACPI
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+from chipsec.hal.acpi import ACPI
 from chipsec.lib.acpi_tables import WSMT
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
@@ -55,7 +55,7 @@ Manual analysis of SMI handlers is required to determine if they can be abused b
         self.logger.log(wsmt_table)
 
         if (not wsmt_table.fixed_comm_buffers) or (not wsmt_table.comm_buffer_nested_ptr_protection) or (not wsmt_table.system_resource_protection):
-            self.logger.log_warning( """WSMT table is present but certain mitigations are missing.
+            self.logger.log_warning("""WSMT table is present but certain mitigations are missing.
 Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS
 *** Analysis is only necessary if Windows is the primary OS ***""")
             return ModuleResult.WARNING
@@ -64,7 +64,7 @@ Manual analysis of SMI handlers is required to determine if they can be abused b
         return ModuleResult.PASSED
 
     # --------------------------------------------------------------------------
-    # run( module_argv )
+    # run(module_argv)
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run(self, module_argv):

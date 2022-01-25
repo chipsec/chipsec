@@ -1,41 +1,33 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Hyper-V VMBus functionality
 """
-import os
-import sys
 import time
-import binascii
-import chipsec_util
-from struct                              import *
-from random                              import *
-from chipsec.modules.tools.vmm.common    import *
+import uuid
+from struct import unpack, pack
+from chipsec.modules.tools.vmm.common import BaseModuleDebug, hv_hciv
 from chipsec.modules.tools.vmm.hv.define import *
-from chipsec.logger                      import *
-from chipsec.file       	             import *
-from chipsec.module_common               import *
-from chipsec.hal.vmm                     import VMM
-from chipsec.defines                     import *
+from chipsec.hal.vmm import VMM
+from chipsec.defines import DD, DQ
+
 
 class RingBuffer(BaseModuleDebug):
     def __init__(self):
@@ -49,7 +41,7 @@ class RingBuffer(BaseModuleDebug):
     def __del__(self):
         BaseModuleDebug.__del__(self)
         self.dbg('Free kernel memory (pfn pages)')
-        #for addr in self.base_addr:
+        # for addr in self.base_addr:
         #    self.cs.mem.free_physical_mem(addr)
         self.base_addr = []
         self.send_size = 0
@@ -58,7 +50,7 @@ class RingBuffer(BaseModuleDebug):
     ##
     ##  ringbuffer_alloc - allocates kernel memory for ring buffer
     ##
-    def ringbuffer_alloc(self, pages = 4):
+    def ringbuffer_alloc(self, pages=4):
         (va, pa) = self.cs.mem.alloc_physical_mem(pages << 12, 0xFFFFFFFFFFFFFFFF)
         self.base_addr.append(va)
         if pa != 0:
@@ -85,10 +77,10 @@ class RingBuffer(BaseModuleDebug):
         ring_data_size = len(self.pfn) - self.send_size - 1
         data = ''
         while total > 0:
-            page   = ring_data_page + (index >> 12) % ring_data_size
-            addr   = self.pfn[page] + (index & 0xFFF)
-            size   = min(total, 0x1000 - (index & 0xFFF))
-            data  += self.cs.mem.read_physical_mem(addr, size)
+            page = ring_data_page + (index >> 12) % ring_data_size
+            addr = self.pfn[page] + (index & 0xFFF)
+            size = min(total, 0x1000 - (index & 0xFFF))
+            data += self.cs.mem.read_physical_mem(addr, size)
             total -= size
             index += size
         return data
@@ -100,11 +92,11 @@ class RingBuffer(BaseModuleDebug):
         ring_data_page = 1
         ring_data_size = self.send_size - 1
         while data:
-            page   = ring_data_page + (index >> 12) % ring_data_size
-            addr   = self.pfn[page] + (index & 0xFFF)
-            size   = min(len(data), 0x1000 - (index & 0xFFF))
+            page = ring_data_page + (index >> 12) % ring_data_size
+            addr = self.pfn[page] + (index & 0xFFF)
+            size = min(len(data), 0x1000 - (index & 0xFFF))
             self.cs.mem.write_physical_mem(addr, size, data[:size])
-            data   = data[size:]
+            data = data[size:]
             index += size
         return
 
@@ -115,8 +107,8 @@ class RingBuffer(BaseModuleDebug):
         ring_data_size = (len(self.pfn) - self.send_size - 1) << 12
         buffer = self.cs.mem.read_physical_mem(self.pfn[self.send_size], 0x10)
         write_index, read_index, interrupt_mask, pending_send_sz = unpack('<4L', buffer)
-        delta  = write_index - read_index
-        avail  = delta if delta >= 0 else ring_data_size + delta
+        delta = write_index - read_index
+        avail = delta if delta >= 0 else ring_data_size + delta
         if avail == 0:
             return ''
         header = self.ringbuffer_copyfrom(read_index, 16)
@@ -133,9 +125,9 @@ class RingBuffer(BaseModuleDebug):
         ring_data_size = (self.send_size - 1) << 12
         buffer = self.cs.mem.read_physical_mem(self.pfn[0], 0x10)
         write_index, read_index, interrupt_mask, pending_send_sz = unpack('<4L', buffer)
-        delta  = read_index - write_index
-        avail  = delta if delta > 0 else ring_data_size + delta
-        data  += DD(0) + DD(write_index)
+        delta = read_index - write_index
+        avail = delta if delta > 0 else ring_data_size + delta
+        data += DD(0) + DD(write_index)
         if avail < len(data):
             return False
         self.ringbuffer_copyto(write_index, data)
@@ -144,46 +136,47 @@ class RingBuffer(BaseModuleDebug):
         self.signal = True
         return True
 
-    def ringbuffer_read_with_timeout(self, timeout = 0):
+    def ringbuffer_read_with_timeout(self, timeout=0):
         self.dbg('Read and advance the read index ...')
         start_time = time.time()
-        polling    = True
+        polling = True
         while polling:
             message = self.ringbuffer_read()
             polling = ((timeout == 0) or (time.time() - start_time <= timeout)) and not message
         return message
 
-    def ringbuffer_write_with_timeout(self, message, timeout = 0):
+    def ringbuffer_write_with_timeout(self, message, timeout=0):
         self.dbg('Write to the ring buffer ...')
         start_time = time.time()
-        polling    = True
+        polling = True
         while polling:
-            result  = self.ringbuffer_write(message)
+            result = self.ringbuffer_write(message)
             polling = ((timeout == 0) or (time.time() - start_time <= timeout)) and not result
         return result
+
 
 class HyperV(BaseModuleDebug):
     def __init__(self):
         BaseModuleDebug.__init__(self)
         self.hypercall = VMM(self.cs)
         self.hypercall.init()
-        self.membuf = self.cs.mem.alloc_physical_mem(4 *0x1000, 0xFFFFFFFF)
-        self.cs.mem.write_physical_mem(self.membuf[1], 4 *0x1000, '\x00' * 4 *0x1000)
+        self.membuf = self.cs.mem.alloc_physical_mem(4 * 0x1000, 0xFFFFFFFF)
+        self.cs.mem.write_physical_mem(self.membuf[1], 4 * 0x1000, '\x00' * 4 * 0x1000)
         self.old_sint2 = []
-        self.old_simp  = []
+        self.old_simp = []
         self.old_siefp = []
-        self.simp   = []
-        self.siefp  = []
+        self.simp = []
+        self.siefp = []
 
     def __del__(self):
         BaseModuleDebug.__del__(self)
         self.dbg('Free kernel memory')
-        #if self.membuf[0] != 0:
+        # if self.membuf[0] != 0:
         #    self.cs.mem.free_physical_mem(self.membuf[0])
         if len(self.old_sint2) == 2:
             self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.old_sint2[0], self.old_sint2[1])
-        if len(self.old_simp)  == 2:
-            self.cs.msr.write_msr(0, HV_X64_MSR_SIMP,  self.old_simp[0],  self.old_simp[1])
+        if len(self.old_simp) == 2:
+            self.cs.msr.write_msr(0, HV_X64_MSR_SIMP, self.old_simp[0], self.old_simp[1])
         if len(self.old_siefp) == 2:
             self.cs.msr.write_msr(0, HV_X64_MSR_SIEFP, self.old_siefp[0], self.old_siefp[1])
         for i in [x for x in self.ringbuffers]:
@@ -194,16 +187,16 @@ class HyperV(BaseModuleDebug):
     ##
     def hv_init(self):
         self.old_sint2 = self.cs.msr.read_msr(0, HV_X64_MSR_SINT2)
-        self.old_simp  = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
+        self.old_simp = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
         self.old_siefp = self.cs.msr.read_msr(0, HV_X64_MSR_SIEFP)
         pa = self.membuf[1]
         self.sint3 = self.cs.msr.read_msr(0, HV_X64_MSR_SINT3)
         self.cs.msr.write_msr(0, HV_X64_MSR_SINT2, self.sint3[0], self.sint3[1])
         self.cs.msr.write_msr(0, HV_X64_MSR_SIEFP, (pa & 0xFFFFFFFF) | 0x1, pa >> 32)
-        #self.cs.msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
-        self.simp  = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
+        # self.cs.msr.write_msr(0, HV_X64_MSR_SCONTROL, 0x1, 0x0)
+        self.simp = self.cs.msr.read_msr(0, HV_X64_MSR_SIMP)
         self.siefp = self.cs.msr.read_msr(0, HV_X64_MSR_SIEFP)
-        self.simp  = (self.simp[0]  + (self.simp[1]  << 32)) & 0xFFFFFFFFFFFFF000
+        self.simp = (self.simp[0] + (self.simp[1] << 32)) & 0xFFFFFFFFFFFFF000
         self.siefp = (self.siefp[0] + (self.siefp[1] << 32)) & 0xFFFFFFFFFFFFF000
         return
 
@@ -212,26 +205,26 @@ class HyperV(BaseModuleDebug):
     ##
     def hv_post_msg(self, message):
         retries = 3
-        hciv    = hv_hciv(0, 0, HV_POST_MESSAGE)
+        hciv = hv_hciv(0, 0, HV_POST_MESSAGE)
         while retries > 0:
             result = self.hypercall.hypercall64_memory_based(hciv, message[:0x100]) & 0xFFFF
             if result == HV_STATUS_INSUFFICIENT_BUFFERS:
                 retries -= 1
                 time.sleep(0.1)
             else:
-                retries  = 0
+                retries = 0
         return result
 
     ##
     ##  hv_recv_msg - recieve message if exist otherwise empty string
     ##
     def hv_recv_msg(self, sint):
-        buffer = self.cs.mem.read_physical_mem(self.simp + 0x100 *sint, 0x100)
+        buffer = self.cs.mem.read_physical_mem(self.simp + 0x100 * sint, 0x100)
         message_type, payload_size, message_flags = unpack('<LBB', buffer[0:6])
         if message_type == HVMSG_NONE:
             buffer = ''
         else:
-            self.cs.mem.write_physical_mem(self.simp + 0x100 *sint, 0x4, DD(HVMSG_NONE))
+            self.cs.mem.write_physical_mem(self.simp + 0x100 * sint, 0x4, DD(HVMSG_NONE))
             if message_flags & 0x1:
                 self.cs.msr.write_msr(0, HV_X64_MSR_EOM, 0x0, 0x0)
         return buffer
@@ -240,7 +233,7 @@ class HyperV(BaseModuleDebug):
     ##  hv_signal_event - send an event notification
     ##
     def hv_signal_event(self, connection_id, flag_number):
-        hciv   = hv_hciv(0, 0, HV_SIGNAL_EVENT)
+        hciv = hv_hciv(0, 0, HV_SIGNAL_EVENT)
         buffer = pack('<LHH', connection_id, flag_number, 0x0)
         result = self.hypercall.hypercall64_memory_based(hciv, buffer) & 0xFFFF
         return result
@@ -250,30 +243,31 @@ class HyperV(BaseModuleDebug):
     ##
     def hv_recv_events(self, sint):
         events = set()
-        buffer = self.cs.mem.read_physical_mem(self.siefp + 0x100 *sint, 0x100)
+        buffer = self.cs.mem.read_physical_mem(self.siefp + 0x100 * sint, 0x100)
         buffer = unpack('<64L', buffer)
         for i in range(64):
             if buffer[i]:
                 for n in range(32):
                     if (buffer[i] >> n) & 0x1:
-                        events.add(i *32 + n)
+                        events.add(i * 32 + n)
         return events
+
 
 class VMBus(HyperV):
     def __init__(self):
         HyperV.__init__(self)
         self.promt = 'VMBUS'
-        self.onmessage_timeout  = 0.1 #0.02
-        self.int_page           = self.membuf[1] + 1 *0x1000
-        self.monitor_page1      = self.membuf[1] + 2 *0x1000
-        self.monitor_page2      = self.membuf[1] + 3 *0x1000
-        self.recv_int_page      = self.int_page + 0x000
-        self.send_int_page      = self.int_page + 0x800
+        self.onmessage_timeout = 0.1  # 0.02
+        self.int_page = self.membuf[1] + 1 * 0x1000
+        self.monitor_page1 = self.membuf[1] + 2 * 0x1000
+        self.monitor_page2 = self.membuf[1] + 3 * 0x1000
+        self.recv_int_page = self.int_page + 0x000
+        self.send_int_page = self.int_page + 0x800
         self.supported_versions = {}
-        self.offer_channels     = {}
-        self.open_channels      = {}
-        self.created_gpadl      = {}
-        self.ringbuffers        = {}
+        self.offer_channels = {}
+        self.open_channels = {}
+        self.created_gpadl = {}
+        self.ringbuffers = {}
         self.next_gpadl = 0x200E1E10
 
     ##
@@ -317,9 +311,9 @@ class VMBus(HyperV):
     ##
     ##  vmbus_recv_msg - recieve message. it may return empty string in case of timeout
     ##
-    def vmbus_recv_msg(self, timeout = 0):
-        start_time  = time.time()
-        polling     = True
+    def vmbus_recv_msg(self, timeout=0):
+        start_time = time.time()
+        polling = True
         while polling:
             message = self.hv_recv_msg(VMBUS_MESSAGE_SINT)
             polling = ((timeout == 0) or (time.time() - start_time <= timeout)) and not message
@@ -333,7 +327,7 @@ class VMBus(HyperV):
                 payload_size = 240
             if rsvd != 0x0000:
                 self.msg('vmbus_recv_msg: invalid reserved field 0x{:04X}'.format(rsvd))
-            #if port_id != VMBUS_MESSAGE_PORT_ID:
+            # if port_id != VMBUS_MESSAGE_PORT_ID:
             #    self.msg('vmbus_recv_msg: invalid ConnectionID 0x%016x' % port_id)
             message = message[16: 16 + payload_size]
         return message
@@ -380,10 +374,10 @@ class VMBus(HyperV):
     ##
     ##  vmbus_connect - Sends a connect request on the partition service connection
     ##
-    def vmbus_connect(self, vmbus_version = VERSION_WIN8, target_vcpu = 0x0):
+    def vmbus_connect(self, vmbus_version=VERSION_WIN8, target_vcpu=0x0):
         self.dbg('Sending channel initiate msg ...')
-        channel_message_header   = pack ('<LL', CHANNELMSG_INITIATE_CONTACT, 0x0)
-        channel_initiate_contact = pack ('<LLQQQ', vmbus_version, target_vcpu, self.int_page, self.monitor_page1, self.monitor_page2)
+        channel_message_header = pack('<LL', CHANNELMSG_INITIATE_CONTACT, 0x0)
+        channel_initiate_contact = pack('<LLQQQ', vmbus_version, target_vcpu, self.int_page, self.monitor_page1, self.monitor_page2)
         result = self.vmbus_post_msg(channel_message_header + channel_initiate_contact)
         if result:
             result = self.vmbus_onmessage() == CHANNELMSG_VERSION_RESPONSE
@@ -394,21 +388,21 @@ class VMBus(HyperV):
     ##
     def vmbus_establish_gpadl(self, child_relid, gpadl, pfn):
         self.dbg('Estabish a GPADL for the specified buffer ...')
-        byte_offset  = 0
-        byte_count   = len(pfn) << 12
-        pfn_array    = ''.join([DQ(addr >> 12) for addr in pfn])
-        gpa_range    = pack('<LL', byte_count, byte_offset) + pfn_array
-        rangecount   = 0x1
+        byte_offset = 0
+        byte_count = len(pfn) << 12
+        pfn_array = ''.join([DQ(addr >> 12) for addr in pfn])
+        gpa_range = pack('<LL', byte_count, byte_offset) + pfn_array
+        rangecount = 0x1
         range_buflen = len(gpa_range)
-        channel_message_header = pack ('<LL', CHANNELMSG_GPADL_HEADER, 0x0)
-        channel_gpadl_header   = pack ('<LLHH', child_relid, gpadl, range_buflen, rangecount)
-        result = self.vmbus_post_msg(channel_message_header + channel_gpadl_header + gpa_range[:27 *8])
-        gpa_range = gpa_range[27 *8:]
+        channel_message_header = pack('<LL', CHANNELMSG_GPADL_HEADER, 0x0)
+        channel_gpadl_header = pack('<LLHH', child_relid, gpadl, range_buflen, rangecount)
+        result = self.vmbus_post_msg(channel_message_header + channel_gpadl_header + gpa_range[:27 * 8])
+        gpa_range = gpa_range[27 * 8:]
         while result and gpa_range != '':
-            channel_message_header = pack ('<LL', CHANNELMSG_GPADL_BODY, 0x0)
-            channel_gpadl_body     = pack ('<LL', 0x0, gpadl)
-            result = self.vmbus_post_msg(channel_message_header + channel_gpadl_body + gpa_range[:28 *8])
-            gpa_range = gpa_range[28 *8:]
+            channel_message_header = pack('<LL', CHANNELMSG_GPADL_BODY, 0x0)
+            channel_gpadl_body = pack('<LL', 0x0, gpadl)
+            result = self.vmbus_post_msg(channel_message_header + channel_gpadl_body + gpa_range[:28 * 8])
+            gpa_range = gpa_range[28 * 8:]
         if result:
             result = self.vmbus_onmessage() == CHANNELMSG_GPADL_CREATED
         return result
@@ -418,8 +412,8 @@ class VMBus(HyperV):
     ##
     def vmbus_teardown_gpadl(self, child_relid, gpadl):
         self.dbg('Teardown the specified GPADL handle ...')
-        channel_message_header = pack ('<LL', CHANNELMSG_GPADL_TEARDOWN, 0x0)
-        channel_gpadl_teardown = pack ('<LL', child_relid, gpadl)
+        channel_message_header = pack('<LL', CHANNELMSG_GPADL_TEARDOWN, 0x0)
+        channel_gpadl_teardown = pack('<LL', child_relid, gpadl)
         result = self.vmbus_post_msg(channel_message_header + channel_gpadl_teardown)
         if result:
             msgtype = self.vmbus_onmessage()
@@ -435,12 +429,12 @@ class VMBus(HyperV):
     ##
     ##  vmbus_open - Open the specified channel
     ##
-    def vmbus_open(self, child_relid, gpadl, pageoffset = 2, userdata = '\x00' * 120):
+    def vmbus_open(self, child_relid, gpadl, pageoffset=2, userdata='\x00' * 120):
         self.dbg('Open the specified channel ...')
-        openid    = child_relid
+        openid = child_relid
         target_vp = 0x0
-        channel_message_header = pack ('<LL', CHANNELMSG_OPENCHANNEL, 0x0)
-        channel_open_channel   = pack ('<5L', child_relid, openid, gpadl, target_vp, pageoffset)
+        channel_message_header = pack('<LL', CHANNELMSG_OPENCHANNEL, 0x0)
+        channel_open_channel = pack('<5L', child_relid, openid, gpadl, target_vp, pageoffset)
         result = self.vmbus_post_msg(channel_message_header + channel_open_channel + userdata)
         if result:
             result = self.vmbus_onmessage() == CHANNELMSG_OPENCHANNEL_RESULT
@@ -451,8 +445,8 @@ class VMBus(HyperV):
     ##
     def vmbus_close(self, child_relid):
         self.dbg('Close the specified channel ...')
-        channel_message_header = pack ('<LL', CHANNELMSG_CLOSECHANNEL, 0x0)
-        channel_close_channel  = pack ('<L', child_relid)
+        channel_message_header = pack('<LL', CHANNELMSG_CLOSECHANNEL, 0x0)
+        channel_close_channel = pack('<L', child_relid)
         return self.vmbus_post_msg(channel_message_header + channel_close_channel)
 
     ##
@@ -460,7 +454,7 @@ class VMBus(HyperV):
     ##
     def vmbus_disconnect(self):
         self.dbg('Sending a disconnect request ...')
-        channel_message_header = pack ('<LL', CHANNELMSG_UNLOAD, 0x0)
+        channel_message_header = pack('<LL', CHANNELMSG_UNLOAD, 0x0)
         result = self.vmbus_post_msg(channel_message_header)
         result = result and (self.vmbus_onmessage() == 17)
         return result
@@ -470,7 +464,7 @@ class VMBus(HyperV):
     ##
     def vmbus_request_offers(self):
         self.dbg('Sending a request to get all our pending offers ...')
-        channel_message_header = pack ('<LL', CHANNELMSG_REQUESTOFFERS, 0x0)
+        channel_message_header = pack('<LL', CHANNELMSG_REQUESTOFFERS, 0x0)
         result = self.vmbus_post_msg(channel_message_header)
         while result:
             msgtype = self.vmbus_onmessage()
@@ -483,8 +477,8 @@ class VMBus(HyperV):
     ##
     def vmbus_process_rescind_offer(self, child_relid):
         self.dbg('Rescind the offer by initiating a device removal ...')
-        channel_message_header = pack ('<LL', CHANNELMSG_RELID_RELEASED, 0x0)
-        channel_relid_released = pack ('<L', child_relid)
+        channel_message_header = pack('<LL', CHANNELMSG_RELID_RELEASED, 0x0)
+        channel_relid_released = pack('<L', child_relid)
         return self.vmbus_post_msg(channel_message_header + channel_relid_released)
 
     ##
@@ -495,12 +489,12 @@ class VMBus(HyperV):
 
         channelmsg = {
             CHANNELMSG_OFFERCHANNEL: 188,
-            CHANNELMSG_ALLOFFERS_DELIVERED:   0,
-            CHANNELMSG_GPADL_CREATED:  12,
-            CHANNELMSG_OPENCHANNEL_RESULT:  12,
-            CHANNELMSG_GPADL_TORNDOWN:   4,
-            CHANNELMSG_RESCIND_CHANNELOFFER:   4,
-            CHANNELMSG_VERSION_RESPONSE:   8
+            CHANNELMSG_ALLOFFERS_DELIVERED: 0,
+            CHANNELMSG_GPADL_CREATED: 12,
+            CHANNELMSG_OPENCHANNEL_RESULT: 12,
+            CHANNELMSG_GPADL_TORNDOWN: 4,
+            CHANNELMSG_RESCIND_CHANNELOFFER: 4,
+            CHANNELMSG_VERSION_RESPONSE: 8
         }
 
         message = self.vmbus_recv_msg(self.onmessage_timeout)
@@ -509,7 +503,7 @@ class VMBus(HyperV):
             self.msg('vmbus_onmessage: timeout')
         elif len(message) >= 8:
             msgtype, padding = unpack('<LL', message[:8])
-            message_body     = message[8:]
+            message_body = message[8:]
 
             self.dbg('vmbus_onmessage: message {:d} {}'.format(msgtype, vmbus_channel_message_type[msgtype]))
 
@@ -525,7 +519,7 @@ class VMBus(HyperV):
                 self.msg('vmbus_onmessage invalid padding {:d}'.format(padding))
 
         ## vmbus_ongpadl_created - GPADL created handler
-        if   msgtype == CHANNELMSG_GPADL_CREATED:
+        if msgtype == CHANNELMSG_GPADL_CREATED:
             child_relid, gpadl, status = unpack('<3L', message_body[:12])
             self.created_gpadl[gpadl] = {'child_relid': child_relid, 'status': status}
         ## vmbus_onopen_result - Open result handler
@@ -551,17 +545,17 @@ class VMBus(HyperV):
             uuid2 = uuid(offer[0x10:0x20])
             # struct vmbus_channel_offer
             guid1 = hv_guid_desc[uuid1] if uuid1 in hv_guid_desc else 'Unknown'
-            channel['name']                = guid1
-            channel['flags']               = unpack('<H', offer[0x30: 0x32])[0]
-            channel['mmio']                = unpack('<H', offer[0x32: 0x34])[0]
-            channel['userdef']             =              offer[0x34: 0xAC]
-            channel['sub_channel']         = unpack('<H', offer[0xAC: 0xAE])[0]
+            channel['name'] = guid1
+            channel['flags'] = unpack('<H', offer[0x30: 0x32])[0]
+            channel['mmio'] = unpack('<H', offer[0x32: 0x34])[0]
+            channel['userdef'] = offer[0x34: 0xAC]
+            channel['sub_channel'] = unpack('<H', offer[0xAC: 0xAE])[0]
             # struct vmbus_channel_offer_channel (continue)
-            channel['child_relid']         = unpack('<L', offer[0xB0: 0xB4])[0]
-            channel['monitor_id']          = unpack('<B', offer[0xB4: 0xB5])[0]
-            channel['monitor_allocated']   = unpack('<B', offer[0xB5: 0xB6])[0] & 0x1
+            channel['child_relid'] = unpack('<L', offer[0xB0: 0xB4])[0]
+            channel['monitor_id'] = unpack('<B', offer[0xB4: 0xB5])[0]
+            channel['monitor_allocated'] = unpack('<B', offer[0xB5: 0xB6])[0] & 0x1
             channel['dedicated_interrupt'] = unpack('<H', offer[0xB6: 0xB8])[0] & 0x1
-            channel['connection_id']       = unpack('<L', offer[0xB8: 0xBC])[0]
+            channel['connection_id'] = unpack('<L', offer[0xB8: 0xBC])[0]
             self.offer_channels[offer[0x00:0x20]] = channel
 
         return msgtype
@@ -587,7 +581,7 @@ class VMBus(HyperV):
         while (len(data) & 0x7) != 0:
             data += '\x00'
         offset8 = 16 >> 3
-        len8    = offset8 + (len(data) >> 3)
+        len8 = offset8 + (len(data) >> 3)
         vmpacket_descriptor = pack('<4HQ', packet_type, offset8, len8, flags, requestid)
         rb.ringbuffer_write(vmpacket_descriptor + data)
         if rb.signal:
@@ -615,6 +609,7 @@ class VMBus(HyperV):
         self.dbg('Retrieve the raw packet on the specified channel ...')
         return
 
+
 class VMBusDiscovery(VMBus):
     def __init__(self):
         VMBus.__init__(self)
@@ -626,7 +621,7 @@ class VMBusDiscovery(VMBus):
     ##  vmbus_rescind_all_offers - Rescind all offers by initiating a device removal
     ##
     def vmbus_rescind_all_offers(self):
-        #for i in self.offer_channels.keys():
+        # for i in self.offer_channels.keys():
         #    relid = self.offer_channels[i]['child_relid']
         #    self.vmbus_process_rescind_offer(relid)
         for i in range(0x10):
@@ -647,11 +642,12 @@ class VMBusDiscovery(VMBus):
     ##
     ## scan_supported_versions
     ##
-    def scan_supported_versions(self, mask = 0x000F000F):
+    def scan_supported_versions(self, mask=0x000F000F):
         version = 0x00000000
         while True:
             self.vmbus_connect(version)
-            if version == mask: break
+            if version == mask:
+                break
             version = (~(~version & mask) + 1) & mask
         return
 
@@ -666,7 +662,7 @@ class VMBusDiscovery(VMBus):
             self.int_page = (FFs << (63 - i)) & FFs
             self.dbg('Address: 0x{:016X}'.format(self.int_page))
             self.vmbus_connect(version)
-            print (self.supported_versions)
+            self.logger.log(self.supported_versions)
         (self.int_page, self.monitor_page1, self.monitor_page2) = pages
         return
 

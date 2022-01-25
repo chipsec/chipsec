@@ -1,23 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Hyper-V hypercall fuzzer
@@ -36,31 +34,33 @@ Usage:
 
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
-from chipsec.modules.tools.vmm.hv.define       import *
-from chipsec.modules.tools.vmm.hv.hypercall    import *
-from chipsec.module_common                     import *
+from chipsec.modules.tools.vmm.hv.define import *
+from chipsec.modules.tools.vmm.hv.hypercall import HyperVHypercall
+from chipsec.modules.tools.vmm.common import get_int_arg
+from chipsec.module_common import BaseModule, ModuleResult
 
 # Hypercall vectors excluded from scan/fuzzing
 excluded_hypercalls_from_scan = []
-excluded_hypercalls_from_fuzzing  = excluded_hypercalls_from_scan + [HV_POST_MESSAGE]
+excluded_hypercalls_from_fuzzing = excluded_hypercalls_from_scan + [HV_POST_MESSAGE]
+
 
 class HypercallFuzz(BaseModule):
 
     def usage(self):
-        print ('  Usage:')
-        print ('    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]')
-        print ('      mode                fuzzing mode')
-        print ('        = status-fuzzing  finding parameters with hypercall success status')
-        print ('        = params-info     shows input parameters valid ranges')
-        print ('        = params-fuzzing  parameters fuzzing based on their valid ranges')
-        print ('        = custom-fuzzing  fuzzing of known hypercalls')
-        print ('      vector              hypercall vector')
-        print ('      iterations          number of hypercall iterations')
-        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        self.logger.log('  Usage:')
+        self.logger.log('    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]')
+        self.logger.log('      mode                fuzzing mode')
+        self.logger.log('        = status-fuzzing  finding parameters with hypercall success status')
+        self.logger.log('        = params-info     shows input parameters valid ranges')
+        self.logger.log('        = params-fuzzing  parameters fuzzing based on their valid ranges')
+        self.logger.log('        = custom-fuzzing  fuzzing of known hypercalls')
+        self.logger.log('      vector              hypercall vector')
+        self.logger.log('      iterations          number of hypercall iterations')
+        self.logger.log('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
-        self.logger.start_test( "Hyper-V hypercall fuzzer" )
+        self.logger.start_test("Hyper-V hypercall fuzzer")
 
         if len(module_argv) > 0:
             command = module_argv[0]

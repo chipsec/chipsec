@@ -1,23 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Hyper-V VMBus generic fuzzer
@@ -34,23 +32,25 @@ Usage:
 
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
-from struct import *
-from random import *
-from chipsec.modules.tools.vmm.hv.define import *
-from chipsec.modules.tools.vmm.common    import *
-from chipsec.modules.tools.vmm.hv.vmbus  import *
-import chipsec_util
+import sys
+import traceback
+from struct import pack
+from random import getrandbits, choice
+from chipsec.modules.tools.vmm.common import session_logger, get_int_arg, overwrite
+from chipsec.modules.tools.vmm.hv.vmbus import VMBusDiscovery, RingBuffer, HyperV
+from chipsec.module_common import ModuleResult
 
 sys.stdout = session_logger(True, 'vmbusfuzz')
+
 
 class VMBusFuzz(VMBusDiscovery):
     def __init__(self):
         VMBusDiscovery.__init__(self)
-        self.training         = False
+        self.training = False
         self.training_msginfo = []
-        self.fuzzing          = False
-        self.fuzzing_rules    = {}
-        self.current_message  = 0
+        self.fuzzing = False
+        self.fuzzing_rules = {}
+        self.current_message = 0
 
     ##
     ##  hv_post_msg - Fuzzing a message to be sent
@@ -96,8 +96,8 @@ class VMBusFuzz(VMBusDiscovery):
             self.vmbus_teardown_gpadl(relid, self.ringbuffers[relid].gpadl)
 
         self.vmbus_rescind_all_offers()
-        #if not self.fuzzing:
-        #for i in self.ringbuffers:
+        # if not self.fuzzing:
+        # for i in self.ringbuffers:
         #    self.ringbuffers[i].ringbuffer_free()
 
     def usage(self):
@@ -111,7 +111,7 @@ class VMBusFuzz(VMBusDiscovery):
         self.logger.log('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
 
     def run(self, module_argv):
-        self.logger.start_test( "Hyper-V VMBus fuzzer" )
+        self.logger.start_test("Hyper-V VMBus fuzzer")
 
         if len(module_argv) > 0:
             command = module_argv[0]
@@ -158,8 +158,8 @@ class VMBusFuzz(VMBusDiscovery):
                         self.fuzzing = False
                     m += 1
         except KeyboardInterrupt:
-            print ('***** Control-C *****')
-        except Exception as error:
+            self.logger.log('***** Control-C *****')
+        except Exception:
             traceback.print_exc()
         finally:
             self.vmbus_rescind_all_offers()
