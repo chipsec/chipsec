@@ -457,6 +457,9 @@ class Chipset:
     def get_io_def(self, bar_name):
         return self.Cfg.get_io_def(bar_name)
 
+    def get_mem_def(self, range_name):
+        return self.Cfg.get_mem_def(range_name)
+
     def get_register_def(self, reg_name, bus=0):
         return self.Cfg.get_register_def(reg_name, bus)
 
@@ -956,6 +959,9 @@ class Chipset:
 
     def get_IO_space(self, io_name):
         return self.Cfg.get_IO_space(io_name)
+
+    def get_REGISTERS_match(self, name):
+        return self.Cfg.get_REGISTERS_match(name)
 
 
 _chipset = None
