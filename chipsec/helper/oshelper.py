@@ -1,22 +1,21 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2021, Intel Corporation
-#
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+
 # Contact information:
 # chipsec@intel.com
-#
 
 """
 Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
@@ -65,14 +64,6 @@ class OsHelper:
             os_system = platform.system()
             raise OsHelperError("Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV)
         else:
-            if self.helper.name != "EfiHelper" and sys.version[0] == "2":  # Python 2 is only supported in the EFI shell.
-                logger().log_warning("***************************************************************************************")
-                logger().log_warning("* !! Python 2 is deprecated. Please update to Python 3 !!")
-                logger().log_warning("* Some chipsec results may be incorrect if you continue.")
-                logger().log_warning("***************************************************************************************")
-                s = raw_input("Type 'yes' to continue running under Python 2 > ")  # Will only run on python 2, so raw_input will be defined.
-                if s.lower() not in ['yes', 'y']:
-                    sys.exit(0)
             self.os_system = self.helper.os_system
             self.os_release = self.helper.os_release
             self.os_version = self.helper.os_version
@@ -85,7 +76,7 @@ class OsHelper:
                 break
             except OsHelperError:
                 raise
-            except:
+            except Exception:
                 logger().log_debug("Unable to load helper: {}".format(helper))
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
@@ -144,8 +135,8 @@ class OsHelper:
     #
     def read_pci_reg(self, bus, device, function, address, size):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
-        if ( 0 != (address & (size - 1)) ):
-            logger().log_debug( "Config register address is not naturally aligned" )
+        if (0 != (address & (size - 1))):
+            logger().log_debug("Config register address is not naturally aligned")
 
         ret = self.helper.read_pci_reg(bus, device, function, address, size)
         if self.filecmds is not None:
@@ -154,8 +145,8 @@ class OsHelper:
 
     def write_pci_reg(self, bus, device, function, address, value, size):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
-        if ( 0 != (address & (size - 1)) ):
-            logger().log_debug( "Config register address is not naturally aligned" )
+        if (0 != (address & (size - 1))):
+            logger().log_debug("Config register address is not naturally aligned")
 
         ret = self.helper.write_pci_reg(bus, device, function, address, value, size)
         if self.filecmds is not None:
@@ -432,7 +423,7 @@ def helper():
         try:
             _helper = OsHelper()
         except BaseException as msg:
-            logger().log_debug( str(msg) )
+            logger().log_debug(str(msg))
             logger().log_debug(traceback.format_exc())
             raise
     return _helper
