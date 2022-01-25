@@ -1,22 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 SMI command:
@@ -41,13 +40,13 @@ Examples:
 >>> chipsec_util nmi
 """
 
-import time
+from argparse import ArgumentParser
 import os
+import time
 
-from chipsec.command         import BaseCommand
-from chipsec.hal.interrupts  import Interrupts
+from chipsec.command import BaseCommand
+from chipsec.hal.interrupts import Interrupts
 from chipsec.lib.uefi_common import EFI_ERROR_STR
-from argparse                import ArgumentParser
 
 
 # ###################################################################
@@ -55,8 +54,6 @@ from argparse                import ArgumentParser
 # CPU Interrupts
 #
 # ###################################################################
-
-
 class SMICommand(BaseCommand):
     """
     >>> chipsec_util smi count
@@ -98,15 +95,14 @@ class SMICommand(BaseCommand):
         parser_smmc.add_argument('port', type=lambda x: int(x, 16), nargs='?', default=0x0, help='Port (hex) [default=0]')
         parser_smmc.set_defaults(func=self.smi_smmc)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def smi_count(self):
-        self.logger.log( "[CHIPSEC] SMI count:" )
+        self.logger.log("[CHIPSEC] SMI count:")
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             smi_cnt = self.cs.read_register_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
-            self.logger.log( "  CPU{:d}: {:d}".format(tid, smi_cnt) )
-
+            self.logger.log("  CPU{:d}: {:d}".format(tid, smi_cnt))
 
     def smi_smmc(self):
         if os.path.isfile(self.payload):
@@ -122,37 +118,36 @@ class SMICommand(BaseCommand):
         self.logger.log("Found \'smmc\' structure at 0x{:x}".format(smmc_loc))
 
         ReturnStatus = self.interrupts.send_smmc_SMI(smmc_loc, self.guid, self.payload, self.payload_loc, CommandPort=self.port)
-        #TODO Translate ReturnStatus to EFI_STATUS enum
+        # TODO Translate ReturnStatus to EFI_STATUS enum
         self.logger.log("ReturnStatus: 0x{:x} ({})".format(ReturnStatus, EFI_ERROR_STR(ReturnStatus)))
 
-
     def smi_send(self):
-        self.logger.log( "[CHIPSEC] Sending SW SMI (code: 0x{:02X}, data: 0x{:02X})..".format(self.SMI_code_port_value, self.SMI_data_port_value) )
+        self.logger.log("[CHIPSEC] Sending SW SMI (code: 0x{:02X}, data: 0x{:02X})..".format(self.SMI_code_port_value, self.SMI_data_port_value))
         if self._rax is None:
-            self.interrupts.send_SMI_APMC( self.SMI_code_port_value, self.SMI_data_port_value )
+            self.interrupts.send_SMI_APMC(self.SMI_code_port_value, self.SMI_data_port_value)
         else:
-            self.logger.log( "          RAX: 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(self._rax) )
-            self.logger.log( "          RBX: 0x{:016X}".format(self._rbx) )
-            self.logger.log( "          RCX: 0x{:016X}".format(self._rcx) )
-            self.logger.log( "          RDX: 0x{:016X} (DX will be overridden with 0x00B2)".format(self._rdx) )
-            self.logger.log( "          RSI: 0x{:016X}".format(self._rsi) )
-            self.logger.log( "          RDI: 0x{:016X}".format(self._rdi) )
-            ret = self.interrupts.send_SW_SMI( self.thread_id, self.SMI_code_port_value, self.SMI_data_port_value, self._rax, self._rbx, self._rcx, self._rdx, self._rsi, self._rdi )
-            if not ret is None:
-                self.logger.log( "Return values")
-                self.logger.log( "          RAX: {:16X}".format(ret[1]) )
-                self.logger.log( "          RBX: {:16X}".format(ret[2]) )
-                self.logger.log( "          RCX: {:16X}".format(ret[3]) )
-                self.logger.log( "          RDX: {:16X}".format(ret[4]) )
-                self.logger.log( "          RSI: {:16X}".format(ret[5]) )
-                self.logger.log( "          RDI: {:16X}".format(ret[6]) )
+            self.logger.log("          RAX: 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(self._rax))
+            self.logger.log("          RBX: 0x{:016X}".format(self._rbx))
+            self.logger.log("          RCX: 0x{:016X}".format(self._rcx))
+            self.logger.log("          RDX: 0x{:016X} (DX will be overridden with 0x00B2)".format(self._rdx))
+            self.logger.log("          RSI: 0x{:016X}".format(self._rsi))
+            self.logger.log("          RDI: 0x{:016X}".format(self._rdi))
+            ret = self.interrupts.send_SW_SMI(self.thread_id, self.SMI_code_port_value, self.SMI_data_port_value, self._rax, self._rbx, self._rcx, self._rdx, self._rsi, self._rdi)
+            if ret is not None:
+                self.logger.log("Return values")
+                self.logger.log("          RAX: {:16X}".format(ret[1]))
+                self.logger.log("          RBX: {:16X}".format(ret[2]))
+                self.logger.log("          RCX: {:16X}".format(ret[3]))
+                self.logger.log("          RDX: {:16X}".format(ret[4]))
+                self.logger.log("          RSI: {:16X}".format(ret[5]))
+                self.logger.log("          RDI: {:16X}".format(ret[6]))
 
     def run(self):
         self.cs.set_scope({
             "MSR_SMI_COUNT": "8086.MSR"
         })
         try:
-            self.interrupts = Interrupts( self.cs )
+            self.interrupts = Interrupts(self.cs)
         except RuntimeError as msg:
             self.logger.log(msg)
             return
@@ -161,7 +156,7 @@ class SMICommand(BaseCommand):
 
         self.func()
 
-        self.logger.log( "[CHIPSEC] (smi) time elapsed {:.3f}".format(time.time() -t) )
+        self.logger.log("[CHIPSEC] (smi) time elapsed {:.3f}".format(time.time() - t))
 
 
 class NMICommand(BaseCommand):
@@ -177,14 +172,15 @@ class NMICommand(BaseCommand):
 
     def run(self):
         try:
-            interrupts = Interrupts( self.cs )
+            interrupts = Interrupts(self.cs)
         except RuntimeError as msg:
             self.logger.log(msg)
             return
 
         t = time.time()
-        self.logger.log( "[CHIPSEC] Sending NMI#..." )
+        self.logger.log("[CHIPSEC] Sending NMI#...")
         interrupts.send_NMI()
-        self.logger.log( "[CHIPSEC] (nmi) time elapsed {:.3f}".format(time.time() -t) )
+        self.logger.log("[CHIPSEC] (nmi) time elapsed {:.3f}".format(time.time() - t))
 
-commands = { 'smi': SMICommand, 'nmi': NMICommand }
+
+commands = {'smi': SMICommand, 'nmi': NMICommand}

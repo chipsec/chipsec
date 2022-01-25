@@ -1,23 +1,23 @@
 # !/usr/bin/python
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2021, Intel Corporation
-#
+
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-#
+
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
+
 # Contact information:
 # chipsec@intel.com
-#
+
 
 """
 >>> chipsec_util ec dump    [<size>]
@@ -40,8 +40,8 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand
 
-from chipsec.logger  import print_buffer
-from chipsec.hal.ec  import EC
+from chipsec.logger import print_buffer, print_buffer_bytes
+from chipsec.hal.ec import EC
 
 
 # Embedded Controller
@@ -75,7 +75,7 @@ class ECCommand(BaseCommand):
         parser_index = subparsers.add_parser('index', parents=[parser_offset])
         parser_index.set_defaults(func=self.index)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         if hasattr(self, 'func'):
             return True
         else:
@@ -85,7 +85,7 @@ class ECCommand(BaseCommand):
         self.logger.log("[CHIPSEC] EC dump")
 
         buf = self._ec.read_range(0, self.size)
-        print_buffer(buf)
+        print_buffer_bytes(buf)
 
     def command(self):
         self.logger.log("[CHIPSEC] Sending EC command 0x{:X}".format(self.cmd))
@@ -94,29 +94,29 @@ class ECCommand(BaseCommand):
 
     def read(self):
         if self.size:
-            buf = self._ec.read_range( self.offset, self.size)
+            buf = self._ec.read_range(self.offset, self.size)
             self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(self.offset, self.size))
-            print_buffer(buf)
+            print_buffer_bytes(buf)
         else:
             val = self._ec.read_memory(
                 self.offset) if self.offset < 0x100 else self._ec.read_memory_extended(self.offset)
-            self.logger.log( "[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(self.start_offset, val))
+            self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(self.offset, val))
 
     def write(self):
-        self.logger.log( "[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval))
+        self.logger.log("[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval))
 
         if self.offset < 0x100:
-            self._ec.write_memory( self.offset, self.wval)
+            self._ec.write_memory(self.offset, self.wval)
         else:
-            self._ec.write_memory_extended( self.offset, self.wval)
+            self._ec.write_memory_extended(self.offset, self.wval)
 
     def index(self):
 
         if self.offset:
             val = self._ec.read_idx(self.offset)
-            self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
+            self.logger.log("[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
         else:
-            self.logger.log( "[CHIPSEC] EC index I/O: dumping memory...")
+            self.logger.log("[CHIPSEC] EC index I/O: dumping memory...")
             mem = []
             for off in range(0x10000):
                 mem.append(chr(self._ec.read_idx(off)))
@@ -125,12 +125,12 @@ class ECCommand(BaseCommand):
     def run(self):
         t = time.time()
         try:
-            self._ec = EC( self.cs)
+            self._ec = EC(self.cs)
         except BaseException as msg:
-            print (msg)
+            self.logger.log(msg)
             return
         self.func()
-        self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log("[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
 
 
-commands = { 'ec': ECCommand}
+commands = {'ec': ECCommand}

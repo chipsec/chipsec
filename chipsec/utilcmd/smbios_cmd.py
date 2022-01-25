@@ -1,22 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2019-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2019-2021, Intel Corporation
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 >>> chipsec_util smbios entrypoint
@@ -32,8 +31,8 @@ from argparse import ArgumentParser
 from time import time
 from chipsec.command import BaseCommand
 from chipsec.hal.smbios import SMBIOS
-from chipsec.logger import print_buffer
-from chipsec.defines import bytestostring
+from chipsec.logger import print_buffer_bytes
+
 
 class smbios_cmd(BaseCommand):
 
@@ -43,14 +42,14 @@ class smbios_cmd(BaseCommand):
         parser_entrypoint = subparsers.add_parser('entrypoint')
         parser_entrypoint.set_defaults(func=self.smbios_ep)
         parser_get = subparsers.add_parser('get')
-        parser_get.add_argument('method', choices=['raw', 'decoded'], default='raw', nargs='?', \
-            help='Get raw data or decoded data.  Decoded data may not exist for all structures')
-        parser_get.add_argument('type', type=int, default=None, nargs='?', \
-            help='SMBIOS type to search for')
-        parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32', \
-            help='Force reading from 32bit structures')
+        parser_get.add_argument('method', choices=['raw', 'decoded'], default='raw', nargs='?',
+                                help='Get raw data or decoded data.  Decoded data may not exist for all structures')
+        parser_get.add_argument('type', type=int, default=None, nargs='?',
+                                help='SMBIOS type to search for')
+        parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32',
+                                help='Force reading from 32bit structures')
         parser_get.set_defaults(func=self.smbios_get)
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def smbios_ep(self):
@@ -80,7 +79,7 @@ class smbios_cmd(BaseCommand):
                 if header is not None:
                     self.logger.log(header)
                 self.logger.log('[CHIPSEC] Raw Data')
-                print_buffer(bytestostring(data))
+                print_buffer_bytes(data)
             elif self.method == 'decoded':
                 self.logger.log(data)
             self.logger.log('==================================================================')
@@ -101,6 +100,7 @@ class smbios_cmd(BaseCommand):
             return
 
         self.func()
-        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time() -t))
+        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time() - t))
+
 
 commands = {'smbios': smbios_cmd}

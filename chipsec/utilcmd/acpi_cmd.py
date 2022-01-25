@@ -1,24 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
 
 """
 Command-line utility providing access to ACPI tables
@@ -37,9 +34,10 @@ from os.path import exists as path_exists
 from time import time
 from argparse import ArgumentParser
 
-from chipsec.hal.acpi   import ACPI
+from chipsec.hal.acpi import ACPI
 from chipsec.exceptions import AcpiRuntimeError
-from chipsec.command    import BaseCommand
+from chipsec.command import BaseCommand
+
 
 # ###################################################################
 #
@@ -58,27 +56,26 @@ class ACPICommand(BaseCommand):
         parser_table.add_argument('-f', '--file', dest='_file', help='Read from file', action='store_true')
         parser_table.add_argument('_name', metavar='table|filename', nargs=1, help="table to list")
         parser_table.set_defaults(func=self.acpi_table)
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         if self.func == self.acpi_table and self._file:
             return False
         return True
 
     def acpi_list(self):
-        self.logger.log( "[CHIPSEC] Enumerating ACPI tables.." )
+        self.logger.log("[CHIPSEC] Enumerating ACPI tables..")
         self._acpi.print_ACPI_table_list()
 
     def acpi_table(self):
         name = self._name[0]
-        if not self._file and not self._acpi.is_ACPI_table_present( name ):
-            self.logger.error( "Please specify table name from {}".format(self._acpi.tableList.keys()) )
+        if not self._file and not self._acpi.is_ACPI_table_present(name):
+            self.logger.error("Please specify table name from {}".format(self._acpi.tableList.keys()))
             return
-        elif self._file and not path_exists( name ):
-            self.logger.error( "[CHIPSEC] Unable to find file '{}'".format(name) )
+        elif self._file and not path_exists(name):
+            self.logger.error("[CHIPSEC] Unable to find file '{}'".format(name))
             return
-        self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '', name) )
-        self._acpi.dump_ACPI_table( name, self._file )
+        self.logger.log("[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '', name))
+        self._acpi.dump_ACPI_table(name, self._file)
         return
-
 
     def run(self):
         t = time()
@@ -88,6 +85,7 @@ class ACPICommand(BaseCommand):
             print(msg)
             return
         self.func()
-        self.logger.log( "[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() -t) )
+        self.logger.log("[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() - t))
 
-commands = { 'acpi': ACPICommand }
+
+commands = {'acpi': ACPICommand}
