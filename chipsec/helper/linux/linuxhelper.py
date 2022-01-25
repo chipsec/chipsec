@@ -25,7 +25,6 @@ Linux helper
 import array
 import errno
 import fcntl
-import mmap
 import os
 import platform
 import struct
@@ -275,7 +274,7 @@ class LinuxHelper(Helper):
         out_buf = self.ioctl(IOCTL_VA2PA, in_buf)
         pa = struct.unpack(self._pack, out_buf)[0]
 
-        #Check if PA > max physical address
+        # Check if PA > max physical address
         max_pa = self.cpuid(0x80000008, 0x0)[0] & 0xFF
         if pa > 1 << max_pa:
             logger().log_debug("[helper] Error in va2pa: PA higher that max physical address: VA (0x{:016X}) -> PA (0x{:016X})".format(va, pa))
@@ -651,7 +650,6 @@ class LinuxHelper(Helper):
         for line in symarr:
             if "phys_mem_access_prot" in line:
                 return line.split(" ")[0]
-
 
     #
     # Logical CPU count

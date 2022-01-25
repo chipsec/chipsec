@@ -28,16 +28,13 @@ import os
 import platform
 import resource
 import struct
-import subprocess
 import sys
-import shutil
 
 from chipsec import defines
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger
-import chipsec.file
 from chipsec.lib.uefi_common import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS
 from chipsec.lib.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.lib.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
@@ -62,7 +59,6 @@ class LinuxNativeHelper(Helper):
 
     DEV_MEM = "/dev/mem"
     DEV_PORT = "/dev/port"
-
 
     def __init__(self):
         super(LinuxNativeHelper, self).__init__()
@@ -640,8 +636,6 @@ class LinuxNativeHelper(Helper):
 
     def getcwd(self):
         return os.getcwd()
-
-
 
     #
     # Logical CPU count
