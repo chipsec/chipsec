@@ -209,7 +209,8 @@ class Cfg:
                         self.IO_BARS[vid][name][_name] = _bar.attrib
                     else:
                         self.IO_BARS[vid][name][_name] = _bar.attrib
-                    logger().log_debug("    + {:16}: {}".format(_name, _bar.attrib))
+                    if logger().DEBUG:
+                        logger().log("    + {:16}: {}".format(_name, _bar.attrib))
 
             logger().log_debug("[*] loading indirect memory accesses definitions..")
             for _indirect in _cfg.iter('indirect'):
@@ -218,8 +219,8 @@ class Cfg:
                     _ima.attrib['index'] = "{}.{}.{}".format(vid, name, _ima.attrib['index'])
                     _ima.attrib['data'] = "{}.{}.{}".format(vid, name, _ima.attrib['data'])
                     del _ima.attrib['name']
-                    self.IMA_REGISTERS[_name]= _ima.attrib
-                    logger().log_debug( "    + {:16}: {}".format(_name, _ima.attrib))
+                    self.IMA_REGISTERS[vid][name][_name] = _ima.attrib
+                    logger().log_debug("    + {:16}: {}".format(_name, _ima.attrib))
 
             logger().log_debug("[*] loading configuration registers..")
             for _registers in _cfg.iter('registers'):
@@ -363,6 +364,14 @@ class Cfg:
         else:
             return None
 
+    def get_mem_def(self, range_name):
+        scope = self.get_scope(range_name)
+        vid, range, _, _ = self.convert_internal_scope(scope, range_name)
+        if range in self.MEMORY_RANGES[vid]:
+            return self.MEMORY_RANGES[vid][range]
+        else:
+            return None
+
     def get_register_def(self, reg_name, bus=0):
         scope = self.get_scope(reg_name)
         vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
@@ -454,9 +463,65 @@ class Cfg:
     def get_IO_space(self, io_name):
         scope = self.get_scope(io_name)
         vid, device, io, _ = self.convert_internal_scope(scope, io_name)
-        if io in self.Cfg.IO_BARS[vid][device].keys():
-            reg = self.Cfg.IO_BARS[io_name]["register"]
-            bf = self.Cfg.IO_BARS[io_name]["base_field"]
+        if io in self.IO_BARS[vid][device].keys():
+            reg = self.IO_BARS[vid][device][io]["register"]
+            bf = self.IO_BARS[vid][device][io]["base_field"]
             return (reg, bf)
         else:
             return (None, None)
+
+    def get_REGISTERS_vids(self):
+        return self.REGISTERS.keys()
+
+    def get_REGISTERS_devs(self):
+        ret = []
+        for key in self.get_RESIGSTERS_vids:
+            for dev in self.REGISTERS[key]:
+                ret.append("{}.{}".format(key, dev))
+
+    def get_REGISTERS_regs(self):
+        ret = []
+        for key in self.get_RESIGSTERS_vids:
+            for dev in self.REGISTERS[key]:
+                for reg in self.REGISTERS[key][dev]:
+                    ret.append("{}.{}.{}".format(key, dev, reg))
+
+    def get_REGISTERS_fields(self):
+        ret = []
+        for key in self.get_RESIGSTERS_vids:
+            for dev in self.REGISTERS[key]:
+                for reg in self.REGISTERS[key][dev]:
+                    for field in self.REGISTERS[key][dev][reg]["FIELDS"]:
+                        ret.append("{}.{}.{}.{}".format(key, dev, reg, field))
+
+    def get_REGISTERS_match(self, name):
+        vid, device, register, field = self.convert_internal_scope("", name)
+        ret = []
+        if vid is None or vid == '*':
+            vid = self.REGISTERS.keys()
+        else:
+            vid = [vid]
+        for v in vid:
+            if v in self.REGISTERS.keys():
+                if device is None or device == "*":
+                    dev = self.REGISTERS[v].keys()
+                else:
+                    dev = [device]
+                for d in dev:
+                    if d in self.REGISTERS[v].keys():
+                        if register is None or register == "*":
+                            reg = self.REGISTERS[v][d].keys()
+                        else:
+                            reg = [register]
+                        for r in reg:
+                            if r in self.REGISTERS[v][d].keys():
+                                if field is None or field == "*":
+                                    fld = self.REGISTERS[v][d][r]['FIELDS'].keys()
+                                else:
+                                    if field in self.REGISTERS[v][d][r]['FIELDS'].keys():
+                                        fld = [field]
+                                    else:
+                                        fld = []
+                                for f in fld:
+                                    ret.append("{}.{}.{}.{}".format(v, d, r, f))
+        return ret

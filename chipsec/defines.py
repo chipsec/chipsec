@@ -1,22 +1,22 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+# Contact information:
+# chipsec@intel.com
+
 
 import struct
 import os
@@ -139,21 +139,29 @@ def scan_single_bit_mask(bit_mask):
 COMPRESSION_TYPE_NONE = 0
 COMPRESSION_TYPE_TIANO = 1
 COMPRESSION_TYPE_UEFI = 2
-COMPRESSION_TYPE_LZMA  = 3
+COMPRESSION_TYPE_LZMA = 3
 COMPRESSION_TYPE_BROTLI = 4
 COMPRESSION_TYPE_EFI_STANDARD = 5
 COMPRESSION_TYPE_UNKNOWN = 6
 COMPRESSION_TYPES_ALGORITHMS = [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI, COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_NONE]
 COMPRESSION_TYPES = [COMPRESSION_TYPE_NONE, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_UEFI, COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_BROTLI, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPE_UNKNOWN]
 
+
 def DB(val):
     return struct.pack('<B', val)
+
+
 def DW(val):
     return struct.pack('<H', val)
+
+
 def DD(val):
     return struct.pack('<L', val)
+
+
 def DQ(val):
     return struct.pack('<Q', val)
+
 
 SIZE2FORMAT = {
     1: 'B',
@@ -162,11 +170,13 @@ SIZE2FORMAT = {
     8: 'Q'
 }
 
+
 def bytestostring(mbytes):
     if isinstance(mbytes, bytes):
         return mbytes.decode("latin_1")
     else:
         return mbytes
+
 
 def stringtobytes(mstr):
     if isinstance(mstr, str):
@@ -174,13 +184,16 @@ def stringtobytes(mstr):
     else:
         return mstr
 
+
 def pack1(value, size):
     """Shortcut to pack a single value into a string based on its size."""
     return struct.pack(SIZE2FORMAT[size], value)
 
+
 def unpack1(string, size):
     """Shortcut to unpack a single value from a string based on its size."""
     return struct.unpack(SIZE2FORMAT[size], string)[0]
+
 
 def get_version():
     version_strs = []
@@ -191,11 +204,14 @@ def get_version():
             version_strs.append(verFile.read().strip())
     return '-'.join(version_strs)
 
+
 def is_printable(seq):
     return set(seq).issubset(set(string.printable))
 
+
 def is_hex(maybe_hex):
     return all(char in string.hexdigits for char in maybe_hex)
+
 
 def get_message():
     msg_str = ""
