@@ -36,6 +36,7 @@ XML configuration file for
         <device name="SMBUS" bus="0" dev="0x1F" fun="4" did="0xA223,0xA1A3" config="SMBUS.smbus1.xml"/>
         <device name="SPI"   bus="0" dev="0x1F" fun="5" did="0xA224,0xA1A4" config="SPI.spi2.xml" />
         <device name="SPI"   bus="0" dev="0x1F" fun="5" did="0xA224,0xA1A4" config="SPI.descriptor2.xml" />
+        <device name="SPI"   bus="0" dev="0x1F" fun="5" config="SPI.sfdp.xml" />
     </pci>
 
     <io>
