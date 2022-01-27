@@ -46,16 +46,17 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="HOSTCTL" bus="0" dev="0x00" fun="0" vid="0x8086" did="0x4C43,0x4C53" config="HOSTCTL.hostctl2.xml"/>
-    <device name="PEG10"    bus="0" dev="0x01" fun="0" vid="0x8086" did="0x4C01" />
-    <device name="PEG11"    bus="0" dev="0x01" fun="1" vid="0x8086" did="0x4C05"/>
-    <device name="PEG12"    bus="0" dev="0x01" fun="2" vid="0x8086" did="0x4C07"/>
-    <device name="IGD"      bus="0" dev="0x02" fun="0" vid="0x8086" did="0x4C8A" config="IGD.igd0.xml"/>
-    <device name="DPTF"     bus="0" dev="0x04" fun="0" vid="0x8086" did="0x4C03"/>
-    <device name="PEG60"    bus="0" dev="0x06" fun="0" vid="0x8086" did="0x4C09" />
-    <device name="GNA"      bus="0" dev="0x08" fun="0" vid="0x8086" did="0x4C11" />
-    <device name="NPK"      bus="0" dev="0x09" fun="0" vid="0x8086" did="0x4C19" />
-    <device name="MEI1" bus="0x0" dev="0x16" fun="0" config="ME.mei0.xml" />
+    <device name="HOSTCTL"  bus="0x0" dev="0x00" fun="0"  did="0x4C43,0x4C53" config="HOSTCTL.hostctl2.xml"/>
+    <device name="HOSTCTL"  bus="0x0" dev="0x00" fun="0"  config="IOMMU.iommu.xml"/>
+    <device name="PEG10"    bus="0x0" dev="0x01" fun="0"  did="0x4C01" />
+    <device name="PEG11"    bus="0x0" dev="0x01" fun="1"  did="0x4C05"/>
+    <device name="PEG12"    bus="0x0" dev="0x01" fun="2"  did="0x4C07"/>
+    <device name="IGD"      bus="0x0" dev="0x02" fun="0"  did="0x4C8A" config="IGD.igd0.xml"/>
+    <device name="DPTF"     bus="0x0" dev="0x04" fun="0"  did="0x4C03"/>
+    <device name="PEG60"    bus="0x0" dev="0x06" fun="0"  did="0x4C09" />
+    <device name="GNA"      bus="0x0" dev="0x08" fun="0"  did="0x4C11" />
+    <device name="NPK"      bus="0x0" dev="0x09" fun="0"  did="0x4C19" />
+    <device name="MEI1"     bus="0x0" dev="0x16" fun="0"  config="ME.mei0.xml" />
   </pci>
 
   <msr>
@@ -68,6 +69,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
   <!--                                      -->
   <!-- #################################### -->
   <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" size="0x10000" config="TPM.tpm12.xml" />
   </memory>
 
 </configuration>

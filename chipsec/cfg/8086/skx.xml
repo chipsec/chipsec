@@ -15,16 +15,23 @@ Intel (c) Xeon Processor Scalable Family datasheet Vol. 2
   </info>
 
   <pci>
-    <device name="MemMap_VTd" bus="0" dev="0" fun="0" did="0x09A2" config="MEMMAP_VTD.memmap_vtd0.xml"/>
-    <device name="DMI" bus="0" dev="3" fun="0" did="0x3348" config="DMI.dmi0.xml" />
-    <device name="MEI1" bus="0x0" dev="0x16" fun="0" config="ME.mei0.xml" />
+    <device name="MemMap_VTd" bus="0x0" dev="0x00" fun="0" did="0x09A2" config="MEMMAP_VTD.memmap_vtd0.xml"/>
+    <device name="MemMap_VTd" bus="0x0" dev="0x00" fun="0" config="IOMMU.iommu.xml"/>
+    <device name="DMI"        bus="0x0" dev="0x03" fun="0" did="0x3348" config="DMI.dmi0.xml" />
+    <device name="MEI1"       bus="0x0" dev="0x16" fun="0" config="ME.mei0.xml" />
   </pci>
 
   <msr>
     <definition name="MSR" config="MSR.msr3.xml" />
   </msr>
 
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
   <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" size="0x10000" config="TPM.tpm12.xml" />
   </memory>
 
 

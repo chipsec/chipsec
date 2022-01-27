@@ -23,15 +23,16 @@
   </pci>
 
   <pci>
-    <device name="HOSTCTL" bus="0x0" dev="0x00" fun="0" config="HOSTCTL.hostctl5.xml"/>
-    <device name="IGD"      bus="0x0" dev="0x2"  fun="0" config="IGD.igd0.xml" />
-    <device name="MEI1"     bus="0x0" dev="0xF"  fun="0" config="ME.mei0.xml" />
-    <device name="MEI2"     bus="0x0" dev="0xF"  fun="1" />
-    <device name="MEI3"     bus="0x0" dev="0xF"  fun="2" />
-    <device name="P2SBC"    bus="0"   dev="0xD"  fun="0" config="P2SB.p2sbc0.xml" />
-    <device name="PMC"      bus="0"   dev="0xD"  fun="1" config="PMC.pmc6.xml" />
-    <device name="SMBUS"    bus="0"   dev="0x1F" fun="1" config="SMBUS.smbus2.xml" />
-    <device name="SPI"      bus="0"   dev="0xD"  fun="2" config="SPI.spi2.xml" />
+    <device name="HOSTCTL"  bus="0x0" dev="0x00"  fun="0" config="HOSTCTL.hostctl5.xml"/>
+    <device name="HOSTCTL"  bus="0x0" dev="0x00"  fun="0" config="IOMMU.iommu.xml"/>
+    <device name="IGD"      bus="0x0" dev="0x02"  fun="0" config="IGD.igd0.xml" />
+    <device name="MEI1"     bus="0x0" dev="0x0F"  fun="0" config="ME.mei0.xml" />
+    <device name="MEI2"     bus="0x0" dev="0x0F"  fun="1" />
+    <device name="MEI3"     bus="0x0" dev="0x0F"  fun="2" />
+    <device name="P2SBC"    bus="0x0" dev="0x0D"  fun="0" config="P2SB.p2sbc0.xml" />
+    <device name="PMC"      bus="0x0" dev="0x0D"  fun="1" config="PMC.pmc6.xml" />
+    <device name="SMBUS"    bus="0x0" dev="0x1F"  fun="1" config="SMBUS.smbus2.xml" />
+    <device name="SPI"      bus="0x0" dev="0x0D"  fun="2" config="SPI.spi2.xml" />
   </pci>
 
   <!-- #################################### -->
@@ -46,5 +47,14 @@
   <mm_msgbus>
       <device name="RTC" port="0xC3" config="RTC.rtc0.xml" />
   </mm_msgbus>
+
+    <!-- #################################### -->
+  <!--                                      -->
+  <!-- Memory ranges                        -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <memory>
+    <range name="TPM" access="mmio" address="0xFED40000" size="0x10000" config="TPM.tpm12.xml" />
+  </memory>
 
 </configuration>
