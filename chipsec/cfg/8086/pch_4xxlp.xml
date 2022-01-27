@@ -25,6 +25,7 @@
     <device name="SMBUS"  bus="0" dev="0x1F" fun="4" config="SMBUS.smbus1.xml" />
     <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.spi0.xml" />
     <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.descriptor0.xml" />
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" config="SPI.sfdp.xml" />
   </pci>
 
   <io>
