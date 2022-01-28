@@ -25,7 +25,20 @@
 
 
 """
+SPI Flash Region Access Control
+
 Checks SPI Flash Region Access Permissions programmed in the Flash Descriptor
+
+Usage:
+    ``chipsec_main -m common.spi_access``
+
+Examples:
+    >>> chipsec_main.py -m common.spi_access
+
+Registers used:
+    - HSFS.FDV
+    - FRAP.BRWA
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
@@ -47,9 +60,9 @@ class spi_access(BaseModule):
     def check_flash_access_permissions(self):
 
         res = ModuleResult.PASSED
-        fdv = self.cs.read_register_field( 'HSFS', 'FDV' ) == 1
-        frap = self.cs.read_register( 'FRAP' )
-        brwa = self.cs.get_register_field( 'FRAP', frap, 'BRWA' )
+        fdv = self.cs.read_register_field('HSFS', 'FDV') == 1
+        frap = self.cs.read_register('FRAP')
+        brwa = self.cs.get_register_field('FRAP', frap, 'BRWA')
 
         # Informational
         # State of Flash Descriptor Valid bit
@@ -96,7 +109,7 @@ class spi_access(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run( self, module_argv ):
-        self.logger.start_test( "SPI Flash Region Access Control" )
+        self.logger.start_test("SPI Flash Region Access Control")
         self.spi.display_SPI_Ranges_Access_Permissions()
         self.res = self.check_flash_access_permissions()
         return self.res
