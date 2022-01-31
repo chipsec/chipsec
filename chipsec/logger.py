@@ -67,12 +67,15 @@ class ColorLogger(pyLogging.Formatter):
             WHITE = WConio.WHITE
 
             LEVEL_ID = {
-                pyLogging.DEBUG: GREEN,
-                pyLogging.INFO: WHITE,
+                pyLogging.ERROR: MAGENTA,
+                39: BLUE,
                 pyLogging.WARNING: YELLOW,
-                pyLogging.CRITICAL: BLUE,
-                pyLogging.ERROR: RED
-            }
+                29: RED,
+                28: GREEN,
+                pyLogging.INFO: WHITE,
+                19: WHITE,
+                18: WHITE,
+                pyLogging.DEBUG: WHITE}
 
             def log_color(self, message, record):
                 """ Testing """
@@ -110,11 +113,15 @@ class ColorLogger(pyLogging.Formatter):
         reset = '\x1b[0m'
 
         LEVEL_ID = {
-            pyLogging.DEBUG: GREEN,
-            pyLogging.INFO: WHITE,
+            pyLogging.ERROR: PURPLE,
+            39: BLUE,
             pyLogging.WARNING: YELLOW,
-            pyLogging.CRITICAL: BLUE,
-            pyLogging.ERROR: RED
+            29: RED,
+            28: GREEN,
+            pyLogging.INFO: WHITE,
+            19: LIGHT_GRAY,
+            18: LIGHT_GRAY,
+            pyLogging.DEBUG: LIGHT_GRAY
         }
 
         def log_color(self, message, record):
@@ -138,13 +145,14 @@ class Logger:
         """The Constructor."""
         self.mytime = localtime()
         self.logfile = None
-        self.debug = pyLogging.DEBUG
-        self.info = pyLogging.INFO
         self.rootLogger = pyLogging.getLogger(__name__)
-        self.rootLogger.setLevel(self.debug)
+        self.rootLogger.setLevel(pyLogging.INFO)
         self.ALWAYS_FLUSH = False
-        pyLogging.addLevelName(15, "verbose")
-        self.verbose = 15
+        pyLogging.addLevelName(19, "verbose")
+        pyLogging.addLevelName(18, "hal")
+        pyLogging.addLevelName(29, "bad")
+        pyLogging.addLevelName(28, "good")
+        pyLogging.addLevelName(39, "header")
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         # Respect https://no-color.org/ convention, and disable colorization
         # when the output is not a terminal (eg. redirection to a file)
