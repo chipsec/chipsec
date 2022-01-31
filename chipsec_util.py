@@ -122,9 +122,8 @@ class ChipsecUtil:
             cmds_dir = os.path.join(get_main_dir(), "chipsec", "utilcmd")
             cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
 
-        if logger().DEBUG:
-            logger().log( '[CHIPSEC] Loaded command-line extensions:' )
-            logger().log( '   {}'.format(cmds) )
+        logger().log_debug( '[CHIPSEC] Loaded command-line extensions:' )
+        logger().log_debug( '   {}'.format(cmds) )
         module = None
         for cmd in cmds:
             try:

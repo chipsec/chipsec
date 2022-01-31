@@ -65,10 +65,10 @@ class Module():
                 if _importlib:
                     self.module = importlib.import_module( self.name )
                 loaded = True
-                if self.logger.DEBUG: self.logger.log_good( "imported: {}".format(self.name) )
+                self.logger.log_debug( "imported: {}".format(self.name) )
             except BaseException as msg:
                 self.logger.error( "Exception occurred during import of {}: '{}'".format(self.name, str(msg)) )
-                if self.logger.DEBUG: self.logger.log_bad(traceback.format_exc())
+                self.logger.log_debug(traceback.format_exc())
                 raise msg
         return loaded
 

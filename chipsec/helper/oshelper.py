@@ -79,8 +79,7 @@ class OsHelper:
             except OsHelperError:
                 raise
             except:
-                if logger().DEBUG:
-                    logger().log("Unable to load helper: {}".format(helper))
+                logger().log_debug("Unable to load helper: {}".format(helper))
 
     def start(self, start_driver, driver_exists=None, to_file=None, from_file=False):
         if not to_file is None:
@@ -96,7 +95,7 @@ class OsHelper:
             if not self.helper.start( start_driver, from_file ):
                 raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
-            if logger().DEBUG: logger().log_bad(traceback.format_exc())
+            logger().log_debug_bad(traceback.format_exc())
             error_no = errno.ENXIO
             if hasattr(msg, 'errorcode'):
                 error_no = msg.errorcode
@@ -150,7 +149,7 @@ class OsHelper:
     def read_pci_reg( self, bus, device, function, address, size ):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
+            logger().log_debug( "Config register address is not naturally aligned" )
 
         if self.use_native_api() and hasattr(self.helper, 'native_read_pci_reg'):
             ret = self.helper.native_read_pci_reg( bus, device, function, address, size )
@@ -163,7 +162,7 @@ class OsHelper:
     def write_pci_reg( self, bus, device, function, address, value, size ):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
+            logger().log_debug( "Config register address is not naturally aligned" )
 
         if self.use_native_api() and hasattr(self.helper, 'native_write_pci_reg'):
             ret = self.helper.native_write_pci_reg( bus, device, function, address, value, size )
@@ -554,8 +553,7 @@ def helper():
         try:
             _helper  = OsHelper()
         except BaseException as msg:
-            if logger().DEBUG:
-                logger().error( str(msg) )
-                logger().log_bad(traceback.format_exc())
+            logger().log_debug( str(msg) )
+            logger().log_debug(traceback.format_exc())
             raise
     return _helper

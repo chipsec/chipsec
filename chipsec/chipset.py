@@ -164,9 +164,9 @@ class Chipset:
             did = (vid_did >> 16) & 0xFFFF
             rid = self.pci.read_byte(0, 0, 0, PCI_HDR_RID_OFF)
         except:
-            if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
+            logger().log_debug("pci.read_dword couldn't read platform VID/DID")
         if not vid in PCH_ADDRESS:
-            if logger().DEBUG: logger().error("PCH address unknown for VID 0x{:04X}.".format(vid))
+            logger().log_debug("PCH address unknown for VID 0x{:04X}.".format(vid))
         else:
             try:
                  (bus,dev,fun) = PCH_ADDRESS[vid]
@@ -175,7 +175,7 @@ class Chipset:
                  pch_did = (vid_did >> 16) & 0xFFFF
                  pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
             except:
-                 if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
+                 logger().log_debug("pci.read_dword couldn't read PCH VID/DID")
         return (vid, did, rid, pch_vid, pch_did, pch_rid)
 
     def get_cpuid(self):
@@ -372,27 +372,27 @@ class Chipset:
         VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
         # create dictionaries
         for vid in VID:
-            if logger().DEBUG: logger().log( "[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)) )
+            logger().log_debug( "[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)) )
             self.chipset_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.pch_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.device_dictionary[int(vid, 16)] = collections.defaultdict(list)
             for fxml in os.listdir(os.path.join(_cfg_path, vid)):
-                if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
+                logger().log_debug( "[*] looking for platform config in '{}'..".format(fxml) )
                 tree = ET.parse( os.path.join(_cfg_path, vid, fxml) )
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     if 'platform' not in _cfg.attrib:
-                        if logger().DEBUG: logger().log( "[*] skipping common platform config '{}'..".format(fxml) )
+                        logger().log_debug( "[*] skipping common platform config '{}'..".format(fxml) )
                         continue
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
-                        if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
+                        logger().log_debug( "[*] found PCH config at '{}'..".format(fxml) )
                         if not _cfg.attrib['platform'].upper() in self.pch_codes.keys():
                             self.pch_codes[_cfg.attrib['platform'].upper()] = {}
                             self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid, 16)
                         mdict = self.pch_dictionary[int(vid, 16)]
                         cdict = self.pch_codes[_cfg.attrib['platform'].upper()]
                     elif _cfg.attrib['platform'].upper():
-                        if logger().DEBUG: logger().log("[*] found platform config from '{}'..".format(fxml))
+                        logger().log_debug("[*] found platform config from '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.chipset_codes.keys():
                             self.chipset_codes[_cfg.attrib['platform'].upper()] = {}
                             self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid, 16)
@@ -400,7 +400,7 @@ class Chipset:
                         cdict = self.chipset_codes[_cfg.attrib['platform'].upper()]
                     else:
                         continue
-                    if logger().DEBUG: logger().log( "[*] Populating configuration dictionary.." )
+                    logger().log_debug( "[*] Populating configuration dictionary.." )
                     for _info in _cfg.iter('info'):
                         if 'family' in _info.attrib:
                             family = _info.attrib['family'].lower()
@@ -429,8 +429,7 @@ class Chipset:
                                 if "detection_value" in _sku.attrib.keys():
                                     _det = _sku.attrib['detection_value']
                             if _did == "":
-                                if logger().DEBUG:
-                                    logger().warn("No SKU found in configuration")
+                                logger().log_debug("No SKU found in configuration")
                             cdict['did'] = _did
                             cdict['detection_value'] = _det
             for cc in self.chipset_codes:
@@ -446,10 +445,9 @@ class Chipset:
         for root, subdirs, files in os.walk(_cfg_path):
             _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
         _cfg_files.sort()
-        if logger().DEBUG:
-            logger().log("[*] Configuration Files:")
-            for _xml in _cfg_files:
-                logger().log("[*] - {}".format(_xml))
+        logger().log_debug("[*] Configuration Files:")
+        for _xml in _cfg_files:
+            logger().log_debug("[*] - {}".format(_xml))
 
         # Locate common (chipsec/cfg/{vid}/common*.xml) configuration XML files.
         loaded_files = []
@@ -477,12 +475,12 @@ class Chipset:
                     loaded_files.append(_xml)
 
         # Load all configuration files for this platform.
-        if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
+        logger().log_debug("[*] Loading Configuration Files:")
         for _xml in loaded_files:
             self.init_cfg_xml(_xml, self.code.lower(), self.pch_code.lower())
 
         # Load Bus numbers for this platform.
-        if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
+        logger().log_debug("[*] Discovering Bus Configuration:")
         self.init_cfg_bus()
 
         self.Cfg.XML_CONFIG_LOADED = True
@@ -494,7 +492,7 @@ class Chipset:
                     del _named_item.attrib['name']
                     if 'undef' in _named_item.attrib:
                         if _name in config_to_modify:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _named_item.attrib['undef']))
+                            logger().log_debug("    - {:16}: {}".format(_name, _named_item.attrib['undef']))
                             config_to_modify.pop(_name, None)
                         continue
                     if type == 'registers':
@@ -516,58 +514,58 @@ class Chipset:
                         _named_item.attrib['FIELDS'] = fields
 
                     config_to_modify[ _name ] = _named_item.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _named_item.attrib) )
+                    logger().log_debug( "    + {:16}: {}".format(_name, _named_item.attrib) )
 
     def init_cfg_xml(self, fxml, code, pch_code):
         if not os.path.exists( fxml ): return
-        if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
+        logger().log_debug( "[*] looking for platform config in '{}'..".format(fxml) )
         tree = ET.parse( fxml )
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
-                if logger().DEBUG: logger().log( "[*] loading common platform config from '{}'..".format(fxml) )
+                logger().log_debug( "[*] loading common platform config from '{}'..".format(fxml) )
             elif code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log( "[*] loading '{}' platform config from '{}'..".format(code, fxml) )
+                logger().log_debug( "[*] loading '{}' platform config from '{}'..".format(code, fxml) )
                 if 'req_pch' in _cfg.attrib:
                     if 'true' == _cfg.attrib['req_pch'].lower():
                         self.reqs_pch = True
             elif pch_code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
+                logger().log_debug("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
             else: continue
 
-            if logger().DEBUG: logger().log( "[*] loading integrated devices/controllers.." )
+            logger().log_debug( "[*] loading integrated devices/controllers.." )
             self.populate_cfg_type(_cfg, 'pci', self.Cfg.CONFIG_PCI, 'device')
 
-            if logger().DEBUG: logger().log( "[*] loading MMIO BARs.." )
+            logger().log_debug( "[*] loading MMIO BARs.." )
             self.populate_cfg_type(_cfg, 'mmio', self.Cfg.MMIO_BARS, 'bar')
 
-            if logger().DEBUG: logger().log( "[*] loading I/O BARs.." )
+            logger().log_debug( "[*] loading I/O BARs.." )
             self.populate_cfg_type(_cfg, 'io', self.Cfg.IO_BARS, 'bar')
 
-            if logger().DEBUG: logger().log( "[*] loading indirect memory accesses definitions.." )
+            logger().log_debug( "[*] loading indirect memory accesses definitions.." )
             self.populate_cfg_type(_cfg, 'ima', self.Cfg.IO_BARS, 'indirect')
 
-            if logger().DEBUG: logger().log( "[*] loading memory ranges.." )
+            logger().log_debug( "[*] loading memory ranges.." )
             self.populate_cfg_type(_cfg, 'memory', self.Cfg.MEMORY_RANGES, 'range')
 
-            if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
+            logger().log_debug( "[*] loading configuration registers.." )
             self.populate_cfg_type(_cfg, 'registers', self.Cfg.REGISTERS, 'register')
 
-            if logger().DEBUG: logger().log( "[*] loading controls.." )
+            logger().log_debug( "[*] loading controls.." )
             self.populate_cfg_type(_cfg, 'controls', self.Cfg.CONTROLS, 'control')
 
-            if logger().DEBUG: logger().log("[*] loading locks..")
+            logger().log_debug("[*] loading locks..")
             self.populate_cfg_type(_cfg, 'locks', self.Cfg.LOCKS, 'lock')
 
     def init_cfg_bus( self ):
-        if logger().DEBUG: logger().log( '[*] Loading device buses..' )
+        logger().log_debug( '[*] Loading device buses..' )
         if QUIET_PCI_ENUM:
             old_hal_state = logger().HAL
             logger().HAL = False
         try:
             enum_devices = self.pci.enumerate_devices()
         except:
-            if logger().DEBUG: logger().log('[*] Unable to enumerate PCI devices.')
+            logger().log_debug('[*] Unable to enumerate PCI devices.')
             enum_devices = []
         if QUIET_PCI_ENUM:
             logger().HAL = old_hal_state
@@ -605,7 +603,7 @@ class Chipset:
                     cfg_str = "{:0>2}_{:0>2}_{:s}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
                     if cfg_str in self.Cfg.BUS.keys():
                         self.Cfg.BUS[config_device] = self.Cfg.BUS.pop(cfg_str)
-                        if logger().DEBUG: logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, device_data['vid'][2:], tdid, ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
+                        logger().log_debug(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, device_data['vid'][2:], tdid, ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
                         break
 
     #
@@ -619,7 +617,7 @@ class Chipset:
                 logger().log_good( "imported platform specific configuration: chipsec.cfg.{}".format(self.code) )
                 self.Cfg = getattr( module, self.code )()
             except ImportError as msg:
-                if logger().DEBUG: logger().log( "[*] Couldn't import chipsec.cfg.{}\n{}".format( self.code, str(msg) ) )
+                logger().log_debug( "[*] Couldn't import chipsec.cfg.{}\n{}".format( self.code, str(msg) ) )
 
         #
         # Initialize platform configuration from XML files
@@ -627,7 +625,7 @@ class Chipset:
         try:
             self.load_xml_configuration()
         except:
-            if logger().DEBUG: logger().log_bad(traceback.format_exc())
+            logger().log_debug(traceback.format_exc())
             pass
 
 
@@ -773,8 +771,7 @@ class Chipset:
     def get_register_bus(self, reg_name):
         device = self.Cfg.REGISTERS[reg_name].get('device', '')
         if not device:
-            if logger().DEBUG:
-                logger().warn( "No device found for '{}'".format(reg_name) )
+            logger().log_debug( "No device found for '{}'".format(reg_name) )
             if 'bus' in self.Cfg.REGISTERS[reg_name]:
                 return [int(self.Cfg.REGISTERS[reg_name]['bus'], 16)]
             else:
@@ -955,8 +952,8 @@ class Chipset:
             if len(reg_values) == 1:
                 self.write_register(reg_name, reg_values[0])
                 ret = True
-        if not ret and logger().DEBUG:
-            logger().log("[write_register_all] There is a mismatch in the number of register values and registers to write")
+        if not ret
+            logger().log_debug("[write_register_all] There is a mismatch in the number of register values and registers to write")
         return ret
 
     def write_register_all_single(self, reg_name, reg_value, cpu_thread=0):
@@ -1233,8 +1230,7 @@ class Chipset:
         return lock_name in self.Cfg.LOCKS.keys()
 
     def get_locked_value(self, lock_name):
-        if logger().DEBUG:
-            logger().log('Retrieve value for lock {}'.format(lock_name))
+        logger().log_debug('Retrieve value for lock {}'.format(lock_name))
         return int(self.Cfg.LOCKS[lock_name]['value'], 16)
 
     def get_lock_desc(self, lock_name):

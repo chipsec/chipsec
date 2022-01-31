@@ -133,7 +133,7 @@ class ChipsecMain:
                 module = importlib.import_module( module_path )
             except BaseException as msg:
                 logger().error( "Exception occurred during import of {}: '{}'".format(module_path, str(msg)) )
-                if logger().DEBUG: logger().log_bad(traceback.format_exc())
+                logger().log_debug(traceback.format_exc())
                 if self.failfast: raise msg
         return module
 
@@ -156,14 +156,14 @@ class ChipsecMain:
         result = None
         try:
             if not modx.do_import(): return module_common.ModuleResult.ERROR
-            if logger().DEBUG and not self._list_tags: logger().log( "[*] Module path: {}".format(modx.get_location()) )
+            if not self._list_tags: logger().log_debug( "[*] Module path: {}".format(modx.get_location()) )
 
             if self.verify_module_tags( modx ):
                 result = modx.run( module_argv )
             else:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:
-            if logger().DEBUG: logger().log_bad(traceback.format_exc())
+            logger().log_debug(traceback.format_exc())
             logger().log_error_check( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
             raise msg
         return result
@@ -211,7 +211,7 @@ class ChipsecMain:
         return True
 
     def load_modules_from_path( self, from_path, recursive = True ):
-        if logger().DEBUG: logger().log( "[*] Path: {}".format(os.path.abspath( from_path )) )
+        logger().log_debug( "[*] Path: {}".format(os.path.abspath( from_path )) )
         for dirname, subdirs, mod_fnames in os.walk( os.path.abspath( from_path ) ):
             if not recursive:
                 while len(subdirs) > 0:
@@ -282,7 +282,7 @@ class ChipsecMain:
             except BaseException:
                 results.add_exception(modx)
                 result = module_common.ModuleResult.ERROR
-                if logger().DEBUG: logger().log_bad(traceback.format_exc())
+                logger().log_debug(traceback.format_exc())
                 if self.failfast: raise
 
             # Module uses the old API  display warning and try to run anyways
@@ -488,13 +488,13 @@ class ChipsecMain:
                     logger().error('To specify a cpu please use -p command-line option')
                     logger().error('To specify a pch please use --pch command-line option\n')
                     logger().error('To load legacy configuration and run anyways please use -i command-line option')
-                    if logger().DEBUG: logger().log_bad(traceback.format_exc())
+                    logger().log_debug(traceback.format_exc())
                     if self.failfast: raise msg
                     return  ExitCode.EXCEPTION
                 logger().warn("Platform dependent functionality is likely to be incorrect")
             except OsHelperError as os_helper_error:
                 logger().error(str(os_helper_error))
-                if logger().DEBUG: logger().log_bad(traceback.format_exc())
+                logger().log_debug(traceback.format_exc())
                 if self.failfast: raise os_helper_error
                 return ExitCode.EXCEPTION
             except BaseException as be:
@@ -509,7 +509,7 @@ class ChipsecMain:
 
         logger().log( " " )
 
-        if logger().DEBUG: logger().log("[*] Running from {}".format(os.getcwd()))
+        logger().log_debug("[*] Running from {}".format(os.getcwd()))
 
         modules_failed = 0
         if self._module:

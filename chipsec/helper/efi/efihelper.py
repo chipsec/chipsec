@@ -76,26 +76,22 @@ class EfiHelper(Helper):
 ###############################################################################################
 
     def create(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper created")
+        logger().log_debug("[helper] UEFI Helper created")
         return True
 
     def start(self, start_driver, driver_exists=False):
         # The driver is part of the modified version of edk2.
         # It is always considered as loaded.
         self.driver_loaded = True
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper started/loaded")
+        logger().log_debug("[helper] UEFI Helper started/loaded")
         return True
 
     def stop(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper stopped/unloaded")
+        logger().log_debug("[helper] UEFI Helper stopped/unloaded")
         return True
 
     def delete(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper deleted")
+        logger().log_debug("[helper] UEFI Helper deleted")
         return True
 
 
@@ -124,13 +120,12 @@ class EfiHelper(Helper):
 
     def va2pa(self, va):
         pa = va # UEFI shell has identity mapping
-        if logger().DEBUG: logger().log( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa) )
+        logger().log_debug( "[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa) )
         return (pa, 0)
 
     def pa2va(self, pa):
         va = pa # UEFI Shell has identity mapping
-        if logger().DEBUG:
-            logger().log('[helper] PA (0X{:016X}) -> VA (0X{:016X})'.format(pa, va))
+        logger().log_debug('[helper] PA (0X{:016X}) -> VA (0X{:016X})'.format(pa, va))
         return va
 
 
@@ -222,11 +217,11 @@ class EfiHelper(Helper):
         return False
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
-        if logger().DEBUG: logger().error( "[efi] load_ucode_update is not supported yet" )
+        logger().log_debug( "[efi] load_ucode_update is not supported yet" )
         return 0
 
     def get_threads_count ( self ):
-        if logger().DEBUG: logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
+        logger().log_debug_warning( "EFI helper hasn't implemented get_threads_count yet" )
         #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
         return 0
 
@@ -235,7 +230,7 @@ class EfiHelper(Helper):
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
-        if logger().DEBUG: logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
+        logger().log_debug_warning("EFI helper has not implemented get_descriptor_table yet")
         return 0
 
     #
@@ -316,8 +311,7 @@ class EfiHelper(Helper):
                     logger().log("[helper] EFI Variable name size was too small increasing to {:d}".format(size))
                 (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
 
-            if logger().DEBUG:
-                logger().log("[helper] Returned {}. Status is {}".format(name, status_dict[status]))
+            logger().log_debug("[helper] Returned {}. Status is {}".format(name, status_dict[status]))
 
             if status:
                 search_complete = True
@@ -327,8 +321,7 @@ class EfiHelper(Helper):
                 else:
                     var_list.append((namestr, guidstr))
 
-                if logger().DEBUG:
-                    logger().log("[helper] Found variable '{}' - [{}]".format(name, guidstr))
+                logger().log_debug("[helper] Found variable '{}' - [{}]".format(name, guidstr))
 
         for (name, guidstr) in var_list:
             (status, data, attr) = self.get_EFI_variable_full(name, guidstr)
@@ -339,7 +332,7 @@ class EfiHelper(Helper):
             var_data = (off, buf, hdr, data, guidstr, attr)
 
             if name in variables:
-                logger().verbose_log('[helper] Duplicate variable name {} - {}'.format(name, guidstr))
+                logger().log_verbose('[helper] Duplicate variable name {} - {}'.format(name, guidstr))
                 continue
             else:
                 variables[name] = []
@@ -355,7 +348,7 @@ class EfiHelper(Helper):
     #
 
     def get_ACPI_SDT( self ):
-        if logger().DEBUG: logger().error( "[efi] ACPI is not supported yet" )
+        logger().log_debug( "[efi] ACPI is not supported yet" )
         return 0
 
     #
@@ -363,19 +356,19 @@ class EfiHelper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        logger().log_debug( "[efi] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        logger().log_debug( "[efi] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        logger().log_debug( "[efi] Message Bus is not supported yet" )
         return None
 
     def set_affinity( self, value ):
-        if logger().DEBUG: logger().error( '[efi] API set_affinity() is not supported' )
+        logger().log_debug( '[efi] API set_affinity() is not supported' )
         return 0
 
 def get_helper():
