@@ -38,9 +38,6 @@ try:
 except ImportError:
     has_WConio = False
 
-LOG_PATH                = os.path.join( os.getcwd(), "logs" )
-#LOG_STATUS_FILE_NAME    = ""
-#LOG_COMPLETED_FILE_NAME = ""
 
 class ColorLogger( pyLogging.Formatter ):
     """Colored Output for Python Logging"""
@@ -183,7 +180,6 @@ class Logger:
 
     def disable( self ):
         """Disables the logging to file and closes the file if any."""
-        self.LOG_TO_FILE = False
         self.LOG_FILE_NAME = None
         self.close()
 
@@ -193,7 +189,7 @@ class Logger:
 
     def flush(self):
         sys.stdout.flush()
-        if self.LOG_TO_FILE and self.logfile is not None:
+        if self.logfile is not None:
             # flush should work with new python logging
             try:
                 self.rootLogger.removeHandler(self.logfile)
@@ -342,34 +338,14 @@ class Logger:
     def end_module( self, module_name ):
         if self.Results.get_current() is not None:
             self.Results.get_current().set_time()
-        #text = "\n[-] *** Done *** %s" % module_name
-        #self._log(text, None, None)
 
-    def _write_log( self, text, filename ):
-        self.rootLogger.log(self.info, text) #writes text to defined log file
-        if self.ALWAYS_FLUSH:
-            # not sure why flush doesn't work as excpected
-            # self.logfile.flush()
-            # close and re-open log file
-            try:
-                self.logfile.close()
-                self.logfile = open( self.LOG_FILE_NAME, 'a+' )
-            except Exception:
-                self.disable()
-
-    def _save_to_log_file(self, text):
-        if(self.LOG_TO_FILE):
-            self._write_log(text, self.LOG_FILE_NAME)
 
     VERBOSE    = False
     UTIL_TRACE = False
     HAL        = False
     DEBUG      = False
 
-
     LOG_TO_STATUS_FILE   = False
-    LOG_STATUS_FILE_NAME = ""
-    LOG_TO_FILE          = False
     LOG_FILE_NAME        = ""
 
 _logger  = Logger()
