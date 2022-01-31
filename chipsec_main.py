@@ -97,7 +97,7 @@ class ChipsecMain:
     # Module API
     ##################################################################################
     def f_mod(self, x):
-        return ( x.find('__init__') == -1 and ZIP_MODULES_RE.match(x) )
+        return ( x.find('__init__') == -1 and self.ZIP_MODULES_RE.match(x) )
 
     def map_modname(self, x):
         return (x.rpartition('.')[0]).replace('/', '.')
@@ -120,7 +120,7 @@ class ChipsecMain:
         return module
 
     def verify_module_tags(self, module):
-        run_it = True      
+        run_it = True
         module_tags, metadata_tags = module.get_tags()
         if len(metadata_tags) > 0:
             logger().log("[*] Metadata tags: {}".format(metadata_tags))
@@ -343,8 +343,7 @@ class ChipsecMain:
     def run_all_modules(self):
         if self.CHIPSEC_LOADED_AS_EXE:
             myzip = zipfile.ZipFile( os.path.join(self.CHIPSEC_FOLDER, "library.zip" ))
-            global ZIP_MODULES_RE
-            ZIP_MODULES_RE = re.compile(r"^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/" +self._cs.code.lower() +r"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
+            self.ZIP_MODULES_RE = re.compile(r"^chipsec\/modules\/\w+\.pyc$|^chipsec\/modules\/common\/(\w+\/)*\w+\.pyc$|^chipsec\/modules\/" +self._cs.code.lower() +r"\/\w+\.pyc$", re.IGNORECASE|re.VERBOSE)
             zip_modules = []
             zip_modules.extend( map(self.map_pass, filter(self.f_mod, myzip.namelist())) )
             logger().log( "Loaded modules from ZIP:" )
