@@ -28,24 +28,6 @@ Main application logic and automation functions
 ## These are for debugging imports
 import inspect
 import sys
-if sys.version[0] == 2:
-    import __builtin__
-    savimp = __builtin__.__import__
-elif sys.version[0] == 3:
-    import builtins
-    savimp = builtins.__import__
-
-
-def newimp(name, *x):
-    caller = inspect.currentframe().f_back
-    if 'chipsec' in name:
-        print ("{:35} -> {}".format( (caller.f_globals.get('__name__')), name))
-
-    return savimp(name, *x)
-## Uncomment the following line to display  the imports that chipsec calls
-#__builtin__.__import__ = newimp
-## END DEBUG
-
 import fnmatch
 import argparse
 import json
