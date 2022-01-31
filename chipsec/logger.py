@@ -225,7 +225,7 @@ class Logger:
     def set_always_flush(self, val):
         self.ALWAYS_FLUSH = val
 
-    def log(self, text, level=pyLogging.INFO):
+    def _log(self, text, level=pyLogging.INFO):
         """Sends plain text to logging."""
         if self.Results.get_current() is not None:
             self.Results.get_current().add_output(text)
@@ -235,6 +235,10 @@ class Logger:
                 self.flush()
         except BaseException:
             print(text)
+
+    def log(self, text):
+        """Plain Log message"""
+        self._log(text, pyLogging.INFO)
 
     # -------------------------------------------------------
     # These logger methods are deprecated and will be removed
@@ -248,12 +252,12 @@ class Logger:
     def warn(self, text):  # Use log_warning()
         """Logs an Warning message"""
         text = "WARNING: " + text
-        self.log(text, pyLogging.WARNING)
+        self._log(text, pyLogging.WARNING)
 
     def verbose_log(self, text):  # Replaced by log_verbose() for naming consistency
         """Logs an Verbose message"""
         if self.VERBOSE:
-            self.log(text, self.verbose)
+        self._log(text, pyLogging.getLevelName("verbose"))
 
     def log_passed_check(self, text):  # Duplicate of log_passed()
         """Logs a Test as PASSED"""
@@ -300,22 +304,22 @@ class Logger:
     def log_passed(self, text):
         """Logs a passed message."""
         text = "[+] PASSED: " + text
-        self.log(text, pyLogging.DEBUG)
+        self._log(text, pyLogging.getLevelName("good"))
 
     def log_failed(self, text):
         """Logs a failed message."""
         text = "[-] FAILED: " + text
-        self.log(text, pyLogging.ERROR)
+        self._log(text, pyLogging.getLevelName("bad"))
 
     def log_error(self, text):
         """Logs an Error message"""
         text = "[-] ERROR: " + text
-        self.log(text, pyLogging.ERROR)
+        self._log(text, pyLogging.ERROR)
 
     def log_warning(self, text):
         """Logs a Warning message"""
         text = "[!] WARNING: " + text
-        self.log(text, pyLogging.WARNING)
+        self._log(text, pyLogging.WARNING)
 
     def log_skipped(self, text):
         """Logs a SKIPPED message."""
@@ -325,48 +329,53 @@ class Logger:
     def log_not_applicable(self, text):
         """Logs a NOT APPLICABLE message."""
         text = "[*] NOT APPLICABLE: " + text
-        self.log(text, pyLogging.WARNING)
+        self._log(text, pyLogging.WARNING)
 
     def log_heading(self, text):
         """Logs a heading message."""
-        self.log(text, pyLogging.CRITICAL)
+        self._log(text, pyLogging.getLevelName("header"))
 
     def log_important(self, text):
         """Logs an important message."""
         text = "[!] " + text
-        self.log(text, pyLogging.ERROR)
+        self._log(text, pyLogging.getLevelName("bad"))
 
-    def log_bad(self, text):
+    def log_result( self, text ):
+        """Logs a result message."""
+        text = "[+] " + text
+        self._log(text, pyLogging.getLevelName("good"))
+
+    def log_bad( self, text ):
         """Logs a bad message, so it calls attention in the information displayed."""
         text = "[-] " + text
-        self.log(text, pyLogging.ERROR)
+        self._log(text, pyLogging.getLevelName("bad"))
 
     def log_good(self, text):
         """Logs a message, if colors available, displays in green."""
         text = "[+] " + text
-        self.log(text, pyLogging.DEBUG)
+        self._log(text, pyLogging.getLevelName("good"))
 
     def log_unknown(self, text):
         """Logs a message with a question mark."""
         text = "[?] " + text
-        self.log(text, pyLogging.INFO)
+        self._log(text, pyLogging.INFO)
 
     def log_information(self, text):
         """Logs a message with information message"""
         text = "[#] INFORMATION: " + text
-        self.log(text, pyLogging.DEBUG)
+        self._log(text, pyLogging.INFO)
 
     def start_test(self, test_name):
         """Logs the start point of a Test"""
         text = "[x][ =======================================================================\n"
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
-        self.log(text, pyLogging.CRITICAL)
+        self._log(text, pyLogging.getLevelName("header"))
 
     def start_module(self, module_name):
         """Displays a banner for the module name provided."""
         text = "\n[*] Running module: {}".format(module_name)
-        self.log(text, pyLogging.INFO)
+        self._log(text, pyLogging.INFO)
         if self.Results.get_current() is not None:
             self.Results.get_current().add_desc(module_name)
             self.Results.get_current().set_time()
