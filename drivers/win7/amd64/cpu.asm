@@ -370,59 +370,52 @@ SendAPMSMI PROC FRAME
 SendAPMSMI ENDP
 
 ;------------------------------------------------------------------------------
-;This function has one argument: swsmi_msg_t structure which contain 7 regs: rcx, rdx, r8, r9, r10, r11, r12:
-;    IN   UINT64	smi_code_data
-;    IN   UINT64	rax_value
-;    IN   UINT64	rbx_value
-;    IN   UINT64	rcx_value
-;    IN   UINT64	rdx_value
-;    IN   UINT64	rsi_value
-;    IN   UINT64	rdi_value
+;This function has one argument: swsmi_msg_t structure pointer which contain SMI code and data values and 6 regs: rax, rbx, rcx, rdx, rsi, rdi:
+;    IN       UINT64	code_data (only lower 16 bit used)
+;    IN/OUT   UINT64	rax_value
+;    IN/OUT   UINT64	rbx_value
+;    IN/OUT   UINT64	rcx_value
+;    IN/OUT   UINT64	rdx_value
+;    IN/OUT   UINT64	rsi_value
+;    IN/OUT   UINT64	rdi_value
 ;------------------------------------------------------------------------------
 ;  void
-; __swsmi__ (
+; _swsmi (
 ;    swsmi_msg_t*
 ;    )
 ;------------------------------------------------------------------------------
-_swsmi PROC FRAME
-    push rbx
-    .pushreg rbx
-    push rsi
-    .pushreg rsi
-    push rdi
-    .pushreg rdi
-    .endprolog
-
+_swsmi PROC
     ; setting up GPR (arguments) to SMI handler call
     ; notes:
-    ;   RAX will get partially overwritten (AX) by _smi_code_data (which is passed in RCX)
-    ;   RDX will get partially overwritten (DX) by the value of APMC port (= 0x00B2)
+    ;   RAX will get partially overwritten (AX) by code_data
     mov  r10, rcx        ; //pointer for struct into r10
-    xchg rax, [r10+08h]  ; //rax_value overwritten by _smi_code_data
-    mov  rax, [r10]      ; //smi_code_data
+    xchg rax, [r10+08h]  ; //rax_value (partially overwritten by code_data)
+    mov  ax,  [r10]      ; //code_data
     xchg rbx, [r10+10h]  ; //rbx value
     xchg rcx, [r10+18h]  ; //rcx value
     xchg rdx, [r10+20h]  ; //rdx value
     xchg rsi, [r10+28h]  ; //rsi value
     xchg rdi, [r10+30h]  ; //rdi value
 
-    ; these OUT instructions will write BYTE value (smi_code_data) to port 0xB3 then port 0xB3 (SW SMI control and data ports)
-    ; the writes need to be broken up as some systems will drop the interrupt if the port size is larger than a BYTE
+    ; Output smi_code_data split up to their designated ports, SW SMI data
+    ; (0xB3) and SW SMI control (0xB2), respectively.
+    ;
+    ; Resist from outputting both at once as a single word, as some systems
+    ; reject the request if the i/o spans more than a byte, e.g.:
+    ; https://github.com/tianocore/edk2-platforms/blob/aa3f6fd542e99dde4206537b095f1a2201275e75/Silicon/Intel/CoffeelakeSiliconPkg/Pch/PchSmiDispatcher/Smm/PchSmmSw.c#L314
     ror ax, 8
-    out 0B3h, al ; 0xB3
+    out 0B3h, al ; SW SMI data
     ror ax, 8
-    out 0B2h, al ; 0xB2
+    out 0B2h, al ; SW SMI control
 
-    ; some SM handlers return data/errorcode in GPRs, need to return this to the caller
+    ; some SMI handlers return data/errorcode in GPRs, need to return this to the caller
     xchg [r10+08h], rax  ; //rax value
     xchg [r10+10h], rbx  ; //rbx value
     xchg [r10+18h], rcx  ; //rcx value
     xchg [r10+20h], rdx  ; //rdx value
     xchg [r10+28h], rsi  ; //rsi value
     xchg [r10+30h], rdi  ; //rdi value
-    pop rdi
-    pop rsi
-    pop rbx
+
     ret
 _swsmi ENDP
 
