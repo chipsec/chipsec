@@ -33,17 +33,11 @@ import atexit
 from chipsec.testcase import TestCase, ChipsecResults
 import traceback
 try:
-    # Prefer WConio2 over the original WConio as it is more up-to-date and better maintained.
     # See https://pypi.org/project/WConio2/ for more details.
     import WConio2 as WConio
     has_WConio = True
 except ImportError:
-    try:
-        import WConio
-        has_WConio = True
-    except ImportError:
-        has_WConio = False
-        #raiseImportError('WConio package not installed. No colored output')
+    has_WConio = False
 
 LOG_PATH                = os.path.join( os.getcwd(), "logs" )
 #LOG_STATUS_FILE_NAME    = ""
