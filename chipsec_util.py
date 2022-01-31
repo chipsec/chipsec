@@ -118,8 +118,9 @@ class ChipsecUtil:
             logger().DEBUG = True
         if self.vverbose:
             logger().VERBOSE = True
-            logger().HAL = True
-            logger().DEBUG = True
+            logger().DEBUG   = True
+            logger().HAL     = True
+        logger().setlevel()
         if self.log:
             logger().set_log_file(self.log)
         if not self._cmd_args:
