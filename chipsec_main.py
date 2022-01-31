@@ -428,8 +428,9 @@ class ChipsecMain:
             logger().DEBUG = True
         if self.vverbose:
             logger().VERBOSE = True
-            logger().DEBUG = True
-            logger().HAL = True
+            logger().DEBUG   = True
+            logger().HAL     = True
+        logger().setlevel()
         if self.log:
             logger().set_log_file(self.log)
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):

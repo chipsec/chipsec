@@ -165,7 +165,17 @@ class Logger:
         self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
         self.Results = ChipsecResults()
 
-    def set_log_file(self, name=None):
+    def setlevel(self):
+        if self.DEBUG:
+            self.rootLogger.setLevel(pyLogging.DEBUG)
+        elif self.HAL:
+            self.rootLogger.setLevel(pyLogging.getLevelName("hal"))
+        elif self.VERBOSE:
+            self.rootLogger.setLevel(pyLogging.getLevelName("verbose"))
+        else:
+            self.rootLogger.setLevel(pyLogging.INFO)
+
+    def set_log_file( self, name=None ):
         """Sets the log file for the output."""
         # Close current log file if it's opened
         self.disable()
