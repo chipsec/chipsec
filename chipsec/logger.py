@@ -26,12 +26,11 @@ import platform
 import string
 import binascii
 import sys
-import os
-from time import localtime, strftime
+from time import localtime
 import atexit
 
-from chipsec.testcase import TestCase, ChipsecResults
-import traceback
+from chipsec.testcase import ChipsecResults
+
 try:
     # See https://pypi.org/project/WConio2/ for more details.
     import WConio2 as WConio
