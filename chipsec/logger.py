@@ -254,12 +254,19 @@ class Logger:
         text = "WARNING: " + text
         self._log(text, pyLogging.WARNING)
 
-    def verbose_log(self, text):  # Replaced by log_verbose() for naming consistency
+    def log_verbose(self, text):
         """Logs an Verbose message"""
-        if self.VERBOSE:
         self._log(text, pyLogging.getLevelName("verbose"))
 
-    def log_passed_check(self, text):  # Duplicate of log_passed()
+    def log_hal(self, text):
+        """Logs an Verbose message"""
+        self._log(text, pyLogging.getLevelName("hal"))
+
+    def log_debug(self, text):
+        """Logs an Verbose message"""
+        self._log(text, pyLogging.DEBUG)
+
+    def log_passed_check( self, text ):
         """Logs a Test as PASSED"""
         self.log_passed(text)
 
