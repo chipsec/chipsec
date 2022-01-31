@@ -214,11 +214,13 @@ class Logger:
 
     def error( self, text ):
         """Logs an Error message"""
+        print('WARNING `error` function will be deprecated, please use log_error function instead')
         text = "ERROR: " + text
         self.log(text, pyLogging.ERROR)
 
     def warn( self, text ):
         """Logs an Warning message"""
+        print('WARNING `warn` function will be deprecated, please use log_warning function instead')
         text = "WARNING: " + text
         self.log(text, pyLogging.WARNING)
 
@@ -229,30 +231,37 @@ class Logger:
 
     def log_passed_check( self, text ):
         """Logs a Test as PASSED"""
+        print('WARNING `log_passed_check` function will be deprecated, please use log_passed function instead')
         self.log_passed(text)
 
     def log_failed_check( self, text ):
         """Logs a Test as FAILED"""
+        print('WARNING `log_failed_check` function will be deprecated, please use log_failed function instead')
         self.log_failed(text)
 
     def log_error_check( self, text ):
         """Logs a Test as ERROR"""
+        print('WARNING `log_error_check` function will be deprecated, please use log_error function instead')
         self.error(text)
 
     def log_skipped_check( self, text ):
         """Logs a Test as Not Implemented"""
+        print('WARNING `log_skipped_check` function will be deprecated, please use log_skipped function instead')
         self.log_skipped(text)
 
     def log_warn_check( self, text ):
         """Logs a Warning test, a warning test is considered equal to a PASSED test"""
+        print('WARNING `log_warn_check` function will be deprecated, please use log_warning function instead')
         self.log_warning(text)
 
     def log_information_check( self, text ):
         """Logs a Information test, an information test"""
+        print('WARNING `log_information_check` function will be deprecated, please use log_information function instead')
         self.log_information(text)
 
     def log_not_applicable_check( self, text):
         """Logs a Test as Not Applicable"""
+        print('WARNING `log_not_applicable_check` function will be deprecated, please use log_not_applicable function instead')
         self.log_not_applicable(text)
 
     def log_passed( self, text ):
