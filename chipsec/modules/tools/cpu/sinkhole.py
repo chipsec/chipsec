@@ -47,7 +47,7 @@ class sinkhole(BaseModule):
         elif not self.cs.is_register_defined( 'IA32_APIC_BASE' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSBASE' ) or \
            not self.cs.is_register_defined( 'IA32_SMRR_PHYSMASK' ):
-            self.logger.error("Couldn't find definition of required configuration registers")
+            self.logger.log_error("Couldn't find definition of required configuration registers")
             self.res = ModuleResult.ERROR
             return False
         else:

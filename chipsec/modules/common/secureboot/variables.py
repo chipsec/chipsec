@@ -83,7 +83,7 @@ class variables(BaseModule):
             # checking if restored correctly
             restoreddata = self._uefi.get_EFI_variable( name, guid )
             #print_buffer( restoreddata )
-            if (restoreddata != data): self.logger.error( "Failed to restore contents of variable {} failed!".format(name) )
+            if (restoreddata != data): self.logger.log_error( "Failed to restore contents of variable {} failed!".format(name) )
             else:                      self.logger.log( "    contents of variable {} have been restored".format(name) )
         else:
             self.logger.log_good( "Could not modify UEFI variable {}:{}".format(guid, name) )

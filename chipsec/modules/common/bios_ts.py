@@ -44,7 +44,7 @@ class bios_ts(BaseModule):
             bild = self.cs.get_control( 'BiosInterfaceLockDown' )
             self.logger.log( "[*] BiosInterfaceLockDown (BILD) control = {:d}".format(bild) )
         else:
-            self.logger.error( "BiosInterfaceLockDown (BILD) control is not defined" )
+            self.logger.log_error( "BiosInterfaceLockDown (BILD) control is not defined" )
             return ModuleResult.ERROR
 
         if self.cs.is_control_defined( 'TopSwapStatus' ):

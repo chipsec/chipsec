@@ -44,7 +44,7 @@ class c_extended_page_tables_from_file(c_extended_page_tables):
                 if (pa <= addr) and (addr + size <= end_pa):
                     source.seek(addr - pa)
                     return source.read(size)
-            logger().error( "Invalid memory address: %016x-%016x" % (addr, addr + size) )
+            logger().log_error( "Invalid memory address: %016x-%016x" % (addr, addr + size) )
             return '\xFF' * size
         return self.cs.mem.read_physical_mem(addr, size)
 
@@ -60,7 +60,7 @@ class ept_finder(BaseModule):
                 if (pa <= addr) and (addr + size <= end_pa):
                     source.seek(addr - pa)
                     return source.read(size)
-            self.logger.error( "Invalid memory address: %016x-%016x" % (addr, addr + size) )
+            self.logger.log_error( "Invalid memory address: %016x-%016x" % (addr, addr + size) )
             return '\xFF' * size
         return self.cs.mem.read_physical_mem(addr, size)
 
@@ -75,12 +75,12 @@ class ept_finder(BaseModule):
         if self.cs.is_register_defined('PCI0.0.0_TSEGMB'):
             tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB') & MASK
         else:
-            self.logger.error( "Couldn't find definition of required registers: TSEGMB" )
+            self.logger.log_error( "Couldn't find definition of required registers: TSEGMB" )
 
         if self.cs.is_register_defined('PCI0.0.0_TOUUD'):
             touud  = self.cs.read_register('PCI0.0.0_TOUUD')  & MASK
         else:
-            self.logger.error( "Couldn't find definition of required registers: TOUUD" )
+            self.logger.log_error( "Couldn't find definition of required registers: TOUUD" )
 
         par = []
         if not (tsegmb is None):
@@ -190,7 +190,7 @@ class ept_finder(BaseModule):
             self.par = self.get_memory_ranges()
 
         if (len(self.par) == 0):
-            self.logger.error("Memory ranges are not defined!")
+            self.logger.log_error("Memory ranges are not defined!")
             return ModuleResult.ERROR
 
         if len(module_argv) == 2 and module_argv[0] == "dump":

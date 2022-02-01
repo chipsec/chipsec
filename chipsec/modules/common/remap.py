@@ -73,7 +73,7 @@ class remap(BaseModule):
            not self.cs.is_register_defined('PCI0.0.0_TOUUD'     ) or \
            not self.cs.is_register_defined('PCI0.0.0_TOLUD'     ) or \
            not self.cs.is_register_defined('PCI0.0.0_TSEGMB'    ):
-            self.logger.error( "Couldn't find definition of required registers (REMAP*, TOLUD, TOUUD, TSEGMB)" )
+            self.logger.log_error( "Couldn't find definition of required registers (REMAP*, TOLUD, TOUUD, TSEGMB)" )
             return ModuleResult.ERROR
 
         remapbase  = self.cs.read_register('PCI0.0.0_REMAPBASE')

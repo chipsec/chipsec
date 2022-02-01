@@ -159,7 +159,7 @@ class scan_blocked(BaseModule):
         if not self.image:
             if len(module_argv) == 0:
                 self.logger.log_important('Unable to read SPI and generate FW image. Access may be blocked.')
-            self.logger.error('No FW image file to read.  Exiting!')
+            self.logger.log_error('No FW image file to read.  Exiting!')
             self.res = ModuleResult.ERROR
             return self.res
 

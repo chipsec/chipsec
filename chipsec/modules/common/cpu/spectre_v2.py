@@ -165,7 +165,7 @@ class spectre_v2(BaseModule):
 
         if not self.cs.is_register_defined( 'IA32_ARCH_CAPABILITIES' ) or \
            not self.cs.is_register_defined( 'IA32_SPEC_CTRL' ):
-            self.logger.error( "couldn't find definition of required MSRs" )
+            self.logger.log_error( "couldn't find definition of required MSRs" )
             return ModuleResult.ERROR
 
 
@@ -178,7 +178,7 @@ class spectre_v2(BaseModule):
                 try:
                     arch_cap_msr = self.cs.read_register( 'IA32_ARCH_CAPABILITIES', tid )
                 except HWAccessViolationError:
-                    self.logger.error( "couldn't read IA32_ARCH_CAPABILITIES" )
+                    self.logger.log_error( "couldn't read IA32_ARCH_CAPABILITIES" )
                     ibrs_enh_supported = False
                     break
 
@@ -213,7 +213,7 @@ class spectre_v2(BaseModule):
                 try:
                     spec_ctrl_msr = self.cs.read_register( 'IA32_SPEC_CTRL', tid )
                 except HWAccessViolationError:
-                    self.logger.error( "couldn't read IA32_SPEC_CTRL" )
+                    self.logger.log_error( "couldn't read IA32_SPEC_CTRL" )
                     ibrs_enabled = False
                     break
 

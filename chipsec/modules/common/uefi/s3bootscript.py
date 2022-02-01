@@ -178,7 +178,7 @@ class s3bootscript(BaseModule):
         self.res = ModuleResult.ERROR
 
         if len(module_argv) > 2:
-            self.logger.error( 'Expected module options: -a <bootscript_address>' )
+            self.logger.log_error( 'Expected module options: -a <bootscript_address>' )
             return self.res
 
         script_pa = None
@@ -196,7 +196,7 @@ class s3bootscript(BaseModule):
             else:
                 self.res = self.check_s3_bootscripts( )
         except:
-            self.logger.error("The module was not able to recognize the S3 resume boot script on this platform.")
+            self.logger.log_error("The module was not able to recognize the S3 resume boot script on this platform.")
             if self.logger.VERBOSE:
                 raise
             self.res = ModuleResult.ERROR

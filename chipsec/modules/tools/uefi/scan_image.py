@@ -214,13 +214,13 @@ class scan_image(BaseModule):
 
             if op == 'generate':
                 if os.path.exists(json_pth):
-                    self.logger.error("JSON file '{}' already exists. Exiting...".format(json_file))
+                    self.logger.log_error("JSON file '{}' already exists. Exiting...".format(json_file))
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.generate_efilist(json_pth)
             elif op == 'check':
                 if not os.path.exists(json_pth):
-                    self.logger.error("JSON file '{}' doesn't exists. Exiting...".format(json_file))
+                    self.logger.log_error("JSON file '{}' doesn't exists. Exiting...".format(json_file))
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.check_list(json_pth)
@@ -228,7 +228,7 @@ class scan_image(BaseModule):
         elif op == 'help':
             self.usage()
         else:
-            self.logger.error("unrecognized command-line argument to the module")
+            self.logger.log_error("unrecognized command-line argument to the module")
             self.usage()
 
         return self.res

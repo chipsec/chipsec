@@ -452,7 +452,7 @@ class smm_ptr(BaseModule):
                     self.test_ptr_in_buffer = True
                     DUMP_GPRS_EVERY_SMI = False
             else:
-                self.logger.error( "Unknown fuzzing mode '{}'".format(module_argv[0]) )
+                self.logger.log_error( "Unknown fuzzing mode '{}'".format(module_argv[0]) )
                 return ModuleResult.ERROR
 
         if len(module_argv) > 2: self.fill_size = int(module_argv[2], 16)

@@ -353,7 +353,7 @@ class s3script_modify(BaseModule):
             scmd = module_argv[1].lower() if len(module_argv) > 1 else 'dispatch_ep'
             if scmd in cmd2opcode:
                 if len(module_argv) < 4:
-                    self.logger.error( 'Expected module options: -a replace_op,{},<reg_address>,<value>'.format(scmd) )
+                    self.logger.log_error( 'Expected module options: -a replace_op,{},<reg_address>,<value>'.format(scmd) )
                     return ModuleResult.ERROR
                 reg_address = int(module_argv[2], 16)
                 value       = int(module_argv[3], 16)
@@ -368,7 +368,7 @@ class s3script_modify(BaseModule):
                 address   = int(module_argv[3], 16) if len(module_argv) == 4 else None
                 sts = self.modify_s3_mem( address, new_value )
             else:
-                self.logger.error( "Unrecognized module command-line argument: {}".format(scmd) )
+                self.logger.log_error( "Unrecognized module command-line argument: {}".format(scmd) )
                 self.logger.log( examples_str )
                 return ModuleResult.ERROR
         elif (op == 'add_op'):
@@ -376,7 +376,7 @@ class s3script_modify(BaseModule):
             new_opcode = None
             if scmd in cmd2opcode:
                 if len(module_argv) < 5:
-                    self.logger.error( 'Expected module options: -a add_op,{},<reg_address>,<value>,<width>'.format(scmd) )
+                    self.logger.log_error( 'Expected module options: -a add_op,{},<reg_address>,<value>,<width>'.format(scmd) )
                     return ModuleResult.ERROR
                 address    = int(module_argv[2], 16)
                 value      = int(module_argv[3], 16)
@@ -388,7 +388,7 @@ class s3script_modify(BaseModule):
                   or S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == cmd2opcode[scmd]):
                     new_opcode = op_io_pci_mem( cmd2opcode[scmd], None, width_val, address, 0, 1, value_buff, None, None )
                 else:
-                    self.logger.error( "Unsupported opcode: {}".format(scmd) )
+                    self.logger.log_error( "Unsupported opcode: {}".format(scmd) )
                     self.logger.log( examples_str )
                     return ModuleResult.ERROR
             elif 'dispatch' == scmd:
@@ -400,13 +400,13 @@ class s3script_modify(BaseModule):
                     entrypoint = int(module_argv[2], 16)
                 new_opcode = op_dispatch( S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE, None, entrypoint )
             else:
-                self.logger.error( "Unrecognized opcode: {}".format(scmd) )
+                self.logger.log_error( "Unrecognized opcode: {}".format(scmd) )
                 self.logger.log( examples_str )
                 return ModuleResult.ERROR
 
             sts = self.modify_s3_add( new_opcode )
         else:
-            self.logger.error( "Unrecognized module command-line argument: {}".format(op) )
+            self.logger.log_error( "Unrecognized module command-line argument: {}".format(op) )
             self.logger.log( examples_str )
             return ModuleResult.ERROR
 

@@ -76,7 +76,7 @@ class memlock(BaseModule):
             try:
                 lt_lock_msr = self.cs.read_register( 'MSR_LT_LOCK_MEMORY', tid )
             except HWAccessViolationError:
-                self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
+                self.logger.log_error( "couldn't read MSR_LT_LOCK_MEMORY" )
                 break
             if self.logger.VERBOSE:
                 self.cs.print_register('MSR_LT_LOCK_MEMORY', lt_lock_msr)
