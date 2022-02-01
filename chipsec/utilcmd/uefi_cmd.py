@@ -196,14 +196,14 @@ class UEFICommand(BaseCommand):
         if status == 0:
             self.logger.log( "[CHIPSEC] writing EFI variable was successful" )
         else:
-            self.logger.error( "writing EFI variable failed" )
+            self.logger.log_error( "writing EFI variable failed" )
 
     def var_delete(self):
         self.logger.log( "[CHIPSEC] Deleting EFI variable Name='{}' GUID={{{}}} via Variable API..".format(self.name, self.guid) )
         status = self._uefi.delete_EFI_variable( self.name, self.guid )
         self.logger.log("Returned {}".format(EFI_STATUS_DICT[status]))
         if status == 0: self.logger.log( "[CHIPSEC] deleting EFI variable was successful" )
-        else: self.logger.error( "deleting EFI variable failed" )
+        else: self.logger.log_error( "deleting EFI variable failed" )
 
     def var_list(self):
         self.logger.log( "[CHIPSEC] Enumerating all EFI variables via OS specific EFI Variable API.." )
@@ -259,10 +259,10 @@ class UEFICommand(BaseCommand):
         if self.fwtype is None:
             self.fwtype = identify_EFI_NVRAM( rom )
             if self.fwtype is None:
-                self.logger.error( "Could not automatically identify EFI NVRAM type" )
+                self.logger.log_error( "Could not automatically identify EFI NVRAM type" )
                 return
         elif self.fwtype not in fw_types:
-            self.logger.error( "Unrecognized EFI NVRAM type '{}'".format(self.fwtype) )
+            self.logger.log_error( "Unrecognized EFI NVRAM type '{}'".format(self.fwtype) )
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
@@ -276,10 +276,10 @@ class UEFICommand(BaseCommand):
         if self.fwtype is None:
             self.fwtype = identify_EFI_NVRAM( rom )
             if self.fwtype is None:
-                self.logger.error( "Could not automatically identify EFI NVRAM type" )
+                self.logger.log_error( "Could not automatically identify EFI NVRAM type" )
                 return
         elif self.fwtype not in fw_types:
-            self.logger.error( "Unrecognized EFI NVRAM type '{}'".format(self.fwtype) )
+            self.logger.log_error( "Unrecognized EFI NVRAM type '{}'".format(self.fwtype) )
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
@@ -289,7 +289,7 @@ class UEFICommand(BaseCommand):
 
     def decode(self):
         if not os.path.exists( self.filename ):
-            self.logger.error( "Could not find file '{}'".format(self.filename) )
+            self.logger.log_error( "Could not find file '{}'".format(self.filename) )
             return
 
         self.logger.log( "[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename) )
@@ -309,7 +309,7 @@ class UEFICommand(BaseCommand):
 
     def keys(self):
         if not os.path.exists( self.filename ):
-            self.logger.error( "Could not find file '{}'".format(self.filename) )
+            self.logger.log_error( "Could not find file '{}'".format(self.filename) )
             return
         self.logger.log( "<keyvar_file> should contain one of the following EFI variables\n[ %s ]" % (" | ".join( ["%s" % var for var in SECURE_BOOT_KEY_VARIABLES]))  )
         self.logger.log( "[CHIPSEC] Parsing EFI variable from '{}'..".format(self.filename) )

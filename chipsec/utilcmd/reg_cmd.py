@@ -94,7 +94,7 @@ class RegisterCommand(BaseCommand):
             value = self.cs.read_register_field(self.reg_name, self.field_name)
             self.logger.log("[CHIPSEC] {}.{}=0x{:X}".format(self.reg_name, self.field_name, value))
         else:
-            self.logger.error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
+            self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
 
 
     def reg_write(self):
@@ -107,7 +107,7 @@ class RegisterCommand(BaseCommand):
             self.logger.log("[CHIPSEC] Writing {}.{} < 0x{:X}".format(self.reg_name, self.field_name, self.value))
             self.cs.write_register_field(self.reg_name, self.field_name, self.value)
         else:
-            self.logger.error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
+            self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
 
 
     def reg_get_control(self):
@@ -115,7 +115,7 @@ class RegisterCommand(BaseCommand):
             value = self.cs.get_control(self.control_name)
             self.logger.log("[CHIPSEC] {} = 0x{:X}".format(self.control_name, value))
         else:
-            self.logger.error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
+            self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
 
 
     def reg_set_control(self):
@@ -123,7 +123,7 @@ class RegisterCommand(BaseCommand):
             self.cs.set_control(self.control_name, self.value)
             self.logger.log("[CHIPSEC] Setting control {} < 0x{:X}".format(self.control_name, self.value))
         else:
-            self.logger.error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
+            self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
 
 
     def run(self):

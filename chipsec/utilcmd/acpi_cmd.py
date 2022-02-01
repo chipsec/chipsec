@@ -70,10 +70,10 @@ class ACPICommand(BaseCommand):
     def acpi_table(self):
         name = self._name[0]
         if not self._file and not self._acpi.is_ACPI_table_present( name ):
-            self.logger.error( "Please specify table name from {}".format(self._acpi.tableList.keys()) )
+            self.logger.log_error( "Please specify table name from {}".format(self._acpi.tableList.keys()) )
             return
         elif self._file and not path_exists( name ):
-            self.logger.error( "[CHIPSEC] Unable to find file '{}'".format(name) )
+            self.logger.log_error( "[CHIPSEC] Unable to find file '{}'".format(name) )
             return
         self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '', name) )
         self._acpi.dump_ACPI_table( name, self._file )

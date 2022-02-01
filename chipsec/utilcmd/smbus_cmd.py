@@ -72,7 +72,7 @@ class SMBusCommand(BaseCommand):
         try:
             self._smbus = SMBus( self.cs )
         except BaseException as msg:
-            self.logger.error(msg)
+            self.logger.log_error(msg)
             return
 
         t = time.time()

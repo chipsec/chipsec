@@ -53,7 +53,7 @@ class DeltasCommand(BaseCommand):
         previous = chipsec.result_deltas.get_json_results(self._prev_log)
         current = chipsec.result_deltas.get_json_results(self._cur_log)
         if previous is None or current is None:
-            self.logger.error('Unable to process JSON log files.')
+            self.logger.log_error('Unable to process JSON log files.')
             return
         deltas = chipsec.result_deltas.compute_result_deltas(previous, current)
 
@@ -64,7 +64,7 @@ class DeltasCommand(BaseCommand):
             elif self._out_format.upper() == 'XML':
                 chipsec.result_deltas.log_deltas_xml(deltas, self._out_name)
             else:
-                self.logger.error('Output log format not supported: {}'.format(self._out_format))
+                self.logger.log_error('Output log format not supported: {}'.format(self._out_format))
 
         # Display the results
         chipsec.result_deltas.display_deltas(deltas, True, start_time)

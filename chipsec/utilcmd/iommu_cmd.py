@@ -92,7 +92,7 @@ class IOMMUCommand(BaseCommand):
             if self.engine in iommu.IOMMU_ENGINES.keys():
                 _iommu_engines = [ self.engine ]
             else:
-                self.logger.error( "IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.engine) )
+                self.logger.log_error( "IOMMU name {} not recognized. Run 'iommu list' command for supported IOMMU names".format(self.engine) )
                 return
         else:
             _iommu_engines = iommu.IOMMU_ENGINES.keys()

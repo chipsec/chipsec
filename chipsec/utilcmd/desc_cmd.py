@@ -120,6 +120,6 @@ class LDTCommand(BaseCommand):
         return True
 
     def run(self):
-        self.logger.error( "[CHIPSEC] ldt not implemented" )
+        self.logger.log_error( "[CHIPSEC] ldt not implemented" )
 
 commands = { 'idt': IDTCommand, 'gdt': GDTCommand }

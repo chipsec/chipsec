@@ -69,7 +69,7 @@ class MMCfgCommand(BaseCommand):
             else:
                 _width = int(self.width)
         except ValueError:
-            self.logger.error( "ValueError: Invalid inputs." )
+            self.logger.log_error( "ValueError: Invalid inputs." )
             return
 
         if self.value is not None:

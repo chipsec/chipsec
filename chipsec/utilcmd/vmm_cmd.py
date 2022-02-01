@@ -89,7 +89,7 @@ class VMMCommand(BaseCommand):
                 dev  = (_bus, _dev, _fun, vid, did)
                 virt_dev = [dev]
             else:
-                self.logger.error("Invalid B:D.F ({})".format(self.bdf))
+                self.logger.log_error("Invalid B:D.F ({})".format(self.bdf))
                 self.logger.log(VMMCommand.__doc__)
                 return
         else:
@@ -132,7 +132,7 @@ class VMMCommand(BaseCommand):
             self.vmm.dump_EPT_page_tables( self.eptp, pt_fname )
         else:
             self.logger.log( "[CHIPSEC] Finding EPT hierarchy in memory is not implemented yet" )
-            self.logger.error(VMMCommand.__doc__)
+            self.logger.log_error(VMMCommand.__doc__)
             return
 
 
@@ -142,7 +142,7 @@ class VMMCommand(BaseCommand):
         try:
             self.vmm = VMM( self.cs )
         except VMMRuntimeError as msg:
-            self.logger.error( msg )
+            self.logger.log_error( msg )
             return
 
         self.vmm.init()

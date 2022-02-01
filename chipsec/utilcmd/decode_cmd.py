@@ -77,7 +77,7 @@ class DecodeCommand(BaseCommand):
             return False
         (fd_off, fd) = get_spi_flash_descriptor( f )
         if (-1 == fd_off) or (fd is None):
-            self.logger.error( "Could not find SPI Flash descriptor in the binary '{}'".format(self._rom) )
+            self.logger.log_error( "Could not find SPI Flash descriptor in the binary '{}'".format(self._rom) )
             self.logger.log_information( "To decode an image without a flash decriptor try chipsec_util uefi decode" )
             return False
 
@@ -87,7 +87,7 @@ class DecodeCommand(BaseCommand):
         # Decoding SPI Flash Regions
         flregs = get_spi_regions( fd )
         if flregs is None:
-            self.logger.error( "SPI Flash descriptor region is not valid" )
+            self.logger.log_error( "SPI Flash descriptor region is not valid" )
             self.logger.log_information( "To decode an image with an invalid flash decriptor try chipsec_util uefi decode" )
             return False
 

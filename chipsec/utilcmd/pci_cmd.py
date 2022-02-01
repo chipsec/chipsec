@@ -154,7 +154,7 @@ class PCICommand(BaseCommand):
             elif 2 == width: pci_value = self.cs.pci.read_word (self.bus, self.device, self.function, self.offset)
             elif 4 == width: pci_value = self.cs.pci.read_dword(self.bus, self.device, self.function, self.offset)
             else:
-                self.logger.error( "Width should be one of {}".format(CMD_OPTS_WIDTH) )
+                self.logger.log_error( "Width should be one of {}".format(CMD_OPTS_WIDTH) )
                 return
             self.logger.log( "[CHIPSEC] PCI {:02X}:{:02X}.{:02X} + 0x{:02X}: 0x{:X}".format(self.bus, self.device, self.function, self.offset, pci_value) )
 
@@ -165,7 +165,7 @@ class PCICommand(BaseCommand):
             elif 2 == width: self.cs.pci.write_word ( self.bus, self.device, self.function, self.offset, self.value )
             elif 4 == width: self.cs.pci.write_dword( self.bus, self.device, self.function, self.offset, self.value )
             else:
-                self.logger.error( "Width should be one of {}".format(CMD_OPTS_WIDTH) )
+                self.logger.log_error( "Width should be one of {}".format(CMD_OPTS_WIDTH) )
                 return
             self.logger.log( "[CHIPSEC] Write 0x{:X} to PCI {:02X}:{:02X}.{:02X} + 0x{:02X}".format(self.value, self.bus, self.device, self.function, self.offset) )
 

@@ -107,7 +107,7 @@ class SPICommand(BaseCommand):
         self.logger.log( "[CHIPSEC] Dumping 0x{:08X} bytes (to the end of BIOS region)".format(spi_size) )
         buf = self._spi.read_spi_to_file( 0, spi_size, self.out_file )
         if (buf is None):
-            self.logger.error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
+            self.logger.log_error( "Dumping SPI Flash didn't return any data (turn on VERBOSE)" )
         else:
             self.logger.log( "[CHIPSEC] Completed SPI flash dump to '{}'".format(self.out_file) )
 
@@ -116,13 +116,13 @@ class SPICommand(BaseCommand):
         self.logger.log( "[CHIPSEC] {}".format(self._msg) )
         buf = self._spi.read_spi_to_file( self.spi_fla, self.length, self.out_file )
         if (buf is None):
-            self.logger.error( "SPI flash read didn't return any data (turn on VERBOSE)" )
+            self.logger.log_error( "SPI flash read didn't return any data (turn on VERBOSE)" )
         else:
             self.logger.log( "[CHIPSEC] Completed SPI flash memory read" )
 
     def spi_write(self):
         if not os.path.exists(self.filename):
-            self.logger.error( "File '{}' doesn't exist".format(self.filename))
+            self.logger.log_error( "File '{}' doesn't exist".format(self.filename))
             return
         self.logger.log( "[CHIPSEC] Writing to SPI flash memory at FLA = 0x{:X} from '{:64s}'".format(self.spi_fla, self.filename) )
 
@@ -174,7 +174,7 @@ class SPICommand(BaseCommand):
         try:
             self._spi = SPI( self.cs )
         except SpiRuntimeError as msg:
-            self.logger.error(msg)
+            self.logger.log_error(msg)
             return
 
         self._msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"

@@ -119,7 +119,7 @@ class SPDCommand(BaseCommand):
             _smbus    = smbus.SMBus( self.cs )
             self._spd = spd.SPD( _smbus )
         except BaseException as msg:
-            self.logger.error(msg)
+            self.logger.log_error(msg)
             return
 
         t = time.time()

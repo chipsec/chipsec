@@ -81,8 +81,8 @@ class IgdCommand(BaseCommand):
             try:
                 buffer = bytearray.fromhex( buffer_value )
             except ValueError as e:
-                self.logger.error( "Incorrect <value> specified: '{}'".format(self.file_value) )
-                self.logger.error( str(e) )
+                self.logger.log_error( "Incorrect <value> specified: '{}'".format(self.file_value) )
+                self.logger.log_error( str(e) )
                 return
             self.logger.log( "[CHIPSEC] Read 0x{:X} hex bytes from command-line: {}'".format(len(buffer), buffer_value) )
         else:
@@ -90,7 +90,7 @@ class IgdCommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Read 0x{:X} bytes from file '{}'".format(len(buffer), self.file_value) )
 
         if len(buffer) < self.size:
-            self.logger.error( "Number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), self.size) )
+            self.logger.log_error( "Number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), self.size) )
             return
 
         self.logger.log( '[CHIPSEC] Writing buffer to memory: PA = 0x{:016X}, len = 0x{:X}..'.format(self.address, self.size) )

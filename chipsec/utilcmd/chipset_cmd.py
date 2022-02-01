@@ -48,6 +48,6 @@ class PlatformCommand(BaseCommand):
             self.cs.print_chipset()
             self.cs.print_pch()
         except UnknownChipsetError as msg:
-            self.logger.error( msg )
+            self.logger.log_error( msg )
 
 commands = { 'platform': PlatformCommand }
