@@ -67,7 +67,7 @@ class TcgPcrEvent(object):
         pcr_index, event_type, digest, event_size = fields
         event = log.read(event_size)
         if len(event) != event_size:
-            logger().warn("[tpm_eventlog] event data length "
+            logger().log_warning"[tpm_eventlog] event data length "
                                  "does not match the expected size")
         name = SML_EVENT_TYPE.get(event_type)
         kls = cls if isinstance(name, str) else name

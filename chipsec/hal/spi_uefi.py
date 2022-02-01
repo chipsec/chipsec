@@ -171,9 +171,9 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
                 pass
         elif sec.Type == EFI_SECTION_GUID_DEFINED:
             if len(sec.Image) < sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:
-                logger().warn("EFI Section seems to be malformed")
+                logger().log_warning"EFI Section seems to be malformed")
                 if len(sec.Image) < sec.HeaderSize + EFI_GUID_SIZE:
-                    logger().warn("Creating fake GUID of 0000-00-00-0000000")
+                    logger().log_warning"Creating fake GUID of 0000-00-00-0000000")
                     guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
                 else:
                     guid0 = struct.unpack(EFI_GUID_FMT, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_SIZE])[0]
@@ -181,8 +181,8 @@ def build_efi_modules_tree( _uefi, fwtype, data, Size, offset, polarity ):
             else:
                 guid0, sec.DataOffset, sec.Attributes = struct.unpack(EFI_GUID_DEFINED_SECTION, sec.Image[sec.HeaderSize:sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size])
             if not isinstance(guid0, bytes):
-                logger().warn("GUID is corrupted")
-                logger().warn("Creating fake GUID of 0000-00-00-0000000")
+                logger().log_warning"GUID is corrupted")
+                logger().log_warning"Creating fake GUID of 0000-00-00-0000000")
                 guid0 = b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
             sec.Guid = UUID(bytes_le=guid0)
@@ -288,7 +288,7 @@ def build_efi_tree( _uefi, data, fwtype ):
             try:
                 fv.NVRAMType = identify_EFI_NVRAM( fv.Image ) if fwtype is None else fwtype
             except Exception:
-                logger().warn("couldn't identify NVRAM in FV {{{}}}".format(fv.Guid))
+                logger().log_warning"couldn't identify NVRAM in FV {{{}}}".format(fv.Guid))
 
         fvolumes.append(fv)
         fv = NextFwVolume( data, fv.Offset + fv.Size )
@@ -436,7 +436,7 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             _uefi.parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType )
                         else: raise Exception("NVRAM type cannot be None")
                     except Exception:
-                        logger().warn( "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType) )
+                        logger().log_warning "couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType) )
 
         # save children modules
         if len(m.children) > 0:

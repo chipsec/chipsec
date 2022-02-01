@@ -104,7 +104,7 @@ class BaseModule(object):
         elif self.res == ModuleResult.FAILED:
             self.logger.log_failed_check(error_msg)
         elif self.res == ModuleResult.WARNING:
-            self.logger.log_warn_check(error_msg)
+            self.logger.log_warning(error_msg)
         elif self.res == ModuleResult.INFORMATION:
             self.logger.log_information_check(error_msg)
 
