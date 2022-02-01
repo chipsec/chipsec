@@ -60,7 +60,7 @@ class IgdCommand(BaseCommand):
         parser_write.add_argument('file_value', type=str, help='Data to write [Value|<file_name>]')
         parser_write.set_defaults(func=self.write_dma)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         if hasattr(self, 'func'):
             return True
         return False

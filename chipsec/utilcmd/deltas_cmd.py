@@ -43,7 +43,7 @@ class DeltasCommand(BaseCommand):
         parser.add_argument('_cur_log', metavar='<current>', help='current log file')
         parser.add_argument('_out_format', metavar='out-format', choices=['JSON', 'XML'], default='JSON', help='output format')
         parser.add_argument('_out_name', metavar='out-name', nargs='?', default=None, help='output filename')
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return False
 
     def run(self):

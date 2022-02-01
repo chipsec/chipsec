@@ -52,7 +52,7 @@ class MMCfgCommand(BaseCommand):
         parser.add_argument('value', type=lambda x: int(x,16), nargs='?', default=None, help='Value to write (hex)')
         parser.set_defaults()
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def run(self):

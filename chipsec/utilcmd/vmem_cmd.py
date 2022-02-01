@@ -97,7 +97,7 @@ class VMemCommand(BaseCommand):
         parser_getphys = subparsers.add_parser('getphys')
         parser_getphys.add_argument('virt_address', type=lambda x: int(x, 16), help='Address (hex)')
         parser_getphys.set_defaults(func=self.vmem_getphys)
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
 

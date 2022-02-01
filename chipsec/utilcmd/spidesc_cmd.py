@@ -40,7 +40,7 @@ class SPIDescCommand(BaseCommand):
         parser = ArgumentParser( prog='chipsec_util spidesc', usage=__doc__ )
         parser.add_argument('fd_file', type=str, help='File name')
         parser.set_defaults()
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return False
 
     def run(self):

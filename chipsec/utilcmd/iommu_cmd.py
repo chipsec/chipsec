@@ -74,7 +74,7 @@ class IOMMUCommand(BaseCommand):
         parser_pt.add_argument('engine', type=str, default='', nargs='?', help='IOMMU Engine')
         parser_pt.set_defaults(func=self.iommu_pt)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def iommu_list(self):

@@ -97,7 +97,7 @@ class MemCommand(BaseCommand):
         parser_search.add_argument('value', type=str, help='Value to search for')
         parser_search.set_defaults(func=self.mem_search)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def dump_region_to_path(self, path, pa_start, pa_end):

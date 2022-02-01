@@ -98,7 +98,7 @@ class SMICommand(BaseCommand):
         parser_smmc.add_argument('port', type=lambda x: int(x, 16), nargs='?', default=0x0, help='Port (hex) [default=0]')
         parser_smmc.set_defaults(func=self.smi_smmc)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def smi_count(self):

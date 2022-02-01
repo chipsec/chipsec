@@ -99,7 +99,7 @@ class PCICommand(BaseCommand):
         parser_cmd.add_argument('pci_sub_class', type=lambda x: int(x, 16), default=None, nargs='?', help='Subclass (hex)')
         parser_cmd.set_defaults(func=self.pci_cmd)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def pci_enumerate(self):

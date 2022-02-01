@@ -47,7 +47,7 @@ class CONFIGCommand(BaseCommand):
         parser_show.add_argument('name', type=str, nargs='*', help="Specific Name", default=[])
         parser_show.set_defaults(func=self.show, config="ALL")
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return False
 
     def show(self):

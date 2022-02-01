@@ -56,7 +56,7 @@ class UCodeCommand(BaseCommand):
 
         parser_decode = subparsers.add_parser('decode')
         parser_decode.add_argument('ucode_filename', type=str, help='ucode file name (.PDB format)')
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def ucode_id(self):

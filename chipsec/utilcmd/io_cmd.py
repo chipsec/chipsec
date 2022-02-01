@@ -65,7 +65,7 @@ class PortIOCommand(BaseCommand):
         parser_w.add_argument('_value', metavar='value', type=lambda x: int(x, 0), help="value")
         parser_w.set_defaults(func=self.io_write)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
 
         return True
 

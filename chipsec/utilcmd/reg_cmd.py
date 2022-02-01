@@ -75,7 +75,7 @@ class RegisterCommand(BaseCommand):
         parser_setcontrol.add_argument('value', type=lambda x: int(x,16), help='Value (hex)')
         parser_setcontrol.set_defaults(func=self.reg_set_control)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
 

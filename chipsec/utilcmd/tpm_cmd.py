@@ -67,7 +67,7 @@ class TPMCommand(BaseCommand):
         parser_state = subparsers.add_parser('state')
         parser_state.add_argument('locality', type=str, choices=['0','1','2','3','4'], help='Locality')
         parser_state.set_defaults(func=self.tpm_state)
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def tpm_parse(self):

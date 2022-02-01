@@ -69,7 +69,7 @@ class CPUCommand(BaseCommand):
         parser_cpuid.add_argument('ecx', type=lambda x: int(x, 0), nargs='?', default=0)
         parser_pt.add_argument('cr3', type=lambda x: int(x, 0), nargs='?', default=None)
 
-        parser.parse_args(self.argv[2:], namespace=CPUCommand)
+        parser.parse_args(self.argv, namespace=self)
 
         return True
 

@@ -50,7 +50,7 @@ class smbios_cmd(BaseCommand):
         parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32', \
             help='Force reading from 32bit structures')
         parser_get.set_defaults(func=self.smbios_get)
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def smbios_ep(self):

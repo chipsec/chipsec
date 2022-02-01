@@ -178,7 +178,7 @@ class UEFICommand(BaseCommand):
         parser_assemble.add_argument('efi_file', type=str, help='')
         parser_assemble.set_defaults(func=self.assemble)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
 
         # No driver for decode functionality
         if 'decode' in self.argv:

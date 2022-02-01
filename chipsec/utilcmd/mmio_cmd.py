@@ -106,7 +106,7 @@ class MMIOCommand(BaseCommand):
         parser_write_abs.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
         parser_write_abs.set_defaults(func=self.write_abs)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         if hasattr(self, 'func'):
             return True
         return False

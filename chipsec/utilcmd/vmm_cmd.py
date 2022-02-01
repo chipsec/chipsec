@@ -73,7 +73,7 @@ class VMMCommand(BaseCommand):
         parser_virtio.add_argument('bdf', type=str, nargs='?', default=None, help='<bus>:<device>.<function>')
         parser_virtio.set_defaults(func=self.vmm_virtio)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
 

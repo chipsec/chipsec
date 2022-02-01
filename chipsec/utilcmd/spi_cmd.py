@@ -90,7 +90,7 @@ class SPICommand(BaseCommand):
         parser_jedec.add_argument('option', type=str, nargs='?', default='', help='Optional decode')
         parser_jedec.set_defaults(func=self.spi_jedec)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
         return True
 
     def spi_info(self):

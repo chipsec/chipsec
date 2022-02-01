@@ -62,7 +62,7 @@ class LOCKCHECKCommand(BaseCommand):
         parser_check = subparsers.add_parser('lock', parents=[parser_lockname])
         parser_check.set_defaults(func=self.check_lock)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
 
         return True
 
