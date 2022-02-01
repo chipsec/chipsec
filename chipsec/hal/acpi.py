@@ -436,9 +436,9 @@ class ACPI(hal_base.HALBase):
         if dsdt_address_to_use is None:
             dsdt_address = parsed_fadt_content.dsdt
             x_dsdt_address = parsed_fadt_content.x_dsdt
-            if logger().HAL: logger().error( 'Unable to determine the correct DSDT address' )
-            if logger().HAL: logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
-            if logger().HAL: logger().error( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
+            if logger().HAL: logger().log_error( 'Unable to determine the correct DSDT address' )
+            if logger().HAL: logger().log_error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
+            if logger().HAL: logger().log_error( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
@@ -454,7 +454,7 @@ class ACPI(hal_base.HALBase):
     #
     def print_ACPI_table_list(self):
         if len( self.tableList ) == 0:
-            logger().error("Couldn't get a list of ACPI tables")
+            logger().log_error("Couldn't get a list of ACPI tables")
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):

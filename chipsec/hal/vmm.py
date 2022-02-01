@@ -93,7 +93,7 @@ class VMM:
         logger().set_log_file( pt_fname )
         paging_ept.read_pt_and_show_status( pt_fname, 'EPT', eptp )
         logger().set_log_file( _orig_logname )
-        if paging_ept.failure: logger().error( 'could not dump EPT page tables' )
+        if paging_ept.failure: logger().log_error( 'could not dump EPT page tables' )
 
 
 ################################################################################

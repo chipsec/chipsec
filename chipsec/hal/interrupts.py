@@ -109,7 +109,7 @@ class Interrupts(hal_base.HALBase):
                 #check for return status
                 ret_buf = self.cs.helper.read_io_port(buf_addr, 8)
             else:
-                logger().error("Functionality is currently not implemented")
+                logger().log_error("Functionality is currently not implemented")
                 ret_buf = None
             return ret_buf
 

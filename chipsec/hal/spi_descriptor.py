@@ -83,12 +83,12 @@ def get_spi_regions( fd ):
 
 def parse_spi_flash_descriptor( cs, rom ):
     if not (isinstance(rom, str) or isinstance(rom, bytes)):
-        logger().error('Invalid fd object type {}'.format(type(rom)))
+        logger().log_error('Invalid fd object type {}'.format(type(rom)))
         return
 
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I', SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]) )
+        logger().log_error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I', SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]) )
         return None
 
     fd_off = pos - 0x10

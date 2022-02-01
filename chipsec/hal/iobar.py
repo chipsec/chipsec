@@ -49,7 +49,7 @@ class IOBAR(hal_base.HALBase):
         try:
             return (self.cs.Cfg.IO_BARS[ bar_name ] is not None)
         except KeyError:
-            if logger().HAL: logger().error( "'%s' I/O BAR definition not found in XML config" % bar_name)
+            if logger().HAL: logger().log_error( "'%s' I/O BAR definition not found in XML config" % bar_name)
             #raise IOBARNotFoundError, ('IOBARNotFound: %s' % bar_name)
             return False
 

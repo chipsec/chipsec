@@ -335,8 +335,8 @@ def parse_sb_db(db, decode_dir):
             err_str = "Wrong SignatureSize for {} type: 0x{:X}." .format(SignatureType, SignatureSize)
             if (sig_size > 0): err_str = err_str + " Must be 0x{:X}.".format(sig_size)
             else:              err_str = err_str + " Must be >= 0x10."
-            logger().error( err_str )
-            logger().error('Skipping signature decode for this list.')
+            logger().log_error( err_str )
+            logger().log_error('Skipping signature decode for this list.')
         dof = dof + SignatureListSize
 
     return entries
@@ -388,7 +388,7 @@ def parse_auth_var(db, decode_dir):
         return entries
     expected_size = struct.unpack(AUTH_CERT_DB_LIST_HEAD, db[dof:dof +AUTH_CERT_DB_LIST_HEAD_size])[0]
     if db_size != expected_size:
-        logger().error("Expected size of cert list did not match actual size.")
+        logger().log_error("Expected size of cert list did not match actual size.")
         return entries
     dof += AUTH_CERT_DB_LIST_HEAD_size
 

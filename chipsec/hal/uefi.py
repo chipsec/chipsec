@@ -303,7 +303,7 @@ class UEFI(hal_base.HALBase):
 
     def find_EFI_variable_store( self, rom_buffer ):
         if ( rom_buffer is None ):
-            logger().error( 'rom_buffer is None' )
+            logger().log_error( 'rom_buffer is None' )
             return None
 
         rom = rom_buffer
@@ -314,7 +314,7 @@ class UEFI(hal_base.HALBase):
         if uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getnvstore']:
             (offset, size, nvram_header) = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getnvstore']( rom )
             if (-1 == offset):
-                logger().error( "'func_getnvstore' is defined but could not find EFI NVRAM. Exiting.." )
+                logger().log_error( "'func_getnvstore' is defined but could not find EFI NVRAM. Exiting.." )
                 return None
         else:
             logger().log( "[uefi] 'func_getnvstore' is not defined in EFI_VAR_DICT. Assuming start offset 0.." )
@@ -335,7 +335,7 @@ NVRAM: EFI Variable Store
     # @TODO: Do not use, will be removed
     def read_EFI_variables( self, efi_var_store, authvars ):
         if ( efi_var_store is None ):
-            logger().error( 'efi_var_store is None' )
+            logger().log_error( 'efi_var_store is None' )
             return None
         variables = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']( efi_var_store )
         if logger().UTIL_TRACE: print_sorted_EFI_variables( variables )
@@ -347,7 +347,7 @@ NVRAM: EFI Variable Store
             logger().log( "[uefi] Using FW type (NVRAM format): {}".format(_fw_type) )
             self.set_FWType( _fw_type )
         else:
-            logger().error( "Unrecognized FW type (NVRAM format) '{}'..".format(_fw_type) )
+            logger().log_error( "Unrecognized FW type (NVRAM format) '{}'..".format(_fw_type) )
             return False
 
         logger().log( "[uefi] Searching for NVRAM in the binary.." )
@@ -362,7 +362,7 @@ NVRAM: EFI Variable Store
             efi_vars = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']( efi_vars_store )
             decode_EFI_variables( efi_vars, nvram_pth )
         else:
-            logger().error( "Did not find NVRAM" )
+            logger().log_error( "Did not find NVRAM" )
             return False
 
         return True
@@ -376,7 +376,7 @@ NVRAM: EFI Variable Store
             else:
                 return None
         else:
-            logger().error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
+            logger().log_error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
             return None
 
     def compress_EFI_binary( self, uncompressed_name, compressed_name, compression_type ):
@@ -387,7 +387,7 @@ NVRAM: EFI Variable Store
             else:
                 return None
         else:
-            logger().error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
+            logger().log_error( 'Unknown EFI compression type 0x{:X}'.format(compression_type) )
             return None
 
     ######################################################################
@@ -406,7 +406,7 @@ NVRAM: EFI Variable Store
 
         efivars = self.list_EFI_variables()
         if efivars is None:
-            logger().error( 'Could not enumerate UEFI variables at runtime' )
+            logger().log_error( 'Could not enumerate UEFI variables at runtime' )
             return (found, BootScript_addresses)
         if logger().HAL: logger().log( "[uefi] searching for EFI variable(s): " + str(S3_BOOTSCRIPT_VARIABLES) )
 
@@ -422,11 +422,11 @@ NVRAM: EFI Variable Store
                 if   4 == varsz: AcpiGlobalAddr_fmt = '<L'
                 elif 8 == varsz: AcpiGlobalAddr_fmt = '<Q'
                 else:
-                    logger().error( "Unrecognized format of '{}' UEFI variable (data size = 0x{:X})".format(efivar_name, varsz) )
+                    logger().log_error( "Unrecognized format of '{}' UEFI variable (data size = 0x{:X})".format(efivar_name, varsz) )
                     break
                 AcpiGlobalAddr = struct.unpack_from( AcpiGlobalAddr_fmt, data )[0]
                 if 0 == AcpiGlobalAddr:
-                    logger().error( "Pointer to ACPI Global Data structure in {} variable is 0".format(efivar_name) )
+                    logger().log_error( "Pointer to ACPI Global Data structure in {} variable is 0".format(efivar_name) )
                     break
                 if logger().HAL: logger().log( "[uefi] Pointer to ACPI Global Data structure: 0x{:016X}".format( AcpiGlobalAddr ) )
                 if logger().HAL: logger().log( "[uefi] Decoding ACPI Global Data structure.." )
@@ -436,7 +436,7 @@ NVRAM: EFI Variable Store
                     print_buffer( bytestostring(AcpiVariableSet) )
                 AcpiVariableSet_fmt = '<6Q'
                 #if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
-                #    logger().error( 'Unrecognized format of AcpiVariableSet structure' )
+                #    logger().log_error( 'Unrecognized format of AcpiVariableSet structure' )
                 #    return (False,0)
                 AcpiReservedMemoryBase, AcpiReservedMemorySize, S3ReservedLowMemoryBase, AcpiBootScriptTable, RuntimeScriptTableBase, AcpiFacsTable = struct.unpack_from( AcpiVariableSet_fmt, AcpiVariableSet )
                 if logger().HAL: logger().log( '[uefi] ACPI Boot-Script table base = 0x{:016X}'.format(AcpiBootScriptTable) )
@@ -499,7 +499,7 @@ NVRAM: EFI Variable Store
 
     def set_EFI_variable_from_file( self, name, guid, filename, datasize=None, attrs=None ):
         if filename is None:
-            logger().error( 'File with EFI variable is not specified' )
+            logger().log_error( 'File with EFI variable is not specified' )
             return False
         var = read_file( filename )
         return self.set_EFI_variable( name, guid, var, datasize, attrs )

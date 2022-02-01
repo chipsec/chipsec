@@ -448,7 +448,7 @@ class SPI(hal_base.HALBase):
             reg_value = self.cs.read_register('BC')
             self.cs.print_register('BC', reg_value )
         else:
-            if self.logger.HAL: self.logger.error( "Could not locate the definition of 'BIOS Control' register.." )
+            if self.logger.HAL: self.logger.log_error( "Could not locate the definition of 'BIOS Control' register.." )
 
 
     def disable_BIOS_write_protection( self ):
@@ -553,7 +553,7 @@ class SPI(hal_base.HALBase):
         # Test if the flash decriptor is valid (and hardware sequencing enabled)
         fdv = self.cs.read_register_field('HSFS', 'FDV')
         if fdv == 0:
-            self.logger.error("HSFS.FDV is 0, hardware sequencing is disabled")
+            self.logger.log_error("HSFS.FDV is 0, hardware sequencing is disabled")
             raise SpiRuntimeError("Chipset does not support hardware sequencing")
 
     #
@@ -591,14 +591,14 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.error( "SPI cycle not ready" )
+            self.logger.log_error( "SPI cycle not ready" )
             return None
 
         for i in range(n):
             if self.logger.HAL:
                 self.logger.log( "[spi] reading chunk {:d} of 0x{:x} bytes from 0x{:x}".format(i, dbc, spi_fla + i *dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, dbc -1, spi_fla + i *dbc ):
-                self.logger.error( "SPI flash read failed" )
+                self.logger.log_error( "SPI flash read failed" )
             else:
                 for fdata_idx in range(0, dbc //4):
                     dword_value = self.spi_reg_read( self.fdata0_off + fdata_idx *4 )
@@ -610,7 +610,7 @@ class SPI(hal_base.HALBase):
             if self.logger.HAL:
                 self.logger.log( "[spi] reading remaining 0x{:x} bytes from 0x{:x}".format(r, spi_fla + n *dbc) )
             if not self._send_spi_cycle( HSFCTL_READ_CYCLE, r -1, spi_fla + n *dbc ):
-                self.logger.error( "SPI flash read failed" )
+                self.logger.log_error( "SPI flash read failed" )
             else:
                 t = 4
                 n_dwords = (r +3) //4
@@ -643,7 +643,7 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.error( "SPI cycle not ready" )
+            self.logger.log_error( "SPI cycle not ready" )
             return None
 
         for i in range(n):
@@ -655,7 +655,7 @@ class SPI(hal_base.HALBase):
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, dbc -1, spi_fla + i *dbc ):
                 write_ok = False
-                self.logger.error( "SPI flash write cycle failed" )
+                self.logger.log_error( "SPI flash write cycle failed" )
 
         if (0 != r):
             if self.logger.UTIL_TRACE or self.logger.HAL:
@@ -668,7 +668,7 @@ class SPI(hal_base.HALBase):
             self.spi_reg_write( self.fdata0_off, dword_value )
             if not self._send_spi_cycle( HSFCTL_WRITE_CYCLE, r -1, spi_fla + n *dbc ):
                 write_ok = False
-                self.logger.error( "SPI flash write cycle failed" )
+                self.logger.log_error( "SPI flash write cycle failed" )
 
         return write_ok
 
@@ -681,12 +681,12 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.error( "SPI cycle not ready" )
+            self.logger.log_error( "SPI cycle not ready" )
             return None
 
         erase_ok = self._send_spi_cycle( HSFCTL_ERASE_CYCLE, 0, spi_fla )
         if not erase_ok:
-            self.logger.error( "SPI Flash erase cycle failed" )
+            self.logger.log_error( "SPI Flash erase cycle failed" )
 
         return erase_ok
 
@@ -733,7 +733,7 @@ class SPI(hal_base.HALBase):
                 self.spi_reg_write( self.fdata14_off, 0x00000000 )
                 self.spi_reg_write( self.fdata15_off, 0x00000000 )
                 if not self._send_spi_cycle( HSFCTL_SFDP_CYCLE, 0x3F, 0 ):
-                    self.logger.error( 'SPI SFDP signature cycle failed' )
+                    self.logger.log_error( 'SPI SFDP signature cycle failed' )
                     continue
                 pTable_offset_list = []
                 pTable_length = []
@@ -776,7 +776,7 @@ class SPI(hal_base.HALBase):
             self.check_hardware_sequencing()
 
             if not self._send_spi_cycle( HSFCTL_JEDEC_CYCLE, 4, 0 ):
-                self.logger.error( 'SPI JEDEC ID cycle failed' )
+                self.logger.log_error( 'SPI JEDEC ID cycle failed' )
             id = self.spi_reg_read( self.fdata0_off )
         else:
             return False

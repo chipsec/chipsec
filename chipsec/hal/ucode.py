@@ -103,7 +103,7 @@ class Ucode:
 
     def update_ucode_all_cpus(self, ucode_file ):
         if not ( os.path.exists(ucode_file) and os.path.isfile(ucode_file) ):
-            logger().error( "Ucode file not found: '{:.256}'".format(ucode_file) )
+            logger().log_error( "Ucode file not found: '{:.256}'".format(ucode_file) )
             return False
         ucode_buf = read_ucode_file( ucode_file )
         if (ucode_buf is not None) and (len(ucode_buf) > 0):
@@ -113,7 +113,7 @@ class Ucode:
 
     def update_ucode(self, cpu_thread_id, ucode_file ):
         if not ( os.path.exists(ucode_file) and os.path.isfile(ucode_file) ):
-            logger().error( "Ucode file not found: '{:.256}'".format(ucode_file) )
+            logger().log_error( "Ucode file not found: '{:.256}'".format(ucode_file) )
             return False
         _ucode_buf = read_ucode_file( ucode_file )
         return self.load_ucode_update( cpu_thread_id, _ucode_buf )

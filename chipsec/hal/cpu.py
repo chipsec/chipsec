@@ -220,7 +220,8 @@ class CPU(hal_base.HALBase):
         logger().set_log_file( pt_fname )
         hpt.read_pt_and_show_status( pt_fname, 'PT', cr3 )
         logger().set_log_file( _orig_logname )
-        if hpt.failure: logger().error( 'could not dump page tables' )
+        if hpt.failure:
+            logger().log_error( 'could not dump page tables' )
 
     def dump_page_tables_all( self ):
         for tid in range(self.cs.msr.get_cpu_thread_count()):

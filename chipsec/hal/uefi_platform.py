@@ -1201,7 +1201,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         entry_data = script[ off: off + entry_length ]
 
         if entry_length > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
+            logger().log_error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
             return (0, None)
 
         s3script_entry = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
@@ -1222,7 +1222,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         entry_data = script[ off + hdr_length: off + entry_length ]
 
         if entry_length > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
+            logger().log_error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
             return (0, None)
 
         s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
