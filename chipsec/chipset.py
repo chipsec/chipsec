@@ -164,9 +164,9 @@ class Chipset:
             did = (vid_did >> 16) & 0xFFFF
             rid = self.pci.read_byte(0, 0, 0, PCI_HDR_RID_OFF)
         except:
-            if logger().DEBUG: logger().error("pci.read_dword couldn't read platform VID/DID")
+            if logger().DEBUG: logger().log_error("pci.read_dword couldn't read platform VID/DID")
         if not vid in PCH_ADDRESS:
-            if logger().DEBUG: logger().error("PCH address unknown for VID 0x{:04X}.".format(vid))
+            if logger().DEBUG: logger().log_error("PCH address unknown for VID 0x{:04X}.".format(vid))
         else:
             try:
                  (bus,dev,fun) = PCH_ADDRESS[vid]
@@ -175,7 +175,7 @@ class Chipset:
                  pch_did = (vid_did >> 16) & 0xFFFF
                  pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
             except:
-                 if logger().DEBUG: logger().error("pci.read_dword couldn't read PCH VID/DID")
+                 if logger().DEBUG: logger().log_error("pci.read_dword couldn't read PCH VID/DID")
         return (vid, did, rid, pch_vid, pch_did, pch_rid)
 
     def get_cpuid(self):
@@ -289,7 +289,7 @@ class Chipset:
         if _unknown_platform:
             msg = 'Unknown Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
             if start_driver:
-                logger().error(msg)
+                logger().log_error(msg)
                 raise UnknownChipsetError(msg)
             else:
                 logger().log("[!]       {}; Using Default.".format(msg))
@@ -298,7 +298,7 @@ class Chipset:
         if _unknown_pch:
             msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
             if self.reqs_pch and start_driver:
-                logger().error("Chipset requires a supported PCH to be loaded. {}".format(msg))
+                logger().log_error("Chipset requires a supported PCH to be loaded. {}".format(msg))
                 raise UnknownChipsetError(msg)
             else:
                 logger().log("[!]       {}; Using Default.".format(msg))
@@ -750,7 +750,7 @@ class Chipset:
                     reg_def['address'] = dev['address']
                     reg_def['access'] = dev['access']
                 else:
-                    logger().error("Memory device {} not found".format(dev_name))
+                    logger().log_error("Memory device {} not found".format(dev_name))
             elif reg_def["type"] == "indirect":
                 if dev_name in self.Cfg.IMA_REGISTERS:
                     dev = self.Cfg.IMA_REGISTERS[dev_name]
@@ -761,13 +761,13 @@ class Chipset:
                     if (dev['index'] in self.Cfg.REGISTERS):
                         reg_def['index'] = dev['index']
                     else:
-                        logger().error("Index register {} not found".format(dev['index']))
+                        logger().log_error("Index register {} not found".format(dev['index']))
                     if (dev['data'] in self.Cfg.REGISTERS):
                         reg_def['data'] = dev['data']
                     else:
-                        logger().error("Data register {} not found".format(dev['data']))
+                        logger().log_error("Data register {} not found".format(dev['data']))
                 else:
-                    logger().error("Indirect access device {} not found".format(dev_name))
+                    logger().log_error("Indirect access device {} not found".format(dev_name))
         return reg_def
 
     def get_register_bus(self, reg_name):

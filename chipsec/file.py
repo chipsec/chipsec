@@ -52,7 +52,7 @@ def read_file( filename, size=0 ):
     try:
         f = open(filename, 'rb')
     except:
-        logger().error( "Unable to open file '{:.256}' for read access".format(filename) )
+        logger().log_error( "Unable to open file '{:.256}' for read access".format(filename) )
         return 0
 
     if size:
@@ -74,7 +74,7 @@ def write_file( filename, buffer, append=False ):
     try:
         f = open(filename, perm)
     except:
-        logger().error( "Unable to open file '{:.256}' for write access".format(filename) )
+        logger().log_error( "Unable to open file '{:.256}' for write access".format(filename) )
         return 0
     f.write( buffer )
     f.close()

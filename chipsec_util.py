@@ -134,7 +134,7 @@ class ChipsecUtil:
                 self.commands.update(cu)
             except ImportError as msg:
                 # Display the import error and continue to import commands
-                logger().error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
+                logger().log_error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
                 continue
         self.commands.update({"help": ""})
 
@@ -169,14 +169,14 @@ class ChipsecUtil:
                 logger().warn("* Error Message: \"{}\"".format(str(msg)))
                 logger().warn("*******************************************************************")
                 if self._unknownPlatform:
-                    logger().error('To run anyways please use -i command-line option\n\n')
+                    logger().log_error('To run anyways please use -i command-line option\n\n')
                     sys.exit(ExitCode.OK)
             except Exception as msg:
-                logger().error(str(msg))
+                logger().log_error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
         else:
             if comm.requires_driver():
-                logger().error("Cannot run without driver loaded")
+                logger().log_error("Cannot run without driver loaded")
                 sys.exit(ExitCode.OK)
 
         if self._show_banner:

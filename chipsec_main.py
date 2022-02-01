@@ -127,12 +127,12 @@ class ChipsecMain:
     def import_module(self, module_path):
         module = None
         if not self.MODPATH_RE.match(module_path):
-            logger().error( "Invalid module path: {}".format(module_path) )
+            logger().log_error( "Invalid module path: {}".format(module_path) )
         else:
             try:
                 module = importlib.import_module( module_path )
             except BaseException as msg:
-                logger().error( "Exception occurred during import of {}: '{}'".format(module_path, str(msg)) )
+                logger().log_error( "Exception occurred during import of {}: '{}'".format(module_path, str(msg)) )
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise msg
         return module
@@ -287,7 +287,7 @@ class ChipsecMain:
 
             # Module uses the old API  display warning and try to run anyways
             if result == module_common.ModuleResult.DEPRECATED:
-                logger().error( 'Module {} does not inherit BaseModule class'.format(str(modx)) )
+                logger().log_error( 'Module {} does not inherit BaseModule class'.format(str(modx)) )
 
             # Populate results
 
@@ -309,7 +309,7 @@ class ChipsecMain:
         if self._deltas_file is not None:
             prev_results = chipsec.result_deltas.get_json_results(self._deltas_file)
             if prev_results is None:
-                logger().error("Delta processing disabled.  Displaying results summary.")
+                logger().log_error("Delta processing disabled.  Displaying results summary.")
             else:
                 test_deltas = chipsec.result_deltas.compute_result_deltas(prev_results, results.get_results())
 
@@ -331,12 +331,12 @@ class ChipsecMain:
                     if len(summary[k]) > 0:
                         logger().log( '[CHIPSEC] Modules with {:11}{:d}:'.format(k, len(summary[k])) )
                         for mod in summary[k]:
-                            logger().error(mod)
+                            logger().log_error(mod)
                 else:
                     logger().log( '[CHIPSEC] Modules {:16}{:d}:'.format(k, len(summary[k])) )
                     for mod in summary[k]:
                         if k == 'failed to run':
-                            logger().error(mod)
+                            logger().log_error(mod)
                         elif k == 'passed':
                             logger().log_passed(mod)
                         elif k == 'information':
@@ -476,24 +476,24 @@ class ChipsecMain:
             sys.path.append(os.path.abspath( import_path ) )
 
         #if self._no_driver and self._driver_exists:
-        #    logger().error( "incompatible options: --no_driver and --exists" )
+        #    logger().log_error( "incompatible options: --no_driver and --exists" )
         #    return ExitCode.EXCEPTION
 
         if self._load_config:
             try:
                 self._cs.init( self._platform, self._pch, (not self._no_driver), self._driver_exists, self._to_file, self._from_file )
             except UnknownChipsetError as msg:
-                logger().error( "Platform is not supported ({}).".format(str(msg)) )
+                logger().log_error( "Platform is not supported ({}).".format(str(msg)) )
                 if self._unknownPlatform:
-                    logger().error('To specify a cpu please use -p command-line option')
-                    logger().error('To specify a pch please use --pch command-line option\n')
-                    logger().error('To load legacy configuration and run anyways please use -i command-line option')
+                    logger().log_error('To specify a cpu please use -p command-line option')
+                    logger().log_error('To specify a pch please use --pch command-line option\n')
+                    logger().log_error('To load legacy configuration and run anyways please use -i command-line option')
                     if logger().DEBUG: logger().log_bad(traceback.format_exc())
                     if self.failfast: raise msg
                     return  ExitCode.EXCEPTION
                 logger().warn("Platform dependent functionality is likely to be incorrect")
             except OsHelperError as os_helper_error:
-                logger().error(str(os_helper_error))
+                logger().log_error(str(os_helper_error))
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
                 if self.failfast: raise os_helper_error
                 return ExitCode.EXCEPTION

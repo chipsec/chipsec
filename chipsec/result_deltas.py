@@ -33,7 +33,7 @@ def get_json_results(json_file):
     try:
         json_data = json.loads(bytestostring(file_data))
     except:
-        logger().error("Unable to load JSON file: {}".format(json_file))
+        logger().log_error("Unable to load JSON file: {}".format(json_file))
         return None
     return json_data
 
