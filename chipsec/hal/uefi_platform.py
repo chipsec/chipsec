@@ -961,7 +961,7 @@ def decode_s3bs_opcode_def( data ):
     op = None
     opcode, = struct.unpack( '<B', data[ : 1 ] )
     try:
-        if logger().HAL: logger().log( script_opcodes[opcode] )
+        logger().log_hal( script_opcodes[opcode] )
     except:
         pass
     if S3BootScriptOpcode_MDE.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE == opcode:
@@ -1021,7 +1021,7 @@ def decode_s3bs_opcode_def( data ):
         op = op_terminate( opcode, size )
     else:
         op = op_unknown( opcode, 1 )
-        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
+        logger().log_hal( 'Unrecognized opcode {:X}'.format(opcode) )
 
     return op
 
@@ -1067,7 +1067,7 @@ def encode_s3bs_opcode_def( op ):
         frmt = '<B'
 
     else:
-        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(op.opcode) )
+        logger().log_hal( 'Unrecognized opcode {:X}'.format(op.opcode) )
 
     return encoded_opcode
 
@@ -1086,7 +1086,7 @@ def decode_s3bs_opcode_edkcompat( data ):
     opcode, size = struct.unpack( hdr_frmt, data[ : header_size ] )
     opcode_data = data[ header_size: ]
     try:
-        if logger().HAL: logger().log( script_opcodes[opcode] )
+        logger().log_hal( script_opcodes[opcode] )
     except:
         pass
 
@@ -1111,7 +1111,8 @@ def decode_s3bs_opcode_edkcompat( data ):
         op = op_io_pci_mem( opcode, size, width, address, None, count, None, value, mask )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
-        if logger().UTIL_TRACE or logger().HAL: logger().warn( 'Cannot parse opcode {:X} yet'.format(opcode) )
+        if logger().UTIL_TRACE:
+            logger().log_hal( 'Cannot parse opcode {:X} yet'.format(opcode) )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<Q'
@@ -1136,7 +1137,7 @@ def decode_s3bs_opcode_edkcompat( data ):
 
     else:
         op = op_unknown( opcode, size )
-        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
+        logger().log_hal( 'Unrecognized opcode {:X}'.format(opcode) )
 
     return op
 
@@ -1192,7 +1193,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         fhdr = '<HB'
         hdr_length = struct.calcsize(fhdr)
         if remaining_len < hdr_length:
-            if logger().HAL: logger().warn( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length) )
+            logger().log_hal( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length) )
             return (0, None)
 
         opcode, entry_length = struct.unpack( fhdr, script[ off: off + hdr_length ] )
@@ -1212,7 +1213,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         hdr_length = struct.calcsize(fhdr)
         f          = fhdr + 'B'
         if remaining_len < (hdr_length + 1):
-            if logger().HAL: logger().warn( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length +1) )
+            logger().log_hal( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length +1) )
             return (0, None)
 
         entry_index, entry_length, opcode = struct.unpack(f, script[ off: off + hdr_length + 1 ])
@@ -1268,13 +1269,13 @@ def id_s3bootscript_type( script, log_script=False ):
 
     start_op, = struct.unpack('<B', script[ : 1 ])
     if S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_TABLE_OPCODE == start_op:
-        if logger().HAL: logger().log('S3 Boot Script AA Parser')
+        logger().log_hal('S3 Boot Script AA Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_EDKCOMPAT
         if log_script: logger().log( '[uefi] Start opcode 0x{:X}'.format(start_op) )
         # MdeModulePkg\Library\PiDxeS3BootScriptLib\BootScriptInternalFormat.h
         script_header_length = struct.calcsize("<HBHLHH")
     else:
-        if logger().HAL: logger().log('S3 Boot Script DEFAULT Parser')
+        logger().log_hal('S3 Boot Script DEFAULT Parser')
         script_type = S3BootScriptType.EFI_BOOT_SCRIPT_TYPE_DEFAULT
 
     return (script_type, script_header_length)

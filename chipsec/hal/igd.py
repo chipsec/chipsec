@@ -79,12 +79,12 @@ class IGD(hal_base.HALBase):
 
     def get_GMADR(self):
         base, size = self.cs.mmio.get_MMIO_BAR_base_address('GMADR')
-        if self.logger.HAL: self.logger.log( '[igd] Aperture (GMADR): 0x{:016X}'.format(base) )
+        self.logger.log_hal( '[igd] Aperture (GMADR): 0x{:016X}'.format(base) )
         return base
 
     def get_GTTMMADR(self):
         base, size = self.cs.mmio.get_MMIO_BAR_base_address('GTTMMADR')
-        if self.logger.HAL: self.logger.log( '[igd] Graphics MMIO and GTT (GTTMMADR): 0x{:016X}'.format(base) )
+        self.logger.log_hal( '[igd] Graphics MMIO and GTT (GTTMMADR): 0x{:016X}'.format(base) )
         return base
 
     def get_GGTT_base(self):
@@ -171,11 +171,10 @@ class IGD(hal_base.HALBase):
         igd_addr = gmadr + pte_num *0x1000
         pte_orig = self.read_GGTT_PTE( pte_num )
 
-        if self.logger.HAL:
-            self.logger.log( '[igd] reading 0x{:X} bytes at PA 0x{:016X} through IGD aperture (DMA) using PTE{:d}'.format(size, address, pte_num) )
-            self.logger.log( '[igd] GFx aperture (GMADR): 0x{:016X}'.format(gmadr) )
-            self.logger.log( '[igd] GFx GTT base        : 0x{:016X}'.format(self.get_GGTT_base()) )
-            self.logger.log( '[igd] original GTT PTE{:03d}: 0x{:08X}'.format(pte_num, pte_orig) )
+        self.logger.log_hal( '[igd] reading 0x{:X} bytes at PA 0x{:016X} through IGD aperture (DMA) using PTE{:d}'.format(size, address, pte_num) )
+        self.logger.log_hal( '[igd] GFx aperture (GMADR): 0x{:016X}'.format(gmadr) )
+        self.logger.log_hal( '[igd] GFx GTT base        : 0x{:016X}'.format(self.get_GGTT_base()) )
+        self.logger.log_hal( '[igd] original GTT PTE{:03d}: 0x{:08X}'.format(pte_num, pte_orig) )
 
 
         if (h > 0) and (size > h):
@@ -186,17 +185,17 @@ class IGD(hal_base.HALBase):
             pages = 1 + size //0x1000
 
         N = pages
-        if self.logger.HAL: self.logger.log( '[igd] pages = 0x{:X}, r = 0x{:X}, N = {:d}'.format(pages, r, N) )
+        self.logger.log_hal( '[igd] pages = 0x{:X}, r = 0x{:X}, N = {:d}'.format(pages, r, N) )
 
+        self.logger.log_hal( '[igd] original data at address 0x{:016X}:'.format(address) )
         if self.logger.HAL:
-            self.logger.log( '[igd] original data at address 0x{:016X}:'.format(address) )
             print_buffer(bytestostring(self.cs.mem.read_physical_mem(address, size)))
 
         buffer = ''
         pa = address
         for p in range(N):
             pte = self.get_GGTT_PTE_from_PA(pa)
-            if self.logger.HAL: self.logger.log( '[igd] GFx PTE for address 0x{:016X}: 0x{:08X}'.format(address, pte) )
+            self.logger.log_hal( '[igd] GFx PTE for address 0x{:016X}: 0x{:08X}'.format(address, pte) )
             self.write_GGTT_PTE(pte_num, pte)
             if (p == 0):
                 pa_off = off
@@ -206,20 +205,22 @@ class IGD(hal_base.HALBase):
             if (p == N -1):
                 size = r if (r > 0) else 0x1000
             if value is None:
-                if self.logger.HAL: self.logger.log( '[igd] reading 0x{:X} bytes at 0x{:016X} through GFx aperture 0x{:016X} ..'.format(size, pa, igd_addr + pa_off) )
+                self.logger.log_hal( '[igd] reading 0x{:X} bytes at 0x{:016X} through GFx aperture 0x{:016X} ..'.format(size, pa, igd_addr + pa_off) )
                 page = self.cs.mem.read_physical_mem(igd_addr + pa_off, size)
                 page = bytestostring(page)
                 buffer += page
-                if self.logger.HAL: print_buffer(page[:size])
+                if self.logger.HAL:
+                    print_buffer(page[:size])
             else:
-                if self.logger.HAL: self.logger.log( '[igd] writing 0x{:X} bytes to 0x{:016X} through GFx aperture 0x{:016X} ..'.format(size, pa, igd_addr + pa_off) )
+                self.logger.log_hal( '[igd] writing 0x{:X} bytes to 0x{:016X} through GFx aperture 0x{:016X} ..'.format(size, pa, igd_addr + pa_off) )
                 page = value[p *0x1000:p *0x1000 +size]
                 self.cs.mem.write_physical_mem(igd_addr + pa_off, size, page)
-                if self.logger.HAL: print_buffer(page)
+                if self.logger.HAL:
+                    print_buffer(page)
             pa += size
 
         # restore original PTE
-        if self.logger.HAL: self.logger.log( '[igd] restoring GFx PTE{:d} 0x{:X}..'.format(pte_num, pte_orig) )
+        self.logger.log_hal( '[igd] restoring GFx PTE{:d} 0x{:X}..'.format(pte_num, pte_orig) )
         self.write_GGTT_PTE(pte_num, pte_orig)
 
         return buffer

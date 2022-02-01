@@ -47,18 +47,18 @@ class CPU(hal_base.HALBase):
 
     def read_cr(self, cpu_thread_id, cr_number ):
         value = self.helper.read_cr( cpu_thread_id, cr_number )
-        if logger().HAL: logger().log( "[cpu{:d}] read CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
+        logger().log_hal( "[cpu{:d}] read CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
         return value
 
     def write_cr(self, cpu_thread_id, cr_number, value ):
-        if logger().HAL: logger().log( "[cpu{:d}] write CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
+        logger().log_hal( "[cpu{:d}] write CR{:d}: value = 0x{:08X}".format(cpu_thread_id, cr_number, value) )
         status = self.helper.write_cr( cpu_thread_id, cr_number, value )
         return status
 
     def cpuid(self, eax, ecx ):
-        if logger().HAL: logger().log( "[cpu] CPUID in : EAX=0x{:08X}, ECX=0x{:08X}".format(eax, ecx) )
+        logger().log_hal( "[cpu] CPUID in : EAX=0x{:08X}, ECX=0x{:08X}".format(eax, ecx) )
         (eax, ebx, ecx, edx) = self.helper.cpuid( eax, ecx )
-        if logger().HAL: logger().log( "[cpu] CPUID out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(eax, ebx, ecx, edx) )
+        logger().log_hal( "[cpu] CPUID out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(eax, ebx, ecx, edx) )
         return (eax, ebx, ecx, edx)
 
     # Using cpuid check if running under vmm control
@@ -117,7 +117,7 @@ class CPU(hal_base.HALBase):
         packages = {}
         cores = {}
         for thread in range(num_threads):
-            if logger().HAL: self.logger.log("Setting affinity to: {:d}".format(thread))
+            self.logger.log_hal("Setting affinity to: {:d}".format(thread))
             self.cs.helper.set_affinity(thread)
             eax = 0xb   # cpuid leaf 0B contains x2apic info
             ecx = 1     # ecx 1 will get us pkg_id in edx after shifting right by _eax
@@ -133,8 +133,8 @@ class CPU(hal_base.HALBase):
             if core_id not in cores:
                 cores[core_id] = []
             cores[core_id].append(thread)
-            if logger().HAL: self.logger.log("pkg id is {:x}".format(pkg_id))
-            if logger().HAL: self.logger.log("core id is {:x}".format(core_id))
+            self.logger.log_hal("pkg id is {:x}".format(pkg_id))
+            self.logger.log_hal("core id is {:x}".format(core_id))
         topology = {'packages': packages, 'cores':cores}
         return topology
 
@@ -205,7 +205,8 @@ class CPU(hal_base.HALBase):
     #
     def check_SMRR_supported( self ):
         mtrrcap_msr_reg = self.cs.read_register( 'MTRRCAP' )
-        if logger().HAL: self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
+        if logger().HAL:
+            self.cs.print_register( 'MTRRCAP', mtrrcap_msr_reg )
         smrr = self.cs.get_register_field( 'MTRRCAP', mtrrcap_msr_reg, 'SMRR' )
         return (1 == smrr)
 
@@ -215,7 +216,7 @@ class CPU(hal_base.HALBase):
     def dump_page_tables( self, cr3, pt_fname=None ):
         _orig_logname = logger().LOG_FILE_NAME
         hpt = paging.c_ia32e_page_tables( self.cs )
-        if logger().HAL: logger().log( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x{:08X}...'.format(cr3) )
+        logger().log_hal( '[cpu] dumping paging hierarchy at physical base (CR3) = 0x{:08X}...'.format(cr3) )
         if pt_fname is None: pt_fname = ('pt_{:08X}'.format(cr3))
         logger().set_log_file( pt_fname )
         hpt.read_pt_and_show_status( pt_fname, 'PT', cr3 )
@@ -225,5 +226,5 @@ class CPU(hal_base.HALBase):
     def dump_page_tables_all( self ):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             cr3 = self.read_cr( tid, 3 )
-            if logger().HAL: logger().log( '[cpu{:d}] found paging hierarchy base (CR3): 0x{:08X}'.format(tid, cr3) )
+            logger().log_hal( '[cpu{:d}] found paging hierarchy base (CR3): 0x{:08X}'.format(tid, cr3) )
             self.dump_page_tables( cr3 )

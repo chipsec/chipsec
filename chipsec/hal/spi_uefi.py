@@ -486,20 +486,20 @@ def decode_uefi_region(_uefi, pth, fname, fwtype, filetype=[]):
         os.makedirs( fv_pth )
 
     # Decoding UEFI Firmware Volumes
-    if logger().HAL: logger().log( "[spi_uefi] decoding UEFI firmware volumes..." )
+    logger().log_hal( "[spi_uefi] decoding UEFI firmware volumes..." )
     parse_uefi_region_from_file( _uefi, fname, fwtype, fv_pth, filetype )
     # If a specific filetype is wanted, there is no need to check for EFI Variables
     if filetype:
         return
 
     # Decoding EFI Variables NVRAM
-    if logger().HAL: logger().log( "[spi_uefi] decoding UEFI NVRAM..." )
+    logger().log_hal( "[spi_uefi] decoding UEFI NVRAM..." )
     region_data = read_file( fname )
     if fwtype is None:
         fwtype = identify_EFI_NVRAM( region_data )
         if fwtype is None: return
     elif fwtype not in fw_types:
-        if logger().HAL: logger().error( "unrecognized NVRAM type {}".format(fwtype) )
+        logger().log_hal( "unrecognized NVRAM type {}".format(fwtype) )
         return
     nvram_fname = os.path.join( bios_pth, ('nvram_{}'.format(fwtype)) )
     logger().set_log_file( (nvram_fname + '.nvram.lst') )

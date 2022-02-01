@@ -242,19 +242,19 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
     def read_pt_and_show_status(self, path, name, ptr):
         #txt = open(path, 'w')
         try:
-            if logger().HAL: logger().log( '[paging] reading {} page tables at 0x{:016X} ...'.format(name, ptr) )
+            logger().log_hal( '[paging] reading {} page tables at 0x{:016X} ...'.format(name, ptr) )
             #self.out = txt
             self.read_page_tables(ptr)
             self.print_info('[paging] {} page tables'.format(name))
             #self.out = sys.stdout
             self.failure = False
-            if logger().HAL: logger().log( '[paging] size: {:d} KB, address space: {:d} MB'.format(len(self.pt.keys()) * 4, self.get_address_space() >> 20) )
+            logger().log_hal( '[paging] size: {:d} KB, address space: {:d} MB'.format(len(self.pt.keys()) * 4, self.get_address_space() >> 20) )
         except InvalidMemoryAddress:
             self.translation_level2.translation = {}
             self.translation                    = {}
             self.pt                             = {}
             self.failure = True
-            if logger().HAL: logger().error( '    ERROR: Invalid {} Page Tables!'.format(name) )
+            logger().log_hal( '    ERROR: Invalid {} Page Tables!'.format(name) )
         #finally:
         #    #txt.close()
         return

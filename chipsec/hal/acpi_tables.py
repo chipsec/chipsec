@@ -604,7 +604,7 @@ class FADT (ACPI_TABLE):
         if len(table_content) >= 112:
             self.x_dsdt = struct.unpack('<Q', table_content[104:112])[0]
         else:
-            if logger().HAL: logger().log( '[acpi] Cannot find X_DSDT entry in FADT.' )
+            logger().log_hal( '[acpi] Cannot find X_DSDT entry in FADT.' )
 
     def get_DSDT_address_to_use( self ):
         dsdt_address_to_use = None

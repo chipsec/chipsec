@@ -130,13 +130,12 @@ class MsgBus(hal_base.HALBase):
         mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
 
-        if self.logger.HAL:
-            self.logger.log( "[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
-            self.logger.log( "[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx) )
+        self.logger.log_hal( "[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
+        self.logger.log_hal( "[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx) )
 
         mdr_out = self.helper.msgbus_send_read_message( mcr, mcrx )
 
-        if self.logger.HAL: self.logger.log( "[msgbus]       < 0x{:08X}".format(mdr_out) )
+        self.logger.log_hal( "[msgbus]       < 0x{:08X}".format(mdr_out) )
 
         return mdr_out
 
@@ -148,9 +147,8 @@ class MsgBus(hal_base.HALBase):
         mcrx = self.__MB_MESSAGE_MCRX(register)
         mdr  = self.__MB_MESSAGE_MDR (data)
 
-        if self.logger.HAL:
-            self.logger.log( "[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data) )
-            self.logger.log( "[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
+        self.logger.log_hal( "[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data) )
+        self.logger.log_hal( "[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
 
         return self.helper.msgbus_send_write_message( mcr, mcrx, mdr )
 
@@ -162,14 +160,14 @@ class MsgBus(hal_base.HALBase):
         mcrx = self.__MB_MESSAGE_MCRX(register)
         mdr  = None if data is None else self.__MB_MESSAGE_MDR(data)
 
-        if self.logger.HAL:
-            self.logger.log( "[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
-            if data is not None: self.logger.log( "[msgbus]          data = 0x{:08X}".format(data) )
-            self.logger.log( "[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
+        self.logger.log_hal( "[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
+        if data is not None:
+            self.logger.log_hal( "[msgbus]          data = 0x{:08X}".format(data) )
+        self.logger.log_hal( "[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
 
         mdr_out = self.helper.msgbus_send_message( mcr, mcrx, mdr )
 
-        if self.logger.HAL: self.logger.log( "[msgbus]          < 0x{:08X}".format(mdr_out) )
+        self.logger.log_hal( "[msgbus]          < 0x{:08X}".format(mdr_out) )
 
         return mdr_out
 
@@ -206,9 +204,9 @@ class MsgBus(hal_base.HALBase):
     """
     # py implementation of msgbus -- doesn't seem to work properly becaise it's not atomic
     def msgbus_send_message( self, port, register, opcode, data=None ):
-        if self.logger.HAL:
-            self.logger.log( "[msgbus] message - port: 0x{:02X}, reg: 0x{:08X} (op: 0x{:02X})".format(port, register, opcode) )
-            if data is not None: self.logger.log( "[msgbus] message - data: 0x{:08X}".format(data) )
+        self.logger.log_hal( "[msgbus] message - port: 0x{:02X}, reg: 0x{:08X} (op: 0x{:02X})".format(port, register, opcode) )
+        if data is not None:
+            self.logger.log_hal( "[msgbus] message - data: 0x{:08X}".format(data) )
         if (register & 0xFFFFFF00):
             # write extended register address (bits [31:08]) to Message Control Register Extension (MCRX)
             chipsec.chipset.write_register_field( self.cs, 'MSG_CTRL_REG_EXT', 'MESSAGE_ADDRESS_OFFSET_EXT', register, preserve_field_position=True )

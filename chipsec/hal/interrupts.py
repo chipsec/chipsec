@@ -52,39 +52,37 @@ class Interrupts(hal_base.HALBase):
 
     def send_SW_SMI( self, thread_id, SMI_code_port_value, SMI_data_port_value, _rax, _rbx, _rcx, _rdx, _rsi, _rdi ):
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
-        if logger().HAL:
-            logger().log( "[intr] Sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
-            logger().log( "       RAX = 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(_rax) )
-            logger().log( "       RBX = 0x{:016X}".format(_rbx) )
-            logger().log( "       RCX = 0x{:016X}".format(_rcx) )
-            logger().log( "       RDX = 0x{:016X} (DX will be overridden with 0x00B2)".format(_rdx) )
-            logger().log( "       RSI = 0x{:016X}".format(_rsi) )
-            logger().log( "       RDI = 0x{:016X}".format(_rdi) )
+        logger().log_hal( "[intr] Sending SW SMI: code port 0x{:02X} <- 0x{:02X}, data port 0x{:02X} <- 0x{:02X} (0x{:04X})".format(SMI_APMC_PORT, SMI_code_port_value, SMI_APMC_PORT +1, SMI_data_port_value, SMI_code_data) )
+        logger().log_hal( "       RAX = 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(_rax) )
+        logger().log_hal( "       RBX = 0x{:016X}".format(_rbx) )
+        logger().log_hal( "       RCX = 0x{:016X}".format(_rcx) )
+        logger().log_hal( "       RDX = 0x{:016X} (DX will be overridden with 0x00B2)".format(_rdx) )
+        logger().log_hal( "       RSI = 0x{:016X}".format(_rsi) )
+        logger().log_hal( "       RDI = 0x{:016X}".format(_rdi) )
         return self.cs.helper.send_sw_smi( thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi )
 
     def send_SMI_APMC( self, SMI_code_port_value, SMI_data_port_value ):
-        if logger().HAL:
-            logger().log("[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X}".format(SMI_code_port_value, SMI_data_port_value))
+        logger().log_hal("[intr] sending SMI via APMC ports: code 0xB2 <- 0x{:02X}, data 0xB3 <- 0x{:02X}".format(SMI_code_port_value, SMI_data_port_value))
         self.cs.io.write_port_byte( SMI_DATA_PORT, SMI_data_port_value )
         return self.cs.io.write_port_byte( SMI_APMC_PORT, SMI_code_port_value )
 
 
 
     def send_NMI( self ):
-        if logger().HAL: logger().log( "[intr] Sending NMI# through TCO1_CTL[NMI_NOW]" )
+        logger().log_hal( "[intr] Sending NMI# through TCO1_CTL[NMI_NOW]" )
         reg, ba = self.cs.get_IO_space("TCOBASE")
         tcobase = self.cs.read_register_field(reg, ba)
         return self.cs.io.write_port_byte( tcobase + NMI_TCO1_CTL + 1, NMI_NOW )
 
     def find_ACPI_SMI_Buffer(self):
-        if logger().HAL: logger().log("Parsing ACPI tables to identify Communication Buffer")
+        logger().log_hal("Parsing ACPI tables to identify Communication Buffer")
         _acpi = ACPI(self.cs).get_ACPI_table("UEFI")
         if len(_acpi):
             _uefi = UEFI_TABLE()
             _uefi.parse(_acpi[0][1])
-            if logger().HAL: logger().log(str(_uefi))
+            logger().log_hal(str(_uefi))
             return _uefi.get_commbuf_info()
-        if logger().HAL: logger().log("Unable to find Communication Buffer")
+        logger().log_hal("Unable to find Communication Buffer")
         return None
 
     def send_ACPI_SMI(self, thread_id, smi_num, buf_addr, invoc_reg, guid, data):

@@ -63,15 +63,13 @@ Reserved3           : 0x{:08X}
 UCODE_HEADER_SIZE = 0x30
 def dump_ucode_update_header( pdb_ucode_buffer ):
     ucode_header = UcodeUpdateHeader( *struct.unpack_from( '12I', pdb_ucode_buffer ) )
-    if logger().HAL:
-        logger().log(ucode_header)
+    logger().log_hal(ucode_header)
     return ucode_header
 
 def read_ucode_file( ucode_filename ):
     ucode_buf = read_file( ucode_filename )
     if (ucode_filename.endswith('.pdb')):
-        if logger().HAL:
-            logger().log( "[ucode] PDB file '{:256}' has ucode update header (size = 0x{:X})".format(ucode_filename, UCODE_HEADER_SIZE) )
+        logger().log_hal( "[ucode] PDB file '{:256}' has ucode update header (size = 0x{:X})".format(ucode_filename, UCODE_HEADER_SIZE) )
         dump_ucode_update_header( ucode_buf )
         return ucode_buf[UCODE_HEADER_SIZE:]
     else:
@@ -95,9 +93,9 @@ class Ucode:
         ucode_update_id = bios_sign_id_hi
 
         if (bios_sign_id_lo & IA32_MSR_BIOS_SIGN_ID_STATUS):
-            if logger().HAL: logger().log( "[ucode] CPU{:d}: last Microcode update failed (current microcode id = 0x{:08X})".format(cpu_thread_id, ucode_update_id) )
+            logger().log_hal( "[ucode] CPU{:d}: last Microcode update failed (current microcode id = 0x{:08X})".format(cpu_thread_id, ucode_update_id) )
         else:
-            if logger().HAL: logger().log( "[ucode] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
+            logger().log_hal( "[ucode] CPU{:d}: Microcode update ID = 0x{:08X}".format(cpu_thread_id, ucode_update_id) )
 
         return ucode_update_id
 
@@ -119,6 +117,6 @@ class Ucode:
         return self.load_ucode_update( cpu_thread_id, _ucode_buf )
 
     def load_ucode_update(self, cpu_thread_id, ucode_buf ):
-        if logger().HAL: logger().log( "[ucode] loading microcode update on CPU{:d}".format(cpu_thread_id) )
+        logger().log_hal( "[ucode] loading microcode update on CPU{:d}".format(cpu_thread_id) )
         self.helper.load_ucode_update( cpu_thread_id, ucode_buf )
         return self.ucode_update_id( cpu_thread_id )

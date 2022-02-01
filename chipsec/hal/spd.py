@@ -320,12 +320,12 @@ class SPD:
     #
     def getDRAMDeviceType( self, device=SPD_SMBUS_ADDRESS ):
         dram_type = self.read_byte( SPD_OFFSET_DRAM_DEVICE_TYPE, device )
-        if logger().HAL: logger().log( "[spd][0x{:02X}] DRAM Device Type (byte 2): 0x{:01X}".format(device, dram_type) )
+        logger().log_hal( "[spd][0x{:02X}] DRAM Device Type (byte 2): 0x{:01X}".format(device, dram_type) )
         return dram_type
 
     def getModuleType( self, device=SPD_SMBUS_ADDRESS ):
         module_type = self.read_byte( SPD_OFFSET_DDR3_MODULE_TYPE, device )
-        if logger().HAL: logger().log( "[spd][0x{:02X}] Module Type (byte 3): 0x{:01X}".format(device, module_type) )
+        logger().log_hal( "[spd][0x{:02X}] Module Type (byte 3): 0x{:01X}".format(device, module_type) )
         return module_type
 
     def isECC( self, device=SPD_SMBUS_ADDRESS ):
@@ -346,13 +346,12 @@ class SPD:
             ecc = self.read_byte( ecc_off, device )
             ecc_supported = (0x2 == ecc)
             ecc_width = self.read_byte( SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, device )
-            if logger().HAL: logger().log("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, ecc_width))
+            logger().log_hal("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, ecc_width))
 
-        if logger().HAL:
-            if ecc is None:
-                logger().log("[spd][0x{:02X}] Unable to determine ECC support".format(device))
-            else:
-                logger().log("[spd][0x{:02X}] ECC is {}supported by the DIMM (byte {:d} = 0x{:02X})".format(device, '' if ecc_supported else 'not ', ecc_off, ecc))
+        if ecc is None:
+            logger().log_hal("[spd][0x{:02X}] Unable to determine ECC support".format(device))
+        else:
+            logger().log_hal("[spd][0x{:02X}] ECC is {}supported by the DIMM (byte {:d} = 0x{:02X})".format(device, '' if ecc_supported else 'not ', ecc_off, ecc))
         return ecc_supported
 
 
@@ -360,15 +359,15 @@ class SPD:
         _dimms = []
         for d in SPD_DIMMS:
             if self.isSPDPresent( d ): _dimms.append( d )
-        if logger().HAL:
-            logger().log( "Detected the following SPD devices:" )
-            for _dimm in _dimms: logger().log( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm], _dimm) )
+        logger().log_hal( "Detected the following SPD devices:" )
+        for _dimm in _dimms:
+            logger().log_hal( "{}: 0x{:02X}".format(SPD_DIMMS[_dimm], _dimm) )
         return _dimms
 
     def isSPDPresent( self, device=SPD_SMBUS_ADDRESS ):
         device_type = self.getDRAMDeviceType( device )
         is_spd_present = (device_type != 0xFF)
-        if logger().HAL: logger().log( "[spd][0x{:02X}] Detecting SPD.. {}found (DRAM memory type = 0x{:X})".format(device, '' if is_spd_present else 'not ', device_type) )
+        logger().log_hal( "[spd][0x{:02X}] Detecting SPD.. {}found (DRAM memory type = 0x{:X})".format(device, '' if is_spd_present else 'not ', device_type) )
         return is_spd_present
 
 

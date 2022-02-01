@@ -250,7 +250,7 @@ class ACPI(hal_base.HALBase):
     def _find_RSDP_in_EBDA(self):
         rsdp_pa = None
         rsdp    = None
-        if logger().HAL: logger().log( "[acpi] searching RSDP in EBDA.." )
+        logger().log_hal( "[acpi] searching RSDP in EBDA.." )
         ebda_ptr_addr = 0x40E
         ebda_addr = struct.unpack('<H', self.cs.mem.read_physical_mem( ebda_ptr_addr, 2 ))[0] << 4
         if ebda_addr > 0x400 and ebda_addr < 0xA0000:
@@ -260,7 +260,7 @@ class ACPI(hal_base.HALBase):
                 rsdp_pa = ebda_addr + pos
                 rsdp = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    if logger().HAL: logger().log( "[acpi] found RSDP in EBDA at: 0x{:016X}".format(rsdp_pa) )
+                    logger().log_hal( "[acpi] found RSDP in EBDA at: 0x{:016X}".format(rsdp_pa) )
                 else:
                     rsdp_pa = None
         return rsdp, rsdp_pa
@@ -278,7 +278,7 @@ class ACPI(hal_base.HALBase):
             rsdp_pa  = 0xE0000 + pos
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
-                if logger().HAL: logger().log( "[acpi] found RSDP in BIOS E/F segments: 0x{:016X}".format(rsdp_pa) )
+                logger().log_hal( "[acpi] found RSDP in BIOS E/F segments: 0x{:016X}".format(rsdp_pa) )
             else:
                 rsdp_pa = None
         return rsdp, rsdp_pa
@@ -289,20 +289,20 @@ class ACPI(hal_base.HALBase):
     def _find_RSDP_in_EFI_config_table(self):
         rsdp_pa = None
         rsdp    = None
-        if logger().HAL: logger().log( '[acpi] searching RSDP pointers in EFI Configuration Table..' )
+        logger().log_hal( '[acpi] searching RSDP pointers in EFI Configuration Table..' )
         (isFound, ect_pa, ect, ect_buf) = self.uefi.find_EFI_Configuration_Table()
         if isFound:
             if RSDP_GUID_ACPI2_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI2_0 ]
-                if logger().HAL: logger().log( '[acpi] ACPI 2.0+ RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI2_0, rsdp_pa) )
+                logger().log_hal( '[acpi] ACPI 2.0+ RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI2_0, rsdp_pa) )
             elif RSDP_GUID_ACPI1_0 in ect.VendorTables:
                 rsdp_pa = ect.VendorTables[ RSDP_GUID_ACPI1_0 ]
-                if logger().HAL: logger().log( '[acpi] ACPI 1.0 RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI1_0, rsdp_pa) )
+                logger().log_hal( '[acpi] ACPI 1.0 RSDP {{{}}} in EFI Config Table: 0x{:016X}'.format(RSDP_GUID_ACPI1_0, rsdp_pa) )
 
         if rsdp_pa:
             rsdp     = self.read_RSDP(rsdp_pa)
             if rsdp.is_RSDP_valid():
-                if logger().HAL: logger().log( "[acpi] found RSDP in EFI Config Table: 0x{:016X}".format(rsdp_pa) )
+                logger().log_hal( "[acpi] found RSDP in EFI Config Table: 0x{:016X}".format(rsdp_pa) )
             else:
                 rsdp_pa = None
         return rsdp, rsdp_pa
@@ -313,7 +313,7 @@ class ACPI(hal_base.HALBase):
     def _find_RSDP_in_EFI(self):
         rsdp_pa = None
         rsdp    = None
-        if logger().HAL: logger().log( "[acpi] searching all EFI memory for RSDP (this may take a minute).." )
+        logger().log_hal( "[acpi] searching all EFI memory for RSDP (this may take a minute).." )
         CHUNK_SZ = 1024 *1024 # 1MB
         (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRAM()
         pa = smram_base - CHUNK_SZ
@@ -322,10 +322,10 @@ class ACPI(hal_base.HALBase):
             pos = bytestostring(membuf).find( ACPI_RSDP_SIG )
             if -1 != pos:
                 rsdp_pa  = pa + pos
-                if logger().HAL: logger().log( "[acpi] found '{}' signature at 0x{:16X}. Checking if valid RSDP..".format(ACPI_RSDP_SIG, rsdp_pa) )
+                logger().log_hal( "[acpi] found '{}' signature at 0x{:16X}. Checking if valid RSDP..".format(ACPI_RSDP_SIG, rsdp_pa) )
                 rsdp     = self.read_RSDP(rsdp_pa)
                 if rsdp.is_RSDP_valid():
-                    if logger().HAL: logger().log( "[acpi] found RSDP in EFI memory: 0x{:016X}".format(rsdp_pa) )
+                    logger().log_hal( "[acpi] found RSDP in EFI memory: 0x{:016X}".format(rsdp_pa) )
                     break
             pa -= CHUNK_SZ
         return rsdp, rsdp_pa
@@ -346,7 +346,7 @@ class ACPI(hal_base.HALBase):
             rsdp, rsdp_pa = self._find_RSDP_in_EFI()
 
         if rsdp_pa is not None:
-            if logger().HAL: logger().log( rsdp )
+            logger().log_hal( rsdp )
 
         return (rsdp_pa, rsdp)
 
@@ -364,13 +364,13 @@ class ACPI(hal_base.HALBase):
                 is_xsdt = True
             else:
                 return (False, None, None, None)
-            if logger().HAL: logger().log( "[acpi] found {} at PA: 0x{:016X}".format('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
+            logger().log_hal( "[acpi] found {} at PA: 0x{:016X}".format('XSDT' if is_xsdt else 'RSDT', sdt_pa) )
             sdt_header_buf = self.cs.mem.read_physical_mem( sdt_pa, ACPI_TABLE_HEADER_SIZE )
             sdt_header     = self._parse_table_header( sdt_header_buf )
             sdt_buf        = self.cs.mem.read_physical_mem( sdt_pa, sdt_header.Length )
         else:
             sdt_pa = None
-            if logger().HAL: logger().log( "[acpi] reading RSDT/XSDT using OS API.." )
+            logger().log_hal( "[acpi] reading RSDT/XSDT using OS API.." )
             (sdt_buf, is_xsdt) = self.cs.helper.get_ACPI_SDT()
             sdt_header = self._parse_table_header( sdt_buf[ :ACPI_TABLE_HEADER_SIZE] )
 
@@ -388,7 +388,7 @@ class ACPI(hal_base.HALBase):
             # 1. Try to extract ACPI table(s) from physical memory
             #    read_physical_mem can be implemented using both
             #    CHIPSEC kernel module and OS native API
-            if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables from physical memory..." )
+            logger().log_hal( "[acpi] trying to enumerate ACPI tables from physical memory..." )
             # find RSDT/XSDT table
             (is_xsdt, sdt_pa, sdt, sdt_header) = self.get_SDT()
 
@@ -400,7 +400,7 @@ class ACPI(hal_base.HALBase):
         except UnimplementedNativeAPIError:
             # 2. If didn't work, try using get_ACPI_table if a helper implemented
             #    reading ACPI tables via native API which some OS may provide
-            if logger().HAL: logger().log( "[acpi] trying to enumerate ACPI tables using get_ACPI_table..." )
+            logger().log_hal( "[acpi] trying to enumerate ACPI tables using get_ACPI_table..." )
             for t in ACPI_TABLES.keys():
                 table = self.cs.helper.get_ACPI_table( t )
                 if table: self.tableList[ t ].append( 0 )
@@ -411,24 +411,24 @@ class ACPI(hal_base.HALBase):
     # Gets table list from entries in RSDT/XSDT
     #
     def get_table_list_from_SDT(self, sdt, is_xsdt):
-        if logger().HAL: logger().log( '[acpi] Getting table list from entries in {}'.format('XSDT' if is_xsdt else 'RSDT') )
+        logger().log_hal( '[acpi] Getting table list from entries in {}'.format('XSDT' if is_xsdt else 'RSDT') )
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             _sig = bytestostring(_sig)
             if _sig not in ACPI_TABLES.keys():
-                if logger().HAL: logger().warn( 'Unknown ACPI table signature: {}'.format(_sig) )
+                logger().log_hal( 'Unknown ACPI table signature: {}'.format(_sig) )
             self.tableList[ _sig ].append(a)
 
     #
     # Gets DSDT from FADT
     #
     def get_DSDT_from_FADT(self):
-        if logger().HAL: logger().log( '[acpi] Getting DSDT from FADT' )
+        logger().log_hal( '[acpi] Getting DSDT from FADT' )
 
         if ACPI_TABLE_SIG_FACP in self.tableList:
             (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
         else:
-            if logger().HAL: logger().warn( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
+            logger().log_hal( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
             return
 
         dsdt_address_to_use = parsed_fadt_content.get_DSDT_address_to_use()
@@ -436,9 +436,9 @@ class ACPI(hal_base.HALBase):
         if dsdt_address_to_use is None:
             dsdt_address = parsed_fadt_content.dsdt
             x_dsdt_address = parsed_fadt_content.x_dsdt
-            if logger().HAL: logger().error( 'Unable to determine the correct DSDT address' )
-            if logger().HAL: logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
-            if logger().HAL: logger().error( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
+            logger().log_hal( 'Unable to determine the correct DSDT address' )
+            logger().log_hal( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
+            logger().log_hal( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
@@ -456,7 +456,7 @@ class ACPI(hal_base.HALBase):
         if len( self.tableList ) == 0:
             logger().error("Couldn't get a list of ACPI tables")
         else:
-            if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
+            logger().log_hal( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):
                 logger().log( " - {}: {}".format(tableName, ", ".join([("0x{:016X}".format(addr) ) for addr in self.tableList[tableName]])) )
 
@@ -476,7 +476,7 @@ class ACPI(hal_base.HALBase):
                 # 1. Try to extract ACPI table(s) from physical memory
                 #    read_physical_mem can be implemented using both
                 #    CHIPSEC kernel module and OS native API
-                if logger().HAL: logger().log( "[acpi] trying to extract ACPI table from physical memory..." )
+                logger().log_hal( "[acpi] trying to extract ACPI table from physical memory..." )
                 for table_address in self.tableList[name]:
                     t_size = self.cs.mem.read_physical_mem_dword( table_address + 4 )
                     t_data = self.cs.mem.read_physical_mem( table_address, t_size )
@@ -484,7 +484,7 @@ class ACPI(hal_base.HALBase):
             except UnimplementedNativeAPIError:
                 # 2. If didn't work, try using get_ACPI_table if a helper implemented
                 #    reading ACPI tables via native API which some OS may provide
-                if logger().HAL: logger().log( "[acpi] trying to extract ACPI table using get_ACPI_table..." )
+                logger().log_hal( "[acpi] trying to extract ACPI table using get_ACPI_table..." )
                 t_data = self.cs.helper.get_ACPI_table( name )
                 acpi_tables_data.append( t_data )
 
@@ -525,14 +525,14 @@ class ACPI(hal_base.HALBase):
 
     def _parse_table_header( self, header ):
         acpi_table_hdr = ACPI_TABLE_HEADER( *struct.unpack_from( ACPI_TABLE_HEADER_FORMAT, header ) )
-        if logger().HAL: logger().log( acpi_table_hdr )
+        logger().log_hal( acpi_table_hdr )
         return acpi_table_hdr
 
 
     def _parse_table_contents( self, signature, contents, header ):
         table = None
         if ACPI_TABLES.__contains__(signature):
-            if logger().HAL: logger().log('{}'.format(signature))
+            logger().log_hal('{}'.format(signature))
             if 'BERT' in signature:
                 table = (ACPI_TABLES[signature])(self.cs)
             elif 'NFIT' in signature:

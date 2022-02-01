@@ -63,11 +63,11 @@ class Msr:
     def get_cpu_thread_count( self ):
         thread_count = self.helper.get_threads_count()
         if thread_count is None or thread_count < 0:
-            if logger().HAL: logger().log( "helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)" )
+            logger().log_hal( "helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)" )
             thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Thread_Count")
 
         if 0 == thread_count: thread_count = 1
-        if logger().HAL: logger().log( "[cpu] # of logical CPUs: {:d}".format(thread_count) )
+        logger().log_hal( "[cpu] # of logical CPUs: {:d}".format(thread_count) )
         return thread_count
 
     # @TODO: fix
@@ -84,12 +84,12 @@ class Msr:
 
     def read_msr( self, cpu_thread_id, msr_addr ):
         (eax, edx) = self.helper.read_msr( cpu_thread_id, msr_addr )
-        if logger().HAL: logger().log( "[cpu{:d}] RDMSR( 0x{:x} ): EAX = 0x{:08X}, EDX = 0x{:08X}".format(cpu_thread_id, msr_addr, eax, edx) )
+        logger().log_hal( "[cpu{:d}] RDMSR( 0x{:x} ): EAX = 0x{:08X}, EDX = 0x{:08X}".format(cpu_thread_id, msr_addr, eax, edx) )
         return (eax, edx)
 
     def write_msr( self, cpu_thread_id, msr_addr, eax, edx ):
         self.helper.write_msr( cpu_thread_id, msr_addr, eax, edx )
-        if logger().HAL: logger().log( "[cpu{:d}] WRMSR( 0x{:x} ): EAX = 0x{:08X}, EDX = 0x{:08X}".format(cpu_thread_id, msr_addr, eax, edx) )
+        logger().log_hal( "[cpu{:d}] WRMSR( 0x{:x} ): EAX = 0x{:08X}, EDX = 0x{:08X}".format(cpu_thread_id, msr_addr, eax, edx) )
         return
 
 ##########################################################################################################
@@ -103,20 +103,17 @@ class Msr:
 
     def get_IDTR( self, cpu_thread_id ):
         (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR )
-        if logger().HAL:
-            logger().log( "[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        logger().log_hal( "[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
         return (limit, base, pa)
 
     def get_GDTR( self, cpu_thread_id ):
         (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR )
-        if logger().HAL:
-            logger().log( "[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        logger().log_hal( "[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
         return (limit, base, pa)
 
     def get_LDTR( self, cpu_thread_id ):
         (limit, base, pa) = self.get_Desc_Table_Register( cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR )
-        if logger().HAL:
-            logger().log( "[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
+        logger().log_hal( "[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa) )
         return (limit, base, pa)
 
 
@@ -148,10 +145,10 @@ class Msr:
         return (pa, dt)
 
     def IDT( self, cpu_thread_id, num_entries=None ):
-        if logger().HAL: logger().log( '[cpu{:d}] IDT:'.format(cpu_thread_id) )
+        logger().log_hal( '[cpu{:d}] IDT:'.format(cpu_thread_id) )
         return self.dump_Descriptor_Table( cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR, num_entries )
     def GDT( self, cpu_thread_id, num_entries=None ):
-        if logger().HAL: logger().log( '[cpu{:d}] GDT:'.format(cpu_thread_id) )
+        logger().log_hal( '[cpu{:d}] GDT:'.format(cpu_thread_id) )
         return self.dump_Descriptor_Table( cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR, num_entries )
 
     def IDT_all( self, num_entries=None ):
