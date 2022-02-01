@@ -379,7 +379,7 @@ def umount(drive):
     import subprocess
     if os.path.exists(drive):
         res = subprocess.call( ["mountvol.exe", drive, "/D"] )
-        if res != 0: logger().log_warning "Cannot unmount EFI System partition: {:d}".format(res) )
+        if res != 0: logger().log_warning("Cannot unmount EFI System partition: {:d}".format(res) )
 
 def get_efi_mount():
     import subprocess
@@ -414,7 +414,7 @@ def replace_bootloader( bootloader_paths, new_bootloader_file, do_mount=True ):
             if os.path.exists(bootloader_path):
                 replace_efi_binary( bootloader_path, new_bootloader_file )
             else:
-                logger().log_warning "Bootloader {} does not exist on ESP".format(bootloader_path) )
+                logger().log_warning("Bootloader {} does not exist on ESP".format(bootloader_path) )
     finally:
         if do_mount: umount( dsk )
     logger().log( "[*] You will need to reboot the system to see the changes" )
@@ -446,25 +446,25 @@ def restore_bootloader( bootloader_paths, do_mount=True ):
     return True
 
 def confirm():
-    logger().log_warning"***************************************************************************************")
-    logger().log_warning"*")
-    logger().log_warning"* RUNNING THIS TOOL MAY RESULT IN UNBOOTABLE OS!")
-    logger().log_warning"* USE IT FOR TESTING PURPOSES ON TEST SYSTEMS ONLY")
-    logger().log_warning"*")
-    logger().log_warning"* The tool converts PE/COFF EFI executables to TE EFI executables.")
-    logger().log_warning"* The tool can also automatically replace files (boot loaders)")
-    logger().log_warning"* listed in the configuration file with the generated TE executable.")
-    logger().log_warning"*")
-    logger().log_warning"* If after reboot, TE executable runs then the firmware doesn't properly")
-    logger().log_warning"* enforce Secure Boot checks on TE EFI executables")
-    logger().log_warning"*")
-    logger().log_warning"* If TE executable doesn't run then the firmware correctly blocked it.")
-    logger().log_warning"* To restore OS boot loader in this case you may use one of the following:")
-    logger().log_warning"* - Disable Secure Boot in BIOS, boot to external drive (e.g. Linux or UEFI shell)")
-    logger().log_warning"*   then restore original boot loader executables from .bak files")
-    logger().log_warning"* - On Windows, use recovery mode which should automatically restore correct executables")
-    logger().log_warning"*")
-    logger().log_warning"***************************************************************************************")
+    logger().log_warning("***************************************************************************************")
+    logger().log_warning("*")
+    logger().log_warning("* RUNNING THIS TOOL MAY RESULT IN UNBOOTABLE OS!")
+    logger().log_warning("* USE IT FOR TESTING PURPOSES ON TEST SYSTEMS ONLY")
+    logger().log_warning("*")
+    logger().log_warning("* The tool converts PE/COFF EFI executables to TE EFI executables.")
+    logger().log_warning("* The tool can also automatically replace files (boot loaders)")
+    logger().log_warning("* listed in the configuration file with the generated TE executable.")
+    logger().log_warning("*")
+    logger().log_warning("* If after reboot, TE executable runs then the firmware doesn't properly")
+    logger().log_warning("* enforce Secure Boot checks on TE EFI executables")
+    logger().log_warning("*")
+    logger().log_warning("* If TE executable doesn't run then the firmware correctly blocked it.")
+    logger().log_warning("* To restore OS boot loader in this case you may use one of the following:")
+    logger().log_warning("* - Disable Secure Boot in BIOS, boot to external drive (e.g. Linux or UEFI shell)")
+    logger().log_warning("*   then restore original boot loader executables from .bak files")
+    logger().log_warning("* - On Windows, use recovery mode which should automatically restore correct executables")
+    logger().log_warning("*")
+    logger().log_warning("***************************************************************************************")
     s = cs_input( "Type 'yes' to continue running the tool > " )
     if s != 'yes': sys.exit( 0 )
 

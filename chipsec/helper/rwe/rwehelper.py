@@ -338,11 +338,11 @@ class RweHelper(Helper):
 
     def show_warning(self):
         logger().log( "" )
-        logger().log_warning "*******************************************************************" )
-        logger().log_warning "Chipsec should only be used on test systems!" )
-        logger().log_warning "It should not be installed/deployed on production end-user systems." )
-        logger().log_warning "See WARNING.txt" )
-        logger().log_warning "*******************************************************************" )
+        logger().log_warning("*******************************************************************" )
+        logger().log_warning("Chipsec should only be used on test systems!" )
+        logger().log_warning("It should not be installed/deployed on production end-user systems." )
+        logger().log_warning("See WARNING.txt" )
+        logger().log_warning("*******************************************************************" )
         logger().log( "" )
 
     #

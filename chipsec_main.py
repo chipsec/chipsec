@@ -457,7 +457,7 @@ class ChipsecMain:
             logger().log("[CHIPSEC] PCH     : {}\n[CHIPSEC]      VID: {:04X}\n[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid, self._cs.pch_did, self._cs.pch_rid))
 
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
-            logger().log_warning"Python architecture (32-bit) is different from OS architecture (64-bit)")
+            logger().log_warning("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
     ##################################################################################
     # Entry point for command-line execution
@@ -491,7 +491,7 @@ class ChipsecMain:
                     if logger().DEBUG: logger().log_bad(traceback.format_exc())
                     if self.failfast: raise msg
                     return  ExitCode.EXCEPTION
-                logger().log_warning"Platform dependent functionality is likely to be incorrect")
+                logger().log_warning("Platform dependent functionality is likely to be incorrect")
             except OsHelperError as os_helper_error:
                 logger().error(str(os_helper_error))
                 if logger().DEBUG: logger().log_bad(traceback.format_exc())
@@ -502,7 +502,7 @@ class ChipsecMain:
                 if self.failfast: raise be
                 return ExitCode.EXCEPTION
         else:
-            logger().log_warning"Platform dependent functionality is likely to be incorrect")
+            logger().log_warning("Platform dependent functionality is likely to be incorrect")
 
         if self._show_banner:
             self.log_properties()

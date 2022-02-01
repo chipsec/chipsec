@@ -543,7 +543,7 @@ class SPI(hal_base.HALBase):
 
         cycle_done = self._wait_SPI_flash_cycle_done()
         if not cycle_done:
-            self.logger.log_warning "SPI cycle not done" )
+            self.logger.log_warning("SPI cycle not done" )
         else:
             if self.logger.HAL: self.logger.log( "[spi] < SPI cycle done" )
 

@@ -276,14 +276,14 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariable.restype = c_int
             self.SetFirmwareEnvironmentVariable.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int]
         except AttributeError as msg:
-            logger().log_warning "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
+            logger().log_warning("G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist" )
 
         try:
             self.NtEnumerateSystemEnvironmentValuesEx = windll.ntdll.NtEnumerateSystemEnvironmentValuesEx
             self.NtEnumerateSystemEnvironmentValuesEx.restype = c_int
             self.NtEnumerateSystemEnvironmentValuesEx.argtypes = [c_int, c_void_p, c_void_p]
         except AttributeError as msg:
-            logger().log_warning "NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
+            logger().log_warning("NtEnumerateSystemEnvironmentValuesEx function doesn't seem to exist" )
 
         try:
             self.GetFirmwareEnvironmentVariableEx = kernel32.GetFirmwareEnvironmentVariableExW
@@ -300,21 +300,21 @@ class Win32Helper(Helper):
             self.GetSystemFirmwareTbl.restype = c_int
             self.GetSystemFirmwareTbl.argtypes = [c_int, c_int, c_void_p, c_int]
         except AttributeError as msg:
-            logger().log_warning "GetSystemFirmwareTable function doesn't seem to exist" )
+            logger().log_warning("GetSystemFirmwareTable function doesn't seem to exist" )
 
         try:
             self.EnumSystemFirmwareTbls = kernel32.EnumSystemFirmwareTables
             self.EnumSystemFirmwareTbls.restype = c_int
             self.EnumSystemFirmwareTbls.argtypes = [c_int, c_void_p, c_int]
         except AttributeError as msg:
-            logger().log_warning "GetSystemFirmwareTable function doesn't seem to exist" )
+            logger().log_warning("GetSystemFirmwareTable function doesn't seem to exist" )
 
         try:
             self.NtQuerySystemInformation = windll.ntdll.NtQuerySystemInformation
             self.NtQuerySystemInformation.restype = c_int
             self.NtQuerySystemInformation.argtypes = [c_uint32, c_void_p, c_uint32, c_uint32_p]
         except AttributeError as msg:
-            logger().log_warning "NtQuerySystemInformation function doesn't seem to exist" )
+            logger().log_warning("NtQuerySystemInformation function doesn't seem to exist" )
 
     def __del__(self):
         if self.driver_handle:
@@ -329,11 +329,11 @@ class Win32Helper(Helper):
 
     def show_warning(self):
         logger().log( "" )
-        logger().log_warning "*******************************************************************" )
-        logger().log_warning "Chipsec should only be used on test systems!" )
-        logger().log_warning "It should not be installed/deployed on production end-user systems." )
-        logger().log_warning "See WARNING.txt" )
-        logger().log_warning "*******************************************************************" )
+        logger().log_warning("*******************************************************************" )
+        logger().log_warning("Chipsec should only be used on test systems!" )
+        logger().log_warning("It should not be installed/deployed on production end-user systems." )
+        logger().log_warning("See WARNING.txt" )
+        logger().log_warning("*******************************************************************" )
         logger().log( "" )
 
     #
@@ -401,7 +401,7 @@ class Win32Helper(Helper):
         if self.use_existing_service: return True
 
         if win32serviceutil.QueryServiceStatus( SERVICE_NAME )[1] != win32service.SERVICE_STOPPED:
-            logger().log_warning "cannot delete service '{}' (not stopped)".format(SERVICE_NAME) )
+            logger().log_warning("cannot delete service '{}' (not stopped)".format(SERVICE_NAME) )
             return False
 
         if logger().DEBUG: logger().log( "[helper] deleting service '{}'...".format(SERVICE_NAME) )
@@ -487,7 +487,7 @@ class Win32Helper(Helper):
             win32api.CloseHandle( self.driver_handle )
             self.driver_handle = None
             self.get_driver_handle()
-            logger().log_warning "Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, int(self.driver_handle)) )
+            logger().log_warning("Invalid handle (wtf?): re-opened device '{:.64}' (new handle: {:08X})".format(self.device_file, int(self.driver_handle)) )
             return False
         return True
 

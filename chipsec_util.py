@@ -163,11 +163,11 @@ class ChipsecUtil:
             try:
                 self._cs.init( self._platform, self._pch, comm.requires_driver() and not self._no_driver, self._driver_exists)
             except UnknownChipsetError as msg:
-                logger().log_warning"*******************************************************************")
-                logger().log_warning"* Unknown platform!")
-                logger().log_warning"* Platform dependent functionality will likely be incorrect")
-                logger().log_warning"* Error Message: \"{}\"".format(str(msg)))
-                logger().log_warning"*******************************************************************")
+                logger().log_warning("*******************************************************************")
+                logger().log_warning("* Unknown platform!")
+                logger().log_warning("* Platform dependent functionality will likely be incorrect")
+                logger().log_warning("* Error Message: \"{}\"".format(str(msg)))
+                logger().log_warning("*******************************************************************")
                 if self._unknownPlatform:
                     logger().error('To run anyways please use -i command-line option\n\n')
                     sys.exit(ExitCode.OK)
@@ -207,7 +207,7 @@ class ChipsecUtil:
         logger().log(get_message())
 
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
-            logger().log_warning"Python architecture (32-bit) is different from OS architecture (64-bit)")
+            logger().log_warning("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
 def main(argv=None):
     chipsecUtil = ChipsecUtil(argv if argv else sys.argv[1:])

@@ -111,7 +111,7 @@ class uefivar_fuzz(BaseModule):
     def run( self, module_argv ):
         self.logger.start_test("Fuzz UEFI Variable Interface")
 
-        self.logger.log_warning"Are you sure you want to continue fuzzing UEFI variable interface?")
+        self.logger.log_warning("Are you sure you want to continue fuzzing UEFI variable interface?")
         s = cs_input("Type 'yes' to continue > ")
         if s.lower() not in ['yes', 'y']:
             return

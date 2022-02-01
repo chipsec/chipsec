@@ -393,6 +393,6 @@ class SPD:
         elif DRAM_DEVICE_TYPE_DDR4 == device_type:
             spd = SPD_DDR4( *struct.unpack_from( SPD_DDR4_FORMAT, spd_buffer ) )
         else:
-            logger().log_warning "[spd] Unsupported SPD format" )
+            logger().log_warning("[spd] Unsupported SPD format" )
 
         if spd is not None: logger().log( spd )
