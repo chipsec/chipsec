@@ -555,7 +555,7 @@ def helper():
             _helper  = OsHelper()
         except BaseException as msg:
             if logger().DEBUG:
-                logger().error( str(msg) )
+                logger().log_error( str(msg) )
                 logger().log_bad(traceback.format_exc())
             raise
     return _helper

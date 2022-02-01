@@ -65,12 +65,12 @@ class FileCmds:
     def Load(self):
         file_data = chipsec.file.read_file(self.filename)
         if file_data == 0:
-            logger().error("Unable to open JSON file: {}".format(self.filename))
+            logger().log_error("Unable to open JSON file: {}".format(self.filename))
             raise OsHelperError("Unable to open JSON file: {}".format(self.filename), 1)
         try:
             self.data = json.loads(file_data)
         except:
-            logger().error("Unable to load JSON file: {}".format(self.filename))
+            logger().log_error("Unable to load JSON file: {}".format(self.filename))
             raise OsHelperError("Unable to open JSON file: {}".format(self.filename), 1)
 
     def getElement(self, cmd, args):
@@ -82,7 +82,7 @@ class FileCmds:
         if str(cmd) in self.data:
             if margs in self.data[str(cmd)]:
                 return self.data[cmd][margs].pop()
-        logger().error("Missing entry for {} {}".format(str(cmd), margs))
+        logger().log_error("Missing entry for {} {}".format(str(cmd), margs))
 
 
 class FileHelper(Helper):

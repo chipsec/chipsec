@@ -231,7 +231,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 def _handle_winerror(fn, msg, hr):
     _handle_error( ("{} failed: {} ({:d})".format(fn, msg, hr)), hr )
 def _handle_error( err, hr=0 ):
-    logger().error( err )
+    logger().log_error( err )
     raise OsHelperError( err, hr )
 
 
@@ -451,7 +451,7 @@ class RweHelper(Helper):
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            if logger().DEBUG: logger().log_error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
         finally:
             self.driver_loaded = False
@@ -520,7 +520,7 @@ class RweHelper(Helper):
             err_status = _err.args[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x{:X})".format(err_status)
-                if logger().DEBUG: logger().error( err_msg )
+                if logger().DEBUG: logger().log_error( err_msg )
                 raise HWAccessViolationError( err_msg, err_status )
             else:
                 _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status, _err.args[2]), err_status )
@@ -619,7 +619,7 @@ class RweHelper(Helper):
         try:
             (eax, ebx, ecx, edx) = struct.unpack( '<4I', out_buf )
         except:
-            if logger().DEBUG: logger().error( 'DeviceIoControl did not return 4 DWORD values' )
+            if logger().DEBUG: logger().log_error( 'DeviceIoControl did not return 4 DWORD values' )
 
         return (eax, edx)
 
@@ -665,7 +665,7 @@ class RweHelper(Helper):
                 out_buf = self._ioctl( IOCTL_READ_IO_PORT_DWORD, in_buf, 8 )
                 mask = 0xffffffff
         except:
-            if logger().DEBUG: logger().error( "DeviceIoControl did not return value of proper size {:X} (value = '{}')".format(size, out_buf) )
+            if logger().DEBUG: logger().log_error( "DeviceIoControl did not return value of proper size {:X} (value = '{}')".format(size, out_buf) )
         #print len(out_buf), ":", out_buf.encode('hex')
         value = struct.unpack("<II", out_buf)[1] & mask
 
@@ -729,7 +729,7 @@ class RweHelper(Helper):
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
-            logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            logger().log_error( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             efi_var_data = None
             #raise WinError(errno.EIO,"Unable to get EFI variable")
         else:
@@ -757,7 +757,7 @@ class RweHelper(Helper):
             status = 0 # EFI_SUCCESS
         else:
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            if logger().DEBUG: logger().log_error( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
 
@@ -781,8 +781,8 @@ class RweHelper(Helper):
             return None
         if 0 != status:
             if logger().DEBUG:
-                logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
-                logger().error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
+                logger().log_error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(kernel32.GetLastError()) )
+                logger().log_error( '*** NTSTATUS: {:08X}'.format( ((1 << 32) - 1) & status) )
             raise WinError()
         if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
@@ -851,7 +851,7 @@ class RweHelper(Helper):
         retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         if retVal == 0:
             if logger().DEBUG:
-                logger().error( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
+                logger().log_error( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
             return None
         if retVal > table_size:
             table_size = retVal
@@ -870,15 +870,15 @@ class RweHelper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().log_error( "[helper] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().log_error( "[helper] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().log_error( "[helper] Message Bus is not supported yet" )
         return None
 
     def get_tool_path( self, tool_type ):
@@ -894,7 +894,7 @@ class RweHelper(Helper):
         if not os.path.isfile( tool_path ):
             tool_path = os.path.join( tool_pathdef, tool_name )
             if not os.path.isfile( tool_path ):
-                if logger().DEBUG: logger().error( "Couldn't find {}".format(tool_path) )
+                if logger().DEBUG: logger().log_error( "Couldn't find {}".format(tool_path) )
 
         return tool_path
 
@@ -916,7 +916,7 @@ class RweHelper(Helper):
                 subprocess.call( [ exe, "-d", "-o", OutputFileName, CompressedFileName ], stdout=open(os.devnull, 'wb') )
             except BaseException as msg:
                 if logger().DEBUG:
-                    logger().error( str(msg) )
+                    logger().log_error( str(msg) )
                     logger().log_bad( traceback.format_exc() )
                 return None
 
