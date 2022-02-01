@@ -60,7 +60,7 @@ class bios_kbrd_buffer(BaseModule):
         has_contents = False
 
         if COMMON_FILL_PTRN == bios_kbrd_buf:
-            self.logger.log_passed_check( "Keyboard buffer is filled with common fill pattern" )
+            self.logger.log_passed( "Keyboard buffer is filled with common fill pattern" )
             return ModuleResult.PASSED
 
         for x in bios_kbrd_buf:
@@ -75,8 +75,8 @@ class bios_kbrd_buffer(BaseModule):
 
         self.logger.log( "[*] Checking contents of the keyboard buffer..\n" )
 
-        if has_contents: self.logger.log_warn_check( "Keyboard buffer is not empty. The test cannot determine conclusively if it contains pre-boot passwords.\n    The contents might have not been cleared by pre-boot firmware or overwritten with garbage.\n    Visually inspect the contents of keyboard buffer for pre-boot passwords (BIOS, HDD, full-disk encryption)." )
-        else:            self.logger.log_passed_check( "Keyboard buffer looks empty. Pre-boot passwords don't seem to be exposed" )
+        if has_contents: self.logger.log_warning( "Keyboard buffer is not empty. The test cannot determine conclusively if it contains pre-boot passwords.\n    The contents might have not been cleared by pre-boot firmware or overwritten with garbage.\n    Visually inspect the contents of keyboard buffer for pre-boot passwords (BIOS, HDD, full-disk encryption)." )
+        else:            self.logger.log_passed( "Keyboard buffer looks empty. Pre-boot passwords don't seem to be exposed" )
 
         return (ModuleResult.WARNING if has_contents else ModuleResult.PASSED)
 

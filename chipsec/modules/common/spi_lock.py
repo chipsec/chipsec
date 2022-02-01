@@ -63,11 +63,11 @@ class spi_lock(BaseModule):
         reg_print = False
 
         if res == ModuleResult.FAILED:
-            self.logger.log_failed_check("SPI Flash Controller not locked correctly.")
+            self.logger.log_failed("SPI Flash Controller not locked correctly.")
         elif res == ModuleResult.PASSED:
-            self.logger.log_passed_check("SPI Flash Controller locked correctly.")
+            self.logger.log_passed("SPI Flash Controller locked correctly.")
         else:
-            self.logger.log_warn_check("Unable to determine if SPI Flash Controller is locked correctly.")
+            self.logger.log_warning("Unable to determine if SPI Flash Controller is locked correctly.")
 
         return res
 

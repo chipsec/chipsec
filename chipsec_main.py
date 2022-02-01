@@ -164,7 +164,7 @@ class ChipsecMain:
                 return module_common.ModuleResult.SKIPPED
         except BaseException as msg:
             if logger().DEBUG: logger().log_bad(traceback.format_exc())
-            logger().log_error_check( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
+            logger().log_error( "Exception occurred during {}.run(): '{}'".format(modx.get_name(), str(msg)) )
             raise msg
         return result
 

@@ -54,9 +54,9 @@ class ia32cfg(BaseModule):
                 res = ModuleResult.FAILED
 
         if res == ModuleResult.PASSED:
-            self.logger.log_passed_check( "IA32_FEATURE_CONTROL MSR is locked on all logical CPUs" )
+            self.logger.log_passed( "IA32_FEATURE_CONTROL MSR is locked on all logical CPUs" )
         else:
-            self.logger.log_failed_check( "IA32_FEATURE_CONTROL MSR is not locked on all logical CPUs" )
+            self.logger.log_failed( "IA32_FEATURE_CONTROL MSR is not locked on all logical CPUs" )
 
         return res
 

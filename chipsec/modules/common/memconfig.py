@@ -106,10 +106,10 @@ class memconfig(BaseModule):
         self.logger.log('[*]')
         if all_locked:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "All memory map registers seem to be locked down" )
+            self.logger.log_passed( "All memory map registers seem to be locked down" )
         else:
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "Not all memory map registers are locked down" )
+            self.logger.log_failed( "Not all memory map registers are locked down" )
 
         return res
 

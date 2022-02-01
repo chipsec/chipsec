@@ -100,13 +100,13 @@ class BaseModule(object):
 
     def display_res_check(self, pass_msg, error_msg):
         if self.res == ModuleResult.PASSED:
-            self.logger.log_passed_check(pass_msg)
+            self.logger.log_passed(pass_msg)
         elif self.res == ModuleResult.FAILED:
-            self.logger.log_failed_check(error_msg)
+            self.logger.log_failed(error_msg)
         elif self.res == ModuleResult.WARNING:
-            self.logger.log_warn_check(error_msg)
+            self.logger.log_warning(error_msg)
         elif self.res == ModuleResult.INFORMATION:
-            self.logger.log_information_check(error_msg)
+            self.logger.log_information(error_msg)
 
     def run(self, module_argv):
         raise NotImplementedError('sub class should overwrite the run() method')

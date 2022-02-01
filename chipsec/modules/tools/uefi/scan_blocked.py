@@ -122,9 +122,9 @@ class scan_blocked(BaseModule):
         self.logger.log( '' )
         if found:
             res = ModuleResult.WARNING
-            self.logger.log_warn_check("Blocked EFI binary found in the UEFI firmware image")
+            self.logger.log_warning("Blocked EFI binary found in the UEFI firmware image")
         else:
-            self.logger.log_passed_check("Didn't find any blocked EFI binary")
+            self.logger.log_passed("Didn't find any blocked EFI binary")
         return res
 
     def usage(self):

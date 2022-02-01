@@ -56,7 +56,7 @@ class debugenabled(BaseModule):
         supported = (ecx & BIT11) != 0
         if not supported:
             self.res = ModuleResult.NOTAPPLICABLE
-            self.logger.log_skipped_check('CPU Debug features are not supported on this platform')
+            self.logger.log_skipped('CPU Debug features are not supported on this platform')
         return supported
 
     def check_dci( self ):
@@ -113,12 +113,12 @@ class debugenabled(BaseModule):
 
         self.logger.log("\n[*] Module Result")
         if (dci_test_fail == ModuleResult.FAILED or cpu_debug_test_fail == ModuleResult.FAILED):
-            self.logger.log_failed_check('One or more of the debug checks have failed and a debug feature is enabled')
+            self.logger.log_failed('One or more of the debug checks have failed and a debug feature is enabled')
             self.res = ModuleResult.FAILED
         elif (dci_test_fail == ModuleResult.WARNING or cpu_debug_test_fail == ModuleResult.WARNING):
-            self.logger.log_warn_check('An unexpected debug state was discovered on this platform')
+            self.logger.log_warning('An unexpected debug state was discovered on this platform')
             self.res = ModuleResult.WARNING
         else:
-            self.logger.log_passed_check('All checks have successfully passed')
+            self.logger.log_passed('All checks have successfully passed')
 
         return self.res
