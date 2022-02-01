@@ -95,7 +95,8 @@ class RegisterCommand(BaseCommand):
         self.logger.log(matches)
 
     def reg_read(self):
-        matches = self.cs.get_REGISTERS_match(self.reg_name)
+        matches = self.cs.get_REGISTERS_match(self.reg_name)  # matches contains fields and registers
+        matches = list(set([i[:i.rfind('.')] for i in matches]))  # find only unique registers from the results
         for reg in matches:
             value = self.cs.read_register_all(reg)
             self.cs.print_register_all(reg, value)
