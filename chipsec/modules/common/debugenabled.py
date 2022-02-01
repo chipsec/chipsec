@@ -64,7 +64,8 @@ class debugenabled(BaseModule):
         self.logger.log('\n[*] Checking DCI register status')
         ectrl = self.cs.read_register('ECTRL')
         HDCIEN = self.cs.get_register_field('ECTRL', ectrl, 'ENABLE') == 1
-        if self.logger.VERBOSE: self.cs.print_register('ECTRL', ectrl)
+        if self.logger.VERBOSE:
+            self.cs.print_register('ECTRL', ectrl)
         if HDCIEN:
             self.logger.log_bad('DCI Debug is enabled')
             TestFail = ModuleResult.FAILED

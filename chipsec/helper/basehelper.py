@@ -41,23 +41,19 @@ class Helper(object):
         return (not self.driver_loaded)
 
     def create(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper created")
+        logger().log_verbose("[helper] Helper created")
         raise NotImplementedError()
 
     def start(self, start_driver, from_file=None):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper started/loaded")
+        logger().log_verbose("[helper] Helper started/loaded")
         raise NotImplementedError()
 
     def stop( self, start_driver ):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper stopped/unloaded")
+        logger().log_verbose("[helper] Helper stopped/unloaded")
         raise NotImplementedError()
 
     def delete(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper deleted")
+        logger().log_verbose("[helper] Helper deleted")
         raise NotImplementedError()
 
     def get_info(self):

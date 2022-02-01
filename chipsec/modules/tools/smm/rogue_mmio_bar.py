@@ -117,7 +117,8 @@ class rogue_mmio_bar(BaseModule):
                     self.logger.log("  checking relocated MMIO")
                     if len(diff) > 0:
                         self.logger.log_important("changes found at 0x{:X} +{}".format(self.reloc_mmio, diff))
-                        if self.logger.VERBOSE: write_file('mmio_mem.new', buf)
+                        if self.logger.VERBOSE:
+                            write_file('mmio_mem.new', buf)
                         return True
         return False
 

@@ -1117,8 +1117,8 @@ class LinuxHelper(Helper):
             encode_str = BROTLI + encode_str
         encode_str += FileName
         data = subprocess.check_output(encode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot compress file({})".format(FileName))
+        if not data == 0:
+            logger().log_verbose("Cannot compress file({})".format(FileName))
             return False
         return True
 
@@ -1148,8 +1148,8 @@ class LinuxHelper(Helper):
             decode_str = BROTLI + decode_str
         decode_str += CompressedFileName
         data = subprocess.call(decode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().error("Cannot decompress file({})".format(CompressedFileName))
+        if not data == 0:
+            logger().log_verbose("Cannot decompress file({})".format(CompressedFileName))
             return False
         return True
 

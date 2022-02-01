@@ -274,8 +274,7 @@ class EfiHelper(Helper):
         if datasize is None: datasize = len(data)
         if attrs is None:
             attrs=0x07
-            if logger().VERBOSE:
-                logger().log_warning("Setting attributes to: {:04X}".format(attrs))
+            logger().log_verbose("Setting attributes to: {:04X}".format(attrs))
 
         (Status, datasize, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), data, datasize)
 
