@@ -430,7 +430,7 @@ class Chipset:
                                     _det = _sku.attrib['detection_value']
                             if _did == "":
                                 if logger().DEBUG:
-                                    logger().warn("No SKU found in configuration")
+                                    logger().log_warning("No SKU found in configuration")
                             cdict['did'] = _did
                             cdict['detection_value'] = _det
             for cc in self.chipset_codes:
@@ -774,7 +774,7 @@ class Chipset:
         device = self.Cfg.REGISTERS[reg_name].get('device', '')
         if not device:
             if logger().DEBUG:
-                logger().warn( "No device found for '{}'".format(reg_name) )
+                logger().log_warning( "No device found for '{}'".format(reg_name) )
             if 'bus' in self.Cfg.REGISTERS[reg_name]:
                 return [int(self.Cfg.REGISTERS[reg_name]['bus'], 16)]
             else:

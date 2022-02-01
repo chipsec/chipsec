@@ -1017,7 +1017,7 @@ class LinuxHelper(Helper):
                 if os.path.isfile(path):
                     # Variable already exists
                     if attrs is not None:
-                        if logger().DEBUG: logger().warn("Changing attributes on an existing variable is not supported. Keeping old attributes...")
+                        if logger().DEBUG: logger().log_warning("Changing attributes on an existing variable is not supported. Keeping old attributes...")
                     f = open(path, 'r')
                     sattrs = f.read(4)
                 else:

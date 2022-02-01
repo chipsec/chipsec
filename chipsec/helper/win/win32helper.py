@@ -293,7 +293,7 @@ class Win32Helper(Helper):
             self.SetFirmwareEnvironmentVariableEx.restype = c_int
             self.SetFirmwareEnvironmentVariableEx.argtypes = [c_wchar_p, c_wchar_p, c_void_p, c_int, c_int]
         except AttributeError as msg:
-            if logger().DEBUG: logger().warn( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
+            if logger().DEBUG: logger().log_warning( "G[S]etFirmwareEnvironmentVariableExW function doesn't seem to exist" )
 
         try:
             self.GetSystemFirmwareTbl = kernel32.GetSystemFirmwareTable
@@ -409,7 +409,7 @@ class Win32Helper(Helper):
             win32serviceutil.RemoveService( SERVICE_NAME )
             if logger().DEBUG: logger().log( "[helper] service '{}' deleted".format(SERVICE_NAME) )
         except win32service.error as err:
-            if logger().DEBUG: logger().warn( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            if logger().DEBUG: logger().log_warning( "RemoveService failed: {} ({:d})".format(err.args[2], err.args[0]) )
             return False
 
         return True
@@ -462,7 +462,7 @@ class Win32Helper(Helper):
             win32serviceutil.WaitForServiceStatus( SERVICE_NAME, win32service.SERVICE_STOPPED, 1 )
             if logger().DEBUG: logger().log( "[helper] service '{}' stopped".format(SERVICE_NAME) )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().warn( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
+            if logger().DEBUG: logger().log_warning( "service '{}' didn't stop: {} ({:d})".format(SERVICE_NAME, err.args[2], err.args[0]) )
             return False
 
         return True
@@ -786,13 +786,13 @@ class Win32Helper(Helper):
             efi_vars = create_string_buffer( retlength )
             status = self.NtEnumerateSystemEnvironmentValuesEx( infcls, efi_vars, length )
         elif (0xC0000002 == status):
-            if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
+            if logger().DEBUG: logger().log_warning( 'NtEnumerateSystemEnvironmentValuesEx was not found (NTSTATUS = 0xC0000002)' )
             if logger().DEBUG: logger().log( '[*] Your Windows does not expose UEFI Runtime Variable API. It was likely installed as legacy boot.\nTo use UEFI variable functions, chipsec needs to run in OS installed with UEFI boot (enable UEFI Boot in BIOS before installing OS)' )
             return None
         if 0 != status:
             lasterror = kernel32.GetLastError()
             if (0xC0000001 == status and lasterror == 0x000003E6): # ERROR_NOACCESS: Invalid access to memory location.  https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
-                if logger().DEBUG: logger().warn( 'NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)' )
+                if logger().DEBUG: logger().log_warning( 'NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)' )
                 if logger().DEBUG: logger().log( '[*] Your Windows has restricted access to UEFI variables.\nTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment' )
                 return None
             else:

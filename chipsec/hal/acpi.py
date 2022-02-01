@@ -416,7 +416,7 @@ class ACPI(hal_base.HALBase):
             _sig = self.cs.mem.read_physical_mem( a, ACPI_TABLE_SIG_SIZE )
             _sig = bytestostring(_sig)
             if _sig not in ACPI_TABLES.keys():
-                if logger().HAL: logger().warn( 'Unknown ACPI table signature: {}'.format(_sig) )
+                if logger().HAL: logger().log_warning( 'Unknown ACPI table signature: {}'.format(_sig) )
             self.tableList[ _sig ].append(a)
 
     #
@@ -428,7 +428,7 @@ class ACPI(hal_base.HALBase):
         if ACPI_TABLE_SIG_FACP in self.tableList:
             (_, parsed_fadt_content, _, _) = self.get_parse_ACPI_table('FACP')[0]
         else:
-            if logger().HAL: logger().warn( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
+            if logger().HAL: logger().log_warning( 'Cannot find FADT in {}'.format('XSDT' if ACPI_TABLE_SIG_XSDT in self.tableList else 'RSDT') )
             return
 
         dsdt_address_to_use = parsed_fadt_content.get_DSDT_address_to_use()

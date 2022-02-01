@@ -595,10 +595,10 @@ NVRAM: EFI Variable Store
                     # the pages in the same relative location as in physical memory.
                     (rst_found, rst_pa, rst_header, rst, rst_buf) = self.find_EFI_RuntimeServices_Table()
                     if rst_found:
-                        if logger().HAL: logger().warn("Attempting to derive configuration table address")
+                        if logger().HAL: logger().log_warning("Attempting to derive configuration table address")
                         ect_pa = rst_pa + (est.ConfigurationTable - est.RuntimeServices)
                     else:
-                        if logger().HAL: logger().warn( "Can't find UEFI ConfigurationTable" )
+                        if logger().HAL: logger().log_warning( "Can't find UEFI ConfigurationTable" )
                         return (None, ect_pa, ect, ect_buf)
 
         if logger().HAL: logger().log( "[uefi] EFI Configuration Table ({:d} entries): VA = 0x{:016X}, PA = 0x{:016X}".format(est.NumberOfTableEntries, est.ConfigurationTable, ect_pa) )

@@ -72,7 +72,7 @@ class rtclock(BaseModule):
             ll = self.cs.get_register_field( 'RC', rc_reg, 'LL' )
             ul = self.cs.get_register_field( 'RC', rc_reg, 'UL' )
         elif self.user_request:
-            self.logger.warn('Writing to CMOS to determine write protection (original values will be restored)')
+            self.logger.log_warning('Writing to CMOS to determine write protection (original values will be restored)')
 
             # Try to modify the low RTC memory regions.
             original_val = self.cmos.read_cmos_low(self.test_offset)
@@ -80,7 +80,7 @@ class rtclock(BaseModule):
             if original_val == self.cmos.read_cmos_low(self.test_offset):
                 ll = 1
             else:
-                self.logger.warn('Restoring original value')
+                self.logger.log_warning('Restoring original value')
                 self.cmos.write_cmos_low(self.test_offset, original_val)
 
             # Try to modify the upper RTC memory regions.
@@ -89,10 +89,10 @@ class rtclock(BaseModule):
             if original_val == self.cmos.read_cmos_high(self.test_offset):
                 ul = 1
             else:
-                self.logger.warn('Restoring original value')
+                self.logger.log_warning('Restoring original value')
                 self.cmos.write_cmos_high(self.test_offset, original_val)
         else:
-            self.logger.warn("Unable to test lock bits without attempting to modify CMOS.")
+            self.logger.log_warning("Unable to test lock bits without attempting to modify CMOS.")
             self.logger.log("[*] Run chipsec_main manually with the following commandline flags.")
             self.logger.log("[*] python chipsec_main -m common.rtclock -a modify")
             return ModuleResult.WARNING

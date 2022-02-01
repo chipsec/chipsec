@@ -150,7 +150,7 @@ class OsHelper:
     def read_pci_reg( self, bus, device, function, address, size ):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
+            if logger().DEBUG: logger().log_warning( "Config register address is not naturally aligned" )
 
         if self.use_native_api() and hasattr(self.helper, 'native_read_pci_reg'):
             ret = self.helper.native_read_pci_reg( bus, device, function, address, size )
@@ -163,7 +163,7 @@ class OsHelper:
     def write_pci_reg( self, bus, device, function, address, value, size ):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
+            if logger().DEBUG: logger().log_warning( "Config register address is not naturally aligned" )
 
         if self.use_native_api() and hasattr(self.helper, 'native_write_pci_reg'):
             ret = self.helper.native_write_pci_reg( bus, device, function, address, value, size )

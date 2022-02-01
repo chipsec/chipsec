@@ -84,7 +84,7 @@ class MMIO(hal_base.HALBase):
     #
     def read_MMIO_reg(self, bar_base, offset, size=4, bar_size=None ):
         if size > 8:
-            if self.logger.HAL: self.logger.warn("MMIO read cannot exceed 8")
+            if self.logger.HAL: self.logger.log_warning("MMIO read cannot exceed 8")
         reg_value = self.cs.helper.read_mmio_reg( bar_base, size, offset, bar_size )
         if self.logger.HAL: self.logger.log( '[mmio] 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, reg_value) )
         return reg_value
@@ -165,7 +165,7 @@ class MMIO(hal_base.HALBase):
             pass
 
         if not is_bar_defined:
-            if self.logger.HAL: self.logger.warn( "'{}' MMIO BAR definition not found/correct in XML config".format(bar_name) )
+            if self.logger.HAL: self.logger.log_warning( "'{}' MMIO BAR definition not found/correct in XML config".format(bar_name) )
         return is_bar_defined
 
     #
