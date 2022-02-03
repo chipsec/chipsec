@@ -25,9 +25,6 @@ The module is fuzzing UEFI Variable interface.
 The module is using UEFI SetVariable interface to write new UEFI variables
 to SPI flash NVRAM with randomized name/attributes/GUID/data/size.
 
-Note: this module modifies contents of non-volatile SPI flash memory (UEFI Variable NVRAM).
-This may render system unbootable if firmware doesn't properly handle variable update/delete operations.
-
 Usage:
 
     chipsec_main -m tools.uefi.uefivar_fuzz [-a <options>]
@@ -36,10 +33,10 @@ Options:
 
     ``[-a <test>,<iterations>,<seed>,<test_case>]``
 
-        - ``test``  UEFI variable interface to fuzz (all, name, guid, attrib, data, size)
-        - ``iterations``  number of tests to perform (default = 1000)
-        - ``seed``  RNG seed to use
-        - ``test_case`` test case # to skip to (combined with seed, can be used to skip to failing test)
+        - ``test``       : UEFI variable interface to fuzz (all, name, guid, attrib, data, size)
+        - ``iterations`` : Number of tests to perform (default = 1000)
+        - ``seed``       : RNG seed to use
+        - ``test_case``  : Test case # to skip to (combined with seed, can be used to skip to failing test)
 
     All module arguments are optional
 
@@ -49,30 +46,16 @@ Examples::
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a all,100000
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a data,1000,123456789
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a name,1,123456789,94
+
+.. note::
+    - This module returns a WARNING by default to indicate that a manual review is needed.
+    - Writes may generate 'ERROR's, this can be expected behavior if the environment rejects them.
+
+.. warning::
+    - This module modifies contents of non-volatile SPI flash memory (UEFI Variable NVRAM).
+    - This may render system unbootable if firmware doesn't properly handle variable update/delete operations.
+
 """
-
-USAGE_TEXT = '''
-Usage:
-    chipsec_main -m tools.uefi.uefivar_fuzz [-a <options>]
-
-    Options:
-    [-a <test>,<iterations>,<seed>,<test_case>]
-
-    - test       : which UEFI variable interface to fuzz
-                   (all, name, guid, attrib, data, size)
-    - iterations : number of tests to perform (default = 1000)
-    - seed       : RNG seed to use
-    - test_case  : test case # to skip to (combined with seed,
-                   can be used to skip to failing test)
-
-    All module arguments are optional
-
-Examples:
-    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz
-    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a all,100000
-    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a data,1000,123456789
-    >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a name,1,123456789,94
-'''
 
 import random
 from time import time
@@ -105,13 +88,13 @@ class uefivar_fuzz(BaseModule):
         return rnum
 
     def usage(self):
-        self.logger.log( USAGE_TEXT )
+        self.logger.log( __doc__.translate({ord('`'): None}) )
         return True
 
     def run( self, module_argv ):
         self.logger.start_test("Fuzz UEFI Variable Interface")
 
-        self.logger.warn("Are you sure you want to continue fuzzing UEFI variable interface?")
+        self.logger.log_warning("Are you sure you want to continue fuzzing UEFI variable interface?")
         s = cs_input("Type 'yes' to continue > ")
         if s.lower() not in ['yes', 'y']:
             return
@@ -196,7 +179,7 @@ class uefivar_fuzz(BaseModule):
                         name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
                         _NAME = name_prim.render()
 
-                if FUZZ_GUID: _GUID   = uuid4()
+                if FUZZ_GUID: _GUID = uuid4()
 
                 if FUZZ_ATTRIB:
                     if attrib_prim.mutate():
@@ -215,9 +198,9 @@ class uefivar_fuzz(BaseModule):
 
                 if FUZZ_SIZE:
                     if _DATA:
-                        _SIZE   = random.randrange(len(_DATA))
+                        _SIZE = random.randrange(len(_DATA))
                     else:
-                        _SIZE   = random.randrange(1024)
+                        _SIZE = random.randrange(1024)
 
                 if (count < CASE):
                     continue
@@ -229,4 +212,4 @@ class uefivar_fuzz(BaseModule):
                 status = self._uefi.delete_EFI_variable(bytestostring(_NAME), str(_GUID))
                 self.logger.log(status)
 
-        return ModuleResult.PASSED
+        return ModuleResult.WARNING
