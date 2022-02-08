@@ -35,7 +35,7 @@ import os
 
 import edk2   # Python 3.6.8 on UEFI
 
-from chipsec.defines           import COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA
+from chipsec.defines           import bytestostring, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA
 from chipsec.logger            import logger
 from chipsec.helper.oshelper   import get_tools_path
 from chipsec.helper.basehelper import Helper
@@ -162,7 +162,7 @@ class EfiHelper(Helper):
         if size == 4:
             return edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
-            buf = struct.pack(size * "B", value)
+            buf = bytestostring( struct.pack(size * "B", value) )
             edk2.writemem(phys_address_lo, phys_address_hi, buf, size)
 
     #
