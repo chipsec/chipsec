@@ -34,9 +34,8 @@ Contact Us
 
 For any questions or suggestions please contact us at: chipsec@intel.com
 
-Mailing lists:
+Mailing list:
 
- * CHIPSEC users: [chipsec-users](https://groups.google.com/forum/#!forum/chipsec-users)
  * [CHIPSEC discussion list on 01.org](https://lists.01.org/hyperkitty/list/chipsec@lists.01.org/)
 
 Twitter:
