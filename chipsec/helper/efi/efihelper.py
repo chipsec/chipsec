@@ -113,9 +113,9 @@ class EfiHelper(Helper):
     def write_phys_mem( self, phys_address_hi, phys_address_lo, length, buf ):
         if 4 == length:
             dword_value = struct.unpack('I', buf)[0]
-            edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
+            edk2.writemem_dword(phys_address_lo, phys_address_hi, bytestostring(dword_value) )
         else:
-            edk2.writemem( phys_address_lo, phys_address_hi, buf, length )
+            edk2.writemem( phys_address_lo, phys_address_hi, bytestostring(buf), length )
 
     def alloc_phys_mem(self, length, max_pa):
         va = edk2.allocphysmem(length, max_pa)[0]
@@ -222,12 +222,13 @@ class EfiHelper(Helper):
         return False
 
     def load_ucode_update( self, cpu_thread_id, ucode_update_buf ):
-        if logger().DEBUG: logger().error( "[efi] load_ucode_update is not supported yet" )
+        if logger().DEBUG:
+            logger().log_error( "[efi] load_ucode_update is not supported yet" )
         return 0
 
     def get_threads_count ( self ):
-        if logger().DEBUG: logger().log_warning( "EFI helper hasn't implemented get_threads_count yet" )
-        #print "OsHelper for %s does not support get_threads_count from OS API"%self.os_system.lower()
+        if logger().DEBUG:
+            logger().log_error( "EFI helper hasn't implemented get_threads_count yet" )
         return 0
 
     def cpuid(self, eax, ecx):
@@ -235,7 +236,8 @@ class EfiHelper(Helper):
         return (reax, rebx, recx, redx)
 
     def get_descriptor_table( self, cpu_thread_id, desc_table_code ):
-        if logger().DEBUG: logger().log_warning("EFI helper has not implemented get_descriptor_table yet")
+        if logger().DEBUG:
+            logger().log_error("EFI helper has not implemented get_descriptor_table yet")
         return 0
 
     #
@@ -280,7 +282,7 @@ class EfiHelper(Helper):
         if attrs is None:
             attrs=0x07
             if logger().VERBOSE:
-                logger().log_warning("Setting attributes to: {:04X}".format(attrs))
+                logger().log_important("Setting attributes to: {:04X}".format(attrs))
 
         (Status, datasize, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), data, datasize)
 
@@ -355,7 +357,8 @@ class EfiHelper(Helper):
     #
 
     def get_ACPI_SDT( self ):
-        if logger().DEBUG: logger().error( "[efi] ACPI is not supported yet" )
+        if logger().DEBUG:
+            logger().log_error( "[efi] ACPI is not supported yet" )
         return 0
 
     #
@@ -363,19 +366,23 @@ class EfiHelper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        if logger().DEBUG:
+            logger().log_error( "[efi] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        if logger().DEBUG:
+            logger().log_error( "[efi] Message Bus is not supported yet" )
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[efi] Message Bus is not supported yet" )
+        if logger().DEBUG:
+            logger().log_error( "[efi] Message Bus is not supported yet" )
         return None
 
     def set_affinity( self, value ):
-        if logger().DEBUG: logger().error( '[efi] API set_affinity() is not supported' )
+        if logger().DEBUG:
+            logger().log_error( '[efi] API set_affinity() is not supported' )
         return 0
 
 def get_helper():
