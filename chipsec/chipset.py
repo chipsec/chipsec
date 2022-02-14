@@ -581,6 +581,7 @@ class Chipset:
                 self.Cfg.BUS[cfg_str] = [enum_dev[0]]
 
         # convert entries with matching configuration file names
+        replaced_devices = {}
         for config_device in self.Cfg.CONFIG_PCI:
             device_data = self.Cfg.CONFIG_PCI[config_device]
             xml_vid  = device_data.get( 'vid', None )
@@ -604,8 +605,14 @@ class Chipset:
                 for tdid in did_list:
                     cfg_str = "{:0>2}_{:0>2}_{:s}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
                     if cfg_str in self.Cfg.BUS.keys():
-                        self.Cfg.BUS[config_device] = self.Cfg.BUS.pop(cfg_str)
-                        if logger().DEBUG: logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, device_data['vid'][2:], tdid, ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
+                        replaced_devices[cfg_str] = self.Cfg.BUS.pop(cfg_str)
+                    if cfg_str in replaced_devices.keys():
+                        self.Cfg.BUS[config_device] = replaced_devices[cfg_str]
+                        self.Cfg.CONFIG_PCI[config_device]['bus'] = '0x{:02X}'.format(self.Cfg.BUS[config_device][0])
+                        if logger().DEBUG:
+                            logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(
+                                config_device, device_data['vid'][2:],
+                                tdid, ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
                         break
 
     #
