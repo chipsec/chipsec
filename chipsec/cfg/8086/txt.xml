@@ -42,7 +42,7 @@ only the public space registers were described here.
       <field name="TYPE1_MINOR_ERROR_CODE" bit="16" size="12" desc="Minor Error Code"/>
       <field name="TYPE1_RESERVED" bit="28" size="2" desc="Failure Condition Details"/>
       <field name="SOFTWARE" bit="30" size="1" desc="Error reported by Software (0 for Processor)"/>
-      <field name="VALID" bit="30" size="1" desc="Valid Register Content"/>
+      <field name="VALID" bit="31" size="1" desc="Valid Register Content"/>
     </register>
 
     <!-- TXT_CMD_RESET at offset 0x38 -->
