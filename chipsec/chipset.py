@@ -1292,21 +1292,23 @@ class Chipset:
         size    = reg_def['FIELDS'][field_name]['size']
         return is_all_ones(value, size, 1)
 
-    def is_control_all_ffs(self, control_name, value, field_only=False):
+    def is_control_all_ffs(self, control_name, cpu_thread=0, field_only=False):
         if self.is_control_defined(control_name) is None:
             if logger().DEBUG:
                 logger().log_error("Control '{}' not defined.".format(control_name))
             return True
-        control = self.Cfg.CONTROLS[control_name]
-        reg_def = control['register']
+        control  = self.Cfg.CONTROLS[control_name]
+        reg_def  = control['register']
+        reg_data = self.read_register(reg_def, cpu_thread)
         if field_only:
             reg_field = control['field']
-            result = self.is_field_all_ones(reg_def, reg_field, value)
+            reg_data  = self.get_register_field(reg_def, reg_data, reg_field)
+            result    = self.is_field_all_ones(reg_def, reg_field, reg_data)
         else:
-            result = self.is_register_all_ffs(reg_def, value)
+            result = self.is_register_all_ffs(reg_def, reg_data)
         return result
 
-        
+
 
 _chipset = None
 
