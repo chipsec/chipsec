@@ -109,16 +109,26 @@ class CONFIGCommand(BaseCommand):
 
     def mmio_details(self, regi):
         if 'register' in regi.keys():
-            ret = "register: {}, base_field: {}, size: {}, fixed_address: {}".format(regi['register'], regi['base_field'], regi['size'], regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = "register: {}, base_field: {}, size: {}, fixed_address: {}".format(
+                regi['register'], regi['base_field'], regi['size'] if 'size' in regi.keys() else None,
+                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
         else:
-            ret = "bus: {}, dev: {}, func: {}, mask: {}, width: {}, size: {}, fixed_address: {}".format(regi['bus'], regi['dev'], regi['fun'], regi['mask'], regi['width'], regi['size'] if 'size' in regi.keys() else None, regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = "bus: {}, dev: {}, func: {}, mask: {}, width: {}, size: {}, fixed_address: {}".format(
+                regi['bus'], regi['dev'], regi['fun'], regi['mask'], regi['width'],
+                regi['size'] if 'size' in regi.keys() else None,
+                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
         return ret
 
     def io_details(self, regi):
         if 'register' in regi.keys():
-            ret = "register: {}, base_field: {}, size: {}, fixed_address: {}".format(regi['register'], regi['base_field'], regi['size'], regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = "register: {}, base_field: {}, size: {}, fixed_address: {}".format(
+                regi['register'], regi['base_field'], regi['size'] if 'size' in regi.keys() else None,
+                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
         else:
-            ret = "bus: {}, dev: {}, func: {}, reg: {}, mask: {}, size: {}, fixed_address: {}".format(regi['bus'], regi['dev'], regi['fun'], regi["reg"], regi['mask'], regi['size'] if 'size' in regi.keys() else None, regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = "bus: {}, dev: {}, func: {}, reg: {}, mask: {}, size: {}, fixed_address: {}".format(
+                regi['bus'], regi['dev'], regi['fun'], regi["reg"], regi['mask'],
+                regi['size'] if 'size' in regi.keys() else None,
+                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
         return ret
 
     def mem_details(self, regi):
