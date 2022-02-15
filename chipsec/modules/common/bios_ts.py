@@ -23,7 +23,20 @@
 """
 Checks for BIOS Interface Lock including Top Swap Mode
 
-`BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ by Bing Sun
+References:
+    - `BIOS Boot Hijacking and VMware Vulnerabilities Digging <http://powerofcommunity.net/poc2007/sunbing.pdf>`_ by Bing Sun
+
+Usage:
+    ``chipsec_main -m common.bios_ts``
+
+Examples:
+    >>> chipsec_main.py -m common.bios_ts
+
+Registers used:
+    - BiosInterfaceLockDown (control)
+    - TopSwapStatus (control)
+    - TopSwap (control)
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
@@ -37,30 +50,37 @@ class bios_ts(BaseModule):
         return True
 
     def check_bios_iface_lock(self):
-        self.logger.start_test( "BIOS Interface Lock (including Top Swap Mode)" )
 
         bild = 0
-        if self.cs.is_control_defined( 'BiosInterfaceLockDown' ):
-            bild = self.cs.get_control( 'BiosInterfaceLockDown' )
+        if self.cs.is_control_defined('BiosInterfaceLockDown'):
+            bild = self.cs.get_control('BiosInterfaceLockDown')
             self.logger.log( "[*] BiosInterfaceLockDown (BILD) control = {:d}".format(bild) )
         else:
-            self.logger.error( "BiosInterfaceLockDown (BILD) control is not defined" )
+            self.logger.log_error("BiosInterfaceLockDown (BILD) control is not defined")
             return ModuleResult.ERROR
 
-        if self.cs.is_control_defined( 'TopSwapStatus' ):
-            tss = self.cs.get_control( 'TopSwapStatus' )
-            self.logger.log( "[*] BIOS Top Swap mode is {} (TSS = {:d})".format('enabled' if (1==tss) else 'disabled', tss) )
+        if self.cs.is_control_defined('TopSwapStatus'):
+            if self.cs.is_control_all_ffs('TopSwapStatus'):
+                self.logger.log("[*] BIOS Top Swap mode: can't determine status.")
+                self.logger.verbose_log('TopSwapStatus read returned all 0xFs.')
+            else:
+                tss = self.cs.get_control('TopSwapStatus')
+                self.logger.log( "[*] BIOS Top Swap mode is {} (TSS = {:d})".format('enabled' if (1==tss) else 'disabled', tss) )
 
-        if self.cs.is_control_defined( 'TopSwap' ):
-            ts  = self.cs.get_control( 'TopSwap' )
-            self.logger.log( "[*] RTC TopSwap control (TS) = {:x}".format(ts) )
+        if self.cs.is_control_defined('TopSwap'):
+            if self.cs.is_control_all_ffs('TopSwap'):
+                self.logger.log("[*] RTC Top Swap control (TS): can't determine status.")
+                self.logger.verbose_log('TopSwap read returned all 0xFs.')
+            else:
+                ts = self.cs.get_control('TopSwap')
+                self.logger.log( "[*] RTC TopSwap control (TS) = {:x}".format(ts) )
 
         if 0 == bild:
             res = ModuleResult.FAILED
-            self.logger.log_failed_check( "BIOS Interface is not locked (including Top Swap Mode)" )
+            self.logger.log_failed("BIOS Interface is not locked (including Top Swap Mode)")
         else:
             res = ModuleResult.PASSED
-            self.logger.log_passed_check( "BIOS Interface is locked (including Top Swap Mode)" )
+            self.logger.log_passed("BIOS Interface is locked (including Top Swap Mode)")
         return res
 
     # --------------------------------------------------------------------------
@@ -68,4 +88,6 @@ class bios_ts(BaseModule):
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run(self, module_argv ):
-        return self.check_bios_iface_lock()
+        self.logger.start_test("BIOS Interface Lock (including Top Swap Mode)")
+        self.res = self.check_bios_iface_lock()
+        return self.res
