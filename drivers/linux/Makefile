@@ -32,8 +32,8 @@ chipsec: check_kernel_dir clean
 clean: check_kernel_dir
 	make -C $(KSRC) M=$(CURDIR) clean
 
-$(obj)/i386/cpu.o: $(src)/i386/cpu.asm
+$(obj)/i386/cpu.o: $(src)/i386/cpu.asm FORCE
 	$(call if_changed,nasm32)
 
-$(obj)/amd64/cpu.o: $(src)/amd64/cpu.asm
+$(obj)/amd64/cpu.o: $(src)/amd64/cpu.asm FORCE
 	$(call if_changed,nasm64)
