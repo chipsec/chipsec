@@ -30,7 +30,7 @@ import struct
 import sys
 from collections import namedtuple
 
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from chipsec.hal import hal_base
 import chipsec.hal.tpm12_commands
 
@@ -227,7 +227,7 @@ class TPM(hal_base.HALBase):
 
         ( header, data, header_blob, data_blob ) = self._read_response( Locality )
         self.logger.log( header )
-        print_buffer( str(data_blob) )
+        print_buffer_bytes( data_blob )
         self.logger.log( '\n' )
 
         #
