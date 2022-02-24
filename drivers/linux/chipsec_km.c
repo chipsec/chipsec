@@ -1639,13 +1639,19 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 		//IN  params: va
 		//OUT params: pa
 #ifdef CONFIG_X86
-		PHYSICAL_ADDRESS pa;
+		phys_addr_t pa;
+		void *va;
+
 		numargs = 1;
 		if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
 
-		pa.quadpart = virt_to_phys((void*)ptr[0]);
-                ptr[0] = pa.quadpart;
+		va = (void*)ptr[0];
+		if (!virt_addr_valid(va))
+			return -EINVAL;
+
+		pa = virt_to_phys(va);
+		ptr[0] = pa;
 
 		if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
 			return -EFAULT;
