@@ -504,7 +504,7 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 	unsigned long p = *ppos;
 	ssize_t written = 0;
 	size_t sz;
-	void *ptr;
+	void *ptr, *bounce;
 
 #ifdef __ARCH_HAS_NO_PAGE_ZERO_MAPPED
 	/* we don't have page 0 mapped on sparc and m68k.. */
@@ -520,6 +520,13 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 		}
 	}
 #endif
+
+	/* Allocate a bounce buffer to make the user copy USERCOPY compatible */
+	bounce = kmalloc(PAGE_SIZE, GFP_KERNEL);
+	if (!bounce) {
+		printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n");
+		return -ENOMEM;
+	}
 
 	while (count > 0) {
 		/*
@@ -541,22 +548,24 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 		ptr = my_xlate_dev_mem_ptr(p);
 		if (!ptr) {
 			dbgprint("xlate FAIL, p: %lX", p);
+			kfree(bounce);
 			return -EFAULT;
 		}
 
 		/*
 		 * It would be safer to use probe_kernel_write() or
-		 * copy_to_kernel_nofault() with a bounce buffer instead of
-		 * directly copying user data to the destination. But these
-		 * functions are no longer exported since Linux 5.8.0
+		 * copy_to_kernel_nofault() but these functions are
+		 * no longer exported since Linux 5.8.0
 		 * (cf. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0493cb086353e786be56010780a0b7025b5db34c)
 		 */
-		if (copy_from_user(ptr, buf, sz)) {
+		if (copy_from_user(bounce, buf, sz)) {
 			dbgprint("copy_from_user FAIL, ptr: %lX / %lx",
 				 p, (unsigned long)ptr);
 			my_unxlate_dev_mem_ptr(p, ptr);
+			kfree(bounce);
 			return -EFAULT;
 		}
+		memcpy(ptr, bounce, sz);
 
 		my_unxlate_dev_mem_ptr(p, ptr);
 
@@ -565,8 +574,8 @@ static ssize_t write_mem(struct file * file, const char __user * buf, size_t cou
 		count -= sz;
 		written += sz;
 	}
-
 	*ppos += written;
+	kfree(bounce);
 	return written;
 }
 
