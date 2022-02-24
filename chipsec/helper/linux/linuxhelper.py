@@ -403,9 +403,14 @@ class LinuxHelper(Helper):
     def va2pa( self, va ):
         error_code = 0
 
-        in_buf = struct.pack( self._pack, va )
-        out_buf = self.ioctl(IOCTL_VA2PA, in_buf)
-        pa = struct.unpack( self._pack, out_buf )[0]
+        in_buf = struct.pack(self._pack, va)
+        try:
+            out_buf = self.ioctl(IOCTL_VA2PA, in_buf)
+            pa = struct.unpack(self._pack, out_buf)[0]
+        except IOError as err:
+            if logger().DEBUG:
+                logger().error("[helper] Error in va2pa: getting PA for VA 0x{:016X} failed with IOError: {}".format(va, err.strerror))
+            return (None, err.errno)
 
         #Check if PA > max physical address
         max_pa = self.cpuid( 0x80000008, 0x0 )[0] & 0xFF
