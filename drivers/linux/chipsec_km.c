@@ -1173,7 +1173,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         //IN params: size
         //OUT params: physical address
         uint32_t NumberOfBytes = 0;
-        void *va;
+	void *va = NULL;
         phys_addr_t pa, max_pa;
         struct allocated_mem_list *tmp = NULL;
         
@@ -1186,21 +1186,28 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         
         NumberOfBytes = ptr[0];
         max_pa = ptr[1];
-        
-        va = kmalloc(NumberOfBytes, GFP_KERNEL );
-        if( !va )
-        {
-            printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
-            return -ENOMEM;
-        }
-         
-        memset(va, 0, NumberOfBytes);
-        pa = virt_to_phys(va);
 
-        if (pa > max_pa)
-        {
-            printk(KERN_ALERT "[chipsec] WARNING: allocated memory (0x%llx) is not below max_pa (0x%llx) (ignoring)", pa, max_pa);
-        }
+	if (max_pa <= U32_MAX) {
+		if (max_pa > 16 * 1024 * 1024)
+			va = kmalloc(NumberOfBytes, GFP_KERNEL | GFP_DMA32);
+		if (!va)
+			va = kmalloc(NumberOfBytes, GFP_KERNEL | GFP_DMA);
+	}
+	if (!va)
+		va = kmalloc(NumberOfBytes, GFP_KERNEL);
+	if (!va) {
+		printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
+		return -ENOMEM;
+	}
+
+	pa = virt_to_phys(va);
+	if (pa > max_pa) {
+		printk(KERN_ALERT "[chipsec] ERROR: allocated memory (0x%llx) is not below max_pa (0x%llx)", pa, max_pa);
+		kfree(va);
+		return -ENOMEM;
+	}
+
+	memset(va, 0, NumberOfBytes);
 
         tmp = kmalloc(sizeof(struct allocated_mem_list), GFP_KERNEL);
         if (tmp == NULL) {
