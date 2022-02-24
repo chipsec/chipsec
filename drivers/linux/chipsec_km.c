@@ -410,13 +410,14 @@ long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
 #endif
 
 /*
- * This function reads the *physical* memory. The f_pos points directly to the 
- * memory location. 
+ * This function reads/writes *physical* memory. The f_pos points directly to
+ * the memory location.
  */
-static ssize_t read_mem(struct file * file, char __user * buf, size_t count, loff_t *ppos)
+static ssize_t rw_mem(struct file *file, char __user *buf, size_t count,
+		      loff_t *ppos, bool read)
 {
 	unsigned long p = *ppos;
-	ssize_t read = 0;
+	ssize_t bytes = 0;
 	size_t sz;
 	void *ptr, *bounce;
 	int err;
@@ -428,12 +429,12 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		if (sz > count)
 			sz = count;
 		if (sz > 0) {
-			if (clear_user(buf, sz))
+			if (read && clear_user(buf, sz))
 				return -EFAULT;
 			buf += sz;
 			p += sz;
 			count -= sz;
-			read += sz;
+			bytes += sz;
 		}
 	}
 #endif
@@ -469,22 +470,39 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 			return -EFAULT;
 		}
 
-		memset(bounce, 0, sz);
-		err = copy_from_kernel_nofault(bounce, ptr, sz);
-		if (err) {
-			dbgprint("copy_from_kernel_nofault FAIL %d, ptr: %lX / %lx",
-				 err, p, (unsigned long)ptr);
-			my_unxlate_dev_mem_ptr(p, ptr);
-			kfree(bounce);
-			return -EFAULT;
-		}
-		err = copy_to_user(buf, bounce, sz);
-		if (err) {
-			dbgprint("copy_to_user FAIL %d, ptr: %lX / %lx",
-				 err, p, (unsigned long)ptr);
-			my_unxlate_dev_mem_ptr(p, ptr);
-			kfree(bounce);
-			return -EFAULT;
+		if (read) {
+			memset(bounce, 0, sz);
+			err = copy_from_kernel_nofault(bounce, ptr, sz);
+			if (err) {
+				dbgprint("copy_from_kernel_nofault FAIL %d, ptr: %lX / %lx",
+					 err, p, (unsigned long)ptr);
+				my_unxlate_dev_mem_ptr(p, ptr);
+				kfree(bounce);
+				return -EFAULT;
+			}
+			err = copy_to_user(buf, bounce, sz);
+			if (err) {
+				dbgprint("copy_to_user FAIL %d, ptr: %lX / %lx",
+					 err, p, (unsigned long)ptr);
+				my_unxlate_dev_mem_ptr(p, ptr);
+				kfree(bounce);
+				return -EFAULT;
+			}
+		} else {
+			/*
+			 * It would be safer to use probe_kernel_write() or
+			 * copy_to_kernel_nofault() but these functions are
+			 * no longer exported since Linux 5.8.0
+			 * (cf. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0493cb086353e786be56010780a0b7025b5db34c)
+			 */
+			if (copy_from_user(bounce, buf, sz)) {
+				dbgprint("copy_from_user FAIL, ptr: %lX / %lx",
+					 p, (unsigned long)ptr);
+				my_unxlate_dev_mem_ptr(p, ptr);
+				kfree(bounce);
+				return -EFAULT;
+			}
+			memcpy(ptr, bounce, sz);
 		}
 
 		my_unxlate_dev_mem_ptr(p, ptr);
@@ -492,91 +510,23 @@ static ssize_t read_mem(struct file * file, char __user * buf, size_t count, lof
 		buf += sz;
 		p += sz;
 		count -= sz;
-		read += sz;
+		bytes += sz;
 	}
-	*ppos += read;
+	*ppos += bytes;
 	kfree(bounce);
-	return read;
+	return bytes;
 }
 
-static ssize_t write_mem(struct file * file, const char __user * buf, size_t count, loff_t *ppos)
+static ssize_t read_mem(struct file *file, char __user *buf, size_t count,
+			loff_t *ppos)
 {
-	unsigned long p = *ppos;
-	ssize_t written = 0;
-	size_t sz;
-	void *ptr, *bounce;
+	return rw_mem(file, buf, count, ppos, true);
+}
 
-#ifdef __ARCH_HAS_NO_PAGE_ZERO_MAPPED
-	/* we don't have page 0 mapped on sparc and m68k.. */
-	if (p < PAGE_SIZE) {
-		sz = PAGE_SIZE - p;
-		if (sz > count)
-			sz = count;
-		if (sz > 0) {
-			buf += sz;
-			p += sz;
-			count -= sz;
-			written += sz;
-		}
-	}
-#endif
-
-	/* Allocate a bounce buffer to make the user copy USERCOPY compatible */
-	bounce = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!bounce) {
-		printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n");
-		return -ENOMEM;
-	}
-
-	while (count > 0) {
-		/*
-		 * Handle first page in case it's not aligned
-		 */
-		if (-p & (PAGE_SIZE - 1))
-			sz = -p & (PAGE_SIZE - 1);
-		else
-			sz = PAGE_SIZE;
-
-		if (sz > count)
-			sz = count;
-
-		/*
-		 * On ia64 if a page has been mapped somewhere as
-		 * uncached, then it must also be accessed uncached
-		 * by the kernel or data corruption may occur
-		 */
-		ptr = my_xlate_dev_mem_ptr(p);
-		if (!ptr) {
-			dbgprint("xlate FAIL, p: %lX", p);
-			kfree(bounce);
-			return -EFAULT;
-		}
-
-		/*
-		 * It would be safer to use probe_kernel_write() or
-		 * copy_to_kernel_nofault() but these functions are
-		 * no longer exported since Linux 5.8.0
-		 * (cf. https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=0493cb086353e786be56010780a0b7025b5db34c)
-		 */
-		if (copy_from_user(bounce, buf, sz)) {
-			dbgprint("copy_from_user FAIL, ptr: %lX / %lx",
-				 p, (unsigned long)ptr);
-			my_unxlate_dev_mem_ptr(p, ptr);
-			kfree(bounce);
-			return -EFAULT;
-		}
-		memcpy(ptr, bounce, sz);
-
-		my_unxlate_dev_mem_ptr(p, ptr);
-
-		buf += sz;
-		p += sz;
-		count -= sz;
-		written += sz;
-	}
-	*ppos += written;
-	kfree(bounce);
-	return written;
+static ssize_t write_mem(struct file *file, const char __user *buf,
+			 size_t count, loff_t *ppos)
+{
+	return rw_mem(file, (char __user *)buf, count, ppos, false);
 }
 
 #ifndef CONFIG_MMU
