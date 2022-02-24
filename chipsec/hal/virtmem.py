@@ -108,10 +108,10 @@ class VirtMemory(hal_base.HALBase):
 
     def va2pa( self, va ):
         (pa, error_code) = self.helper.va2pa( va )
-        if logger().HAL: logger().log( '[mem] VA (0x{:016X}) -> PA (0x{:016X})'.format(va, pa) )
         if error_code:
             if logger().HAL: logger().log( '[mem] Looks like VA (0x{:016X}) not mapped'.format(va) )
             return
+        if logger().HAL: logger().log( '[mem] VA (0x{:016X}) -> PA (0x{:016X})'.format(va, pa) )
         return pa
 
     def free_virtual_mem(self, virt_address):
