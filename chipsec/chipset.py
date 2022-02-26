@@ -1286,12 +1286,12 @@ class Chipset:
         if self.register_is_msr(reg_name):
             size = 8
         else:
-            size = self.get_register_def(reg_name)['size']
+            size = int(self.get_register_def(reg_name)['size'], 0)
         return is_all_ones(value, size)
 
     def is_field_all_ones(self, reg_name, field_name, value):
         reg_def = self.get_register_def(reg_name)
-        size    = reg_def['FIELDS'][field_name]['size']
+        size    = int(reg_def['FIELDS'][field_name]['size'], 0)
         return is_all_ones(value, size, 1)
 
     def is_control_all_ffs(self, control_name, cpu_thread=0, field_only=False):
