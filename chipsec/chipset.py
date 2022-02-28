@@ -603,16 +603,18 @@ class Chipset:
                         did_list.append(int(tdid, 16))
                 # If there is a match between the configuration entry and generic entry, replace the name with the configuration entry
                 for tdid in did_list:
-                    cfg_str = "{:0>2}_{:0>2}_{:s}_{:04X}".format(device_data['dev'][2:] if len(device_data['dev']) > 2 else device_data['dev'], device_data['fun'], device_data['vid'][2:], tdid)
+                    dev = int(device_data['dev'],16)
+                    fun = int(device_data['fun'],16)
+                    vid = device_data['vid'][2:]
+                    cfg_str = "{:02X}_{:02X}_{:s}_{:04X}".format(dev, fun, vid, tdid).upper()
                     if cfg_str in self.Cfg.BUS.keys():
                         replaced_devices[cfg_str] = self.Cfg.BUS.pop(cfg_str)
                     if cfg_str in replaced_devices.keys():
                         self.Cfg.BUS[config_device] = replaced_devices[cfg_str]
                         self.Cfg.CONFIG_PCI[config_device]['bus'] = '0x{:02X}'.format(self.Cfg.BUS[config_device][0])
                         if logger().DEBUG:
-                            logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(
-                                config_device, device_data['vid'][2:],
-                                tdid, ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])))
+                            buses = ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])
+                            logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, vid, tdid, buses))
                         break
 
     #
@@ -795,7 +797,7 @@ class Chipset:
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_value = 0
-        if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
+        if (RegisterType.PCICFG == rtype) or (RegisterType.MMCFG == rtype):
             if bus is not None:
                 b = bus
             else:
@@ -885,7 +887,7 @@ class Chipset:
     def write_register(self, reg_name, reg_value, cpu_thread=0, bus=None):
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
-        if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
+        if (RegisterType.PCICFG == rtype) or (RegisterType.MMCFG == rtype):
             if bus is not None:
                 b = bus
             else:
