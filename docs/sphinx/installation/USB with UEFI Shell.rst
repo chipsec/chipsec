@@ -69,7 +69,9 @@ Native functions accessing HW resources are built directly into Python UEFI port
 
 #. Start with `Py368Readme.txt <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/Py368ReadMe.txt>`_
 
-    - For a UDK2018 overview, visit `UDK2018 How to Build <https://github.com/tianocore/tianocore.github.io/wiki/UDK2018-How-to-Build>`_
+    - Latest EDK2, visit `Tianocore EDK2 Github <https://github.com/tianocore/edk2>`_  (Make sure to update submodules)
+    - Latest EDK2-LIBC, visit `Tianocore EDK2-LIBC Github <https://github.com/tianocore/edk2-libc>`_
+    - Follow setup steps described in the ``Py368Readme.txt``
 
 #. Import files from the `CHIPSEC Python 3.6.8 port for EFI Shell  <https://github.com/chipsec/chipsec/tree/master/chipsec_tools/edk2/PythonEFI>`_
 
