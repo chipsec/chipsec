@@ -2,7 +2,6 @@ TITLE   cpu.asm: Assembly code for the x64 resources
 
 .CODE cpu_asm_code$__a
 
-PUBLIC DisableInterrupts
 PUBLIC WritePortDword
 PUBLIC WritePortWord
 PUBLIC WritePortByte
@@ -159,15 +158,6 @@ _wrmsr PROC
     ret
 _wrmsr ENDP
 
-;------------------------------------------------------------------------------
-;  void
-;  DisableInterrupts (
-;    )
-;------------------------------------------------------------------------------
-DisableInterrupts PROC
-    cli
-    ret
-DisableInterrupts ENDP
 
 ;------------------------------------------------------------------------------
 ;  void
