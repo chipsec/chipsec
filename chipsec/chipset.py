@@ -605,8 +605,8 @@ class Chipset:
                 for tdid in did_list:
                     dev = int(device_data['dev'],16)
                     fun = int(device_data['fun'],16)
-                    vid = device_data['vid'][2:]
-                    cfg_str = "{:02X}_{:02X}_{:s}_{:04X}".format(dev, fun, vid, tdid).upper()
+                    vid = int(device_data['vid'],16)
+                    cfg_str = "{:02X}_{:02X}_{:04X}_{:04X}".format(dev, fun, vid, tdid)
                     if cfg_str in self.Cfg.BUS.keys():
                         replaced_devices[cfg_str] = self.Cfg.BUS.pop(cfg_str)
                     if cfg_str in replaced_devices.keys():
@@ -614,7 +614,7 @@ class Chipset:
                         self.Cfg.CONFIG_PCI[config_device]['bus'] = '0x{:02X}'.format(self.Cfg.BUS[config_device][0])
                         if logger().DEBUG:
                             buses = ','.join('0x{:02X}'.format(i) for i in self.Cfg.BUS[config_device])
-                            logger().log(' + {:16s}: VID 0x{:s} - DID 0x{:04X} -> Bus {:s}'.format(config_device, vid, tdid, buses))
+                            logger().log(' + {:16s}: VID 0x{:04X} - DID 0x{:04X} -> Bus {:s}'.format(config_device, vid, tdid, buses))
                         break
 
     #
