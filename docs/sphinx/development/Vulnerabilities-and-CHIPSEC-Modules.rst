@@ -4,10 +4,11 @@ CHIPSEC Modules
 A CHIPSEC module is just a python class that inherits from BaseModule and implements ``is_supported`` and ``run``. Modules are stored under the chipsec installation directory in a subdirectory "modules". The "modules" directory contains one subdirectory for each chipset that chipsec supports. There is also a directory for common modules that should apply to every platform.
 
     ===============================================  ================================================================================================
-     ``chipsec/modules/``                            modules including tests or tools (that's where most of the chipsec functionality is)        
-     ``chipsec/modules/common/``                     modules common to all platforms                                                             
-     ``chipsec/modules/<platform>/``                 modules specific to <platform>                                                
-     ``chipsec/modules/tools/``                      security tools based on CHIPSEC framework (fuzzers, etc.)                                   
+     ``chipsec/modules/``                            modules including tests or tools (that's where most of the chipsec functionality is)
+     ``chipsec/modules/common/``                     modules common to all vendors
+     ``chipsec/modules/<vendor>/common``             modules common to all platforms for <vendor>
+     ``chipsec/modules/<vendor>/<platform>/``        modules specific to <platform> for the given <vendor>
+     ``chipsec/modules/tools/``                      security tools based on CHIPSEC framework (fuzzers, etc.)
     ===============================================  ================================================================================================
     
 Internally the chipsec application uses the concept of a module name, which is a string of the form: ``common.bios_wp``.

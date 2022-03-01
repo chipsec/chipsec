@@ -208,22 +208,30 @@ class ChipsecMain:
     def load_my_modules(self):
         #
         # Step 1.
-        # Load modules common to all supported platforms
+        # Load modules common to all supported vendors
         #
         common_path = os.path.join(self.Modules_Path, 'common')
         logger().log("[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd(), '.')))
         self.load_modules_from_path(common_path)
         #
         # Step 2.
-        # Load platform-specific modules from the corresponding platform module directory
+        # Load vendor- and platform-specific modules from the corresponding module directories
         #
-        chipset_path = os.path.join(self.Modules_Path, self._cs.code.lower())
+        vendor_path = os.path.join(self.Modules_Path, format(self._cs.vid, 'x'))
+        if (0xFFFF != self._cs.vid) and os.path.exists(vendor_path):
+            logger().log( "[*] loading vendor-specific modules from \"{}\" ..".format(
+                vendor_path.replace(os.getcwd(), '.')))
+            self.load_modules_from_path(vendor_path)
+        else:
+            logger().log("[*] No vendor-specific modules to load")
+
+        chipset_path = os.path.join(vendor_path, self._cs.code.lower())
         if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.code) and os.path.exists(chipset_path):
-            logger().log("[*] loading platform specific modules from \"{}\" ..".format(
+            logger().log("[*] loading platform-specific modules from \"{}\" ..".format(
                 chipset_path.replace(os.getcwd(), '.')))
             self.load_modules_from_path(chipset_path)
         else:
-            logger().log("[*] No platform specific modules to load")
+            logger().log("[*] No platform-specific modules to load")
         #
         # Step 3.
         # Enumerate all modules from the root module directory

@@ -37,15 +37,17 @@ The CHIPSEC HAL and other APIs are also available within these modules. See the 
 
 Copy your module into the ``chipsec/modules/`` directory structure
 
+- Modules specific to a certain vendor must be located in ``chipsec/modules/<vendor_code>`` directory, for example ``chipsec/modules/8086`` for Intel-specific modules
+
 - Modules specific to a certain platform should implement ``is_supported`` function which returns ``True`` for the platforms the module is applicable to
 
-- Modules specific to a certain platform can also be located in ``chipsec/modules/<platform_code>`` directory, for example ``chipsec/modules/hsw``. Supported plaforms and their code can be found by running ``chipesec_main.py --help``
+- Modules specific to a certain platform can also be located in ``chipsec/modules/<vendor_code>/<platform_code>`` directory, for example ``chipsec/modules/hsw``. Supported plaforms and their code can be found by running ``chipesec_main.py --help``
 
-- Modules common to all platform which CHIPSEC supports can be located in ``chipsec/modules/common`` directory
+- Modules common to all vendors which CHIPSEC supports must be located in ``chipsec/modules/common`` directory, and modules common to all platforms for a given vendor should be located in ``chipsec/modules/<vendor_code>/common``
 
-If a new platform needs to be added:
+If a new vendor or platform needs to be added:
 
-- Review the platform datasheet and include appropriate information in an XML configuration file for the platform. Place this file in chipsec/cfg/8086. Registers that are correctly defined in ``common.xml`` will be inherited and do not need to be added. Use ``common.xml`` as an example. It is based on the 4th Generation Intel Core platform (Haswell).
+- Review the platform datasheet and include appropriate information in an XML configuration file for the platform. Place this file in chipsec/cfg/<vendor_code>. Registers that are correctly defined in ``common.xml`` will be inherited and do not need to be added. Use ``common.xml`` as an example. For Intel (chipsec/cfg/8086), it is based on the 4th Generation Intel Core platform (Haswell).
 
 .. seealso:: 
     `Creating CHIPSEC modules and commands <https://github.com/chipsec/chipsec/wiki/files/training/OSFC_2018_CHIPSEC_Workshop.pdf>`_
