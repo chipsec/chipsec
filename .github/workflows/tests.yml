@@ -193,7 +193,7 @@ jobs:
       run: |
         sudo apt-get update -q
         sudo apt-get install -qqy dkms nasm
-        pip install distro
+        pip install distro pre-commit
 
     - name: Build the driver with Python
       run: python setup.py build_ext -i
@@ -205,6 +205,9 @@ jobs:
         echo "Building chipsec ${CHIPSEC_MODULE_VER} for Linux kernel ${KERNEL_VER}"
         sudo dkms add drivers/linux
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
+
+    - name: Run pre-commit tests
+      run: pre-commit run --all-files
 
     - name: Run Python tests
       run: python setup.py test
