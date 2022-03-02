@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 # Copyright (c) 2020 Intel Corporation
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -42,38 +42,67 @@ import mmap
 # Volatile registers         : EAX, ECX, EDX
 
 _POSIX_64_OPC = [
-        0x53,                    # push   %rbx
-        0x89, 0xf0,              # mov    %esi,%eax
-        0x89, 0xd1,              # mov    %edx,%ecx
-        0x0f, 0xa2,              # cpuid
-        0x89, 0x07,              # mov    %eax,(%rdi)
-        0x89, 0x5f, 0x04,        # mov    %ebx,0x4(%rdi)
-        0x89, 0x4f, 0x08,        # mov    %ecx,0x8(%rdi)
-        0x89, 0x57, 0x0c,        # mov    %edx,0xc(%rdi)
-        0x5b,                    # pop    %rbx
-        0xc3                     # retq
+    0x53,  # push   %rbx
+    0x89,
+    0xF0,  # mov    %esi,%eax
+    0x89,
+    0xD1,  # mov    %edx,%ecx
+    0x0F,
+    0xA2,  # cpuid
+    0x89,
+    0x07,  # mov    %eax,(%rdi)
+    0x89,
+    0x5F,
+    0x04,  # mov    %ebx,0x4(%rdi)
+    0x89,
+    0x4F,
+    0x08,  # mov    %ecx,0x8(%rdi)
+    0x89,
+    0x57,
+    0x0C,  # mov    %edx,0xc(%rdi)
+    0x5B,  # pop    %rbx
+    0xC3,  # retq
 ]
 
 _CDECL_32_OPC = [
-        0x53,                    # push   %ebx
-        0x57,                    # push   %edi
-        0x8b, 0x7c, 0x24, 0x0c,  # mov    0xc(%esp),%edi
-        0x8b, 0x44, 0x24, 0x10,  # mov    0x10(%esp),%eax
-        0x8b, 0x4c, 0x24, 0x14,  # mov    0x14(%esp),%ecx
-        0x0f, 0xa2,              # cpuid
-        0x89, 0x07,              # mov    %eax,(%edi)
-        0x89, 0x5f, 0x04,        # mov    %ebx,0x4(%edi)
-        0x89, 0x4f, 0x08,        # mov    %ecx,0x8(%edi)
-        0x89, 0x57, 0x0c,        # mov    %edx,0xc(%edi)
-        0x5f,                    # pop    %edi
-        0x5b,                    # pop    %ebx
-        0xc3                     # ret
+    0x53,  # push   %ebx
+    0x57,  # push   %edi
+    0x8B,
+    0x7C,
+    0x24,
+    0x0C,  # mov    0xc(%esp),%edi
+    0x8B,
+    0x44,
+    0x24,
+    0x10,  # mov    0x10(%esp),%eax
+    0x8B,
+    0x4C,
+    0x24,
+    0x14,  # mov    0x14(%esp),%ecx
+    0x0F,
+    0xA2,  # cpuid
+    0x89,
+    0x07,  # mov    %eax,(%edi)
+    0x89,
+    0x5F,
+    0x04,  # mov    %ebx,0x4(%edi)
+    0x89,
+    0x4F,
+    0x08,  # mov    %ecx,0x8(%edi)
+    0x89,
+    0x57,
+    0x0C,  # mov    %edx,0xc(%edi)
+    0x5F,  # pop    %edi
+    0x5B,  # pop    %ebx
+    0xC3,  # ret
 ]
 
-is_64bit   = sizeof(c_voidp) == 8
+is_64bit = sizeof(c_voidp) == 8
+
 
 class CPUID_struct(Structure):
     _fields_ = [(r, c_uint32) for r in ("eax", "ebx", "ecx", "edx")]
+
 
 class CPUID(object):
     def __init__(self):
@@ -85,7 +114,9 @@ class CPUID(object):
         size = len(opc)
         code = (c_ubyte * size)(*opc)
 
-        self.addr = mmap.mmap(-1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        self.addr = mmap.mmap(
+            -1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC
+        )
         self.addr.write(bytes(code))
 
         func_type = CFUNCTYPE(None, POINTER(CPUID_struct), c_uint32, c_uint32)
@@ -103,6 +134,7 @@ class CPUID(object):
 
 
 if __name__ == "__main__":
+
     def valid_inputs():
         cpuid = CPUID()
         for eax in (0x0, 0x80000000):

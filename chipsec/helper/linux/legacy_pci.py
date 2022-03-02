@@ -30,33 +30,61 @@ import mmap
 from ctypes import cdll, c_ubyte, CFUNCTYPE, c_uint32, c_uint16, c_void_p, addressof
 
 IN_PORT = [
-        0x55,                   # push   %rbp
-        0x48, 0x89, 0xe5,       # mov    %rsp,%rbp
-        0x89, 0xf8,             # mov    %edi,%eax
-        0x66, 0x89, 0x45, 0xec, # mov    %ax,-0x14(%rbp)
-        0x0f, 0xb7, 0x45, 0xec, # movzwl -0x14(%rbp),%eax
-        0x89, 0xc2,             # mov    %eax,%edx
-        0xed,                   # in     (%dx),%eax
-        0x89, 0x45, 0xfc,       # mov    %eax,-0x4(%rbp)
-        0x8b, 0x45, 0xfc,       # mov    -0x4(%rbp),%eax
-        0x5d,                   # pop    %rbp
-        0xc3,                   # retq
+    0x55,  # push   %rbp
+    0x48,
+    0x89,
+    0xE5,  # mov    %rsp,%rbp
+    0x89,
+    0xF8,  # mov    %edi,%eax
+    0x66,
+    0x89,
+    0x45,
+    0xEC,  # mov    %ax,-0x14(%rbp)
+    0x0F,
+    0xB7,
+    0x45,
+    0xEC,  # movzwl -0x14(%rbp),%eax
+    0x89,
+    0xC2,  # mov    %eax,%edx
+    0xED,  # in     (%dx),%eax
+    0x89,
+    0x45,
+    0xFC,  # mov    %eax,-0x4(%rbp)
+    0x8B,
+    0x45,
+    0xFC,  # mov    -0x4(%rbp),%eax
+    0x5D,  # pop    %rbp
+    0xC3,  # retq
 ]
 
 
 OUT_PORT = [
-        0x55,                   # push   %rbp
-        0x48, 0x89, 0xe5,       # mov    %rsp,%rbp
-        0x89, 0x7d, 0xfc,       # mov    %edi,-0x4(%rbp)
-        0x89, 0xf0,             # mov    %esi,%eax
-        0x66, 0x89, 0x45, 0xf8, # mov    %ax,-0x8(%rbp)
-        0x8b, 0x45, 0xfc,       # mov    -0x4(%rbp),%eax
-        0x0f, 0xb7, 0x55, 0xf8, # movzwl -0x8(%rbp),%edx
-        0xef,                   # out    %eax,(%dx)
-        0x90,                   # nop
-        0x5d,                   # pop    %rbp
-        0xc3,                   # retq
+    0x55,  # push   %rbp
+    0x48,
+    0x89,
+    0xE5,  # mov    %rsp,%rbp
+    0x89,
+    0x7D,
+    0xFC,  # mov    %edi,-0x4(%rbp)
+    0x89,
+    0xF0,  # mov    %esi,%eax
+    0x66,
+    0x89,
+    0x45,
+    0xF8,  # mov    %ax,-0x8(%rbp)
+    0x8B,
+    0x45,
+    0xFC,  # mov    -0x4(%rbp),%eax
+    0x0F,
+    0xB7,
+    0x55,
+    0xF8,  # movzwl -0x8(%rbp),%edx
+    0xEF,  # out    %eax,(%dx)
+    0x90,  # nop
+    0x5D,  # pop    %rbp
+    0xC3,  # retq
 ]
+
 
 class PORTS(object):
     def __init__(self):
@@ -66,7 +94,9 @@ class PORTS(object):
         opc = IN_PORT
         size = len(opc)
         code = (c_ubyte * size)(*opc)
-        self.addr = mmap.mmap(-1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        self.addr = mmap.mmap(
+            -1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC
+        )
         self.addr.write(bytes(code))
         in_func_type = CFUNCTYPE(c_uint32, c_uint16)
         self.in_fp = c_void_p.from_buffer(self.addr)
@@ -75,7 +105,9 @@ class PORTS(object):
         opc = OUT_PORT
         size = len(opc)
         code = (c_ubyte * size)(*opc)
-        self.addr = mmap.mmap(-1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        self.addr = mmap.mmap(
+            -1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC
+        )
         self.addr.write(bytes(code))
         out_func_type = CFUNCTYPE(None, c_uint32, c_uint16)
         self.out_fp = c_void_p.from_buffer(self.addr)
@@ -88,15 +120,20 @@ class PORTS(object):
     def outl(self, value, port):
         self.outl_ptr(value, port)
 
+
 class LEGACY_PCI(object):
     def __init__(self):
         self.ports = PORTS()
 
     def read_pci_config(self, bus, dev, func, offset):
-        self.ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
-        v = self.ports.inl(0xcfc)
+        self.ports.outl(
+            0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xCF8
+        )
+        v = self.ports.inl(0xCFC)
         return v
 
     def write_pci_config(self, bus, dev, func, offset, value):
-        self.ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
-        self.ports.outl(value, 0xcfc)
+        self.ports.outl(
+            0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xCF8
+        )
+        self.ports.outl(value, 0xCFC)

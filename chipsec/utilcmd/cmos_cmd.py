@@ -29,41 +29,46 @@ Examples:
 >>> chipsec_util cmos writeh 0x0 0xCC
 """
 
-from time   import time
-from argparse   import ArgumentParser
+from time import time
+from argparse import ArgumentParser
 
-from chipsec.command    import BaseCommand
-from chipsec.hal.cmos   import CMOS
+from chipsec.command import BaseCommand
+from chipsec.hal.cmos import CMOS
 from chipsec.exceptions import CmosRuntimeError
 
 
 class CMOSCommand(BaseCommand):
-
     def requires_driver(self):
         parser = ArgumentParser(usage=__doc__)
 
         parser_offset = ArgumentParser(add_help=False)
-        parser_offset.add_argument('offset', type=lambda x: int(x, 0), help="offsets read")
+        parser_offset.add_argument(
+            "offset", type=lambda x: int(x, 0), help="offsets read"
+        )
 
         parser_val = ArgumentParser(add_help=False)
-        parser_val.add_argument('value', type=lambda x: int(x, 0), help="value written")
+        parser_val.add_argument("value", type=lambda x: int(x, 0), help="value written")
 
         subparsers = parser.add_subparsers()
 
         # dump
-        parser_dump = subparsers.add_parser('dump')
+        parser_dump = subparsers.add_parser("dump")
         parser_dump.set_defaults(func=self.cmos_dump)
         # readl
-        parser_readl = subparsers.add_parser('readl', parents=[parser_offset])
+        parser_readl = subparsers.add_parser("readl", parents=[parser_offset])
         parser_readl.set_defaults(func=self.cmos_readl)
         # writel
-        parser_writel = subparsers.add_parser('writel', parents=[parser_offset, parser_val])
+        parser_writel = subparsers.add_parser(
+            "writel", parents=[parser_offset, parser_val]
+        )
         parser_writel.set_defaults(func=self.cmos_writel)
         # readh
-        parser_readh = subparsers.add_parser('readh', parents=[parser_offset])
+        parser_readh = subparsers.add_parser("readh", parents=[parser_offset])
         parser_readh.set_defaults(func=self.cmos_readh)
         # writeh
-        parser_writeh = subparsers.add_parser('writeh', parents=[parser_offset, parser_val])
+        parser_writeh = subparsers.add_parser(
+            "writeh", parents=[parser_offset, parser_val]
+        )
         parser_writeh.set_defaults(func=self.cmos_writeh)
 
         parser.parse_args(self.argv[2:], namespace=CMOSCommand)
@@ -80,14 +85,18 @@ class CMOSCommand(BaseCommand):
 
     def cmos_writel(self):
         val = self._cmos.write_cmos_low(self.offset, self.value)
-        self.logger.log("[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (self.offset, self.value))
+        self.logger.log(
+            "[CHIPSEC] CMOS low byte 0x%X = 0x%X" % (self.offset, self.value)
+        )
 
     def cmos_readh(self):
         val = self._cmos.read_cmos_high(self.offset)
         self.logger.log("[CHIPSEC] CMOS high byte 0x%X = 0x%X" % (self.offset, val))
 
     def cmos_writeh(self):
-        self.logger.log("[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (self.offset, self.value))
+        self.logger.log(
+            "[CHIPSEC] Writing CMOS high byte 0x%X <- 0x%X " % (self.offset, self.value)
+        )
         self._cmos.write_cmos_high(self.offset, self.value)
 
     def run(self):
@@ -102,4 +111,4 @@ class CMOSCommand(BaseCommand):
         self.logger.log("[CHIPSEC] (cmos) time elapsed {:.3f}".format(time() - t))
 
 
-commands = {'cmos': CMOSCommand}
+commands = {"cmos": CMOSCommand}

@@ -1,17 +1,17 @@
-#CHIPSEC: Platform Security Assessment Framework
+# CHIPSEC: Platform Security Assessment Framework
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 #
 
@@ -25,7 +25,6 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
     """Test the ACPI commands exposed by chipsec_utils."""
 
     def test_acpi_xsdt_list(self):
-
         class ACPIHelper(mock_helper.ACPIHelper):
 
             USE_RSDP_REV_0 = False
@@ -45,16 +44,15 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self._assertLogValue("EFGH", "0x0000000000000400")
 
     def test_acpi_rsdt_list(self):
-
         class ACPIHelper(mock_helper.ACPIHelper):
-
             def __init__(self):
                 super(ACPIHelper, self).__init__()
                 self._add_entry_to_rsdt(0x300)
 
             def read_phys_mem(self, pa_hi, pa_lo, length):
-                if (pa_lo >= self.EBDA_ADDRESS and
-                        pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
+                if pa_lo >= self.EBDA_ADDRESS and pa_lo < self.RSDP_ADDRESS + len(
+                    self.rsdp_descriptor
+                ):
                     # Simulate a condition where there is no RSDP in EBDA
                     return "\xFF" * length
                 elif pa_lo == 0xE0000:
@@ -74,7 +72,6 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self._assertLogValue("X_DSDT", "0x0000000000000000")
 
     def test_mismatch_dsdt_x_dsdt_error(self):
-
         class DSDTParsingHelper(mock_helper.DSDTParsingHelper):
 
             DSDT_ADDRESS = 0x400
@@ -86,7 +83,6 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self.assertIn(b"Unable to determine the correct DSDT address", self.log)
 
     def test_mismatch_dsdt_x_dsdt_ok_dsdt_zero(self):
-
         class DSDTParsingHelper(mock_helper.DSDTParsingHelper):
 
             DSDT_ADDRESS = 0x0
@@ -95,11 +91,9 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self._chipsec_util("acpi table FACP", DSDTParsingHelper)
         self._assertLogValue("DSDT", "0x00000000")
         self._assertLogValue("X_DSDT", "0x0000000000000400")
-        self.assertNotIn(b"Unable to determine the correct DSDT address",
-                         self.log)
+        self.assertNotIn(b"Unable to determine the correct DSDT address", self.log)
 
     def test_mismatch_dsdt_x_dsdt_ok_x_dsdt_zero(self):
-
         class DSDTParsingHelper(mock_helper.DSDTParsingHelper):
 
             DSDT_ADDRESS = 0x400
@@ -108,11 +102,9 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self._chipsec_util("acpi table FACP", DSDTParsingHelper)
         self._assertLogValue("DSDT", "0x00000400")
         self._assertLogValue("X_DSDT", "0x0000000000000000")
-        self.assertNotIn(b"Unable to determine the correct DSDT address",
-                         self.log)
+        self.assertNotIn(b"Unable to determine the correct DSDT address", self.log)
 
     def test_no_x_dsdt(self):
-
         class DSDTParsingHelper(mock_helper.DSDTParsingHelper):
 
             USE_FADT_WITH_X_DSDT = False
@@ -124,21 +116,22 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
         self.assertIn(b"Cannot find X_DSDT entry in FADT.", self.log)
 
     def test_show_dsdt(self):
-
         class DSDTParsingHelper(mock_helper.DSDTParsingHelper):
 
             DSDT_ADDRESS = 0x600
 
-            DSDT_DESCRIPTOR = (b"DSDT" +                   # Signature
-                               struct.pack("<I", 0x30) +  # Length
-                               struct.pack("<B", 0x1) +   # Revision
-                               struct.pack("<B", 0x1) +   # Checksum
-                               b"OEMDSD" +                 # OEMID
-                               b"OEMTBLID" +               # OEM Table ID
-                               b"OEMR" +                   # OEM Revision
-                               b"CRID" +                   # Creator ID
-                               b"CRRV" +                   # Creator Revision
-                               struct.pack("<Q", 0x129))  # AML code
+            DSDT_DESCRIPTOR = (
+                b"DSDT"
+                + struct.pack("<I", 0x30)  # Signature
+                + struct.pack("<B", 0x1)  # Length
+                + struct.pack("<B", 0x1)  # Revision
+                + b"OEMDSD"  # Checksum
+                + b"OEMTBLID"  # OEMID
+                + b"OEMR"  # OEM Table ID
+                + b"CRID"  # OEM Revision
+                + b"CRRV"  # Creator ID
+                + struct.pack("<Q", 0x129)  # Creator Revision
+            )  # AML code
 
             def read_phys_mem(self, pa_hi, pa_lo, length):
                 if pa_lo == self.DSDT_ADDRESS:
@@ -165,38 +158,45 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
               * SSDT table [0x600, 0x630]
               * SSDT table [0x800, 0x830]
             """
-            SSDT1_DESCRIPTOR = (b"SSDT" +                   # Signature
-                                struct.pack("<I", 0x30) +  # Length
-                                struct.pack("<B", 0x1) +   # Revision
-                                struct.pack("<B", 0x1) +   # Checksum
-                                b"OEMSS1" +                 # OEMID
-                                b"OEMTBLID" +               # OEM Table ID
-                                b"OEMR" +                   # OEM Revision
-                                b"CRID" +                   # Creator ID
-                                b"CRRV" +                   # Creator Revision
-                                struct.pack("<Q", 0x129))  # AML code
 
-            SSDT2_DESCRIPTOR = (b"SSDT" +                   # Signature
-                                struct.pack("<I", 0x30) +  # Length
-                                struct.pack("<B", 0x1) +   # Revision
-                                struct.pack("<B", 0x1) +   # Checksum
-                                b"OEMSS2" +                 # OEMID
-                                b"OEMTBLID" +               # OEM Table ID
-                                b"OEMR" +                   # OEM Revision
-                                b"CRID" +                   # Creator ID
-                                b"CRRV" +                   # Creator Revision
-                                struct.pack("<Q", 0x929))  # AML code
+            SSDT1_DESCRIPTOR = (
+                b"SSDT"
+                + struct.pack("<I", 0x30)  # Signature
+                + struct.pack("<B", 0x1)  # Length
+                + struct.pack("<B", 0x1)  # Revision
+                + b"OEMSS1"  # Checksum
+                + b"OEMTBLID"  # OEMID
+                + b"OEMR"  # OEM Table ID
+                + b"CRID"  # OEM Revision
+                + b"CRRV"  # Creator ID
+                + struct.pack("<Q", 0x129)  # Creator Revision
+            )  # AML code
 
-            SSDT3_DESCRIPTOR = (b"SSDT" +                   # Signature
-                                struct.pack("<I", 0x30) +  # Length
-                                struct.pack("<B", 0x1) +   # Revision
-                                struct.pack("<B", 0x1) +   # Checksum
-                                b"OEMSS3" +                 # OEMID
-                                b"OEMTBLID" +               # OEM Table ID
-                                b"OEMR" +                   # OEM Revision
-                                b"CRID" +                   # Creator ID
-                                b"CRRV" +                   # Creator Revision
-                                struct.pack("<Q", 0x199))  # AML code
+            SSDT2_DESCRIPTOR = (
+                b"SSDT"
+                + struct.pack("<I", 0x30)  # Signature
+                + struct.pack("<B", 0x1)  # Length
+                + struct.pack("<B", 0x1)  # Revision
+                + b"OEMSS2"  # Checksum
+                + b"OEMTBLID"  # OEMID
+                + b"OEMR"  # OEM Table ID
+                + b"CRID"  # OEM Revision
+                + b"CRRV"  # Creator ID
+                + struct.pack("<Q", 0x929)  # Creator Revision
+            )  # AML code
+
+            SSDT3_DESCRIPTOR = (
+                b"SSDT"
+                + struct.pack("<I", 0x30)  # Signature
+                + struct.pack("<B", 0x1)  # Length
+                + struct.pack("<B", 0x1)  # Revision
+                + b"OEMSS3"  # Checksum
+                + b"OEMTBLID"  # OEMID
+                + b"OEMR"  # OEM Table ID
+                + b"CRID"  # OEM Revision
+                + b"CRRV"  # Creator ID
+                + struct.pack("<Q", 0x199)  # Creator Revision
+            )  # AML code
 
             def __init__(self):
                 super(SSDTParsingHelper, self).__init__()
@@ -216,14 +216,14 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                     return parent.read_phys_mem(pa_hi, pa_lo, length)
 
         self._chipsec_util("acpi list", SSDTParsingHelper)
-        self._assertLogValue("SSDT", ("0x0000000000000400, "
-                                      "0x0000000000000600, "
-                                      "0x0000000000000800"))
+        self._assertLogValue(
+            "SSDT", ("0x0000000000000400, " "0x0000000000000600, " "0x0000000000000800")
+        )
         self._chipsec_util("acpi table SSDT", SSDTParsingHelper)
         self.assertIn(b"OEMSS1", self.log)
         self.assertIn(b"OEMSS2", self.log)
         self.assertIn(b"OEMSS3", self.log)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

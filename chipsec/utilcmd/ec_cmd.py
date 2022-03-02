@@ -40,43 +40,52 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand
 
-from chipsec.logger  import print_buffer
-from chipsec.hal.ec  import EC
+from chipsec.logger import print_buffer
+from chipsec.hal.ec import EC
 
 
 # Embedded Controller
 class ECCommand(BaseCommand):
-
     def requires_driver(self):
         parser = ArgumentParser(usage=__doc__)
 
         parser_offset = ArgumentParser(add_help=False)
-        parser_offset.add_argument('offset', type=lambda x: int(x, 0), nargs='?', default=0, help="offset")
+        parser_offset.add_argument(
+            "offset", type=lambda x: int(x, 0), nargs="?", default=0, help="offset"
+        )
 
         parser_sz = ArgumentParser(add_help=False)
-        parser_sz.add_argument("size", type=lambda sz: int(sz, 0), nargs='?', help="size")
+        parser_sz.add_argument(
+            "size", type=lambda sz: int(sz, 0), nargs="?", help="size"
+        )
 
         subparsers = parser.add_subparsers()
 
-        parser_command = subparsers.add_parser('command')
-        parser_command.add_argument("cmd", type=lambda sz: int(sz, 0), help="EC command to issue")
+        parser_command = subparsers.add_parser("command")
+        parser_command.add_argument(
+            "cmd", type=lambda sz: int(sz, 0), help="EC command to issue"
+        )
         parser_command.set_defaults(func=self.command)
 
-        parser_dump = subparsers.add_parser('dump', parents=[parser_sz])
+        parser_dump = subparsers.add_parser("dump", parents=[parser_sz])
         parser_dump.set_defaults(func=self.dump, size=0x160)
 
-        parser_read = subparsers.add_parser('read', parents=[parser_offset])
+        parser_read = subparsers.add_parser("read", parents=[parser_offset])
         parser_read.set_defaults(func=self.read, size=None)
 
-        parser_write = subparsers.add_parser('write', parents=[parser_offset])
-        parser_write.add_argument("wval", type=lambda sz: int(sz, 0), help="byte value to write into EC memory")
+        parser_write = subparsers.add_parser("write", parents=[parser_offset])
+        parser_write.add_argument(
+            "wval",
+            type=lambda sz: int(sz, 0),
+            help="byte value to write into EC memory",
+        )
         parser_write.set_defaults(func=self.write)
 
-        parser_index = subparsers.add_parser('index', parents=[parser_offset])
+        parser_index = subparsers.add_parser("index", parents=[parser_offset])
         parser_index.set_defaults(func=self.index)
 
         parser.parse_args(self.argv[2:], namespace=self)
-        if hasattr(self, 'func'):
+        if hasattr(self, "func"):
             return True
         else:
             return False
@@ -94,29 +103,48 @@ class ECCommand(BaseCommand):
 
     def read(self):
         if self.size:
-            buf = self._ec.read_range( self.offset, self.size)
-            self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(self.offset, self.size))
+            buf = self._ec.read_range(self.offset, self.size)
+            self.logger.log(
+                "[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(
+                    self.offset, self.size
+                )
+            )
             print_buffer(buf)
         else:
-            val = self._ec.read_memory(
-                self.offset) if self.offset < 0x100 else self._ec.read_memory_extended(self.offset)
-            self.logger.log( "[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(self.start_offset, val))
+            val = (
+                self._ec.read_memory(self.offset)
+                if self.offset < 0x100
+                else self._ec.read_memory_extended(self.offset)
+            )
+            self.logger.log(
+                "[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(
+                    self.start_offset, val
+                )
+            )
 
     def write(self):
-        self.logger.log( "[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval))
+        self.logger.log(
+            "[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(
+                self.offset, self.wval
+            )
+        )
 
         if self.offset < 0x100:
-            self._ec.write_memory( self.offset, self.wval)
+            self._ec.write_memory(self.offset, self.wval)
         else:
-            self._ec.write_memory_extended( self.offset, self.wval)
+            self._ec.write_memory_extended(self.offset, self.wval)
 
     def index(self):
 
         if self.offset:
             val = self._ec.read_idx(self.offset)
-            self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
+            self.logger.log(
+                "[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(
+                    self.offset, val
+                )
+            )
         else:
-            self.logger.log( "[CHIPSEC] EC index I/O: dumping memory...")
+            self.logger.log("[CHIPSEC] EC index I/O: dumping memory...")
             mem = []
             for off in range(0x10000):
                 mem.append(chr(self._ec.read_idx(off)))
@@ -125,12 +153,12 @@ class ECCommand(BaseCommand):
     def run(self):
         t = time.time()
         try:
-            self._ec = EC( self.cs)
+            self._ec = EC(self.cs)
         except BaseException as msg:
-            print (msg)
+            print(msg)
             return
         self.func()
-        self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log("[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
 
 
-commands = { 'ec': ECCommand}
+commands = {"ec": ECCommand}

@@ -30,47 +30,48 @@ from chipsec.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
 from chipsec.logger import logger
 
-MSGBUS_MDR_IN_MASK          = 0x1
-MSGBUS_MDR_OUT_MASK         = 0x2
+MSGBUS_MDR_IN_MASK = 0x1
+MSGBUS_MDR_OUT_MASK = 0x2
 
-IOCTL_RDPCI                 = 0xc00c7001
-IOCTL_WRPCI                 = 0xc00c7002
-IOCTL_RDMMIO                = 0xc0187003
-IOCTL_WRMMIO                = 0xc0187004
-IOCTL_RDCR                  = 0xc0107005
-IOCTL_WRCR                  = 0xc0107006
-IOCTL_RDIO                  = 0xc0187007
-IOCTL_WRIO                  = 0xc0187008
-IOCTL_CPUID                 = 0xc0207009
-IOCTL_RDMSR                 = 0xc018700a
-IOCTL_WRMSR                 = 0xc018700b
-IOCTL_SWSMI                 = 0xc038700c
-IOCTL_HYPERCALL             = 0xc060700d
-IOCTL_MSGBUS_SEND_MESSAGE   = 0xc028700e
-IOCTL_CPU_DESCRIPTOR_TABLE  = 0xc038700f
-IOCTL_ALLOC_PHYSMEM         = 0xc0207010
-#IOCTL_LOAD_UCODE_PATCH      = 0xc0067011
+IOCTL_RDPCI = 0xC00C7001
+IOCTL_WRPCI = 0xC00C7002
+IOCTL_RDMMIO = 0xC0187003
+IOCTL_WRMMIO = 0xC0187004
+IOCTL_RDCR = 0xC0107005
+IOCTL_WRCR = 0xC0107006
+IOCTL_RDIO = 0xC0187007
+IOCTL_WRIO = 0xC0187008
+IOCTL_CPUID = 0xC0207009
+IOCTL_RDMSR = 0xC018700A
+IOCTL_WRMSR = 0xC018700B
+IOCTL_SWSMI = 0xC038700C
+IOCTL_HYPERCALL = 0xC060700D
+IOCTL_MSGBUS_SEND_MESSAGE = 0xC028700E
+IOCTL_CPU_DESCRIPTOR_TABLE = 0xC038700F
+IOCTL_ALLOC_PHYSMEM = 0xC0207010
+# IOCTL_LOAD_UCODE_PATCH      = 0xc0067011
 
 # Format for the IOCTL structures. See chipsec_ioctl.h for the complete
 # definition.
-_pci_msg_t_fmt       = "BBBHBI"
-_mmio_msg_t_fmt      = "QQB"
-_io_msg_t_fmt        = "QQQ"
-_cr_msg_t_fmt        = "IQ"
-_msr_msg_t_fmt       = "QQQ"
-_cpuid_msg_t_fmt     = "QQQQ"
-_smi_msg_t_fmt       = "QQQQQQQ"
+_pci_msg_t_fmt = "BBBHBI"
+_mmio_msg_t_fmt = "QQB"
+_io_msg_t_fmt = "QQQ"
+_cr_msg_t_fmt = "IQ"
+_msr_msg_t_fmt = "QQQ"
+_cpuid_msg_t_fmt = "QQQQ"
+_smi_msg_t_fmt = "QQQQQQQ"
 _hypercall_msg_t_fmt = "QQQQQQQQQQQQ"
-_msgbus_msg_t_fmt    = "QQQQQ"
-_cpudes_msg_t_fmt    = "QQQQQQQ"
-#_ucodeh_msg_t_fmt    = "BH"
+_msgbus_msg_t_fmt = "QQQQQ"
+_cpudes_msg_t_fmt = "QQQQQQQ"
+# _ucodeh_msg_t_fmt    = "BH"
 _alloc_mem_msg_t_fmt = "QQQQ"
 
 
-LZMA  = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress")
+LZMA = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress")
 TIANO = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
-EFI   = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
+EFI = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
 BROTLI = os.path.join(chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli")
+
 
 class OSXHelper(Helper):
 
@@ -79,20 +80,29 @@ class OSXHelper(Helper):
 
     def __init__(self):
         super(OSXHelper, self).__init__()
-        self.os_system  = platform.system()
+        self.os_system = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
         self.os_machine = platform.machine()
-        self.os_uname   = platform.uname()
+        self.os_uname = platform.uname()
         self.dev_fh = None
         self.name = "OSXHelper"
 
-    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI]
-    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI, chipsec.defines.COMPRESSION_TYPE_LZMA, chipsec.defines.COMPRESSION_TYPE_BROTLI]
+    decompression_oder_type1 = [
+        chipsec.defines.COMPRESSION_TYPE_TIANO,
+        chipsec.defines.COMPRESSION_TYPE_UEFI,
+    ]
+    decompression_oder_type2 = [
+        chipsec.defines.COMPRESSION_TYPE_TIANO,
+        chipsec.defines.COMPRESSION_TYPE_UEFI,
+        chipsec.defines.COMPRESSION_TYPE_LZMA,
+        chipsec.defines.COMPRESSION_TYPE_BROTLI,
+    ]
 
     def load_driver(self):
-        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
-                                   "helper", "osx", self.DRIVER_NAME)
+        driver_path = os.path.join(
+            chipsec.file.get_main_dir(), "chipsec", "helper", "osx", self.DRIVER_NAME
+        )
         # Make sure the driver image and its subdirectories are owned by root.
         s = os.stat(driver_path)
         if s.st_uid != 0 or s.st_gid != 0:
@@ -109,7 +119,7 @@ class OSXHelper(Helper):
         self.driverpath = driver_path
 
     def create(self, start_driver):
-        #self.init(start_driver)
+        # self.init(start_driver)
         if logger().DEBUG:
             logger().log("[helper] OSX Helper created")
         return True
@@ -117,8 +127,13 @@ class OSXHelper(Helper):
     def start(self, start_driver, driver_exists=False):
         if start_driver:
             if os.path.exists(self.DEVICE_NAME):
-                driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
-                                           "helper", "osx", self.DRIVER_NAME)
+                driver_path = os.path.join(
+                    chipsec.file.get_main_dir(),
+                    "chipsec",
+                    "helper",
+                    "osx",
+                    self.DRIVER_NAME,
+                )
                 subprocess.check_call(["kextunload", driver_path])
             self.load_driver()
         self.init(start_driver)
@@ -129,8 +144,13 @@ class OSXHelper(Helper):
     def stop(self, start_driver):
         self.close()
         if self.driver_loaded:
-            driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec",
-                                       "helper", "osx", self.DRIVER_NAME)
+            driver_path = os.path.join(
+                chipsec.file.get_main_dir(),
+                "chipsec",
+                "helper",
+                "osx",
+                self.DRIVER_NAME,
+            )
             subprocess.check_call(["kextunload", driver_path])
         if logger().DEBUG:
             logger().log("[helper] OSX Helper stopped/unloaded")
@@ -147,8 +167,9 @@ class OSXHelper(Helper):
                 self.dev_fh = open(self.DEVICE_NAME, "rb+")
                 self.driver_loaded = True
             except IOError as e:
-                raise OsHelperError("Unable to open the Chipsec device.\n"
-                                    "{}".format(str(e)), e.errno)
+                raise OsHelperError(
+                    "Unable to open the Chipsec device.\n" "{}".format(str(e)), e.errno
+                )
 
     def close(self):
         if self.dev_fh:
@@ -159,42 +180,42 @@ class OSXHelper(Helper):
         return fcntl.ioctl(self.dev_fh, ioctl_name, args)
 
     def mem_read_block(self, addr, sz):
-        if(addr is not None):
+        if addr is not None:
             self.dev_fh.seek(addr)
         return self.dev_fh.read(sz)
 
     def mem_write_block(self, addr, sz, newval):
-        if(addr is not None):
+        if addr is not None:
             self.dev_fh.seek(addr)
         self.dev_fh.write(newval)
         self.dev_fh.flush()
 
     def write_phys_mem(self, addr_hi, addr_lo, size, value):
-        if(value is not None):
+        if value is not None:
             self.mem_write_block((addr_hi << 32) | addr_lo, size, value)
 
     def read_phys_mem(self, addr_hi, addr_lo, size):
         ret = self.mem_read_block((addr_hi << 32) | addr_lo, size)
         return ret
 
-    def read_pci_reg( self, bus, device, function, offset, size = 4 ):
-        data = struct.pack(_pci_msg_t_fmt, bus, device, function, offset,
-                           size, 0)
+    def read_pci_reg(self, bus, device, function, offset, size=4):
+        data = struct.pack(_pci_msg_t_fmt, bus, device, function, offset, size, 0)
         try:
             ret = self.ioctl(IOCTL_RDPCI, data)
         except IOError:
-            if logger().DEBUG: logger().error("IOError")
+            if logger().DEBUG:
+                logger().error("IOError")
             return None
         x = struct.unpack(_pci_msg_t_fmt, ret)
         return x[5]
 
-    def write_pci_reg( self, bus, device, function, offset, value, size = 4 ):
-        data = struct.pack(_pci_msg_t_fmt, bus, device, function, offset,
-                           size, value)
+    def write_pci_reg(self, bus, device, function, offset, value, size=4):
+        data = struct.pack(_pci_msg_t_fmt, bus, device, function, offset, size, value)
         try:
             ret = self.ioctl(IOCTL_WRPCI, data)
         except IOError:
-            if logger().DEBUG: logger().error("IOError")
+            if logger().DEBUG:
+                logger().error("IOError")
 
     def read_mmio_reg(self, phys_address, size):
         data = struct.pack(_mmio_msg_t_fmt, phys_address, 0, size)
@@ -215,7 +236,9 @@ class OSXHelper(Helper):
     def unknown_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type2:
-            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
+            res = self.decompress_file(
+                CompressedFileName, OutputFileName, CompressionType
+            )
             if res == True:
                 self.rotate_list(self.decompression_oder_type2, failed_times)
                 break
@@ -226,7 +249,9 @@ class OSXHelper(Helper):
     def unknown_efi_decompress(self, CompressedFileName, OutputFileName):
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
+            res = self.decompress_file(
+                CompressedFileName, OutputFileName, CompressionType
+            )
             if res == True:
                 self.rotate_list(self.decompression_oder_type1, failed_times)
                 break
@@ -237,7 +262,7 @@ class OSXHelper(Helper):
     #
     # Compress binary file
     #
-    def compress_file( self, FileName, OutputFileName, CompressionType ):
+    def compress_file(self, FileName, OutputFileName, CompressionType):
         if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
             return False
         encode_str = " -e -o {} ".format(OutputFileName)
@@ -262,7 +287,7 @@ class OSXHelper(Helper):
     #
     # Decompress binary
     #
-    def decompress_file( self, CompressedFileName, OutputFileName, CompressionType ):
+    def decompress_file(self, CompressedFileName, OutputFileName, CompressionType):
         if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
             return False
         if CompressionType == chipsec.defines.COMPRESSION_TYPE_UNKNOWN:
@@ -290,15 +315,15 @@ class OSXHelper(Helper):
             return False
         return True
 
-
-    def get_tool_info( self, tool_type ):
+    def get_tool_info(self, tool_type):
         raise NotImplementedError()
 
     #
     # Logical CPU count
     #
-    def get_threads_count (self):
+    def get_threads_count(self):
         import subprocess
+
         return int(subprocess.check_output("sysctl -n hw.ncpu", shell=True))
 
     #########################################################
@@ -313,24 +338,27 @@ class OSXHelper(Helper):
 
     def delete_EFI_variable(self, name, guid):
         raise NotImplementedError()
+
     def native_delete_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
     def list_EFI_variables(self):
         raise NotImplementedError()
+
     def native_list_EFI_variables(self):
         raise NotImplementedError()
 
     def get_EFI_variable(self, name, guid, attrs=None):
         raise NotImplementedError()
+
     def native_get_EFI_variable(self, name, guid, attrs=None):
         raise NotImplementedError()
 
     def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
         raise NotImplementedError()
+
     def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
         raise NotImplementedError()
-
 
     #########################################################
     # Port I/O
@@ -341,13 +369,18 @@ class OSXHelper(Helper):
         out_buf = self.ioctl(IOCTL_RDIO, in_buf)
         try:
             if 1 == size:
-                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xff
+                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xFF
             elif 2 == size:
-                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xffff
+                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xFFFF
             else:
-                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xffffffff
+                value = struct.unpack(_io_msg_t_fmt, out_buf)[2] & 0xFFFFFFFF
         except:
-            if logger().DEBUG: logger().error("DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(size, out_buf))
+            if logger().DEBUG:
+                logger().error(
+                    "DeviceIoControl did not return value of proper size {:x} (value = '{}')".format(
+                        size, out_buf
+                    )
+                )
         return value
 
     def write_io_port(self, io_port, value, size):
@@ -355,40 +388,58 @@ class OSXHelper(Helper):
         return self.ioctl(IOCTL_WRIO, in_buf)
 
     def read_cr(self, cpu_thread_id, cr_number):
-        #self.set_affinity(cpu_thread_id)
+        # self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_cr_msg_t_fmt, cr_number, 0)
         out_buf = self.ioctl(IOCTL_RDCR, in_buf)
         value = struct.unpack(_cr_msg_t_fmt, out_buf)[1]
         return value
 
     def write_cr(self, cpu_thread_id, cr_number, value):
-        #self.set_affinity(cpu_thread_id)
+        # self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_cr_msg_t_fmt, cr_number, value)
         return self.ioctl(IOCTL_WRCR, in_buf)
 
     def read_msr(self, thread_id, msr_addr):
-        #self.set_affinity(cpu_thread_id)
+        # self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_msr_msg_t_fmt, msr_addr, 0, 0)
         out_buf = self.ioctl(IOCTL_RDMSR, in_buf)
         value = struct.unpack(_msr_msg_t_fmt, out_buf)
         return (value[1], value[2])
 
     def write_msr(self, thread_id, msr_addr, eax, edx):
-        #self.set_affinity(cpu_thread_id)
+        # self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(_msr_msg_t_fmt, msr_addr, 0, 0)
         return self.ioctl(IOCTL_WRMSR, in_buf)
 
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
-        #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_cpudes_msg_t_fmt, cpu_thread_id, desc_table_code, 0, 0, 0, 0, 0)
+        # self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(
+            _cpudes_msg_t_fmt, cpu_thread_id, desc_table_code, 0, 0, 0, 0, 0
+        )
         out_buf = self.ioctl(IOCTL_CPU_DESCRIPTOR_TABLE, in_buf)
-        (limit, base_hi, base_lo, pa_hi, pa_lo) = struct.unpack(_cpudes_msg_t_fmt, out_buf)[2:]
+        (limit, base_hi, base_lo, pa_hi, pa_lo) = struct.unpack(
+            _cpudes_msg_t_fmt, out_buf
+        )[2:]
         pa = (pa_hi << 32) + pa_lo
         base = (base_hi << 32) + base_lo
         return (limit, base, pa)
 
-    def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer ):
-        in_buf = struct.pack(_hypercall_msg_t_fmt, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer, 0)
+    def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer):
+        in_buf = struct.pack(
+            _hypercall_msg_t_fmt,
+            rcx,
+            rdx,
+            r8,
+            r9,
+            r10,
+            r11,
+            rax,
+            rbx,
+            rdi,
+            rsi,
+            xmm_buffer,
+            0,
+        )
         out_buf = self.ioctl(IOCTL_HYPERCALL, in_buf)
         return struct.unpack(_hypercall_msg_t_fmt, out_buf)[11]
 
@@ -402,27 +453,40 @@ class OSXHelper(Helper):
         out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
         return struct.unpack(_alloc_mem_msg_t_fmt, out_buf)[2:]
 
-    def msgbus_send_read_message( self, mcr, mcrx ):
+    def msgbus_send_read_message(self, mcr, mcrx):
         mdr_out = 0
-        in_buf  = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out)
-        out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
-        mdr_out = struct.unpack( _msgbus_msg_t_fmt, out_buf)[4]
+        in_buf = struct.pack(
+            _msgbus_msg_t_fmt, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out
+        )
+        out_buf = self.ioctl(IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        mdr_out = struct.unpack(_msgbus_msg_t_fmt, out_buf)[4]
         return mdr_out
 
-    def msgbus_send_write_message( self, mcr, mcrx, mdr):
+    def msgbus_send_write_message(self, mcr, mcrx, mdr):
         mdr_out = 0
-        in_buf  = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, mdr_out)
-        out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        in_buf = struct.pack(
+            _msgbus_msg_t_fmt, MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, mdr_out
+        )
+        out_buf = self.ioctl(IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
         return
 
-    def msgbus_send_message( self, mcr, mcrx, mdr=None):
+    def msgbus_send_message(self, mcr, mcrx, mdr=None):
         mdr_out = 0
         if mdr is None:
-            in_buf = struct.pack(_msgbus_msg_t_fmt, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out)
+            in_buf = struct.pack(
+                _msgbus_msg_t_fmt, MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out
+            )
         else:
-            in_buf = struct.pack(_msgbus_msg_t_fmt, (MSGBUS_MDR_IN_MASK | MSGBUS_MDR_OUT_MASK), mcr, mcrx, mdr, mdr_out)
-        out_buf = self.ioctl( IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
-        mdr_out = struct.unpack( _msgbus_msg_t_fmt, out_buf)[4]
+            in_buf = struct.pack(
+                _msgbus_msg_t_fmt,
+                (MSGBUS_MDR_IN_MASK | MSGBUS_MDR_OUT_MASK),
+                mcr,
+                mcrx,
+                mdr,
+                mdr_out,
+            )
+        out_buf = self.ioctl(IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        mdr_out = struct.unpack(_msgbus_msg_t_fmt, out_buf)[4]
         return mdr_out
 
     def get_affinity(self):
@@ -431,9 +495,13 @@ class OSXHelper(Helper):
     def set_affinity(self, thread_id):
         raise NotImplementedError()
 
-    def send_sw_smi( self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
-        #self.set_affinity(cpu_thread_id)
-        in_buf = struct.pack(_smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+    def send_sw_smi(
+        self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi
+    ):
+        # self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(
+            _smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi
+        )
         out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
         ret = struct.unpack(_smi_msg_t_fmt, out_buf)
         return ret
@@ -449,6 +517,7 @@ class OSXHelper(Helper):
     #
     def retpoline_enabled(self):
         raise UnimplementedAPIError("retpoline_enabled")
+
 
 def get_helper():
     return OSXHelper()

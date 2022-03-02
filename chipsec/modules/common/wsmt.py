@@ -22,15 +22,14 @@ system firmware to confirm to the operating system that certain security best pr
 implemented in System Management Mode (SMM) software.
 See <https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-uefi-wsmt> for more details.
 """
-from chipsec.module_common   import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
-from chipsec.hal.acpi        import ACPI
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+from chipsec.hal.acpi import ACPI
 from chipsec.hal.acpi_tables import WSMT
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
 
 class wsmt(BaseModule):
-
     def __init__(self):
         BaseModule.__init__(self)
 
@@ -40,9 +39,11 @@ class wsmt(BaseModule):
             self.table_data = acpi.get_ACPI_table("WSMT")[0][1]
         except IndexError:
             # No WSMT table
-            self.logger.warn("""WSMT table was not found.
+            self.logger.warn(
+                """WSMT table was not found.
 Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS
-*** Analysis is only necessary if Windows is the primary OS ***""")
+*** Analysis is only necessary if Windows is the primary OS ***"""
+            )
             self.res = ModuleResult.WARNING
             return False
         return True
@@ -54,13 +55,21 @@ Manual analysis of SMI handlers is required to determine if they can be abused b
         wsmt_table.parse(self.table_data)
         self.logger.log(wsmt_table)
 
-        if (not wsmt_table.fixed_comm_buffers) or (not wsmt_table.comm_buffer_nested_ptr_protection) or (not wsmt_table.system_resource_protection):
-            self.logger.warn( """WSMT table is present but certain mitigations are missing.
+        if (
+            (not wsmt_table.fixed_comm_buffers)
+            or (not wsmt_table.comm_buffer_nested_ptr_protection)
+            or (not wsmt_table.system_resource_protection)
+        ):
+            self.logger.warn(
+                """WSMT table is present but certain mitigations are missing.
 Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS
-*** Analysis is only necessary if Windows is the primary OS ***""")
+*** Analysis is only necessary if Windows is the primary OS ***"""
+            )
             return ModuleResult.WARNING
 
-        self.logger.log_passed("WSMT table is present and reports all supported mitigations")
+        self.logger.log_passed(
+            "WSMT table is present and reports all supported mitigations"
+        )
         return ModuleResult.PASSED
 
     # --------------------------------------------------------------------------

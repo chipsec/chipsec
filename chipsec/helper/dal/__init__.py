@@ -27,8 +27,8 @@
 import sys
 from chipsec.helper.oshelper import avail_helpers
 
-if 'itpii' in sys.modules:
-    __all__ = [ 'dalhelper' ]
+if "itpii" in sys.modules:
+    __all__ = ["dalhelper"]
     avail_helpers.append("dalhelper")
 else:
     __all__ = []

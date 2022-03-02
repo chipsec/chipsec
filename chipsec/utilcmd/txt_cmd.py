@@ -9,12 +9,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -25,7 +25,7 @@ Usage:
     >>> chipsec_util txt state
 """
 
-from argparse        import ArgumentParser
+from argparse import ArgumentParser
 import binascii
 from chipsec.command import BaseCommand
 from chipsec.exceptions import HWAccessViolationError
@@ -33,23 +33,22 @@ import struct
 
 
 class TXTCommand(BaseCommand):
-
     def requires_driver(self):
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
-        parser_state = subparsers.add_parser('dump')
+        parser_state = subparsers.add_parser("dump")
         parser_state.set_defaults(func=self.txt_dump)
-        parser_state = subparsers.add_parser('state')
+        parser_state = subparsers.add_parser("state")
         parser_state.set_defaults(func=self.txt_state)
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
     def txt_dump(self):
         # Read TXT Public area as hexdump, with absolute address and skipping zeros
-        txt_public = self.cs.mem.read_physical_mem(0xfed30000, 0x1000)
+        txt_public = self.cs.mem.read_physical_mem(0xFED30000, 0x1000)
         has_skipped_line = False
         for offset in range(0, len(txt_public), 16):
-            line_bytes = txt_public[offset:offset + 16]
+            line_bytes = txt_public[offset : offset + 16]
             if all(b == 0 for b in line_bytes):
                 has_skipped_line = True
                 continue
@@ -57,7 +56,9 @@ class TXTCommand(BaseCommand):
                 self.logger.log("[CHIPSEC] *")
                 has_skipped_line = False
             line_hex = " ".join("{:02X}".format(b) for b in line_bytes)
-            self.logger.log("[CHIPSEC] {:08X}: {}".format(0xfed30000 + offset, line_hex))
+            self.logger.log(
+                "[CHIPSEC] {:08X}: {}".format(0xFED30000 + offset, line_hex)
+            )
 
     def _log_register(self, reg_name):
         """Log the content of a register with lines starting with [CHIPSEC]"""
@@ -67,18 +68,26 @@ class TXTCommand(BaseCommand):
         if reg_def["type"] == "memory":
             addr = int(reg_def["address"], 16) + int(reg_def["offset"], 16)
             desc += ", at {:08X}".format(addr)
-        self.logger.log("[CHIPSEC] {} = 0x{:0{width}X} ({})".format(
-            reg_name, value, desc, width=int(reg_def['size'], 16) * 2))
+        self.logger.log(
+            "[CHIPSEC] {} = 0x{:0{width}X} ({})".format(
+                reg_name, value, desc, width=int(reg_def["size"], 16) * 2
+            )
+        )
 
-        if 'FIELDS' in reg_def:
-            sorted_fields = sorted(reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']))
+        if "FIELDS" in reg_def:
+            sorted_fields = sorted(
+                reg_def["FIELDS"].items(), key=lambda field: int(field[1]["bit"])
+            )
             for field_name, field_attrs in sorted_fields:
-                field_bit = int(field_attrs['bit'])
-                field_size = int(field_attrs['size'])
+                field_bit = int(field_attrs["bit"])
+                field_size = int(field_attrs["size"])
                 field_mask = (1 << field_size) - 1
                 field_value = (value >> field_bit) & field_mask
-                self.logger.log("[CHIPSEC]     [{:02d}] {:23} = {:X} << {}".format(
-                    field_bit, field_name, field_value, field_attrs['desc']))
+                self.logger.log(
+                    "[CHIPSEC]     [{:02d}] {:23} = {:X} << {}".format(
+                        field_bit, field_name, field_value, field_attrs["desc"]
+                    )
+                )
 
     def txt_state(self):
         """Dump Intel TXT state
@@ -92,13 +101,29 @@ class TXTCommand(BaseCommand):
         """
         # Read bits in CPUID
         (eax, ebx, ecx, edx) = self.cs.cpu.cpuid(0x01, 0x00)
-        self.logger.log("[CHIPSEC] CPUID.01H.ECX[Bit 6] = {} << Safer Mode Extensions (SMX)".format((ecx >> 6) & 1))
-        self.logger.log("[CHIPSEC] CPUID.01H.ECX[Bit 5] = {} << Virtual Machine Extensions (VMX)".format((ecx >> 5) & 1))
+        self.logger.log(
+            "[CHIPSEC] CPUID.01H.ECX[Bit 6] = {} << Safer Mode Extensions (SMX)".format(
+                (ecx >> 6) & 1
+            )
+        )
+        self.logger.log(
+            "[CHIPSEC] CPUID.01H.ECX[Bit 5] = {} << Virtual Machine Extensions (VMX)".format(
+                (ecx >> 5) & 1
+            )
+        )
 
         # Read bits in CR4
         cr4 = self.cs.cpu.read_cr(0, 4)
-        self.logger.log("[CHIPSEC] CR4.SMXE[Bit 14] = {} << Safer Mode Extensions Enable".format((cr4 >> 14) & 1))
-        self.logger.log("[CHIPSEC] CR4.VMXE[Bit 13] = {} << Virtual Machine Extensions Enable".format((cr4 >> 13) & 1))
+        self.logger.log(
+            "[CHIPSEC] CR4.SMXE[Bit 14] = {} << Safer Mode Extensions Enable".format(
+                (cr4 >> 14) & 1
+            )
+        )
+        self.logger.log(
+            "[CHIPSEC] CR4.VMXE[Bit 13] = {} << Virtual Machine Extensions Enable".format(
+                (cr4 >> 13) & 1
+            )
+        )
 
         # Read bits in MSR IA32_FEATURE_CONTROL
         self._log_register("IA32_FEATURE_CONTROL")
@@ -109,14 +134,18 @@ class TXTCommand(BaseCommand):
         self.logger.log("[CHIPSEC]")
 
         # Read hashes of public keys
-        txt_pubkey = struct.pack("<QQQQ",
+        txt_pubkey = struct.pack(
+            "<QQQQ",
             self.cs.read_register("TXT_PUBLIC_KEY_0"),
             self.cs.read_register("TXT_PUBLIC_KEY_1"),
             self.cs.read_register("TXT_PUBLIC_KEY_2"),
             self.cs.read_register("TXT_PUBLIC_KEY_3"),
         )
-        self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(
-            binascii.hexlify(txt_pubkey).decode("ascii")))
+        self.logger.log(
+            "[CHIPSEC] TXT Public Key Hash: {}".format(
+                binascii.hexlify(txt_pubkey).decode("ascii")
+            )
+        )
 
         try:
             eax, edx = self.cs.msr.read_msr(0, 0x20)
@@ -127,11 +156,18 @@ class TXTCommand(BaseCommand):
             pubkey_in_msr += struct.pack("<II", eax, edx)
             eax, edx = self.cs.msr.read_msr(0, 0x23)
             pubkey_in_msr += struct.pack("<II", eax, edx)
-            self.logger.log("[CHIPSEC] Public Key Hash in MSR[0x20...0x23]: {}".format(
-                binascii.hexlify(pubkey_in_msr).decode("ascii")))
+            self.logger.log(
+                "[CHIPSEC] Public Key Hash in MSR[0x20...0x23]: {}".format(
+                    binascii.hexlify(pubkey_in_msr).decode("ascii")
+                )
+            )
         except HWAccessViolationError as exc:
             # Report the exception and continue
-            self.logger.log("[CHIPSEC] Unable to read Public Key Hash in MSR[0x20...0x23]: {}".format(exc))
+            self.logger.log(
+                "[CHIPSEC] Unable to read Public Key Hash in MSR[0x20...0x23]: {}".format(
+                    exc
+                )
+            )
         self.logger.log("[CHIPSEC]")
 
         # Read TXT status
@@ -167,4 +203,4 @@ class TXTCommand(BaseCommand):
         self.func()
 
 
-commands = {'txt': TXTCommand}
+commands = {"txt": TXTCommand}

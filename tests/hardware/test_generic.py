@@ -1,25 +1,27 @@
-#CHIPSEC: Platform Security Assessment Framework
+# CHIPSEC: Platform Security Assessment Framework
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 #
 import os
 import platform
 import tempfile
 import unittest
+
 try:
     import distro
+
     mSystem = distro.linux_distribution()
 except:
     if platform.system() == "Windows":
@@ -45,14 +47,11 @@ class GenericHardwareTest(unittest.TestCase):
         if hasattr(self, "DIST") and mSystem != self.DIST:
             self.skipTest("Unsupported distribution {}".format(self.DIST))
 
-        if (hasattr(self, "PRODUCT_NAME") and
-                self.product_name() != self.PRODUCT_NAME):
+        if hasattr(self, "PRODUCT_NAME") and self.product_name() != self.PRODUCT_NAME:
             self.skipTest("Unsupported platform {}".format(self.PRODUCT_NAME))
 
-        if (hasattr(self, "BIOS_VERSION") and
-                self.bios_version() != self.BIOS_VERSION):
-            self.skipTest("Unsupported BIOS version "
-                          "{}".format(self.BIOS_VERSION))
+        if hasattr(self, "BIOS_VERSION") and self.bios_version() != self.BIOS_VERSION:
+            self.skipTest("Unsupported BIOS version " "{}".format(self.BIOS_VERSION))
 
         if hasattr(self, "BOOT_MODE") and self.boot_mode() != self.BOOT_MODE:
             self.skipTest("Unsupported boot type {}".format(self.BOOT_MODE))
@@ -66,8 +65,7 @@ class GenericHardwareTest(unittest.TestCase):
         error_code = cm.main()
         logger.logger().close()
         self.log = open(self.log_file).read()
-        self.assertLessEqual(error_code, 31,
-                             "At least one test raised an error")
+        self.assertLessEqual(error_code, 31, "At least one test raised an error")
         for test in self.PASS:
             self.assertIn("PASSED: {}".format(test), self.log)
         for test in self.SKIPPED:

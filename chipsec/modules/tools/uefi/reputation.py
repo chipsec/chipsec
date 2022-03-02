@@ -25,15 +25,16 @@ from chipsec.file import read_file
 
 try:
     from virus_total_apis import PublicApi as VirusTotalPublicApi
+
     has_virus_total_apis = True
 except ImportError:
     has_virus_total_apis = False
 
 TAGS = [MTAG_BIOS]
 
-DEF_FWIMAGE_FILE = 'fw.bin'
+DEF_FWIMAGE_FILE = "fw.bin"
 
-USAGE_TEXT = '''
+USAGE_TEXT = """
 Usage:
 
     chipsec_main.py -i -m tools.uefi.reputation -a <vt_api_key>[,<vt_threshold>,<fw_image>]
@@ -44,13 +45,13 @@ Usage:
                      before failing the test. Defaults to 10.
       fw_image     : Full file path to UEFI firmware image
                      If not specified, the module will dump firmware image directly from ROM
-'''
+"""
+
 
 class reputation(BaseModule):
-
     def __init__(self):
         BaseModule.__init__(self)
-        self.uefi = UEFI( self.cs )
+        self.uefi = UEFI(self.cs)
         self.image = None
         self.vt_threshold = 10
         self.vt = None
@@ -59,8 +60,10 @@ class reputation(BaseModule):
         if has_virus_total_apis:
             return True
         else:
-            self.logger.log_important("""Can't import module 'virus_total_apis'.
-Please run 'pip install virustotal-api' and try again.""")
+            self.logger.log_important(
+                """Can't import module 'virus_total_apis'.
+Please run 'pip install virustotal-api' and try again."""
+            )
             return False
 
     def reputation_callback(self, efi_module):
@@ -69,7 +72,9 @@ Please run 'pip install virustotal-api' and try again.""")
         while vt_report["response_code"] == 204:
             # The Public API is limited to 4 requests per minute.
             if self.logger.DEBUG:
-                self.logger.log("VT API quota exceeded, sleeping for 1 minute... (-.-)zzZZ")
+                self.logger.log(
+                    "VT API quota exceeded, sleeping for 1 minute... (-.-)zzZZ"
+                )
 
             time.sleep(60)
             # Retry.
@@ -77,44 +82,59 @@ Please run 'pip install virustotal-api' and try again.""")
 
         if vt_report["results"]["response_code"] == 0:
             # Hash is unknown to VT.
-            self.logger.log_warn_check("Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log_warn_check(
+                "Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(
+                    efi_module
+                )
+            )
             return False
 
         if vt_report["results"]["positives"] >= self.vt_threshold:
-            self.logger.log_bad("Suspicious EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log_bad(
+                "Suspicious EFI binary found in the UEFI firmware image\n{}".format(
+                    efi_module
+                )
+            )
             return True
 
         if self.logger.VERBOSE:
-            self.logger.log("Benign EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log(
+                "Benign EFI binary found in the UEFI firmware image\n{}".format(
+                    efi_module
+                )
+            )
 
         return False
 
-    def check_reputation( self ):
+    def check_reputation(self):
         res = ModuleResult.PASSED
 
         # parse the UEFI firmware image and look for EFI modules matching the balck-list
         efi_tree = build_efi_model(self.uefi, self.image, None)
         match_types = EFIModuleType.SECTION_EXE
-        matching_modules = search_efi_tree(efi_tree, self.reputation_callback, match_types)
+        matching_modules = search_efi_tree(
+            efi_tree, self.reputation_callback, match_types
+        )
         found = len(matching_modules) > 0
-        self.logger.log( '' )
+        self.logger.log("")
         if found:
             res = ModuleResult.WARNING
-            self.logger.log_warn_check("Suspicious EFI binary found in the UEFI firmware image")
+            self.logger.log_warn_check(
+                "Suspicious EFI binary found in the UEFI firmware image"
+            )
         else:
             self.logger.log_passed_check("Didn't find any suspicious EFI binary")
         return res
 
     def usage(self):
-        self.logger.log( USAGE_TEXT )
-
+        self.logger.log(USAGE_TEXT)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
-        self.logger.start_test( "Check for suspicious EFI binaries in UEFI firmware" )
+    def run(self, module_argv):
+        self.logger.start_test("Check for suspicious EFI binaries in UEFI firmware")
 
         self.usage()
 
@@ -127,16 +147,22 @@ Please run 'pip install virustotal-api' and try again.""")
         if len(module_argv) > 2:
             # Use provided firmware image
             image_file = module_argv[2]
-            self.logger.log( "[*] reading FW image from file: {}".format(image_file) )
+            self.logger.log("[*] reading FW image from file: {}".format(image_file))
         else:
             # Read firmware image directly from SPI flash memory
-            self.spi = SPI( self.cs )
-            (base, limit, freg) = self.spi.get_SPI_region( BIOS )
+            self.spi = SPI(self.cs)
+            (base, limit, freg) = self.spi.get_SPI_region(BIOS)
             image_size = limit + 1 - base
-            self.logger.log( "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size) )
-            self.logger.log( "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..." )
-            self.spi.read_spi_to_file( base, image_size, image_file )
+            self.logger.log(
+                "[*] dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(
+                    image_file, base, limit, image_size
+                )
+            )
+            self.logger.log(
+                "[*] this may take a few minutes (instead, use 'chipsec_util spi dump')..."
+            )
+            self.spi.read_spi_to_file(base, image_size, image_file)
 
-        self.image = read_file( image_file )
+        self.image = read_file(image_file)
 
         return self.check_reputation()

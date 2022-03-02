@@ -18,7 +18,7 @@
 # chipsec@intel.com
 #
 
-__version__ = '1.0'
+__version__ = "1.0"
 
 from chipsec.defines import bit, is_set
 from chipsec.hal.hal_base import HALBase
