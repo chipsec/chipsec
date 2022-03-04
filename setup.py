@@ -228,7 +228,7 @@ class sdist(_sdist):
             """driver. Please use it only when a kernel driver is already present on the\n""" \
             """system. Otherwise, please install chipsec from source, using the following\n""" \
             """procedure:\n""" \
-            """  https://github.com/chipsec/chipsec/blob/master/chipsec-manual.pdf"""
+            """  https://github.com/chipsec/chipsec/blob/main/chipsec-manual.pdf"""
         _sdist.make_release_tree(self, base_dir, files)
         no_driver_marker = os.path.join(base_dir, NO_DRIVER_MARKER_FILE)
         with io.open(no_driver_marker, "w", encoding="utf-8") as fd:
@@ -238,7 +238,7 @@ class sdist(_sdist):
 package_data = {
     # Include any configuration file.
     "": ["*.ini", "*.cfg", "*.json"],
-    "chipsec": ["*VERSION", "WARNING.txt"],
+    "chipsec": ["*VERSION*", "WARNING.txt"],
     "chipsec.cfg": ["8086/*.xml", "1022/*.xml", "*.xml", "*.xsd"],
 }
 data_files = [("", ["chipsec-manual.pdf"])]
@@ -269,9 +269,8 @@ setup(name='chipsec', version=version(), description='CHIPSEC: Platform Security
           'Operating System :: Microsoft :: Windows',
           'Operating System :: POSIX :: Linux',
           'Operating System :: MacOS :: MacOS X',
-          'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.6',
-          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.6',
           'Topic :: Security',
           'Topic :: System :: Hardware'],
       data_files=data_files, packages=find_packages(exclude=["tests.*", "tests"]), package_data=package_data,
