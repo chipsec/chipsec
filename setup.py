@@ -227,8 +227,9 @@ class sdist(_sdist):
         pypi_msg = u"""PyPI-distributed chipsec PIP package doesn't contain a pre-built kernel\n""" \
             """driver. Please use it only when a kernel driver is already present on the\n""" \
             """system. Otherwise, please install chipsec from source, using the following\n""" \
-            """procedure:\n""" \
-            """  https://github.com/chipsec/chipsec/blob/main/chipsec-manual.pdf"""
+            """procedure:""" \
+            """\n  https://github.com/chipsec/chipsec/blob/main/chipsec-manual.pdf""" \
+            """\n  https://chipsec.github.io/"""
         _sdist.make_release_tree(self, base_dir, files)
         no_driver_marker = os.path.join(base_dir, NO_DRIVER_MARKER_FILE)
         with io.open(no_driver_marker, "w", encoding="utf-8") as fd:
