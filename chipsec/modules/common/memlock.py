@@ -1,6 +1,6 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018, Eclypsium, Inc.
-#Copyright (c) 2019-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2018, Eclypsium, Inc.
+# Copyright (c) 2019-2021, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,18 +16,15 @@
 This module checks if memory configuration is locked to protect SMM
 
 Reference:
-https://github.com/coreboot/coreboot/blob/master/src/cpu/intel/model_206ax/finalize.c
-https://github.com/coreboot/coreboot/blob/master/src/soc/intel/broadwell/include/soc/msr.h
+    - https://github.com/coreboot/coreboot/blob/master/src/cpu/intel/model_206ax/finalize.c
+    - https://github.com/coreboot/coreboot/blob/master/src/soc/intel/broadwell/include/soc/msr.h
 
 This module checks the following:
 - MSR_LT_LOCK_MEMORY MSR (0x2E7) - Bit [0]
 
 The module returns the following results:
-FAILED : MSR_LT_LOCK_MEMORY[0] is not set
-PASSED : MSR_LT_LOCK_MEMORY[0] is set.
-
-Hardware registers used:
-MSR_LT_LOCK_MEMORY
+    - **FAILED** : MSR_LT_LOCK_MEMORY[0] is not set
+    - **PASSED** : MSR_LT_LOCK_MEMORY[0] is set.
 
 Usage:
   ``chipsec_main -m common.memlock``
@@ -35,7 +32,11 @@ Usage:
 Example:
     >>> chipsec_main.py -m common.memlock
 
-.. note:: This module will not run on Atom based platforms.
+Registers used:
+    - MSR_LT_LOCK_MEMORY
+
+.. note::
+    - This module will not run on Atom based platforms.
 
 """
 
@@ -43,12 +44,6 @@ from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.exceptions import HWAccessViolationError
 
 _MODULE_NAME = 'memlock'
-
-########################################################################################################
-#
-# Main module functionality
-#
-########################################################################################################
 
 class memlock(BaseModule):
 
@@ -63,24 +58,24 @@ class memlock(BaseModule):
             if self.cs.register_has_field('MSR_LT_LOCK_MEMORY', 'LT_LOCK'):
                 return True
             else:
-                self.logger.log("'MSR_LT_LOCK_MEMORY.LT_LOCK' not defined for platform.  Skipping module.")
+                self.logger.log_important("'MSR_LT_LOCK_MEMORY.LT_LOCK' not defined for platform.  Skipping module.")
         else:
-            self.logger.log('Found an Atom based platform.  Skipping module.')
+            self.logger.log_important('Found an Atom based platform.  Skipping module.')
         return False
 
-    def check_MSR_LT_LOCK_MEMORY( self ):
-        self.logger.log("[X] Checking MSR_LT_LOCK_MEMORY status")
+    def check_MSR_LT_LOCK_MEMORY(self):
+        self.logger.log('[*] Checking MSR_LT_LOCK_MEMORY status')
         status = False
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             lt_lock_msr = 0
             try:
-                lt_lock_msr = self.cs.read_register( 'MSR_LT_LOCK_MEMORY', tid )
+                lt_lock_msr = self.cs.read_register('MSR_LT_LOCK_MEMORY', tid)
             except HWAccessViolationError:
-                self.logger.error( "couldn't read MSR_LT_LOCK_MEMORY" )
+                self.logger.log_error("Couldn't read MSR_LT_LOCK_MEMORY")
                 break
             if self.logger.VERBOSE:
                 self.cs.print_register('MSR_LT_LOCK_MEMORY', lt_lock_msr)
-            lt_lock = self.cs.get_register_field( 'MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK' )
+            lt_lock = self.cs.get_register_field('MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK')
             self.logger.log( "[*]   cpu{:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {:x}".format(tid, lt_lock) )
             if 0 == lt_lock:
                 status = True
@@ -92,10 +87,10 @@ class memlock(BaseModule):
         check_MSR_LT_LOCK_MEMORY_test_fail = self.check_MSR_LT_LOCK_MEMORY()
 
         if check_MSR_LT_LOCK_MEMORY_test_fail == True:
-            self.logger.log_failed("Check failed. MSR_LT_LOCK_MEMORY isn't configured correctly")
+            self.logger.log_failed("MSR_LT_LOCK_MEMORY.LT_LOCK bit is not configured correctly")
             self.res = ModuleResult.FAILED
         else:
-            self.logger.log_passed('Check have successfully passed')
+            self.logger.log_passed('MSR_LT_LOCK_MEMORY.LT_LOCK bit is set')
             self.res = ModuleResult.PASSED
 
         return self.res
