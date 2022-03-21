@@ -20,7 +20,19 @@
 The Windows SMM Security Mitigation Table (WSMT) is an ACPI table defined by Microsoft that allows
 system firmware to confirm to the operating system that certain security best practices have been
 implemented in System Management Mode (SMM) software.
-See <https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-uefi-wsmt> for more details.
+
+Reference:
+    - See <https://docs.microsoft.com/en-us/windows-hardware/design/device-experiences/oem-uefi-wsmt> for more details.
+
+Usage:
+    ``chipsec_main -m common.wsmt``
+
+Examples:
+    >>> chipsec_main.py -m common.wsmt
+
+.. note::
+    - Analysis is only necessary if Windows is the primary OS
+
 """
 from chipsec.module_common   import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 from chipsec.hal.acpi        import ACPI
@@ -33,40 +45,40 @@ class wsmt(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self._acpi = ACPI(self.cs)
 
     def is_supported(self):
-        try:
-            acpi = ACPI(self.cs)
-            self.table_data = acpi.get_ACPI_table("WSMT")[0][1]
-        except IndexError:
-            # No WSMT table
-            self.logger.warn("""WSMT table was not found.
-Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS
-*** Analysis is only necessary if Windows is the primary OS ***""")
-            self.res = ModuleResult.WARNING
-            return False
         return True
 
     def check_wsmt(self):
-        self.logger.start_test("WSMT Configuration")
+        res = ModuleResult.PASSED
+        table_data = self._acpi.get_ACPI_table("WSMT")
+        if not table_data:
+            self.logger.log_warning('WSMT table was not found.')
+            return ModuleResult.WARNING
 
         wsmt_table = WSMT()
-        wsmt_table.parse(self.table_data)
+        try:
+            wsmt_table.parse(table_data[0][1])
+        except:
+            self.logger.log_error('Issue parsing the WSMT table data.')
+            return ModuleResult.ERROR
         self.logger.log(wsmt_table)
 
         if (not wsmt_table.fixed_comm_buffers) or (not wsmt_table.comm_buffer_nested_ptr_protection) or (not wsmt_table.system_resource_protection):
-            self.logger.warn( """WSMT table is present but certain mitigations are missing.
-Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS
-*** Analysis is only necessary if Windows is the primary OS ***""")
-            return ModuleResult.WARNING
-
-        self.logger.log_passed("WSMT table is present and reports all supported mitigations")
-        return ModuleResult.PASSED
+            self.logger.log_warning('WSMT table is present but certain mitigations are missing.')
+            res = ModuleResult.WARNING
+        else:
+            self.logger.log_passed("WSMT table is present and reports all supported mitigations.")
+        return res
 
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
     def run(self, module_argv):
+        self.logger.start_test("WSMT Configuration")
         self.res = self.check_wsmt()
+        if self.res == ModuleResult.WARNING:
+            self.logger.log_important('Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS.')
         return self.res
