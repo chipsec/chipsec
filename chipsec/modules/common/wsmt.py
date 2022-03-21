@@ -60,7 +60,7 @@ class wsmt(BaseModule):
         wsmt_table = WSMT()
         try:
             wsmt_table.parse(table_data[0][1])
-        except:
+        except TypeError:
             self.logger.log_error('Issue parsing the WSMT table data.')
             return ModuleResult.ERROR
         self.logger.log(wsmt_table)
