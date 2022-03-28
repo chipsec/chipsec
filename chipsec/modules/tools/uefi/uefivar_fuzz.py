@@ -53,7 +53,11 @@ Examples::
 
 .. warning::
     - This module modifies contents of non-volatile SPI flash memory (UEFI Variable NVRAM).
-    - This may render system unbootable if firmware doesn't properly handle variable update/delete operations.
+    - This may render system UNBOOTABLE if firmware doesn't properly handle variable update/delete operations.
+
+.. important::
+    - Evaluate the platform for expected behavior to determine PASS/FAIL.
+    - Behavior can include platform stability and retaining protections.
 
 """
 
@@ -212,4 +216,9 @@ class uefivar_fuzz(BaseModule):
                 status = self._uefi.delete_EFI_variable(bytestostring(_NAME), str(_GUID))
                 self.logger.log(status)
 
-        return ModuleResult.WARNING
+        self.logger.log_warning('Fuzzing complete: platform is in an unknown state.')
+        self.logger.log_important('Evaluate the platform for expected behavior to determine PASS/FAIL')
+        self.logger.log_important('Behavior can include platform stability and retaining protections.')
+
+        self.res = ModuleResult.WARNING
+        return self.res
