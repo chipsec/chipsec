@@ -14,11 +14,11 @@ Core components
     ``chipsec_util.py``                              utility functions (access to various hardware resources)
     ``chipsec/chipset.py``                           chipset detection
     ``chipsec/command.py``                           base class for util commands
-    ``chipsec/defines.py``                           common defines  
-    ``chipsec/file.py``                              reading from/writing to files 
+    ``chipsec/defines.py``                           common defines
+    ``chipsec/file.py``                              reading from/writing to files
     ``chipsec/logger.py``                            logging functions
-    ``chipsec/module.py``                            generic functions to import and load modules 
-    ``chipsec/module_common.py``                     base class for modules 
+    ``chipsec/module.py``                            generic functions to import and load modules
+    ``chipsec/module_common.py``                     base class for modules
     ``chipsec/result_deltas.py``                     supports checking result deltas between test runs
     ``chipsec/testcase.py``                          support for XML and JSON log file output
     ``chipsec/helper/helpers.py``                    registry of supported OS helpers
@@ -28,7 +28,7 @@ Core components
 Commands
 --------
 
-Implement functionality of chipsec_util
+Implement functionality of chipsec_util.
 
 CHIPSEC utilities provide the capability for manual testing and direct hardware access.
 
@@ -36,23 +36,23 @@ CHIPSEC utilities provide the capability for manual testing and direct hardware 
 
 .. note:: All numeric values in the instructions are in hex.
 
-.. toctree:: 
+.. toctree::
 
     List of Utility components <../modules/chipsec.utilcmd.rst>
 
 HAL (Hardware Abstraction Layer)
 --------------------------------
 
-Useful abstractions for common tasks such as accessing the SPI
-    
-.. toctree:: 
+Useful abstractions for common tasks such as accessing the SPI.
+
+.. toctree::
 
     List of HAL components <../modules/chipsec.hal.rst>
 
 Fuzzing
 -------
 
-.. toctree:: 
+.. toctree::
 
     List of Fuzzing components <../modules/chipsec.fuzzing.rst>
 
@@ -86,11 +86,9 @@ CHIPSEC_UTIL Program Flow
 Auxiliary components
 --------------------
 
-    ============ =====================================================================================
-    ``setup.py`` setup script to install CHIPSEC as a package
-    ============ =====================================================================================
-    
+    - ``setup.py`` setup script to install CHIPSEC as a package
+
 Executable build scripts
 ------------------------
 
-    ``<CHIPSEC_ROOT>/scripts/build_exe_*.py``  make files to build Windows executables
+    - ``<CHIPSEC_ROOT>/scripts/build_exe_*.py`` make files to build Windows executables
