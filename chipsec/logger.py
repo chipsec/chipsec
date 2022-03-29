@@ -148,7 +148,10 @@ class Logger:
         pyLogging.addLevelName(15, "verbose")
         self.verbose = 15
         self.logstream = pyLogging.StreamHandler(sys.stdout)
-        self.logstream.setFormatter(ColorLogger()) #applys colorization to output
+        # Respect https://no-color.org/ convention, and disable colorization
+        # when the output is not a terminal (eg. redirection to a file)
+        if sys.stdout.isatty() and os.getenv('NO_COLOR') is None:
+            self.logstream.setFormatter(ColorLogger())
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
         self.Results = ChipsecResults()
 
