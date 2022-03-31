@@ -1,35 +1,33 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2022, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2022, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
 Contains platform identification functions
 """
 
-import sys
 import collections
 import os
 import fnmatch
-import re
 import xml.etree.ElementTree as ET
 
-from chipsec.helper.oshelper import OsHelper, OsHelperError
+from chipsec.helper.oshelper import OsHelper
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
@@ -151,7 +149,7 @@ class Chipset:
     # Initialization
     #
     ##################################################################################
-    def detect_platform( self ):
+    def detect_platform(self):
         vid = 0xFFFF
         did = 0xFFFF
         rid = 0xFF
@@ -193,9 +191,10 @@ class Chipset:
         else:
             return '{:02X}{}'.format(extfamily, ret)
 
-    def init( self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None ):
+    def init(self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None):
         _unknown_platform = False
         self.reqs_pch = False
+        self.is_soc = False
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
@@ -221,7 +220,11 @@ class Chipset:
 
         if platform_code is None:
         #platform code was not passed in try to determine based upon cpu id
-            if vid in self.chipset_dictionary and did in self.chipset_dictionary[vid] and len(self.chipset_dictionary[vid][did]) > 1 and cpuid in self.detection_dictionary.keys():
+            vid_found      = vid in self.chipset_dictionary
+            did_found      = did in self.chipset_dictionary[vid]
+            multiple_found = len(self.chipset_dictionary[vid][did]) > 1
+            cpuid_found    = cpuid in self.detection_dictionary.keys()
+            if vid_found and did_found and multiple_found and cpuid_found:
                 for item in self.chipset_dictionary[vid][did]:
                     if self.detection_dictionary[cpuid] == item['code']:
                         #matched processor with detection value
@@ -233,15 +236,15 @@ class Chipset:
                         self.did = did
                         self.rid = rid
                         break
-            elif vid in self.chipset_dictionary and did in self.chipset_dictionary[vid]:
+            elif vid_found and did_found:
                 _unknown_platform = False
-                data_dict       = self.chipset_dictionary[vid][ did ][0]
+                data_dict       = self.chipset_dictionary[vid][did][0]
                 self.code       = data_dict['code'].upper()
                 self.longname   = data_dict['longname']
                 self.vid = vid
                 self.did = did
                 self.rid = rid
-            elif cpuid in self.detection_dictionary.keys():
+            elif cpuid_found:
                 _unknown_platform = False
                 self.code       = self.detection_dictionary[cpuid]
                 self.longname   = self.detection_dictionary[cpuid]
@@ -252,8 +255,8 @@ class Chipset:
         elif platform_code in self.chipset_codes:
             # Check if platform code passed in is valid and override configuration
             _unknown_platform = False
-            self.vid = self.chipset_codes[ platform_code ]['vid']
-            self.did = self.chipset_codes[ platform_code ]['did']
+            self.vid = self.chipset_codes[platform_code]['vid']
+            self.did = self.chipset_codes[platform_code]['did']
             self.rid = 0x00
             self.code = platform_code
             self.longname = platform_code
@@ -262,6 +265,8 @@ class Chipset:
                 msg += ', CPUID = 0x{}'.format(cpuid)
             logger().log("[CHIPSEC] {}".format(msg))
 
+        pch_vid_found = pch_vid in self.pch_dictionary.keys()
+        pch_did_found = pch_did in self.pch_dictionary[pch_vid].keys()
         if req_pch_code is not None:
             # Check if pch code passed in is valid
             if req_pch_code in self.pch_codes:
@@ -273,8 +278,8 @@ class Chipset:
                 _unknown_pch = False
                 msg = 'PCH     : Actual values: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
                 logger().log("[CHIPSEC] {}".format(msg))
-        elif pch_vid in self.pch_dictionary.keys() and pch_did in self.pch_dictionary[pch_vid].keys():
-            #Check if pch did for device 0:31:0 is in configuration
+        elif pch_vid_found and pch_did_found:
+            #Check if pch did for device is in configuration
             self.pch_vid = pch_vid
             self.pch_did = pch_did
             self.pch_rid = pch_rid
@@ -285,7 +290,10 @@ class Chipset:
             self.pch_code       = data_dict['code']
             self.pch_longname   = data_dict['longname']
             _unknown_pch = False
-
+        else:
+            self.pch_vid = pch_vid
+            self.pch_did = pch_did
+            self.pch_rid = pch_rid
         if _unknown_platform:
             msg = 'Unknown Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
             if start_driver:
@@ -293,8 +301,11 @@ class Chipset:
                 raise UnknownChipsetError(msg)
             else:
                 logger().log("[!]       {}; Using Default.".format(msg))
-        if not _unknown_platform: # don't initialize config if platform is unknown
+        if not _unknown_platform: # Don't initialize config if platform is unknown
             self.init_cfg()
+        if self.is_soc:
+            self.pch_longname = self.longname
+            _unknown_pch = False
         if _unknown_pch:
             msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
             if self.reqs_pch and start_driver:
@@ -306,8 +317,8 @@ class Chipset:
             msg = 'Results from this system may be incorrect.'
             logger().log("[!]            {}".format(msg))
 
-    def destroy( self, start_driver ):
-        self.helper.stop( start_driver )
+    def destroy(self, start_driver):
+        self.helper.stop(start_driver)
 
     def get_chipset_code(self):
         return self.code
@@ -328,10 +339,10 @@ class Chipset:
         logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
 
     def is_core(self):
-        return  self.get_chipset_code() in CHIPSET_FAMILY["core"]
+        return self.get_chipset_code() in CHIPSET_FAMILY["core"]
 
     def is_server(self):
-        return  self.get_chipset_code() in CHIPSET_FAMILY["xeon"]
+        return self.get_chipset_code() in CHIPSET_FAMILY["xeon"]
 
     def is_atom(self):
         return self.get_chipset_code() in CHIPSET_FAMILY["atom"]
@@ -519,9 +530,11 @@ class Chipset:
                     if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _named_item.attrib) )
 
     def init_cfg_xml(self, fxml, code, pch_code):
-        if not os.path.exists( fxml ): return
-        if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
-        tree = ET.parse( fxml )
+        if not os.path.exists(fxml):
+            return
+        if logger().DEBUG:
+            logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
+        tree = ET.parse(fxml)
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
@@ -531,36 +544,39 @@ class Chipset:
                 if 'req_pch' in _cfg.attrib:
                     if 'true' == _cfg.attrib['req_pch'].lower():
                         self.reqs_pch = True
+                if 'is_soc' in _cfg.attrib:
+                    if 'true' == _cfg.attrib['is_soc'].lower():
+                        self.is_soc = True
             elif pch_code == _cfg.attrib['platform'].lower():
                 if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
             else: continue
 
-            if logger().DEBUG: logger().log( "[*] loading integrated devices/controllers.." )
+            if logger().DEBUG: logger().log("[*] loading integrated devices/controllers..")
             self.populate_cfg_type(_cfg, 'pci', self.Cfg.CONFIG_PCI, 'device')
 
-            if logger().DEBUG: logger().log( "[*] loading MMIO BARs.." )
+            if logger().DEBUG: logger().log("[*] loading MMIO BARs..")
             self.populate_cfg_type(_cfg, 'mmio', self.Cfg.MMIO_BARS, 'bar')
 
-            if logger().DEBUG: logger().log( "[*] loading I/O BARs.." )
+            if logger().DEBUG: logger().log("[*] loading I/O BARs..")
             self.populate_cfg_type(_cfg, 'io', self.Cfg.IO_BARS, 'bar')
 
-            if logger().DEBUG: logger().log( "[*] loading indirect memory accesses definitions.." )
+            if logger().DEBUG: logger().log("[*] loading indirect memory accesses definitions..")
             self.populate_cfg_type(_cfg, 'ima', self.Cfg.IO_BARS, 'indirect')
 
-            if logger().DEBUG: logger().log( "[*] loading memory ranges.." )
+            if logger().DEBUG: logger().log("[*] loading memory ranges..")
             self.populate_cfg_type(_cfg, 'memory', self.Cfg.MEMORY_RANGES, 'range')
 
-            if logger().DEBUG: logger().log( "[*] loading configuration registers.." )
+            if logger().DEBUG: logger().log("[*] loading configuration registers..")
             self.populate_cfg_type(_cfg, 'registers', self.Cfg.REGISTERS, 'register')
 
-            if logger().DEBUG: logger().log( "[*] loading controls.." )
+            if logger().DEBUG: logger().log("[*] loading controls..")
             self.populate_cfg_type(_cfg, 'controls', self.Cfg.CONTROLS, 'control')
 
             if logger().DEBUG: logger().log("[*] loading locks..")
             self.populate_cfg_type(_cfg, 'locks', self.Cfg.LOCKS, 'lock')
 
     def init_cfg_bus( self ):
-        if logger().DEBUG: logger().log( '[*] Loading device buses..' )
+        if logger().DEBUG: logger().log('[*] Loading device buses..')
         if QUIET_PCI_ENUM:
             old_hal_state = logger().HAL
             logger().HAL = False
