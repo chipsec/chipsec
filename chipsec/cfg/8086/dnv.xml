@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="DNV" >
+<configuration platform="DNV" is_soc="True">
 <!--
 XML configuration file for Denverton
 

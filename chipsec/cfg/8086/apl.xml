@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="APL">
+<configuration platform="APL" is_soc="True">
 <!--
 XML configuration for Apollo Lake based SoCs
 document id 334818/334819
