@@ -105,6 +105,7 @@ from chipsec.logger import print_buffer
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.uefi_common import S3BootScriptOpcode, script_width_values, script_width_formats, op_io_pci_mem, op_dispatch
 from chipsec.hal.uefi_platform import encode_s3bootscript_entry, id_s3bootscript_type, create_s3bootscript_entry_buffer
+from chipsec.defines import bytestostring
 
 ########################################################################################################
 #
@@ -172,7 +173,7 @@ class s3script_modify(BaseModule):
 
                     orig_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
                     self.logger.log( "[*] Original entry:" )
-                    print_buffer( orig_entry_buf )
+                    print_buffer( bytestostring(orig_entry_buf) )
 
                     if S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE == opcode or \
                        S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE        == opcode or \
@@ -186,7 +187,7 @@ class s3script_modify(BaseModule):
 
                     new_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
                     self.logger.log( "[*] Modified entry:" )
-                    print_buffer( new_entry_buf )
+                    print_buffer( bytestostring(new_entry_buf) )
                     return True
 
         self.logger.log_bad( "Did not find required 0x{:X} opcode in the script".format(opcode) )
@@ -199,7 +200,7 @@ class s3script_modify(BaseModule):
         self.cs.mem.write_physical_mem( new_entrypoint, ep_size, self.DISPATCH_ENTRYPOINT_INSTR )
         new_ep = self.cs.mem.read_physical_mem( new_entrypoint, ep_size )
         self.logger.log_good( "Allocated new DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(new_entrypoint, ep_size) )
-        print_buffer( new_ep )
+        print_buffer( bytestostring(new_ep) )
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
         if parsed_scripts is None:
@@ -219,7 +220,7 @@ class s3script_modify(BaseModule):
 
                     orig_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
                     self.logger.log( "[*] Original entry:" )
-                    print_buffer( orig_entry_buf )
+                    print_buffer( bytestostring(orig_entry_buf) )
 
                     e.decoded_opcode.entrypoint = new_entrypoint
                     entry_buf = encode_s3bootscript_entry( e )
@@ -227,7 +228,7 @@ class s3script_modify(BaseModule):
 
                     new_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
                     self.logger.log( "[*] Modified entry:" )
-                    print_buffer( new_entry_buf )
+                    print_buffer( bytestostring(new_entry_buf) )
                     self.logger.log('After sleep/resume, the system should hang' )
                     return True
 
@@ -260,7 +261,7 @@ class s3script_modify(BaseModule):
         self.cs.mem.write_physical_mem( ep_pa, ep_size, self.DISPATCH_ENTRYPOINT_INSTR )
         new_ep = self.cs.mem.read_physical_mem( ep_pa, ep_size )
         self.logger.log( "[*] New DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(ep_pa, ep_size) )
-        print_buffer( new_ep )
+        print_buffer( bytestostring(new_ep) )
         return True
 
 
@@ -291,7 +292,7 @@ class s3script_modify(BaseModule):
 
                     orig_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
                     self.logger.log( "[*] Original entry:" )
-                    print_buffer( orig_entry_buf )
+                    print_buffer( bytestostring(orig_entry_buf) )
 
                     e.decoded_opcode.address = address
                     e.decoded_opcode.values[0] = new_value
@@ -300,7 +301,7 @@ class s3script_modify(BaseModule):
 
                     new_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
                     self.logger.log( "[*] Modified entry:" )
-                    print_buffer( new_entry_buf )
+                    print_buffer( bytestostring(new_entry_buf) )
                     self.logger.log('After sleep/resume, read address 0x{:08X} and look for value 0x{:08X}'.format(address, new_value))
                     return True
 
@@ -328,13 +329,13 @@ class s3script_modify(BaseModule):
                     self.logger.log( e )
                     pa = bootscript_pa + e.offset_in_script
                     orig_entry_buf = self.cs.mem.read_physical_mem( pa, e.length )
-                    #print_buffer( orig_entry_buf )
+                    print_buffer( bytestostring(orig_entry_buf) )
 
                     self.logger.log( "[*] New S3 boot script opcode:" )
                     self.logger.log( new_opcode )
                     self.logger.log( "[*] Adding new opcode entry at address 0x{:016X}..".format(pa) )
                     new_entry = create_s3bootscript_entry_buffer( script_type, new_opcode, e_index )
-                    print_buffer( new_entry )
+                    print_buffer( bytestostring(new_entry) )
 
                     self.cs.mem.write_physical_mem( pa, len(new_entry), new_entry )
                     last_entry_pa = pa + len(new_entry)
