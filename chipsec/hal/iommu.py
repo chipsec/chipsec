@@ -75,6 +75,8 @@ class IOMMU(hal_base.HALBase):
         self.logger.log( "Base register (BAR)       : {}".format(vtd) )
         reg = self.cs.read_register( vtd )
         self.logger.log( "BAR register value        : 0x{:X}".format(reg) )
+        if reg == 0:
+            return
         base    = self.get_IOMMU_Base_Address( iommu_engine )
         self.logger.log( "MMIO base                 : 0x{:016X}".format(base) )
         self.logger.log( "------------------------------------------------------------------" )
@@ -114,6 +116,9 @@ class IOMMU(hal_base.HALBase):
 
     def dump_IOMMU_page_tables( self, iommu_engine ):
         vtd = IOMMU_ENGINES[ iommu_engine ]
+        if self.cs.read_register( vtd ) == 0:
+            self.logger.log( "[iommu] {} value is zero".format(vtd) )
+            return
         te  = self.is_IOMMU_Translation_Enabled( iommu_engine )
         self.logger.log( "[iommu] Translation enabled    : {:d}".format(te) )
         rtaddr_reg = self.cs.read_register( vtd + '_RTADDR' )
@@ -148,6 +153,9 @@ class IOMMU(hal_base.HALBase):
         self.logger.log( "==================================================================" )
         self.logger.log( "[iommu] {} IOMMU Engine Status:".format(iommu_engine) )
         self.logger.log( "==================================================================" )
+        if self.cs.read_register( vtd ) == 0:
+            self.logger.log( "[iommu] {} value is zero".format(vtd) )
+            return
         gsts_reg = self.cs.read_register( vtd + '_GSTS' )
         self.cs.print_register( vtd + '_GSTS', gsts_reg )
         fsts_reg = self.cs.read_register( vtd + '_FSTS' )
