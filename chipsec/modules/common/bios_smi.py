@@ -58,6 +58,7 @@ class bios_smi(BaseModule):
            not self.cs.is_control_defined('SMILock') or \
            not self.cs.is_control_defined('BiosWriteEnable'):
             self.res = ModuleResult.NOTAPPLICABLE
+            self.logger.log_important('Required controls not defined for platform.  Skipping module.')
             return False
         return True
 
