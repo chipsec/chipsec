@@ -16,7 +16,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-This module checks that ME Manufacturing mode is not enabled
+This module checks that ME Manufacturing mode is not enabled.
 
 References:
 
@@ -74,7 +74,13 @@ https://github.com/coreboot/coreboot/blob/master/src/soc/intel/apollolake/cse.c
 
 This module checks the following:
 
-    HFS.MFG_MODE BDF: 0:22:0 offset 0x40 - Bit [4]
+    ``HFS.MFG_MODE BDF: 0:22:0 offset 0x40 - Bit [4]``
+
+Usage:
+    ``chipsec_main -m common.me_mfg_mode``
+
+Examples:
+    >>> chipsec_main.py -m common.me_mfg_mode
 
 The module returns the following results:
 
@@ -83,8 +89,7 @@ The module returns the following results:
     PASSED : HFS.MFG_MODE is not set.
 
 Hardware registers used:
-
-    HFS
+    - HFS.MFG_MODE
 """
 
 from chipsec.module_common import BaseModule, ModuleResult
@@ -98,24 +103,24 @@ class me_mfg_mode(BaseModule):
         if self.cs.is_device_enabled("MEI1"):
             return True
         else:
+            self.logger.log_important('MEi1 not enabled.  Skipping module.')
             self.res = ModuleResult.NOTAPPLICABLE
             return False
 
     def check_me_mfg_mode(self):
-        self.logger.start_test( "ME Manufacturing Mode" )
-
         me_mfg_mode_res = ModuleResult.FAILED
-        me_hfs_reg = self.cs.read_register( 'HFS' )
-        me_mfg_mode = self.cs.get_register_field( 'HFS', me_hfs_reg, 'MFG_MODE' )
+        me_hfs_reg = self.cs.read_register('HFS')
+        me_mfg_mode = self.cs.get_register_field('HFS', me_hfs_reg, 'MFG_MODE')
 
         if 0 == me_mfg_mode:
             me_mfg_mode_res = ModuleResult.PASSED
-            self.logger.log_passed( "ME is not in Manufacturing Mode" )
+            self.logger.log_passed("ME is not in Manufacturing Mode")
         else:
-            self.logger.log_failed( "ME is in Manufacturing Mode" )
+            self.logger.log_failed("ME is in Manufacturing Mode")
 
         return me_mfg_mode_res
 
     def run( self, module_argv ):
+        self.logger.start_test("ME Manufacturing Mode")
         self.res = self.check_me_mfg_mode()
         return self.res
