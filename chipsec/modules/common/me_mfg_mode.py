@@ -103,7 +103,7 @@ class me_mfg_mode(BaseModule):
         if self.cs.is_device_enabled("MEI1"):
             return True
         else:
-            self.logger.log_important('MEi1 not enabled.  Skipping module.')
+            self.logger.log_important('MEI1 not enabled.  Skipping module.')
             self.res = ModuleResult.NOTAPPLICABLE
             return False
 
