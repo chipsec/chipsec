@@ -1,23 +1,22 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# 
+# Contact information:
+# chipsec@intel.com
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
-
 
 """
 The module is fuzzing UEFI Variable interface.
@@ -26,8 +25,7 @@ The module is using UEFI SetVariable interface to write new UEFI variables
 to SPI flash NVRAM with randomized name/attributes/GUID/data/size.
 
 Usage:
-
-    chipsec_main -m tools.uefi.uefivar_fuzz [-a <options>]
+    ``chipsec_main -m tools.uefi.uefivar_fuzz [-a <options>]``
 
 Options:
 
@@ -41,7 +39,6 @@ Options:
     All module arguments are optional
 
 Examples::
-
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a all,100000
     >>> chipsec_main.py -m tools.uefi.uefivar_fuzz -a data,1000,123456789
@@ -82,7 +79,8 @@ class uefivar_fuzz(BaseModule):
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
         if not supported:
-            self.logger.log_skipped("OS does not support UEFI Runtime API")
+            self.logger.log_important("OS does not support UEFI Runtime API.  Skipping module.")
+            self.res = ModuleResult.NOTAPPLICABLE
         return supported
 
     def rnd(self, n=1):
@@ -92,7 +90,7 @@ class uefivar_fuzz(BaseModule):
         return rnum
 
     def usage(self):
-        self.logger.log( __doc__.translate({ord('`'): None}) )
+        self.logger.log(__doc__.translate({ord('`'): None}) )
         return True
 
     def run( self, module_argv ):
@@ -102,7 +100,6 @@ class uefivar_fuzz(BaseModule):
         s = cs_input("Type 'yes' to continue > ")
         if s.lower() not in ['yes', 'y']:
             return
-
 
         # Default options
         _NAME   = 'FuzzerVarName'
@@ -124,57 +121,64 @@ class uefivar_fuzz(BaseModule):
         FUZZ_SIZE   = True
 
         # Init fuzzing primitives
-        name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
+        name_prim   = prim.string(value=_NAME, max_len=BOUND_STR)
         attrib_prim = prim.dword(value=_ATTRIB) # i think the attrib field is 4 bytes large?
-        data_prim = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
+        data_prim   = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
 
-        help_text  = False
+        help_text = False
 
         if len(module_argv):
             fz_cli = module_argv[0].lower()
-            if ('all' != fz_cli):
+            if 'all' != fz_cli:
                 FUZZ_NAME   = False
                 FUZZ_GUID   = False
                 FUZZ_ATTRIB = False
                 FUZZ_DATA   = False
                 FUZZ_SIZE   = False
 
-                if   ('name'   == fz_cli): FUZZ_NAME = True
-                elif ('guid'   == fz_cli): FUZZ_GUID = True
-                elif ('attrib' == fz_cli): FUZZ_ATTRIB = True
-                elif ('data'   == fz_cli): FUZZ_DATA = True
-                elif ('size'   == fz_cli): FUZZ_SIZE = True
-                else: help_text = self.usage()
+                if ('name' == fz_cli):
+                    FUZZ_NAME = True
+                elif ('guid' == fz_cli):
+                    FUZZ_GUID = True
+                elif ('attrib' == fz_cli):
+                    FUZZ_ATTRIB = True
+                elif ('data' == fz_cli):
+                    FUZZ_DATA = True
+                elif ('size' == fz_cli):
+                    FUZZ_SIZE = True
+                else:
+                    help_text = self.usage()
 
             if len(module_argv) > 1:
-                if (module_argv[1].isdigit()):
+                if module_argv[1].isdigit():
                     ITERATIONS = int(module_argv[1])
                 else:
                     help_text = self.usage()
 
             if len(module_argv) > 2:
-                if (module_argv[2].isdigit()):
+                if module_argv[2].isdigit():
                     SEED = int(module_argv[2])
                 else:
                     help_text = self.usage()
 
             if len(module_argv) > 3:
-                if (module_argv[3].isdigit()):
+                if module_argv[3].isdigit():
                     CASE = int(module_argv[3])
                 else:
                     help_text = self.usage()
 
         if not help_text:
-            random.seed( SEED )
-            write_file( 'SEED.txt', str(SEED) )
+            random.seed(SEED)
+            write_file('SEED.txt', str(SEED))
 
-            if not len(module_argv): fz_cli = 'all'
-            self.logger.log( 'Test      : {}'.format(fz_cli))
-            self.logger.log( 'Iterations: {:d}'.format(ITERATIONS) )
-            self.logger.log( 'Seed      : {:d}'.format(SEED) )
-            self.logger.log( 'Test case : {:d}'.format(CASE) )
+            if not len(module_argv):
+                fz_cli = 'all'
+            self.logger.log('Test      : {}'.format(fz_cli))
+            self.logger.log('Iterations: {:d}'.format(ITERATIONS))
+            self.logger.log('Seed      : {:d}'.format(SEED))
+            self.logger.log('Test case : {:d}'.format(CASE))
             self.logger.log('')
-            for count in range(1, ITERATIONS +CASE):
+            for count in range(1, ITERATIONS + CASE):
                 if FUZZ_NAME:
                     _NAME = ''
                     if name_prim.mutate():
@@ -183,7 +187,8 @@ class uefivar_fuzz(BaseModule):
                         name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
                         _NAME = name_prim.render()
 
-                if FUZZ_GUID: _GUID = uuid4()
+                if FUZZ_GUID: 
+                    _GUID = uuid4()
 
                 if FUZZ_ATTRIB:
                     if attrib_prim.mutate():
@@ -209,7 +214,7 @@ class uefivar_fuzz(BaseModule):
                 if (count < CASE):
                     continue
 
-                self.logger.log( '  Running test #{:d}:'.format(count) )
+                self.logger.log('  Running test #{:d}:'.format(count))
                 self.logger.flush()
                 status = self._uefi.set_EFI_variable(bytestostring(_NAME), str(_GUID), _DATA, _SIZE, _ATTRIB)
                 self.logger.log(status)
