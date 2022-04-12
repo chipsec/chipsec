@@ -1,38 +1,30 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
-
 
 
 """
 Common include file for modules
 """
 
-import platform
-import string
-import sys
-import os
-from time import localtime, strftime
-
 import chipsec.logger
 import chipsec.chipset
-import chipsec.defines
 
 
 class ModuleResult:
@@ -100,16 +92,16 @@ class BaseModule(object):
 
     def display_res_check(self, pass_msg, error_msg):
         if self.res == ModuleResult.PASSED:
-            self.logger.log_passed_check(pass_msg)
+            self.logger.log_passed(pass_msg)
         elif self.res == ModuleResult.FAILED:
-            self.logger.log_failed_check(error_msg)
+            self.logger.log_failed(error_msg)
         elif self.res == ModuleResult.WARNING:
-            self.logger.log_warn_check(error_msg)
+            self.logger.log_warning(error_msg)
         elif self.res == ModuleResult.INFORMATION:
-            self.logger.log_information_check(error_msg)
+            self.logger.log_information(error_msg)
 
     def run(self, module_argv):
-        raise NotImplementedError('sub class should overwrite the run() method')
+        raise NotImplementedError('Sub-class should overwrite the run() method')
 
 
 MTAG_BIOS       = "BIOS"
@@ -128,7 +120,7 @@ MTAG_METAS = {
               MTAG_CPU:        "CPU Modules",
               }
 ##! [Available Tags]
-MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])
+MODULE_TAGS = dict([(_tag, []) for _tag in MTAG_METAS])
 
 #
 # Common module command line options
@@ -136,10 +128,7 @@ MODULE_TAGS = dict( [(_tag, []) for _tag in MTAG_METAS])
 OPT_MODIFY = 'modify'
 
 #
-# Python 2/3 compatible input
+# Python 3 compatible input (Python 2 is EOL)
 #
 def cs_input(msg):
-    if sys.version[0] == '2':
-        return raw_input(msg)
-    else:
-        return input(msg)
+    return input(msg)
