@@ -50,7 +50,7 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
 
-autodoc_mock_imports = ['efi', 'common', 'itpii', 'fcntl', 'resource', 'chipsec_tools', 'chipsec.chipset']
+autodoc_mock_imports = ['efi', 'common', 'itpii', 'fcntl', 'resource', 'chipsec_tools', 'chipsec.chipset', 'edk2']
 
 # The toctree document.
 main_doc = 'index'
@@ -476,7 +476,7 @@ pdf_cover_template = '_templates/scover.tmpl'
 
 
 # Page template name for "regular" pages
-pdf_page_template = 'cutePage'
+pdf_page_template = 'mainPage'
 
 
 # Show Table Of Contents at the beginning?
