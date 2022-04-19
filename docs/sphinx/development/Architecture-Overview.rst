@@ -3,6 +3,8 @@ Architecture Overview
 
 .. figure:: ../_images/architecture.png
    :alt: CHIPSEC Architecture
+   :width: 1100
+   :height: 600
 
    CHIPSEC Architecture
 

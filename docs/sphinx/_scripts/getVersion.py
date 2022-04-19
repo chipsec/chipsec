@@ -41,8 +41,9 @@ def getVersion():
 
     with open(os.path.join(index_path), 'r') as f:
         contents = f.read()
-    splitContents = contents.split('\n')
-    contents = contents.replace(splitContents[5], 'CHIPSEC ' + version)
+    withVer = 'CHIPSEC ' + version
+    contents = contents.replace('CHIPSEC', withVer, 2)
+    contents = contents.replace('=======', '=' * len(withVer), 1)
     with open(os.path.join(index_path), 'w') as f:
         f.write(contents)
 
