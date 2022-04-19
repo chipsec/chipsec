@@ -24,6 +24,7 @@ Simple PCIe device Memory-Mapped I/O (MMIO) and I/O ranges VMM emulation fuzzer
 
 Usage:
     ``chipsec_main -m tools.vmm.pcie_fuzz [-a <bus> <dev> <fun>]``
+
     - ``<bus>`` : Bus # to fuzz      (in hex)
     - ``<dev>`` : Device # to fuzz   (in hex)
     - ``<fun>`` : Function # to fuzz (in hex)
@@ -32,7 +33,7 @@ Where:
     - ``[]``: optional line
 
 Examples:
-    >>> chipsec_main.py -i -m tools.vmm.pcie_fuzz 
+    >>> chipsec_main.py -i -m tools.vmm.pcie_fuzz
     >>> chipsec_main.py -i -m tools.vmm.pcie_fuzz -l log.txt
     >>> chipsec_main.py -i -m tools.vmm.pcie_fuzz -a 0 1f 0
 
