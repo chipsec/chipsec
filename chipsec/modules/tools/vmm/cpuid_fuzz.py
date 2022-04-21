@@ -63,7 +63,6 @@ _MODULE_NAME = 'cpuid_fuzz'
 #
 # We will only be fuzzing _NO_EAX_TO_FUZZ range of EAX values each _EAX_FUZZ_STEP step
 #
-#global _EAX_FUZZ_STEP
 _NO_EAX_TO_FUZZ       = 0x100
 _EAX_FUZZ_STEP        = 0x1000000
 
