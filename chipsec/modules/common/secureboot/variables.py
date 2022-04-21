@@ -78,7 +78,8 @@ class variables(BaseModule):
         status = self._uefi.set_EFI_variable(name, guid, baddata)
         if StatusCode.EFI_SUCCESS != status:
             self.logger.log('    < Modification of {} returned error 0x{:X}'.format(name, status))
-        else: self.logger.log('    < Modification of {} returned success'.format(name))
+        else:
+            self.logger.log('    < Modification of {} returned success'.format(name))
 
         self.logger.log('    > Checking variable {} contents after modification..'.format(name))
         newdata = self._uefi.get_EFI_variable(name, guid)
