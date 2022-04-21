@@ -149,11 +149,7 @@ class scan_image(BaseModule):
         self.logger.log(__doc__.replace('`',''))
 
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("Simple list generation/checking for (U)EFI firmware")
 
         self.res = ModuleResult.NOTAPPLICABLE
