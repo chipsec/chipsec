@@ -277,10 +277,6 @@ class spectre_v2(BaseModule):
 
         return res
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("Checks for Branch Target Injection / Spectre v2 (CVE-2017-5715)")
         self.res = self.check_spectre_mitigations()
