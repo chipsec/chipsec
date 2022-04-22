@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="CHT" is_soc="True">
+<configuration platform="CHT" req_pch="False">
 <!--
 XML configuration for Cherry Trail and Braswell SoCs
 
