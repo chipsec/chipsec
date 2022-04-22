@@ -49,10 +49,10 @@ class cpu_info(BaseModule):
 
     def is_supported(self):
         if self.cs.register_has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
-            self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
-            self.res = ModuleResult.NOTAPPLICABLE
-            return False
-        return True
+            return True
+        self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def run(self, module_argv):
         # Log the start of the test
