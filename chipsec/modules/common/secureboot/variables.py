@@ -180,10 +180,6 @@ class variables(BaseModule):
                 return ModuleResult.PASSED
 
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("Attributes of Secure Boot EFI Variables")
 
