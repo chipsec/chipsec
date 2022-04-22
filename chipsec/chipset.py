@@ -193,8 +193,7 @@ class Chipset:
 
     def init(self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None):
         _unknown_platform = False
-        self.reqs_pch = False
-        self.is_soc = False
+        self.reqs_pch = None
         self.helper.start(start_driver, driver_exists, to_file, from_file)
         logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
 
@@ -295,19 +294,19 @@ class Chipset:
         if _unknown_platform:
             msg = 'Unknown Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(vid, did, rid)
             if start_driver:
-                logger().error(msg)
+                logger().log_error(msg)
                 raise UnknownChipsetError(msg)
             else:
                 logger().log("[!]       {}; Using Default.".format(msg))
         if not _unknown_platform: # Don't initialize config if platform is unknown
             self.init_cfg()
-        if self.is_soc:
+        if self.reqs_pch == False:
             self.pch_longname = self.longname
             _unknown_pch = False
         if _unknown_pch:
             msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
             if self.reqs_pch and start_driver:
-                logger().error("Chipset requires a supported PCH to be loaded. {}".format(msg))
+                logger().log_error("Chipset requires a supported PCH to be loaded. {}".format(msg))
                 raise UnknownChipsetError(msg)
             else:
                 logger().log("[!]       {}; Using Default.".format(msg))
@@ -542,9 +541,8 @@ class Chipset:
                 if 'req_pch' in _cfg.attrib:
                     if 'true' == _cfg.attrib['req_pch'].lower():
                         self.reqs_pch = True
-                if 'is_soc' in _cfg.attrib:
-                    if 'true' == _cfg.attrib['is_soc'].lower():
-                        self.is_soc = True
+                    if 'false' == _cfg.attrib['req_pch'].lower():
+                        self.reqs_pch = False
             elif pch_code == _cfg.attrib['platform'].lower():
                 if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
             else: continue
