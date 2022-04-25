@@ -530,7 +530,7 @@ class Chipset:
         if not os.path.exists(fxml):
             return
         if logger().DEBUG:
-            logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
+            logger().log("[*] looking for platform config in '{}'..".format(fxml))
         tree = ET.parse(fxml)
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
