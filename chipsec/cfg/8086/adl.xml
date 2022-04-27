@@ -57,7 +57,6 @@ https://cdrdv2.intel.com/v1/dl/getContent/655259
 <mmio>
     <bar name="MCHBAR" bus="0" dev="0" fun="0" reg="0x48" width="8" mask="0x3FFFFFE0000" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
     <bar name="TMBAR"      register="TMBAR"      base_field="BA" size="0x20000"   desc=""/>
-    <bar name="VTDPVC0BAR" register="VTDPVC0BAR" base_field="BA" size="0x1000"    desc=""/>
     <bar name="GTTMMADR"   register="GTTMMADR"   base_field="BA" size="0x1000000" desc=""/>
 </mmio>
 
