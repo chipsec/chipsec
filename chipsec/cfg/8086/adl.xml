@@ -39,11 +39,16 @@ https://cdrdv2.intel.com/v1/dl/getContent/655259
     <sku did="0x4601" name="AlderLake" code="ADL" longname="ADL-P/U15 2+8"/>
     <sku did="0x4602" name="AlderLake" code="ADL" longname="ADL-U9 2+8"/>
     <sku did="0x4609" name="AlderLake" code="ADL" longname="ADL-U15 2+4"/>
+    <sku did="0x460A" name="AlderLake" code="ADL" longname="ADL-U9 2+4"/>
     <sku did="0x4610" name="AlderLake" code="ADL" longname="ADL-S LGA 2+0"/>
+    <sku did="0x4619" name="AlderLake" code="ADL" longname="ADL-U15 1+4"/>
+    <sku did="0x461A" name="AlderLake" code="ADL" longname="ADL-U9 1+4"/>
     <sku did="0x4621" name="AlderLake" code="ADL" longname="ADL-P/H 4+8"/>
     <sku did="0x4629" name="AlderLake" code="ADL" longname="ADL-H 4+4"/>
     <sku did="0x4630" name="AlderLake" code="ADL" longname="ADL-S LGA 4+0"/>
     <sku did="0x4641" name="AlderLake" code="ADL" longname="ADL-P/H 6+8"/>
+    <sku did="0x4648" name="AlderLake" code="ADL" longname="ADL-S LGA 6+4"/>
+    <sku did="0x4649" name="AlderLake" code="ADL" longname="ADL-H 6+4"/>
     <sku did="0x4650" name="AlderLake" code="ADL" longname="ADL-S LGA 6+0"/>
     <sku did="0x4660" name="AlderLake" code="ADL" longname="ADL-S LGA 8+8"/>
     <sku did="0x4668" name="AlderLake" code="ADL" longname="ADL-S LGA 8+4"/>
