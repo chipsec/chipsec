@@ -150,7 +150,11 @@ class Logger:
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         # Respect https://no-color.org/ convention, and disable colorization
         # when the output is not a terminal (eg. redirection to a file)
-        if sys.stdout.isatty() and os.getenv('NO_COLOR') is None:
+        try:
+            is_atty = sys.stdout.isatty()
+        except AttributeError:
+            is_atty = False
+        if is_atty and os.getenv('NO_COLOR') is None:
             self.logstream.setFormatter(ColorLogger())
         self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
         self.Results = ChipsecResults()
