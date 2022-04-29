@@ -36,6 +36,7 @@ If in doubt, follow the existing code style and formatting.
     Should contain a space immediately after the '#'.
 
     .. code-block:: python
+
         # Good header comment
 
 
@@ -46,6 +47,7 @@ If in doubt, follow the existing code style and formatting.
     Avoid using backslashes '\\' in strings.
 
     .. code-block:: python
+
         'This is a preferred "string".'
         "Also an acceptable 'string'."
 
@@ -62,6 +64,7 @@ If in doubt, follow the existing code style and formatting.
     Avoid using ``import *`` or ``from import *``.  This could pollute the namespace.
 
     .. code-block:: python
+
         # Good
         import sys
         from chipsec.module_common import BaseModule, ModuleResult
@@ -80,7 +83,7 @@ If in doubt, follow the existing code style and formatting.
 
     If at or near this limit, consider rewriting (eg simplifying) the line instead of breaking it into multiple lines.
 
-    Long lines can be an indication that too many things are happening at once and/or to difficult to read.
+    Long lines can be an indication that too many things are happening at once and/or difficult to read.
 
 
 #. Class Names
@@ -136,6 +139,7 @@ If in doubt, follow the existing code style and formatting.
     While not needed in most cases, it can improve readability and limit the possibility of 'left-to-right chaining' issues.
 
     .. code-block:: python
+
         # Preferred
         if (test1 == True) or (test2 in data_list):
             return True
@@ -163,6 +167,7 @@ If in doubt, follow the existing code style and formatting.
     If including any non-ASCII characters anywhere in a python file, include the python encoding comment at the beginning of the file.
 
     .. code-block:: python
+
         # -*- coding: utf-8 -*-
 
     No non-ASCII class, function, or variable names.
@@ -170,12 +175,11 @@ If in doubt, follow the existing code style and formatting.
 
 #. Docstrings
 
-    Use three double-quotes for module scoped docstrings.
+    Use three double-quotes for all docstrings.
 
     .. code-block:: python
-        """String description of module or docstring."""
 
-    Single quote for function or routine docstring.
+        """String description docstring."""
 
 
 #. Semicolons
@@ -186,7 +190,7 @@ If in doubt, follow the existing code style and formatting.
 #. Try Except
 
     Avoid using nested try-except.
-    
+
     The routine you are calling, may already be using one.
 
 
