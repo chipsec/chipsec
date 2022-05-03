@@ -23,7 +23,8 @@
 A tool to test SMI handlers for pointer validation vulnerabilities
 
 Reference:
-    - CanSecWest 2015: `A New Class of Vulnerability in SMI Handlers of BIOS/UEFI Firmware <https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf>`_
+    - CanSecWest 2015: `A New Class of Vulnerability in SMI Handlers of BIOS/UEFI Firmware <https://cansecwest.com/slides/2015/A%20New%20Class%20of%20Vulnin%20SMI%20-%20Andrew%20Furtak.pdf>`_ (dead?)
+    - c7zero.info: `A New Class of Vulnerability in SMI Handlers of BIOS/UEFI Firmware <http://www.c7zero.info/stuff/ANewClassOfVulnInSMIHandlers_csw2015.pdf>`_
 
 
 Usage:
@@ -344,7 +345,7 @@ class smm_ptr(BaseModule):
             else:
                 name, var = line.strip().partition('=')[::2]
                 _n = name.strip().lower()
-                if   'name' == _n:
+                if 'name' == _n:
                     _smi_desc.name = var
                 elif 'desc' == _n:
                     _smi_desc.desc = var
