@@ -55,12 +55,12 @@ Run CHIPSEC in UEFI Shell
    ``fs0:``
 
    ``cd chipsec``
-   
+
    ``python368.efi chipsec_main.py`` or ``python368.efi chipsec_util.py``
 
    Next follow steps in section "Basic Usage" of :ref:`Running CHIPSEC <Running-Chipsec>`
 
-(OPTIONAL) Extending CHIPSEC UEFI Python 3.6.8 functionality 
+(OPTIONAL) Extending CHIPSEC UEFI Python 3.6.8 functionality
 ------------------------------------------------------------
 
 Skip this section if you don't plan on extending native UEFI functionality for CHIPSEC.
@@ -73,10 +73,10 @@ Native functions accessing HW resources are built directly into Python UEFI port
     - Latest EDK2-LIBC, visit `Tianocore EDK2-LIBC Github <https://github.com/tianocore/edk2-libc>`_
     - Follow setup steps described in the ``Py368Readme.txt``
 
-#. Import files from the `CHIPSEC Python 3.6.8 port for EFI Shell  <https://github.com/chipsec/chipsec/tree/master/chipsec_tools/edk2/PythonEFI>`_
+#. Import files from the `CHIPSEC Python 3.6.8 port for EFI Shell  <https://github.com/chipsec/chipsec/tree/main/chipsec_tools/edk2/PythonEFI>`_
 
-    - Replace existing  ``AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/edk2module.c`` file with `edk2module.c <https://github.com/chipsec/chipsec/blob/master/chipsec_tools/edk2/PythonEFI/edk2module.c>`_
-    - Copy `cpu.asm <https://github.com/chipsec/chipsec/blob/master/chipsec_tools/edk2/PythonEFI/cpu.asm>`_ file to ``AppPkg/Applications/Python/Python-3.6.8/PyMode-3.6.8/Modules/``
+    - Replace existing  ``AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/edk2module.c`` file with `edk2module.c <https://github.com/chipsec/chipsec/blob/main/chipsec_tools/edk2/PythonEFI/edk2module.c>`_
+    - Copy `cpu.asm <https://github.com/chipsec/chipsec/blob/main/chipsec_tools/edk2/PythonEFI/cpu.asm>`_ file to ``AppPkg/Applications/Python/Python-3.6.8/PyMode-3.6.8/Modules/``
     - Add ``PyMod-$(PYTHON_VERSION)/Modules/cpu.asm`` line under the ``[Sources.X64]`` section in ``AppPkg/Applications/Python/Python-3.6.8/Python368.inf``
 
 #. Make modifications as needed
