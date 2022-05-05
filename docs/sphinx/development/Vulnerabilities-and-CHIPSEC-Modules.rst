@@ -4,12 +4,12 @@ CHIPSEC Modules
 A CHIPSEC module is just a python class that inherits from BaseModule and implements ``is_supported`` and ``run``. Modules are stored under the chipsec installation directory in a subdirectory "modules". The "modules" directory contains one subdirectory for each chipset that chipsec supports. There is also a directory for common modules that should apply to every platform.
 
     ===============================================  ================================================================================================
-     ``chipsec/modules/``                            modules including tests or tools (that's where most of the chipsec functionality is)        
-     ``chipsec/modules/common/``                     modules common to all platforms                                                             
-     ``chipsec/modules/<platform>/``                 modules specific to <platform>                                                
-     ``chipsec/modules/tools/``                      security tools based on CHIPSEC framework (fuzzers, etc.)                                   
+     ``chipsec/modules/``                            modules including tests or tools (that's where most of the chipsec functionality is)
+     ``chipsec/modules/common/``                     modules common to all platforms
+     ``chipsec/modules/<platform>/``                 modules specific to <platform>
+     ``chipsec/modules/tools/``                      security tools based on CHIPSEC framework (fuzzers, etc.)
     ===============================================  ================================================================================================
-    
+
 Internally the chipsec application uses the concept of a module name, which is a string of the form: ``common.bios_wp``.
 This means module ``common.bios_wp`` is a python script called ``bios_wp.py`` that is stored at ``<ROOT_DIR>\chipsec\modules\common\``.
 
@@ -46,7 +46,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      -
    * - BIOS interface is not locked
      - common.bios_ts
-     - 
+     -
 
 .. list-table:: **Attack Surface/Vector: Runtime protection of SMRAM**
    :header-rows: 1
@@ -54,7 +54,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
    * - Vulnerability Description
      - CHIPSEC Module
      - Example
-   * - Compatability SMRAM is not locked
+   * - Compatibility SMRAM is not locked
      - common.smm
      -
    * - SMM cache attack
@@ -82,7 +82,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
    * - Root certificate
      - common.bios_wp, common.secureboot.variables
      -
-   * - Key exchange keys and whitelist/blacklist
+   * - Key exchange keys
      - common.secureboot.variables
      -
    * - Controls in setup variable (CSM enable/disable, image verification policies, secure boot enable/disable, clear/restore keys)
@@ -144,7 +144,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
    * - Architectural features not locked
      - common.ia32cfg
      -
-   * - Memory mamp is not locked
+   * - Memory map is not locked
      - memconfig
      -
    * - IOMMU usage
@@ -164,25 +164,25 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - tools.smm.smm_ptr
      -
    * - Legacy SMI handlers call legacy BIOS outside SMRAM
-     - 
+     -
      -
    * - INT15 in legacy SMI handlers
-     - 
+     -
      -
    * - UEFI SMI handlers call UEFI services outside SMRAM
-     - 
+     -
      -
    * - Malicious CommBuffer pointer and contents
-     - 
+     -
      -
    * - Race condition during SMI handler
-     - 
+     -
      -
    * - Authenticated variables SMI handler is not implemented
      - chipsec_util uefi var-write
      -
    * - SmmRuntime vulnerability
-     - tools.uefi.blacklist
+     - tools.uefi.scan_blocked
      -
 
 .. list-table:: **Attack Surface/Vector: Boot time firmware**
@@ -192,10 +192,10 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - CHIPSEC Module
      - Example
    * - Software vulnerabilities when parsing, decompressing, and loading data from ROM
-     - 
+     -
      -
    * - Software vulnerabilities in implementation of digital signature verification
-     - 
+     -
      -
    * - Pointers stored in UEFI variables and used during boot
      - chipsec_util uefi var-write
@@ -204,7 +204,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - chipsec_util pci xrom
      -
    * - Boot hangs due to error condition (eg. ASSERT)
-     - 
+     -
      -
 
 .. list-table:: **Attack Surface/Vector: Power state transitions (eg. resume from sleep)**
@@ -220,7 +220,7 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - common.uefi.s3bootscript, tools.uefi.s3script_modify
      -
    * - S3 boot script interpreter stored in unprotected memory
-     - 
+     -
      -
    * - Pointer to S3 boot script table in unprotected UEFI variable
      - common.uefi.s3bootscript, tools.uefi.s3script_modify
@@ -242,16 +242,16 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - CHIPSEC Module
      - Example
    * - Software vulnerabilities when parsing firmware updates
-     - 
+     -
      -
    * - Unauthenticated firmware updates
-     - 
+     -
      -
    * - Runtime firmware update that can be interrupted
-     - 
+     -
      -
    * - Signature not checked on capsule update executable
-     - 
+     -
      -
 
 .. list-table:: **Attack Surface/Vector: Network interfaces**
@@ -261,10 +261,10 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - CHIPSEC Module
      - Example
    * - Software vulnerabilities when handling messages over network interfaces
-     - 
+     -
      -
    * - Booting unauthenticated firmware over unprotected network interfaces
-     - 
+     -
      -
 
 .. list-table:: **Attack Surface/Vector: Misc**
@@ -277,12 +277,12 @@ Known vulnerabilities can be mapped to CHIPSEC modules as follows:
      - common.bios_kbrd_buffer
      -
    * - DMA attack from devices during firmware execution
-     - 
+     -
      -
 
 Modules
 -------
 
-.. toctree:: 
+.. toctree::
 
     List of modules <../modules/chipsec.modules.rst>
