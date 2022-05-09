@@ -1,47 +1,47 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
 Access to MMIO (Memory Mapped IO) BARs and Memory-Mapped PCI Configuration Space (MMCFG)
 
 usage:
-    >>> read_MMIO_reg(cs, bar_base, 0x0, 4 )
-    >>> write_MMIO_reg(cs, bar_base, 0x0, 0xFFFFFFFF, 4 )
-    >>> read_MMIO( cs, bar_base, 0x1000 )
-    >>> dump_MMIO( cs, bar_base, 0x1000 )
+    >>> read_MMIO_reg(cs, bar_base, 0x0, 4)
+    >>> write_MMIO_reg(cs, bar_base, 0x0, 0xFFFFFFFF, 4)
+    >>> read_MMIO(cs, bar_base, 0x1000)
+    >>> dump_MMIO(cs, bar_base, 0x1000)
 
     Access MMIO by BAR name:
 
-    >>> read_MMIO_BAR_reg( cs, 'MCHBAR', 0x0, 4 )
-    >>> write_MMIO_BAR_reg( cs, 'MCHBAR', 0x0, 0xFFFFFFFF, 4 )
-    >>> get_MMIO_BAR_base_address( cs, 'MCHBAR' )
-    >>> is_MMIO_BAR_enabled( cs, 'MCHBAR' )
-    >>> is_MMIO_BAR_programmed( cs, 'MCHBAR' )
-    >>> dump_MMIO_BAR( cs, 'MCHBAR' )
-    >>> list_MMIO_BARs( cs )
+    >>> read_MMIO_BAR_reg(cs, 'MCHBAR', 0x0, 4)
+    >>> write_MMIO_BAR_reg(cs, 'MCHBAR', 0x0, 0xFFFFFFFF, 4)
+    >>> get_MMIO_BAR_base_address(cs, 'MCHBAR')
+    >>> is_MMIO_BAR_enabled(cs, 'MCHBAR')
+    >>> is_MMIO_BAR_programmed(cs, 'MCHBAR')
+    >>> dump_MMIO_BAR(cs, 'MCHBAR')
+    >>> list_MMIO_BARs(cs)
 
     Access Memory Mapped Config Space:
 
     >>> get_MMCFG_base_address(cs)
-    >>> read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4 )
-    >>> read_mmcfg_reg( cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF )
+    >>> read_mmcfg_reg(cs, 0, 0, 0, 0x10, 4)
+    >>> read_mmcfg_reg(cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF)
 """
 
 from chipsec.hal import hal_base
@@ -352,18 +352,12 @@ class MMIO(hal_base.HALBase):
         for _bar_name in self.cs.Cfg.MMIO_BARS:
             if not self.is_MMIO_BAR_defined( _bar_name ): continue
             _bar = self.cs.Cfg.MMIO_BARS[_bar_name]
-            bus_data = None
+            bus_data = []
             if 'register' in _bar:
                 bus_data = self.cs.get_register_bus(_bar['register'])
-                if bus_data is None:
+                if not bus_data:
                     if 'bus' in self.cs.get_register_def(_bar['register']):
                         bus_data = [int(self.cs.get_register_def(_bar['register'])['bus'],16)]
-                    else:
-                        # On AMD, some BARs are defined in MSRs or SMNs. These are associated
-                        # with a cpu thread or a die (respectively), which can be mapped to a
-                        # northbridge bus, but we don't support it currently. Just pass a default
-                        # bus, and let downstream code fallback on die 0.
-                        bus_data = [None]
             elif 'bus' in _bar:
                 bus_data = [int(_bar['bus'],16)]
             else:

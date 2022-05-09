@@ -795,15 +795,30 @@ class Chipset:
         device = self.Cfg.REGISTERS[reg_name].get('device', '')
         if not device:
             if logger().DEBUG:
-                logger().warn( "No device found for '{}'".format(reg_name) )
+                logger().log_important("No device found for '{}'".format(reg_name))
             if 'bus' in self.Cfg.REGISTERS[reg_name]:
                 return [int(self.Cfg.REGISTERS[reg_name]['bus'], 16)]
             else:
-                return None
+                return []
         return self.get_device_bus(device)
 
     def get_device_bus(self, dev_name):
-        return self.Cfg.BUS.get(dev_name, None)
+        buses = self.Cfg.BUS.get(dev_name, [])
+        if buses:
+            return buses
+        if logger().DEBUG:
+            logger().log_important("Device '{}' not found on any buses".format(dev_name))
+        if 'bus' in self.Cfg.CONFIG_PCI[dev_name]:
+            (bus, dev, fun) = self.get_device_BDF(dev_name)
+            if self.pci.is_enabled(bus, dev, fun):
+                buses = [bus]
+            else:
+                if logger().DEBUG:
+                    logger().log_important("Device '{}' not enabled".format(dev_name))
+        else:
+            if logger().DEBUG:
+                logger().log_important("No bus value defined for device '{}'".format(dev_name))
+        return buses
 
     def read_register(self, reg_name, cpu_thread=0, bus=None, do_check=True):
         reg = self.get_register_def(reg_name)
