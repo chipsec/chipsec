@@ -136,7 +136,14 @@ class spectre_v2(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return True
+        if self.cs.is_register_defined('IA32_ARCH_CAPABILITIES'):
+            if self.cs.is_register_defined('IA32_SPEC_CTRL'):
+                return True
+            self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
+        else:
+            self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_spectre_mitigations(self):
         try:
@@ -164,10 +171,6 @@ class spectre_v2(BaseModule):
             self.logger.log_good("CPU supports STIBP")
         else:
             self.logger.log_bad("CPU doesn't support STIBP")
-
-        if not self.cs.is_register_defined('IA32_ARCH_CAPABILITIES') or not self.cs.is_register_defined('IA32_SPEC_CTRL'):
-            self.logger.log_error("Couldn't find definition of required MSRs")
-            return ModuleResult.ERROR
 
         if arch_cap_supported:
             ibrs_enh_supported = True
