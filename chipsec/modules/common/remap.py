@@ -1,29 +1,29 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# 
+# Contact information:
+# chipsec@intel.com
+# 
 
 
 """
 Check Memory Remapping Configuration
 
 Reference:
-    `Preventing & Detecting Xen Hypervisor Subversions <http://www.invisiblethingslab.com/resources/bh08/part2-full.pdf>`_ by Joanna Rutkowska & Rafal Wojtczuk
+    - `Preventing & Detecting Xen Hypervisor Subversions <http://www.invisiblethingslab.com/resources/bh08/part2-full.pdf>`_ by Joanna Rutkowska & Rafal Wojtczuk
 
 Usage:
   ``chipsec_main -m common.remap``
@@ -39,7 +39,7 @@ Registers used:
     - PCI0.0.0_TSEGMB
 
 .. note::
-    This module will only run on Core platforms.
+    - This module will only run on Core platforms.
 
 """
 
@@ -61,20 +61,21 @@ class remap(BaseModule):
 
     def is_supported(self):
         if self.cs.is_core():
-            return True
-        self.logger.log('Not a Core (client) platform.  Skipping module.')
+            rbase_exist  = self.cs.is_register_defined('PCI0.0.0_REMAPBASE')
+            rlimit_exist = self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT')
+            touud_exist  = self.cs.is_register_defined('PCI0.0.0_TOUUD')
+            tolud_exist  = self.cs.is_register_defined('PCI0.0.0_TOLUD')
+            tseg_exist   = self.cs.is_register_defined('PCI0.0.0_TSEGMB')
+            if rbase_exist and rlimit_exist and touud_exist and tolud_exist and tseg_exist:
+                return True
+            self.logger.log_important('Required register definitions not defined for platform.  Skipping module.')
+        else:
+            self.logger.log_important('Not a Core (client) platform.  Skipping module.')
         self.res = ModuleResult.NOTAPPLICABLE
         return False
 
     def check_remap_config(self):
         is_warning = False
-        if not self.cs.is_register_defined('PCI0.0.0_REMAPBASE' ) or \
-           not self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT') or \
-           not self.cs.is_register_defined('PCI0.0.0_TOUUD'     ) or \
-           not self.cs.is_register_defined('PCI0.0.0_TOLUD'     ) or \
-           not self.cs.is_register_defined('PCI0.0.0_TSEGMB'    ):
-            self.logger.error( "Couldn't find definition of required registers (REMAP*, TOLUD, TOUUD, TSEGMB)" )
-            return ModuleResult.ERROR
 
         remapbase  = self.cs.read_register('PCI0.0.0_REMAPBASE')
         remaplimit = self.cs.read_register('PCI0.0.0_REMAPLIMIT')
