@@ -70,7 +70,15 @@ class bios_wp(BaseModule):
         self.spi = SPI(self.cs)
 
     def is_supported(self):
-        return True
+        ble_exists    = self.cs.is_control_defined('BiosLockEnable')
+        bioswe_exists = self.cs.is_control_defined('BiosWriteEnable')
+        smmbwp_exists = self.cs.is_control_defined('SmmBiosWriteProtection')
+
+        if ble_exists and bioswe_exists and smmbwp_exists:
+            return True
+        self.logger.log_important('Required Controls are not defined for platform.  Skipping module.')
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_BIOS_write_protection(self):
         ble = self.cs.get_control('BiosLockEnable', with_print=True)
@@ -127,7 +135,7 @@ class bios_wp(BaseModule):
                         areas_to_protect.append((start, base - 1))
                         areas_to_protect.append((limit + 1, end))
 
-        if (len(areas_to_protect) == 0):
+        if len(areas_to_protect) == 0:
             pr_cover_bios = True
         else:
             if (len(areas_to_protect) != 1) or (areas_to_protect[0] != (bios_base, bios_limit)):
@@ -143,11 +151,8 @@ class bios_wp(BaseModule):
 
         return pr_cover_bios
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
-    def run(self, module_argv ):
+
+    def run(self, module_argv):
         self.logger.start_test("BIOS Region Write Protection")
         wp  = self.check_BIOS_write_protection()
         spr = self.check_SPI_protected_ranges()
