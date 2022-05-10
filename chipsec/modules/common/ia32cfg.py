@@ -48,7 +48,14 @@ class ia32cfg(BaseModule):
         self.res = ModuleResult.PASSED
 
     def is_supported(self):
-        return True
+        if self.cs.is_register_defined('IA32_FEATURE_CONTROL'):
+            if self.cs.is_control_defined('Ia32FeatureControlLock'):
+                return True
+            self.logger.log_important('Ia32FeatureControlLock control not defined for platform.  Skipping module.')
+        else:
+            self.logger.log_important('IA32_FEATURE_CONTROL register not defined for platform.  Skipping module.')
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     def check_ia32feature_control(self):
         self.logger.log("[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs..")
