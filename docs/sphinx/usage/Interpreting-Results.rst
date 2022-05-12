@@ -1,3 +1,5 @@
+.. _Interpreting-Results:
+
 Interpreting results
 ====================
 
@@ -25,18 +27,12 @@ definition of the return values is listed below:
      - A known **vulnerability** has been detected
    * - WARNING
      - We have detected something that could be a vulnerability but **manual analysis is required** to confirm (inconclusive)
-   * - SKIPPED NOT IMPLEMENTED
-     - CHIPSEC currently has not implemented support for this test on this platform
-   * - SKIPPED NOT APPLICABLE
+   * - NOT_APPLICABLE (SKIPPED)
      - The issue checked by this module is not applicable to this platform. This result can be ignored
    * - INFORMATION
      - This module does not check for a vulnerability. It just prints information about the system
    * - ERROR
      - Something went wrong in the execution of CHIPSEC
-   * - DEPRECATED
-     - At least one module uses deprecated API
-   * - EXCEPTION
-     - At least one module threw an unexpected exception
 
 Automated Tests
 ---------------
@@ -58,7 +54,7 @@ messaging, the mapping of result and messages is defined below:
      - All memory map registers seem to be locked down
      - Not all memory map registers are locked down
      - N/A
-     - 
+     -
    * - Remap
      - Memory Remap is configured correctly and locked
      - Memory Remap is not properly configured/locked. Remaping attack may be possible.
@@ -85,7 +81,7 @@ messaging, the mapping of result and messages is defined below:
      - N/A
      -
    * - common.bios_wp
-     - BIOS is write protected	
+     - BIOS is write protected
      - BIOS should enable all available SMM based write protection mechanisms or configure SPI protected ranges to protect the entire BIOS region. BIOS is NOT protected completely
      - N/A
      -
@@ -96,7 +92,7 @@ messaging, the mapping of result and messages is defined below:
      -
    * - common.rtclock
      - Protected locations in RTC memory are locked
-     - N/A	
+     - N/A
      - Protected locations in RTC memory are accessible (BIOS may not be using them)
      -
    * - common.smm
