@@ -50,7 +50,11 @@ class spi_desc(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        return True
+        if self.cs.register_has_all_fields('FRAP', ['BRRA', 'BRWA']):
+            return True
+        self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
+        self.res = ModuleResult.NOTAPPLICABLE
+        return False
 
     ##
     # Displays the SPI Regions Access Permissions
@@ -62,7 +66,7 @@ class spi_desc(BaseModule):
         brra = self.cs.get_register_field('FRAP', frap, 'BRRA')
         brwa = self.cs.get_register_field('FRAP', frap, 'BRWA')
 
-        self.logger.log("[*] Software access to SPI flash regions: read = 0x{:02X}, write = 0x{:02X}".format(brra, brwa) )
+        self.logger.log("[*] Software access to SPI flash regions: read = 0x{:02X}, write = 0x{:02X}".format(brra, brwa))
         if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
             self.logger.log_bad("Software has write access to SPI flash descriptor")
@@ -75,10 +79,6 @@ class spi_desc(BaseModule):
             self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
         return res
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("SPI Flash Region Access Control")
         self.res = self.check_flash_access_permissions()
