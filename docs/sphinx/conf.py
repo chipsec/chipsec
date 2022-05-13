@@ -126,12 +126,15 @@ html_theme = 'classic'
 html_theme_options = {
     'body_min_width':'80%',
     'body_max_width':'150%',
-    'sidebarbgcolor':'#0071c5',
-    'footertextcolor':'#0071c5',
-    'footerbgcolor':'#ffffff',
-    'headtextcolor':'#0071c5',
-    'headbgcolor':'#f2f2f2',
-    'relbarbgcolor':'#004280'
+    'sidebarbgcolor':'#41728A',
+    'sidebarlinkcolor':'#B9D6E5',
+    'headtextcolor':'#86B3CA',
+    'headbgcolor':'#183544',
+    'relbarbgcolor':'#525252',
+    'relbarlinkcolor':'#E9E9E9',
+    'footerbgcolor':'#262626',
+    'visitedlinkcolor':'#8F5DA2',
+    'linkcolor':'#548FAD'
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
