@@ -19,16 +19,7 @@ pageTemplates:
       - 100%
     showFooter: true
     showHeader: true
-  decoratedPage:
-    defaultFooter: '###Page###'
-    defaultHeader: '###Section###'
-    frames:
-    - - 0%
-      - 0%
-      - 100%
-      - 100%
-    showFooter: true
-    showHeader: true
+    defaultHeader: '###Page### - ###Section###'
   emptyPage:
     frames:
     - - 0cm
@@ -152,27 +143,27 @@ styles:
         spaceBefore: 40
         textColor: '#0071c5'
     heading1:
-        backColor: '#003C71'
+        backColor: '#00285A'
         textColor: '#ffffff'
         fontSize: 200%
     heading2:
-        backColor: '#0063ad'
+        backColor: '#004A86'
         textColor: '#ffffff'
         fontSize: 160%
     heading3:
-        backColor: '#008ebd'
+        backColor: '#005B85'
         textColor: '#ffffff'
         fontSize: 140%
     heading4: 
-        backColor: '#009682'
+        backColor: '#0095Ca'
         textColor: '#ffffff'
         fontSize: 120%
     heading5: 
-        backColor: '#65b85a'
+        backColor: '#41728A'
         textColor: '#ffffff'
         fontSize: 100%
     heading6:
-        backColor: '#de8e16'
+        backColor: '#708541'
         textColor: '#ffffff'
         fontSize: 80%
     hlist:
