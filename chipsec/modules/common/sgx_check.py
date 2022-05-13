@@ -1,19 +1,19 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2022, Intel Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+#
 # Contact information:
 # chipsec@intel.com
 #
@@ -77,13 +77,15 @@ class sgx_check(BaseModule):
         sgx_cpu_support = False
         if self.cs.helper.is_efi():
             self.logger.log_important('Currently this module cannot run within the EFI Shell. Exiting.')
+        elif not self.cs.register_has_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN'):
+            self.logger.log_important('IA32_FEATURE_CONTROL.SGX_GLOBAL_EN not defined for platform.  Skipping module.')
         else:
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
                     self.logger.verbose_log("[*] Failed to set affinity to CPU{:d}".format(tid))
                 (_, r_ebx, _, _) = self.cs.cpu.cpuid(0x07, 0x00)
-                if (r_ebx & BIT2):
+                if r_ebx & BIT2:
                     self.logger.verbose_log("[*] CPU{:d}: does support SGX".format(tid))
                     sgx_cpu_support = True
                 else:
@@ -124,11 +126,11 @@ class sgx_check(BaseModule):
 
         # Verify that Protected Memory Range (PRM) is supported, MSR IA32_MTRRCAP (FEh) [12]=1
         # Check on every CPU and make sure that they are all the same values
-        self.logger.log( "\n[*] Verifying if Protected Memory Range (PRMRR) is configured" )
+        self.logger.log("\n[*] Verifying if Protected Memory Range (PRMRR) is configured")
         prmrr_enable = False
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             mtrrcap = self.cs.read_register_field('MTRRCAP', 'PRMRR', False, tid)
-            if (0 == mtrrcap):
+            if mtrrcap == 0:
                 self.logger.verbose_log("[*] CPU{:d} Protected Memory Range configuration is not supported".format(tid))
             else:
                 prmrr_enable = True
@@ -215,22 +217,22 @@ class sgx_check(BaseModule):
             prmrr_configs = []
             # NB: BWG Provides only a list of 4 possible values, see item 5, section 2.1. So values e.g. 0x050 are prohibited, report error.
             config_support = False
-            if (BIT0 & prmrr_valid_config):
+            if BIT0 & prmrr_valid_config:
                 prmrr_configs.append("1M")
                 config_support = True
-            if (BIT1 & prmrr_valid_config):
+            if BIT1 & prmrr_valid_config:
                 prmrr_configs.append("2M")
                 config_support = True
-            if (BIT5 & prmrr_valid_config):
+            if BIT5 & prmrr_valid_config:
                 prmrr_configs.append("32M")
                 config_support = True
-            if (BIT6 & prmrr_valid_config):
+            if BIT6 & prmrr_valid_config:
                 prmrr_configs.append("64M")
                 config_support = True
-            if (BIT7 & prmrr_valid_config):
+            if BIT7 & prmrr_valid_config:
                 prmrr_configs.append("128M")
                 config_support = True
-            if (BIT8 & prmrr_valid_config):
+            if BIT8 & prmrr_valid_config:
                 prmrr_configs.append("256M")
                 config_support = True
             if config_support:
@@ -240,7 +242,7 @@ class sgx_check(BaseModule):
                 sgx_ok = False
 
             # In some cases the PRMRR base and mask may be zero
-            if prmrr_base == 0 and prmrr_mask == 0:
+            if (prmrr_base == 0) and (prmrr_mask == 0):
                 self.logger.log("[*] PRMRR Base and Mask are set to zero.  PRMRR appears to be disabled.")
                 self.logger.log("[*]   Skipping Base/Mask settings.")
             else:
@@ -293,13 +295,13 @@ class sgx_check(BaseModule):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
                     self.logger.verbose_log("[*] Failed to set affinity to CPU{:d}".format(tid))
-                (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid(0x012, 0x00)
-                if (r_eax & BIT0):
+                (r_eax, _, _, _) = self.cs.cpu.cpuid(0x012, 0x00)
+                if r_eax & BIT0:
                     self.logger.verbose_log("[*] CPU{:d} SGX-1 instructions are supported".format(tid))
                     sgx1_instr_support = True
                 else:
                     self.logger.verbose_log("[*] CPU{:d} SGX-1 instructions are not supported".format(tid))
-                if (r_eax & BIT1):
+                if r_eax & BIT1:
                     self.logger.verbose_log("[*] CPU{:d} SGX-2 instructions are supported".format(tid))
                     sgx2_instr_support = True
                 else:
@@ -348,20 +350,20 @@ class sgx_check(BaseModule):
         self.logger.log("[*]     Debug enabled      : {:d}".format(debug_enable))
         self.logger.log("[*]     Lock               : {:d}".format(debug_lock))
 
-        if (1 == sgx_debug_status):
+        if sgx_debug_status == 1:
             self.logger.log_bad("SGX debug mode is enabled")
             self.res = ModuleResult.FAILED
         else:
             self.logger.log_good("SGX debug mode is disabled")
-        if (0 == debug_enable):
+        if debug_enable == 0:
             self.logger.log_good("Silicon debug features are disabled")
         else:
             self.logger.log_bad("Silicon debug features are not disabled")
             self.res = ModuleResult.FAILED
-        if (0 == debug_enable) and (1==sgx_debug_status):
+        if (0 == debug_enable) and (1 == sgx_debug_status):
             self.logger.log_bad("Enabling sgx_debug without enabling debug mode in msr IA32_DEBUG_INTERFACE is not a valid configuration")
             self.res = ModuleResult.FAILED
-        if (1 == debug_lock):
+        if debug_lock == 1:
             self.logger.log_good("Silicon debug Feature Control register is locked")
         else:
             self.logger.log_bad("Silicon debug Feature Control register is not locked")
