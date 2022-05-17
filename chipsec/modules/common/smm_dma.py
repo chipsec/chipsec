@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2010-2022, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -75,7 +75,7 @@ class smm_dma(BaseModule):
         elif self.cs.is_server():
             self.logger.log_important('Xeon (server) platform detected.  Skipping module.')
             return False
-        elif self.cs.is_control_defined('TSEGBaseLock') and self.cs.is_control_defined('TSEGLimitLock'):
+        elif not self.cs.is_control_defined('TSEGBaseLock') or not self.cs.is_control_defined('TSEGLimitLock'):
             self.logger.log_important('TSEGBaseLock and/or TSEGLimitLock control(s) not defined for platform.  Skipping module.')
             return False
         else:
