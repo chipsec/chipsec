@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -23,7 +23,6 @@ Main UEFI component using platform specific and common UEFI functionality
 """
 
 import struct
-import sys
 import os
 
 from collections import namedtuple
@@ -513,55 +512,70 @@ NVRAM: EFI Variable Store
     # UEFI System Tables
     ######################################################################
 
-    def find_EFI_Table( self, table_sig ):
-        (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRAM()
-        CHUNK_SZ = 1024 *1024 # 1MB
-        if logger().HAL: logger().log( "[uefi] searching memory for EFI table with signature '{}' ..".format(table_sig) )
+    def find_EFI_Table(self, table_sig):
+        (smram_base, _, _) = self.cs.cpu.get_SMRAM()
+        CHUNK_SZ = 1024 * 1024 # 1MB
+        if logger().HAL:
+            logger().log("[uefi] Searching memory for EFI table with signature '{}' ..".format(table_sig))
         table_pa, table_header, table, table_buf = None, None, None, None
         pa = smram_base - CHUNK_SZ
         isFound = False
+
+        (tseg_base, tseg_limit, _) = self.cs.cpu.get_TSEG()
+
         while pa > CHUNK_SZ:
-            if logger().HAL: logger().log( '[uefi] reading 0x{:016X}..'.format(pa) )
+            if (pa <= tseg_limit) and (pa >= tseg_base):
+                if logger().HAL:
+                    logger().log("[uefi] Skipping memory read at pa: {:016X}".format(pa))
+                    pa -= CHUNK_SZ
+                    continue
+            if logger().HAL:
+                logger().log('[uefi] Reading 0x{:016X}..'.format(pa))
             try:
-                membuf = self.cs.mem.read_physical_mem( pa, CHUNK_SZ )
+                membuf = self.cs.mem.read_physical_mem(pa, CHUNK_SZ)
             except OsHelperError as err:
-                if logger().HAL: logger().log("[uefi] Unable to read memory at pa: {:016X} Error: {}".format(pa, err))
+                if logger().HAL:
+                    logger().log("[uefi] Unable to read memory at pa: {:016X} Error: {}".format(pa, err))
                 pa -= CHUNK_SZ
                 continue
-            pos = bytestostring(membuf).find( table_sig )
+            pos = bytestostring(membuf).find(table_sig)
             if -1 != pos:
                 table_pa = pa + pos
-                if logger().HAL: logger().log( "[uefi] found signature '{}' at 0x{:016X}..".format(table_sig, table_pa) )
+                if logger().HAL:
+                    logger().log("[uefi] Round signature '{}' at 0x{:016X}..".format(table_sig, table_pa))
                 if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE):
-                    hdr = membuf[ pos: pos + EFI_TABLE_HEADER_SIZE ]
+                    hdr = membuf[pos: pos + EFI_TABLE_HEADER_SIZE]
                 else:
-                    hdr = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE )
-                table_header = EFI_TABLE_HEADER( *struct.unpack_from( EFI_TABLE_HEADER_FMT, hdr ) )
+                    hdr = self.cs.mem.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE)
+                table_header = EFI_TABLE_HEADER(*struct.unpack_from(EFI_TABLE_HEADER_FMT, hdr))
                 # do some sanity checks on the header
-                if 0 != table_header.Reserved or                 \
-                   0 == table_header.CRC32    or                 \
-                   table_header.Revision not in EFI_REVISIONS or \
-                   table_header.HeaderSize > MAX_EFI_TABLE_SIZE:
+                is_reserved         = table_header.Reserved != 0
+                is_bad_crc          = table_header.CRC32 == 0
+                is_not_table_rev    = table_header.Revision not in EFI_REVISIONS
+                is_not_correct_size = table_header.HeaderSize > MAX_EFI_TABLE_SIZE
+                if is_reserved or is_bad_crc or is_not_table_rev or is_not_correct_size:
                     if logger().HAL:
-                        logger().log( "[uefi] found '{}' at 0x{:016X} but doesn't look like an actual table. keep searching..".format(table_sig, table_pa) )
-                        logger().log( table_header )
+                        logger().log("[uefi] Found '{}' at 0x{:016X} but doesn't look like an actual table. Keep searching...".format(table_sig, table_pa))
+                        logger().log(table_header)
                 else:
                     isFound = True
-                    if logger().HAL: logger().log( "[uefi] found EFI table at 0x{:016X} with signature '{}'..".format(table_pa, table_sig) )
-                    table_size = struct.calcsize( EFI_TABLES[table_sig]['fmt'] )
-                    if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE - table_size):
-                        table_buf = membuf[ pos: pos + EFI_TABLE_HEADER_SIZE + table_size ]
-                    else:
-                        table_buf = self.cs.mem.read_physical_mem( table_pa, EFI_TABLE_HEADER_SIZE + table_size )
-                    table = EFI_TABLES[table_sig]['struct']( *struct.unpack_from( EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:] ) )
                     if logger().HAL:
-                        print_buffer( bytestostring(table_buf) )
-                        logger().log( '[uefi] {}:'.format(EFI_TABLES[table_sig]['name']) )
-                        logger().log( table_header )
-                        logger().log( table )
+                        logger().log("[uefi] Found EFI table at 0x{:016X} with signature '{}'...".format(table_pa, table_sig))
+                    table_size = struct.calcsize(EFI_TABLES[table_sig]['fmt'])
+                    if pos < (CHUNK_SZ - EFI_TABLE_HEADER_SIZE - table_size):
+                        table_buf = membuf[pos: pos + EFI_TABLE_HEADER_SIZE + table_size]
+                    else:
+                        table_buf = self.cs.mem.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE + table_size)
+                    table = EFI_TABLES[table_sig]['struct'](*struct.unpack_from(EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:]))
+                    if logger().HAL:
+                        print_buffer(bytestostring(table_buf))
+                        logger().log('[uefi] {}:'.format(EFI_TABLES[table_sig]['name']))
+                        logger().log(table_header)
+                        logger().log(table)
                     break
             pa -= CHUNK_SZ
-        if (not isFound) and logger().HAL: logger().log( "[uefi] could not find EFI table with signature '{}'".format(table_sig) )
+        if (not isFound) and logger().HAL:
+            logger().log("[uefi] Could not find EFI table with signature '{}'".format(table_sig))
         return (isFound, table_pa, table_header, table, table_buf)
 
     def find_EFI_System_Table( self ):
