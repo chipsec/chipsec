@@ -90,14 +90,14 @@ class uefivar_fuzz(BaseModule):
         return rnum
 
     def usage(self):
-        self.logger.log(__doc__.translate({ord('`'): None}) )
+        self.logger.log(__doc__.translate({ord('`'): None}))
         return True
 
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("Fuzz UEFI Variable Interface")
 
         self.logger.log_warning("Are you sure you want to continue fuzzing UEFI variable interface?")
-        s = cs_input("Type 'yes' to continue > ")
+        s = input("Type 'yes' to continue > ")
         if s.lower() not in ['yes', 'y']:
             return
 
@@ -136,15 +136,15 @@ class uefivar_fuzz(BaseModule):
                 FUZZ_DATA   = False
                 FUZZ_SIZE   = False
 
-                if ('name' == fz_cli):
+                if 'name' == fz_cli:
                     FUZZ_NAME = True
-                elif ('guid' == fz_cli):
+                elif 'guid' == fz_cli:
                     FUZZ_GUID = True
-                elif ('attrib' == fz_cli):
+                elif 'attrib' == fz_cli:
                     FUZZ_ATTRIB = True
-                elif ('data' == fz_cli):
+                elif 'data' == fz_cli:
                     FUZZ_DATA = True
-                elif ('size' == fz_cli):
+                elif 'size' == fz_cli:
                     FUZZ_SIZE = True
                 else:
                     help_text = self.usage()
@@ -183,7 +183,8 @@ class uefivar_fuzz(BaseModule):
                     _NAME = ''
                     if name_prim.mutate():
                         _NAME = name_prim.render()
-                    else: # if mutate() returns false, we need to reload the primitive
+                    else:
+                        # if mutate() returns false, we need to reload the primitive
                         name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
                         _NAME = name_prim.render()
 
@@ -211,7 +212,7 @@ class uefivar_fuzz(BaseModule):
                     else:
                         _SIZE = random.randrange(1024)
 
-                if (count < CASE):
+                if count < CASE:
                     continue
 
                 self.logger.log('  Running test #{:d}:'.format(count))
