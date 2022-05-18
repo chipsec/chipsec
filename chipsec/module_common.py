@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2010-2022, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -126,9 +126,3 @@ MODULE_TAGS = dict([(_tag, []) for _tag in MTAG_METAS])
 # Common module command line options
 #
 OPT_MODIFY = 'modify'
-
-#
-# Python 3 compatible input (Python 2 is EOL)
-#
-def cs_input(msg):
-    return input(msg)
