@@ -474,7 +474,7 @@ def confirm():
     logger().warn("*")
     logger().warn("***************************************************************************************")
     s = input("Type 'yes' to continue running the tool > ")
-    if s != 'yes':
+    if s.lower() not in ['yes', 'y']:
         sys.exit(0)
 
 def usage():
