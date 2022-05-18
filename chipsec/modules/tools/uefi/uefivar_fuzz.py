@@ -63,7 +63,7 @@ from time import time
 from uuid import uuid4, UUID
 import struct
 
-from chipsec.module_common import BaseModule, ModuleResult, cs_input
+from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.file          import write_file
 from chipsec.hal.uefi      import UEFI
 from chipsec.defines       import bytestostring
