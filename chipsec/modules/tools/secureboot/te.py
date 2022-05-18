@@ -57,7 +57,6 @@ import struct
 import sys
 
 from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.module_common import cs_input
 from chipsec.logger import logger
 
 
