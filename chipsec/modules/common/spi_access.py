@@ -39,6 +39,10 @@ Registers used:
     - HSFS.FDV
     - FRAP.BRWA
 
+.. important::
+    - Some platforms may use alternate means of protecting these regions.
+      Consider this when assessing results.
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
@@ -100,6 +104,7 @@ class spi_access(BaseModule):
             elif ModuleResult.FAILED == res:
                 self.logger.log_failed("SPI Flash Region Access Permissions are not programmed securely in flash descriptor")
                 self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
+                self.logger.log_important('If using alternative protections, this can be considered a WARNING')
             elif ModuleResult.WARNING == res:
                 self.logger.log_warning("Certain SPI flash regions are writeable by software")
         else:
