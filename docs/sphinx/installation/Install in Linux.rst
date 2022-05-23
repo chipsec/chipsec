@@ -53,8 +53,8 @@ Creating a Live Linux image
 1. Download things you will need:
 
    -  Desired Linux image (e.g. Fedora LXDE 64bit)
-   -  `liveusb-creator <https://fedorahosted.org/liveusb-creator/>`__
+   -  `Rufus <https://rufus.ie/en/>`__
 
-2. Use liveusb-creator to image a USB stick with the desired Linux
+2. Use Rufus to image a USB stick with the desired Linux
    image. Include as much persistent storage as possible.
 3. Reboot to USB
