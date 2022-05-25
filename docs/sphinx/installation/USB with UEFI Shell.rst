@@ -22,9 +22,7 @@ Installing CHIPSEC
 
 2. Copy the contents of CHIPSEC to the USB drive.
 
-   -  The contents of your drive should look like follows:
-
-::
+   The contents of your drive should look like follows::
 
       -  fs0:
          -  efi
