@@ -90,7 +90,15 @@ Module & Command Development
     :glob:
     :maxdepth: 1
     :caption: Architecture and Modules
-    
+
     development/*
 
+Contribution and Style Guides
+-----------------------------
 
+.. toctree::
+    :glob:
+    :maxdepth: 1
+    :caption: Contribution Guide
+
+    contribution/*
