@@ -281,18 +281,6 @@ class FileHelper(Helper):
     #
     def getcwd(self):
         return self.filecmds.getElement("getcwd", ())
-    #
-    # Decompress binary with OS specific tools
-    #
-
-    def decompress_file(self, CompressedFileName, OutputFileName, CompressionType):
-        return self.filecmds.getElement("decompress_file", (CompressedFileName, OutputFileName, CompressionType))
-
-    #
-    # Compress binary with OS specific tools
-    #
-    def compress_file(self, FileName, OutputFileName, CompressionType):
-        return self.filecmds.getElement("compress_file", (FileName, OutputFileName, CompressionType))
 
 
 _helper = None
