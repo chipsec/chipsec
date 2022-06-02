@@ -41,11 +41,11 @@ from uuid import UUID
 
 from chipsec.logger import logger
 from chipsec.file import write_file, read_file
-from chipsec.defines import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN
+from chipsec.hal.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN
 from chipsec.hal.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.hal.uefi_platform import FWType, ParsePFS, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 
-from chipsec.hal.uefi import identify_EFI_NVRAM
+from chipsec.hal.uefi import identify_EFI_NVRAM, parse_EFI_variables
 from chipsec.hal.uefi_fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.hal.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
 from chipsec.hal.uefi_fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
@@ -54,6 +54,7 @@ from chipsec.hal.uefi_fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYP
 from chipsec.hal.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
 from chipsec.hal.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
 from chipsec.hal.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
+from chipsec.hal.uefi_compression import UEFICompression
 
 CMD_UEFI_FILE_REMOVE = 0
 CMD_UEFI_FILE_INSERT_BEFORE = 1
@@ -69,29 +70,18 @@ type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pi
 WRITE_ALL_HASHES = False
 
 
-def decompress_section_data(_uefi, section_dir_path, sec_fs_name, compressed_data, compression_type, remove_files=False):
-    compressed_name = os.path.join(section_dir_path, "{}.gz".format(sec_fs_name))
+def decompress_section_data( section_dir_path, sec_fs_name, compressed_data, compression_type):
+    uefi_uc = UEFICompression()
     uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
-    write_file(compressed_name, compressed_data)
-    uncompressed_image = _uefi.decompress_EFI_binary(compressed_name, uncompressed_name, compression_type)
-    if remove_files:
-        try:
-            os.remove(compressed_name)
-            if uncompressed_image:
-                os.remove(uncompressed_name)
-        except Exception:
-            pass
+    if logger().HAL: logger().log("[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n".format(compression_type, uncompressed_name))
+    uncompressed_image = uefi_uc.decompress_EFI_binary(compressed_data, compression_type)
     return uncompressed_image
 
 
-def compress_image(_uefi, image, compression_type):
-    precomress_file = 'uefi_file.raw.comp'
-    compressed_file = 'uefi_file.raw.comp.gz'
-    write_file(precomress_file, image)
-    compressed_image = _uefi.compress_EFI_binary(precomress_file, compressed_file, compression_type)
-    write_file(compressed_file, compressed_image)
-    os.remove(precomress_file)
-    os.remove(compressed_file)
+def compress_image(image, compression_type):
+    uefi_uc = UEFICompression()
+    if logger().HAL: logger().log("[uefi] compressing EFI binary (type = 0x{:X})\n".format(compression_type))
+    compressed_image = uefi_uc.compress_EFI_binary(image,  compression_type)
     return compressed_image
 
 
@@ -151,7 +141,7 @@ def modify_uefi_region(data, command, guid, uefi_file=''):
     return data
 
 
-def build_efi_modules_tree(_uefi, fwtype, data, Size, offset, polarity):
+def build_efi_modules_tree(fwtype, data, Size, offset, polarity):
     sections = []
     secn = 0
 
@@ -188,59 +178,59 @@ def build_efi_modules_tree(_uefi, fwtype, data, Size, offset, polarity):
             sec.Guid = UUID(bytes_le=guid0)
 
             if sec.Guid == EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID:
-                sec.children = build_efi_modules_tree(_uefi, fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
+                sec.children = build_efi_modules_tree(fwtype, sec.Image[sec.DataOffset:], Size - sec.DataOffset, 0, polarity)
             elif sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID or sec.Guid == TIANO_DECOMPRESSED_GUID:
                 if sec.Guid == LZMA_CUSTOM_DECOMPRESS_GUID:
-                    d = decompress_section_data(_uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA, True)
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_LZMA)
                 else:
-                    d = decompress_section_data(_uefi, "", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD, True)
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.DataOffset:], COMPRESSION_TYPE_EFI_STANDARD)
                 if d is None:
                     sec.Comments = "Unable to decompress image"
-                    d = decompress_section_data(_uefi, "", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN, True)
+                    d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size:], COMPRESSION_TYPE_UNKNOWN)
                 if d:
-                    sec.children = build_efi_modules_tree(_uefi, fwtype, d, len(d), 0, polarity)
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
             elif sec.Guid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
                 offset = sec.DataOffset + EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size
                 sec.Comments = "Certificate Type RSA2048/SHA256"
                 if len(sec.Image) > offset:
-                    sec.children = build_efi_modules_tree(_uefi, fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
             else:
-                sec.children = build_efi_model(_uefi, sec.Image[sec.HeaderSize:], fwtype)
+                sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
 
         elif sec.Type == EFI_SECTION_COMPRESSION:
             for mct in COMPRESSION_TYPES_ALGORITHMS:
-                d = decompress_section_data(_uefi, "", sec_fs_name, sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:], mct, True)
+                d = decompress_section_data("", sec_fs_name, sec.Image[sec.HeaderSize + EFI_COMPRESSION_SECTION_size:], mct)
                 if d:
-                    sec.children = build_efi_modules_tree(_uefi, fwtype, d, len(d), 0, polarity)
+                    sec.children = build_efi_modules_tree(fwtype, d, len(d), 0, polarity)
                 if sec.children:
                     break
 
         elif sec.Type == EFI_SECTION_FIRMWARE_VOLUME_IMAGE:
-            children = build_efi_file_tree(_uefi, sec.Image[sec.HeaderSize:], fwtype)
+            children = build_efi_file_tree(sec.Image[sec.HeaderSize:], fwtype)
             if children is not None:
                 sec.children = children
 
         elif sec.Type == EFI_SECTION_RAW:
-            sec.children = build_efi_model(_uefi, sec.Image[sec.HeaderSize:], fwtype)
+            sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
 
         elif sec.Type not in SECTION_NAMES.keys():
-            sec.children = build_efi_model(_uefi, sec.Image[sec.HeaderSize:], fwtype)
+            sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
             if not sec.children:
-                sec.children = build_efi_model(_uefi, data, fwtype)
+                sec.children = build_efi_model(data, fwtype)
 
         sections.append(sec)
-        sec = NextFwFileSection(data, Size, sec.Size + sec.Offset, polarity)
+        sec = NextFwFileSection( data, Size, sec.Size + sec.Offset, polarity)
         secn += 1
     return sections
 
 # build_efi_file_tree - extract EFI FV file from EFI image and build an object tree
 #
 # Input arguements:
-# _uefi    - instance of chipsec.hal.uefi.UEFI class
 # fv_image - fv_image containing files
+# fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 
 
-def build_efi_file_tree(_uefi, fv_img, fwtype):
+def build_efi_file_tree (fv_img, fwtype):
     fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
     polarity = Attributes & EFI_FVB2_ERASE_POLARITY
     fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
@@ -248,11 +238,11 @@ def build_efi_file_tree(_uefi, fv_img, fwtype):
     while fwbin is not None:
         fwbin.calc_hashes()
         if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD) or fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
-            fwbin.children = build_efi_modules_tree(_uefi, fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
+            fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
             fv.append(fwbin)
         elif fwbin.Type == EFI_FV_FILETYPE_RAW:
             if fwbin.Name != NVAR_NVRAM_FS_FILE:
-                fwbin.children = build_efi_tree(_uefi, fwbin.Image[fwbin.HeaderSize:], fwtype)
+                fwbin.children = build_efi_tree(fwbin.Image[fwbin.HeaderSize:], fwtype)
                 fv.append(fwbin)
             else:
                 fwbin.isNVRAM = True
@@ -266,11 +256,10 @@ def build_efi_file_tree(_uefi, fv_img, fwtype):
 # build_efi_tree - extract EFI modules (FV, files, sections) from EFI image and build an object tree
 #
 # Input arguments:
-#   _uefi          - instance of chipsec.hal.uefi.UEFI class
 #   data           - an image containing UEFI firmware volumes
 #   fwtype         - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 #
-def build_efi_tree(_uefi, data, fwtype):
+def build_efi_tree(data, fwtype):
     fvolumes = []
     fv = NextFwVolume(data)
     while fv is not None:
@@ -278,7 +267,7 @@ def build_efi_tree(_uefi, data, fwtype):
 
         # Detect File System firmware volumes
         if fv.Guid in EFI_PLATFORM_FS_GUIDS or fv.Guid in EFI_FS_GUIDS:
-            fwbin = build_efi_file_tree(_uefi, fv.Image, fwtype)
+            fwbin = build_efi_file_tree (fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
 
@@ -326,19 +315,19 @@ def update_efi_tree(modules, parent_guid=None):
     return ui_string
 
 
-def build_efi_model(_uefi, data, fwtype):
+def build_efi_model(data, fwtype):
     # Try PFS first
     result = ParsePFS(data)
     if result is not None:
         model = []
         for d in result[0]:
-            m = build_efi_tree(_uefi, d, fwtype)
+            m = build_efi_tree(d, fwtype)
             model.extend(m)
         if len(result[1]) > 0:
-            m = build_efi_tree(_uefi, result[1], fwtype)
+            m = build_efi_tree(result[1], fwtype)
             model.extend(m)
     else:
-        model = build_efi_tree(_uefi, data, fwtype)
+        model = build_efi_tree(data, fwtype)
     update_efi_tree(model)
     return model
 
@@ -406,7 +395,7 @@ def search_efi_tree(modules, search_callback, match_module_types=EFIModuleType.S
     return matching_modules
 
 
-def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, save_log=True, lvl=0):
+def save_efi_tree(modules, parent=None, save_modules=True, path=None, save_log=True, lvl=0):
     mod_dir_path = None
     modules_arr = []
     modn = 0
@@ -443,15 +432,14 @@ def save_efi_tree(_uefi, modules, parent=None, save_modules=True, path=None, sav
                             # getNVstore_xxx functions expect FV than a FW file within FV
                             # so for EFI_FILE type of module using parent's Image as NVRAM
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
-                            _uefi.parse_EFI_variables(os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType)
-                        else:
-                            raise Exception("NVRAM type cannot be None")
+                            parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType)
+                        else: raise Exception("NVRAM type cannot be None")
                     except Exception:
                         logger().log_warning("couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType))
 
         # save children modules
         if len(m.children) > 0:
-            md["children"] = save_efi_tree(_uefi, m.children, m, save_modules, mod_dir_path, save_log, lvl + 1)
+            md["children"] = save_efi_tree(m.children, m, save_modules, mod_dir_path, save_log, lvl + 1)
         else:
             del md["children"]
 
@@ -468,7 +456,7 @@ class UUIDEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def parse_uefi_region_from_file(_uefi, filename, fwtype, outpath=None, filetype=[]):
+def parse_uefi_region_from_file(filename, fwtype, outpath=None, filetype=[]):
     # Create an output folder to dump EFI module tree
     if outpath is None:
         outpath = "{}.dir".format(filename)
@@ -479,17 +467,17 @@ def parse_uefi_region_from_file(_uefi, filename, fwtype, outpath=None, filetype=
     rom = read_file(filename)
 
     # Parse UEFI image binary and build a tree hierarchy of EFI modules
-    tree = build_efi_model(_uefi, rom, fwtype)
+    tree = build_efi_model(rom, fwtype)
 
     # Save entire EFI module hierarchy on a file-system and export into JSON
     if filetype:
         tree_json = save_efi_tree_filetype(tree, path=outpath, filetype=filetype)
     else:
-        tree_json = save_efi_tree(_uefi, tree, path=outpath)
-    write_file("{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
+        tree_json = save_efi_tree(tree, path=outpath)
+    write_file( "{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder) )
 
 
-def decode_uefi_region(_uefi, pth, fname, fwtype, filetype=[]):
+def decode_uefi_region(pth, fname, fwtype, filetype=[]):
 
     bios_pth = os.path.join(pth, fname + '.dir')
     if not os.path.exists(bios_pth):
@@ -499,9 +487,8 @@ def decode_uefi_region(_uefi, pth, fname, fwtype, filetype=[]):
         os.makedirs(fv_pth)
 
     # Decoding UEFI Firmware Volumes
-    if logger().HAL:
-        logger().log("[spi_uefi] decoding UEFI firmware volumes...")
-    parse_uefi_region_from_file(_uefi, fname, fwtype, fv_pth, filetype)
+    if logger().HAL: logger().log( "[spi_uefi] decoding UEFI firmware volumes..." )
+    parse_uefi_region_from_file(fname, fwtype, fv_pth, filetype)
     # If a specific filetype is wanted, there is no need to check for EFI Variables
     if filetype:
         return
@@ -518,9 +505,9 @@ def decode_uefi_region(_uefi, pth, fname, fwtype, filetype=[]):
         if logger().HAL:
             logger().log_error("unrecognized NVRAM type {}".format(fwtype))
         return
-    nvram_fname = os.path.join(bios_pth, ('nvram_{}'.format(fwtype)))
-    logger().set_log_file((nvram_fname + '.nvram.lst'))
-    _uefi.parse_EFI_variables(nvram_fname, region_data, False, fwtype)
+    nvram_fname = os.path.join( bios_pth, ('nvram_{}'.format(fwtype)) )
+    logger().set_log_file( (nvram_fname + '.nvram.lst') )
+    parse_EFI_variables(nvram_fname, region_data, False, fwtype)
 
 
 def save_efi_tree_filetype(modules, parent=None, path=None, lvl=0, filetype=[], save=False):
