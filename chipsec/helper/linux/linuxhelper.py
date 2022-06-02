@@ -34,7 +34,6 @@ import resource
 import struct
 import subprocess
 import sys
-import shutil
 
 from chipsec import defines
 from chipsec.helper.oshelper import get_tools_path
@@ -73,18 +72,7 @@ IOCTL_VA2PA = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE = 0x15
 IOCTL_FREE_PHYSMEM = 0x16
 
-LZMA = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "LzmaCompress")
-TIANO = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
-EFI = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "TianoCompress")
-BROTLI = os.path.join(chipsec.file.get_main_dir(), chipsec.file.TOOLS_DIR, "compression", "bin", "Brotli")
-
-_tools = {
-    chipsec.defines.COMPRESSION_TYPE_TIANO: 'TianoCompress',
-    chipsec.defines.COMPRESSION_TYPE_LZMA: 'LzmaCompress',
-    chipsec.defines.COMPRESSION_TYPE_BROTLI: 'Brotli'
-}
-
-
+_tools = {}
 class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
 
@@ -106,9 +94,6 @@ class LinuxHelper(Helper):
     SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
     SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT = False
     DKMS_DIR = "/var/lib/dkms/"
-
-    decompression_oder_type1 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI]
-    decompression_oder_type2 = [chipsec.defines.COMPRESSION_TYPE_TIANO, chipsec.defines.COMPRESSION_TYPE_UEFI, chipsec.defines.COMPRESSION_TYPE_LZMA, chipsec.defines.COMPRESSION_TYPE_BROTLI]
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -1162,87 +1147,6 @@ class LinuxHelper(Helper):
         for line in symarr:
             if "phys_mem_access_prot" in line:
                 return line.split(" ")[0]
-
-    def rotate_list(self, list, n):
-        return list[n:] + list[:n]
-
-    def unknown_decompress(self, CompressedFileName, OutputFileName):
-        failed_times = 0
-        for CompressionType in self.decompression_oder_type2:
-            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
-            if res == True:
-                self.rotate_list(self.decompression_oder_type2, failed_times)
-                break
-            else:
-                failed_times += 1
-        return res
-
-    def unknown_efi_decompress(self, CompressedFileName, OutputFileName):
-        failed_times = 0
-        for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(CompressedFileName, OutputFileName, CompressionType)
-            if res == True:
-                self.rotate_list(self.decompression_oder_type1, failed_times)
-                break
-            else:
-                failed_times += 1
-        return res
-
-    #
-    # Compress binary file
-    #
-    def compress_file(self, FileName, OutputFileName, CompressionType):
-        if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
-            return False
-        encode_str = " -e -o {} ".format(OutputFileName)
-        if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(FileName, OutputFileName)
-            return True
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
-            encode_str = TIANO + encode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            encode_str = EFI + encode_str + "--uefi "
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
-            encode_str = LZMA + encode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
-            encode_str = BROTLI + encode_str
-        encode_str += FileName
-        data = subprocess.check_output(encode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().log_error("Cannot compress file({})".format(FileName))
-            return False
-        return True
-
-    #
-    # Decompress binary
-    #
-    def decompress_file(self, CompressedFileName, OutputFileName, CompressionType):
-        if not CompressionType in [i for i in chipsec.defines.COMPRESSION_TYPES]:
-            return False
-        if CompressionType == chipsec.defines.COMPRESSION_TYPE_UNKNOWN:
-            data = self.unknown_decompress(CompressedFileName, OutputFileName)
-            return data
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_EFI_STANDARD:
-            data = self.unknown_efi_decompress(CompressedFileName, OutputFileName)
-            return data
-        decode_str = " -d -o {} ".format(OutputFileName)
-        if CompressionType == chipsec.defines.COMPRESSION_TYPE_NONE:
-            shutil.copyfile(CompressedFileName, OutputFileName)
-            return True
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_TIANO:
-            decode_str = TIANO + decode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_UEFI:
-            decode_str = EFI + decode_str + "--uefi "
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_LZMA:
-            decode_str = LZMA + decode_str
-        elif CompressionType == chipsec.defines.COMPRESSION_TYPE_BROTLI:
-            decode_str = BROTLI + decode_str
-        decode_str += CompressedFileName
-        data = subprocess.call(decode_str, shell=True)
-        if not data == 0 and logger().VERBOSE:
-            logger().log_error("Cannot decompress file({})".format(CompressedFileName))
-            return False
-        return True
 
     #
     # Logical CPU count

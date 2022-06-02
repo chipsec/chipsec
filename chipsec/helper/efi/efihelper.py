@@ -35,15 +35,13 @@ import os
 
 import edk2   # Python 3.6.8 on UEFI
 
-from chipsec.defines import bytestostring, COMPRESSION_TYPE_TIANO, COMPRESSION_TYPE_LZMA
+from chipsec.defines import bytestostring
 from chipsec.logger import logger
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.helper.basehelper import Helper
 
 
 _tools = {
-    COMPRESSION_TYPE_TIANO: 'TianoCompress.efi',
-    COMPRESSION_TYPE_LZMA: 'LzmaCompress.efi'
 }
 
 
