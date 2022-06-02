@@ -27,7 +27,7 @@ Setup module to install chipsec package via setuptools
 import io
 import os
 import platform
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 from distutils import log, dir_util
 import subprocess
 
@@ -91,24 +91,6 @@ class build_ext(_build_ext):
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
-    def _build_linux_compression(self):
-        log.info("building compression executables")
-        build_elf = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
-        elfs = ["Brotli", "LzmaCompress", "TianoCompress"]
-        # copy the compression files to build directory
-        self.copy_tree(os.path.join("chipsec_tools", "compression"), build_elf)
-        # Run the makefile there
-        subprocess.check_output(["make", "-C", build_elf, "-f", "GNUmakefile"])
-        # Copy the resulting elf files into the correct place
-        root_dst = "" if self.inplace else self.real_build_lib
-        dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
-        try:
-            os.mkdir(dst)
-        except Exception:
-            pass
-        for elf in elfs:
-            self.copy_file(os.path.join(build_elf, "bin", elf), dst)
-
     def _build_darwin_driver(self):
         log.info("building the OSX driver")
         build_driver = os.path.join(self.real_build_lib, "drivers", "osx")
@@ -127,24 +109,6 @@ class build_ext(_build_ext):
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
-    def _build_darwin_compression(self):
-        log.info("building compression executables")
-        build_exe = os.path.join(self.real_build_lib, "chipsec_tools", "compression")
-        exes = ["Brotli", "LzmaCompress", "TianoCompress"]
-        # copy the compression files to build directory
-        self.copy_tree(os.path.join("chipsec_tools", "compression"), build_exe)
-        # Run the makefile there
-        subprocess.check_output(["make", "-C", build_exe, "-f", "GNUmakefile"])
-        # Copy the resulting elf files into the correct place
-        root_dst = "" if self.inplace else self.real_build_lib
-        dst = os.path.join(root_dst, "chipsec_tools", "compression", "bin")
-        try:
-            os.mkdir(dst)
-        except Exception:
-            pass
-        for exe in exes:
-            self.copy_file(os.path.join(build_exe, "bin", exe), dst)
-
     def _build_win_driver(self):
         log.info("building the windows driver")
         build_driver = os.path.join("drivers", "win7")
@@ -155,15 +119,6 @@ class build_ext(_build_ext):
             subprocess.call(["install.cmd"])
         else:
             subprocess.call(["install.cmd", "32"])
-        os.chdir(cur_dir)
-
-    def _build_win_compression(self):
-        log.info("building the windows compression")
-        build_driver = os.path.join("chipsec_tools", "compression")
-        cur_dir = os.getcwd()
-        os.chdir(build_driver)
-        # Run the makefile there.
-        subprocess.call(["build.cmd"])
         os.chdir(cur_dir)
 
     def run(self):
@@ -177,13 +132,10 @@ class build_ext(_build_ext):
         self.real_build_lib = os.path.realpath(self.build_lib)
         if platform.system().lower() == "linux":
             driver_build_function = self._build_linux_driver
-            self._build_linux_compression()
         elif platform.system().lower() == "darwin":
             driver_build_function = self._build_darwin_driver
-            self._build_darwin_compression()
         elif platform.system().lower() == "windows":
             driver_build_function = self._build_win_driver
-            self._build_win_compression()
 
         if not self.skip_driver:
             driver_build_function()
@@ -249,41 +201,90 @@ extra_kw = []
 if platform.system().lower() == "windows":
     package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
     package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
-    package_data["chipsec_tools.compression.bin"] = ['*']
+    package_data["chipsec_tools.compression"] = ['*']
     install_requires.append("pywin32")
+    extra_kw = [
+        Extension(
+            'EfiCompressor',
+            sources=[
+                os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'Compress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'TianoCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompressor.c'),
+                ],
+            include_dirs=[
+                os.path.join('chipsec_tools', 'compression', 'Include'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'Common'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'X64'),
+                ],
+            )
+        ]
 
 elif platform.system().lower() == "linux":
-    package_data["chipsec_tools.compression.bin"] = ['*']
+    package_data["chipsec_tools.compression"] = ['*']
+    extra_kw = [
+        Extension(
+            'EfiCompressor',
+            sources=[
+                os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'Compress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'TianoCompress.c'),
+                os.path.join('chipsec_tools', 'compression', 'EfiCompressor.c'),
+                ],
+            include_dirs=[
+                os.path.join('chipsec_tools', 'compression', 'Include'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'Common'),
+                os.path.join('chipsec_tools', 'compression', 'Include', 'X64'),
+                ],
+            )
+        ]
 
-elif platform.system().lower() == "darwin":
-    package_data["chipsec_tools.compression.bin"] = ['*']
+setup(
+    name = 'chipsec',
+    version = version(),
+    description = 'CHIPSEC: Platform Security Assessment Framework',
+    author = 'CHIPSEC Team',
+    author_email = 'chipsec@intel.com',
+    url = 'https://github.com/chipsec/chipsec',
+    download_url="https://github.com/chipsec/chipsec",
+    license = 'GNU General Public License v2 (GPLv2)',
+    platforms=['any'],
+    long_description = long_description(),
 
-setup(name='chipsec', version=version(), description='CHIPSEC: Platform Security Assessment Framework',
-      author='CHIPSEC Team', author_email='chipsec@intel.com', url='https://github.com/chipsec/chipsec',
-      download_url="https://github.com/chipsec/chipsec", license='GNU General Public License v2 (GPLv2)',
-      platforms=['any'], long_description=long_description(),
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'Environment :: Console',
-          'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-          'Natural Language :: English',
-          'Operating System :: Microsoft :: Windows',
-          'Operating System :: POSIX :: Linux',
-          'Operating System :: MacOS :: MacOS X',
-          'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.6',
-          'Topic :: Security',
-          'Topic :: System :: Hardware'],
-      data_files=data_files, packages=find_packages(exclude=["tests.*", "tests"]), package_data=package_data,
-      install_requires=install_requires, py_modules=['chipsec_main', 'chipsec_util'],
-      entry_points={
-          'console_scripts': [
-              'chipsec_util=chipsec_util:main',
-              'chipsec_main=chipsec_main:main']},
-      test_suite="tests",
-      cmdclass={
-          'install': install,
-          'build': build,
-          'build_ext': build_ext,
-          'sdist': sdist},
-      ext_modules=extra_kw)
+    classifiers = [
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
+        'Natural Language :: English',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Topic :: Security',
+        'Topic :: System :: Hardware'
+    ],
+
+    data_files = data_files,
+    packages = find_packages(exclude=["tests.*", "tests"]),
+    package_data = package_data,
+    install_requires = install_requires,
+
+    py_modules=['chipsec_main', 'chipsec_util'],
+    entry_points = {
+        'console_scripts': [
+            'chipsec_util=chipsec_util:main',
+            'chipsec_main=chipsec_main:main',
+        ],
+    },
+    test_suite="tests",
+    cmdclass = {
+        'install': install,
+        'build': build,
+        'build_ext': build_ext,
+        'sdist': sdist,
+    },
+    ext_modules = extra_kw
+)
