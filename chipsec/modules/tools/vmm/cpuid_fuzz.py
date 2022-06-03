@@ -46,12 +46,12 @@ Additional options set within the module:
     - ``_LOG_OUT_RESULTS``       : Log output results
 
 .. note::
-    - Additional fuzzer options are set by variables within the module
-    - Returns a Warning by default.
-    - System may be in an unknown state, further evaluation may be needed.
+    - Returns a Warning by default
+    - System may be in an unknown state, further evaluation may be needed
 
 .. important::
     - This module is designed to run in a VM environment
+    - Behavior on physical HW is undefined
 
 """
 
@@ -140,6 +140,7 @@ class cpuid_fuzz (BaseModule):
         for s in range(steps):
             self.fuzz_CPUID(s * _EAX_FUZZ_STEP, _random_order)
 
+        self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
         self.res = ModuleResult.WARNING
         return self.res
