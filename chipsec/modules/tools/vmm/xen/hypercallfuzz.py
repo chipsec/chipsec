@@ -1,76 +1,70 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
-#
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#
-#Contact information:
-#chipsec@intel.com
-#
-
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
+# 
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# 
+# Contact information:
+# chipsec@intel.com
+# 
 
 
 """
 Xen hypercall fuzzer
 
 Usage:
-  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz \``
-  ``-a <mode>[,<vector>,<iterations>] -l log.txt``
+    ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a <mode>[,<vector>,<iterations>]``
 
-    - ``mode``				fuzzing mode
+    - ``mode``                       : fuzzing mode
 
-        * ``= help``			prints this help
-        * ``= info``			hypervisor information
-        * ``= fuzzing``			fuzzing specified hypercall
-        * ``= fuzzing-all``		fuzzing all hypercalls
-        * ``= fuzzing-all-randomly``	fuzzing random hypercalls
-    - ``vector``			code or name of a hypercall to be fuzzed (use info)
-    - ``iterations``			number of fuzzing iterations
+        * ``help``                 : Prints this help
+        * ``info``                 : Hypervisor information
+        * ``fuzzing``              : Fuzzing specified hypercall
+        * ``fuzzing-all``          : Fuzzing all hypercalls
+        * ``fuzzing-all-randomly`` : Fuzzing random hypercalls
+    - ``<vector>``                 : Code or name of a hypercall to be fuzzed (use info)
+    - ``<iterations>``             : Number of fuzzing iterations
 
 Examples:
+    >>> chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a fuzzing,10 -l log.txt
+    >>> chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a fuzzing-all,50 -l log.txt
+    >>> chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a fuzzing-all-randomly,10,0x10000000 -l log.txt
 
-  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a sched_op,10 -l log.txt``
-  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a xen_version,50 -l log.txt``
-  ``chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a set_timer_op,10,0x10000000 -l log.txt``
+.. note::
+    - Returns a Warning by default
+    - System may be in an unknown state, further evaluation may be needed
+
+.. important::
+    - This module is designed to run in a VM environment
+    - Behavior on physical HW is undefined
+
 """
 
-from chipsec.modules.tools.vmm.xen.define      import *
-from chipsec.modules.tools.vmm.xen.hypercall   import *
-from chipsec.hal.vmm                           import *
-from chipsec.module_common                     import *
-from chipsec.modules.tools.vmm.common          import *
+from chipsec.modules.tools.vmm.xen.define    import *
+from chipsec.module_common                   import BaseModule, ModuleResult
+from chipsec.modules.tools.vmm.xen.hypercall import XenHypercall
 
-class HypercallFuzz (BaseModule):
+class HypercallFuzz(BaseModule):
 
     def usage(self):
-        self.logger.log('')
-        self.logger.log('  Usage:' )
-        self.logger.log('    chipsec_main.py -i -m tools.vmm.xen.hypercallfuzz -a <mode>[,<hypercall>,<iterations>] -l log.txt' )
-        self.logger.log('      <mode>			fuzzing mode' )
-        self.logger.log('        = help			prints this help' )
-        self.logger.log('        = info			hypervisor information' )
-        self.logger.log('        = fuzzing		fuzzing hypercall specified with <vector>' )
-        self.logger.log('        = fuzzing-all		fuzzing all hypercalls' )
-        self.logger.log('        = fuzzing-all-randomly	fuzzing random hypercalls' )
-        self.logger.log('      <vector>			code or name of a hypercall to be fuzzed (use info)' )
-        self.logger.log('      <iterations>		number of fuzzing iterations' )
+        self.logger.log(self.__doc__.replace('`',''))
         return
 
     def get_int(self, arg, base = 10, defvalue = 10000):
         try:
             value = int(arg, base)
         except ValueError:
-            self.logger.error( "Invalid integer parameter: '{}' (using default value: {:d})".format(arg, defvalue))
+            self.logger.log_error("Invalid integer parameter: '{}' (using default value: {:d})".format(arg, defvalue))
             value = defvalue
         return value
 
@@ -83,19 +77,6 @@ class HypercallFuzz (BaseModule):
         xen = XenHypercall()
         xen.promt = 'CHIPSEC'
         xen.debug = False
-
-        ##
-        ## XSA-188 Workaround
-        ##
-        #(cntl_va, cntl_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
-        #(args_va, args_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
-        #cntl = '\x00' * 4096
-        #args = struct.pack('<QLLQ', cntl_pa >> 12, 0, 0, 0)
-        #self.cs.mem.write_physical_mem(args_pa, len(args), args)
-        #self.cs.mem.write_physical_mem(cntl_pa, len(cntl), cntl)
-        #result = xen.hypercall([EVENT_CHANNEL_OP, EVTCHOP_INIT_CONTROL, args_va])
-        #if result['status'] == XEN_STATUS_SUCCESS:
-        #    self.logger.log('Event channel control block has been initialized !')
 
         if command == 'help':
             self.usage()
@@ -113,7 +94,7 @@ class HypercallFuzz (BaseModule):
                 code = int(arg1, 16)
             except ValueError:
                 if arg1.lower() not in name2code:
-                    self.logger.error( "Unknown hypercall: '{}'".format(arg1))
+                    self.logger.log_error("Unknown hypercall: '{}'".format(arg1))
                     return ModuleResult.ERROR
                 code = name2code[arg1.lower()]
             count = self.get_int(arg2)
@@ -124,7 +105,6 @@ class HypercallFuzz (BaseModule):
             xen.scan_hypercalls(range(256))
             xen.print_hypercall_status()
             self.logger.log('\nStart fuzzing ...\n')
-            #excluded = [MEMORY_OP, CONSOLE_IO, GRANT_TABLE_OP, SCHED_OP, EVENT_CHANNEL_OP]
             excluded = [MEMORY_OP, CONSOLE_IO, GRANT_TABLE_OP, SCHED_OP]
             vectors = sorted([x for x in xen.hypercalls.keys() if x not in excluded])
             if command == 'fuzzing-all':
@@ -136,4 +116,7 @@ class HypercallFuzz (BaseModule):
             self.logger.log('Invalid command: {}\n'.format(command))
             self.usage()
 
-        return ModuleResult.PASSED
+        self.logger.log_information('Module completed')
+        self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
+        self.res = ModuleResult.WARNING
+        return self.res
