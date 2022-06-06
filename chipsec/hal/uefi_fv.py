@@ -243,12 +243,14 @@ def FvSum16(buffer):
 def FvChecksum16(buffer):
     return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
-def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size):
+def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size, Calcsum, Checksum):
     # zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
     fv_rsvd = (Reserved == 0)
     # fs_guid = (FsGuid in (EFI_FS_GUIDS + [VARIABLE_STORE_FV_GUID]))
     fv_len = (FvLength <= size)
     fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
+    if Checksum != Calcsum:
+        logger().log_warning("Firmware Volume {{{}}} checksum does not match calculated checksum".format(FsGuid))
     return fv_rsvd and fv_len and fv_header_len
 
 def NextFwVolume(buffer, off = 0):
@@ -276,7 +278,7 @@ def NextFwVolume(buffer, off = 0):
             fvh = fvh + tail
         CalcSum = FvChecksum16(fvh)
         FsGuid = UUID(bytes_le=FileSystemGuid0)
-        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size)):
+        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size, CalcSum, Checksum)):
             return EFI_FV(fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof +FvLength], CalcSum)
         else:
             fof += 0x2C
