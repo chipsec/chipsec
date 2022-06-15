@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<configuration platform="PCH_8x">
+<!--
+CHIPSEC: Platform Security Assessment Framework
+Copyright (c) 2021, Intel Corporation
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; Version 2.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+Contact information:
+chipsec@intel.com
+-->
+
+<!--
+XML configuration file for 8 series based platforms
+
+* Intel(R) 8 Series Chipset Family Platform Controller Hub (PCH)
+  http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+  https://www.intel.com/content/dam/www/public/us/en/documents/datasheets/8-series-chipset-pch-datasheet.pdf
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0x8C4E" name="Q87"  code="PCH_8x" longname="Intel Q87 (8 series) PCH" />
+  </info>
+</configuration>
