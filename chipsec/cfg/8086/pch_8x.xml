@@ -35,6 +35,20 @@ XML configuration file for 8 series based platforms
   <!--                                      -->
   <!-- #################################### -->
   <info>
-    <sku did="0x8C4E" name="Q87"  code="PCH_8x" longname="Intel Q87 (8 series) PCH" />
+    <sku did="0x8C41" name="MES"   code="PCH_8x" longname="Mobile Engineering Sample" />
+    <sku did="0x8C42" name="DES"   code="PCH_8x" longname="Desktop Engineering Sample" />
+    <sku did="0x8C44" name="Z87"   code="PCH_8x" longname="Intel Z87 (8 series) PCH" />
+    <sku did="0x8C46" name="Z85"   code="PCH_8x" longname="Intel Z85 (8 series) PCH" />
+    <sku did="0x8C49" name="HM86"  code="PCH_8x" longname="Intel HM86 (8 series) PCH" />
+    <sku did="0x8C4A" name="H87"   code="PCH_8x" longname="Intel H87 (8 series) PCH" />
+    <sku did="0x8C4B" name="HM87"  code="PCH_8x" longname="Intel HM87 (8 series) PCH" />
+    <sku did="0x8C4C" name="Q85"   code="PCH_8x" longname="Intel Q85 (8 series) PCH" />
+    <sku did="0x8C4E" name="Q87"   code="PCH_8x" longname="Intel Q87 (8 series) PCH" />
+    <sku did="0x8C4F" name="QM87"  code="PCH_8x" longname="Intel QM87 (8 series) PCH" />
+    <sku did="0x8C50" name="B85"   code="PCH_8x" longname="Intel B85 (8 series) PCH" />
+    <sku did="0x8C52" name="C222"  code="PCH_8x" longname="Intel C222 (8 series) PCH" />
+    <sku did="0x8C54" name="C224"  code="PCH_8x" longname="Intel C224 (8 series) PCH" />
+    <sku did="0x8C56" name="C226"  code="PCH_8x" longname="Intel C226 (8 series) PCH" />
+    <sku did="0x8C5C" name="H81"   code="PCH_8x" longname="Intel H81 (8 series) PCH" />
   </info>
 </configuration>
