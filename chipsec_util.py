@@ -147,7 +147,7 @@ class ChipsecUtil:
                 self.commands.update(cu)
             except ImportError as msg:
                 # Display the import error and continue to import commands
-                logger().error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
+                logger().log_error("Exception occurred during import of {}: '{}'".format(cmd, str(msg)))
                 continue
         self.commands.update({"help": ""})
 
@@ -175,20 +175,20 @@ class ChipsecUtil:
                 self._cs.init(self._platform, self._pch, comm.requires_driver() and not self._no_driver,
                               self._driver_exists)
             except UnknownChipsetError as msg:
-                logger().warn("*******************************************************************")
-                logger().warn("* Unknown platform!")
-                logger().warn("* Platform dependent functionality will likely be incorrect")
-                logger().warn("* Error Message: \"{}\"".format(str(msg)))
-                logger().warn("*******************************************************************")
+                logger().log_warning("*******************************************************************")
+                logger().log_warning("* Unknown platform!")
+                logger().log_warning("* Platform dependent functionality will likely be incorrect")
+                logger().log_warning("* Error Message: \"{}\"".format(str(msg)))
+                logger().log_warning("*******************************************************************")
                 if self._unknownPlatform:
-                    logger().error('To run anyways please use -i command-line option\n\n')
+                    logger().log_error('To run anyways please use -i command-line option\n\n')
                     sys.exit(ExitCode.OK)
             except Exception as msg:
-                logger().error(str(msg))
+                logger().log_error(str(msg))
                 sys.exit(ExitCode.EXCEPTION)
         else:
             if comm.requires_driver():
-                logger().error("Cannot run without driver loaded")
+                logger().log_error("Cannot run without driver loaded")
                 sys.exit(ExitCode.OK)
 
         if self._show_banner:
@@ -224,7 +224,7 @@ class ChipsecUtil:
         logger().log(get_message())
 
         if not self.PYTHON_64_BITS and platform.machine().endswith("64"):
-            logger().warn("Python architecture (32-bit) is different from OS architecture (64-bit)")
+            logger().log_warning("Python architecture (32-bit) is different from OS architecture (64-bit)")
 
 
 def main(argv=None):
