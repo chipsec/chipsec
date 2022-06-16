@@ -31,7 +31,7 @@ usage:
 import struct
 
 from chipsec.hal.hal_base import HALBase
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 
 
 class Memory(HALBase):
@@ -81,7 +81,7 @@ class Memory(HALBase):
     def write_physical_mem(self, phys_address, length, buf):
         if self.logger.HAL:
             self.logger.log('[mem] buffer len = 0x{:X} to PA = 0x{:016X}'.format(length, phys_address))
-            print_buffer(buf)
+            print_buffer_bytes(buf)
         return self.helper.write_physical_mem(phys_address, length, buf)
 
     def write_physical_mem_dword(self, phys_address, dword_value):
