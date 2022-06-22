@@ -23,7 +23,7 @@
 This module triggers host crash on vulnerable Xen 4.4
 
 Reference:
-    - Proof-of-concept module for Xen XSA-188 <https://xenbits.xen.org/xsa/advisory-188.html>`_
+    - `Proof-of-concept module for Xen XSA-188 <https://xenbits.xen.org/xsa/advisory-188.html>`_
         - CVE-2016-7154: "use after free in FIFO event channel code"
         - Discovered by Mikhail Gorobets
 
