@@ -83,13 +83,13 @@ class sgx_check(BaseModule):
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
-                    self.logger.verbose_log("[*] Failed to set affinity to CPU{:d}".format(tid))
+                    self.logger.log_verbose("[*] Failed to set affinity to CPU{:d}".format(tid))
                 (_, r_ebx, _, _) = self.cs.cpu.cpuid(0x07, 0x00)
                 if r_ebx & BIT2:
-                    self.logger.verbose_log("[*] CPU{:d}: does support SGX".format(tid))
+                    self.logger.log_verbose("[*] CPU{:d}: does support SGX".format(tid))
                     sgx_cpu_support = True
                 else:
-                    self.logger.verbose_log("[*]CPU{:d}: does not support SGX".format(tid))
+                    self.logger.log_verbose("[*]CPU{:d}: does not support SGX".format(tid))
                     self.logger.log_important('SGX not supported.  Skipping module.')
         if not sgx_cpu_support:
             self.res = ModuleResult.NOTAPPLICABLE
@@ -115,7 +115,7 @@ class sgx_check(BaseModule):
         locked = True
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             feature_cntl_lock = self.cs.get_control('Ia32FeatureControlLock', tid)
-            self.logger.verbose_log("[*] cpu{:d}: IA32_Feature_Control Lock = {:d}".format(tid, feature_cntl_lock))
+            self.logger.log_verbose("[*] cpu{:d}: IA32_Feature_Control Lock = {:d}".format(tid, feature_cntl_lock))
             if 0 == feature_cntl_lock:
                 locked = False
         if locked:
@@ -131,10 +131,10 @@ class sgx_check(BaseModule):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             mtrrcap = self.cs.read_register_field('MTRRCAP', 'PRMRR', False, tid)
             if mtrrcap == 0:
-                self.logger.verbose_log("[*] CPU{:d} Protected Memory Range configuration is not supported".format(tid))
+                self.logger.log_verbose("[*] CPU{:d} Protected Memory Range configuration is not supported".format(tid))
             else:
                 prmrr_enable = True
-                self.logger.verbose_log("[*] CPU{:d} Protected Memory Range configuration is supported".format(tid))
+                self.logger.log_verbose("[*] CPU{:d} Protected Memory Range configuration is supported".format(tid))
         if prmrr_enable:
             self.logger.log_good("Protected Memory Range configuration is supported")
         else:
@@ -294,18 +294,18 @@ class sgx_check(BaseModule):
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 status = self.helper.set_affinity(tid)
                 if status == -1:
-                    self.logger.verbose_log("[*] Failed to set affinity to CPU{:d}".format(tid))
+                    self.logger.log_verbose("[*] Failed to set affinity to CPU{:d}".format(tid))
                 (r_eax, _, _, _) = self.cs.cpu.cpuid(0x012, 0x00)
                 if r_eax & BIT0:
-                    self.logger.verbose_log("[*] CPU{:d} SGX-1 instructions are supported".format(tid))
+                    self.logger.log_verbose("[*] CPU{:d} SGX-1 instructions are supported".format(tid))
                     sgx1_instr_support = True
                 else:
-                    self.logger.verbose_log("[*] CPU{:d} SGX-1 instructions are not supported".format(tid))
+                    self.logger.log_verbose("[*] CPU{:d} SGX-1 instructions are not supported".format(tid))
                 if r_eax & BIT1:
-                    self.logger.verbose_log("[*] CPU{:d} SGX-2 instructions are supported".format(tid))
+                    self.logger.log_verbose("[*] CPU{:d} SGX-2 instructions are supported".format(tid))
                     sgx2_instr_support = True
                 else:
-                    self.logger.verbose_log("[*] CPU{:d} SGX-2 instructions are not supported".format(tid))
+                    self.logger.log_verbose("[*] CPU{:d} SGX-2 instructions are not supported".format(tid))
             if sgx1_instr_support:
                 self.logger.log_good("Intel SGX instructions are supported and available to use")
                 sgx_ok = True
