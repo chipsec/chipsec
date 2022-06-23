@@ -1,19 +1,19 @@
 # CHIPSEC: Platform Security Assessment Framework
 # Copyright (c) 2010-2020, Intel Corporation
-# 
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; Version 2.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-# 
+#
 # Contact information:
 # chipsec@intel.com
 #
@@ -59,7 +59,7 @@ class bios_ts(BaseModule):
         if self.cs.is_control_defined('TopSwapStatus'):
             if self.cs.is_control_all_ffs('TopSwapStatus'):
                 self.logger.log("[*] BIOS Top Swap mode: can't determine status.")
-                self.logger.verbose_log('TopSwapStatus read returned all 0xFs.')
+                self.logger.log_verbose('TopSwapStatus read returned all 0xFs.')
             else:
                 tss = self.cs.get_control('TopSwapStatus')
                 self.logger.log("[*] BIOS Top Swap mode is {} (TSS = {:d})".format('enabled' if (1==tss) else 'disabled', tss))
@@ -67,7 +67,7 @@ class bios_ts(BaseModule):
         if self.cs.is_control_defined('TopSwap'):
             if self.cs.is_control_all_ffs('TopSwap'):
                 self.logger.log("[*] RTC Top Swap control (TS): can't determine status.")
-                self.logger.verbose_log('TopSwap read returned all 0xFs.')
+                self.logger.log_verbose('TopSwap read returned all 0xFs.')
             else:
                 ts = self.cs.get_control('TopSwap')
                 self.logger.log("[*] RTC TopSwap control (TS) = {:x}".format(ts))
