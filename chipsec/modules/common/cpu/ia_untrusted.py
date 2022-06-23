@@ -1,25 +1,36 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2018-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
 IA Untrusted checks
+
+Usage:
+    ``chipsec_main -m common.cpu.ia_untrusted``
+
+Examples:
+    >>> chipsec_main.py -m common.cpu.ia_untrusted
+
+Registers used:
+    - MSR_BIOS_DONE.IA_UNTRUSTED
+    - MSR_BIOS_DONE.SoC_BIOS_DONE
+
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
@@ -31,9 +42,9 @@ class ia_untrusted(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if self.cs.is_register_defined('MSR_BIOS_DONE') and \
-           self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+        if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             return True
+        self.logger.log_important('MSR_BIOS_DONE.IA_UNTRUSTED is not defined for platform.  Skipping checks.')
         self.res = ModuleResult.NOTAPPLICABLE
         return False
 
@@ -66,7 +77,7 @@ class ia_untrusted(BaseModule):
         self.res = self.check_untrusted()
         self.logger.log("")
         if self.res == ModuleResult.PASSED:
-            self.logger.log_passed_check("IA_UNTRUSTED set on all threads")
+            self.logger.log_passed("IA_UNTRUSTED set on all threads")
         elif self.res == ModuleResult.FAILED:
-            self.logger.log_failed_check("IA_UNTRUSTED not set on all threads")
+            self.logger.log_failed("IA_UNTRUSTED not set on all threads")
         return self.res
