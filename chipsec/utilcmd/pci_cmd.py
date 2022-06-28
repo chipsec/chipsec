@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -154,7 +154,7 @@ class PCICommand(BaseCommand):
             elif 2 == width: pci_value = self.cs.pci.read_word (self.bus, self.device, self.function, self.offset)
             elif 4 == width: pci_value = self.cs.pci.read_dword(self.bus, self.device, self.function, self.offset)
             else:
-                self.logger.error( "Width should be one of {}".format(CMD_OPTS_WIDTH) )
+                self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
                 return
             self.logger.log( "[CHIPSEC] PCI {:02X}:{:02X}.{:02X} + 0x{:02X}: 0x{:X}".format(self.bus, self.device, self.function, self.offset, pci_value) )
 
@@ -165,7 +165,7 @@ class PCICommand(BaseCommand):
             elif 2 == width: self.cs.pci.write_word ( self.bus, self.device, self.function, self.offset, self.value )
             elif 4 == width: self.cs.pci.write_dword( self.bus, self.device, self.function, self.offset, self.value )
             else:
-                self.logger.error( "Width should be one of {}".format(CMD_OPTS_WIDTH) )
+                self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
                 return
             self.logger.log( "[CHIPSEC] Write 0x{:X} to PCI {:02X}:{:02X}.{:02X} + 0x{:02X}".format(self.value, self.bus, self.device, self.function, self.offset) )
 

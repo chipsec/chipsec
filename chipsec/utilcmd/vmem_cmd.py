@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -106,7 +106,7 @@ class VMemCommand(BaseCommand):
         try:
             buffer = self._vmem.read_virtual_mem( self.virt_address, self.size )
         except (TypeError, OSError):
-            self.logger.error( 'Error mapping VA to PA.' )
+            self.logger.log_error('Error mapping VA to PA.')
             return
 
         if self.buf_file:
@@ -134,10 +134,10 @@ class VMemCommand(BaseCommand):
             elif 0x2 == width: value = self._vmem.read_virtual_mem_word ( self.virt_address )
             elif 0x4 == width: value = self._vmem.read_virtual_mem_dword( self.virt_address )
             else:
-                self.logger.error( "Must specify <length> argument in 'mem readval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH) )
+                self.logger.log_error("Must specify <length> argument in 'mem readval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH))
                 return
         except (TypeError, OSError):
-            self.logger.error( 'Error mapping VA to PA.' )
+            self.logger.log_error('Error mapping VA to PA.')
             return
         self.logger.log( '[CHIPSEC] value = 0x{:X}'.format(value) )
 
@@ -147,8 +147,8 @@ class VMemCommand(BaseCommand):
             try:
                 buffer = bytearray.fromhex(self.buf_file)
             except ValueError as e:
-                self.logger.error( "Incorrect <value> specified: '{}'".format(self.buf_file) )
-                self.logger.error( str(e) )
+                self.logger.log_error("Incorrect <value> specified: '{}'".format(self.buf_file))
+                self.logger.log_error(str(e))
                 return
             self.logger.log( "[CHIPSEC] Read 0x{:X} hex bytes from command-line: {}'".format(len(buffer), self.buf_file) )
         else:
@@ -156,7 +156,7 @@ class VMemCommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Read 0x{:X} bytes from file '{}'".format(len(buffer), self.buf_file) )
 
         if len(buffer) < self.size:
-            self.logger.error( "Number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), self.size) )
+            self.logger.log_error("Number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), self.size))
             return
 
         self.logger.log( '[CHIPSEC] Writing buffer to memory: VA = 0x{:016X}, len = 0x{:X}.'.format(self.virt_address, self.size) )
@@ -178,16 +178,16 @@ class VMemCommand(BaseCommand):
             elif 0x2 == width: self._vmem.write_virtual_mem_word ( self.virt_address, self.value )
             elif 0x4 == width: self._vmem.write_virtual_mem_dword( self.virt_address, self.value )
             else:
-                self.logger.error( "Must specify <length> argument in 'mem writeval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH) )
+                self.logger.log_error("Must specify <length> argument in 'mem writeval' as one of {}".format(chipsec_util.CMD_OPTS_WIDTH))
         except (TypeError, OSError):
-            self.logger.error( 'Error mapping VA to PA.' )
+            self.logger.log_error('Error mapping VA to PA.')
 
 
     def vmem_search(self):
         try:
             buffer = self._vmem.read_virtual_mem( self.virt_address, self.size )
         except (TypeError, OSError):
-            self.logger.error( 'Error mapping VA to PA.' )
+            self.logger.log_error('Error mapping VA to PA.')
             return
 
         buffer = bytestostring(buffer)
@@ -205,7 +205,7 @@ class VMemCommand(BaseCommand):
         try:
             (va, pa) = self._vmem.alloc_virtual_mem( self.size )
         except (TypeError, OSError):
-            self.logger.error( 'Error mapping VA to PA.' )
+            self.logger.log_error('Error mapping VA to PA.')
             return
         self.logger.log( '[CHIPSEC] Allocated {:X} bytes of virtual memory:'.format(self.size) )
         self.logger.log( '          VA = 0x{:016X}'.format(va) )
@@ -216,7 +216,7 @@ class VMemCommand(BaseCommand):
         try:
             pa = self._vmem.va2pa( self.virt_address )
         except (TypeError, OSError):
-            self.logger.error( 'Error mapping VA to PA.' )
+            self.logger.log_error('Error mapping VA to PA.')
             return
         if pa is not None:
             self.logger.log( '[CHIPSEC] Virtual memory:' )

@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2018-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -53,7 +53,7 @@ class DeltasCommand(BaseCommand):
         previous = chipsec.result_deltas.get_json_results(self._prev_log)
         current = chipsec.result_deltas.get_json_results(self._cur_log)
         if previous is None or current is None:
-            self.logger.error('Unable to process JSON log files.')
+            self.logger.log_error('Unable to process JSON log files.')
             return
         deltas = chipsec.result_deltas.compute_result_deltas(previous, current)
 
@@ -64,7 +64,7 @@ class DeltasCommand(BaseCommand):
             elif self._out_format.upper() == 'XML':
                 chipsec.result_deltas.log_deltas_xml(deltas, self._out_name)
             else:
-                self.logger.error('Output log format not supported: {}'.format(self._out_format))
+                self.logger.log_error('Output log format not supported: {}'.format(self._out_format))
 
         # Display the results
         chipsec.result_deltas.display_deltas(deltas, True, start_time)
