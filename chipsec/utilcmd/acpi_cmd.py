@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -70,10 +70,10 @@ class ACPICommand(BaseCommand):
     def acpi_table(self):
         name = self._name[0]
         if not self._file and not self._acpi.is_ACPI_table_present( name ):
-            self.logger.error( "Please specify table name from {}".format(self._acpi.tableList.keys()) )
+            self.logger.log_error("Please specify table name from {}".format(self._acpi.tableList.keys()))
             return
         elif self._file and not path_exists( name ):
-            self.logger.error( "[CHIPSEC] Unable to find file '{}'".format(name) )
+            self.logger.log_error("[CHIPSEC] Unable to find file '{}'".format(name))
             return
         self.logger.log( "[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '', name) )
         self._acpi.dump_ACPI_table( name, self._file )

@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -153,11 +153,11 @@ class MemCommand(BaseCommand):
             try:
                 width = get_option_width(self.length) if is_option_valid_width(self.length) else int(self.length, 16)
             except ValueError:
-                self.logger.error("[CHIPSEC] Bad length given '{}'".format(self.length))
+                self.logger.log_error("[CHIPSEC] Bad length given '{}'".format(self.length))
                 return
 
         if width not in (0x1,0x2,0x4):
-            self.logger.error( "Must specify <length> argument in 'mem readval' as one of {}".format(CMD_OPTS_WIDTH) )
+            self.logger.log_error("Must specify <length> argument in 'mem readval' as one of {}".format(CMD_OPTS_WIDTH))
             return
         self.logger.log( '[CHIPSEC] Reading {:X}-byte value from PA 0x{:016X}..'.format(width, self.phys_address) )
         if   0x1 == width: value = self.cs.mem.read_physical_mem_byte ( self.phys_address )
@@ -170,7 +170,7 @@ class MemCommand(BaseCommand):
             try:
                 buffer = bytearray.fromhex(self.buffer_data)
             except ValueError:
-                self.logger.error( "Incorrect <value> specified: '{}'".format(self.buffer_data) )
+                self.logger.log_error("Incorrect <value> specified: '{}'".format(self.buffer_data))
                 return
             self.logger.log( "[CHIPSEC] Read 0x{:X} hex bytes from command-line: '{}'".format(len(buffer), self.buffer_data) )
         else:
@@ -178,7 +178,7 @@ class MemCommand(BaseCommand):
             self.logger.log( "[CHIPSEC] Read 0x{:X} bytes from file '{}'".format(len(buffer), self.buffer_data) )
 
         if len(buffer) < self.buffer_length:
-            self.logger.error( "Number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), self.buffer_length) )
+            self.logger.log_error("Number of bytes read (0x{:X}) is less than the specified <length> (0x{:X})".format(len(buffer), self.buffer_length))
             return
 
         self.logger.log( '[CHIPSEC] writing buffer to memory: PA = 0x{:016X}, len = 0x{:X}..'.format(self.phys_address, self.buffer_length) )
@@ -188,11 +188,11 @@ class MemCommand(BaseCommand):
             try:
                 width = get_option_width(self.length) if is_option_valid_width(self.length) else int(self.length, 16)
             except ValueError:
-                self.logger.error( "Must specify <length> argument in 'mem writeval' as one of {}".format(CMD_OPTS_WIDTH) )
+                self.logger.log_error("Must specify <length> argument in 'mem writeval' as one of {}".format(CMD_OPTS_WIDTH))
                 return
 
             if width not in (0x1,0x2,0x4):
-                self.logger.error( "Must specify <length> argument in 'mem writeval' as one of {}".format(CMD_OPTS_WIDTH) )
+                self.logger.log_error("Must specify <length> argument in 'mem writeval' as one of {}".format(CMD_OPTS_WIDTH))
                 return
             self.logger.log( '[CHIPSEC] Writing {:X}-byte value 0x{:X} to PA 0x{:016X}..'.format(width, self.write_data, self.phys_address) )
             if   0x1 == width: self.cs.mem.write_physical_mem_byte ( self.phys_address, self.write_data )
