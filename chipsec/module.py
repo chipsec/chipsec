@@ -59,7 +59,7 @@ class Module():
     def do_import(self):
         loaded = False
         if not MODPATH_RE.match(self.get_name()):
-            self.logger.error( "Invalid module path: {}".format(self.name) )
+            self.logger.log_error("Invalid module path: {}".format(self.name))
         else:
             try:
                 if _importlib:
@@ -67,7 +67,7 @@ class Module():
                 loaded = True
                 if self.logger.DEBUG: self.logger.log_good( "imported: {}".format(self.name) )
             except BaseException as msg:
-                self.logger.error( "Exception occurred during import of {}: '{}'".format(self.name, str(msg)) )
+                self.logger.log_error("Exception occurred during import of {}: '{}'".format(self.name, str(msg)))
                 if self.logger.DEBUG: self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded

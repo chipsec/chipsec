@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -32,8 +32,8 @@
 Reading from/writing to files
 
 usage:
-    >>> read_file( filename )
-    >>> write_file( filename, buffer )
+    >>> read_file(filename)
+    >>> write_file(filename, buffer)
 """
 
 import struct
@@ -52,7 +52,7 @@ def read_file( filename, size=0 ):
     try:
         f = open(filename, 'rb')
     except:
-        logger().error( "Unable to open file '{:.256}' for read access".format(filename) )
+        logger().log_error("Unable to open file '{:.256}' for read access".format(filename))
         return 0
 
     if size:
@@ -74,7 +74,7 @@ def write_file( filename, buffer, append=False ):
     try:
         f = open(filename, perm)
     except:
-        logger().error( "Unable to open file '{:.256}' for write access".format(filename) )
+        logger().log_error("Unable to open file '{:.256}' for write access".format(filename))
         return 0
     f.write( buffer )
     f.close()
