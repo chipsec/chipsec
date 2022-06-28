@@ -165,7 +165,7 @@ class rogue_mmio_bar(BaseModule):
                 d, f = df.split('.')
                 pcie_devices = [ (int(b, 16), int(d, 16), int(f, 16), 0, 0) ]
             except:
-                self.logger.error("Incorrect b:d.f format\nUsage:\nchipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]")
+                self.logger.log_error("Incorrect b:d.f format\nUsage:\nchipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]")
         else:
             self.logger.log("[*] Discovering PCIe devices..")
             pcie_devices = self.cs.pci.enumerate_devices()
