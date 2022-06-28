@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -231,7 +231,7 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 def _handle_winerror(fn, msg, hr):
     _handle_error( ("{} failed: {} ({:d})".format(fn, msg, hr)), hr )
 def _handle_error( err, hr=0 ):
-    if logger().DEBUG: logger().error( err )
+    if logger().DEBUG: logger().log_error(err)
     raise OsHelperError( err, hr )
 
 class Win32Helper(Helper):
@@ -453,7 +453,7 @@ class Win32Helper(Helper):
             self.driver_handle = None
             win32serviceutil.StopService( SERVICE_NAME )
         except pywintypes.error as err:
-            if logger().DEBUG: logger().error( "StopService failed: {} ({:d})".format(err.args[2], err.args[0]) )
+            if logger().DEBUG: logger().log_error("StopService failed: {} ({:d})".format(err.args[2], err.args[0]))
             return False
         finally:
             self.driver_loaded = False
@@ -521,7 +521,7 @@ class Win32Helper(Helper):
             err_status = _err.args[0] + 0x100000000
             if STATUS_PRIVILEGED_INSTRUCTION == err_status:
                 err_msg = "HW Access Violation: DeviceIoControl returned STATUS_PRIVILEGED_INSTRUCTION (0x{:X})".format(err_status)
-                if logger().DEBUG: logger().error( err_msg )
+                if logger().DEBUG: logger().log_error(err_msg)
                 raise HWAccessViolationError( err_msg, err_status )
             else:
                 _handle_error( "HW Access Error: DeviceIoControl returned status 0x{:X} ({})".format(err_status, _err.args[2]), err_status )
@@ -737,7 +737,7 @@ class Win32Helper(Helper):
                 length = self.GetFirmwareEnvironmentVariableEx( name, "{{{}}}".format(guid), efi_var, EFI_VAR_MAX_BUFFER_SIZE, pattrs )
         if (0 == length) or (efi_var is None):
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            if logger().DEBUG: logger().log_error('GetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()))
             efi_var_data = None
             #raise WinError(errno.EIO,"Unable to get EFI variable")
         else:
@@ -768,7 +768,7 @@ class Win32Helper(Helper):
             status = 0 # EFI_SUCCESS
         else:
             status = kernel32.GetLastError()
-            if logger().DEBUG: logger().error( 'SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()) )
+            if logger().DEBUG: logger().log_error('SetFirmwareEnvironmentVariable[Ex] returned error: {}'.format(WinError()))
             #raise WinError(errno.EIO, "Unable to set EFI variable")
         return status
 
@@ -797,8 +797,8 @@ class Win32Helper(Helper):
                 return None
             else:
                 if logger().DEBUG:
-                    logger().error( 'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(lasterror) )
-                    logger().error( '*** NTSTATUS: {:08X}'.format(status) )
+                    logger().log_error('NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{:X})'.format(lasterror))
+                    logger().log_error('*** NTSTATUS: {:08X}'.format(status))
                 raise WinError()
         if logger().DEBUG: logger().log( '[helper] len(efi_vars) = 0x{:X} (should be 0x20000)'.format(len(efi_vars)) )
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( efi_vars )
@@ -876,7 +876,7 @@ class Win32Helper(Helper):
         retVal = self.GetSystemFirmwareTbl( FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size )
         if retVal == 0:
             if logger().DEBUG:
-                logger().error( 'GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()) )
+                logger().log_error('GetSystemFirmwareTable({}) returned error: {}'.format(table_name, WinError()))
             return None
         if retVal > table_size:
             table_size = retVal
@@ -895,15 +895,15 @@ class Win32Helper(Helper):
     #
 
     def msgbus_send_read_message( self, mcr, mcrx ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().log_error("[helper] Message Bus is not supported yet")
         return None
 
     def msgbus_send_write_message( self, mcr, mcrx, mdr ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().log_error("[helper] Message Bus is not supported yet")
         return None
 
     def msgbus_send_message( self, mcr, mcrx, mdr=None ):
-        if logger().DEBUG: logger().error( "[helper] Message Bus is not supported yet" )
+        if logger().DEBUG: logger().log_error("[helper] Message Bus is not supported yet")
         return None
 
     def rotate_list(self, list, n):
@@ -952,7 +952,7 @@ class Win32Helper(Helper):
         encode_str += FileName
         data = subprocess.call(encode_str, stdout=open(os.devnull, 'wb'), shell=True)
         if not data == 0 and logger().DEBUG:
-            logger().error("Cannot compress file({})".format(FileName))
+            logger().log_error("Cannot compress file({})".format(FileName))
             return False
         return True
 
@@ -984,7 +984,7 @@ class Win32Helper(Helper):
         data = subprocess.call(decode_str, stdout=open(os.devnull, 'wb'), shell=True)
         if not data == 0:
             if logger().DEBUG:
-                logger().error("Cannot decompress file({})".format(CompressedFileName))
+                logger().log_error("Cannot decompress file({})".format(CompressedFileName))
             return False
         return True
 

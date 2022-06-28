@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2018-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -65,12 +65,12 @@ class FileCmds:
     def Load(self):
         file_data = chipsec.file.read_file(self.filename)
         if file_data == 0:
-            logger().error("Unable to open JSON file: {}".format(self.filename))
+            logger().log_error("Unable to open JSON file: {}".format(self.filename))
             raise OsHelperError("Unable to open JSON file: {}".format(self.filename), 1)
         try:
             self.data = json.loads(file_data)
         except:
-            logger().error("Unable to load JSON file: {}".format(self.filename))
+            logger().log_error("Unable to load JSON file: {}".format(self.filename))
             raise OsHelperError("Unable to open JSON file: {}".format(self.filename), 1)
 
     def getElement(self, cmd, args):
@@ -82,7 +82,7 @@ class FileCmds:
         if str(cmd) in self.data:
             if margs in self.data[str(cmd)]:
                 return self.data[cmd][margs].pop()
-        logger().error("Missing entry for {} {}".format(str(cmd), margs))
+        logger().log_error("Missing entry for {} {}".format(str(cmd), margs))
 
 
 class FileHelper(Helper):
