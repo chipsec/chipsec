@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -86,7 +86,7 @@ class SMBus(hal_base.HALBase):
         if self.logger.HAL: self.logger.log( "[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
         if (0x8086 == vid): return True
         else:
-            self.logger.error( "Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid) )
+            self.logger.log_error("Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid))
             return False
 
     def is_SMBus_host_controller_enabled( self ):
@@ -140,16 +140,16 @@ class SMBus(hal_base.HALBase):
                 #kill = 0
                 #if chipsec.chipset.register_has_field( self.cs, self.smb_reg_control, 'KILL' ):
                 #    kill = chipsec.chipset.read_register_field( self.cs, self.smb_reg_control, 'KILL' )
-                if self.logger.HAL: self.logger.error( "SMBus transaction failed (FAILED/ERROR bit = 1)" )
+                if self.logger.HAL: self.logger.log_error("SMBus transaction failed (FAILED/ERROR bit = 1)")
                 return False
             else:
                 if self.cs.register_has_field( self.smb_reg_status, 'DEV_ERR' ):
                     if 1 == self.cs.get_register_field( self.smb_reg_status, sts, 'DEV_ERR' ):
-                        if self.logger.HAL: self.logger.error( "SMBus device error (invalid cmd, unclaimed cycle or time-out error)" )
+                        if self.logger.HAL: self.logger.log_error("SMBus device error (invalid cmd, unclaimed cycle or time-out error)")
                         return False
                 if self.cs.register_has_field( self.smb_reg_status, 'BUS_ERR' ):
                     if 1 == self.cs.get_register_field( self.smb_reg_status, sts, 'BUS_ERR' ):
-                        if self.logger.HAL: self.logger.error( "SMBus bus error" )
+                        if self.logger.HAL: self.logger.log_error("SMBus bus error")
                         return False
         return (0 == busy)
 

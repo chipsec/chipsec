@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -109,7 +109,7 @@ class Interrupts(hal_base.HALBase):
                 #check for return status
                 ret_buf = self.cs.helper.read_io_port(buf_addr, 8)
             else:
-                logger().error("Functionality is currently not implemented")
+                logger().log_error("Functionality is currently not implemented")
                 ret_buf = None
             return ret_buf
 
@@ -174,14 +174,14 @@ MdeModulePkg/Core/PiSmmCore/PiSmmCorePrivateData.h
         self.cs.mem.write_physical_mem(smmc + CommBuffer_offset, 8, struct.pack("Q", payload_loc))
         self.cs.mem.write_physical_mem(smmc + BufferSize_offset, 8, struct.pack("Q", len(data_hdr)))
         self.cs.mem.write_physical_mem(payload_loc, len(data_hdr), data_hdr)
-        
+
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on input")
             print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))
             self.logger.log("")
 
         self.send_SMI_APMC(CommandPort, DataPort)
-        
+
         if self.logger.VERBOSE:
             self.logger.log("[*] Communication buffer on output")
             print_buffer_bytes(self.cs.mem.read_physical_mem(payload_loc, len(data_hdr)))

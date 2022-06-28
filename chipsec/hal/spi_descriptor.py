@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -83,12 +83,12 @@ def get_spi_regions( fd ):
 
 def parse_spi_flash_descriptor( cs, rom ):
     if not (isinstance(rom, str) or isinstance(rom, bytes)):
-        logger().error('Invalid fd object type {}'.format(type(rom)))
+        logger().log_error('Invalid fd object type {}'.format(type(rom)))
         return
 
     pos = rom.find( SPI_FLASH_DESCRIPTOR_SIGNATURE )
     if (-1 == pos or pos < 0x10):
-        logger().error( 'Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I', SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]) )
+        logger().log_error('Valid SPI flash descriptor is not found (should have signature {:08X})'.format(struct.unpack('=I', SPI_FLASH_DESCRIPTOR_SIGNATURE)[0]))
         return None
 
     fd_off = pos - 0x10
