@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -178,7 +178,7 @@ class s3bootscript(BaseModule):
         self.res = ModuleResult.ERROR
 
         if len(module_argv) > 2:
-            self.logger.error( 'Expected module options: -a <bootscript_address>' )
+            self.logger.log_error('Expected module options: -a <bootscript_address>')
             return self.res
 
         script_pa = None
@@ -196,7 +196,7 @@ class s3bootscript(BaseModule):
             else:
                 self.res = self.check_s3_bootscripts( )
         except:
-            self.logger.error("The module was not able to recognize the S3 resume boot script on this platform.")
+            self.logger.log_error("The module was not able to recognize the S3 resume boot script on this platform.")
             if self.logger.VERBOSE:
                 raise
             self.res = ModuleResult.ERROR
