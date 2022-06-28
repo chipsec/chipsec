@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -103,7 +103,7 @@ class Ucode:
 
     def update_ucode_all_cpus(self, ucode_file ):
         if not ( os.path.exists(ucode_file) and os.path.isfile(ucode_file) ):
-            logger().error( "Ucode file not found: '{:.256}'".format(ucode_file) )
+            logger().log_error("Ucode file not found: '{:.256}'".format(ucode_file))
             return False
         ucode_buf = read_ucode_file( ucode_file )
         if (ucode_buf is not None) and (len(ucode_buf) > 0):
@@ -113,7 +113,7 @@ class Ucode:
 
     def update_ucode(self, cpu_thread_id, ucode_file ):
         if not ( os.path.exists(ucode_file) and os.path.isfile(ucode_file) ):
-            logger().error( "Ucode file not found: '{:.256}'".format(ucode_file) )
+            logger().log_error("Ucode file not found: '{:.256}'".format(ucode_file))
             return False
         _ucode_buf = read_ucode_file( ucode_file )
         return self.load_ucode_update( cpu_thread_id, _ucode_buf )

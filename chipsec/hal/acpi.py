@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -436,9 +436,9 @@ class ACPI(hal_base.HALBase):
         if dsdt_address_to_use is None:
             dsdt_address = parsed_fadt_content.dsdt
             x_dsdt_address = parsed_fadt_content.x_dsdt
-            if logger().HAL: logger().error( 'Unable to determine the correct DSDT address' )
-            if logger().HAL: logger().error( '  DSDT   address = 0x{:08X}'.format(dsdt_address) )
-            if logger().HAL: logger().error( '  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
+            if logger().HAL: logger().log_error('Unable to determine the correct DSDT address')
+            if logger().HAL: logger().log_error('  DSDT   address = 0x{:08X}'.format(dsdt_address))
+            if logger().HAL: logger().log_error('  X_DSDT address = 0x{}'.format("{:16X}".format(x_dsdt_address)) if x_dsdt_address is not None else 'Not found')
             return
 
         self.tableList[ ACPI_TABLE_SIG_DSDT ].append(dsdt_address_to_use)
@@ -454,7 +454,7 @@ class ACPI(hal_base.HALBase):
     #
     def print_ACPI_table_list(self):
         if len( self.tableList ) == 0:
-            logger().error("Couldn't get a list of ACPI tables")
+            logger().log_error("Couldn't get a list of ACPI tables")
         else:
             if logger().HAL: logger().log( "[acpi] Found the following ACPI tables:" )
             for tableName in sorted(self.tableList.keys()):

@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -141,11 +141,10 @@ class IOMMU(hal_base.HALBase):
                 self.logger.log( '[iommu] total VTd domains: {:d}'.format(len(paging_vtd.domains)))
                 for domain in paging_vtd.domains:
                     paging_vtd.read_pt_and_show_status('vtd_{:08X}'.format(domain), 'VTd', domain)
-                    #if paging_vtd.failure: self.logger.error( "couldn't dump VT-d page tables" )
             else:
                 self.logger.log( "[iommu] translation via VT-d engine '{}' is not enabled".format(iommu_engine) )
         else:
-            self.logger.error( "cannot access VT-d registers" )
+            self.logger.log_error("Cannot access VT-d registers")
 
 
     def dump_IOMMU_status( self, iommu_engine ):

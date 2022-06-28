@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -1201,7 +1201,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         entry_data = script[ off: off + entry_length ]
 
         if entry_length > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
+            logger().log_error('[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length))
             return (0, None)
 
         s3script_entry = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )
@@ -1222,7 +1222,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         entry_data = script[ off + hdr_length: off + entry_length ]
 
         if entry_length > MAX_S3_BOOTSCRIPT_ENTRY_LENGTH:
-            logger().error( '[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length) )
+            logger().log_error('[uefi] Unrecognized S3 boot script format (entry length = 0x{:X})'.format(entry_length))
             return (0, None)
 
         s3script_entry                = S3BOOTSCRIPT_ENTRY( s3bootscript_type, entry_index, off, entry_length, entry_data )

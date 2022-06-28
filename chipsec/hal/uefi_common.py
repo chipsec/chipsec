@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -335,8 +335,8 @@ def parse_sb_db(db, decode_dir):
             err_str = "Wrong SignatureSize for {} type: 0x{:X}." .format(SignatureType, SignatureSize)
             if (sig_size > 0): err_str = err_str + " Must be 0x{:X}.".format(sig_size)
             else:              err_str = err_str + " Must be >= 0x10."
-            logger().error( err_str )
-            logger().error('Skipping signature decode for this list.')
+            logger().log_error(err_str)
+            logger().log_error('Skipping signature decode for this list.')
         dof = dof + SignatureListSize
 
     return entries
@@ -388,7 +388,7 @@ def parse_auth_var(db, decode_dir):
         return entries
     expected_size = struct.unpack(AUTH_CERT_DB_LIST_HEAD, db[dof:dof +AUTH_CERT_DB_LIST_HEAD_size])[0]
     if db_size != expected_size:
-        logger().error("Expected size of cert list did not match actual size.")
+        logger().log_error("Expected size of cert list did not match actual size.")
         return entries
     dof += AUTH_CERT_DB_LIST_HEAD_size
 
