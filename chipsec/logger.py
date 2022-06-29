@@ -46,96 +46,70 @@ except ImportError:
 
 LOG_PATH = os.path.join(os.getcwd(), "logs")
 
+class chipsecrecordfactory(pyLogging.LogRecord):
+    if "windows" == platform.system().lower() and has_WConio:
+        colors = {
+            'BLACK': WConio.BLACK,
+            'RED': WConio.LIGHTRED,
+            'GREEN': WConio.LIGHTGREEN,
+            'YELLOW': WConio.YELLOW,
+            'BLUE': WConio.LIGHTBLUE,
+            'PURPLE': WConio.MAGENTA,
+            'CYAN': WConio.CYAN,
+            'WHITE': WConio.WHITE,
+        }
 
-class ColorLogger(pyLogging.Formatter):
-    """Colored Output for Python Logging"""
+        def getMessage(self) -> str:
+            color = None
+            msg = str(self.msg)
+            if self.args:
+                color = self.args[0]
+            if color in self.colors:
+                WConio.textcolor(self.colors[color])
+                return msg
 
-    def format(self, record):
-        message = pyLogging.Formatter.format(self, record)
-        message = self.log_color(message, record)
-        return message
-
-    if "windows" == platform.system().lower():
-        if has_WConio:
-            BLACK = WConio.BLACK
-            RED = WConio.LIGHTRED
-            GREEN = WConio.LIGHTGREEN
-            YELLOW = WConio.YELLOW
-            BLUE = WConio.LIGHTBLUE
-            MAGENTA = WConio.MAGENTA
-            CYAN = WConio.CYAN
-            WHITE = WConio.WHITE
-
-            LEVEL_ID = {
-                pyLogging.ERROR: MAGENTA,
-                39: BLUE,
-                pyLogging.WARNING: YELLOW,
-                29: RED,
-                28: GREEN,
-                pyLogging.INFO: WHITE,
-                19: WHITE,
-                18: WHITE,
-                pyLogging.DEBUG: WHITE}
-
-            def log_color(self, message, record):
-                """ Testing """
-                if record.levelno in self.LEVEL_ID:
-                    WConio.textcolor(self.LEVEL_ID[record.levelno])
-                    return message
-
-            old_setting = WConio.gettextinfo()[4] & 0x00FF
-            atexit.register(WConio.textcolor, old_setting)
-
-        else:
-            def log_color(self, message, record):
-                return message
+        old_setting = WConio.gettextinfo()[4] & 0x00FF
+        atexit.register(WConio.textcolor, old_setting)
 
     elif "linux" == platform.system().lower():
         ENDC = '\033[0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
-        END = 0
-        LIGHT = 90
-        DARK = 30
-        BACKGROUND = 40
-        LIGHT_BACKGROUND = 100
-        GRAY = 0
-        RED = 1
-        GREEN = 2
-        YELLOW = 3
-        BLUE = 4
-        PURPLE = 5
-        CYAN = 6
-        LIGHT_GRAY = 7
-        NORMAL = 8
-        WHITE = 9
         csi = '\x1b['
         reset = '\x1b[0m'
-
-        LEVEL_ID = {
-            pyLogging.ERROR: PURPLE,
-            39: BLUE,
-            pyLogging.WARNING: YELLOW,
-            29: RED,
-            28: GREEN,
-            pyLogging.INFO: WHITE,
-            19: LIGHT_GRAY,
-            18: LIGHT_GRAY,
-            pyLogging.DEBUG: LIGHT_GRAY
+        colors = {
+            'END': 0,
+            'LIGHT': 90,
+            'DARK': 30,
+            'BACKGROUND': 40,
+            'LIGHT_BACKGROUND': 100,
+            'GRAY': 0,
+            'RED': 1,
+            'GREEN': 2,
+            'YELLOW': 3,
+            'BLUE': 4,
+            'PURPLE': 5,
+            'CYAN': 6,
+            'LIGHT_GRAY': 7,
+            'NORMAL': 8,
+            'WHITE': 9,
         }
 
-        def log_color(self, message, record):
-            if record.levelno in self.LEVEL_ID:
-                color = self.LEVEL_ID[record.levelno]
+        def getMessage(self) -> str:
+            color = None
+            msg = str(self.msg)
+            if self.args:
+                color = self.args[0]
+            if color in self.colors:
                 params = []
-                params.append(str(color + 30))
-                message = ''.join((self.csi, ';'.join(params),
-                                   'm', message, self.reset))
-            return message
-
+                params.append(str(self.colors[color] + 30))
+                msg = ''.join((self.csi, ';'.join(params),
+                              'm', msg, self.reset))
+            return msg
     else:
-        def log_color(self, message, record):
-            return message
+        def getMessage(self) -> str:
+            msg = str(self.msg)
+            return msg
 
 
 class Logger:
@@ -150,9 +124,6 @@ class Logger:
         self.ALWAYS_FLUSH = False
         pyLogging.addLevelName(19, "verbose")
         pyLogging.addLevelName(18, "hal")
-        pyLogging.addLevelName(29, "bad")
-        pyLogging.addLevelName(28, "good")
-        pyLogging.addLevelName(39, "header")
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         # Respect https://no-color.org/ convention, and disable colorization
         # when the output is not a terminal (eg. redirection to a file)
@@ -161,7 +132,7 @@ class Logger:
         except AttributeError:
             is_atty = False
         if is_atty and os.getenv('NO_COLOR') is None:
-            self.logstream.setFormatter(ColorLogger())
+            pyLogging.setLogRecordFactory(chipsecrecordfactory)  # applies colorization to output
         self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
         self.Results = ChipsecResults()
 
@@ -175,7 +146,7 @@ class Logger:
         else:
             self.rootLogger.setLevel(pyLogging.INFO)
 
-    def set_log_file( self, name=None ):
+    def set_log_file(self, name=None):
         """Sets the log file for the output."""
         # Close current log file if it's opened
         self.disable()
@@ -185,9 +156,9 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-                self.logfile = pyLogging.FileHandler(filename=self.LOG_FILE_NAME, mode='w')  # creates FileHandler for log file
+                # creates FileHandler for log file
+                self.logfile = pyLogging.FileHandler(filename=self.LOG_FILE_NAME, mode='w')
                 self.rootLogger.addHandler(self.logfile)  # adds filehandler to root logger
-
                 self.LOG_TO_FILE = True
             except Exception:
                 print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
@@ -195,7 +166,7 @@ class Logger:
         else:
             try:
                 self.rootLogger.addHandler(self.logstream)
-            except:
+            except Exception:
                 pass
 
     def close(self):
@@ -235,12 +206,12 @@ class Logger:
     def set_always_flush(self, val):
         self.ALWAYS_FLUSH = val
 
-    def _log(self, text, level=pyLogging.INFO):
+    def _log(self, text, level=pyLogging.INFO, color=None):
         """Sends plain text to logging."""
         if self.Results.get_current() is not None:
             self.Results.get_current().add_output(text)
         try:
-            self.rootLogger.log(level, text)
+            self.rootLogger.log(level, text, color)
             if self.ALWAYS_FLUSH:
                 self.flush()
         except BaseException:
@@ -248,7 +219,7 @@ class Logger:
 
     def log(self, text):
         """Plain Log message"""
-        self._log(text, pyLogging.INFO)
+        self._log(text, pyLogging.INFO, "WHITE")
 
     # -------------------------------------------------------
     # These logger methods are deprecated and will be removed
@@ -257,26 +228,14 @@ class Logger:
     def error(self, text):  # Use log_error()
         """Logs an Error message"""
         text = "ERROR: " + text
-        self.log(text, pyLogging.ERROR)
+        self.log_error(text)
 
     def warn(self, text):  # Use log_warning()
         """Logs an Warning message"""
         text = "WARNING: " + text
-        self._log(text, pyLogging.WARNING)
+        self.log_warning(text)
 
-    def log_verbose(self, text):
-        """Logs an Verbose message"""
-        self._log(text, pyLogging.getLevelName("verbose"))
-
-    def log_hal(self, text):
-        """Logs an Verbose message"""
-        self._log(text, pyLogging.getLevelName("hal"))
-
-    def log_debug(self, text):
-        """Logs an Verbose message"""
-        self._log(text, pyLogging.DEBUG)
-
-    def log_passed_check( self, text ):
+    def log_passed_check(self, text):
         """Logs a Test as PASSED"""
         self.log_passed(text)
 
@@ -286,7 +245,7 @@ class Logger:
 
     def log_error_check(self, text):  # Duplicate of log_error()
         """Logs a Test as ERROR"""
-        self.error(text)
+        self.log_error(text)
 
     def log_skipped_check(self, text):  # Duplicate of log_skipped()
         """Logs a Test as Not Implemented"""
@@ -307,7 +266,7 @@ class Logger:
     def log_result(self, text):  # Duplicate of log_good()
         """Logs a result message."""
         text = "[+] " + text
-        self.log(text, pyLogging.DEBUG)
+        self.log_good(text)
 
     # -----------------------------
     # End deprecated logger methods
@@ -318,76 +277,79 @@ class Logger:
         if self.VERBOSE:
             self.log(text, self.verbose)
 
+    def log_hal(self, text):
+        """Logs an Verbose message"""
+        self._log(text, pyLogging.getLevelName("hal"), "LIGHT_GRAY")
+
+    def log_debug(self, text):
+        """Logs an Verbose message"""
+        self._log(text, pyLogging.DEBUG)
+
     def log_passed(self, text):
         """Logs a passed message."""
         text = "[+] PASSED: " + text
-        self._log(text, pyLogging.getLevelName("good"))
+        self._log(text, pyLogging.INFO, "GREEN")
 
     def log_failed(self, text):
         """Logs a failed message."""
         text = "[-] FAILED: " + text
-        self._log(text, pyLogging.getLevelName("bad"))
+        self._log(text, pyLogging.INFO, "RED")
 
     def log_error(self, text):
         """Logs an Error message"""
         text = "[-] ERROR: " + text
-        self._log(text, pyLogging.ERROR)
+        self._log(text, pyLogging.ERROR, "PURPLE")
 
     def log_warning(self, text):
-        """Logs a Warning message"""
-        text = "[!] WARNING: " + text
-        self._log(text, pyLogging.WARNING)
+        """Logs an Warning message"""
+        text = "WARNING: " + text
+        self._log(text, pyLogging.INFO, "YELLOW")
 
     def log_skipped(self, text):
         """Logs a SKIPPED message."""
         text = "[*] SKIPPED: " + text
-        self.log(text, pyLogging.WARNING)
+        self._log(text, pyLogging.INFO, "YELLOW")
 
     def log_not_applicable(self, text):
         """Logs a NOT APPLICABLE message."""
         text = "[*] NOT APPLICABLE: " + text
-        self._log(text, pyLogging.WARNING)
+        self._log(text, pyLogging.INFO, "YELLOW")
 
     def log_heading(self, text):
         """Logs a heading message."""
-        self._log(text, pyLogging.getLevelName("header"))
+        self._log(text, pyLogging.INFO, "BLUE")
 
     def log_important(self, text):
         """Logs an important message."""
         text = "[!] " + text
-        self._log(text, pyLogging.getLevelName("bad"))
+        self._log(text, pyLogging.INFO, "RED")
 
-    def log_result( self, text ):
-        """Logs a result message."""
-        text = "[+] " + text
-        self._log(text, pyLogging.getLevelName("good"))
-
-    def log_bad( self, text ):
+    def log_bad(self, text):
         """Logs a bad message, so it calls attention in the information displayed."""
         text = "[-] " + text
-        self._log(text, pyLogging.getLevelName("bad"))
+        self._log(text, pyLogging.INFO, "RED")
 
     def log_good(self, text):
         """Logs a message, if colors available, displays in green."""
         text = "[+] " + text
-        self._log(text, pyLogging.getLevelName("good"))
+        self._log(text, pyLogging.INFO, "GREEN")
 
     def log_unknown(self, text):
         """Logs a message with a question mark."""
         text = "[?] " + text
-        self._log(text, pyLogging.INFO)
+        self._log(text, pyLogging.INFO, "WHITE")
 
     def log_information(self, text):
         """Logs a message with information message"""
         text = "[#] INFORMATION: " + text
-        self._log(text, pyLogging.INFO)
+        self._log(text, pyLogging.INFO, "WHITE")
 
     def start_test(self, test_name):
         """Logs the start point of a Test"""
         text = "[x][ =======================================================================\n"
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
-        self._log(text, pyLogging.getLevelName("header"))
+        self._log(text, pyLogging.INFO, "BLUE")
 
     def start_module(self, module_name):
         """Displays a banner for the module name provided."""
