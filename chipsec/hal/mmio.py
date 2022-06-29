@@ -62,6 +62,8 @@ class MMIO(hal_base.HALBase):
 
     def __init__(self, cs):
         super(MMIO, self).__init__(cs)
+        self.cached_bar_addresses = {}
+        self.cache_bar_addresses_resolution = False
 
     ###########################################################################
     # Access to MMIO BAR defined by configuration files (chipsec/cfg/*.py)
@@ -169,9 +171,24 @@ class MMIO(hal_base.HALBase):
         return is_bar_defined
 
     #
+    # Enable caching of BAR addresses
+    #
+    def enable_cache_address_resolution(self, enable):
+        if enable:
+            self.cache_bar_addresses_resolution = True
+        else:
+            self.cache_bar_addresses_resolution = False
+            self.flush_bar_address_cache()
+
+    def flush_bar_address_cache(self):
+         self.cached_bar_addresses = {}
+
+    #
     # Get base address of MMIO range by MMIO BAR name
     #
     def get_MMIO_BAR_base_address(self, bar_name, bus=None):
+        if self.cache_bar_addresses_resolution and (bar_name, bus) in self.cached_bar_addresses:
+                return self.cached_bar_addresses[(bar_name, bus)]
         bar = self.cs.Cfg.MMIO_BARS[ bar_name ]
         if bar is None or bar == {}: return -1, -1
         _bus = bus
@@ -247,6 +264,9 @@ class MMIO(hal_base.HALBase):
             if self.logger.HAL:
                 self.logger.log('[mmio] Base address was determined to be 0.')
             raise CSReadError('[mmio] Base address was determined to be 0')
+
+        if self.cache_bar_addresses_resolution:
+            self.cached_bar_addresses[(bar_name, bus)] = (base, size)
         return base, size
 
     #
