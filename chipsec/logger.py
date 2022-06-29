@@ -45,6 +45,7 @@ except ImportError:
         has_WConio = False
 
 LOG_PATH = os.path.join(os.getcwd(), "logs")
+log_Color = False
 
 class chipsecrecordfactory(pyLogging.LogRecord):
     if "windows" == platform.system().lower() and has_WConio:
@@ -71,7 +72,7 @@ class chipsecrecordfactory(pyLogging.LogRecord):
         old_setting = WConio.gettextinfo()[4] & 0x00FF
         atexit.register(WConio.textcolor, old_setting)
 
-    elif "linux" == platform.system().lower():
+    elif log_Color and "linux" == platform.system().lower():
         ENDC = '\033[0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
@@ -132,8 +133,9 @@ class Logger:
         except AttributeError:
             is_atty = False
         if is_atty and os.getenv('NO_COLOR') is None:
-            pyLogging.setLogRecordFactory(chipsecrecordfactory)  # applies colorization to output
-        self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
+            log_Color = True
+        pyLogging.setLogRecordFactory(chipsecrecordfactory)  # applies colorization to output
+        self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
         self.Results = ChipsecResults()
 
     def setlevel(self):
