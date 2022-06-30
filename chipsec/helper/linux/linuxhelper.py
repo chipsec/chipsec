@@ -45,6 +45,7 @@ import chipsec.file
 from chipsec.hal.uefi_common import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
+from chipsec.helper.linux.legacy_pci import LEGACY_PCI
 
 MSGBUS_MDR_IN_MASK  = 0x1
 MSGBUS_MDR_OUT_MASK = 0x2
@@ -119,6 +120,7 @@ class LinuxHelper(Helper):
         self.dev_port = None
         self.dev_msr = None
         self.module_loaded = False
+        self.legacy_pci = None
 
         # A list of all the mappings allocated via map_io_space. When using
         # read/write MMIO, if the region is already mapped in the process's
@@ -437,8 +439,11 @@ class LinuxHelper(Helper):
         device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
         if not os.path.exists(device_path):
             if offset < 256:
-                from chipsec.helper.linux.legacy_pci import LEGACY_PCI
-                pci = LEGACY_PCI()
+                if self.legacy_pci:
+                    pci = self.legacy_pci
+                else:
+                    pci = LEGACY_PCI()
+                    self.legacy_pci = pci
                 value = pci.read_pci_config(bus, device, function, offset)
                 return value
             else:
@@ -471,8 +476,11 @@ class LinuxHelper(Helper):
         device_path = "/sys/bus/pci/devices/{}/config".format(device_name)
         if not os.path.exists(device_path):
             if offset < 256:
-                from chipsec.helper.linux.legacy_pci import LEGACY_PCI
-                pci = LEGACY_PCI()
+                if self.legacy_pci:
+                    pci = self.legacy_pci
+                else:
+                    pci = LEGACY_PCI()
+                    self.legacy_pci = pci
                 value = pci.write_pci_config(bus, device, function, offset, value)
                 return False
         try:
