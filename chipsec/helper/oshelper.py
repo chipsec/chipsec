@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -59,11 +59,11 @@ class OsHelper:
             os_system  = platform.system()
             raise OsHelperError( "Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV )
         else:
-            if self.helper.name != "EfiHelper" and sys.version[0] == "2": # Python 2 is only supported in the EFI shell.
-                logger().warn("***************************************************************************************")
-                logger().warn("* !! Python 2 is deprecated. Please update to Python 3 !!")
-                logger().warn("* Some chipsec results may be incorrect if you continue.")
-                logger().warn("***************************************************************************************")
+            if sys.version[0] == "2":
+                logger().log_warning("***************************************************************************************")
+                logger().log_warning("* !! Python 2 is deprecated. Please update to Python 3 !!")
+                logger().log_warning("* Some chipsec results may be incorrect if you continue.")
+                logger().log_warning("***************************************************************************************")
                 s = raw_input( "Type 'yes' to continue running under Python 2 > " ) # Will only run on python 2, so raw_input will be defined.
                 if s.lower() not in ['yes', 'y']: sys.exit( 0 )
             self.os_system  = self.helper.os_system
@@ -106,10 +106,10 @@ class OsHelper:
         if not self.filecmds is None:
             self.filecmds.Save()
         if not self.helper.stop( start_driver ):
-            logger().warn("failed to stop OS helper")
+            logger().log_warning("failed to stop OS helper")
         else:
             if not self.helper.delete( start_driver ):
-                logger().warn("failed to delete OS helper")
+                logger().log_warning("failed to delete OS helper")
 
     #
     # use_native_api
@@ -150,7 +150,7 @@ class OsHelper:
     def read_pci_reg( self, bus, device, function, address, size ):
         """Read PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
+            if logger().DEBUG: logger().log_warning("Config register address is not naturally aligned")
 
         if self.use_native_api() and hasattr(self.helper, 'native_read_pci_reg'):
             ret = self.helper.native_read_pci_reg( bus, device, function, address, size )
@@ -163,7 +163,7 @@ class OsHelper:
     def write_pci_reg( self, bus, device, function, address, value, size ):
         """Write PCI configuration registers via legacy CF8/CFC ports"""
         if ( 0 != (address & (size - 1)) ):
-            if logger().DEBUG: logger().warn( "Config register address is not naturally aligned" )
+            if logger().DEBUG: logger().log_warning("Config register address is not naturally aligned")
 
         if self.use_native_api() and hasattr(self.helper, 'native_write_pci_reg'):
             ret = self.helper.native_write_pci_reg( bus, device, function, address, value, size )
@@ -555,7 +555,7 @@ def helper():
             _helper  = OsHelper()
         except BaseException as msg:
             if logger().DEBUG:
-                logger().error( str(msg) )
+                logger().log_error(str(msg))
                 logger().log_bad(traceback.format_exc())
             raise
     return _helper
