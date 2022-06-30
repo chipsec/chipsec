@@ -108,7 +108,7 @@ class IOBAR(hal_base.HALBase):
         if logger().HAL: logger().log('[iobar] read {} + 0x{:X} ({:d})'.format(bar_name, offset, size))
         (bar_base, bar_size) = self.get_IO_BAR_base_address( bar_name )
         io_port = bar_base + offset
-        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size) )
+        if offset > bar_size and logger().HAL: logger().log_warning('offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size))
         value = self.cs.io._read_port( io_port, size )
         return value
 
@@ -119,7 +119,7 @@ class IOBAR(hal_base.HALBase):
         (bar_base, bar_size) = self.get_IO_BAR_base_address( bar_name )
         if logger().HAL: logger().log( '[iobar] write {} + 0x{:X} ({:d}): 0x{:X}'.format(bar_name, offset, size, value) )
         io_port = bar_base + offset
-        if offset > bar_size and logger().HAL: logger().warn( 'offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size) )
+        if offset > bar_size and logger().HAL: logger().log_warning('offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size))
         return self.cs.io._write_port( io_port, value, size )
 
 

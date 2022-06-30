@@ -1021,7 +1021,7 @@ def decode_s3bs_opcode_def( data ):
         op = op_terminate( opcode, size )
     else:
         op = op_unknown( opcode, 1 )
-        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
+        if logger().HAL: logger().log_warning('Unrecognized opcode {:X}'.format(opcode))
 
     return op
 
@@ -1067,7 +1067,7 @@ def encode_s3bs_opcode_def( op ):
         frmt = '<B'
 
     else:
-        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(op.opcode) )
+        if logger().HAL: logger().log_warning('Unrecognized opcode {:X}'.format(op.opcode))
 
     return encoded_opcode
 
@@ -1111,7 +1111,7 @@ def decode_s3bs_opcode_edkcompat( data ):
         op = op_io_pci_mem( opcode, size, width, address, None, count, None, value, mask )
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_SMBUS_EXECUTE_OPCODE == opcode:
-        if logger().UTIL_TRACE or logger().HAL: logger().warn( 'Cannot parse opcode {:X} yet'.format(opcode) )
+        if logger().UTIL_TRACE or logger().HAL: logger().log_warning('Cannot parse opcode {:X} yet'.format(opcode))
 
     elif S3BootScriptOpcode_EdkCompat.EFI_BOOT_SCRIPT_STALL_OPCODE == opcode:
         frmt = '<Q'
@@ -1136,7 +1136,7 @@ def decode_s3bs_opcode_edkcompat( data ):
 
     else:
         op = op_unknown( opcode, size )
-        if logger().HAL: logger().warn( 'Unrecognized opcode {:X}'.format(opcode) )
+        if logger().HAL: logger().log_warning('Unrecognized opcode {:X}'.format(opcode))
 
     return op
 
@@ -1192,7 +1192,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         fhdr = '<HB'
         hdr_length = struct.calcsize(fhdr)
         if remaining_len < hdr_length:
-            if logger().HAL: logger().warn( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length) )
+            if logger().HAL: logger().log_warning('the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length) )
             return (0, None)
 
         opcode, entry_length = struct.unpack( fhdr, script[ off: off + hdr_length ] )
@@ -1212,7 +1212,7 @@ def parse_s3bootscript_entry( s3bootscript_type, script, off, log_script=False )
         hdr_length = struct.calcsize(fhdr)
         f          = fhdr + 'B'
         if remaining_len < (hdr_length + 1):
-            if logger().HAL: logger().warn( 'the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length +1) )
+            if logger().HAL: logger().log_warning('the script should have at least 0x{:X} bytes to parse next entry'.format(hdr_length +1) )
             return (0, None)
 
         entry_index, entry_length, opcode = struct.unpack(f, script[ off: off + hdr_length + 1 ])
@@ -1245,7 +1245,7 @@ def encode_s3bootscript_entry( entry ):
     if entry_val_buf is not None:
         entry_buf = entry_hdr_buf + entry_val_buf
     else:
-        logger().warn( 'Could not encode opcode of boot script entry (type 0x{:X})'.format(entry.script_type) )
+        logger().log_warning('Could not encode opcode of boot script entry (type 0x{:X})'.format(entry.script_type))
 
     return entry_buf
 

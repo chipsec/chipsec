@@ -133,7 +133,7 @@ def parse_spi_flash_descriptor( cs, rom ):
     if cs.register_has_field('FLMAP0', 'NR'):
         nr = cs.get_register_field('FLMAP0', flmap0, 'NR')
         if nr == 0:
-            logger().warn( 'only 1 region (FD) is found. Looks like flash descriptor binary is from Skylake platform or later. Try with option --platform' )
+            logger().log_warning('only 1 region (FD) is found. Looks like flash descriptor binary is from Skylake platform or later. Try with option --platform')
         nr += 1
         logger().log( '  Number of Regions           : {:d}'.format(nr) )
 
