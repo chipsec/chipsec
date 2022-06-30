@@ -805,12 +805,14 @@ class Chipset:
     def get_device_bus(self, dev_name):
         buses = self.Cfg.BUS.get(dev_name, [])
         if buses:
+            if logger().DEBUG:
+                logger().log_important("Using discovered bus values for device '{}'".format(dev_name))
             return buses
-        if logger().DEBUG:
-            logger().log_important("Device '{}' not found on any buses".format(dev_name))
         if 'bus' in self.Cfg.CONFIG_PCI[dev_name]:
             (bus, dev, fun) = self.get_device_BDF(dev_name)
             if self.pci.is_enabled(bus, dev, fun):
+                if logger().DEBUG:
+                    logger().log_important("Using pre-defined bus values for device '{}'".format(dev_name))
                 buses = [bus]
             else:
                 if logger().DEBUG:
