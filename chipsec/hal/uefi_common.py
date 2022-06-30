@@ -384,7 +384,7 @@ def parse_auth_var(db, decode_dir):
 
     # Verify that list makes sense
     if db_size < AUTH_CERT_DB_LIST_HEAD_size:
-        logger().warn("Cert list empty.")
+        logger().log_warning("Cert list empty.")
         return entries
     expected_size = struct.unpack(AUTH_CERT_DB_LIST_HEAD, db[dof:dof +AUTH_CERT_DB_LIST_HEAD_size])[0]
     if db_size != expected_size:
@@ -401,7 +401,7 @@ def parse_auth_var(db, decode_dir):
         try:
             var_name = codecs.decode(db[tof:tof +name_size], 'utf-16')
         except UnicodeDecodeError:
-            logger().warn("Unable to decode {}".format(db[tof:tof +name_size]))
+            logger().log_warning("Unable to decode {}".format(db[tof:tof +name_size]))
             var_name = "chipsec.exceptions!"
         tof += name_size
         sig_data = db[tof:tof +cert_data_size]
@@ -456,7 +456,7 @@ def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
     elif var_type == ESAL_SIG_VAR:
         parse_esal_var(var, var_path)
     else:
-        logger().warn('Unsupported variable type requested: {}'.format(var_type))
+        logger().log_warning('Unsupported variable type requested: {}'.format(var_type))
 
 
 ########################################################################################################
