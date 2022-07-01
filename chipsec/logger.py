@@ -55,7 +55,7 @@ class chipsecrecordfactory(pyLogging.LogRecord):
             'GREEN': WConio.LIGHTGREEN,
             'YELLOW': WConio.YELLOW,
             'BLUE': WConio.LIGHTBLUE,
-            'PURPLE': WConio.MAGENTA,
+            'PURPLE': WConio.LIGHTMAGENTA,
             'CYAN': WConio.CYAN,
             'WHITE': WConio.WHITE,
         }
