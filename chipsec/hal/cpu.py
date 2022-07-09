@@ -80,7 +80,7 @@ class CPU(hal_base.HALBase):
     # Using CPUID we can determine if Hyper-Threading is enabled in the CPU
     def is_HT_active(self):
         logical_processor_per_core=self.get_number_logical_processor_per_core()
-        return logical_processor_per_core>1)
+        return logical_processor_per_core>1
 
     # Using the CPUID we determine the number of logical processors per core
     def get_number_logical_processor_per_core(self):
