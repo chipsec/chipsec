@@ -522,8 +522,8 @@ class ACPI(hal_base.HALBase):
         table              = self._parse_table_contents( name, table_blob, table_header_blob )
         return (table_header, table, table_header_blob, table_blob)
 
-
-    def _parse_table_header( self, header ):
+    @staticmethod
+    def _parse_table_header( header ):
         acpi_table_hdr = ACPI_TABLE_HEADER( *struct.unpack_from( ACPI_TABLE_HEADER_FORMAT, header ) )
         if logger().HAL: logger().log( acpi_table_hdr )
         return acpi_table_hdr
