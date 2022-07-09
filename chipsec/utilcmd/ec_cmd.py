@@ -76,10 +76,7 @@ class ECCommand(BaseCommand):
         parser_index.set_defaults(func=self.index)
 
         parser.parse_args(self.argv[2:], namespace=self)
-        if hasattr(self, 'func'):
-            return True
-        else:
-            return False
+        return bool(hasattr(self, 'func'))
 
     def dump(self):
         self.logger.log("[CHIPSEC] EC dump")
