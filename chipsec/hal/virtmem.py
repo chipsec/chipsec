@@ -118,4 +118,4 @@ class VirtMemory(hal_base.HALBase):
         pa = self.va2pa(virt_address)
         ret = self.helper.free_physical_mem(pa)
         if logger().HAL: logger().log( '[mem] Deallocated : VA = 0x{:016X}'.format(virt_address) )
-        return True if ret == 1 else False
+        return ret == 1
