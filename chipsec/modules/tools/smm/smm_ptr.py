@@ -147,7 +147,6 @@ _FILL_VALUE_BYTE  = 0x5A
 _SMI_CODE_DATA    = 0x0
 _MEM_FILL_VALUE   = b'\x11'
 _MEM_FILL_SIZE    = 0x500
-_MAX_ALLOC_PA     = 0xFFFFFFFF
 _DEFAULT_GPRS     = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': _FILL_VALUE_QWORD, 'rdx': _FILL_VALUE_QWORD, 'rsi': _FILL_VALUE_QWORD, 'rdi': _FILL_VALUE_QWORD}
 
 _pth = 'smm_ptr'
@@ -503,11 +502,11 @@ class smm_ptr(BaseModule):
                 _addr = int(module_argv[3], 16)
                 self.logger.log("[*] Using address from command-line (0x{:016X}) to pass to SMI handlers".format(_addr))
         else:
-            (_, _addr) = self.cs.mem.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
+            (_, _addr) = self.cs.mem.alloc_physical_mem(self.fill_size)
             self.logger.log("[*] Allocated memory buffer (to pass to SMI handlers)       : 0x{:016X}".format(_addr))
 
         if self.is_check_memory:
-            (_, _addr1) = self.cs.mem.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
+            (_, _addr1) = self.cs.mem.alloc_physical_mem(self.fill_size)
             self.logger.log("[*] Allocated 2nd buffer (address will be in the 1st buffer): 0x{:016X}".format(_addr1))
 
         #
