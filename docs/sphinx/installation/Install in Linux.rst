@@ -11,42 +11,6 @@ Tested on:
 
 Run CHIPSEC on a desired Linux distribution or create a live Linux image on a USB flash drive and boot to it.
 
-Prerequisites
--------------
-
-Python 3.7 or higher (https://www.python.org/downloads/)
-
-.. note::
-
-   CHIPSEC has deprecated support for Python2 since June 2020 
-
-Install or update necessary dependencies before installing CHIPSEC:
-
-``dnf install kernel kernel-devel-$(uname -r) python python-devel gcc nasm redhat-rpm-config elfutils-libelf-devel git``
-
-or
-
-``apt-get install build-essential python-dev python gcc linux-headers-$(uname -r) nasm``
-
-or
-
-``pacman -S python2 python2-setuptools nasm linux-headers``
-
-Install setuptools package:
-
-``pip install setuptools``
-
-Building
---------
-
-Clone CHIPSEC source
-
-   ``git clone https://github.com/chipsec/chipsec.git``
-
-Build the Driver and Compression Tools 
-
-   ``python setup.py build_ext -i``
-
 Creating a Live Linux image
 ---------------------------
 
@@ -58,3 +22,68 @@ Creating a Live Linux image
 2. Use Rufus to image a USB stick with the desired Linux
    image. Include as much persistent storage as possible.
 3. Reboot to USB
+
+Installing Kali Linux
+---------------------
+
+`Download <https://www.kali.org/downloads/>`__ and `install <https://www.kali.org/docs/installation/>`__ Kali Linux
+
+Prerequisites
+-------------
+
+Python 3.7 or higher (https://www.python.org/downloads/)
+
+.. note::
+
+   CHIPSEC has deprecated support for Python2 since June 2020 
+
+Install or update necessary dependencies before installing CHIPSEC:
+
+``dnf install kernel kernel-devel-$(uname -r) python3 python3-devel gcc nasm redhat-rpm-config elfutils-libelf-devel git``
+
+or
+
+``apt-get install build-essential python3-dev python3 gcc linux-headers-$(uname -r) nasm``
+
+or
+
+``pacman -S python3 python3-setuptools nasm linux-headers``
+
+Install setuptools package:
+
+``pip install setuptools``
+
+Installing CHIPSEC
+------------------
+
+**Get latest CHIPSEC release from PyPI repository**
+
+``pip install chipsec``
+
+.. note::
+
+   Version in PyPI is outdate please refrain from using until further notice
+
+**Get CHIPSEC package from latest source code**
+
+Download zip from CHIPSEC repo
+
+   :ref:`Download CHIPSEC <Download>`
+
+ or
+
+Clone CHIPSEC source
+
+   ``git clone https://github.com/chipsec/chipsec.git``
+
+Building CHIPSEC
+----------------
+
+Build the Driver and Compression Tools 
+
+   ``python setup.py build_ext -i``
+
+Run CHIPSEC
+-----------
+
+Follow steps in section "Using as a Python package" of :ref:`Running CHIPSEC <Running-Chipsec>`

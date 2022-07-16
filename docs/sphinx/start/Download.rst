@@ -1,3 +1,5 @@
+.. _Download:
+
 Download CHIPSEC
 ================
 
