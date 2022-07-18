@@ -157,7 +157,7 @@ If in doubt, follow the existing code style and formatting.
 
     Use whitespace after a comma, colon, or semicolon.
 
-    Use whitespace around operators: +, -, \*, \**, /, //, %, =, ==, <, >, <=, >=, <>, !=, is, in, is not, not in, <<, >>, &, |, ^
+    Use whitespace around operators: +, -, \*, \**, /, //, %, =, ==, <, >, <=, >=, <>, !=, is, in, is not, not in, <<, >>, &, \|, ^
 
     No trailing whitespace.
 
