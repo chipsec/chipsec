@@ -328,7 +328,7 @@ class ChipsecMain:
                             logger().log_information(mod)
                         elif k == 'failed':
                             logger().log_failed(mod)
-                        elif k == 'not implemented':
+                        elif k == 'skipped':
                             logger().log_skipped(mod)
                         elif k == 'not applicable':
                             logger().log_not_applicable(mod)

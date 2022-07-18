@@ -42,7 +42,7 @@ class ExitCode:
   CHIPSEC returns an integer exit code:
   - Exit code is 0:       all modules ran successfully and passed
   - Exit code is not 0:   each bit means the following:
-      - Bit 0: NOT IMPLEMENTED at least one module was not implemented for the platform
+      - Bit 0: SKIPPED         at least one module was skipped for the platform
       - Bit 1: WARNING         at least one module had a warning
       - Bit 2: DEPRECATED      at least one module uses deprecated API
       - Bit 3: FAIL            at least one module failed
@@ -112,7 +112,7 @@ class ChipsecResults():
         ret['information'] = information
         ret['failed'] = failed
         ret['warnings'] = warnings
-        ret['not implemented'] = skipped
+        ret['skipped'] = skipped
         ret['not applicable'] = notapplicable
         ret['exceptions'] = self.exceptions
         return ret
@@ -127,7 +127,7 @@ class ChipsecResults():
             return ExitCode.FAIL
         elif len(summary['warnings']) != 0:
             return ExitCode.WARNING
-        elif len(summary['not implemented']) != 0:
+        elif len(summary['skipped']) != 0:
             return ExitCode.SKIPPED
         elif len(summary['not applicable']) != 0:
             return ExitCode.NOTAPPLICABLE
