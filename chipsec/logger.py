@@ -308,8 +308,8 @@ class Logger:
         self.log(text, pyLogging.WARNING)
 
     def log_skipped(self, text):
-        """Logs a NOT IMPLEMENTED message."""
-        text = "[*] NOT IMPLEMENTED: " + text
+        """Logs a SKIPPED message."""
+        text = "[*] SKIPPED: " + text
         self.log(text, pyLogging.WARNING)
 
     def log_not_applicable(self, text):

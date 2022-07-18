@@ -487,7 +487,7 @@ class te(BaseModule):
         #win8 = self.cs.helper.is_win8_or_greater()
         efi_mode = self.cs.helper.EFI_supported()
         if not efi_mode:
-            self.logger.log_skipped_check("OS did not boot in UEFI mode")
+            self.logger.log_not_applicable("OS did not boot in UEFI mode")
         return efi_mode
 
     def run(self, module_argv):
