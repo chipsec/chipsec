@@ -43,11 +43,12 @@ Examples:
 
 """
 
-from chipsec.module_common  import BaseModule, ModuleResult
-from chipsec.hal.vmm        import VMM
+from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.hal.vmm import VMM
 
-EVENT_CHANNEL_OP     = 32
+EVENT_CHANNEL_OP = 32
 EVTCHOP_INIT_CONTROL = 11
+
 
 class xsa188(BaseModule):
     def run(self, module_argv):

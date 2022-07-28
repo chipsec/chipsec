@@ -70,8 +70,8 @@ _FLUSH_LOG_EACH_MSR = False
 
 # Control values to be written to each MSR
 _FUZZ_VALUE_0_all1s = True
-_FUZZ_VALUE_5A      = False
-_FUZZ_VALUE_RND     = True
+_FUZZ_VALUE_5A = False
+_FUZZ_VALUE_RND = True
 
 # Exclude MSRs which cause VM hang/crash
 _EXCLUDE_MSR = []
@@ -81,7 +81,7 @@ class msr_fuzz (BaseModule):
 
     def fuzz_MSRs(self, msr_addr_start, random_order=False):
         msr_addr_range = 0x10000
-        msr_addr_end   = msr_addr_start + msr_addr_range
+        msr_addr_end = msr_addr_start + msr_addr_range
         self.logger.log("[*] Fuzzing MSRs in range 0x{:08X}:0x{:08X}..".format(msr_addr_start, msr_addr_end))
         it = 0
         if random_order:
@@ -133,7 +133,6 @@ class msr_fuzz (BaseModule):
                         pass
             it += 1
         return True
-
 
     def run(self, module_argv):
         self.logger.start_test("Fuzzing CPU Model Specific Registers (MSR)")

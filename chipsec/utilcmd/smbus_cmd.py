@@ -29,10 +29,11 @@ Examples:
 
 import time
 
-from chipsec.command   import BaseCommand
-from chipsec.logger    import print_buffer
+from chipsec.command import BaseCommand
+from chipsec.logger import print_buffer
 from chipsec.hal.smbus import SMBus
-from argparse          import ArgumentParser
+from argparse import ArgumentParser
+
 
 class SMBusCommand(BaseCommand):
 
@@ -54,33 +55,33 @@ class SMBusCommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-
     def smbus_read(self):
         if self.size is not None:
-            buf = self._smbus.read_range( self.dev_addr, self.start_off, self.size )
-            self.logger.log( "[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} size 0x{:X}".format(self.dev_addr, self.start_off, self.size) )
-            print_buffer( buf )
+            buf = self._smbus.read_range(self.dev_addr, self.start_off, self.size)
+            self.logger.log("[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} size 0x{:X}".format(self.dev_addr, self.start_off, self.size))
+            print_buffer(buf)
         else:
-            val = self._smbus.read_byte( self.dev_addr, self.start_off )
-            self.logger.log( "[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} = 0x{:X}".format(self.dev_addr, self.start_off, val) )
+            val = self._smbus.read_byte(self.dev_addr, self.start_off)
+            self.logger.log("[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} = 0x{:X}".format(self.dev_addr, self.start_off, val))
 
     def smbus_write(self):
-        self.logger.log( "[CHIPSEC] SMBus write: device 0x{:X} offset 0x{:X} = 0x{:X}".format(self.dev_addr, self.off, self.val) )
-        self._smbus.write_byte( self.dev_addr, self.off, self.val )
+        self.logger.log("[CHIPSEC] SMBus write: device 0x{:X} offset 0x{:X} = 0x{:X}".format(self.dev_addr, self.off, self.val))
+        self._smbus.write_byte(self.dev_addr, self.off, self.val)
 
     def run(self):
         try:
-            self._smbus = SMBus( self.cs )
+            self._smbus = SMBus(self.cs)
         except BaseException as msg:
             self.logger.log_error(msg)
             return
 
         t = time.time()
         if not self._smbus.is_SMBus_supported():
-            self.logger.log( "[CHIPSEC] SMBus controller is not supported" )
+            self.logger.log("[CHIPSEC] SMBus controller is not supported")
             return
         self._smbus.display_SMBus_info()
         self.func()
-        self.logger.log( "[CHIPSEC] (smbus) time elapsed {:.3f}".format(time.time() -t) )
+        self.logger.log("[CHIPSEC] (smbus) time elapsed {:.3f}".format(time.time() - t))
 
-commands = { 'smbus': SMBusCommand }
+
+commands = {'smbus': SMBusCommand}

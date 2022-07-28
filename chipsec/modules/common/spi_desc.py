@@ -44,6 +44,7 @@ from chipsec.hal.spi import FLASH_DESCRIPTOR
 
 TAGS = [MTAG_BIOS]
 
+
 class spi_desc(BaseModule):
 
     def __init__(self):
@@ -72,7 +73,7 @@ class spi_desc(BaseModule):
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 
         self.logger.log('')
-        if   ModuleResult.PASSED == res:
+        if ModuleResult.PASSED == res:
             self.logger.log_passed("SPI flash permissions prevent SW from writing to flash descriptor")
         elif ModuleResult.FAILED == res:
             self.logger.log_failed("SPI flash permissions allow SW to write flash descriptor")

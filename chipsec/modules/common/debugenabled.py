@@ -45,13 +45,14 @@ from chipsec.defines import BIT11
 
 _MODULE_NAME = 'debugenabled'
 
+
 class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
         self.is_enable_set = False
-        self.is_debug_set  = False
-        self.is_lock_set   = True
+        self.is_debug_set = False
+        self.is_lock_set = True
 
     def is_supported(self):
         # Use CPUID Function 1 to determine if the IA32_DEBUG_INTERFACE MSR is supported.
@@ -84,8 +85,8 @@ class debugenabled(BaseModule):
         TestFail = ModuleResult.PASSED
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             dbgiface = self.cs.read_register('IA32_DEBUG_INTERFACE', tid)
-            IA32_DEBUG_INTERFACE_DEBUGENABLE   = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
-            IA32_DEBUG_INTERFACE_DEBUGELOCK    = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1
+            IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
+            IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1
             IA32_DEBUG_INTERFACE_DEBUGEOCCURED = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'DEBUG_OCCURRED') == 1
 
             if self.logger.VERBOSE:

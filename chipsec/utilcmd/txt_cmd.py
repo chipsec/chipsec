@@ -9,12 +9,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -25,7 +25,7 @@ Usage:
     >>> chipsec_util txt state
 """
 
-from argparse        import ArgumentParser
+from argparse import ArgumentParser
 import binascii
 from chipsec.command import BaseCommand
 from chipsec.exceptions import HWAccessViolationError
@@ -110,11 +110,11 @@ class TXTCommand(BaseCommand):
 
         # Read hashes of public keys
         txt_pubkey = struct.pack("<QQQQ",
-            self.cs.read_register("TXT_PUBLIC_KEY_0"),
-            self.cs.read_register("TXT_PUBLIC_KEY_1"),
-            self.cs.read_register("TXT_PUBLIC_KEY_2"),
-            self.cs.read_register("TXT_PUBLIC_KEY_3"),
-        )
+                                 self.cs.read_register("TXT_PUBLIC_KEY_0"),
+                                 self.cs.read_register("TXT_PUBLIC_KEY_1"),
+                                 self.cs.read_register("TXT_PUBLIC_KEY_2"),
+                                 self.cs.read_register("TXT_PUBLIC_KEY_3"),
+                                 )
         self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(
             binascii.hexlify(txt_pubkey).decode("ascii")))
 

@@ -55,6 +55,7 @@ from chipsec.hal.spi_descriptor import get_spi_flash_descriptor, get_spi_regions
 from chipsec.hal.spi_uefi import decode_uefi_region
 from chipsec.hal.uefi import UEFI, uefi_platform
 
+
 class DecodeCommand(BaseCommand):
 
     def requires_driver(self):
@@ -65,7 +66,7 @@ class DecodeCommand(BaseCommand):
         return False
 
     def decode_types(self):
-        self.logger.log("\n<fw_type> should be in [ {} ]\n".format( " | ".join( ["{}".format (t) for t in uefi_platform.fw_types] )))
+        self.logger.log("\n<fw_type> should be in [ {} ]\n".format(" | ".join(["{}".format(t) for t in uefi_platform.fw_types])))
 
     def decode_rom(self):
         _uefi = UEFI(self.cs)
@@ -96,13 +97,13 @@ class DecodeCommand(BaseCommand):
             os.makedirs(pth)
 
         for r in flregs:
-            idx     = r[0]
-            name    = r[1]
-            base    = r[3]
-            limit   = r[4]
+            idx = r[0]
+            name = r[1]
+            base = r[3]
+            limit = r[4]
             notused = r[5]
             if not notused:
-                region_data = rom[base:limit +1]
+                region_data = rom[base:limit + 1]
                 fname = os.path.join(pth, '{:d}_{:04X}-{:04X}_{}.bin'.format(idx, base, limit, name))
                 write_file(fname, region_data)
                 if FLASH_DESCRIPTOR == idx:
@@ -116,13 +117,13 @@ class DecodeCommand(BaseCommand):
 
         self.logger.set_log_file(_orig_logname)
 
-
     def run(self):
         t = time()
         if self._rom.lower() == 'types':
             self.decode_types()
         else:
             self.decode_rom()
-        self.logger.log("[CHIPSEC] (decode) time elapsed {:.3f}".format(time() -t))
+        self.logger.log("[CHIPSEC] (decode) time elapsed {:.3f}".format(time() - t))
+
 
 commands = {"decode": DecodeCommand}

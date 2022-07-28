@@ -19,7 +19,6 @@
 #
 
 
-
 #
 # -------------------------------------------------------------------------------
 #
@@ -44,10 +43,11 @@ from chipsec.logger import logger
 
 TOOLS_DIR = 'chipsec_tools'
 
-def read_file( filename, size=0 ):
-    #with open( filename, 'rb' ) as f:
+
+def read_file(filename, size=0):
+    # with open( filename, 'rb' ) as f:
     #  _file = f.read()
-    #f.closed
+    # f.closed
 
     try:
         f = open(filename, 'rb')
@@ -56,18 +56,20 @@ def read_file( filename, size=0 ):
         return 0
 
     if size:
-        _file = f.read( size )
+        _file = f.read(size)
     else:
         _file = f.read()
     f.close()
 
-    if logger().DEBUG: logger().log( "[file] read {:d} bytes from '{:256}'".format( len(_file), filename ) )
+    if logger().DEBUG:
+        logger().log("[file] read {:d} bytes from '{:256}'".format(len(_file), filename))
     return _file
 
-def write_file( filename, buffer, append=False ):
-    #with open( filename, 'wb' ) as f:
+
+def write_file(filename, buffer, append=False):
+    # with open( filename, 'wb' ) as f:
     #  f.write( buffer )
-    #f.closed
+    # f.closed
     perm = 'a' if append else 'w'
     if isinstance(buffer, bytes) or isinstance(buffer, bytearray):
         perm += 'b'
@@ -76,22 +78,24 @@ def write_file( filename, buffer, append=False ):
     except:
         logger().log_error("Unable to open file '{:.256}' for write access".format(filename))
         return 0
-    f.write( buffer )
+    f.write(buffer)
     f.close()
 
-    if logger().DEBUG: logger().log( "[file] wrote {:d} bytes to '{:.256}'".format( len(buffer), filename ) )
+    if logger().DEBUG:
+        logger().log("[file] wrote {:d} bytes to '{:.256}'".format(len(buffer), filename))
     return True
 
 
 # determine if CHIPSEC is loaded as chipsec.exe or in python
 def main_is_frozen():
     return (hasattr(sys, "frozen") or  # new py2exe
-            hasattr(sys, "importers")) # old py2exe
+            hasattr(sys, "importers"))  # old py2exe
+
 
 def get_main_dir():
-    path = os.path.abspath( os.path.join( os.path.dirname( __file__ ), os.path.pardir ) )
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     if main_is_frozen():
         path = os.path.dirname(sys.executable)
-    #elif len( os.path.dirname(sys.argv[0]) ) > 0:
+    # elif len( os.path.dirname(sys.argv[0]) ) > 0:
     #    path = os.path.dirname(sys.argv[0])
-    return  path
+    return path

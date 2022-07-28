@@ -15,7 +15,7 @@
 import platform
 from chipsec.helper.oshelper import avail_helpers
 if 'darwin' == platform.system().lower():
-    __all__ = [ "osxhelper" ]
+    __all__ = ["osxhelper"]
     avail_helpers.append("osxhelper")
 else:
-    __all__ = [ ]
+    __all__ = []

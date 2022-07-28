@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -48,6 +48,7 @@ from chipsec.hal.uefi_common import StatusCode
 
 TAGS = [MTAG_BIOS, MTAG_SECUREBOOT]
 
+
 class access_uefispec(BaseModule):
 
     def __init__(self):
@@ -60,7 +61,7 @@ class access_uefispec(BaseModule):
         ta = EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
 
         self.uefispec_vars = {
-        #### From UEFI Spec Table 11 "Global Variables"
+            # From UEFI Spec Table 11 "Global Variables"
             "LangCodes": bs | rt,
             "Lang": nv | bs | rt,
             "Timeout": nv | bs | rt,
@@ -77,28 +78,28 @@ class access_uefispec(BaseModule):
             "BootOrder": nv | bs | rt,
 
             "BootNext": nv | bs | rt,
-            "BootCurrent":  bs | rt,
+            "BootCurrent": bs | rt,
             "BootOptionSupport": bs | rt,
             "Driver0001": nv | bs | rt,
             "DriverOrder": nv | bs | rt,
             "Key0001": nv | bs | rt,
-            "HwErrRecSupport": nv | bs | rt, # HwErrRecSupport should be RO
-            "SetupMode": bs | rt, # SetupMode should be RO
-            "KEK":  nv | bs | rt | ta,
-            "PK":   nv | bs | rt | ta,
-            "SignatureSupport": bs | rt, # RO
-            "SecureBoot": bs | rt, # RO
-            "KEKDefault": bs | rt, # RO
-            "PKDefault": bs | rt, # RO
-            "dbDefault": bs | rt, # RO
-            "dbxDefault": bs | rt, # RO
-            "dbtDefault": bs | rt, # RO
-            "OsIndicationsSupported": bs | rt, # RO
+            "HwErrRecSupport": nv | bs | rt,  # HwErrRecSupport should be RO
+            "SetupMode": bs | rt,  # SetupMode should be RO
+            "KEK": nv | bs | rt | ta,
+            "PK": nv | bs | rt | ta,
+            "SignatureSupport": bs | rt,  # RO
+            "SecureBoot": bs | rt,  # RO
+            "KEKDefault": bs | rt,  # RO
+            "PKDefault": bs | rt,  # RO
+            "dbDefault": bs | rt,  # RO
+            "dbxDefault": bs | rt,  # RO
+            "dbtDefault": bs | rt,  # RO
+            "OsIndicationsSupported": bs | rt,  # RO
             "OsIndications": nv | bs | rt,
-            "VendorKeys":   bs | rt # RO
+            "VendorKeys": bs | rt  # RO
         }
 
-        self.uefispec_ro_vars = ( "HwErrRecSupport", "SetupMode", "SignatureSupport", "SecureBoot", "KEKDefault", "PKDefault", "dbDefault", "dbxDefault", "dbtDefault", "OsIndicationsSupported", "VendorKeys" )
+        self.uefispec_ro_vars = ("HwErrRecSupport", "SetupMode", "SignatureSupport", "SecureBoot", "KEKDefault", "PKDefault", "dbDefault", "dbxDefault", "dbtDefault", "OsIndicationsSupported", "VendorKeys")
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
@@ -107,7 +108,7 @@ class access_uefispec(BaseModule):
             self.res = ModuleResult.NOTAPPLICABLE
         return supported
 
-    def diff_var( self, data1, data2):
+    def diff_var(self, data1, data2):
         if data1 is None or data2 is None:
             return data1 != data2
 
@@ -115,8 +116,8 @@ class access_uefispec(BaseModule):
         newstr = ":".join("{:02x}".format(c) for c in data2)
 
         if oldstr != newstr:
-            print (oldstr)
-            print (newstr)
+            print(oldstr)
+            print(newstr)
             return True
         else:
             return False
@@ -127,21 +128,21 @@ class access_uefispec(BaseModule):
         #origdata = _uefi.get_EFI_variable(name, guid)
         origdata = data
         datalen = len(bytearray(data))
-        baddata = 'Z' *datalen #0x5A is ASCII 'Z'
+        baddata = 'Z' * datalen  # 0x5A is ASCII 'Z'
         if baddata == origdata:
-            baddata = 'A' *datalen #in case we failed to restore previously
+            baddata = 'A' * datalen  # in case we failed to restore previously
         status = self._uefi.set_EFI_variable(name, guid, baddata)
-        if status != StatusCode.EFI_SUCCESS: self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
-        newdata  = self._uefi.get_EFI_variable(name, guid)
+        if status != StatusCode.EFI_SUCCESS:
+            self.logger.log_good('Writing EFI variable {} did not succeed.'.format(name))
+        newdata = self._uefi.get_EFI_variable(name, guid)
         if self.diff_var(newdata, origdata):
             self.logger.log_bad('Corruption of EFI variable of concern {}. Trying to recover.'.format(name))
             ret = True
             self._uefi.set_EFI_variable(name, guid, origdata)
             if self.diff_var(self._uefi.get_EFI_variable(name, guid), origdata):
-                nameguid = name +' (' +guid +')'
+                nameguid = name + ' (' + guid + ')'
                 self.logger.log_bad('RECOVERY FAILED. Variable {} remains corrupted. Original data value: {}'.format(nameguid, origdata))
         return ret
-
 
     def check_vars(self, do_modify):
         res = ModuleResult.PASSED
@@ -157,27 +158,30 @@ class access_uefispec(BaseModule):
 
         self.logger.log('[*] Testing UEFI variables ..')
         for name in vars.keys():
-            if name is None: pass
+            if name is None:
+                pass
             if vars[name] is None:
                 pass
 
             if len(vars[name]) > 1:
-                self.logger.log_important( 'Found two instances of the variable {}.'.format(name) )
+                self.logger.log_important('Found two instances of the variable {}.'.format(name))
             for (off, buf, hdr, data, guid, attrs) in vars[name]:
                 self.logger.log('[*] Variable {} ({}) Guid {} Size {} '.format(name, get_attr_string(attrs), guid, hex(len(data))))
                 perms = self.uefispec_vars.get(name)
                 if perms is not None:
                     if perms != attrs:
                         attr_diffs = (perms ^ attrs)
-                        extra_attr = attr_diffs &  attrs
+                        extra_attr = attr_diffs & attrs
                         missing_attr = attr_diffs & ~extra_attr
                         uefispec_concern.append(name)
                         if extra_attr != 0:
-                            self.logger.log_important( '  Extra attributes:' + get_attr_string(extra_attr) )
-                            if (extra_attr & ~(EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_APPEND_WRITE) != 0):  res = ModuleResult.FAILED
+                            self.logger.log_important('  Extra attributes:' + get_attr_string(extra_attr))
+                            if (extra_attr & ~(EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_APPEND_WRITE) != 0):
+                                res = ModuleResult.FAILED
                         if missing_attr != 0:
-                            self.logger.log_important( '  Missing attributes:' + get_attr_string(missing_attr) )
-                        if res != ModuleResult.FAILED: res = ModuleResult.WARNING
+                            self.logger.log_important('  Missing attributes:' + get_attr_string(missing_attr))
+                        if res != ModuleResult.FAILED:
+                            res = ModuleResult.WARNING
 
                 if do_modify:
                     self.logger.log("[*] Testing modification of {} ..".format(name))
@@ -217,10 +221,9 @@ class access_uefispec(BaseModule):
             self.logger.log_failed('Some EFI variables were not protected according to spec.')
         return res
 
-
-    def run( self,  module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("Access Control of EFI Variables")
 
         do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
-        self.res = self.check_vars( do_modify )
+        self.res = self.check_vars(do_modify)
         return self.res

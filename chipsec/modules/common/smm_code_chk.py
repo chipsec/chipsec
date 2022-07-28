@@ -75,8 +75,8 @@ class smm_code_chk(BaseModule):
             return True
 
     def _check_SMM_Code_Chk_En(self, thread_id):
-        regval      = self.cs.read_register('MSR_SMM_FEATURE_CONTROL', thread_id)
-        lock        = self.cs.get_register_field('MSR_SMM_FEATURE_CONTROL', regval, 'LOCK')
+        regval = self.cs.read_register('MSR_SMM_FEATURE_CONTROL', thread_id)
+        lock = self.cs.get_register_field('MSR_SMM_FEATURE_CONTROL', regval, 'LOCK')
         code_chk_en = self.cs.get_register_field('MSR_SMM_FEATURE_CONTROL', regval, 'SMM_Code_Chk_En')
 
         self.cs.print_register('MSR_SMM_FEATURE_CONTROL', regval, cpu_thread=thread_id)
@@ -124,7 +124,7 @@ Please consult the Intel SDM to determine whether or not your CPU supports SMM_C
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("SMM_Code_Chk_En (SMM Call-Out) Protection")
         self.res = self.check_SMM_Code_Chk_En()
         return self.res

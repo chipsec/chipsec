@@ -55,13 +55,14 @@ from chipsec.hal.msr import MemType
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
+
 class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        mtrr_exist  = self.cs.is_register_defined('MTRRCAP')
+        mtrr_exist = self.cs.is_register_defined('MTRRCAP')
         pbase_exist = self.cs.is_register_defined('IA32_SMRR_PHYSBASE')
         pmask_exist = self.cs.is_register_defined('IA32_SMRR_PHYSMASK')
         if mtrr_exist and pbase_exist and pmask_exist:
@@ -117,7 +118,7 @@ class smrr(BaseModule):
         self.logger.log("[*] Checking SMRR range mask programming..")
         msr_smrrmask = self.cs.read_register('IA32_SMRR_PHYSMASK')
         self.cs.print_register('IA32_SMRR_PHYSMASK', msr_smrrmask)
-        smrrmask  = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True)
+        smrrmask = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True)
         smrrvalid = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid')
         self.logger.log("[*] SMRR range mask: 0x{:016X}".format(smrrmask))
 
@@ -145,7 +146,6 @@ class smrr(BaseModule):
         if smrr_ok:
             self.logger.log_good("OK so far. SMRR range base/mask match on all logical CPUs")
 
-
         #
         # 5. Reading from & writing to SMRR_BASE physical address
         # writes should be dropped, reads should return all F's
@@ -156,9 +156,9 @@ class smrr(BaseModule):
         ok = 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword(smrrbase)
         smrr_ok = smrr_ok and ok
         if ok:
-            self.logger.log_passed("SMRR reads are blocked in non-SMM mode") #return all F's
+            self.logger.log_passed("SMRR reads are blocked in non-SMM mode")  # return all F's
         else:
-            self.logger.log_failed("SMRR reads are not blocked in non-SMM mode") #all F's are not returned
+            self.logger.log_failed("SMRR reads are not blocked in non-SMM mode")  # all F's are not returned
 
         if (do_modify):
             self.logger.log("[*] Trying to modify memory at SMRR base 0x{:08X}..".format(smrrbase))
@@ -169,7 +169,6 @@ class smrr(BaseModule):
                 self.logger.log_good("SMRR writes are blocked in non-SMM mode")
             else:
                 self.logger.log_bad("SMRR writes are not blocked in non-SMM mode")
-
 
         self.logger.log('')
         if not smrr_ok:

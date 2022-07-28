@@ -96,35 +96,35 @@ from chipsec.exceptions import BadSMIDetected
 #
 
 # False - better performance, True - better results tracking
-DUMP_MEMORY_ON_DETECT  = False
+DUMP_MEMORY_ON_DETECT = False
 # False - better performance, True - better results tracking
-FLUSH_OUTPUT_ALWAYS    = False
+FLUSH_OUTPUT_ALWAYS = False
 # makes sure SMI code is logged in case of a crash
 FLUSH_OUTPUT_AFTER_SMI = True
 # dump all registers in log before every SMI (True - large size of log file)
-DUMP_GPRS_EVERY_SMI    = True
+DUMP_GPRS_EVERY_SMI = True
 
 #
 # SMI fuzzing options
 #
 
 # stop fuzzing after the first potential issue detected
-FUZZ_BAIL_ON_1ST_DETECT   = True
+FUZZ_BAIL_ON_1ST_DETECT = True
 
 # Consider SMI handler subfunctions are passed in RCX GP register
 # Fuzz RCX as SMI subfunctions: from 0 to MAX_SMI_FUNCTIONS
 # False - better performance, True - smarter fuzzing
 FUZZ_SMI_FUNCTIONS_IN_ECX = True
-MAX_SMI_FUNCTIONS         = 0x10
+MAX_SMI_FUNCTIONS = 0x10
 
 # Max value of the value written to SMI data port (0xB3)
-MAX_SMI_DATA              = 0x100
+MAX_SMI_DATA = 0x100
 
 # Pass the pointer to SMI handlers in all general-purpose registers
 # rather than in one register
 # True - faster, False - gives you specific GPR that the vulnerable SMI handler is consuming
 #
-PTR_IN_ALL_GPRS           = False
+PTR_IN_ALL_GPRS = False
 
 # SMI handler may take a pointer/PA from (some offset of off) address passed in GPRs and write to it
 # Treat contents at physical address passed in GPRs as pointers and check contents at that pointer
@@ -133,7 +133,7 @@ PTR_IN_ALL_GPRS           = False
 
 # Max offset of the pointer (physical address)
 # of the 2nd order buffer written in the memory buffer passed to SMI
-MAX_PTR_OFFSET_IN_BUFFER  = 0x20
+MAX_PTR_OFFSET_IN_BUFFER = 0x20
 
 # very obscure option, don't even try to understand
 GPR_2ADDR = False
@@ -143,55 +143,54 @@ GPR_2ADDR = False
 # Defaults
 #
 _FILL_VALUE_QWORD = 0x5A5A5A5A5A5A5A5A
-_FILL_VALUE_BYTE  = 0x5A
-_SMI_CODE_DATA    = 0x0
-_MEM_FILL_VALUE   = b'\x11'
-_MEM_FILL_SIZE    = 0x500
-_MAX_ALLOC_PA     = 0xFFFFFFFF
-_DEFAULT_GPRS     = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': _FILL_VALUE_QWORD, 'rdx': _FILL_VALUE_QWORD, 'rsi': _FILL_VALUE_QWORD, 'rdi': _FILL_VALUE_QWORD}
+_FILL_VALUE_BYTE = 0x5A
+_SMI_CODE_DATA = 0x0
+_MEM_FILL_VALUE = b'\x11'
+_MEM_FILL_SIZE = 0x500
+_MAX_ALLOC_PA = 0xFFFFFFFF
+_DEFAULT_GPRS = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': _FILL_VALUE_QWORD, 'rdx': _FILL_VALUE_QWORD, 'rsi': _FILL_VALUE_QWORD, 'rdi': _FILL_VALUE_QWORD}
 
 _pth = 'smm_ptr'
 
 
 class smi_desc(object):
     def __init__(self):
-        self.smi_code      = None
-        self.smi_data      = None
-        self.name          = 'smi'
-        self.desc          = ''
-        self.gprs          = _DEFAULT_GPRS
+        self.smi_code = None
+        self.smi_data = None
+        self.name = 'smi'
+        self.desc = ''
+        self.gprs = _DEFAULT_GPRS
         self.ptr_in_buffer = False
-        self.ptr           = None
-        self.ptr_offset    = 0
-        self.sig           = None
-        self.sig_offset    = 0
+        self.ptr = None
+        self.ptr_offset = 0
+        self.sig = None
+        self.sig_offset = 0
 
 
 def DIFF(s, t, sz):
     return [pos for pos in range(sz) if s[pos] != t[pos]]
 
+
 def FILL_BUFFER(_fill_byte, _fill_size, _ptr_in_buffer, _ptr, _ptr_offset, _sig, _sig_offset):
     fill_buf = _fill_byte * _fill_size
     if _ptr_in_buffer and (_ptr is not None):
-        fill_buf = fill_buf[:_ptr_offset] + struct.pack('=I', _ptr&0xFFFFFFFF) + fill_buf[_ptr_offset + 4:]
+        fill_buf = fill_buf[:_ptr_offset] + struct.pack('=I', _ptr & 0xFFFFFFFF) + fill_buf[_ptr_offset + 4:]
     if _sig is not None:
         fill_buf = fill_buf[:_sig_offset] + _sig + fill_buf[_sig_offset + len(_sig):]
     return fill_buf
-
 
 
 class smm_ptr(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.interrupts = Interrupts(self.cs)
-        self.is_check_memory    = True
+        self.is_check_memory = True
         self.test_ptr_in_buffer = False
         self.fill_byte = _MEM_FILL_VALUE
         self.fill_size = _MEM_FILL_SIZE
 
     def is_supported(self):
         return True
-
 
     def fill_memory(self, _addr, is_ptr_in_buffer, _ptr, _ptr_offset, _sig, _sig_offset):
         #
@@ -239,9 +238,9 @@ class smm_ptr(BaseModule):
         self.logger.log("    < Checking buffers")
 
         expected_buf = FILL_BUFFER(self.fill_byte, self.fill_size, _smi_desc.ptr_in_buffer, _smi_desc.ptr, _smi_desc.ptr_offset, _smi_desc.sig, _smi_desc.sig_offset)
-        buf          = self.cs.mem.read_physical_mem(_addr, self.fill_size)
-        differences  = DIFF(expected_buf, buf, self.fill_size)
-        _changed     = len(differences) > 0
+        buf = self.cs.mem.read_physical_mem(_addr, self.fill_size)
+        differences = DIFF(expected_buf, buf, self.fill_size)
+        _changed = len(differences) > 0
 
         if self.logger.VERBOSE:
             self.logger.log('Checking contents at PA 0x{:016X}:'.format(_addr))
@@ -262,12 +261,12 @@ class smm_ptr(BaseModule):
                 self.logger.log("    Dumping buffer to '{}'".format(_f))
                 write_file(_f, buf)
 
-        _changed1    = False
+        _changed1 = False
         expected_buf = filler
         if _smi_desc.ptr_in_buffer and (_ptr is not None):
-            buf1         = self.cs.mem.read_physical_mem(_ptr, self.fill_size)
+            buf1 = self.cs.mem.read_physical_mem(_ptr, self.fill_size)
             differences1 = DIFF(expected_buf, buf1, self.fill_size)
-            _changed1    = len(differences1) > 0
+            _changed1 = len(differences1) > 0
 
             if self.logger.VERBOSE:
                 self.logger.log("Checking contents at PA 0x{:016X}:".format(_ptr))
@@ -287,7 +286,6 @@ class smm_ptr(BaseModule):
                     write_file(_f, buf1)
 
         return (_changed or _changed1)
-
 
     def smi_fuzz_iter(self, thread_id, _addr, _smi_desc, fill_contents=True, restore_contents=False):
         #
@@ -324,7 +322,6 @@ class smm_ptr(BaseModule):
 
         return contents_changed
 
-
     def test_config(self, thread_id, _smi_config_fname, _addr, _addr1):
         #
         # Parse SMM config file describing SMI handlers and their call arguments
@@ -355,8 +352,8 @@ class smm_ptr(BaseModule):
                     _smi_desc.smi_data = int(var, 16) if '*' != var else _SMI_CODE_DATA
                 elif 'ptr_offset' == _n:
                     _smi_desc.ptr_in_buffer = True
-                    _smi_desc.ptr_offset    = int(var, 16)
-                    _smi_desc.ptr           = _addr1
+                    _smi_desc.ptr_offset = int(var, 16)
+                    _smi_desc.ptr = _addr1
                 elif 'sig' == _n:
                     _smi_desc.sig = bytearray.fromhex(var)
                 elif 'sig_offset' == _n:
@@ -365,7 +362,6 @@ class smm_ptr(BaseModule):
                     _smi_desc.gprs[_n] = (_addr if 'PTR' == var else (_FILL_VALUE_BYTE if 'VAL' == var else int(var, 16))) if '*' != var else _FILL_VALUE_QWORD
 
         return bad_ptr_cnt
-
 
     def test_fuzz(self, thread_id, smic_start, smic_end, _addr, _addr1):
 
@@ -417,7 +413,7 @@ class smm_ptr(BaseModule):
 
                                 self.logger.log("    RSI: 0x{:016X}".format(_addr))
                                 _smi_desc.gprs['rsi'] = gpr_value
-                                if self.smi_fuzz_iter(thread_id,  _addr, _smi_desc, False, True):
+                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                     bad_ptr_cnt += 1
                                 _smi_desc.gprs['rsi'] = _FILL_VALUE_QWORD
 
@@ -468,23 +464,23 @@ class smm_ptr(BaseModule):
         self.logger.log("  address       physical address of memory buffer to pass in GP regs to SMI handlers (in Hex)")
         self.logger.log("    = smram     pass address of SMRAM base (system may hang in this mode!)\n")
 
-        test_mode            = 'config'
-        _smi_config_fname    = 'chipsec/modules/tools/smm/smm_config.ini'
-        _addr                = None
-        _addr1               = None
-        thread_id            = 0x0
+        test_mode = 'config'
+        _smi_config_fname = 'chipsec/modules/tools/smm/smm_config.ini'
+        _addr = None
+        _addr1 = None
+        thread_id = 0x0
 
         global DUMP_GPRS_EVERY_SMI
         smic_start = 0
-        smic_end   = 0
+        smic_end = 0
         if len(module_argv) > 1:
             test_mode = module_argv[0].lower()
             if test_mode == 'config':
                 _smi_config_fname = module_argv[1]
             elif test_mode in ['fuzz', 'fuzzmore']:
-                smic_arr   = module_argv[1].split(':')
+                smic_arr = module_argv[1].split(':')
                 smic_start = int(smic_arr[0], 16)
-                smic_end   = int(smic_arr[1], 16)
+                smic_end = int(smic_arr[1], 16)
                 if test_mode == 'fuzzmore':
                     self.test_ptr_in_buffer = True
                     DUMP_GPRS_EVERY_SMI = False
@@ -524,7 +520,7 @@ class smm_ptr(BaseModule):
         self.logger.log("    Filling/checking memory?  : {}".format('YES' if self.is_check_memory else 'NO'))
         if self.is_check_memory:
             self.logger.log("      Second buffer pointer   : 0x{:016X} (address written to memory buffer)".format(_addr1))
-            self.logger.log("      Number of bytes to fill : 0x{:X}".format(self.fill_size ))
+            self.logger.log("      Number of bytes to fill : 0x{:X}".format(self.fill_size))
             self.logger.log("      Byte to fill with       : 0x{:X}".format(ord(self.fill_byte)))
         self.logger.log("    Additional options (can be changed in the source code):")
         self.logger.log("      Fuzzing SMI functions in ECX?          : {:d}".format(FUZZ_SMI_FUNCTIONS_IN_ECX))

@@ -94,6 +94,7 @@ Hardware registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult
 
+
 class me_mfg_mode(BaseModule):
 
     def __init__(self):
@@ -120,7 +121,7 @@ class me_mfg_mode(BaseModule):
 
         return me_mfg_mode_res
 
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("ME Manufacturing Mode")
         self.res = self.check_me_mfg_mode()
         return self.res

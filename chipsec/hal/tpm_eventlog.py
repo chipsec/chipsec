@@ -80,7 +80,7 @@ class TcgPcrEvent(object):
             t = "(0x{:x}".format(self.event_type)
         _str = "PCR: {:d}\ttype: {}\tsize: 0x{:x}\tdigest: {}"
         return _str.format(self.pcr_index, t.ljust(EVENT_TYPE_MAX_LENGTH),
-                       self.event_size, binascii.hexlify(self.digest))
+                           self.event_size, binascii.hexlify(self.digest))
 
 
 class SCRTMVersion(TcgPcrEvent):
@@ -94,8 +94,9 @@ class SCRTMVersion(TcgPcrEvent):
         try:
             _str += "\n\t+ version: {}".format(self.version.decode("utf-16"))
         except:
-            if logger().HAL: logger().log_warning("[tpm_eventlog] CRTM Version is not "
-                                 "a valid string")
+            if logger().HAL:
+                logger().log_warning("[tpm_eventlog] CRTM Version is not "
+                                     "a valid string")
         return _str
 
 
@@ -111,7 +112,6 @@ class EFIFirmwareBlob(TcgPcrEvent):
         self.base = base
         self.length = length
 
-
     def __str__(self):
         _str = super(EFIFirmwareBlob, self).__str__()
         _str += "\n\t+ base: 0x{:x}\tlength: 0x{:x}".format(self.base, self.length)
@@ -119,39 +119,39 @@ class EFIFirmwareBlob(TcgPcrEvent):
 
 
 SML_EVENT_TYPE = {
-        # From reference [2]
-        0x0: "EV_PREBOOT_CERT",
-        0x1: "EV_POST_CODE",
-        0x2: "EV_UNUSED",
-        0x3: "EV_NO_ACTION",
-        0x4: "EV_SEPARATOR",
-        0x5: "EV_ACTION",
-        0x6: "EV_EVENT_TAG",
-        0x7: "EV_S_CRTM_CONTENTS",
-        0x8: SCRTMVersion,
-        0x9: "EV_CPU_MICROCODE",
-        0xA: "EV_PLATFORM_CONFIG_FLAGS",
-        0xB: "EV_TABLE_OF_DEVICES",
-        0xC: "EV_COMPACT_HASH",
-        0xD: "EV_IPL",
-        0xE: "EV_IPL_PARTITION_DATA",
-        0xF: "EV_NONHOST_CODE",
-        0x10: "EV_NONHOST_CONFIG",
-        0x11: "EV_NONHOST_INFO",
-        0x12: "EV_OMIT_BOOT_DEVICE_EVENTS",
+    # From reference [2]
+    0x0: "EV_PREBOOT_CERT",
+    0x1: "EV_POST_CODE",
+    0x2: "EV_UNUSED",
+    0x3: "EV_NO_ACTION",
+    0x4: "EV_SEPARATOR",
+    0x5: "EV_ACTION",
+    0x6: "EV_EVENT_TAG",
+    0x7: "EV_S_CRTM_CONTENTS",
+    0x8: SCRTMVersion,
+    0x9: "EV_CPU_MICROCODE",
+    0xA: "EV_PLATFORM_CONFIG_FLAGS",
+    0xB: "EV_TABLE_OF_DEVICES",
+    0xC: "EV_COMPACT_HASH",
+    0xD: "EV_IPL",
+    0xE: "EV_IPL_PARTITION_DATA",
+    0xF: "EV_NONHOST_CODE",
+    0x10: "EV_NONHOST_CONFIG",
+    0x11: "EV_NONHOST_INFO",
+    0x12: "EV_OMIT_BOOT_DEVICE_EVENTS",
 
-        # From reference [1]
-        0x80000000: "EV_EFI_EVENT_BASE",
-        0x80000001: "EV_EFI_VARIABLE_DRIVER_CONFIG",
-        0x80000002: "EV_EFI_VARIABLE_BOOT",
-        0x80000003: "EV_EFI_BOOT_SERVICES_APPLICATION",
-        0x80000004: "EV_EFI_BOOT_SERVICES_DRIVER",
-        0x80000005: "EV_EFI_RUNTIME_SERVICES_DRIVER",
-        0x80000006: "EV_EFI_GPT_EVENT",
-        0x80000007: "EV_EFI_ACTION",
-        0x80000008: EFIFirmwareBlob,
-        0x80000009: "EV_EFI_HANDOFF_TABLES",
-        0x800000E0: "EV_EFI_VARIABLE_AUTHORITY"
+    # From reference [1]
+    0x80000000: "EV_EFI_EVENT_BASE",
+    0x80000001: "EV_EFI_VARIABLE_DRIVER_CONFIG",
+    0x80000002: "EV_EFI_VARIABLE_BOOT",
+    0x80000003: "EV_EFI_BOOT_SERVICES_APPLICATION",
+    0x80000004: "EV_EFI_BOOT_SERVICES_DRIVER",
+    0x80000005: "EV_EFI_RUNTIME_SERVICES_DRIVER",
+    0x80000006: "EV_EFI_GPT_EVENT",
+    0x80000007: "EV_EFI_ACTION",
+    0x80000008: EFIFirmwareBlob,
+    0x80000009: "EV_EFI_HANDOFF_TABLES",
+    0x800000E0: "EV_EFI_VARIABLE_AUTHORITY"
 }
 
 EVENT_TYPE_MAX_LENGTH = max([len(v) for v in SML_EVENT_TYPE.values()

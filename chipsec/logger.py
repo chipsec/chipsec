@@ -46,6 +46,7 @@ except ImportError:
 
 LOG_PATH = os.path.join(os.getcwd(), "logs")
 
+
 class ColorLogger(pyLogging.Formatter):
     """Colored Output for Python Logging"""
 
@@ -66,11 +67,11 @@ class ColorLogger(pyLogging.Formatter):
             WHITE = WConio.WHITE
 
             LEVEL_ID = {
-            pyLogging.DEBUG: GREEN,
-            pyLogging.INFO: WHITE,
-            pyLogging.WARNING: YELLOW,
-            pyLogging.CRITICAL: BLUE,
-            pyLogging.ERROR: RED
+                pyLogging.DEBUG: GREEN,
+                pyLogging.INFO: WHITE,
+                pyLogging.WARNING: YELLOW,
+                pyLogging.CRITICAL: BLUE,
+                pyLogging.ERROR: RED
             }
 
             def log_color(self, message, record):
@@ -92,17 +93,17 @@ class ColorLogger(pyLogging.Formatter):
         UNDERLINE = '\033[4m'
         END = 0
         LIGHT = 90
-        DARK  = 30
+        DARK = 30
         BACKGROUND = 40
         LIGHT_BACKGROUND = 100
-        GRAY   = 0
-        RED    = 1
-        GREEN  = 2
+        GRAY = 0
+        RED = 1
+        GREEN = 2
         YELLOW = 3
-        BLUE   = 4
+        BLUE = 4
         PURPLE = 5
-        CYAN   = 6
-        LIGHT_GRAY  = 7
+        CYAN = 6
+        LIGHT_GRAY = 7
         NORMAL = 8
         WHITE = 9
         csi = '\x1b['
@@ -114,7 +115,7 @@ class ColorLogger(pyLogging.Formatter):
             pyLogging.WARNING: YELLOW,
             pyLogging.CRITICAL: BLUE,
             pyLogging.ERROR: RED
-            }
+        }
 
         def log_color(self, message, record):
             if record.levelno in self.LEVEL_ID:
@@ -122,12 +123,13 @@ class ColorLogger(pyLogging.Formatter):
                 params = []
                 params.append(str(color + 30))
                 message = ''.join((self.csi, ';'.join(params),
-                                    'm', message, self.reset))
+                                   'm', message, self.reset))
             return message
 
     else:
         def log_color(self, message, record):
             return message
+
 
 class Logger:
     """Class for logging to console, text file, XML."""
@@ -152,7 +154,7 @@ class Logger:
             is_atty = False
         if is_atty and os.getenv('NO_COLOR') is None:
             self.logstream.setFormatter(ColorLogger())
-        self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
+        self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
         self.Results = ChipsecResults()
 
     def set_log_file(self, name=None):
@@ -165,8 +167,8 @@ class Logger:
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
-                self.logfile = pyLogging.FileHandler(filename = self.LOG_FILE_NAME, mode='w') #creates FileHandler for log file
-                self.rootLogger.addHandler(self.logfile) #adds filehandler to root logger
+                self.logfile = pyLogging.FileHandler(filename=self.LOG_FILE_NAME, mode='w')  # creates FileHandler for log file
+                self.rootLogger.addHandler(self.logfile)  # adds filehandler to root logger
 
                 self.LOG_TO_FILE = True
             except Exception:
@@ -230,12 +232,12 @@ class Logger:
     # These logger methods are deprecated and will be removed
     # -------------------------------------------------------
 
-    def error( self, text ):  # Use log_error()
+    def error(self, text):  # Use log_error()
         """Logs an Error message"""
         text = "ERROR: " + text
         self.log(text, pyLogging.ERROR)
 
-    def warn( self, text ):  # Use log_warning()
+    def warn(self, text):  # Use log_warning()
         """Logs an Warning message"""
         text = "WARNING: " + text
         self.log(text, pyLogging.WARNING)
@@ -245,35 +247,35 @@ class Logger:
         if self.VERBOSE:
             self.log(text, self.verbose)
 
-    def log_passed_check( self, text ):  # Duplicate of log_passed()
+    def log_passed_check(self, text):  # Duplicate of log_passed()
         """Logs a Test as PASSED"""
         self.log_passed(text)
 
-    def log_failed_check( self, text ):  # Duplicate of log_failed()
+    def log_failed_check(self, text):  # Duplicate of log_failed()
         """Logs a Test as FAILED"""
         self.log_failed(text)
 
-    def log_error_check( self, text ):  # Duplicate of log_error()
+    def log_error_check(self, text):  # Duplicate of log_error()
         """Logs a Test as ERROR"""
         self.error(text)
 
-    def log_skipped_check( self, text ):  # Duplicate of log_skipped()
+    def log_skipped_check(self, text):  # Duplicate of log_skipped()
         """Logs a Test as Not Implemented"""
         self.log_skipped(text)
 
-    def log_warn_check( self, text ):  # Duplicate of log_warning()
+    def log_warn_check(self, text):  # Duplicate of log_warning()
         """Logs a Warning test, a warning test is considered equal to a PASSED test"""
         self.log_warning(text)
 
-    def log_information_check( self, text ):  # Duplicate of log_information()
+    def log_information_check(self, text):  # Duplicate of log_information()
         """Logs a Information test, an information test"""
         self.log_information(text)
 
-    def log_not_applicable_check( self, text):  # Duplicate of log_not_applicable()
+    def log_not_applicable_check(self, text):  # Duplicate of log_not_applicable()
         """Logs a Test as Not Applicable"""
         self.log_not_applicable(text)
 
-    def log_result( self, text ):  # Duplicate of log_good()
+    def log_result(self, text):  # Duplicate of log_good()
         """Logs a result message."""
         text = "[+] " + text
         self.log(text, pyLogging.DEBUG)
@@ -348,7 +350,7 @@ class Logger:
 
     def start_test(self, test_name):
         """Logs the start point of a Test"""
-        text =        "[x][ =======================================================================\n"
+        text = "[x][ =======================================================================\n"
         text = text + "[x][ Module: " + test_name + "\n"
         text = text + "[x][ ======================================================================="
         self.log(text, pyLogging.CRITICAL)
@@ -379,18 +381,20 @@ class Logger:
         if self.LOG_TO_FILE:
             self._write_log(text, self.LOG_FILE_NAME)
 
-    VERBOSE    = False
+    VERBOSE = False
     UTIL_TRACE = False
-    HAL        = False
-    DEBUG      = False
+    HAL = False
+    DEBUG = False
 
-
-    LOG_TO_STATUS_FILE   = False
+    LOG_TO_STATUS_FILE = False
     LOG_STATUS_FILE_NAME = ""
-    LOG_TO_FILE          = False
-    LOG_FILE_NAME        = ""
+    LOG_TO_FILE = False
+    LOG_FILE_NAME = ""
+
 
 _logger = Logger()
+
+
 def logger():
     """Returns a Logger instance."""
     return _logger
@@ -411,10 +415,10 @@ def hex_to_text(value):
 
 def bytes2string(buffer, length=16):
     '''Generate text string based on str with ASCII side panel'''
-    output       = []
-    num_string   = []
+    output = []
+    num_string = []
     ascii_string = []
-    index        = 1
+    index = 1
     for c in buffer:
         num_string += ['{:02X} '.format(ord(c))]
         if not (c in string.printable) or (c in string.whitespace):
@@ -426,7 +430,7 @@ def bytes2string(buffer, length=16):
             num_string += ascii_string
             output.append(''.join(num_string))
             ascii_string = []
-            num_string   = []
+            num_string = []
         index += 1
     if 0 != (len(buffer) % length):
         num_string += [(length - len(buffer) % length) * 3 * ' ']
@@ -436,23 +440,23 @@ def bytes2string(buffer, length=16):
     return '\n'.join(output)
 
 
-def dump_buffer(arr, length = 8):
+def dump_buffer(arr, length=8):
     """Dumps the buffer (str) with ASCII"""
     return bytes2string(arr, length)
 
 
-def print_buffer(arr, length = 16):
+def print_buffer(arr, length=16):
     """Prints the buffer (str) with ASCII"""
     prt_str = bytes2string(arr, length)
     logger().log(prt_str)
 
 
-def dump_buffer_bytes(arr, length = 8):
+def dump_buffer_bytes(arr, length=8):
     """Dumps the buffer (bytes, bytearray) with ASCII"""
-    output       = []
-    num_string   = []
+    output = []
+    num_string = []
     ascii_string = []
-    index        = 1
+    index = 1
     for c in arr:
         num_string += ['{:02X} '.format(c)]
         if not (chr(c) in string.printable) or (chr(c) in string.whitespace):
@@ -464,7 +468,7 @@ def dump_buffer_bytes(arr, length = 8):
             num_string += ascii_string
             output.append(''.join(num_string))
             ascii_string = []
-            num_string   = []
+            num_string = []
         index += 1
     if 0 != (len(arr) % length):
         num_string += [(length - len(arr) % length) * 3 * ' ']
@@ -474,13 +478,13 @@ def dump_buffer_bytes(arr, length = 8):
     return '\n'.join(output)
 
 
-def print_buffer_bytes(arr, length = 16):
+def print_buffer_bytes(arr, length=16):
     """Prints the buffer (bytes, bytearray) with ASCII"""
     prt_str = dump_buffer_bytes(arr, length)
     logger().log(prt_str)
 
 
-def pretty_print_hex_buffer(arr, length = 16):
+def pretty_print_hex_buffer(arr, length=16):
     """Prints the buffer (bytes, bytearray) in a grid"""
     _str = ["    _"]
     for n in range(length):
@@ -492,7 +496,7 @@ def pretty_print_hex_buffer(arr, length = 16):
     logger().log(''.join(_str))
 
 
-def dump_data(data, length = 16):
+def dump_data(data, length=16):
     """Dumps the buffer with ASCII"""
     if isinstance(data, str):
         dump_buffer(data, length)
@@ -500,7 +504,7 @@ def dump_data(data, length = 16):
         dump_buffer_bytes(data, length)
 
 
-def print_data(data, length = 16):
+def print_data(data, length=16):
     """Prints the buffer with ASCII"""
     if isinstance(data, str):
         print_buffer(data, length)

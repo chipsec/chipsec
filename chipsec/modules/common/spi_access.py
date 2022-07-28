@@ -50,6 +50,7 @@ from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
 
 TAGS = [MTAG_BIOS]
 
+
 class spi_access(BaseModule):
 
     def __init__(self):

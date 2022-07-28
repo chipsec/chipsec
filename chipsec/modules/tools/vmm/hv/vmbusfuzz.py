@@ -50,23 +50,24 @@ import sys
 import traceback
 from struct import pack
 from random import getrandbits, choice
-from chipsec.module_common              import ModuleResult
-from chipsec.modules.tools.vmm.common   import session_logger, overwrite, get_int_arg
+from chipsec.module_common import ModuleResult
+from chipsec.modules.tools.vmm.common import session_logger, overwrite, get_int_arg
 from chipsec.modules.tools.vmm.hv.vmbus import VMBusDiscovery, HyperV, RingBuffer
 
 sys.stdout = session_logger(True, 'vmbusfuzz')
 
+
 class VMBusFuzz(VMBusDiscovery):
     def __init__(self):
         VMBusDiscovery.__init__(self)
-        self.training         = False
+        self.training = False
         self.training_msginfo = []
-        self.fuzzing          = False
-        self.fuzzing_rules    = {}
-        self.current_message  = 0
+        self.fuzzing = False
+        self.fuzzing_rules = {}
+        self.current_message = 0
 
     ##
-    ##  hv_post_msg - Fuzzing a message to be sent
+    # hv_post_msg - Fuzzing a message to be sent
     ##
     def hv_post_msg(self, message):
         if self.training:
@@ -77,7 +78,7 @@ class VMBusFuzz(VMBusDiscovery):
                 for position in rules:
                     message = overwrite(message, rules[position], position)
             self.current_message += 1
-        ## Randomize leftover bytes. It shouldn't affect functionality.
+        # Randomize leftover bytes. It shouldn't affect functionality.
         leftovers = ''.join(chr(getrandbits(8)) for _ in range(256 - len(message)))
         return HyperV.hv_post_msg(self, message + leftovers)
 
@@ -116,7 +117,7 @@ class VMBusFuzz(VMBusDiscovery):
         if len(module_argv) > 0:
             command = module_argv[0]
         else:
-            self.logger.log(self.__doc__.replace('`',''))
+            self.logger.log(self.__doc__.replace('`', ''))
             return
 
         cmdarg1 = module_argv[1] if len(module_argv) > 1 else 'all'

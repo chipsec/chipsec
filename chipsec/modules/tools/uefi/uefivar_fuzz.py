@@ -64,11 +64,12 @@ from uuid import uuid4, UUID
 import struct
 
 from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.file          import write_file
-from chipsec.hal.uefi      import UEFI
-from chipsec.defines       import bytestostring
+from chipsec.file import write_file
+from chipsec.hal.uefi import UEFI
+from chipsec.defines import bytestostring
 
 from chipsec.fuzzing import primitives as prim
+
 
 class uefivar_fuzz(BaseModule):
 
@@ -102,39 +103,39 @@ class uefivar_fuzz(BaseModule):
             return
 
         # Default options
-        _NAME   = 'FuzzerVarName'
-        _GUID   = UUID('414C4694-F4CF-0525-69AF-C99C8596530F')
+        _NAME = 'FuzzerVarName'
+        _GUID = UUID('414C4694-F4CF-0525-69AF-C99C8596530F')
         _ATTRIB = 0x07
-        _SIZE   = 0x08
-        _DATA   = struct.pack("B", 0x41) *_SIZE
+        _SIZE = 0x08
+        _DATA = struct.pack("B", 0x41) * _SIZE
 
         ITERATIONS = 1000
-        SEED       = int(time())
-        CASE       = 1
-        BOUND_STR  = 255 #tested value that can be increased or decreased to fit the limit bounds
-        BOUND_INT  = 1000
+        SEED = int(time())
+        CASE = 1
+        BOUND_STR = 255  # tested value that can be increased or decreased to fit the limit bounds
+        BOUND_INT = 1000
 
-        FUZZ_NAME   = True
-        FUZZ_GUID   = True
+        FUZZ_NAME = True
+        FUZZ_GUID = True
         FUZZ_ATTRIB = True
-        FUZZ_DATA   = True
-        FUZZ_SIZE   = True
+        FUZZ_DATA = True
+        FUZZ_SIZE = True
 
         # Init fuzzing primitives
-        name_prim   = prim.string(value=_NAME, max_len=BOUND_STR)
-        attrib_prim = prim.dword(value=_ATTRIB) # i think the attrib field is 4 bytes large?
-        data_prim   = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
+        name_prim = prim.string(value=_NAME, max_len=BOUND_STR)
+        attrib_prim = prim.dword(value=_ATTRIB)  # i think the attrib field is 4 bytes large?
+        data_prim = prim.random_data(value=_DATA, min_length=0, max_length=BOUND_INT)
 
         help_text = False
 
         if len(module_argv):
             fz_cli = module_argv[0].lower()
             if 'all' != fz_cli:
-                FUZZ_NAME   = False
-                FUZZ_GUID   = False
+                FUZZ_NAME = False
+                FUZZ_GUID = False
                 FUZZ_ATTRIB = False
-                FUZZ_DATA   = False
-                FUZZ_SIZE   = False
+                FUZZ_DATA = False
+                FUZZ_SIZE = False
 
                 if 'name' == fz_cli:
                     FUZZ_NAME = True

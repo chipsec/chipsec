@@ -47,6 +47,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
+
 class bios_smi(BaseModule):
 
     def __init__(self):
@@ -81,10 +82,10 @@ class bios_smi(BaseModule):
         #
         if self.cs.is_control_defined('TCOSMIEnable') and self.cs.is_control_defined('GlobalSMIEnable'):
             self.logger.log("[*] Checking SMI enables..")
-            tco_en     = self.cs.get_control('TCOSMIEnable')
+            tco_en = self.cs.get_control('TCOSMIEnable')
             gbl_smi_en = self.cs.get_control('GlobalSMIEnable')
-            self.logger.log( "    Global SMI enable: {:d}".format(gbl_smi_en) )
-            self.logger.log( "    TCO SMI enable   : {:d}".format(tco_en) )
+            self.logger.log("    Global SMI enable: {:d}".format(gbl_smi_en))
+            self.logger.log("    TCO SMI enable   : {:d}".format(tco_en))
 
             if gbl_smi_en != 1:
                 ok = False
@@ -131,7 +132,6 @@ class bios_smi(BaseModule):
             res = ModuleResult.FAILED
             self.logger.log_failed("Not all required SMI sources are enabled and locked")
         return res
-
 
     def run(self, module_argv):
         self.logger.start_test("SMI Events Configuration")

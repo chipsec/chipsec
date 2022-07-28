@@ -50,11 +50,12 @@ Usage:
                      If not specified, the module will dump firmware image directly from ROM
 '''
 
+
 class reputation(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.uefi = UEFI( self.cs )
+        self.uefi = UEFI(self.cs)
         self.image = None
         self.vt_threshold = 10
         self.vt = None
@@ -94,7 +95,7 @@ Please run 'pip install virustotal-api' and try again.""")
 
         return False
 
-    def check_reputation( self ):
+    def check_reputation(self):
         res = ModuleResult.PASSED
 
         # parse the UEFI firmware image and look for EFI modules matching the blocked-list
@@ -113,9 +114,8 @@ Please run 'pip install virustotal-api' and try again.""")
     def usage(self):
         self.logger.log(USAGE_TEXT)
 
-
     def run(self, module_argv):
-        self.logger.start_test("Check for suspicious EFI binaries in UEFI firmware") 
+        self.logger.start_test("Check for suspicious EFI binaries in UEFI firmware")
 
         self.usage()
 

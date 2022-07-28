@@ -46,30 +46,32 @@ QUIET_PCI_ENUM = True
 LOAD_COMMON = True
 CONSISTENCY_CHECKING = False
 
+
 class RegisterType:
-    PCICFG    = 'pcicfg'
-    MMCFG     = 'mmcfg'
-    MMIO      = 'mmio'
-    MSR       = 'msr'
-    PORTIO    = 'io'
-    IOBAR     = 'iobar'
-    MSGBUS    = 'msgbus'
+    PCICFG = 'pcicfg'
+    MMCFG = 'mmcfg'
+    MMIO = 'mmio'
+    MSR = 'msr'
+    PORTIO = 'io'
+    IOBAR = 'iobar'
+    MSGBUS = 'msgbus'
     MM_MSGBUS = 'mm_msgbus'
-    MEMORY    = 'memory'
-    IMA       = 'indirect'
+    MEMORY = 'memory'
+    IMA = 'indirect'
+
 
 class Cfg:
     def __init__(self):
-        self.CONFIG_PCI    = {}
-        self.REGISTERS     = {}
-        self.MMIO_BARS     = {}
-        self.IO_BARS       = {}
+        self.CONFIG_PCI = {}
+        self.REGISTERS = {}
+        self.MMIO_BARS = {}
+        self.IO_BARS = {}
         self.IMA_REGISTERS = {}
         self.MEMORY_RANGES = {}
-        self.CONTROLS      = {}
-        self.BUS           = {}
-        self.LOCKS         = {}
-        self.LOCKEDBY      = {}
+        self.CONTROLS = {}
+        self.BUS = {}
+        self.LOCKS = {}
+        self.LOCKEDBY = {}
         self.XML_CONFIG_LOADED = False
 
 
@@ -81,7 +83,7 @@ CHIPSET_ID_UNKNOWN = 0
 
 CHIPSET_CODE_UNKNOWN = ''
 
-CHIPSET_FAMILY  = {}
+CHIPSET_FAMILY = {}
 
 PCH_CODE_PREFIX = 'PCH_'
 
@@ -108,34 +110,34 @@ class Chipset:
 
         self.init_xml_configuration()
 
-        self.vid            = 0xFFFF
-        self.did            = 0xFFFF
-        self.rid            = 0xFF
-        self.code           = CHIPSET_CODE_UNKNOWN
-        self.longname       = "Unrecognized Platform"
-        self.id             = CHIPSET_ID_UNKNOWN
-        self.pch_vid        = 0xFFFF
-        self.pch_did        = 0xFFFF
-        self.pch_rid        = 0xFF
-        self.pch_code       = CHIPSET_CODE_UNKNOWN
-        self.pch_longname   = 'Unrecognized PCH'
-        self.pch_id         = CHIPSET_ID_UNKNOWN
-        self.Cfg        = Cfg()
+        self.vid = 0xFFFF
+        self.did = 0xFFFF
+        self.rid = 0xFF
+        self.code = CHIPSET_CODE_UNKNOWN
+        self.longname = "Unrecognized Platform"
+        self.id = CHIPSET_ID_UNKNOWN
+        self.pch_vid = 0xFFFF
+        self.pch_did = 0xFFFF
+        self.pch_rid = 0xFF
+        self.pch_code = CHIPSET_CODE_UNKNOWN
+        self.pch_longname = 'Unrecognized PCH'
+        self.pch_id = CHIPSET_ID_UNKNOWN
+        self.Cfg = Cfg()
 
         #
         # Initializing 'basic primitive' HAL components
         # (HAL components directly using native OS helper functionality)
         #
-        self.pci        = pci.Pci(self)
-        self.mem        = physmem.Memory(self)
-        self.msr        = msr.Msr(self)
-        self.ucode      = ucode.Ucode(self)
-        self.io         = io.PortIO(self)
-        self.cpu        = cpu.CPU(self)
-        self.msgbus     = msgbus.MsgBus(self)
-        self.mmio       = mmio.MMIO(self)
-        self.iobar      = iobar.IOBAR(self)
-        self.igd        = igd.IGD(self)
+        self.pci = pci.Pci(self)
+        self.mem = physmem.Memory(self)
+        self.msr = msr.Msr(self)
+        self.ucode = ucode.Ucode(self)
+        self.io = io.PortIO(self)
+        self.cpu = cpu.CPU(self)
+        self.msgbus = msgbus.MsgBus(self)
+        self.mmio = mmio.MMIO(self)
+        self.iobar = iobar.IOBAR(self)
+        self.igd = igd.IGD(self)
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -162,28 +164,31 @@ class Chipset:
             did = (vid_did >> 16) & 0xFFFF
             rid = self.pci.read_byte(0, 0, 0, PCI_HDR_RID_OFF)
         except:
-            if logger().DEBUG: logger().log_error("pci.read_dword couldn't read platform VID/DID")
+            if logger().DEBUG:
+                logger().log_error("pci.read_dword couldn't read platform VID/DID")
         if not vid in PCH_ADDRESS:
-            if logger().DEBUG: logger().log_error("PCH address unknown for VID 0x{:04X}.".format(vid))
+            if logger().DEBUG:
+                logger().log_error("PCH address unknown for VID 0x{:04X}.".format(vid))
         else:
             try:
-                 (bus,dev,fun) = PCH_ADDRESS[vid]
-                 vid_did = self.pci.read_dword(bus, dev, fun, 0)
-                 pch_vid = vid_did & 0xFFFF
-                 pch_did = (vid_did >> 16) & 0xFFFF
-                 pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
+                (bus, dev, fun) = PCH_ADDRESS[vid]
+                vid_did = self.pci.read_dword(bus, dev, fun, 0)
+                pch_vid = vid_did & 0xFFFF
+                pch_did = (vid_did >> 16) & 0xFFFF
+                pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
             except:
-                 if logger().DEBUG: logger().log_error("pci.read_dword couldn't read PCH VID/DID")
+                if logger().DEBUG:
+                    logger().log_error("pci.read_dword couldn't read PCH VID/DID")
         return (vid, did, rid, pch_vid, pch_did, pch_rid)
 
     def get_cpuid(self):
-            # Get processor version information
+        # Get processor version information
         (eax, ebx, ecx, edx) = self.cpu.cpuid(0x01, 0x00)
         stepping = eax & 0xF
         model = (eax >> 4) & 0xF
         extmodel = (eax >> 16) & 0xF
         family = (eax >> 8) & 0xF
-        ptype = (eax >>12) & 0x3
+        ptype = (eax >> 12) & 0x3
         extfamily = (eax >> 20) & 0xFF
         ret = '{:01X}{:01X}{:01X}{:01X}{:01X}'.format(extmodel, ptype, family, model, stepping)
         if extfamily == 0:
@@ -195,7 +200,7 @@ class Chipset:
         _unknown_platform = False
         self.reqs_pch = None
         self.helper.start(start_driver, driver_exists, to_file, from_file)
-        logger().log( '[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API') )
+        logger().log('[CHIPSEC] API mode: {}'.format('using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API'))
 
         vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
         # get cpuid only if driver using driver (otherwise it will cause problems)
@@ -204,13 +209,13 @@ class Chipset:
         else:
             cpuid = None
 
-        #initialize chipset values to unknown
+        # initialize chipset values to unknown
         _unknown_platform = True
-        self.longname   = 'UnknownPlatform'
+        self.longname = 'UnknownPlatform'
         self.vid = 0xFFFF
         self.did = 0xFFFF
         self.rid = 0xFF
-        #initialize pch values to unknown/default
+        # initialize pch values to unknown/default
         _unknown_pch = True
         self.pch_longname = 'Default PCH'
         self.pch_vid = 0xFFFF
@@ -218,35 +223,35 @@ class Chipset:
         self.pch_rid = 0xFF
 
         if platform_code is None:
-        #platform code was not passed in try to determine based upon cpu id
-            vid_found      = vid in self.chipset_dictionary
-            did_found      = did in self.chipset_dictionary[vid]
+            # platform code was not passed in try to determine based upon cpu id
+            vid_found = vid in self.chipset_dictionary
+            did_found = did in self.chipset_dictionary[vid]
             multiple_found = len(self.chipset_dictionary[vid][did]) > 1
-            cpuid_found    = cpuid in self.detection_dictionary.keys()
+            cpuid_found = cpuid in self.detection_dictionary.keys()
             if vid_found and did_found and multiple_found and cpuid_found:
                 for item in self.chipset_dictionary[vid][did]:
                     if self.detection_dictionary[cpuid] == item['code']:
-                        #matched processor with detection value
+                        # matched processor with detection value
                         _unknown_platform = False
-                        data_dict       = item
-                        self.code       = data_dict['code'].upper()
-                        self.longname   = data_dict['longname']
+                        data_dict = item
+                        self.code = data_dict['code'].upper()
+                        self.longname = data_dict['longname']
                         self.vid = vid
                         self.did = did
                         self.rid = rid
                         break
             elif vid_found and did_found:
                 _unknown_platform = False
-                data_dict       = self.chipset_dictionary[vid][did][0]
-                self.code       = data_dict['code'].upper()
-                self.longname   = data_dict['longname']
+                data_dict = self.chipset_dictionary[vid][did][0]
+                self.code = data_dict['code'].upper()
+                self.longname = data_dict['longname']
                 self.vid = vid
                 self.did = did
                 self.rid = rid
             elif cpuid_found:
                 _unknown_platform = False
-                self.code       = self.detection_dictionary[cpuid]
-                self.longname   = self.detection_dictionary[cpuid]
+                self.code = self.detection_dictionary[cpuid]
+                self.longname = self.detection_dictionary[cpuid]
                 self.vid = vid
                 self.did = did
                 self.rid = rid
@@ -276,16 +281,16 @@ class Chipset:
                 msg = 'PCH     : Actual values: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(pch_vid, pch_did, pch_rid)
                 logger().log("[CHIPSEC] {}".format(msg))
         elif (pch_vid in self.pch_dictionary.keys()) and (pch_did in self.pch_dictionary[pch_vid].keys()):
-            #Check if pch did for device is in configuration
+            # Check if pch did for device is in configuration
             self.pch_vid = pch_vid
             self.pch_did = pch_did
             self.pch_rid = pch_rid
             pch_list = self.pch_dictionary[self.pch_vid][self.pch_did]
             if len(pch_list) > 1:
                 logger().log("[!]       Multiple PCHs contain the same DID. Using first in the list.")
-            data_dict           = pch_list[0]
-            self.pch_code       = data_dict['code']
-            self.pch_longname   = data_dict['longname']
+            data_dict = pch_list[0]
+            self.pch_code = data_dict['code']
+            self.pch_longname = data_dict['longname']
             _unknown_pch = False
         else:
             self.pch_vid = pch_vid
@@ -298,7 +303,7 @@ class Chipset:
                 raise UnknownChipsetError(msg)
             else:
                 logger().log("[!]       {}; Using Default.".format(msg))
-        if not _unknown_platform: # Don't initialize config if platform is unknown
+        if not _unknown_platform:  # Don't initialize config if platform is unknown
             self.init_cfg()
         if self.reqs_pch == False:
             self.pch_longname = self.longname
@@ -348,13 +353,13 @@ class Chipset:
         return self.helper.use_native_api()
 
     def print_supported_chipsets(self):
-        logger().log( "\nSupported platforms:\n" )
-        logger().log( "VID     | DID     | Name           | Code   | Long Name" )
-        logger().log( "-------------------------------------------------------------------------------------" )
+        logger().log("\nSupported platforms:\n")
+        logger().log("VID     | DID     | Name           | Code   | Long Name")
+        logger().log("-------------------------------------------------------------------------------------")
         for _vid in sorted(self.chipset_dictionary.keys()):
             for _did in sorted(self.chipset_dictionary[_vid]):
                 for item in self.chipset_dictionary[_vid][_did]:
-                    logger().log( " {:-#06x} | {:-#06x} | {:14} | {:6} | {:40}".format(_vid, _did, item['name'], item['code'].lower(), item['longname']) )
+                    logger().log(" {:-#06x} | {:-#06x} | {:14} | {:6} | {:40}".format(_vid, _did, item['name'], item['code'].lower(), item['longname']))
 
     ##################################################################################
     #
@@ -376,31 +381,36 @@ class Chipset:
         self.detection_dictionary = dict()
 
         # find VID
-        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec', 'cfg' )
-        VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f) ]
+        _cfg_path = os.path.join(chipsec.file.get_main_dir(), 'chipsec', 'cfg')
+        VID = [f for f in os.listdir(_cfg_path) if os.path.isdir(os.path.join(_cfg_path, f)) and is_hex(f)]
         # create dictionaries
         for vid in VID:
-            if logger().DEBUG: logger().log( "[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)) )
+            if logger().DEBUG:
+                logger().log("[*] Entering directory '{}'..".format(os.path.join(_cfg_path, vid)))
             self.chipset_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.pch_dictionary[int(vid, 16)] = collections.defaultdict(list)
             self.device_dictionary[int(vid, 16)] = collections.defaultdict(list)
             for fxml in os.listdir(os.path.join(_cfg_path, vid)):
-                if logger().DEBUG: logger().log( "[*] looking for platform config in '{}'..".format(fxml) )
-                tree = ET.parse( os.path.join(_cfg_path, vid, fxml) )
+                if logger().DEBUG:
+                    logger().log("[*] looking for platform config in '{}'..".format(fxml))
+                tree = ET.parse(os.path.join(_cfg_path, vid, fxml))
                 root = tree.getroot()
                 for _cfg in root.iter('configuration'):
                     if 'platform' not in _cfg.attrib:
-                        if logger().DEBUG: logger().log( "[*] skipping common platform config '{}'..".format(fxml) )
+                        if logger().DEBUG:
+                            logger().log("[*] skipping common platform config '{}'..".format(fxml))
                         continue
                     elif _cfg.attrib['platform'].lower().startswith('pch'):
-                        if logger().DEBUG: logger().log( "[*] found PCH config at '{}'..".format(fxml) )
+                        if logger().DEBUG:
+                            logger().log("[*] found PCH config at '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.pch_codes.keys():
                             self.pch_codes[_cfg.attrib['platform'].upper()] = {}
                             self.pch_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid, 16)
                         mdict = self.pch_dictionary[int(vid, 16)]
                         cdict = self.pch_codes[_cfg.attrib['platform'].upper()]
                     elif _cfg.attrib['platform'].upper():
-                        if logger().DEBUG: logger().log("[*] found platform config from '{}'..".format(fxml))
+                        if logger().DEBUG:
+                            logger().log("[*] found platform config from '{}'..".format(fxml))
                         if not _cfg.attrib['platform'].upper() in self.chipset_codes.keys():
                             self.chipset_codes[_cfg.attrib['platform'].upper()] = {}
                             self.chipset_codes[_cfg.attrib['platform'].upper()]['vid'] = int(vid, 16)
@@ -408,7 +418,8 @@ class Chipset:
                         cdict = self.chipset_codes[_cfg.attrib['platform'].upper()]
                     else:
                         continue
-                    if logger().DEBUG: logger().log( "[*] Populating configuration dictionary.." )
+                    if logger().DEBUG:
+                        logger().log("[*] Populating configuration dictionary..")
                     for _info in _cfg.iter('info'):
                         if 'family' in _info.attrib:
                             family = _info.attrib['family'].lower()
@@ -418,13 +429,13 @@ class Chipset:
                         if 'detection_value' in _info.attrib:
                             for dv in list(_info.attrib['detection_value'].split(',')):
                                 if dv[-1].upper() == 'X':
-                                    rdv = int(dv[:-1], 16) << 4   #  Assume valid hex value with last nibble removed
-                                    for rdv_value in range( rdv, rdv+0x10 ):
-                                        self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
+                                    rdv = int(dv[:-1], 16) << 4  # Assume valid hex value with last nibble removed
+                                    for rdv_value in range(rdv, rdv + 0x10):
+                                        self.detection_dictionary[format(rdv_value, 'X')] = _cfg.attrib['platform'].upper()
                                 elif '-' in dv:
                                     rdv = dv.split('-')
-                                    for rdv_value in range( int(rdv[0],16), int(rdv[1],16)+1 ): #  Assume valid hex values
-                                        self.detection_dictionary[format(rdv_value,'X')] = _cfg.attrib['platform'].upper()
+                                    for rdv_value in range(int(rdv[0], 16), int(rdv[1], 16) + 1):  # Assume valid hex values
+                                        self.detection_dictionary[format(rdv_value, 'X')] = _cfg.attrib['platform'].upper()
                                 else:
                                     self.detection_dictionary[dv.strip().upper()] = _cfg.attrib['platform'].upper()
                         if _info.find('sku') is not None:
@@ -446,11 +457,10 @@ class Chipset:
             for pc in self.pch_codes:
                 globals()["PCH_CODE_{}".format(pc[4:].upper())] = pc.upper()
 
-
-    def load_xml_configuration( self ):
+    def load_xml_configuration(self):
         # Create a sorted config file list (xml only)
         _cfg_files = []
-        _cfg_path = os.path.join( chipsec.file.get_main_dir(), 'chipsec/cfg', "{:04X}".format(self.vid) )
+        _cfg_path = os.path.join(chipsec.file.get_main_dir(), 'chipsec/cfg', "{:04X}".format(self.vid))
         for root, subdirs, files in os.walk(_cfg_path):
             _cfg_files.extend([os.path.join(root, x) for x in files if fnmatch.fnmatch(x, '*.xml')])
         _cfg_files.sort()
@@ -485,46 +495,53 @@ class Chipset:
                     loaded_files.append(_xml)
 
         # Load all configuration files for this platform.
-        if logger().DEBUG: logger().log("[*] Loading Configuration Files:")
+        if logger().DEBUG:
+            logger().log("[*] Loading Configuration Files:")
         for _xml in loaded_files:
             self.init_cfg_xml(_xml, self.code.lower(), self.pch_code.lower())
 
         # Load Bus numbers for this platform.
-        if logger().DEBUG: logger().log("[*] Discovering Bus Configuration:")
+        if logger().DEBUG:
+            logger().log("[*] Discovering Bus Configuration:")
         self.init_cfg_bus()
 
         self.Cfg.XML_CONFIG_LOADED = True
 
     def populate_cfg_type(self, xml_cfg, type, config_to_modify, item_name):
-            for _item in xml_cfg.iter(type):
-                for _named_item in _item.iter(item_name):
-                    _name = _named_item.attrib['name']
-                    del _named_item.attrib['name']
-                    if 'undef' in _named_item.attrib:
-                        if _name in config_to_modify:
-                            if logger().DEBUG: logger().log("    - {:16}: {}".format(_name, _named_item.attrib['undef']))
-                            config_to_modify.pop(_name, None)
-                        continue
-                    if type == 'registers':
-                        if 'size' not in _named_item.attrib: _named_item.attrib['size'] = "0x4"
-                        if 'desc' not in _named_item.attrib: _named_item.attrib['desc'] = ''
-                    fields = {}
-                    if _named_item.find('field') is not None:
-                        for _field in _named_item.iter('field'):
-                            _field_name = _field.attrib['name']
-                            if 'lockedby' in _field.attrib:
-                                _lockedby = _field.attrib['lockedby']
-                                if _lockedby in self.Cfg.LOCKEDBY.keys():
-                                    self.Cfg.LOCKEDBY[_lockedby].append((_name, _field_name))
-                                else:
-                                    self.Cfg.LOCKEDBY[_lockedby] = [(_name, _field_name)]
-                            del _field.attrib['name']
-                            if 'desc' not in _field.attrib: _field.attrib['desc'] = ''
-                            fields[ _field_name ] = _field.attrib
-                        _named_item.attrib['FIELDS'] = fields
+        for _item in xml_cfg.iter(type):
+            for _named_item in _item.iter(item_name):
+                _name = _named_item.attrib['name']
+                del _named_item.attrib['name']
+                if 'undef' in _named_item.attrib:
+                    if _name in config_to_modify:
+                        if logger().DEBUG:
+                            logger().log("    - {:16}: {}".format(_name, _named_item.attrib['undef']))
+                        config_to_modify.pop(_name, None)
+                    continue
+                if type == 'registers':
+                    if 'size' not in _named_item.attrib:
+                        _named_item.attrib['size'] = "0x4"
+                    if 'desc' not in _named_item.attrib:
+                        _named_item.attrib['desc'] = ''
+                fields = {}
+                if _named_item.find('field') is not None:
+                    for _field in _named_item.iter('field'):
+                        _field_name = _field.attrib['name']
+                        if 'lockedby' in _field.attrib:
+                            _lockedby = _field.attrib['lockedby']
+                            if _lockedby in self.Cfg.LOCKEDBY.keys():
+                                self.Cfg.LOCKEDBY[_lockedby].append((_name, _field_name))
+                            else:
+                                self.Cfg.LOCKEDBY[_lockedby] = [(_name, _field_name)]
+                        del _field.attrib['name']
+                        if 'desc' not in _field.attrib:
+                            _field.attrib['desc'] = ''
+                        fields[_field_name] = _field.attrib
+                    _named_item.attrib['FIELDS'] = fields
 
-                    config_to_modify[ _name ] = _named_item.attrib
-                    if logger().DEBUG: logger().log( "    + {:16}: {}".format(_name, _named_item.attrib) )
+                config_to_modify[_name] = _named_item.attrib
+                if logger().DEBUG:
+                    logger().log("    + {:16}: {}".format(_name, _named_item.attrib))
 
     def init_cfg_xml(self, fxml, code, pch_code):
         if not os.path.exists(fxml):
@@ -535,51 +552,65 @@ class Chipset:
         root = tree.getroot()
         for _cfg in root.iter('configuration'):
             if 'platform' not in _cfg.attrib:
-                if logger().DEBUG: logger().log( "[*] loading common platform config from '{}'..".format(fxml) )
+                if logger().DEBUG:
+                    logger().log("[*] loading common platform config from '{}'..".format(fxml))
             elif code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log( "[*] loading '{}' platform config from '{}'..".format(code, fxml) )
+                if logger().DEBUG:
+                    logger().log("[*] loading '{}' platform config from '{}'..".format(code, fxml))
                 if 'req_pch' in _cfg.attrib:
                     if 'true' == _cfg.attrib['req_pch'].lower():
                         self.reqs_pch = True
                     if 'false' == _cfg.attrib['req_pch'].lower():
                         self.reqs_pch = False
             elif pch_code == _cfg.attrib['platform'].lower():
-                if logger().DEBUG: logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
-            else: continue
+                if logger().DEBUG:
+                    logger().log("[*] loading '{}' PCH config from '{}'..".format(pch_code, fxml))
+            else:
+                continue
 
-            if logger().DEBUG: logger().log("[*] loading integrated devices/controllers..")
+            if logger().DEBUG:
+                logger().log("[*] loading integrated devices/controllers..")
             self.populate_cfg_type(_cfg, 'pci', self.Cfg.CONFIG_PCI, 'device')
 
-            if logger().DEBUG: logger().log("[*] loading MMIO BARs..")
+            if logger().DEBUG:
+                logger().log("[*] loading MMIO BARs..")
             self.populate_cfg_type(_cfg, 'mmio', self.Cfg.MMIO_BARS, 'bar')
 
-            if logger().DEBUG: logger().log("[*] loading I/O BARs..")
+            if logger().DEBUG:
+                logger().log("[*] loading I/O BARs..")
             self.populate_cfg_type(_cfg, 'io', self.Cfg.IO_BARS, 'bar')
 
-            if logger().DEBUG: logger().log("[*] loading indirect memory accesses definitions..")
+            if logger().DEBUG:
+                logger().log("[*] loading indirect memory accesses definitions..")
             self.populate_cfg_type(_cfg, 'ima', self.Cfg.IO_BARS, 'indirect')
 
-            if logger().DEBUG: logger().log("[*] loading memory ranges..")
+            if logger().DEBUG:
+                logger().log("[*] loading memory ranges..")
             self.populate_cfg_type(_cfg, 'memory', self.Cfg.MEMORY_RANGES, 'range')
 
-            if logger().DEBUG: logger().log("[*] loading configuration registers..")
+            if logger().DEBUG:
+                logger().log("[*] loading configuration registers..")
             self.populate_cfg_type(_cfg, 'registers', self.Cfg.REGISTERS, 'register')
 
-            if logger().DEBUG: logger().log("[*] loading controls..")
+            if logger().DEBUG:
+                logger().log("[*] loading controls..")
             self.populate_cfg_type(_cfg, 'controls', self.Cfg.CONTROLS, 'control')
 
-            if logger().DEBUG: logger().log("[*] loading locks..")
+            if logger().DEBUG:
+                logger().log("[*] loading locks..")
             self.populate_cfg_type(_cfg, 'locks', self.Cfg.LOCKS, 'lock')
 
-    def init_cfg_bus( self ):
-        if logger().DEBUG: logger().log('[*] Loading device buses..')
+    def init_cfg_bus(self):
+        if logger().DEBUG:
+            logger().log('[*] Loading device buses..')
         if QUIET_PCI_ENUM:
             old_hal_state = logger().HAL
             logger().HAL = False
         try:
             enum_devices = self.pci.enumerate_devices()
         except:
-            if logger().DEBUG: logger().log('[*] Unable to enumerate PCI devices.')
+            if logger().DEBUG:
+                logger().log('[*] Unable to enumerate PCI devices.')
             enum_devices = []
         if QUIET_PCI_ENUM:
             logger().HAL = old_hal_state
@@ -596,8 +627,8 @@ class Chipset:
         replaced_devices = {}
         for config_device in self.Cfg.CONFIG_PCI:
             device_data = self.Cfg.CONFIG_PCI[config_device]
-            xml_vid  = device_data.get( 'vid', None )
-            xml_did  = device_data.get( 'did', None )
+            xml_vid = device_data.get('vid', None)
+            xml_did = device_data.get('did', None)
             # if the vid and did are present within the configuration file attempt to replace generic name with configuration name
             if xml_vid and xml_did:
                 did_list = []
@@ -605,7 +636,7 @@ class Chipset:
                 for tdid in xml_did.split(','):
                     if tdid[-1].upper() == "X":
                         tndid = int(tdid[:-1], 16) << 4
-                        for rdv_value in range(tndid, tndid+0x10):
+                        for rdv_value in range(tndid, tndid + 0x10):
                             did_list.append(rdv_value)
                     elif '-' in tdid:
                         rdv = tdid.split('-')
@@ -615,9 +646,9 @@ class Chipset:
                         did_list.append(int(tdid, 16))
                 # If there is a match between the configuration entry and generic entry, replace the name with the configuration entry
                 for tdid in did_list:
-                    dev = int(device_data['dev'],16)
-                    fun = int(device_data['fun'],16)
-                    vid = int(device_data['vid'],16)
+                    dev = int(device_data['dev'], 16)
+                    fun = int(device_data['fun'], 16)
+                    vid = int(device_data['vid'], 16)
                     cfg_str = "{:02X}_{:02X}_{:04X}_{:04X}".format(dev, fun, vid, tdid)
                     if cfg_str in self.Cfg.BUS.keys():
                         replaced_devices[cfg_str] = self.Cfg.BUS.pop(cfg_str)
@@ -636,11 +667,12 @@ class Chipset:
         if self.code and '' != self.code:
             try:
                 module_path = 'chipsec.cfg.' + self.code
-                module = importlib.import_module( module_path )
-                logger().log_good( "imported platform specific configuration: chipsec.cfg.{}".format(self.code) )
-                self.Cfg = getattr( module, self.code )()
+                module = importlib.import_module(module_path)
+                logger().log_good("imported platform specific configuration: chipsec.cfg.{}".format(self.code))
+                self.Cfg = getattr(module, self.code)()
             except ImportError as msg:
-                if logger().DEBUG: logger().log( "[*] Couldn't import chipsec.cfg.{}\n{}".format( self.code, str(msg) ) )
+                if logger().DEBUG:
+                    logger().log("[*] Couldn't import chipsec.cfg.{}\n{}".format(self.code, str(msg)))
 
         #
         # Initialize platform configuration from XML files
@@ -648,9 +680,9 @@ class Chipset:
         try:
             self.load_xml_configuration()
         except:
-            if logger().DEBUG: logger().log_bad(traceback.format_exc())
+            if logger().DEBUG:
+                logger().log_bad(traceback.format_exc())
             pass
-
 
     ##################################################################################
     #
@@ -659,25 +691,26 @@ class Chipset:
     #
     ##################################################################################
 
-    def get_device_BDF( self, device_name ):
-        device = self.Cfg.CONFIG_PCI[ device_name ]
-        if device is None or device == {}: raise DeviceNotFoundError ('DeviceNotFound: {}'.format(device_name))
+    def get_device_BDF(self, device_name):
+        device = self.Cfg.CONFIG_PCI[device_name]
+        if device is None or device == {}:
+            raise DeviceNotFoundError('DeviceNotFound: {}'.format(device_name))
         b = int(device['bus'], 16)
         d = int(device['dev'], 16)
         f = int(device['fun'], 16)
         return (b, d, f)
 
-    def get_DeviceVendorID( self, device_name ):
-        (b, d, f) = self.get_device_BDF( device_name )
-        return self.pci.get_DIDVID( b, d, f )
+    def get_DeviceVendorID(self, device_name):
+        (b, d, f) = self.get_device_BDF(device_name)
+        return self.pci.get_DIDVID(b, d, f)
 
-    def is_device_enabled( self, device_name ):
-        if self.is_device_defined( device_name ):
-            (b, d, f) = self.get_device_BDF( device_name )
-            return self.pci.is_enabled( b, d, f )
+    def is_device_enabled(self, device_name):
+        if self.is_device_defined(device_name):
+            (b, d, f) = self.get_device_BDF(device_name)
+            return self.pci.is_enabled(b, d, f)
         return False
 
-    def is_register_device_enabled( self, reg_name, bus=None ):
+    def is_register_device_enabled(self, reg_name, bus=None):
         if reg_name in self.Cfg.REGISTERS:
             reg = self.get_register_def(reg_name)
             rtype = reg['type']
@@ -688,17 +721,17 @@ class Chipset:
                     b = int(reg['bus'], 16)
                 d = int(reg['dev'], 16)
                 f = int(reg['fun'], 16)
-                return self.pci.is_enabled( b, d, f )
+                return self.pci.is_enabled(b, d, f)
             elif (rtype == RegisterType.MMIO):
                 bar_name = reg['bar']
                 return self.mmio.is_MMIO_BAR_enabled(bar_name, bus)
         return False
 
-    def switch_device_def( self, target_dev, source_dev ):
-        (b, d, f) = self.get_device_BDF( source_dev )
-        self.Cfg.CONFIG_PCI[ target_dev ]['bus'] = str(b)
-        self.Cfg.CONFIG_PCI[ target_dev ]['dev'] = str(d)
-        self.Cfg.CONFIG_PCI[ target_dev ]['fun'] = str(f)
+    def switch_device_def(self, target_dev, source_dev):
+        (b, d, f) = self.get_device_BDF(source_dev)
+        self.Cfg.CONFIG_PCI[target_dev]['bus'] = str(b)
+        self.Cfg.CONFIG_PCI[target_dev]['dev'] = str(d)
+        self.Cfg.CONFIG_PCI[target_dev]['fun'] = str(f)
 
 ##################################################################################
 #
@@ -742,7 +775,6 @@ class Chipset:
 #
 ##################################################################################
 
-
     def is_register_defined(self, reg_name):
         try:
             return (self.Cfg.REGISTERS[reg_name] is not None)
@@ -750,7 +782,7 @@ class Chipset:
             return False
 
     def is_device_defined(self, dev_name):
-        if self.Cfg.CONFIG_PCI.get( dev_name, None ) is None:
+        if self.Cfg.CONFIG_PCI.get(dev_name, None) is None:
             return False
         else:
             return True
@@ -839,10 +871,14 @@ class Chipset:
                 if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
                     raise CSReadError("PCI Device is not available ({}:{}.{})".format(b, d, f))
             if RegisterType.PCICFG == rtype:
-                if   1 == size: reg_value = self.pci.read_byte ( b, d, f, o )
-                elif 2 == size: reg_value = self.pci.read_word ( b, d, f, o )
-                elif 4 == size: reg_value = self.pci.read_dword( b, d, f, o )
-                elif 8 == size: reg_value = (self.pci.read_dword( b, d, f, o +4 ) << 32) | self.pci.read_dword(b, d, f, o)
+                if 1 == size:
+                    reg_value = self.pci.read_byte(b, d, f, o)
+                elif 2 == size:
+                    reg_value = self.pci.read_word(b, d, f, o)
+                elif 4 == size:
+                    reg_value = self.pci.read_dword(b, d, f, o)
+                elif 8 == size:
+                    reg_value = (self.pci.read_dword(b, d, f, o + 4) << 32) | self.pci.read_dword(b, d, f, o)
             elif RegisterType.MMCFG == rtype:
                 reg_value = self.mmio.read_mmcfg_reg(b, d, f, o, size)
         elif RegisterType.MMIO == rtype:
@@ -852,19 +888,19 @@ class Chipset:
             else:
                 raise CSReadError("MMIO Bar ({}) base address is 0".format(reg['bar']))
         elif RegisterType.MSR == rtype:
-            (eax, edx) = self.msr.read_msr( cpu_thread, int(reg['msr'], 16) )
+            (eax, edx) = self.msr.read_msr(cpu_thread, int(reg['msr'], 16))
             reg_value = (edx << 32) | eax
         elif RegisterType.PORTIO == rtype:
             port = int(reg['port'], 16)
             size = int(reg['size'], 16)
-            reg_value = self.io._read_port( port, size )
+            reg_value = self.io._read_port(port, size)
         elif RegisterType.IOBAR == rtype:
             if self.iobar.get_IO_BAR_base_address(reg['bar'])[0] != 0:
-                reg_value = self.iobar.read_IO_BAR_reg( reg['bar'], int(reg['offset'], 16), int(reg['size'], 16) )
+                reg_value = self.iobar.read_IO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16))
             else:
                 raise CSReadError("IO Bar ({}) base address is 0".format(reg['bar']))
         elif RegisterType.MSGBUS == rtype:
-            reg_value = self.msgbus.msgbus_reg_read( int(reg['port'], 16), int(reg['offset'], 16) )
+            reg_value = self.msgbus.msgbus_reg_read(int(reg['port'], 16), int(reg['offset'], 16))
         elif RegisterType.MM_MSGBUS == rtype:
             reg_value = self.msgbus.mm_msgbus_reg_read(int(reg['port'], 16), int(reg['offset'], 16))
         elif RegisterType.MEMORY == rtype:
@@ -901,7 +937,7 @@ class Chipset:
             elif 'scope' in reg.keys() and reg['scope'] == "cores":
                 cores = topology['cores']
                 threads_to_use = [cores[p][0] for p in cores]
-            else: # Default to threads
+            else:  # Default to threads
                 threads_to_use = range(self.helper.get_threads_count())
             for t in threads_to_use:
                 values.append(self.read_register(reg_name, t))
@@ -926,28 +962,31 @@ class Chipset:
             o = int(reg['offset'], 16)
             size = int(reg['size'], 16)
             if RegisterType.PCICFG == rtype:
-                if   1 == size: self.pci.write_byte( b, d, f, o, reg_value )
-                elif 2 == size: self.pci.write_word( b, d, f, o, reg_value )
-                elif 4 == size: self.pci.write_dword( b, d, f, o, reg_value )
+                if 1 == size:
+                    self.pci.write_byte(b, d, f, o, reg_value)
+                elif 2 == size:
+                    self.pci.write_word(b, d, f, o, reg_value)
+                elif 4 == size:
+                    self.pci.write_dword(b, d, f, o, reg_value)
                 elif 8 == size:
-                    self.pci.write_dword( b, d, f, o, (reg_value & 0xFFFFFFFF) )
-                    self.pci.write_dword( b, d, f, o + 4, (reg_value>>32 & 0xFFFFFFFF) )
+                    self.pci.write_dword(b, d, f, o, (reg_value & 0xFFFFFFFF))
+                    self.pci.write_dword(b, d, f, o + 4, (reg_value >> 32 & 0xFFFFFFFF))
             elif RegisterType.MMCFG == rtype:
-                self.mmio.write_mmcfg_reg(b, d, f, o, size, reg_value )
+                self.mmio.write_mmcfg_reg(b, d, f, o, size, reg_value)
         elif RegisterType.MMIO == rtype:
             self.mmio.write_MMIO_BAR_reg(reg['bar'], int(reg['offset'], 16), reg_value, int(reg['size'], 16), bus)
         elif RegisterType.MSR == rtype:
             eax = (reg_value & 0xFFFFFFFF)
             edx = ((reg_value >> 32) & 0xFFFFFFFF)
-            self.msr.write_msr( cpu_thread, int(reg['msr'], 16), eax, edx )
+            self.msr.write_msr(cpu_thread, int(reg['msr'], 16), eax, edx)
         elif RegisterType.PORTIO == rtype:
             port = int(reg['port'], 16)
             size = int(reg['size'], 16)
-            self.io._write_port( port, reg_value, size )
+            self.io._write_port(port, reg_value, size)
         elif RegisterType.IOBAR == rtype:
-            self.iobar.write_IO_BAR_reg( reg['bar'], int(reg['offset'], 16), int(reg['size'], 16), reg_value )
+            self.iobar.write_IO_BAR_reg(reg['bar'], int(reg['offset'], 16), int(reg['size'], 16), reg_value)
         elif RegisterType.MSGBUS == rtype:
-            self.msgbus.msgbus_reg_write( int(reg['port'], 16), int(reg['offset'], 16), reg_value )
+            self.msgbus.msgbus_reg_write(int(reg['port'], 16), int(reg['offset'], 16), reg_value)
         elif RegisterType.MM_MSGBUS == rtype:
             self.msgbus.mm_msgbus_reg_write(int(reg['port'], 16), int(reg['offset'], 16), reg_value)
         elif RegisterType.MEMORY == rtype:
@@ -975,7 +1014,7 @@ class Chipset:
             elif 'scope' in reg.keys() and reg['scope'] == "cores":
                 cores = topology['cores']
                 threads_to_use = [cores[p][0] for p in cores]
-            else: # Default to threads
+            else:  # Default to threads
                 threads_to_use = range(self.helper.get_threads_count())
             if len(reg_values) == len(threads_to_use):
                 value = 0
@@ -1009,7 +1048,7 @@ class Chipset:
             elif 'scope' in reg.keys() and reg['scope'] == "cores":
                 cores = topology['cores']
                 threads_to_use = [cores[p][0] for p in cores]
-            else: # Default to threads
+            else:  # Default to threads
                 threads_to_use = range(self.helper.get_threads_count())
             for t in threads_to_use:
                 self.write_register(reg_name, reg_value, t)
@@ -1020,7 +1059,7 @@ class Chipset:
             self.write_register(reg_name, reg_value)
         return True
 
-    def read_register_dict( self, reg_name):
+    def read_register_dict(self, reg_name):
         reg_value = self.read_register(reg_name)
         reg_def = self.get_register_def(reg_name)
         result = reg_def
@@ -1052,34 +1091,38 @@ class Chipset:
     def get_register_field(self, reg_name, reg_value, field_name,
                            preserve_field_position=False):
         field_attrs = self.get_register_def(reg_name)['FIELDS'][field_name]
-        field_bit   = int(field_attrs['bit'])
-        field_mask  = (1 << int(field_attrs['size'])) - 1
-        if preserve_field_position: return reg_value & (field_mask << field_bit)
-        else:                       return (reg_value >> field_bit) & field_mask
+        field_bit = int(field_attrs['bit'])
+        field_mask = (1 << int(field_attrs['size'])) - 1
+        if preserve_field_position:
+            return reg_value & (field_mask << field_bit)
+        else:
+            return (reg_value >> field_bit) & field_mask
 
     def get_register_field_all(self, reg_name, reg_values, field_name, preserve_field_position=False):
         values = []
         for reg_value in reg_values:
-            values.append( self.get_register_field( reg_name, reg_value, field_name, preserve_field_position) )
+            values.append(self.get_register_field(reg_name, reg_value, field_name, preserve_field_position))
         return values
 
     def set_register_field(self, reg_name, reg_value, field_name,
                            field_value, preserve_field_position=False):
         field_attrs = self.get_register_def(reg_name)['FIELDS'][field_name]
-        field_bit   = int(field_attrs['bit'])
-        field_mask  = (1 << int(field_attrs['size'])) - 1
-        reg_value  &= ~(field_mask << field_bit) # keep other fields
-        if preserve_field_position: reg_value |= (field_value & (field_mask << field_bit))
-        else:                       reg_value |= ((field_value & field_mask) << field_bit)
+        field_bit = int(field_attrs['bit'])
+        field_mask = (1 << int(field_attrs['size'])) - 1
+        reg_value &= ~(field_mask << field_bit)  # keep other fields
+        if preserve_field_position:
+            reg_value |= (field_value & (field_mask << field_bit))
+        else:
+            reg_value |= ((field_value & field_mask) << field_bit)
         return reg_value
 
     def set_register_field_all(self, reg_name, reg_values, field_name, field_value, preserve_field_position=False):
         values = []
         for reg_value in reg_values:
-            values.append( self.set_register_field( reg_name, reg_value, field_name, field_value, preserve_field_position) )
+            values.append(self.set_register_field(reg_name, reg_value, field_name, field_value, preserve_field_position))
         return values
 
-    def read_register_field( self, reg_name, field_name, preserve_field_position=False, cpu_thread=0, bus=None ):
+    def read_register_field(self, reg_name, field_name, preserve_field_position=False, cpu_thread=0, bus=None):
         reg_value = self.read_register(reg_name, cpu_thread, bus)
         return self.get_register_field(reg_name, reg_value, field_name, preserve_field_position)
 
@@ -1087,7 +1130,7 @@ class Chipset:
         reg_values = self.read_register_all(reg_name, cpu_thread)
         return self.get_register_field_all(reg_name, reg_values, field_name, preserve_field_position)
 
-    def write_register_field( self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0 ):
+    def write_register_field(self, reg_name, field_name, field_value, preserve_field_position=False, cpu_thread=0):
         try:
             reg_value = self.read_register(reg_name, cpu_thread)
             reg_value_new = self.set_register_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
@@ -1101,7 +1144,7 @@ class Chipset:
         reg_values_new = self.set_register_field_all(reg_name, reg_values, field_name, field_value, preserve_field_position)
         return self.write_register_all(reg_name, reg_values_new, cpu_thread)
 
-    def register_has_field( self, reg_name, field_name ):
+    def register_has_field(self, reg_name, field_name):
         try:
             reg_def = self.get_register_def(reg_name)
         except KeyError:
@@ -1123,7 +1166,7 @@ class Chipset:
         if 'FIELDS' in reg_def:
             reg_fields_str += '\n'
             # sort fields by their bit position in the register
-            sorted_fields = sorted( reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']) )
+            sorted_fields = sorted(reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']))
             for f in sorted_fields:
                 field_attrs = f[1]
                 field_bit = int(field_attrs['bit'])
@@ -1135,14 +1178,15 @@ class Chipset:
                 field_desc = (' << ' + field_attrs['desc'] + ' ') if (field_attrs['desc'] != '') else ''
                 reg_fields_str += ("    [{:02d}] {:16} = {:X}{}\n".format(field_bit, f[0], field_value, field_desc))
 
-        if '' != reg_fields_str: reg_fields_str = reg_fields_str[:-1]
+        if '' != reg_fields_str:
+            reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
     def print_register(self, reg_name, reg_val, bus=None, cpu_thread=0):
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_str = ''
-        reg_val_str = "0x{:0{width}X}".format(reg_val, width=(int(reg['size'], 16) *2))
+        reg_val_str = "0x{:0{width}X}".format(reg_val, width=(int(reg['size'], 16) * 2))
         if RegisterType.PCICFG == rtype or RegisterType.MMCFG == rtype:
             if bus is not None:
                 b = bus
@@ -1151,9 +1195,9 @@ class Chipset:
             d = int(reg['dev'], 16)
             f = int(reg['fun'], 16)
             o = int(reg['offset'], 16)
-            mmcfg_off_str =  ''
+            mmcfg_off_str = ''
             if RegisterType.MMCFG == rtype:
-                mmcfg_off_str += ", MMCFG + 0x{:X}".format((b *32 *8 + d *8 + f) * 0x1000 + o)
+                mmcfg_off_str += ", MMCFG + 0x{:X}".format((b * 32 * 8 + d * 8 + f) * 0x1000 + o)
             reg_str = "[*] {} = {} << {} (b:d.f {:02d}:{:02d}.{:d} + 0x{:X}{})".format(reg_name, reg_val_str, reg['desc'], b, d, f, o, mmcfg_off_str)
         elif RegisterType.MMIO == rtype:
             reg_str = "[*] {} = {} << {} ({} + 0x{:X})".format(reg_name, reg_val_str, reg['desc'], reg['bar'], int(reg['offset'], 16))
@@ -1171,12 +1215,12 @@ class Chipset:
             reg_str = "[*] {} = {} << {}".format(reg_name, reg_val_str, reg['desc'])
 
         reg_str += self._register_fields_str(reg, reg_val)
-        logger().log( reg_str )
+        logger().log(reg_str)
         return reg_str
 
     def print_register_all(self, reg_name, cpu_thread=0):
         reg_str = ''
-        bus_data = self.get_register_bus( reg_name )
+        bus_data = self.get_register_bus(reg_name)
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         if RegisterType.MSR == rtype:
@@ -1187,7 +1231,7 @@ class Chipset:
             elif 'scope' in reg.keys() and reg['scope'] == "cores":
                 cores = topology['cores']
                 threads_to_use = [cores[p][0] for p in cores]
-            else: # Default to threads
+            else:  # Default to threads
                 threads_to_use = range(self.helper.get_threads_count())
             for t in threads_to_use:
                 reg_val = self.read_register(reg_name, t)
@@ -1202,9 +1246,9 @@ class Chipset:
         return reg_str
 
     def get_control(self, control_name, cpu_thread=0, with_print=False):
-        control = self.Cfg.CONTROLS[ control_name ]
-        reg     = control['register']
-        field   = control['field']
+        control = self.Cfg.CONTROLS[control_name]
+        reg = control['register']
+        field = control['field']
         reg_data = self.read_register(reg, cpu_thread)
         if logger().VERBOSE or with_print:
             self.print_register(reg, reg_data)
@@ -1212,13 +1256,13 @@ class Chipset:
 
     def set_control(self, control_name, control_value, cpu_thread=0):
         control = self.Cfg.CONTROLS[control_name]
-        reg     = control['register']
-        field   = control['field']
+        reg = control['register']
+        field = control['field']
         return self.write_register_field(reg, field, control_value, cpu_thread)
 
     def is_control_defined(self, control_name):
         try:
-            return (self.Cfg.CONTROLS[ control_name ] is not None)
+            return (self.Cfg.CONTROLS[control_name] is not None)
         except KeyError:
             return False
 
@@ -1237,8 +1281,8 @@ class Chipset:
 
     def get_lock(self, lock_name, cpu_thread=0, with_print=False, bus=None):
         lock = self.Cfg.LOCKS[lock_name]
-        reg     = lock['register']
-        field   = lock['field']
+        reg = lock['register']
+        field = lock['field']
         if bus is None:
             reg_data = self.read_register_all(reg, cpu_thread)
         else:
@@ -1256,8 +1300,8 @@ class Chipset:
 
     def set_lock(self, lock_name, lock_value, cpu_thread=0, bus=None):
         lock = self.Cfg.LOCKS[lock_name]
-        reg     = lock['register']
-        field   = lock['field']
+        reg = lock['register']
+        field = lock['field']
         if bus is None:
             reg_data = self.read_register_all(reg, cpu_thread)
             reg_data = self.set_register_field_all(reg, reg_data, field, lock_value)
@@ -1290,9 +1334,9 @@ class Chipset:
 
     def get_lock_mask(self, lock_name):
         lock = self.Cfg.LOCKS[lock_name]
-        reg     = lock['register']
-        field   = lock['field']
-        return(self.get_register_field_mask(reg,field))
+        reg = lock['register']
+        field = lock['field']
+        return(self.get_register_field_mask(reg, field))
 
     def get_lockedby(self, lock_name):
         if lock_name in self.Cfg.LOCKEDBY.keys():
@@ -1320,7 +1364,7 @@ class Chipset:
 
     def is_field_all_ones(self, reg_name, field_name, value):
         reg_def = self.get_register_def(reg_name)
-        size    = int(reg_def['FIELDS'][field_name]['size'], 0)
+        size = int(reg_def['FIELDS'][field_name]['size'], 0)
         return is_all_ones(value, size, 1)
 
     def is_control_all_ffs(self, control_name, cpu_thread=0, field_only=False):
@@ -1328,20 +1372,20 @@ class Chipset:
             if logger().DEBUG:
                 logger().log_error("Control '{}' not defined.".format(control_name))
             return True
-        control  = self.Cfg.CONTROLS[control_name]
-        reg_def  = control['register']
+        control = self.Cfg.CONTROLS[control_name]
+        reg_def = control['register']
         reg_data = self.read_register(reg_def, cpu_thread)
         if field_only:
             reg_field = control['field']
-            reg_data  = self.get_register_field(reg_def, reg_data, reg_field)
-            result    = self.is_field_all_ones(reg_def, reg_field, reg_data)
+            reg_data = self.get_register_field(reg_def, reg_data, reg_field)
+            result = self.is_field_all_ones(reg_def, reg_field, reg_data)
         else:
             result = self.is_register_all_ffs(reg_def, reg_data)
         return result
 
 
-
 _chipset = None
+
 
 def cs():
     global _chipset

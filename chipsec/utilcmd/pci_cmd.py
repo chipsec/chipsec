@@ -19,7 +19,6 @@
 #
 
 
-
 """
 The pci command can enumerate PCI/PCIe devices, enumerate expansion ROMs and allow direct access to PCI configuration registers via bus/device/function.
 
@@ -47,14 +46,16 @@ Examples:
 
 import time
 
-from chipsec.command    import BaseCommand
-from chipsec.logger     import pretty_print_hex_buffer
-from argparse           import ArgumentParser
-from chipsec_util       import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
-from chipsec.hal.pci    import print_pci_devices, print_pci_XROMs
-from chipsec.hal.pci    import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD_OFF
+from chipsec.command import BaseCommand
+from chipsec.logger import pretty_print_hex_buffer
+from argparse import ArgumentParser
+from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
+from chipsec.hal.pci import print_pci_devices, print_pci_XROMs
+from chipsec.hal.pci import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD_OFF
 
 # PCIe Devices and Configuration Registers
+
+
 class PCICommand(BaseCommand):
 
     def requires_driver(self):
@@ -103,8 +104,8 @@ class PCICommand(BaseCommand):
         return True
 
     def pci_enumerate(self):
-        self.logger.log( "[CHIPSEC] Enumerating available PCIe devices..." )
-        print_pci_devices( self.cs.pci.enumerate_devices() )
+        self.logger.log("[CHIPSEC] Enumerating available PCIe devices...")
+        print_pci_devices(self.cs.pci.enumerate_devices())
 
     def pci_dump(self):
         if self.bus is not None:
@@ -118,7 +119,7 @@ class PCICommand(BaseCommand):
                 cfg_buf = self.cs.pci.dump_pci_config(_bus, _device, _function)
                 pretty_print_hex_buffer(cfg_buf)
         else:
-            self.logger.log( "[CHIPSEC] Dumping configuration of available PCI devices..." )
+            self.logger.log("[CHIPSEC] Dumping configuration of available PCI devices...")
             self.cs.pci.print_pci_config_all()
 
     def pci_xrom(self):
@@ -129,46 +130,52 @@ class PCICommand(BaseCommand):
                 devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
 
             for (_bus, _device, _function, _vid, _did) in devices:
-                self.logger.log( "[CHIPSEC] Locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(_bus, _device, _function) )
-                exists, xrom = self.cs.pci.find_XROM( _bus, _device, _function, True, True, self.xrom_addr )
+                self.logger.log("[CHIPSEC] Locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(_bus, _device, _function))
+                exists, xrom = self.cs.pci.find_XROM(_bus, _device, _function, True, True, self.xrom_addr)
                 if exists:
-                    self.logger.log( "[CHIPSEC] Found XROM of {:02X}:{:02X}.{:02X}".format(_bus, _device, _function) )
+                    self.logger.log("[CHIPSEC] Found XROM of {:02X}:{:02X}.{:02X}".format(_bus, _device, _function))
                     if xrom is not None:
-                        self.logger.log( "[CHIPSEC] XROM enabled = {:d}, base = 0x{:08X}, size = 0x{:08X}".format(xrom.en, xrom.base, xrom.size) )
-                        if xrom.header is not None: self.logger.log( "[CHIPSEC] XROM header: {}".format(xrom.header) )
+                        self.logger.log("[CHIPSEC] XROM enabled = {:d}, base = 0x{:08X}, size = 0x{:08X}".format(xrom.en, xrom.base, xrom.size))
+                        if xrom.header is not None:
+                            self.logger.log("[CHIPSEC] XROM header: {}".format(xrom.header))
                 else:
-                    self.logger.log( "[CHIPSEC] Couldn't find XROM of {:02X}:{:02X}.{:02X}".format(_bus, _device, _function) )
+                    self.logger.log("[CHIPSEC] Couldn't find XROM of {:02X}:{:02X}.{:02X}".format(_bus, _device, _function))
         else:
-            self.logger.log( "[CHIPSEC] Enumerating PCI expansion ROMs..." )
-            _xroms = self.cs.pci.enumerate_xroms( True, True, self.xrom_addr )
-            self.logger.log( "[CHIPSEC] found {:d} PCI expansion ROMs".format(len(_xroms)) )
+            self.logger.log("[CHIPSEC] Enumerating PCI expansion ROMs...")
+            _xroms = self.cs.pci.enumerate_xroms(True, True, self.xrom_addr)
+            self.logger.log("[CHIPSEC] found {:d} PCI expansion ROMs".format(len(_xroms)))
             if len(_xroms) > 0:
-                print_pci_XROMs( _xroms )
+                print_pci_XROMs(_xroms)
 
     def pci_read(self):
-            width = 4
-            if self.size is not None:
-                width = get_option_width(self.size) if is_option_valid_width(self.size) else int(self.size, 16)
-
-            if   1 == width: pci_value = self.cs.pci.read_byte (self.bus, self.device, self.function, self.offset)
-            elif 2 == width: pci_value = self.cs.pci.read_word (self.bus, self.device, self.function, self.offset)
-            elif 4 == width: pci_value = self.cs.pci.read_dword(self.bus, self.device, self.function, self.offset)
-            else:
-                self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
-                return
-            self.logger.log( "[CHIPSEC] PCI {:02X}:{:02X}.{:02X} + 0x{:02X}: 0x{:X}".format(self.bus, self.device, self.function, self.offset, pci_value) )
-
-    def pci_write(self):
+        width = 4
+        if self.size is not None:
             width = get_option_width(self.size) if is_option_valid_width(self.size) else int(self.size, 16)
 
-            if   1 == width: self.cs.pci.write_byte ( self.bus, self.device, self.function, self.offset, self.value )
-            elif 2 == width: self.cs.pci.write_word ( self.bus, self.device, self.function, self.offset, self.value )
-            elif 4 == width: self.cs.pci.write_dword( self.bus, self.device, self.function, self.offset, self.value )
-            else:
-                self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
-                return
-            self.logger.log( "[CHIPSEC] Write 0x{:X} to PCI {:02X}:{:02X}.{:02X} + 0x{:02X}".format(self.value, self.bus, self.device, self.function, self.offset) )
+        if 1 == width:
+            pci_value = self.cs.pci.read_byte(self.bus, self.device, self.function, self.offset)
+        elif 2 == width:
+            pci_value = self.cs.pci.read_word(self.bus, self.device, self.function, self.offset)
+        elif 4 == width:
+            pci_value = self.cs.pci.read_dword(self.bus, self.device, self.function, self.offset)
+        else:
+            self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
+            return
+        self.logger.log("[CHIPSEC] PCI {:02X}:{:02X}.{:02X} + 0x{:02X}: 0x{:X}".format(self.bus, self.device, self.function, self.offset, pci_value))
 
+    def pci_write(self):
+        width = get_option_width(self.size) if is_option_valid_width(self.size) else int(self.size, 16)
+
+        if 1 == width:
+            self.cs.pci.write_byte(self.bus, self.device, self.function, self.offset, self.value)
+        elif 2 == width:
+            self.cs.pci.write_word(self.bus, self.device, self.function, self.offset, self.value)
+        elif 4 == width:
+            self.cs.pci.write_dword(self.bus, self.device, self.function, self.offset, self.value)
+        else:
+            self.logger.log_error("Width should be one of {}".format(CMD_OPTS_WIDTH))
+            return
+        self.logger.log("[CHIPSEC] Write 0x{:X} to PCI {:02X}:{:02X}.{:02X} + 0x{:02X}".format(self.value, self.bus, self.device, self.function, self.offset))
 
     def pci_cmd(self):
         self.logger.log('BDF     | VID:DID   | CMD  | CLS | Sub CLS')
@@ -185,13 +192,12 @@ class PCICommand(BaseCommand):
                 continue
             self.logger.log('{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:04X} | {:02X}  | {:02X}'.format(b, d, f, vid, did, cmd_reg, dev_cls, dev_sub_cls))
 
-
     def run(self):
         t = time.time()
 
         self.func()
 
-        self.logger.log( "[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time() -t) )
+        self.logger.log("[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time() - t))
 
 
-commands = { 'pci': PCICommand }
+commands = {'pci': PCICommand}

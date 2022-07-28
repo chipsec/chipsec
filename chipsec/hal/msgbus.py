@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -44,17 +44,17 @@ from chipsec.exceptions import RegisterNotFoundError
 # Reference: http://lxr.free-electrons.com/source/arch/x86/include/asm/iosf_mbi.h
 #
 class MessageBusOpcode:
-    MB_OPCODE_MMIO_READ   = 0x00
-    MB_OPCODE_MMIO_WRITE  = 0x01
-    MB_OPCODE_IO_READ     = 0x02
-    MB_OPCODE_IO_WRITE    = 0x03
-    MB_OPCODE_CFG_READ    = 0x04
-    MB_OPCODE_CFG_WRITE   = 0x05
-    MB_OPCODE_CR_READ     = 0x06
-    MB_OPCODE_CR_WRITE    = 0x07
-    MB_OPCODE_REG_READ    = 0x10
-    MB_OPCODE_REG_WRITE   = 0x11
-    MB_OPCODE_ESRAM_READ  = 0x12
+    MB_OPCODE_MMIO_READ = 0x00
+    MB_OPCODE_MMIO_WRITE = 0x01
+    MB_OPCODE_IO_READ = 0x02
+    MB_OPCODE_IO_WRITE = 0x03
+    MB_OPCODE_CFG_READ = 0x04
+    MB_OPCODE_CFG_WRITE = 0x05
+    MB_OPCODE_CR_READ = 0x06
+    MB_OPCODE_CR_WRITE = 0x07
+    MB_OPCODE_REG_READ = 0x10
+    MB_OPCODE_REG_WRITE = 0x11
+    MB_OPCODE_ESRAM_READ = 0x12
     MB_OPCODE_ESRAM_WRITE = 0x13
 
 #
@@ -62,24 +62,27 @@ class MessageBusOpcode:
 # Reference: http://lxr.free-electrons.com/source/arch/x86/include/asm/iosf_mbi.h
 # @TODO: move these to per-platform XML config?
 #
+
+
 class MessageBusPort_Atom:
     UNIT_AUNIT = 0x00
-    UNIT_SMC   = 0x01
-    UNIT_CPU   = 0x02
+    UNIT_SMC = 0x01
+    UNIT_CPU = 0x02
     UNIT_BUNIT = 0x03
-    UNIT_PMC   = 0x04
-    UNIT_GFX   = 0x06
-    UNIT_SMI   = 0x0C
-    UNIT_USB   = 0x43
-    UNIT_SATA  = 0xA3
-    UNIT_PCIE  = 0xA6
+    UNIT_PMC = 0x04
+    UNIT_GFX = 0x06
+    UNIT_SMI = 0x0C
+    UNIT_USB = 0x43
+    UNIT_SATA = 0xA3
+    UNIT_PCIE = 0xA6
+
 
 class MessageBusPort_Quark:
-    UNIT_HBA   = 0x00
-    UNIT_HB    = 0x03
-    UNIT_RMU   = 0x04
-    UNIT_MM    = 0x05
-    UNIT_SOC   = 0x31
+    UNIT_HBA = 0x00
+    UNIT_HB = 0x03
+    UNIT_RMU = 0x04
+    UNIT_MM = 0x05
+    UNIT_SOC = 0x31
 
 
 class MsgBus(hal_base.HALBase):
@@ -91,20 +94,20 @@ class MsgBus(hal_base.HALBase):
 
     def __MB_MESSAGE_MCR(self, port, reg, opcode):
         mcr = 0x0
-        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF )
-        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg )
-        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port )
-        mcr = self.cs.set_register_field( 'MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode )
+        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF)
+        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg)
+        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port)
+        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode)
         return mcr
 
     def __MB_MESSAGE_MCRX(self, reg):
         mcrx = 0x0
-        mcrx = self.cs.set_register_field( 'MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True )
+        mcrx = self.cs.set_register_field('MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True)
         return mcrx
 
     def __MB_MESSAGE_MDR(self, data):
         mdr = 0x0
-        mdr = self.cs.set_register_field( 'MSG_DATA_REG', mdr, 'MESSAGE_DATA', data )
+        mdr = self.cs.set_register_field('MSG_DATA_REG', mdr, 'MESSAGE_DATA', data)
         return mdr
 
     def __hide_p2sb(self, hide):
@@ -114,7 +117,7 @@ class MsgBus(hal_base.HALBase):
             elif self.cs.register_has_field("P2SB_HIDE", "HIDE"):
                 self.p2sbHide = {'reg': 'P2SB_HIDE', 'field': 'HIDE'}
             else:
-                raise RegisterNotFoundError ('RegisterNotFound: P2SBC')
+                raise RegisterNotFoundError('RegisterNotFound: P2SBC')
 
         hidden = not self.cs.is_device_enabled('P2SBC')
         if hide:
@@ -126,50 +129,53 @@ class MsgBus(hal_base.HALBase):
     #
     # Issues read message on the message bus
     #
-    def msgbus_read_message( self, port, register, opcode ):
-        mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
+    def msgbus_read_message(self, port, register, opcode):
+        mcr = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
 
         if self.logger.HAL:
-            self.logger.log( "[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
-            self.logger.log( "[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx) )
+            self.logger.log("[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode))
+            self.logger.log("[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx))
 
-        mdr_out = self.helper.msgbus_send_read_message( mcr, mcrx )
+        mdr_out = self.helper.msgbus_send_read_message(mcr, mcrx)
 
-        if self.logger.HAL: self.logger.log( "[msgbus]       < 0x{:08X}".format(mdr_out) )
+        if self.logger.HAL:
+            self.logger.log("[msgbus]       < 0x{:08X}".format(mdr_out))
 
         return mdr_out
 
     #
     # Issues write message on the message bus
     #
-    def msgbus_write_message( self, port, register, opcode, data ):
-        mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
+    def msgbus_write_message(self, port, register, opcode, data):
+        mcr = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
-        mdr  = self.__MB_MESSAGE_MDR (data)
+        mdr = self.__MB_MESSAGE_MDR(data)
 
         if self.logger.HAL:
-            self.logger.log( "[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data) )
-            self.logger.log( "[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
+            self.logger.log("[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data))
+            self.logger.log("[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr))
 
-        return self.helper.msgbus_send_write_message( mcr, mcrx, mdr )
+        return self.helper.msgbus_send_write_message(mcr, mcrx, mdr)
 
     #
     # Issues generic message on the message bus
     #
-    def msgbus_send_message( self, port, register, opcode, data=None ):
-        mcr  = self.__MB_MESSAGE_MCR(port, register, opcode)
+    def msgbus_send_message(self, port, register, opcode, data=None):
+        mcr = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
-        mdr  = None if data is None else self.__MB_MESSAGE_MDR(data)
+        mdr = None if data is None else self.__MB_MESSAGE_MDR(data)
 
         if self.logger.HAL:
-            self.logger.log( "[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode) )
-            if data is not None: self.logger.log( "[msgbus]          data = 0x{:08X}".format(data) )
-            self.logger.log( "[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr) )
+            self.logger.log("[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode))
+            if data is not None:
+                self.logger.log("[msgbus]          data = 0x{:08X}".format(data))
+            self.logger.log("[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr))
 
-        mdr_out = self.helper.msgbus_send_message( mcr, mcrx, mdr )
+        mdr_out = self.helper.msgbus_send_message(mcr, mcrx, mdr)
 
-        if self.logger.HAL: self.logger.log( "[msgbus]          < 0x{:08X}".format(mdr_out) )
+        if self.logger.HAL:
+            self.logger.log("[msgbus]          < 0x{:08X}".format(mdr_out))
 
         return mdr_out
 

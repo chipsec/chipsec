@@ -63,7 +63,7 @@ Registers used:
 
 _MODULE_NAME = 'sgx_check'
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
-from chipsec.defines       import BIT0, BIT1, BIT2, BIT5, BIT6, BIT7, BIT8
+from chipsec.defines import BIT0, BIT1, BIT2, BIT5, BIT6, BIT7, BIT8
 TAGS = [MTAG_HWCONFIG]
 
 
@@ -207,7 +207,7 @@ class sgx_check(BaseModule):
                 (prmrr_mask_lock != prmrr_mask_lock_new) or
                 (prmrr_uncore_mask_vld != prmrr_uncore_mask_vld_new) or
                 (prmrr_uncore_mask_lock != prmrr_uncore_mask_lock_new) or
-                (prmrr_base_memtype != prmrr_base_memtype_new)):
+                    (prmrr_base_memtype != prmrr_base_memtype_new)):
                 prmrr_uniform = False
         if not prmrr_uniform:
             self.logger.log_bad("PRMRR config is not uniform across all CPUs")

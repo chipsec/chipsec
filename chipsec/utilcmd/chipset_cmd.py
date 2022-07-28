@@ -24,14 +24,16 @@ usage as a standalone utility:
     >>> chipsec_util platform
 """
 
-from chipsec.command    import BaseCommand
-from chipsec.exceptions    import UnknownChipsetError
+from chipsec.command import BaseCommand
+from chipsec.exceptions import UnknownChipsetError
 
 # ###################################################################
 #
 # Chipset/CPU Detection
 #
 # ###################################################################
+
+
 class PlatformCommand(BaseCommand):
     """
     chipsec_util platform
@@ -49,4 +51,5 @@ class PlatformCommand(BaseCommand):
         except UnknownChipsetError as msg:
             self.logger.log_error(msg)
 
-commands = { 'platform': PlatformCommand }
+
+commands = {'platform': PlatformCommand}

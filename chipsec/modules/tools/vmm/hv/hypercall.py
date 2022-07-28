@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -28,14 +28,15 @@ import sys
 import time
 import binascii
 import chipsec_util
-from random                                import *
-from struct                                import *
-from chipsec.modules.tools.vmm.hv.define   import *
-from chipsec.modules.tools.vmm.common      import *
-from chipsec.logger                        import *
-from chipsec.file                          import *
-from chipsec.module_common                 import *
-from chipsec.hal.vmm                       import *
+from random import *
+from struct import *
+from chipsec.modules.tools.vmm.hv.define import *
+from chipsec.modules.tools.vmm.common import *
+from chipsec.logger import *
+from chipsec.file import *
+from chipsec.module_common import *
+from chipsec.hal.vmm import *
+
 
 class HyperVHypercall(BaseModuleHwAccess):
     def __init__(self):
@@ -43,30 +44,30 @@ class HyperVHypercall(BaseModuleHwAccess):
         self.hv = VMM(self.cs)
         self.hv.init()
         self.hypervisor_present = False
-        self.hv_partitionid      = {}
-        self.hv_connectionid     = {}
-        self.hv_hypercalls       = {}
+        self.hv_partitionid = {}
+        self.hv_connectionid = {}
+        self.hv_hypercalls = {}
         self.param_matrix_status = {}
 
     ##
-    ##  print_hypervisor_info
+    # print_hypervisor_info
     ##
     def print_hypervisor_info(self):
-        gprs = self.cpuid_info (0x00000001, 0x0, 'Feature Information')
+        gprs = self.cpuid_info(0x00000001, 0x0, 'Feature Information')
         self.hypervisor_present = ((gprs[2] >> 31) & 0x1) == 0x1
-        self.msg('ECX(31) - Hypervisor Present                  :  {:x}'  .format (self.hypervisor_present))
+        self.msg('ECX(31) - Hypervisor Present                  :  {:x}'  .format(self.hypervisor_present))
 
         if self.hypervisor_present:
 
-            gprs = self.cpuid_info (0x40000000, 0x0, 'Hypervisor CPUID leaf range and vendor ID signature')
+            gprs = self.cpuid_info(0x40000000, 0x0, 'Hypervisor CPUID leaf range and vendor ID signature')
             (max_input_value, id_signature_ebx, id_signature_ecx, id_signature_edx) = gprs
-            id_signature = pack ('<3L', id_signature_ebx, id_signature_ecx, id_signature_edx )
+            id_signature = pack('<3L', id_signature_ebx, id_signature_ecx, id_signature_edx)
             self.msg('The maximum input value for hypervisor CPUID  :  {:08X}'.format(max_input_value))
             self.msg('Hypervisor Vendor ID Signature                :  {}'.format(id_signature))
 
-            gprs = self.cpuid_info (0x40000001, 0x0, 'Hypervisor vendor-neutral interface identification')
+            gprs = self.cpuid_info(0x40000001, 0x0, 'Hypervisor vendor-neutral interface identification')
             (interface_signature, rsvd_ebx, rsvd_ecx, rsvd_edx) = gprs
-            interface_signature = pack ('<1L', interface_signature)
+            interface_signature = pack('<1L', interface_signature)
             self.msg('Hypervisor Interface Signature                :  {}'.format(interface_signature))
 
             if interface_signature == 'Hv#1':
@@ -75,29 +76,29 @@ class HyperVHypercall(BaseModuleHwAccess):
                     self.msg('')
                     self.msg('*** WARNING ***: Invalid CPUID.0x40000000.0x0.EAX value\n\n')
 
-                for cpuid_eax in range (0x40000002, max_input_value):
+                for cpuid_eax in range(0x40000002, max_input_value):
                     self.print_hypervisor_cpuid(cpuid_eax)
 
         return
 
     ##
-    ##  print_hypervisor_cpuid
+    # print_hypervisor_cpuid
     ##
-    def print_hypervisor_cpuid(self, cpuid_eax, cpuid_ecx = 0x0):
+    def print_hypervisor_cpuid(self, cpuid_eax, cpuid_ecx=0x0):
         if cpuid_eax == 0x40000002:
-            (eax, ebx, ecx, edx) = self.cpuid_info (cpuid_eax, cpuid_ecx, 'Hypervisor system identity')
-            major_version   = 0xFFFF   & (ebx >> 16)
-            minor_version   = 0xFFFF   & ebx
-            service_branch  = 0xFF     & (edx >> 24)
-            service_number  = 0xFFFFFF & edx
-            self.msg('   EAX        - Build Number    :  {:08X}'  .format(eax)            )
-            self.msg('   EBX(31-16) - Major Version   :  {:04X}'  .format(major_version)  )
-            self.msg('   EBX(15-0)  - Minor Version   :  {:04X}'  .format(minor_version)  )
-            self.msg('   ECX        - Service Pack    :  {:08X}'  .format(ecx)            )
-            self.msg('   EDX(31-24) - Service Branch  :  {:02X}'  .format(service_branch) )
-            self.msg('   EDX(23-0)  - Service Number  :  {:06x}'  .format(service_number) )
+            (eax, ebx, ecx, edx) = self.cpuid_info(cpuid_eax, cpuid_ecx, 'Hypervisor system identity')
+            major_version = 0xFFFF & (ebx >> 16)
+            minor_version = 0xFFFF & ebx
+            service_branch = 0xFF & (edx >> 24)
+            service_number = 0xFFFFFF & edx
+            self.msg('   EAX        - Build Number    :  {:08X}'  .format(eax))
+            self.msg('   EBX(31-16) - Major Version   :  {:04X}'  .format(major_version))
+            self.msg('   EBX(15-0)  - Minor Version   :  {:04X}'  .format(minor_version))
+            self.msg('   ECX        - Service Pack    :  {:08X}'  .format(ecx))
+            self.msg('   EDX(31-24) - Service Branch  :  {:02X}'  .format(service_branch))
+            self.msg('   EDX(23-0)  - Service Number  :  {:06x}'  .format(service_number))
         elif cpuid_eax == 0x40000003:
-            (eax, ebx, ecx, edx) = self.cpuid_info (cpuid_eax, cpuid_ecx, 'Feature identification')
+            (eax, ebx, ecx, edx) = self.cpuid_info(cpuid_eax, cpuid_ecx, 'Feature identification')
             self.msg('   EAX - features available to the partition                :  {:08X}'.format(eax))
             self.info_bitwise(eax, cpuid_desc[cpuid_eax]['EAX'])
             self.msg('   EBX - flags specified at partition creation              :  {:08X}'.format(ebx))
@@ -107,24 +108,24 @@ class HyperVHypercall(BaseModuleHwAccess):
             self.msg('   EDX - misc. features available to the partition          :  {:08X}'.format(edx))
             self.info_bitwise(edx, cpuid_desc[cpuid_eax]['EDX'])
         elif cpuid_eax == 0x40000004:
-            (eax, ebx, ecx, edx) = self.cpuid_info (cpuid_eax, cpuid_ecx, 'Implementation recommendations')
+            (eax, ebx, ecx, edx) = self.cpuid_info(cpuid_eax, cpuid_ecx, 'Implementation recommendations')
             self.msg('   EAX(9-0) - recommendations for optimal performance       :  {:08X}'.format(eax))
             self.msg('   EBX      - recommended number of attempts                :  {:08X}'.format(ebx))
         elif cpuid_eax == 0x40000005:
-            (eax, ebx, ecx, edx) = self.cpuid_info (cpuid_eax, cpuid_ecx, 'Implementation limits')
+            (eax, ebx, ecx, edx) = self.cpuid_info(cpuid_eax, cpuid_ecx, 'Implementation limits')
             self.msg('   EAX - The maximum number of virtual processors supported :  {:08X}'.format(eax))
             self.msg('   EBX - The maximum number of logical processors supported :  {:08X}'.format(ebx))
             self.msg('   ECX - The maximum number of physical interrupt vectors   :  {:08X}'.format(ecx))
         elif cpuid_eax == 0x40000006:
-            (eax, ebx, ecx, edx) = self.cpuid_info (cpuid_eax, cpuid_ecx, 'Implementation hardware features')
+            (eax, ebx, ecx, edx) = self.cpuid_info(cpuid_eax, cpuid_ecx, 'Implementation hardware features')
             self.msg('   EAX - Intel-specific features  :  {:08X}'.format(eax))
             self.msg('   EDX - AMD-specific features    :  {:08X}'.format(edx))
         else:
-            (eax, ebx, ecx, edx) = self.cpuid_info (cpuid_eax, cpuid_ecx, '')
+            (eax, ebx, ecx, edx) = self.cpuid_info(cpuid_eax, cpuid_ecx, '')
         return
 
     ##
-    ##  print_synthetic_msrs
+    # print_synthetic_msrs
     ##
     def print_synthetic_msrs(self):
         self.msg('')
@@ -140,7 +141,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  scan_hypercalls
+    # scan_hypercalls
     ##
     def scan_hypercalls(self, code_list):
         for call_code in code_list:
@@ -149,9 +150,9 @@ class HyperVHypercall(BaseModuleHwAccess):
             for buffer in data:
                 try:
                     self.dbg('- FAST HYPERCALL')
-                    hciv    = hv_hciv(0, 0, call_code, 1)
-                    result  = self.hv.hypercall64_extended_fast(hciv, buffer) & 0xFFFF
-                    hv_rep  = 0
+                    hciv = hv_hciv(0, 0, call_code, 1)
+                    result = self.hv.hypercall64_extended_fast(hciv, buffer) & 0xFFFF
+                    hv_rep = 0
                     hv_fast = 1
                     if result == HV_STATUS_INVALID_HYPERCALL_INPUT:
                         self.dbg('- JUST HYPERCALL')
@@ -160,13 +161,13 @@ class HyperVHypercall(BaseModuleHwAccess):
                         hv_fast = 0
                         if result == HV_STATUS_INVALID_HYPERCALL_INPUT:
                             self.dbg('- FAST REP HYPERCALL')
-                            hciv   = hv_hciv(0, 1, call_code, 1)
+                            hciv = hv_hciv(0, 1, call_code, 1)
                             result = self.hv.hypercall64_extended_fast(hciv, buffer) & 0xFFFF
                             hv_rep = 1
                             if result == HV_STATUS_INVALID_HYPERCALL_INPUT:
                                 self.dbg('- REP HYPERCALL')
                                 hciv = hv_hciv(0, 1, call_code, 0)
-                                result  = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
+                                result = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
                                 hv_fast = 0
                             else:
                                 hv_fast = 1
@@ -177,13 +178,13 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  scan_partitionid
+    # scan_partitionid
     ##
     def scan_partitionid(self, id_list):
         invalid_partition = 0
         for i in id_list:
             hciv = hv_hciv(0, 0, 0x0041)
-            buffer = pack ('<Q', i)
+            buffer = pack('<Q', i)
             result = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
             if result == HV_STATUS_ACCESS_DENIED:
                 self.hv_partitionid[i] = 1
@@ -194,43 +195,43 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  scan_connectionid
+    # scan_connectionid
     ##
     def scan_connectionid(self, id_list):
         for i in id_list:
             hciv = hv_hciv(0, 0, HV_POST_MESSAGE)
-            buffer = pack ('<LLLLQ', i, 0x0, 0x1, 8, 0x0)
+            buffer = pack('<LLLLQ', i, 0x0, 0x1, 8, 0x0)
             result = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
             if result != HV_STATUS_INVALID_CONNECTION_ID:
                 if result == HV_STATUS_SUCCESS:
                     self.hv_connectionid[i] = 0x1
                 else:
                     hciv = hv_hciv(0, 0, HV_SIGNAL_EVENT)
-                    buffer = pack ('<LHH', i, 0x0, 0x0)
+                    buffer = pack('<LHH', i, 0x0, 0x0)
                     result = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
                     self.hv_connectionid[i] = 0x2 if result == HV_STATUS_SUCCESS else 0x3
         return
 
     ##
-    ##  scan_for_success_status
+    # scan_for_success_status
     ##
     def scan_for_success_status(self, i, total_tests):
         statistics = {}
-        pattern    = ''
+        pattern = ''
         hc = self.hv_hypercalls[i] if i in self.hv_hypercalls else [0, 0, HV_STATUS_INVALID_HYPERCALL_CODE]
         if hc[2] != HV_STATUS_SUCCESS:
             for x in range(total_tests):
-                buffer  = ''
+                buffer = ''
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * randint(0, 8) + chr(getrandbits(8))
                 buffer += '\x00' * 32
-                hciv   = hv_hciv(0, hc[0], i, 0)
+                hciv = hv_hciv(0, hc[0], i, 0)
                 result = self.hv.hypercall64_memory_based(hciv, buffer)
                 rep_completed = (result >> 32) & 0x0FFF
-                result        = result & 0xFFFF
-                statistics[result] = 1 if result not in statistics else statistics[result]  + 1
+                result = result & 0xFFFF
+                statistics[result] = 1 if result not in statistics else statistics[result] + 1
                 if result == HV_STATUS_SUCCESS:
                     pattern = buffer
                     break
@@ -239,7 +240,7 @@ class HyperVHypercall(BaseModuleHwAccess):
             self.msg('*************** Status codes statistics: *****************')
             for n in sorted(statistics.keys()):
                 status = get_hypercall_status(n, 'Not defined')
-                self.msg('{:50}: {:d}'.format(status, statistics[n]) )
+                self.msg('{:50}: {:d}'.format(status, statistics[n]))
             self.hex('Input Parameters', pattern[:0x20])
         else:
             self.msg('')
@@ -247,7 +248,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  scan_input_parameters
+    # scan_input_parameters
     ##
     def scan_input_parameters(self, i, maxlen):
         matrix = [[0 for x in range(0x101)] for y in range(maxlen)]
@@ -257,9 +258,9 @@ class HyperVHypercall(BaseModuleHwAccess):
         for l in range(maxlen):
             for v in range(0x100):
                 s = list(iv)
-                s[l]   = chr(v)
+                s[l] = chr(v)
                 buffer = ''.join(s)
-                hciv   = hv_hciv(0, hc[0], i, 0)
+                hciv = hv_hciv(0, hc[0], i, 0)
                 result = self.hv.hypercall64_memory_based(hciv, buffer) & 0xFFFF
                 matrix[l][v] = result
         self.param_matrix_status[i] = matrix
@@ -267,12 +268,12 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  print_input_parameters
+    # print_input_parameters
     ##
     def print_input_parameters(self, i, maxlen, status_list):
         matrix = self.param_matrix_status[i]
         for l in range(maxlen):
-            x   = 0
+            x = 0
             ranges = []
             for v in range(0x100):
                 if (matrix[l][v] not in status_list) and (matrix[l][v + 1] in status_list):
@@ -287,23 +288,23 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  input_parameters_fuzzing
+    # input_parameters_fuzzing
     ##
     def input_parameters_fuzzing(self, i, maxlen, status_list, total_tests):
         matrix = self.param_matrix_status[i]
         buffer = self.get_initial_data(GOOD_PARAMS_STATUSES, i, 32)[0]
         self.msg('Start input parameters fuzzing ...')
         for x in range(total_tests):
-            if x % 10000000 == 10000000 -1:
-                self.msg('{:4.0f}% DONE'.format(100.0 *x /total_tests))
-            l = randint(0, maxlen -1)
-            v = randint(0, 0x100 -1)
+            if x % 10000000 == 10000000 - 1:
+                self.msg('{:4.0f}% DONE'.format(100.0 * x / total_tests))
+            l = randint(0, maxlen - 1)
+            v = randint(0, 0x100 - 1)
             if matrix[l][v] == 1:
                 s = list(buffer)
-                s[l]   = chr(v)
+                s[l] = chr(v)
                 buffer = ''.join(s)
-                s[randint(0, maxlen -1)] = chr(randint(0, 0xFF))
-                s[randint(0, maxlen -1)] = chr(randint(0, 0xFF))
+                s[randint(0, maxlen - 1)] = chr(randint(0, 0xFF))
+                s[randint(0, maxlen - 1)] = chr(randint(0, 0xFF))
                 if self.hv_hypercalls[i][0] in status_list:
                     hciv = hv_hciv(0, 1, i, 0)
                 else:
@@ -313,22 +314,22 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  print_hypercall_status
+    # print_hypercall_status
     ##
     def print_hypercall_status(self):
         self.msg('')
         self.msg('*** Hypervisor Hypercall Status Codes ***')
         status_list = [HV_STATUS_INVALID_HYPERCALL_CODE]
         for i in sorted(self.hv_hypercalls.keys()):
-            hc     = self.hv_hypercalls[i]
+            hc = self.hv_hypercalls[i]
             status = get_hypercall_status(hc[2])
             hcname = get_hypercall_name(i)
             if status not in status_list:
-                self.msg("HYPERV_HYPERCALL REP:{:d} FAST:{:d} {:04X}  {:02X}  {:40} '{}'".format(hc[0], hc[1], i, hc[2], status, hcname) )
+                self.msg("HYPERV_HYPERCALL REP:{:d} FAST:{:d} {:04X}  {:02X}  {:40} '{}'".format(hc[0], hc[1], i, hc[2], status, hcname))
         return
 
     ##
-    ##  print_partitionid
+    # print_partitionid
     ##
     def print_partitionid(self):
         self.msg('')
@@ -341,7 +342,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  print_partition_properties
+    # print_partition_properties
     ##
     def print_partition_properties(self):
         self.msg('')
@@ -358,10 +359,10 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  set_partition_property
+    # set_partition_property
     ##
     def set_partition_property(self, part, prop, value):
-        hciv   = hv_hciv(0, 0, HV_SET_PARTITION_PROPERTY)
+        hciv = hv_hciv(0, 0, HV_SET_PARTITION_PROPERTY)
         buffer = pack('<QLLQ', part, prop, 0, value)
         result = self.hv.hypercall64_memory_based(hciv, buffer)
         status = get_hypercall_status(result, '0x{:08X}'.format(result))
@@ -369,7 +370,7 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  print_connectionid
+    # print_connectionid
     ##
     def print_connectionid(self, status_list):
         self.msg('')
@@ -380,11 +381,11 @@ class HyperVHypercall(BaseModuleHwAccess):
         return
 
     ##
-    ##  custom_fuzzing
+    # custom_fuzzing
     ##
     def custom_fuzzing(self, call_code, total_tests):
         statistics = {}
-        buffer = ''.join( [chr(randint(0, 255)) for i in range(0, 112)] )
+        buffer = ''.join([chr(randint(0, 255)) for i in range(0, 112)])
         hcname = get_hypercall_name(call_code)
 
         if hcname == 'HvConnectPort':
@@ -392,9 +393,9 @@ class HyperVHypercall(BaseModuleHwAccess):
             self.msg('Hypercall: {} '.format(hcname))
             hciv = hv_hciv(0, 0, call_code)
             for i in range(0x0, 0xFFFFF):
-                buffer = pack ('<5Q', i & 0xF, (i >> 4) & 0xF, (i >> 8) & 0xF, (i >> 12) & 0xF, (i >> 16) & 0xF )
+                buffer = pack('<5Q', i & 0xF, (i >> 4) & 0xF, (i >> 8) & 0xF, (i >> 12) & 0xF, (i >> 16) & 0xF)
                 result = self.hv.hypercall64_memory_based(hciv, buffer)
-                statistics[result] = 1 if result not in statistics else statistics[result]  + 1
+                statistics[result] = 1 if result not in statistics else statistics[result] + 1
 
         elif hcname == 'HvPostMessage':
             self.msg('Hypercall: {} '.format(hcname))
@@ -405,10 +406,10 @@ class HyperVHypercall(BaseModuleHwAccess):
                     for i in range(0x100, 0x1000):
                         messagetype = 0x7FFFFFFF & getrandbits(32)
                         payloadsize = randint(0, 240)
-                        message0    = getrandbits(8)
-                        buffer = pack ('<4LQ', connid, 0, messagetype, payloadsize, message0 )
+                        message0 = getrandbits(8)
+                        buffer = pack('<4LQ', connid, 0, messagetype, payloadsize, message0)
                         result = hv.hypercall64_memory_based(hciv, buffer)
-                        statistics[result] = 1 if result not in statistics else statistics[result]  + 1
+                        statistics[result] = 1 if result not in statistics else statistics[result] + 1
                         self.dbg('HvPostMessage: {} {}'.format(get_hypercall_status(result), binascii.hexlify(buffer)))
 
         elif hcname == 'HvSignalEvent':
@@ -418,13 +419,13 @@ class HyperVHypercall(BaseModuleHwAccess):
                 if self.hv_connectionid[connid] == HV_PORT_TYPE_EVENT:
                     self.msg('Connection ID: {:08X}'.format(connid))
                     for i in range(min(total_tests, 0xFFFF)):
-                        buffer = pack ('<LHH', connid, 0, i)
+                        buffer = pack('<LHH', connid, 0, i)
                         result = self.hv.hypercall64_memory_based(hciv, buffer)
-                        statistics[result] = 1 if result not in statistics else statistics[result]  + 1
+                        statistics[result] = 1 if result not in statistics else statistics[result] + 1
 
         if len(statistics) > 0:
             self.msg('*************** Status codes statistics: *****************')
             for i in sorted(statistics.keys()):
-                self.msg('{:50}: {:d}'.format(get_hypercall_status(i), statistics[i]) )
+                self.msg('{:50}: {:d}'.format(get_hypercall_status(i), statistics[i]))
 
         return

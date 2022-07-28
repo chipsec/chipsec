@@ -28,10 +28,10 @@ Examples:
 >>> chipsec_util config show REGISTERS BC
 """
 
-from time   import time
-from argparse   import ArgumentParser
+from time import time
+from argparse import ArgumentParser
 
-from chipsec.command    import BaseCommand
+from chipsec.command import BaseCommand
 
 
 class CONFIGCommand(BaseCommand):
@@ -41,7 +41,7 @@ class CONFIGCommand(BaseCommand):
 
         subparsers = parser.add_subparsers()
 
-        #show
+        # show
         parser_show = subparsers.add_parser('show')
         parser_show.add_argument('config', choices=['CONFIG_PCI', 'REGISTERS', 'MMIO_BARS', 'IO_BARS', 'MEMORY_RANGES', 'CONTROLS', 'BUS', 'LOCKS', 'ALL'])
         parser_show.add_argument('name', type=str, nargs='*', help="Specific Name", default=[])

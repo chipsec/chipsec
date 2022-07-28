@@ -28,14 +28,14 @@ import chipsec.chipset
 
 
 class ModuleResult:
-    FAILED        = 0
-    PASSED        = 1
-    WARNING       = 2
-    SKIPPED       = 3
-    DEPRECATED    = 4
-    INFORMATION   = 5
+    FAILED = 0
+    PASSED = 1
+    WARNING = 2
+    SKIPPED = 3
+    DEPRECATED = 4
+    INFORMATION = 5
     NOTAPPLICABLE = 6
-    ERROR         = -1
+    ERROR = -1
 
 
 result_priority = {
@@ -50,13 +50,13 @@ result_priority = {
 }
 
 ModuleResultName = {
-    ModuleResult.FAILED:        "Failed",
-    ModuleResult.PASSED:        "Passed",
-    ModuleResult.WARNING:       "Warning",
-    ModuleResult.SKIPPED:       "Skipped",
-    ModuleResult.DEPRECATED:    "Deprecated",
-    ModuleResult.INFORMATION:   "Information",
-    ModuleResult.ERROR:         "Error",
+    ModuleResult.FAILED: "Failed",
+    ModuleResult.PASSED: "Passed",
+    ModuleResult.WARNING: "Warning",
+    ModuleResult.SKIPPED: "Skipped",
+    ModuleResult.DEPRECATED: "Deprecated",
+    ModuleResult.INFORMATION: "Information",
+    ModuleResult.ERROR: "Error",
     ModuleResult.NOTAPPLICABLE: "NotApplicable"
 }
 
@@ -104,22 +104,22 @@ class BaseModule(object):
         raise NotImplementedError('Sub-class should overwrite the run() method')
 
 
-MTAG_BIOS       = "BIOS"
-MTAG_SMM        = "SMM"
+MTAG_BIOS = "BIOS"
+MTAG_SMM = "SMM"
 MTAG_SECUREBOOT = "SECUREBOOT"
-MTAG_HWCONFIG   = "HWCONFIG"
-MTAG_CPU        = "CPU"
+MTAG_HWCONFIG = "HWCONFIG"
+MTAG_CPU = "CPU"
 
 
-##! [Available Tags]
+# ! [Available Tags]
 MTAG_METAS = {
-              MTAG_BIOS:       "System Firmware (BIOS/UEFI) Modules",
-              MTAG_SMM:        "System Management Mode (SMM) Modules",
-              MTAG_SECUREBOOT: "Secure Boot Modules",
-              MTAG_HWCONFIG:   "Hardware Configuration Modules",
-              MTAG_CPU:        "CPU Modules",
-              }
-##! [Available Tags]
+    MTAG_BIOS: "System Firmware (BIOS/UEFI) Modules",
+    MTAG_SMM: "System Management Mode (SMM) Modules",
+    MTAG_SECUREBOOT: "Secure Boot Modules",
+    MTAG_HWCONFIG: "Hardware Configuration Modules",
+    MTAG_CPU: "CPU Modules",
+}
+# ! [Available Tags]
 MODULE_TAGS = dict([(_tag, []) for _tag in MTAG_METAS])
 
 #
