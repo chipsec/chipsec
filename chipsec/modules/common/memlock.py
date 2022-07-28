@@ -46,6 +46,7 @@ from chipsec.exceptions import HWAccessViolationError
 
 _MODULE_NAME = 'memlock'
 
+
 class memlock(BaseModule):
 
     def __init__(self):

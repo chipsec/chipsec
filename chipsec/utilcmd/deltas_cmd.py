@@ -35,6 +35,7 @@ from argparse import ArgumentParser
 from chipsec.command import BaseCommand
 import chipsec.result_deltas
 
+
 class DeltasCommand(BaseCommand):
 
     def requires_driver(self):
@@ -70,5 +71,6 @@ class DeltasCommand(BaseCommand):
         chipsec.result_deltas.display_deltas(deltas, True, start_time)
 
         return
+
 
 commands = {'deltas': DeltasCommand}

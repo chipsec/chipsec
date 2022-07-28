@@ -63,18 +63,19 @@ import time
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.hal.vmm import VMM
 
-DEFAULT_VECTOR_MAXVAL     = 0xFF
+DEFAULT_VECTOR_MAXVAL = 0xFF
 
 DEFAULT_MAXVAL_EXHAUSTIVE = 0xFF
-DEFAULT_MAXVAL_RANDOM     = 0xFFFFFFFF
+DEFAULT_MAXVAL_RANDOM = 0xFFFFFFFF
 
 DEFAULT_RANDOM_ITERATIONS = 0x7FFFFFFF
 
 # Flush log file before each port
 _FLUSH_LOG_EACH_ITER = False
-_LOG_ALL_GPRS        = True
+_LOG_ALL_GPRS = True
 
 GPRS = {'rax': 0, 'rbx': 0, 'rcx': 0, 'rdx': 0, 'rdi': 0, 'rsi': 0, 'r8': 0, 'r9': 0, 'r10': 0, 'r11': 0}
+
 
 class hypercallfuzz(BaseModule):
 
@@ -83,14 +84,13 @@ class hypercallfuzz(BaseModule):
         self.vmm = VMM(self.cs)
 
         self.random_order = True
-        self.gprs         = GPRS
-        self.vector_reg   = None
-        self.iterations   = DEFAULT_RANDOM_ITERATIONS
-        self.maxval       = DEFAULT_MAXVAL_RANDOM
+        self.gprs = GPRS
+        self.vector_reg = None
+        self.iterations = DEFAULT_RANDOM_ITERATIONS
+        self.maxval = DEFAULT_MAXVAL_RANDOM
 
     def is_supported(self):
         return True
-
 
     def fuzz_generic_hypercalls(self):
         _fmt = '{:02X}' if self.maxval <= 0xFF else ('{:04X}' if self.maxval <= 0xFFFF else ('{:08X}' if self.maxval <= 0xFFFFFFFF else '{:016X}'))
@@ -107,8 +107,8 @@ class hypercallfuzz(BaseModule):
                 rdx = random.randint(0, self.gprs['rdx'])
                 rdi = random.randint(0, self.gprs['rdi'])
                 rsi = random.randint(0, self.gprs['rsi'])
-                r8  = random.randint(0, self.gprs['r8'])
-                r9  = random.randint(0, self.gprs['r9'])
+                r8 = random.randint(0, self.gprs['r8'])
+                r9 = random.randint(0, self.gprs['r9'])
                 r10 = random.randint(0, self.gprs['r10'])
                 r11 = random.randint(0, self.gprs['r11'])
                 if _LOG_ALL_GPRS:
@@ -137,7 +137,7 @@ class hypercallfuzz(BaseModule):
                                                     if _LOG_ALL_GPRS:
                                                         self.logger.log(_str.format(it, rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11))
                                                     else:
-                                                        self.logger.log( "{:d} hcall".format(it) )
+                                                        self.logger.log("{:d} hcall".format(it))
                                                     if _FLUSH_LOG_EACH_ITER:
                                                         self.logger.flush()
                                                     try:
@@ -148,7 +148,6 @@ class hypercallfuzz(BaseModule):
 
         self.logger.log("[*] Finished fuzzing: time elapsed {:.3f}".format(time.time() - t))
         return ModuleResult.WARNING
-
 
     def run(self, module_argv):
         self.logger.start_test("Dumb VMM hypercall fuzzer")

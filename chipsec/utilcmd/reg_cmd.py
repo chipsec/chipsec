@@ -35,14 +35,14 @@ Examples:
 >>> chipsec_util reg set_control BiosLockEnable 0x1
 """
 
-from chipsec.command  import BaseCommand
-from argparse         import ArgumentParser
+from chipsec.command import BaseCommand
+from argparse import ArgumentParser
 
 
 class RegisterCommand(BaseCommand):
 
     def requires_driver(self):
-        parser = ArgumentParser( prog='chipsec_util reg', usage=__doc__ )
+        parser = ArgumentParser(prog='chipsec_util reg', usage=__doc__)
         subparsers = parser.add_subparsers()
 
         parser_read = subparsers.add_parser('read')
@@ -57,13 +57,13 @@ class RegisterCommand(BaseCommand):
 
         parser_write = subparsers.add_parser('write')
         parser_write.add_argument('reg_name', type=str, help='Register name')
-        parser_write.add_argument('value', type=lambda x: int(x,16), help='Value (hex)')
+        parser_write.add_argument('value', type=lambda x: int(x, 16), help='Value (hex)')
         parser_write.set_defaults(func=self.reg_write)
 
         parser_writefield = subparsers.add_parser('write_field')
         parser_writefield.add_argument('reg_name', type=str, help='Register name')
         parser_writefield.add_argument('field_name', type=str, help='Field name')
-        parser_writefield.add_argument('value', type=lambda x: int(x,16), help='Value (hex)')
+        parser_writefield.add_argument('value', type=lambda x: int(x, 16), help='Value (hex)')
         parser_writefield.set_defaults(func=self.reg_write_field)
 
         parser_getcontrol = subparsers.add_parser('get_control')
@@ -72,12 +72,11 @@ class RegisterCommand(BaseCommand):
 
         parser_setcontrol = subparsers.add_parser('set_control')
         parser_setcontrol.add_argument('control_name', type=str, help='Control name')
-        parser_setcontrol.add_argument('value', type=lambda x: int(x,16), help='Value (hex)')
+        parser_setcontrol.add_argument('value', type=lambda x: int(x, 16), help='Value (hex)')
         parser_setcontrol.set_defaults(func=self.reg_set_control)
 
         parser.parse_args(self.argv[2:], namespace=self)
         return True
-
 
     def reg_read(self):
         if self.field_name is not None:
@@ -88,7 +87,6 @@ class RegisterCommand(BaseCommand):
             self.logger.log("[CHIPSEC] {}=0x{:X}".format(self.reg_name, value))
             self.cs.print_register(self.reg_name, value)
 
-
     def reg_read_field(self):
         if self.cs.register_has_field(self.reg_name, self.field_name):
             value = self.cs.read_register_field(self.reg_name, self.field_name)
@@ -96,11 +94,9 @@ class RegisterCommand(BaseCommand):
         else:
             self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
 
-
     def reg_write(self):
         self.logger.log("[CHIPSEC] Writing {} < 0x{:X}".format(self.reg_name, self.value))
         self.cs.write_register(self.reg_name, self.value)
-
 
     def reg_write_field(self):
         if self.cs.register_has_field(self.reg_name, self.field_name):
@@ -109,14 +105,12 @@ class RegisterCommand(BaseCommand):
         else:
             self.logger.log_error("[CHIPSEC] Register '{}' doesn't have field '{}' defined".format(self.reg_name, self.field_name))
 
-
     def reg_get_control(self):
         if self.cs.is_control_defined(self.control_name):
             value = self.cs.get_control(self.control_name)
             self.logger.log("[CHIPSEC] {} = 0x{:X}".format(self.control_name, value))
         else:
             self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
-
 
     def reg_set_control(self):
         if self.cs.is_control_defined(self.control_name):
@@ -125,10 +119,9 @@ class RegisterCommand(BaseCommand):
         else:
             self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
 
-
     def run(self):
 
         self.func()
 
 
-commands = { 'reg': RegisterCommand }
+commands = {'reg': RegisterCommand}

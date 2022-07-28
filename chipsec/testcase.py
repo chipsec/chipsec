@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2018-2020, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2018-2020, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 import json
@@ -25,15 +25,16 @@ from collections import OrderedDict
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 
+
 class ExitCode:
-    OK            = 0
-    SKIPPED       = 1
-    WARNING       = 2
-    DEPRECATED    = 4
-    FAIL          = 8
-    ERROR         = 16
-    EXCEPTION     = 32
-    INFORMATION   = 64
+    OK = 0
+    SKIPPED = 1
+    WARNING = 2
+    DEPRECATED = 4
+    FAIL = 8
+    ERROR = 16
+    EXCEPTION = 32
+    INFORMATION = 64
     NOTAPPLICABLE = 128
 
     help_epilog = """\
@@ -71,7 +72,7 @@ class ChipsecResults():
     def get_current(self):
         if len(self.test_cases) == 0 or self.summary:
             return None
-        return self.test_cases[len(self.test_cases) -1]
+        return self.test_cases[len(self.test_cases) - 1]
 
     def add_exception(self, name):
         self.exceptions.append(str(name))
@@ -81,16 +82,16 @@ class ChipsecResults():
             self.set_time()
         self.summary = True
         ret = OrderedDict()
-        passed        = []
-        failed        = []
-        errors        = []
-        warnings      = []
-        skipped       = []
-        information   = []
+        passed = []
+        failed = []
+        errors = []
+        warnings = []
+        skipped = []
+        information = []
         notapplicable = []
-        executed      = 0
+        executed = 0
         for test in self.test_cases:
-            executed +=1
+            executed += 1
             fields = test.get_fields()
             if fields['result'] == 'Passed':
                 passed.append(fields['name'])
@@ -106,7 +107,7 @@ class ChipsecResults():
                 information.append(fields['name'])
             elif fields['result'] == 'NotApplicable':
                 notapplicable.append(fields['name'])
-        ret['total']  = executed
+        ret['total'] = executed
         ret['failed to run'] = errors
         ret['passed'] = passed
         ret['information'] = information
@@ -160,15 +161,15 @@ class ChipsecResults():
             if k == 'total':
                 temp['name'] = k
                 temp['total'] = "{:d}".format(summary[k])
-                m_element = ET.SubElement( xml_element, 'result', temp)
+                m_element = ET.SubElement(xml_element, 'result', temp)
             else:
                 temp['name'] = k
                 temp['total'] = "{:d}".format(len(summary[k]))
-                m_element = ET.SubElement( xml_element, 'result', temp)
+                m_element = ET.SubElement(xml_element, 'result', temp)
                 for mod in summary[k]:
-                    n_element = ET.SubElement( m_element, 'module')
+                    n_element = ET.SubElement(m_element, 'module')
                     n_element.text = mod
-        return ET.tostring( xml_element, None, None )
+        return ET.tostring(xml_element, None, None)
 
     def json_summary(self):
         summary = self.order_summary()
@@ -189,24 +190,23 @@ class ChipsecResults():
                 summary_dict[k] = "{:d}".format(summary[k])
             else:
                 summary_dict[k.replace(" ", "")] = "{:d}".format(len(summary[k]))
-        summary_dict["name"] = os.path.basename( os.path.splitext(name)[0] )
-        summary_dict["time"] = "{:5f}".format( self.time )
+        summary_dict["name"] = os.path.basename(os.path.splitext(name)[0])
+        summary_dict["time"] = "{:5f}".format(self.time)
         ts_element = ET.SubElement(xml_element, "testsuite", summary_dict)
-        #add properties
+        # add properties
         pr_element = ET.SubElement(ts_element, "properties")
         prop_dict = dict()
         for k in self.properties:
-            prop_dict["name"]  = k
+            prop_dict["name"] = k
             prop_dict["value"] = self.properties[k]
             p_element = ET.SubElement(pr_element, "property", prop_dict)
-        #add test cases
+        # add test cases
         for test in self.test_cases:
-            tc_element =  ET.SubElement(ts_element, "testcase", {'classname': test.name, 'name': test.desc, 'time': '{}'.format("{:5f}".format(test.time)if test.time is not None else "0.0")})
-            r_element =   ET.SubElement(tc_element, "pass", {"type": test.result})
+            tc_element = ET.SubElement(ts_element, "testcase", {'classname': test.name, 'name': test.desc, 'time': '{}'.format("{:5f}".format(test.time)if test.time is not None else "0.0")})
+            r_element = ET.SubElement(tc_element, "pass", {"type": test.result})
             out_element = ET.SubElement(tc_element, "system-out")
             out_element.text = test.output
-        return xml.dom.minidom.parseString(ET.tostring( xml_element, None, None )).toprettyxml()
-
+        return xml.dom.minidom.parseString(ET.tostring(xml_element, None, None)).toprettyxml()
 
     def markdown_full(self, name):
         passed = []
@@ -217,15 +217,15 @@ class ChipsecResults():
         information = []
         notapplicable = []
         deprecated = []
-        destination = { 'Passed':        passed,
-                        'Failed':        failed,
-                        'Error':         error,
-                        'Warning':       warning,
-                        'Skipped':       skipped,
-                        'Information':   information,
-                        'NotApplicable': notapplicable,
-                        'Deprecated':    deprecated
-                        }
+        destination = {'Passed': passed,
+                       'Failed': failed,
+                       'Error': error,
+                       'Warning': warning,
+                       'Skipped': skipped,
+                       'Information': information,
+                       'NotApplicable': notapplicable,
+                       'Deprecated': deprecated
+                       }
 
         for test in self.test_cases:
             # Test case as header level 4

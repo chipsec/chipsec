@@ -11,12 +11,12 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -42,10 +42,11 @@ Examples:
 """
 
 from chipsec.command import BaseCommand
-from chipsec.hal     import tpm_eventlog
-from chipsec.hal     import tpm
-from chipsec.exceptions   import TpmRuntimeError
-from argparse        import ArgumentParser
+from chipsec.hal import tpm_eventlog
+from chipsec.hal import tpm
+from chipsec.exceptions import TpmRuntimeError
+from argparse import ArgumentParser
+
 
 class TPMCommand(BaseCommand):
 
@@ -60,12 +61,12 @@ class TPMCommand(BaseCommand):
 
         parser_command = subparsers.add_parser('command')
         parser_command.add_argument('command_name', type=str, help='Command')
-        parser_command.add_argument('locality', type=str, choices=['0','1','2','3','4'], help='Locality')
+        parser_command.add_argument('locality', type=str, choices=['0', '1', '2', '3', '4'], help='Locality')
         parser_command.add_argument('command_parameters', nargs='*', type=int, help='Command Parameters')
         parser_command.set_defaults(func=self.tpm_command)
 
         parser_state = subparsers.add_parser('state')
-        parser_state.add_argument('locality', type=str, choices=['0','1','2','3','4'], help='Locality')
+        parser_state.add_argument('locality', type=str, choices=['0', '1', '2', '3', '4'], help='Locality')
         parser_state.set_defaults(func=self.tpm_state)
         parser.parse_args(self.argv[2:], namespace=self)
         return True
@@ -75,16 +76,15 @@ class TPMCommand(BaseCommand):
             tpm_eventlog.parse(log)
 
     def tpm_command(self):
-        self._tpm.command( self.command_name, self.locality, self.command_parameters )
+        self._tpm.command(self.command_name, self.locality, self.command_parameters)
 
     def tpm_state(self):
-        self._tpm.dump_access ( self.locality )
-        self._tpm.dump_status ( self.locality )
-        self._tpm.dump_didvid ( self.locality )
-        self._tpm.dump_rid ( self.locality )
-        self._tpm.dump_intcap ( self.locality )
-        self._tpm.dump_intenable( self.locality )
-
+        self._tpm.dump_access(self.locality)
+        self._tpm.dump_status(self.locality)
+        self._tpm.dump_didvid(self.locality)
+        self._tpm.dump_rid(self.locality)
+        self._tpm.dump_intcap(self.locality)
+        self._tpm.dump_intenable(self.locality)
 
     def run(self):
         if self.func != self.tpm_parse:
@@ -96,4 +96,5 @@ class TPMCommand(BaseCommand):
 
         self.func()
 
-commands = { 'tpm': TPMCommand }
+
+commands = {'tpm': TPMCommand}

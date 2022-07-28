@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -27,54 +27,56 @@ Usage:
 
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
-from struct  import *
-from random  import *
-from chipsec.modules.tools.vmm.hv.define  import *
-from chipsec.modules.tools.vmm.common     import *
-from chipsec.modules.tools.vmm.hv.vmbus   import *
-from chipsec.defines                      import *
+from struct import *
+from random import *
+from chipsec.modules.tools.vmm.hv.define import *
+from chipsec.modules.tools.vmm.common import *
+from chipsec.modules.tools.vmm.hv.vmbus import *
+from chipsec.defines import *
 import chipsec_util
 
-SYNTH_KBD_VERSION              = 0x00010000
-SYNTH_KBD_PROTOCOL_REQUEST     = 1
-SYNTH_KBD_PROTOCOL_RESPONSE    = 2
-SYNTH_KBD_EVENT                = 3
-SYNTH_KBD_LED_INDICATORS       = 4
+SYNTH_KBD_VERSION = 0x00010000
+SYNTH_KBD_PROTOCOL_REQUEST = 1
+SYNTH_KBD_PROTOCOL_RESPONSE = 2
+SYNTH_KBD_EVENT = 3
+SYNTH_KBD_LED_INDICATORS = 4
 
 sys.stdout = session_logger(True, 'synth_kbd')
+
 
 class RingBufferFuzzer(RingBuffer):
     def __init__(self):
         RingBuffer.__init__(self)
         self.fuzzing = False
-        self.count   = 0
+        self.count = 0
 
     ##
-    ##  ringbuffer_read - Fuzzing recv ring buffer pointers
+    # ringbuffer_read - Fuzzing recv ring buffer pointers
     ##
     def ringbuffer_read(self):
         if self.fuzzing:
             buffer = self.cs.mem.read_physical_mem(self.pfn[self.send_size], 0x10)
             write_index, read_index, interrupt_mask, pending_send_sz = unpack('<4L', buffer)
-            overwrite(buffer, DD(randint(0, 0xFFFFFFFF)), 4 *randint(0, 3))
+            overwrite(buffer, DD(randint(0, 0xFFFFFFFF)), 4 * randint(0, 3))
             self.cs.mem.write_physical_mem(self.pfn[self.send_size], len(buffer), buffer)
             result = ''
             self.count += 1
             if self.count > 1000000:
-                raise Exception 
+                raise Exception
         else:
             result = RingBuffer.ringbuffer_read(self)
         return result
 
+
 class synth_kbd(BaseModule):
     def usage(self):
-        print ('  Usage:')
-        print ('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
-        print ('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        print('  Usage:')
+        print('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
+        print('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
         return
 
     def run(self, module_argv):
-        self.logger.start_test( "Hyper-V VMBus virtual keyboard fuzzer" )
+        self.logger.start_test("Hyper-V VMBus virtual keyboard fuzzer")
 
         if len(module_argv) > 0:
             command = module_argv[0]
@@ -103,7 +105,7 @@ class synth_kbd(BaseModule):
             vb.print_created_gpadl()
             vb.print_open_channels()
 
-            synth_kbd_protocol_request  = pack('<LL', SYNTH_KBD_PROTOCOL_REQUEST, SYNTH_KBD_VERSION)
+            synth_kbd_protocol_request = pack('<LL', SYNTH_KBD_PROTOCOL_REQUEST, SYNTH_KBD_VERSION)
             vb.vmbus_sendpacket(relid, synth_kbd_protocol_request, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             synth_kbd_protocol_response = vb.vmbus_recvpacket(relid)
             if len(synth_kbd_protocol_response) != 8:
@@ -134,11 +136,11 @@ class synth_kbd(BaseModule):
                 vb.err('synth_kbd protocol request has failed!')
 
         except KeyboardInterrupt:
-            print ('***** Control-C *****')
+            print('***** Control-C *****')
         except Exception as error:
-            print ('\n\n')
+            print('\n\n')
             traceback.print_exc()
-            print ('\n\n')
+            print('\n\n')
         finally:
             vb.vmbus_close(relid)
             vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)

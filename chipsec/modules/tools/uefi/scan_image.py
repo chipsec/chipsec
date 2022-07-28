@@ -69,6 +69,7 @@ TAGS = [MTAG_BIOS]
 DEF_FWIMAGE_FILE = 'fw.bin'
 DEF_EFILIST_FILE = 'efilist.json'
 
+
 class scan_image(BaseModule):
 
     def __init__(self):
@@ -87,7 +88,7 @@ class scan_image(BaseModule):
     def genlist_callback(self, efi_module):
         md = {}
         if type(efi_module) == EFI_SECTION:
-            #if efi_module.MD5:
+            # if efi_module.MD5:
             #   md["md5"] = efi_module.MD5
             if efi_module.SHA256:
                 md["sha1"] = efi_module.SHA1
@@ -98,7 +99,8 @@ class scan_image(BaseModule):
             if efi_module.Name and efi_module.Name != SECTION_NAMES[EFI_SECTION_PE32]:
                 md["type"] = efi_module.Name
             self.efi_list[efi_module.SHA256] = md
-        else: pass
+        else:
+            pass
 
     #
     # Generates new list of EFI executable binaries
@@ -146,8 +148,7 @@ class scan_image(BaseModule):
             return ModuleResult.PASSED
 
     def usage(self):
-        self.logger.log(__doc__.replace('`',''))
-
+        self.logger.log(__doc__.replace('`', ''))
 
     def run(self, module_argv):
         self.logger.start_test("Simple list generation/checking for (U)EFI firmware")
@@ -162,12 +163,12 @@ class scan_image(BaseModule):
                 self.usage()
                 return self.res
             elif len(module_argv) > 2:
-                json_file  = module_argv[1]
+                json_file = module_argv[1]
                 image_file = module_argv[2]
                 self.logger.log("[*] Reading firmware from '{}'...".format(image_file))
             else:
                 image_file = DEF_FWIMAGE_FILE
-                json_file  = DEF_EFILIST_FILE
+                json_file = DEF_EFILIST_FILE
                 self.spi = SPI(self.cs)
                 (base, limit, _) = self.spi.get_SPI_region(BIOS)
                 image_size = limit + 1 - base

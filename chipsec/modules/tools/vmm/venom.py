@@ -52,10 +52,11 @@ from chipsec.module_common import BaseModule, ModuleResult
 
 _MODULE_NAME = 'venom'
 
-ITER_COUNT         = 0x10000000
+ITER_COUNT = 0x10000000
 FDC_PORT_DATA_FIFO = 0x3F5
-FDC_CMD_WRVAL      = 0x42
-FD_CMD             = 0x8E # FD_CMD_DRIVE_SPECIFICATION_COMMAND # FD_CMD_READ_ID = 0x0A
+FDC_CMD_WRVAL = 0x42
+FD_CMD = 0x8E  # FD_CMD_DRIVE_SPECIFICATION_COMMAND # FD_CMD_READ_ID = 0x0A
+
 
 class venom (BaseModule):
 

@@ -63,7 +63,7 @@ from chipsec.module_common import BaseModule, ModuleResult
 
 MAX_PORTS = 0x10000
 MAX_PORT_VALUE = 0xFF
-DEFAULT_PORT_WRITE_COUNT  = 1000
+DEFAULT_PORT_WRITE_COUNT = 1000
 DEFAULT_RANDOM_ITERATIONS = 1000000
 
 # Flush log file before each port

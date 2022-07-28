@@ -66,13 +66,13 @@ from chipsec.hal.pci import print_pci_devices
 # Fuzzing configuration
 #################################################################
 #
-IO_FUZZ        = 0
-CALC_BAR_SIZE  = 1
-TIMEOUT        = 1
-ACTIVE_RANGE   = 0
-BIT_FLIP       = 1
+IO_FUZZ = 0
+CALC_BAR_SIZE = 1
+TIMEOUT = 1
+ACTIVE_RANGE = 0
+BIT_FLIP = 1
 
-_EXCLUDE_BAR   = []
+_EXCLUDE_BAR = []
 
 
 class pcie_fuzz(BaseModule):
@@ -91,9 +91,8 @@ class pcie_fuzz(BaseModule):
             self.cs.io.write_port_dword(bar + port_off, 0xFFFFFFFF)
             self.cs.io.write_port_dword(bar + port_off, 0x00000000)
 
-
     def fuzz_offset(self, bar, reg_off, reg_value, is64bit):
-        self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value) # same value
+        self.cs.mmio.write_MMIO_reg(bar, reg_off, reg_value)  # same value
         self.cs.mmio.write_MMIO_reg(bar, reg_off, ~reg_value & 0xFFFFFFFF)
         self.cs.mmio.write_MMIO_reg(bar, reg_off, 0xFFFFFFFF)
         self.cs.mmio.write_MMIO_reg(bar, reg_off, 0x5A5A5A5A)

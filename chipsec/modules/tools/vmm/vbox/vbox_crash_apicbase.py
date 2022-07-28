@@ -44,6 +44,7 @@ from chipsec.module_common import BaseModule, ModuleResult
 
 _MODULE_NAME = 'vbox_crash_apicbase'
 
+
 class vbox_crash_apicbase(BaseModule):
 
     def run(self, module_argv):

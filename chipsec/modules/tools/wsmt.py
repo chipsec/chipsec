@@ -34,8 +34,8 @@ Examples:
     - Analysis is only necessary if Windows is the primary OS
 
 """
-from chipsec.module_common   import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
-from chipsec.hal.acpi        import ACPI
+from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+from chipsec.hal.acpi import ACPI
 from chipsec.hal.acpi_tables import WSMT
 
 TAGS = [MTAG_BIOS, MTAG_SMM]

@@ -50,6 +50,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_SMM
 
 TAGS = [MTAG_SMM]
 
+
 class sinkhole(BaseModule):
 
     def __init__(self):
@@ -62,8 +63,8 @@ class sinkhole(BaseModule):
             self.res = ModuleResult.NOTAPPLICABLE
             return False
         elif not self.cs.is_register_defined('IA32_APIC_BASE') or \
-           not self.cs.is_register_defined('IA32_SMRR_PHYSBASE') or \
-           not self.cs.is_register_defined('IA32_SMRR_PHYSMASK'):
+                not self.cs.is_register_defined('IA32_SMRR_PHYSBASE') or \
+                not self.cs.is_register_defined('IA32_SMRR_PHYSMASK'):
             self.logger.log_error("Couldn't find definition of required configuration registers.")
             self.res = ModuleResult.ERROR
             return False
@@ -72,11 +73,11 @@ class sinkhole(BaseModule):
 
     def check_LAPIC_SMRR_overlap(self):
         smrr_physbase_msr = self.cs.read_register('IA32_SMRR_PHYSBASE', 0)
-        apic_base_msr     = self.cs.read_register('IA32_APIC_BASE', 0)
+        apic_base_msr = self.cs.read_register('IA32_APIC_BASE', 0)
         self.cs.print_register('IA32_APIC_BASE', apic_base_msr)
         self.cs.print_register('IA32_SMRR_PHYSBASE', smrr_physbase_msr)
 
-        smrrbase  = self.cs.get_register_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase')
+        smrrbase = self.cs.get_register_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase')
         smrr_base = self.cs.get_register_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase', True)
         apic_base = self.cs.get_register_field('IA32_APIC_BASE', apic_base_msr, 'APICBase', True)
 
@@ -113,7 +114,7 @@ class sinkhole(BaseModule):
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("x86 SMM Memory Sinkhole")
 
         if self.cs.cpu.check_SMRR_supported():

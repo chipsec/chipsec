@@ -63,6 +63,7 @@ from chipsec.hal.spi import BIOS, SPI
 
 TAGS = [MTAG_BIOS]
 
+
 class bios_wp(BaseModule):
 
     def __init__(self):
@@ -70,7 +71,7 @@ class bios_wp(BaseModule):
         self.spi = SPI(self.cs)
 
     def is_supported(self):
-        ble_exists    = self.cs.is_control_defined('BiosLockEnable')
+        ble_exists = self.cs.is_control_defined('BiosLockEnable')
         bioswe_exists = self.cs.is_control_defined('BiosWriteEnable')
         smmbwp_exists = self.cs.is_control_defined('SmmBiosWriteProtection')
 
@@ -100,7 +101,7 @@ class bios_wp(BaseModule):
 
     def check_SPI_protected_ranges(self):
         (bios_base, bios_limit, _) = self.spi.get_SPI_region(BIOS)
-        self.logger.log( "\n[*] BIOS Region: Base = 0x{:08X}, Limit = 0x{:08X}".format(bios_base, bios_limit) )
+        self.logger.log("\n[*] BIOS Region: Base = 0x{:08X}, Limit = 0x{:08X}".format(bios_base, bios_limit))
         self.spi.display_SPI_Protected_Ranges()
 
         pr_cover_bios = False
@@ -151,10 +152,9 @@ class bios_wp(BaseModule):
 
         return pr_cover_bios
 
-
     def run(self, module_argv):
         self.logger.start_test("BIOS Region Write Protection")
-        wp  = self.check_BIOS_write_protection()
+        wp = self.check_BIOS_write_protection()
         spr = self.check_SPI_protected_ranges()
 
         self.logger.log('')

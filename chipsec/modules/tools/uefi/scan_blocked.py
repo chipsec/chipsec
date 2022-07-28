@@ -63,6 +63,7 @@ TAGS = [MTAG_BIOS]
 
 DEF_FWIMAGE_FILE = 'fw.bin'
 
+
 class scan_blocked(BaseModule):
 
     def __init__(self):
@@ -100,13 +101,13 @@ class scan_blocked(BaseModule):
         return res
 
     def usage(self):
-        self.logger.log(__doc__.replace('`',''))
-
+        self.logger.log(__doc__.replace('`', ''))
 
     # --------------------------------------------------------------------------
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
+
     def run(self, module_argv):
         self.logger.start_test("Check for blocked EFI binaries in UEFI firmware")
 

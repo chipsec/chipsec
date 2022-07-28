@@ -130,6 +130,7 @@ from chipsec.defines import BIT26, BIT27, BIT29
 
 TAGS = [MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM]
 
+
 class spectre_v2(BaseModule):
 
     def __init__(self):
@@ -156,8 +157,8 @@ class spectre_v2(BaseModule):
         #
         (_, _, _, r_edx) = self.cs.cpu.cpuid(0x7, 0x0)
         ibrs_ibpb_supported = (r_edx & BIT26) > 0
-        stibp_supported     = (r_edx & BIT27) > 0
-        arch_cap_supported  = (r_edx & BIT29) > 0
+        stibp_supported = (r_edx & BIT27) > 0
+        arch_cap_supported = (r_edx & BIT29) > 0
         self.logger.log("[*] CPUID.7H:EDX[26] = {:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)".format(ibrs_ibpb_supported))
         self.logger.log("[*] CPUID.7H:EDX[27] = {:d} Single Thread Indirect Branch Predictors (STIBP)".format(stibp_supported))
         self.logger.log("[*] CPUID.7H:EDX[29] = {:d} IA32_ARCH_CAPABILITIES".format(arch_cap_supported))
@@ -198,7 +199,7 @@ class spectre_v2(BaseModule):
             ibrs_enh_supported = False
             self.logger.log_bad("CPU doesn't support enhanced IBRS")
 
-        ibrs_enabled  = True
+        ibrs_enabled = True
         stibp_enabled_count = 0
         if ibrs_enh_supported:
             self.logger.log("[*] Checking if OS is using Enhanced IBRS...")

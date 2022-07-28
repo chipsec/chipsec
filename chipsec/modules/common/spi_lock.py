@@ -47,6 +47,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 
 TAGS = [MTAG_BIOS]
 
+
 class spi_lock(BaseModule):
 
     def __init__(self):

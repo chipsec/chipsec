@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2010-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2010-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 
@@ -25,14 +25,15 @@ Xen specific hypercall functionality
 
 import binascii
 import collections
-from chipsec.modules.tools.vmm.xen.define  import *
-from chipsec.hal.vmm                       import *
-from chipsec.module_common                 import *
-from chipsec.modules.tools.vmm.common      import *
+from chipsec.modules.tools.vmm.xen.define import *
+from chipsec.hal.vmm import *
+from chipsec.module_common import *
+from chipsec.modules.tools.vmm.common import *
 
-SM_RANGE = { 'masks': [ 0x00000000000000FF ] }
-MD_RANGE = { 'masks': [ 0x000000000000FFFF ] }
-XL_RANGE = { 'masks': [ 0xFFFFFFFFFFFFFFFF ] }
+SM_RANGE = {'masks': [0x00000000000000FF]}
+MD_RANGE = {'masks': [0x000000000000FFFF]}
+XL_RANGE = {'masks': [0xFFFFFFFFFFFFFFFF]}
+
 
 class XenHypercall(BaseModuleHwAccess):
     def __init__(self):
@@ -46,22 +47,22 @@ class XenHypercall(BaseModuleHwAccess):
         (self.buff_va, self.buff_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
         if self.buff_pa == 0:
             raise Exception("[*] Could not allocate memory!")
-        ### define initial args for hypercall fuzzing
+        # define initial args for hypercall fuzzing
         self.hypercall_args = {
-            MEMORY_OP:  { 'args': [ xenmem_commands.keys(),      self.buff_va ] },
-            SET_TIMER_OP:  { 'args': [ XL_RANGE,                    XL_RANGE     ] },
-            XEN_VERSION:  { 'args': [ xen_version_commands.keys(), self.buff_va ] },
-            CONSOLE_IO:  { 'args': [ console_io_commands.keys(),  MD_RANGE,  self.buff_va ] },
-            GRANT_TABLE_OP:  { 'args': [ SM_RANGE,               self.buff_va,    XL_RANGE ] },
-            SCHED_OP:  { 'args': [ schedop_commands.keys(),     self.buff_va ] },
-            EVENT_CHANNEL_OP:  { 'args': [ evtchop_commands.keys(),     self.buff_va ] },
-            NMI_OP:  { 'args': [ XL_RANGE,                    XL_RANGE     ] },
-            HVM_OP:  { 'args': [ hvmop_commands.keys(),       self.buff_va ] },
-            TMEM_OP:  { 'args': [ self.buff_va                              ] },
-            XENPMU_OP:  { 'args': [ xenpmuop_commands.keys(),    self.buff_va ] },
-            SYSCTL:  { 'args': [ self.buff_va                              ] },
-            DOMCTL:  { 'args': [ self.buff_va                              ] },
-            ARCH_1:  { 'args': [ self.buff_va                              ] },
+            MEMORY_OP: {'args': [xenmem_commands.keys(), self.buff_va]},
+            SET_TIMER_OP: {'args': [XL_RANGE, XL_RANGE]},
+            XEN_VERSION: {'args': [xen_version_commands.keys(), self.buff_va]},
+            CONSOLE_IO: {'args': [console_io_commands.keys(), MD_RANGE, self.buff_va]},
+            GRANT_TABLE_OP: {'args': [SM_RANGE, self.buff_va, XL_RANGE]},
+            SCHED_OP: {'args': [schedop_commands.keys(), self.buff_va]},
+            EVENT_CHANNEL_OP: {'args': [evtchop_commands.keys(), self.buff_va]},
+            NMI_OP: {'args': [XL_RANGE, XL_RANGE]},
+            HVM_OP: {'args': [hvmop_commands.keys(), self.buff_va]},
+            TMEM_OP: {'args': [self.buff_va]},
+            XENPMU_OP: {'args': [xenpmuop_commands.keys(), self.buff_va]},
+            SYSCTL: {'args': [self.buff_va]},
+            DOMCTL: {'args': [self.buff_va]},
+            ARCH_1: {'args': [self.buff_va]},
         }
 
     def get_value(self, arg):
@@ -74,9 +75,9 @@ class XenHypercall(BaseModuleHwAccess):
         return value
 
     ##
-    ##  hypercall
+    # hypercall
     ##
-    def hypercall(self, args, size = 0, data = ''):
+    def hypercall(self, args, size=0, data=''):
         data = data.ljust(4096, '\x00')[:4096]
         self.cs.mem.write_physical_mem(self.buff_pa, len(data), data)
         self.dbg('ARGS: {}  DATA: {}'.format(' '.join(['{:016X}'.format(x) for x in args]), binascii.hexlify(data[:32])))
@@ -89,42 +90,42 @@ class XenHypercall(BaseModuleHwAccess):
         return {'exception': False, 'status': rax, 'buffer': val}
 
     ##
-    ##  xen_version
+    # xen_version
     ##
-    def xen_version(self, cmd, size = 0, data = ''):
+    def xen_version(self, cmd, size=0, data=''):
         return self.hypercall((XEN_VERSION, cmd, self.buff_va), size, data)
 
     ##
-    ##  get_hypervisor_info
+    # get_hypervisor_info
     ##
     def get_hypervisor_info(self):
         info = {}
 
         if not self.xen_version(XENVER_VERSION)['exception']:
-            version                     = self.xen_version(XENVER_VERSION)
-            extra_version               = self.xen_version(XENVER_EXTRAVERSION, 16)
-            compile_info                = self.xen_version(XENVER_COMPILE_INFO, 140)
-            capabilities                = self.xen_version(XENVER_CAPABILITIES, 1024)
-            changeset                   = self.xen_version(XENVER_CHANGESET, 64)
-            platform_parameters         = self.xen_version(XENVER_PLATFORM_PARAMETERS, 8)
-            pagesize                    = self.xen_version(XENVER_PAGESIZE)
-            guest_handle                = self.xen_version(XENVER_GUEST_HANDLE)
-            command_line                = self.xen_version(XENVER_COMMANDLINE, 1024)
+            version = self.xen_version(XENVER_VERSION)
+            extra_version = self.xen_version(XENVER_EXTRAVERSION, 16)
+            compile_info = self.xen_version(XENVER_COMPILE_INFO, 140)
+            capabilities = self.xen_version(XENVER_CAPABILITIES, 1024)
+            changeset = self.xen_version(XENVER_CHANGESET, 64)
+            platform_parameters = self.xen_version(XENVER_PLATFORM_PARAMETERS, 8)
+            pagesize = self.xen_version(XENVER_PAGESIZE)
+            guest_handle = self.xen_version(XENVER_GUEST_HANDLE)
+            command_line = self.xen_version(XENVER_COMMANDLINE, 1024)
 
-            info['extra_version']       = extra_version['buffer'].strip('\x00')
-            info['xen_major']           = (version['status'] >> 16) & 0xFFFF
-            info['xen_minor']           = version['status'] & 0xFFFF
-            info['xen_version']         = '{:d}.{:d}{}'.format(info['xen_major'], info['xen_minor'], extra_version['buffer'])
-            info['compiler']            = compile_info['buffer'][:64].strip('\x00')
-            info['compile_by']          = compile_info['buffer'][64:80].strip('\x00')
-            info['compile_domain']      = compile_info['buffer'][80:112].strip('\x00')
-            info['compile_date']        = compile_info['buffer'][112:140].strip('\x00')
-            info['capabilities']        = capabilities['buffer'].strip('\x00')
-            info['changeset']           = changeset['buffer'].strip('\x00')
+            info['extra_version'] = extra_version['buffer'].strip('\x00')
+            info['xen_major'] = (version['status'] >> 16) & 0xFFFF
+            info['xen_minor'] = version['status'] & 0xFFFF
+            info['xen_version'] = '{:d}.{:d}{}'.format(info['xen_major'], info['xen_minor'], extra_version['buffer'])
+            info['compiler'] = compile_info['buffer'][:64].strip('\x00')
+            info['compile_by'] = compile_info['buffer'][64:80].strip('\x00')
+            info['compile_domain'] = compile_info['buffer'][80:112].strip('\x00')
+            info['compile_date'] = compile_info['buffer'][112:140].strip('\x00')
+            info['capabilities'] = capabilities['buffer'].strip('\x00')
+            info['changeset'] = changeset['buffer'].strip('\x00')
             info['platform_parameters'] = struct.unpack('<Q', platform_parameters['buffer'])[0]
-            info['pagesize']            = pagesize['status']
-            info['guest_handle']        = guest_handle['status']
-            info['command_line']        = command_line['buffer'].strip('\x00')
+            info['pagesize'] = pagesize['status']
+            info['guest_handle'] = guest_handle['status']
+            info['command_line'] = command_line['buffer'].strip('\x00')
 
             info['features'] = {}
             for i in range(0x100):
@@ -136,23 +137,23 @@ class XenHypercall(BaseModuleHwAccess):
         return info
 
     ##
-    ##  print_hypervisor_info
+    # print_hypervisor_info
     ##
     def print_hypervisor_info(self, info):
         features = ", ".join(['F{:d}={:016X}'.format(k, v) for k, v in info['features'].items() if v != 0])
         self.msg('XEN Hypervisor is present!')
-        self.msg('          Version : {}'.format(info['xen_version'])         )
-        self.msg('         Compiler : {}'.format(info['compiler'])            )
-        self.msg('       Compile by : {}'.format(info['compile_by'])          )
-        self.msg('   Compile Domain : {}'.format(info['compile_domain'])      )
-        self.msg('     Compile Date : {}'.format(info['compile_date'])        )
-        self.msg('     Capabilities : {}'.format(info['capabilities'])        )
-        self.msg('       Change Set : {}'.format(info['changeset'])           )
-        self.msg('  Platform Params : {:016X}'.format(info['platform_parameters']) )
-        self.msg('         Features : {}'.format(features)                    )
-        self.msg('        Page size : {:016X}'.format(info['pagesize'])            )
-        self.msg('     Guest Handle : {:016X}'.format(info['guest_handle'])        )
-        self.msg('     Command Line : {}'.format(info['command_line'])        )
+        self.msg('          Version : {}'.format(info['xen_version']))
+        self.msg('         Compiler : {}'.format(info['compiler']))
+        self.msg('       Compile by : {}'.format(info['compile_by']))
+        self.msg('   Compile Domain : {}'.format(info['compile_domain']))
+        self.msg('     Compile Date : {}'.format(info['compile_date']))
+        self.msg('     Capabilities : {}'.format(info['capabilities']))
+        self.msg('       Change Set : {}'.format(info['changeset']))
+        self.msg('  Platform Params : {:016X}'.format(info['platform_parameters']))
+        self.msg('         Features : {}'.format(features))
+        self.msg('        Page size : {:016X}'.format(info['pagesize']))
+        self.msg('     Guest Handle : {:016X}'.format(info['guest_handle']))
+        self.msg('     Command Line : {}'.format(info['command_line']))
 
     def scan_hypercalls(self, vector_list):
         for vector in vector_list:
@@ -167,8 +168,8 @@ class XenHypercall(BaseModuleHwAccess):
         self.msg('')
         self.msg('*** Hypervisor Hypercall Status Codes ***')
         for vector in sorted(self.hypercalls.keys()):
-            data   = self.hypercalls[vector]
-            name   = get_hypercall_name(vector)
+            data = self.hypercalls[vector]
+            name = get_hypercall_name(vector)
             status = get_hypercall_status_extended(data['status'])
             self.msg("HYPERCALL {:04X}  {:016X}  {:45} '{}'".format(vector, data['status'], status, name))
         return
@@ -176,12 +177,12 @@ class XenHypercall(BaseModuleHwAccess):
     def fuzz_hypercall(self, code, iterations):
         rule = self.hypercall_args.get(code, {})
         if not rule:
-            self.msg( "WARNING: Fuzzing rule is not defined for this hypercall!")
+            self.msg("WARNING: Fuzzing rule is not defined for this hypercall!")
         args = rule.get('args', [])
-        self.msg( "Fuzzing {} (0x{:02X}) hypercall".format(get_hypercall_name(code, 'Unknown'), code))
+        self.msg("Fuzzing {} (0x{:02X}) hypercall".format(get_hypercall_name(code, 'Unknown'), code))
         self.stats_reset()
         for it in range(iterations):
-            data  = list('\x00' * 32)
+            data = list('\x00' * 32)
             data[randint(0, len(data) - 1)] = chr(getrandbits(8))
             data[randint(0, len(data) - 1)] = chr(getrandbits(8))
             data = ''.join(data)
@@ -199,9 +200,9 @@ class XenHypercall(BaseModuleHwAccess):
             code = random.choice(codes)
             rule = self.hypercall_args.get(code, {})
             if not rule:
-                self.msg( "WARNING: Fuzzing rule is not defined for this hypercall!")
+                self.msg("WARNING: Fuzzing rule is not defined for this hypercall!")
             args = rule.get('args', [])
-            data  = list('\x00' * 32)
+            data = list('\x00' * 32)
             data[randint(0, len(data) - 1)] = chr(getrandbits(8))
             data[randint(0, len(data) - 1)] = chr(getrandbits(8))
             data = ''.join(data)

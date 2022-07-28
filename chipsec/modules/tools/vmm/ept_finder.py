@@ -52,13 +52,14 @@ from chipsec.file import write_file
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.hal.paging import c_extended_page_tables
 
+
 class c_extended_page_tables_from_file(c_extended_page_tables):
     def __init__(self, cs, read_from_file, par):
         c_extended_page_tables.__init__(self, cs)
         self.read_from_file = read_from_file
         self.par = par
 
-    def readmem(self, name, addr, size = 4096):
+    def readmem(self, name, addr, size=4096):
         if self.read_from_file:
             for (pa, end_pa, source) in self.par:
                 if (pa <= addr) and (addr + size <= end_pa):
@@ -68,13 +69,14 @@ class c_extended_page_tables_from_file(c_extended_page_tables):
             return '\xFF' * size
         return self.cs.mem.read_physical_mem(addr, size)
 
+
 class ept_finder(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.read_from_file = False
         self.par = []
 
-    def read_physical_mem(self, addr, size = 0x1000):
+    def read_physical_mem(self, addr, size=0x1000):
         if self.read_from_file:
             for (pa, end_pa, source) in self.par:
                 if (pa <= addr) and (addr + size <= end_pa):
@@ -88,9 +90,9 @@ class ept_finder(BaseModule):
         return struct.unpack("<L", self.read_physical_mem(addr, 4))[0]
 
     def get_memory_ranges(self):
-        MASK   = 0xFFFFFFFFFFFFF000
+        MASK = 0xFFFFFFFFFFFFF000
         tsegmb = None
-        touud  = None
+        touud = None
 
         if self.cs.is_register_defined('PCI0.0.0_TSEGMB'):
             tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB') & MASK
@@ -98,7 +100,7 @@ class ept_finder(BaseModule):
             self.logger.log_error("Couldn't find definition of required registers: TSEGMB")
 
         if self.cs.is_register_defined('PCI0.0.0_TOUUD'):
-            touud = self.cs.read_register('PCI0.0.0_TOUUD')  & MASK
+            touud = self.cs.read_register('PCI0.0.0_TOUUD') & MASK
         else:
             self.logger.log_error("Couldn't find definition of required registers: TOUUD")
 
@@ -112,12 +114,12 @@ class ept_finder(BaseModule):
 
     def find_vmcs_by_ept(self, ept_list, revision_id):
         EPTP_OFFSET = 0x0140
-        MASK        = 0xFFFFFFFFFFFFF000
+        MASK = 0xFFFFFFFFFFFFF000
         vmcs_list = []
         for (pa, end_pa, _) in self.par:
             while pa < end_pa:
                 revid = self.read_physical_mem_dword(pa)
-                eptp  = self.read_physical_mem_dword(pa + EPTP_OFFSET)
+                eptp = self.read_physical_mem_dword(pa + EPTP_OFFSET)
                 eptp += self.read_physical_mem_dword(pa + EPTP_OFFSET + 4) << 32
                 if (eptp & MASK in ept_list) and (revision_id == revid):
                     vmcs_list.append(pa)
@@ -134,8 +136,8 @@ class ept_finder(BaseModule):
                 topalike = True
                 reserved = False
                 for i in range(512):
-                    big_page  = ((page[i] >> 7) & 0x1) == 1
-                    memtype   = ((page[i] >> 3) & 0x7)
+                    big_page = ((page[i] >> 7) & 0x1) == 1
+                    memtype = ((page[i] >> 3) & 0x7)
 
                     if level == 4:
                         reserved_bits_mask = 0x000FFF0000000000
@@ -178,14 +180,13 @@ class ept_finder(BaseModule):
                 pa += 0x1000
         return pt_list
 
-    def dump_dram(self, filename, pa, end_pa, buffer_size = 0x100000):
+    def dump_dram(self, filename, pa, end_pa, buffer_size=0x100000):
         with open(filename, "wb") as dram:
-            self.logger.log( '[*] Dumping memory to {} ...'.format(filename))
+            self.logger.log('[*] Dumping memory to {} ...'.format(filename))
             while pa < end_pa:
                 dram.write(self.cs.mem.read_physical_mem(pa, min(end_pa - pa, buffer_size)))
                 pa += buffer_size
         return
-
 
     def run(self, module_argv):
         self.logger.start_test("EPT Finder")
@@ -195,7 +196,7 @@ class ept_finder(BaseModule):
         if self.read_from_file:
             if len(module_argv) == 3:
                 revision_id = int(module_argv[2], 16)
-                pattern   = "{}.dram_*".format(module_argv[1])
+                pattern = "{}.dram_*".format(module_argv[1])
                 filenames = glob.glob(pattern)
                 for name in filenames:
                     addr = name[len(pattern) - 1:]
@@ -205,7 +206,7 @@ class ept_finder(BaseModule):
                     self.par.append((addr, addr + size, open(name, "rb")))
             else:
                 self.logger.log_error('Invalid parameters')
-                self.logger.log(self.__doc__.replace('`',''))
+                self.logger.log(self.__doc__.replace('`', ''))
                 return ModuleResult.ERROR
         else:
             revision_id = self.cs.msr.read_msr(0, 0x480)[0]
@@ -217,7 +218,7 @@ class ept_finder(BaseModule):
 
         if (len(module_argv) == 2) and (module_argv[0] == "dump"):
             for (pa, end_pa, _) in self.par:
-                postfix  = "lo" if pa == 0x0 else "hi" if pa == 0x100000000 else "0x{:08x}".format(pa)
+                postfix = "lo" if pa == 0x0 else "hi" if pa == 0x100000000 else "0x{:08x}".format(pa)
                 filename = "{}.dram_{}".format(module_argv[1], postfix)
                 self.dump_dram(filename, pa, end_pa)
             return ModuleResult.PASSED

@@ -63,31 +63,31 @@ _MODULE_NAME = 'cpuid_fuzz'
 #
 # We will only be fuzzing _NO_EAX_TO_FUZZ range of EAX values each _EAX_FUZZ_STEP step
 #
-_NO_EAX_TO_FUZZ       = 0x100
-_EAX_FUZZ_STEP        = 0x1000000
+_NO_EAX_TO_FUZZ = 0x100
+_EAX_FUZZ_STEP = 0x1000000
 
 # Number of iterations if value is Randomly chosen
 _NO_ITERATIONS_TO_FUZZ = 0x1000000
 
 # Control values to be passed in ECX
-_FUZZ_ECX_RANDOM      = False
+_FUZZ_ECX_RANDOM = False
 # Max value of ECX when fuzzed sequentially
-_MAX_ECX              = 0x100
+_MAX_ECX = 0x100
 
 # Exclude CPUID EAX which cause VM hang/crash
-_EXCLUDE_CPUID        = [ ]
+_EXCLUDE_CPUID = []
 
 # Flush log file before each fuzz iteration
-_FLUSH_LOG_EACH_ITER  = False
+_FLUSH_LOG_EACH_ITER = False
 # Log values of EAX, EBX, ECX, EDX which CPUID returns
-_LOG_OUT_RESULTS      = False
+_LOG_OUT_RESULTS = False
 
 
 class cpuid_fuzz (BaseModule):
 
     def fuzz_CPUID(self, eax_start, random_order=False):
         eax_range = _NO_EAX_TO_FUZZ
-        eax_end   = eax_start + eax_range
+        eax_end = eax_start + eax_range
         self.logger.log("[*] Fuzzing CPUID with EAX in range 0x{:08X}:0x{:08X}..".format(eax_start, eax_end))
         it = 0
         if random_order:
@@ -117,7 +117,6 @@ class cpuid_fuzz (BaseModule):
                             self.logger.log("    Out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(r_eax, r_ebx, r_ecx, r_edx))
             it += 1
         return True
-
 
     def run(self, module_argv):
         self.logger.start_test("CPUID Fuzzer")

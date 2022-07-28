@@ -112,15 +112,15 @@ from chipsec.hal.uefi_platform import encode_s3bootscript_entry, id_s3bootscript
 ########################################################################################################
 
 cmd2opcode = {
-'pci_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE,
-'mmio_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE,
-'io_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE,
-'pci_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE,
-'mmio_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE,
-'io_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE
+    'pci_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE,
+    'mmio_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE,
+    'io_wr': S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE,
+    'pci_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_READ_WRITE_OPCODE,
+    'mmio_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_READ_WRITE_OPCODE,
+    'io_rw': S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE
 }
 
-dispatch_opcode  = S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE
+dispatch_opcode = S3BootScriptOpcode.EFI_BOOT_SCRIPT_DISPATCH_OPCODE
 terminate_opcode = S3BootScriptOpcode.EFI_BOOT_SCRIPT_TERMINATE_OPCODE
 
 write_opcodes = [
@@ -128,6 +128,7 @@ write_opcodes = [
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_PCI_CONFIG_WRITE_OPCODE,
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE
 ]
+
 
 class s3script_modify(BaseModule):
 
@@ -168,8 +169,8 @@ class s3script_modify(BaseModule):
                 continue
             self.logger.log("[*] Looking for 0x{:X} opcode in the script at 0x{:016X}..".format(opcode, bootscript_pa))
             for e in parsed_scripts[bootscript_pa]:
-                if (e.decoded_opcode is not None)       and \
-                   (opcode  == e.decoded_opcode.opcode) and \
+                if (e.decoded_opcode is not None) and \
+                   (opcode == e.decoded_opcode.opcode) and \
                    (address == e.decoded_opcode.address):
 
                     self.logger.log_good("Found opcode at offset 0x{:04X}".format(e.offset_in_script))
@@ -269,7 +270,6 @@ class s3script_modify(BaseModule):
         print_buffer_bytes(new_ep)
         return True
 
-
     def modify_s3_mem(self, address, new_value):
         if address is None:
             (smram_base, _, _) = self.cs.cpu.get_SMRAM()
@@ -365,16 +365,17 @@ class s3script_modify(BaseModule):
                     self.logger.log_error('Expected module options: -a replace_op,{},<reg_address>,<value>'.format(scmd))
                     return ModuleResult.ERROR
                 reg_address = int(module_argv[2], 16)
-                value       = int(module_argv[3], 16)
+                value = int(module_argv[3], 16)
                 sts = self.modify_s3_reg(cmd2opcode[scmd], reg_address, value)
-                if sts: self.logger.log('[*] After sleep/resume, check the value of register 0x{:X} is 0x{:X}'.format(reg_address, value))
+                if sts:
+                    self.logger.log('[*] After sleep/resume, check the value of register 0x{:X} is 0x{:X}'.format(reg_address, value))
             elif 'dispatch' == scmd:
                 sts = self.modify_s3_dispatch()
             elif 'dispatch_ep' == scmd:
                 sts = self.modify_s3_dispatch_ep()
             elif 'mem' == scmd:
                 new_value = int(module_argv[2], 16) if len(module_argv) >= 3 else 0xB007B007
-                address   = int(module_argv[3], 16) if len(module_argv) == 4 else None
+                address = int(module_argv[3], 16) if len(module_argv) == 4 else None
                 sts = self.modify_s3_mem(address, new_value)
             else:
                 self.logger.log_error("Unrecognized module command-line argument: {}".format(scmd))
@@ -387,10 +388,10 @@ class s3script_modify(BaseModule):
                 if len(module_argv) < 5:
                     self.logger.log_error('Expected module options: -a add_op,{},<reg_address>,<value>,<width>'.format(scmd))
                     return ModuleResult.ERROR
-                address    = int(module_argv[2], 16)
-                value      = int(module_argv[3], 16)
-                width      = int(module_argv[4], 16)
-                width_val  = script_width_values[width]
+                address = int(module_argv[2], 16)
+                value = int(module_argv[3], 16)
+                width = int(module_argv[4], 16)
+                width_val = script_width_values[width]
                 value_buff = struct.pack("<{}".format(script_width_formats[width_val]), value)
 
                 if cmd2opcode[scmd] in write_opcodes:

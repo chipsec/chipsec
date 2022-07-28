@@ -54,6 +54,7 @@ from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.hal.smbus import SMBus
 from chipsec.hal.spd import SPD
 
+
 class spd_wd(BaseModule):
 
     def __init__(self):
@@ -73,7 +74,7 @@ class spd_wd(BaseModule):
     def check_spd_wd(self):
         try:
             _smbus = SMBus(self.cs)
-            _spd   = SPD(_smbus)
+            _spd = SPD(_smbus)
         except BaseException as msg:
             self.logger.log_error(msg)
             self.res = ModuleResult.ERROR
@@ -82,7 +83,7 @@ class spd_wd(BaseModule):
         spd_wd_reg = self.cs.read_register('SMBUS_HCFG')
         spd_wd = self.cs.get_register_field('SMBUS_HCFG', spd_wd_reg, 'SPD_WD')
 
-        self.cs.print_register('SMBUS_HCFG',spd_wd_reg)
+        self.cs.print_register('SMBUS_HCFG', spd_wd_reg)
 
         if 1 == spd_wd:
             self.logger.log_passed("SPD Write Disable is set")
@@ -97,7 +98,7 @@ class spd_wd(BaseModule):
 
         return self.res
 
-    def run( self, module_argv ):
+    def run(self, module_argv):
         self.logger.start_test("SPD Write Disable")
         self.logger.log('')
 

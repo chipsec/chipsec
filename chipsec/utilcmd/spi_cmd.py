@@ -48,8 +48,8 @@ import time
 import os
 from chipsec.command import BaseCommand
 from chipsec.hal.spi import SPI, BIOS
-from chipsec.exceptions   import SpiRuntimeError
-from argparse        import ArgumentParser
+from chipsec.exceptions import SpiRuntimeError
+from argparse import ArgumentParser
 
 
 # SPI Flash Controller
@@ -182,5 +182,6 @@ class SPICommand(BaseCommand):
         self.func()
 
         self.logger.log("[CHIPSEC] (spi) time elapsed {:.3f}".format(time.time() - t))
+
 
 commands = {'spi': SPICommand}

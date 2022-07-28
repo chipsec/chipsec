@@ -23,7 +23,7 @@
 Main application logic and automation functions
 """
 
-## These are for debugging imports
+# These are for debugging imports
 import sys
 import fnmatch
 import argparse

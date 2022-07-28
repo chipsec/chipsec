@@ -1,17 +1,17 @@
-#CHIPSEC: Platform Security Assessment Framework
+# CHIPSEC: Platform Security Assessment Framework
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 #
 
@@ -70,7 +70,7 @@ class TestHelper(Helper):
             raise Exception("Unexpected PCI read")
 
     def read_physical_mem(self, phys_address, length):
-        return self.read_phys_mem(phys_address>>32, phys_address& 0xFFFFFFFF, length)
+        return self.read_phys_mem(phys_address >> 32, phys_address & 0xFFFFFFFF, length)
 
     def get_threads_count(self):
         return 2
@@ -177,7 +177,7 @@ class ACPIHelper(TestHelper):
               pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
             mem = b"\x00" * self.EBDA_PADDING + self.rsdp_descriptor
             offset = pa_lo - self.EBDA_ADDRESS
-            return mem[offset:offset +length]
+            return mem[offset:offset + length]
         elif pa_lo == self.RSDT_ADDRESS:
             return self.rsdt_descriptor[:length]
         elif pa_lo == self.XSDT_ADDRESS:
@@ -286,6 +286,7 @@ class SPIHelper(TestHelper):
     def map_io_space(self, base, size, cache_type):
         raise UnimplementedAPIError("Not implemented")
 
+
 class ValidChipsetHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
         if (bus, device, function) == (0, 0, 0):
@@ -305,6 +306,7 @@ class ValidChipsetHelper(TestHelper):
         else:
             raise Exception("Unexpected PCI read")
 
+
 class InvalidChipsetHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
         if (bus, device, function) == (0, 0, 0):
@@ -323,6 +325,7 @@ class InvalidChipsetHelper(TestHelper):
                 return 0x9D438086
         else:
             raise Exception("Unexpected PCI read")
+
 
 class InvalidPchHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):

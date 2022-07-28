@@ -40,8 +40,8 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand
 
-from chipsec.logger  import print_buffer
-from chipsec.hal.ec  import EC
+from chipsec.logger import print_buffer
+from chipsec.hal.ec import EC
 
 
 # Embedded Controller
@@ -91,29 +91,29 @@ class ECCommand(BaseCommand):
 
     def read(self):
         if self.size:
-            buf = self._ec.read_range( self.offset, self.size)
+            buf = self._ec.read_range(self.offset, self.size)
             self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(self.offset, self.size))
             print_buffer(buf)
         else:
             val = self._ec.read_memory(
                 self.offset) if self.offset < 0x100 else self._ec.read_memory_extended(self.offset)
-            self.logger.log( "[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(self.start_offset, val))
+            self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(self.start_offset, val))
 
     def write(self):
-        self.logger.log( "[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval))
+        self.logger.log("[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval))
 
         if self.offset < 0x100:
-            self._ec.write_memory( self.offset, self.wval)
+            self._ec.write_memory(self.offset, self.wval)
         else:
-            self._ec.write_memory_extended( self.offset, self.wval)
+            self._ec.write_memory_extended(self.offset, self.wval)
 
     def index(self):
 
         if self.offset:
             val = self._ec.read_idx(self.offset)
-            self.logger.log( "[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
+            self.logger.log("[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
         else:
-            self.logger.log( "[CHIPSEC] EC index I/O: dumping memory...")
+            self.logger.log("[CHIPSEC] EC index I/O: dumping memory...")
             mem = []
             for off in range(0x10000):
                 mem.append(chr(self._ec.read_idx(off)))
@@ -122,12 +122,12 @@ class ECCommand(BaseCommand):
     def run(self):
         t = time.time()
         try:
-            self._ec = EC( self.cs)
+            self._ec = EC(self.cs)
         except BaseException as msg:
-            print (msg)
+            print(msg)
             return
         self.func()
-        self.logger.log( "[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log("[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
 
 
-commands = { 'ec': ECCommand}
+commands = {'ec': ECCommand}

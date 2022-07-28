@@ -1,21 +1,21 @@
-#CHIPSEC: Platform Security Assessment Framework
-#Copyright (c) 2019-2021, Intel Corporation
+# CHIPSEC: Platform Security Assessment Framework
+# Copyright (c) 2019-2021, Intel Corporation
 #
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; Version 2.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; Version 2.
 #
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License
-#along with this program; if not, write to the Free Software
-#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-#Contact information:
-#chipsec@intel.com
+# Contact information:
+# chipsec@intel.com
 #
 
 """
@@ -35,6 +35,7 @@ from chipsec.hal.smbios import SMBIOS
 from chipsec.logger import print_buffer
 from chipsec.defines import bytestostring
 
+
 class smbios_cmd(BaseCommand):
 
     def requires_driver(self):
@@ -43,12 +44,12 @@ class smbios_cmd(BaseCommand):
         parser_entrypoint = subparsers.add_parser('entrypoint')
         parser_entrypoint.set_defaults(func=self.smbios_ep)
         parser_get = subparsers.add_parser('get')
-        parser_get.add_argument('method', choices=['raw', 'decoded'], default='raw', nargs='?', \
-            help='Get raw data or decoded data.  Decoded data may not exist for all structures')
-        parser_get.add_argument('type', type=int, default=None, nargs='?', \
-            help='SMBIOS type to search for')
-        parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32', \
-            help='Force reading from 32bit structures')
+        parser_get.add_argument('method', choices=['raw', 'decoded'], default='raw', nargs='?',
+                                help='Get raw data or decoded data.  Decoded data may not exist for all structures')
+        parser_get.add_argument('type', type=int, default=None, nargs='?',
+                                help='SMBIOS type to search for')
+        parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32',
+                                help='Force reading from 32bit structures')
         parser_get.set_defaults(func=self.smbios_get)
         parser.parse_args(self.argv[2:], namespace=self)
         return True
@@ -101,6 +102,7 @@ class smbios_cmd(BaseCommand):
             return
 
         self.func()
-        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time() -t))
+        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time() - t))
+
 
 commands = {'smbios': smbios_cmd}

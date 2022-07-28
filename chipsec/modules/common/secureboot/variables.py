@@ -61,7 +61,7 @@ class variables(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self._uefi  = UEFI(self.cs)
+        self._uefi = UEFI(self.cs)
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
@@ -69,7 +69,6 @@ class variables(BaseModule):
             self.logger.log_important("OS does not support UEFI Runtime API.  Skipping module.")
             self.res = ModuleResult.NOTAPPLICABLE
         return supported
-
 
     def can_modify(self, name, guid, data, attrs):
         self.logger.log("    > Attempting to modify variable {}:{}".format(guid, name))
@@ -99,12 +98,12 @@ class variables(BaseModule):
             self.logger.log_good("Could not modify UEFI variable {}:{}".format(guid, name))
         return _changed
 
-    ## check_secureboot_variable_attributes
+    # check_secureboot_variable_attributes
     # checks authentication attributes of Secure Boot EFI variables
     def check_secureboot_variable_attributes(self, do_modify):
         not_found = 0
-        not_auth  = 0
-        not_wp    = 0
+        not_auth = 0
+        not_wp = 0
         is_secureboot_enabled = False
 
         sbvars = self._uefi.list_EFI_variables()
@@ -178,7 +177,6 @@ class variables(BaseModule):
             else:
                 self.logger.log_passed('All Secure Boot UEFI variables are protected')
                 return ModuleResult.PASSED
-
 
     def run(self, module_argv):
         self.logger.start_test("Attributes of Secure Boot EFI Variables")

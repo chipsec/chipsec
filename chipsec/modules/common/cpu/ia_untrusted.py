@@ -37,6 +37,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
 
 TAGS = [MTAG_HWCONFIG]
 
+
 class ia_untrusted(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)

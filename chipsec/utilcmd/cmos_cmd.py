@@ -29,11 +29,11 @@ Examples:
 >>> chipsec_util cmos writeh 0x0 0xCC
 """
 
-from time   import time
-from argparse   import ArgumentParser
+from time import time
+from argparse import ArgumentParser
 
-from chipsec.command    import BaseCommand
-from chipsec.hal.cmos   import CMOS
+from chipsec.command import BaseCommand
+from chipsec.hal.cmos import CMOS
 from chipsec.exceptions import CmosRuntimeError
 
 
