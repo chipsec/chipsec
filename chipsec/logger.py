@@ -58,6 +58,7 @@ class chipsecrecordfactory(pyLogging.LogRecord):
             'PURPLE': WConio.LIGHTMAGENTA,
             'CYAN': WConio.CYAN,
             'WHITE': WConio.WHITE,
+            'LIGHT_GRAY': WConio.LIGHTGRAY,
         }
 
         def getMessage(self) -> str:
