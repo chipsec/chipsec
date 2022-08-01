@@ -357,7 +357,7 @@ class Logger:
     def start_module(self, module_name):
         """Displays a banner for the module name provided."""
         text = "\n[*] Running module: {}".format(module_name)
-        self._log(text, pyLogging.INFO)
+        self._log(text, pyLogging.INFO, "WHITE")
         if self.Results.get_current() is not None:
             self.Results.get_current().add_desc(module_name)
             self.Results.get_current().set_time()
