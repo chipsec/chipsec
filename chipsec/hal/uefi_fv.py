@@ -69,10 +69,25 @@ EFI_FV_FILETYPE_MM_STANDALONE = 0x0e
 EFI_FV_FILETYPE_MM_CORE_STANDALONE = 0x0f
 EFI_FV_FILETYPE_FFS_PAD = 0xf0
 
-FILE_TYPE_NAMES = {0x00: 'FV_ALL', 0x01: 'FV_RAW', 0x02: 'FV_FREEFORM', 0x03: 'FV_SECURITY_CORE', 0x04: 'FV_PEI_CORE',
-                   0x05: 'FV_DXE_CORE', 0x06: 'FV_PEIM', 0x07: 'FV_DRIVER', 0x08: 'FV_COMBINED_PEIM_DRIVER', 0x09: 'FV_APPLICATION',
-                   0x0A: 'FV_MM', 0x0B: 'FV_FVIMAGE', 0x0C: 'FV_COMBINED_MM_DXE', 0x0D: 'FV_MM_CORE', 0x0E: 'FV_MM_STANDALONE',
-                   0x0F: 'FV_MM_CORE_STANDALONE', 0xF0: 'FV_FFS_PAD'}
+FILE_TYPE_NAMES = {
+    0x00: 'FV_ALL',
+    0x01: 'FV_RAW',
+    0x02: 'FV_FREEFORM',
+    0x03: 'FV_SECURITY_CORE',
+    0x04: 'FV_PEI_CORE',
+    0x05: 'FV_DXE_CORE',
+    0x06: 'FV_PEIM',
+    0x07: 'FV_DRIVER',
+    0x08: 'FV_COMBINED_PEIM_DRIVER',
+    0x09: 'FV_APPLICATION',
+    0x0A: 'FV_MM',
+    0x0B: 'FV_FVIMAGE',
+    0x0C: 'FV_COMBINED_MM_DXE',
+    0x0D: 'FV_MM_CORE',
+    0x0E: 'FV_MM_STANDALONE',
+    0x0F: 'FV_MM_CORE_STANDALONE',
+    0xF0: 'FV_FFS_PAD'
+}
 
 EFI_SECTION_ALL = 0x00
 EFI_SECTION_COMPRESSION = 0x01
@@ -90,7 +105,23 @@ EFI_SECTION_RAW = 0x19
 EFI_SECTION_PEI_DEPEX = 0x1B
 EFI_SECTION_MM_DEPEX = 0x1C
 
-SECTION_NAMES = {0x00: 'S_ALL', 0x01: 'S_COMPRESSION', 0x02: 'S_GUID_DEFINED', 0x10: 'S_PE32', 0x11: 'S_PIC', 0x12: 'S_TE', 0x13: 'S_DXE_DEPEX', 0x14: 'S_VERSION', 0x15: 'S_USER_INTERFACE', 0x16: 'S_COMPATIBILITY16', 0x17: 'S_FV_IMAGE', 0x18: 'S_FREEFORM_SUBTYPE_GUID', 0x19: 'S_RAW', 0x1B: 'S_PEI_DEPEX', 0x1C: 'S_MM_DEPEX'}
+SECTION_NAMES = {
+    0x00: 'S_ALL',
+    0x01: 'S_COMPRESSION',
+    0x02: 'S_GUID_DEFINED',
+    0x10: 'S_PE32',
+    0x11: 'S_PIC',
+    0x12: 'S_TE',
+    0x13: 'S_DXE_DEPEX',
+    0x14: 'S_VERSION',
+    0x15: 'S_USER_INTERFACE',
+    0x16: 'S_COMPATIBILITY16',
+    0x17: 'S_FV_IMAGE',
+    0x18: 'S_FREEFORM_SUBTYPE_GUID',
+    0x19: 'S_RAW',
+    0x1B: 'S_PEI_DEPEX',
+    0x1C: 'S_MM_DEPEX'
+}
 
 EFI_SECTIONS_EXE = [EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16]
 
@@ -123,7 +154,7 @@ EFI_FFS_VOLUME_TOP_FILE_GUID = UUID("1BA0062E-C779-4582-8566-336AE8F78F09")
 DEF_INDENT = "    "
 
 
-class EFI_MODULE(object):
+class EFI_MODULE:
     def __init__(self, Offset, Guid, HeaderSize, Attributes, Image):
         self.Offset = Offset
         self.Guid = Guid
@@ -144,7 +175,10 @@ class EFI_MODULE(object):
         self.children = []
 
     def name(self):
-        return "{} {{{}}} {}".format(type(self).__name__.encode('ascii', 'ignore'), str(self.Guid).upper(), self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
+        _name = type(self).__name__.encode('ascii', 'ignore')
+        _guid = str(self.Guid).upper()
+        _ui_str = self.ui_string.encode('ascii', 'ignore') if self.ui_string else ''
+        return f'{_name} {{{_guid}}} {_ui_str}'
 
     def __str__(self):
         _ind = self.indent + DEF_INDENT
@@ -180,9 +214,9 @@ class EFI_FV(EFI_MODULE):
         self.CalcSum = CalcSum
 
     def __str__(self):
-        schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum, self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
+        schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
         _s = "\n{}{} +{:08X}h {{{}}}: ".format(self.indent, type(self).__name__, self.Offset, self.Guid)
-        _s += "Size {:08X}h, Attr {:08X}h, HdrSize {:04X}h, ExtHdrOffset {:08X}h, Checksum {}".format(self.Size, self.Attributes, self.HeaderSize, self.ExtHeaderOffset, schecksum)
+        _s += f"Size {self.Size:08X}h, Attr {self.Attributes:08X}h, HdrSize {self.HeaderSize:04X}h, ExtHdrOffset {self.ExtHeaderOffset:08X}h, Checksum {schecksum}"
         _s += super(EFI_FV, self).__str__()
         return bytestostring(_s)
 
@@ -199,8 +233,9 @@ class EFI_FILE(EFI_MODULE):
         self.CalcSum = CalcSum
 
     def __str__(self):
-        schecksum = ('{:04X}h ({:04X}h) *** checksum mismatch ***'.format(self.Checksum, self.CalcSum)) if self.CalcSum != self.Checksum else ('{:04X}h'.format(self.Checksum))
-        _s = "\n{}+{:08X}h {}\n{}Type {:02X}h, Attr {:08X}h, State {:02X}h, Size {:06X}h, Checksum {}".format(self.indent, self.Offset, self.name(), self.indent, self.Type, self.Attributes, self.State, self.Size, schecksum)
+        schecksum = f'{self.Checksum:04X}h ({self.CalcSum:04X}h) *** checksum mismatch ***' if self.CalcSum != self.Checksum else f'{self.Checksum:04X}h'
+        _s = "\n{}+{:08X}h {}\n{}Type {:02X}h, Attr {:08X}h, State {:02X}h, Size {:06X}h, Checksum {}".format(
+            self.indent, self.Offset, self.name(), self.indent, self.Type, self.Attributes, self.State, self.Size, schecksum)
         _s += (super(EFI_FILE, self).__str__() + '\n')
         return bytestostring(_s)
 
@@ -218,7 +253,10 @@ class EFI_SECTION(EFI_MODULE):
         self.parentGuid = None
 
     def name(self):
-        return "{} section of binary {{{}}} {}".format(self.Name.encode('ascii', 'ignore'), self.parentGuid, self.ui_string.encode('ascii', 'ignore') if self.ui_string else '')
+        _name = self.Name.encode('ascii', 'ignore')
+        _guid = self.parentGuid
+        _ui_str = self.ui_string.encode('ascii', 'ignore') if self.ui_string else ''
+        return f'{_name} section of binary {{{_guid}}} {_ui_str}'
 
     def __str__(self):
         _s = "{}+{:08X}h {}: Type {:02X}h".format(self.indent, self.Offset, self.name(), self.Type)
@@ -262,9 +300,7 @@ def FvChecksum16(buffer):
 
 
 def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size, Calcsum, Checksum):
-    # zero_vector = (ZeroVector == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
     fv_rsvd = (Reserved == 0)
-    # fs_guid = (FsGuid in (EFI_FS_GUIDS + [VARIABLE_STORE_FV_GUID]))
     fv_len = (FvLength <= size)
     fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
     if Checksum != Calcsum:
@@ -340,7 +376,7 @@ def GetFvHeader(buffer, off=0):
             size = size + (numblocks * lenblock)
         numblocks, lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY, buffer[fof:fof + EFI_FV_BLOCK_MAP_ENTRY_SZ])
     if FvLength != size:
-        logger().log("ERROR: Volume Size not consistant with Block Maps")
+        logger().log("ERROR: Volume Size not consistent with Block Maps")
         return (0, 0, 0)
     if size >= 0x40000000 or size == 0:
         logger().log("ERROR: Volume is corrupted")
@@ -401,7 +437,8 @@ def NextFwFile(FvImage, FvLength, fof, polarity):
         else:
             fsum = FFS_FIXED_CHECKSUM
         CalcSum = (hsum | (fsum << 8))
-        res = EFI_FILE(cur_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, FvImage[cur_offset:cur_offset + fsize], header_size, update_or_deleted, CalcSum)
+        _image = FvImage[cur_offset:cur_offset + fsize]
+        res = EFI_FILE(cur_offset, Name, Type, Attributes, State, IntegrityCheck, fsize, _image, header_size, update_or_deleted, CalcSum)
         break
     return res
 
@@ -416,7 +453,9 @@ def NextFwFileSection(sections, ssize, sof, polarity):
         Size = get_3b_size(Size)
         Header_Size = EFI_COMMON_SECTION_HEADER_size
         if Size == 0xFFFFFF and (curr_offset + EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")) < ssize:
-            Size = struct.unpack("I", sections[curr_offset + EFI_COMMON_SECTION_HEADER_size:curr_offset + EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")])[0]
+            _start = curr_offset + EFI_COMMON_SECTION_HEADER_size
+            _finish = _start + struct.calcsize("I")
+            Size = struct.unpack("I", sections[_start:_finish])[0]
             Header_Size = EFI_COMMON_SECTION_HEADER_size + struct.calcsize("I")
         if Type in SECTION_NAMES.keys():
             sec_name = SECTION_NAMES[Type]
