@@ -118,9 +118,9 @@ def ParsePFS(data):
         pfs_file = PfsFile(pfs_file.tail)
     return (pfs_file_data, pfs_file.data)
 
-# 3
+#
 # List of supported types of EFI NVRAM format (platform/vendor specific)
-# 3
+#
 
 
 class FWType:
@@ -165,9 +165,9 @@ LENOVO_FS2_GUID = UUID("E360BDBA-C3CE-46BE-8F37-B231E5CB9F35")
 EFI_PLATFORM_FS_GUIDS = [LENOVO_FS1_GUID, LENOVO_FS2_GUID]
 EFI_NVRAM_GUIDS = [VARIABLE_STORE_FV_GUID, ADDITIONAL_NV_STORE_GUID, NVAR_NVRAM_FS_FILE]
 
-# 3
+#
 # This Variable header is defined by UEFI
-# 3
+#
 
 #
 # Variable Store Status
@@ -995,9 +995,9 @@ def getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2( nvram_buf ):
 """
 
 
-# 3
+#
 # Decoding S3 Resume Boot Script
-# 3
+#
 
 class S3BootScriptType:
     EFI_BOOT_SCRIPT_TYPE_DEFAULT = 0x00
@@ -1370,9 +1370,9 @@ def id_s3bootscript_type(script, log_script=False):
     return (script_type, script_header_length)
 
 
-# 3
+#
 # EFI Variable Header Dictionary
-# 3
+#
 #
 # Add your EFI variable details to the dictionary
 #
