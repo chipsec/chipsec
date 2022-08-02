@@ -22,7 +22,6 @@
 Use results from a json file
 """
 import json
-from sys import version
 
 import chipsec.file
 from chipsec.logger import logger
@@ -56,10 +55,7 @@ class FileCmds:
             self.data[str(cmd)] = {margs: [str(ret)]}
 
     def Save(self):
-        if version[0] == "3":
-            js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '))
-        else:
-            js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '), encoding='latin_1')
+        js = json.dumps(self.data, sort_keys=False, indent=2, separators=(',', ': '))
         chipsec.file.write_file(self.filename, js)
 
     def Load(self):
