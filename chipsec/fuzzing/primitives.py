@@ -1,18 +1,11 @@
 import random
 import struct
-from sys import version
 
-
-def isinteger(var):
-    if version[0] == '2':
-        return isinstance(var, (int, long))
-    else:
-        return isinstance(var, int)
 
 ########################################################################################################################
 
 
-class base_primitive (object):
+class base_primitive:
     '''
     The primitive base class implements common functionality shared across most primitives.
     '''
@@ -96,7 +89,7 @@ class base_primitive (object):
 
 
 ########################################################################################################################
-class delim (base_primitive):
+class delim(base_primitive):
     def __init__(self, value, fuzzable=True, name=None):
         '''
         Represent a delimiter such as :,\r,\n, ,=,>,< etc... Mutations include repetition, substitution and exclusion.
@@ -129,7 +122,7 @@ class delim (base_primitive):
             self.fuzz_library.append(self.value * 500)
             self.fuzz_library.append(self.value * 1000)
 
-        # try ommitting the delimiter.
+        # try omitting the delimiter.
         self.fuzz_library.append("")
 
         # if the delimiter is a space, try throwing out some tabs.
@@ -178,7 +171,7 @@ class delim (base_primitive):
 
 
 ########################################################################################################################
-class group (base_primitive):
+class group(base_primitive):
     def __init__(self, name, values):
         '''
         This primitive represents a list of static values, stepping through each one on mutation. You can tie a block
@@ -240,7 +233,7 @@ class group (base_primitive):
 
 
 ########################################################################################################################
-class random_data (base_primitive):
+class random_data(base_primitive):
     def __init__(self, value, min_length, max_length, max_mutations=25, fuzzable=True, step=None, name=None):
         '''
         Generate a random chunk of data while maintaining a copy of the original. A random length range can be specified.
@@ -322,7 +315,7 @@ class random_data (base_primitive):
 
 
 ########################################################################################################################
-class static (base_primitive):
+class static(base_primitive):
     def __init__(self, value, name=None):
         '''
         Primitive that contains static content.
@@ -362,7 +355,7 @@ class static (base_primitive):
 
 
 ########################################################################################################################
-class string (base_primitive):
+class string(base_primitive):
     # store fuzz_library as a class variable to avoid copying the ~70MB structure across each instantiated primitive.
     fuzz_library = []
 
@@ -580,7 +573,7 @@ class string (base_primitive):
             if self.size == -1:
                 break
 
-            # ignore library items greather then user-supplied length.
+            # ignore library items greater then user-supplied length.
             # TODO: might want to make this smarter.
             if len(self.value) > self.size:
                 continue
@@ -611,16 +604,13 @@ class string (base_primitive):
         try:
             self.rendered = str(self.value).encode(self.encoding)
         except:
-            if version[0] == '3':
-                self.rendered = str(self.value).encode('latin-1')
-            else:
-                self.rendered = self.value
+            self.rendered = str(self.value).encode('latin-1')
 
         return self.rendered
 
 
 ########################################################################################################################
-class bit_field (base_primitive):
+class bit_field(base_primitive):
     def __init__(self, value, width, max_num=None, endian="<", format="binary", signed=False, full_range=False, fuzzable=True, name=None):
         '''
         The bit field primitive represents a number of variable length and is used to define all other integer types.
@@ -644,9 +634,9 @@ class bit_field (base_primitive):
         '''
 
         super(bit_field, self).__init__()
-        assert isinteger(width)
+        assert isinstance(width, int)
 
-        if isinteger(value) or isinstance(value, (list, tuple)):
+        if isinstance(value, (int, list, tuple)):
             self.value = self.original_value = value
         else:
             raise ValueError("The supplied value must be either an Int, Long, List or Tuple.")
@@ -666,7 +656,7 @@ class bit_field (base_primitive):
         if self.max_num is None:
             self.max_num = self.to_decimal("1" + "0" * width)
 
-        assert isinteger(self.max_num)
+        assert isinstance(self.max_num, int)
 
         # build the fuzz library.
         if self.full_range:
@@ -696,7 +686,7 @@ class bit_field (base_primitive):
             for fuzz_int in fh.readlines():
                 # convert the line into an integer, continue on failure.
                 try:
-                    fuzz_int = long(fuzz_int, 16)
+                    fuzz_int = int(fuzz_int, 16)
                 except:
                     continue
 
@@ -823,7 +813,7 @@ class bit_field (base_primitive):
 class byte (bit_field):
     def __init__(self, value, endian="<", format="binary", signed=False, full_range=False, fuzzable=True, name=None):
         self.s_type = "byte"
-        if not(isinteger(value) or isinstance(value, (list, tuple))):
+        if not isinstance(value, (int, list, tuple)):
             value = struct.unpack(endian + "B", value)[0]
 
         bit_field.__init__(self, value, 8, None, endian, format, signed, full_range, fuzzable, name)
@@ -833,7 +823,7 @@ class byte (bit_field):
 class word (bit_field):
     def __init__(self, value, endian="<", format="binary", signed=False, full_range=False, fuzzable=True, name=None):
         self.s_type = "word"
-        if not(isinteger(value) or isinstance(value, (list, tuple))):
+        if not isinstance(value, (int, list, tuple)):
             value = struct.unpack(endian + "H", value)[0]
 
         bit_field.__init__(self, value, 16, None, endian, format, signed, full_range, fuzzable, name)
@@ -843,7 +833,7 @@ class word (bit_field):
 class dword (bit_field):
     def __init__(self, value, endian="<", format="binary", signed=False, full_range=False, fuzzable=True, name=None):
         self.s_type = "dword"
-        if not(isinteger(value) or isinstance(value, (list, tuple))):
+        if not isinstance(value, (int, list, tuple)):
             value = struct.unpack(endian + "L", value)[0]
 
         bit_field.__init__(self, value, 32, None, endian, format, signed, full_range, fuzzable, name)
@@ -853,7 +843,7 @@ class dword (bit_field):
 class qword (bit_field):
     def __init__(self, value, endian="<", format="binary", signed=False, full_range=False, fuzzable=True, name=None):
         self.s_type = "qword"
-        if not(isinteger(value) or isinstance(value, (list, tuple))):
+        if not isinstance(value, (int, list, tuple)):
             value = struct.unpack(endian + "Q", value)[0]
 
         bit_field.__init__(self, value, 64, None, endian, format, signed, full_range, fuzzable, name)
