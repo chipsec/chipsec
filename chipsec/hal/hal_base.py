@@ -26,7 +26,7 @@ Base for HAL Components
 import chipsec.logger
 
 
-class HALBase(object):
+class HALBase:
     def __init__(self, cs):
         self.cs = cs
         self.logger = chipsec.logger.logger()

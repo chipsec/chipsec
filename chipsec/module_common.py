@@ -65,7 +65,7 @@ def getModuleResultName(res):
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
 
 
-class BaseModule(object):
+class BaseModule:
     def __init__(self):
         self.cs = chipsec.chipset.cs()
         self.logger = chipsec.logger.logger()

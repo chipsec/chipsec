@@ -153,7 +153,7 @@ _DEFAULT_GPRS = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': _FIL
 _pth = 'smm_ptr'
 
 
-class smi_desc(object):
+class smi_desc:
     def __init__(self):
         self.smi_code = None
         self.smi_data = None

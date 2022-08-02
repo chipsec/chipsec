@@ -267,7 +267,7 @@ def uuid(id):
 ### OPTIONAL ROUTINES ##########################################################
 
 
-class session_logger(object):
+class session_logger:
     def __init__(self, log, details):
         self.defstdout = sys.stdout
         self.log = log

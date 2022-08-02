@@ -77,7 +77,7 @@ class CPUID_struct(Structure):
     _fields_ = [(r, c_uint32) for r in ("eax", "ebx", "ecx", "edx")]
 
 
-class CPUID(object):
+class CPUID:
     def __init__(self):
         if platform.machine() not in ("AMD64", "x86_64", "x86", "i686"):
             raise SystemError("Only available for x86")
