@@ -3,9 +3,9 @@
 <!--
 XML configuration file for Whiskey Lake
 
-* 8th Generation Intel(R) Processor Family for U-Processor Platforms
-  https://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
-  https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/300-series-chipset-on-package-pch-datasheet-vol-1.pdf
+8th Generation Intel(R) Processor Family for U-Processor Platforms:
+  - https://www.intel.com/content/www/us/en/processors/core/core-technical-resources.html
+  - https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/300-series-chipset-on-package-pch-datasheet-vol-1.pdf
 -->
 
   <!-- #################################### -->
