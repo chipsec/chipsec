@@ -189,7 +189,7 @@ PCIR Offset         : 0x{:04X}
 """.format(self.Signature, self.InitSize, self.InitEP, self.Reserved.encode('hex').upper(), self.PCIROffset)
 
 
-class XROM(object):
+class XROM:
     def __init__(self, bus, dev, fun, en, base, size):
         self.bus = bus
         self.dev = dev

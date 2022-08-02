@@ -22,7 +22,7 @@ from chipsec.logger import logger
 # Base class for the helpers
 
 
-class Helper(object):
+class Helper:
     class __metaclass__(type):
         def __init__(cls, name, bases, attrs):
             if not hasattr(cls, 'registry'):

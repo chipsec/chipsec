@@ -1,4 +1,5 @@
-# Copyright (c) 2020 Intel Corporation
+# -*- coding: utf-8 -*-
+# # Copyright (c) 2020 Intel Corporation
 # SPDX-License-Identifier: GPL-2.0-only
 #
 # This file incorporates work covered by the following copyright and
@@ -59,7 +60,7 @@ OUT_PORT = [
 ]
 
 
-class PORTS(object):
+class PORTS:
     def __init__(self):
         clib = cdll.LoadLibrary("libc.so.6")
         clib.iopl(3)
@@ -90,7 +91,7 @@ class PORTS(object):
         self.outl_ptr(value, port)
 
 
-class LEGACY_PCI(object):
+class LEGACY_PCI:
     def __init__(self):
         self.ports = PORTS()
 

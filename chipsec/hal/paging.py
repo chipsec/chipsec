@@ -40,7 +40,7 @@ ADDR_2MB = 0xFFFFFFFFFFE00000 & MAXPHYADDR
 ADDR_1GB = 0xFFFFFFFFC0000000 & MAXPHYADDR
 
 
-class c_translation(object):
+class c_translation:
 
     def __init__(self):
         self.translation = {}
@@ -122,7 +122,7 @@ class c_translation(object):
         return
 
 
-class c_reverse_translation(object):
+class c_reverse_translation:
 
     def __init__(self, translation):
         self.reverse_translation = {}
@@ -140,7 +140,7 @@ class c_reverse_translation(object):
         return self.reverse_translation[addr] if addr in self.reverse_translation else []
 
 
-class c_paging_memory_access(object):
+class c_paging_memory_access:
 
     def __init__(self, cs):
         self.cs = cs

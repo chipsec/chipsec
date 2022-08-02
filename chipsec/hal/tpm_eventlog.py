@@ -32,7 +32,7 @@ import struct
 from chipsec.logger import logger
 
 
-class TcgPcrEvent(object):
+class TcgPcrEvent:
     """An Event (TPM 1.2 format) as recorded in the SML."""
 
     _header_fmt = "II20sI"
@@ -158,7 +158,7 @@ EVENT_TYPE_MAX_LENGTH = max([len(v) for v in SML_EVENT_TYPE.values()
                              if isinstance(v, str)])
 
 
-class PcrLogParser(object):
+class PcrLogParser:
     """Iterator over the events of a log."""
 
     def __init__(self, log):
