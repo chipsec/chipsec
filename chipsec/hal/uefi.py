@@ -546,8 +546,8 @@ NVRAM: EFI Variable Store
             if (pa <= tseg_limit) and (pa >= tseg_base):
                 if logger().HAL:
                     logger().log("[uefi] Skipping memory read at pa: {:016X}".format(pa))
-                    pa -= CHUNK_SZ
-                    continue
+                pa -= CHUNK_SZ
+                continue
             if logger().HAL:
                 logger().log('[uefi] Reading 0x{:016X}..'.format(pa))
             try:
