@@ -2,8 +2,8 @@ Windows Installation
 ====================
 
 | CHIPSEC supports the following versions:
-| Windows 8, 8.1, 10 - x86 and AMD64
-| Windows Server 2012, 2016 - x86 and AMD64
+| Windows 8, 8.1, 10, 11 - x86 and AMD64
+| Windows Server 2012, 2016, 2019, 2022 - x86 and AMD64
 
 .. note::
 
@@ -30,7 +30,14 @@ which includes:
 
 To compile the driver:
 
-   `Visual Studio and WDK <https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk>`_: for building the driver. For best results use the latest available (at least `WDK 8 and VS 2012 <https://docs.microsoft.com/en-us/windows-hardware/drivers/other-wdk-downloads>`_)
+   `Visual Studio and WDK <https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk>`_: for building the driver. 
+   
+   For best results use the latest available (**VS2022 + SDK/WDK 11** or **VS2019 + SDK/WDK 10 or 11**)
+   
+   .. note::
+
+      Make sure to install compatible VS/SDK/WDK versions and the spectre mitigation packages
+
 
 To clone the repo:
 
@@ -55,29 +62,29 @@ Build the Driver and Compression Tools
 Turn off kernel driver signature checks
 ---------------------------------------
 
-**Windows 10 64-bit**
+**Enable boot menu**
 
 In CMD shell:
    
    ``bcdedit /set {bootmgr} displaybootmenu yes``
 
-**Windows 10 64-bit / Windows 8, 8.1 64-bit (with Secure Boot enabled) / Windows Server 2016 64-bit / Windows Server 2012 64-bit (with Secure Boot enabled):**
+**With Secure Boot enabled:**
 
 Method 1:
 
-   - In CMD shell: ``shutdown /r /t 0 /o`` or Start button > Power icon > SHIFT key + Restart
-   - Navigate: Troubleshooting > Advanced Settings > Startup Settings > Reboot 
+   - In CMD shell: ``shutdown /r /t 0 /o`` or Start button -> Power icon -> SHIFT key + Restart
+   - Navigate: Troubleshooting -> Advanced Settings -> Startup Settings -> Reboot 
    - After reset choose F7 or 7 “Disable driver signature checks”
 
 Method 2: 
 
-   - Disable Secure Boot in the BIOS setup screen then disable driver signature checks as in Windows 8 with Secure Boot disabled
+   - Disable Secure Boot in the BIOS setup screen then disable driver signature checks as with Secure Boot disabled
 
-**Windows 10 (with Secure Boot disabled) / Windows 8 (with Secure Boot disabled) / Windows Server 2012 (with Secure Boot disabled):**
+**With Secure Boot disabled:**
 
 Method 1: 
 
-   - Boot in Test mode (allows self-signed certificates) \
+   - Boot in Test mode (allows self-signed certificates)
       - Start CMD.EXE as Adminstrator ``BcdEdit /set TESTSIGNING ON`` 
       - Reboot
       - If this doesn’t work, run these additional commands:
@@ -86,7 +93,7 @@ Method 1:
 
 Method 2: 
 
-   - Press F8 when booting Windows and choose “No driver signatures enforcement” option to turn off driver signature checks at all
+   - Press F8 when booting Windows and choose “No driver signatures enforcement” option to turn off driver signature checks
 
 Alternate Build Methods
 -----------------------
@@ -104,10 +111,9 @@ Method 2:
    - Open a VS developer command prompt
    - ``> cd <CHIPSEC_ROOT_DIR>\drivers\win7``
    - Build driver using msbuild command:
-      - For 32 bit:
-         - ``> msbuild``
-      - For 64 bit:
-         - ``> msbuild /p:Platform=x64``
+      - ``> msbuild /p:Platform=x64``
+      or
+      - ``> msbuild /p:Platform=x32``
 
 If build process is completed without any errors, the driver binary will be moved into the chipsec helper directory: 
    
