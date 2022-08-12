@@ -86,7 +86,13 @@ module_param(a2,ulong,0); //a2 is addr of phys_mem_access_prot function
 static const char program_name[] = "chipsec";
 
 // list of allocated memory
-static struct allocated_mem_list allocated_mem_list;
+struct allocated_mem_list {
+    struct list_head list;
+    phys_addr_t pa;
+    unsigned long va;
+    unsigned int order;
+};
+static LIST_HEAD(allocated_mem_list);
 
 typedef struct tagCONTEXT {
     unsigned long a;   // rax - 0x00; eax - 0x0
@@ -1173,55 +1179,60 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         //IN params: size
         //OUT params: physical address
         uint32_t NumberOfBytes = 0;
-        void *va = NULL;
+        unsigned int order;
+        unsigned long va = 0;
         phys_addr_t pa, max_pa;
         struct allocated_mem_list *tmp = NULL;
-        
+
         numargs = 2;
         if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
         {
             printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
             return -EFAULT;
         }
-        
+
         NumberOfBytes = ptr[0];
         max_pa = ptr[1];
+        order = get_order(NumberOfBytes);
 
         if (max_pa <= U32_MAX) {
-            va = kmalloc(NumberOfBytes, GFP_KERNEL | GFP_DMA);
+            if (max_pa > 16 * 1024 * 1024)
+                va = __get_free_pages(GFP_KERNEL | __GFP_ZERO | __GFP_DMA32, order);
+            else
+                va = __get_free_pages(GFP_KERNEL | __GFP_ZERO | __GFP_DMA, order);
         }
         if (!va)
-            va = kmalloc(NumberOfBytes, GFP_KERNEL);
+            va = __get_free_pages(GFP_KERNEL | __GFP_ZERO, order);
         if (!va) {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n" );
             return -ENOMEM;
         }
 
-        pa = virt_to_phys(va);
+        pa = virt_to_phys((void *)va);
         if (pa > max_pa) {
             printk(KERN_ALERT "[chipsec] ERROR: allocated memory (0x%llx) is not below max_pa (0x%llx)", pa, max_pa);
-            kfree(va);
+            free_pages(va, order);
             return -ENOMEM;
         }
-
-        memset(va, 0, NumberOfBytes);
 
         tmp = kmalloc(sizeof(struct allocated_mem_list), GFP_KERNEL);
         if (tmp == NULL) {
             printk(KERN_ALERT "[chipsec] ERROR: STATUS_UNSUCCESSFUL - could not allocate memory\n");
-            kfree(va);
+            free_pages(va, order);
             return -ENOMEM;
         }
 
         tmp->va = va;
         tmp->pa = pa;
-        list_add(&(tmp->list), &(allocated_mem_list.list));
+        tmp->order = order;
+        list_add(&tmp->list, &allocated_mem_list);
 
-        ptr[0] = (unsigned long)va;
+        ptr[0] = va;
         ptr[1] = pa;
         
-        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+        if (copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
             return -EFAULT;
+
         break;
     }
 
@@ -1229,10 +1240,8 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
     {
         // IN params : physical address
         // OUT params : 0 not freed, 1 freed
-        phys_addr_t pa = 0;
-        void *va = NULL;
-        struct list_head *pos, *q;
-        struct allocated_mem_list *element;
+        struct allocated_mem_list *e;
+        phys_addr_t pa;
 
         numargs = 1;
         if (copy_from_user((void*) ptrbuf, (void*) ioctl_param, (sizeof(long) * numargs)) > 0) {
@@ -1242,29 +1251,27 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 
         pa = ptr[0];
 
-        // look for va inside allocated mem list
-        list_for_each_safe(pos, q, &allocated_mem_list.list) {
-            element = list_entry(pos, struct allocated_mem_list, list);
-            if (element->pa == pa) {
-                va = element->va;
-                list_del(pos);
-                kfree(element);
+        // look for pa inside allocated mem list
+        list_for_each_entry(e, &allocated_mem_list, list) {
+            if (e->pa == pa) {
+                list_del(&e->list);
                 break;
             }
         }
 
-        if (va != NULL) {
+        if (&e->list != &allocated_mem_list) {
             // freeing
-            printk(KERN_INFO "[chipsec] freeing pa = 0x%llx, va = %p\n", pa, va);
-            kfree(va);
+            printk(KERN_INFO "[chipsec] freeing pa = 0x%llx, va = 0x%lx\n", pa, e->va);
+            free_pages(e->va, e->order);
+            kfree(e);
             ptr[0] = 1;
         } else {
+            printk(KERN_ERR "[chipsec] allocation for pa = 0x%llx not found!\n", pa);
             ptr[0] = 0;
         }
 
-        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0) {
+        if (copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
             return -EFAULT;
-        }
 
         break;
     }
@@ -1967,28 +1974,23 @@ init_module (void)
         return ret;
     }
 
-    // initialize allocated mem list
-    INIT_LIST_HEAD(&allocated_mem_list.list);
-
     return 0;
 }
 
 /// Function executed when unloading module
 void cleanup_module (void)
 {
-    struct list_head *pos, *q;
-    struct allocated_mem_list *element;
+    struct allocated_mem_list *e, *tmp;
 
     dbgprint ("Destroying chipsec device");
     misc_deregister(&chipsec_dev);
     dbgprint ("exit");
 
     // freeing
-    list_for_each_safe(pos, q, &allocated_mem_list.list) {
-        element = list_entry(pos, struct allocated_mem_list, list);
-        printk(KERN_INFO "auto freeing allocated memory (va = %p, pa = 0x%llx)\n", element->va, element->pa);
-        kfree(element->va);
-        list_del(pos);
-        kfree(element);
+    list_for_each_entry_safe(e, tmp, &allocated_mem_list, list) {
+        printk(KERN_INFO "auto freeing allocated memory (va = 0x%lx, pa = 0x%llx)\n", e->va, e->pa);
+        free_pages(e->va, e->order);
+        list_del(&e->list);
+        kfree(e);
     }
 }
