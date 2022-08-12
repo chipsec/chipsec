@@ -105,9 +105,3 @@ typedef struct _DESCRIPTOR_TABLE_RECORD {
   physaddr_t base;
 } DESCRIPTOR_TABLE_RECORD, *PDESCRIPTOR_TABLE_RECORD;
 #pragma pack()
-
-struct allocated_mem_list {
-  physaddr_t pa;
-  void *va;
-  struct list_head list;
-};
