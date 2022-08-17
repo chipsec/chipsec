@@ -843,7 +843,7 @@ DriverDeviceControl(
                 break;
               }
 
-            ucode_buf = ExAllocatePoolWithTag( NonPagedPool, ucode_size, 0x3184 );
+            ucode_buf = ExAllocatePool2( NonPagedPool, ucode_size, 0x3184 );
             if( !ucode_buf )
               {
                 DbgPrint( "[chipsec] ERROR: couldn't allocate pool for ucode binary\n" );
