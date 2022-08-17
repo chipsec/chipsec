@@ -202,7 +202,8 @@ XML configuration file for 6XX series pch
     </register>
 
     <!-- SPI Interface Controller -->
-    <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="4" desc="BIOS Control">
+    <register name="BC" type="pcicfg" device="SPI" offset="0xDC" size="4" desc="BIOS Control">
+
       <field name="BIOSWE"   bit="0" size="1" desc="BIOS Write Enable" />
       <field name="BLE"      bit="1" size="1" desc="BIOS Lock Enable" />
       <field name="SRC"      bit="2" size="2" desc="SPI Read Configuration" />
