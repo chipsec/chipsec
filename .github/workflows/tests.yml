@@ -163,6 +163,7 @@ jobs:
           - "3.9"
           - "3.8"
           - "3.7"
+          - "3.6"
 
     steps:
     - uses: actions/checkout@v2
@@ -205,8 +206,10 @@ jobs:
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}
           - {ubuntu: "20.04", python: "3.7"}
+          - {ubuntu: "20.04", python: "3.6"}
 
           - {ubuntu: "18.04", python: "3.7"}
+          - {ubuntu: "18.04", python: "3.6"}
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
