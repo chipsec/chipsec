@@ -90,7 +90,8 @@ XML configuration file for 6XX series pch
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- Sideband Register Access Registers -->
-    <register name="SBREG_BAR" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x10" size="4" desc="Sideband Register Access BAR">
+    <register name="SBREG_BAR" type="pcicfg" device="P2SBC" offset="0x10" size="4" desc="Sideband Register Access BAR">
+
       <field name="RBA" bit="28" size="4" desc="Register Base Address"/>
     </register>
     <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="4" desc="P2SB Configuration Register">
