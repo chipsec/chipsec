@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="PCH_6XXP">
+<configuration platform="PCH_6XXS">
 <!--
 CHIPSEC: Platform Security Assessment Framework
 Copyright (c) 2021-2022, Intel Corporation
@@ -22,6 +22,7 @@ chipsec@intel.com
 -->
 <!--
 XML configuration file for 6XX series pch
+Based upon datasheet(s): 648364 and 680836
 -->
 
   <!-- #################################### -->
@@ -30,7 +31,38 @@ XML configuration file for 6XX series pch
   <!--                                      -->
   <!-- #################################### -->
   <info>
-    <sku did="0x5182" name="6xxP" code="PCH_6XXP" longname="Intel ADL-P (600) PCH" />
+    <sku did="0x7A80" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A81" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A82" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A83" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A84" name="6xxS" code="PCH_6XXP" longname="Intel Z690 PCH"/>
+    <sku did="0x7A85" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A86" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A87" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A88" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A89" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8A" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8B" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8C" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8D" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8E" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8F" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A90" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A91" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A92" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A93" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A94" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A95" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A96" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A97" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A98" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A99" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A9A" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A9B" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A9C" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A9D" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A9E" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A9F" name="6xxS" code="PCH_6XXP" longname="ADL PCH 600 Series"/>
   </info>
 
   <!-- #################################### -->
@@ -52,7 +84,6 @@ XML configuration file for 6XX series pch
   <mmio>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000" size="0x1000" desc="SPI Controller Register Range"/>
     <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x2000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
-    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
   </mmio>
 
   <!-- #################################### -->
@@ -89,15 +120,6 @@ XML configuration file for 6XX series pch
     <!-- PCIe Configuration registers -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
-    <!-- Sideband Register Access Registers -->
-    <register name="SBREG_BAR" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x10" size="4" desc="Sideband Register Access BAR">
-      <field name="RBA" bit="28" size="4" desc="Register Base Address"/>
-    </register>
-    <register name="P2SBC" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0xE0" size="4" desc="P2SB Configuration Register">
-      <field name="HIDE"     bit="8"  size="1" desc="Hide SBREG_BAR"/>
-	  <field name="MASKLOCK" bit="17" size="1" desc="P2SB Mask Lock"/>
-      <field name="SBILOCK"  bit="31" size="1" desc="SBI register Lock"/>
-    </register>
 
     <!-- DCI registers -->
     <register name="ECTRL" type="mm_msgbus" port="0xB8" offset="0x0004" size="4" desc="DCI Control Register">
@@ -404,7 +426,6 @@ XML configuration file for 6XX series pch
     <control name="SpiWriteStatusDis"      register="HSFS"        field="WRSDIS"         desc="Write Status Disable"/>
     <control name="SMILock"                register="GEN_PMCON_2" field="SMI_LOCK"       desc="SMI Global Configuration Lock"/>
     <control name="TcoCtlLock"             register="TCOCTL"      field="TCO_BASE_LOCK"  desc="TCO Base Lock"/>
-    <control name="SrlLock"                register="DMIC"        field="LOCK"           desc="Locks TOCBASE"/>
     <control name="StrapMessage"           register="SSML"        field="SSL"            desc="Set_Strap Lock"/>
   </controls>
 
