@@ -69,12 +69,12 @@ class memconfig(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if self.cs.is_core():
-            if self.cs.is_register_defined('MSR_BIOS_DONE'):
+        if self.cs.is_intel():
+            if self.cs.is_core():
                 return True
-            self.logger.log_important('MSR_BIOS_DONE register is not defined for platform.  Skipping module.')
-        else:
             self.logger.log_important("Not a 'Core' (Desktop) platform.  Skipping test.")
+        else:
+            self.logger.log_important("Not an Intel platform.  Skipping test.")
         self.res = ModuleResult.NOTAPPLICABLE
         return False
 
@@ -93,18 +93,20 @@ class memconfig(BaseModule):
             self.logger.log('[*] Checking legacy register lock state:')
         else:
             self.logger.log('[*] Checking register lock state:')
-        for r in regs:
-            if not self.cs.is_register_defined(r) or not self.cs.register_has_field(r, memmap_registers[r]):
-                self.logger.log_important('Skipping Validation: Register {} or field {} was not defined for this platform.'.format(r, memmap_registers[r]))
+        for reg in regs:
+            reg_field = memmap_registers[reg]
+            if not self.cs.register_has_field(reg, reg_field):
+                self.logger.log_important(f'Skipping Validation: Register {reg} or field {reg_field} was not defined for this platform.')
                 continue
-            d = self.cs.get_register_def(r)
-            v = self.cs.read_register(r)
-            locked = self.cs.get_register_field(r, v, memmap_registers[r])
+            reg_def = self.cs.get_register_def(reg)
+            reg_value = self.cs.read_register(reg)
+            reg_desc = reg_def['desc']
+            locked = self.cs.get_register_field(reg, reg_value, reg_field)
             if locked == 1:
-                self.logger.log_good("{:20} = 0x{:16X} - LOCKED   - {}".format(r, v, d['desc']))
+                self.logger.log_good(f"{reg:20} = 0x{reg_value:016X} - LOCKED   - {reg_desc}")
             else:
                 all_locked = False
-                self.logger.log_bad("{:20} = 0x{:16X} - UNLOCKED - {}".format(r, v, d['desc']))
+                self.logger.log_bad(f"{reg:20} = 0x{reg_value:016X} - UNLOCKED - {reg_desc}")
 
         if ia_untrusted is not None:
             self.logger.log('[*]')
