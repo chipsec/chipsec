@@ -34,7 +34,7 @@ from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadE
 from chipsec.exceptions import RegisterTypeNotFoundError
 
 from chipsec.logger import logger
-from chipsec.defines import is_hex, is_all_ones
+from chipsec.defines import is_hex, is_all_ones, ARCH_VID
 
 import chipsec.file
 
@@ -89,9 +89,9 @@ PCH_CODE_PREFIX = 'PCH_'
 
 PCH_ADDRESS = {
     # Intel: 0:1F.0
-    0x8086: (0, 0x1F, 0),
+    ARCH_VID.INTEL: (0, 0x1F, 0),
     # AMD: 0:14.3
-    0x1022: (0, 0x14, 3)
+    ARCH_VID.AMD: (0, 0x14, 3)
 }
 
 try:
@@ -166,7 +166,7 @@ class Chipset:
         except:
             if logger().DEBUG:
                 logger().log_error("pci.read_dword couldn't read platform VID/DID")
-        if not vid in PCH_ADDRESS:
+        if vid not in PCH_ADDRESS:
             if logger().DEBUG:
                 logger().log_error("PCH address unknown for VID 0x{:04X}.".format(vid))
         else:
@@ -349,6 +349,18 @@ class Chipset:
     def is_atom(self):
         return self.get_chipset_code() in CHIPSET_FAMILY["atom"]
 
+    def is_intel(self) -> bool:
+        """Returns true if platform Vendor ID equals Intel VID"""
+        return self.is_arch(ARCH_VID.INTEL)
+
+    def is_amd(self) -> bool:
+        """Returns true if platform Vendor ID equals AMD VID"""
+        return self.is_arch(ARCH_VID.AMD)
+
+    def is_arch(self, *arch_vid: int) -> bool:
+        """Check support for multiple architecture VIDs"""
+        return self.vid in arch_vid
+
     def use_native_api(self):
         return self.helper.use_native_api()
 
@@ -423,7 +435,7 @@ class Chipset:
                     for _info in _cfg.iter('info'):
                         if 'family' in _info.attrib:
                             family = _info.attrib['family'].lower()
-                            if not family in CHIPSET_FAMILY:
+                            if family not in CHIPSET_FAMILY:
                                 CHIPSET_FAMILY[family] = []
                             CHIPSET_FAMILY[family].append(_cfg.attrib['platform'].upper())
                         if 'detection_value' in _info.attrib:
@@ -1293,7 +1305,7 @@ class Chipset:
                 for rd in reg_data:
                     self.print_register(reg, rd)
             else:
-                self.logger.log("Register has no data")
+                logger.log("Register has no data")
         if reg_data:
             return self.get_register_field_all(reg, reg_data, field)
         return reg_data
@@ -1336,7 +1348,7 @@ class Chipset:
         lock = self.Cfg.LOCKS[lock_name]
         reg = lock['register']
         field = lock['field']
-        return(self.get_register_field_mask(reg, field))
+        return self.get_register_field_mask(reg, field)
 
     def get_lockedby(self, lock_name):
         if lock_name in self.Cfg.LOCKEDBY.keys():
