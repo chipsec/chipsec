@@ -226,3 +226,8 @@ def get_message():
         with open(msg_file, "r") as msgFile:
             msg_str = msgFile.read()
     return msg_str
+
+
+class ARCH_VID:
+    INTEL = 0x8086
+    AMD = 0x1022
