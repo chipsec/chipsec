@@ -34,7 +34,6 @@ allowing manipulation of memory that should have been protected.
 References:
     - `System Management Mode Design and Security Issues <http://www.ssi.gouv.fr/uploads/IMG/pdf/IT_Defense_2010_final.pdf>`_
     - `Summary of Attack against BIOS and Secure Boot <https://www.defcon.org/images/defcon-22/dc-22-presentations/Bulygin-Bazhaniul-Furtak-Loucaides/DEFCON-22-Bulygin-Bazhaniul-Furtak-Loucaides-Summary-of-attacks-against-BIOS-UPDATED.pdf>`_
-    - `Programmed I/O accesses: a threat to Virtual Machine Monitors? <http://www.ssi.gouv.fr/archive/fr/sciences/fichiers/lti/pacsec2007-duflot-papier.pdf>`_ (broken?)
 
 Usage:
     ``chipsec_main -m smm_dma``
