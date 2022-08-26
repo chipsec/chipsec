@@ -877,7 +877,20 @@ class LinuxHelper(Helper):
         return variables
 
     def kern_set_EFI_variable(self, name, guid, value, attr=0x7):
-        status_dict = {0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION"}
+        status_dict = {
+            0: "EFI_SUCCESS",
+            1: "EFI_LOAD_ERROR",
+            2: "EFI_INVALID_PARAMETER",
+            3: "EFI_UNSUPPORTED",
+            4: "EFI_BAD_BUFFER_SIZE",
+            5: "EFI_BUFFER_TOO_SMALL",
+            6: "EFI_NOT_READY",
+            7: "EFI_DEVICE_ERROR",
+            8: "EFI_WRITE_PROTECTED",
+            9: "EFI_OUT_OF_RESOURCES",
+            14: "EFI_NOT_FOUND",
+            26: "EFI_SECURITY_VIOLATION"
+        }
 
         header_size = 60  # 4*15
         namelen = len(name)
@@ -899,10 +912,12 @@ class LinuxHelper(Helper):
         guid9 = int(guid[32:34], 16)
         guid10 = int(guid[34:], 16)
 
-        in_buf = struct.pack('15I' + str(namelen) + 's' + str(datalen) + 's', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, attr, namelen, datalen, name.encode('utf-8'), value)
+        pack_formatting = f'15I{namelen}s{datalen}s'
+        _guid = (guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10)
+        in_buf = struct.pack(pack_formatting, data_size, *_guid, attr, namelen, datalen, name.encode('utf-8'), value)
         buffer = array.array("B", in_buf)
-        stat = self.ioctl(IOCTL_SET_EFIVAR, buffer)
-        size, status = struct.unpack("2I", buffer[:8])
+        self.ioctl(IOCTL_SET_EFIVAR, buffer)
+        _, status = struct.unpack("2I", buffer[:8])
 
         if (status != 0):
             if logger().DEBUG:
