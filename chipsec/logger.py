@@ -27,11 +27,11 @@ import string
 import binascii
 import sys
 import os
-from time import localtime, strftime
+from time import localtime
 import atexit
 
-from chipsec.testcase import TestCase, ChipsecResults
-import traceback
+from chipsec.testcase import ChipsecResults
+
 try:
     # Prefer WConio2 over the original WConio as it is more up-to-date and better maintained.
     # See https://pypi.org/project/WConio2/ for more details.
@@ -46,6 +46,7 @@ except ImportError:
 
 LOG_PATH = os.path.join(os.getcwd(), "logs")
 log_Color = False
+
 
 class chipsecrecordfactory(pyLogging.LogRecord):
     if "windows" == platform.system().lower() and has_WConio:
@@ -136,7 +137,7 @@ class Logger:
         if is_atty and os.getenv('NO_COLOR') is None:
             log_Color = True
         pyLogging.setLogRecordFactory(chipsecrecordfactory)  # applies colorization to output
-        self.rootLogger.addHandler(self.logstream) #adds streamhandler to root logger
+        self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
         self.Results = ChipsecResults()
 
     def setlevel(self):
@@ -277,16 +278,15 @@ class Logger:
 
     def log_verbose(self, text):
         """Logs a Verbose message"""
-        if self.VERBOSE:
-            self.log(text, self.verbose)
+        self._log(text, pyLogging.getLevelName("verbose"), "LIGHT_GRAY")
 
     def log_hal(self, text):
-        """Logs an Verbose message"""
+        """Logs a hal message"""
         self._log(text, pyLogging.getLevelName("hal"), "LIGHT_GRAY")
 
     def log_debug(self, text):
-        """Logs an Verbose message"""
-        self._log(text, pyLogging.DEBUG)
+        """Logs a debug message"""
+        self._log(text, pyLogging.DEBUG, "LIGHT_GRAY")
 
     def log_passed(self, text):
         """Logs a passed message."""
