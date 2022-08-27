@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<configuration platform="PMC_I440FX" >
+<!--
+XML configuration file for Intel 440FX PCI and Memory Controller (PMC).
+It is used by QEMU "pc" machine, implemented in
+https://github.com/qemu/qemu/blob/v7.0.0/hw/pci-host/i440fx.c
+
+A datasheet is available on https://wiki.qemu.org/File:29054901.pdf
+-->
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Information                          -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <info>
+    <sku did="0x1237" name="i440FX" code="PMC_I440FX" longname="Intel 440FX PMC" />
+  </info>
+
+  <pci>
+    <device name="PMC" bus="0" dev="0" fun="0" vid="0x8086" did="0x1237" />
+  </pci>
+
+  <registers>
+    <register name="PCI0.0.0_VID"     type="pcicfg" device="PMC" offset="0x00" size="2" desc="Vendor ID" />
+    <register name="PCI0.0.0_DID"     type="pcicfg" device="PMC" offset="0x02" size="2" desc="Device ID" />
+    <register name="PCI0.0.0_CMD"     type="pcicfg" device="PMC" offset="0x04" size="2" desc="PCI Command Register" />
+    <register name="PCI0.0.0_STS"     type="pcicfg" device="PMC" offset="0x06" size="2" desc="PCI Status Register" />
+    <register name="PCI0.0.0_RID"     type="pcicfg" device="PMC" offset="0x08" size="1" desc="Revision ID" />
+    <register name="PCI0.0.0_CLASSC"  type="pcicfg" device="PMC" offset="0x09" size="3" desc="Class Code">
+      <field name="BASEC" bit="16" size="8" desc="Base Class Code"/>
+      <field name="SCC"   bit="8"  size="8" desc="Sub-Class Code"/>
+      <field name="PI"    bit="0"  size="8" desc="Programming Interface"/>
+    </register>
+    <register name="PCI0.0.0_MLT"     type="pcicfg" device="PMC" offset="0x0D" size="1" desc="Master Latency Timer" />
+    <register name="PCI0.0.0_HEADT"   type="pcicfg" device="PMC" offset="0x0E" size="1" desc="Header Type" />
+    <register name="PCI0.0.0_BIST"    type="pcicfg" device="PMC" offset="0x0F" size="1" desc="BIST Register" />
+    <register name="PCI0.0.0_PMCCFG"  type="pcicfg" device="PMC" offset="0x50" size="2" desc="PMC Configuration">
+      <field name="WPE"  bit="15" size="1" desc="WSC Protocol Enable"/>
+      <field name="ELME" bit="14" size="1" desc="Row Select or Extra Copy of Lower Memory Address Enable"/>
+      <field name="HFS"  bit="8"  size="2" desc="Host Frequency Select"/>
+      <field name="EPTE" bit="6"  size="1" desc="ECC/Parity TEST Enable"/>
+      <field name="DDIM" bit="4"  size="2" desc="DRAM Data Integrity Mode"/>
+      <field name="IOQD" bit="2"  size="1" desc="In-Order Queue Depth"/>
+    </register>
+    <register name="PCI0.0.0_DETURBO" type="pcicfg" device="PMC" offset="0x52" size="1" desc="Deturbo Counter Control" />
+    <register name="PCI0.0.0_DBC"     type="pcicfg" device="PMC" offset="0x53" size="1" desc="DBX Buffer Control" />
+    <register name="PCI0.0.0_AXC"     type="pcicfg" device="PMC" offset="0x54" size="1" desc="Auxiliary Control" />
+    <register name="PCI0.0.0_DRAMR"   type="pcicfg" device="PMC" offset="0x55" size="2" desc="DRAM Row Type (DRT)" />
+    <register name="PCI0.0.0_DRAMC"   type="pcicfg" device="PMC" offset="0x57" size="1" desc="DRAM Control" />
+    <register name="PCI0.0.0_DRAMT"   type="pcicfg" device="PMC" offset="0x58" size="1" desc="DRAM Timing" />
+    <register name="PCI0.0.0_PAM0"    type="pcicfg" device="PMC" offset="0x59" size="1" desc="Programmable Attribute Map 0" />
+    <register name="PCI0.0.0_PAM1"    type="pcicfg" device="PMC" offset="0x5A" size="1" desc="Programmable Attribute Map 1" />
+    <register name="PCI0.0.0_PAM2"    type="pcicfg" device="PMC" offset="0x5B" size="1" desc="Programmable Attribute Map 2" />
+    <register name="PCI0.0.0_PAM3"    type="pcicfg" device="PMC" offset="0x5C" size="1" desc="Programmable Attribute Map 3" />
+    <register name="PCI0.0.0_PAM4"    type="pcicfg" device="PMC" offset="0x5D" size="1" desc="Programmable Attribute Map 4" />
+    <register name="PCI0.0.0_PAM5"    type="pcicfg" device="PMC" offset="0x5E" size="1" desc="Programmable Attribute Map 5" />
+    <register name="PCI0.0.0_PAM6"    type="pcicfg" device="PMC" offset="0x5F" size="1" desc="Programmable Attribute Map 6" />
+    <register name="PCI0.0.0_DRB0"    type="pcicfg" device="PMC" offset="0x60" size="1" desc="DRAM Row Boundary 0" />
+    <register name="PCI0.0.0_DRB1"    type="pcicfg" device="PMC" offset="0x61" size="1" desc="DRAM Row Boundary 1" />
+    <register name="PCI0.0.0_DRB2"    type="pcicfg" device="PMC" offset="0x62" size="1" desc="DRAM Row Boundary 2" />
+    <register name="PCI0.0.0_DRB3"    type="pcicfg" device="PMC" offset="0x63" size="1" desc="DRAM Row Boundary 3" />
+    <register name="PCI0.0.0_DRB4"    type="pcicfg" device="PMC" offset="0x64" size="1" desc="DRAM Row Boundary 4" />
+    <register name="PCI0.0.0_DRB5"    type="pcicfg" device="PMC" offset="0x65" size="1" desc="DRAM Row Boundary 5" />
+    <register name="PCI0.0.0_DRB6"    type="pcicfg" device="PMC" offset="0x66" size="1" desc="DRAM Row Boundary 6" />
+    <register name="PCI0.0.0_DRB7"    type="pcicfg" device="PMC" offset="0x67" size="1" desc="DRAM Row Boundary 7" />
+    <register name="PCI0.0.0_FDHC"    type="pcicfg" device="PMC" offset="0x68" size="1" desc="Fixed DRAM Hole Control" />
+    <register name="PCI0.0.0_MTT"     type="pcicfg" device="PMC" offset="0x70" size="1" desc="Multi-Transaction Timer" />
+    <register name="PCI0.0.0_CLT"     type="pcicfg" device="PMC" offset="0x71" size="1" desc="CPU Latency Timer" />
+    <register name="PCI0.0.0_SMRAMC"  type="pcicfg" device="PMC" offset="0x72" size="1" desc="System Management RAM Control">
+      <field name="D_OPEN"     bit="6" size="1" desc="SMRAM Open"/>
+      <field name="D_CLS"      bit="5" size="1" desc="SMRAM Closed"/>
+      <field name="D_LCK"      bit="4" size="1" desc="SMRAM Locked"/>
+      <field name="G_SMRAME"   bit="3" size="1" desc="SMRAM Enabled"/>
+      <field name="C_BASE_SEG" bit="0" size="3" desc="SMRAM Base Segment = 010b"/>
+    </register>
+    <register name="PCI0.0.0_ERRCMD"  type="pcicfg" device="PMC" offset="0x90" size="1" desc="Error Command Register" />
+    <register name="PCI0.0.0_ERRSTS"  type="pcicfg" device="PMC" offset="0x91" size="1" desc="Error Status Register" />
+    <register name="PCI0.0.0_TRC"     type="pcicfg" device="PMC" offset="0x93" size="1" desc="Turbo Reset Control Register">
+      <field name="BISTE" bit="3" size="1" desc="Built-In Self Test Enable"/>
+      <field name="RCPU"  bit="2" size="1" desc="Reset CPU"/>
+      <field name="SHRE"  bit="1" size="1" desc="System Hard Reset Enable"/>
+      <field name="DM"    bit="0" size="1" desc="Deturbo Mode"/>
+    </register>
+  </registers>
+
+  <controls>
+  </controls>
+
+</configuration>
