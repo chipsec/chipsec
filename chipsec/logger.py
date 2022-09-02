@@ -45,70 +45,75 @@ except ImportError:
         has_WConio = False
 
 LOG_PATH = os.path.join(os.getcwd(), "logs")
-log_Color = False
 
 
 class chipsecrecordfactory(pyLogging.LogRecord):
-    if "windows" == platform.system().lower() and has_WConio:
-        colors = {
-            'BLACK': WConio.BLACK,
-            'RED': WConio.LIGHTRED,
-            'GREEN': WConio.LIGHTGREEN,
-            'YELLOW': WConio.YELLOW,
-            'BLUE': WConio.LIGHTBLUE,
-            'PURPLE': WConio.LIGHTMAGENTA,
-            'CYAN': WConio.CYAN,
-            'WHITE': WConio.WHITE,
-            'LIGHT_GRAY': WConio.LIGHTGRAY,
-        }
+    try:
+        is_atty = sys.stdout.isatty()
+    except AttributeError:
+        is_atty = False
+    if is_atty and os.getenv('NO_COLOR') is None and \
+       (("windows" == platform.system().lower() and has_WConio) or "linux" == platform.system().lower()):
+        if "windows" == platform.system().lower() and has_WConio:
+            colors = {
+                'BLACK': WConio.BLACK,
+                'RED': WConio.LIGHTRED,
+                'GREEN': WConio.LIGHTGREEN,
+                'YELLOW': WConio.YELLOW,
+                'BLUE': WConio.LIGHTBLUE,
+                'PURPLE': WConio.LIGHTMAGENTA,
+                'CYAN': WConio.CYAN,
+                'WHITE': WConio.WHITE,
+                'LIGHT_GRAY': WConio.LIGHTGRAY,
+            }
 
-        def getMessage(self) -> str:
-            color = None
-            msg = str(self.msg)
-            if self.args:
-                color = self.args[0]
-            if color in self.colors:
-                WConio.textcolor(self.colors[color])
+            def getMessage(self) -> str:
+                color = None
+                msg = str(self.msg)
+                if self.args:
+                    color = self.args[0]
+                if color in self.colors:
+                    WConio.textcolor(self.colors[color])
+                    return msg
+
+            old_setting = WConio.gettextinfo()[4] & 0x00FF
+            atexit.register(WConio.textcolor, old_setting)
+
+        elif "linux" == platform.system().lower():
+            ENDC = '\033[0m'
+            BOLD = '\033[1m'
+            UNDERLINE = '\033[4m'
+            csi = '\x1b['
+            reset = '\x1b[0m'
+            colors = {
+                'END': 0,
+                'LIGHT': 90,
+                'DARK': 30,
+                'BACKGROUND': 40,
+                'LIGHT_BACKGROUND': 100,
+                'GRAY': 0,
+                'RED': 1,
+                'GREEN': 2,
+                'YELLOW': 3,
+                'BLUE': 4,
+                'PURPLE': 5,
+                'CYAN': 6,
+                'LIGHT_GRAY': 7,
+                'NORMAL': 8,
+                'WHITE': 9,
+            }
+
+            def getMessage(self) -> str:
+                color = None
+                msg = str(self.msg)
+                if self.args:
+                    color = self.args[0]
+                if color in self.colors:
+                    params = []
+                    params.append(str(self.colors[color] + 30))
+                    msg = ''.join((self.csi, ';'.join(params),
+                                  'm', msg, self.reset))
                 return msg
-
-        old_setting = WConio.gettextinfo()[4] & 0x00FF
-        atexit.register(WConio.textcolor, old_setting)
-
-    elif log_Color and "linux" == platform.system().lower():
-        ENDC = '\033[0m'
-        BOLD = '\033[1m'
-        UNDERLINE = '\033[4m'
-        csi = '\x1b['
-        reset = '\x1b[0m'
-        colors = {
-            'END': 0,
-            'LIGHT': 90,
-            'DARK': 30,
-            'BACKGROUND': 40,
-            'LIGHT_BACKGROUND': 100,
-            'GRAY': 0,
-            'RED': 1,
-            'GREEN': 2,
-            'YELLOW': 3,
-            'BLUE': 4,
-            'PURPLE': 5,
-            'CYAN': 6,
-            'LIGHT_GRAY': 7,
-            'NORMAL': 8,
-            'WHITE': 9,
-        }
-
-        def getMessage(self) -> str:
-            color = None
-            msg = str(self.msg)
-            if self.args:
-                color = self.args[0]
-            if color in self.colors:
-                params = []
-                params.append(str(self.colors[color] + 30))
-                msg = ''.join((self.csi, ';'.join(params),
-                              'm', msg, self.reset))
-            return msg
     else:
         def getMessage(self) -> str:
             msg = str(self.msg)
@@ -130,12 +135,6 @@ class Logger:
         self.logstream = pyLogging.StreamHandler(sys.stdout)
         # Respect https://no-color.org/ convention, and disable colorization
         # when the output is not a terminal (eg. redirection to a file)
-        try:
-            is_atty = sys.stdout.isatty()
-        except AttributeError:
-            is_atty = False
-        if is_atty and os.getenv('NO_COLOR') is None:
-            log_Color = True
         pyLogging.setLogRecordFactory(chipsecrecordfactory)  # applies colorization to output
         self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
         self.Results = ChipsecResults()
