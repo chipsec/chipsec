@@ -72,12 +72,13 @@ class scan_blocked(BaseModule):
         self.cfg_name = 'blockedlist.json'
         self.image = None
         self.efi_blockedlist = None
+        self.cpuid = None
 
     def is_supported(self):
         return True
 
     def blockedlist_callback(self, efi_module):
-        return check_match_criteria(efi_module, self.efi_blockedlist, self.logger)
+        return check_match_criteria(efi_module, self.efi_blockedlist, self.logger, self.cpuid)
 
     def check_blockedlist(self):
         res = ModuleResult.PASSED
@@ -122,6 +123,7 @@ class scan_blocked(BaseModule):
             self.logger.log("[*] Dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size))
             self.logger.log("[*] This may take a few minutes (instead, use 'chipsec_util spi dump')...")
             self.spi.read_spi_to_file(base, image_size, image_file)
+            self.cpuid = self.cs.get_cpuid()
         elif len(module_argv) > 0:
             # Use provided firmware image
             image_file = module_argv[0]
