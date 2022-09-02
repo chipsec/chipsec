@@ -51,5 +51,14 @@
       "SecDxe_file_info": { "name": "SecDxe", "guid": "682894B5-6B70-4EBA-9E90-A607E5676297"},
       "SecDxe_hash_data": { "sha1": "f2be778971ad9df2082a266bd04ab657bd287413", "sha256": "7ea33696c91761e95697549e0b0f84db2cf4033216cd16c3264b10daa31f598c"}
     }
+  },
+  "FirmwareBleed": {
+    "description": "FWBleed: SMM RSB Stuffing Vulnerability (https://binarly.io/posts/FirmwareBleed_The_industry_fails_to_adopt_Return_Stack_Buffer_mitigations_in_SMM/index.html)",
+    "match": {
+      "PiSmmCpuDxeSmm_file_info": {"guid": "a3ff0ef5-0c28-42f5-b544-8c7de1e80014", "cpuid":"406e3,506e3,50653,50654,60663,806e9,806ea,806eb,906e9,906ea,906eb,906ec" }
+    },
+    "exclude":{
+      "Mitigation":{"guid": "a3ff0ef5-0c28-42f5-b544-8c7de1e80014", "regexp": "\\xf3\\x90\\x0f\\xae\\xe8\\xeb.\\x48\\xff\\xc8\\x75.\\x48\\x81\\xc4....\\x0f\\xaa"}
+    }
   }
 }
