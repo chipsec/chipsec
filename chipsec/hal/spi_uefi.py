@@ -70,17 +70,19 @@ type2ext = {EFI_SECTION_PE32: 'pe32', EFI_SECTION_TE: 'te', EFI_SECTION_PIC: 'pi
 WRITE_ALL_HASHES = False
 
 
-def decompress_section_data( section_dir_path, sec_fs_name, compressed_data, compression_type):
+def decompress_section_data(section_dir_path, sec_fs_name, compressed_data, compression_type):
     uefi_uc = UEFICompression()
     uncompressed_name = os.path.join(section_dir_path, sec_fs_name)
-    if logger().HAL: logger().log("[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n".format(compression_type, uncompressed_name))
+    if logger().HAL:
+        logger().log("[uefi] decompressing EFI binary (type = 0x{:X})\n       {} ->\n".format(compression_type, uncompressed_name))
     uncompressed_image = uefi_uc.decompress_EFI_binary(compressed_data, compression_type)
     return uncompressed_image
 
 
 def compress_image(image, compression_type):
     uefi_uc = UEFICompression()
-    if logger().HAL: logger().log("[uefi] compressing EFI binary (type = 0x{:X})\n".format(compression_type))
+    if logger().HAL:
+        logger().log("[uefi] compressing EFI binary (type = 0x{:X})\n".format(compression_type))
     compressed_image = uefi_uc.compress_EFI_binary(image,  compression_type)
     return compressed_image
 
@@ -219,7 +221,7 @@ def build_efi_modules_tree(fwtype, data, Size, offset, polarity):
                 sec.children = build_efi_model(data, fwtype)
 
         sections.append(sec)
-        sec = NextFwFileSection( data, Size, sec.Size + sec.Offset, polarity)
+        sec = NextFwFileSection(data, Size, sec.Size + sec.Offset, polarity)
         secn += 1
     return sections
 
@@ -230,7 +232,8 @@ def build_efi_modules_tree(fwtype, data, Size, offset, polarity):
 # fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 
 
-def build_efi_file_tree (fv_img, fwtype):
+
+def build_efi_file_tree(fv_img, fwtype):
     fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
     polarity = Attributes & EFI_FVB2_ERASE_POLARITY
     fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
@@ -267,7 +270,7 @@ def build_efi_tree(data, fwtype):
 
         # Detect File System firmware volumes
         if fv.Guid in EFI_PLATFORM_FS_GUIDS or fv.Guid in EFI_FS_GUIDS:
-            fwbin = build_efi_file_tree (fv.Image, fwtype)
+            fwbin = build_efi_file_tree(fv.Image, fwtype)
             for i in fwbin:
                 fv.children.append(i)
 
@@ -432,8 +435,9 @@ def save_efi_tree(modules, parent=None, save_modules=True, path=None, save_log=T
                             # getNVstore_xxx functions expect FV than a FW file within FV
                             # so for EFI_FILE type of module using parent's Image as NVRAM
                             nvram = parent.Image if (type(m) == EFI_FILE and type(parent) == EFI_FV) else m.Image
-                            parse_EFI_variables( os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType)
-                        else: raise Exception("NVRAM type cannot be None")
+                            parse_EFI_variables(os.path.join(mod_dir_path, 'NVRAM'), nvram, False, m.NVRAMType)
+                        else:
+                            raise Exception("NVRAM type cannot be None")
                     except Exception:
                         logger().log_warning("couldn't extract NVRAM in {{{}}} using type '{}'".format(m.Guid, m.NVRAMType))
 
@@ -474,7 +478,7 @@ def parse_uefi_region_from_file(filename, fwtype, outpath=None, filetype=[]):
         tree_json = save_efi_tree_filetype(tree, path=outpath, filetype=filetype)
     else:
         tree_json = save_efi_tree(tree, path=outpath)
-    write_file( "{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder) )
+    write_file("{}.UEFI.json".format(filename), json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
 
 
 def decode_uefi_region(pth, fname, fwtype, filetype=[]):
@@ -487,7 +491,8 @@ def decode_uefi_region(pth, fname, fwtype, filetype=[]):
         os.makedirs(fv_pth)
 
     # Decoding UEFI Firmware Volumes
-    if logger().HAL: logger().log( "[spi_uefi] decoding UEFI firmware volumes..." )
+    if logger().HAL:
+        logger().log("[spi_uefi] decoding UEFI firmware volumes...")
     parse_uefi_region_from_file(fname, fwtype, fv_pth, filetype)
     # If a specific filetype is wanted, there is no need to check for EFI Variables
     if filetype:
@@ -505,8 +510,8 @@ def decode_uefi_region(pth, fname, fwtype, filetype=[]):
         if logger().HAL:
             logger().log_error("unrecognized NVRAM type {}".format(fwtype))
         return
-    nvram_fname = os.path.join( bios_pth, ('nvram_{}'.format(fwtype)) )
-    logger().set_log_file( (nvram_fname + '.nvram.lst') )
+    nvram_fname = os.path.join(bios_pth, ('nvram_{}'.format(fwtype)))
+    logger().set_log_file((nvram_fname + '.nvram.lst'))
     parse_EFI_variables(nvram_fname, region_data, False, fwtype)
 
 

@@ -216,9 +216,10 @@ def print_sorted_EFI_variables(variables):
     for name in sorted_names:
         for rec in variables[name]:
             #                   off,    buf,     hdr,         data,   guid,   attrs
-            print_efi_variable( rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5] )
+            print_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5])
 
-def decode_EFI_variables( efi_vars, nvram_pth ):
+
+def decode_EFI_variables(efi_vars, nvram_pth):
     # print decoded and sorted EFI variables into a log file
     print_sorted_EFI_variables(efi_vars)
     # write each EFI variable into its own binary file
@@ -246,13 +247,11 @@ def identify_EFI_NVRAM(buffer):
             if offset != -1: return fw_type
     return None
 
-
 def parse_EFI_variables(self, fname, rom, authvars, _fw_type=None):
     if _fw_type in uefi_platform.fw_types:
         logger().log("[uefi] Using FW type (NVRAM format): {}".format(_fw_type))
-        #self.set_FWType(_fw_type)
     else:
-        logger().error("Unrecognized FW type (NVRAM format) '{}'..".format(_fw_type))
+        logger().log_error("Unrecognized FW type (NVRAM format) '{}'..".format(_fw_type))
         return False
 
     logger().log("[uefi] Searching for NVRAM in the binary..")
@@ -267,41 +266,42 @@ def parse_EFI_variables(self, fname, rom, authvars, _fw_type=None):
         efi_vars = uefi_platform.EFI_VAR_DICT[_fw_type]['func_getefivariables'](efi_vars_store)
         decode_EFI_variables(efi_vars, nvram_pth)
     else:
-        logger().error("Did not find NVRAM")
+        logger().log_error("Did not find NVRAM")
         return False
-    return True
 
+    return True
 
 def find_EFI_variable_store(rom_buffer, _FWType):
     if rom_buffer is None:
-        logger().error('rom_buffer is None')
+        logger().log_error('rom_buffer is None')
         return None
 
     rom = rom_buffer
-    offset       = 0
-    size         = len(rom_buffer)
+    offset = 0
+    size = len(rom_buffer)
     nvram_header = None
 
     if uefi_platform.EFI_VAR_DICT[_FWType]['func_getnvstore']:
         (offset, size, nvram_header) = uefi_platform.EFI_VAR_DICT[_FWType]['func_getnvstore'](rom)
         if (-1 == offset):
-            logger().error("'func_getnvstore' is defined but could not find EFI NVRAM. Exiting..")
+            logger().log_error("'func_getnvstore' is defined but could not find EFI NVRAM. Exiting..")
             return None
     else:
         logger().log("[uefi] 'func_getnvstore' is not defined in EFI_VAR_DICT. Assuming start offset 0..")
 
-    if -1 == size: size = len(rom_buffer)
+    if -1 == size:
+        size = len(rom_buffer)
     nvram_buf = rom[offset: offset + size]
 
     if logger().UTIL_TRACE:
         logger().log('[uefi] Found EFI NVRAM at offset 0x{:08X}'.format(offset))
-        logger().log( """
+        logger().log("""
 ==================================================================
 NVRAM: EFI Variable Store
 ==================================================================""")
-        if nvram_header: logger().log(nvram_header)
+        if nvram_header:
+            logger().log(nvram_header)
     return nvram_buf
-
 
 ########################################################################################################
 #
@@ -340,29 +340,31 @@ class UEFI(hal_base.HALBase):
     def dump_EFI_variables_from_SPI(self):
         return self.read_EFI_variables_from_SPI(0, 0x800000)
 
-    def read_EFI_variables_from_SPI( self, BIOS_region_base, BIOS_region_size ):
-        rom = self.cs.spi.read_spi( BIOS_region_base, BIOS_region_size )
-        efi_var_store = self.find_EFI_variable_store( rom, self._FWType )
+    def read_EFI_variables_from_SPI(self, BIOS_region_base, BIOS_region_size):
+        rom = self.cs.spi.read_spi(BIOS_region_base, BIOS_region_size)
+        efi_var_store = self.find_EFI_variable_store(rom, self._FWType)
         if efi_var_store:
             efi_vars = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables']
             return efi_vars
         return efi_var_store
 
-    def read_EFI_variables_from_file( self, filename ):
-        rom = read_file( filename )
-        efi_var_store = self.find_EFI_variable_store( rom, self._FWType )
+    def read_EFI_variables_from_file(self, filename):
+        rom = read_file(filename)
+        efi_var_store = self.find_EFI_variable_store(rom, self._FWType)
         if efi_var_store:
             efi_vars = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables']
             return efi_vars
         return efi_var_store
+
 
     # @TODO: Do not use, will be removed
-    def read_EFI_variables( self, efi_var_store, authvars ):
-        if ( efi_var_store is None ):
-            logger().error( 'efi_var_store is None' )
+    def read_EFI_variables(self, efi_var_store, authvars):
+        if (efi_var_store is None):
+            logger().log_error('efi_var_store is None')
             return None
-        variables = uefi_platform.EFI_VAR_DICT[ self._FWType ]['func_getefivariables']( efi_var_store )
-        if logger().UTIL_TRACE: print_sorted_EFI_variables( variables )
+        variables = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
+        if logger().UTIL_TRACE:
+            print_sorted_EFI_variables(variables)
         return variables
 
     ######################################################################
