@@ -107,7 +107,6 @@ class EfiHelper(Helper):
     # Physical memory access
     #
 
-
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         return edk2.readmem(phys_address_lo, phys_address_hi, length)
 
@@ -116,7 +115,7 @@ class EfiHelper(Helper):
             dword_value = struct.unpack('I', buf)[0]
             edk2.writemem_dword(phys_address_lo, phys_address_hi, bytestostring(dword_value))
         else:
-            edk2.writemem(phys_address_lo, phys_address_hi, bytestostring(buf), length)
+            edk2.writemem(phys_address_lo, phys_address_hi, bytestostring(buf))
 
     def alloc_phys_mem(self, length, max_pa):
         va = edk2.allocphysmem(length, max_pa)[0]
@@ -165,7 +164,7 @@ class EfiHelper(Helper):
             return edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
             buf = bytestostring(struct.pack(size * "B", value))
-            edk2.writemem(phys_address_lo, phys_address_hi, buf, size)
+            edk2.writemem(phys_address_lo, phys_address_hi, buf)
 
     #
     # PCIe configuration access

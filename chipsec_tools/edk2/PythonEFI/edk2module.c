@@ -4129,7 +4129,7 @@ posix_writemem(PyObject *self, PyObject *args)
   int len;
   UINT32 addr_lo, addr_hi;
 
-  if (!PyArg_ParseTuple(args, "IIsI", &addr_lo, &addr_hi, &buf, &len))
+  if (!PyArg_ParseTuple(args, "IIs#", &addr_lo, &addr_hi, &buf, &len))
     return NULL;
 
 #ifdef MDE_CPU_X64
