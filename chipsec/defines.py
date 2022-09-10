@@ -172,7 +172,7 @@ SIZE2FORMAT = {
 
 
 def bytestostring(mbytes):
-    if isinstance(mbytes, bytes):
+    if isinstance(mbytes, bytes) or isinstance(mbytes, bytearray):
         return mbytes.decode("latin_1")
     else:
         return mbytes
