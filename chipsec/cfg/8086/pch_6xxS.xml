@@ -84,7 +84,7 @@ Based upon datasheet(s): 648364 and 680836
   <mmio>
     <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000" size="0x1000" desc="SPI Controller Register Range"/>
     <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x2000" fixed_address="0xFE000000" desc="Power Management Register Range"/>
-    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
+    <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xE0000000" desc="Sideband Register Access BAR"/>
   </mmio>
 
   <!-- #################################### -->
