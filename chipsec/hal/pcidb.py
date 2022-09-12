@@ -20674,7 +20674,7 @@ DEVICES = {
              0x9904: "4-Port PCIe Serial Adapter",
              0x9912: "PCIe 9912 Multi-I/O Controller",
              0x9922: "MCS9922 PCIe Multi-I/O Controller",
-             0x9990: "MCS9990 PCIe to 4â€Port USB 2.0 Host Controller",
+             0x9990: "MCS9990 PCIe to 4-Port USB 2.0 Host Controller",
              },
 
     # Stargen Inc.
