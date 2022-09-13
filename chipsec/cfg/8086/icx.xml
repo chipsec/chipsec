@@ -52,11 +52,11 @@ chipsec@intel.com
 
 
     <!-- MMCFG -->
-    <register name="MMCFG_BASE" type="pcicfg" device="MemMap_VTd" offset="0x90" size="4" desc="MMCFG Address Base">
-      <field name="mmcfg_base_addr" bit="26" size="26" desc="TOLM address"/>
+    <register name="MMCFG_BASE" type="pcicfg" device="MemMap_VTd" offset="0x90" size="8" desc="MMCFG Address Base">
+      <field name="mmcfg_base_addr" bit="26" size="25" desc="TOLM address"/>
     </register>
-    <register name="MMCFG_LIMIT" type="pcicfg" device="MemMap_VTd" offset="0x98" size="4" desc="MMCFG Address Limit">
-      <field name="mmcfg_limit_addr" bit="26" size="26" desc="TOHM address"/>
+    <register name="MMCFG_LIMIT" type="pcicfg" device="MemMap_VTd" offset="0x98" size="8" desc="MMCFG Address Limit">
+      <field name="mmcfg_limit_addr" bit="26" size="25" desc="TOHM address"/>
     </register>
 
     <register name="TSEG" type="pcicfg" device="MemMap_VTd" offset="0xA8" size="8" desc="TSEG Memory">

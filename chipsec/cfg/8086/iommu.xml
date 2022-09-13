@@ -21,7 +21,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     </register>
     <register name="VTBAR_CAP" type="mmio" bar="VTBAR" offset="0x08" size="8" desc="Capability">
       <field name="ND"    bit="0"  size="2"  desc="Number of Domains Supported"/>
-      <field name="AFL"   bit="3"  size="1"  desc="Advanced Fault Logging"/>
+      <field name="Rsvd"  bit="3"  size="1"  desc="Reserved"/>
       <field name="RWBF"  bit="4"  size="1"  desc="Required Write-Buffer Flushing"/>
       <field name="PLMR"  bit="5"  size="1"  desc="Protected Low-Memory Region"/>
       <field name="PHMR"  bit="6"  size="1"  desc="Protected High-Memory Region"/>
@@ -77,7 +77,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="IRE"   bit="25" size="1"  desc="Interrupt Remapping Enable"/>
       <field name="QIE"   bit="26" size="1"  desc="Queued Invalidation Enable"/>
       <field name="WBF"   bit="27" size="1"  desc="Write Buffer Flush"/>
-      <field name="EAFL"  bit="28" size="1"  desc="Enable Advanced Fault Logging"/>
+      <field name="Rsvd"  bit="28" size="1"  desc="Reserved"/>
       <field name="SFL"   bit="29" size="1"  desc="Set Fault Log"/>
       <field name="SRTP"  bit="30" size="1"  desc="Set Root Table Pointer"/>
       <field name="TE"    bit="31" size="1"  desc="Translation Enable"/>
@@ -89,7 +89,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="IRES"  bit="25" size="1"  desc="Interrupt Remapping Enable Status"/>
       <field name="QIES"  bit="26" size="1"  desc="Queued Invalidation Enable Status"/>
       <field name="WBFS"  bit="27" size="1"  desc="Write Buffer Flush Status"/>
-      <field name="AFLS"  bit="28" size="1"  desc="Advanced Fault Logging Status"/>
+      <field name="Rsvd"  bit="28" size="1"  desc="Reserved"/>
       <field name="FLS"   bit="29" size="1"  desc="Fault Log Status"/>
       <field name="RTPS"  bit="30" size="1"  desc="Root Table Pointer Status"/>
       <field name="TES"   bit="31" size="1"  desc="Translation Enable Status"/>
@@ -140,11 +140,16 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     </register>
     <register name="VTBAR_FRCDL" type="mmio" bar="VTBAR" offset="0x0" size="8" desc="Fault Recording (Low)"/>
     <register name="VTBAR_FRCDH" type="mmio" bar="VTBAR" offset="0x8" size="8" desc="Fault Recording (High)"/>
+    <!-- this reg has been resvered from the latest spec
+         http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/vt-directed-io-spec.pdf
+    -->
+    <!--
     <register name="VTBAR_AFL" type="mmio" bar="VTBAR" offset="0x58" size="8" desc="Advanced Fault Log">
       <field name="R"   bit="0" size="9"  desc="Reserved"/>
       <field name="FLS" bit="9" size="3"  desc="Fault Log Size"/>
       <field name="FLA" bit="0" size="52" desc="Fault Log Address"/>
     </register>
+    -->
     <register name="VTBAR_PMEN" type="mmio" bar="VTBAR" offset="0x64" size="4" desc="Protected Memory Enable">
       <field name="PRS" bit="0"  size="1"  desc="Protected Region Status"/>
       <field name="EPM" bit="31" size="1"  desc="Enable Protected Memory"/>
@@ -178,7 +183,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     <register name="VTBAR_IEDATA"  type="mmio" bar="VTBAR" offset="0xA4" size="4" desc="Invalidation Event Data"/>
     <register name="VTBAR_IEADDR"  type="mmio" bar="VTBAR" offset="0xA8" size="4" desc="Invalidation Event Address"/>
     <register name="VTBAR_IEUADDR" type="mmio" bar="VTBAR" offset="0xAC" size="4" desc="Invalidation Event Address"/>
-    <register name="VTBAR_IRTA"    type="mmio" bar="VTBAR" offset="0xB8" size="4" desc="Invalidation Event Upper Address">
+    <register name="VTBAR_IRTA"    type="mmio" bar="VTBAR" offset="0xB8" size="8" desc="Invalidation Event Upper Address">
       <field name="S"    bit="0"  size="4"  desc="Size"/>
       <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
       <field name="IRTA" bit="12" size="52" desc="Interrupt Remapping Table Address"/>
@@ -192,7 +197,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     </register>
     <register name="GFXVTBAR_CAP" type="mmio" bar="GFXVTBAR" offset="0x08" size="8" desc="Capability">
       <field name="ND"    bit="0"  size="2"  desc="Number of Domains Supported"/>
-      <field name="AFL"   bit="3"  size="1"  desc="Advanced Fault Logging"/>
+      <field name="Rsvd"     bit="3"  size="1"  desc="Reserved"/>
       <field name="RWBF"  bit="4"  size="1"  desc="Required Write-Buffer Flushing"/>
       <field name="PLMR"  bit="5"  size="1"  desc="Protected Low-Memory Region"/>
       <field name="PHMR"  bit="6"  size="1"  desc="Protected High-Memory Region"/>
@@ -248,7 +253,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="IRE"   bit="25" size="1"  desc="Interrupt Remapping Enable"/>
       <field name="QIE"   bit="26" size="1"  desc="Queued Invalidation Enable"/>
       <field name="WBF"   bit="27" size="1"  desc="Write Buffer Flush"/>
-      <field name="EAFL"  bit="28" size="1"  desc="Enable Advanced Fault Logging"/>
+      <field name="Rsvd"  bit="28" size="1"  desc="Reserved"/>
       <field name="SFL"   bit="29" size="1"  desc="Set Fault Log"/>
       <field name="SRTP"  bit="30" size="1"  desc="Set Root Table Pointer"/>
       <field name="TE"    bit="31" size="1"  desc="Translation Enable"/>
@@ -260,7 +265,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
       <field name="IRES"  bit="25" size="1"  desc="Interrupt Remapping Enable Status"/>
       <field name="QIES"  bit="26" size="1"  desc="Queued Invalidation Enable Status"/>
       <field name="WBFS"  bit="27" size="1"  desc="Write Buffer Flush Status"/>
-      <field name="AFLS"  bit="28" size="1"  desc="Advanced Fault Logging Status"/>
+      <field name="Rsvd"  bit="28" size="1"  desc="Reserved"/>
       <field name="FLS"   bit="29" size="1"  desc="Fault Log Status"/>
       <field name="RTPS"  bit="30" size="1"  desc="Root Table Pointer Status"/>
       <field name="TES"   bit="31" size="1"  desc="Translation Enable Status"/>
@@ -311,11 +316,16 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     </register>
     <register name="GFXVTBAR_FRCDL" type="mmio" bar="GFXVTBAR" offset="0x0" size="8" desc="Fault Recording (Low)"/>
     <register name="GFXVTBAR_FRCDH" type="mmio" bar="GFXVTBAR" offset="0x8" size="8" desc="Fault Recording (High)"/>
+    <!-- this reg has been resvered from the latest spec
+         http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/vt-directed-io-spec.pdf
+    -->
+    <!--
     <register name="GFXVTBAR_AFL" type="mmio" bar="GFXVTBAR" offset="0x58" size="8" desc="Advanced Fault Log">
       <field name="R"   bit="0" size="9"  desc="Reserved"/>
       <field name="FLS" bit="9" size="3"  desc="Fault Log Size"/>
       <field name="FLA" bit="0" size="52" desc="Fault Log Address"/>
     </register>
+    -->
     <register name="GFXVTBAR_PMEN" type="mmio" bar="GFXVTBAR" offset="0x64" size="4" desc="Protected Memory Enable">
       <field name="PRS" bit="0"  size="1"  desc="Protected Region Status"/>
       <field name="EPM" bit="31" size="1"  desc="Enable Protected Memory"/>
@@ -349,7 +359,7 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
     <register name="GFXVTBAR_IEDATA"  type="mmio" bar="GFXVTBAR" offset="0xA4" size="4" desc="Invalidation Event Data"/>
     <register name="GFXVTBAR_IEADDR"  type="mmio" bar="GFXVTBAR" offset="0xA8" size="4" desc="Invalidation Event Address"/>
     <register name="GFXVTBAR_IEUADDR" type="mmio" bar="GFXVTBAR" offset="0xAC" size="4" desc="Invalidation Event Address"/>
-    <register name="GFXVTBAR_IRTA"    type="mmio" bar="GFXVTBAR" offset="0xB8" size="4" desc="Invalidation Event Upper Address">
+    <register name="GFXVTBAR_IRTA"    type="mmio" bar="GFXVTBAR" offset="0xB8" size="8" desc="Invalidation Event Upper Address">
       <field name="S"    bit="0"  size="4"  desc="Size"/>
       <field name="EIME" bit="11" size="1"  desc="Extended Interrupt Mode Enable"/>
       <field name="IRTA" bit="12" size="52" desc="Interrupt Remapping Table Address"/>
