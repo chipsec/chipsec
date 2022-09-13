@@ -45,6 +45,9 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
     <sku did="0x4385" name="5xx" code="PCH_5XXH" longname="5xx PCH Z590" />
     <sku did="0x4384" name="5xx" code="PCH_5XXH" longname="5xx PCH Q570" />
     <sku did="0x438F" name="5xx" code="PCH_5XXH" longname="5xx PCH W580" />
+    <!-- Server -->
+    <sku did="0x438C" name="5xx" code="PCH_5XXH" longname="5XX PCH C252" />
+    <sku did="0x438D" name="5xx" code="PCH_5XXH" longname="5XX PCH C256" />
   </info>
 
   <!-- #################################### -->
