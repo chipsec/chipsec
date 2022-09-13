@@ -63,16 +63,16 @@ XML configuration for Cherry Trail and Braswell SoCs
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <!-- Sections 1.6 -->
-    <register name="MSG_CTRL_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD0" desc="Message Bus Control Register">
+    <register name="MSG_CTRL_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD0" size="4" desc="Message Bus Control Register">
       <field name="MESSAGE_WR_BYTE_ENABLES" bit="4"  size="4" desc="Message write byte enable" />
       <field name="MESSAGE_ADDRESS_OFFSET"  bit="8"  size="8" desc="Message register address" />
       <field name="MESSAGE_PORT"            bit="16" size="8" desc="Message port" />
       <field name="MESSAGE_OPCODE"          bit="24" size="8" desc="Message opcode" />
     </register>
-    <register name="MSG_DATA_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD4" desc="Message Bus Data Register">
+    <register name="MSG_DATA_REG" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD4" size="4" desc="Message Bus Data Register">
       <field name="MESSAGE_DATA" bit="0" size="32" desc="Message data" />
     </register>
-    <register name="MSG_CTRL_REG_EXT" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD8" desc="Message Bus Control Register Extension">
+    <register name="MSG_CTRL_REG_EXT" type="pcicfg" bus="0" dev="0" fun="0" offset="0xD8" size="4" desc="Message Bus Control Register Extension">
       <field name="MESSAGE_ADDRESS_OFFSET_EXT"  bit="8"  size="24" desc="Message register address extension" />
     </register>
 
@@ -82,7 +82,7 @@ XML configuration for Cherry Trail and Braswell SoCs
     <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x50" size="4" desc="GMCH Graphics Control">
       <field name="GGCLOCK"     bit="0"  size="1" desc="GGC Lock"/>
       <field name="VGA_DISABLE" bit="1"  size="1" desc="VGA Disable"/>
-      <field name="GMS"         bit="3"  size="7" desc="Graphics Mode Select"/>
+      <field name="GMS"         bit="3"  size="5" desc="Graphics Mode Select"/>
       <field name="GGMS"        bit="8"  size="2" desc="GTT Graphics Memory Size"/>
       <field name="VAMEN"       bit="14" size="1" desc="Versatile Acceleration"/>
     </register>
