@@ -56,7 +56,7 @@ XML configuration for Sandy Bridge based platforms
     <register name="SMBUS_HCFG" type="pcicfg" device="SMBUS" offset="0x40" size="1" desc="Host Configuration">
       <field name="HST_EN"     bit="0" size="1"/>
       <field name="SMB_SMI_EN" bit="1" size="1"/>
-      <field name="I2C_EN"     bit="2" size="2"/>
+      <field name="I2C_EN"     bit="2" size="1"/>
       <field name="SSRESET"    bit="3" size="1"/>
       <field name="RESERVED"   bit="4" size="1"/>
     </register>

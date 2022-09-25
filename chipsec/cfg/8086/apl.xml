@@ -79,7 +79,7 @@ document id 334818/334819
      </register>
 
     <!-- Misc PCI registers -->
-    <register name="IADBGCTRL" type="pcicfg" bus="0" dev="0x1A" fun="0" offset="0xB0" desc="Debug Control">
+    <register name="IADBGCTRL" type="pcicfg" bus="0" dev="0x1A" fun="0" offset="0xB0" size="4" desc="Debug Control">
         <field name="IADBGCTRL_LOCK" bit="30" size="1"/>
     </register>
     <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x0D" fun="1" offset="0x10" size="8" desc="PM Base Address">
@@ -90,20 +90,20 @@ document id 334818/334819
       <field name="BA" bit="2" size="30" desc="Base Address"/>
     </register>
     <!-- SMBus Host Controller -->
-    <register name="SMBUS_VID"  type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x100" size="2" desc="VID" />
-    <register name="SMBUS_DID"  type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x102" size="2" desc="DID" />
-    <register name="SMBUS_CMD"  type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x104" size="2" desc="CMD" />
-    <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x140" size="1" desc="Host Configuration">
+    <register name="SMBUS_VID"  type="mmcfg" bus="0" dev="0x1F" fun="1" offset="0x100" size="2" desc="VID" />
+    <register name="SMBUS_DID"  type="mmcfg" bus="0" dev="0x1F" fun="1" offset="0x102" size="2" desc="DID" />
+    <register name="SMBUS_CMD"  type="mmcfg" bus="0" dev="0x1F" fun="1" offset="0x104" size="2" desc="CMD" />
+    <register name="SMBUS_HCFG" type="mmcfg" bus="0" dev="0x1F" fun="1" offset="0x140" size="1" desc="Host Configuration">
       <field name="HST_EN"     bit="0" size="1"/>
       <field name="SMB_SMI_EN" bit="1" size="1"/>
-      <field name="I2C_EN"     bit="2" size="2"/>
+      <field name="I2C_EN"     bit="2" size="1"/>
       <field name="SSRESET"    bit="3" size="1"/>
       <field name="SPD_WD"     bit="4" size="1"/>
     </register>
-    <register name="TCOBASE"    type="pcicfg" bus="0" dev="0x1f" fun="1" offset="0x150" size="4" desc="TCO Base Address">
+    <register name="TCOBASE"    type="mmcfg" bus="0" dev="0x1f" fun="1" offset="0x150" size="4" desc="TCO Base Address">
       <field name="TCOBA" bit="5" size="11" desc="TCO Base Address"/>
     </register>
-    <register name="TCOCTL"     type="pcicfg" bus="0" dev="0x1f" fun="1" offset="0x154" size="4" desc="TCO Control">
+    <register name="TCOCTL"     type="mmcfg" bus="0" dev="0x1f" fun="1" offset="0x154" size="4" desc="TCO Control">
       <field name="TCO_BASE_EN"   bit="8" size="1" desc="TCO Base Enable"/>
     </register>
 
@@ -338,7 +338,7 @@ document id 334818/334819
     </register>
 
     <!-- GFx MMIO registers -->
-    <register name="PCBR" type="mmio" bar="GTTMMADR" offset="0x182120" desc="PCBR">
+    <register name="PCBR" type="mmio" bar="GTTMMADR" offset="0x182120" size="8" desc="PCBR">
         <field name="PCBR_LOCK" bit="0" size="1"/>
     </register>
 
