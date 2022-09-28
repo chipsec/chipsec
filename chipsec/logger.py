@@ -398,35 +398,32 @@ def logger():
     """Returns a Logger instance."""
     return _logger
 
-def table_column_size(str_table: Union[List[str], List[List[str]]], min_width: int = 2) -> Tuple[int, ...]:
-    # If list of lists
-    if type(str_table[0]) is list:
-        table_string_lengths = []
-        for row in str_table:
-            row_string_lengths = []
-            for string in row:
-                row_string_lengths.append(len(string))
-            table_string_lengths.append(row_string_lengths)
+def minimum_column_widths(table_data):
+    clean_data = clean_data_table(table_data)
+    column_widths = get_column_widths(clean_data)
+    min_widths = find_min_col_widths(column_widths)
+    return tuple(min_widths)
 
-        min_col_widths = []
-        i = 0
-        while i < len(row_string_lengths):
-            min_col_widths.append(min_width)
-            for lengths in table_string_lengths:
-                if lengths[i] > min_col_widths[i]:
-                    min_col_widths[i] = lengths[i]
-            i += 1
-        return tuple(min_col_widths)
+def clean_data_table(data_table):
+    clean_table = [extract_column_values(row) for row in data_table]
+    return clean_table
 
-    # If list of strings
-    if type(str_table[0]) is str:
-        col_lengths = []
-        for string in str_table:
-            if len(string) < min_width:
-                col_lengths.append(min_width)
-            else:
-                col_lengths.append(len(string))
-        return tuple(col_lengths)
+def extract_column_values(row_data):
+    clean_row = [row_data[0]]
+    additional_column_values = row_data[1].values()
+    [clean_row.append(value) for value in additional_column_values]
+    return clean_row
+
+def get_column_widths(data):
+    col_widths = [[len(col) for col in row] for row in data]
+    return col_widths
+
+def find_min_col_widths(col_data, minimum_width = 2):
+    columns_per_row = len(col_data[0])
+    min_widths = ([(max(rows[i] for rows in col_data)) for i in range(columns_per_row)])
+    for i in range(len(min_widths)):
+        min_widths[i] = min_widths[i] if min_widths[i] > minimum_width else minimum_width
+    return min_widths
 
 ##################################################################################
 # Hex dump functions
