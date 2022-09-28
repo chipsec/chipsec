@@ -88,7 +88,7 @@ def create_efi_disk(filename, startup_nsh=None):
                 f.write(startup_nsh)
 
         # Convert to QCow image
-        print("Converting to QCow2 format to {} ...".format(filename))
+        print("Converting to QCow2 format in {} ...".format(filename))
         subprocess.run(
             ("qemu-img", "convert", "-c", "-f", "vvfat", "-O", "qcow2", "fat:" + tmpdir, filename),
             check=True
