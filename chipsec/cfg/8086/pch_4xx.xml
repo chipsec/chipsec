@@ -124,7 +124,9 @@ chipsec@intel.com
     </register>
     <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x18" size="4" desc="Power Management Configuration Reg 1">
     </register>
-
+    <register name="SSML" type="mmio" bar="PWRMBASE" offset="0x104C" size="4" desc="Strap message lock register">
+      <field name="SSL" bit="0" size="1" desc="Set Strap Lock" />
+    </register>
 
     <!-- SMBus Host Controller -->
     <register name="SMBUS_VID"  type="pcicfg" device="SMBUS" offset="0x00" size="2" desc="VID" />
@@ -313,11 +315,12 @@ chipsec@intel.com
   <!--                                      -->
   <!-- #################################### -->
   <controls>
-    <control name="BiosInterfaceLockDown"  register="BC"          field="BILD"      desc="BIOS Interface Lock-Down"/>
-    <control name="TopSwap"                register="BC"          field="TSS"       desc="Top Swap Status"/>
-    <control name="SpiWriteStatusDis"      register="HSFS"        field="WRSDIS"    desc="Write Status Disable"/>
-    <control name="SMILock"                register="GEN_PMCON_1" field="SMI_LOCK"  desc="SMI Global Configuration Lock"/>
-    <control name="TcoCtlLock"            register="TCOCTL" field="TCO_BASE_LOCK"  desc="TCO Base Lock"/>
+    <control name="BiosInterfaceLockDown"  register="BC"          field="BILD"          desc="BIOS Interface Lock-Down"/>
+    <control name="TopSwap"                register="BC"          field="TSS"           desc="Top Swap Status"/>
+    <control name="SpiWriteStatusDis"      register="HSFS"        field="WRSDIS"        desc="Write Status Disable"/>
+    <control name="SMILock"                register="GEN_PMCON_1" field="SMI_LOCK"      desc="SMI Global Configuration Lock"/>
+    <control name="TcoCtlLock"             register="TCOCTL"      field="TCO_BASE_LOCK" desc="TCO Base Lock"/>
+    <control name="StrapMessage"           register="SSML"        field="SSL"           desc="Set_Strap Lock"/>
   </controls>
 
 </configuration>
