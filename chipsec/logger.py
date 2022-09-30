@@ -29,7 +29,6 @@ import sys
 import os
 import atexit
 from time import localtime, strftime
-from typing import Union, List, Tuple
 
 from chipsec.testcase import ChipsecResults
 
@@ -398,11 +397,11 @@ def logger():
     """Returns a Logger instance."""
     return _logger
 
-def minimum_column_widths(table_data):
+def aligned_column_spacing(table_data):
     clean_data = clean_data_table(table_data)
-    column_widths = get_column_widths(clean_data)
-    min_widths = find_min_col_widths(column_widths)
-    return tuple(min_widths)
+    all_column_widths = get_column_widths(clean_data)
+    required_widths = find_required_col_widths(all_column_widths)
+    return tuple(required_widths)
 
 def clean_data_table(data_table):
     clean_table = [extract_column_values(row) for row in data_table]
@@ -418,12 +417,12 @@ def get_column_widths(data):
     col_widths = [[len(col) for col in row] for row in data]
     return col_widths
 
-def find_min_col_widths(col_data, minimum_width = 2):
+def find_required_col_widths(col_data, minimum_width = 2):
     columns_per_row = len(col_data[0])
-    min_widths = ([(max(rows[i] for rows in col_data)) for i in range(columns_per_row)])
-    for i in range(len(min_widths)):
-        min_widths[i] = min_widths[i] if min_widths[i] > minimum_width else minimum_width
-    return min_widths
+    max_widths = ([(max(rows[i] for rows in col_data)) for i in range(columns_per_row)])
+    for i in range(len(max_widths)):
+        max_widths[i] = max_widths[i] if max_widths[i] > minimum_width else minimum_width
+    return max_widths
 
 ##################################################################################
 # Hex dump functions
