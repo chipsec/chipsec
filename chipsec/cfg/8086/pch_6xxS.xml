@@ -34,17 +34,17 @@ Based upon datasheet(s): 648364 and 680836
     <sku did="0x7A80" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A81" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A82" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
-    <sku did="0x7A83" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A83" name="6xxS" code="PCH_6XXS" longname="Intel Q670 PCH"/>
     <sku did="0x7A84" name="6xxS" code="PCH_6XXS" longname="Intel Z690 PCH"/>
-    <sku did="0x7A85" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
-    <sku did="0x7A86" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
-    <sku did="0x7A87" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
-    <sku did="0x7A88" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A85" name="6xxS" code="PCH_6XXS" longname="Intel H670 PCH"/>
+    <sku did="0x7A86" name="6xxS" code="PCH_6XXS" longname="Intel B660 PCH"/>
+    <sku did="0x7A87" name="6xxS" code="PCH_6XXS" longname="Intel H610 PCH"/>
+    <sku did="0x7A88" name="6xxS" code="PCH_6XXS" longname="Intel W680 PCH"/>
     <sku did="0x7A89" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A8A" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A8B" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
-    <sku did="0x7A8C" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
-    <sku did="0x7A8D" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
+    <sku did="0x7A8C" name="6xxS" code="PCH_6XXS" longname="Intel HM670 PCH"/>
+    <sku did="0x7A8D" name="6xxS" code="PCH_6XXS" longname="Intel WM690 PCH"/>
     <sku did="0x7A8E" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A8F" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
     <sku did="0x7A90" name="6xxS" code="PCH_6XXS" longname="ADL PCH 600 Series"/>
