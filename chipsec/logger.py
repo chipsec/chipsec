@@ -27,8 +27,9 @@ import string
 import binascii
 import sys
 import os
-from time import localtime
 import atexit
+from time import localtime, strftime
+from typing import Union, List, Tuple
 
 from chipsec.testcase import ChipsecResults
 
@@ -397,6 +398,35 @@ def logger():
     """Returns a Logger instance."""
     return _logger
 
+def table_column_size(str_table: Union[List[str], List[List[str]]], min_width: int = 2) -> Tuple[int, ...]:
+    # If list of lists
+    if type(str_table[0]) is list:
+        table_string_lengths = []
+        for row in str_table:
+            row_string_lengths = []
+            for string in row:
+                row_string_lengths.append(len(string))
+            table_string_lengths.append(row_string_lengths)
+
+        min_col_widths = []
+        i = 0
+        while i < len(row_string_lengths):
+            min_col_widths.append(min_width)
+            for lengths in table_string_lengths:
+                if lengths[i] > min_col_widths[i]:
+                    min_col_widths[i] = lengths[i]
+            i += 1
+        return tuple(min_col_widths)
+
+    # If list of strings
+    if type(str_table[0]) is str:
+        col_lengths = []
+        for string in str_table:
+            if len(string) < min_width:
+                col_lengths.append(min_width)
+            else:
+                col_lengths.append(len(string))
+        return tuple(col_lengths)
 
 ##################################################################################
 # Hex dump functions
