@@ -194,4 +194,121 @@ If in doubt, follow the existing code style and formatting.
     The routine you are calling, may already be using one.
 
 
+Type Hints
+==========
+
+Employing Type Hints is encouraged but any commits utilizing them must to be limited to the features supported by **Python 3.6.8**.
+
+This is earliest version of Python utilized by CHIPSEC, the version of the EFI Shell Python.
+
+For more information on Python Type Hints:
+  `PEP 483 - The Theory of Type Hints <https://peps.python.org/pep-0483/>`_
+
+
+This table lists which Type Hint PEPs are in scope for CHIPSEC.
+
+.. list-table:: PEP versions supported by CHIPSEC
+   :widths: 9 25 25 12 10
+   :header-rows: 1
+
+   * - PEP
+     - Title
+     - Summary
+     - Python Version
+     - Supported
+   * - `PEP 3107 <https://www.python.org/dev/peps/pep-3107/>`_
+     - Function Annotations
+     - Syntax for adding arbitrary metadata annotations to Python functions
+     - 3.0
+     - Yes
+   * - `PEP 362 <https://www.python.org/dev/peps/pep-0362/>`_
+     - Function Signature Object
+     - Contains all necessary information about a function and its parameters
+     - 3.3
+     - Yes
+   * - `PEP 484 <https://www.python.org/dev/peps/pep-0484/>`_
+     - Type Hints
+     - Standard syntax for type annotations
+     - 3.5
+     - Yes
+   * - `PEP 526 <https://www.python.org/dev/peps/pep-0526/>`_
+     - Syntax for Variable Annotations
+     - Adds syntax for annotating the types of variables
+     - 3.6
+     - Yes
+   * - `PEP 544 <https://www.python.org/dev/peps/pep-0544/>`_
+     - Protocols: Structural subtyping (static duck typing)
+     - Specify type metadata for static type checkers and other third party tools
+     - 3.8
+     - No
+   * - `PEP 585 <https://www.python.org/dev/peps/pep-0585/>`_
+     - Type Hinting Generics In Standard Collections
+     - Enable support for the generics syntax in all standard collections currently available in the typing module
+     - 3.9
+     - No
+   * - `PEP 586 <https://www.python.org/dev/peps/pep-0586/>`_
+     - Literal Types
+     - Literal types indicate that some expression has literally a specific value(s).
+     - 3.8
+     - No
+   * - `PEP 593 <https://www.python.org/dev/peps/pep-0593/>`_
+     - Flexible function and variable annotations
+     - Adds an Annotated type to the typing module to decorate existing types with context-specific metadata.
+     - 3.9
+     - No
+   * - `PEP 598 <https://www.python.org/dev/peps/pep-0598/>`_
+     - TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
+     - Support dictionary object with a specific set of string keys, each with a value of a specific type
+     - 3.8
+     - No
+   * - `PEP 604 <https://www.python.org/dev/peps/pep-0604/>`_
+     - Allow writing union types as X | Y
+     - Overload the | operator on types to allow writing Union[X, Y] as X | Y
+     - 3.10
+     - No
+   * - `PEP 612 <https://www.python.org/dev/peps/pep-0612/>`_
+     - Parameter Specification Variables
+     - Proposes typing.ParamSpec and typing.Concatenate to support forwarding parameter types of one callable over to another callable
+     - 3.10
+     - No
+   * - `PEP 613 <https://www.python.org/dev/peps/pep-0613/>`_
+     - Explicit Type Aliases
+     - Formalizes a way to explicitly declare an assignment as a type alias
+     - 3.10
+     - No
+   * - `PEP 646 <https://www.python.org/dev/peps/pep-0646/>`_
+     - Variadic Generics
+     - Introduce TypeVarTuple, enabling parameterisation with an arbitrary number of types
+     - 3.11
+     - No
+   * - `PEP 647 <https://www.python.org/dev/peps/pep-0647/>`_
+     - User-Defined Type Guards
+     - Specifies a way for programs to influence conditional type narrowing employed by a type checker based on runtime checks
+     - 3.11
+     - No
+   * - `PEP 655 <https://www.python.org/dev/peps/pep-0655/>`_
+     - Marking individual TypedDict items as required or potentially-missing
+     - Two new notations: Required[], which can be used on individual items of a TypedDict to mark them as required, and NotRequired[]
+     - 3.11
+     - No
+   * - `PEP 673 <https://www.python.org/dev/peps/pep-0673/>`_
+     - Self Type
+     - Methods that return an instance of their class
+     - 3.10
+     - No
+   * - `PEP 675 <https://www.python.org/dev/peps/pep-0675/>`_
+     - Arbitrary Literal String Type
+     - Introduces supertype of literal string types: LiteralString
+     - 3.11
+     - No
+   * - `PEP 681 <https://www.python.org/dev/peps/pep-0681/>`_
+     - Data Class Transforms
+     - Provides a way for third-party libraries to indicate that certain decorator functions, classes, and metaclasses provide behaviors similar to dataclasses
+     - 3.11
+     - No
+   * - `PEP 692 <https://www.python.org/dev/peps/pep-0692/>`_
+     - Using TypedDict for more precise kwargs typing
+     - A new syntax for specifying kwargs type as a TypedDict without breaking current behavior
+     - 3.12
+     - No
 
