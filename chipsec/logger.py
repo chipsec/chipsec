@@ -28,8 +28,8 @@ import binascii
 import sys
 import os
 import atexit
-from typing import Tuple, Dict
 from time import localtime, strftime
+from typing import Dict, List, Tuple
 
 from chipsec.testcase import ChipsecResults
 
@@ -398,27 +398,27 @@ def logger():
     """Returns a Logger instance."""
     return _logger
 
-def aligned_column_spacing(table_data: list[Tuple[str, Dict[str, str]]]) -> Tuple[int, ...]:
+def aligned_column_spacing(table_data: List[Tuple[str, Dict[str, str]]]) -> Tuple[int, ...]:
     clean_data = clean_data_table(table_data)
     all_column_widths = get_column_widths(clean_data)
     required_widths = find_required_col_widths(all_column_widths)
     return tuple(required_widths)
 
-def clean_data_table(data_table: list[Tuple[str, Dict[str, str]]]) -> list[list[str]]:
+def clean_data_table(data_table: List[Tuple[str, Dict[str, str]]]) -> List[List[str]]:
     clean_table = [extract_column_values(row) for row in data_table]
     return clean_table
 
-def extract_column_values(row_data: Tuple[str, Dict[str, str]]) -> list[str]:
+def extract_column_values(row_data: Tuple[str, Dict[str, str]]) -> List[str]:
     clean_row = [row_data[0]]
     additional_column_values = row_data[1].values()
     [clean_row.append(value) for value in additional_column_values]
     return clean_row
 
-def get_column_widths(data: list[list[str]]) -> list[list[int]]:
+def get_column_widths(data: List[List[str]]) -> List[List[int]]:
     col_widths = [[len(col) for col in row] for row in data]
     return col_widths
 
-def find_required_col_widths(col_data: list[list[int]], minimum_width = 2) -> Tuple[int, ...]:
+def find_required_col_widths(col_data: List[List[int]], minimum_width = 2) -> Tuple[int, ...]:
     columns_per_row = len(col_data[0])
     max_widths = ([(max(rows[i] for rows in col_data)) for i in range(columns_per_row)])
     for i in range(len(max_widths)):
