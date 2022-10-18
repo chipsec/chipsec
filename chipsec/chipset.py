@@ -461,7 +461,7 @@ class Chipset:
                                     _det = _sku.attrib['detection_value']
                             if _did == "":
                                 if logger().DEBUG:
-                                    logger().warn("No SKU found in configuration")
+                                    logger().log_warning("No SKU found in configuration")
                             cdict['did'] = _did
                             cdict['detection_value'] = _det
             for cc in self.chipset_codes:
