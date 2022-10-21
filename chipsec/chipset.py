@@ -335,7 +335,7 @@ class Chipset:
         return self.pch_longname
 
     def print_chipset(self):
-        logger().log("[*] Platform: {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.vid, self.did, self.rid))
+        logger().log("[*] Platform: {}\n          CPUID: {}\n           VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.longname, self.get_cpuid(), self.vid, self.did, self.rid))
 
     def print_pch(self):
         logger().log("[*] PCH     : {}\n          VID: {:04X}\n          DID: {:04X}\n          RID: {:02X}".format(self.pch_longname, self.pch_vid, self.pch_did, self.pch_rid))
