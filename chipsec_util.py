@@ -194,10 +194,13 @@ class ChipsecUtil:
 
         if self._show_banner:
             logger().log("[CHIPSEC] Helper  : {} ({})".format(*self._cs.helper.helper.get_info()))
-            chip_info = "[CHIPSEC] {:8}: {}\n[CHIPSEC]      VID: {:04X}\n" \
+
+            chip_info = "[CHIPSEC] {:8}: {}\n[CHIPSEC]      CPUID: {}\n[CHIPSEC]      VID: {:04X}\n" \
                 "[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}"
-            logger().log(chip_info.format("Platform", self._cs.longname, self._cs.vid, self._cs.did, self._cs.rid))
+            logger().log(chip_info.format("Platform", self._cs.longname, self._cs.get_cpuid(), self._cs.vid, self._cs.did, self._cs.rid))
             if not self._cs.is_atom():
+                chip_info = "[CHIPSEC] {:8}: {}\n[CHIPSEC]      VID: {:04X}\n" \
+                    "[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}"
                 logger().log(chip_info.format("PCH", self._cs.pch_longname, self._cs.pch_vid,
                                               self._cs.pch_did, self._cs.pch_rid))
 
