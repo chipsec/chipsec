@@ -7,15 +7,22 @@ We also have the `issue tracker <https://github.com/chipsec/chipsec/issues>`_ in
 
 If you'd like to make a contribution to the code please open a `pull request <https://github.com/chipsec/chipsec/pulls>`_
 
-Mailing lists:
+Mailing list:
 
- * CHIPSEC users: https://groups.google.com/forum/#!forum/chipsec-users
- * CHIPSEC discussion list on 01.org: https://lists.01.org/hyperkitty/list/chipsec@lists.01.org/
+ * Site: https://lists.linux.dev/
+ * Name: oe-chipsec
+ * List Address: oe-chipsec@lists.linux.dev
+ * Archive Site: https://lore.kernel.org/oe-chipsec/
+ If you wish to subscribe, please send an email to: oe-chipsec+subscribe@lists.linux.dev
 
 Twitter:
 
  * For CHIPSEC release alerts: Follow `CHIPSEC Release <https://twitter.com/ChipsecR>`_
  * For general CHIPSEC info: Follow `CHIPSEC <https://twitter.com/Chipsec>`_
+
+Discord:
+
+ * `CHIPSEC Discord Server <https://discord.gg/NvxdPe8RKt>`
 
 .. note::
 
