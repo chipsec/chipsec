@@ -437,7 +437,9 @@ class ChipsecMain:
             logger().log("[*] Use of the -a command no longer needs to have arguments concatenated with ','")
             self._module_argv = self._module_argv[0].split(',')
         if self._unknownPlatform is False:
-            logger().log("[*] Ignoring unsupported platform warning and continue execution")
+            logger().log_warning("Ignoring unsupported platform warning and continue execution.")
+            logger().log_warning("Most results cannot be trusted.")
+            logger().log_warning("Unless a platform independent module is being run, do not file issues against this run.")
         if self._from_file:
             self._driver_exists = "FileHelper"
 
@@ -496,7 +498,7 @@ class ChipsecMain:
                 if self._unknownPlatform:
                     logger().log_error('To specify a cpu please use -p command-line option')
                     logger().log_error('To specify a pch please use --pch command-line option\n')
-                    logger().log_error('To load legacy configuration and run anyways please use -i command-line option')
+                    logger().log_error('If the correct configuration is not loaded, results should not be trusted.')
                     if logger().DEBUG:
                         logger().log_bad(traceback.format_exc())
                     if self.failfast:

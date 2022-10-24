@@ -69,34 +69,34 @@ chipsec_main options
    usage: chipsec_main.py [options]
 
    Options:
-     -h, --help                      show this message and exit
-     -m, --module _MODULE            specify module to run (example: -m common.bios_wp)
-     -a, --module_args _MODULE_ARGV  additional module arguments
-     -v, --verbose                   verbose mode
-     -vv, --vverbose                 very verbose HAL debug mode
+     -h, --help                      Show this message and exit
+     -m, --module _MODULE            Specify module to run (example: -m common.bios_wp)
+     -a, --module_args _MODULE_ARGV  Additional module arguments
+     -v, --verbose                   Verbose mode
+     -vv, --vverbose                 Very verbose HAL debug mode
      --hal                           HAL mode
-     -d, --debug                     debug mode
-     -l, --log  LOG                  output to log file
+     -d, --debug                     Debug mode
+     -l, --log  LOG                  Output to log file
 
    Advanced Options:
-     -p, --platform _PLATFORM            explicitly specify platform code
-     --pch _PCH                          explicitly specify PCH code
-     -n, --no_driver                     chipsec won't need kernel mode functions so don't load chipsec driver
-     -i, --ignore_platform               run chipsec even if the platform is not recognized
-     -j, --json _JSON_OUT                specify filename for JSON output
-     -x, --xml _XML_OUT                  specify filename for xml output (JUnit style)
-     -k, --markdown                      specify filename for markdown output
-     -t, --moduletype USER_MODULE_TAGS   run tests of a specific type (tag)
-     --list_tags                         list all the available options for -t,--moduletype
-     -I, --include IMPORT_PATHS          specify additional path to load modules from
-     --failfast                          fail on any exception and exit (don't mask exceptions)
-     --no_time                           don't log timestamps
-     --deltas _DELTAS_FILE               specifies a JSON log file to compute result deltas from
-     --record _TO_FILE                   run chipsec and clone helper results into JSON file
-     --replay _FROM_FILE                 replay a chipsec run with JSON file
-     --helper _HELPER                    specify OS Helper
-     -nb, --no_banner                    chipsec won't display banner information
-     --skip_config                       skip configuration and driver loading
+     -p, --platform _PLATFORM            Explicitly specify platform code
+     --pch _PCH                          Explicitly specify PCH code
+     -n, --no_driver                     Chipsec won't need kernel mode functions so don't load chipsec driver
+     -i, --ignore_platform               Run chipsec even if the platform is not recognized (not recommended)
+     -j, --json _JSON_OUT                Specify filename for JSON output
+     -x, --xml _XML_OUT                  Specify filename for xml output (JUnit style)
+     -k, --markdown                      Specify filename for markdown output
+     -t, --moduletype USER_MODULE_TAGS   Run tests of a specific type (tag)
+     --list_tags                         List all the available options for -t,--moduletype
+     -I, --include IMPORT_PATHS          Specify additional path to load modules from
+     --failfast                          Fail on any exception and exit (don't mask exceptions)
+     --no_time                           Don't log timestamps
+     --deltas _DELTAS_FILE               Specifies a JSON log file to compute result deltas from
+     --record _TO_FILE                   Run chipsec and clone helper results into JSON file
+     --replay _FROM_FILE                 Replay a chipsec run with JSON file
+     --helper _HELPER                    Specify OS Helper
+     -nb, --no_banner                    Chipsec won't display banner information
+     --skip_config                       Skip configuration and driver loading
 
 chipsec_util options
 --------------------
@@ -106,14 +106,14 @@ chipsec_util options
    usage: chipsec_util.py [options] <command>
 
    Options:
-     -h, --help                   show this message and exit
-     -v, --verbose                verbose mode
+     -h, --help                   Show this message and exit
+     -v, --verbose                Verbose mode
      --hal                        HAL mode
-     -d, --debug                  debug mode
-     -l, --log  LOG               output to log file
-     -p, --platform _PLATFORM     explicitly specify platform code
-     --pch _PCH                   explicitly specify PCH code
-     -n, --no_driver              chipsec won't need kernel mode functions so don't load chipsec driver
-     -i, --ignore_platform        run chipsec even if the platform is not recognized
+     -d, --debug                  Debug mode
+     -l, --log  LOG               Output to log file
+     -p, --platform _PLATFORM     Explicitly specify platform code
+     --pch _PCH                   Explicitly specify PCH code
+     -n, --no_driver              Chipsec won't need kernel mode functions so don't load chipsec driver
+     -i, --ignore_platform        Run chipsec even if the platform is not recognized (not recommended)
      Command _CMD                 Util command to run
      Command _ARGS                All numeric values are in hex <width> is in {1 - byte, 2 - word, 4 - dword}
