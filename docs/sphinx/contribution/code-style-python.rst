@@ -1,3 +1,12 @@
+
+Python Version
+==============
+
+All Python code, and PEP support, must to be limited to the features supported by **Python 3.6.8**.
+
+This is earliest version of Python utilized by CHIPSEC, the version of the EFI Shell Python.
+
+
 Python Coding Style Guide
 =========================
 
@@ -196,10 +205,6 @@ If in doubt, follow the existing code style and formatting.
 
 Type Hints
 ==========
-
-Employing Type Hints is encouraged but any commits utilizing them must to be limited to the features supported by **Python 3.6.8**.
-
-This is earliest version of Python utilized by CHIPSEC, the version of the EFI Shell Python.
 
 For more information on Python Type Hints:
   `PEP 483 - The Theory of Type Hints <https://peps.python.org/pep-0483/>`_
