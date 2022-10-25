@@ -203,6 +203,30 @@ If in doubt, follow the existing code style and formatting.
     The routine you are calling, may already be using one.
 
 
+f-Strings
+=========
+
+.. list-table:: PEP versions supported by CHIPSEC
+   :widths: 12 25 25 12 10
+   :header-rows: 1
+
+   * - PEP / bpo
+     - Title
+     - Summary
+     - Python Version
+     - Supported
+   * - `PEP 3107 <https://www.python.org/dev/peps/pep-0498/>`_
+     - Literal String Interpolation
+     - Adds a new string formatting mechanism: Literal String Interpolation, f-strings
+     - 3.6
+     - Yes
+   * - `bpo 36817 <https://github.com/python/cpython/issues/80998>`_
+     - Add = to f-strings for easier debugging
+     - f-strings support = for self-documenting expressions
+     - 3.8
+     - No
+
+
 Type Hints
 ==========
 
@@ -213,7 +237,7 @@ For more information on Python Type Hints:
 This table lists which Type Hint PEPs are in scope for CHIPSEC.
 
 .. list-table:: PEP versions supported by CHIPSEC
-   :widths: 9 25 25 12 10
+   :widths: 12 25 25 12 10
    :header-rows: 1
 
    * - PEP
