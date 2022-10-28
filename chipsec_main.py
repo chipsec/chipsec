@@ -463,7 +463,7 @@ class ChipsecMain:
         logger().log("[CHIPSEC] Python  : {} ({})".format(platform.python_version(),
                                                           "64-bit" if self.PYTHON_64_BITS else "32-bit"))
         logger().log("[CHIPSEC] Helper  : {} ({})".format(*self._cs.helper.helper.get_info()))
-        chip_info = "[CHIPSEC] {:8}: {}\n[CHIPSEC]      CPUID: {}\n[CHIPSEC]      VID: {:04X}\n" \
+        chip_info = "[CHIPSEC] {:8}: {}\n[CHIPSEC]    CPUID: {}\n[CHIPSEC]      VID: {:04X}\n" \
             "[CHIPSEC]      DID: {:04X}\n[CHIPSEC]      RID: {:02X}"
         logger().log(chip_info.format("Platform", self._cs.longname, self._cs.get_cpuid(), self._cs.vid, self._cs.did, self._cs.rid))
         if not self._cs.is_atom():
