@@ -207,7 +207,7 @@ f-Strings
 =========
 
 .. list-table:: PEP versions supported by CHIPSEC
-   :widths: 12 25 25 12 10
+   :widths: 12 23 25 12 12
    :header-rows: 1
 
    * - PEP / bpo
@@ -215,7 +215,7 @@ f-Strings
      - Summary
      - Python Version
      - Supported
-   * - `PEP 3107 <https://www.python.org/dev/peps/pep-0498/>`_
+   * - `PEP 498 <https://www.python.org/dev/peps/pep-0498/>`_
      - Literal String Interpolation
      - Adds a new string formatting mechanism: Literal String Interpolation, f-strings
      - 3.6
@@ -237,7 +237,7 @@ For more information on Python Type Hints:
 This table lists which Type Hint PEPs are in scope for CHIPSEC.
 
 .. list-table:: PEP versions supported by CHIPSEC
-   :widths: 12 25 25 12 10
+   :widths: 12 23 25 12 12
    :header-rows: 1
 
    * - PEP
@@ -280,15 +280,15 @@ This table lists which Type Hint PEPs are in scope for CHIPSEC.
      - Literal types indicate that some expression has literally a specific value(s).
      - 3.8
      - No
+   * - `PEP 589 <https://www.python.org/dev/peps/pep-0589/>`_
+     - TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
+     - Support dictionary object with a specific set of string keys, each with a value of a specific type
+     - 3.8
+     - No
    * - `PEP 593 <https://www.python.org/dev/peps/pep-0593/>`_
      - Flexible function and variable annotations
      - Adds an Annotated type to the typing module to decorate existing types with context-specific metadata.
      - 3.9
-     - No
-   * - `PEP 598 <https://www.python.org/dev/peps/pep-0598/>`_
-     - TypedDict: Type Hints for Dictionaries with a Fixed Set of Keys
-     - Support dictionary object with a specific set of string keys, each with a value of a specific type
-     - 3.8
      - No
    * - `PEP 604 <https://www.python.org/dev/peps/pep-0604/>`_
      - Allow writing union types as X | Y
