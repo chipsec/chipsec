@@ -46,7 +46,7 @@ jobs:
       image: docker://${{ matrix.distro.image_prefix }}${{ matrix.distro.name }}:${{ matrix.distro.tag }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Install Alpine dependencies
       if: matrix.distro.name == 'alpine'
@@ -125,9 +125,9 @@ jobs:
         CHIPSEC_MODULE_VER="$(cat chipsec/VERSION)"
         echo "CHIPSEC_MODULE_VER=${CHIPSEC_MODULE_VER}" >> "$GITHUB_ENV"
 
-        echo "::set-output name=kernel::${KERNEL_VER}"
-        echo "::set-output name=chipsec::${CHIPSEC_MODULE_VER}"
-        echo "::set-output name=uname_m::$(uname -m)"
+        echo "kernel=${KERNEL_VER}" >> "$GITHUB_OUTPUT"
+        echo "chipsec=${CHIPSEC_MODULE_VER}" >> "$GITHUB_OUTPUT"
+        echo "uname_m=$(uname -m)" >> "$GITHUB_OUTPUT"
 
     - name: Build Linux driver with DKMS for ${{ steps.versions.outputs.kernel }}
       run: |
@@ -142,11 +142,11 @@ jobs:
       id: modinfo
       run: |
         MODULE="$(ls -1 "/var/lib/dkms/chipsec/${CHIPSEC_MODULE_VER}/${KERNEL_VER}/$(uname -m)/module/chipsec.ko"* | head -n1)"
-        echo "::set-output name=module_path::${MODULE}"
+        echo "module_path=${MODULE}" >> "$GITHUB_OUTPUT"
         modinfo "${MODULE}"
 
     - name: Upload Linux driver from ${{ steps.modinfo.outputs.module_path }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: chipsec-${{ steps.versions.outputs.chipsec }}.${{ matrix.distro.name }}-${{ matrix.distro.tag }}${{ matrix.distro.variant }}-${{ steps.versions.outputs.kernel }}.${{ steps.versions.outputs.uname_m }}
         path: ${{ steps.modinfo.outputs.module_path }}
@@ -166,10 +166,10 @@ jobs:
           - "3.6"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
 
@@ -182,7 +182,7 @@ jobs:
       run: python setup.py build_ext -i
 
     - name: Upload Windows driver
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: drivers_win7_x64__from_py${{ matrix.python }}
         path: drivers/win7/x64
@@ -214,11 +214,11 @@ jobs:
 
     steps:
     - name: Set up Python ${{ matrix.versions.python }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.versions.python }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Patch chipsec_main to return true even when some module failed
       run: |
