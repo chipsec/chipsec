@@ -226,12 +226,16 @@ class Chipset:
             # platform code was not passed in try to determine based upon cpu id
             vid_found = vid in self.chipset_dictionary
             did_found = did in self.chipset_dictionary[vid]
+            #check if multiple platform found by [vid][did]
             multiple_found = len(self.chipset_dictionary[vid][did]) > 1
+            logger().log_debug("read out cpuid:{}, platforms found per vid & did:{}, multiple:{}".format(cpuid, self.chipset_dictionary[vid][did], multiple_found))
+            for i in self.detection_dictionary.keys():
+                logger().log_debug("cpuid detection val:{}, plat:{}".format(i, self.detection_dictionary[i]))
             cpuid_found = cpuid in self.detection_dictionary.keys()
             if vid_found and did_found and multiple_found and cpuid_found:
                 for item in self.chipset_dictionary[vid][did]:
                     if self.detection_dictionary[cpuid] == item['code']:
-                        # matched processor with detection value
+                        # matched processor with detection value, cpuid used to decide the correct platform
                         _unknown_platform = False
                         data_dict = item
                         self.code = data_dict['code'].upper()
