@@ -57,14 +57,16 @@ class TestChipsecUtil(unittest.TestCase):
         """
         chipsec_util._cs = chipset.cs()
         chipsec_util._cs.helper.helper = helper_class()
-        util = chipsec_util.ChipsecUtil(arg.split())
-        util.VERBOSE = True
-        logger.logger().HAL = True
-        logger.logger().set_log_file(self.log_file)
+        args = arg.split()
+        par = chipsec_util.parse_args(args)
+        util = chipsec_util.ChipsecUtil(par, args)
+        util.logger.VERBOSE = True
+        util.logger.HAL = True
+        util.logger.set_log_file(self.log_file)
         try:
             err_code = util.main()
         finally:
-            logger.logger().close()
+            util.logger.close()
         with open(self.log_file, 'rb') as log:
             self.log = log.read()
         self.assertEqual(err_code, 0)

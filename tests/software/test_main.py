@@ -29,5 +29,5 @@ class TestChipsecMain(unittest.TestCase):
     def test_help(self):
         """Run chipsec_main --help"""
         # Basic test. This should run without loading the driver.
-        m = chipsec_main.ChipsecMain(["--help"])
-        self.assertEqual(ExitCode.OK, m.main())
+        m = chipsec_main.main(['--help'])
+        self.assertEqual(ExitCode.OK, m)
