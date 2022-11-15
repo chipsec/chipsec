@@ -326,6 +326,8 @@ class InvalidChipsetHelper(TestHelper):
         else:
             raise Exception("Unexpected PCI read")
 
+    def cpuid(self, eax, ecx):
+        return 0xfffff, 0, 0, 0
 
 class InvalidPchHelper(TestHelper):
     def read_pci_reg(self, bus, device, function, address, size):
