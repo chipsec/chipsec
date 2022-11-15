@@ -62,9 +62,11 @@ class GenericHardwareTest(unittest.TestCase):
         os.remove(self.log_file)
 
     def _generic_main(self):
-        cm = chipsec_main.ChipsecMain(["-l", self.log_file])
+        arg = ['-l', self.log_file]
+        par = chipsec_main.parse_args(arg)
+        cm = chipsec_main.ChipsecMain(par, arg)
         error_code = cm.main()
-        logger.logger().close()
+        cm.logger.close()
         self.log = open(self.log_file).read()
         self.assertLessEqual(error_code, 31,
                              "At least one test raised an error")
