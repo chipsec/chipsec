@@ -21,6 +21,8 @@
 import struct
 import os
 import string
+import platform
+from typing import Tuple
 
 import chipsec.file
 
@@ -203,6 +205,10 @@ def get_version():
         with open(version_file, "r") as verFile:
             version_strs.append(verFile.read().strip())
     return '-'.join(version_strs)
+
+
+def os_version() -> Tuple[str, str, str, str]:
+    return platform.system(), platform.release(), platform.version(), platform.machine()
 
 
 def is_printable(seq):

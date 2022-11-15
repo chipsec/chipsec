@@ -28,9 +28,10 @@ import binascii
 import sys
 import os
 import atexit
-from time import localtime, strftime
-from typing import Dict, List, Tuple
+from time import localtime
+from typing import Sequence, Tuple, Dict, List
 
+from chipsec.defines import get_version, get_message, os_version
 from chipsec.testcase import ChipsecResults
 
 try:
@@ -191,6 +192,7 @@ class Logger:
         self.LOG_TO_FILE = False
         self.LOG_FILE_NAME = None
         self.close()
+        self.Results.flush_testcases()
 
     ######################################################################
     # Logging functions
@@ -380,15 +382,54 @@ class Logger:
         if self.LOG_TO_FILE:
             self._write_log(text, self.LOG_FILE_NAME)
 
-    VERBOSE = False
-    UTIL_TRACE = False
-    HAL = False
-    DEBUG = False
+    def print_banner(self, arguments: Sequence[str]) -> None:
+        """Prints CHIPSEC banner"""
+        version = get_version()
+        message = get_message()
+        args = ' '.join(arguments)
+        self.log('################################################################\n'
+                 '##                                                            ##\n'
+                 '##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n'
+                 '##                                                            ##\n'
+                 '################################################################')
+        self.log(f'[CHIPSEC] Version  : {version}')
+        self.log(f'[CHIPSEC] Arguments: {args}')
+        self.log(message)
 
-    LOG_TO_STATUS_FILE = False
-    LOG_STATUS_FILE_NAME = ""
-    LOG_TO_FILE = False
-    LOG_FILE_NAME = ""
+    def print_banner_properties(self, cs) -> None:
+        """Prints CHIPSEC properties banner"""
+        (system, release, version, machine) = os_version()
+        is_python_64 = True if (sys.maxsize > 2**32) else False
+        python_version = platform.python_version()
+        python_arch = "64-bit" if is_python_64 else "32-bit"
+        (helper_name, driver_path) = cs.helper.helper.get_info()
+
+        self.log(f'[CHIPSEC] OS      : {system} {release} {version} {machine}')
+        self.log(f'[CHIPSEC] Python  : {python_version} ({python_arch})')
+        self.log(f'[CHIPSEC] Helper  : {helper_name} ({driver_path})')
+        self.log(f'[CHIPSEC] Platform: {cs.longname}')
+        self.log(f'[CHIPSEC]    CPUID: {cs.get_cpuid()}')
+        self.log(f'[CHIPSEC]      VID: {cs.vid}')
+        self.log(f'[CHIPSEC]      DID: {cs.did}')
+        self.log(f'[CHIPSEC]      RID: {cs.rid}')
+        if not cs.is_atom():
+            self.log(f'[CHIPSEC] PCH     : {cs.pch_longname}')
+            self.log(f'[CHIPSEC]      VID: {cs.pch_vid}')
+            self.log(f'[CHIPSEC]      DID: {cs.pch_did}')
+            self.log(f'[CHIPSEC]      RID: {cs.pch_rid}')
+
+        if not is_python_64 and machine.endswith("64"):
+            self.log_warning("Python architecture (32-bit) is different from OS architecture (64-bit)")
+
+    VERBOSE: bool = False
+    UTIL_TRACE: bool = False
+    HAL: bool = False
+    DEBUG: bool = False
+
+    LOG_TO_STATUS_FILE: bool = False
+    LOG_STATUS_FILE_NAME: str = ""
+    LOG_TO_FILE: bool = False
+    LOG_FILE_NAME: str = ""
 
 
 _logger = Logger()
@@ -398,15 +439,18 @@ def logger():
     """Returns a Logger instance."""
     return _logger
 
+
 def aligned_column_spacing(table_data: List[Tuple[str, Dict[str, str]]]) -> Tuple[int, ...]:
     clean_data = clean_data_table(table_data)
     all_column_widths = get_column_widths(clean_data)
     required_widths = find_required_col_widths(all_column_widths)
     return tuple(required_widths)
 
+
 def clean_data_table(data_table: List[Tuple[str, Dict[str, str]]]) -> List[List[str]]:
     clean_table = [extract_column_values(row) for row in data_table]
     return clean_table
+
 
 def extract_column_values(row_data: Tuple[str, Dict[str, str]]) -> List[str]:
     clean_row = [row_data[0]]
@@ -414,11 +458,13 @@ def extract_column_values(row_data: Tuple[str, Dict[str, str]]) -> List[str]:
     [clean_row.append(value) for value in additional_column_values]
     return clean_row
 
+
 def get_column_widths(data: List[List[str]]) -> List[List[int]]:
     col_widths = [[len(col) for col in row] for row in data]
     return col_widths
 
-def find_required_col_widths(col_data: List[List[int]], minimum_width = 2) -> Tuple[int, ...]:
+
+def find_required_col_widths(col_data: List[List[int]], minimum_width=2) -> Tuple[int, ...]:
     columns_per_row = len(col_data[0])
     max_widths = ([(max(rows[i] for rows in col_data)) for i in range(columns_per_row)])
     for i in range(len(max_widths)):
@@ -428,6 +474,7 @@ def find_required_col_widths(col_data: List[List[int]], minimum_width = 2) -> Tu
 ##################################################################################
 # Hex dump functions
 ##################################################################################
+
 
 def hex_to_text(value):
     '''Generate text string based on bytestrings'''
