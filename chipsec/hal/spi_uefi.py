@@ -51,6 +51,7 @@ from chipsec.hal.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE,
 from chipsec.hal.uefi_fv import EFI_GUID_DEFINED_SECTION, EFI_GUID_DEFINED_SECTION_size, NextFwFile, NextFwFileSection, NextFwVolume, GetFvHeader
 from chipsec.hal.uefi_fv import EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID, LZMA_CUSTOM_DECOMPRESS_GUID, TIANO_DECOMPRESSED_GUID
 from chipsec.hal.uefi_fv import EFI_CERT_TYPE_RSA_2048_SHA256_GUID, EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size, EFI_SECTION, EFI_FV, EFI_FILE
+from chipsec.hal.uefi_fv import EFI_FIRMWARE_CONTENTS_SIGNED_GUID, WIN_CERT_TYPE_EFI_GUID, WIN_CERTIFICATE_size, WIN_CERTIFICATE
 from chipsec.hal.uefi_fv import EFI_SECTION_COMPRESSION, EFI_SECTION_FIRMWARE_VOLUME_IMAGE, EFI_SECTION_RAW, SECTION_NAMES, DEF_INDENT
 from chipsec.hal.uefi_fv import FILE_TYPE_NAMES, EFI_FS_GUIDS, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID, EFI_FILE_HEADER_CONSTRUCTION
 from chipsec.hal.uefi_fv import EFI_COMPRESSION_SECTION_size, EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_FFS_PAD, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
@@ -139,7 +140,7 @@ def modify_uefi_region(data, command, guid, uefi_file=''):
             #    FvHeader = FvHeader[:0x32] + struct.pack('<H', NewChecksum) + FvHeader[0x34:]
             #    data = data[:FvOffset] + FvHeader + data[FvOffset + FvHeaderLength:]
 
-        fv = NextFwVolume(data, fv.Offset + fv.Size)
+        fv = NextFwVolume(data, fv.Offset, fv.Size)
     return data
 
 
@@ -196,6 +197,22 @@ def build_efi_modules_tree(fwtype, data, Size, offset, polarity):
                 sec.Comments = "Certificate Type RSA2048/SHA256"
                 if len(sec.Image) > offset:
                     sec.children = build_efi_modules_tree(fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
+            elif sec.Guid == EFI_FIRMWARE_CONTENTS_SIGNED_GUID:
+                start = sec.HeaderSize + EFI_GUID_DEFINED_SECTION_size
+                stop = start + WIN_CERTIFICATE_size
+                length, _, cert_type, guid = struct.unpack(WIN_CERTIFICATE, sec.Image[start:stop])
+                certGuid = UUID(bytes_le=guid)
+                if cert_type == WIN_CERT_TYPE_EFI_GUID:
+                    sec.Comments = "Found UEFI Certificate."
+                    if certGuid == EFI_CERT_TYPE_RSA_2048_SHA256_GUID:
+                        sec.Comments += " Cert of type RSA2048/SHA256!"
+                    else:
+                        sec.Comments += f" Cert of unknown type! But the guid is: {certGuid}"
+                else:
+                    sec.Comments = f"Unknown cert type: {cert_type}"
+                offset = sec.DataOffset + length
+                if len(sec.Image) > offset:
+                    sec.children = build_efi_modules_tree(fwtype, sec.Image[offset:], len(sec.Image[offset:]), 0, polarity)
             else:
                 sec.children = build_efi_model(sec.Image[sec.HeaderSize:], fwtype)
 
@@ -240,7 +257,7 @@ def build_efi_file_tree(fv_img, fwtype):
     fv = []
     while fwbin is not None:
         fwbin.calc_hashes()
-        if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD) or fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
+        if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
             fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
             fv.append(fwbin)
         elif fwbin.Type == EFI_FV_FILETYPE_RAW:
@@ -251,6 +268,9 @@ def build_efi_file_tree(fv_img, fwtype):
                 fwbin.isNVRAM = True
                 fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
                 fv.append(fwbin)
+        elif fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
+            fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
+            fv.append(fwbin)
         fwbin = NextFwFile(fv_img, fv_size, fwbin.Size + fwbin.Offset, polarity)
     return fv
 
@@ -283,7 +303,7 @@ def build_efi_tree(data, fwtype):
                 logger().log_warning("couldn't identify NVRAM in FV {{{}}}".format(fv.Guid))
 
         fvolumes.append(fv)
-        fv = NextFwVolume(data, fv.Offset + fv.Size)
+        fv = NextFwVolume(data, fv.Offset, fv.Size)
 
     return fvolumes
 

@@ -251,7 +251,7 @@ def _getNVstore_EFI(nvram_buf, efi_type):
     l = (-1, -1, None)
     FvOffset = 0
     FvLength = 0
-    fv = NextFwVolume(nvram_buf, FvOffset + FvLength)
+    fv = NextFwVolume(nvram_buf, FvOffset, FvLength)
     while True:
         if (fv is None):
             break
@@ -263,7 +263,7 @@ def _getNVstore_EFI(nvram_buf, efi_type):
                 if (isCorrectVSStype(fv.Image[nvram_start:], efi_type)):
                     l = (fv.Offset + nvram_start, fv.Size - nvram_start, None)
                 break
-        fv = NextFwVolume(nvram_buf, fv.Offset + fv.Size)
+        fv = NextFwVolume(nvram_buf, fv.Offset, fv.Size)
     return l
 
 
@@ -392,7 +392,7 @@ def getNVstore_NVAR(nvram_buf):
                 if (not fwbin.UD):
                     return l
             fwbin = NextFwFile(fv.Image, fv.Size, fwbin.Size + fwbin.Offset, polarity)
-        fv = NextFwVolume(nvram_buf, fv.Offset + fv.Size)
+        fv = NextFwVolume(nvram_buf, fv.Offset, fv.Size)
     return l
 
 
@@ -855,7 +855,7 @@ def getNVstore_EVSA(nvram_buf):
             if (nvram_start != -1) and (nvram_start >= tlv_h_size):
                 nvram_start = nvram_start - tlv_h_size
                 l = (fv.Offset + nvram_start, fv.Size - nvram_start, None)
-        fv = NextFwVolume(nvram_buf, fv.Offset + fv.Size)
+        fv = NextFwVolume(nvram_buf, fv.Offset, fv.Size)
     return l
 
 
