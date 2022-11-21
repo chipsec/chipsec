@@ -24,6 +24,7 @@ UEFI Firmware Volume Parsing/Modification Functionality
 
 import hashlib
 import struct
+from typing import Optional
 from uuid import UUID
 from chipsec.defines import bytestostring
 from chipsec.hal.uefi_common import get_3b_size, bit_set, align
@@ -126,6 +127,7 @@ SECTION_NAMES = {
 EFI_SECTIONS_EXE = [EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16]
 
 EFI_FIRMWARE_VOLUME_HEADER = "<16s16sQIIHHHBB"
+EFI_FIRMWARE_VOLUME_HEADER_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
 EFI_FV_BLOCK_MAP_ENTRY = "<II"
 EFI_FFS_FILE_HEADER = "<16sHBB3sB"
 EFI_FFS_FILE_HEADER2 = "<16sHBB3sBQ"
@@ -135,9 +137,15 @@ EFI_COMPRESSION_SECTION_size = struct.calcsize(EFI_COMPRESSION_SECTION)
 EFI_GUID_DEFINED_SECTION = "<16sHH"
 EFI_GUID_DEFINED_SECTION_size = struct.calcsize(EFI_GUID_DEFINED_SECTION)
 
+WIN_CERTIFICATE = "<IHH16s"
+WIN_CERTIFICATE_size = struct.calcsize(WIN_CERTIFICATE)
+
+WIN_CERT_TYPE_EFI_GUID = 0x0EF1
+
 EFI_CRC32_GUIDED_SECTION_EXTRACTION_PROTOCOL_GUID = UUID("FC1BCDB0-7D31-49AA-936A-A4600D9DD083")
 EFI_CERT_TYPE_RSA_2048_SHA256_GUID = UUID("A7717414-C616-4977-9420-844712A735BF")
 EFI_CERT_TYPE_RSA_2048_SHA256_GUID_size = struct.calcsize("16s256s256s")
+EFI_FIRMWARE_CONTENTS_SIGNED_GUID = UUID("0F9D89E8-9259-4F76-A5AF-0C89E34023DF")
 EFI_FIRMWARE_FILE_SYSTEM_GUID = UUID("7A9354D9-0468-444A-81CE-0BF617D890DF")
 EFI_FIRMWARE_FILE_SYSTEM2_GUID = UUID("8C8CE578-8A3D-4F1C-9935-896185C32DD3")
 EFI_FIRMWARE_FILE_SYSTEM3_GUID = UUID("5473C07A-3DCB-4DCA-BD6F-1E9689E7349A")
@@ -308,13 +316,12 @@ def ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeader
     return fv_rsvd and fv_len and fv_header_len
 
 
-def NextFwVolume(buffer, off=0):
-    fof = off
-    vf_header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
+def NextFwVolume(buffer, off: int = 0, last_fv_size: int = 0) -> Optional[EFI_FV]:
+    fof = off if last_fv_size == 0 else off + max(last_fv_size, EFI_FIRMWARE_VOLUME_HEADER_size)
     size = len(buffer)
-    while ((fof + vf_header_size) < size):
+    while ((fof + EFI_FIRMWARE_VOLUME_HEADER_size) < size):
         fof = bytestostring(buffer).find("_FVH", fof)
-        if fof == -1 or size - fof < vf_header_size:
+        if fof == -1 or size - fof < EFI_FIRMWARE_VOLUME_HEADER_size:
             break
         elif fof < 0x28:
             # continue searching for signature if header is not valid
@@ -323,7 +330,7 @@ def NextFwVolume(buffer, off=0):
         fof = fof - 0x28
         ZeroVector, FileSystemGuid0, \
             FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
-            Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof + vf_header_size])
+            Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[fof:fof + EFI_FIRMWARE_VOLUME_HEADER_size])
         fvh = struct.pack(EFI_FIRMWARE_VOLUME_HEADER, ZeroVector,
                           FileSystemGuid0,
                           FvLength, Signature, Attributes, HeaderLength, 0, ExtHeaderOffset,
@@ -342,14 +349,14 @@ def NextFwVolume(buffer, off=0):
 
 def GetFvHeader(buffer, off=0):
     EFI_FV_BLOCK_MAP_ENTRY_SZ = struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
-    header_size = struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER) + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
+    header_size = EFI_FIRMWARE_VOLUME_HEADER_size + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)
     if (len(buffer) < header_size):
         return (0, 0, 0)
     size = 0
-    fof = off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)
+    fof = off + EFI_FIRMWARE_VOLUME_HEADER_size
     ZeroVector, FileSystemGuid0, \
         FvLength, Signature, Attributes, HeaderLength, Checksum, ExtHeaderOffset,    \
-        Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[off:off + struct.calcsize(EFI_FIRMWARE_VOLUME_HEADER)])
+        Reserved, Revision = struct.unpack(EFI_FIRMWARE_VOLUME_HEADER, buffer[off:off + EFI_FIRMWARE_VOLUME_HEADER_size])
     numblocks, lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY, buffer[fof:fof + struct.calcsize(EFI_FV_BLOCK_MAP_ENTRY)])
     if logger().HAL:
         logger().log('{}'.format(
