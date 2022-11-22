@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2010-2022, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ from chipsec import module_common
 from chipsec import chipset
 from chipsec.helper import oshelper
 from chipsec.logger import logger
-from chipsec.testcase import ExitCode, TestCase
+from chipsec.testcase import ExitCode, TestCase, ChipsecResults
 from chipsec.exceptions import UnknownChipsetError, OsHelperError
 
 try:
@@ -288,8 +288,7 @@ class ChipsecMain:
             self.logger.log("[+] loaded {}".format(modx))
 
     def run_loaded_modules(self):
-
-        results = self.logger.Results
+        results = ChipsecResults()
         results.add_properties(self.properties())
 
         # Print a list of all loaded modules
@@ -300,8 +299,7 @@ class ChipsecMain:
         t = time.time()
         for (modx, modx_argv) in self.Loaded_Modules:
             test_result = TestCase(modx.get_name())
-            results.add_testcase(test_result)
-            self.logger.start_module(modx.get_name())
+            test_result.start_module()
 
             # Run the module
             try:
@@ -319,10 +317,8 @@ class ChipsecMain:
                 self.logger.log_error('Module {} does not inherit BaseModule class'.format(str(modx)))
 
             # Populate results
-            test_result.add_result(module_common.getModuleResultName(result))
-            if modx_argv:
-                test_result.add_arg(modx_argv)
-            self.logger.end_module(modx.get_name())
+            test_result.end_module(module_common.getModuleResultName(result), modx_argv if modx_argv else None)
+            results.add_testcase(test_result)
 
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_full())
@@ -340,42 +336,9 @@ class ChipsecMain:
                 self.logger.log_error("Delta processing disabled.  Displaying results summary.")
             else:
                 test_deltas = chipsec.result_deltas.compute_result_deltas(prev_results, results.get_results())
-
-        if test_deltas is not None:
-            chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
-        elif not self._list_tags:
-            summary = results.order_summary()
-            self.logger.log("\n[CHIPSEC] ***************************  SUMMARY  ***************************")
-            if not self.no_time:
-                self.logger.log("[CHIPSEC] Time elapsed            {:.3f}".format(time.time() - t))
-            for k in summary.keys():
-                if k == 'total':
-                    self.logger.log('[CHIPSEC] Modules {:16}{:d}'.format(k, summary[k]))
-                elif k == 'warnings':
-                    self.logger.log('[CHIPSEC] Modules with {:11}{:d}:'.format(k, len(summary[k])))
-                    for mod in summary[k]:
-                        self.logger.log_warning(mod)
-                elif k == 'exceptions':
-                    if len(summary[k]) > 0:
-                        self.logger.log('[CHIPSEC] Modules with {:11}{:d}:'.format(k, len(summary[k])))
-                        for mod in summary[k]:
-                            self.logger.log_error(mod)
-                else:
-                    self.logger.log('[CHIPSEC] Modules {:16}{:d}:'.format(k, len(summary[k])))
-                    for mod in summary[k]:
-                        if k == 'failed to run':
-                            self.logger.log_error(mod)
-                        elif k == 'passed':
-                            self.logger.log_passed(mod)
-                        elif k == 'information':
-                            self.logger.log_information(mod)
-                        elif k == 'failed':
-                            self.logger.log_failed(mod)
-                        elif k == 'skipped':
-                            self.logger.log_skipped(mod)
-                        elif k == 'not applicable':
-                            self.logger.log_not_applicable(mod)
-            self.logger.log('[CHIPSEC] *****************************************************************')
+                chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
+        elif not self._list_tags and results.get_current is not None:
+            results.print_summary(time.time() - t if not self.no_time else None)
         else:
             self.logger.log("[*] Available tags are:")
             for at in self.AVAILABLE_TAGS:

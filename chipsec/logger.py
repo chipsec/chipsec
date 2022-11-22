@@ -51,6 +51,7 @@ if not os.path.exists(LOG_PATH):
 
 LOGGER_NAME = 'CHIPSEC'
 
+
 class chipsecRecordFactory(logging.LogRecord):
     try:
         is_atty = sys.stdout.isatty()
@@ -72,7 +73,8 @@ class chipsecRecordFactory(logging.LogRecord):
             }
 
             def getMessage(self) -> str:
-                if self.name != LOGGER_NAME: return super().getMessage()
+                if self.name != LOGGER_NAME:
+                    return super().getMessage()
                 color = None
                 msg = str(self.msg)
                 if self.args:
@@ -109,7 +111,8 @@ class chipsecRecordFactory(logging.LogRecord):
             }
 
             def getMessage(self) -> str:
-                if self.name != LOGGER_NAME: return super().getMessage()
+                if self.name != LOGGER_NAME:
+                    return super().getMessage()
                 color = None
                 msg = str(self.msg)
                 if self.args:
@@ -122,25 +125,27 @@ class chipsecRecordFactory(logging.LogRecord):
                 return msg
     else:
         def getMessage(self) -> str:
-            if self.name == LOGGER_NAME: return str(self.msg); return super.getMessage()
+            if self.name == LOGGER_NAME:
+                return str(self.msg)
+            return super.getMessage()
 
 
 class Logger:
     """Class for logging to console, text file, XML."""
 
     class level(Enum):
-        DEBUG=10
-        VERBOSE=11
-        HAL=12
-        HELPER=13
-        INFO=20
-        GOOD=21
-        IMPORTANT=22
-        WARNING=30
-        BAD=31
-        ERROR=40
-        CRITICAL=50
-        EXCEPTION=60
+        DEBUG = 10
+        VERBOSE = 11
+        HAL = 12
+        HELPER = 13
+        INFO = 20
+        GOOD = 21
+        IMPORTANT = 22
+        WARNING = 30
+        BAD = 31
+        ERROR = 40
+        CRITICAL = 50
+        EXCEPTION = 60
 
     def __init__(self, profile='debug.conf'):
         """The Constructor."""
@@ -161,7 +166,7 @@ class Logger:
         logging.setLogRecordFactory(chipsecRecordFactory)  # applies colorization to output
         self.Results = ChipsecResults()
 
-    def log(self, text:str, level:level=level.INFO) -> None:
+    def log(self, text: str, level: level = level.INFO) -> None:
         """Sends plain text to logging."""
         if self.Results.get_current() is not None:
             self.Results.get_current().add_output(text)
@@ -179,7 +184,7 @@ class Logger:
             elif level == self.level.IMPORTANT:
                 self.chipsecLogger.info(f'[!] {text}', 'CYAN')
             elif level == self.level.WARNING:
-                self.chipsecLogger.warning(f'WARNING: {text}', 'YELLOW')           
+                self.chipsecLogger.warning(f'WARNING: {text}', 'YELLOW')
             elif level == self.level.BAD:
                 self.chipsecLogger.info(f'[-] {text}', 'RED')
             elif level == self.level.ERROR:
@@ -256,7 +261,6 @@ class Logger:
         self.LOG_TO_FILE = False
         self.LOG_FILE_NAME = None
         self.close()
-        self.Results.flush_testcases()
 
     def flush(self):
         sys.stdout.flush()
@@ -278,8 +282,6 @@ class Logger:
 
     def _log(self, text, level=logging.INFO, color=None):
         """Sends plain text to logging."""
-        if self.Results.get_current() is not None:
-            self.Results.get_current().add_output(text)
         try:
             self.chipsecLogger.log(level, text, color)
             if self.ALWAYS_FLUSH:
@@ -345,24 +347,12 @@ class Logger:
     # End deprecated logger methods
     # -----------------------------
 
-    def start_test(self, test_name:str) -> None:
+    def start_test(self, test_name: str) -> None:
         """Logs the start point of a Test"""
         text = '[x][ =======================================================================\n'
         text = text + '[x][ Module: ' + test_name + '\n'
         text = text + '[x][ ======================================================================='
         self.chipsecLogger.info(text, 'BLUE')
-
-    def start_module(self, module_name:str) -> None:
-        """Displays a banner for the module name provided."""
-        text = f'\n[*] Running module: {module_name}'
-        self.log(text)
-        if self.Results.get_current() is not None:
-            self.Results.get_current().add_desc(module_name)
-            self.Results.get_current().set_time()
-
-    def end_module(self, module_name:str) -> None:
-        if self.Results.get_current() is not None:
-            self.Results.get_current().set_time()
 
     def print_banner(self, arguments: Sequence[str], version, message) -> None:
         """Prints CHIPSEC banner"""
@@ -400,7 +390,7 @@ class Logger:
 
         if not is_python_64 and machine.endswith('64'):
             self.log_warning('Python architecture (32-bit) is different from OS architecture (64-bit)')
-   
+
     def _write_log(self, text, filename):
         """Write text to defined log file"""
         self.chipsecLogger.log(self.info, text)
@@ -414,7 +404,7 @@ class Logger:
     def _save_to_log_file(self, text):
         if self.LOG_TO_FILE:
             self._write_log(text, self.LOG_FILE_NAME)
-            
+
     VERBOSE: bool = False
     UTIL_TRACE: bool = False
     HAL: bool = False
@@ -425,12 +415,14 @@ class Logger:
     LOG_TO_FILE: bool = False
     LOG_FILE_NAME: str = ''
 
+
 _logger = Logger()
 
 
 def logger() -> Logger:
     """Returns a Logger instance."""
     return _logger
+
 
 def aligned_column_spacing(table_data: List[Tuple[str, Dict[str, str]]]) -> Tuple[int, ...]:
     clean_data = clean_data_table(table_data)
