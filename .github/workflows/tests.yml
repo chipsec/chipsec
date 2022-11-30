@@ -36,7 +36,6 @@ jobs:
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "9", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "8", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "20.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "18.04", image_prefix: "docker.io/library/"}
