@@ -88,7 +88,14 @@ class UEFICompression:
                 try:
                     data = lzma.decompress(compressed_data)
                 except lzma.LZMAError:
-                    data = None
+                    # lzma may not be able to decompress
+                    # https://github.com/python/cpython/issues/92018
+                    # suggested workaround is to change the size within the header
+                    try:
+                        buf = compressed_data[:5] + b'\xFF' * 8 + compressed_data[13:]
+                        data = lzma.decompress(buf)
+                    except lzma.LZMAError:
+                        data = None
             elif compression_type == COMPRESSION_TYPE_BROTLI and has_brotli:
                 try:
                     data = brotli.decompress(compressed_data)
@@ -99,7 +106,7 @@ class UEFICompression:
             if logger().HAL and data is None:
                 logger().log("Cannot decompress data with {}".format(compression_type))
         else:
-            logger().error('Unknown EFI compression type 0x{:X}'.format(compression_type))
+            logger().log_error('Unknown EFI compression type 0x{:X}'.format(compression_type))
             data = None
         return data
 
@@ -152,6 +159,6 @@ class UEFICompression:
             else:
                 data = None
         else:
-            logger().error('Unknown EFI compression type 0x{:X}'.format(compression_type))
+            logger().log_error('Unknown EFI compression type 0x{:X}'.format(compression_type))
             data = None
         return data
