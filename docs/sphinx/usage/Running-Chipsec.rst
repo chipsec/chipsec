@@ -69,14 +69,15 @@ chipsec_main options
    usage: chipsec_main.py [options]
 
    Options:
-     -h, --help                      Show this message and exit
-     -m, --module _MODULE            Specify module to run (example: -m common.bios_wp)
-     -a, --module_args _MODULE_ARGV  Additional module arguments
-     -v, --verbose                   Verbose mode
-     -vv, --vverbose                 Very verbose HAL debug mode
-     --hal                           HAL mode
-     -d, --debug                     Debug mode
-     -l, --log  LOG                  Output to log file
+     -h, --help                          Show this message and exit
+     -m, --module _MODULE                Specify module to run (example: -m common.bios_wp)
+     -mx, --module_exclude _MODULE1 ...  Specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)
+     -a, --module_args _MODULE_ARGV      Additional module arguments
+     -v, --verbose                       Verbose mode
+     -vv, --vverbose                     Very verbose HAL debug mode
+     --hal                               HAL mode
+     -d, --debug                         Debug mode
+     -l, --log  LOG                      Output to log file
 
    Advanced Options:
      -p, --platform _PLATFORM            Explicitly specify platform code
