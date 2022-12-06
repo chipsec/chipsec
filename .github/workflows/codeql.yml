@@ -20,11 +20,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ python ]
+        language: [ python, cpp ]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -qqy nasm
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -32,8 +37,10 @@ jobs:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v2
+      - name: Build the driver
+        run: |
+          cd drivers/linux
+          make
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
