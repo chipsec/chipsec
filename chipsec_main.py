@@ -65,6 +65,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options = parser.add_argument_group('Options')
     options.add_argument('-h', '--help', help="show this message and exit", action='store_true')
     options.add_argument('-m', '--module', dest='_module', help='specify module to run (example: -m common.bios_wp)')
+    options.add_argument('-mx', '--module_exclude', dest='_module_exclude', nargs='+', help='specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)')
     options.add_argument('-a', '--module_args', nargs='*', dest="_module_argv", help="additional module arguments")
     options.add_argument('-v', '--verbose', help='verbose mode', action='store_true')
     options.add_argument('--hal', help='HAL mode', action='store_true')
@@ -228,7 +229,11 @@ class ChipsecMain:
         module = chipsec.module.Module(module_name)
 
         if module not in self.Loaded_Modules:
-            self.Loaded_Modules.append((module, module_argv))
+            if self._module_exclude:
+                if not [i for i in self._module_exclude if i in module.name]:
+                    self.Loaded_Modules.append((module, module_argv))
+            else:
+                self.Loaded_Modules.append((module, module_argv))
         return True
 
     def load_modules_from_path(self, from_path, recursive=True):
