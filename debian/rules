@@ -2,14 +2,14 @@
 # -*- makefile -*-
 
 # Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+export DH_VERBOSE=1
 
 include /usr/share/dpkg/pkg-info.mk
 
-PYTHON2_VERSIONS = $(shell pyversions -r)
+#PYTHON3_VERSIONS = $(shell pyversions -r)
 
 %:
-	dh $@ --with python2 --with dkms
+	dh $@ --with python3 --with dkms --buildsystem=pybuild
 
 override_dh_auto_clean:
 	dh_auto_clean
