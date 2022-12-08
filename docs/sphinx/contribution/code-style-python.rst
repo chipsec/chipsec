@@ -203,6 +203,13 @@ If in doubt, follow the existing code style and formatting.
     The routine you are calling, may already be using one.
 
 
+#. Avoid for-else and while-else loops
+
+    The loop behavior for these can be counterintuitive.
+
+    If they have to be used, make sure to properly document the expected behavior / work-flow.
+
+
 f-Strings
 =========
 
@@ -267,7 +274,7 @@ This table lists which Type Hint PEPs are in scope for CHIPSEC.
      - Yes
    * - `PEP 544 <https://www.python.org/dev/peps/pep-0544/>`_
      - Protocols: Structural subtyping (static duck typing)
-     - Specify type metadata for static type checkers and other third party tools
+     - Specify type metadata for static type checkers and other third-party tools
      - 3.8
      - No
    * - `PEP 585 <https://www.python.org/dev/peps/pep-0585/>`_
@@ -341,3 +348,23 @@ This table lists which Type Hint PEPs are in scope for CHIPSEC.
      - 3.12
      - No
 
+
+Walrus Operator (:=)
+====================
+
+At this time, Assignment Expressions (Walrus operator) are not supported.
+
+.. list-table:: PEP versions supported by CHIPSEC
+   :widths: 12 23 25 12 12
+   :header-rows: 1
+
+   * - PEP
+     - Title
+     - Summary
+     - Python Version
+     - Supported
+   * - `PEP 572 <https://peps.python.org/pep-0572/>`_
+     - Assignment Expressions
+     - Adds a way to assign to variables within an expression
+     - 3.8
+     - No
