@@ -669,7 +669,7 @@ class S3BootScriptSmbusOperation:
     BWBR_PROCESS_CALL = 0x0B
 
 
-class op_io_pci_mem():
+class op_io_pci_mem:
     def __init__(self, opcode, size, width, address, unknown, count, buffer, value=None, mask=None):
         self.opcode = opcode
         self.size = size
@@ -709,7 +709,7 @@ class op_io_pci_mem():
         return str_r
 
 
-class op_smbus_execute():
+class op_smbus_execute:
     def __init__(self, opcode, size, address, command, operation, peccheck):
         self.opcode = opcode
         self.size = size
@@ -734,7 +734,7 @@ class op_smbus_execute():
 # } EFI_BOOT_SCRIPT_STALL;
 
 
-class op_stall():
+class op_stall:
     def __init__(self, opcode, size, duration):
         self.opcode = opcode
         self.size = size
@@ -753,7 +753,7 @@ class op_stall():
 # } EFI_BOOT_SCRIPT_DISPATCH;
 
 
-class op_dispatch():
+class op_dispatch:
     def __init__(self, opcode, size, entrypoint, context=None):
         self.opcode = opcode
         self.size = size
@@ -778,7 +778,7 @@ class op_dispatch():
 # } EFI_BOOT_SCRIPT_MEM_POLL;
 
 
-class op_mem_poll():
+class op_mem_poll:
     def __init__(self, opcode, size, width, address, duration, looptimes):
         self.opcode = opcode
         self.size = size
@@ -802,7 +802,7 @@ class op_mem_poll():
 # } EFI_BOOT_SCRIPT_TERMINATE;
 
 
-class op_terminate():
+class op_terminate:
     def __init__(self, opcode, size):
         self.opcode = opcode
         self.size = size
@@ -812,7 +812,7 @@ class op_terminate():
         return "  Opcode     : {} (0x{:02X})\n".format(self.name, self.opcode)
 
 
-class op_unknown():
+class op_unknown:
     def __init__(self, opcode, size):
         self.opcode = opcode
         self.size = size
@@ -821,7 +821,7 @@ class op_unknown():
         return "  Opcode     : unknown (0x{:02X})\n".format(self.opcode)
 
 
-class S3BOOTSCRIPT_ENTRY():
+class S3BOOTSCRIPT_ENTRY:
     def __init__(self, script_type, index, offset_in_script, length, data=None):
         self.script_type = script_type
         self.index = index
@@ -1037,7 +1037,7 @@ class EFI_VENDOR_TABLE(namedtuple('EFI_VENDOR_TABLE', 'VendorGuidData VendorTabl
         return EFI_GUID_STR(self.VendorGuidData)
 
 
-class EFI_CONFIGURATION_TABLE():
+class EFI_CONFIGURATION_TABLE:
     def __init__(self):
         self.VendorTables = {}
 

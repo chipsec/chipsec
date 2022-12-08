@@ -194,7 +194,7 @@ ACPI_RSDP_EXT_SIZE = struct.calcsize(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT)
 assert ACPI_RSDP_EXT_SIZE == 36
 
 
-class RSDP():
+class RSDP:
     def __init__(self, table_content):
         if len(table_content) == ACPI_RSDP_SIZE:
             (self.Signature, self.Checksum, self.OEMID,

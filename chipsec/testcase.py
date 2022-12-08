@@ -55,7 +55,7 @@ class ExitCode:
 """
 
 
-class ChipsecResults():
+class ChipsecResults:
     def __init__(self):
         self.test_cases = []
         self.properties = None
@@ -246,7 +246,7 @@ class ChipsecResults():
         return ret_string
 
 
-class TestCase():
+class TestCase:
     def __init__(self, name):
         self.name = name
         self.result = ''

@@ -35,7 +35,7 @@ except ImportError:
 MODPATH_RE = re.compile("^\w+(\.\w+)*$")
 
 
-class Module():
+class Module:
     def __init__(self, name):
         self.logger = chipsec.logger.logger()
         self.name = name
