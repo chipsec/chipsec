@@ -36,7 +36,7 @@ from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
 from chipsec.defines import bytestostring
 
 
-class ACPI_TABLE():
+class ACPI_TABLE:
     def parse(self, table_content):
         return
 

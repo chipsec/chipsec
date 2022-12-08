@@ -137,7 +137,7 @@ def get_virtio_devices(devices):
     return virtio_devices
 
 
-class VirtIO_Device():
+class VirtIO_Device:
 
     def __init__(self, cs, b, d, f):
         self.cs = cs
