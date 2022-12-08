@@ -36,6 +36,7 @@ from chipsec.exceptions import UnknownChipsetError
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
 from chipsec.file import get_main_dir
+from chipsec.defines import get_version, get_message, os_version
 
 CMD_OPTS_WIDTH = ['byte', 'word', 'dword']
 
@@ -117,7 +118,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
 
     if par['_cmd'] == 'help' or par['show_help']:
         if par['_show_banner']:
-            logger().print_banner(argv)
+            logger().print_banner(argv, get_version(), get_message())
         parser.print_help()
         return None
     else:
@@ -163,7 +164,7 @@ class ChipsecUtil:
         """Receives and executes the commands"""
 
         if self._show_banner:
-            self.logger.print_banner(self.argv)
+            self.logger.print_banner(self.argv, get_version(), get_message())
 
         self.init_cs()
 
@@ -177,24 +178,24 @@ class ChipsecUtil:
                 self._cs.init(self._platform, self._pch, comm.requires_driver() and not self._no_driver,
                               self._driver_exists)
             except UnknownChipsetError as msg:
-                self.logger.log_warning("*******************************************************************")
-                self.logger.log_warning("* Unknown platform!")
-                self.logger.log_warning("* Platform dependent functionality will likely be incorrect")
-                self.logger.log_warning("* Error Message: \"{}\"".format(str(msg)))
-                self.logger.log_warning("*******************************************************************")
+                self.logger.log("*******************************************************************\n"
+                            "* Unknown platform!\n"
+                            "* Platform dependent functionality will likely be incorrect\n"
+                            f"* Error Message: \"{str(msg)}\"\n"
+                            "*******************************************************************", self.logger.level.WARNING)
                 if self._unknownPlatform:
-                    self.logger.log_error('To run anyways please use -i command-line option\n\n')
+                    self.logger.log('To run anyways please use -i command-line option\n\n', self.logger.level.ERROR)
                     sys.exit(ExitCode.OK)
             except Exception as msg:
-                self.logger.log_error(str(msg))
+                self.logger.log(str(msg), self.logger.level.ERROR)
                 sys.exit(ExitCode.EXCEPTION)
         else:
             if comm.requires_driver():
-                self.logger.log_error("Cannot run without driver loaded")
+                self.logger.log("Cannot run without driver loaded", self.logger.level.ERROR)
                 sys.exit(ExitCode.OK)
 
         if self._show_banner:
-            self.logger.print_banner_properties(self._cs)
+            self.logger.print_banner_properties(self._cs, os_version())
 
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()

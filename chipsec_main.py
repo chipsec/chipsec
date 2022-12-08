@@ -98,7 +98,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
 
     if par['help']:
         if par['_show_banner']:
-            logger().print_banner(argv)
+            logger().print_banner(argv, defines.get_version(), defines.get_message())
         parser.print_help()
         return None
     else:
@@ -450,7 +450,7 @@ class ChipsecMain:
         self.init_cs()
 
         if self._show_banner:
-            self.logger.print_banner(self.argv)
+            self.logger.print_banner(self.argv, defines.get_version(), defines.get_message())
 
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath(import_path))
@@ -487,7 +487,7 @@ class ChipsecMain:
             self.logger.log_warning("Platform dependent functionality is likely to be incorrect")
 
         if self._show_banner:
-            self.logger.print_banner_properties(self._cs)
+            self.logger.print_banner_properties(self._cs, defines.os_version())
 
         self.logger.log(" ")
 
