@@ -21,17 +21,16 @@
 """
 Logging functions
 """
-import logging as pyLogging
+import logging
 import platform
 import string
 import binascii
 import sys
 import os
 import atexit
-from time import localtime
+from time import localtime, strftime
 from typing import Sequence, Tuple, Dict, List
-
-from chipsec.defines import get_version, get_message, os_version
+from enum import Enum
 from chipsec.testcase import ChipsecResults
 
 try:
@@ -47,9 +46,12 @@ except ImportError:
         has_WConio = False
 
 LOG_PATH = os.path.join(os.getcwd(), "logs")
+if not os.path.exists(LOG_PATH):
+    os.mkdir(LOG_PATH)
 
+LOGGER_NAME = 'CHIPSEC'
 
-class chipsecrecordfactory(pyLogging.LogRecord):
+class chipsecRecordFactory(logging.LogRecord):
     try:
         is_atty = sys.stdout.isatty()
     except AttributeError:
@@ -70,6 +72,7 @@ class chipsecrecordfactory(pyLogging.LogRecord):
             }
 
             def getMessage(self) -> str:
+                if self.name != LOGGER_NAME: return super().getMessage()
                 color = None
                 msg = str(self.msg)
                 if self.args:
@@ -106,6 +109,7 @@ class chipsecrecordfactory(pyLogging.LogRecord):
             }
 
             def getMessage(self) -> str:
+                if self.name != LOGGER_NAME: return super().getMessage()
                 color = None
                 msg = str(self.msg)
                 if self.args:
@@ -118,38 +122,86 @@ class chipsecrecordfactory(pyLogging.LogRecord):
                 return msg
     else:
         def getMessage(self) -> str:
-            msg = str(self.msg)
-            return msg
+            if self.name == LOGGER_NAME: return str(self.msg); return super.getMessage()
 
 
 class Logger:
     """Class for logging to console, text file, XML."""
 
-    def __init__(self):
+    class level(Enum):
+        DEBUG=10
+        VERBOSE=11
+        HAL=12
+        HELPER=13
+        INFO=20
+        GOOD=21
+        IMPORTANT=22
+        WARNING=30
+        BAD=31
+        ERROR=40
+        CRITICAL=50
+        EXCEPTION=60
+
+    def __init__(self, profile='debug.conf'):
         """The Constructor."""
         self.mytime = localtime()
         self.logfile = None
-        self.rootLogger = pyLogging.getLogger(__name__)
-        self.rootLogger.setLevel(pyLogging.INFO)
         self.ALWAYS_FLUSH = False
-        pyLogging.addLevelName(19, "verbose")
-        pyLogging.addLevelName(18, "hal")
-        self.logstream = pyLogging.StreamHandler(sys.stdout)
-        # Respect https://no-color.org/ convention, and disable colorization
-        # when the output is not a terminal (eg. redirection to a file)
-        pyLogging.setLogRecordFactory(chipsecrecordfactory)  # applies colorization to output
-        self.rootLogger.addHandler(self.logstream)  # adds streamhandler to root logger
+        self.logstream = logging.StreamHandler(sys.stdout)
+        logname = strftime('%a%b%d%y-%H%M%S') + '.log'
+        logPath = os.path.join(LOG_PATH, logname)
+        fileH = logging.FileHandler(logPath)
+        self.chipsecLogger = logging.getLogger(LOGGER_NAME)
+        self.chipsecLogger.setLevel(logging.DEBUG)
+        self.chipsecLogger.addHandler(self.logstream)
+        self.chipsecLogger.addHandler(fileH)
+        logging.addLevelName(11, "VERBOSE")
+        logging.addLevelName(12, "HAL")
+        logging.addLevelName(13, "HELPER")
+        logging.setLogRecordFactory(chipsecRecordFactory)  # applies colorization to output
         self.Results = ChipsecResults()
+
+    def log(self, text:str, level:level=level.INFO) -> None:
+        """Sends plain text to logging."""
+        if self.Results.get_current() is not None:
+            self.Results.get_current().add_output(text)
+        try:
+            if level == self.level.DEBUG:
+                self.chipsecLogger.debug(text, 'BLUE')
+            elif level == self.level.VERBOSE:
+                self.chipsecLogger.log(11, f'[*] [VERBOSE] {text}', 'LIGHT_GRAY')
+            elif level == self.level.HAL:
+                self.chipsecLogger.log(12, f'[*] [HAL] {text}', 'LIGHT_GRAY')
+            elif level == self.level.HELPER:
+                self.chipsecLogger.log(13, f'[*] [HELPER] {text}', 'LIGHT_GRAY')
+            elif level == self.level.GOOD:
+                self.chipsecLogger.info(f'[+] {text}', 'GREEN')
+            elif level == self.level.IMPORTANT:
+                self.chipsecLogger.info(f'[!] {text}', 'CYAN')
+            elif level == self.level.WARNING:
+                self.chipsecLogger.warning(f'WARNING: {text}', 'YELLOW')           
+            elif level == self.level.BAD:
+                self.chipsecLogger.info(f'[-] {text}', 'RED')
+            elif level == self.level.ERROR:
+                self.chipsecLogger.error(f'ERROR: {text}', 'RED')
+            elif level == self.level.CRITICAL:
+                self.chipsecLogger.critical(f'{text}', 'PURPLE')
+            elif level == self.level.EXCEPTION:
+                self.chipsecLogger.exception(f'{text}', 'PURPLE')
+            else:
+                self.chipsecLogger.info(f'{text}', 'WHITE')
+        except Exception:
+            self.chipsecLogger.exception(f'{text}', 'PURPLE')
 
     def setlevel(self):
         if self.DEBUG:
-            self.rootLogger.setLevel(pyLogging.DEBUG)
+            self.chipsecLogger.setLevel(logging.DEBUG)
         elif self.HAL:
-            self.rootLogger.setLevel(pyLogging.getLevelName("hal"))
+            self.chipsecLogger.setLevel(logging.getLevelName('HAL'))
         elif self.VERBOSE:
-            self.rootLogger.setLevel(pyLogging.getLevelName("verbose"))
+            self.chipsecLogger.setLevel(logging.getLevelName('VERBOSE'))
         else:
-            self.rootLogger.setLevel(pyLogging.INFO)
+            self.chipsecLogger.setLevel(logging.INFO)
 
     def set_log_file(self, name=None):
         """Sets the log file for the output."""
@@ -162,28 +214,28 @@ class Logger:
             # Open new log file and keep it opened
             try:
                 # creates FileHandler for log file
-                self.logfile = pyLogging.FileHandler(filename=self.LOG_FILE_NAME, mode='w')
-                self.rootLogger.addHandler(self.logfile)  # adds filehandler to root logger
+                self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='w')
+                self.chipsecLogger.addHandler(self.logfile)  # adds filehandler to root logger
                 self.LOG_TO_FILE = True
             except Exception:
-                print("WARNING: Could not open log file '{}'".format(self.LOG_FILE_NAME))
-            self.rootLogger.removeHandler(self.logstream)
+                print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
+            self.chipsecLogger.removeHandler(self.logstream)
         else:
             try:
-                self.rootLogger.addHandler(self.logstream)
+                self.chipsecLogger.addHandler(self.logstream)
             except Exception:
                 pass
 
-    def close(self):
+    def close(self) -> None:
         """Closes the log file."""
         if self.logfile:
             try:
-                self.rootLogger.removeHandler(self.logfile)
-                self.rootLogger.removeHandler(self.logstream)
+                self.chipsecLogger.removeHandler(self.logfile)
+                self.chipsecLogger.removeHandler(self.logstream)
                 self.logfile.close()
                 self.logstream.flush()
             except Exception:
-                print("WARNING: Could not close log file")
+                print('WARNING: Could not close log file')
             finally:
                 self.logfile = None
 
@@ -194,147 +246,126 @@ class Logger:
         self.close()
         self.Results.flush_testcases()
 
-    ######################################################################
-    # Logging functions
-    ######################################################################
-
     def flush(self):
         sys.stdout.flush()
         if self.LOG_TO_FILE and self.logfile is not None:
             # flush should work with new python logging
             try:
-                self.rootLogger.removeHandler(self.logfile)
+                self.chipsecLogger.removeHandler(self.logfile)
                 self.logfile.flush()
-                self.rootLogger.addHandler(self.logfile)
+                self.chipsecLogger.addHandler(self.logfile)
             except Exception:
                 self.disable()
 
     def set_always_flush(self, val):
         self.ALWAYS_FLUSH = val
 
-    def _log(self, text, level=pyLogging.INFO, color=None):
+    # -------------------------------------------------------
+    # These logger methods are deprecated and will be removed
+    # -------------------------------------------------------
+
+    def _log(self, text, level=logging.INFO, color=None):
         """Sends plain text to logging."""
         if self.Results.get_current() is not None:
             self.Results.get_current().add_output(text)
         try:
-            self.rootLogger.log(level, text, color)
+            self.chipsecLogger.log(level, text, color)
             if self.ALWAYS_FLUSH:
                 self.flush()
         except BaseException:
             print(text)
 
-    def log(self, text):
-        """Plain Log message"""
-        self._log(text, pyLogging.INFO, "WHITE")
-
-    def log_verbose(self, text):
+    def log_verbose(self, text):  # Use log('text', self.logger.VERBOSE)
         """Logs a Verbose message"""
-        self._log(text, pyLogging.getLevelName("verbose"), "LIGHT_GRAY")
+        self.log(text, self.level.VERBOSE)
 
-    def log_hal(self, text):
+    def log_hal(self, text):  # Use log("text", self.logger.HAL)
         """Logs a hal message"""
-        self._log(text, pyLogging.getLevelName("hal"), "LIGHT_GRAY")
+        self.log(text, self.level.HAL)
 
-    def log_debug(self, text):
+    def log_debug(self, text):   # Use log("text", self.logger.DEBUG)
         """Logs a debug message"""
-        self._log(text, pyLogging.DEBUG, "LIGHT_GRAY")
+        self.log(text, self.level.DEBUG)
 
-    def log_passed(self, text):
+    def log_passed(self, text):   # Use log("text", self.logger.GOOD)
         """Logs a passed message."""
-        text = "[+] PASSED: " + text
-        self._log(text, pyLogging.INFO, "GREEN")
+        text = f'PASSED: {text}'
+        self.log(text, self.level.GOOD)
 
     def log_failed(self, text):
         """Logs a failed message."""
-        text = "[-] FAILED: " + text
-        self._log(text, pyLogging.INFO, "RED")
+        text = f'FAILED: {text}'
+        self.log(text, self.level.BAD)
 
-    def log_error(self, text):
+    def log_error(self, text):   # Use log("text", self.logger.ERROR)
         """Logs an Error message"""
-        text = "[-] ERROR: " + text
-        self._log(text, pyLogging.ERROR, "PURPLE")
+        self.log(text, self.level.ERROR)
 
-    def log_warning(self, text):
+    def log_warning(self, text):   # Use log("text", self.logger.WARNING)
         """Logs an Warning message"""
-        text = "WARNING: " + text
-        self._log(text, pyLogging.INFO, "YELLOW")
+        self.log(text, self.level.WARNING)
 
     def log_skipped(self, text):
         """Logs a SKIPPED message."""
-        text = "[*] SKIPPED: " + text
-        self._log(text, pyLogging.INFO, "YELLOW")
+        text = f'SKIPPED: " {text}'
+        self.log(text, self.level.WARNING)
 
-    def log_not_applicable(self, text):
+    def log_not_applicable(self, text):   # Use log("text", self.logger.NOTAPPLICABLE)
         """Logs a NOT APPLICABLE message."""
-        text = "[*] NOT APPLICABLE: " + text
-        self._log(text, pyLogging.INFO, "YELLOW")
+        text = f'NOT APPLICABLE: {text}'
+        self.log(text, self.level.WARNING)
 
     def log_heading(self, text):
         """Logs a heading message."""
-        self._log(text, pyLogging.INFO, "BLUE")
+        self.log(text)
 
-    def log_important(self, text):
+    def log_important(self, text):   # Use log("text", self.logger.IMPORTANT)
         """Logs an important message."""
-        text = "[!] " + text
-        self._log(text, pyLogging.INFO, "RED")
+        self.log(text, self.level.BAD)
 
-    def log_bad(self, text):
+    def log_bad(self, text):   # Use log("text", self.logger.BAD)
         """Logs a bad message, so it calls attention in the information displayed."""
-        text = "[-] " + text
-        self._log(text, pyLogging.INFO, "RED")
+        self.log(text, self.level.BAD)
 
-    def log_good(self, text):
+    def log_good(self, text):   # Use log("text", self.logger.GOOD)
         """Logs a message, if colors available, displays in green."""
-        text = "[+] " + text
-        self._log(text, pyLogging.INFO, "GREEN")
+        self.log(text, self.level.GOOD)
 
     def log_unknown(self, text):
         """Logs a message with a question mark."""
-        text = "[?] " + text
-        self._log(text, pyLogging.INFO, "WHITE")
+        text = f'[?] {text}'
+        self.log(text)
 
-    def log_information(self, text):
+    def log_information(self, text):    # Use log("text")
         """Logs a message with information message"""
-        text = "[#] INFORMATION: " + text
-        self._log(text, pyLogging.INFO, "WHITE")
+        text = f'[#] INFORMATION: {text}'
+        self.log(text)
 
-    def start_test(self, test_name):
+    # -----------------------------
+    # End deprecated logger methods
+    # -----------------------------
+
+    def start_test(self, test_name:str) -> None:
         """Logs the start point of a Test"""
-        text = "[x][ =======================================================================\n"
-        text = text + "[x][ Module: " + test_name + "\n"
-        text = text + "[x][ ======================================================================="
-        self._log(text, pyLogging.INFO, "BLUE")
+        text = '[x][ =======================================================================\n'
+        text = text + '[x][ Module: ' + test_name + '\n'
+        text = text + '[x][ ======================================================================='
+        self.chipsecLogger.info(text, 'BLUE')
 
-    def start_module(self, module_name):
+    def start_module(self, module_name:str) -> None:
         """Displays a banner for the module name provided."""
-        text = "\n[*] Running module: {}".format(module_name)
-        self._log(text, pyLogging.INFO, "WHITE")
+        text = f'\n[*] Running module: {module_name}'
+        self.log(text)
         if self.Results.get_current() is not None:
             self.Results.get_current().add_desc(module_name)
             self.Results.get_current().set_time()
 
-    def end_module(self, module_name):
+    def end_module(self, module_name:str) -> None:
         if self.Results.get_current() is not None:
             self.Results.get_current().set_time()
 
-    def _write_log(self, text, filename):
-        """Write text to defined log file"""
-        self.rootLogger.log(self.info, text)
-        if self.ALWAYS_FLUSH:
-            try:
-                self.logfile.close()
-                self.logfile = open(self.LOG_FILE_NAME, 'a+')
-            except Exception:
-                self.disable()
-
-    def _save_to_log_file(self, text):
-        if self.LOG_TO_FILE:
-            self._write_log(text, self.LOG_FILE_NAME)
-
-    def print_banner(self, arguments: Sequence[str]) -> None:
+    def print_banner(self, arguments: Sequence[str], version, message) -> None:
         """Prints CHIPSEC banner"""
-        version = get_version()
-        message = get_message()
         args = ' '.join(arguments)
         self.log('################################################################\n'
                  '##                                                            ##\n'
@@ -345,12 +376,12 @@ class Logger:
         self.log(f'[CHIPSEC] Arguments: {args}')
         self.log(message)
 
-    def print_banner_properties(self, cs) -> None:
+    def print_banner_properties(self, cs, os_version) -> None:
         """Prints CHIPSEC properties banner"""
-        (system, release, version, machine) = os_version()
+        (system, release, version, machine) = os_version
         is_python_64 = True if (sys.maxsize > 2**32) else False
         python_version = platform.python_version()
-        python_arch = "64-bit" if is_python_64 else "32-bit"
+        python_arch = '64-bit' if is_python_64 else '32-bit'
         (helper_name, driver_path) = cs.helper.helper.get_info()
 
         self.log(f'[CHIPSEC] OS      : {system} {release} {version} {machine}')
@@ -358,36 +389,48 @@ class Logger:
         self.log(f'[CHIPSEC] Helper  : {helper_name} ({driver_path})')
         self.log(f'[CHIPSEC] Platform: {cs.longname}')
         self.log(f'[CHIPSEC]    CPUID: {cs.get_cpuid()}')
-        self.log(f'[CHIPSEC]      VID: {cs.vid}')
-        self.log(f'[CHIPSEC]      DID: {cs.did}')
-        self.log(f'[CHIPSEC]      RID: {cs.rid}')
+        self.log(f'[CHIPSEC]      VID: {cs.vid:04X}')
+        self.log(f'[CHIPSEC]      DID: {cs.did:04X}')
+        self.log(f'[CHIPSEC]      RID: {cs.rid:02X}')
         if not cs.is_atom():
             self.log(f'[CHIPSEC] PCH     : {cs.pch_longname}')
-            self.log(f'[CHIPSEC]      VID: {cs.pch_vid}')
-            self.log(f'[CHIPSEC]      DID: {cs.pch_did}')
-            self.log(f'[CHIPSEC]      RID: {cs.pch_rid}')
+            self.log(f'[CHIPSEC]      VID: {cs.pch_vid:04X}')
+            self.log(f'[CHIPSEC]      DID: {cs.pch_did:04X}')
+            self.log(f'[CHIPSEC]      RID: {cs.pch_rid:02X}')
 
-        if not is_python_64 and machine.endswith("64"):
-            self.log_warning("Python architecture (32-bit) is different from OS architecture (64-bit)")
+        if not is_python_64 and machine.endswith('64'):
+            self.log_warning('Python architecture (32-bit) is different from OS architecture (64-bit)')
+   
+    def _write_log(self, text, filename):
+        """Write text to defined log file"""
+        self.chipsecLogger.log(self.info, text)
+        if self.ALWAYS_FLUSH:
+            try:
+                self.logfile.close()
+                self.logfile = open(self.LOG_FILE_NAME, 'a+')
+            except Exception:
+                self.disable()
 
+    def _save_to_log_file(self, text):
+        if self.LOG_TO_FILE:
+            self._write_log(text, self.LOG_FILE_NAME)
+            
     VERBOSE: bool = False
     UTIL_TRACE: bool = False
     HAL: bool = False
     DEBUG: bool = False
 
     LOG_TO_STATUS_FILE: bool = False
-    LOG_STATUS_FILE_NAME: str = ""
+    LOG_STATUS_FILE_NAME: str = ''
     LOG_TO_FILE: bool = False
-    LOG_FILE_NAME: str = ""
-
+    LOG_FILE_NAME: str = ''
 
 _logger = Logger()
 
 
-def logger():
+def logger() -> Logger:
     """Returns a Logger instance."""
     return _logger
-
 
 def aligned_column_spacing(table_data: List[Tuple[str, Dict[str, str]]]) -> Tuple[int, ...]:
     clean_data = clean_data_table(table_data)
@@ -445,7 +488,7 @@ def bytes2string(buffer, length=16):
         if not (c in string.printable) or (c in string.whitespace):
             ascii_string += ['{}'.format(' ')]
         else:
-            ascii_string += ['{}'.format(c)]
+            ascii_string += [f'{c}']
         if (index % length) == 0:
             num_string += ['| ']
             num_string += ascii_string
@@ -507,13 +550,13 @@ def print_buffer_bytes(arr, length=16):
 
 def pretty_print_hex_buffer(arr, length=16):
     """Prints the buffer (bytes, bytearray) in a grid"""
-    _str = ["    _"]
+    _str = ['    _']
     for n in range(length):
-        _str += ["{:02X}__".format(n)]
+        _str += ['{:02X}__'.format(n)]
     for n in range(len(arr)):
         if (n % length) == 0:
-            _str += ["\n{:02X} | ".format(n)]
-        _str += ["{:02X}  ".format(arr[n])]
+            _str += ['\n{:02X} | '.format(n)]
+        _str += ['{:02X}  '.format(arr[n])]
     logger().log(''.join(_str))
 
 
