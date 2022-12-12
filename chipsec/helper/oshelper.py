@@ -69,13 +69,11 @@ class OsHelper:
             raise OsHelperError("Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV)
         else:
             if sys.version[0] == "2":
-                logger().log_warning("***************************************************************************************")
-                logger().log_warning("* !! Python 2 is deprecated. Please update to Python 3 !!")
-                logger().log_warning("* Some chipsec results may be incorrect if you continue.")
-                logger().log_warning("***************************************************************************************")
-                s = raw_input("Type 'yes' to continue running under Python 2 > ")  # Will only run on python 2, so raw_input will be defined.
-                if s.lower() not in ['yes', 'y']:
-                    sys.exit(0)
+                logger().log_warning("*****************************************************************************")
+                logger().log_warning("* !! Python 2 is deprecated and not supported. Please update to Python 3 !! *")
+                logger().log_warning("* !!                           Exiting CHIPSEC                           !! *")
+                logger().log_warning("*****************************************************************************")
+                sys.exit(0)
             self.os_system = self.helper.os_system
             self.os_release = self.helper.os_release
             self.os_version = self.helper.os_version
