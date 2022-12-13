@@ -15,14 +15,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // Macro Definitions
 //
 #undef  UINT8_MAX
-typedef INT32 NODE;
+typedef UINT32 NODE;
 #define UINT8_MAX     0xff
 #define UINT8_BIT     8
 #define THRESHOLD     3
 #define INIT_CRC      0
 #define WNDBIT        19
 #define WNDSIZ        (1U << WNDBIT)
-#define MAXMATCH      256
+#define MAXMATCH      ((UINT32)256)
 #define BLKSIZ        (1U << 14)  // 16 * 1024U
 #define PERC_FLAG     0x80000000U
 #define CODE_BIT      16
@@ -736,7 +736,7 @@ Returns: (VOID)
 
     t1  = &mText[mPos + mMatchLen];
     t2  = &mText[mMatchPos + mMatchLen];
-    while (mMatchLen < Index2) {
+    while ((UINT32)mMatchLen < Index2) {
       if (*t1 != *t2) {
         Split (NodeR);
         return ;
@@ -747,7 +747,7 @@ Returns: (VOID)
       t2++;
     }
 
-    if (mMatchLen >= MAXMATCH) {
+    if ((UINT32)mMatchLen >= MAXMATCH) {
       break;
     }
 
@@ -1345,9 +1345,10 @@ HufEncodeStart (
   )
 {
   INT32 Index;
+  UINT32 UIndex;
 
-  for (Index = 0; Index < NC; Index++) {
-    mCFreq[Index] = 0;
+  for (UIndex = 0; UIndex < NC; UIndex++) {
+    mCFreq[UIndex] = 0;
   }
 
   for (Index = 0; Index < NP; Index++) {
