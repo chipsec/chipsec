@@ -49,9 +49,9 @@ or
 
 ``pacman -S python3 python3-setuptools nasm linux-headers``
 
-Install setuptools package:
+To install requirements: 
 
-``pip install setuptools``
+   ``pip install -r linux_requirements.txt``
 
 Installing CHIPSEC
 ------------------
