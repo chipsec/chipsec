@@ -31,7 +31,6 @@ import atexit
 from time import localtime, strftime
 from typing import Sequence, Tuple, Dict, List
 from enum import Enum
-from chipsec.testcase import ChipsecResults
 
 try:
     # Prefer WConio2 over the original WConio as it is more up-to-date and better maintained.
@@ -164,12 +163,9 @@ class Logger:
         logging.addLevelName(12, "HAL")
         logging.addLevelName(13, "HELPER")
         logging.setLogRecordFactory(chipsecRecordFactory)  # applies colorization to output
-        self.Results = ChipsecResults()
 
     def log(self, text: str, level: level = level.INFO) -> None:
         """Sends plain text to logging."""
-        if self.Results.get_current() is not None:
-            self.Results.get_current().add_output(text)
         try:
             if level == self.level.DEBUG:
                 self.chipsecLogger.debug(text, 'BLUE')
