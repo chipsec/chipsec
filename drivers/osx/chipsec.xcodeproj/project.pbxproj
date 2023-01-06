@@ -302,6 +302,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
+                EXCLUDED_ARCHS = arm64e;
 				INFOPLIST_FILE = chipsec/Info.plist;
 				MODULE_NAME = com.google.chipsec;
 				MODULE_START = chipsec_start;
@@ -319,6 +320,7 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "";
+                EXCLUDED_ARCHS = arm64e;
 				INFOPLIST_FILE = chipsec/Info.plist;
 				MODULE_NAME = com.google.chipsec;
 				MODULE_START = chipsec_start;
@@ -334,6 +336,7 @@
 		63F7B74A1CF830FE00A3B40C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+                EXCLUDED_ARCHS = arm64e;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -342,6 +345,7 @@
 		63F7B74B1CF830FE00A3B40C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+                EXCLUDED_ARCHS = arm64e;
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
