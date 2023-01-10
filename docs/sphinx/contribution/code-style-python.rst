@@ -349,6 +349,27 @@ This table lists which Type Hint PEPs are in scope for CHIPSEC.
      - No
 
 
+Underscores in Numeric Literals
+===============================
+
+Underscores in Numeric Literals are supported, even encouraged, but not required.  For consistency, follow the grouping examples presented in the PEP abstract.
+
+.. list-table:: PEP versions supported by CHIPSEC
+   :widths: 12 23 25 12 12
+   :header-rows: 1
+
+   * - PEP
+     - Title
+     - Summary
+     - Python Version
+     - Supported
+   * - `PEP 515 <https://peps.python.org/pep-0515/>`_
+     - Underscores in Numeric Literals
+     - Extends Python's syntax so that underscores can be used as visual separators for grouping purposes in numerical literals
+     - 3.6
+     - Yes
+
+
 Walrus Operator (:=)
 ====================
 
