@@ -57,7 +57,7 @@ class ExitCode:
 """
 
 
-class TestCase():
+class TestCase:
     def __init__(self, name: str) -> None:
         self.name = name
         self.result = ''
@@ -73,7 +73,7 @@ class TestCase():
 
     def start_module(self) -> None:
         """Displays a banner for the module name provided."""
-        text = f'\n[*] running module: {self.name}'
+        text = f'\n[*] Running module: {self.name}'
         logger().log_heading(text)
         self.startTime = time.time()
         self.desc = self.name
@@ -85,7 +85,7 @@ class TestCase():
         self.time = self.endTime - self.startTime
 
 
-class ChipsecResults():
+class ChipsecResults:
     def __init__(self):
         self.test_cases = []
         self.properties = None
@@ -209,17 +209,18 @@ class ChipsecResults():
         js = json.dumps(summary, sort_keys=False, indent=2, separators=(',', ': '))
         return js
 
-    def xml_full(self, name) -> str:
+    def xml_full(self, name: str, runtime: Optional[float] = None) -> str:
         xml_element = ET.Element('testsuites')
         summary = self.order_summary()
         summary_dict = {}
         for k in summary.keys():
             if k == 'total':
-                summary_dict[k] = '{summary[k]:d}'
+                summary_dict[k] = f'{summary[k]:d}'
             else:
                 summary_dict[k.replace(' ', '')] = f'{len(summary[k]):d}'
         summary_dict["name"] = os.path.basename(os.path.splitext(name)[0])
-        summary_dict["time"] = "{:5f}".format(self.time)
+        if runtime is not None:
+            summary_dict["time"] = f'{runtime:5f}'
         ts_element = ET.SubElement(xml_element, "testsuite", summary_dict)
         # add properties
         pr_element = ET.SubElement(ts_element, "properties")
@@ -227,12 +228,12 @@ class ChipsecResults():
         for k in self.properties:
             prop_dict["name"] = k
             prop_dict["value"] = self.properties[k]
-            p_element = ET.SubElement(pr_element, "property", prop_dict)
+            ET.SubElement(pr_element, "property", prop_dict)
         # add test cases
         for test in self.test_cases:
             ttime = test.time if test.time is not None else 0.0
             tc_element = ET.SubElement(ts_element, "testcase", {'classname': test.name, 'name': test.desc, 'time': f'{ttime:5f}'})
-            r_element = ET.SubElement(tc_element, "pass", {"type": test.result})
+            ET.SubElement(tc_element, "pass", {"type": test.result})
             out_element = ET.SubElement(tc_element, "system-out")
             out_element.text = test.output
         return xml.dom.minidom.parseString(ET.tostring(xml_element, None, None)).toprettyxml()
@@ -271,11 +272,11 @@ class ChipsecResults():
             ret_string += ''.join(destination[result])
         return ret_string
 
-    def print_summary(self, runtime: Optional[bool] = None) -> None:
+    def print_summary(self, runtime: Optional[float] = None) -> None:
         summary = self.order_summary()
         filler = '*' * 27
         logger().log(f'\n[CHIPSEC] {filler}  SUMMARY  {filler}')
-        if runtime:
+        if runtime is not None:
             logger().log(f'[CHIPSEC] Time elapsed            {runtime:.3f}')
 
         for k in summary.keys():

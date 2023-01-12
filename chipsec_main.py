@@ -320,11 +320,13 @@ class ChipsecMain:
             test_result.end_module(module_common.getModuleResultName(result), modx_argv if modx_argv else None)
             results.add_testcase(test_result)
 
+        runtime = time.time() - t if not self.no_time else None
+
         if self._json_out:
             chipsec.file.write_file(self._json_out, results.json_full())
 
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out))
+            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out, runtime))
 
         if self._markdown_out:
             chipsec.file.write_file(self._markdown_out, results.markdown_full(self._markdown_out))
@@ -338,7 +340,7 @@ class ChipsecMain:
                 test_deltas = chipsec.result_deltas.compute_result_deltas(prev_results, results.get_results())
                 chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
         elif not self._list_tags and results.get_current is not None:
-            results.print_summary(time.time() - t if not self.no_time else None)
+            results.print_summary(runtime)
         else:
             self.logger.log("[*] Available tags are:")
             for at in self.AVAILABLE_TAGS:
