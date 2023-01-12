@@ -80,7 +80,7 @@ class chipsecRecordFactory(logging.LogRecord):
                     color = self.args[0]
                 if color in self.colors:
                     WConio.textcolor(self.colors[color])
-                    return msg
+                return msg
 
             old_setting = WConio.gettextinfo()[4] & 0x00FF
             atexit.register(WConio.textcolor, old_setting)
