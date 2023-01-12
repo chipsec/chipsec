@@ -326,7 +326,7 @@ def update_efi_tree(modules, parent_guid=None):
                 # and propagate it up untill and including parent EFI file
                 for m1 in modules:
                     m1.ui_string = m.ui_string
-                return m.ui_string
+                ui_string = m.ui_string
         # update parent file's GUID in all children nodes
         if len(m.children) > 0:
             ui_string = update_efi_tree(m.children, parent_guid)
