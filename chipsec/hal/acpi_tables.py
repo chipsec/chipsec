@@ -30,6 +30,7 @@ __version__ = '0.1'
 import struct
 from collections import namedtuple
 from uuid import UUID
+from typing import Optional, Tuple
 
 from chipsec.logger import logger, dump_buffer_bytes
 from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
@@ -37,10 +38,10 @@ from chipsec.defines import bytestostring
 
 
 class ACPI_TABLE:
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         return
 
-    def __str__(self):
+    def __str__(self) -> str:
         return """------------------------------------------------------------------
   Table Content
 ------------------------------------------------------------------
@@ -55,7 +56,6 @@ class ACPI_TABLE:
 
 ACPI_TABLE_FORMAT_DMAR = '=BB10s'
 ACPI_TABLE_SIZE_DMAR = struct.calcsize(ACPI_TABLE_FORMAT_DMAR)
-# class ACPI_TABLE_DMAR( namedtuple('ACPI_TABLE_DMAR', 'HostAddrWidth Flags Reserved dmar_structures') ):
 
 
 class DMAR (ACPI_TABLE):
@@ -70,7 +70,7 @@ class DMAR (ACPI_TABLE):
             'ANDD_FORMAT': 'HH3sB'
         }
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         off = ACPI_TABLE_SIZE_DMAR
         struct_fmt = '=HH'
         while off < len(table_content) - 1:
@@ -82,34 +82,36 @@ class DMAR (ACPI_TABLE):
         (self.HostAddrWidth, self.Flags, self.Reserved) = struct.unpack_from(ACPI_TABLE_FORMAT_DMAR, table_content)
         return
 
-    def __str__(self):
-        _str = """------------------------------------------------------------------
+    def __str__(self) -> str:
+        res_str = ''.join(f'{ord(c):02x} ' for c in bytestostring(self.Reserved))
+        _str = f"""------------------------------------------------------------------
   DMAR Table Contents
 ------------------------------------------------------------------
-  Host Address Width  : {:d}
-  Flags               : 0x{:02X}
-  Reserved            : {}
-""".format(self.HostAddrWidth, self.Flags, ''.join('{:02x} '.format(ord(c)) for c in bytestostring(self.Reserved)))
+  Host Address Width  : {self.HostAddrWidth:d}
+  Flags               : 0x{self.Flags:02X}
+  Reserved            : {res_str}
+"""
         _str += "\n  Remapping Structures:\n"
         for st in self.dmar_structures:
             _str += str(st)
         return _str
 
-    def _get_structure_DMAR(self, _type, DataStructure):
+    def _get_structure_DMAR(self, _type: int, DataStructure: bytes) -> str:
         if 0x00 == _type:
-            return self._get_DMAR_structure_DRHD(DataStructure)
+            ret = self._get_DMAR_structure_DRHD(DataStructure)
         elif 0x01 == _type:
-            return self._get_DMAR_structure_RMRR(DataStructure)
+            ret = self._get_DMAR_structure_RMRR(DataStructure)
         elif 0x02 == _type:
-            return self._get_DMAR_structure_ATSR(DataStructure)
+            ret = self._get_DMAR_structure_ATSR(DataStructure)
         elif 0x03 == _type:
-            return self._get_DMAR_structure_RHSA(DataStructure)
+            ret = self._get_DMAR_structure_RHSA(DataStructure)
         elif 0x04 == _type:
-            return self._get_DMAR_structure_ANDD(DataStructure)
+            ret = self._get_DMAR_structure_ANDD(DataStructure)
         else:
-            return ("\n  Unknown DMAR structure 0x{:02X}\n".format(_type))
+            ret = (f"\n  Unknown DMAR structure 0x{_type:02X}\n")
+        return str(ret)
 
-    def _get_DMAR_structure_DRHD(self, structure):
+    def _get_DMAR_structure_DRHD(self, structure: bytes) -> 'ACPI_TABLE_DMAR_DRHD':
         device_scope = []
         fmt = '=BB'
         step = struct.calcsize(fmt)
@@ -119,12 +121,12 @@ class DMAR (ACPI_TABLE):
             if 0 == length:
                 break
             path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
-            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + ('{:d}s'.format(path_sz))
+            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + (f'{path_sz:d}s')
             device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
             off += length
         return ACPI_TABLE_DMAR_DRHD(*struct.unpack_from(self.DMAR_TABLE_FORMAT["DRHD_FORMAT"], structure), DeviceScope=device_scope)
 
-    def _get_DMAR_structure_RMRR(self, structure):
+    def _get_DMAR_structure_RMRR(self, structure: bytes) -> 'ACPI_TABLE_DMAR_RMRR':
         device_scope = []
         fmt = '=HH'
         step = struct.calcsize(fmt)
@@ -134,12 +136,12 @@ class DMAR (ACPI_TABLE):
             if 0 == length:
                 break
             path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
-            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + ('{:d}s'.format(path_sz))
+            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + (f'{path_sz:d}s')
             device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
             off += length
         return ACPI_TABLE_DMAR_RMRR(*struct.unpack_from(self.DMAR_TABLE_FORMAT["RMRR_FORMAT"], structure), DeviceScope=device_scope)
 
-    def _get_DMAR_structure_ATSR(self, structure):
+    def _get_DMAR_structure_ATSR(self, structure: bytes) -> 'ACPI_TABLE_DMAR_ATSR':
         device_scope = []
         fmt = '=HH'
         step = struct.calcsize(fmt)
@@ -149,18 +151,19 @@ class DMAR (ACPI_TABLE):
             if 0 == length:
                 break
             path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
-            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + ('{:d}s'.format(path_sz))
+            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + (f'{path_sz:d}s')
             device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
             off += length
         return ACPI_TABLE_DMAR_ATSR(*struct.unpack_from(self.DMAR_TABLE_FORMAT["ATSR_FORMAT"], structure), DeviceScope=device_scope)
 
-    def _get_DMAR_structure_RHSA(self, structure):
+    def _get_DMAR_structure_RHSA(self, structure: bytes) -> 'ACPI_TABLE_DMAR_RHSA':
         return ACPI_TABLE_DMAR_RHSA(*struct.unpack_from(self.DMAR_TABLE_FORMAT["RHSA_FORMAT"], structure))
 
-    def _get_DMAR_structure_ANDD(self, structure):
+    def _get_DMAR_structure_ANDD(self, structure: bytes) -> 'ACPI_TABLE_DMAR_ANDD':
         sz = struct.calcsize('=H')
         length = struct.unpack('=H', structure[sz:sz + sz])[0]
-        f = self.DMAR_TABLE_FORMAT["ANDD_FORMAT"] + ('{:d}s'.format(length - struct.calcsize(self.DMAR_TABLE_FORMAT["ANDD_FORMAT"])))
+        dmr_len = length - struct.calcsize(self.DMAR_TABLE_FORMAT["ANDD_FORMAT"])
+        f = self.DMAR_TABLE_FORMAT["ANDD_FORMAT"] + (f'{dmr_len:d}s')
         return ACPI_TABLE_DMAR_ANDD(*struct.unpack_from(f, structure))
 
 #
@@ -178,16 +181,16 @@ DMAR_DS_TYPE = {
     DMAR_DS_TYPE_PCIPCI_BRIDGE: 'PCI-PCI Bridge',
     DMAR_DS_TYPE_IOAPIC: 'I/O APIC Device',
     DMAR_DS_TYPE_MSI_CAPABLE_HPET: 'MSI Capable HPET',
-    DMAR_DS_TYPE_ACPI_NAMESPACE: 'ACPI Namaspace Device'
+    DMAR_DS_TYPE_ACPI_NAMESPACE: 'ACPI Namespace Device'
 }
 
 
 class ACPI_TABLE_DMAR_DeviceScope(namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Type Length Reserved EnumerationID StartBusNum Path')):
     __slots__ = ()
 
-    def __str__(self):
-        return """      {} ({:02X}): Len: 0x{:02X}, Rsvd: 0x{:04X}, Enum ID: 0x{:02X}, Start Bus#: 0x{:02X}, Path: {}
-""".format(DMAR_DS_TYPE[self.Type], self.Type, self.Length, self.Reserved, self.EnumerationID, self.StartBusNum, ''.join('{:02x} '.format(ord(c)) for c in bytestostring(self.Path)))
+    def __str__(self) -> str:
+        path_str = ''.join(f'{ord(c):02x} ' for c in bytestostring(self.Path))
+        return f"""      {DMAR_DS_TYPE[self.Type]} ({self.Type:02X}): Len: 0x{self.Length:02X}, Rsvd: 0x{self.Reserved:04X}, Enum ID: 0x{self.EnumerationID:02X}, Start Bus#: 0x{self.StartBusNum:02X}, Path: {path_str}"""
 
 #
 # DMAR DMA Remapping Hardware Unit Definition (DRHD) Structure
@@ -197,15 +200,15 @@ class ACPI_TABLE_DMAR_DeviceScope(namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Typ
 class ACPI_TABLE_DMAR_DRHD(namedtuple('ACPI_TABLE_DMAR_DRHD', 'Type Length Flags Reserved SegmentNumber RegisterBaseAddr DeviceScope')):
     __slots__ = ()
 
-    def __str__(self):
-        _str = """
-  DMA Remapping Hardware Unit Definition (0x{:04X}):
-    Length                : 0x{:04X}
-    Flags                 : 0x{:02X}
-    Reserved              : 0x{:02X}
-    Segment Number        : 0x{:04X}
-    Register Base Address : 0x{:016X}
-""".format(self.Type, self.Length, self.Flags, self.Reserved, self.SegmentNumber, self.RegisterBaseAddr)
+    def __str__(self) -> str:
+        _str = f"""
+  DMA Remapping Hardware Unit Definition (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Flags                 : 0x{self.Flags:02X}
+    Reserved              : 0x{self.Reserved:02X}
+    Segment Number        : 0x{self.SegmentNumber:04X}
+    Register Base Address : 0x{self.RegisterBaseAddr:016X}
+"""
         _str += '    Device Scope          :\n'
         for ds in self.DeviceScope:
             _str += str(ds)
@@ -219,15 +222,15 @@ class ACPI_TABLE_DMAR_DRHD(namedtuple('ACPI_TABLE_DMAR_DRHD', 'Type Length Flags
 class ACPI_TABLE_DMAR_RMRR(namedtuple('ACPI_TABLE_DMAR_RMRR', 'Type Length Reserved SegmentNumber RMRBaseAddr RMRLimitAddr DeviceScope')):
     __slots__ = ()
 
-    def __str__(self):
-        _str = """
-  Reserved Memory Range (0x{:04X}):
-    Length                : 0x{:04X}
-    Reserved              : 0x{:04X}
-    Segment Number        : 0x{:04X}
-    Reserved Memory Base  : 0x{:016X}
-    Reserved Memory Limit : 0x{:016X}
-""".format(self.Type, self.Length, self.Reserved, self.SegmentNumber, self.RMRBaseAddr, self.RMRLimitAddr)
+    def __str__(self) -> str:
+        _str = f"""
+  Reserved Memory Range (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Reserved              : 0x{self.Reserved:04X}
+    Segment Number        : 0x{self.SegmentNumber:04X}
+    Reserved Memory Base  : 0x{self.RMRBaseAddr:016X}
+    Reserved Memory Limit : 0x{self.RMRLimitAddr:016X}
+"""
         _str += '    Device Scope          :\n'
         for ds in self.DeviceScope:
             _str += str(ds)
@@ -240,14 +243,14 @@ class ACPI_TABLE_DMAR_RMRR(namedtuple('ACPI_TABLE_DMAR_RMRR', 'Type Length Reser
 class ACPI_TABLE_DMAR_ATSR(namedtuple('ACPI_TABLE_DMAR_ATSR', 'Type Length Flags Reserved SegmentNumber DeviceScope')):
     __slots__ = ()
 
-    def __str__(self):
-        _str = """
-  Root Port ATS Capability (0x{:04X}):
-    Length                : 0x{:04X}
-    Flags                 : 0x{:02X}
-    Reserved (0)          : 0x{:02X}
-    Segment Number        : 0x{:04X}
-""".format(self.Type, self.Length, self.Flags, self.Reserved, self.SegmentNumber)
+    def __str__(self) -> str:
+        _str = f"""
+  Root Port ATS Capability (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Flags                 : 0x{self.Flags:02X}
+    Reserved (0)          : 0x{self.Reserved:02X}
+    Segment Number        : 0x{self.SegmentNumber:04X}
+"""
         _str += '    Device Scope          :\n'
         for ds in self.DeviceScope:
             _str += str(ds)
@@ -261,14 +264,14 @@ class ACPI_TABLE_DMAR_ATSR(namedtuple('ACPI_TABLE_DMAR_ATSR', 'Type Length Flags
 class ACPI_TABLE_DMAR_RHSA(namedtuple('ACPI_TABLE_DMAR_RHSA', 'Type Length Reserved RegisterBaseAddr ProximityDomain')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
-  Remapping Hardware Status Affinity (0x{:04X}):
-    Length                : 0x{:04X}
-    Reserved (0)          : 0x{:08X}
-    Register Base Address : 0x{:016X}
-    Proximity Domain      : 0x{:08X}
-""".format(self.Type, self.Length, self.Reserved, self.RegisterBaseAddr, self.ProximityDomain)
+    def __str__(self) -> str:
+        return f"""
+  Remapping Hardware Status Affinity (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Reserved (0)          : 0x{self.Reserved:08X}
+    Register Base Address : 0x{self.RegisterBaseAddr:016X}
+    Proximity Domain      : 0x{self.ProximityDomain:08X}
+"""
 
 
 #
@@ -282,14 +285,15 @@ assert 8 == ACPI_TABLE_DMAR_ANDD_SIZE
 class ACPI_TABLE_DMAR_ANDD(namedtuple('ACPI_TABLE_DMAR_ANDD', 'Type Length Reserved ACPIDevNum ACPIObjectName')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
-  Remapping Hardware Status Affinity (0x{:04X}):
-    Length                : 0x{:04X}
-    Reserved (0)          : {}
-    ACPI Device Number    : 0x{:02X}
-    ACPI Object Name      : {}
-""".format(self.Type, self.Length, ''.join('{:02x} '.format(ord(c)) for c in bytestostring(self.Reserved)), self.ACPIDevNum, self.ACPIObjectName)
+    def __str__(self) -> str:
+        res_str = ''.join(f'{ord(c):02x} ' for c in bytestostring(self.Reserved))
+        return f"""
+  Remapping Hardware Status Affinity (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Reserved (0)          : {res_str}
+    ACPI Device Number    : 0x{self.ACPIDevNum:02X}
+    ACPI Object Name      : {self.ACPIObjectName}
+"""
 
 ########################################################################################################
 #
@@ -326,7 +330,7 @@ class APIC (ACPI_TABLE):
             "GIC_REDISTRIBUTOR": '<BBHQI'
         }
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         (self.LAPICBase, self.Flags) = struct.unpack('=II', table_content[0: 8])
         cont = 8
         while cont < len(table_content) - 1:
@@ -337,291 +341,292 @@ class APIC (ACPI_TABLE):
             cont += length
         return
 
-    def __str__(self):
-        apic_str = """------------------------------------------------------------------
+    def __str__(self) -> str:
+        apic_str = f"""------------------------------------------------------------------
   APIC Table Contents
 ------------------------------------------------------------------
-  Local APIC Base  : 0x{:016X}
-  Flags            : 0x{:08X}
-""".format(self.LAPICBase, self.Flags)
+  Local APIC Base  : 0x{self.LAPICBase:016X}
+  Flags            : 0x{self.Flags:08X}
+"""
         apic_str += "\n  Interrupt Controller Structures:\n"
         for st in self.apic_structs:
             apic_str += str(st)
         return apic_str
 
-    def get_structure_APIC(self, value, DataStructure):
+    def get_structure_APIC(self, value: int, DataStructure: bytes) -> str:
         if 0x00 == value:
-            return ACPI_TABLE_APIC_PROCESSOR_LAPIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["PROCESSOR_LAPIC"], DataStructure))
+            ret = ACPI_TABLE_APIC_PROCESSOR_LAPIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["PROCESSOR_LAPIC"], DataStructure))
         elif 0x01 == value:
-            return ACPI_TABLE_APIC_IOAPIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["IOAPIC"], DataStructure))
+            ret = ACPI_TABLE_APIC_IOAPIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["IOAPIC"], DataStructure))
         elif 0x02 == value:
-            return ACPI_TABLE_APIC_INTERRUPT_SOURSE_OVERRIDE(*struct.unpack_from(self.APIC_TABLE_FORMAT["INTERRUPT_SOURSE_OVERRIDE"], DataStructure))
+            ret = ACPI_TABLE_APIC_INTERRUPT_SOURSE_OVERRIDE(*struct.unpack_from(self.APIC_TABLE_FORMAT["INTERRUPT_SOURSE_OVERRIDE"], DataStructure))
         elif 0x03 == value:
-            return ACPI_TABLE_APIC_NMI_SOURCE(*struct.unpack_from(self.APIC_TABLE_FORMAT["NMI_SOURCE"], DataStructure))
+            ret = ACPI_TABLE_APIC_NMI_SOURCE(*struct.unpack_from(self.APIC_TABLE_FORMAT["NMI_SOURCE"], DataStructure))
         elif 0x04 == value:
-            return ACPI_TABLE_APIC_LAPIC_NMI(*struct.unpack_from(self.APIC_TABLE_FORMAT["LAPIC_NMI"], DataStructure))
+            ret = ACPI_TABLE_APIC_LAPIC_NMI(*struct.unpack_from(self.APIC_TABLE_FORMAT["LAPIC_NMI"], DataStructure))
         elif 0x05 == value:
-            return ACPI_TABLE_APIC_LAPIC_ADDRESS_OVERRIDE(*struct.unpack_from(self.APIC_TABLE_FORMAT["LAPIC_ADDRESS_OVERRIDE"], DataStructure))
+            ret = ACPI_TABLE_APIC_LAPIC_ADDRESS_OVERRIDE(*struct.unpack_from(self.APIC_TABLE_FORMAT["LAPIC_ADDRESS_OVERRIDE"], DataStructure))
         elif 0x06 == value:
-            return ACPI_TABLE_APIC_IOSAPIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["IOSAPIC"], DataStructure))
+            ret = ACPI_TABLE_APIC_IOSAPIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["IOSAPIC"], DataStructure))
         elif 0x07 == value:
-            return ACPI_TABLE_APIC_PROCESSOR_LSAPIC(*struct.unpack_from("{}{}s".format(self.APIC_TABLE_FORMAT["PROCESSOR_LSAPIC"], str(len(DataStructure) - 16)), DataStructure))
+            ret = ACPI_TABLE_APIC_PROCESSOR_LSAPIC(*struct.unpack_from(f'{self.APIC_TABLE_FORMAT["PROCESSOR_LSAPIC"]}{str(len(DataStructure) - 16)}s', DataStructure))
         elif 0x08 == value:
-            return ACPI_TABLE_APIC_PLATFORM_INTERRUPT_SOURCES(*struct.unpack_from(self.APIC_TABLE_FORMAT["PLATFORM_INTERRUPT_SOURCES"], DataStructure))
+            ret = ACPI_TABLE_APIC_PLATFORM_INTERRUPT_SOURCES(*struct.unpack_from(self.APIC_TABLE_FORMAT["PLATFORM_INTERRUPT_SOURCES"], DataStructure))
         elif 0x09 == value:
-            return ACPI_TABLE_APIC_PROCESSOR_Lx2APIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["PROCESSOR_Lx2APIC"], DataStructure))
+            ret = ACPI_TABLE_APIC_PROCESSOR_Lx2APIC(*struct.unpack_from(self.APIC_TABLE_FORMAT["PROCESSOR_Lx2APIC"], DataStructure))
         elif 0x0A == value:
-            return ACPI_TABLE_APIC_Lx2APIC_NMI(*struct.unpack_from(self.APIC_TABLE_FORMAT["Lx2APIC_NMI"], DataStructure))
+            ret = ACPI_TABLE_APIC_Lx2APIC_NMI(*struct.unpack_from(self.APIC_TABLE_FORMAT["Lx2APIC_NMI"], DataStructure))
         elif 0x0B == value:
-            return ACPI_TABLE_APIC_GICC_CPU(*struct.unpack_from(self.APIC_TABLE_FORMAT["GICC_CPU"], DataStructure))
+            ret = ACPI_TABLE_APIC_GICC_CPU(*struct.unpack_from(self.APIC_TABLE_FORMAT["GICC_CPU"], DataStructure))
         elif 0x0C == value:
-            return ACPI_TABLE_APIC_GIC_DISTRIBUTOR(*struct.unpack_from(self.APIC_TABLE_FORMAT["GIC_DISTRIBUTOR"], DataStructure))
+            ret = ACPI_TABLE_APIC_GIC_DISTRIBUTOR(*struct.unpack_from(self.APIC_TABLE_FORMAT["GIC_DISTRIBUTOR"], DataStructure))
         elif 0x0D == value:
-            return ACPI_TABLE_APIC_GIC_MSI(*struct.unpack_from(self.APIC_TABLE_FORMAT["GIC_MSI"], DataStructure))
+            ret = ACPI_TABLE_APIC_GIC_MSI(*struct.unpack_from(self.APIC_TABLE_FORMAT["GIC_MSI"], DataStructure))
         elif 0x0E == value:
-            return ACPI_TABLE_APIC_GIC_REDISTRIBUTOR(*struct.unpack_from(self.APIC_TABLE_FORMAT["GIC_REDISTRIBUTOR"], DataStructure))
+            ret = ACPI_TABLE_APIC_GIC_REDISTRIBUTOR(*struct.unpack_from(self.APIC_TABLE_FORMAT["GIC_REDISTRIBUTOR"], DataStructure))
         else:
             DataStructure_str = dump_buffer_bytes(DataStructure, length=16)
-            return f"""
+            ret = f"""
 Reserved ....................................{value}"
 {DataStructure_str}"
 """
+        return str(ret)
 
 
 class ACPI_TABLE_APIC_PROCESSOR_LAPIC(namedtuple('ACPI_TABLE_APIC_PROCESSOR_LAPIC', 'Type Length ACPIProcID APICID Flags')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Processor Local APIC (0x00)
-    Type         : 0x{:02X}
-    Length       : 0x{:02X}
-    ACPI Proc ID : 0x{:02X}
-    APIC ID      : 0x{:02X}
-    Flags        : 0x{:02X}
-""".format(self.Type, self.Length, self.ACPIProcID, self.APICID, self.Flags)
+    Type         : 0x{self.Type:02X}
+    Length       : 0x{self.Length:02X}
+    ACPI Proc ID : 0x{self.ACPIProcID:02X}
+    APIC ID      : 0x{self.APICID:02X}
+    Flags        : 0x{self.Flags:02X}
+"""
 
 
 class ACPI_TABLE_APIC_IOAPIC(namedtuple('ACPI_TABLE_APIC_IOAPIC', 'Type Length IOAPICID Reserved IOAPICAddr GlobalSysIntBase')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   I/O APIC (0x01)
-    Type                : 0x{:02X}
-    Length              : 0x{:02X}
-    Reserved            : 0x{:02X} 
-    I/O APIC ID         : 0x{:02X}
-    I/O APIC Base       : 0x{:02X}
-    Global Sys Int Base : 0x{:02X}
-""".format(self.Type, self.Length, self.IOAPICID, self.Reserved, self.IOAPICAddr, self.GlobalSysIntBase)
+    Type                : 0x{self.Type:02X}
+    Length              : 0x{self.Length:02X}
+    Reserved            : 0x{self.IOAPICID:02X}
+    I/O APIC ID         : 0x{self.Reserved:02X}
+    I/O APIC Base       : 0x{self.IOAPICAddr:02X}
+    Global Sys Int Base : 0x{self.GlobalSysIntBase:02X}
+"""
 
 
 class ACPI_TABLE_APIC_INTERRUPT_SOURSE_OVERRIDE(namedtuple('ACPI_TABLE_APIC_INTERRUPT_SOURSE_OVERRIDE', 'Type Length Bus Source GlobalSysIntBase Flags')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Interrupt Source Override (0x02)
-    Type                : 0x{:02X}
-    Length              : 0x{:02X}
-    Bus                 : 0x{:02X}
-    Source              : 0x{:02X}
-    Global Sys Int Base : 0x{:02X}
-    Flags               : 0x{:02X}
-""".format(self.Type, self.Length, self.Bus, self.Source, self.GlobalSysIntBase, self.Flags)
+    Type                : 0x{self.Type:02X}
+    Length              : 0x{self.Length:02X}
+    Bus                 : 0x{self.Bus:02X}
+    Source              : 0x{self.Source:02X}
+    Global Sys Int Base : 0x{self.GlobalSysIntBase:02X}
+    Flags               : 0x{self.Flags:02X}
+"""
 
 
 class ACPI_TABLE_APIC_NMI_SOURCE(namedtuple('ACPI_TABLE_APIC_NMI_SOURCE', 'Type Length Flags GlobalSysIntBase')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Non-maskable Interrupt (NMI) Source (0x03)
-    Type                : 0x{:02X}
-    Length              : 0x{:02X}
-    Flags               : 0x{:02X}
-    Global Sys Int Base : 0x{:02X}
-""".format(self.Type, self.Length, self.Flags, self.GlobalSysIntBase)
+    Type                : 0x{self.Type:02X}
+    Length              : 0x{self.Length:02X}
+    Flags               : 0x{self.Flags:02X}
+    Global Sys Int Base : 0x{self.GlobalSysIntBase:02X}
+"""
 
 
 class ACPI_TABLE_APIC_LAPIC_NMI(namedtuple('ACPI_TABLE_APIC_LAPIC_NMI', 'Type Length ACPIProcessorID Flags LocalAPICLINT')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Local APIC NMI (0x04)
-    Type              : 0x{:02X}
-    Length            : 0x{:02X}
-    ACPI Processor ID : 0x{:02X}
-    Flags             : 0x{:02X}
-    Local APIC LINT   : 0x{:02X}
-""".format(self.Type, self.Length, self.ACPIProcessorID, self.Flags, self.LocalAPICLINT)
+    Type              : 0x{self.Type:02X}
+    Length            : 0x{self.Length:02X}
+    ACPI Processor ID : 0x{self.ACPIProcessorID:02X}
+    Flags             : 0x{self.Flags:02X}
+    Local APIC LINT   : 0x{self.LocalAPICLINT:02X}
+"""
 
 
 class ACPI_TABLE_APIC_LAPIC_ADDRESS_OVERRIDE(namedtuple('ACPI_TABLE_APIC_LAPIC_ADDRESS_OVERRIDE', 'Type Length Reserved LocalAPICAddress')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Local APIC Address Override (0x05)
-    Type               : 0x{:02X}
-    Length             : 0x{:02X}
-    Reserved           : 0x{:02X}
-    Local APIC Address : 0x{:02X}
-""".format(self.Type, self.Length, self.Reserved, self.LocalAPICAddress)
+    Type               : 0x{self.Type:02X}
+    Length             : 0x{self.Length:02X}
+    Reserved           : 0x{self.Reserved:02X}
+    Local APIC Address : 0x{self.LocalAPICAddress:02X}
+"""
 
 
 class ACPI_TABLE_APIC_IOSAPIC(namedtuple('ACPI_TABLE_APIC_IOSAPIC', 'Type Length IOAPICID Reserved GlobalSysIntBase IOSAPICAddress')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   I/O SAPIC (0x06)
-    Type                : 0x{:02X}
-    Length              : 0x{:02X}
-    IO APIC ID          : 0x{:02X}
-    Reserved            : 0x{:02X}
-    Global Sys Int Base : 0x{:02X}
-    IO SAPIC Address    : 0x{:02X}
-""".format(self.Type, self.Length, self.IOAPICID, self.Reserved, self.GlobalSysIntBase, self.IOSAPICAddress)
+    Type                : 0x{self.Type:02X}
+    Length              : 0x{self.Length:02X}
+    IO APIC ID          : 0x{self.IOAPICID:02X}
+    Reserved            : 0x{self.Reserved:02X}
+    Global Sys Int Base : 0x{self.GlobalSysIntBase:02X}
+    IO SAPIC Address    : 0x{self.IOSAPICAddress:02X}
+"""
 
 
 class ACPI_TABLE_APIC_PROCESSOR_LSAPIC(namedtuple('ACPI_TABLE_APIC_PROCESSOR_LSAPIC', 'Type Length ACPIProcID LocalSAPICID LocalSAPICEID Reserved Flags ACPIProcUIDValue ACPIProcUIDString'), ):
     __slots__ = ()
 
-    def __str__(self):
-        return """
-  Local SAPIC (0x07)    
-    Type                 : 0x{:02X}
-    Length               : 0x{:02X}
-    ACPI Proc ID         : 0x{:02X}
-    Local SAPIC ID       : 0x{:02X}
-    Local SAPIC EID      : 0x{:02X}
-    Reserved             : 0x{:02X}
-    Flags                : 0x{:02X}
-    ACPI Proc UID Value  : 0x{:02X}
-    ACPI Proc UID String : 0x{:02X}
-""".format(self.Type, self.Length, self.ACPIProcID, self.LocalSAPICID, self.LocalSAPICEID, self.Reserved, self.Flags, self.ACPIProcUIDValue, self.ACPIProcUIDString)
+    def __str__(self) -> str:
+        return f"""
+  Local SAPIC (0x07)
+    Type                 : 0x{self.Type:02X}
+    Length               : 0x{self.Length:02X}
+    ACPI Proc ID         : 0x{self.ACPIProcID:02X}
+    Local SAPIC ID       : 0x{self.LocalSAPICID:02X}
+    Local SAPIC EID      : 0x{self.LocalSAPICEID:02X}
+    Reserved             : 0x{self.Reserved:02X}
+    Flags                : 0x{self.Flags:02X}
+    ACPI Proc UID Value  : 0x{self.ACPIProcUIDValue:02X}
+    ACPI Proc UID String : 0x{self.ACPIProcUIDString:02X}
+"""
 
 
 class ACPI_TABLE_APIC_PLATFORM_INTERRUPT_SOURCES(namedtuple('ACPI_TABLE_APIC_PLATFORM_INTERRUPT_SOURCES', 'Type Length Flags InterruptType ProcID ProcEID IOSAPICVector GlobalSystemInterrupt PlatIntSourceFlags')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Platform Interrupt Sources (0x08)
-    Type                    : 0x{:02X}
-    Length                  : 0x{:02X}
-    Flags                   : 0x{:02X}
-    Interrupt Type          : 0x{:02X}
-    Proc ID                 : 0x{:02X}
-    Proc EID                : 0x{:02X}
-    I/O SAPIC Vector        : 0x{:02X}
-    Global System Interrupt : 0x{:02X}
-    Plat Int Source Flags   : 0x{:02X}
-""".format(self.Type, self.Length, self.Flags, self.InterruptType, self.ProcID, self.ProcEID, self.IOSAPICVector, self.GlobalSystemInterrupt, self.PlatIntSourceFlags)
+    Type                    : 0x{self.Type:02X}
+    Length                  : 0x{self.Length:02X}
+    Flags                   : 0x{self.Flags:02X}
+    Interrupt Type          : 0x{self.InterruptType:02X}
+    Proc ID                 : 0x{self.ProcID:02X}
+    Proc EID                : 0x{self.ProcEID:02X}
+    I/O SAPIC Vector        : 0x{self.IOSAPICVector:02X}
+    Global System Interrupt : 0x{self.GlobalSystemInterrupt:02X}
+    Plat Int Source Flags   : 0x{self.PlatIntSourceFlags:02X}
+"""
 
 
 class ACPI_TABLE_APIC_PROCESSOR_Lx2APIC(namedtuple('ACPI_TABLE_APIC_PROCESSOR_Lx2APIC', 'Type Length Reserved x2APICID Flags ACPIProcUID')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Processor Local x2APIC (0x09)
-    Type          : 0x{:02X}
-    Length        : 0x{:02X}
-    Reserved      : 0x{:02X}
-    x2APIC ID     : 0x{:02X}
-    Flags         : 0x{:02X}
-    ACPI Proc UID : 0x{:02X}
-""".format(self.Type, self.Length, self.Reserved, self.x2APICID, self.Flags, self.ACPIProcUID)
+    Type          : 0x{self.Type:02X}
+    Length        : 0x{self.Length:02X}
+    Reserved      : 0x{self.Reserved:02X}
+    x2APIC ID     : 0x{self.x2APICID:02X}
+    Flags         : 0x{self.Flags:02X}
+    ACPI Proc UID : 0x{self.ACPIProcUID:02X}
+"""
 
 
 class ACPI_TABLE_APIC_Lx2APIC_NMI(namedtuple('ACPI_TABLE_APIC_Lx2APIC_NMI', 'Type Length Flags ACPIProcUID Localx2APICLINT Reserved')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   Local x2APIC NMI (0x0A)
-    Type              : 0x{:02X}
-    Length            : 0x{:02X}
-    Flags             : 0x{:02X}
-    ACPI Proc UID     : 0x{:02X}
-    Local x2APIC LINT : 0x{:02X}
-    Reserved          : 0x{:}
-""".format(self.Type, self.Length, self.Flags, self.ACPIProcUID, self.Localx2APICLINT, self.Reserved)
+    Type              : 0x{self.Type:02X}
+    Length            : 0x{self.Length:02X}
+    Flags             : 0x{self.Flags:02X}
+    ACPI Proc UID     : 0x{self.ACPIProcUID:02X}
+    Local x2APIC LINT : 0x{self.Localx2APICLINT:02X}
+    Reserved          : 0x{self.Reserved:}
+"""
 
 
 class ACPI_TABLE_APIC_GICC_CPU(namedtuple('ACPI_TABLE_APIC_GICC_CPU', 'Type Length Reserved CPUIntNumber ACPIProcUID Flags ParkingProtocolVersion PerformanceInterruptGSIV ParkedAddress PhysicalAddress GICV GICH VGICMaintenanceINterrupt GICRBaseAddress MPIDR')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   GICC CPU Interface Structure (0x0B)
-    Type                       : 0x{:02X}
-    Length                     : 0x{:02X}
-    Reserved                   : 0x{:02X}
-    CPU Int Number             : 0x{:02X}
-    ACPI Proc UID              : 0x{:02X}
-    Flags                      : 0x{:02X}
-    Parking Protocol Version   : 0x{:02X}
-    Performance Interrupt GSIV : 0x{:02X}
-    Parked Address             : 0x{:02X}
-    Physical Address           : 0x{:02X}
-    GICV                       : 0x{:02X}
-    GICH                       : 0x{:02X}
-    VGIC Maintenance INterrupt : 0x{:02X}
-    GICR Base Address          : 0x{:02X}
-    MPIDR                      : 0x{:02X}
-""".format(self.Type, self.Length, self.Reserved, self.CPUIntNumber, self.ACPIProcUID, self.Flags, self.ParkingProtocolVersion, self.PerformanceInterruptGSIV, self.ParkedAddress, self.PhysicalAddress, self.GICV, self.GICH, self.VGICMaintenanceINterrupt, self.GICRBaseAddress, self.MPIDR)
+    Type                       : 0x{self.Type:02X}
+    Length                     : 0x{self.Length:02X}
+    Reserved                   : 0x{self.Reserved:02X}
+    CPU Int Number             : 0x{self.CPUIntNumber:02X}
+    ACPI Proc UID              : 0x{self.ACPIProcUID:02X}
+    Flags                      : 0x{self.Flags:02X}
+    Parking Protocol Version   : 0x{self.ParkingProtocolVersion:02X}
+    Performance Interrupt GSIV : 0x{self.PerformanceInterruptGSIV:02X}
+    Parked Address             : 0x{self.ParkedAddress:02X}
+    Physical Address           : 0x{self.PhysicalAddress:02X}
+    GICV                       : 0x{self.GICV:02X}
+    GICH                       : 0x{self.GICH:02X}
+    VGIC Maintenance INterrupt : 0x{self.VGICMaintenanceINterrupt:02X}
+    GICR Base Address          : 0x{self.GICRBaseAddress:02X}
+    MPIDR                      : 0x{self.MPIDR:02X}
+"""
 
 
 class ACPI_TABLE_APIC_GIC_DISTRIBUTOR(namedtuple('ACPI_TABLE_APIC_GIC_DISTRIBUTOR', 'Type Length Reserved GICID PhysicalBaseAddress SystemVectorBase Reserved2 ')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   GICD GIC Distributor Structure (0x0C)
-    Type                  : 0x{:02X}
-    Length                : 0x{:02X}
-    Reserved              : 0x{:02X}
-    GICID                 : 0x{:02X}
-    Physical Base Address : 0x{:02X}
-    System Vector Base    : 0x{:02X}
-    Reserved              : 0x{:02X}
-""".format(self.Type, self.Length, self.Reserved, self.GICID, self.PhysicalBaseAddress, self.SystemVectorBase, self.Reserved2)
+    Type                  : 0x{self.Type:02X}
+    Length                : 0x{self.Length:02X}
+    Reserved              : 0x{self.Reserved:02X}
+    GICID                 : 0x{self.GICID:02X}
+    Physical Base Address : 0x{self.PhysicalBaseAddress:02X}
+    System Vector Base    : 0x{self.SystemVectorBase:02X}
+    Reserved              : 0x{self.Reserved2:02X}
+"""
 
 
 class ACPI_TABLE_APIC_GIC_MSI(namedtuple('ACPI_TABLE_APIC_GIC_MSI', 'Type Length Reserved GICMSIFrameID PhysicalBaseAddress Flags SPICount SPIBase')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   GICv2m MSI Frame (0x0D)
-    Type                  : 0x{:02X}
-    Length                : 0x{:02X}
-    Reserved              : 0x{:02X}
-    GIC MSI Frame ID      : 0x{:02X}
-    Physical Base Address : 0x{:02X}
-    Flags                 : 0x{:02X}
-    SPI Count             : 0x{:02X}
-    SPI Base              : 0x{:02X}
-""".format(self.Type, self.Length, self.Reserved, self.GICMSIFrameID, self.PhysicalBaseAddress, self.Flags, self.SPICount, self.SPIBase)
+    Type                  : 0x{self.Type:02X}
+    Length                : 0x{self.Length:02X}
+    Reserved              : 0x{self.Reserved:02X}
+    GIC MSI Frame ID      : 0x{self.GICMSIFrameID:02X}
+    Physical Base Address : 0x{self.PhysicalBaseAddress:02X}
+    Flags                 : 0x{self.Flags:02X}
+    SPI Count             : 0x{self.SPICount:02X}
+    SPI Base              : 0x{self.SPIBase:02X}
+"""
 
 
 class ACPI_TABLE_APIC_GIC_REDISTRIBUTOR(namedtuple('ACPI_TABLE_APIC_GIC_REDISTRIBUTOR', 'Type Length Reserved DiscoverRangeBaseAdd DiscoverRangeLength')):
     __slots__ = ()
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
   GICR Redistributor Structure (0x0E)
-    Type                  : 0x{:02X}
-    Length                : 0x{:02X}
-    Reserved              : 0x{:02X}
-    Discover Range Base   : 0x{:02X}
-    Discover Range Length : 0x{:02X}
-""".format(self.Type, self.Length, self.Reserved, self.DiscoverRangeBaseAdd, self.DiscoverRangeLength)
+    Type                  : 0x{self.Type:02X}
+    Length                : 0x{self.Length:02X}
+    Reserved              : 0x{self.Reserved:02X}
+    Discover Range Base   : 0x{self.DiscoverRangeBaseAdd:02X}
+    Discover Range Length : 0x{self.DiscoverRangeLength:02X}
+"""
 
 ########################################################################################################
 #
@@ -634,18 +639,19 @@ class XSDT (ACPI_TABLE):
     def __init__(self):
         self.Entries = []
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         num_of_tables = len(table_content) // 8
-        self.Entries = struct.unpack(('={:d}Q'.format(num_of_tables)), table_content)
+        self.Entries = struct.unpack(f'={num_of_tables:d}Q', table_content)
         return
 
-    def __str__(self):
-        return """==================================================================
+    def __str__(self) -> str:
+        entries_str = ''.join([f'0x{addr:016X}\n' for addr in self.Entries])
+        return f"""==================================================================
   Extended System Description Table (XSDT)
 ==================================================================
 ACPI Table Entries:
-{}
-""".format(''.join(['0x{:016X}\n'.format(addr) for addr in self.Entries]))
+{entries_str}
+"""
 
 ########################################################################################################
 #
@@ -658,18 +664,19 @@ class RSDT (ACPI_TABLE):
     def __init__(self):
         self.Entries = []
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         num_of_tables = len(table_content) // 4
-        self.Entries = struct.unpack(('={:d}I'.format(num_of_tables)), table_content)
+        self.Entries = struct.unpack(f'={num_of_tables:d}I', table_content)
         return
 
-    def __str__(self):
-        return """==================================================================
+    def __str__(self) -> str:
+        entries_str = ''.join([f'0x{addr:016X}\n' for addr in self.Entries])
+        return f"""==================================================================
   Root System Description Table (RSDT)
 ==================================================================
 ACPI Table Entries:
-{}
-""".format(''.join(['0x{:016X}\n'.format(addr) for addr in self.Entries]))
+{entries_str}
+"""
 
 ########################################################################################################
 #
@@ -686,7 +693,7 @@ class FADT (ACPI_TABLE):
         self.acpi_enable = None
         self.acpi_disable = None
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         self.dsdt = struct.unpack('<I', table_content[4:8])[0]
         self.smi = struct.unpack('<I', table_content[12:16])[0]
         self.acpi_enable = struct.unpack('B', table_content[16:17])[0]
@@ -697,7 +704,7 @@ class FADT (ACPI_TABLE):
             if logger().HAL:
                 logger().log('[acpi] Cannot find X_DSDT entry in FADT.')
 
-    def get_DSDT_address_to_use(self):
+    def get_DSDT_address_to_use(self) -> Optional[int]:
         dsdt_address_to_use = None
         if self.x_dsdt is None:
             if self.dsdt != 0:
@@ -711,17 +718,17 @@ class FADT (ACPI_TABLE):
                 dsdt_address_to_use = self.x_dsdt
         return dsdt_address_to_use
 
-    def __str__(self):
-        return """------------------------------------------------------------------
+    def __str__(self) -> str:
+        dsdt_str = f'0x{self.x_dsdt:016X}' if self.x_dsdt is not None else 'Not found'
+        return f"""------------------------------------------------------------------
   Fixed ACPI Description Table (FADT) Contents
 ------------------------------------------------------------------
-  DSDT    : {}
-  X_DSDT  : {}
-  SMI_CMD : {}
-  ACPI_EN : {}
-  ACPI_DIS: {}
-""".format(('0x{:08X}'.format(self.dsdt)), ('0x{:016X}'.format(self.x_dsdt)) if self.x_dsdt is not None else 'Not found',
-            '0x{:04X}'.format(self.smi), '0x{:01X}'.format(self.acpi_enable), '0x{:01X}'.format(self.acpi_disable))
+  DSDT    : 0x{self.dsdt:08X}
+  X_DSDT  : {dsdt_str}
+  SMI_CMD : 0x{self.smi:04X}
+  ACPI_EN : 0x{self.acpi_enable:01X}
+  ACPI_DIS: 0x{self.acpi_disable:01X}
+"""
 
 ########################################################################################################
 #
@@ -734,7 +741,7 @@ class BGRT (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         self.Version = struct.unpack('<H', table_content[0:2])[0]
         self.Status = struct.unpack('<b', table_content[2:3])[0]
         self.ImageType = struct.unpack('<b', table_content[3:4])[0]
@@ -756,17 +763,17 @@ class BGRT (ACPI_TABLE):
         else:
             self.ImageTypeStr = 'Reserved'
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
 ------------------------------------------------------------------
-  Version          	 			: {:d}
-  Status           	 			: {:d}
-   Clockwise Orientation Offset 	: {}
-  Image Type        			: {:d} {}
-  Image Address      			: 0x{:016X}
-  Image Offset X     			: 0x{:08X}
-  Image Offset Y     			: 0x{:08X}
-""".format(self.Version, self.Status, self.OrientationOffset, self.ImageType, self.ImageTypeStr, self.ImageAddress, self.ImageOffsetX, self.ImageOffsetY)
+  Version                       : {self.Version:d}
+  Status                        : {self.Status:d}
+   Clockwise Orientation Offset : {self.OrientationOffset}
+  Image Type                    : {self.ImageType:d} {self.ImageTypeStr}
+  Image Address                 : 0x{self.ImageAddress:016X}
+  Image Offset X                : 0x{self.ImageOffsetX:08X}
+  Image Offset Y                : 0x{self.ImageOffsetY:08X}
+"""
 
 ########################################################################################################
 #
@@ -780,7 +787,7 @@ class BERT (ACPI_TABLE):
         self.cs = cs
         return
 
-    def parseSectionType(self, table_content):
+    def parseSectionType(self, table_content: bytes) -> str:
         # Processor Generic: {0x9876CCAD, 0x47B4, 0x4bdb, {0xB6, 0x5E, 0x16, 0xF1, 0x93, 0xC4, 0xF3, 0xDB}}
         # Processor Specific: IA32/X64:{0xDC3EA0B0, 0xA144, 0x4797, {0xB9, 0x5B, 0x53, 0xFA, 0x24, 0x2B, 0x6E, 0x1D}}
         # Processor Specific: IPF: {0xe429faf1, 0x3cb7, 0x11d4, {0xb, 0xca, 0x7, 0x00, 0x80,0xc7, 0x3c, 0x88, 0x81}}
@@ -797,7 +804,7 @@ class BERT (ACPI_TABLE):
         val2 = struct.unpack('<L', table_content[4:8])[0]
         val3 = struct.unpack('<L', table_content[8:12])[0]
         val4 = struct.unpack('<L', table_content[12:16])[0]
-        results = '''0x{:08X} 0x{:08X} 0x{:08X} 0x{:08X} - '''.format(val1, val2, val3, val4)
+        results = f'''0x{val1:08X} 0x{val2:08X} 0x{val3:08X} 0x{val4:08X} - '''
         """if val1 == 0x9876CCAD and val2 == 0x47B4 and val3 == 0x4bdb and val4 in [0xB6, 0x5E, 0x16, 0xF1, 0x93, 0xC4, 0xF3, 0xDB]:
             return results + '''Generic Processor'''
         elif val1 == 0xDC3EA0B0 and val2 == 0xA144 and val3 == 0x4797 and val4 in [0xB9, 0x5B, 0x53, 0xFA, 0x24, 0x2B, 0x6E, 0x1D]:
@@ -824,7 +831,7 @@ class BERT (ACPI_TABLE):
             return results + '''IOMMU Specific DMAr Section'''"""
         return results + '''Unknown'''
 
-    def parseTime(self, table_content):
+    def parseTime(self, table_content: bytes) -> str:
         seconds = struct.unpack('<B', table_content[0:1])[0]
         minutes = struct.unpack('<B', table_content[1:2])[0]
         hours = struct.unpack('<B', table_content[2:3])[0]
@@ -836,9 +843,9 @@ class BERT (ACPI_TABLE):
         precision_str = ''
         if percision > 0:
             precision_str = '(time is percise and correlates to time of event)'
-        return ''' {:d}:{:d}:{:d} {:d}/{:d}/{:d}{:d} [m/d/y] {}'''.format(hours, minutes, seconds, month, day, century, year, precision_str)
+        return f''' {hours:d}:{minutes:d}:{seconds:d} {month:d}/{day:d}/{century:d}{year:d} [m/d/y] {precision_str}'''
 
-    def parseGenErrorEntries(self, table_content):
+    def parseGenErrorEntries(self, table_content: bytes) -> str:
         errorSeverities = ['Recoverable', 'Fatal', 'Corrected', 'None', 'Unknown severity entry']
         sectionType = self.parseSectionType(table_content[0:16])
         errorSeverity = struct.unpack('<L', table_content[16:20])[0]
@@ -866,28 +873,28 @@ class BERT (ACPI_TABLE):
         FRU_Id_str = ''
         if FRU_Id1 == 0 and FRU_Id2 == 0 and FRU_Id3 == 0 and FRU_Id4 == 0:
             FRU_Id_str = ' - Default value, invalid FRU ID'
-        return '''
-      Section Type                                  : {}
-      Error Severity                                : {} - {}
-      Revision                                      : 0x{:04X}{}
-      Validation Bits                               : 0x{:02X}
-      Flags                                         : 0x{:02X}
-        Primary                                     : 0x{:02X}
-        Containment Warning                         : 0x{:02X}
-        Reset                                       : 0x{:02X}
-        Error Threshold Exceeded                    : 0x{:02X}
-        Resource Not Accessible                     : 0x{:02X}
-        Latent Error                                : 0x{:02X}
-        Propagated                                  : 0x{:02X}
-        Overflow                                    : 0x{:02X}
-        Reserved                                    : 0x{:02X}
-      Error Data Length                             : 0x{:08X} ( {:d} )
-      FRU Id                                        : {} {} {} {}{}
-      FRU Text                                      : {}
-      Timestamp                                     : {:d} - {}
-      Data                                          : {}'''.format(sectionType, errorSeverity, errorSeverity_str, revision, revision_str, validationBits, flags, (flags & 1), (flags & 2), (flags & 4), (flags & 8), (flags & 16), (flags & 32), (flags & 64), (flags & 128), (flags & 256), errDataLen, errDataLen, FRU_Id1, FRU_Id2, FRU_Id3, FRU_Id4, FRU_Id_str, FRU_Text, timestamp, timestamp_str, data)
+        return f'''
+      Section Type                                  : {sectionType}
+      Error Severity                                : {errorSeverity} - {errorSeverity_str}
+      Revision                                      : 0x{revision:04X}{revision_str}
+      Validation Bits                               : 0x{validationBits:02X}
+      Flags                                         : 0x{flags:02X}
+        Primary                                     : 0x{flags & 1:02X}
+        Containment Warning                         : 0x{flags & 2:02X}
+        Reset                                       : 0x{flags & 4:02X}
+        Error Threshold Exceeded                    : 0x{flags & 8:02X}
+        Resource Not Accessible                     : 0x{flags & 16:02X}
+        Latent Error                                : 0x{flags & 32:02X}
+        Propagated                                  : 0x{flags & 64:02X}
+        Overflow                                    : 0x{flags & 128:02X}
+        Reserved                                    : 0x{flags & 256:02X}
+      Error Data Length                             : 0x{errDataLen:08X} ( {errDataLen:d} )
+      FRU Id                                        : {FRU_Id1} {FRU_Id2} {FRU_Id3} {FRU_Id4}{FRU_Id_str}
+      FRU Text                                      : {FRU_Text}
+      Timestamp                                     : {timestamp:d} - {timestamp_str}
+      Data                                          : {data}'''
 
-    def parseErrorBlock(self, table_content):
+    def parseErrorBlock(self, table_content: bytes) -> None:
         errorSeverities = ['Recoverable', 'Fatal', 'Corrected', 'None', 'Unknown severity entry']
         blockStatus = struct.unpack('<L', table_content[0:4])[0]
         rawDataOffset = struct.unpack('<L', table_content[4:8])[0]
@@ -898,38 +905,35 @@ class BERT (ACPI_TABLE):
         errorSeverity_str = errorSeverities[4]
         if errorSeverity < 4:
             errorSeverity_str = errorSeverities[errorSeverity]
-        self.BootRegion = '''
+        self.BootRegion = f'''
 Generic Error Status Block
-    Block Status                                    : 0x{:08X}
-      Correctable Error Valid                       : 0x{:08X}
-      Uncorrectable Error Valid                     : 0x{:08X}
-      Multiple Uncorrectable Errors                 : 0x{:08X}
-      Multiple Correctable Errors                   : 0x{:08X}
-      Error Data Entry Count                        : 0x{:08X}
-      Reserved                                      : 0x{:08X}
-    Raw Data Offset                                 : 0x{:08X} ( {:d} )
-    Raw Data Length                                 : 0x{:08X} ( {:d} )
-    Data Length                                     : 0x{:08X} ( {:d} )
-    Error Severity                                  : 0x{:08X} - {}
-    Generic Error Data Entries{}
-'''.format(blockStatus, (blockStatus & 1), (blockStatus & 2),
-            (blockStatus & 4), (blockStatus & 8), (blockStatus & 1023),
-            (blockStatus & 262143), rawDataOffset, rawDataOffset, rawDataLen,
-            rawDataLen, dataLen, dataLen, errorSeverity, errorSeverity_str, genErrorDataEntries)
+    Block Status                                    : 0x{blockStatus:08X}
+      Correctable Error Valid                       : 0x{blockStatus & 1:08X}
+      Uncorrectable Error Valid                     : 0x{blockStatus & 2:08X}
+      Multiple Uncorrectable Errors                 : 0x{blockStatus & 4:08X}
+      Multiple Correctable Errors                   : 0x{blockStatus & 8:08X}
+      Error Data Entry Count                        : 0x{blockStatus & 1023:08X}
+      Reserved                                      : 0x{blockStatus & 262143:08X}
+    Raw Data Offset                                 : 0x{rawDataOffset:08X} ( {rawDataOffset:d} )
+    Raw Data Length                                 : 0x{rawDataLen:08X} ( {rawDataLen:d} )
+    Data Length                                     : 0x{dataLen:08X} ( {dataLen:d} )
+    Error Severity                                  : 0x{errorSeverity:08X} - {errorSeverity_str}
+    Generic Error Data Entries{genErrorDataEntries}
+'''
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         self.BootRegionLen = struct.unpack('<L', table_content[0:4])[0]
         self.BootRegionAddr = struct.unpack('<Q', table_content[4:12])[0]
         bootRegion = self.cs.mem.read_physical_mem(self.BootRegionAddr, self.BootRegionLen)
         self.parseErrorBlock(bootRegion)
 
-    def __str__(self):
-        return """
+    def __str__(self) -> str:
+        return f"""
 ------------------------------------------------------------------
-  Boot Region Length                                : {:d}
-  Boot Region Address	                            : 0x{:016X}
-  Boot Region - {}
-""".format(self.BootRegionLen, self.BootRegionAddr, self.BootRegion)
+  Boot Region Length                                : {self.BootRegionLen:d}
+  Boot Region Address	                            : 0x{self.BootRegionAddr:016X}
+  Boot Region - {self.BootRegion}
+"""
 
 ########################################################################################################
 #
@@ -942,10 +946,10 @@ class EINJ (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parseAddress(self, table_content):
+    def parseAddress(self, table_content: bytes) -> str:
         return str(GAS(table_content))
 
-    def parseInjection(self, table_content):
+    def parseInjection(self, table_content: bytes) -> None:
         errorInjectActions = ['BEGIN_INJECTION_OPERATION', 'GET_TRIGGER_ERROR_ACTION', 'SET_ERROR_TYPE', 'GET_ERROR_TYPE', 'END_OPERATION', 'EXECUTE_OPERATION',
                               'CHECK_BUSY_STATUS', 'GET_COMMAND_STATUS', 'SET_ERROR_TYPE_WITH_ADDRESS', 'GET_EXECUTE_OPERATION_TIMING', 'not recognized as valid aciton']
         injectionInstructions = ['READ_REGISTER', 'READ_REGISTER_VALUE', 'WRITE_REGISTER', 'WRITE_REGISTER_VALUE', 'NOOP', 'not recognized as valid instruction']
@@ -977,24 +981,24 @@ class EINJ (ACPI_TABLE):
             reserved_str = ' - Error, must be 0'
         else:
             reserved_str = ''
-        self.results_str += """
+        self.results_str += f"""
   Injection Instruction Entry
-    Injection Action                                : 0x{:02X} ( {:d} ) - {}
-    Instruction                                     : 0x{:02X} ( {:d} ) - {}
-    Flags                                           : 0x{:02X} ( {:d} ){}
-    Reserved                                        : 0x{:02X} ( {:d} ){}
-    Register Region - {}
-    Value                                           : 0x{:016X} ( {:d} )
-    Mask                                            : 0x{:016X} ( {:d} )
-    """.format(injectionAction, injectionAction, injectionAction_str, instruction, instruction, instruction_str, flags, flags, flags_str, reserved, reserved, reserved_str, registerRegion, value, value, mask, mask)
+    Injection Action                                : 0x{injectionAction:02X} ( {injectionAction:d} ) - {injectionAction_str}
+    Instruction                                     : 0x{instruction:02X} ( {instruction:d} ) - {instruction_str}
+    Flags                                           : 0x{flags:02X} ( {flags:d} ){flags_str}
+    Reserved                                        : 0x{reserved:02X} ( {reserved:d} ){reserved_str}
+    Register Region - {registerRegion}
+    Value                                           : 0x{value:016X} ( {value:d} )
+    Mask                                            : 0x{mask:016X} ( {mask:d} )
+    """
 
-    def parseInjectionActionTable(self, table_contents, numInjections):
+    def parseInjectionActionTable(self, table_contents: bytes, numInjections: int) -> None:
         curInjection = 0
         while curInjection < numInjections:
             self.parseInjection(table_contents[curInjection * 32:(curInjection + 1) * 32])
             curInjection += 1
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         injectionHeaderSz = struct.unpack('<L', table_content[0:4])[0]
         injectionFlags = struct.unpack('<B', table_content[4:5])[0]
         reserved1 = struct.unpack('<B', table_content[5:6])[0]
@@ -1010,17 +1014,16 @@ class EINJ (ACPI_TABLE):
             injection_str = ' - Error, this feild should be 0'
         if reserved != 0:
             reserved_str = ' - Error, this field should be 0'
-        self.results_str = """
+        self.results_str = f"""
 ------------------------------------------------------------------
-  Injection Header Size                             : 0x{:016X} ( {:d} )
-  Injection Flags                                   : 0x{:02X}{}
-  Reserved                                          : 0x{:06X}{}
-  Injection Entry Count                             : 0x{:08X} ( {:d} )
+  Injection Header Size                             : 0x{injectionHeaderSz:016X} ( {injectionHeaderSz:d} )
+  Injection Flags                                   : 0x{injectionFlags:02X}{injection_str}
+  Reserved                                          : 0x{reserved:06X}{reserved_str}
+  Injection Entry Count                             : 0x{injectionEntryCount:08X} ( {injectionEntryCount:d} )
   Injection Instruction Entries
-""".format(injectionHeaderSz, injectionHeaderSz, injectionFlags, injection_str, reserved, reserved_str, injectionEntryCount, injectionEntryCount)
-        self.parseInjectionActionTable(table_content[12:], injectionEntryCount)
+"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results_str
 
 ########################################################################################################
@@ -1034,16 +1037,16 @@ class ERST (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parseAddress(self, table_content):
+    def parseAddress(self, table_content: bytes) -> str:
         return str(GAS(table_content))
 
-    def parseActionTable(self, table_content, instrCountEntry):
+    def parseActionTable(self, table_content: bytes, instrCountEntry: int) -> None:
         curInstruction = 0
         while curInstruction < instrCountEntry:
             self.parseInstructionEntry(table_content[32 * curInstruction:])
             curInstruction += 1
 
-    def parseInstructionEntry(self, table_content):
+    def parseInstructionEntry(self, table_content: bytes) -> None:
         serializationInstr_str = ''
         serializationAction = struct.unpack('<B', table_content[0:1])[0]
         instruction = struct.unpack('<B', table_content[1:2])[0]
@@ -1074,18 +1077,18 @@ class ERST (ACPI_TABLE):
         else:
             flags_str = ''
 
-        self.results_str += '''
+        self.results_str += f'''
     Serialization Intruction Entry
-      Serialized Action                             : 0x{:02X} - {}
-      Instruction                                   : 0x{:02X} - {}
-      Flags                                         : 0x{:02X}{}
-      Reserved                                      : 0x{:02X}{}
-      Register Region - {}
-      Value                                         : 0x{:016X}
-      Mask                                          : 0x{:016X}
-    '''.format(serializationAction, serializationAction_str, instruction, serializationInstr_str, flags, flags_str, reserved, reserved_str, registerRegion, value, mask)
+      Serialized Action                             : 0x{serializationAction:02X} - {serializationAction_str}
+      Instruction                                   : 0x{instruction:02X} - {serializationInstr_str}
+      Flags                                         : 0x{flags:02X}{flags_str}
+      Reserved                                      : 0x{reserved:02X}{reserved_str}
+      Register Region - {registerRegion}
+      Value                                         : 0x{value:016X}
+      Mask                                          : 0x{mask:016X}
+    '''
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         headerSz = struct.unpack('<L', table_content[0:4])[0]
         reserved = struct.unpack('<L', table_content[4:8])[0]
         instrCountEntry = struct.unpack('<L', table_content[8:12])[0]
@@ -1093,16 +1096,16 @@ class ERST (ACPI_TABLE):
             reserved_str = ' - Error, this should be 0'
         else:
             reserved_str = ''
-        self.results_str = """
+        self.results_str = f"""
 ------------------------------------------------------------------
-  Serialization Header Size                       : 0x{:08X} ( {:d} )
-  Reserved                                        : 0x{:08X}{}
-  Instruction Count Entry                         : 0x{:08X} ( {:d} )
+  Serialization Header Size                       : 0x{headerSz:08X} ( {headerSz:d} )
+  Reserved                                        : 0x{reserved:08X}{reserved_str}
+  Instruction Count Entry                         : 0x{instrCountEntry:08X} ( {instrCountEntry:d} )
   Serialization Action Table
-""".format(headerSz, headerSz, reserved, reserved_str, instrCountEntry, instrCountEntry)
+"""
         self.parseActionTable(table_content[12:], instrCountEntry)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results_str
 
 ########################################################################################################
@@ -1116,7 +1119,7 @@ class HEST (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parseErrEntry(self, table_content):
+    def parseErrEntry(self, table_content: bytes) -> Optional[int]:
         _type = struct.unpack('<H', table_content[0:2])[0]
         if _type == 0:  # Arch Machine Check Execption Structure
             return self.parseAMCES(table_content)
@@ -1128,10 +1131,9 @@ class HEST (ACPI_TABLE):
             return self.parsePCIe(table_content, _type)
         elif _type == 9 or _type == 10:  # Generic hardware Error Source Structure or Generic Hardware Error Source version 2
             return self.parseGHESS(table_content, _type)
-        else:
-            pass
+        return
 
-    def parseNotify(self, table_content):
+    def parseNotify(self, table_content: bytes) -> str:
         types = ['Polled', 'External Interrupt', 'Local Interrupt', 'SCI', 'NMI', 'CMCI', 'MCE', 'GPI-Signal',
                  'ARMv8 SEA', 'ARMv8 SEI', 'External Interrupt - GSIV', 'Software Delicated Exception', 'Reserved']
         errorType = struct.unpack('<B', table_content[0:1])[0]
@@ -1153,24 +1155,25 @@ class HEST (ACPI_TABLE):
         if errorType == 10:
             vector_str = 'Specifies the GSIV triggerd by error source'
 
-        return """Hardware Error Notification Structure
-      Type                                        : {:d} - {}
-      Length                                      : 0x{:02X}
-      Configuration Write Enable                  : 0x{:04X}
-        Type                                      : {:d}
-        Poll Interval                             : {:d}
-        Switch To Polling Threshold Value         : {:d}
-        Switch To Polling Threshold Window        : {:d}
-        Error Threshold Value                     : {:d}
-        Error Threshold Window                    : {:d}
-      Poll Interval                               : {:d} milliseconds
-      Vector                                      : {:d}{}
-      Switch To Polling Threshold Value           : 0x{:08X}
-      Switch To Polling Threshold Window          : {:d} milliseconds
-      Error Threshold Value                       : 0x{:08X}
-      Error Threshold Window                      : {:d} milliseconds""".format(errorType, typeStr, length, configWrEn, (configWrEn & 1), (configWrEn & 2), (configWrEn & 4), (configWrEn & 8), (configWrEn & 16), (configWrEn & 32), pollInterval, vector, vector_str, switchPollingThreshVal, switchPollThresWind, errThreshVal, errThreshWind)
+        return f"""Hardware Error Notification Structure
+      Type                                        : {errorType:d} - {typeStr}
+      Length                                      : 0x{length:02X}
+      Configuration Write Enable                  : 0x{configWrEn:04X}
+        Type                                      : {configWrEn & 1:d}
+        Poll Interval                             : {configWrEn & 2:d}
+        Switch To Polling Threshold Value         : {configWrEn & 4:d}
+        Switch To Polling Threshold Window        : {configWrEn & 8:d}
+        Error Threshold Value                     : {configWrEn & 16:d}
+        Error Threshold Window                    : {configWrEn & 32:d}
+      Poll Interval                               : {pollInterval:d} milliseconds
+      Vector                                      : {vector:d}{vector_str}
+      Switch To Polling Threshold Value           : 0x{switchPollingThreshVal:08X}
+      Switch To Polling Threshold Window          : {errThreshVal:d} milliseconds
+      Error Threshold Value                       : 0x{errThreshVal:08X}
+      Error Threshold Window                      : {errThreshWind:d} milliseconds
+      """
 
-    def machineBankParser(self, table_content):
+    def machineBankParser(self, table_content: bytes) -> None:
         bankNum = struct.unpack('<B', table_content[0:1])[0]
         clearStatus = struct.unpack('<B', table_content[1:2])[0]
         statusDataFormat = struct.unpack('<B', table_content[2:3])[0]
@@ -1212,21 +1215,21 @@ class HEST (ACPI_TABLE):
         else:
             miscRegMSTAddr_str = ' - Ignore'
 
-        self.resultsStr = self.resultsStr + ("""Machine Check Error Bank Structure
-      Bank Number                                 : 0x{:04X}
-      Clear Status On Initialization              : 0x{:04X} - {}
-      Status Data Format                          : 0x{:04X} - {}
-      Reserved                                    : 0x{:04X}
-      Control Register MSR Address                : 0x{:04X}{}
-      Control Init Data                           : 0x{:04X}
-      Status Register MSR Address                 : 0x{:04X}{}
-      Address Register MSR Address                : 0x{:04X}{}
-      Misc Register MSR Address	                  : 0x{:04X}{}""".format(bankNum, clearStatus, clearStatus_str, statusDataFormat, statusDataFormat_str, reserved1, controlRegMsrAddr, controlRegMsrAddr_str, controlInitData, statusRegMSRAddr, statusRegMSRAddr_str, addrRegMSRAddr, addrRegMSRAddr_str, miscRegMSTAddr, miscRegMSTAddr_str))
+        self.resultsStr += f"""Machine Check Error Bank Structure
+      Bank Number                                 : 0x{bankNum:04X}
+      Clear Status On Initialization              : 0x{clearStatus:04X} - {clearStatus_str}
+      Status Data Format                          : 0x{statusDataFormat:04X} - {statusDataFormat_str}
+      Reserved                                    : 0x{reserved1:04X}
+      Control Register MSR Address                : 0x{controlRegMsrAddr:04X}{controlRegMsrAddr_str}
+      Control Init Data                           : 0x{controlInitData:04X}
+      Status Register MSR Address                 : 0x{statusRegMSRAddr:04X}{statusRegMSRAddr_str}
+      Address Register MSR Address                : 0x{addrRegMSRAddr:04X}{addrRegMSRAddr_str}
+      Misc Register MSR Address                   : 0x{miscRegMSTAddr:04X}{miscRegMSTAddr_str}"""
 
-    def parseAddress(self, table_content):
+    def parseAddress(self, table_content: bytes) -> str:
         return str(GAS(table_content))
 
-    def parseAMCES(self, table_content):
+    def parseAMCES(self, table_content: bytes) -> int:
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved1 = struct.unpack('<H', table_content[4:6])[0]
         flags = struct.unpack('<B', table_content[6:7])[0]
@@ -1261,27 +1264,27 @@ class HEST (ACPI_TABLE):
         if firmware_first == 0:
             ghes_assist_str = 'Bit is reserved'
 
-        self.resultsStr = self.resultsStr + ("""
+        self.resultsStr += f"""
   Architecture Machine Check Exception Structure
-    Source ID                                     : 0x{:04X}
-    Reserved                                      : 0x{:04X}
-    Flags                                         : 0x{:02X}
-    FIRMWARE_FIRST                                : {} - {}
-    GHES_ASSIST                                   : {} - {}
-    Enabled                                       : 0x{:02X}
-    Number of Records to Pre-allocate             : 0x{:08X}
-    Max Sections Per Record                       : 0x{:08X}
-    Global Capability Init Data                   : 0x{:016X}
-    Number of Hardware Banks                      : 0x{:02X}
-    Reserved                                      : 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X}
-	""".format(sourceID, reserved1, flags, firmware_first, firmware_first_str, ghes_assist, ghes_assist_str, enabled, recordsToPreAllocate, maxSectorsPerRecord, globalCapabilityInitData, numHardwareBanks, reserved2_1, reserved2_2, reserved2_3, reserved2_4, reserved2_5, reserved2_6, reserved2_7))
+    Source ID                                     : 0x{sourceID:04X}
+    Reserved                                      : 0x{reserved1:04X}
+    Flags                                         : 0x{flags:02X}
+    FIRMWARE_FIRST                                : {firmware_first} - {firmware_first_str}
+    GHES_ASSIST                                   : {ghes_assist} - {ghes_assist_str}
+    Enabled                                       : 0x{enabled:02X}
+    Number of Records to Pre-allocate             : 0x{recordsToPreAllocate:08X}
+    Max Sections Per Record                       : 0x{maxSectorsPerRecord:08X}
+    Global Capability Init Data                   : 0x{globalCapabilityInitData:016X}
+    Number of Hardware Banks                      : 0x{numHardwareBanks:02X}
+    Reserved                                      : 0x{reserved2_1:02X} 0x{reserved2_2:02X} 0x{reserved2_3:02X} 0x{reserved2_4:02X} 0x{reserved2_5:02X} 0x{reserved2_6:02X} 0x{reserved2_7:02X}
+    """
         curBankNum = 0
         while curBankNum < numHardwareBanks:
             self.machineBankParser(table_content[40 + curBankNum * 28:40 + (curBankNum + 1) * 28])
             curBankNum += 1
         return 40 + numHardwareBanks * 28
 
-    def parseAMCS(self, table_content, _type):
+    def parseAMCS(self, table_content: bytes, _type: int) -> int:
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved1 = struct.unpack('<H', table_content[4:6])[0]
         flags = struct.unpack('<B', table_content[6:7])[0]
@@ -1320,27 +1323,28 @@ class HEST (ACPI_TABLE):
         else:
             title = 'Architecture Deferred Machine Check Structure'
 
-        self.resultsStr = self.resultsStr + ("""
-    {}
-    Source ID         				  : 0x{:04X}
-    Reserved                                      : 0x{:04X}
-    Flags                                         : 0x{:02X}{}
-      FIRMWARE_FIRST                              : {} - {}
-      GHES_ASSIST                                 : {} - {}
-    Enabled                                       : 0x{:02X}
-    Number of Records to Pre-allocate             : 0x{:08X}
-    Max Sections Per Record                       : 0x{:08X}
-    {}
-    Number of Hardware Banks                      : 0x{:02X}
-    Reserved                                      : 0x{:02X} 0x{:02X} 0x{:02X}
-	""".format(title, sourceID, reserved1, flags, flags_str, firmware_first, firmware_first_str, ghes_assist, ghes_assist_str, enabled, recordsToPreAllocate, maxSectorsPerRecord, notificationStructure, numHardwareBanks, reserved2_1, reserved2_2, reserved2_3))
+        self.resultsStr += f"""
+    {title}
+    Source ID         				  : 0x{sourceID:04X}
+    Reserved                                      : 0x{reserved1:04X}
+    Flags                                         : 0x{flags:02X}{flags_str}
+      FIRMWARE_FIRST                              : {firmware_first} - {firmware_first_str}
+      GHES_ASSIST                                 : {ghes_assist} - {ghes_assist_str}
+    Enabled                                       : 0x{enabled:02X}
+    Number of Records to Pre-allocate             : 0x{recordsToPreAllocate:08X}
+    Max Sections Per Record                       : 0x{maxSectorsPerRecord:08X}
+    {notificationStructure}
+    Number of Hardware Banks                      : 0x{numHardwareBanks:02X}
+    Reserved                                      : 0x{reserved2_1:02X} 0x{reserved2_2:02X} 0x{reserved2_3:02X}
+
+    """
         currBank = 0
         while currBank < numHardwareBanks:
             self.machineBankParser(table_content[48 + currBank * 28:48 + (currBank + 1) * 28])
             currBank += 1
         return 48 + numHardwareBanks * 28
 
-    def parseNMIStructure(self, table_content):
+    def parseNMIStructure(self, table_content: bytes) -> int:
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved = struct.unpack('<L', table_content[4:8])[0]
         numRecordsToPreAllocate = struct.unpack('<L', table_content[8:12])[0]
@@ -1352,18 +1356,17 @@ class HEST (ACPI_TABLE):
         else:
             reserved_str = ' - Error, not 0'
 
-        self.resultsStr = self.resultsStr + ("""
+        self.resultsStr += f"""
   Architecture NMI Error Structure
-    Source ID                                     : 0x{:04X}
-    Reserved                                      : 0x{:08X}{}
-    Number of Records to Pre-Allocate             : 0x{:08X}
-    Max Sections Per Record                       : 0x{:08X}
-    Max Raw Data Length                           : 0x{:08X}
-	""".format(sourceID, reserved, reserved_str, numRecordsToPreAllocate, maxSectorsPerRecord, maxRawDataLength))
-
+    Source ID                                     : 0x{sourceID:04X}
+    Reserved                                      : 0x{reserved:08X}{reserved_str}
+    Number of Records to Pre-Allocate             : 0x{numRecordsToPreAllocate:08X}
+    Max Sections Per Record                       : 0x{maxSectorsPerRecord:08X}
+    Max Raw Data Length                           : 0x{maxRawDataLength:08X}
+    """
         return 20
 
-    def parsePCIe(self, table_content, _type):
+    def parsePCIe(self, table_content: bytes, _type: int) -> int:
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         reserved1 = struct.unpack('<H', table_content[4:6])[0]
         flags = struct.unpack('<B', table_content[6:7])[0]
@@ -1382,18 +1385,18 @@ class HEST (ACPI_TABLE):
         if _type == 6:
             title = 'PCI Express Root Port AER Structure'
             rootErrCommand = struct.unpack('<L', table_content[44:48])[0]
-            extra_str = '''
-    Root Error Command                            : 0x{:08X}'''.format(rootErrCommand)
+            extra_str = f'''
+    Root Error Command                            : 0x{rootErrCommand:08X}'''
             size = 48
         elif _type == 8:
             title = 'PCI Express Bridge AER Structure'
             secondaryUncorrErrMask = struct.unpack('<L', table_content[44:48])[0]
             secondaryUncorrErrServ = struct.unpack('<L', table_content[48:52])[0]
             secondaryAdvCapabAndControl = struct.unpack('<L', table_content[52:56])[0]
-            extra_str = '''
-    Secondary Uncorrectable Error Mask            : 0x{:08X}
-    Secondary Uncorrectable Error Severity        : 0x{:08X}
-    Secondary Advanced Capabilities and Control   : 0x{:08X}'''.format(secondaryUncorrErrMask, secondaryUncorrErrServ, secondaryAdvCapabAndControl)
+            extra_str = f'''
+    Secondary Uncorrectable Error Mask            : 0x{secondaryUncorrErrMask:08X}
+    Secondary Uncorrectable Error Severity        : 0x{secondaryUncorrErrServ:08X}
+    Secondary Advanced Capabilities and Control   : 0x{secondaryAdvCapabAndControl:08X}'''
             size = 56
         else:
             title = 'PCI Express Device AER Structure'
@@ -1427,29 +1430,29 @@ class HEST (ACPI_TABLE):
         if firmware_first != 0:
             isFirmware_str = ' - This field should be ignored since FIRMWARE_FIRST is set'
 
-        self.resultsStr = self.resultsStr + ("""
-  {}
-    Source ID                                     : 0x{:04X}
-    Reserved                                      : 0x{:08X}
-    Flags                                         : 0x{:02X}{}
-      FIRMWARE_FIRST                              : {} - {} {}
-      GLOBAL                                      : {} - {}
-    Enabled                                       : 0x{:08X}
-    Number of Records to Pre-Allocate             : 0x{:08X}
-    Max Sections Per Record                       : 0x{:08X}
-    Bus                                           : 0x{:08X}
-    Device                                        : 0x{:04X}{}
-    Function                                      : 0x{:04X}{}
-    Device Control                                : 0x{:04X}
-    Reserved                                      : 0x{:04X}{}
-    Uncorrectable Error Mask                      : 0x{:08X}
-    Uncorrected Error Severity                    : 0x{:08X}
-    Corrected Error Mask                          : 0x{:08X}
-    Advanced Error Capabilities and Control       : 0x{:08X}{}
-	""".format(title, sourceID, reserved1, flags, flags_str, firmware_first, firmware_first_str, isFirmware_str, global_flag, global_flag_str, enabled, numRecordsToPreAllocate, maxSectorsPerRecord, bus, device, isGlobal_str, function, isGlobal_str, deviceControl, reserved2, reserved2_str, uncorrectableErrorMask, uncorrectableErrorServerity, correctableErrorMask, advancedErrorCapabilitiesAndControl, extra_str))
+        self.resultsStr += f"""
+  {title}
+    Source ID                                     : 0x{sourceID:04X}
+    Reserved                                      : 0x{reserved1:08X}
+    Flags                                         : 0x{flags:02X}{flags_str}
+      FIRMWARE_FIRST                              : {firmware_first} - {firmware_first_str} {isFirmware_str}
+      GLOBAL                                      : {global_flag} - {global_flag_str}
+    Enabled                                       : 0x{enabled:08X}
+    Number of Records to Pre-Allocate             : 0x{numRecordsToPreAllocate:08X}
+    Max Sections Per Record                       : 0x{maxSectorsPerRecord:08X}
+    Bus                                           : 0x{bus:08X}
+    Device                                        : 0x{device:04X}{isGlobal_str}
+    Function                                      : 0x{function:04X}{isGlobal_str}
+    Device Control                                : 0x{deviceControl:04X}
+    Reserved                                      : 0x{reserved2:04X}{reserved2_str}
+    Uncorrectable Error Mask                      : 0x{uncorrectableErrorMask:08X}
+    Uncorrected Error Severity                    : 0x{uncorrectableErrorServerity:08X}
+    Corrected Error Mask                          : 0x{correctableErrorMask:08X}
+    Advanced Error Capabilities and Control       : 0x{advancedErrorCapabilitiesAndControl:08X}{extra_str}
+    """
         return size
 
-    def parseGHESS(self, table_content, _type):
+    def parseGHESS(self, table_content: bytes, _type: int) -> int:
         sourceID = struct.unpack('<H', table_content[2:4])[0]
         relatedSourceID = struct.unpack('<H', table_content[4:6])[0]
         flags = struct.unpack('<B', table_content[6:7])[0]
@@ -1468,36 +1471,36 @@ class HEST (ACPI_TABLE):
             readAckReg_str = self.parseAddress(table_content[64:76])
             readAckPresv = struct.unpack('<Q', table_content[76:84])[0]
             readAckWr = struct.unpack('<Q', table_content[84:88])[0]
-            extra_str = '''
-    Read Ack Register - {}
-    Read Ack Preserve                             : 0x{:016X}
-    Read Ack Write                                : 0x{:016X}'''.format(readAckReg_str, readAckPresv, readAckWr)
+            extra_str = f'''
+    Read Ack Register - {readAckReg_str}
+    Read Ack Preserve                             : 0x{readAckPresv:016X}
+    Read Ack Write                                : 0x{readAckWr:016X}'''
         if relatedSourceID == 65535:
             relatedSourceID_str = 'Does not represent an alternate souce'
         else:
             relatedSourceID_str = ''
 
-        self.resultsStr = self.resultsStr + ("""
-  {}
-    Source ID                                     : 0x{:04X}
-    Related Source Id                             : 0x{:08X}{}
-    Flags                                         : 0x{:02X} - Reserved
-    Enabled                                       : 0x{:02X}
-    Number of Records to Pre-Allocate             : 0x{:08X}
-    Max Sections Per Record                       : 0x{:08X}
-    Max Raw Data Length                           : 0x{:08X}
-    Error Status Address - {}
-    {}
-    Error Status Block Length                     : 0x{:08X}{}
-	""".format(title, sourceID, relatedSourceID, relatedSourceID_str, flags, enabled, numRecordsToPreAllocate, maxSectorsPerRecord, maxRawDataLength, address_str, notification_str, errStatusBlockLen, extra_str))
+        self.resultsStr += f"""
+  {title}
+    Source ID                                     : 0x{sourceID:04X}
+    Related Source Id                             : 0x{relatedSourceID:08X}{relatedSourceID_str}
+    Flags                                         : 0x{flags:02X} - Reserved
+    Enabled                                       : 0x{enabled:02X}
+    Number of Records to Pre-Allocate             : 0x{numRecordsToPreAllocate:08X}
+    Max Sections Per Record                       : 0x{maxSectorsPerRecord:08X}
+    Max Raw Data Length                           : 0x{maxRawDataLength:08X}
+    Error Status Address - {address_str}
+    {notification_str}
+    Error Status Block Length                     : 0x{errStatusBlockLen:08X}{extra_str}
+    """
         return 64
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         self.ErrorSourceCount = struct.unpack('<L', table_content[0:4])[0]
-        self.resultsStr = """
+        self.resultsStr = f"""
 ------------------------------------------------------------------
-  Error Source Count                              : {}
-""".format(self.ErrorSourceCount)
+  Error Source Count                              : {self.ErrorSourceCount}
+"""
         nextTable = 4
         currErrSource = 0
         while currErrSource < self.ErrorSourceCount:
@@ -1506,7 +1509,7 @@ class HEST (ACPI_TABLE):
                 nextTable += table_entry
             currErrSource += 1
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.resultsStr
 
 
@@ -1520,24 +1523,24 @@ class SPMI (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parseAddress(self, table_content):
+    def parseAddress(self, table_content: bytes) -> str:
         return str(GAS(table_content))
 
-    def parseNonUID(self, table_content):
+    def parseNonUID(self, table_content: bytes) -> str:
         pciSegGrpNum = struct.unpack('<B', table_content[0:1])[0]
         pciBusNum = struct.unpack('<B', table_content[1:2])[0]
         pciDevNum = struct.unpack('<B', table_content[2:3])[0]
         pciFuncNum = struct.unpack('<B', table_content[3:4])[0]
-        return '''  PCI Segment GroupNumber                                 : 0x{:02X}
-  PCI Bus Number                                          : 0x{:02X}
-  PCI Device Number                                       : 0x{:02X}
-  PCI Function Number                                     : 0x{:02X}'''.format(pciSegGrpNum, pciBusNum, pciDevNum, pciFuncNum)
+        return f'''  PCI Segment GroupNumber                                 : 0x{pciSegGrpNum:02X}
+  PCI Bus Number                                          : 0x{pciBusNum:02X}
+  PCI Device Number                                       : 0x{pciDevNum:02X}
+  PCI Function Number                                     : 0x{pciFuncNum:02X}'''
 
-    def parseUID(self, table_content):
+    def parseUID(self, table_content: bytes) -> str:
         uid = struct.unpack('<L', table_content[0:4])[0]
-        return '''  UID                                                     : 0x{:02X}'''.format(uid)
+        return f'''  UID                                                     : 0x{uid:02X}'''
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         interfaceType = struct.unpack('<B', table_content[0:1])[0]
         reserved1 = struct.unpack('<B', table_content[1:2])[0]
         specRev = struct.unpack('<B', table_content[2:3])[0]
@@ -1558,7 +1561,7 @@ class SPMI (ACPI_TABLE):
             intTypeStr = "SMBus System Interface (SSIF)"
         else:
             intTypeStr = "Reserved"
-        specRevStr = ('0x{:02X}'.format(specRev))
+        specRevStr = (f'0x{specRev:02X}')
         intType_0 = interruptType & 1
         intType_1 = interruptType & 2 >> 1
         intType_other = interruptType ^ 3 >> 2
@@ -1584,29 +1587,29 @@ class SPMI (ACPI_TABLE):
         globalSysInt_str = ''
         if intType_1 != 1:
             globalSysInt_str = ' - this field should be 0'
-        self.results = '''==================================================================
+        self.results = f'''==================================================================
   Service Processor Management Interface Description Table ( SPMI )
 ==================================================================
-  Interface Type                                          : 0x{:02X} - {}
-  Reserved                                                : 0x{:02X} - Must always be 01h to be compatible with any software implementing previous versions of the spec
-  Specification Revision (version)                        : {} 
-  Interrupt Type                                          : 0x{:04X}
-    SCI triggered through GPE                             : 0x{:02X} - {}
-    I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x{:02X} - {}
-    Reserved                                              : 0x{:02X} - Must be 0
-  GPE                                                     : 0x{:02X}{}
-  Reserved                                                : 0x{:02X} - should be 00h
-  PCI Device Flag                                         : 0x{:02X}
-    PCI Device Flag                                       : {:d}
-    Reserved                                              : {:d} - must be 0
-  Global System Interrupt                                 : 0x{:08X}{}
-  Base Address - {}
-{}
-  Reserved                                                : 0x{:02X}
+  Interface Type                                          : 0x{interfaceType:02X} - {intTypeStr}
+  Reserved                                                : 0x{reserved1:02X} - Must always be 01h to be compatible with any software implementing previous versions of the spec
+  Specification Revision (version)                        : {specRevStr}
+  Interrupt Type                                          : 0x{interruptType:04X}
+    SCI triggered through GPE                             : 0x{intType_0:02X} - {intTypeSCIGPE}
+    I/0 APIC/SAPIC interrupt (Global System Interrupt)    : 0x{intType_1:02X} - {intTypeIO}
+    Reserved                                              : 0x{intType_other:02X} - Must be 0
+  GPE                                                     : 0x{gpe:02X}{GPE_str}
+  Reserved                                                : 0x{reserved2:02X} - should be 00h
+  PCI Device Flag                                         : 0x{pciDeviceFlag:02X}
+    PCI Device Flag                                       : {pciDeviceFlag_0:d} {pci_str}
+    Reserved                                              : {pciDeviceFlag_reserved:d} - must be 0
+  Global System Interrupt                                 : 0x{globalSysInter:08X}{globalSysInt_str}
+  Base Address - {baseAdder}
+{otherStr}
+  Reserved                                                : 0x{reserved3:02X}
 
-'''.format(interfaceType, intTypeStr, reserved1, specRevStr, interruptType, intType_0, intTypeSCIGPE, intType_1, intTypeIO, intType_other, gpe, GPE_str, reserved2, pciDeviceFlag, pciDeviceFlag_0, pciDeviceFlag_reserved, globalSysInter, globalSysInt_str, baseAdder, otherStr, reserved3)
+'''
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results
 
 
@@ -1620,7 +1623,7 @@ class RASF (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         rpcci1 = struct.unpack('<B', table_content[0:1])[0]
         rpcci2 = struct.unpack('<B', table_content[1:2])[0]
         rpcci3 = struct.unpack('<B', table_content[2:3])[0]
@@ -1633,14 +1636,14 @@ class RASF (ACPI_TABLE):
         rpcci10 = struct.unpack('<B', table_content[9:10])[0]
         rpcci11 = struct.unpack('<B', table_content[10:11])[0]
         rpcci12 = struct.unpack('<B', table_content[11:12])[0]
-        self.results = '''==================================================================
+        self.results = f'''==================================================================
   ACPI RAS Feature Table ( RASF )
 ==================================================================
-  RASF Platform Communication Channel Identifier          : 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X}
+  RASF Platform Communication Channel Identifier          : 0x{rpcci1:02X} 0x{rpcci2:02X} 0x{rpcci3:02X} 0x{rpcci4:02X} 0x{rpcci5:02X} 0x{rpcci6:02X} 0x{rpcci7:02X} 0x{rpcci8:02X} 0x{rpcci9:02X} 0x{rpcci10:02X} 0x{rpcci11:02X} 0x{rpcci12:02X}
 
-'''.format(rpcci1, rpcci2, rpcci3, rpcci4, rpcci5, rpcci6, rpcci7, rpcci8, rpcci9, rpcci10, rpcci11, rpcci12)
+'''
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results
 
 
@@ -1654,7 +1657,7 @@ class MSCT (ACPI_TABLE):
     def __init__(self):
         return
 
-    def parseProx(self, table_content, val):
+    def parseProx(self, table_content: bytes, val: int) -> str:
         rev = struct.unpack('<B', table_content[0:1])[0]
         length = struct.unpack('<B', table_content[1:2])[0]
         maxDomRangeL = struct.unpack('<L', table_content[2:6])[0]
@@ -1667,17 +1670,18 @@ class MSCT (ACPI_TABLE):
             maxProcCap_str = ' - Proximity domains do not contain a processor'
         if maxMemCap == 0:
             maxMemCap_str = '- Proximity domains do not contain memory'
-        return '''
-    Maximum Proximity Domain Informaiton Structure[{:d}]
-      Revision                                              : 0x{:02X} ( {:d} )
-      Length                                                : 0x{:02X} ( {:d} )
-      Proximity Domain Range (low)                          : 0x{:04X}
-      Proximity Domain Range (high)                         : 0x{:04X}
-      Maximum Processor Capacity                            : 0x{:04X} ( {:d} ){}
-      Maximum Memory Capacity                               : 0x{:016X} ( {:d} ) bytes {}
-'''.format(val, rev, rev, length, length, maxDomRangeL, maxDomRangeH, maxProcCap, maxProcCap, maxProcCap_str, maxMemCap, maxMemCap, maxMemCap_str)
+        return f'''
+    Maximum Proximity Domain Informaiton Structure[{val:d}]
+      Revision                                              : 0x{rev:02X} ( {rev:d} )
+      Length                                                : 0x{length:02X} ( {length:d} )
+      Proximity Domain Range (low)                          : 0x{maxDomRangeL:04X}
+      Proximity Domain Range (high)                         : 0x{maxDomRangeH:04X}
+      Maximum Processor Capacity                            : 0x{maxProcCap:04X} ( {maxProcCap:d} ){maxProcCap_str}
+      Maximum Memory Capacity                               : 0x{maxMemCap:016X} ( {maxMemCap:d} ) bytes {maxMemCap_str}
 
-    def parseProxDomInfoStruct(self, table_contents, num):
+'''
+
+    def parseProxDomInfoStruct(self, table_contents: bytes, num: int) -> str:
         val = 0
         result = ''
         while val < num:
@@ -1685,24 +1689,24 @@ class MSCT (ACPI_TABLE):
             val = val + 1
         return result
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         offsetProxDomInfo = struct.unpack('<L', table_content[0:4])[0]
         maxNumProxDoms = struct.unpack('<L', table_content[4:8])[0]
         maxNumClockDoms = struct.unpack('<L', table_content[8:12])[0]
         maxPhysAddr = struct.unpack('<Q', table_content[12:20])[0]
         proxDomInfoStructStr = self.parseProxDomInfoStruct(table_content[20:], maxNumProxDoms)
-        self.results = '''==================================================================
+        self.results = f'''==================================================================
   Maximum System Characteristics Table ( MSCT )
 ==================================================================
-  Offset to Proximity Domain Information Structure        : 0x{:08X}
-  Maximum Number of Proximity Domains                     : 0x{:08X} ( {:d} )
-  Maximum Number of Clock Domains                         : 0x{:08X} ( {:d} )
-  Maximum Physical Address                                : 0x{:016X}
-  Proximity Domain  Information Structure{}
+  Offset to Proximity Domain Information Structure        : 0x{offsetProxDomInfo:08X}
+  Maximum Number of Proximity Domains                     : 0x{maxNumProxDoms:08X} ( {maxNumProxDoms:d} )
+  Maximum Number of Clock Domains                         : 0x{maxNumClockDoms:08X} ( {maxNumClockDoms:d} )
+  Maximum Physical Address                                : 0x{maxPhysAddr:016X}
+  Proximity Domain  Information Structure{proxDomInfoStructStr}
 
-'''.format(offsetProxDomInfo, maxNumProxDoms, maxNumProxDoms, maxNumClockDoms, maxNumClockDoms, maxPhysAddr, proxDomInfoStructStr)
+'''
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results
 
 
@@ -1718,7 +1722,7 @@ class NFIT (ACPI_TABLE):
         self.total_length = length
         return
 
-    def platCapStruct(self, tableLen, table_content):
+    def platCapStruct(self, tableLen: int, table_content: bytes) -> str:
         highestValidCap = struct.unpack('<B', table_content[4:5])[0]
         reserved1_1 = struct.unpack('<B', table_content[5:6])[0]
         reserved1_2 = struct.unpack('<B', table_content[6:7])[0]
@@ -1744,20 +1748,20 @@ class NFIT (ACPI_TABLE):
             cap3_str = 'Platform supports mirroring multiple byte addressable persistent memory regions together'
         else:
             cap3_str = 'Platform does not support mirroring multiple byte addressable persistent memory regions together'
-        return '''
+        return f'''
     Platform Capabilities Structure [Type 7]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      Highest Valid Capability                                    : 0x{:02X}
-      Reserved                                                    : 0x{:02X} 0x{:02X} 0x{:02X}
-      Capabilities                                                : 0x{:08X}
-        CPU Cache Flush to NVDIMM Durability on Power Loss        : 0x{:08X} - {}
-        Mem Controller Flush to NVDIMM Durability on Power Loss   : 0x{:08X} - {}
-        Byte Addressible Persistent Mem Hw Mirroring Capable      : 0x{:08X} - {}
-        Reserved                                                  : 0x{:08X}
-      Reserved                                                    : 0x{:08X}
-'''.format(tableLen, tableLen, highestValidCap, reserved1_1, reserved1_2, reserved1_3, capabilities, cap1, cap1_str, cap2, cap2_str, cap3, cap3_str, capRes, reserved2)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      Highest Valid Capability                                    : 0x{highestValidCap:02X}
+      Reserved                                                    : 0x{reserved1_1:02X} 0x{reserved1_2:02X} 0x{reserved1_3:02X}
+      Capabilities                                                : 0x{capabilities:08X}
+        CPU Cache Flush to NVDIMM Durability on Power Loss        : 0x{cap1:08X} - {cap1_str}
+        Mem Controller Flush to NVDIMM Durability on Power Loss   : 0x{cap2:08X} - {cap2_str}
+        Byte Addressible Persistent Mem Hw Mirroring Capable      : 0x{cap3:08X} - {cap3_str}
+        Reserved                                                  : 0x{capRes:08X}
+      Reserved                                                    : 0x{reserved2:08X}
+'''
 
-    def flushHintAddrStruct(self, tableLen, table_content):
+    def flushHintAddrStruct(self, tableLen: int, table_content: bytes) -> Tuple[int, str]:
         nfitDevHandle = struct.unpack('<L', table_content[4:8])[0]
         numFlushHintAddr = struct.unpack('<L', table_content[4:8])[0]
         reserved = struct.unpack('<L', table_content[4:8])[0]
@@ -1765,37 +1769,37 @@ class NFIT (ACPI_TABLE):
         lines = ''
         while curLine < numFlushHintAddr:
             lineInfo = struct.unpack('<Q', table_content[curLine * 8 + 8:curLine * 8 + 16])[0]
-            lines += '''
-        Flush Hint Address {}                                     : 0x{:016X} '''.format((curLine + 1), lineInfo)
+            lines += f'''
+        Flush Hint Address {curLine + 1:d}                                     : 0x{lineInfo:016X} '''
             curLine += 1
-        return (curLine - 1) * 8 + 16, '''
+        return (curLine - 1) * 8 + 16, f'''
     Flush Hint Address Structure [Type 6]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      NFIT Device Handle                                          : 0x{:08X}
-      Number of Flush Hint Addresses in this Structure            : 0x{:08X} ( {:d} )
-      Reserved                                                    : 0x{:08X}
-      Flush Hint Addresses{}
-'''.format(tableLen, tableLen, nfitDevHandle, numFlushHintAddr, numFlushHintAddr, reserved, lines)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      NFIT Device Handle                                          : 0x{nfitDevHandle:08X}
+      Number of Flush Hint Addresses in this Structure            : 0x{numFlushHintAddr:08X} ( {numFlushHintAddr:d} )
+      Reserved                                                    : 0x{reserved:08X}
+      Flush Hint Addresses{lines}
+'''
 
-    def nvdimmBlockDataWindowsRegionStruct(self, tableLen, table_content):
+    def nvdimmBlockDataWindowsRegionStruct(self, tableLen: int, table_content: bytes) -> str:
         nvdimmControlRegionStructureIndex = struct.unpack('<H', table_content[4:6])[0]
         numBlockDataWindows = struct.unpack('<H', table_content[6:8])[0]
         blockDataWindowsStartOffset = struct.unpack('<Q', table_content[8:16])[0]
         szBlckDataWindow = struct.unpack('<Q', table_content[16:24])[0]
         blckAccMemCap = struct.unpack('<Q', table_content[24:32])[0]
         begAddr = struct.unpack('<Q', table_content[32:40])[0]
-        return '''
+        return f'''
     NVDIMM Block Data Region Structure [Type 5]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      NVDIMM Control Region Structure Index                       : 0x{:04X} - Should not be 0
-      Number of Block Data Windows                                : 0x{:04X} ( {:d} )
-      Block Data Window Start Offest                              : 0x{:016X} ( {:d} bytes )
-      Size of Block Data Window                                   : 0x{:016X} ( {:d} bytes )
-      Block Accessible Memory Capacity                            : 0x{:016X} ( {:d} bytes )
-      Start Addr for 1st Block in Block Accessible Mem            : 0x{:016X} ( {:d} bytes )
-'''.format(tableLen, tableLen, nvdimmControlRegionStructureIndex, numBlockDataWindows, numBlockDataWindows, blockDataWindowsStartOffset, blockDataWindowsStartOffset, szBlckDataWindow, szBlckDataWindow, blckAccMemCap, blckAccMemCap, begAddr, begAddr)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      NVDIMM Control Region Structure Index                       : 0x{nvdimmControlRegionStructureIndex:04X} - Should not be 0
+      Number of Block Data Windows                                : 0x{numBlockDataWindows:04X} ( {numBlockDataWindows:d} )
+      Block Data Window Start Offest                              : 0x{blockDataWindowsStartOffset:016X} ( {blockDataWindowsStartOffset:d} bytes )
+      Size of Block Data Window                                   : 0x{szBlckDataWindow:016X} ( {szBlckDataWindow:d} bytes )
+      Block Accessible Memory Capacity                            : 0x{blckAccMemCap:016X} ( {blckAccMemCap:d} bytes )
+      Start Addr for 1st Block in Block Accessible Mem            : 0x{begAddr:016X} ( {begAddr:d} bytes )
+'''
 
-    def nvdimmControlRegionStructMark(self, tableLen, table_content):
+    def nvdimmControlRegionStructMark(self, tableLen: int, table_content: bytes) -> str:
         nvdimmControlRegionStructureIndex = struct.unpack('<H', table_content[4:6])[0]
         vendorID = struct.unpack('<H', table_content[6:8])[0]
         deviceID = struct.unpack('<H', table_content[8:10])[0]
@@ -1831,58 +1835,58 @@ class NFIT (ACPI_TABLE):
             reserved2_4 = struct.unpack('<B', table_content[77:78])[0]
             reserved2_5 = struct.unpack('<B', table_content[78:79])[0]
             reserved2_6 = struct.unpack('<B', table_content[79:80])[0]
-            cont_str = '''      Size of Block Control Windows                               : 0x{:016X} ({:d} bytes)
-      Command Reg Offset in Block Control Windows                 : 0x{:016X}
-      Size of Command Register in Block Control Windows           : 0x{:016X}
-      Status Register Offset in Block Control Windows             : 0x{:016X}
-      Size of Status Register in Block Control Windows            : 0x{:016X}
-      NVDIMM Control Region Flag                                  : 0x{:04X}
-      Reserved                                                    : 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X}
-      {}'''.format(szBlckControlWindow, szBlckControlWindow, commandRegOffset, szCommandReg, statusRegOffset, szStatus, nvdimmControlRegionFl, reserved2_1, reserved2_2, reserved2_3, reserved2_4, reserved2_5, reserved2_6, cont_str)
+            cont_str = f'''      Size of Block Control Windows                               : 0x{szBlckControlWindow:016X} ({szBlckControlWindow:d} bytes)
+      Command Reg Offset in Block Control Windows                 : 0x{commandRegOffset:016X}
+      Size of Command Register in Block Control Windows           : 0x{szCommandReg:016X}
+      Status Register Offset in Block Control Windows             : 0x{statusRegOffset:016X}
+      Size of Status Register in Block Control Windows            : 0x{szStatus:016X}
+      NVDIMM Control Region Flag                                  : 0x{nvdimmControlRegionFl:04X}
+      Reserved                                                    : 0x{reserved2_1:02X} 0x{reserved2_2:02X} 0x{reserved2_3:02X} 0x{reserved2_4:02X} 0x{reserved2_5:02X} 0x{reserved2_6:02X}
+      {cont_str}'''
         valid_0 = validFields & 1
         valid_str = ''
         valid_man_str = ''
         if valid_0 == 0:
             valid_str = 'System is compliant with ACPI 6.0 - Manufacturing Location & Date fields are invalid and should be ignored'
             valid_man_str = 'Value is invalid and should be ignored'
-        return '''
+        return f'''
     NVDIMM Control Region Structure [Type 4]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      NVDIMM Control Region Structure Index                       : 0x{:04X}
-      Vendor ID                                                   : 0x{:04X}
-      Device ID                                                   : 0x{:04X}
-      Revision ID                                                 : 0x{:04X}
-      Subsystem Vendor ID                                         : 0x{:04X}
-      Subsystem Device ID                                         : 0x{:04X}
-      Subsystem Revision ID                                       : 0x{:04X}
-      Valid Fields                                                : 0x{:02X}
-        Bit[0]                                                    : {}{}
-      Manufacturing Location                                      : 0x{:02X}{}
-      Manufacturing Date                                          : 0x{:04X}{}
-      Reserved                                                    : 0x{:04X}
-      Serial Number                                               : 0x{:08X}
-      Region Format Interface Code                                : 0x{:04X}
-        Reserved                                                  : 0x{:02X}
-        Function Interface Field                                  : 0x{:02X}
-        Reserved                                                  : 0x{:02X}
-        Function Class Field                                      : 0x{:02X}
-      Number of Block Control Windows                             : 0x{:08X}
-'''.format(tableLen, tableLen, nvdimmControlRegionStructureIndex, vendorID, deviceID, revID, subsystemVendorID, subsysDevID, subsysRevID, validFields, valid_0, valid_str, manLocation, valid_man_str, manDate, valid_man_str, reserved, serialNum, regionFormatInterfaceCode, rfic_r1, rfic_fif, rfic_r2, rfic_fcf, numBlockControlWindows)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      NVDIMM Control Region Structure Index                       : 0x{nvdimmControlRegionStructureIndex:04X}
+      Vendor ID                                                   : 0x{vendorID:04X}
+      Device ID                                                   : 0x{deviceID:04X}
+      Revision ID                                                 : 0x{revID:04X}
+      Subsystem Vendor ID                                         : 0x{subsystemVendorID:04X}
+      Subsystem Device ID                                         : 0x{subsysDevID:04X}
+      Subsystem Revision ID                                       : 0x{subsysRevID:04X}
+      Valid Fields                                                : 0x{validFields:02X}
+        Bit[0]                                                    : {valid_0}{valid_str}
+      Manufacturing Location                                      : 0x{manLocation:02X}{valid_man_str}
+      Manufacturing Date                                          : 0x{manDate:04X}{valid_man_str}
+      Reserved                                                    : 0x{reserved:04X}
+      Serial Number                                               : 0x{serialNum:08X}
+      Region Format Interface Code                                : 0x{regionFormatInterfaceCode:04X}
+        Reserved                                                  : 0x{rfic_r1:02X}
+        Function Interface Field                                  : 0x{rfic_fif:02X}
+        Reserved                                                  : 0x{rfic_r2:02X}
+        Function Class Field                                      : 0x{rfic_fcf:02X}
+      Number of Block Control Windows                             : 0x{numBlockControlWindows:08X}
+'''
 
-    def smbiosManagementInfo(self, tableLen, table_content):
+    def smbiosManagementInfo(self, tableLen: int, table_content: bytes) -> str:
         smbios_tables = ['BIOS Information', 'System Information', 'Baseboard (or Module) Information', 'System Enclosure or Chassis', 'Processor Information', 'Memory Controller Information, obsolete', 'Memory Module Information, obsolete', 'Cache Information', 'Port Connector Information', 'System Slots', 'On Board Devices Information, obsolete', 'OEM Strings', 'System Confirguration Options', 'BIOS Language Information', 'Group Associations', 'System Event Log', 'Physical Memory Array', 'Memory Device', '32-Bit Memory Error Information', 'Memory Array Mapped Address', 'Memory Device Mapped Address',
                          'Built-in Pointing Device', 'Portable Battery', 'System Reset', 'Hardware Security', 'System Power Controls', 'Voltage Probe', 'Cooling Device', 'Temperature Probe', 'Electrical Current Probe', 'Out-of-Band Remote Address', 'Boot Integrity Services (BIS) Entry Point', 'System Boot Information', '64-Bit Mmemory Error Information', 'Management Device', 'Management Device Component', 'Management Device Threshold Data', 'Memory Channel', 'IPMI Device Information', 'System Power Supply', 'Additional Information', 'Onboard Devices Extended Information', 'Mangement Controller Host Interface']
         reserved = struct.unpack('<L', table_content[4:8])[0]
         curPos = 8
         dataStr = ''
-        return '''
+        return f'''
     SMBIOS Management Information Structure [Type 3]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      Reserved                                                    : 0x{:08X}
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      Reserved                                                    : 0x{reserved:08X}
       ----Unable to further at this time.----
-'''.format(tableLen, tableLen, reserved)
+'''  # TODO
 
-    def interleave(self, tableLen, table_content):
+    def interleave(self, tableLen: int, table_content: bytes) -> Tuple[int, str]:
         interleaveStructureIndex = struct.unpack('<H', table_content[4:6])[0]
         reserved = struct.unpack('<H', table_content[6:8])[0]
         numLinesDescribed = struct.unpack('<L', table_content[8:12])[0]
@@ -1891,19 +1895,19 @@ class NFIT (ACPI_TABLE):
         lines = ''
         while curLine < numLinesDescribed:
             lineInfo = struct.unpack('<L', table_content[curLine * 4 + 16:curLine * 4 + 20])[0]
-            lines += '''
-        Line {:d} Offset                                            : 0x{:08X} ( {:d} bytes ) '''.format((curLine + 1), lineInfo, lineInfo)
+            lines += f'''
+        Line {curLine + 1:d} Offset                                            : 0x{lineInfo:08X} ( {lineInfo:d} bytes )'''
             curLine += 1
-        return (curLine - 1) * 4 + 20, '''
+        return (curLine - 1) * 4 + 20, f'''
     Interleave Structure [Type 2]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      Reserved                                                    : 0x{:04X}
-      Number of Lines Described                                   : 0x{:08X} ( {:d} )
-      Line Size                                                   : 0x{:08X} ( {:d} bytes )
-      Lines {}
-'''.format(tableLen, tableLen, reserved, numLinesDescribed, numLinesDescribed, lineSz, lineSz, lines)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      Reserved                                                    : 0x{reserved:04X}
+      Number of Lines Described                                   : 0x{numLinesDescribed:08X} ( {numLinesDescribed:d} )
+      Line Size                                                   : 0x{lineSz:08X} ( {lineSz:d} bytes )
+      Lines {lines}
+'''
 
-    def parseMAP(self, tableLen, table_content):
+    def parseMAP(self, tableLen: int, table_content: bytes) -> str:
         nfitDeviceHandle = struct.unpack('<L', table_content[4:8])[0]
         nvdimmPhysID = struct.unpack('<H', table_content[8:10])[0]
         nvdimmRegionID = struct.unpack('<H', table_content[10:12])[0]
@@ -1916,24 +1920,24 @@ class NFIT (ACPI_TABLE):
         interleaveWays = struct.unpack('<H', table_content[42:44])[0]
         nvdimmStateFlags = struct.unpack('<H', table_content[44:46])[0]
         reserve = struct.unpack('<H', table_content[46:48])[0]
-        return '''
+        return f'''
     NVDIMM Region Mapping Structure [Type 1]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      NFIT Device Handle                                          : 0x{:08X}
-      NVDIMM Physical ID                                          : 0x{:04X}
-      NVDIMM Region ID                                            : 0x{:04X}
-      SPA Range Structure Index                                   : 0x{:04X}
-      NVDIMM Control Region Structure Index                       : 0x{:016X}
-      NVDIMM Region Size                                          : 0x{:016X}
-      Region Offset                                               : 0x{:016X}
-      NVDIMM Physical Address Region Base                         : 0x{:016X}
-      Interleave Structure Index                                  : 0x{:04X}
-      Interleave Ways                                             : 0x{:04X}
-      NVDIMM State Flags                                          : 0x{:04X}
-      Reserved                                                    : 0x{:04X}
-'''.format(tableLen, tableLen, nfitDeviceHandle, nvdimmPhysID, nvdimmRegionID, spaRangeStructureIndex, nvdimmControlRegionSz, nvdimmRegionSz, regionOffset, nvdimmPhysicalAddressRegionBase, interleaveStructIndex, interleaveWays, nvdimmStateFlags, reserve)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      NFIT Device Handle                                          : 0x{nfitDeviceHandle:08X}
+      NVDIMM Physical ID                                          : 0x{nvdimmPhysID:04X}
+      NVDIMM Region ID                                            : 0x{nvdimmRegionID:04X}
+      SPA Range Structure Index                                   : 0x{spaRangeStructureIndex:04X}
+      NVDIMM Control Region Structure Index                       : 0x{nvdimmControlRegionSz:016X}
+      NVDIMM Region Size                                          : 0x{nvdimmRegionSz:016X}
+      Region Offset                                               : 0x{regionOffset:016X}
+      NVDIMM Physical Address Region Base                         : 0x{nvdimmPhysicalAddressRegionBase:016X}
+      Interleave Structure Index                                  : 0x{interleaveStructIndex:04X}
+      Interleave Ways                                             : 0x{interleaveWays:04X}
+      NVDIMM State Flags                                          : 0x{nvdimmStateFlags:04X}
+      Reserved                                                    : 0x{reserve:04X}
+'''
 
-    def parseSPA(self, tableLen, table_content):
+    def parseSPA(self, tableLen: int, table_content: bytes) -> str:
         volitileMemGUID = [0x7305944f, 0xfdda, 0x44e3, 0xb1, 0x6c, 0x3f, 0x22, 0xd2, 0x52, 0xe5, 0xd0]
         byteAddrPMGUID = [0x66f0d379, 0xb4f3, 0x4074, 0xac, 0x43, 0x0d, 0x33, 0x18, 0xb7, 0x8c, 0xdb]
         nvdimmControlRegionGUID = [0x92f701f6, 0x13b4, 0x405d, 0x91, 0x0b, 0x29, 0x93, 0x67, 0xe8, 0x23, 0x4c]
@@ -2015,30 +2019,30 @@ class NFIT (ACPI_TABLE):
             artg_str = 'RAM Disk supporting a Virtual CD Region - Persistent (persistent memory region containing an ISO image)'
         else:
             artg_str = 'Not in specification, could be a vendor defined GUID'
-        return '''
+        return f'''
     System Physical Address (SPA) Range Structure [Type 1]
-      Length                                                      : 0x{:04X} ( {:d} bytes )
-      SPA Range Structure Index                                   : 0x{:04X}{}
-      Flags                                                       : 0x{:04X}
-        Bit[0] (Add/Online Operation Only)                        : 0x{:04X}{}
-        Bit[1] (Proximity Domain Validity)                        : 0x{:04X}{}
-        Bits[15:2]                                                : 0x{:04X} - Reserved
-      Reserved                                                    : 0x{:08X}
-      Proximity Domain                                            : 0x{:08X} - must match value in SRAT table
-      Address Range Type GUID                                     : 0x{:08X} 0x{:04X} 0x{:04X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} 0x{:02X} - {}
-      System Physical Address Range Base                          : 0x{:016X}
-      System Physical Address Range Length                        : 0x{:016X} ({:d} bytes)
-      Address Range Memory Mapping Attribute                      : 0x{:016X}
-'''.format(tableLen, tableLen, spaRangeStructure, spaRangeStructure_str, flags, flag1, flag1_str, flag2, flag2_str, flag3, reserved, proximityDomain, addressRangeTypeGUID_1, addressRangeTypeGUID_2, addressRangeTypeGUID_3, addressRangeTypeGUID_4, addressRangeTypeGUID_5, addressRangeTypeGUID_6, addressRangeTypeGUID_7, addressRangeTypeGUID_8, addressRangeTypeGUID_9, addressRangeTypeGUID_10, addressRangeTypeGUID_11, artg_str, systemPARangeBase, SPARLen, SPARLen, addrRangeMemMapAttr)
+      Length                                                      : 0x{tableLen:04X} ( {tableLen:d} bytes )
+      SPA Range Structure Index                                   : 0x{spaRangeStructure:04X}{spaRangeStructure_str}
+      Flags                                                       : 0x{flags:04X}
+        Bit[0] (Add/Online Operation Only)                        : 0x{flag1:04X}{flag1_str}
+        Bit[1] (Proximity Domain Validity)                        : 0x{flag2:04X}{flag2_str}
+        Bits[15:2]                                                : 0x{flag3:04X} - Reserved
+      Reserved                                                    : 0x{reserved:08X}
+      Proximity Domain                                            : 0x{proximityDomain:08X} - must match value in SRAT table
+      Address Range Type GUID                                     : 0x{addressRangeTypeGUID_1:08X} 0x{addressRangeTypeGUID_2:04X} 0x{addressRangeTypeGUID_3:04X} 0x{addressRangeTypeGUID_4:02X} 0x{addressRangeTypeGUID_5:02X} 0x{addressRangeTypeGUID_6:02X} 0x{addressRangeTypeGUID_7:02X} 0x{addressRangeTypeGUID_8:02X} 0x{addressRangeTypeGUID_9:02X} 0x{addressRangeTypeGUID_10:02X} 0x{addressRangeTypeGUID_11:02X} - {artg_str}
+      System Physical Address Range Base                          : 0x{systemPARangeBase:016X}
+      System Physical Address Range Length                        : 0x{SPARLen:016X} ({SPARLen:d} bytes)
+      Address Range Memory Mapping Attribute                      : 0x{addrRangeMemMapAttr:016X}
+'''
 
-    def parseStructures(self, table_content):
+    def parseStructures(self, table_content: bytes) -> str:
         notFinished = True
         curPos = 0
         result = ''
         while notFinished:
             tableType = struct.unpack('<H', table_content[curPos:curPos + 2])[0]
             tableLen = struct.unpack('<H', table_content[curPos + 2:curPos + 4])[0]
-            result += ''' Length:                    {:d}'''.format(self.total_length)
+            result += f''' Length:                    {self.total_length:d}'''
             if tableType == 0:
                 result += self.parseSPA(tableLen, table_content[curPos:])
                 curPos = curPos + tableLen
@@ -2071,18 +2075,18 @@ class NFIT (ACPI_TABLE):
                 notFinished = False
         return result
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         reserved = struct.unpack('<L', table_content[0:4])[0]
         NFITstructures = self.parseStructures(table_content[4:])
-        self.results = '''==================================================================
+        self.results = f'''==================================================================
   NVDIMM Firmware Interface Table ( NFIT )
 ==================================================================
-  Reserved                                                      : {:08X}
-  NFIT Structures{}
+  Reserved                                                      : {reserved:08X}
+  NFIT Structures{NFITstructures}
 
-'''.format(reserved, NFITstructures)
+'''
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results
 
 
@@ -2101,7 +2105,7 @@ class UEFI_TABLE (ACPI_TABLE):
         self.invoc_reg = None
         return
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         self.results = '''==================================================================
   Table Content
 =================================================================='''
@@ -2112,9 +2116,9 @@ class UEFI_TABLE (ACPI_TABLE):
         guid = struct.unpack(EFI_GUID_FMT, table_content[:16])
         identifier = EFI_GUID_STR(guid)
         offset = struct.unpack('H', table_content[16:18])[0]
-        self.results += """
-  identifier                 : {}
-  Data Offset                : {:d}""".format(identifier, offset)
+        self.results += f"""
+  identifier                 : {identifier}
+  Data Offset                : {offset:d}"""
         # check if SMM Communication ACPI Table
         if not (SMM_COMM_TABLE == identifier):
             return
@@ -2126,20 +2130,20 @@ class UEFI_TABLE (ACPI_TABLE):
         content_offset += 4
         self.buf_addr = struct.unpack('Q', table_content[content_offset:content_offset + 8])[0]
         content_offset += 8
-        self.results += """
-  SW SMI NUM                 : {}
-  Buffer Ptr Address         : {:X}""".format(self.smi, int(self.buf_addr))
+        self.results += f"""
+  SW SMI NUM                 : {self.smi}
+  Buffer Ptr Address         : {self.buf_addr:X}"""
         # Check to see if there is enough data for Invocation Register
         if content_offset + 12 <= len(table_content):
             self.invoc_reg = GAS(table_content[content_offset:content_offset + 12])
-            self.results += "\n  Invocation Register        :\n{}".format(str(self.invoc_reg))
+            self.results += f"\n  Invocation Register        :\n{str(self.invoc_reg)}"
         else:
             self.results += "\n  Invocation Register        : None\n"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.results
 
-    def get_commbuf_info(self):
+    def get_commbuf_info(self) -> Tuple[Optional[int], Optional[int], Optional['GAS']]:
         return (self.smi, self.buf_addr, self.invoc_reg)
 
 ########################################################################################################
@@ -2160,7 +2164,7 @@ class WSMT (ACPI_TABLE):
         self.comm_buffer_nested_ptr_protection = False
         self.system_resource_protection = False
 
-    def parse(self, table_content):
+    def parse(self, table_content: bytes) -> None:
         if len(table_content) < 4:
             return
 
@@ -2170,14 +2174,14 @@ class WSMT (ACPI_TABLE):
         self.comm_buffer_nested_ptr_protection = bool(mitigations & WSMT.COMM_BUFFER_NESTED_PTR_PROTECTION)
         self.system_resource_protection = bool(mitigations & WSMT.SYSTEM_RESOURCE_PROTECTION)
 
-    def __str__(self):
-        return """------------------------------------------------------------------
+    def __str__(self) -> str:
+        return f"""------------------------------------------------------------------
 Windows SMM Mitigations Table (WSMT) Contents
 ------------------------------------------------------------------
-FIXED_COMM_BUFFERS                  : {}
-COMM_BUFFER_NESTED_PTR_PROTECTION   : {}
-SYSTEM_RESOURCE_PROTECTION          : {}
-    """.format(self.fixed_comm_buffers, self.comm_buffer_nested_ptr_protection, self.system_resource_protection)
+FIXED_COMM_BUFFERS                  : {self.fixed_comm_buffers}
+COMM_BUFFER_NESTED_PTR_PROTECTION   : {self.comm_buffer_nested_ptr_protection}
+SYSTEM_RESOURCE_PROTECTION          : {self.system_resource_protection}
+    """
 
 ########################################################################################################
 #
@@ -2217,13 +2221,14 @@ class GAS:
         else:
             self.accessSize_str = accessSizeList[5]
 
-    def __str__(self):
-        return """  Generic Address Structure
-    Address Space ID                            : {:02X} - {}
-    Register Bit Width                          : {:02X}
-    Register Bit Offset                         : {:02X}
-    Access Size                                 : {:02X} - {}
-    Address                                     : {:16X}\n""".format(self.addrSpaceID, self.addrSpaceID_str, self.regBitWidth, self.regBitOffset, self.accessSize, self.accessSize_str, self.addr)
+    def __str__(self) -> str:
+        return f"""  Generic Address Structure
+    Address Space ID                            : {self.addrSpaceID:02X} - {self.accessSize_str}
+    Register Bit Width                          : {self.regBitWidth:02X}
+    Register Bit Offset                         : {self.regBitOffset:02X}
+    Access Size                                 : {self.accessSize:02X} - {self.accessSize_str}
+    Address                                     : {self.addr:16X}
+    """
 
-    def get_info(self):
+    def get_info(self) -> Tuple[int, int, int, int, int]:
         return (self.addrSpaceID, self.regBitWidth, self.regBitOffset, self.accessSize, self.addr)
