@@ -193,6 +193,18 @@ class Logger:
         except Exception:
             self.chipsecLogger.exception(f'{text}', 'PURPLE')
 
+    def log_verbose(self, text):
+        """Logs a Verbose message"""
+        self.log(text, self.level.VERBOSE)
+
+    def log_hal(self, text):
+        """Logs a hal message"""
+        self.log(text, self.level.HAL)
+
+    def log_debug(self, text):
+        """Logs a debug message"""
+        self.log(text, self.level.DEBUG)
+
     def setlevel(self):
         if self.DEBUG:
             self.chipsecLogger.setLevel(logging.DEBUG)
@@ -274,18 +286,6 @@ class Logger:
                 self.flush()
         except BaseException:
             print(text)
-
-    def log_verbose(self, text):  # Use log('text', self.logger.VERBOSE)
-        """Logs a Verbose message"""
-        self.log(text, self.level.VERBOSE)
-
-    def log_hal(self, text):  # Use log("text", self.logger.HAL)
-        """Logs a hal message"""
-        self.log(text, self.level.HAL)
-
-    def log_debug(self, text):   # Use log("text", self.logger.DEBUG)
-        """Logs a debug message"""
-        self.log(text, self.level.DEBUG)
 
     def log_passed(self, text):   # Use log("text", self.logger.GOOD)
         """Logs a passed message."""
