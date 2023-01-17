@@ -31,6 +31,7 @@ usage:
     >>> write_port_dword( 0x71, 0 )
 """
 
+from typing import List
 from chipsec.logger import logger
 
 
@@ -40,58 +41,58 @@ class PortIO:
         self.helper = cs.helper
         self.cs = cs
 
-    def _read_port(self, io_port, size):
+    def _read_port(self, io_port: int, size: int) -> int:
         value = self.helper.read_io_port(io_port, size)
         if logger().HAL:
-            logger().log("[io] IN 0x{:04X}: value = 0x{:08X}, size = 0x{:02X}".format(io_port, value, size))
+            logger().log(f"[io] IN 0x{io_port:04X}: value = 0x{value:08X}, size = 0x{size:02X}")
         return value
 
-    def _write_port(self, io_port, value, size):
+    def _write_port(self, io_port: int, value: int, size: int) -> int:
         if logger().HAL:
-            logger().log("[io] OUT 0x{:04X}: value = 0x{:08X}, size = 0x{:02X}".format(io_port, value, size))
+            logger().log(f"[io] OUT 0x{io_port:04X}: value = 0x{value:08X}, size = 0x{size:02X}")
         status = self.helper.write_io_port(io_port, value, size)
         return status
 
-    def read_port_dword(self, io_port):
+    def read_port_dword(self, io_port: int) -> int:
         value = self.helper.read_io_port(io_port, 4)
         if logger().HAL:
-            logger().log("[io] reading dword from I/O port 0x{:04X} -> 0x{:08X}".format(io_port, value))
+            logger().log(f"[io] reading dword from I/O port 0x{io_port:04X} -> 0x{value:08X}")
         return value
 
-    def read_port_word(self, io_port):
+    def read_port_word(self, io_port: int) -> int:
         value = self.helper.read_io_port(io_port, 2)
         if logger().HAL:
-            logger().log("[io] reading word from I/O port 0x{:04X} -> 0x{:04X}".format(io_port, value))
+            logger().log(f"[io] reading word from I/O port 0x{io_port:04X} -> 0x{value:04X}")
         return value
 
-    def read_port_byte(self, io_port):
+    def read_port_byte(self, io_port: int) -> int:
         value = self.helper.read_io_port(io_port, 1)
         if logger().HAL:
-            logger().log("[io] reading byte from I/O port 0x{:04X} -> 0x{:02X}".format(io_port, value))
+            logger().log(f"[io] reading byte from I/O port 0x{io_port:04X} -> 0x{value:02X}")
         return value
 
-    def write_port_byte(self, io_port, value):
+    def write_port_byte(self, io_port: int, value: int) -> None:
         if logger().HAL:
-            logger().log("[io] writing byte to I/O port 0x{:04X} <- 0x{:02X}".format(io_port, value))
+            logger().log(f"[io] writing byte to I/O port 0x{io_port:04X} <- 0x{value:02X}")
         self.helper.write_io_port(io_port, value, 1)
         return
 
-    def write_port_word(self, io_port, value):
+    def write_port_word(self, io_port: int, value: int) -> None:
         if logger().HAL:
-            logger().log("[io] writing word to I/O port 0x{:04X} <- 0x{:04X}".format(io_port, value))
+            logger().log(f"[io] writing word to I/O port 0x{io_port:04X} <- 0x{value:04X}")
         self.helper.write_io_port(io_port, value, 2)
         return
 
-    def write_port_dword(self, io_port, value):
+    def write_port_dword(self, io_port: int, value: int) -> None:
         if logger().HAL:
-            logger().log("[io] writing dword to I/O port 0x{:04X} <- 0x{:08X}".format(io_port, value))
+            logger().log(f"[io] writing dword to I/O port 0x{io_port:04X} <- 0x{value:08X}")
         self.helper.write_io_port(io_port, value, 4)
         return
 
     #
     # Read registers from I/O range
     #
-    def read_IO(self, range_base, range_size, size=1):
+    def read_IO(self, range_base: int, range_size: int, size: int = 1) -> List[int]:
         n = range_size // size
         io_ports = []
         for i in range(n):
@@ -101,10 +102,10 @@ class PortIO:
     #
     # Dump I/O range
     #
-    def dump_IO(self, range_base, range_size, size=1):
+    def dump_IO(self, range_base: int, range_size: int, size: int = 1) -> None:
         n = range_size // size
-        fmt = '0{:d}X'.format((size * 2))
-        logger().log("[io] I/O register range [0x{:04X}:0x{:04X}+{:04X}]:".format(range_base, range_base, range_size))
+        fmt = f'0{size * 2:d}X'
+        logger().log(f"[io] I/O register range [0x{range_base:04X}:0x{range_base:04X}+{range_size:04X}]:")
         for i in range(n):
             reg = self._read_port(range_base + i * size, size)
-            logger().log('+{:04X}: {:{form}}'.format(i * size, reg, form=fmt))
+            logger().log(f'+{size * i:04X}: {reg:{fmt}}')
