@@ -28,7 +28,7 @@ usage:
     >>> write_IO_BAR_reg( bar_name, offset, size, value )
     >>> dump_IO_BAR( bar_name )
 """
-
+from typing import Tuple, List
 from chipsec.hal import hal_base
 from chipsec.logger import logger
 from chipsec.exceptions import IOBARNotFoundError
@@ -46,22 +46,21 @@ class IOBAR(hal_base.HALBase):
     # Check if I/O BAR with bar_name has been defined in XML config
     # Use this function to fall-back to hardcoded config in case XML config is not available
     #
-    def is_IO_BAR_defined(self, bar_name):
+    def is_IO_BAR_defined(self, bar_name: str) -> bool:
         try:
             return (self.cs.Cfg.IO_BARS[bar_name] is not None)
         except KeyError:
             if logger().HAL:
-                logger().log_error("'{}' I/O BAR definition not found in XML config".format(bar_name))
-            # raise IOBARNotFoundError, ('IOBARNotFound: %s' % bar_name)
+                logger().log_error(f"'{bar_name}' I/O BAR definition not found in XML config")
             return False
 
     #
     # Get base address of I/O range by IO BAR name
     #
-    def get_IO_BAR_base_address(self, bar_name):
+    def get_IO_BAR_base_address(self, bar_name: str) -> Tuple[int, int]:
         bar = self.cs.Cfg.IO_BARS[bar_name]
         if bar is None or bar == {}:
-            raise IOBARNotFoundError('IOBARNotFound: {}'.format(bar_name))
+            raise IOBARNotFoundError(f'IOBARNotFound: {bar_name}')
 
         if 'register' in bar:
             bar_reg = bar['register']
@@ -92,7 +91,7 @@ class IOBAR(hal_base.HALBase):
         if 'fixed_address' in bar and (base == empty_base or base == 0):
             base = int(bar['fixed_address'], 16)
             if logger().HAL:
-                logger().log('[iobar] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
+                logger().log(f'[iobar] Using fixed address for {bar_name}: 0x{base:016X}')
 
         if 'mask' in bar:
             base = base & int(bar['mask'], 16)
@@ -101,40 +100,40 @@ class IOBAR(hal_base.HALBase):
         size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
         if logger().HAL:
-            logger().log('[iobar] {}: 0x{:04X} (size = 0x{:X})'.format(bar_name, base, size))
+            logger().log(f'[iobar] {bar_name}: 0x{base:04X} (size = 0x{size:X})')
         if base == 0:
-            raise CSReadError("IOBAR ({}) base address is 0".format(bar_name))
+            raise CSReadError(f'IOBAR ({bar_name}) base address is 0')
         return base, size
 
     #
     # Read I/O register from I/O range defined by I/O BAR name
     #
-    def read_IO_BAR_reg(self, bar_name, offset, size):
+    def read_IO_BAR_reg(self, bar_name: str, offset: int, size: int) -> int:
         if logger().HAL:
-            logger().log('[iobar] read {} + 0x{:X} ({:d})'.format(bar_name, offset, size))
+            logger().log(f'[iobar] read {bar_name} + 0x{offset:X} ({size:d})')
         (bar_base, bar_size) = self.get_IO_BAR_base_address(bar_name)
         io_port = bar_base + offset
         if offset > bar_size and logger().HAL:
-            logger().log_warning('offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size))
+            logger().log_warning(f'offset 0x{offset:X} is outside {bar_name} size (0x{size:X})')
         value = self.cs.io._read_port(io_port, size)
         return value
 
     #
     # Write I/O register from I/O range defined by I/O BAR name
     #
-    def write_IO_BAR_reg(self, bar_name, offset, size, value):
+    def write_IO_BAR_reg(self, bar_name: str, offset: int, size: int, value: int) -> int:
         (bar_base, bar_size) = self.get_IO_BAR_base_address(bar_name)
         if logger().HAL:
-            logger().log('[iobar] write {} + 0x{:X} ({:d}): 0x{:X}'.format(bar_name, offset, size, value))
+            logger().log(f'[iobar] write {bar_name} + 0x{offset:X} ({size:d}): 0x{value:X}')
         io_port = bar_base + offset
         if offset > bar_size and logger().HAL:
-            logger().log_warning('offset 0x{:X} is ouside {} size (0x{:X})'.format(offset, bar_name, size))
+            logger().log_warning(f'offset 0x{offset:X} is outside {bar_name} size (0x{size:X})')
         return self.cs.io._write_port(io_port, value, size)
 
     #
     # Check if I/O range is enabled by BAR name
     #
-    def is_IO_BAR_enabled(self, bar_name):
+    def is_IO_BAR_enabled(self, bar_name: str) -> bool:
         bar = self.cs.Cfg.IO_BARS[bar_name]
         is_enabled = True
         if 'register' in bar:
@@ -144,7 +143,7 @@ class IOBAR(hal_base.HALBase):
                 is_enabled = (1 == self.cs.read_register_field(bar_reg, bar_en_field))
         return is_enabled
 
-    def list_IO_BARs(self):
+    def list_IO_BARs(self) -> None:
         logger().log('')
         logger().log('--------------------------------------------------------------------------------')
         logger().log(' I/O Range    | BAR Register   | Base             | Size     | En? | Description')
@@ -157,39 +156,38 @@ class IOBAR(hal_base.HALBase):
                 (_base, _size) = self.get_IO_BAR_base_address(_bar_name)
             except CSReadError:
                 if self.logger.HAL:
-                    self.logger.log("Unable to find IO BAR {}".format(_bar_name))
+                    self.logger.log(f"Unable to find IO BAR {_bar_name}")
                 continue
             _en = self.is_IO_BAR_enabled(_bar_name)
 
             if 'register' in _bar:
                 _s = _bar['register']
                 if 'offset' in _bar:
-                    _s += (' + 0x{:X}'.format(int(_bar['offset'], 16)))
+                    _s += (f' + 0x{int(_bar["offset"], 16):X}')
             else:
-                _s = '{:02X}:{:02X}.{:01X} + {}'.format(int(_bar['bus'], 16), int(_bar['dev'], 16), int(_bar['fun'], 16), _bar['reg'])
+                _s = f'{int(_bar["bus"], 16):02X}:{int(_bar["dev"], 16):02X}.{int(_bar["fun"], 16):01X} + {_bar["reg"]}'
 
-            logger().log(' {:12} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, _s, _base, _size, _en, _bar['desc']))
+            logger().log(f' {_bar_name:12} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
 
     #
     # Read I/O range by I/O BAR name
     #
-    def read_IO_BAR(self, bar_name, size=1):
+    def read_IO_BAR(self, bar_name: str, size: int = 1) -> List[int]:
         (range_base, range_size) = self.get_IO_BAR_base_address(bar_name)
         n = range_size // size
         io_ports = []
         for i in range(n):
             io_ports.append(self.cs.io._read_port(range_base + i * size, size))
-            #io_ports.append( self.read_IO_BAR_reg( bar_name, i*size, size ) )
         return io_ports
 
     #
     # Dump I/O range by I/O BAR name
     #
-    def dump_IO_BAR(self, bar_name, size=1):
+    def dump_IO_BAR(self, bar_name: str, size: int = 1) -> None:
         (range_base, range_size) = self.get_IO_BAR_base_address(bar_name)
         n = range_size // size
-        fmt = '0{:d}X'.format(size * 2)
-        logger().log("[iobar] I/O BAR {}:".format(bar_name))
+        fmt = f'0{size * 2:d}X'
+        logger().log(f"[iobar] I/O BAR {bar_name}:")
         for i in range(n):
             reg = self.cs.io._read_port(range_base + i * size, size)
-            logger().log('{:+04X}: {:{form}}'.format(i * size, reg, form=fmt))
+            logger().log(f'{size * i:+04X}: {reg:{fmt}}')
