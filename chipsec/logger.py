@@ -29,7 +29,7 @@ import sys
 import os
 import atexit
 from time import localtime, strftime
-from typing import Sequence, Tuple, Dict, List, Union
+from typing import Sequence, Tuple, Dict, List, Optional
 from enum import Enum
 
 try:
@@ -95,7 +95,7 @@ class chipsecFilter(logging.Filter):
 
 
 class chipsecLogFormatter(logging.Formatter):
-    def __init__(self, fmt: Union[str, None] = ..., datefmt: Union[str, None] = ..., style='%') -> None:
+    def __init__(self, fmt: Optional[str] = ..., datefmt: Optional[str] = ..., style='%') -> None:
         super().__init__(fmt, datefmt, style)
         self.infmt = fmt
 
@@ -107,7 +107,7 @@ class chipsecLogFormatter(logging.Formatter):
 
 
 class chipsecStreamFormatter(logging.Formatter):
-    def __init__(self, fmt: Union[str, None] = ..., datefmt: Union[str, None] = ..., style='%') -> None:
+    def __init__(self, fmt: Optional[str] = ..., datefmt: Optional[str] = ..., style='%') -> None:
         super().__init__(fmt, datefmt, style)
         self.infmt = fmt
         self.levelfmt = '[%(levelname)s]  %(message)s'
@@ -170,9 +170,9 @@ class chipsecStreamFormatter(logging.Formatter):
             color = 'CYAN'
         elif record.levelno == level.WARNING.value:
             color = 'YELLOW'
-        elif record.levelno == [level.ERROR.value, level.BAD.value]:
+        elif record.levelno in [level.ERROR.value, level.BAD.value]:
             color = 'RED'
-        elif record.levelno == [level.EXCEPTION.value, level.CRITICAL.value]:
+        elif record.levelno in [level.EXCEPTION.value, level.CRITICAL.value]:
             color = 'PURPLE'
         else:
             color = 'WHITE'
@@ -213,8 +213,8 @@ class Logger:
         logging.addLevelName(level.VERBOSE.value, level.VERBOSE.name)
         logging.addLevelName(level.HAL.value, level.HAL.name)
         logging.addLevelName(level.HELPER.value, level.HELPER.name)
-        logFormatter = chipsecLogFormatter('%(additional)s %(message)s')
-        streamFormatter = chipsecStreamFormatter('%(additional)s %(message)s')
+        logFormatter = chipsecLogFormatter('%(additional)s%(message)s')
+        streamFormatter = chipsecStreamFormatter('%(additional)s%(message)s')
         self.logstream.setFormatter(streamFormatter)
         fileH.setFormatter(logFormatter)
         self.Results = ChipsecResults()
@@ -383,7 +383,7 @@ class Logger:
         text = '[x][ =======================================================================\n'
         text = text + '[x][ Module: ' + test_name + '\n'
         text = text + '[x][ ======================================================================='
-        self.chipsecLogger.info(text, level.INFO, 'BLUE')
+        self.log(text, level.INFO, 'BLUE')
 
     def print_banner(self, arguments: Sequence[str], version, message) -> None:
         """Prints CHIPSEC banner"""
