@@ -32,6 +32,7 @@ import argparse
 from typing import Sequence, Optional, Dict, Any
 from chipsec.helper import oshelper
 from chipsec.logger import logger
+from chipsec.banner import print_banner, print_banner_properties
 from chipsec.exceptions import UnknownChipsetError
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
@@ -118,7 +119,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
 
     if par['_cmd'] == 'help' or par['show_help']:
         if par['_show_banner']:
-            logger().print_banner(argv, get_version(), get_message())
+            print_banner(argv, get_version(), get_message())
         parser.print_help()
         return None
     else:
@@ -164,7 +165,7 @@ class ChipsecUtil:
         """Receives and executes the commands"""
 
         if self._show_banner:
-            self.logger.print_banner(self.argv, get_version(), get_message())
+            print_banner(self.argv, get_version(), get_message())
 
         self.init_cs()
 
@@ -179,10 +180,10 @@ class ChipsecUtil:
                               self._driver_exists)
             except UnknownChipsetError as msg:
                 self.logger.log("*******************************************************************\n"
-                            "* Unknown platform!\n"
-                            "* Platform dependent functionality will likely be incorrect\n"
-                            f"* Error Message: \"{str(msg)}\"\n"
-                            "*******************************************************************", self.logger.level.WARNING)
+                                "* Unknown platform!\n"
+                                "* Platform dependent functionality will likely be incorrect\n"
+                                f"* Error Message: \"{str(msg)}\"\n"
+                                "*******************************************************************", self.logger.level.WARNING)
                 if self._unknownPlatform:
                     self.logger.log('To run anyways please use -i command-line option\n\n', self.logger.level.ERROR)
                     sys.exit(ExitCode.OK)
@@ -195,7 +196,7 @@ class ChipsecUtil:
                 sys.exit(ExitCode.OK)
 
         if self._show_banner:
-            self.logger.print_banner_properties(self._cs, os_version())
+            print_banner_properties(self._cs, os_version())
 
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()
