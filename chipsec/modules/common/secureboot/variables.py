@@ -73,7 +73,7 @@ class variables(BaseModule):
     def can_modify(self, name, guid, data, attrs):
         self.logger.log("    > Attempting to modify variable {}:{}".format(guid, name))
 
-        baddata = chr(ord(data[0]) ^ 0xFF) + data[1:]
+        baddata = (data[0] ^ 0xFF).to_bytes(1, 'little') + data[1:]
         status = self._uefi.set_EFI_variable(name, guid, baddata)
         if StatusCode.EFI_SUCCESS != status:
             self.logger.log('    < Modification of {} returned error 0x{:X}'.format(name, status))
