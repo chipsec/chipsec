@@ -290,7 +290,7 @@ class ChipsecResults:
                 if len(summary[k]) > 0:
                     logger().log(f'[CHIPSEC] Modules with {k:11}{len(summary[k]):d}:')
                     for mod in summary[k]:
-                        logger().error(mod)
+                        logger().log_error(mod)
             else:
                 logger().log(f'[CHIPSEC] Modules {k:16}{len(summary[k]):d}:')
                 for mod in summary[k]:
