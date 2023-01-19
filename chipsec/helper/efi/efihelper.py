@@ -111,9 +111,9 @@ class EfiHelper(Helper):
     def write_phys_mem(self, phys_address_hi, phys_address_lo, length, buf):
         if 4 == length:
             dword_value = struct.unpack('I', buf)[0]
-            edk2.writemem_dword(phys_address_lo, phys_address_hi, bytestostring(dword_value))
+            edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
         else:
-            edk2.writemem(phys_address_lo, phys_address_hi, bytestostring(buf), length)
+            edk2.writemem(phys_address_lo, phys_address_hi, buf, length)
 
     def alloc_phys_mem(self, length, max_pa):
         va = edk2.allocphysmem(length, max_pa)[0]
