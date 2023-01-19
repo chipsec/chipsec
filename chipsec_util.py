@@ -32,7 +32,7 @@ import argparse
 from typing import Sequence, Optional, Dict, Any
 from chipsec.helper import oshelper
 from chipsec.logger import logger
-from chipsec.banner import print_banner, print_banner_properties
+from chipsec.banner import chipsec_banner, chipsec_banner_properties
 from chipsec.exceptions import UnknownChipsetError
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
@@ -119,7 +119,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
 
     if par['_cmd'] == 'help' or par['show_help']:
         if par['_show_banner']:
-            print_banner(argv, get_version(), get_message())
+            logger().log(chipsec_banner(argv, get_version(), get_message()))
         parser.print_help()
         return None
     else:
@@ -165,7 +165,7 @@ class ChipsecUtil:
         """Receives and executes the commands"""
 
         if self._show_banner:
-            print_banner(self.argv, get_version(), get_message())
+            self.logger.log(chipsec_banner(self.argv, get_version(), get_message()))
 
         self.init_cs()
 
@@ -196,7 +196,7 @@ class ChipsecUtil:
                 sys.exit(ExitCode.OK)
 
         if self._show_banner:
-            print_banner_properties(self._cs, os_version())
+            self.logger.log(chipsec_banner_properties(self._cs, os_version()))
 
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()

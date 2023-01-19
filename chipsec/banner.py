@@ -25,7 +25,7 @@ Banner functions
 import platform
 import sys
 from typing import Sequence, Tuple
-from chipsec.logger import logger
+from chipsec.chipset import Chipset
 
 
 def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_str: str = '') -> str:
@@ -45,18 +45,14 @@ def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_
     return banner
 
 
-def print_banner(arguments: Sequence[str], version: str, message: str, custom_str: str = '') -> None:
-    """Prints the CHIPSEC banner"""
-    logger().log(chipsec_banner(arguments, version, message, custom_str))
-
-
-def chipsec_banner_properties(cs, os_version: Tuple[str, str, str, str]) -> str:
+def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]) -> str:
     """Creates the CHIPSEC properties banner string"""
     (system, release, version, machine) = os_version
     is_python_64 = True if (sys.maxsize > 2**32) else False
     python_version = platform.python_version()
     python_arch = '64-bit' if is_python_64 else '32-bit'
     (helper_name, driver_path) = cs.helper.helper.get_info()
+    include_pch = cs.reqs_pch or cs.reqs_pch is None
 
     banner_prop = f'''
 [CHIPSEC] OS      : {system} {release} {version} {machine}
@@ -67,7 +63,7 @@ def chipsec_banner_properties(cs, os_version: Tuple[str, str, str, str]) -> str:
 [CHIPSEC]      VID: {cs.vid:04X}
 [CHIPSEC]      DID: {cs.did:04X}
 [CHIPSEC]      RID: {cs.rid:02X}'''
-    if not cs.is_atom():
+    if include_pch:
         banner_prop += f'''
 [CHIPSEC] PCH     : {cs.pch_longname}
 [CHIPSEC]      VID: {cs.pch_vid:04X}
@@ -78,8 +74,3 @@ def chipsec_banner_properties(cs, os_version: Tuple[str, str, str, str]) -> str:
         banner_prop += 'Python architecture (32-bit) is different from OS architecture (64-bit)'
 
     return banner_prop
-
-
-def print_banner_properties(cs, os_version: Tuple[str, str, str, str]) -> None:
-    """Prints the CHIPSEC properties banner"""
-    logger().log(chipsec_banner_properties(cs, os_version))
