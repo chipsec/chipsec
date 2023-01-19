@@ -25,7 +25,7 @@ from collections import OrderedDict
 import xml.etree.ElementTree as ET
 import xml.dom.minidom
 from chipsec.logger import logger
-from typing import Dict, Type, Optional
+from typing import Dict, List, Type, Optional
 
 
 class ExitCode:
@@ -64,8 +64,8 @@ class TestCase:
         self.output = ''
         self.argv = ''
         self.desc = ''
-        self.startTime = None
-        self.endTime = None
+        self.startTime = 0
+        self.endTime = 0
         self.time = None
 
     def get_fields(self) -> Dict[str, str]:
@@ -99,7 +99,7 @@ class ChipsecResults:
     def add_testcase(self, test: Type[TestCase]) -> None:
         self.test_cases.append(test)
 
-    def get_current(self) -> Type[TestCase]:
+    def get_current(self) -> Optional[Type[TestCase]]:
         if len(self.test_cases) == 0 or self.summary:
             return None
         return self.test_cases[len(self.test_cases) - 1]
@@ -107,7 +107,7 @@ class ChipsecResults:
     def add_exception(self, name):
         self.exceptions.append(str(name))
 
-    def order_summary(self) -> None:
+    def order_summary(self) -> Dict[str, List[TestCase]]:
         self.summary = True
         ret = OrderedDict()
         passed = []
@@ -184,20 +184,20 @@ class ChipsecResults:
     def xml_summary(self) -> str:
         summary = self.order_summary()
         xml_element = ET.Element("Summary")
-        for k in summary.keys():
+        for value in summary.keys():
             temp = {}
-            if k == 'total':
-                temp['name'] = k
-                temp['total'] = "{:d}".format(summary[k])
+            if value == 'total':
+                temp['name'] = value
+                temp['total'] = "{:d}".format(summary[value])
                 m_element = ET.SubElement(xml_element, 'result', temp)
             else:
-                temp['name'] = k
-                temp['total'] = "{:d}".format(len(summary[k]))
+                temp['name'] = value
+                temp['total'] = "{:d}".format(len(summary[value]))
                 m_element = ET.SubElement(xml_element, 'result', temp)
-                for mod in summary[k]:
+                for mod in summary[value]:
                     n_element = ET.SubElement(m_element, 'module')
                     n_element.text = mod
-        return ET.tostring(xml_element, None, None)
+        return ET.tostring(xml_element, "unicode", None)
 
     def json_summary(self) -> str:
         summary = self.order_summary()
@@ -213,11 +213,11 @@ class ChipsecResults:
         xml_element = ET.Element('testsuites')
         summary = self.order_summary()
         summary_dict = {}
-        for k in summary.keys():
-            if k == 'total':
-                summary_dict[k] = f'{summary[k]:d}'
+        for value in summary.keys():
+            if value == 'total':
+                summary_dict[value] = f'{summary[value]:d}'
             else:
-                summary_dict[k.replace(' ', '')] = f'{len(summary[k]):d}'
+                summary_dict[value.replace(' ', '')] = f'{len(summary[value]):d}'
         summary_dict["name"] = os.path.basename(os.path.splitext(name)[0])
         if runtime is not None:
             summary_dict["time"] = f'{runtime:5f}'
@@ -225,10 +225,11 @@ class ChipsecResults:
         # add properties
         pr_element = ET.SubElement(ts_element, "properties")
         prop_dict = {}
-        for k in self.properties:
-            prop_dict["name"] = k
-            prop_dict["value"] = self.properties[k]
-            ET.SubElement(pr_element, "property", prop_dict)
+        if self.properties is not None:
+            for value in self.properties:
+                prop_dict["name"] = value
+                prop_dict["value"] = self.properties[value]
+                ET.SubElement(pr_element, "property", prop_dict)
         # add test cases
         for test in self.test_cases:
             ttime = test.time if test.time is not None else 0.0
@@ -279,31 +280,31 @@ class ChipsecResults:
         if runtime is not None:
             logger().log(f'[CHIPSEC] Time elapsed            {runtime:.3f}')
 
-        for k in summary.keys():
-            if k == 'total':
-                logger().log(f'[CHIPSEC] Modules {k:16}{summary[k]:d}')
-            elif k == 'warnings':
-                logger().log(f'[CHIPSEC] Modules with {k:11}{len(summary[k]):d}:')
-                for mod in summary[k]:
+        for result in summary.keys():
+            if result == 'total':
+                logger().log(f'[CHIPSEC] Modules {result:16}{summary[result]:d}')
+            elif result == 'warnings':
+                logger().log(f'[CHIPSEC] Modules with {result:11}{len(summary[result]):d}:')
+                for mod in summary[result]:
                     logger().log_warning(mod)
-            elif k == 'exceptions':
-                if len(summary[k]) > 0:
-                    logger().log(f'[CHIPSEC] Modules with {k:11}{len(summary[k]):d}:')
-                    for mod in summary[k]:
+            elif result == 'exceptions':
+                if len(summary[result]) > 0:
+                    logger().log(f'[CHIPSEC] Modules with {result:11}{len(summary[result]):d}:')
+                    for mod in summary[result]:
                         logger().log_error(mod)
             else:
-                logger().log(f'[CHIPSEC] Modules {k:16}{len(summary[k]):d}:')
-                for mod in summary[k]:
-                    if k == 'failed to run':
+                logger().log(f'[CHIPSEC] Modules {result:16}{len(summary[result]):d}:')
+                for mod in summary[result]:
+                    if result == 'failed to run':
                         logger().log_error(mod)
-                    elif k == 'passed':
+                    elif result == 'passed':
                         logger().log_passed(mod)
-                    elif k == 'information':
+                    elif result == 'information':
                         logger().log_information(mod)
-                    elif k == 'failed':
+                    elif result == 'failed':
                         logger().log_failed(mod)
-                    elif k == 'skipped':
+                    elif result == 'skipped':
                         logger().log_skipped(mod)
-                    elif k == 'not applicable':
+                    elif result == 'not applicable':
                         logger().log_not_applicable(mod)
         logger().log('[CHIPSEC] *****************************************************************')
