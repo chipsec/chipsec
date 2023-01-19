@@ -107,11 +107,6 @@ class chipsecLogFormatter(logging.Formatter):
 
 
 class chipsecStreamFormatter(logging.Formatter):
-    def __init__(self, fmt: Optional[str] = ..., datefmt: Optional[str] = ..., style='%') -> None:
-        super().__init__(fmt, datefmt, style)
-        self.infmt = fmt
-        self.levelfmt = '[%(levelname)s]  %(message)s'
-
     try:
         is_atty = sys.stdout.isatty()
     except AttributeError:
@@ -158,6 +153,13 @@ class chipsecStreamFormatter(logging.Formatter):
             }
         else:
             colors = {}
+    else:
+        colors = {}
+
+    def __init__(self, fmt: Optional[str] = ..., datefmt: Optional[str] = ..., style='%') -> None:
+        super().__init__(fmt, datefmt, style)
+        self.infmt = fmt
+        self.levelfmt = '[%(levelname)s]  %(message)s'
 
     def format(self, record):
         if record.levelno == level.DEBUG.value:
