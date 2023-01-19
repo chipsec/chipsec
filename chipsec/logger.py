@@ -209,6 +209,7 @@ class Logger:
         self.chipsecLogger.addHandler(self.logstream)
         self.chipsecLogger.addHandler(fileH)
         self.chipsecLogger.addFilter(chipsecFilter(LOGGER_NAME))
+        self.chipsecLogger.propagate = False
         logging.addLevelName(level.VERBOSE.value, level.VERBOSE.name)
         logging.addLevelName(level.HAL.value, level.HAL.name)
         logging.addLevelName(level.HELPER.value, level.HELPER.name)
