@@ -140,21 +140,21 @@ class chipsecStreamFormatter(logging.Formatter):
             csi = '\x1b['
             reset = '\x1b[0m'
             colors = {
-                'END': 0,
-                'LIGHT': 90,
-                'DARK': 30,
-                'BACKGROUND': 40,
-                'LIGHT_BACKGROUND': 100,
-                'GRAY': 0,
-                'RED': 1,
-                'GREEN': 2,
-                'YELLOW': 3,
-                'BLUE': 4,
-                'PURPLE': 5,
-                'CYAN': 6,
-                'LIGHT_GRAY': 7,
-                'NORMAL': 8,
-                'WHITE': 9,
+                'END': '30',
+                'LIGHT': '120',
+                'DARK': '60',
+                'BACKGROUND': '70',
+                'LIGHT_BACKGROUND': '130',
+                'GRAY': '30',
+                'RED': '31',
+                'GREEN': '32',
+                'YELLOW': '33',
+                'BLUE': '34',
+                'PURPLE': '35',
+                'CYAN': '36',
+                'LIGHT_GRAY': '37',
+                'NORMAL': '38',
+                'WHITE': '39',
             }
         else:
             colors = {}
@@ -181,13 +181,10 @@ class chipsecStreamFormatter(logging.Formatter):
                 color = record.args[0]
             record.args = tuple()
         if color in self.colors and "linux" == self.mPlatform:
-            params = []
-            params.append(str(self.colors[color] + 30))
-            log_fmt = ''.join((self.csi, ';'.join(params),
-                               'm', self.infmt, self.reset))
+            log_fmt = f'{self.csi};{self.colors[color]}m{self.infmt}{self.reset}'
         else:
             log_fmt = self.infmt
-        if "windows" == self.mPlatform:
+        if color in self.colors and "windows" == self.mPlatform:
             WConio.textcolor(self.colors[color])
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
@@ -217,12 +214,9 @@ class Logger:
         streamFormatter = chipsecStreamFormatter('%(additional)s%(message)s')
         self.logstream.setFormatter(streamFormatter)
         fileH.setFormatter(logFormatter)
-        self.Results = ChipsecResults()
 
-    def log(self, text: str, level: level = level.INFO, color: str = None) -> None:
+    def log(self, text: str, level: level = level.INFO, color: Optional[str] = ...) -> None:
         """Sends plain text to logging."""
-        if self.Results.get_current() is not None:
-            self.Results.get_current().add_output(text)
         self.chipsecLogger.log(level.value, text, color)
 
     def log_verbose(self, text: str) -> None:  # Use log('text', level.VERBOSE)
@@ -314,7 +308,7 @@ class Logger:
     def _log(self, text, level=level.INFO, color=None) -> None:
         """Sends plain text to logging."""
         try:
-            self.chipsecLogger.log(level, text, color)
+            self.chipsecLogger.log(level.value, text, color)
             if self.ALWAYS_FLUSH:
                 self.flush()
         except BaseException:
