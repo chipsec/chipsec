@@ -31,7 +31,7 @@ import argparse
 
 from typing import Sequence, Optional, Dict, Any
 from chipsec.helper import oshelper
-from chipsec.logger import logger
+from chipsec.logger import logger, level
 from chipsec.exceptions import UnknownChipsetError
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
@@ -182,16 +182,16 @@ class ChipsecUtil:
                             "* Unknown platform!\n"
                             "* Platform dependent functionality will likely be incorrect\n"
                             f"* Error Message: \"{str(msg)}\"\n"
-                            "*******************************************************************", self.logger.level.WARNING)
+                            "*******************************************************************", level.WARNING)
                 if self._unknownPlatform:
-                    self.logger.log('To run anyways please use -i command-line option\n\n', self.logger.level.ERROR)
+                    self.logger.log('To run anyways please use -i command-line option\n\n', level.ERROR)
                     sys.exit(ExitCode.OK)
             except Exception as msg:
-                self.logger.log(str(msg), self.logger.level.ERROR)
+                self.logger.log(str(msg), level.ERROR)
                 sys.exit(ExitCode.EXCEPTION)
         else:
             if comm.requires_driver():
-                self.logger.log("Cannot run without driver loaded", self.logger.level.ERROR)
+                self.logger.log("Cannot run without driver loaded", level.ERROR)
                 sys.exit(ExitCode.OK)
 
         if self._show_banner:
