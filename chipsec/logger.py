@@ -29,7 +29,7 @@ import sys
 import os
 import atexit
 from time import localtime, strftime
-from typing import Sequence, Tuple, Dict, List, Optional
+from typing import Tuple, Dict, List, Optional
 from enum import Enum
 
 try:
@@ -382,42 +382,6 @@ class Logger:
         text = text + '[x][ ======================================================================='
         self.log(text, level.INFO, 'BLUE')
 
-    def print_banner(self, arguments: Sequence[str], version, message) -> None:
-        """Prints CHIPSEC banner"""
-        args = ' '.join(arguments)
-        self.log('################################################################\n'
-                 '##                                                            ##\n'
-                 '##  CHIPSEC: Platform Hardware Security Assessment Framework  ##\n'
-                 '##                                                            ##\n'
-                 '################################################################')
-        self.log(f'[CHIPSEC] Version  : {version}')
-        self.log(f'[CHIPSEC] Arguments: {args}')
-        self.log(message)
-
-    def print_banner_properties(self, cs, os_version) -> None:
-        """Prints CHIPSEC properties banner"""
-        (system, release, version, machine) = os_version
-        is_python_64 = True if (sys.maxsize > 2**32) else False
-        python_version = platform.python_version()
-        python_arch = '64-bit' if is_python_64 else '32-bit'
-        (helper_name, driver_path) = cs.helper.helper.get_info()
-
-        self.log(f'[CHIPSEC] OS      : {system} {release} {version} {machine}')
-        self.log(f'[CHIPSEC] Python  : {python_version} ({python_arch})')
-        self.log(f'[CHIPSEC] Helper  : {helper_name} ({driver_path})')
-        self.log(f'[CHIPSEC] Platform: {cs.longname}')
-        self.log(f'[CHIPSEC]    CPUID: {cs.get_cpuid()}')
-        self.log(f'[CHIPSEC]      VID: {cs.vid:04X}')
-        self.log(f'[CHIPSEC]      DID: {cs.did:04X}')
-        self.log(f'[CHIPSEC]      RID: {cs.rid:02X}')
-        if not cs.is_atom():
-            self.log(f'[CHIPSEC] PCH     : {cs.pch_longname}')
-            self.log(f'[CHIPSEC]      VID: {cs.pch_vid:04X}')
-            self.log(f'[CHIPSEC]      DID: {cs.pch_did:04X}')
-            self.log(f'[CHIPSEC]      RID: {cs.pch_rid:02X}')
-
-        if not is_python_64 and machine.endswith('64'):
-            self.log_warning('Python architecture (32-bit) is different from OS architecture (64-bit)')
 
     def _write_log(self, text, filename):
         """Write text to defined log file"""
