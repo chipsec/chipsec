@@ -8,34 +8,20 @@ jobs:
     strategy:
       matrix:
         distro:
+          - {name: "alpine", tag: "3.17", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.16", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.15", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.14", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.13", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.12", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.11", variant: "-lts", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.10", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.9", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.8", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.7", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.7", variant: "-hardened", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.6", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.6", variant: "-hardened", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.5", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.5", variant: "-grsec", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.4", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.4", variant: "-grsec", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.3", variant: "-vanilla", image_prefix: "docker.io/library/"}
-          - {name: "alpine", tag: "3.3", variant: "-grsec", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "latest", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "latest", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
+          - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
           - {name: "centos", tag: "stream8", image_prefix: "quay.io/centos/"}
           - {name: "centos", tag: "7", image_prefix: "quay.io/centos/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
-          - {name: "debian", tag: "9", image_prefix: "docker.io/library/"}
+          - {name: "ubuntu", tag: "23.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "20.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "18.04", image_prefix: "docker.io/library/"}
