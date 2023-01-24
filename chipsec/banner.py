@@ -26,6 +26,7 @@ import platform
 import sys
 from typing import Sequence, Tuple
 from chipsec.chipset import Chipset
+from chipsec.logger import logger
 
 
 def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_str: str = '') -> str:
@@ -43,6 +44,10 @@ def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_
 [CHIPSEC] Arguments: {args}
 {message}'''
     return banner
+
+
+def print_banner(arguments: Sequence[str], version: str, message: str, custom_str: str = '') -> None:
+    logger().log(chipsec_banner(arguments, version, message, custom_str))
 
 
 def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]) -> str:
@@ -74,3 +79,7 @@ def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]
         banner_prop += 'Python architecture (32-bit) is different from OS architecture (64-bit)'
 
     return banner_prop
+
+
+def print_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]) -> None:
+    logger().log(chipsec_banner_properties(cs, os_version))
