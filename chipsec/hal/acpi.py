@@ -29,17 +29,18 @@ import struct
 from collections import defaultdict
 from collections import namedtuple
 
-from chipsec.logger import logger, print_buffer
-from chipsec.file import read_file
 from chipsec.defines import bytestostring
 from chipsec.exceptions import UnimplementedNativeAPIError
-
-from chipsec.hal import acpi_tables, hal_base, uefi
+from chipsec.file import read_file
+from chipsec.hal import acpi_tables
+from chipsec.hal.hal_base import HALBase
+from chipsec.hal.uefi import UEFI
+from chipsec.logger import logger, print_buffer_bytes
 
 # ACPI Table Header Format
 ACPI_TABLE_HEADER_FORMAT = '=4sIBB6s8sI4sI'
 ACPI_TABLE_HEADER_SIZE = struct.calcsize(ACPI_TABLE_HEADER_FORMAT)  # 36
-assert(36 == ACPI_TABLE_HEADER_SIZE)
+assert 36 == ACPI_TABLE_HEADER_SIZE
 
 
 class ACPI_TABLE_HEADER(namedtuple('ACPI_TABLE_HEADER', 'Signature Length Revision Checksum OEMID OEMTableID OEMRevision CreatorID CreatorRevision')):
@@ -183,49 +184,7 @@ ACPI_TABLES = {
 
 RSDP_GUID_ACPI2_0 = '8868E871-E4F1-11D3-BC22-0080C73C8881'
 RSDP_GUID_ACPI1_0 = 'EB9D2D31-2D88-11D3-9A16-0090273FC14D'
-
-
 ACPI_RSDP_SIG = 'RSD PTR '
-# RSDP Format
-ACPI_RSDP_FORMAT = '<8sB6sBI'
-ACPI_RSDP_EXT_FORMAT = 'IQB3s'
-ACPI_RSDP_SIZE = struct.calcsize(ACPI_RSDP_FORMAT)
-ACPI_RSDP_EXT_SIZE = struct.calcsize(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT)
-assert ACPI_RSDP_EXT_SIZE == 36
-
-
-class RSDP:
-    def __init__(self, table_content):
-        if len(table_content) == ACPI_RSDP_SIZE:
-            (self.Signature, self.Checksum, self.OEMID,
-             self.Revision, self.RsdtAddress) = struct.unpack(ACPI_RSDP_FORMAT, table_content)
-        else:
-            (self.Signature, self.Checksum, self.OEMID,
-             self.Revision, self.RsdtAddress, self.Length,
-             self.XsdtAddress, self.ExtChecksum, self.Reserved) = struct.unpack(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT, table_content)
-
-    def __str__(self):
-        default = ("==================================================================\n"
-                   "  Root System Description Pointer (RSDP)\n"
-                   "==================================================================\n"
-                   "  Signature        : {}\n"
-                   "  Checksum         : 0x{:02X}\n"
-                   "  OEM ID           : {}\n"
-                   "  Revision         : 0x{:02X}\n"
-                   "  RSDT Address     : 0x{:08X}\n"
-                   ).format(self.Signature, self.Checksum, self.OEMID, self.Revision, self.RsdtAddress)
-        if hasattr(self, "Length"):
-            default += ("  Length           : 0x{:08X}\n"
-                        "  XSDT Address     : 0x{:016X}\n"
-                        "  Extended Checksum: 0x{:02X}\n"
-                        "  Reserved         : {}\n"
-                        ).format(self.Length, self.XsdtAddress, self.ExtChecksum, self.Reserved.encode("hex") if (isinstance(self.Reserved, str)) else self.Reserved.hex())
-        return default
-
-    # some sanity checking on RSDP
-    def is_RSDP_valid(self):
-        return (0 != self.Checksum and (0x0 == self.Revision or 0x2 == self.Revision))
-
 
 ########################################################################################################
 #
@@ -233,19 +192,22 @@ class RSDP:
 #
 ########################################################################################################
 
-class ACPI(hal_base.HALBase):
+
+class ACPI(HALBase):
     def __init__(self, cs):
         super(ACPI, self).__init__(cs)
-        self.uefi = uefi.UEFI(self.cs)
+        self.uefi = UEFI(self.cs)
         self.tableList = defaultdict(list)
         self.get_ACPI_table_list()
 
     def read_RSDP(self, rsdp_pa):
-        rsdp_buf = self.cs.mem.read_physical_mem(rsdp_pa, ACPI_RSDP_SIZE)
-        rsdp = RSDP(rsdp_buf)
+        rsdp_buf = self.cs.mem.read_physical_mem(rsdp_pa, acpi_tables.ACPI_RSDP_SIZE)
+        rsdp = acpi_tables.RSDP()
+        rsdp.parse(rsdp_buf)
         if rsdp.Revision >= 0x2:
-            rsdp_buf = self.cs.mem.read_physical_mem(rsdp_pa, ACPI_RSDP_EXT_SIZE)
-            rsdp = RSDP(rsdp_buf)
+            rsdp_buf = self.cs.mem.read_physical_mem(rsdp_pa, acpi_tables.ACPI_RSDP_EXT_SIZE)
+            rsdp = acpi_tables.RSDP()
+            rsdp.parse(rsdp_buf)
         return rsdp
 
     #
@@ -536,11 +498,11 @@ class ACPI(hal_base.HALBase):
             logger().log("==================================================================")
             # print table header
             logger().log(table_header)
-            print_buffer(bytestostring(table_header_blob))
+            print_buffer_bytes(table_header_blob)
             # print table contents
             logger().log('')
             logger().log(table)
-            print_buffer(bytestostring(table_blob))
+            print_buffer_bytes(table_blob)
             logger().log('')
 
     # --------------------------------------------------------------------
@@ -564,7 +526,10 @@ class ACPI(hal_base.HALBase):
             if logger().HAL:
                 logger().log('{}'.format(signature))
             if 'BERT' in signature:
-                table = (ACPI_TABLES[signature])(self.cs)
+                BootRegionLen = struct.unpack('<L', contents[0:4])[0]
+                BootRegionAddr = struct.unpack('<Q', contents[4:12])[0]
+                bootRegion = self.cs.mem.read_physical_mem(BootRegionAddr, BootRegionLen)
+                table = (ACPI_TABLES[signature])(bootRegion)
             elif 'NFIT' in signature:
                 table = (ACPI_TABLES[signature])(header)
             else:
