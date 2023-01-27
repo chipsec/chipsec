@@ -34,7 +34,6 @@ from typing import Optional, Tuple
 
 from chipsec.logger import logger, dump_buffer_bytes
 from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
-from chipsec.defines import bytestostring
 
 
 class ACPI_TABLE:
@@ -46,6 +45,53 @@ class ACPI_TABLE:
   Table Content
 ------------------------------------------------------------------
 """
+
+########################################################################################################
+#
+# RSDP
+#
+########################################################################################################
+
+
+# RSDP Format
+ACPI_RSDP_FORMAT = '<8sB6sBI'
+ACPI_RSDP_EXT_FORMAT = 'IQB3s'
+ACPI_RSDP_SIZE = struct.calcsize(ACPI_RSDP_FORMAT)
+ACPI_RSDP_EXT_SIZE = struct.calcsize(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT)
+assert ACPI_RSDP_EXT_SIZE == 36
+
+
+class RSDP(ACPI_TABLE):
+    def parse(self, table_content: bytes) -> None:
+        if len(table_content) == ACPI_RSDP_SIZE:
+            (self.Signature, self.Checksum, self.OEMID,
+             self.Revision, self.RsdtAddress) = struct.unpack(ACPI_RSDP_FORMAT, table_content)
+        else:
+            (self.Signature, self.Checksum, self.OEMID,
+             self.Revision, self.RsdtAddress, self.Length,
+             self.XsdtAddress, self.ExtChecksum, self.Reserved) = struct.unpack(ACPI_RSDP_FORMAT + ACPI_RSDP_EXT_FORMAT, table_content)
+
+    def __str__(self) -> str:
+        default = ("==================================================================\n"
+                   "  Root System Description Pointer (RSDP)\n"
+                   "==================================================================\n"
+                   f"  Signature        : {self.Signature}\n"
+                   f"  Checksum         : 0x{self.Checksum:02X}\n"
+                   f"  OEM ID           : {self.OEMID}\n"
+                   f"  Revision         : 0x{self.Revision:02X}\n"
+                   f"  RSDT Address     : 0x{self.RsdtAddress:08X}\n")
+        if hasattr(self, "Length"):
+            default += (f"  Length           : 0x{self.Length:08X}\n"
+                        f"  XSDT Address     : 0x{self.XsdtAddress:016X}\n"
+                        f"  Extended Checksum: 0x{self.ExtChecksum:02X}\n"
+                        f"  Reserved         : {self.Reserved.hex()}\n"
+                        )
+        return default
+
+    # some sanity checking on RSDP
+    def is_RSDP_valid(self):
+        return 0 != self.Checksum and (0x0 == self.Revision or 0x2 == self.Revision)
+
 
 ########################################################################################################
 #
@@ -83,13 +129,12 @@ class DMAR (ACPI_TABLE):
         return
 
     def __str__(self) -> str:
-        res_str = ''.join(f'{ord(c):02x} ' for c in bytestostring(self.Reserved))
         _str = f"""------------------------------------------------------------------
   DMAR Table Contents
 ------------------------------------------------------------------
   Host Address Width  : {self.HostAddrWidth:d}
   Flags               : 0x{self.Flags:02X}
-  Reserved            : {res_str}
+  Reserved            : {self.Reserved.hex()}
 """
         _str += "\n  Remapping Structures:\n"
         for st in self.dmar_structures:
@@ -189,8 +234,7 @@ class ACPI_TABLE_DMAR_DeviceScope(namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Typ
     __slots__ = ()
 
     def __str__(self) -> str:
-        path_str = ''.join(f'{ord(c):02x} ' for c in bytestostring(self.Path))
-        return f"""      {DMAR_DS_TYPE[self.Type]} ({self.Type:02X}): Len: 0x{self.Length:02X}, Rsvd: 0x{self.Reserved:04X}, Enum ID: 0x{self.EnumerationID:02X}, Start Bus#: 0x{self.StartBusNum:02X}, Path: {path_str}"""
+        return f"""      {DMAR_DS_TYPE[self.Type]} ({self.Type:02X}): Len: 0x{self.Length:02X}, Rsvd: 0x{self.Reserved:04X}, Enum ID: 0x{self.EnumerationID:02X}, Start Bus#: 0x{self.StartBusNum:02X}, Path: {self.Path.hex()}"""
 
 #
 # DMAR DMA Remapping Hardware Unit Definition (DRHD) Structure
@@ -286,11 +330,10 @@ class ACPI_TABLE_DMAR_ANDD(namedtuple('ACPI_TABLE_DMAR_ANDD', 'Type Length Reser
     __slots__ = ()
 
     def __str__(self) -> str:
-        res_str = ''.join(f'{ord(c):02x} ' for c in bytestostring(self.Reserved))
         return f"""
   Remapping Hardware Status Affinity (0x{self.Type:04X}):
     Length                : 0x{self.Length:04X}
-    Reserved (0)          : {res_str}
+    Reserved (0)          : {self.Reserved.hex()}
     ACPI Device Number    : 0x{self.ACPIDevNum:02X}
     ACPI Object Name      : {self.ACPIObjectName}
 """
@@ -783,8 +826,8 @@ class BGRT (ACPI_TABLE):
 
 
 class BERT (ACPI_TABLE):
-    def __init__(self, cs):
-        self.cs = cs
+    def __init__(self, bootRegion: bytes) -> None:
+        self.bootRegion = bootRegion
         return
 
     def parseSectionType(self, table_content: bytes) -> str:
@@ -924,8 +967,7 @@ Generic Error Status Block
     def parse(self, table_content: bytes) -> None:
         self.BootRegionLen = struct.unpack('<L', table_content[0:4])[0]
         self.BootRegionAddr = struct.unpack('<Q', table_content[4:12])[0]
-        bootRegion = self.cs.mem.read_physical_mem(self.BootRegionAddr, self.BootRegionLen)
-        self.parseErrorBlock(bootRegion)
+        self.parseErrorBlock(self.bootRegion)
 
     def __str__(self) -> str:
         return f"""
