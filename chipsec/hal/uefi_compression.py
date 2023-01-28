@@ -66,6 +66,9 @@ class UEFICompression:
     def __init__(self):
         pass
 
+    def rotate_list(self, list, n):
+        return list[n:] + list[:n]
+
     def decompress_EFI_binary(self, compressed_data, compression_type):
         if compression_type in COMPRESSION_TYPES:
             if compression_type == COMPRESSION_TYPE_UNKNOWN:
@@ -111,6 +114,7 @@ class UEFICompression:
         return data
 
     def unknown_decompress(self, compressed_data):
+        res = None
         failed_times = 0
         for CompressionType in self.decompression_oder_type2:
             res = self.decompress_EFI_binary(compressed_data, CompressionType)
@@ -122,9 +126,10 @@ class UEFICompression:
         return res
 
     def unknown_efi_decompress(self, compressed_data):
+        res = None
         failed_times = 0
         for CompressionType in self.decompression_oder_type1:
-            res = self.decompress_file(compressed_data, CompressionType)
+            res = self.decompress_EFI_binary(compressed_data, CompressionType)
             if res is not None:
                 self.rotate_list(self.decompression_oder_type1, failed_times)
                 break
