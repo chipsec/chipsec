@@ -385,7 +385,7 @@ class Logger:
 
     def _write_log(self, text, filename):
         """Write text to defined log file"""
-        self.chipsecLogger.log(self.info, text)
+        self.chipsecLogger.log(level.INFO.value, text)
         if self.ALWAYS_FLUSH:
             try:
                 self.logfile.close()

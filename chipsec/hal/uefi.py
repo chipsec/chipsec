@@ -342,7 +342,7 @@ class UEFI(hal_base.HALBase):
 
     def read_EFI_variables_from_SPI(self, BIOS_region_base, BIOS_region_size):
         rom = self.cs.spi.read_spi(BIOS_region_base, BIOS_region_size)
-        efi_var_store = self.find_EFI_variable_store(rom, self._FWType)
+        efi_var_store = find_EFI_variable_store(rom, self._FWType)
         if efi_var_store:
             efi_vars = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables']
             return efi_vars
@@ -350,7 +350,7 @@ class UEFI(hal_base.HALBase):
 
     def read_EFI_variables_from_file(self, filename):
         rom = read_file(filename)
-        efi_var_store = self.find_EFI_variable_store(rom, self._FWType)
+        efi_var_store = find_EFI_variable_store(rom, self._FWType)
         if efi_var_store:
             efi_vars = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables']
             return efi_vars
