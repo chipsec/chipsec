@@ -2155,7 +2155,7 @@ class UEFI_TABLE (ACPI_TABLE):
         if len(table_content) < 18:
             return
         # Get Guid and Data Offset
-        guid = struct.unpack(EFI_GUID_FMT, table_content[:16])
+        guid = struct.unpack(EFI_GUID_FMT, table_content[:16])[0]
         identifier = EFI_GUID_STR(guid)
         offset = struct.unpack('H', table_content[16:18])[0]
         self.results += f"""
