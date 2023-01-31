@@ -18,6 +18,30 @@
 # chipsec@intel.com
 #
 
+"""
+>>> chipsec_util check list
+>>> chipsec_util check lock <lockname>
+>>> chipsec_util check lock <lockname1, lockname2, ...>
+>>> chipsec_util check all
+
+Examples:
+
+>>> chipsec_util check list
+>>> chipsec_util check lock DebugLock
+>>> chipsec_util check all
+
+KEY:
+    Lock Name - Name of Lock within configuration file
+    State     - Lock Configuration
+        Undefined - Lock is not defined within configuration
+        Undoc     - Lock is missing configuration information
+        Hidden    - Lock is in a disabled or hidden state (unable to read the lock)
+        Unlocked  - Lock does not match value within configuration
+        Locked    - Lock matches value within configuration
+        RW/O      - Lock is identified as register is RW/O
+
+"""
+
 from time import time
 from argparse import ArgumentParser
 
@@ -27,22 +51,10 @@ from chipsec.defines import is_set
 
 
 class LOCKCHECKCommand(BaseCommand):
-    """
-    >>> chipsec_util check list
-    >>> chipsec_util check lock <lockname>
-    >>> chipsec_util check lock <lockname1, lockname2, ...>
-    >>> chipsec_util check all
-
-    Examples:
-
-    >>> chipsec_util check list
-    >>> chipsec_util check lock DebugLock
-    >>> chipsec_util check all
-    """
 
     version = "0.5"
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(prog='chipsec_util check', usage=LOCKCHECKCommand.__doc__)
 
         parser_lockname = ArgumentParser(add_help=False)
@@ -66,32 +78,32 @@ class LOCKCHECKCommand(BaseCommand):
 
         return True
 
-    def log_key(self):
+    def log_key(self) -> None:
         self.logger.log("""
 KEY:
 \tLock Name - Name of Lock within configuration file
 \tState - Lock Configuration
 \t\tUndefined - Lock is not defined within configuration
-\t\tUndoc -  Lock is missing configuration information
+\t\tUndoc - Lock is missing configuration information
 \t\tHidden - Lock is in a disabled or hidden state (unable to read the lock)
 \t\tUnlocked - Lock does not match value within configuration
 \t\tLocked - Lock matches value within configuration
 \t\tRW/O - Lock is identified as register is RW/O\n\n""")
 
-    def log_header(self):
-        ret = '{:^27}|{:^16}|{:^16}\n{}'.format('Lock Name', 'State', 'Consistent', '-' * 58)
+    def log_header(self) -> str:
+        ret = f'{"Lock Name":^27}|{"State":^16}|{"Consistent":^16}\n{"-" * 58}'
         if not self.logger.HAL:
             self.logger.log(ret)
-        return "\n\n{}".format(ret)
+        return f"\n\n{ret}"
 
-    def list_locks(self):
+    def list_locks(self) -> None:
         self.logger.log('Locks identified within the configuration:')
         for lock in self._locks.get_locks():
             self.logger.log(lock)
         self.logger.log('')
         return
 
-    def checkall_locks(self):
+    def checkall_locks(self) -> None:
         locks = self._locks.get_locks()
         if not locks:
             self.logger.log('Did not find any locks')
@@ -101,23 +113,25 @@ KEY:
         res = self.log_header()
         for lock in locks:
             is_locked = self._locks.is_locked(lock)
-            res = "{}\n{}".format(res, self.check_log(lock, is_locked))
+            is_locked_str = self.check_log(lock, is_locked)
+            res = f"{res}\n{is_locked_str}"
         if self.logger.HAL:
             self.logger.log(res)
         return
 
-    def check_lock(self):
+    def check_lock(self) -> None:
         if self.logger.VERBOSE:
             self.log_key()
         res = self.log_header()
         for lock in self.lockname:
             is_locked = self._locks.is_locked(lock)
-            res = "{}\n{}".format(res, self.check_log(lock, is_locked))
+            is_locked_str = self.check_log(lock, is_locked)
+            res = f"{res}\n{is_locked_str}"
         if self.logger.HAL:
             self.logger.log(res)
         return
 
-    def check_log(self, lock, is_locked):
+    def check_log(self, lock: str, is_locked: int) -> str:
         consistent = "N/A"
         if not is_set(is_locked, LockResult.DEFINED):
             res_str = 'Undefined'
@@ -137,12 +151,12 @@ KEY:
             consistent = "No"
         elif res_str in ["RW/O", "Locked", "UnLocked"] and not is_set(is_locked, LockResult.INCONSISTENT):
             consistent = "Yes"
-        res = '{:27}|  {:14}|{:^16}'.format(lock[:26], res_str, consistent)
+        res = f'{lock[:26]:27}|  {res_str:14}|{consistent:^16}'
         if not self.logger.HAL:
             self.logger.log(res)
         return res
 
-    def run(self):
+    def run(self) -> None:
         CONSISTENCY_CHECKING = True
         self.logger.set_always_flush(True)
         try:
@@ -153,7 +167,7 @@ KEY:
         t = time()
         self.func()
         self.logger.set_always_flush(False)
-        self.logger.log("[CHIPSEC] (Lock Check) time elapsed {:.3f}".format(time() - t))
+        self.logger.log(f"[CHIPSEC] (Lock Check) time elapsed {time() - t:.3f}")
 
 
 commands = {'check': LOCKCHECKCommand}
