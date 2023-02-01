@@ -4119,7 +4119,7 @@ posix_readmem_dword(PyObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(efi_writemem__doc__,
-"writemem(addr_lo, addr_hi, buf, len) -> None\n\
+"writemem(addr_lo, addr_hi, buf) -> None\n\
 Write the buf (PyString) to the given memory address.");
 
 static PyObject *
