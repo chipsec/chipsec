@@ -77,6 +77,7 @@ goto :finish
 if %CHIPSEC_BUILD% == "0" goto :finish
 if defined VS140COMNTOOLS goto :newbuild
 if defined VS160COMNTOOLS goto :newbuild
+if defined VS170COMNTOOLS goto :newbuild
 goto :finish
 
 :newbuild
