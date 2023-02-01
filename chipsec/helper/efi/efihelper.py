@@ -35,7 +35,6 @@ import os
 
 import edk2   # Python 3.6.8 on UEFI
 
-from chipsec.defines import bytestostring
 from chipsec.logger import logger
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.helper.basehelper import Helper
@@ -105,15 +104,18 @@ class EfiHelper(Helper):
     # Physical memory access
     #
 
+
     def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
         return edk2.readmem(phys_address_lo, phys_address_hi, length)
 
     def write_phys_mem(self, phys_address_hi, phys_address_lo, length, buf):
+        if type(buf) == bytearray:
+            buf = bytes(buf)
         if 4 == length:
             dword_value = struct.unpack('I', buf)[0]
             edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
         else:
-            edk2.writemem(phys_address_lo, phys_address_hi, buf, length)
+            edk2.writemem(phys_address_lo, phys_address_hi, buf)
 
     def alloc_phys_mem(self, length, max_pa):
         va = edk2.allocphysmem(length, max_pa)[0]
@@ -161,8 +163,8 @@ class EfiHelper(Helper):
         if size == 4:
             return edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
-            buf = bytestostring(struct.pack(size * "B", value))
-            edk2.writemem(phys_address_lo, phys_address_hi, buf, size)
+            buf = struct.pack(size * "B", value)
+            edk2.writemem(phys_address_lo, phys_address_hi, buf)
 
     #
     # PCIe configuration access
@@ -300,7 +302,8 @@ class EfiHelper(Helper):
         var_list = list()
         variables = dict()
 
-        status_dict = {0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION"}
+        status_dict = {0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL",
+                       6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION"}
 
         namestr = ''
         size = 200
