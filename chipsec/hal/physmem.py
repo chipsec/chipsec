@@ -28,8 +28,8 @@ usage:
     >>> read_physical_mem_dowrd( 0xfed40000 )
 """
 
-import struct
-
+from struct import unpack, pack
+from typing import Tuple, Optional
 from chipsec.hal.hal_base import HALBase
 from chipsec.logger import print_buffer_bytes
 
@@ -48,97 +48,84 @@ class Memory(HALBase):
 
     # Reading physical memory
 
-    def read_physical_mem(self, phys_address, length):
-        if self.logger.HAL:
-            self.logger.log("[mem] 0x{:016X}".format(phys_address))
+    def read_physical_mem(self, phys_address: int, length: int) -> bytes:
+        self.logger.log_hal(f'[mem] 0x{phys_address:016X}')
         return self.helper.read_physical_mem(phys_address, length)
 
-    def read_physical_mem_qword(self, phys_address):
+    def read_physical_mem_qword(self, phys_address: int) -> int:
         out_buf = self.read_physical_mem(phys_address, 8)
-        value = struct.unpack('=Q', out_buf)[0]
-        if self.logger.HAL:
-            self.logger.log('[mem] qword at PA = 0x{:016X}: 0x{:016X}'.format(phys_address, value))
+        value = unpack('=Q', out_buf)[0]
+        self.logger.log_hal(f'[mem] qword at PA = 0x{phys_address:016X}: 0x{value:016X}')
         return value
 
-    def read_physical_mem_dword(self, phys_address):
+    def read_physical_mem_dword(self, phys_address: int) -> int:
         out_buf = self.read_physical_mem(phys_address, 4)
-        value = struct.unpack('=I', out_buf)[0]
-        if self.logger.HAL:
-            self.logger.log('[mem] dword at PA = 0x{:016X}: 0x{:08X}'.format(phys_address, value))
+        value = unpack('=I', out_buf)[0]
+        self.logger.log_hal(f'[mem] dword at PA = 0x{phys_address:016X}: 0x{value:08X}')
         return value
 
-    def read_physical_mem_word(self, phys_address):
+    def read_physical_mem_word(self, phys_address: int) -> int:
         out_buf = self.read_physical_mem(phys_address, 2)
-        value = struct.unpack('=H', out_buf)[0]
-        if self.logger.HAL:
-            self.logger.log('[mem] word at PA = 0x{:016X}: 0x{:04X}'.format(phys_address, value))
+        value = unpack('=H', out_buf)[0]
+        self.logger.log_hal(f'[mem] word at PA = 0x{phys_address:016X}: 0x{value:04X}')
         return value
 
-    def read_physical_mem_byte(self, phys_address):
+    def read_physical_mem_byte(self, phys_address: int) -> int:
         out_buf = self.read_physical_mem(phys_address, 1)
-        value = struct.unpack('=B', out_buf)[0]
-        if self.logger.HAL:
-            self.logger.log('[mem] byte at PA = 0x{:016X}: 0x{:02X}'.format(phys_address, value))
+        value = unpack('=B', out_buf)[0]
+        self.logger.log_hal(f'[mem] byte at PA = 0x{phys_address:016X}: 0x{value:02X}')
         return value
 
     # Writing physical memory
 
-    def write_physical_mem(self, phys_address, length, buf):
+    def write_physical_mem(self, phys_address: int, length: int, buf: bytes) -> int:
         if self.logger.HAL:
-            self.logger.log('[mem] buffer len = 0x{:X} to PA = 0x{:016X}'.format(length, phys_address))
+            self.logger.log(f'[mem] buffer len = 0x{length:X} to PA = 0x{phys_address:016X}')
             print_buffer_bytes(buf)
         return self.helper.write_physical_mem(phys_address, length, buf)
 
-    def write_physical_mem_dword(self, phys_address, dword_value):
-        if self.logger.HAL:
-            self.logger.log('[mem] dword to PA = 0x{:016X} <- 0x{:08X}'.format(phys_address, dword_value))
-        return self.write_physical_mem(phys_address, 4, struct.pack('I', dword_value))
+    def write_physical_mem_dword(self, phys_address: int, dword_value: int) -> int:
+        self.logger.log_hal(f'[mem] dword to PA = 0x{phys_address:016X} <- 0x{dword_value:08X}')
+        return self.write_physical_mem(phys_address, 4, pack('I', dword_value))
 
-    def write_physical_mem_word(self, phys_address, word_value):
-        if self.logger.HAL:
-            self.logger.log('[mem] word to PA = 0x{:016X} <- 0x{:04X}'.format(phys_address, word_value))
-        return self.write_physical_mem(phys_address, 2, struct.pack('H', word_value))
+    def write_physical_mem_word(self, phys_address: int, word_value: int) -> int:
+        self.logger.log_hal(f'[mem] word to PA = 0x{phys_address:016X} <- 0x{word_value:04X}')
+        return self.write_physical_mem(phys_address, 2, pack('H', word_value))
 
-    def write_physical_mem_byte(self, phys_address, byte_value):
-        if self.logger.HAL:
-            self.logger.log('[mem] byte to PA = 0x{:016X} <- 0x{:02X}'.format(phys_address, byte_value))
-        return self.write_physical_mem(phys_address, 1, struct.pack('B', byte_value))
+    def write_physical_mem_byte(self, phys_address: int, byte_value: int) -> int:
+        self.logger.log_hal(f'[mem] byte to PA = 0x{phys_address:016X} <- 0x{byte_value:02X}')
+        return self.write_physical_mem(phys_address, 1, pack('B', byte_value))
 
     # Allocate physical memory buffer
 
-    def alloc_physical_mem(self, length, max_phys_address=0xFFFFFFFFFFFFFFFF):
+    def alloc_physical_mem(self, length: int, max_phys_address: int = 0xFFFFFFFFFFFFFFFF) -> Tuple[int, int]:
         (va, pa) = self.helper.alloc_physical_mem(length, max_phys_address)
-        if self.logger.HAL:
-            self.logger.log('[mem] Allocated: PA = 0x{:016X}, VA = 0x{:016X}'.format(pa, va))
+        self.logger.log_hal(f'[mem] Allocated: PA = 0x{pa:016X}, VA = 0x{va:016X}')
         return (va, pa)
 
-    def va2pa(self, va):
+    def va2pa(self, va: int) -> Optional[int]:
         (pa, error_code) = self.helper.va2pa(va)
         if error_code:
-            if self.logger.HAL:
-                self.logger.log('[mem] Looks like VA (0x{:016X}) not mapped'.format(va))
-            return
-        if self.logger.HAL:
-            self.logger.log('[mem] VA (0x{:016X}) -> PA (0x{:016X})'.format(va, pa))
+            self.logger.log_hal(f'[mem] Looks like VA (0x{va:016X}) not mapped')
+            return None
+        self.logger.log_hal(f'[mem] VA (0x{va:016X}) -> PA (0x{pa:016X})')
         return pa
 
     # Map physical address to virtual
 
-    def map_io_space(self, pa, length, cache_type):
+    def map_io_space(self, pa: int, length: int, cache_type: int) -> int:
         va = self.helper.map_io_space(pa, length, cache_type)
-        if self.logger.HAL:
-            self.logger.log('[mem] Mapped: PA = 0x{:016X}, VA = 0x{:016X}'.format(pa, va))
+        self.logger.log_hal(f'[mem] Mapped: PA = 0x{pa:016X}, VA = 0x{va:016X}')
         return va
 
     # Free physical memory buffer
 
-    def free_physical_mem(self, pa):
+    def free_physical_mem(self, pa: int) -> bool:
         ret = self.helper.free_physical_mem(pa)
-        if self.logger.HAL:
-            self.logger.log('[mem] Deallocated : PA = 0x{:016X}'.format(pa))
+        self.logger.log_hal(f'[mem] Deallocated : PA = 0x{pa:016X}')
         return True if ret == 1 else False
 
-    def set_mem_bit(self, addr, bit):
+    def set_mem_bit(self, addr: int, bit: int) -> int:
         addr += bit >> 3
         byte = self.read_physical_mem_byte(addr)
         self.write_physical_mem_byte(addr, (byte | (0x1 << (bit & 0x7))))
