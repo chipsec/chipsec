@@ -25,6 +25,7 @@ usage:
     >>> cpuid(0)
 """
 
+from typing import Tuple
 from chipsec.hal import hal_base
 from chipsec.logger import logger
 
@@ -35,10 +36,8 @@ class CpuID(hal_base.HALBase):
         super(CpuID, self).__init__(cs)
         self.helper = cs.helper
 
-    def cpuid(self, eax, ecx):
-        if logger().HAL:
-            logger().log("[cpuid] in: EAX=0x{:08X}, ECX=0x{:08X}".format(eax, ecx))
+    def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
+        logger().log_hal(f'[cpuid] in: EAX=0x{eax:08X}, ECX=0x{ecx:08X}')
         (eax, ebx, ecx, edx) = self.helper.cpuid(eax, ecx)
-        if logger().HAL:
-            logger().log("[cpuid] out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(eax, ebx, ecx, edx))
+        logger().log_hal(f'[cpuid] out: EAX=0x{eax:08X}, EBX=0x{ebx:08X}, ECX=0x{ecx:08X}, EDX=0x{edx:08X}')
         return (eax, ebx, ecx, edx)
