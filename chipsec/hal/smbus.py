@@ -28,7 +28,7 @@
 """
 Access to SMBus Controller
 """
-
+from typing import List
 from chipsec.hal import iobar, hal_base
 from chipsec.exceptions import IOBARNotFoundError, RegisterNotFoundError
 
@@ -59,14 +59,14 @@ class SMBus(hal_base.HALBase):
         self.smb_reg_data0 = 'SMBUS_HST_D0'
         self.smb_reg_data1 = 'SMBUS_HST_D1'
 
-    def get_SMBus_Base_Address(self):
+    def get_SMBus_Base_Address(self) -> int:
         if self.iobar.is_IO_BAR_defined('SMBUS_BASE'):
-            (sba_base, sba_size) = self.iobar.get_IO_BAR_base_address('SMBUS_BASE')
+            (sba_base, _) = self.iobar.get_IO_BAR_base_address('SMBUS_BASE')
             return sba_base
         else:
             raise IOBARNotFoundError('IOBARAccessError: SMBUS_BASE')
 
-    def get_SMBus_HCFG(self):
+    def get_SMBus_HCFG(self) -> int:
         if self.cs.is_register_defined('SMBUS_HCFG'):
             reg_value = self.cs.read_register('SMBUS_HCFG')
             if self.logger.HAL:
@@ -75,29 +75,27 @@ class SMBus(hal_base.HALBase):
         else:
             raise RegisterNotFoundError('RegisterNotFound: SMBUS_HCFG')
 
-    def display_SMBus_info(self):
-        if self.logger.HAL:
-            self.logger.log("[smbus] SMBus Base Address: 0x{:04X}".format(self.get_SMBus_Base_Address()))
+    def display_SMBus_info(self) -> None:
+        self.logger.log_hal(f'[smbus] SMBus Base Address: 0x{self.get_SMBus_Base_Address():04X}')
         self.get_SMBus_HCFG()
 
-    def is_SMBus_enabled(self):
+    def is_SMBus_enabled(self) -> bool:
         return self.cs.is_device_enabled('SMBUS')
 
-    def is_SMBus_supported(self):
+    def is_SMBus_supported(self) -> bool:
         (did, vid) = self.cs.get_DeviceVendorID('SMBUS')
-        if self.logger.HAL:
-            self.logger.log("[smbus] SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid))
+        self.logger.log_hal(f'[smbus] SMBus Controller (DID,VID) = (0x{did:04X},0x{vid:04X})')
         if (0x8086 == vid):
             return True
         else:
-            self.logger.log_error("Unknown SMBus Controller (DID,VID) = (0x{:04X},0x{:04X})".format(did, vid))
+            self.logger.log_error(f'Unknown SMBus Controller (DID,VID) = (0x{did:04X},0x{vid:04X})')
             return False
 
-    def is_SMBus_host_controller_enabled(self):
+    def is_SMBus_host_controller_enabled(self) -> int:
         hcfg = self.get_SMBus_HCFG()
         return self.cs.get_register_field("SMBUS_HCFG", hcfg, "HST_EN")
 
-    def enable_SMBus_host_controller(self):
+    def enable_SMBus_host_controller(self) -> None:
         # Enable SMBus Host Controller Interface in HCFG
         reg_value = self.cs.read_register('SMBUS_HCFG')
         if 0 == (reg_value & 0x1):
@@ -109,7 +107,7 @@ class SMBus(hal_base.HALBase):
         if 0 == (cmd & 0x1):
             self.cs.write_register('SMBUS_CMD', (cmd | 0x1))
 
-    def reset_SMBus_controller(self):
+    def reset_SMBus_controller(self) -> bool:
         reg_value = self.cs.read_register('SMBUS_HCFG')
         self.cs.write_register('SMBUS_HCFG', reg_value | 0x08)
         for i in range(SMBUS_POLL_COUNT):
@@ -122,16 +120,18 @@ class SMBus(hal_base.HALBase):
     #
 
     # waits for SMBus to become ready
-    def _is_smbus_ready(self):
+    def _is_smbus_ready(self) -> bool:
+        busy = None
         for i in range(SMBUS_POLL_COUNT):
             #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
             busy = self.cs.read_register_field(self.smb_reg_status, 'BUSY')
             if 0 == busy:
                 return True
-        return (0 == busy)
+        return 0 == busy
 
     # waits for SMBus transaction to complete
-    def _wait_for_cycle(self):
+    def _wait_for_cycle(self) -> bool:
+        busy = None
         for i in range(SMBUS_POLL_COUNT):
             #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
             sts = self.cs.read_register(self.smb_reg_status)
@@ -161,9 +161,9 @@ class SMBus(hal_base.HALBase):
                         if self.logger.HAL:
                             self.logger.log_error("SMBus bus error")
                         return False
-        return (0 == busy)
+        return 0 == busy
 
-    def read_byte(self, target_address, offset):
+    def read_byte(self, target_address: int, offset: int) -> int:
         # clear status bits
         self.cs.write_register(self.smb_reg_status, 0xFF)
 
@@ -190,11 +190,10 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if self.logger.HAL:
-            self.logger.log("[smbus] read device {:X} off {:X} = {:X}".format(target_address, offset, value))
+        self.logger.log_hal(f'[smbus] read device {target_address:X} off {offset:X} = {value:X}')
         return value
 
-    def write_byte(self, target_address, offset, value):
+    def write_byte(self, target_address: int, offset: int, value: int) -> bool:
         # clear status bits
         self.cs.write_register(self.smb_reg_status, 0xFF)
 
@@ -221,24 +220,19 @@ class SMBus(hal_base.HALBase):
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
-        if self.logger.HAL:
-            self.logger.log("[smbus] write to device {:X} off {:X} = {:X}".format(target_address, offset, value))
+        self.logger.log_hal(f'[smbus] write to device {target_address:X} off {offset:X} = {value:X}')
         return True
 
-    def read_range(self, target_address, start_offset, size):
+    def read_range(self, target_address: int, start_offset: int, size: int) -> List[str]:
         buffer = [chr(0xFF)] * size
         for i in range(size):
             buffer[i] = chr(self.read_byte(target_address, start_offset + i))
-        if self.logger.HAL:
-            self.logger.log("[smbus] reading {:d} bytes from device 0x{:X} at offset {:X}".format(size, target_address, start_offset))
-            #print_buffer( buffer )
+        self.logger.log_hal(f'[smbus] reading {size:d} bytes from device 0x{target_address:X} at offset {start_offset:X}')
         return buffer
 
-    def write_range(self, target_address, start_offset, buffer):
+    def write_range(self, target_address: int, start_offset: int, buffer: List[str]) -> bool:
         size = len(buffer)
         for i in range(size):
             self.write_byte(target_address, start_offset + i, ord(buffer[i]))
-        if self.logger.HAL:
-            self.logger.log("[smbus] writing {:d} bytes to device 0x{:X} at offset {:X}".format(size, target_address, start_offset))
-            #print_buffer( buffer )
+        self.logger.log_hal(f'[smbus] writing {size:d} bytes to device 0x{target_address:X} at offset {start_offset:X}')
         return True
