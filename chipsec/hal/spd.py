@@ -34,6 +34,7 @@ http://en.wikipedia.org/wiki/Serial_presence_detect
 """
 
 import struct
+from typing import List
 from collections import namedtuple
 
 from chipsec.logger import logger, print_buffer
@@ -51,11 +52,11 @@ MAX_DIMM_SPD_COUNT = 8
 
 SPD_DIMMS = {}
 for i in range(MAX_DIMM_SPD_COUNT):
-    SPD_DIMMS[SPD_SMBUS_ADDRESS + i * 2] = 'DIMM{:d}'.format(i)
+    SPD_DIMMS[SPD_SMBUS_ADDRESS + i * 2] = f'DIMM{i:d}'
 
 SPD_DIMM_ADDRESSES = {}
 for i in range(MAX_DIMM_SPD_COUNT):
-    SPD_DIMM_ADDRESSES['DIMM{:d}'.format(i)] = SPD_SMBUS_ADDRESS + i * 2
+    SPD_DIMM_ADDRESSES[f'DIMM{i:d}'] = SPD_SMBUS_ADDRESS + i * 2
 
 ###############################################################################
 #
@@ -126,7 +127,7 @@ SPD_OFFSET_DDR4_SPD_BYTES = 0  # SPD Bytes Written, Device Size, CRC coverage/ra
 SPD_OFFSET_DDR4_SPD_REVISION = 1  # SPD Revision
 SPD_OFFSET_DDR4_MODULE_TYPE = 3  # Module Type
 SPD_OFFSET_DDR4_SDRAM_DENSITY_BANKS = 4  # SDRAM Density and Banks
-SPD_OFFSET_DDR4_SDRAM_ADDRESSING = 5  # SDRAM Addresing
+SPD_OFFSET_DDR4_SDRAM_ADDRESSING = 5  # SDRAM Addressing
 SPD_OFFSET_DDR4_SDRAM_PACKAGE_TYPE = 6  # SDRAM Package Type
 SPD_OFFSET_DDR4_OPTIONAL_FEATURES = 7  # SDRAM Optional Features
 SPD_OFFSET_DDR4_THERMAL_AND_REFRESH = 8  # SDRAM Thermal and Refresh Options
@@ -187,16 +188,16 @@ SPD_REVISION_1_2 = 0x12
 SPD_REVISION_1_3 = 0x13
 
 
-def SPD_REVISION(revision):
-    return ('{:d}.{:d}'.format(revision >> 4, revision & 0xF))
+def SPD_REVISION(revision: int) -> str:
+    return (f'{revision >> 4:d}.{revision & 0xF:d}')
 
 
-def dram_device_type_name(dram_type):
+def dram_device_type_name(dram_type: int) -> str:
     dt_name = DRAM_DEVICE_TYPE[dram_type] if dram_type in DRAM_DEVICE_TYPE else 'unknown'
     return dt_name
 
 
-def module_type_name(module_type):
+def module_type_name(module_type: int) -> str:
     mt_name = MODULE_TYPE[module_type] if module_type in MODULE_TYPE else 'unknown'
     return mt_name
 
@@ -207,16 +208,16 @@ SPD_DDR_FORMAT = '=4B'
 class SPD_DDR(namedtuple('SPD_DDR', 'SPDBytes TotalBytes DeviceType RowAddressCount')):
     __slots__ = ()
 
-    def __str__(self):
-        return """------------------------------------------------------------------
+    def __str__(self) -> str:
+        return f"""------------------------------------------------------------------
 SPD DDR
 ------------------------------------------------------------------
-[0] Number of SPD bytes written: 0x{:02X}
-[1] Total number of bytes      : 0x{:02X}
-[2] DRAM Memory Type           : 0x{:02X} ({})
-[3] Number of Row Addresses    : 0x{:02X}
+[0] Number of SPD bytes written: 0x{self.SPDBytes:02X}
+[1] Total number of bytes      : 0x{self.TotalBytes:02X}
+[2] DRAM Memory Type           : 0x{self.DeviceType:02X} ({dram_device_type_name(self.DeviceType)})
+[3] Number of Row Addresses    : 0x{self.RowAddressCount:02X}
 ------------------------------------------------------------------
-""".format(self.SPDBytes, self.TotalBytes, self.DeviceType, dram_device_type_name(self.DeviceType), self.RowAddressCount)
+"""
 
 
 SPD_DDR2_FORMAT = '=4B'
@@ -225,16 +226,16 @@ SPD_DDR2_FORMAT = '=4B'
 class SPD_DDR2(namedtuple('SPD_DDR2', 'SPDBytes TotalBytes DeviceType RowAddressCount')):
     __slots__ = ()
 
-    def __str__(self):
-        return """------------------------------------------------------------------
+    def __str__(self) -> str:
+        return f"""------------------------------------------------------------------
 SPD DDR2
 ------------------------------------------------------------------
-[0] Number of SPD bytes written: 0x{:02X}
-[1] Total number of bytes      : 0x{:02X}
-[2] DRAM Memory Type           : 0x{:02X} ({})
-[3] Number of Row Addresses    : 0x{:02X}
+[0] Number of SPD bytes written: 0x{self.SPDBytes:02X}
+[1] Total number of bytes      : 0x{self.TotalBytes:02X}
+[2] DRAM Memory Type           : 0x{self.DeviceType:02X} ({dram_device_type_name(self.DeviceType)})
+[3] Number of Row Addresses    : 0x{self.RowAddressCount:02X}
 ------------------------------------------------------------------
-""".format(self.SPDBytes, self.TotalBytes, self.DeviceType, dram_device_type_name(self.DeviceType), self.RowAddressCount)
+"""
 
 
 SPD_DDR3_FORMAT = '=16B'
@@ -243,61 +244,59 @@ SPD_DDR3_FORMAT = '=16B'
 class SPD_DDR3(namedtuple('SPD_DDR3', 'SPDBytes Revision DeviceType ModuleType ChipSize Addressing Voltages ModuleOrg BusWidthECC FTB MTBDivident MTBDivisor tCKMin RsvdD CASLo CASHi')):
     __slots__ = ()
 
-    def __str__(self):
-        return """------------------------------------------------------------------
+    def __str__(self) -> str:
+        return f"""------------------------------------------------------------------
 SPD DDR3
 ------------------------------------------------------------------
-[0x00] SPD Bytes Written, Device Size, CRC: 0x{:02X}
-[0x01] SPD Revision                       : 0x{:02X} ({})
-[0x02] DRAM Memory Type                   : 0x{:02X} ({})
-[0x03] Module Type                        : 0x{:02X} ({})
-[0x04] SDRAM Density and Banks            : 0x{:02X}
-[0x05] SDRAM Addressing (Row/Column Bits) : 0x{:02X}
-[0x06] Module Nominal Voltage, VDD        : 0x{:02X}
-[0x07] Module Organization                : 0x{:02X}
-[0x08] Module Memory Bus Width, ECC       : 0x{:02X}
-[0x09] FTB Divident/Divisor               : 0x{:02X}
-[0x0A] MTB Divident                       : 0x{:02X}
-[0x0B] MTB Divisor                        : 0x{:02X}
-[0x0C] SDRAM Minimum Cycle Time (tCKmin)  : 0x{:02X}
-[0x0D] Reserved                           : 0x{:02X}
-[0x0E] CAS Latencies Supported (LSB)      : 0x{:02X}
-[0x0F] CAS Latencies Supported (MSB)      : 0x{:02X}
+[0x00] SPD Bytes Written, Device Size, CRC: 0x{self.SPDBytes:02X}
+[0x01] SPD Revision                       : 0x{self.Revision:02X} ({SPD_REVISION(self.Revision)})
+[0x02] DRAM Memory Type                   : 0x{self.DeviceType:02X} ({dram_device_type_name(self.DeviceType)})
+[0x03] Module Type                        : 0x{self.ModuleType:02X} ({module_type_name(self.ModuleType)})
+[0x04] SDRAM Density and Banks            : 0x{self.ChipSize:02X}
+[0x05] SDRAM Addressing (Row/Column Bits) : 0x{self.Addressing:02X}
+[0x06] Module Nominal Voltage, VDD        : 0x{self.Voltages:02X}
+[0x07] Module Organization                : 0x{self.ModuleOrg:02X}
+[0x08] Module Memory Bus Width, ECC       : 0x{self.BusWidthECC:02X}
+[0x09] FTB Divident/Divisor               : 0x{self.FTB:02X}
+[0x0A] MTB Divident                       : 0x{self.MTBDivident:02X}
+[0x0B] MTB Divisor                        : 0x{self.MTBDivisor:02X}
+[0x0C] SDRAM Minimum Cycle Time (tCKmin)  : 0x{self.tCKMin:02X}
+[0x0D] Reserved                           : 0x{self.RsvdD:02X}
+[0x0E] CAS Latencies Supported (LSB)      : 0x{self.CASLo:02X}
+[0x0F] CAS Latencies Supported (MSB)      : 0x{self.CASHi:02X}
 ------------------------------------------------------------------
-""".format(self.SPDBytes, self.Revision, SPD_REVISION(self.Revision), self.DeviceType, dram_device_type_name(self.DeviceType), self.ModuleType, module_type_name(self.ModuleType),
-            self.ChipSize, self.Addressing, self.Voltages, self.ModuleOrg, self.BusWidthECC, self.FTB, self.MTBDivident, self.MTBDivisor, self.tCKMin, self.RsvdD, self.CASLo, self.CASHi)
+"""
 
 
 SPD_DDR4_FORMAT = '=16B'
 
 
-class SPD_DDR4(namedtuple('SPD_DDR4', 'SPDBytes Revision DeviceType ModuleType Density Addressing PackageType OptFeatures ThernalRefresh OptFeatures1 ReservedA VDD ModuleOrg BusWidthECC ThermSensor ModuleTypeExt')):
+class SPD_DDR4(namedtuple('SPD_DDR4', 'SPDBytes Revision DeviceType ModuleType Density Addressing PackageType OptFeatures ThermalRefresh OptFeatures1 ReservedA VDD ModuleOrg BusWidthECC ThermSensor ModuleTypeExt')):
     __slots__ = ()
 
-    def __str__(self):
-        return """------------------------------------------------------------------
+    def __str__(self) -> str:
+        return f"""------------------------------------------------------------------
 SPD DDR4
 ------------------------------------------------------------------
 Base Configuration and DRAM Parameters
-[0x00] SPD Bytes Written, Device Size, CRC: 0x{:02X}
-[0x01] SPD Revision                       : 0x{:02X} ({})
-[0x02] DRAM Memory Type                   : 0x{:02X} ({})
-[0x03] Module Type                        : 0x{:02X} ({})
-[0x04] SDRAM Density and Banks            : 0x{:02X}
-[0x05] SDRAM Addresing (Row/Column Bits)  : 0x{:02X}
-[0x06] SDRAM Package Type                 : 0x{:02X}
-[0x07] SDRAM Optional Features            : 0x{:02X}
-[0x08] SDRAM Thermal and Refresh Options  : 0x{:02X}
-[0x09] Other Optional Features            : 0x{:02X}
-[0x0A] Reserved (== 0x00)                 : 0x{:02X}
-[0x0B] Module Nominal Voltage, VDD        : 0x{:02X}
-[0x0C] Module Organization                : 0x{:02X}
-[0x0D] Module Memory Bus Width            : 0x{:02X}
-[0x0E] Module Thermal Sensor              : 0x{:02X}
-[0x0F] Extended Module Type               : 0x{:02X}
+[0x00] SPD Bytes Written, Device Size, CRC: 0x{self.SPDBytes:02X}
+[0x01] SPD Revision                       : 0x{self.Revision:02X} ({SPD_REVISION(self.Revision)})
+[0x02] DRAM Memory Type                   : 0x{self.DeviceType:02X} ({dram_device_type_name(self.DeviceType)})
+[0x03] Module Type                        : 0x{self.ModuleType:02X} ({module_type_name(self.ModuleType)})
+[0x04] SDRAM Density and Banks            : 0x{self.Density:02X}
+[0x05] SDRAM Addressing (Row/Column Bits) : 0x{self.Addressing:02X}
+[0x06] SDRAM Package Type                 : 0x{self.PackageType:02X}
+[0x07] SDRAM Optional Features            : 0x{self.OptFeatures:02X}
+[0x08] SDRAM Thermal and Refresh Options  : 0x{self.ThermalRefresh:02X}
+[0x09] Other Optional Features            : 0x{self.OptFeatures1:02X}
+[0x0A] Reserved (== 0x00)                 : 0x{self.ReservedA:02X}
+[0x0B] Module Nominal Voltage, VDD        : 0x{self.VDD:02X}
+[0x0C] Module Organization                : 0x{self.ModuleOrg:02X}
+[0x0D] Module Memory Bus Width            : 0x{self.BusWidthECC:02X}
+[0x0E] Module Thermal Sensor              : 0x{self.ThermSensor:02X}
+[0x0F] Extended Module Type               : 0x{self.ModuleTypeExt:02X}
 ------------------------------------------------------------------
-""".format(self.SPDBytes, self.Revision, SPD_REVISION(self.Revision), self.DeviceType, dram_device_type_name(self.DeviceType), self.ModuleType, module_type_name(self.ModuleType),
-            self.Density, self.Addressing, self.PackageType, self.OptFeatures, self.ThernalRefresh, self.OptFeatures1, self.ReservedA, self.VDD, self.ModuleOrg, self.BusWidthECC, self.ThermSensor, self.ModuleTypeExt)
+"""
 
 
 ###############################################################################
@@ -310,43 +309,41 @@ class SPD:
     def __init__(self, smbus):
         self.smbus = smbus
 
-    def read_byte(self, offset, device=SPD_SMBUS_ADDRESS):
+    def read_byte(self, offset: int, device: int = SPD_SMBUS_ADDRESS) -> int:
         return self.smbus.read_byte(device, offset)
 
-    def write_byte(self, offset, value, device=SPD_SMBUS_ADDRESS):
+    def write_byte(self, offset: int, value: int, device: int = SPD_SMBUS_ADDRESS) -> bool:
         return self.smbus.write_byte(device, offset, value)
 
-    def read_range(self, start_offset, size, device=SPD_SMBUS_ADDRESS):
+    def read_range(self, start_offset: int, size: int, device: int = SPD_SMBUS_ADDRESS) -> List[str]:
         buffer = [chr(0xFF)] * size
         for i in range(size):
             buffer[i] = chr(self.read_byte(start_offset + i, device))
         return buffer
 
-    def write_range(self, start_offset, buffer, device=SPD_SMBUS_ADDRESS):
+    def write_range(self, start_offset: int, buffer: List[str], device: int = SPD_SMBUS_ADDRESS) -> bool:
         size = len(buffer)
         for i in range(size):
             self.write_byte(start_offset + i, ord(buffer[i]), device)
         return True
 
-    def dump_spd_rom(self, device=SPD_SMBUS_ADDRESS):
+    def dump_spd_rom(self, device: int = SPD_SMBUS_ADDRESS) -> List[str]:
         return self.read_range(0x0, 0x100, device)
 
     #
     # Decoding certain bytes of DIMM SPD: may be dependent on the DRAM type
     #
-    def getDRAMDeviceType(self, device=SPD_SMBUS_ADDRESS):
+    def getDRAMDeviceType(self, device: int = SPD_SMBUS_ADDRESS) -> int:
         dram_type = self.read_byte(SPD_OFFSET_DRAM_DEVICE_TYPE, device)
-        if logger().HAL:
-            logger().log("[spd][0x{:02X}] DRAM Device Type (byte 2): 0x{:01X}".format(device, dram_type))
+        logger().log_hal(f'[spd][0x{device:02X}] DRAM Device Type (byte 2): 0x{dram_type:01X}')
         return dram_type
 
-    def getModuleType(self, device=SPD_SMBUS_ADDRESS):
+    def getModuleType(self, device: int = SPD_SMBUS_ADDRESS) -> int:
         module_type = self.read_byte(SPD_OFFSET_DDR3_MODULE_TYPE, device)
-        if logger().HAL:
-            logger().log("[spd][0x{:02X}] Module Type (byte 3): 0x{:01X}".format(device, module_type))
+        logger().log_hal(f'[spd][0x{device:02X}] Module Type (byte 3): 0x{module_type:01X}')
         return module_type
 
-    def isECC(self, device=SPD_SMBUS_ADDRESS):
+    def isECC(self, device: int = SPD_SMBUS_ADDRESS) -> bool:
         device_type = self.getDRAMDeviceType(device)
         ecc_supported = False
         ecc_off = 0
@@ -364,39 +361,39 @@ class SPD:
             ecc = self.read_byte(ecc_off, device)
             ecc_supported = (0x2 == ecc)
             ecc_width = self.read_byte(SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, device)
-            if logger().HAL:
-                logger().log("[spd][0x{:02X}] DDR/DDR2 ECC width (byte {:d}): 0x{:02X}".format(device, SPD_OFFSET_DDR_ECC_SDRAM_WIDTH, ecc_width))
+            logger().log_hal(f'[spd][0x{device:02X}] DDR/DDR2 ECC width (byte {SPD_OFFSET_DDR_ECC_SDRAM_WIDTH:d}): 0x{ecc_width:02X}')
 
         if logger().HAL:
             if ecc is None:
-                logger().log("[spd][0x{:02X}] Unable to determine ECC support".format(device))
+                logger().log(f'[spd][0x{device:02X}] Unable to determine ECC support')
             else:
-                logger().log("[spd][0x{:02X}] ECC is {}supported by the DIMM (byte {:d} = 0x{:02X})".format(device, '' if ecc_supported else 'not ', ecc_off, ecc))
+                not_str = '' if ecc_supported else 'not '
+                logger().log(f'[spd][0x{device:02X}] ECC is {not_str}supported by the DIMM (byte {ecc_off:d} = 0x{ecc:02X})')
         return ecc_supported
 
-    def detect(self):
+    def detect(self) -> List[int]:
         _dimms = []
         for d in SPD_DIMMS:
             if self.isSPDPresent(d):
                 _dimms.append(d)
         if logger().HAL:
-            logger().log("Detected the following SPD devices:")
+            logger().log('Detected the following SPD devices:')
             for _dimm in _dimms:
-                logger().log("{}: 0x{:02X}".format(SPD_DIMMS[_dimm], _dimm))
+                logger().log(f"{SPD_DIMMS[_dimm]}: 0x{_dimm:02X}")
         return _dimms
 
-    def isSPDPresent(self, device=SPD_SMBUS_ADDRESS):
+    def isSPDPresent(self, device: int = SPD_SMBUS_ADDRESS) -> bool:
         device_type = self.getDRAMDeviceType(device)
         is_spd_present = (device_type != 0xFF)
-        if logger().HAL:
-            logger().log("[spd][0x{:02X}] Detecting SPD.. {}found (DRAM memory type = 0x{:X})".format(device, '' if is_spd_present else 'not ', device_type))
+        not_str = '' if is_spd_present else 'not '
+        logger().log_hal(f'[spd][0x{device:02X}] Detecting SPD.. {not_str}found (DRAM memory type = 0x{device_type:X})')
         return is_spd_present
 
-    def decode(self, device=SPD_SMBUS_ADDRESS):
+    def decode(self, device: int = SPD_SMBUS_ADDRESS) -> None:
         spd = None
         device_type = self.getDRAMDeviceType(device)
         spd_rom = self.dump_spd_rom(device)
-        logger().log("[spd][0x{:02X}] Serial Presence Detect (SPD) EEPROM contents:".format(device))
+        logger().log(f'[spd][0x{device:02X}] Serial Presence Detect (SPD) EEPROM contents:')
         print_buffer(spd_rom)
         spd_buffer = ''.join(spd_rom).encode('utf_8')
 
@@ -409,7 +406,7 @@ class SPD:
         elif DRAM_DEVICE_TYPE_DDR4 == device_type:
             spd = SPD_DDR4(*struct.unpack_from(SPD_DDR4_FORMAT, spd_buffer))
         else:
-            logger().log_warning("[spd] Unsupported SPD format")
+            logger().log_warning('[spd] Unsupported SPD format')
 
         if spd is not None:
-            logger().log(spd)
+            logger().log(str(spd))
