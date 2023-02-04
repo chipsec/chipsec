@@ -303,8 +303,6 @@ class ChipsecResults:
                         logger().log_information(mod)
                     elif result == 'failed':
                         logger().log_failed(mod)
-                    elif result == 'skipped':
-                        logger().log_skipped(mod)
-                    elif result == 'not applicable':
+                    elif result in ['not applicable', 'skipped']:
                         logger().log_not_applicable(mod)
         logger().log('[CHIPSEC] *****************************************************************')
