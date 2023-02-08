@@ -116,7 +116,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/743844
 
         <!-- Processor Graphics -->
         <register name="GTTMMADR" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address">
-            <field name="BA"      bit="24" size="8" desc="Memory Base Address"/>
+            <field name="BA"      bit="24" size="40" desc="Memory Base Address"/>
         </register>
 
         <!-- Dynamic Tuning Technology -->
