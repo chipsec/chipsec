@@ -35,25 +35,21 @@ usage:
     >>> write_file(filename, buffer)
 """
 
-import struct
 import sys
 import os
 
+from typing import Any
 from chipsec.logger import logger
 
 TOOLS_DIR = 'chipsec_tools'
 
 
-def read_file(filename, size=0):
-    # with open( filename, 'rb' ) as f:
-    #  _file = f.read()
-    # f.closed
-
+def read_file(filename: str, size: int = 0) -> bytes:
     try:
         f = open(filename, 'rb')
     except:
-        logger().log_error("Unable to open file '{:.256}' for read access".format(filename))
-        return 0
+        logger().log_error(f"Unable to open file '{filename:.256}' for read access")
+        return b''
 
     if size:
         _file = f.read(size)
@@ -61,41 +57,34 @@ def read_file(filename, size=0):
         _file = f.read()
     f.close()
 
-    if logger().DEBUG:
-        logger().log("[file] read {:d} bytes from '{:256}'".format(len(_file), filename))
+    logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:256}'")
     return _file
 
 
-def write_file(filename, buffer, append=False):
-    # with open( filename, 'wb' ) as f:
-    #  f.write( buffer )
-    # f.closed
+def write_file(filename: str, buffer: Any, append: bool = False) -> bool:
     perm = 'a' if append else 'w'
     if isinstance(buffer, bytes) or isinstance(buffer, bytearray):
         perm += 'b'
     try:
         f = open(filename, perm)
     except:
-        logger().log_error("Unable to open file '{:.256}' for write access".format(filename))
-        return 0
+        logger().log_error(f"Unable to open file '{filename:.256}' for write access")
+        return False
     f.write(buffer)
     f.close()
 
-    if logger().DEBUG:
-        logger().log("[file] wrote {:d} bytes to '{:.256}'".format(len(buffer), filename))
+    logger().log_debug(f"[file] Wrote {len(buffer):d} bytes to '{filename:.256}'")
     return True
 
 
 # determine if CHIPSEC is loaded as chipsec.exe or in python
-def main_is_frozen():
+def main_is_frozen() -> bool:
     return (hasattr(sys, "frozen") or  # new py2exe
             hasattr(sys, "importers"))  # old py2exe
 
 
-def get_main_dir():
+def get_main_dir() -> str:
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
     if main_is_frozen():
         path = os.path.dirname(sys.executable)
-    # elif len( os.path.dirname(sys.argv[0]) ) > 0:
-    #    path = os.path.dirname(sys.argv[0])
     return path
