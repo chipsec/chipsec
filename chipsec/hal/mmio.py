@@ -43,7 +43,7 @@ usage:
     >>> read_mmcfg_reg(cs, 0, 0, 0, 0x10, 4)
     >>> read_mmcfg_reg(cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF)
 """
-
+from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.exceptions import CSReadError
 
@@ -73,7 +73,7 @@ class MMIO(hal_base.HALBase):
     # To add your own MMIO bar:
     #   1. Add new MMIO BAR id (any)
     #   2. Write a function get_yourBAR_base_address() with no args that
-    #      returns base addres of new bar
+    #      returns base address of new bar
     #   3. Add a pointer to this function to MMIO_BAR_base map
     #   4. Don't touch read/write_MMIO_reg functions ;)
     #
@@ -83,60 +83,52 @@ class MMIO(hal_base.HALBase):
     # Read MMIO register as an offset off of MMIO range base address
     #
 
-    def read_MMIO_reg(self, bar_base, offset, size=4, bar_size=None):
+    def read_MMIO_reg(self, bar_base: int, offset: int, size: int = 4, bar_size: Optional[int] = None) -> int:
         if size > 8:
             if self.logger.HAL:
                 self.logger.log_warning("MMIO read cannot exceed 8")
         reg_value = self.cs.helper.read_mmio_reg(bar_base, size, offset, bar_size)
-        if self.logger.HAL:
-            self.logger.log('[mmio] 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, reg_value))
+        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
         return reg_value
 
-    def read_MMIO_reg_byte(self, bar_base, offset):
+    def read_MMIO_reg_byte(self, bar_base: int, offset: int) -> int:
         reg_value = self.cs.helper.read_mmio_reg(bar_base, 1, offset)
-        if self.logger.HAL:
-            self.logger.log('[mmio] 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, reg_value))
+        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
         return reg_value
 
-    def read_MMIO_reg_word(self, bar_base, offset):
+    def read_MMIO_reg_word(self, bar_base: int, offset: int) -> int:
         reg_value = self.cs.helper.read_mmio_reg(bar_base, 2, offset)
-        if self.logger.HAL:
-            self.logger.log('[mmio] 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, reg_value))
+        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
         return reg_value
 
-    def read_MMIO_reg_dword(self, bar_base, offset):
+    def read_MMIO_reg_dword(self, bar_base: int, offset: int) -> int:
         reg_value = self.cs.helper.read_mmio_reg(bar_base, 4, offset)
-        if self.logger.HAL:
-            self.logger.log('[mmio] 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, reg_value))
+        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
         return reg_value
 
     #
     # Write MMIO register as an offset off of MMIO range base address
     #
-    def write_MMIO_reg(self, bar_base, offset, value, size=4, bar_size=None):
-        if self.logger.HAL:
-            self.logger.log('[mmio] write 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, value))
+    def write_MMIO_reg(self, bar_base: int, offset: int, value: int, size: int = 4, bar_size: Optional[int] = None) -> Optional[int]:
+        self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
         self.cs.helper.write_mmio_reg(bar_base, size, value, offset, bar_size)
 
-    def write_MMIO_reg_byte(self, bar_base, offset, value):
-        if self.logger.HAL:
-            self.logger.log('[mmio] write 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, value))
+    def write_MMIO_reg_byte(self, bar_base: int, offset: int, value: int) -> Optional[int]:
+        self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
         self.cs.helper.write_mmio_reg(bar_base, 1, value, offset)
 
-    def write_MMIO_reg_word(self, bar_base, offset, value):
-        if self.logger.HAL:
-            self.logger.log('[mmio] write 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, value))
+    def write_MMIO_reg_word(self, bar_base: int, offset: int, value: int) -> Optional[int]:
+        self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
         self.cs.helper.write_mmio_reg(bar_base, 2, value, offset)
 
-    def write_MMIO_reg_dword(self, bar_base, offset, value):
-        if self.logger.HAL:
-            self.logger.log('[mmio] write 0x{:08X} + 0x{:08X} = 0x{:08X}'.format(bar_base, offset, value))
+    def write_MMIO_reg_dword(self, bar_base: int, offset: int, value: int) -> Optional[int]:
+        self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
         self.cs.helper.write_mmio_reg(bar_base, 4, value, offset)
 
     #
     # Read MMIO registers as offsets off of MMIO range base address
     #
-    def read_MMIO(self, bar_base, size):
+    def read_MMIO(self, bar_base: int, size: int) -> List[int]:
         regs = []
         size -= size % 4
         for offset in range(0, size, 4):
@@ -146,11 +138,11 @@ class MMIO(hal_base.HALBase):
     #
     # Dump MMIO range
     #
-    def dump_MMIO(self, bar_base, size):
-        self.logger.log("[mmio] MMIO register range [0x{:016X}:0x{:016X}+{:08X}]:".format(bar_base, bar_base, size))
+    def dump_MMIO(self, bar_base: int, size: int) -> None:
+        self.logger.log(f'[mmio] MMIO register range [0x{bar_base:016X}:0x{bar_base:016X}+{size:08X}]:')
         size -= size % 4
         for offset in range(0, size, 4):
-            self.logger.log('+{:08X}: {:08X}'.format(offset, self.read_MMIO_reg(bar_base, offset)))
+            self.logger.log(f'+{offset:08X}: {self.read_MMIO_reg(bar_base, offset):08X}')
 
     ###############################################################################
     # Access to MMIO BAR defined by XML configuration files (chipsec/cfg/*.xml)
@@ -161,7 +153,7 @@ class MMIO(hal_base.HALBase):
     # Use this function to fall-back to hardcoded config in case XML config is not available
     #
 
-    def is_MMIO_BAR_defined(self, bar_name):
+    def is_MMIO_BAR_defined(self, bar_name: str) -> bool:
         is_bar_defined = False
         try:
             _bar = self.cs.Cfg.MMIO_BARS[bar_name]
@@ -176,32 +168,33 @@ class MMIO(hal_base.HALBase):
 
         if not is_bar_defined:
             if self.logger.HAL:
-                self.logger.log_warning("'{}' MMIO BAR definition not found/correct in XML config".format(bar_name))
+                self.logger.log_warning(f"'{bar_name}' MMIO BAR definition not found/correct in XML config")
         return is_bar_defined
 
     #
     # Enable caching of BAR addresses
     #
-    def enable_cache_address_resolution(self, enable):
+    def enable_cache_address_resolution(self, enable: bool) -> None:
         if enable:
             self.cache_bar_addresses_resolution = True
         else:
             self.cache_bar_addresses_resolution = False
             self.flush_bar_address_cache()
 
-    def flush_bar_address_cache(self):
+    def flush_bar_address_cache(self) -> None:
         self.cached_bar_addresses = {}
 
     #
     # Get base address of MMIO range by MMIO BAR name
     #
-    def get_MMIO_BAR_base_address(self, bar_name, bus=None):
+    def get_MMIO_BAR_base_address(self, bar_name: str, bus: Optional[int] = None) -> Tuple[int, int]:
         if self.cache_bar_addresses_resolution and (bar_name, bus) in self.cached_bar_addresses:
             return self.cached_bar_addresses[(bar_name, bus)]
         bar = self.cs.Cfg.MMIO_BARS[bar_name]
         if bar is None or bar == {}:
             return -1, -1
         _bus = bus
+        limit = 0
 
         if 'register' in bar:
             preserve = True
@@ -216,21 +209,21 @@ class MMIO(hal_base.HALBase):
                 try:
                     base = self.cs.read_register_field(bar_reg, base_field, preserve, bus=_bus)
                 except CSReadError:
-                    if self.logger.HAL:
-                        self.logger.log('[mmio] Unable to determine MMIO Base.  Using Base = 0x0')
                     base = 0
+                    self.logger.log_hal(f'[mmio] Unable to determine MMIO Base.  Using Base = 0x{base:X}')
                 try:
                     reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve)
                 except CSReadError:
-                    if self.logger.HAL:
-                        self.logger.log('[mmio] Unable to determine MMIO Mask.  Using Mask = 0xFFFF')
                     reg_mask = 0xFFFF
+                    self.logger.log_hal(f'[mmio] Unable to determine MMIO Mask.  Using Mask = 0x{reg_mask:X}')
             else:
                 base = self.cs.read_register(bar_reg, bus=_bus)
                 reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
             if 'limit_field' in bar:
                 limit_field = bar['limit_field']
                 limit = self.cs.read_register_field(bar_reg, limit_field, bus=_bus)
+            else:
+                self.logger.log_hal(f"[mmio] 'limit_field' field not defined for bar, using limit = 0x{limit:X}")
         else:
             # this method is not preferred (less flexible)
             if _bus is not None:
@@ -251,8 +244,7 @@ class MMIO(hal_base.HALBase):
 
         if 'fixed_address' in bar and (base == reg_mask or base == 0):
             base = int(bar['fixed_address'], 16)
-            if self.logger.HAL:
-                self.logger.log('[mmio] Using fixed address for {}: 0x{:016X}'.format(bar_name, base))
+            self.logger.log_hal(f'[mmio] Using fixed address for {bar_name}: 0x{base:016X}')
         if 'mask' in bar:
             base &= int(bar['mask'], 16)
         if 'offset' in bar:
@@ -271,11 +263,9 @@ class MMIO(hal_base.HALBase):
         else:
             size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
-        if self.logger.HAL:
-            self.logger.log('[mmio] {}: 0x{:016X} (size = 0x{:X})'.format(bar_name, base, size))
+        self.logger.log_hal(f'[mmio] {bar_name}: 0x{base:016X} (size = 0x{size:X})')
         if base == 0:
-            if self.logger.HAL:
-                self.logger.log('[mmio] Base address was determined to be 0.')
+            self.logger.log_hal('[mmio] Base address was determined to be 0.')
             raise CSReadError('[mmio] Base address was determined to be 0')
 
         if self.cache_bar_addresses_resolution:
@@ -285,7 +275,7 @@ class MMIO(hal_base.HALBase):
     #
     # Check if MMIO range is enabled by MMIO BAR name
     #
-    def is_MMIO_BAR_enabled(self, bar_name, bus=None):
+    def is_MMIO_BAR_enabled(self, bar_name: str, bus: Optional[int] = None) -> bool:
         if not self.is_MMIO_BAR_defined(bar_name):
             return False
         bar = self.cs.Cfg.MMIO_BARS[bar_name]
@@ -323,7 +313,7 @@ class MMIO(hal_base.HALBase):
     #
     # Check if MMIO range is programmed by MMIO BAR name
     #
-    def is_MMIO_BAR_programmed(self, bar_name):
+    def is_MMIO_BAR_programmed(self, bar_name: str) -> bool:
         bar = self.cs.Cfg.MMIO_BARS[bar_name]
 
         if 'register' in bar:
@@ -353,7 +343,7 @@ class MMIO(hal_base.HALBase):
     #
     # Read MMIO register from MMIO range defined by MMIO BAR name
     #
-    def read_MMIO_BAR_reg(self, bar_name, offset, size=4, bus=None):
+    def read_MMIO_BAR_reg(self, bar_name: str, offset: int, size: int = 4, bus: Optional[int] = None) -> int:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
         # @TODO: check offset exceeds BAR size
         return self.read_MMIO_reg(bar_base, offset, size, bar_size)
@@ -361,23 +351,23 @@ class MMIO(hal_base.HALBase):
     #
     # Write MMIO register from MMIO range defined by MMIO BAR name
     #
-    def write_MMIO_BAR_reg(self, bar_name, offset, value, size=4, bus=None):
+    def write_MMIO_BAR_reg(self, bar_name: str, offset: int, value: int, size: int = 4, bus: Optional[int] = None) -> Optional[int]:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
         # @TODO: check offset exceeds BAR size
         return self.write_MMIO_reg(bar_base, offset, value, size, bar_size)
 
-    def read_MMIO_BAR(self, bar_name, bus=None):
+    def read_MMIO_BAR(self, bar_name: str, bus: Optional[int] = None) -> List[int]:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
         return self.read_MMIO(bar_base, bar_size)
 
     #
     # Dump MMIO range by MMIO BAR name
     #
-    def dump_MMIO_BAR(self, bar_name):
+    def dump_MMIO_BAR(self, bar_name: str) -> None:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name)
         self.dump_MMIO(bar_base, bar_size)
 
-    def list_MMIO_BARs(self):
+    def list_MMIO_BARs(self) -> None:
         self.logger.log('')
         self.logger.log('--------------------------------------------------------------------------------------')
         self.logger.log(' MMIO Range   | BUS | BAR Register   | Base             | Size     | En? | Description')
@@ -400,25 +390,27 @@ class MMIO(hal_base.HALBase):
                 try:
                     (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name, bus)
                 except:
-                    if self.logger.HAL:
-                        self.logger.log("Unable to find MMIO BAR {}".format(_bar))
+                    self.logger.log_hal(f'Unable to find MMIO BAR {_bar}')
                     continue
                 _en = self.is_MMIO_BAR_enabled(_bar_name)
 
                 if 'register' in _bar:
                     _s = _bar['register']
                     if 'offset' in _bar:
-                        _s += (' + 0x{:X}'.format(int(_bar['offset'], 16)))
+                        _s += (f' + 0x{int(_bar["offset"], 16):X}')
                 else:
-                    _s = '{:02X}:{:02X}.{:01X} + {}'.format(int(_bar['bus'], 16), int(_bar['dev'], 16), int(_bar['fun'], 16), _bar['reg'])
+                    bus_value = int(_bar["bus"], 16)
+                    dev_value = int(_bar["dev"], 16)
+                    fun_value = int(_bar["fun"], 16)
+                    _s = f'{bus_value:02X}:{dev_value:02X}.{fun_value:01X} + {_bar["reg"]}'
 
-                self.logger.log(' {:12} |  {:02X} | {:14} | {:016X} | {:08X} | {:d}   | {}'.format(_bar_name, bus or 0, _s, _base, _size, _en, _bar['desc']))
+                self.logger.log(f' {_bar_name:12} |  {bus or 0:02X} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
 
     ##################################################################################
     # Access to Memory Mapped PCIe Configuration Space
     ##################################################################################
 
-    def get_MMCFG_base_address(self):
+    def get_MMCFG_base_address(self) -> Tuple[int, int]:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address('MMCFG')
         if self.cs.register_has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
             len = self.cs.read_register_field("PCI0.0.0_PCIEXBAR", "LENGTH")
@@ -441,25 +433,22 @@ class MMIO(hal_base.HALBase):
             if num_buses <= 8:
                 bar_size = 2**20 * 2**num_buses
             else:
-                if self.logger.HAL:
-                    self.logger.log('[mmcfg] Unexpected MmioCfgBaseAddr bus range: 0x{:01X}'.format(num_buses))
-        if self.logger.HAL:
-            self.logger.log('[mmcfg] Memory Mapped CFG Base: 0x{:016X}'.format(bar_base))
+                self.logger.log_hal(f'[mmcfg] Unexpected MmioCfgBaseAddr bus range: 0x{num_buses:01X}')
+        self.logger.log_hal(f'[mmcfg] Memory Mapped CFG Base: 0x{bar_base:016X}')
         return bar_base, bar_size
 
-    def read_mmcfg_reg(self, bus, dev, fun, off, size):
+    def read_mmcfg_reg(self, bus: int, dev: int, fun: int, off: int, size: int) -> int:
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address()
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
         value = self.read_MMIO_reg(pciexbar, pciexbar_off, size, pciexbar_sz)
-        if self.logger.HAL:
-            self.logger.log("[mmcfg] reading {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(bus, dev, fun, off, pciexbar_off, value))
+        self.logger.log_hal(f'[mmcfg] reading {bus:02d}:{dev:02d}.{fun:d} + 0x{off:02X} (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}')
         if 1 == size:
             return (value & 0xFF)
         elif 2 == size:
             return (value & 0xFFFF)
         return value
 
-    def write_mmcfg_reg(self, bus, dev, fun, off, size, value):
+    def write_mmcfg_reg(self, bus: int, dev: int, fun: int, off: int, size: int, value: int) -> bool:
         pciexbar, pciexbar_sz = self.get_MMCFG_base_address()
         pciexbar_off = (bus * 32 * 8 + dev * 8 + fun) * 0x1000 + off
         if size == 1:
@@ -469,6 +458,5 @@ class MMIO(hal_base.HALBase):
         else:
             mask = 0xFFFFFFFF
         self.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size, pciexbar_sz)
-        if self.logger.HAL:
-            self.logger.log("[mmcfg] writing {:02d}:{:02d}.{:d} + 0x{:02X} (MMCFG + 0x{:08X}): 0x{:08X}".format(bus, dev, fun, off, pciexbar_off, value))
+        self.logger.log_hal(f'[mmcfg] writing {bus:02d}:{dev:02d}.{fun:d} + 0x{off:02X} (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}')
         return True
