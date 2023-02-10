@@ -42,125 +42,124 @@ class IOMMU(hal_base.HALBase):
         super(IOMMU, self).__init__(cs)
         self.mmio = mmio.MMIO(cs)
 
-    def get_IOMMU_Base_Address(self, iommu_engine):
+    def get_IOMMU_Base_Address(self, iommu_engine: str) -> int:
         if iommu_engine in IOMMU_ENGINES:
             vtd_base_name = IOMMU_ENGINES[iommu_engine]
         else:
-            raise IOMMUError('IOMMUError: unknown IOMMU engine 0x{:X}'.format(iommu_engine))
+            raise IOMMUError(f'IOMMUError: unknown IOMMU engine 0x{iommu_engine:X}')
 
         if self.mmio.is_MMIO_BAR_defined(vtd_base_name):
-            (base, size) = self.mmio.get_MMIO_BAR_base_address(vtd_base_name)
+            (base, _) = self.mmio.get_MMIO_BAR_base_address(vtd_base_name)
         else:
-            raise IOMMUError('IOMMUError: IOMMU BAR {} is not defined in the config'.format(vtd_base_name))
+            raise IOMMUError(f'IOMMUError: IOMMU BAR {vtd_base_name} is not defined in the config')
         return base
 
-    def is_IOMMU_Engine_Enabled(self, iommu_engine):
+    def is_IOMMU_Engine_Enabled(self, iommu_engine: str) -> bool:
         if iommu_engine in IOMMU_ENGINES:
             vtd_base_name = IOMMU_ENGINES[iommu_engine]
         else:
-            raise IOMMUError('IOMMUError: unknown IOMMU engine 0x{:X}'.format(iommu_engine))
+            raise IOMMUError(f'IOMMUError: unknown IOMMU engine 0x{iommu_engine:X}')
         return self.mmio.is_MMIO_BAR_defined(vtd_base_name) and self.mmio.is_MMIO_BAR_enabled(vtd_base_name)
 
-    def is_IOMMU_Translation_Enabled(self, iommu_engine):
-        tes = self.cs.read_register_field(IOMMU_ENGINES[iommu_engine] + '_GSTS', 'TES')
+    def is_IOMMU_Translation_Enabled(self, iommu_engine: str) -> bool:
+        tes = self.cs.read_register_field(f'{IOMMU_ENGINES[iommu_engine]}_GSTS', 'TES')
         return (1 == tes)
 
-    def set_IOMMU_Translation(self, iommu_engine, te):
-        return self.cs.write_register_field(IOMMU_ENGINES[iommu_engine] + '_GCMD', 'TE', te)
+    def set_IOMMU_Translation(self, iommu_engine: str, te: int) -> bool:
+        return self.cs.write_register_field(f'{IOMMU_ENGINES[iommu_engine]}_GCMD', 'TE', te)
 
-    def dump_IOMMU_configuration(self, iommu_engine):
+    def dump_IOMMU_configuration(self, iommu_engine: str) -> None:
         self.logger.log("==================================================================")
         vtd = IOMMU_ENGINES[iommu_engine]
-        self.logger.log("[iommu] {} IOMMU Engine Configuration".format(iommu_engine))
+        self.logger.log(f'[iommu] {iommu_engine} IOMMU Engine Configuration')
         self.logger.log("==================================================================")
-        self.logger.log("Base register (BAR)       : {}".format(vtd))
+        self.logger.log(f'Base register (BAR)       : {vtd}')
         reg = self.cs.read_register(vtd)
-        self.logger.log("BAR register value        : 0x{:X}".format(reg))
+        self.logger.log(f'BAR register value        : 0x{reg:X}')
         if reg == 0:
             return
         base = self.get_IOMMU_Base_Address(iommu_engine)
-        self.logger.log("MMIO base                 : 0x{:016X}".format(base))
+        self.logger.log(f'MMIO base                 : 0x{base:016X}')
         self.logger.log("------------------------------------------------------------------")
-        ver_min = self.cs.read_register_field(vtd + '_VER', 'MIN')
-        ver_max = self.cs.read_register_field(vtd + '_VER', 'MAX')
-        self.logger.log("Version                   : {:X}.{:X}".format(ver_max, ver_min))
+        ver_min = self.cs.read_register_field(f'{vtd}_VER', 'MIN')
+        ver_max = self.cs.read_register_field(f'{vtd}_VER', 'MAX')
+        self.logger.log(f'Version                   : {ver_max:X}.{ver_min:X}')
         enabled = self.is_IOMMU_Engine_Enabled(iommu_engine)
-        self.logger.log("Engine enabled            : {:d}".format(enabled))
+        self.logger.log(f'Engine enabled            : {enabled:d}')
         te = self.is_IOMMU_Translation_Enabled(iommu_engine)
-        self.logger.log("Translation enabled       : {:d}".format(te))
-        rtaddr_rta = self.cs.read_register_field(vtd + '_RTADDR', 'RTA', True)
-        self.logger.log("Root Table Address        : 0x{:016X}".format(rtaddr_rta))
-        irta = self.cs.read_register_field(vtd + '_IRTA', 'IRTA')
-        self.logger.log("Interrupt Remapping Table : 0x{:016X}".format(irta))
+        self.logger.log(f'Translation enabled       : {te:d}')
+        rtaddr_rta = self.cs.read_register_field(f'{vtd}_RTADDR', 'RTA', True)
+        self.logger.log(f'Root Table Address        : 0x{rtaddr_rta:016X}')
+        irta = self.cs.read_register_field(f'{vtd}_IRTA', 'IRTA')
+        self.logger.log(f'Interrupt Remapping Table : 0x{irta:016X}')
         self.logger.log("------------------------------------------------------------------")
         self.logger.log("Protected Memory:")
-        pmen_epm = self.cs.read_register_field(vtd + '_PMEN', 'EPM')
-        pmen_prs = self.cs.read_register_field(vtd + '_PMEN', 'PRS')
-        self.logger.log("  Enabled                 : {:d}".format(pmen_epm))
-        self.logger.log("  Status                  : {:d}".format(pmen_prs))
-        plmbase = self.cs.read_register_field(vtd + '_PLMBASE', 'PLMB')
-        plmlimit = self.cs.read_register_field(vtd + '_PLMLIMIT', 'PLML')
-        phmbase = self.cs.read_register_field(vtd + '_PHMBASE', 'PHMB')
-        phmlimit = self.cs.read_register_field(vtd + '_PHMLIMIT', 'PHML')
-        self.logger.log("  Low Memory Base         : 0x{:016X}".format(plmbase))
-        self.logger.log("  Low Memory Limit        : 0x{:016X}".format(plmlimit))
-        self.logger.log("  High Memory Base        : 0x{:016X}".format(phmbase))
-        self.logger.log("  High Memory Limit       : 0x{:016X}".format(phmlimit))
+        pmen_epm = self.cs.read_register_field(f'{vtd}_PMEN', 'EPM')
+        pmen_prs = self.cs.read_register_field(f'{vtd}_PMEN', 'PRS')
+        self.logger.log(f'  Enabled                 : {pmen_epm:d}')
+        self.logger.log(f'  Status                  : {pmen_prs:d}')
+        plmbase = self.cs.read_register_field(f'{vtd}_PLMBASE', 'PLMB')
+        plmlimit = self.cs.read_register_field(f'{vtd}_PLMLIMIT', 'PLML')
+        phmbase = self.cs.read_register_field(f'{vtd}_PHMBASE', 'PHMB')
+        phmlimit = self.cs.read_register_field(f'{vtd}_PHMLIMIT', 'PHML')
+        self.logger.log(f'  Low Memory Base         : 0x{plmbase:016X}')
+        self.logger.log(f'  Low Memory Limit        : 0x{plmlimit:016X}')
+        self.logger.log(f'  High Memory Base        : 0x{phmbase:016X}')
+        self.logger.log(f'  High Memory Limit       : 0x{phmlimit:016X}')
         self.logger.log("------------------------------------------------------------------")
         self.logger.log("Capabilities:\n")
-        cap_reg = self.cs.read_register(vtd + '_CAP')
-        self.cs.print_register(vtd + '_CAP', cap_reg)
-        ecap_reg = self.cs.read_register(vtd + '_ECAP')
-        self.cs.print_register(vtd + '_ECAP', ecap_reg)
+        cap_reg = self.cs.read_register(f'{vtd}_CAP')
+        self.cs.print_register(f'{vtd}_CAP', cap_reg)
+        ecap_reg = self.cs.read_register(f'{vtd}_ECAP')
+        self.cs.print_register(f'{vtd}_ECAP', ecap_reg)
         self.logger.log('')
 
-    def dump_IOMMU_page_tables(self, iommu_engine):
+    def dump_IOMMU_page_tables(self, iommu_engine: str) -> None:
         vtd = IOMMU_ENGINES[iommu_engine]
         if self.cs.read_register(vtd) == 0:
-            self.logger.log("[iommu] {} value is zero".format(vtd))
+            self.logger.log(f'[iommu] {vtd} value is zero')
             return
         te = self.is_IOMMU_Translation_Enabled(iommu_engine)
-        self.logger.log("[iommu] Translation enabled    : {:d}".format(te))
-        rtaddr_reg = self.cs.read_register(vtd + '_RTADDR')
-        rtaddr_rta = self.cs.get_register_field(vtd + '_RTADDR', rtaddr_reg, 'RTA', True)
-        rtaddr_rtt = self.cs.get_register_field(vtd + '_RTADDR', rtaddr_reg, 'RTT')
-        #rtaddr_rta = self.cs.read_register_field( vtd + '_RTADDR', 'RTA', True )
-        #rtaddr_rtt = self.cs.read_register_field( vtd + '_RTADDR', 'RTT' )
-        self.logger.log("[iommu] Root Table Address/Type: 0x{:016X}/{:X}".format(rtaddr_rta, rtaddr_rtt))
+        self.logger.log(f'[iommu] Translation enabled    : {te:d}')
+        rtaddr_reg = self.cs.read_register(f'{vtd}_RTADDR')
+        rtaddr_rta = self.cs.get_register_field(f'{vtd}_RTADDR', rtaddr_reg, 'RTA', True)
+        rtaddr_rtt = self.cs.get_register_field(f'{vtd}_RTADDR', rtaddr_reg, 'RTT')
+        self.logger.log(f'[iommu] Root Table Address/Type: 0x{rtaddr_rta:016X}/{rtaddr_rtt:X}')
 
-        ecap_reg = self.cs.read_register(vtd + '_ECAP')
-        ecs = self.cs.get_register_field(vtd + '_ECAP', ecap_reg, 'ECS')
-        pasid = self.cs.get_register_field(vtd + '_ECAP', ecap_reg, 'PASID')
-        self.logger.log('[iommu] PASID / ECS            : {:X} / {:X}'.format(pasid, ecs))
+        ecap_reg = self.cs.read_register(f'{vtd}_ECAP')
+        ecs = self.cs.get_register_field(f'{vtd}_ECAP', ecap_reg, 'ECS')
+        pasid = self.cs.get_register_field(f'{vtd}_ECAP', ecap_reg, 'PASID')
+        self.logger.log(f'[iommu] PASID / ECS            : {pasid:X} / {ecs:X}')
 
         if 0xFFFFFFFFFFFFFFFF != rtaddr_reg:
             if te:
-                self.logger.log('[iommu] dumping VT-d page table hierarchy at 0x{:016X} (vtd_context_{:08X})..'.format(rtaddr_rta, rtaddr_rta))
+                self.logger.log(f'[iommu] Dumping VT-d page table hierarchy at 0x{rtaddr_rta:016X} (vtd_context_{rtaddr_rta:08X})')
                 paging_vtd = paging.c_vtd_page_tables(self.cs)
-                paging_vtd.read_vtd_context('vtd_context_{:08X}'.format(rtaddr_rta), rtaddr_rta)
-                self.logger.log('[iommu] total VTd domains: {:d}'.format(len(paging_vtd.domains)))
+                paging_vtd.read_vtd_context(f'vtd_context_{rtaddr_rta:08X}', rtaddr_rta)
+                self.logger.log(f'[iommu] Total VTd domains: {len(paging_vtd.domains):d}')
                 for domain in paging_vtd.domains:
-                    paging_vtd.read_pt_and_show_status('vtd_{:08X}'.format(domain), 'VTd', domain)
+                    paging_vtd.read_pt_and_show_status(f'vtd_{domain:08X}', 'VTd', domain)
             else:
-                self.logger.log("[iommu] translation via VT-d engine '{}' is not enabled".format(iommu_engine))
+                self.logger.log(f"[iommu] translation via VT-d engine '{iommu_engine}' is not enabled")
         else:
             self.logger.log_error("Cannot access VT-d registers")
 
-    def dump_IOMMU_status(self, iommu_engine):
+    def dump_IOMMU_status(self, iommu_engine: str) -> None:
         vtd = IOMMU_ENGINES[iommu_engine]
-        self.logger.log("==================================================================")
-        self.logger.log("[iommu] {} IOMMU Engine Status:".format(iommu_engine))
-        self.logger.log("==================================================================")
+        self.logger.log('==================================================================')
+        self.logger.log(f'[iommu] {iommu_engine} IOMMU Engine Status:')
+        self.logger.log('==================================================================')
         if self.cs.read_register(vtd) == 0:
-            self.logger.log("[iommu] {} value is zero".format(vtd))
-            return
-        gsts_reg = self.cs.read_register(vtd + '_GSTS')
-        self.cs.print_register(vtd + '_GSTS', gsts_reg)
-        fsts_reg = self.cs.read_register(vtd + '_FSTS')
-        self.cs.print_register(vtd + '_FSTS', fsts_reg)
-        frcdl_reg = self.cs.read_register(vtd + '_FRCDL')
-        self.cs.print_register(vtd + '_FRCDL', frcdl_reg)
-        frcdh_reg = self.cs.read_register(vtd + '_FRCDH')
-        self.cs.print_register(vtd + '_FRCDH', frcdh_reg)
-        ics_reg = self.cs.read_register(vtd + '_ICS')
-        self.cs.print_register(vtd + '_ICS', ics_reg)
+            self.logger.log(f'[iommu] {vtd} value is zero')
+            return None
+        gsts_reg = self.cs.read_register(f'{vtd}_GSTS')
+        self.cs.print_register(f'{vtd}_GSTS', gsts_reg)
+        fsts_reg = self.cs.read_register(f'{vtd}_FSTS')
+        self.cs.print_register(f'{vtd}_FSTS', fsts_reg)
+        frcdl_reg = self.cs.read_register(f'{vtd}_FRCDL')
+        self.cs.print_register(f'{vtd}_FRCDL', frcdl_reg)
+        frcdh_reg = self.cs.read_register(f'{vtd}_FRCDH')
+        self.cs.print_register(f'{vtd}_FRCDH', frcdh_reg)
+        ics_reg = self.cs.read_register(f'{vtd}_ICS')
+        self.cs.print_register(f'{vtd}_ICS', ics_reg)
+        return None
