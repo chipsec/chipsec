@@ -223,7 +223,7 @@ class MMIO(hal_base.HALBase):
                 limit_field = bar['limit_field']
                 limit = self.cs.read_register_field(bar_reg, limit_field, bus=_bus)
             else:
-                self.logger.log_hal(f"[mmio] 'limit_field' field not defined for bar, using limit = 0x{limit:X}")
+                self.logger.log_warning(f"[mmio] 'limit_field' field not defined for bar, using limit = 0x{limit:X}")
         else:
             # this method is not preferred (less flexible)
             if _bus is not None:
