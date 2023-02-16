@@ -121,15 +121,11 @@ If build process is completed without any errors, the driver binary will be move
 
 **Build the compression tools**
 
-Method 1:
+Method:
 
    - Navigate to the chipsec_tools\compression directory   
-   - run the build.cmd
-
-Method 2:
-
-   - Download compression tools from https://github.com/tianocore/edk2-BaseTools-win32/archive/master.zip   
-   - Unzip the archive into the chipsec_tools/compression/bin directory
+   - Run `python setup.py build`
+   - Copy the `EfiCompressor.cp<pyver>-win_<arch>.pyd` file from  build/lib.win-<arch>-<pyver> to the root chipsec directory
 
 **Alternate Method to load CHIPSEC service/driver**
 
