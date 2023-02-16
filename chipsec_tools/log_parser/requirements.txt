@@ -1,7 +1,7 @@
-Click==7.0
-Flask==1.1.1
-itsdangerous==1.1.0
-Jinja2==2.11.3
+Click==8.0.1
+Flask==2.2.3
+itsdangerous==2.1.2
+Jinja2==3.1.2
 lxml>=4.6.5
-MarkupSafe==1.1.1
-Werkzeug==0.16.0
+MarkupSafe==2.1.1
+Werkzeug==2.2.3
