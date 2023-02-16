@@ -46,6 +46,7 @@ Examples:
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, OPT_MODIFY
 from chipsec.hal.uefi import UEFI, SECURE_BOOT_VARIABLES, IS_VARIABLE_ATTRIBUTE, EFI_VAR_NAME_SecureBoot, SECURE_BOOT_KEY_VARIABLES
 from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
+from chipsec.hal.uefi import SECURE_BOOT_OPTIONAL_VARIABLES
 from chipsec.hal.uefi_common import StatusCode
 
 # ############################################################
@@ -142,7 +143,9 @@ class variables(BaseModule):
                     if do_modify:
                         if self.can_modify(name, guid, data, attrs):
                             not_wp += 1
-
+            elif name in SECURE_BOOT_OPTIONAL_VARIABLES:
+                self.logger.log_important('Secure Boot variable {} is not found but is optional'.format(name))
+                continue
             else:
                 not_found += 1
                 self.logger.log_important('Secure Boot variable {} is not found'.format(name))
