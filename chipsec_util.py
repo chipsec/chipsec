@@ -190,13 +190,13 @@ class ChipsecUtil:
             except Exception as msg:
                 self.logger.log(str(msg), level.ERROR)
                 sys.exit(ExitCode.EXCEPTION)
+
+            if self._show_banner:
+                print_banner_properties(self._cs, os_version())
         else:
             if comm.requires_driver():
                 self.logger.log("Cannot run without driver loaded", level.ERROR)
                 sys.exit(ExitCode.OK)
-
-        if self._show_banner:
-            print_banner_properties(self._cs, os_version())
 
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()
