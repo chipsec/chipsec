@@ -27,6 +27,7 @@ TCG TPM v1.2 Specification
 """
 
 import struct
+from typing import Dict, Tuple
 from chipsec.logger import logger
 
 COMMAND_FORMAT = "=HIIIII"
@@ -53,13 +54,13 @@ TPM_ORD_SAVESTATE = 0x98000000
 TSC_ORD_PHYSICALPRESENCE = 0x0A000040
 TSC_ORD_RESETESTABLISHMENTBIT = 0x0B000040
 
-STARTUP = {
+STARTUP: Dict[int, int] = {
     1: 0x0100,
     2: 0x0200,
     3: 0x0300
 }
 
-PCR = {
+PCR: Dict[int, int] = {
     0: 0x00000000,
     1: 0x01000000,
     2: 0x02000000,
@@ -94,7 +95,7 @@ PCR = {
 }
 
 
-def pcrread(command_argv):
+def pcrread(*command_argv: str) -> Tuple[bytes, int]:
     """
     The TPM_PCRRead operation provides non-cryptographic reporting  of the contents of a named PCR
     """
@@ -104,13 +105,13 @@ def pcrread(command_argv):
     except:
         if logger().HAL:
             logger().log_bad("Invalid PCR value\n")
-        return
+        return (b'', 0)
     command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_PCRREAD, Pcr, 0, 0)
     size = Size >> 0x18
     return (command, size)
 
 
-def nvread(command_argv):
+def nvread(*command_argv: str) -> Tuple[bytes, int]:
     """
     Read a value from the NV store
     Index, Offset, Size
@@ -121,7 +122,7 @@ def nvread(command_argv):
     return (command, size)
 
 
-def startup(command_argv):
+def startup(*command_argv: str) -> Tuple[bytes, int]:
     """
     Execute a tpm_startup command. TPM_Startup is always preceded by TPM_Init, which is the physical indication (a system wide reset) that TPM initialization is necessary
     Type of Startup to be used:
@@ -134,14 +135,14 @@ def startup(command_argv):
     except:
         if logger().HAL:
             logger().log_bad("Invalid startup type option value\n")
-        return
+        return (b'', 0)
     Size = 0x0E000000
     command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_STARTUP, startupType, 0, 0)
     size = Size >> 0x18
     return (command, size)
 
 
-def continueselftest(command_argv):
+def continueselftest(*command_argv: str) -> Tuple[bytes, int]:
     """
     TPM_ContinueSelfTest informs the TPM that it should complete self-test of all TPM functions. The TPM may return success immediately and then perform the self-test, or it may perform the self-test and then return success or failure.
     """
@@ -151,7 +152,7 @@ def continueselftest(command_argv):
     return (command, size)
 
 
-def getcap(command_argv):
+def getcap(*command_argv: str) -> Tuple[bytes, int]:
     """
     Returns current information regarding the TPM
     CapArea    - Capabilities Area
@@ -164,7 +165,7 @@ def getcap(command_argv):
     return (command, size)
 
 
-def forceclear(command_argv):
+def forceclear(*command_argv: str) -> Tuple[bytes, int]:
     Size = 0x0A000000
     command = struct.pack(COMMAND_FORMAT, TPM_TAG_RQU_COMMAND, Size, TPM_ORD_FORCECLEAR, 0, 0, 0)
     size = Size >> 0x18
