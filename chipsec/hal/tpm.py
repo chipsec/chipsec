@@ -27,6 +27,7 @@ https://trustedcomputinggroup.org
 
 import struct
 from collections import namedtuple
+from typing import Dict, Tuple, Callable
 
 from chipsec.logger import print_buffer_bytes
 from chipsec.hal import hal_base
@@ -50,7 +51,7 @@ TPM_RID = 0x0F04
 TPM_INTCAP = 0x0014
 TPM_INTENABLE = 0x0008
 
-STATUS = {
+STATUS: Dict[int, str] = {
     0x00: "Success",
     0x01: "ERROR: Authentication Failed",
     0x02: "ERROR: The index to a PCR, DIR or other register is incorrect",
@@ -157,7 +158,7 @@ STATUS = {
     0x803: "NON-FATAL ERROR: The TPM is defending against dictionary attacks and is in some time-out period."
 }
 
-LOCALITY = {
+LOCALITY: Dict[str, int] = {
     '0': 0x0000,
     '1': 0x1000,
     '2': 0x2000,
@@ -165,7 +166,7 @@ LOCALITY = {
     '4': 0x4000
 }
 
-COMMANDS = {
+COMMANDS: Dict[str, Callable] = {
     "pcrread": chipsec.hal.tpm12_commands.pcrread,
     "nvread": chipsec.hal.tpm12_commands.nvread,
     "startup": chipsec.hal.tpm12_commands.startup,
@@ -177,14 +178,14 @@ COMMANDS = {
 class TPM_RESPONSE_HEADER(namedtuple('TPM_RESPONSE_HEADER', 'ResponseTag DataSize ReturnCode')):
     __slots__ = ()
 
-    def __str__(self):
-        _str = """----------------------------------------------------------------
+    def __str__(self) -> str:
+        _str = f"""----------------------------------------------------------------
                      TPM response header
 ----------------------------------------------------------------
-   Response TAG: 0x{:x}
-   Data Size   : 0x{:x}
-   Return Code : 0x{:x}
-""".format(self.ResponseTag, self.DataSize, self.ReturnCode)
+   Response TAG: 0x{self.ResponseTag:x}
+   Data Size   : 0x{self.DataSize:x}
+   Return Code : 0x{self.ReturnCode:x}
+"""
         _str += "\t"
         try:
             _str += STATUS[self.ReturnCode]
@@ -200,7 +201,7 @@ class TPM(hal_base.HALBase):
         self.helper = cs.helper
         self.TPM_BASE = int(self.cs.Cfg.MEMORY_RANGES["TPM"]["address"], 16)
 
-    def command(self, commandName, locality, command_argv):
+    def command(self, commandName: str, locality: str, *command_argv: str) -> None:
         """
         Send command to the TPM and receive data
         """
@@ -227,8 +228,8 @@ class TPM(hal_base.HALBase):
         (command, size) = COMMANDS[commandName](command_argv)
         self._send_command(Locality, command, size)
 
-        (header, data, header_blob, data_blob) = self._read_response(Locality)
-        self.logger.log(header)
+        (header, _, _, data_blob) = self._read_response(Locality)
+        self.logger.log(str(header))
         print_buffer_bytes(data_blob)
         self.logger.log('\n')
 
@@ -239,10 +240,8 @@ class TPM(hal_base.HALBase):
             self.helper.write_mmio_reg(access_address, 4, BEENSEIZED)
         self.helper.write_mmio_reg(access_address, 1, ACTIVELOCALITY)
 
-    def _send_command(self, Locality, command, size):
-        """
-        Send a command to the TPM using the locality specified
-        """
+    def _send_command(self, Locality: int, command: bytes, size: int) -> None:
+        """Send a command to the TPM using the locality specified"""
         count = 0
 
         datafifo_address = self.TPM_BASE | Locality | TPM_DATAFIFO
@@ -270,14 +269,12 @@ class TPM(hal_base.HALBase):
 
         self.helper.write_mmio_reg(sts_address, 1, TPMGO)
 
-    def _read_response(self, Locality):
-        """
-        Read the TPM's response using the specified locality
-        """
+    def _read_response(self, Locality: int) -> Tuple[TPM_RESPONSE_HEADER, bytes, bytearray, bytearray]:
+        """Read the TPM's response using the specified locality"""
         count = 0
-        header = ""
+        header = b''
         header_blob = bytearray()
-        data = ""
+        data = b''
         data_blob = bytearray()
         #
         # Build FIFO address
@@ -322,56 +319,44 @@ class TPM(hal_base.HALBase):
 
         return (header, data, header_blob, data_blob)
 
-    def dump_access(self, locality):
-        """
-        View the contents of the register used to gain ownership of the TPM
-        """
+    def dump_access(self, locality: str) -> None:
+        """View the contents of the register used to gain ownership of the TPM"""
         register = 'TPM_ACCESS'
         self.dump_register(register, locality)
 
-    def dump_status(self, locality):
-        """
-        View general status details
-        """
+    def dump_status(self, locality: str) -> None:
+        """View general status details"""
         register = 'TPM_STS'
         self.dump_register(register, locality)
 
-    def dump_didvid(self, locality):
-        """
-        TPM's Vendor and Device ID
-        """
+    def dump_didvid(self, locality: str) -> None:
+        """TPM's Vendor and Device ID"""
         register = 'TPM_DID_VID'
         self.dump_register(register, locality)
 
-    def dump_rid(self, locality):
-        """
-        TPM's Revision ID
-        """
+    def dump_rid(self, locality: str) -> None:
+        """TPM's Revision ID"""
         register = 'TPM_RID'
         self.dump_register(register, locality)
 
-    def dump_intcap(self, locality):
-        """
-        Provides information of which interrupts that particular TPM supports
-        """
+    def dump_intcap(self, locality: str) -> None:
+        """Provides information of which interrupts that particular TPM supports"""
         register = 'TPM_INTF_CAPABILITY'
         self.dump_register(register, locality)
 
-    def dump_intenable(self, locality):
-        """
-        View the contents of the register used to enable specific interrupts
-        """
+    def dump_intenable(self, locality: str) -> None:
+        """View the contents of the register used to enable specific interrupts"""
         register = 'TPM_INT_ENABLE'
         self.dump_register(register, locality)
 
-    def log_register_header(self, register_name, locality):
+    def log_register_header(self, register_name: str, locality: str) -> None:
         num_spaces = 32 + (-len(register_name) // 2)  # ceiling division
         self.logger.log('=' * 64)
-        self.logger.log("{}{}_{}".format(' ' * num_spaces, register_name, locality))
+        self.logger.log(f'{" " * num_spaces}{register_name}_{locality}')
         self.logger.log('=' * 64)
 
-    def dump_register(self, register_name, locality):
-        self.cs.Cfg.REGISTERS[register_name]['address'] = hex(int(self.cs.Cfg.REGISTERS[register_name]['address'], 16) ^ LOCALITY[locality])
+    def dump_register(self, register_name: str, locality: str) -> None:
+        self.cs.Cfg.REGISTERS[register_name]['address'] = str(hex(int(self.cs.Cfg.REGISTERS[register_name]['address'], 16) ^ LOCALITY[locality]))
         register = self.cs.read_register_dict(register_name)
 
         self.log_register_header(register_name, locality)
@@ -381,4 +366,4 @@ class TPM(hal_base.HALBase):
             if len(field) > max_field_len:
                 max_field_len = len(field)
         for field in register['FIELDS']:
-            self.logger.log('\t{}{}: {}'.format(field, ' ' * (max_field_len - len(field)), hex(register['FIELDS'][field]['value'])))
+            self.logger.log(f'\t{field}{" " * (max_field_len - len(field))}: {hex(register["FIELDS"][field]["value"])}')
