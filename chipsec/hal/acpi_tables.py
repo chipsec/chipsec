@@ -31,12 +31,12 @@ import struct
 from collections import namedtuple
 from uuid import UUID
 from typing import Optional, Tuple
-
 from chipsec.logger import logger, dump_buffer_bytes
 from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
 
 
 class ACPI_TABLE:
+
     def parse(self, table_content: bytes) -> None:
         return
 
@@ -89,7 +89,7 @@ class RSDP(ACPI_TABLE):
         return default
 
     # some sanity checking on RSDP
-    def is_RSDP_valid(self):
+    def is_RSDP_valid(self) -> bool:
         return 0 != self.Checksum and (0x0 == self.Revision or 0x2 == self.Revision)
 
 
@@ -2142,8 +2142,8 @@ SMM_COMM_TABLE = str(UUID('c68ed8e29dc64cbd9d94db65acc5c332')).upper()
 
 class UEFI_TABLE (ACPI_TABLE):
     def __init__(self):
-        self.buf_addr = None
-        self.smi = None
+        self.buf_addr = 0
+        self.smi = 0
         self.invoc_reg = None
         return
 
@@ -2185,7 +2185,9 @@ class UEFI_TABLE (ACPI_TABLE):
     def __str__(self) -> str:
         return self.results
 
-    def get_commbuf_info(self) -> Tuple[Optional[int], Optional[int], Optional['GAS']]:
+    CommBuffInfo = Tuple[int, int, Optional['GAS']]
+
+    def get_commbuf_info(self) -> CommBuffInfo:
         return (self.smi, self.buf_addr, self.invoc_reg)
 
 ########################################################################################################
@@ -2225,6 +2227,8 @@ COMM_BUFFER_NESTED_PTR_PROTECTION   : {self.comm_buffer_nested_ptr_protection}
 SYSTEM_RESOURCE_PROTECTION          : {self.system_resource_protection}
     """
 
+
+
 ########################################################################################################
 #
 # Generic Address Structure
@@ -2233,7 +2237,7 @@ SYSTEM_RESOURCE_PROTECTION          : {self.system_resource_protection}
 
 
 class GAS:
-    def __init__(self, table_content):
+    def __init__(self, table_content: bytes):
         self.addrSpaceID = struct.unpack('<B', table_content[0:1])[0]
         self.regBitWidth = struct.unpack('<B', table_content[1:2])[0]
         self.regBitOffset = struct.unpack('<B', table_content[2:3])[0]
