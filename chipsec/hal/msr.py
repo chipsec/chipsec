@@ -34,6 +34,7 @@ usage:
     >>> GDT_all()
 """
 
+from typing import Dict, Tuple, Optional
 from chipsec.logger import logger, print_buffer
 
 
@@ -46,7 +47,7 @@ MTRR_MEMTYPE_WC = 0x1
 MTRR_MEMTYPE_WT = 0x4
 MTRR_MEMTYPE_WP = 0x5
 MTRR_MEMTYPE_WB = 0x6
-MemType = {
+MemType: Dict[int, str] = {
     MTRR_MEMTYPE_UC: 'Uncacheable (UC)',
     MTRR_MEMTYPE_WC: 'Write Combining (WC)',
     MTRR_MEMTYPE_WT: 'Write-through (WT)',
@@ -61,21 +62,19 @@ class Msr:
         self.helper = cs.helper
         self.cs = cs
 
-    def get_cpu_thread_count(self):
+    def get_cpu_thread_count(self) -> int:
         thread_count = self.helper.get_threads_count()
         if thread_count is None or thread_count < 0:
-            if logger().HAL:
-                logger().log("helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)")
+            logger().log_hal("helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)")
             thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Thread_Count")
 
         if 0 == thread_count:
             thread_count = 1
-        if logger().HAL:
-            logger().log("[cpu] # of logical CPUs: {:d}".format(thread_count))
+        logger().log_hal(f'[cpu] # of logical CPUs: {thread_count:d}')
         return thread_count
 
     # @TODO: fix
-    def get_cpu_core_count(self):
+    def get_cpu_core_count(self) -> int:
         core_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Core_Count")
         return core_count
 
@@ -87,17 +86,15 @@ class Msr:
 ##########################################################################################################
 
 
-    def read_msr(self, cpu_thread_id, msr_addr):
+    def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
         (eax, edx) = self.helper.read_msr(cpu_thread_id, msr_addr)
-        if logger().HAL:
-            logger().log("[cpu{:d}] RDMSR( 0x{:x} ): EAX = 0x{:08X}, EDX = 0x{:08X}".format(cpu_thread_id, msr_addr, eax, edx))
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] RDMSR( 0x{msr_addr:x} ): EAX = 0x{eax:08X}, EDX = 0x{edx:08X}')
         return (eax, edx)
 
-    def write_msr(self, cpu_thread_id, msr_addr, eax, edx):
+    def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> None:
         self.helper.write_msr(cpu_thread_id, msr_addr, eax, edx)
-        if logger().HAL:
-            logger().log("[cpu{:d}] WRMSR( 0x{:x} ): EAX = 0x{:08X}, EDX = 0x{:08X}".format(cpu_thread_id, msr_addr, eax, edx))
-        return
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] WRMSR( 0x{msr_addr:x} ): EAX = 0x{eax:08X}, EDX = 0x{edx:08X}')
+        return None
 
 ##########################################################################################################
 #
@@ -105,25 +102,26 @@ class Msr:
 #
 ##########################################################################################################
 
-    def get_Desc_Table_Register(self, cpu_thread_id, code):
-        return self.helper.get_descriptor_table(cpu_thread_id, code)
+    def get_Desc_Table_Register(self, cpu_thread_id: int, code: int) -> Tuple[int, int, int]:
+        desc_table = self.helper.get_descriptor_table(cpu_thread_id, code)
+        if desc_table is None:
+            logger().log_hal(f'[msr] Unable to locate CPU Descriptor Table: Descriptor table code = {code:d}')
+            return (0, 0, 0)
+        return desc_table
 
-    def get_IDTR(self, cpu_thread_id):
+    def get_IDTR(self, cpu_thread_id: int) -> Tuple[int, int, int]:
         (limit, base, pa) = self.get_Desc_Table_Register(cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR)
-        if logger().HAL:
-            logger().log("[cpu{:d}] IDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa))
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] IDTR Limit = 0x{limit:04X}, Base = 0x{base:016X}, Physical Address = 0x{pa:016X}')
         return (limit, base, pa)
 
-    def get_GDTR(self, cpu_thread_id):
+    def get_GDTR(self, cpu_thread_id: int) -> Tuple[int, int, int]:
         (limit, base, pa) = self.get_Desc_Table_Register(cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR)
-        if logger().HAL:
-            logger().log("[cpu{:d}] GDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa))
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] GDTR Limit = 0x{limit:04X}, Base = 0x{base:016X}, Physical Address = 0x{pa:016X}')
         return (limit, base, pa)
 
-    def get_LDTR(self, cpu_thread_id):
+    def get_LDTR(self, cpu_thread_id: int) -> Tuple[int, int, int]:
         (limit, base, pa) = self.get_Desc_Table_Register(cpu_thread_id, DESCRIPTOR_TABLE_CODE_LDTR)
-        if logger().HAL:
-            logger().log("[cpu{:d}] LDTR Limit = 0x{:04X}, Base = 0x{:016X}, Physical Address = 0x{:016X}".format(cpu_thread_id, limit, base, pa))
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] LDTR Limit = 0x{limit:04X}, Base = 0x{base:016X}, Physical Address = 0x{pa:016X}')
         return (limit, base, pa)
 
 
@@ -134,15 +132,15 @@ class Msr:
 ##########################################################################################################
 
 
-    def dump_Descriptor_Table(self, cpu_thread_id, code, num_entries=None):
-        (limit, base, pa) = self.helper.get_descriptor_table(cpu_thread_id, code)
+    def dump_Descriptor_Table(self, cpu_thread_id: int, code: int, num_entries: Optional[int] = None) -> Tuple[int, int]:
+        (limit, _, pa) = self.helper.get_descriptor_table(cpu_thread_id, code)
         dt = self.helper.read_physical_mem(pa, limit + 1)
         total_num = len(dt) // 16
-        if (total_num < num_entries) or (num_entries is None):
+        if (num_entries is None) or (total_num < num_entries):
             num_entries = total_num
-        logger().log('[cpu{:d}] Physical Address: 0x{:016X}'.format(cpu_thread_id, pa))
-        logger().log('[cpu{:d}] # of entries    : {:d}'.format(cpu_thread_id, total_num))
-        logger().log('[cpu{:d}] Contents ({:d} entries):'.format(cpu_thread_id, num_entries))
+        logger().log(f'[cpu{cpu_thread_id:d}] Physical Address: 0x{pa:016X}')
+        logger().log(f'[cpu{cpu_thread_id:d}] # of entries    : {total_num:d}')
+        logger().log(f'[cpu{cpu_thread_id:d}] Contents ({num_entries:d} entries):')
         print_buffer(dt)
         logger().log('--------------------------------------')
         logger().log('#    segment:offset         attributes')
@@ -151,24 +149,22 @@ class Msr:
             offset = (ord(dt[i * 16 + 11]) << 56) | (ord(dt[i * 16 + 10]) << 48) | (ord(dt[i * 16 + 9]) << 40) | (ord(dt[i * 16 + 8]) << 32) | (ord(dt[i * 16 + 7]) << 24) | (ord(dt[i * 16 + 6]) << 16) | (ord(dt[i * 16 + 1]) << 8) | ord(dt[i * 16 + 0])
             segsel = (ord(dt[i * 16 + 3]) << 8) | ord(dt[i * 16 + 2])
             attr = (ord(dt[i * 16 + 5]) << 8) | ord(dt[i * 16 + 4])
-            logger().log('{:03d}  {:04X}:{:016X}  0x{:04X}'.format(i, segsel, offset, attr))
+            logger().log(f'{i:03d}  {segsel:04X}:{offset:016X}  0x{attr:04X}')
 
         return (pa, dt)
 
-    def IDT(self, cpu_thread_id, num_entries=None):
-        if logger().HAL:
-            logger().log('[cpu{:d}] IDT:'.format(cpu_thread_id))
+    def IDT(self, cpu_thread_id: int, num_entries: Optional[int] = None) -> Tuple[int, int]:
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] IDT:')
         return self.dump_Descriptor_Table(cpu_thread_id, DESCRIPTOR_TABLE_CODE_IDTR, num_entries)
 
-    def GDT(self, cpu_thread_id, num_entries=None):
-        if logger().HAL:
-            logger().log('[cpu{:d}] GDT:'.format(cpu_thread_id))
+    def GDT(self, cpu_thread_id: int, num_entries: Optional[int] = None) -> Tuple[int, int]:
+        logger().log_hal(f'[cpu{cpu_thread_id:d}] GDT:')
         return self.dump_Descriptor_Table(cpu_thread_id, DESCRIPTOR_TABLE_CODE_GDTR, num_entries)
 
-    def IDT_all(self, num_entries=None):
+    def IDT_all(self, num_entries: Optional[int] = None) -> None:
         for tid in range(self.get_cpu_thread_count()):
             self.IDT(tid, num_entries)
 
-    def GDT_all(self, num_entries=None):
+    def GDT_all(self, num_entries: Optional[int] = None) -> None:
         for tid in range(self.get_cpu_thread_count()):
             self.GDT(tid, num_entries)
