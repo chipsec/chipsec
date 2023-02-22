@@ -20,6 +20,7 @@
 
 __version__ = '1.0'
 
+from typing import List, Optional
 from chipsec.defines import bit, is_set
 from chipsec.hal.hal_base import HALBase
 from chipsec.exceptions import CSReadError, HWAccessViolationError
@@ -37,13 +38,13 @@ class locks(HALBase):
     def __init__(self, cs):
         super(locks, self).__init__(cs)
 
-    def get_locks(self):
+    def get_locks(self) -> List[str]:
         """
         Return a list of locks defined within the configuration file
         """
         return self.cs.get_lock_list()
 
-    def lock_valid(self, lock_name, bus=None):
+    def lock_valid(self, lock_name: str, bus: Optional[int] = None) -> int:
         res = 0
         if self.cs.is_lock_defined(lock_name):
             res |= LockResult.DEFINED
@@ -60,7 +61,7 @@ class locks(HALBase):
             res |= LockResult.HAS_CONFIG
         return res
 
-    def is_locked(self, lock_name, bus=None):
+    def is_locked(self, lock_name: str, bus: Optional[int] = None) -> int:
         """
         Return whether the lock has the value setting
         """
