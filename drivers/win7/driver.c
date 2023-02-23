@@ -34,6 +34,16 @@ chipsec@intel.com
 
 #pragma code_seg("chipsec_code$__c")
 
+typedef
+PVOID
+(*PFN_ExAllocatePool2)(
+  ULONG64 Flags,
+  SIZE_T     NumberOfBytes,
+  ULONG      Tag
+);
+UNICODE_STRING functionName = {0};
+PFN_ExAllocatePool2 pfnExAllocatePool2 = NULL;
+
 UINT32
 ReadPCICfg(
   UINT8 bus,
@@ -843,7 +853,15 @@ DriverDeviceControl(
                 break;
               }
 
-            ucode_buf = ExAllocatePool2( NonPagedPool, ucode_size, 0x3184 );
+            RtlInitUnicodeString(&functionName, L"ExAllocatePool2");
+            pfnExAllocatePool2 = (PFN_ExAllocatePool2)MmGetSystemRoutineAddress(&functionName);
+
+            if (pfnExAllocatePool2 != NULL) {
+                ucode_buf = pfnExAllocatePool2( NonPagedPool, ucode_size, 0x3184 );
+            } else {
+                // Fall back to call the old api
+                ucode_buf = ExAllocatePoolWithTag( NonPagedPool, ucode_size, 0x3184 );
+            }
             if( !ucode_buf )
               {
                 DbgPrint( "[chipsec] ERROR: couldn't allocate pool for ucode binary\n" );
