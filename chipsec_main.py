@@ -454,11 +454,11 @@ class ChipsecMain:
                 if self.failfast:
                     raise be
                 return ExitCode.EXCEPTION
+
+            if self._show_banner:
+                print_banner_properties(self._cs, defines.os_version())
         else:
             self.logger.log_warning("Platform dependent functionality is likely to be incorrect")
-
-        if self._show_banner:
-            print_banner_properties(self._cs, defines.os_version())
 
         self.logger.log(" ")
 

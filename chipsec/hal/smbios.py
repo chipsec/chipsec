@@ -24,7 +24,7 @@ HAL component providing access to and decoding of SMBIOS structures
 
 import struct
 from collections import namedtuple
-
+from typing import Dict, List, Optional, Tuple, Any, Union, Type
 from chipsec.defines import BOUNDARY_1MB, bytestostring
 from chipsec.hal import hal_base, uefi
 from chipsec.logger import logger
@@ -40,33 +40,29 @@ SMBIOS_2_x_INT_SIG = b"_DMI_"
 SMBIOS_2_x_GUID = "EB9D2D31-2D88-11D3-9A16-0090273FC14D"
 SMBIOS_2_x_ENTRY_POINT_FMT = "=4sBBBBHB5B5sBHIHB"
 SMBIOS_2_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_2_x_ENTRY_POINT_FMT)
-SMBIOS_2_x_FORMAT_STRING = """
-SMBIOS 2.x Entry Point Structure:
-  Anchor String             : {}
-  Checksum                  : 0x{:02X}
-  Entry Point Length        : 0x{:02X}
-  Entry Point Version       : {:d}.{:d}
-  Max Structure Size        : 0x{:04X}
-  Entry Point Revision      : 0x{:02X}
-  Formatted Area            : 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}
-  Intermediate Anchor String: {}
-  Intermediate Checksum     : 0x{:02X}
-  Structure Table Length    : 0x{:04X}
-  Structure Talbe Address   : 0x{:08X}
-  SMBIOS Structure Count    : 0x{:04X}
-  SMBIOS BCD Revision       : 0x{:02X}
-"""
 
 
 class SMBIOS_2_x_ENTRY_POINT(namedtuple('SMBIOS_2_x_ENTRY_POINT', 'Anchor EntryCs EntryLen MajorVer MinorVer MaxSize EntryRev \
     FormatArea0 FormatArea1 FormatArea2 FormatArea3 FormatArea4 IntAnchor IntCs TableLen TableAddr NumStructures BcdRev')):
     __slots__ = ()
 
-    def __str__(self):
-        return SMBIOS_2_x_FORMAT_STRING.format(bytestostring(self.Anchor), self.EntryCs, self.EntryLen, self.MajorVer,
-                                               self.MinorVer, self.MaxSize, self.EntryRev, self.FormatArea0, self.FormatArea1,
-                                               self.FormatArea2, self.FormatArea3, self.FormatArea4, bytestostring(self.IntAnchor),
-                                               self.IntCs, self.TableLen, self.TableAddr, self.NumStructures, self.BcdRev)
+    def __str__(self) -> str:
+        return f"""
+SMBIOS 2.x Entry Point Structure:
+  Anchor String             : {bytestostring(self.Anchor)}
+  Checksum                  : 0x{self.EntryCs:02X}
+  Entry Point Length        : 0x{self.EntryLen:02X}
+  Entry Point Version       : {self.MajorVer:d}.{self.MinorVer:d}
+  Max Structure Size        : 0x{self.MaxSize:04X}
+  Entry Point Revision      : 0x{self.EntryRev:02X}
+  Formatted Area            : 0x{self.FormatArea0:02X}, 0x{self.FormatArea1:02X}, 0x{self.FormatArea2:02X}, 0x{self.FormatArea3:02X}, 0x{self.FormatArea4:02X}
+  Intermediate Anchor String: {bytestostring(self.IntAnchor)}
+  Intermediate Checksum     : 0x{self.IntCs:02X}
+  Structure Table Length    : 0x{self.TableLen:04X}
+  Structure Table Address   : 0x{self.TableAddr:08X}
+  SMBIOS Structure Count    : 0x{self.NumStructures:04X}
+  SMBIOS BCD Revision       : 0x{self.BcdRev:02X}
+"""
 
 
 SMBIOS_3_x_SIG = b"_SM3_"
@@ -75,45 +71,41 @@ SMBIOS_3_x_MAJOR_VER = 0x03
 SMBIOS_3_x_GUID = "F2FD1544-9794-4A2C-992E-E5BBCF20E394"
 SMBIOS_3_x_ENTRY_POINT_FMT = "=5sBBBBBBBIQ"
 SMBIOS_3_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_3_x_ENTRY_POINT_FMT)
-SMBIOS_3_x_FORMAT_STRING = """
-SMBIOS 3.x Entry Point Structure:
-  Anchor String             : {}
-  Checksum                  : 0x{:02X}
-  Entry Point Length        : 0x{:02X}
-  Entry Ponnt Version       : {:d}.{:d}
-  SMBIOS Docrev             : 0x{:02X}
-  Entry Point Revision      : 0x{:02X}
-  Reserved                  : 0x{:02X}
-  Max Structure Size        : 0x{:08X}
-  Structure Table Address   : 0x{:016X}
-"""
 
 
 class SMBIOS_3_x_ENTRY_POINT(namedtuple('SMBIOS_3_x_ENTRY_POINT', 'Anchor EntryCs EntryLen MajorVer MinorVer Docrev EntryRev \
     Reserved MaxSize TableAddr')):
     __slots__ = ()
 
-    def __str__(self):
-        return SMBIOS_3_x_FORMAT_STRING.format(bytestostring(self.Anchor), self.EntryCs, self.EntryLen, self.MajorVer,
-                                               self.MinorVer, self.Docrev, self.EntryRev, self.Reserved, self.MaxSize,
-                                               self.TableAddr)
+    def __str__(self) -> str:
+        return f"""
+SMBIOS 3.x Entry Point Structure:
+  Anchor String             : {bytestostring(self.Anchor)}
+  Checksum                  : 0x{self.EntryCs:02X}
+  Entry Point Length        : 0x{self.EntryLen:02X}
+  Entry Ponnt Version       : {self.MajorVer:d}.{self.MinorVer:d}
+  SMBIOS Docrev             : 0x{self.Docrev:02X}
+  Entry Point Revision      : 0x{self.EntryRev:02X}
+  Reserved                  : 0x{self.Reserved:02X}
+  Max Structure Size        : 0x{self.MaxSize:08X}
+  Structure Table Address   : 0x{self.TableAddr:016X}
+"""
 
 
 SMBIOS_STRUCT_HEADER_FMT = "=BBH"
 SMBIOS_STRUCT_HEADER_SIZE = struct.calcsize(SMBIOS_STRUCT_HEADER_FMT)
-SMBIOS_STRUCT_HEADER_FORMAT_STRING = """
-SMBIOS Stuct Header:
-  Type                      : 0x{0:02X} ({0:d})
-  Length                    : 0x{1:02X}
-  Handle                    : 0x{2:04X}
-"""
 
 
 class SMBIOS_STRUCT_HEADER(namedtuple('SMBIOS_STRUCT_HEADER', 'Type Length Handle')):
     __slots__ = ()
 
-    def __str__(self):
-        return SMBIOS_STRUCT_HEADER_FORMAT_STRING.format(self.Type, self.Length, self.Handle)
+    def __str__(self) -> str:
+        return f"""
+SMBIOS Struct Header:
+  Type                      : 0x{self.Type:02X} ({self.Type:d})
+  Length                    : 0x{self.Length:02X}
+  Handle                    : 0x{self.Handle:04X}
+"""
 
 
 SMBIOS_STRUCT_TERM_FMT = "=H"
@@ -124,18 +116,6 @@ SMBIOS_STRUCT_TERM_VAL = 0x0000
 SMBIOS_BIOS_INFO_ENTRY_ID = 0
 SMBIOS_BIOS_INFO_2_0_ENTRY_FMT = '=BBHBBHBBQ'
 SMBIOS_BIOS_INFO_2_0_ENTRY_SIZE = struct.calcsize(SMBIOS_BIOS_INFO_2_0_ENTRY_FMT)
-SMBIOS_BIOS_INFO_2_0_FORMAT_STRING = """
-SMBIOS BIOS Information:
-  Type                      : 0x{0:02X} ({0:d})
-  Length                    : 0x{1:02X}
-  Handle                    : 0x{2:04X}
-  Vendor                    : {3:s}
-  BIOS Version              : {4:s}
-  BIOS Starting Segment     : 0x{5:04X}
-  BIOS Release Date         : {6:s}
-  BIOS ROM Size             : 0x{7:02X}
-  BIOS Characteristics      : 0x{8:016X}
-"""
 SMBIOS_BIOS_INFO_2_0_FORMAT_STRING_FAILED = """
 SMBIOS BIOS Information structure decode failed
 """
@@ -145,7 +125,7 @@ class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_INFO_2_0_ENTRY', 'type length
     release_str rom_sz bios_char strings')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_count = len(self.strings)
         ven_str = ''
         ver_str = ''
@@ -156,23 +136,23 @@ class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_INFO_2_0_ENTRY', 'type length
             ver_str = self.strings[self.version_str - 1]
         if self.release_str != 0 and self.release_str <= str_count:
             rel_str = self.strings[self.release_str - 1]
-        return SMBIOS_BIOS_INFO_2_0_FORMAT_STRING.format(self.type, self.length, self.handle, ven_str,
-                                                         ver_str, self.segment, rel_str, self.rom_sz, self.bios_char)
+        return f"""
+SMBIOS BIOS Information:
+  Type                      : 0x{self.type:02X} ({self.type:d})
+  Length                    : 0x{self.length:02X}
+  Handle                    : 0x{self.handle:04X}
+  Vendor                    : {ven_str:s}
+  BIOS Version              : {ver_str:s}
+  BIOS Starting Segment     : 0x{self.segment:04X}
+  BIOS Release Date         : {rel_str:s}
+  BIOS ROM Size             : 0x{self.rom_sz:02X}
+  BIOS Characteristics      : 0x{self.bios_char:016X}
+"""
 
 
 SMBIOS_SYSTEM_INFO_ENTRY_ID = 1
 SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT = '=BBHBBBB'
 SMBIOS_SYSTEM_INFO_2_0_ENTRY_SIZE = struct.calcsize(SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT)
-SMBIOS_SYSTEM_INFO_2_0_FORMAT_STRING = """
-SMBIOS System Information:
-  Type                      : 0x{0:02X} ({0:d})
-  Length                    : 0x{1:02X}
-  Handle                    : 0x{2:04X}
-  Manufacturer              : {3:s}
-  Product Name              : {4:s}
-  Version                   : {5:s}
-  Serial Number             : {6:s}
-"""
 SMBIOS_SYSTEM_INFO_2_0_FORMAT_STRING_FAILED = """
 SMBIOS System Information structure decode failed
 """
@@ -182,7 +162,7 @@ class SMBIOS_SYSTEM_INFO_2_0(namedtuple('SMBIOS_SYSTEM_INFO_2_0_ENTRY', 'type le
     version_str serial_str strings')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_count = len(self.strings)
         man_str = ''
         pro_str = ''
@@ -196,11 +176,21 @@ class SMBIOS_SYSTEM_INFO_2_0(namedtuple('SMBIOS_SYSTEM_INFO_2_0_ENTRY', 'type le
             ver_str = self.strings[self.version_str - 1]
         if self.serial_str != 0 and self.serial_str <= str_count:
             ser_str = self.strings[self.serial_str - 1]
-        return SMBIOS_SYSTEM_INFO_2_0_FORMAT_STRING.format(self.type, self.length, self.handle, man_str,
-                                                           pro_str, ver_str, ser_str)
+        return f"""
+SMBIOS System Information:
+  Type                      : 0x{self.type:02X} ({self.type:d})
+  Length                    : 0x{self.length:02X}
+  Handle                    : 0x{self.handle:04X}
+  Manufacturer              : {man_str:s}
+  Product Name              : {pro_str:s}
+  Version                   : {ver_str:s}
+  Serial Number             : {ser_str:s}
+"""
 
+SmbiosInfo = Union[SMBIOS_BIOS_INFO_2_0, SMBIOS_SYSTEM_INFO_2_0]
+StructDecode = Dict[str, Any]  # TODO: Replace Any when TypeDict (PEP 589) supported
 
-struct_decode_tree = {
+struct_decode_tree: Dict[int, StructDecode] = {
     SMBIOS_BIOS_INFO_ENTRY_ID: {'class': SMBIOS_BIOS_INFO_2_0, 'format': SMBIOS_BIOS_INFO_2_0_ENTRY_FMT},
     SMBIOS_SYSTEM_INFO_ENTRY_ID: {'class': SMBIOS_SYSTEM_INFO_2_0, 'format': SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT}
 }
@@ -219,7 +209,8 @@ class SMBIOS(hal_base.HALBase):
         self.smbios_3_ep = None
         self.smbios_3_data = None
 
-    def __get_raw_struct(self, table, start_offset):
+
+    def __get_raw_struct(self, table: bytes, start_offset: int) -> Tuple[Optional[bytes], Optional[int]]:
         """
         Returns a tuple including the raw data and the offset to the next entry.  This allows the function
         to be called multiple times to process all the entries in a table.
@@ -232,20 +223,16 @@ class SMBIOS(hal_base.HALBase):
         """
         # Check for end of table and remaining size to parse
         if table is None:
-            if logger().HAL:
-                logger().log('- Invalid table')
+            logger().log_hal('- Invalid table')
             return (None, None)
         table_len = len(table)
-        if logger().HAL:
-            logger().log('Start Offset: 0x{:04X}, Table Size: 0x{:04X}'.format(start_offset, table_len))
+        logger().log_hal(f'Start Offset: 0x{start_offset:04X}, Table Size: 0x{table_len:04X}')
         if start_offset >= table_len:
-            if logger().HAL:
-                logger().log('- Bad table length (table_len): 0x{:04X}'.format(table_len))
+            logger().log_hal(f'- Bad table length (table_len): 0x{table_len:04X}')
             return (None, None)
         size_left = len(table[start_offset:])
         if size_left < SMBIOS_STRUCT_HEADER_SIZE:
-            if logger().HAL:
-                logger().log('- Table too small (size_left): 0x{:04X}'.format(size_left))
+            logger().log_hal(f'- Table too small (size_left): 0x{size_left:04X}')
             return (None, None)
 
         # Read the header to determine structure fixed size
@@ -253,93 +240,76 @@ class SMBIOS(hal_base.HALBase):
             header = SMBIOS_STRUCT_HEADER(*struct.unpack_from(SMBIOS_STRUCT_HEADER_FMT,
                                                               table[start_offset:start_offset + SMBIOS_STRUCT_HEADER_SIZE]))
         except:
-            if logger().HAL:
-                logger().log('- Unable to unpack data')
+            logger().log_hal('- Unable to unpack data')
             return (None, None)
         str_offset = start_offset + header.Length
         if str_offset + SMBIOS_STRUCT_TERM_SIZE >= table_len:
-            if logger().HAL:
-                logger().log('- Not enough space for termination (str_offset): 0x{:04X}'.format(str_offset))
+            logger().log_hal(f'- Not enough space for termination (str_offset): 0x{str_offset:04X}')
             return (None, None)
 
-        # Process any remaing content (strings)
-        if logger().HAL:
-            logger().log('String start offset: 0x{:04X}'.format(str_offset))
+        # Process any remaining content (strings)
+        logger().log_hal(f'String start offset: 0x{str_offset:04X}')
         tmp_offset = str_offset
         while (tmp_offset + SMBIOS_STRUCT_TERM_SIZE < table_len):
             (value, ) = struct.unpack_from(SMBIOS_STRUCT_TERM_FMT, table[tmp_offset:tmp_offset + SMBIOS_STRUCT_TERM_SIZE])
             if value == SMBIOS_STRUCT_TERM_VAL:
-                if logger().HAL:
-                    logger().log('+ Found structure termination')
+                logger().log_hal('+ Found structure termination')
                 break
             tmp_offset += 1
         if tmp_offset >= table_len:
-            if logger().HAL:
-                logger().log('- End of table reached')
+            logger().log_hal('- End of table reached')
             return (None, None)
         tmp_offset += SMBIOS_STRUCT_TERM_SIZE
 
-        if logger().HAL:
-            logger().log('Structure Size: 0x{:04X}'.format(tmp_offset - start_offset))
+        logger().log_hal(f'Structure Size: 0x{tmp_offset - start_offset:04X}')
         return (table[start_offset:tmp_offset], tmp_offset)
 
-    def __validate_ep_2_values(self, pa):
+    def __validate_ep_2_values(self, pa: int) -> Optional[SMBIOS_2_x_ENTRY_POINT]:
         # Force a second read of memory so we don't have to worry about it falling outside the
         # original buffer.
         try:
-            if logger().HAL:
-                logger().log('Validating 32bit SMBIOS header @ 0x{:08X}'.format(pa))
+            logger().log_hal(f'Validating 32bit SMBIOS header @ 0x{pa:08X}')
             mem_buffer = self.cs.mem.read_physical_mem(pa, SMBIOS_2_x_ENTRY_POINT_SIZE)
             ep_data = SMBIOS_2_x_ENTRY_POINT(*struct.unpack_from(SMBIOS_2_x_ENTRY_POINT_FMT, mem_buffer))
         except:
-            if logger().HAL:
-                logger().log('- Memory read failed')
+            logger().log_hal('- Memory read failed')
             return None
         if ep_data.Anchor != SMBIOS_2_x_SIG:
-            if logger().HAL:
-                logger().log('- Invalid signature')
+            logger().log_hal('- Invalid signature')
             return None
         if not (ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE or ep_data.EntryLen == SMBIOS_2_x_ENTRY_SIZE_OLD):
-            if logger().HAL:
-                logger().log('- Invalid structure size')
+            logger().log_hal('- Invalid structure size')
             return None
         if ep_data.IntAnchor != SMBIOS_2_x_INT_SIG:
-            if logger().HAL:
-                logger().log('- Invalid intermediate signature')
+            logger().log_hal('- Invalid intermediate signature')
             return None
-        if ep_data.TableAddr == 0 or ep_data.TableLen == 0:
-            if logger().HAL:
-                logger().log('- Invalid table address or length')
+        if (ep_data.TableAddr == 0) or (ep_data.TableLen == 0):
+            logger().log_hal('- Invalid table address or length')
             return None
         return ep_data
 
-    def __validate_ep_3_values(self, pa):
+    def __validate_ep_3_values(self, pa: int) -> Optional[SMBIOS_3_x_ENTRY_POINT]:
         # Force a second read of memory so we don't have to worry about it falling outside the
         # original buffer.
         try:
-            if logger().HAL:
-                logger().log('Validating 64bit SMBIOS header @ 0x{:08X}'.format(pa))
+            logger().log_hal(f'Validating 64bit SMBIOS header @ 0x{pa:08X}')
             mem_buffer = self.cs.mem.read_physical_mem(pa, SMBIOS_3_x_ENTRY_POINT_SIZE)
             ep_data = SMBIOS_3_x_ENTRY_POINT(*struct.unpack_from(SMBIOS_3_x_ENTRY_POINT_FMT, mem_buffer))
         except:
-            if logger().HAL:
-                logger().log('- Memory read failed')
+            logger().log_hal('- Memory read failed')
             return None
         if ep_data.Anchor != SMBIOS_3_x_SIG:
-            if logger().HAL:
-                logger().log('- Invalid signature')
+            logger().log_hal('- Invalid signature')
             return None
         if not (ep_data.EntryLen == SMBIOS_3_x_ENTRY_SIZE):
-            if logger().HAL:
-                logger().log('- Invalid structure size')
+            logger().log_hal('- Invalid structure size')
             return None
         if ep_data.MaxSize == 0 or ep_data.TableAddr == 0:
-            if logger().HAL:
-                logger().log('- Invalid table address or maximum size')
+            logger().log_hal('- Invalid table address or maximum size')
             return None
         return ep_data
 
-    def find_smbios_table(self):
+    def find_smbios_table(self) -> bool:
         # Handle the case were we already found the tables
         if self.smbios_2_ep is not None or self.smbios_3_ep is not None:
             return True
@@ -349,58 +319,47 @@ class SMBIOS(hal_base.HALBase):
 
         # Fist get the configuration table using the UEFI HAL.  You may not be able to use the addresses
         # in the table because in some cases they have been converted to a VA and are not mapped.
-        if logger().HAL:
-            logger().log('Chedking UEFI Configuration Table for SMBIOS entry')
-        (ect_found, ect_pa, ect, ect_buf) = self.uefi.find_EFI_Configuration_Table()
-        if ect_found:
-            if logger().HAL:
-                logger().log(ect)
+        logger().log_hal('Checking UEFI Configuration Table for SMBIOS entry')
+        (ect_found, _, ect, _) = self.uefi.find_EFI_Configuration_Table()
+        if ect_found and (ect is not None):
+            logger().log_hal(str(ect))
             if SMBIOS_2_x_GUID in ect.VendorTables:
-                if logger().HAL:
-                    logger().log('+ Found 32bit SMBIOS entry')
-                if logger().HAL:
-                    logger().log('+ Potential 2.x table address: 0x{:016X}'.format(ect.VendorTables[SMBIOS_2_x_GUID]))
+                logger().log_hal('+ Found 32bit SMBIOS entry')
+                logger().log_hal(f'+ Potential 2.x table address: 0x{ect.VendorTables[SMBIOS_2_x_GUID]:016X}')
                 self.smbios_2_guid_found = True
                 entries_to_find += 1
             if SMBIOS_3_x_GUID in ect.VendorTables:
-                if logger().HAL:
-                    logger().log('+ Found 64bit SMBIOS entry')
-                if logger().HAL:
-                    logger().log('+ Potential 3.x table address: 0x{:016X}'.format(ect.VendorTables[SMBIOS_3_x_GUID]))
+                logger().log_hal('+ Found 64bit SMBIOS entry')
+                logger().log_hal(f'+ Potential 3.x table address: 0x{ect.VendorTables[SMBIOS_3_x_GUID]:016X}')
                 self.smbios_3_guid_found = True
                 entries_to_find += 1
 
         # Determine regions to scan
         if self.smbios_2_guid_found or self.smbios_3_guid_found:
-            (smm_base, smm_limit, smm_size) = self.cs.cpu.get_SMRAM()
+            (smm_base, _, _) = self.cs.cpu.get_SMRAM()
             pa = smm_base - SCAN_SIZE
         else:
             entries_to_find = 2
             pa = BOUNDARY_1MB - SCAN_SIZE
 
         # Scan memory for the signature
-        if logger().HAL:
-            logger().log('Scanning memory for {:d} signature(s)'.format(entries_to_find))
+        logger().log_hal(f'Scanning memory for {entries_to_find:d} signature(s)')
         while (pa >= SCAN_LOW_LIMIT):
             mem_buffer = self.cs.mem.read_physical_mem(pa, SCAN_SIZE)
             sig_pa = mem_buffer.find(SMBIOS_2_x_SIG) + pa
             if sig_pa >= pa and self.smbios_2_pa is None:
-                if logger().HAL:
-                    logger().log('+ Found SMBIOS 2.x signature @ 0x{:08X}'.format(sig_pa))
+                logger().log_hal(f'+ Found SMBIOS 2.x signature @ 0x{sig_pa:08X}')
                 self.smbios_2_ep = self.__validate_ep_2_values(sig_pa)
                 if self.smbios_2_ep is not None:
-                    if logger().HAL:
-                        logger().log('+ Verified SMBIOS 2.x Entry Point structure')
+                    logger().log_hal('+ Verified SMBIOS 2.x Entry Point structure')
                     self.smbios_2_pa = sig_pa
                     entries_found += 1
             sig_pa = mem_buffer.find(SMBIOS_3_x_SIG) + pa
             if sig_pa >= pa and self.smbios_3_pa is None:
-                if logger().HAL:
-                    logger().log('+ Found SMBIOS 3.x signature @ 0x{:08X}'.format(sig_pa))
+                logger().log_hal(f'+ Found SMBIOS 3.x signature @ 0x{sig_pa:08X}')
                 self.smbios_3_ep = self.__validate_ep_3_values(sig_pa)
                 if self.smbios_3_ep is not None:
-                    if logger().HAL:
-                        logger().log('+ Verified SMBIOS 3.x Entry Point structure')
+                    logger().log_hal('+ Verified SMBIOS 3.x Entry Point structure')
                     self.smbios_3_pa = sig_pa
                     entries_found += 1
             if entries_found >= entries_to_find:
@@ -409,25 +368,23 @@ class SMBIOS(hal_base.HALBase):
 
         # Check to see if we thing we found the structure
         if self.smbios_2_pa is None and self.smbios_3_pa is None:
-            if logger().HAL:
-                logger().log('- Unable to find SMBIOS tables')
+            logger().log_hal('- Unable to find SMBIOS tables')
             return False
 
         # Read the raw data regions
-        if logger().HAL:
-            logger().log('Reading SMBIOS data tables:')
+        logger().log_hal('Reading SMBIOS data tables:')
         if self.smbios_2_ep is not None and self.smbios_2_ep.TableAddr != 0 and self.smbios_2_ep.TableLen != 0:
             self.smbios_2_data = self.cs.mem.read_physical_mem(self.smbios_2_ep.TableAddr, self.smbios_2_ep.TableLen)
-            if self.smbios_2_data is None and logger().HAL:
-                logger().log('- Failed to read 32bit SMBIOS data')
+            if self.smbios_2_data is None:
+                logger().log_hal('- Failed to read 32bit SMBIOS data')
         if self.smbios_3_ep is not None and self.smbios_3_ep.TableAddr != 0 and self.smbios_3_ep.MaxSize != 0:
             self.smbios_3_data = self.cs.mem.read_physical_mem(self.smbios_3_ep.TableAddr, self.smbios_3_ep.MaxSize)
-            if self.smbios_3_data is None and logger().HAL:
-                logger().log('- Failed to read 64bit SMBIOS data')
+            if self.smbios_3_data is None:
+                logger().log_hal('- Failed to read 64bit SMBIOS data')
 
         return True
 
-    def get_raw_structs(self, struct_type=None, force_32bit=False):
+    def get_raw_structs(self, struct_type: Optional[int], force_32bit: bool):
         """
         Returns a list of raw data blobs for each SMBIOS structure.  The default is to process the 64bit
         entries if available unless specifically specified.
@@ -438,22 +395,18 @@ class SMBIOS(hal_base.HALBase):
         ret_val = []
 
         if self.smbios_3_data is not None and not force_32bit:
-            if logger().HAL:
-                logger().log('Using 64bit SMBIOS table')
+            logger().log_hal('Using 64bit SMBIOS table')
             table = self.smbios_3_data
         elif self.smbios_2_data is not None:
-            if logger().HAL:
-                logger().log('Using 32bit SMBIOS table')
+            logger().log_hal('Using 32bit SMBIOS table')
             table = self.smbios_2_data
         else:
-            if logger().HAL:
-                logger().log('- No SMBIOS data available')
+            logger().log_hal('- No SMBIOS data available')
             return None
 
-        if logger().HAL:
-            logger().log('Getting SMBIOS structures...')
+        logger().log_hal('Getting SMBIOS structures...')
         raw_data, next_offset = self.__get_raw_struct(table, 0)
-        while next_offset is not None:
+        while (next_offset is not None) and (raw_data is not None):
             if struct_type is None:
                 ret_val.append(raw_data)
             else:
@@ -464,43 +417,36 @@ class SMBIOS(hal_base.HALBase):
 
         return ret_val
 
-    def get_header(self, raw_data):
-        if logger().HAL:
-            logger().log('Getting generic SMBIOS header information')
+    def get_header(self, raw_data: bytes) -> Optional[SMBIOS_STRUCT_HEADER]:
+        logger().log_hal('Getting generic SMBIOS header information')
         if raw_data is None:
-            if logger().HAL:
-                logger().log('- Raw data pointer is None')
+            logger().log_hal('- Raw data pointer is None')
             return None
         if len(raw_data) < SMBIOS_STRUCT_HEADER_SIZE:
-            if logger().HAL:
-                logger().log('- Raw data too small for header information')
+            logger().log_hal('- Raw data too small for header information')
             return None
 
         try:
             header = SMBIOS_STRUCT_HEADER(*struct.unpack_from(SMBIOS_STRUCT_HEADER_FMT, raw_data[:SMBIOS_STRUCT_HEADER_SIZE]))
         except:
-            if logger().HAL:
-                logger().log('- Failed to extract information from raw data')
+            logger().log_hal('- Failed to extract information from raw data')
             return None
 
         return header
 
-    def get_string_list(self, raw_data):
+    def get_string_list(self, raw_data: bytes) -> Optional[List[str]]:
         ret_val = []
 
-        if logger().HAL:
-            logger().log('Getting strings from structure')
+        logger().log_hal('Getting strings from structure')
         raw_data_size = len(raw_data)
         header = self.get_header(raw_data)
         if header is None:
             return None
         if header.Length + SMBIOS_STRUCT_TERM_SIZE > raw_data_size:
-            if logger().HAL:
-                logger().log('- Data buffer too small for structure')
+            logger().log_hal('- Data buffer too small for structure')
             return None
         if header.Length + SMBIOS_STRUCT_TERM_SIZE == raw_data_size:
-            if logger().HAL:
-                logger().log('+ No strings in this structure')
+            logger().log_hal('+ No strings in this structure')
             return ret_val
 
         index = 0
@@ -508,28 +454,24 @@ class SMBIOS(hal_base.HALBase):
         while tmp_offset + index + 1 < raw_data_size:
             (value, ) = struct.unpack_from('=B', raw_data[tmp_offset + index:])
             if value == 0:
-                if logger().HAL:
-                    logger().log('+ Unpacking string of size {:d}'.format(index))
-                (string, ) = struct.unpack_from('={:d}s'.format(index), raw_data[tmp_offset:])
+                logger().log_hal(f'+ Unpacking string of size {index:d}')
+                (string, ) = struct.unpack_from(f'={index:d}s', raw_data[tmp_offset:])
                 string = bytestostring(string)
-                if logger().HAL:
-                    logger().log('+ Found: {:s}'.format(string))
+                logger().log_hal(f'+ Found: {string:s}')
                 ret_val.append(string)
                 tmp_offset += index + 1
                 index = 0
                 continue
             index += 1
 
-        if logger().HAL:
-            logger().log('+ Found {:d} strings'.format(len(ret_val)))
+        logger().log_hal(f'+ Found {len(ret_val):d} strings')
         return ret_val
 
-    def get_decoded_structs(self, struct_type=None, force_32bit=False):
+    def get_decoded_structs(self, struct_type: Optional[int] = None, force_32bit: bool =False) -> Optional[List[Type[SmbiosInfo]]]:
         ret_val = []
 
         # Determine if the structure exists in the table
-        if logger().HAL:
-            logger().log('Getting decoded SMBIOS structures')
+        logger().log_hal('Getting decoded SMBIOS structures')
         structs = self.get_raw_structs(struct_type, force_32bit)
         if structs is None:
             return None
@@ -539,12 +481,10 @@ class SMBIOS(hal_base.HALBase):
             # Get the structures header information so we can determine the correct decode method
             header = self.get_header(data)
             if header is None:
-                if logger().HAL:
-                    logger().log('- Could not decode header')
+                logger().log_hal('- Could not decode header')
                 continue
             if header.Type not in struct_decode_tree:
-                if logger().HAL:
-                    logger().log('- Structure {:d} not in decode list'.format(header.Type))
+                logger().log_hal(f'- Structure {header.Type:d} not in decode list')
                 continue
 
             # Unpack the structure and then get the strings
@@ -552,12 +492,10 @@ class SMBIOS(hal_base.HALBase):
             try:
                 decode_data = struct.unpack_from(tmp_decode['format'], data)
             except:
-                if logger().HAL:
-                    logger().log('- Could not decode structure')
+                logger().log_hal('- Could not decode structure')
                 continue
             if decode_data is None:
-                if logger().HAL:
-                    logger().log('- No structure data was decoded')
+                logger().log_hal('- No structure data was decoded')
                 continue
             strings = self.get_string_list(data)
             if strings is not None:
@@ -567,8 +505,7 @@ class SMBIOS(hal_base.HALBase):
             try:
                 decode_object = tmp_decode['class'](*decode_data)
             except:
-                if logger().HAL:
-                    logger().log('- Failed to create structure')
+                logger().log_hal('- Failed to create structure')
                 continue
             ret_val.append(decode_object)
 
