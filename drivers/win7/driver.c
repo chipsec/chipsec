@@ -41,8 +41,18 @@ PVOID
   SIZE_T     NumberOfBytes,
   ULONG      Tag
 );
+
+typedef
+PVOID
+(*PFN_ExAllocatePoolWithTag)(
+    ULONG64 Flags,
+    SIZE_T     NumberOfBytes,
+    ULONG      Tag
+    );
+
 UNICODE_STRING functionName = {0};
 PFN_ExAllocatePool2 pfnExAllocatePool2 = NULL;
+PFN_ExAllocatePoolWithTag pfnExAllocatePoolWithTag = NULL;
 
 UINT32
 ReadPCICfg(
@@ -855,13 +865,21 @@ DriverDeviceControl(
 
             RtlInitUnicodeString(&functionName, L"ExAllocatePool2");
             pfnExAllocatePool2 = (PFN_ExAllocatePool2)MmGetSystemRoutineAddress(&functionName);
+            RtlInitUnicodeString(&functionName, L"ExAllocatePoolWithTag");
+            pfnExAllocatePoolWithTag = (PFN_ExAllocatePoolWithTag)MmGetSystemRoutineAddress(&functionName);
 
             if (pfnExAllocatePool2 != NULL) {
                 ucode_buf = pfnExAllocatePool2( NonPagedPool, ucode_size, 0x3184 );
-            } else {
-                // Fall back to call the old api
-                ucode_buf = ExAllocatePoolWithTag( NonPagedPool, ucode_size, 0x3184 );
+            } else if (pfnExAllocatePoolWithTag != NULL) {
+                // Fall back to call the old api            
+                ucode_buf = pfnExAllocatePoolWithTag( NonPagedPool, ucode_size, 0x3184 );
             }
+            else {
+                DbgPrint("[chipsec] ERROR: couldn't find the correct kernel api\n");
+                Status = STATUS_NOT_IMPLEMENTED;
+                break;
+            }
+            
             if( !ucode_buf )
               {
                 DbgPrint( "[chipsec] ERROR: couldn't allocate pool for ucode binary\n" );
