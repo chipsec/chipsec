@@ -24,7 +24,7 @@ x64/IA-64 Paging functionality including x86 page tables, Extended Page Tables (
 
 import sys
 import struct
-
+from typing import Dict, List, Optional, Any
 import chipsec.defines
 from chipsec.logger import logger
 from chipsec.exceptions import InvalidMemoryAddress
@@ -39,16 +39,17 @@ ADDR_4KB = 0xFFFFFFFFFFFFF000 & MAXPHYADDR
 ADDR_2MB = 0xFFFFFFFFFFE00000 & MAXPHYADDR
 ADDR_1GB = 0xFFFFFFFFC0000000 & MAXPHYADDR
 
+TranslationType = Dict[int, Dict[str, Any]]  # TODO: TypedDict (PEP589)
 
 class c_translation:
 
     def __init__(self):
-        self.translation = {}
+        self.translation: TranslationType = {}
 
-    def is_translation_exist(self, addr, mask, size):
+    def is_translation_exist(self, addr: int, mask: int, size: str) -> bool:
         return ((addr & mask) in self.translation) and (self.translation[addr & mask]['size'] == size)
 
-    def get_translation(self, addr):
+    def get_translation(self, addr: int) -> Optional[int]:
         if len(self.translation) == 0:
             return addr
         ADDR_4KB = 0xFFFFFFFFFFFFF000
@@ -64,7 +65,7 @@ class c_translation:
             result = None
         return result
 
-    def get_pages_by_physaddr(self, addr):
+    def get_pages_by_physaddr(self, addr: int) -> List[Dict[str, int]]:
         SIZE = {'4KB': ADDR_4KB, '2MB': ADDR_2MB, '1GB': ADDR_1GB}
         result = []
         for i in self.translation.keys():
@@ -74,14 +75,14 @@ class c_translation:
                 result.append(page)
         return result
 
-    def get_address_space(self):
+    def get_address_space(self) -> int:
         total = 0
         mem_range = self.get_mem_range()
         for i in mem_range:
             total += i[1] - i[0]
         return total
 
-    def get_mem_range(self, noattr=False):
+    def get_mem_range(self, noattr: bool = False) -> List[List[int]]:
         SIZE = {'4KB': SIZE_4KB, '2MB': SIZE_2MB, '1GB': SIZE_1GB}
         perm = {self.translation[a]['addr']: self.translation[a] for a in self.translation.keys()}
         mem_range = []
@@ -98,18 +99,18 @@ class c_translation:
                 mem_range += [[addr, addr + size, attr]]
         return mem_range
 
-    def add_page(self, virt, phys, size, attr):
+    def add_page(self, virt: int, phys: int, size: str, attr: str) -> None:
         if size not in ['4KB', '2MB', '4MB', '1GB']:
             raise Exception('Invalid size!')
         self.translation[virt] = {'addr': phys, 'size': size, 'attr': attr}
         return
 
-    def del_page(self, addr):
+    def del_page(self, addr: int) -> None:
         if addr in self.translation:
             del self.translation[addr]
         return
 
-    def expand_pages(self, exp_size):
+    def expand_pages(self, exp_size: str) -> None:
         SIZE = {'1GB': '2MB', '2MB': '4KB'}
         for virt in self.translation.keys():
             size = self.translation[virt]['size']
@@ -124,8 +125,8 @@ class c_translation:
 
 class c_reverse_translation:
 
-    def __init__(self, translation):
-        self.reverse_translation = {}
+    def __init__(self, translation: TranslationType):
+        self.reverse_translation: Dict[int, List[Dict[str, Any]]] = {}
         for virt in translation.keys():
             phys = translation[virt]['addr']
             size = translation[virt]['size']
@@ -134,7 +135,7 @@ class c_reverse_translation:
                 self.reverse_translation[phys] = []
             self.reverse_translation[phys].append({'addr': virt, 'size': size, 'attr': attr})
 
-    def get_reverse_translation(self, addr):
+    def get_reverse_translation(self, addr: int) ->  List[Dict[str, Any]]:
         ADDR_4KB = 0xFFFFFFFFFFFFF000
         addr &= ADDR_4KB
         return self.reverse_translation[addr] if addr in self.reverse_translation else []
@@ -145,7 +146,7 @@ class c_paging_memory_access:
     def __init__(self, cs):
         self.cs = cs
 
-    def readmem(self, name, addr, size=4096):
+    def readmem(self, name: str, addr: int, size: int = 4096) -> bytes:
         return self.cs.mem.read_physical_mem(addr, size)
 
 
@@ -155,10 +156,13 @@ class c_paging_with_2nd_level_translation(c_paging_memory_access):
         c_paging_memory_access.__init__(self, cs)
         self.translation_level2 = c_translation()
 
-    def readmem(self, name, addr, size=4096):
+    def readmem(self, name: str, addr: int, size: int = 4096) -> bytes:
         phys = self.translation_level2.get_translation(addr)
+        if phys is None:
+            logger().log_hal('[paging] get_translation(): phys is None. Returning 0.')
+            return b''
         if phys != addr:
-            name += '_0x{:08X}'.format(phys)
+            name += f'_0x{phys:08X}'
         return super(c_paging_with_2nd_level_translation, self).readmem(name, phys, size)
 
 
@@ -175,19 +179,19 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
         self.failure = False
         self.canonical_msb = 47
 
-    def get_canonical(self, va):
+    def get_canonical(self, va: int) -> int:
         canonical_mask = (ADDR_MASK << (self.canonical_msb + 1)) & ADDR_MASK
         canonical_va = (va | canonical_mask) if (va >> self.canonical_msb) & 0x1 else va
         return canonical_va
 
-    def get_field(self, entry, desc):
+    def get_field(self, entry: int, desc: Dict[str, int]) -> int:
         return (entry >> desc['offset']) & desc['mask']
 
-    def set_field(self, value, desc):
+    def set_field(self, value: int, desc: Dict[str, int]) -> int:
         return (value & desc['mask']) << desc['offset']
 
-    def read_entries(self, info, addr, size=8):
-        data = self.readmem('{}_{}_0x{:08X}'.format(self.name, info, addr), addr, 0x1000)
+    def read_entries(self, info: str, addr: int, size: int = 8) -> List[Any]:
+        data = self.readmem(f'{self.name}_{info}_0x{addr:08X}', addr, 0x1000)
         entries = struct.unpack('<512Q', data)
         if size == 16:
             entries = [[entries[i], entries[i + 1]] for i in range(0, 512, 2)]
@@ -199,73 +203,67 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
             return [entries[0]]
         return entries
 
-    def print_info(self, name):
-        logger().log('\n  {} physical address ranges:'.format(name))
+    def print_info(self, name: str) -> None:
+        logger().log(f'\n  {name} physical address ranges:')
         mem_range = self.get_mem_range()
         for index in range(len(mem_range)):
             i = mem_range[index]
-            logger().log('    0x{:013X} - 0x{:013X} {:8d}  {}'.format(i[0], i[1] - 1, (i[1] - i[0]) >> 12, i[2]))
+            logger().log(f'    0x{i[0]:013X} - 0x{i[1] - 1:013X} {(i[1] - i[0]) >> 12:8d}  {i[2]}')
 
-        logger().log('\n  {} pages:'.format(name))
+        logger().log(f'\n  {name} pages:')
         for i in sorted(self.pt.keys()):
-            logger().log('    0x{:013X}  {}'.format(i, self.pt[i]))
+            logger().log(f'    0x{i:013X}  {self.pt[i]}')
         logger().log('\n')
-        logger().log('  {} size: {:d} KB, address space: {:d} MB'.format(name, len(self.pt.keys()) * 4, self.get_address_space() >> 20))
+        logger().log(f'  {name} size: {len(self.pt.keys()) * 4:d} KB, address space: {self.get_address_space() >> 20:d} MB')
         return
 
-    def check_misconfig(self, addr_list):
+    def check_misconfig(self, addr_list: List[int]) -> None:
         addr_list = [x & MAXPHYADDR for x in addr_list]
         mem_range = self.get_mem_range()
         for addr in addr_list:
             for i in range(len(mem_range)):
                 if (mem_range[i][0] <= addr) and (addr < mem_range[i][1]):
-                    print('*** WARNING: PAGE TABLES MISCONFIGURATION  0x{:013X}'.format(addr))
+                    logger().log_hal(f'*** WARNING: PAGE TABLES MISCONFIGURATION  0x{addr:013X}')
         return
 
-    def save_configuration(self, path):
-        cfg = open(path, 'w')
-        try:
-            cfg.write(str(self.translation_level2.translation) + '\n')
-            cfg.write(str(self.translation) + '\n')
-            cfg.write(str(self.pt))
-        finally:
-            cfg.close()
+    def save_configuration(self, path: str) -> None:
+        with open(path, 'w') as cfg:
+            try:
+                cfg.write(str(self.translation_level2.translation) + '\n')
+                cfg.write(str(self.translation) + '\n')
+                cfg.write(str(self.pt))
+            except:
+                logger().log_hal(f'[paging] Error saving: {path}')
         return
 
-    def load_configuration(self, path):
-        cfg = open(path, 'r')
-        try:
-            self.translation_level2.translation = eval(cfg.readline())
-            self.translation = eval(cfg.readline())
-            self.pt = eval(cfg.readline())
-        finally:
-            cfg.close()
+    def load_configuration(self, path: str) -> None:
+        with open(path, 'r') as cfg:
+            try:
+                self.translation_level2.translation = eval(cfg.readline())
+                self.translation = eval(cfg.readline())
+                self.pt = eval(cfg.readline())
+            finally:
+                logger().log_hal(f'[paging] Error loading: {path}')
         return
 
-    def read_pt_and_show_status(self, path, name, ptr):
-        #txt = open(path, 'w')
+    def read_pt_and_show_status(self, path: str, name: str, ptr: int) -> None:
+        logger().log_hal(f'[paging] Reading {name} page tables at 0x{ptr:016X}...')
         try:
-            if logger().HAL:
-                logger().log('[paging] reading {} page tables at 0x{:016X} ...'.format(name, ptr))
-            #self.out = txt
             self.read_page_tables(ptr)
-            self.print_info('[paging] {} page tables'.format(name))
-            #self.out = sys.stdout
-            self.failure = False
-            if logger().HAL:
-                logger().log('[paging] size: {:d} KB, address space: {:d} MB'.format(len(self.pt.keys()) * 4, self.get_address_space() >> 20))
         except InvalidMemoryAddress:
             self.translation_level2.translation = {}
             self.translation = {}
             self.pt = {}
             self.failure = True
             if logger().HAL:
-                logger().log_error('    Invalid {} Page Tables!'.format(name))
-        # finally:
-        #    #txt.close()
+                logger().log_error(f'    Invalid {name} Page Tables!')
+        else:
+            self.print_info(f'[paging] {name} page tables')
+            self.failure = False
+            logger().log_hal(f'[paging] size: {len(self.pt.keys()) * 4:d} KB, address space: {self.get_address_space() >> 20:d} MB')
         return
 
-    def read_page_tables(self, entry):
+    def read_page_tables(self, entry: int):
         raise Exception("Function needs to be implemented by child class")
 
 
@@ -282,31 +280,31 @@ class c_4level_page_tables(c_paging):
         self.PT_NAME = ['EPTP', 'PML4E', 'PDPTE', 'PDE', 'PTE']
         self.PT_SIZE = ['', '', '1GB', '2MB', '4KB']
 
-    def get_virt_addr(self, pml4e_index, pdpte_index=0, pde_index=0, pte_index=0):
+    def get_virt_addr(self, pml4e_index: int, pdpte_index: int = 0, pde_index: int = 0, pte_index: int = 0) -> int:
         ofs1 = self.set_field(pml4e_index, self.PML4_INDX)
         ofs2 = self.set_field(pdpte_index, self.PDPT_INDX)
         ofs3 = self.set_field(pde_index, self.PD_INDX)
         ofs4 = self.set_field(pte_index, self.PT_INDX)
         return (ofs1 | ofs2 | ofs3 | ofs4)
 
-    def print_entry(self, lvl, pa, va=0, perm=''):
+    def print_entry(self, lvl: int, pa: int, va: int = 0, perm: str = '') -> None:
         canonical_va = self.get_canonical(va)
-        info = '  {}{:6}: {:013X}'.format('  ' * lvl, self.PT_NAME[lvl], pa)
+        info = f'  {"  " * lvl}{self.PT_NAME[lvl]:6}: {pa:013X}'
         if perm != '':
             size = self.PT_SIZE[lvl]
-            info += ' - {} PAGE  {}'.format(size, perm)
+            info += f' - {size} PAGE  {perm}'
             info = info.ljust(64)
             if pa == va:
                 info += '1:1 mapping'
             else:
-                info += '{}: {:013X}'.format(self.PHYSICAL_ADDR_NAME, canonical_va)
+                info += f'{self.PHYSICAL_ADDR_NAME}: {canonical_va:013X}'
 
             self.add_page(canonical_va, pa, size, perm)
 
         logger().log(info)
         return
 
-    def read_page_tables(self, ptr):
+    def read_page_tables(self, ptr: int) -> None:
         addr = ptr & ADDR_4KB
         self.pointer = addr
         self.pt = {addr: 'pml4'}
@@ -315,13 +313,13 @@ class c_4level_page_tables(c_paging):
         self.read_pml4(addr)
         return
 
-    def is_present(self, entry):
+    def is_present(self, entry: int) -> int:
         return entry & chipsec.defines.BIT0
 
-    def is_bigpage(self, entry):
+    def is_bigpage(self, entry: int) -> int:
         return entry & chipsec.defines.BIT7
 
-    def read_pml4(self, addr):
+    def read_pml4(self, addr: int) -> None:
         pml4 = self.read_entries('pml4', addr)
         for pml4e_index in range(len(pml4)):
             pml4e = pml4[pml4e_index]
@@ -332,7 +330,7 @@ class c_4level_page_tables(c_paging):
                 self.read_pdpt(addr, pml4e_index)
         return
 
-    def get_attr(self, entry):
+    def get_attr(self, entry: int) -> str:
         ret = ''
         if entry & chipsec.defines.BIT1:
             ret += 'W'
@@ -344,7 +342,7 @@ class c_4level_page_tables(c_paging):
             ret += 'S'
         return ret
 
-    def read_pdpt(self, addr, pml4e_index):
+    def read_pdpt(self, addr: int, pml4e_index: int) -> None:
         pdpt = self.read_entries('pdpt', addr)
         for pdpte_index in range(len(pdpt)):
             pdpte = pdpt[pdpte_index]
@@ -360,7 +358,7 @@ class c_4level_page_tables(c_paging):
                     self.read_pd(addr, pml4e_index, pdpte_index)
         return
 
-    def read_pd(self, addr, pml4e_index, pdpte_index):
+    def read_pd(self, addr: int, pml4e_index: int, pdpte_index: int) -> None:
         pd = self.read_entries('pd', addr)
         for pde_index in range(len(pd)):
             pde = pd[pde_index]
@@ -376,7 +374,7 @@ class c_4level_page_tables(c_paging):
                     self.read_pt(addr, pml4e_index, pdpte_index, pde_index)
         return
 
-    def read_pt(self, addr, pml4e_index, pdpte_index, pde_index):
+    def read_pt(self, addr: int, pml4e_index: int, pdpte_index: int, pde_index: int) -> None:
         pt = self.read_entries('pt', addr)
         for pte_index in range(len(pt)):
             pte = pt[pte_index]
@@ -386,7 +384,7 @@ class c_4level_page_tables(c_paging):
                 self.print_entry(4, phys, virt, self.get_attr(pte))
         return
 
-    def read_entry_by_virt_addr(self, virt):
+    def read_entry_by_virt_addr(self, virt: int) -> Dict[str, Any]:
         if self.pointer is None:
             raise Exception('Page Table pointer is undefined!')
         addr = self.pointer
@@ -415,7 +413,7 @@ class c_4level_page_tables(c_paging):
                             if self.is_present(pte):
                                 addr = (pte & ADDR_4KB) | (virt & ~ADDR_4KB)
                                 return {'addr': addr, 'attr': self.get_attr(pte), 'size': '4KB'}
-        return None
+        return {'addr': 0, 'attr': '', 'size': ''}
 
 
 class c_ia32e_page_tables(c_4level_page_tables):
@@ -430,16 +428,16 @@ class c_ia32e_page_tables(c_4level_page_tables):
         self.US = {'mask': 0x1, 'offset': 2}
         self.BIGPAGE = {'mask': 0x1, 'offset': 7}
 
-    def is_present(self, entry):
+    def is_present(self, entry: int) -> bool:
         return self.get_field(entry, self.P) != 0
 
-    def is_bigpage(self, entry):
+    def is_bigpage(self, entry: int) -> bool:
         return self.get_field(entry, self.BIGPAGE) != 0
 
-    def get_attr(self, entry):
+    def get_attr(self, entry: int) -> str:
         RW_DESC = ['R', 'W']
         US_DESC = ['S', 'U']
-        return RW_DESC[self.get_field(entry, self.RW)] + ' ' + US_DESC[self.get_field(entry, self.US)]
+        return f'{RW_DESC[self.get_field(entry, self.RW)]} {US_DESC[self.get_field(entry, self.US)]}'
 
 
 class c_pae_page_tables(c_ia32e_page_tables):
@@ -451,7 +449,7 @@ class c_pae_page_tables(c_ia32e_page_tables):
         self.PDPT_INDX = {'mask': 0x003, 'offset': 30}
         self.PT_NAME = ['', 'CR3', 'PDPTE', 'PDE', 'PTE']
 
-    def read_page_tables(self, ptr):
+    def read_page_tables(self, ptr: int) -> None:
         addr = ptr & ADDR_4KB
         self.pointer = addr
         self.pt = {addr: 'pdpt'}
@@ -460,10 +458,10 @@ class c_pae_page_tables(c_ia32e_page_tables):
         self.read_pdpt(addr, None)
         return
 
-    def read_pml4(self, addr):
+    def read_pml4(self, addr: int):
         raise Exception('PAE Page tables have no PML4!')
 
-    def read_pdpt(self, addr, pml4e_index=None):
+    def read_pdpt(self, addr: int, pml4e_index: Optional[int] = None) -> None:
         if not pml4e_index:
             raise Exception('PAE Page tables have no PML4!')
         pdpt = self.read_entries('pdpt', addr)
@@ -493,23 +491,23 @@ class c_extended_page_tables(c_4level_page_tables):
         self.BIGPAGE = {'mask': 0x1, 'offset': 7}
         self.canonical_msb = 63
 
-    def is_present(self, entry):
+    def is_present(self, entry: int) ->  bool:
         return self.get_field(entry, self.XWR) != 0
 
-    def is_bigpage(self, entry):
+    def is_bigpage(self, entry: int) -> bool:
         return self.get_field(entry, self.BIGPAGE) != 0
 
-    def get_attr(self, entry):
+    def get_attr(self, entry: int) -> str:
         XWR_DESC = ['---', '--R', '-W-', '-WR', 'X--', 'X-R', 'XW-', 'XWR']
         MEM_DESC = ['UC', 'WC', '02', '03', 'WT', 'WP', 'WB', 'UC-']
-        return XWR_DESC[self.get_field(entry, self.XWR)] + ' ' + MEM_DESC[self.get_field(entry, self.MEM_TYPE)]
+        return f'{XWR_DESC[self.get_field(entry, self.XWR)]} {MEM_DESC[self.get_field(entry, self.MEM_TYPE)]}'
 
-    def read_pt_and_show_status(self, path, name, ptr):
+    def read_pt_and_show_status(self, path: str, name: str, ptr: int) -> None:
         super(c_extended_page_tables, self).read_pt_and_show_status(path, name, ptr)
-        self.check_misconfig(self.pt)
+        self.check_misconfig(list(self.pt))
         return
 
-    def map_bigpage_1G(self, virt, i):
+    def map_bigpage_1G(self, virt: int, i: int) -> None:
         if self.pointer is None:
             raise Exception('Page Table pointer is undefined!')
         addr = self.pointer
@@ -543,7 +541,7 @@ class c_vtd_page_tables(c_extended_page_tables):
         self.domains = {}
         self.cpt = {}
 
-    def read_vtd_context(self, path, ptr):
+    def read_vtd_context(self, path: str, ptr: int) -> None:
         txt = open(path, 'w')
         try:
             self.out = txt
@@ -556,8 +554,8 @@ class c_vtd_page_tables(c_extended_page_tables):
             if len(self.domains) != 0:
                 logger().log('[paging] VT-d domains:')
                 for domain in sorted(self.domains.keys()):
-                    logger().log('  0x{:016X} '.format(domain))
-            logger().log('[paging] total VT-d domains: {:d}\n'.format(len(self.domains)))
+                    logger().log(f'  0x{domain:016X} ')
+            logger().log(f'[paging] Total VT-d domains: {len(self.domains):d}\n')
 
             logger().log('[paging] VT-d context entries:')
             for source_id in sorted(self.context.keys()):
@@ -565,12 +563,12 @@ class c_vtd_page_tables(c_extended_page_tables):
 
             logger().log('[paging] VT-d context pages:')
             for i in sorted(self.cpt.keys()):
-                logger().log('    0x{:013X}  {}'.format(i, self.cpt[i]))
+                logger().log(f'    0x{i:013X}  {self.cpt[i]}')
         finally:
             txt.close()
         return
 
-    def read_re(self, addr):
+    def read_re(self, addr: int) -> None:
         re = self.read_entries('re', addr, 16)
         for ree_index in range(len(re)):
             ree_lo = re[ree_index][0]
@@ -581,7 +579,7 @@ class c_vtd_page_tables(c_extended_page_tables):
                 self.cpt[addr] = 'context'
         return
 
-    def read_ce(self, addr, ree_index):
+    def read_ce(self, addr: int, ree_index: int) -> None:
         ce = self.read_entries('ce', addr, 16)
         for cee_index in range(len(ce)):
             cee_lo = ce[cee_index][0]
@@ -594,7 +592,7 @@ class c_vtd_page_tables(c_extended_page_tables):
                     self.domains[slptptr] = 1
         return
 
-    def print_context_entry(self, source_id, cee):
+    def print_context_entry(self, source_id: int, cee: Dict[int, int]) -> None:
         if self.get_field(cee[0], self.CE_LO_P):
             info = (
                 self.get_field(source_id, self.DID_BUS),
@@ -610,12 +608,12 @@ class c_vtd_page_tables(c_extended_page_tables):
             logger().log('  {:02X}:{:02X}.{:X}  DID: {:02X}  AVAIL: {:X}  AW: {:X}  T: {:X}  FPD: {:X}  SLPTPTR: {:016X}'.format(*info))
         return
 
-    def read_page_tables(self, ptr):
-        logger().log('  Page Tables for domain 0x{:013X}: '.format(ptr))
+    def read_page_tables(self, ptr: int) -> None:
+        logger().log(f'  Page Tables for domain 0x{ptr:013X}: ')
         super(c_vtd_page_tables, self).read_page_tables(ptr)
         return
 
-    def read_pt_and_show_status(self, path, name, ptr):
+    def read_pt_and_show_status(self, path: str, name: str, ptr: int) -> None:
         super(c_vtd_page_tables, self).read_pt_and_show_status(path, name, ptr)
-        self.check_misconfig(self.cpt)
+        self.check_misconfig(list(self.cpt))
         return
