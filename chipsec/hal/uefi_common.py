@@ -28,12 +28,13 @@ import struct
 import codecs
 from collections import namedtuple
 from uuid import UUID
+from typing import Dict, List, Tuple, Optional, Any, Callable
 
 from chipsec.file import read_file, write_file
 from chipsec.logger import logger, dump_buffer, dump_buffer_bytes
 from chipsec.defines import bytestostring
 
-#from chipsec.helper.oshelper import helper
+# from chipsec.helper.oshelper import helper
 
 
 ################################################################################################
@@ -63,11 +64,11 @@ EFI_VARIABLE_APPEND_WRITE = 0x00000040  # Variable allows append
 UEFI23_1_AUTHENTICATED_VARIABLE_ATTRIBUTES = (EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
 
 
-def IS_VARIABLE_ATTRIBUTE(_c, _Mask):
+def IS_VARIABLE_ATTRIBUTE(_c: int, _Mask: int) -> bool:
     return ((_c & _Mask) != 0)
 
 
-def IS_EFI_VARIABLE_AUTHENTICATED(attr):
+def IS_EFI_VARIABLE_AUTHENTICATED(attr: int) -> bool:
     return (IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) or IS_VARIABLE_ATTRIBUTE(attr, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS))
 
 
@@ -75,7 +76,7 @@ MAX_VARIABLE_SIZE = 1024
 MAX_NVRAM_SIZE = 1024 * 1024
 
 
-def get_nvar_name(nvram, name_offset, isAscii):
+def get_nvar_name(nvram: bytes, name_offset: int, isAscii: bool):
     if isAscii:
         nend = nvram.find(b'\x00', name_offset)
         name = nvram[name_offset:nend].decode('latin1')
@@ -153,7 +154,7 @@ class StatusCode:
   '''
 
 
-EFI_STATUS_DICT = {
+EFI_STATUS_DICT: Dict[int, str] = {
     StatusCode.EFI_SUCCESS: "EFI_SUCCESS",
     StatusCode.EFI_LOAD_ERROR: "EFI_LOAD_ERROR",
     StatusCode.EFI_INVALID_PARAMETER: "EFI_INVALID_PARAMETER",
@@ -192,7 +193,7 @@ EFI_STATUS_DICT = {
 EFI_MAX_BIT = 0x8000000000000000
 
 
-def EFI_ERROR_STR(error):
+def EFI_ERROR_STR(error: int) -> str:
     """
     Translates an EFI_STATUS value into its corresponding textual representation.
     """
@@ -207,25 +208,25 @@ EFI_GUID_FMT = "16s"
 EFI_GUID_SIZE = struct.calcsize(EFI_GUID_FMT)
 
 
-def EFI_GUID_STR(guid):
+def EFI_GUID_STR(guid: bytes) -> str:
     guid_str = UUID(bytes_le=guid)
     return str(guid_str).upper()
 
 
-def align(of, size):
+def align(of:int, size: int) -> int:
     of = (((of + size - 1) // size) * size)
     return of
 
 
-def bit_set(value, mask, polarity=False):
+def bit_set(value: int, mask: int, polarity: bool = False) -> bool:
     if polarity:
         value = ~value
     return ((value & mask) == mask)
 
 
-def get_3b_size(s):
-    s = bytestostring(s)
-    return (ord(s[0]) + (ord(s[1]) << 8) + (ord(s[2]) << 16))
+def get_3b_size(s_data: bytes) -> int:
+    s_str = bytestostring(s_data)
+    return (ord(s_str[0]) + (ord(s_str[1]) << 8) + (ord(s_str[2]) << 16))
 
 
 # #################################################################################################
@@ -294,24 +295,25 @@ def parse_pkcs7(data):
     return
 
 
-sig_types = {"C1C41626-504C-4092-ACA9-41F936934328": ("EFI_CERT_SHA256_GUID", parse_sha256, 0x30, "SHA256"),
-             "3C5766E8-269C-4E34-AA14-ED776E85B3B6": ("EFI_CERT_RSA2048_GUID", parse_rsa2048, 0x110, "RSA2048"),
-             "E2B36190-879B-4A3D-AD8D-F2E7BBA32784": ("EFI_CERT_RSA2048_SHA256_GUID", parse_rsa2048_sha256, 0x110, "RSA2048_SHA256"),
-             "826CA512-CF10-4AC9-B187-BE01496631BD": ("EFI_CERT_SHA1_GUID", parse_sha1, 0x24, "SHA1"),
-             "67F8444F-8743-48F1-A328-1EAAB8736080": ("EFI_CERT_RSA2048_SHA1_GUID", parse_rsa2048_sha1, 0x110, "RSA2048_SHA1"),
-             "A5C059A1-94E4-4AA7-87B5-AB155C2BF072": ("EFI_CERT_X509_GUID", parse_x509, 0, "X509"),
-             "0B6E5233-A65C-44C9-9407-D9AB83BFC8BD": ("EFI_CERT_SHA224_GUID", parse_sha224, 0x2c, "SHA224"),
-             "FF3E5307-9FD0-48C9-85F1-8AD56C701E01": ("EFI_CERT_SHA384_GUID", parse_sha384, 0x40, "SHA384"),
-             "093E0FAE-A6C4-4F50-9F1B-D41E2B89C19A": ("EFI_CERT_SHA512_GUID", parse_sha512, 0x50, "SHA512"),
-             "3bd2a492-96c0-4079-b420-fcf98ef103ed": ("EFI_CERT_X509_SHA256_GUID", parse_x509_sha256, 0x40, "X509_SHA256"),
-             "7076876e-80c2-4ee6-aad2-28b349a6865b": ("EFI_CERT_X509_SHA384_GUID", parse_x509_sha384, 0x50, "X509_SHA384"),
-             "446dbf63-2502-4cda-bcfa-2465d2b0fe9d": ("EFI_CERT_X509_SHA512_GUID", parse_x509_sha512, 0x60, "X509_SHA512"),
-             "452e8ced-dfff-4b8c-ae01-5118862e682c": ("EFI_CERT_EXTERNAL_MANAGEMENT_GUID", parse_external, 0x11, "EXTERNAL_MANAGEMENT"),
-             "4AAFD29D-68DF-49EE-8AA9-347D375665A7": ("EFI_CERT_TYPE_PKCS7_GUID", parse_pkcs7, 0, "PKCS7"),
-             }
+sig_types: Dict[str, Tuple[str, Callable, int, str]] = {
+    "C1C41626-504C-4092-ACA9-41F936934328": ("EFI_CERT_SHA256_GUID", parse_sha256, 0x30, "SHA256"),
+    "3C5766E8-269C-4E34-AA14-ED776E85B3B6": ("EFI_CERT_RSA2048_GUID", parse_rsa2048, 0x110, "RSA2048"),
+    "E2B36190-879B-4A3D-AD8D-F2E7BBA32784": ("EFI_CERT_RSA2048_SHA256_GUID", parse_rsa2048_sha256, 0x110, "RSA2048_SHA256"),
+    "826CA512-CF10-4AC9-B187-BE01496631BD": ("EFI_CERT_SHA1_GUID", parse_sha1, 0x24, "SHA1"),
+    "67F8444F-8743-48F1-A328-1EAAB8736080": ("EFI_CERT_RSA2048_SHA1_GUID", parse_rsa2048_sha1, 0x110, "RSA2048_SHA1"),
+    "A5C059A1-94E4-4AA7-87B5-AB155C2BF072": ("EFI_CERT_X509_GUID", parse_x509, 0, "X509"),
+    "0B6E5233-A65C-44C9-9407-D9AB83BFC8BD": ("EFI_CERT_SHA224_GUID", parse_sha224, 0x2c, "SHA224"),
+    "FF3E5307-9FD0-48C9-85F1-8AD56C701E01": ("EFI_CERT_SHA384_GUID", parse_sha384, 0x40, "SHA384"),
+    "093E0FAE-A6C4-4F50-9F1B-D41E2B89C19A": ("EFI_CERT_SHA512_GUID", parse_sha512, 0x50, "SHA512"),
+    "3bd2a492-96c0-4079-b420-fcf98ef103ed": ("EFI_CERT_X509_SHA256_GUID", parse_x509_sha256, 0x40, "X509_SHA256"),
+    "7076876e-80c2-4ee6-aad2-28b349a6865b": ("EFI_CERT_X509_SHA384_GUID", parse_x509_sha384, 0x50, "X509_SHA384"),
+    "446dbf63-2502-4cda-bcfa-2465d2b0fe9d": ("EFI_CERT_X509_SHA512_GUID", parse_x509_sha512, 0x60, "X509_SHA512"),
+    "452e8ced-dfff-4b8c-ae01-5118862e682c": ("EFI_CERT_EXTERNAL_MANAGEMENT_GUID", parse_external, 0x11, "EXTERNAL_MANAGEMENT"),
+    "4AAFD29D-68DF-49EE-8AA9-347D375665A7": ("EFI_CERT_TYPE_PKCS7_GUID", parse_pkcs7, 0, "PKCS7"),
+    }
 
 
-def parse_sb_db(db, decode_dir):
+def parse_sb_db(db: bytes, decode_dir: str) -> List[bytes]:
     entries = []
     dof = 0
     nsig = 0
@@ -407,7 +409,7 @@ AUTH_CERT_DB_DATA = "<16sIII"
 AUTH_CERT_DB_DATA_size = struct.calcsize(AUTH_CERT_DB_DATA)
 
 
-def parse_auth_var(db, decode_dir):
+def parse_auth_var(db: bytes, decode_dir: str) -> List[bytes]:
     entries = []
     dof = 0
     nsig = 0
@@ -449,7 +451,7 @@ def parse_auth_var(db, decode_dir):
 ESAL_SIG_SIZE = 256
 
 
-def parse_esal_var(db, decode_dir):
+def parse_esal_var(db: bytes, decode_dir: str) -> List[bytes]:
     entries = []
     dof = 0
     nsig = 0
@@ -477,7 +479,7 @@ AUTH_SIG_VAR = 2
 ESAL_SIG_VAR = 3
 
 
-def parse_efivar_file(fname, var=None, var_type=SECURE_BOOT_SIG_VAR):
+def parse_efivar_file(fname: str, var: Optional[bytes] = None, var_type: int = SECURE_BOOT_SIG_VAR) -> None:
     logger().log(f'Processing certs in file: {fname}')
     if not var:
         var = read_file(fname)
@@ -554,7 +556,7 @@ class S3BootScriptOpcode_EdkCompat (S3BootScriptOpcode):
 #
 # Names of S3 Boot Script Opcodes
 #
-script_opcodes = {
+script_opcodes: Dict[int, str] = {
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_WRITE_OPCODE: "S3_BOOTSCRIPT_IO_WRITE",
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_IO_READ_WRITE_OPCODE: "S3_BOOTSCRIPT_IO_READ_WRITE",
     S3BootScriptOpcode.EFI_BOOT_SCRIPT_MEM_WRITE_OPCODE: "S3_BOOTSCRIPT_MEM_WRITE",
@@ -603,21 +605,21 @@ class S3BootScriptWidth:
     EFI_BOOT_SCRIPT_WIDTH_UINT64 = 0x03
 
 
-script_width_sizes = {
+script_width_sizes: Dict[int, int] = {
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8: 1,
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16: 2,
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32: 4,
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64: 8
 }
 
-script_width_values = {
+script_width_values: Dict[int, int] = {
     1: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8,
     2: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16,
     4: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32,
     8: S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT64
 }
 
-script_width_formats = {
+script_width_formats: Dict[int, str] = {
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT8: 'B',
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT16: 'H',
     S3BootScriptWidth.EFI_BOOT_SCRIPT_WIDTH_UINT32: 'I',
@@ -670,7 +672,8 @@ class S3BootScriptSmbusOperation:
 
 
 class op_io_pci_mem:
-    def __init__(self, opcode, size, width, address, unknown, count, buffer, value=None, mask=None):
+    def __init__(self, opcode: int, size: int, width: int, address: int, unknown: Optional[int], count: Optional[int], 
+                 buffer: Optional[bytes], value: Optional[int] = None, mask: Optional[int] = None):
         self.opcode = opcode
         self.size = size
         self.width = width
@@ -689,7 +692,7 @@ class op_io_pci_mem:
             else:
                 self.values = list(struct.unpack((f'<{self.count:d}{script_width_formats[self.width]:1}'), self.buffer))
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_r = f'  Opcode : {self.name} (0x{self.opcode:04X})\n'
         str_r += f'  Width  : 0x{self.width:02X} ({script_width_sizes[self.width]:X} bytes)\n'
         str_r += f'  Address: 0x{self.address:08X}\n'
@@ -711,7 +714,7 @@ class op_io_pci_mem:
 
 
 class op_smbus_execute:
-    def __init__(self, opcode, size, address, command, operation, peccheck):
+    def __init__(self, opcode: int, size: int, address: int, command: int, operation: int, peccheck: int):
         self.opcode = opcode
         self.size = size
         self.address = address
@@ -720,7 +723,7 @@ class op_smbus_execute:
         self.peccheck = peccheck
         self.name = script_opcodes[opcode]
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_r = f'  Opcode           : {self.name} (0x{self.opcode:04X})\n'
         str_r += f'  Secondary Address: 0x{self.address:02X}\n'
         str_r += f'  Command          : 0x{self.command:08X}\n'
@@ -736,13 +739,13 @@ class op_smbus_execute:
 
 
 class op_stall:
-    def __init__(self, opcode, size, duration):
+    def __init__(self, opcode: int, size: int, duration: int):
         self.opcode = opcode
         self.size = size
         self.duration = duration
         self.name = script_opcodes[self.opcode]
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_r = f'  Opcode  : {self.name} (0x{self.opcode:04X})\n'
         str_r += f'  Duration: 0x{self.duration:08X} (us)\n'
         return str_r
@@ -755,14 +758,14 @@ class op_stall:
 
 
 class op_dispatch:
-    def __init__(self, opcode, size, entrypoint, context=None):
+    def __init__(self, opcode: int, size: int, entrypoint: int, context: Optional[int] = None):
         self.opcode = opcode
         self.size = size
         self.entrypoint = entrypoint
         self.context = context
         self.name = script_opcodes[self.opcode]
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_r = f'  Opcode     : {self.name} (0x{self.opcode:04X})\n'
         str_r += f'  Entry Point: 0x{self.entrypoint:016X}\n'
         if self.context is not None:
@@ -780,7 +783,7 @@ class op_dispatch:
 
 
 class op_mem_poll:
-    def __init__(self, opcode, size, width, address, duration, looptimes):
+    def __init__(self, opcode: int, size: int, width: int, address: int, duration: int, looptimes: int):
         self.opcode = opcode
         self.size = size
         self.width = width
@@ -789,7 +792,7 @@ class op_mem_poll:
         self.looptimes = looptimes
         self.name = 'S3_BOOTSCRIPT_MEM_POLL'
 
-    def __str__(self):
+    def __str__(self) -> str:
         str_r = f'  Opcode    : {self.name} (0x{self.opcode:04X})\n'
         str_r += f'  Width     : 0x{self.width:02X} ({script_width_sizes[self.width]:X} bytes)\n'
         str_r += f'  Address   : 0x{self.address:016X}\n'
@@ -797,27 +800,28 @@ class op_mem_poll:
         str_r += f'  LoopTimes?: 0x{self.looptimes:016X}\n'
         return str_r
 
+
 class op_terminate:
-    def __init__(self, opcode, size):
+    def __init__(self, opcode: int, size: int):
         self.opcode = opcode
         self.size = size
         self.name = script_opcodes[self.opcode]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'  Opcode     : {self.name} (0x{self.opcode:02X})\n'
 
 
 class op_unknown:
-    def __init__(self, opcode, size):
+    def __init__(self, opcode: int, size: int):
         self.opcode = opcode
         self.size = size
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'  Opcode     : unknown (0x{self.opcode:02X})\n'
 
 
 class S3BOOTSCRIPT_ENTRY:
-    def __init__(self, script_type, index, offset_in_script, length, data=None):
+    def __init__(self, script_type: int, index: Optional[int], offset_in_script: int, length: int, data: Optional[bytes] = None):
         self.script_type = script_type
         self.index = index
         self.offset_in_script = offset_in_script
@@ -826,7 +830,7 @@ class S3BOOTSCRIPT_ENTRY:
         self.decoded_opcode = None
         self.header_length = 0
 
-    def __str__(self):
+    def __str__(self) -> str:
         entry_str = '' if self.index is None else (f'[{self.index:03d}] ')
         entry_str += f'Entry at offset 0x{self.offset_in_script:04X} (len = 0x{self.length:X}, header len = 0x{self.header_length:X}):'
         if self.data:
@@ -858,7 +862,7 @@ EFI_TABLE_HEADER_SIZE = 0x18
 class EFI_TABLE_HEADER(namedtuple('EFI_TABLE_HEADER', 'Signature Revision HeaderSize CRC32 Reserved')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""Header:
   Signature     : {bytestostring(self.Signature)}
   Revision      : {EFI_SYSTEM_TABLE_REVISION(self.Revision)}
@@ -886,11 +890,23 @@ EFI_2_10_SYSTEM_TABLE_REVISION = ((2 << 16) | (10))
 EFI_2_00_SYSTEM_TABLE_REVISION = ((2 << 16) | (00))
 EFI_1_10_SYSTEM_TABLE_REVISION = ((1 << 16) | (10))
 EFI_1_02_SYSTEM_TABLE_REVISION = ((1 << 16) | (0o2))
-EFI_REVISIONS = [EFI_2_70_SYSTEM_TABLE_REVISION, EFI_2_60_SYSTEM_TABLE_REVISION, EFI_2_50_SYSTEM_TABLE_REVISION, EFI_2_40_SYSTEM_TABLE_REVISION, EFI_2_31_SYSTEM_TABLE_REVISION, EFI_2_30_SYSTEM_TABLE_REVISION, EFI_2_20_SYSTEM_TABLE_REVISION, EFI_2_10_SYSTEM_TABLE_REVISION, EFI_2_00_SYSTEM_TABLE_REVISION, EFI_1_10_SYSTEM_TABLE_REVISION, EFI_1_02_SYSTEM_TABLE_REVISION]
+EFI_REVISIONS: List[int] = [
+    EFI_2_70_SYSTEM_TABLE_REVISION, 
+    EFI_2_60_SYSTEM_TABLE_REVISION, 
+    EFI_2_50_SYSTEM_TABLE_REVISION, 
+    EFI_2_40_SYSTEM_TABLE_REVISION, 
+    EFI_2_31_SYSTEM_TABLE_REVISION,
+    EFI_2_30_SYSTEM_TABLE_REVISION, 
+    EFI_2_20_SYSTEM_TABLE_REVISION, 
+    EFI_2_10_SYSTEM_TABLE_REVISION, 
+    EFI_2_00_SYSTEM_TABLE_REVISION, 
+    EFI_1_10_SYSTEM_TABLE_REVISION, 
+    EFI_1_02_SYSTEM_TABLE_REVISION
+    ]
 
 
-def EFI_SYSTEM_TABLE_REVISION(revision):
-    return (f'{revision >> 16:d}.{revision & 0xFFFF:d}')
+def EFI_SYSTEM_TABLE_REVISION(revision: int) -> str:
+    return f'{revision >> 16:d}.{revision & 0xFFFF:d}'
 
 
 EFI_SYSTEM_TABLE_FMT = '=12Q'
@@ -899,7 +915,7 @@ EFI_SYSTEM_TABLE_FMT = '=12Q'
 class EFI_SYSTEM_TABLE(namedtuple('EFI_SYSTEM_TABLE', 'FirmwareVendor FirmwareRevision ConsoleInHandle ConIn ConsoleOutHandle ConOut StandardErrorHandle StdErr RuntimeServices BootServices NumberOfTableEntries ConfigurationTable')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""EFI System Table:
   FirmwareVendor      : 0x{self.FirmwareVendor:016X}
   FirmwareRevision    : 0x{self.FirmwareRevision:016X}
@@ -931,7 +947,7 @@ EFI_RUNTIME_SERVICES_TABLE_FMT = '=14Q'
 class EFI_RUNTIME_SERVICES_TABLE(namedtuple('EFI_RUNTIME_SERVICES_TABLE', 'GetTime SetTime GetWakeupTime SetWakeupTime SetVirtualAddressMap ConvertPointer GetVariable GetNextVariableName SetVariable GetNextHighMonotonicCount ResetSystem UpdateCapsule QueryCapsuleCapabilities QueryVariableInfo')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""Runtime Services:
   GetTime                  : 0x{self.GetTime:016X}
   SetTime                  : 0x{self.SetTime:016X}
@@ -965,7 +981,7 @@ EFI_BOOT_SERVICES_TABLE_FMT = '=44Q'
 class EFI_BOOT_SERVICES_TABLE(namedtuple('EFI_BOOT_SERVICES_TABLE', 'RaiseTPL RestoreTPL AllocatePages FreePages GetMemoryMap AllocatePool FreePool CreateEvent SetTimer WaitForEvent SignalEvent CloseEvent CheckEvent InstallProtocolInterface ReinstallProtocolInterface UninstallProtocolInterface HandleProtocol Reserved RegisterProtocolNotify LocateHandle LocateDevicePath InstallConfigurationTable LoadImage StartImage Exit UnloadImage ExitBootServices GetNextMonotonicCount Stall SetWatchdogTimer ConnectController DisconnectController OpenProtocol CloseProtocol OpenProtocolInformation ProtocolsPerHandle LocateHandleBuffer LocateProtocol InstallMultipleProtocolInterfaces UninstallMultipleProtocolInterfaces CalculateCrc32 CopyMem SetMem CreateEventEx')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""Boot Services:
   RaiseTPL                           : 0x{self.RaiseTPL:016X}
   RestoreTPL                         : 0x{self.RestoreTPL:016X}
@@ -1028,7 +1044,7 @@ EFI_VENDOR_TABLE_SIZE = struct.calcsize(EFI_VENDOR_TABLE_FORMAT)
 class EFI_VENDOR_TABLE(namedtuple('EFI_VENDOR_TABLE', 'VendorGuidData VendorTable')):
     __slots__ = ()
 
-    def VendorGuid(self):
+    def VendorGuid(self) -> str:
         return EFI_GUID_STR(self.VendorGuidData)
 
 
@@ -1036,7 +1052,7 @@ class EFI_CONFIGURATION_TABLE:
     def __init__(self):
         self.VendorTables = {}
 
-    def __str__(self):
+    def __str__(self) -> str:
         vendor_table_str = ''.join([f'{{{vt}}} : 0x{self.VendorTables[vt]:016X}\n' for vt in self.VendorTables])
         return f'Vendor Tables:\n{vendor_table_str}'
 
@@ -1055,7 +1071,7 @@ EFI_DXE_SERVICES_TABLE_FMT = '=17Q'
 class EFI_DXE_SERVICES_TABLE(namedtuple('EFI_DXE_SERVICES_TABLE', 'AddMemorySpace AllocateMemorySpace FreeMemorySpace RemoveMemorySpace GetMemorySpaceDescriptor SetMemorySpaceAttributes GetMemorySpaceMap AddIoSpace AllocateIoSpace FreeIoSpace RemoveIoSpace GetIoSpaceDescriptor GetIoSpaceMap Dispatch Schedule Trust ProcessFirmwareVolume')):
     __slots__ = ()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""DXE Services:
   AddMemorySpace          : 0x{self.AddMemorySpace:016X}
   AllocateMemorySpace     : 0x{self.AllocateMemorySpace:016X}
@@ -1093,12 +1109,12 @@ EFI_SMM_SYSTEM_TABLE_SIGNATURE = 'SMST'
 EFI_SMM_SYSTEM_TABLE_REVISION = (0 << 16) | (0x09)
 
 
-EFI_TABLES = {
+EFI_TABLES: Dict[str, Dict[str, Any]] = {
     EFI_SYSTEM_TABLE_SIGNATURE: {'name': 'EFI System Table', 'struct': EFI_SYSTEM_TABLE, 'fmt': EFI_SYSTEM_TABLE_FMT},
     EFI_RUNTIME_SERVICES_SIGNATURE: {'name': 'EFI Runtime Services Table', 'struct': EFI_RUNTIME_SERVICES_TABLE, 'fmt': EFI_RUNTIME_SERVICES_TABLE_FMT},
     EFI_BOOT_SERVICES_SIGNATURE: {'name': 'EFI Boot Services Table', 'struct': EFI_BOOT_SERVICES_TABLE, 'fmt': EFI_BOOT_SERVICES_TABLE_FMT},
     EFI_DXE_SERVICES_TABLE_SIGNATURE: {'name': 'EFI DXE Services Table', 'struct': EFI_DXE_SERVICES_TABLE, 'fmt': EFI_DXE_SERVICES_TABLE_FMT}
     # EFI_FRAMEWORK_PEI_SERVICES_TABLE_SIGNATURE : {'name' : 'EFI Framework PEI Services Table', 'struct' : EFI_FRAMEWORK_PEI_SERVICES_TABLE, 'fmt' : EFI_FRAMEWORK_PEI_SERVICES_TABLE_FMT },
     # EFI_SMM_SYSTEM_TABLE_SIGNATURE             : {'name' : 'EFI SMM System Table',             'struct' : EFI_SMM_SYSTEM_TABLE,             'fmt' : EFI_SMM_SYSTEM_TABLE_FMT             },
-    #EFI_CONFIG_TABLE_SIGNATURE                 : {'name' : 'EFI Configuration Table',          'struct' : EFI_CONFIG_TABLE,                 'fmt' : EFI_CONFIG_TABLE_FMT                 }
+    # EFI_CONFIG_TABLE_SIGNATURE                 : {'name' : 'EFI Configuration Table',          'struct' : EFI_CONFIG_TABLE,                 'fmt' : EFI_CONFIG_TABLE_FMT                 }
 }
