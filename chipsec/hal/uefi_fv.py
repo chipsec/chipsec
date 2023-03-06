@@ -163,15 +163,15 @@ DEF_INDENT = "    "
 
 
 class EFI_MODULE:
-    def __init__(self, Offset: int, Guid: Optional[UUID], HeaderSize: int, Attributes: Optional[int], Image: bytes):
+    def __init__(self, Offset: int, Guid: Optional[UUID], HeaderSize: int, Attributes: int, Image: bytes):
         self.Offset = Offset
         self.Guid = Guid
         self.HeaderSize = HeaderSize
         self.Attributes = Attributes
         self.Image = Image
-        self.ui_string = None
+        self.ui_string = ''
         self.isNVRAM = False
-        self.NVRAMType = None
+        self.NVRAMType = ''
 
         self.indent = ''
 
@@ -249,11 +249,11 @@ class EFI_FILE(EFI_MODULE):
 
 class EFI_SECTION(EFI_MODULE):
     def __init__(self, Offset: int, Name: str, Type: int, Image: bytes, HeaderSize: int, Size: int):
-        super(EFI_SECTION, self).__init__(Offset, None, HeaderSize, None, Image)
+        super(EFI_SECTION, self).__init__(Offset, None, HeaderSize, 0, Image)
         self.Name = Name
         self.Type = Type
-        self.DataOffset = None
-        self.Comments = None
+        self.DataOffset = 0
+        self.Comments = ''
         self.Size = Size
 
         # parent GUID used in search, export to JSON/log
