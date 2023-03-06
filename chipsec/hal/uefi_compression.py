@@ -67,8 +67,8 @@ class UEFICompression:
     def __init__(self):
         pass
 
-    def rotate_list(self, list: List[Any], n: int) -> List[Any]:
-        return list[n:] + list[:n]
+    def rotate_list(self, rot_list: List[Any], n: int) -> List[Any]:
+        return rot_list[n:] + rot_list[:n]
 
     def decompress_EFI_binary(self, compressed_data: bytes, compression_type: int) -> bytes:
         if compression_type in COMPRESSION_TYPES:
@@ -138,7 +138,7 @@ class UEFICompression:
                 failed_times += 1
         return res
 
-    def compress_EFI_binary(self, uncompressed_data: bytes, compression_type: str) -> bytes:
+    def compress_EFI_binary(self, uncompressed_data: bytes, compression_type: int) -> bytes:
         if compression_type in COMPRESSION_TYPES:
             if compression_type == COMPRESSION_TYPE_NONE:
                 data = uncompressed_data
