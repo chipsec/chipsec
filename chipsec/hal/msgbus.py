@@ -35,6 +35,7 @@ usage:
     >>> msgbus_send_message( port, register, opcode, data )
 """
 
+from typing import Optional
 from chipsec.hal import hal_base
 from chipsec.exceptions import RegisterNotFoundError
 
@@ -92,7 +93,7 @@ class MsgBus(hal_base.HALBase):
         self.helper = cs.helper
         self.p2sbHide = None
 
-    def __MB_MESSAGE_MCR(self, port, reg, opcode):
+    def __MB_MESSAGE_MCR(self, port: int, reg: int, opcode: int) -> int:
         mcr = 0x0
         mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF)
         mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg)
@@ -100,17 +101,17 @@ class MsgBus(hal_base.HALBase):
         mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode)
         return mcr
 
-    def __MB_MESSAGE_MCRX(self, reg):
+    def __MB_MESSAGE_MCRX(self, reg: int) -> int:
         mcrx = 0x0
         mcrx = self.cs.set_register_field('MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True)
         return mcrx
 
-    def __MB_MESSAGE_MDR(self, data):
+    def __MB_MESSAGE_MDR(self, data: int) -> int:
         mdr = 0x0
         mdr = self.cs.set_register_field('MSG_DATA_REG', mdr, 'MESSAGE_DATA', data)
         return mdr
 
-    def __hide_p2sb(self, hide):
+    def __hide_p2sb(self, hide: bool) -> bool:
         if not self.p2sbHide:
             if self.cs.register_has_field("P2SBC", "HIDE"):
                 self.p2sbHide = {'reg': 'P2SBC', 'field': 'HIDE'}
@@ -129,53 +130,48 @@ class MsgBus(hal_base.HALBase):
     #
     # Issues read message on the message bus
     #
-    def msgbus_read_message(self, port, register, opcode):
+    def msgbus_read_message(self, port: int, register: int, opcode: int) -> Optional[int]:
         mcr = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
 
-        if self.logger.HAL:
-            self.logger.log("[msgbus] read: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode))
-            self.logger.log("[msgbus]       MCR = 0x{:08X}, MCRX = 0x{:08X}".format(mcr, mcrx))
+        self.logger.log_hal(f'[msgbus] Read: port 0x{port:02X} + 0x{register:08X} (op = 0x{opcode:02X})')
+        self.logger.log_hal(f'[msgbus]       MCR = 0x{mcr:08X}, MCRX = 0x{mcrx:08X}')
 
         mdr_out = self.helper.msgbus_send_read_message(mcr, mcrx)
 
-        if self.logger.HAL:
-            self.logger.log("[msgbus]       < 0x{:08X}".format(mdr_out))
+        self.logger.log_hal(f'[msgbus]       < 0x{mdr_out:08X}')
 
         return mdr_out
 
     #
     # Issues write message on the message bus
     #
-    def msgbus_write_message(self, port, register, opcode, data):
+    def msgbus_write_message(self, port: int, register: int, opcode: int, data: int) -> None:
         mcr = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
         mdr = self.__MB_MESSAGE_MDR(data)
 
-        if self.logger.HAL:
-            self.logger.log("[msgbus] write: port 0x{:02X} + 0x{:08X} (op = 0x{:02X}) < data = 0x{:08X}".format(port, register, opcode, data))
-            self.logger.log("[msgbus]        MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr))
+        self.logger.log_hal(f'[msgbus] Write: port 0x{port:02X} + 0x{register:08X} (op = 0x{opcode:02X}) < data = 0x{data:08X}')
+        self.logger.log_hal(f'[msgbus]        MCR = 0x{mcr:08X}, MCRX = 0x{mcrx:08X}, MDR = 0x{mdr:08X}')
 
         return self.helper.msgbus_send_write_message(mcr, mcrx, mdr)
 
     #
     # Issues generic message on the message bus
     #
-    def msgbus_send_message(self, port, register, opcode, data=None):
+    def msgbus_send_message(self, port: int, register: int, opcode: int, data: Optional[int] = None) -> Optional[int]:
         mcr = self.__MB_MESSAGE_MCR(port, register, opcode)
         mcrx = self.__MB_MESSAGE_MCRX(register)
         mdr = None if data is None else self.__MB_MESSAGE_MDR(data)
 
-        if self.logger.HAL:
-            self.logger.log("[msgbus] message: port 0x{:02X} + 0x{:08X} (op = 0x{:02X})".format(port, register, opcode))
-            if data is not None:
-                self.logger.log("[msgbus]          data = 0x{:08X}".format(data))
-            self.logger.log("[msgbus]          MCR = 0x{:08X}, MCRX = 0x{:08X}, MDR = 0x{:08X}".format(mcr, mcrx, mdr))
+        self.logger.log_hal(f'[msgbus] message: port 0x{port:02X} + 0x{register:08X} (op = 0x{opcode:02X})')
+        if data is not None:
+            self.logger.log_hal(f'[msgbus]          data = 0x{data:08X}')
+        self.logger.log_hal(f'[msgbus]          MCR = 0x{mcr:08X}, MCRX = 0x{mcrx:08X}, MDR = 0x{mdr:08X}')
 
         mdr_out = self.helper.msgbus_send_message(mcr, mcrx, mdr)
 
-        if self.logger.HAL:
-            self.logger.log("[msgbus]          < 0x{:08X}".format(mdr_out))
+        self.logger.log_hal(f'[msgbus]          < 0x{mdr_out:08X}')
 
         return mdr_out
 
@@ -183,13 +179,13 @@ class MsgBus(hal_base.HALBase):
     # Message bus register read/write
     #
 
-    def msgbus_reg_read(self, port, register):
+    def msgbus_reg_read(self, port: int, register: int) -> Optional[int]:
         return self.msgbus_read_message(port, register, MessageBusOpcode.MB_OPCODE_REG_READ)
 
-    def msgbus_reg_write(self, port, register, data):
+    def msgbus_reg_write(self, port: int, register: int, data: int) -> None:
         return self.msgbus_write_message(port, register, MessageBusOpcode.MB_OPCODE_REG_WRITE, data)
 
-    def mm_msgbus_reg_read(self, port, register):
+    def mm_msgbus_reg_read(self, port: int, register: int) -> int:
         was_hidden = False
         if self.cs.is_register_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
@@ -199,7 +195,7 @@ class MsgBus(hal_base.HALBase):
             self.__hide_p2sb(True)
         return reg_val
 
-    def mm_msgbus_reg_write(self, port, register, data):
+    def mm_msgbus_reg_write(self, port: int, register: int, data: int) -> Optional[int]:
         was_hidden = False
         if self.cs.is_register_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
@@ -208,22 +204,3 @@ class MsgBus(hal_base.HALBase):
         if self.cs.is_register_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val
-
-    """
-    # py implementation of msgbus -- doesn't seem to work properly becaise it's not atomic
-    def msgbus_send_message( self, port, register, opcode, data=None ):
-        if self.logger.HAL:
-            self.logger.log( "[msgbus] message - port: 0x{:02X}, reg: 0x{:08X} (op: 0x{:02X})".format(port, register, opcode) )
-            if data is not None: self.logger.log( "[msgbus] message - data: 0x{:08X}".format(data) )
-        if (register & 0xFFFFFF00):
-            # write extended register address (bits [31:08]) to Message Control Register Extension (MCRX)
-            chipsec.chipset.write_register_field( self.cs, 'MSG_CTRL_REG_EXT', 'MESSAGE_ADDRESS_OFFSET_EXT', register, preserve_field_position=True )
-        res = None
-        # write data to Message Data Register (MDR) for writes
-        if data is not None: chipsec.chipset.write_register( self.cs, 'MSG_DATA_REG', data )
-        # write message (byte enables, address bits [08:00], port and opcode) to Message Control Register (MCR)
-        chipsec.chipset.write_register( self.cs, 'MSG_CTRL_REG', MB_MESSAGE(self.cs, port, register, opcode) )
-        # read the data from Message Data Register (MDR) for reads
-        if data is None: res = chipsec.chipset.read_register( self.cs, 'MSG_DATA_REG' )
-        return res
-    """
