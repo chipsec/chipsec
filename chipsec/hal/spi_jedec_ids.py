@@ -22,17 +22,18 @@
 JEDED ID : Manufacturers and Device IDs
 """
 
+from typing import Dict
 
 class JEDEC_ID:
 
-    MANUFACTURER = {0xEF: 'Winbond',
-                    0xC2: 'Macronix'}
+    MANUFACTURER: Dict[int, str] = {0xEF: 'Winbond',
+                                    0xC2: 'Macronix'}
 
-    DEVICE = {0xEF4018: 'W25Q128 (SPI)',
-              0xEF6018: 'W25Q128 (QPI)',
-              0xEF4017: 'W25Q64FV (SPI)',
-              0xEF6017: 'W25Q64FV (QPI)',
-              0xEF7016: 'W25Q32JV',
-              0xEF4019: 'W25Q256',
-              0xC22017: 'MX25L6408',
-              0xC22018: 'MX25L12805'}
+    DEVICE: Dict[int, str] = {0xEF4018: 'W25Q128 (SPI)',
+                              0xEF6018: 'W25Q128 (QPI)',
+                              0xEF4017: 'W25Q64FV (SPI)',
+                              0xEF6017: 'W25Q64FV (QPI)',
+                              0xEF7016: 'W25Q32JV',
+                              0xEF4019: 'W25Q256',
+                              0xC22017: 'MX25L6408',
+                              0xC22018: 'MX25L12805'}
