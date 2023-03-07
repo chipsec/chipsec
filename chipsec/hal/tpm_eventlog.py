@@ -29,8 +29,10 @@ Based on the following specifications:
 import binascii
 import struct
 
+from typing import Any, Dict, BinaryIO, Optional, Type, TypeVar
 from chipsec.logger import logger
 
+EventType = TypeVar('EventType', bound='TcgPcrEvent')
 
 class TcgPcrEvent:
     """An Event (TPM 1.2 format) as recorded in the SML."""
@@ -38,7 +40,7 @@ class TcgPcrEvent:
     _header_fmt = "II20sI"
     _header_size = struct.calcsize(_header_fmt)
 
-    def __init__(self, pcr_index, event_type, digest, event_size, event):
+    def __init__(self, pcr_index: int, event_type: int, digest: bytes, event_size: int, event: Any):
         self.pcr_index = pcr_index
         self.event_type = event_type
         name = SML_EVENT_TYPE.get(self.event_type)
@@ -49,7 +51,7 @@ class TcgPcrEvent:
         self.event = event
 
     @classmethod
-    def parse(cls, log):
+    def parse(cls: Type[EventType], log: BinaryIO) -> Optional[EventType]:
         """Try to read an event from the log.
 
         Args:
@@ -62,41 +64,39 @@ class TcgPcrEvent:
         """
         header = log.read(cls._header_size)
         if not header:
-            return
+            return None
         fields = struct.unpack(cls._header_fmt, header)
         pcr_index, event_type, digest, event_size = fields
         event = log.read(event_size)
         if len(event) != event_size:
-            logger().log_warning("[tpm_eventlog] event data length "
-                                 "does not match the expected size")
+            logger().log_warning("[tpm_eventlog] event data length does not match the expected size")
         name = SML_EVENT_TYPE.get(event_type)
         kls = cls if isinstance(name, str) else name
+        if kls is None:
+            return None
         return kls(pcr_index, event_type, digest, event_size, event)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.event_type_name:
             t = self.event_type_name
         else:
-            t = "(0x{:x}".format(self.event_type)
-        _str = "PCR: {:d}\ttype: {}\tsize: 0x{:x}\tdigest: {}"
-        return _str.format(self.pcr_index, t.ljust(EVENT_TYPE_MAX_LENGTH),
-                           self.event_size, binascii.hexlify(self.digest))
+            t = f'(0x{self.event_type:x}'
+        return f'PCR: {self.pcr_index:d}\ttype: {t.ljust(EVENT_TYPE_MAX_LENGTH)}\tsize: 0x{self.event_size:x}\tdigest: {binascii.hexlify(self.digest)}'
 
 
 class SCRTMVersion(TcgPcrEvent):
-    def __init__(self, *args):
+    def __init__(self, *args: Any):
         super(SCRTMVersion, self).__init__(*args)
         self.event_type_name = "EV_S_CRTM_VERSION"
-        self.version = self.event
+        self.version: bytes = self.event
 
-    def __str__(self):
+    def __str__(self) -> str:
         _str = super(SCRTMVersion, self).__str__()
         try:
-            _str += "\n\t+ version: {}".format(self.version.decode("utf-16"))
+            _str += f'\n\t+ version: {self.version.decode("utf-16")}'
         except:
             if logger().HAL:
-                logger().log_warning("[tpm_eventlog] CRTM Version is not "
-                                     "a valid string")
+                logger().log_warning("[tpm_eventlog] CRTM Version is not a valid string")
         return _str
 
 
@@ -105,20 +105,20 @@ class EFIFirmwareBlob(TcgPcrEvent):
     # a UINTN. Use a native unsigned long to cover the most general case.
     _event_fmt = "@QL"
 
-    def __init__(self, *args):
+    def __init__(self, *args: Any):
         super(EFIFirmwareBlob, self).__init__(*args)
         self.event_type_name = "EV_EFI_PLATFORM_FIRMWARE_BLOB"
         base, length = struct.unpack(self._event_fmt, self.event)
         self.base = base
         self.length = length
 
-    def __str__(self):
-        _str = super(EFIFirmwareBlob, self).__str__()
-        _str += "\n\t+ base: 0x{:x}\tlength: 0x{:x}".format(self.base, self.length)
+    def __str__(self) -> str:
+        _blob = super(EFIFirmwareBlob, self).__str__()
+        _str = f'{_blob}\n\t+ base: 0x{self.base:x}\tlength: 0x{self.length:x}'
         return _str
 
 
-SML_EVENT_TYPE = {
+SML_EVENT_TYPE: Dict[int, Any] = {
     # From reference [2]
     0x0: "EV_PREBOOT_CERT",
     0x1: "EV_POST_CODE",
@@ -154,30 +154,30 @@ SML_EVENT_TYPE = {
     0x800000E0: "EV_EFI_VARIABLE_AUTHORITY"
 }
 
-EVENT_TYPE_MAX_LENGTH = max([len(v) for v in SML_EVENT_TYPE.values()
+EVENT_TYPE_MAX_LENGTH: int = max([len(v) for v in SML_EVENT_TYPE.values()
                              if isinstance(v, str)])
 
 
 class PcrLogParser:
     """Iterator over the events of a log."""
 
-    def __init__(self, log):
+    def __init__(self, log: BinaryIO):
         self.log = log
 
-    def __iter__(self):
+    def __iter__(self) -> 'PcrLogParser':
         return self
 
-    def __next__(self):
+    def __next__(self) -> TcgPcrEvent:
         event = TcgPcrEvent.parse(self.log)
         if not event:
             raise StopIteration()
         return event
 
-    def next(self):
+    def next(self) -> TcgPcrEvent:
         return self.__next__()
 
 
-def parse(log):
+def parse(log: BinaryIO) -> None:
     """Simple wrapper around PcrLogParser."""
     for event in PcrLogParser(log):
-        logger().log(event)
+        logger().log(str(event))
