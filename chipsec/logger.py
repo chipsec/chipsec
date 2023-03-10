@@ -440,7 +440,7 @@ def get_column_widths(data: List[List[str]]) -> List[List[int]]:
     return col_widths
 
 
-def find_required_col_widths(col_data: List[List[int]], minimum_width=2) -> Tuple[int, ...]:
+def find_required_col_widths(col_data: List[List[int]], minimum_width=2) -> List[int]:
     columns_per_row = len(col_data[0])
     max_widths = ([(max(rows[i] for rows in col_data)) for i in range(columns_per_row)])
     for i in range(len(max_widths)):
