@@ -387,7 +387,7 @@ class ACPI(HALBase):
     # Gets table list from entries in RSDT/XSDT
     #
     def get_table_list_from_SDT(self, sdt: RsdtXsdt, is_xsdt: bool) -> None:
-        logger().log_hal('[acpi] Getting table list from entries in {"XSDT" if is_xsdt else "RSDT"}')
+        logger().log_hal(f'[acpi] Getting table list from entries in {"XSDT" if is_xsdt else "RSDT"}')
         for a in sdt.Entries:
             _sig = self.cs.mem.read_physical_mem(a, ACPI_TABLE_SIG_SIZE)
             _sig = bytestostring(_sig)
