@@ -19,8 +19,6 @@
 #
 
 
-import os
-import sys
 import re
 import traceback
 import chipsec.logger
@@ -60,16 +58,16 @@ class Module:
     def do_import(self):
         loaded = False
         if not MODPATH_RE.match(self.get_name()):
-            self.logger.log_error("Invalid module path: {}".format(self.name))
+            self.logger.log_error(f'Invalid module path: {self.name}')
         else:
             try:
                 if _importlib:
                     self.module = importlib.import_module(self.name)
                 loaded = True
                 if self.logger.DEBUG:
-                    self.logger.log_good("imported: {}".format(self.name))
+                    self.logger.log_good(f'imported: {self.name}')
             except BaseException as msg:
-                self.logger.log_error("Exception occurred during import of {}: '{}'".format(self.name, str(msg)))
+                self.logger.log_error(f"Exception occurred during import of {self.name}: '{str(msg)}'")
                 if self.logger.DEBUG:
                     self.logger.log_bad(traceback.format_exc())
                 raise msg
@@ -80,7 +78,7 @@ class Module:
 
         if self.mod_obj is not None and result == ModuleResult.PASSED:
             if module_argv is not None:
-                self.logger.log("[*] Module arguments ({:d}):".format(len(module_argv)))
+                self.logger.log(f'[*] Module arguments ({len(module_argv):d}):')
                 self.logger.log(module_argv)
             else:
                 module_argv = []
@@ -91,10 +89,10 @@ class Module:
                 else:
                     if self.mod_obj.res == ModuleResult.NOTAPPLICABLE:
                         result = ModuleResult.NOTAPPLICABLE
-                        self.logger.log("Skipping module {} since it is not applicable in this environment and/or platform".format(self.name))
+                        self.logger.log(f'Skipping module {self.name} since it is not applicable in this environment and/or platform')
                     else:
                         result = ModuleResult.SKIPPED
-                        self.logger.log("Skipping module {} since it is not supported in this environment and/or platform".format(self.name))
+                        self.logger.log(f'Skipping module {self.name} since it is not supported in this environment and/or platform')
 
         return result
 

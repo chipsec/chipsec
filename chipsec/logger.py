@@ -201,7 +201,7 @@ class Logger:
         self.logfile = None
         self.ALWAYS_FLUSH = False
         self.logstream = logging.StreamHandler(sys.stdout)
-        logname = strftime('%a%b%d%y-%H%M%S') + '.log'
+        logname = f"{strftime('%a%b%d%y-%H%M%S')}.log"
         logPath = os.path.join(LOG_PATH, logname)
         fileH = logging.FileHandler(logPath)
         self.chipsecLogger = logging.getLogger(LOGGER_NAME)
@@ -378,8 +378,8 @@ class Logger:
     def start_test(self, test_name: str) -> None:
         """Logs the start point of a Test"""
         text = '[x][ =======================================================================\n'
-        text = text + '[x][ Module: ' + test_name + '\n'
-        text = text + '[x][ ======================================================================='
+        text = f'{text}[x][ Module: {test_name}\n'
+        text = f'{text}[x][ ======================================================================='
         self.log(text, level.INFO, 'BLUE')
 
 
@@ -454,7 +454,7 @@ def find_required_col_widths(col_data: List[List[int]], minimum_width=2) -> Tupl
 
 def hex_to_text(value):
     '''Generate text string based on bytestrings'''
-    text = binascii.unhexlify('{:x}'.format(value))[::-1]
+    text = binascii.unhexlify(f'{value:x}')[::-1]
     if isinstance(text, str):
         return text   # Python 2.x
     else:
@@ -468,9 +468,9 @@ def bytes2string(buffer, length=16):
     ascii_string = []
     index = 1
     for c in buffer:
-        num_string += ['{:02X} '.format(ord(c))]
+        num_string += [f'{ord(c):02X} ']
         if not (c in string.printable) or (c in string.whitespace):
-            ascii_string += ['{}'.format(' ')]
+            ascii_string += [' ']
         else:
             ascii_string += [f'{c}']
         if (index % length) == 0:
@@ -506,9 +506,9 @@ def dump_buffer_bytes(arr, length=8):
     ascii_string = []
     index = 1
     for c in arr:
-        num_string += ['{:02X} '.format(c)]
+        num_string += [f'{c:02X} ']
         if not (chr(c) in string.printable) or (chr(c) in string.whitespace):
-            ascii_string += ['{}'.format(' ')]
+            ascii_string += [' ']
         else:
             ascii_string += [chr(c)]
         if (index % length) == 0:
@@ -536,11 +536,11 @@ def pretty_print_hex_buffer(arr, length=16):
     """Prints the buffer (bytes, bytearray) in a grid"""
     _str = ['    _']
     for n in range(length):
-        _str += ['{:02X}__'.format(n)]
+        _str += [f'{n:02X}__']
     for n in range(len(arr)):
         if (n % length) == 0:
-            _str += ['\n{:02X} | '.format(n)]
-        _str += ['{:02X}  '.format(arr[n])]
+            _str += [f'\n{n:02X} | ']
+        _str += [f'{arr[n]:02X}  ']
     logger().log(''.join(_str))
 
 

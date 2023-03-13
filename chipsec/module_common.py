@@ -83,7 +83,7 @@ class BaseModule:
 
     def update_res(self, value):
         if value not in result_priority:
-            self.logger.log_verbose('Attempting to set invalid result status: {}'.format(value))
+            self.logger.log_verbose(f'Attempting to set invalid result status: {value}')
             return
         cur_priority = result_priority[self.res]
         new_priority = result_priority[value]
