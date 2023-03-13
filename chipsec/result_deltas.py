@@ -34,7 +34,7 @@ def get_json_results(json_file):
     try:
         json_data = json.loads(bytestostring(file_data))
     except:
-        logger().log_error("Unable to load JSON file: {}".format(json_file))
+        logger().log_error(f'Unable to load JSON file: {json_file}')
         return None
     return json_data
 
@@ -62,12 +62,12 @@ def display_deltas(deltas, hide_time, start_time):
     logger().log("")
     logger().log("[CHIPSEC] **********************  TEST DELTA SUMMARY  *********************")
     if not hide_time:
-        logger().log("[CHIPSEC] Time elapsed          {:.3f}" .format(time.time() - start_time))
+        logger().log(f'[CHIPSEC] Time elapsed          {time.time() - start_time:.3f}')
     if deltas:
-        logger().log("[*] {:46}| {:10} | {:10}".format("Test", "Previous", "Current"))
-        logger().log("[*] {}".format('-' * 71))
+        logger().log(f'[*] {"Test":46}| {"Previous":10} | {"Current":10}')
+        logger().log(f'[*] {"-" * 71}')
         for test in deltas:
-            logger().log_bad("{:46}| {:10} | {:10}".format(test, deltas[test]['previous'], deltas[test]['current']))
+            logger().log_bad(f'{test:46}| {deltas[test]["previous"]:10} | {deltas[test]["current"]:10}')
     else:
         logger().log_good("No changes detected.")
     logger().log("[CHIPSEC] *****************************************************************")

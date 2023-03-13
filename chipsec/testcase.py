@@ -188,11 +188,11 @@ class ChipsecResults:
             temp = {}
             if value == 'total':
                 temp['name'] = value
-                temp['total'] = "{:d}".format(summary[value])
+                temp['total'] = f'{summary[value]:d}'
                 m_element = ET.SubElement(xml_element, 'result', temp)
             else:
                 temp['name'] = value
-                temp['total'] = "{:d}".format(len(summary[value]))
+                temp['total'] = f'{len(summary[value]):d}'
                 m_element = ET.SubElement(xml_element, 'result', temp)
                 for mod in summary[value]:
                     n_element = ET.SubElement(m_element, 'module')
@@ -263,7 +263,7 @@ class ChipsecResults:
             out_string = f'#### {test.name.replace("chipsec.modules.", ""):s}\n'
             for line in test.output.splitlines(True):
                 # Format output as code
-                out_string += '    {:s}'.format(line)
+                out_string += f'    {line:s}'
             destination[test.result].append(out_string)
 
         ret_string = ''
