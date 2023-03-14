@@ -32,9 +32,9 @@ import struct
 import sys
 import uuid
 import os
-
 import edk2   # Python 3.6.8 on UEFI
 
+from typing import Dict, List, Optional, Tuple
 from chipsec.logger import logger
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.helper.basehelper import Helper
@@ -43,6 +43,7 @@ from chipsec.helper.basehelper import Helper
 _tools = {
 }
 
+EfiVariableType = Tuple[int, bytes, int, bytes, str, int]
 
 class EfiHelper(Helper):
 
@@ -72,27 +73,23 @@ class EfiHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def create(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper created")
+    def create(self, start_driver: bool) -> bool:
+        logger().log_debug('[helper] UEFI Helper created')
         return True
 
-    def start(self, start_driver, driver_exists=False):
+    def start(self, start_driver: bool, driver_exists: bool = False) -> bool:
         # The driver is part of the modified version of edk2.
         # It is always considered as loaded.
         self.driver_loaded = True
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper started/loaded")
+        logger().log_debug('[helper] UEFI Helper started/loaded')
         return True
 
-    def stop(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper stopped/unloaded")
+    def stop(self, start_driver: bool) -> bool:
+        logger().log_debug('[helper] UEFI Helper stopped/unloaded')
         return True
 
-    def delete(self, start_driver):
-        if logger().DEBUG:
-            logger().log("[helper] UEFI Helper deleted")
+    def delete(self, start_driver: bool) -> bool:
+        logger().log_debug('[helper] UEFI Helper deleted')
         return True
 
 
@@ -105,43 +102,42 @@ class EfiHelper(Helper):
     #
 
 
-    def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
+    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
         return edk2.readmem(phys_address_lo, phys_address_hi, length)
 
-    def write_phys_mem(self, phys_address_hi, phys_address_lo, length, buf):
+    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: bytes) -> int:
         if type(buf) == bytearray:
             buf = bytes(buf)
         if 4 == length:
             dword_value = struct.unpack('I', buf)[0]
-            edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
+            res = edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
         else:
-            edk2.writemem(phys_address_lo, phys_address_hi, buf)
+            res = edk2.writemem(phys_address_lo, phys_address_hi, buf)
+        return res
 
-    def alloc_phys_mem(self, length, max_pa):
+    def alloc_phys_mem(self, length: int, max_pa: int) -> Tuple[int, int]:
         va = edk2.allocphysmem(length, max_pa)[0]
         (pa, _) = self.va2pa(va)
         return (va, pa)
 
-    def va2pa(self, va):
+    def va2pa(self, va: int) -> Tuple[int, int]:
         pa = va  # UEFI shell has identity mapping
-        if logger().DEBUG:
-            logger().log("[helper] VA (0X{:016X}) -> PA (0X{:016X})".format(va, pa))
+        logger().log_debug(f'[helper] VA (0X{va:016X}) -> PA (0X{pa:016X})')
         return (pa, 0)
 
-    def pa2va(self, pa):
+    def pa2va(self, pa: int) -> int:
         va = pa  # UEFI Shell has identity mapping
-        if logger().DEBUG:
-            logger().log('[helper] PA (0X{:016X}) -> VA (0X{:016X})'.format(pa, va))
+        logger().log_debug(f'[helper] PA (0X{pa:016X}) -> VA (0X{va:016X})')
         return va
 
     #
     # Memory-mapped I/O (MMIO) access
     #
 
-    def map_io_space(self, physical_address, length, cache_type):
+    def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
         return self.pa2va(physical_address)
 
-    def read_mmio_reg(self, phys_address, size):
+    def read_mmio_reg(self, phys_address: int, size: int) -> int:
         phys_address_lo = phys_address & 0xFFFFFFFF
         phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
         out_buf = edk2.readmem(phys_address_lo, phys_address_hi, size)
@@ -157,20 +153,21 @@ class EfiHelper(Helper):
             value = 0
         return value
 
-    def write_mmio_reg(self, phys_address, size, value):
+    def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
         phys_address_lo = phys_address & 0xFFFFFFFF
         phys_address_hi = (phys_address >> 32) & 0xFFFFFFFF
         if size == 4:
-            return edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
+            ret = edk2.writemem_dword(phys_address_lo, phys_address_hi, value)
         else:
             buf = struct.pack(size * "B", value)
-            edk2.writemem(phys_address_lo, phys_address_hi, buf)
+            ret = edk2.writemem(phys_address_lo, phys_address_hi, buf)
+        return ret
 
     #
     # PCIe configuration access
     #
 
-    def read_pci_reg(self, bus, device, function, address, size):
+    def read_pci_reg(self, bus: int, device: int, function: int, address: int, size: int) -> int:
         if (1 == size):
             return (edk2.readpci(bus, device, function, address, size) & 0xFF)
         elif (2 == size):
@@ -178,14 +175,14 @@ class EfiHelper(Helper):
         else:
             return edk2.readpci(bus, device, function, address, size)
 
-    def write_pci_reg(self, bus, device, function, address, value, size):
+    def write_pci_reg(self, bus: int, device: int, function: int, address:int, value: int, size: int) -> int:
         return edk2.writepci(bus, device, function, address, value, size)
 
     #
     # CPU I/O port access
     #
 
-    def read_io_port(self, io_port, size):
+    def read_io_port(self, io_port: int, size: int) -> int:
         if (1 == size):
             return (edk2.readio(io_port, size) & 0xFF)
         elif (2 == size):
@@ -193,74 +190,78 @@ class EfiHelper(Helper):
         else:
             return edk2.readio(io_port, size)
 
-    def write_io_port(self, io_port, value, size):
+    def write_io_port(self, io_port: int, value: int, size: int) -> int:
         return edk2.writeio(io_port, size, value)
 
     #
     # SMI events
     #
 
-    def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
         return edk2.swsmi(SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
 
     #
     # CPU related API
     #
 
-    def read_msr(self, cpu_thread_id, msr_addr):
+    def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
         (eax, edx) = edk2.rdmsr(msr_addr)
         eax = eax % 2**32
         edx = edx % 2**32
         return (eax, edx)
 
-    def write_msr(self, cpu_thread_id, msr_addr, eax, edx):
-        edk2.wrmsr(msr_addr, eax, edx)
+    def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> int:
+        return edk2.wrmsr(msr_addr, eax, edx)
 
-    def read_cr(self, cpu_thread_id, cr_number):
+    def read_cr(self, cpu_thread_id: int, cr_number: int) -> int:
+        if logger().DEBUG:
+            logger().log_error("[helper] read_cr is not supported yet")
         return 0
 
-    def write_cr(self, cpu_thread_id, cr_number, value):
+    def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
+        if logger().DEBUG:
+            logger().log_error("[helper] write_cr is not supported yet")
+        return 0
+
+    def load_ucode_update(self, cpu_thread_id: int, ucode_update_buf: int) -> bool:
+        if logger().DEBUG:
+            logger().log_error("[helper] load_ucode_update is not supported yet")
         return False
 
-    def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
+    def get_threads_count(self) -> int:
         if logger().DEBUG:
-            logger().log_error("[efi] load_ucode_update is not supported yet")
+            logger().log_error("EFI Helper hasn't implemented get_threads_count yet")
         return 0
 
-    def get_threads_count(self):
-        if logger().DEBUG:
-            logger().log_error("EFI helper hasn't implemented get_threads_count yet")
-        return 0
-
-    def cpuid(self, eax, ecx):
+    def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
         (reax, rebx, recx, redx) = edk2.cpuid(eax, ecx)
         return (reax, rebx, recx, redx)
 
-    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
+    def get_descriptor_table(self, cpu_thread_id: int, desc_table_code: int)-> None:
         if logger().DEBUG:
             logger().log_error("EFI helper has not implemented get_descriptor_table yet")
-        return 0
+        return None
 
     #
     # File system
     #
 
-    def get_tool_info(self, tool_type):
-        tool_name = _tools[tool_type] if tool_type in _tools else None
+    def get_tool_info(self, tool_type: str) -> Tuple[str, str]:
+        tool_name = _tools[tool_type] if tool_type in _tools else ''
         tool_path = os.path.join(get_tools_path(), self.os_system.lower())
-        return tool_name, tool_path
+        return (tool_name, tool_path)
 
-    def getcwd(self):
+    def getcwd(self) -> str:
         return os.getcwd()
 
     #
     # EFI Variable API
     #
 
-    def EFI_supported(self):
+    def EFI_supported(self) -> bool:
         return True
 
-    def get_EFI_variable_full(self, name, guidstr):
+    def get_EFI_variable_full(self, name: str, guidstr: str) -> Tuple[int, Optional[bytes], int]:
 
         size = 100
         (Status, Attributes, newdata, DataSize) = edk2.GetVariable(name, guidstr, size)
@@ -271,29 +272,27 @@ class EfiHelper(Helper):
 
         return (Status, newdata, Attributes)
 
-    def get_EFI_variable(self, name, guidstr):
+    def get_EFI_variable(self, name: str, guidstr: str) -> Optional[bytes]:
         (_, data, _) = self.get_EFI_variable_full(name, guidstr)
         return data
 
-    def set_EFI_variable(self, name, guidstr, data, datasize=None, attrs=0x7):
+    def set_EFI_variable(self, name: str, guidstr: str, data: bytes, datasize: Optional[int] = None, attrs: int = 0x7) -> int:
 
-        if data is None:
-            data = '\0' * 4
         if datasize is None:
             datasize = len(data)
         if attrs is None:
             attrs = 0x07
             if logger().VERBOSE:
-                logger().log_important("Setting attributes to: {:04X}".format(attrs))
+                logger().log_important(f'Setting attributes to: {attrs:04X}')
 
         (Status, datasize, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), data, datasize)
 
         return Status
 
-    def delete_EFI_variable(self, name, guid):
-        return self.set_EFI_variable(name, guid, None, 0, 0)
+    def delete_EFI_variable(self, name: str, guid: str) -> int:
+        return self.set_EFI_variable(name, guid, bytes(4), 0, 0)
 
-    def list_EFI_variables(self):
+    def list_EFI_variables(self) -> Optional[Dict[str, List[EfiVariableType]]]:
 
         off = 0
         buf = list()
@@ -317,12 +316,10 @@ class EfiHelper(Helper):
             (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
 
             if status == 5:
-                if logger().DEBUG:
-                    logger().log("[helper] EFI Variable name size was too small increasing to {:d}".format(size))
+                logger().log_debug(f'[helper] EFI Variable name size was too small increasing to {size:d}')
                 (status, namestr, size, guidstr) = edk2.GetNextVariableName(size, name, guid)
 
-            if logger().DEBUG:
-                logger().log("[helper] Returned {}. Status is {}".format(name, status_dict[status]))
+            logger().log_debug(f'[helper] Returned {name}. Status is {status_dict[status]}')
 
             if status:
                 search_complete = True
@@ -332,19 +329,18 @@ class EfiHelper(Helper):
                 else:
                     var_list.append((namestr, guidstr))
 
-                if logger().DEBUG:
-                    logger().log("[helper] Found variable '{}' - [{}]".format(name, guidstr))
+                logger().log_debug(f"[helper] Found variable '{name}' - [{guidstr}]")
 
         for (name, guidstr) in var_list:
             (status, data, attr) = self.get_EFI_variable_full(name, guidstr)
 
             if status:
-                logger().log_verbose('[helper] Error reading variable {}.  Status = {:d} - {}'.format(name, status, status_dict[status]))
+                logger().log_verbose(f'[helper] Error reading variable {name}.  Status = {status:d} - {status_dict[status]}')
 
             var_data = (off, buf, hdr, data, guidstr, attr)
 
             if name in variables:
-                logger().log_verbose('[helper] Duplicate variable name {} - {}'.format(name, guidstr))
+                logger().log_verbose(f'[helper] Duplicate variable name {name} - {guidstr}')
                 continue
             else:
                 variables[name] = []
@@ -358,35 +354,35 @@ class EfiHelper(Helper):
     # ACPI tables access
     #
 
-    def get_ACPI_SDT(self):
+    def get_ACPI_SDT(self) -> Tuple[None, bool]:
         if logger().DEBUG:
-            logger().log_error("[efi] ACPI is not supported yet")
-        return 0
+            logger().log_error("[helper] ACPI is not supported yet")
+        return (None, False)
 
     #
     # IOSF Message Bus access
     #
 
-    def msgbus_send_read_message(self, mcr, mcrx):
+    def msgbus_send_read_message(self, mcr: int, mcrx: int) -> None:
         if logger().DEBUG:
-            logger().log_error("[efi] Message Bus is not supported yet")
+            logger().log_error("[helper] Message Bus is not supported yet")
         return None
 
-    def msgbus_send_write_message(self, mcr, mcrx, mdr):
+    def msgbus_send_write_message(self, mcr: int, mcrx: int, mdr: int) -> None:
         if logger().DEBUG:
-            logger().log_error("[efi] Message Bus is not supported yet")
+            logger().log_error("[helper] Message Bus is not supported yet")
         return None
 
-    def msgbus_send_message(self, mcr, mcrx, mdr=None):
+    def msgbus_send_message(self, mcr: int, mcrx: int, mdr: Optional[int] = None) -> None:
         if logger().DEBUG:
-            logger().log_error("[efi] Message Bus is not supported yet")
+            logger().log_error("[helper] Message Bus is not supported yet")
         return None
 
-    def set_affinity(self, value):
+    def set_affinity(self, value: int) -> None:
         if logger().DEBUG:
-            logger().log_error('[efi] API set_affinity() is not supported')
-        return 0
+            logger().log_error('[helper] API set_affinity() is not supported')
+        return None
 
 
-def get_helper():
+def get_helper() -> EfiHelper:
     return EfiHelper()
