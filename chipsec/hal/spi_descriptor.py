@@ -62,8 +62,6 @@ def get_spi_regions(fd: bytes) -> Optional[List[Tuple[int, str, int, int, int, b
     flmap0 = struct.unpack_from('=I', fd[0x14:0x18])[0]
     # Flash Region Base Address (bits [23:16])
     frba = ((flmap0 & 0x00FF0000) >> 12)
-    # Number of Regions (bits [26:24])
-    nr = (((flmap0 & 0xFF000000) >> 24) & 0x7)
 
     flregs = []
     for r in range(spi.SPI_REGION_NUMBER_IN_FD):
