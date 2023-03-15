@@ -429,7 +429,6 @@ def getEFIvariables_NVAR(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
             guid = str(guid).upper()
             var_name_off = EFI_GUID_SIZE
         else:
-            char_byte = nvram_buf[nof + nvar_size]
             guid_idx = _ord(nvram_buf[nof + nvar_size])
             guid_off = (nvram_size - EFI_GUID_SIZE) - guid_idx * EFI_GUID_SIZE
             guid = UUID(bytes_le=nvram_buf[guid_off: guid_off + EFI_GUID_SIZE])
