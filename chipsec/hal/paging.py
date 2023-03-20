@@ -242,7 +242,7 @@ class c_paging(c_paging_with_2nd_level_translation, c_translation):
                 self.translation_level2.translation = eval(cfg.readline())
                 self.translation = eval(cfg.readline())
                 self.pt = eval(cfg.readline())
-            finally:
+            except:
                 logger().log_hal(f'[paging] Error loading: {path}')
         return
 
