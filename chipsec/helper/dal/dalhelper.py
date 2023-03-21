@@ -232,7 +232,7 @@ class DALHelper(Helper):
     def write_msr(self, thread: int, msr_addr: int, eax: int, edx: int) -> int:
         if not self.base.threads[thread].isenabled:
             en_thread = self.find_thread()
-            logger().log_debug('[WARNING] Selected thread [{thread:d}] was disabled, using [{en_thread:d}].')
+            logger().log_debug(f'[WARNING] Selected thread [{thread:d}] was disabled, using [{en_thread:d}].')
             thread = en_thread
         val = (edx << 32) | eax
         self.base.threads[thread].msr(msr_addr, val)
