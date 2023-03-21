@@ -254,7 +254,7 @@ class DALHelper(Helper):
         elif cr_number == 8:
             val = self.base.threads[cpu_thread_id].state.regs.cr8.value
         else:
-            logger().log_debug('[ERROR] Selected CR{cr_number:d} is not supported.')
+            logger().log_debug(f'[ERROR] Selected CR{cr_number:d} is not supported.')
             val = 0
         return val
 
