@@ -261,7 +261,7 @@ class DALHelper(Helper):
     def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
         if not self.base.threads[cpu_thread_id].isenabled:
             en_thread = self.find_thread()
-            logger().log_debug('[WARNING] Selected thread [{cpu_thread_id:d}] was disabled, using [{en_thread:d}].')
+            logger().log_debug(f'[WARNING] Selected thread [{cpu_thread_id:d}] was disabled, using [{en_thread:d}].')
             cpu_thread_id = en_thread
         if cr_number == 0:
             self.base.threads[cpu_thread_id].state.regs.cr0 = value
