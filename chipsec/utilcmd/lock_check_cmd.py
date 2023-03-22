@@ -33,6 +33,7 @@ Examples:
 KEY:
     Lock Name - Name of Lock within configuration file
     State     - Lock Configuration
+    
         Undefined - Lock is not defined within configuration
         Undoc     - Lock is missing configuration information
         Hidden    - Lock is in a disabled or hidden state (unable to read the lock)

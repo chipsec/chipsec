@@ -112,7 +112,9 @@ Method 2:
    - ``> cd <CHIPSEC_ROOT_DIR>\drivers\win7``
    - Build driver using msbuild command:
       - ``> msbuild /p:Platform=x64``
+
       or
+      
       - ``> msbuild /p:Platform=x32``
 
 If build process is completed without any errors, the driver binary will be moved into the chipsec helper directory: 
