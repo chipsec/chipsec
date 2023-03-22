@@ -15,6 +15,7 @@ Mailing list:
  * Name: oe-chipsec
  * List Address: oe-chipsec@lists.linux.dev
  * Archive Site: https://lore.kernel.org/oe-chipsec/
+ 
  If you wish to subscribe, please send an email to: oe-chipsec+subscribe@lists.linux.dev
 
 Twitter:
