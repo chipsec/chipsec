@@ -1,0 +1,402 @@
+<?xml version="1.0"?>
+<configuration platform="EHL" req_pch="False">
+
+<!--
+XML configuration file for Elkhart Lake
+Document ID: 635255, 636112, 636722, 636723
+-->
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Information                          -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <info family="core">
+        <sku did="0x4512" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4514" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4516" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4518" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x451E" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4522" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4526" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4528" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x452A" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x452C" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x452E" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4532" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x4538" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+        <sku did="0x453A" name="Elkhart Lake" code="EHL" longname="Elkhart Lake" />
+    </info>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Integrated devices                   -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <pci>
+    <!-- 636722 3.0-->
+        <device name="P2SBC"  bus="0" dev="0x1F" fun="1" vid="0x8086" />
+    <!-- 636722 6.0 -->
+        <device name="SMBUS"  bus="0" dev="0x1F" fun="4" vid="0x8086" />
+    <!-- 636722 7.0 -->
+        <device name="SPI"    bus="0" dev="0x1F" fun="5" vid="0x8086" />
+    </pci>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+    <!-- 635255 7.1 -->
+        <bar name="GTTMMADR" bus="0" dev="2"    fun="0" reg="0x10" width="8" mask="0x7FFF000000" desc="Graphics Translation Table Range"/>
+    <!-- 636722 7.1.5 -->
+        <bar name="SPIBAR"   bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000" size="0x1000" desc="SPI Controller Register Range"/>
+    <!-- 636722 3.1.4 -->
+        <bar name="SBREGBAR" register="SBREG_BAR" base_field="RBA" size="0x1000000" fixed_address="0xFD000000" desc="Sideband Register Access BAR"/>
+    <!-- 636722 15.1.13 -->
+        <bar name="ABAR" bus="0" dev="0x23" fun="0" reg="0x24" width="4" mask="0xFFF80000"/>
+        <bar name="PWRMBASE" register="PWRMBASE" base_field="BA" size="0x2000" fixed_address="0xFE000000" desc="PM Base Address"/>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+        <bar name="TCOBASE"    register="TCOBASE"  base_field="TCOBA" size="0x20"  desc="TCO Base Address"/>
+        <bar name="SMBUS_BASE" bus="0" dev="0x1F" fun="4" reg="0x20" mask="0xFFE0" size="0x80"  desc="SMBus Base Address"/>
+        <bar name="ABASE"      register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+        <bar name="PMBASE"     register="ABASE"    base_field="BA"    size="0x100" fixed_address="0x1800" desc="ACPI Base Address"/>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="IBECC_ACTIVATE" type="mmio" bar="MCHBAR" offset="0xDC00" size="4" desc="BIOS programmed, enables-disables In-Band ECC">
+            <field name="IBECC_EN" bit="0" size="1" desc="IBECC Enable Control" />
+        </register>
+        <register name="MTRRCAP"  type="msr" msr="0xFE"  desc="MTRR Capabilities MSR">
+            <field name="VCNT"             bit="0"  size="8" desc="Variable Range Registers Count" />
+            <field name="Fixed_Range_MTRR" bit="8"  size="1" desc="Fixed range MTRRs Supported" />
+            <field name="WC"               bit="10" size="1" desc="WC Supported" />
+        </register>
+
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!-- PCIe Configuration registers -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+        <!-- Sideband Register Access Registers -->
+        <!-- 636722 3.1.4 -->
+        <register name="SBREG_BAR" type="pcicfg" bus="0" dev="0x1F" fun="1" offset="0x10" size="4" desc="Sideband Register Access BAR">
+            <field name="RBA" bit="24" size="8" desc="Register Base Address"/>
+        </register>
+        <register name="P2SBC" device="P2SBC" offset="0xE0" size="4" desc="P2SB control" >
+            <field name="HIDE" bit="8" size="1" desc="Hide SBREG_BAR" />
+            <field name="MASKLOCK" bit="17" size="1" desc="EPMASKs Lock" />
+        </register>
+        <register name="EPMASK0" type="mmcfg" device="P2SBC" offset="0x220" size="4" desc="Endpoint Mask 0">
+        </register>
+        <register name="EPMASK1" type="mmcfg" device="P2SBC" offset="0x224" size="4" desc="Endpoint Mask 1">
+        </register>
+        <register name="EPMASK2" type="mmcfg" device="P2SBC" offset="0x228" size="4" desc="Endpoint Mask 2">
+        </register>
+        <register name="EPMASK3" type="mmcfg" device="P2SBC" offset="0x22C" size="4" desc="Endpoint Mask 3">
+        </register>
+        <register name="EPMASK4" type="mmcfg" device="P2SBC" offset="0x230" size="4" desc="Endpoint Mask 4">
+        </register>
+        <register name="EPMASK5" type="mmcfg" device="P2SBC" offset="0x234" size="4" desc="Endpoint Mask 5">
+        </register>
+        <register name="EPMASK6" type="mmcfg" device="P2SBC" offset="0x238" size="4" desc="Endpoint Mask 6">
+        </register>
+        <register name="EPMASK7" type="mmcfg" device="P2SBC" offset="0x23C" size="4" desc="Endpoint Mask 7">
+        </register>
+
+        <!-- Power Management Controller -->
+        <register name="ABASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x20" size="4" desc="ACPI Base Address">
+            <field name="STYPE" bit="0" size="1" desc="Space Type (always 1 - I/O space)"/>
+            <field name="BA"    bit="7" size="25" desc="Base Address"/>
+        </register>
+        <register name="SMI_EN" type="iobar" bar="ABASE" offset="0x30" size="4" desc="SMI control and enable" >
+            <field name="GBL_SMI_EN" bit="0" size="1"/>
+            <field name="TCO_EN" bit="13" size="1" />
+            <field name="GPIO_UNLOCK_SMI_EN" bit="27" size="1"/>
+        </register>
+        <register name="PWRMBASE" type="pcicfg" bus="0" dev="0x1f" fun="2" offset="0x10" size="4" desc="PM Base Address">
+            <field name="STYPE" bit="0"  size="1"  desc="Space Type (always 0 - memory space)"/>
+            <field name="BA"    bit="13" size="19" desc="Base Address"/>
+        </register>
+        <register name="SRDL" type="mmio" bar="PWRMBASE" offset="0x104C" size="4" desc="Soft Reset Data Lock">
+            <field name="SSL" bit="0" size="1" desc="Set Strap Lock" />
+        </register>
+        <register name="PM_CFG" type="mmio" bar="PWRMBASE" offset="0x1818" size="4" desc="PM_CFG" >
+        </register>
+        <register name="GEN_PMCON_1" type="mmio" bar="PWRMBASE" offset="0x1020" size="4" desc="General PM Configuration B">
+        </register>
+        <register name="GEN_PMCON_2" type="mmio" bar="PWRMBASE" offset="0x1024" size="4" desc="General PM Configuration B">
+            <field name="SMI_LOCK"        bit="4"  size="1" />
+        </register>
+        <register name="ETR3" type="mmio" bar="PWRMBASE" offset="0x1048" size="4" desc="" >
+	        <field name="CF9GR" bit="20" size="1" desc=""/>
+	        <field name="CF9LOCK" bit="31" size="1" desc=""/>
+        </register>
+
+        <!-- PCH RTC registers -->
+        <register name="RC" type="mm_msgbus" port="0xC3" offset="0x3400" size="4" desc="RTC Configuration">
+            <field name="UE"   bit="2"  size="1" desc="Upper 128 Byte Enable"/>
+            <field name="LL"   bit="3"  size="1" desc="Lower 128 Byte Lock"/>
+            <field name="UL"   bit="4"  size="1" desc="Upper 128 Byte Lock"/>
+            <field name="BILD" bit="31" size="1" desc="BIOS Interface Lock-Down"/>
+        </register>
+        <register name="BUC" type="mm_msgbus" port="0xC3" offset="0x3414" size="4" desc="Backed Up Control">
+            <field name="TS" bit="0" size="1" desc="Top Swap"/>
+        </register>
+
+        <!-- SMBus Host Controller -->
+        <register name="SMBUS_VID"  type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x00" size="2" desc="VID" />
+        <register name="SMBUS_DID"  type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x02" size="2" desc="DID" />
+        <register name="SMBUS_CMD"  type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x04" size="2" desc="CMD" />
+        <register name="SMBUS_HCFG" type="pcicfg" bus="0" dev="0x1F" fun="4" offset="0x40" size="1" desc="Host Configuration">
+            <field name="HST_EN"     bit="0" size="1"/>
+            <field name="SMB_SMI_EN" bit="1" size="1"/>
+            <field name="I2C_EN"     bit="2" size="1"/>
+            <field name="SSRESET"    bit="3" size="1"/>
+            <field name="SPD_WD"     bit="4" size="1"/>
+        </register>
+        <register name="TCOBASE"    type="pcicfg" bus="0" dev="0x1f" fun="4" offset="0x50" size="4" desc="TCO Base Address">
+            <field name="IOS"   bit="0" size="1"  desc="I/O space"/>
+            <field name="TCOBA" bit="5" size="11" desc="TCO Base Address"/>
+        </register>
+        <register name="TCOCTL"     type="pcicfg" bus="0" dev="0x1f" fun="4" offset="0x54" size="4" desc="TCO Control">
+            <field name="TCO_BASE_LOCK" bit="0" size="1" desc="TCO Base Lock"/>
+            <field name="TCO_BASE_EN"   bit="8" size="1" desc="TCO Base Enable"/>
+        </register>
+
+        <!-- SPI Interface Controller -->
+        <register name="BC" type="pcicfg" bus="0" dev="0x1F" fun="5" offset="0xDC" size="4" desc="BIOS Control">
+            <field name="BIOSWE"   bit="0" size="1" desc="BIOS Write Enable" />
+            <field name="BLE"      bit="1" size="1" desc="BIOS Lock Enable" />
+            <field name="SRC"      bit="2" size="2" desc="SPI Read Configuration" />
+            <field name="TSS"      bit="4" size="1" desc="Top Swap Status" />
+            <field name="SMM_BWP"  bit="5" size="1" desc="SMM BIOS Write Protection" />
+            <field name="BBS"      bit="6" size="1" desc="Boot BIOS Strap" />
+            <field name="BILD"     bit="7" size="1" desc="BIOS Interface Lock Down"/>
+        </register>
+
+        <!-- PCH SPIBAR registers -->
+        <register name="HSFS" type="mmio" bar="SPIBAR" offset="0x4" size="4" desc="HW sequencing flash status">
+            <field name="FDONE"     bit="0"  size="1" desc="Flash Cycle Done"/>
+            <field name="FCERR"     bit="1"  size="1" desc="Flash Cycle Error"/>
+            <field name="AEL"       bit="2"  size="1" desc="Access Error Log"/>
+            <field name="SAF_ERROR" bit="3"  size="1" desc="SAF Error"/>
+            <field name="SAF_DLE"   bit="4"  size="1" desc="SAF Data Length Error"/>
+            <field name="SCIP"      bit="5"  size="1" desc="SPI cycle in progress"/>
+            <field name="WRSDIS"    bit="11" size="1" desc="Write status disable"/>
+            <field name="PR34LKD"   bit="12" size="1" desc="PRR3 PRR4 Lock-Down"/>
+            <field name="FDOPSS"    bit="13" size="1" desc="Flash Descriptor Override Pin-Strap Status"/>
+            <field name="FDV"       bit="14" size="1" desc="Flash Descriptor Valid"/>
+            <field name="FLOCKDN"   bit="15" size="1" desc="Flash Configuration Lock-Down"/>
+            <field name="FGO"       bit="16" size="1" desc="Flash cycle go"/>
+            <field name="FCYCLE"    bit="17" size="4" desc="Flash Cycle Type"/>
+            <field name="WET"       bit="21" size="1" desc="Write Enable Type"/>
+            <field name="FDBC"      bit="24" size="6" desc="Flash Data Byte Count"/>
+            <field name="FSMIE"     bit="31" size="1" desc="Flash SPI SMI Enable"/>
+        </register>
+        <register name="FRACC" type="mmio" bar="SPIBAR" offset="0x50" size="4" desc="Flash region access permisions">
+            <field name="BMWAG" bit="24" size="8" desc="BIOS Master Write Access Grant" />
+            <field name="BMRAG" bit="16" size="8" desc="BIOS Master Read Access Grant" />
+            <field name="BRWA" bit="8" size="8" desc="BIOS Region Write Access" />
+            <field name="BRRA" bit="0" size="8" desc="BIOS Region Read Access" />
+        </register>
+        <register name="FREG0_FLASHD" type="mmio" bar="SPIBAR" offset="0x54" size="4" desc="Flash Region 0 (Flash Descriptor)">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG1_BIOS" type="mmio" bar="SPIBAR" offset="0x58" size="4" desc="Flash Region 1 (BIOS)">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG2_ME" type="mmio" bar="SPIBAR" offset="0x5C" size="4" desc="Flash Region 2 (ME)">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG2_ME" type="mmio" bar="SPIBAR" offset="0x5C" size="4" desc="Flash Region 2 (ME)">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG3_GBE" type="mmio" bar="SPIBAR" offset="0x60" size="4" desc="Flash Region 3 (GBe)">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG4_PD" type="mmio" bar="SPIBAR" offset="0x64" size="4" desc="Flash Region 4 (Platform Data)">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG5" type="mmio" bar="SPIBAR" offset="0x68" size="4" desc="Flash Region 5">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG6" type="mmio" bar="SPIBAR" offset="0x6C" size="4" desc="Flash Region 6">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG7" type="mmio" bar="SPIBAR" offset="0x70" size="4" desc="Flash Region 7">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG8" type="mmio" bar="SPIBAR" offset="0x74" size="4" desc="Flash Region 8">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG9" type="mmio" bar="SPIBAR" offset="0x78" size="4" desc="Flash Region 9">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG10" type="mmio" bar="SPIBAR" offset="0x7C" size="4" desc="Flash Region 10">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="FREG11" type="mmio" bar="SPIBAR" offset="0x80" size="4" desc="Flash Region 11">
+            <field name="RB" bit="0"  size="15" desc="Region Base"/>
+            <field name="RL" bit="16" size="15" desc="Region Limit"/>
+        </register>
+        <register name="PR0" type="mmio" bar="SPIBAR" offset="0x84" size="4" desc="Protected Range 0">
+            <field name="PRB" bit="0"  size="15"/>
+            <field name="RPE" bit="15" size="1"/>
+            <field name="PRL" bit="16" size="15"/>
+            <field name="WPE" bit="31" size="1"/>
+        </register>
+        <register name="PR1" type="mmio" bar="SPIBAR" offset="0x88" size="4" desc="Protected Range 1">
+            <field name="PRB" bit="0"  size="15"/>
+            <field name="RPE" bit="15" size="1"/>
+            <field name="PRL" bit="16" size="15"/>
+            <field name="WPE" bit="31" size="1"/>
+        </register>
+        <register name="PR2" type="mmio" bar="SPIBAR" offset="0x8C" size="4" desc="Protected Range 2">
+            <field name="PRB" bit="0"  size="15"/>
+            <field name="RPE" bit="15" size="1"/>
+            <field name="PRL" bit="16" size="15"/>
+            <field name="WPE" bit="31" size="1"/>
+        </register>
+        <register name="PR3" type="mmio" bar="SPIBAR" offset="0x90" size="4" desc="Protected Range 3">
+            <field name="PRB" bit="0"  size="15"/>
+            <field name="RPE" bit="15" size="1"/>
+            <field name="PRL" bit="16" size="15"/>
+            <field name="WPE" bit="31" size="1"/>
+        </register>
+        <register name="PR4" type="mmio" bar="SPIBAR" offset="0x94" size="4" desc="Protected Range 4">
+            <field name="PRB" bit="0"  size="15"/>
+            <field name="RPE" bit="15" size="1"/>
+            <field name="PRL" bit="16" size="15"/>
+            <field name="WPE" bit="31" size="1"/>
+        </register>
+        <!-- 635255 3.45/3.46 -->
+        <register name="PCI0.0.0_REMAPBASE"  type="mmio" bar="MCHBAR" offset="0x5090" size="8" desc="Memory Remap Base Address" />
+        <register name="PCI0.0.0_REMAPLIMIT" type="mmio" bar="MCHBAR" offset="0x5098" size="8" desc="Memory Remap Limit Address" />
+        <register name="FDOC" type="mmio" bar="SPIBAR" offset="0xB4" size="4" desc="Flash Descriptor Observability Control Register">
+            <field name="FDSI" bit="2"  size="10" desc="Flash Descriptor Section Index"/>
+            <field name="FDSS" bit="12" size="3"  desc="Flash Descriptor Section Select"/>
+        </register>
+        <register name="FDOD" type="mmio" bar="SPIBAR" offset="0xB8" size="4" desc="Flash Descriptor Observability Data Register">
+            <field name="FDSD" bit="0"  size="32" desc="Flash Descriptor Section Data"/>
+        </register>
+        <register name="VSCC" type="mmio" bar="SPIBAR" offset="0xC4" size="4" desc="Vendor Specific Component Capabilities">
+            <field name="LWG"   bit="2"  size="1" desc="Lower Write Granularity"/>
+            <field name="LWSR"  bit="3"  size="1" desc="Lower Write Status Required"/>
+            <field name="LWEWS" bit="4"  size="1" desc="Write Enable on Write Status"/>
+            <field name="LEO"   bit="8"  size="8" desc="Lower Erase Opcode"/>
+            <field name="VCL"   bit="30" size="1" desc="Vendor Component Lock"/>
+            <field name="CPPTV" bit="31" size="1" desc="Component Property Parameter Table Valid"/>
+        </register>
+
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!-- I/O registers (I/O ports)    -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+        <!-- PCH TCOBASE (SMBus TCO) I/O registers -->
+        <!-- 636722 27.1.6 -->
+        <register name="TCO1_CNT" type="iobar" bar="TCOBASE" offset="0x8" size="2" desc="TCO1 Control">
+            <field name="TCO_LOCK" bit="12" size="1" desc="TCO Lock"/>
+        </register>
+
+        <!-- MISC registers -->
+        <register name="DMIC" type="mm_msgbus" port="0x88" offset="0x2234" size="4" desc="DMI Control Register">
+            <field name ="LOCK" bit="31" size="1" desc="When this bit is set, all the secured registers will be locked and will be Read-Only." />
+        </register>
+
+        <!-- PCI MCH Registers -->
+        <register name="PCI0.0.0_GGC" type="pcicfg" bus="0" dev="0" fun="0" offset="0x50" size="2" desc="Graphics Control">
+            <field name="GMS"     bit="8" size="8" desc="GMS" />
+            <field name="GGMS"    bit="6" size="2" desc="GGMS" />
+            <field name="VAMEN"   bit="2" size="1" desc="VAMEN" />
+            <field name="IVD"     bit="1" size="1" desc="IVD" />
+            <field name="GGCLOCK" bit="0" size="1" desc="GGC Lock"/>
+        </register>
+        <register name="PCI0.0.0_PAVPC" type="pcicfg" bus="0" dev="0" fun="0" offset="0x58" size="4" desc="PAVP Control">
+            <field name="PCMBASE" bit="20" size="12" desc="PCMBASE" />
+            <field name="ASMFEN" bit="6" size="1" desc="ASMF Method Enable" />
+            <field name="OVTATTACK" bit="4" size="1" desc="Override Unsolicited Connection State Attack and Terminate" />
+            <field name="PAVPLCK" bit="2" size="1" desc="PAVP Lock" />
+            <field name="PAVPE" bit="1" size="1" desc="PAVP Enable" />
+            <field name="PCME" bit="0" size="1" desc="PCM Enable" />
+        </register>
+        <register name="PCI0.0.0_DPR" type="pcicfg" bus="0" dev="0" fun="0" offset="0x5C" size="4" desc="DMA Protected Region">
+            <field name="TOPOFDPR" bit="20" size="12" desc="Top of DPR" />
+            <field name="DPRSIZE" bit="4" size="8" desc="DPR Size" />
+            <field name="EPM" bit="2" size="1" desc="DPR Enable" />
+            <field name="PRS" bit="1" size="1" desc="DPR Status" />
+            <field name="LOCK" bit="0" size="1" desc="DPR Lock" />
+        </register>
+        <register name="PCI0.0.0_BDSM" type="pcicfg" bus="0" dev="0" fun="0" offset="0xB0" size="4" desc="Base of Graphics Stolen Memory">
+            <field name="BDSM" bit="20" size="12" desc="DSM Base" />
+            <field name="LOCK" bit="0"  size="1"  desc="Lock" />
+        </register>
+        <!-- VT-d register updates -->
+        <!-- 635255 8.1 -->
+        <register name="VTBAR_PMEN" type="mmio" bar="VTBAR" offset="0x64" size="4" desc="Protected Memory Enable">
+            <field name="PRS" bit="0"  size="1"  desc="Protected Region Status"/>
+            <field name="EPM" bit="31" size="1"  desc="Enable Protected Memory"/>
+        </register>
+        <register name="VTBAR_PLMBASE" type="mmio" bar="VTBAR" offset="0x68" size="4" desc="Protected Memory Low Base">
+            <field name="PLMB" bit="20" size="12" desc="Protected Low-Memory Base"/>
+        </register>
+        <register name="VTBAR_PLMLIMIT" type="mmio" bar="VTBAR" offset="0x6C" size="4" desc="Protected Memory Low Limit">
+            <field name="PLML" bit="20" size="12" desc="Protected Low-Memory Limit"/>
+        </register>
+        <register name="VTBAR_PHMBASE" type="mmio" bar="VTBAR" offset="0x70" size="8" desc="Protected Memory High Base">
+            <field name="PHMB" bit="20" size="19" desc="Protected High-Memory Base"/>
+        </register>
+        <register name="VTBAR_PHMLIMIT" type="mmio" bar="VTBAR" offset="0x78" size="8" desc="Protected Memory High Limit">
+            <field name="PHML" bit="20" size="19" desc="Protected High-Memory Limit"/>
+        </register>
+
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!-- MMIO registers               -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!-- 635255 2.15 -->
+        <register name="PCI0.0.0_DEVEN" type="pcicfg" bus="0" dev="0" fun="0" offset="0x54" size="4" desc="Device Enable">
+            <field name="D14F0EN" bit="14" size="1" desc="VMD Enable" />
+            <field name="D4EN"   bit="7" size="1" desc="Bus 0 Device 4 Enable"/>
+            <field name="D2EN"   bit="4" size="1" desc="Bus 0 Device 2 Enable"/>
+        </register>
+
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!--      Undefined Registers     -->
+        <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <register name="PMRR_UNCORE_PHYSBASE" undef="MSR does not exist." />
+        <register name="PMRR_UNCORE_MASK" undef="MSR does not exist." />
+    </registers>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- 'Controls'                           -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <controls>
+    </controls>
+
+</configuration>
