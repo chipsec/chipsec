@@ -71,7 +71,7 @@ NotWantedFilesList = [
 
 def RunAutoDoc() -> None:
     try:
-        os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {CHIPSEC_DIR}\\*test*')
+        os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {os.path.join(CHIPSEC_DIR, "*test*")}')
     except Exception:
         print('Unable to run sphinx-apidoc')
         raise
@@ -101,14 +101,14 @@ def GeneratePDF() -> None:
 
 def GenerateHTML() -> None:
     try:
-        os.system(f'sphinx-build -b html -T {SPHINX_DIR} {CHIPSEC_DIR}\\manual')
+        os.system(f'sphinx-build -b html -T {SPHINX_DIR} {os.path.join(CHIPSEC_DIR, "manual")}')
     except Exception:
         print('Unable to generate HTML')
         raise
 
 def GenerateJSON() -> None:
     try:
-        os.system(f'sphinx-build -b json -T {SPHINX_DIR} {CHIPSEC_DIR}\\manualJson')
+        os.system(f'sphinx-build -b json -T {SPHINX_DIR} {os.path.join(CHIPSEC_DIR, "manualJson")}')
     except Exception:
         print('Unable to generate JSON')
         raise
