@@ -9,7 +9,7 @@
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="atom" detection_value="7006a">
+  <info family="atom" detection_value="706ax">
     <sku did="0x3180" name="Gemini Lake" code="GLK" longname="Gemini Lake" />
     <sku did="0x31F0" name="Gemini Lake" code="GLK" longname="Gemini Lake" />
   </info>
