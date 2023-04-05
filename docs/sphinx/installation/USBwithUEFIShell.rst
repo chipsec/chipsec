@@ -18,7 +18,7 @@ Installing CHIPSEC
 
 1. Extract the contents of ``__install__/UEFI/chipsec_py368_uefi_x64.zip`` to the USB drive, as appropriate.
 
-   -  This will create a /efi/Tools directory with Python368.efi and /efi/StdLib with subdirectories for dependencies.
+   -  This will create a /efi/Tools directory with Python.efi and /efi/StdLib with subdirectories for dependencies.
 
 2. Copy the contents of CHIPSEC to the USB drive.
 
@@ -33,7 +33,7 @@ Installing CHIPSEC
                   -  python36.8
                      -  [lots of python files and directories]
             -  Tools
-               -  Python368.efi
+               -  Python.efi
          -  chipsec
             -  chipsec
                -  …
@@ -54,16 +54,12 @@ Run CHIPSEC in UEFI Shell
 
    ``cd chipsec``
 
-   ``python368.efi chipsec_main.py`` or ``python368.efi chipsec_util.py``
+   ``python.efi chipsec_main.py`` or ``python.efi chipsec_util.py``
 
    Next follow steps in section "Basic Usage" of :ref:`Running CHIPSEC <Running-Chipsec>`
 
-(OPTIONAL) Extending CHIPSEC UEFI Python 3.6.8 functionality
-------------------------------------------------------------
-
-Skip this section if you don't plan on extending native UEFI functionality for CHIPSEC.
-
-Native functions accessing HW resources are built directly into Python UEFI port in built-in edk2 module. If you want to add more native functionality to Python UEFI port for CHIPSEC, you'll need to re-build Python for UEFI:
+Building UEFI Python 3.6.8 (optional)
+-------------------------------------
 
 #. Start with `Py368Readme.txt <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/Py368ReadMe.txt>`_
 
@@ -71,15 +67,23 @@ Native functions accessing HW resources are built directly into Python UEFI port
     - Latest EDK2-LIBC, visit `Tianocore EDK2-LIBC Github <https://github.com/tianocore/edk2-libc>`_
     - Follow setup steps described in the ``Py368Readme.txt``
 
-#. Import files from the `CHIPSEC Python 3.6.8 port for EFI Shell  <https://github.com/chipsec/chipsec/tree/main/chipsec_tools/edk2/PythonEFI>`_
-
-    - Replace existing  ``AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/edk2module.c`` file with `edk2module.c <https://github.com/chipsec/chipsec/blob/main/chipsec_tools/edk2/PythonEFI/edk2module.c>`_
-    - Copy `cpu.asm <https://github.com/chipsec/chipsec/blob/main/chipsec_tools/edk2/PythonEFI/cpu.asm>`_ file to ``AppPkg/Applications/Python/Python-3.6.8/PyMode-3.6.8/Modules/``
-    - Add ``PyMod-$(PYTHON_VERSION)/Modules/cpu.asm`` line under the ``[Sources.X64]`` section in ``AppPkg/Applications/Python/Python-3.6.8/Python368.inf``
-
 #. Make modifications as needed
 
-    - All CHIPSEC related functions are in ``edk2module.c`` (``#ifdef CHIPSEC``)
-    - Asm functions are in ``cpu.asm``
+    - CPython / C file(s):
 
-#. Build and directory creation steps are covered in the ``Py368ReadMe.txt``
+      - `edk2module.c <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/edk2module.c>`_
+
+    - ASM file(s):
+
+      - `cpu.nasm <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/cpu.nasm>`_
+      - `cpu_ia32.nasm <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/cpu_ia32.nasm>`_
+      - `cpu_gcc.s <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/cpu_gcc.s>`_
+      - `cpu_ia32_gcc.s <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/PyMod-3.6.8/Modules/cpu_ia32_gcc.s>`_
+
+    - INF file(s):
+
+      - `Python368.inf <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/Python368.inf>`_
+
+#. Build and directory creation steps are covered in the `Py368Readme.txt <https://github.com/tianocore/edk2-libc/blob/master/AppPkg/Applications/Python/Python-3.6.8/Py368ReadMe.txt>`_
+
+    - MSVS build tools are highly recommended
