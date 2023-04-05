@@ -50,7 +50,7 @@ import zipfile
 
 CHIPSEC_BASE = Path(__file__).parent / ".."
 PYTHON_INSTALL_ZIP = CHIPSEC_BASE / "__install__" / "UEFI" / "chipsec_py368_uefi_x64.zip"
-PYTHON_EFI_COMMAND = "python368.efi"
+PYTHON_EFI_COMMAND = "python.efi"
 
 OVMF_CODE_LOCATIONS = (
     # Arch Linux https://archlinux.org/packages/extra/any/edk2-ovmf/
