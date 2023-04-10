@@ -90,8 +90,6 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="don't log timestamps", action='store_true')
     adv_options.add_argument('--deltas', dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
-    adv_options.add_argument('--record', dest='_to_file', help='run chipsec and clone helper results into JSON file')
-    adv_options.add_argument('--replay', dest='_from_file', help='replay a chipsec run with JSON file')
     adv_options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in helper().getAvailableHelpers()])
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
@@ -395,8 +393,6 @@ class ChipsecMain:
             self.logger.log_warning("Ignoring unsupported platform warning and continue execution.")
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
-        if self._from_file:
-            self._driver_exists = "FileHelper"
 
     def properties(self):
         ret = OrderedDict()
@@ -428,8 +424,7 @@ class ChipsecMain:
 
         if self._load_config:
             try:
-                self._cs.init(self._platform, self._pch, (not self._no_driver), self._driver_exists,
-                              self._to_file, self._from_file)
+                self._cs.init(self._platform, self._pch, (not self._no_driver), self._driver_exists)
             except UnknownChipsetError as msg:
                 self.logger.log_error("Platform is not supported ({}).".format(str(msg)))
                 if self._unknownPlatform:
