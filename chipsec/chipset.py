@@ -196,10 +196,10 @@ class Chipset:
         else:
             return f'{extfamily:02X}{ret}'
 
-    def init(self, platform_code, req_pch_code, start_driver, driver_exists=None, to_file=None, from_file=None):
+    def init(self, platform_code, req_pch_code, start_driver, driver_exists=None):
         _unknown_platform = False
         self.reqs_pch = None
-        self.helper.start(start_driver, driver_exists, to_file, from_file)
+        self.helper.start(start_driver, driver_exists)
         api_mode_str = 'using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API'
         logger().log(f'[CHIPSEC] API mode: {api_mode_str}')
 

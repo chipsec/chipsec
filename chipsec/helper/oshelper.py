@@ -121,10 +121,7 @@ class OsHelper:
             ret = self.getBaseHelper()
         return ret
 
-    def start(self, start_driver: bool, driver_exists: Optional[bool] = None, to_file: Optional[bool] = None, from_file: Optional[bool] = False) -> None:
-        if to_file is not None:
-            from chipsec.helper.file.filehelper import FileCmds
-            self.filecmds = FileCmds(to_file)
+    def start(self, start_driver: bool, driver_exists: Optional[bool] = None) -> None:
         if driver_exists is not None:
             for name in self.avail_helpers:
                 if name == driver_exists:
@@ -132,7 +129,7 @@ class OsHelper:
         try:
             if not self.helper.create(start_driver):
                 raise OsHelperError("failed to create OS helper", 1)
-            if not self.helper.start(start_driver, from_file):
+            if not self.helper.start(start_driver):
                 raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
             if logger().DEBUG:
