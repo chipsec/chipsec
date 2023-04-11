@@ -174,10 +174,10 @@ class uefivar_fuzz(BaseModule):
 
             if not len(module_argv):
                 fz_cli = 'all'
-            self.logger.log('Test      : {}'.format(fz_cli))
-            self.logger.log('Iterations: {:d}'.format(ITERATIONS))
-            self.logger.log('Seed      : {:d}'.format(SEED))
-            self.logger.log('Test case : {:d}'.format(CASE))
+            self.logger.log(f'Test      : {fz_cli}')
+            self.logger.log(f'Iterations: {ITERATIONS:d}')
+            self.logger.log(f'Seed      : {SEED:d}')
+            self.logger.log(f'Test case : {CASE:d}')
             self.logger.log('')
             for count in range(1, ITERATIONS + CASE):
                 if FUZZ_NAME:
@@ -216,7 +216,7 @@ class uefivar_fuzz(BaseModule):
                 if count < CASE:
                     continue
 
-                self.logger.log('  Running test #{:d}:'.format(count))
+                self.logger.log(f'  Running test #{count:d}:')
                 self.logger.flush()
                 status = self._uefi.set_EFI_variable(bytestostring(_NAME), str(_GUID), _DATA, _SIZE, _ATTRIB)
                 self.logger.log(status)
