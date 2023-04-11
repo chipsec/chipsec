@@ -81,11 +81,11 @@ class sinkhole(BaseModule):
         smrr_base = self.cs.get_register_field('IA32_SMRR_PHYSBASE', smrr_physbase_msr, 'PhysBase', True)
         apic_base = self.cs.get_register_field('IA32_APIC_BASE', apic_base_msr, 'APICBase', True)
 
-        self.logger.log("[*] Local APIC Base: 0x{:016X}".format(apic_base))
-        self.logger.log("[*] SMRR Base      : 0x{:016X}".format(smrr_base))
+        self.logger.log(f'[*] Local APIC Base: 0x{apic_base:016X}')
+        self.logger.log(f'[*] SMRR Base      : 0x{smrr_base:016X}')
 
         self.logger.log("[*] Attempting to overlap Local APIC page with SMRR region")
-        self.logger.log("    Writing 0x{:X} to IA32_APIC_BASE[APICBase]..".format(smrrbase))
+        self.logger.log(f'   Writing 0x{smrrbase:X} to IA32_APIC_BASE[APICBase]..')
         self.logger.log_important("NOTE: The system may hang or process may crash when running this test.")
         self.logger.log("      In that case, the mitigation to this issue is likely working but we may not be handling the exception generated.")
 
@@ -95,7 +95,7 @@ class sinkhole(BaseModule):
             self.logger.log_important("Error encountered when attempting to modify IA32_APIC_BASE")
 
         apic_base_msr_new = self.cs.read_register('IA32_APIC_BASE', 0)
-        self.logger.log("[*] New IA32_APIC_BASE: 0x{:016X}".format(apic_base_msr_new))
+        self.logger.log(f'[*] New IA32_APIC_BASE: 0x{apic_base_msr_new:016X}')
 
         if apic_base_msr_new == apic_base_msr:
             res = ModuleResult.PASSED
@@ -104,7 +104,7 @@ class sinkhole(BaseModule):
         else:
             self.logger.log_bad("Could modify IA32_APIC_BASE to overlap SMRR")
             self.cs.write_register('IA32_APIC_BASE', apic_base_msr, 0)
-            self.logger.log("[*] Restored original value 0x{:016X}".format(apic_base_msr))
+            self.logger.log(f'[*] Restored original value 0x{apic_base_msr:016X}')
             res = ModuleResult.FAILED
             self.logger.log_failed("CPU is susceptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly.")
 
