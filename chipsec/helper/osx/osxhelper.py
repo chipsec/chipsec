@@ -225,25 +225,13 @@ class OSXHelper(Helper):
     def delete_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
-    def native_delete_EFI_variable(self, name, guid):
-        raise NotImplementedError()
-
     def list_EFI_variables(self):
-        raise NotImplementedError()
-
-    def native_list_EFI_variables(self):
         raise NotImplementedError()
 
     def get_EFI_variable(self, name, guid, attrs=None):
         raise NotImplementedError()
 
-    def native_get_EFI_variable(self, name, guid, attrs=None):
-        raise NotImplementedError()
-
     def set_EFI_variable(self, name, guid, data, datasize, attrs=None):
-        raise NotImplementedError()
-
-    def native_set_EFI_variable(self, name, guid, data, datasize, attrs=None):
         raise NotImplementedError()
 
     #########################################################

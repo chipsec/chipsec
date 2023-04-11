@@ -316,26 +316,14 @@ class DALHelper(Helper):
     def delete_EFI_variable(self, name, guid):
         raise UnimplementedAPIError('delete_EFI_variable')
 
-    def native_delete_EFI_variable(self, name, guid):
-        raise UnimplementedAPIError('native_delete_EFI_variable')
-
     def list_EFI_variables(self):
         raise UnimplementedAPIError('list_EFI_variables')
-
-    def native_list_EFI_variables(self):
-        raise UnimplementedAPIError('native_list_EFI_variables')
 
     def get_EFI_variable(self, name, guid, attrs):
         raise UnimplementedAPIError('get_EFI_variable')
 
-    def native_get_EFI_variable(self, name, guid, attrs):
-        raise UnimplementedAPIError('native_get_EFI_variable')
-
     def set_EFI_variable(self, name, guid, data, datasize, attrs):
         raise UnimplementedAPIError('set_EFI_variable')
-
-    def native_set_EFI_variable(self, name, guid, data, datasize, attrs):
-        raise UnimplementedAPIError('native_set_EFI_variable')
 
     #
     # Memory-mapped I/O (MMIO) access
@@ -388,9 +376,6 @@ class DALHelper(Helper):
     #
     def get_ACPI_SDT(self):
         raise UnimplementedAPIError('get_ACPI_SDT')
-
-    def native_get_ACPI_table(self, table_name):
-        raise UnimplementedAPIError('native_get_ACPI_table')
 
     def get_ACPI_table(self, table_name):
         raise UnimplementedAPIError('get_ACPI_table')

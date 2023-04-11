@@ -151,11 +151,6 @@ class UnimplementedAPIError (OsHelperError):
         super(UnimplementedAPIError, self).__init__(f"'{api_name}' is not implemented", 0)
 
 
-class UnimplementedNativeAPIError (UnimplementedAPIError):
-    def __init__(self, api_name):
-        super(UnimplementedNativeAPIError, self).__init__(api_name)
-
-
 class DALHelperError (RuntimeError):
     pass
 

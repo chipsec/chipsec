@@ -200,8 +200,6 @@ class Chipset:
         _unknown_platform = False
         self.reqs_pch = None
         self.helper.start(start_driver, driver_exists)
-        api_mode_str = 'using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API'
-        logger().log(f'[CHIPSEC] API mode: {api_mode_str}')
 
         vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
         # get cpuid only if driver using driver (otherwise it will cause problems)
@@ -365,9 +363,6 @@ class Chipset:
     def is_arch(self, *arch_vid: int) -> bool:
         """Check support for multiple architecture VIDs"""
         return self.vid in arch_vid
-
-    def use_native_api(self):
-        return self.helper.use_native_api()
 
     def print_supported_chipsets(self):
         logger().log("\nSupported platforms:\n")

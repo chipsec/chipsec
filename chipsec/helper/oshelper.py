@@ -139,20 +139,6 @@ class OsHelper:
             if not self.helper.delete(start_driver):
                 logger().log_warning("failed to delete OS helper")
 
-    #
-    # use_native_api
-    # Defines if CHIPSEC should use its own API or native environment/OS API
-    #
-    # Returns:
-    #   True  if CHIPSEC needs to use native OS/environment API
-    #   False if CHIPSEC needs to use its own (OS agnostic) implementation of helper API
-    #
-    # Currently, CHIPSEC will use native API only if CHIPSEC driver wasn't loaded
-    # (e.g. when --no_driver command-line option is specified).
-    # In future, it can can more conditions
-    #
-    def use_native_api(self) -> bool:
-        return self.helper.use_native_api()
 
     def is_dal(self) -> bool:
         return 'itpii' in sys.modules
@@ -185,10 +171,7 @@ class OsHelper:
             if logger().DEBUG:
                 logger().log_warning("Config register address is not naturally aligned")
 
-        if self.use_native_api() and hasattr(self.helper, 'native_read_pci_reg'):
-            ret = self.helper.native_read_pci_reg(bus, device, function, address, size)
-        else:
-            ret = self.helper.read_pci_reg(bus, device, function, address, size)
+        ret = self.helper.read_pci_reg(bus, device, function, address, size)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_pci_reg", (bus, device, function, address, size), ret)
         return ret
@@ -199,10 +182,7 @@ class OsHelper:
             if logger().DEBUG:
                 logger().log_warning("Config register address is not naturally aligned")
 
-        if self.use_native_api() and hasattr(self.helper, 'native_write_pci_reg'):
-            ret = self.helper.native_write_pci_reg(bus, device, function, address, value, size)
-        else:
-            ret = self.helper.write_pci_reg(bus, device, function, address, value, size)
+        ret = self.helper.write_pci_reg(bus, device, function, address, value, size)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_pci_reg", (bus, device, function, address, size), ret)
         return ret
@@ -211,19 +191,13 @@ class OsHelper:
     # read/write mmio
     #
     def read_mmio_reg(self, bar_base: int, size: int, offset: int = 0, bar_size: Optional[int] = None) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_read_mmio_reg'):
-            ret = self.helper.native_read_mmio_reg(bar_base, bar_size, offset, size)
-        else:
-            ret = self.helper.read_mmio_reg(bar_base + offset, size)
+        ret = self.helper.read_mmio_reg(bar_base + offset, size)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_mmio_reg", (bar_base + offset, size), ret)
         return ret
 
     def write_mmio_reg(self, bar_base: int, size: int, value: int, offset: int = 0, bar_size: Optional[int] = None) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
-            ret = self.helper.native_write_mmio_reg(bar_base, bar_size, offset, size, value)
-        else:
-            ret = self.helper.write_mmio_reg(bar_base + offset, size, value)
+        ret = self.helper.write_mmio_reg(bar_base + offset, size, value)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_mmio_reg", (bar_base + offset, size, value), ret)
         return ret
@@ -232,56 +206,38 @@ class OsHelper:
     # physical_address is 64 bit integer
     #
     def read_physical_mem(self, phys_address: int, length: int) -> bytes:
-        if self.use_native_api() and hasattr(self.helper, 'native_read_phys_mem'):
-            ret = self.helper.native_read_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length)
-        else:
-            ret = self.helper.read_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length)
+        ret = self.helper.read_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_physical_mem", ((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length), ret)
         return ret
 
     def write_physical_mem(self, phys_address: int, length: int, buf: AnyStr) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_write_phys_mem'):
-            ret = self.helper.native_write_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length, buf)
-        else:
-            ret = self.helper.write_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length, buf)
+        ret = self.helper.write_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length, buf)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_physical_mem", ((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length, buf), ret)
         return ret
 
     def alloc_physical_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_alloc_phys_mem'):
-            ret = self.helper.native_alloc_phys_mem(length, max_phys_address)
-        else:
-            ret = self.helper.alloc_phys_mem(length, max_phys_address)
+        ret = self.helper.alloc_phys_mem(length, max_phys_address)
         if self.filecmds is not None:
             self.filecmds.AddElement("alloc_physical_mem", (length, max_phys_address), ret)
         return ret
 
     def free_physical_mem(self, physical_address: int) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_free_phys_mem'):
-            ret = self.helper.native_free_phys_mem(physical_address)
-        else:
-            ret = self.helper.free_phys_mem(physical_address)
+        ret = self.helper.free_phys_mem(physical_address)
         if self.filecmds is not None:
             self.filecmds.AddElement("free_physical_mem", (physical_address), ret)
         return ret
 
     def va2pa(self, va: int) -> Tuple[int, int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_va2pa'):
-            ret = self.helper.native_va2pa(va)
-        else:
-            ret = self.helper.va2pa(va)
+        ret = self.helper.va2pa(va)
         if self.filecmds is not None:
             self.filecmds.AddElement("va2pa", (va), ret)
         return ret
 
     def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
         try:
-            if self.use_native_api() and hasattr(self.helper, 'native_map_io_space'):
-                ret = self.helper.native_map_io_space(physical_address, length, cache_type)
-            elif hasattr(self.helper, 'map_io_space'):
-                ret = self.helper.map_io_space(physical_address, length, cache_type)
+            ret = self.helper.map_io_space(physical_address, length, cache_type)
             if self.filecmds is not None:
                 self.filecmds.AddElement("map_io_space", (physical_address, length, cache_type), ret)
             return ret
@@ -293,19 +249,13 @@ class OsHelper:
     # Read/Write I/O port
     #
     def read_io_port(self, io_port: int, size: int) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_read_io_port'):
-            ret = self.helper.native_read_io_port(io_port, size)
-        else:
-            ret = self.helper.read_io_port(io_port, size)
+        ret = self.helper.read_io_port(io_port, size)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_io_port", (io_port, size), ret)
         return ret
 
     def write_io_port(self, io_port: int, value: int, size: int) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_write_io_port'):
-            ret = self.helper.native_write_io_port(io_port, value, size)
-        else:
-            ret = self.helper.write_io_port(io_port, value, size)
+        ret = self.helper.write_io_port(io_port, value, size)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_io_port", (io_port, value, size), ret)
         return ret
@@ -314,19 +264,13 @@ class OsHelper:
     # Read/Write CR registers
     #
     def read_cr(self, cpu_thread_id: int, cr_number: int) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_read_cr'):
-            ret = self.helper.native_read_cr(cpu_thread_id, cr_number)
-        else:
-            ret = self.helper.read_cr(cpu_thread_id, cr_number)
+        ret = self.helper.read_cr(cpu_thread_id, cr_number)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_cr", (cpu_thread_id, cr_number), ret)
         return ret
 
     def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_write_cr'):
-            ret = self.helper.native_write_cr(cpu_thread_id, cr_number, value)
-        else:
-            ret = self.helper.write_cr(cpu_thread_id, cr_number, value)
+        ret = self.helper.write_cr(cpu_thread_id, cr_number, value)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_cr", (cpu_thread_id, cr_number, value), ret)
         return ret
@@ -335,19 +279,13 @@ class OsHelper:
     # Read/Write MSR on a specific CPU thread
     #
     def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_read_msr'):
-            ret = self.helper.native_read_msr(cpu_thread_id, msr_addr)
-        else:
-            ret = self.helper.read_msr(cpu_thread_id, msr_addr)
+        ret = self.helper.read_msr(cpu_thread_id, msr_addr)
         if self.filecmds is not None:
             self.filecmds.AddElement("read_msr", (cpu_thread_id, msr_addr), ret)
         return ret
 
     def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_write_msr'):
-            ret = self.helper.native_write_msr(cpu_thread_id, msr_addr, eax, edx)
-        else:
-            ret = self.helper.write_msr(cpu_thread_id, msr_addr, eax, edx)
+        ret = self.helper.write_msr(cpu_thread_id, msr_addr, eax, edx)
         if self.filecmds is not None:
             self.filecmds.AddElement("write_msr", (cpu_thread_id, msr_addr, eax, edx), ret)
         return ret
@@ -356,10 +294,7 @@ class OsHelper:
     # Load CPU microcode update on a specific CPU thread
     #
     def load_ucode_update(self, cpu_thread_id: int, ucode_update_buf: int) -> bool:
-        if self.use_native_api() and hasattr(self.helper, 'native_load_ucode_update'):
-            ret = self.helper.native_load_ucode_update(cpu_thread_id, ucode_update_buf)
-        else:
-            ret = self.helper.load_ucode_update(cpu_thread_id, ucode_update_buf)
+        ret = self.helper.load_ucode_update(cpu_thread_id, ucode_update_buf)
         if self.filecmds is not None:
             self.filecmds.AddElement("load_ucode_update", (cpu_thread_id, ucode_update_buf), ret)
         return ret
@@ -368,10 +303,7 @@ class OsHelper:
     # Read IDTR/GDTR/LDTR on a specific CPU thread
     #
     def get_descriptor_table(self, cpu_thread_id: int, desc_table_code: int) -> Optional[Tuple[int, int, int]]:
-        if self.use_native_api() and hasattr(self.helper, 'native_get_descriptor_table'):
-            ret = self.helper.native_get_descriptor_table(cpu_thread_id, desc_table_code)
-        else:
-            ret = self.helper.get_descriptor_table(cpu_thread_id, desc_table_code)
+        ret = self.helper.get_descriptor_table(cpu_thread_id, desc_table_code)
         if self.filecmds is not None:
             self.filecmds.AddElement("get_descriptor_table", (cpu_thread_id, desc_table_code), ret)
         return ret
@@ -386,37 +318,25 @@ class OsHelper:
         return ret
 
     def get_EFI_variable(self, name: str, guid: str) -> Optional[bytes]:
-        if self.use_native_api() and hasattr(self.helper, 'native_get_EFI_variable'):
-            ret = self.helper.native_get_EFI_variable(name, guid)
-        else:
-            ret = self.helper.get_EFI_variable(name, guid)
+        ret = self.helper.get_EFI_variable(name, guid)
         if self.filecmds is not None:
             self.filecmds.AddElement("get_EFI_variable", (name, guid), ret)
         return ret
 
     def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: Optional[int] = None, attrs: Optional[int] = None) -> Optional[int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_set_EFI_variable'):
-            ret = self.helper.native_set_EFI_variable(name, guid, data, datasize, attrs)
-        else:
-            ret = self.helper.set_EFI_variable(name, guid, data, datasize, attrs)
+        ret = self.helper.set_EFI_variable(name, guid, data, datasize, attrs)
         if self.filecmds is not None:
             self.filecmds.AddElement("set_EFI_variable", (name, guid, data, datasize, attrs), ret)
         return ret
 
     def delete_EFI_variable(self, name: str, guid: str) -> Optional[int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_delete_EFI_variable'):
-            ret = self.helper.native_delete_EFI_variable(name, guid)
-        else:
-            ret = self.helper.delete_EFI_variable(name, guid)
+        ret = self.helper.delete_EFI_variable(name, guid)
         if self.filecmds is not None:
             self.filecmds.AddElement("delete_EFI_variable", (name, guid), ret)
         return ret
 
     def list_EFI_variables(self) -> Optional[Dict[str, List['EfiVariableType']]]:
-        if self.use_native_api() and hasattr(self.helper, 'native_list_EFI_variables'):
-            ret = self.helper.native_list_EFI_variables()
-        else:
-            ret = self.helper.list_EFI_variables()
+        ret = self.helper.list_EFI_variables()
         if self.filecmds is not None:
             self.filecmds.AddElement("list_EFI_variables", (), ret)
         return ret
@@ -432,10 +352,7 @@ class OsHelper:
 
     def get_ACPI_table(self, table_name: str) -> Optional[Array]:
         # return self.helper.get_ACPI_table( table_name )
-        if self.use_native_api() and hasattr(self.helper, 'native_get_ACPI_table'):
-            ret = self.helper.native_get_ACPI_table(table_name)
-        else:
-            ret = self.helper.get_ACPI_table(table_name)
+        ret = self.helper.get_ACPI_table(table_name)
         if self.filecmds is not None:
             self.filecmds.AddElement("get_ACPI_table", (table_name), ret)
         return ret
@@ -444,10 +361,7 @@ class OsHelper:
     # CPUID
     #
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_cpuid'):
-            ret = self.helper.native_cpuid(eax, ecx)
-        else:
-            ret = self.helper.cpuid(eax, ecx)
+        ret = self.helper.cpuid(eax, ecx)
         if self.filecmds is not None:
             self.filecmds.AddElement("cpuid", (eax, ecx), ret)
         return ret
@@ -457,28 +371,19 @@ class OsHelper:
     #
 
     def msgbus_send_read_message(self, mcr: int, mcrx: int) -> Optional[int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_msgbus_send_read_message'):
-            ret = self.helper.native_msgbus_send_read_message(mcr, mcrx)
-        else:
-            ret = self.helper.msgbus_send_read_message(mcr, mcrx)
+        ret = self.helper.msgbus_send_read_message(mcr, mcrx)
         if self.filecmds is not None:
             self.filecmds.AddElement("msgbus_send_read_message", (mcr, mcrx), ret)
         return ret
 
     def msgbus_send_write_message(self, mcr: int, mcrx: int, mdr: int) -> None:
-        if self.use_native_api() and hasattr(self.helper, 'native_msgbus_send_write_message'):
-            ret = self.helper.native_msgbus_send_write_message(mcr, mcrx, mdr)
-        else:
-            ret = self.helper.msgbus_send_write_message(mcr, mcrx, mdr)
+        ret = self.helper.msgbus_send_write_message(mcr, mcrx, mdr)
         if self.filecmds is not None:
             self.filecmds.AddElement("msgbus_send_write_message", (mcr, mcrx, mdr), ret)
         return ret
 
     def msgbus_send_message(self, mcr: int, mcrx: int, mdr: Optional[int]) -> Optional[int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_msgbus_send_message'):
-            ret = self.helper.native_msgbus_send_message(mcr, mcrx, mdr)
-        else:
-            ret = self.helper.msgbus_send_message(mcr, mcrx, mdr)
+        ret = self.helper.msgbus_send_message(mcr, mcrx, mdr)
         if self.filecmds is not None:
             self.filecmds.AddElement("msgbus_send_message", (mcr, mcrx, mdr), ret)
         return ret
@@ -487,19 +392,13 @@ class OsHelper:
     # Affinity
     #
     def get_affinity(self) -> Optional[int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_get_affinity'):
-            ret = self.helper.native_get_affinity()
-        else:
-            ret = self.helper.get_affinity()
+        ret = self.helper.get_affinity()
         if self.filecmds is not None:
             self.filecmds.AddElement("get_affinity", (), ret)
         return ret
 
     def set_affinity(self, value: int) -> Optional[int]:
-        if self.use_native_api() and hasattr(self.helper, 'native_set_affinity'):
-            ret = self.helper.native_set_affinity(value)
-        else:
-            ret = self.helper.set_affinity(value)
+        ret = self.helper.set_affinity(value)
         if self.filecmds is not None:
             self.filecmds.AddElement("set_affinity", (value), ret)
         return ret
@@ -508,10 +407,7 @@ class OsHelper:
     # Logical CPU count
     #
     def get_threads_count(self) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_get_threads_count'):
-            ret = self.helper.native_get_threads_count()
-        else:
-            ret = self.helper.get_threads_count()
+        ret = self.helper.get_threads_count()
         if self.filecmds is not None:
             self.filecmds.AddElement("get_threads_count", (), ret)
         return ret
@@ -520,10 +416,7 @@ class OsHelper:
     # Send SW SMI
     #
     def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
-        if self.use_native_api() and hasattr(self.helper, 'native_send_sw_smi'):
-            ret = self.helper.native_send_sw_smi(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
-        else:
-            ret = self.helper.send_sw_smi(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+        ret = self.helper.send_sw_smi(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         if self.filecmds is not None:
             self.filecmds.AddElement("send_sw_smi", (cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi), ret)
         return ret
@@ -533,10 +426,7 @@ class OsHelper:
     #
     def hypercall(self, rcx: int = 0, rdx: int = 0, r8: int = 0, r9: int = 0, r10: int = 0, r11: int = 0,
                   rax: int = 0, rbx: int = 0, rdi: int = 0, rsi: int = 0, xmm_buffer: int = 0) -> int:
-        if self.use_native_api() and hasattr(self.helper, 'native_hypercall'):
-            ret = self.helper.native_hypercall(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
-        else:
-            ret = self.helper.hypercall(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
+        ret = self.helper.hypercall(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
         if self.filecmds is not None:
             self.filecmds.AddElement("hypercall", (rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer), ret)
         return ret
@@ -546,10 +436,7 @@ class OsHelper:
     #
 
     def retpoline_enabled(self) -> bool:
-        if self.use_native_api() and hasattr(self.helper, 'native_retpoline_enabled'):
-            ret = self.helper.native_retpoline_enabled()
-        else:
-            ret = self.helper.retpoline_enabled()
+        ret = self.helper.retpoline_enabled()
         if self.filecmds is not None:
             self.filecmds.AddElement("retpoline_enabled", (), ret)
         return ret
