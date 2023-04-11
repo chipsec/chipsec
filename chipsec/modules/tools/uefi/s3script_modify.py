@@ -167,16 +167,16 @@ class s3script_modify(BaseModule):
         for bootscript_pa in bootscript_PAs:
             if bootscript_pa == 0:
                 continue
-            self.logger.log("[*] Looking for 0x{:X} opcode in the script at 0x{:016X}..".format(opcode, bootscript_pa))
+            self.logger.log(f'[*] Looking for 0x{opcode:X} opcode in the script at 0x{bootscript_pa:016X}..')
             for e in parsed_scripts[bootscript_pa]:
                 if (e.decoded_opcode is not None) and \
                    (opcode == e.decoded_opcode.opcode) and \
                    (address == e.decoded_opcode.address):
 
-                    self.logger.log_good("Found opcode at offset 0x{:04X}".format(e.offset_in_script))
+                    self.logger.log_good(f'Found opcode at offset 0x{e.offset_in_script:04X}')
                     self.logger.log(e)
                     pa = bootscript_pa + e.offset_in_script
-                    self.logger.log("[*] Modifying S3 boot script entry at address 0x{:016X}..".format(pa))
+                    self.logger.log(f'[*] Modifying S3 boot script entry at address 0x{pa:016X}..')
 
                     orig_entry_buf = self.cs.mem.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Original entry:")
@@ -195,7 +195,7 @@ class s3script_modify(BaseModule):
                     print_buffer_bytes(new_entry_buf)
                     return True
 
-        self.logger.log_bad("Did not find required 0x{:X} opcode in the script".format(opcode))
+        self.logger.log_bad(f'Did not find required 0x{opcode:X} opcode in the script')
         return False
 
     def modify_s3_dispatch(self):
@@ -204,7 +204,7 @@ class s3script_modify(BaseModule):
         (_, new_entrypoint) = self.cs.mem.alloc_physical_mem(ep_size, smram_base)
         self.cs.mem.write_physical_mem(new_entrypoint, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
         new_ep = self.cs.mem.read_physical_mem(new_entrypoint, ep_size)
-        self.logger.log_good("Allocated new DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(new_entrypoint, ep_size))
+        self.logger.log_good(f'Allocated new DISPATCH entry-point at 0x{new_entrypoint:016X} (size = 0x{ep_size:X}):')
         print_buffer_bytes(new_ep)
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
@@ -214,14 +214,14 @@ class s3script_modify(BaseModule):
         for bootscript_pa in bootscript_PAs:
             if bootscript_pa == 0:
                 continue
-            self.logger.log("[*] Searching the script at 0x{:016X} for DISPATCH opcodes..".format(bootscript_pa))
+            self.logger.log(f'[*] Searching the script at 0x{bootscript_pa:016X} for DISPATCH opcodes..')
             for e in parsed_scripts[bootscript_pa]:
                 if (e.decoded_opcode is not None) and (dispatch_opcode == e.decoded_opcode.opcode):
 
-                    self.logger.log_good("Found DISPATCH opcode at offset 0x{:04X}".format(e.offset_in_script))
+                    self.logger.log_good(f'Found DISPATCH opcode at offset 0x{e.offset_in_script:04X}')
                     self.logger.log(e)
                     pa = bootscript_pa + e.offset_in_script
-                    self.logger.log("[*] Modifying S3 boot script entry at address 0x{:016X}..".format(pa))
+                    self.logger.log(f'[*] Modifying S3 boot script entry at address 0x{pa:016X}..')
 
                     orig_entry_buf = self.cs.mem.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Original entry:")
@@ -249,11 +249,11 @@ class s3script_modify(BaseModule):
         for script_pa in bootscript_PAs:
             if script_pa == 0:
                 continue
-            self.logger.log("[*] Looking for DISPATCH opcode in the script at 0x{:016X}..".format(script_pa))
+            self.logger.log(f'[*] Looking for DISPATCH opcode in the script at 0x{script_pa:016X}..')
             for e in parsed_scripts[script_pa]:
                 if (e.decoded_opcode is not None) and (dispatch_opcode == e.decoded_opcode.opcode):
                     ep_pa = e.decoded_opcode.entrypoint
-                    self.logger.log_good("Found DISPATCH opcode at offset 0x{:04X} with entry-point 0x{:016X}".format(e.offset_in_script, ep_pa))
+                    self.logger.log_good(f'Found DISPATCH opcode at offset 0x{e.offset_in_script:04X} with entry-point 0x{ep_pa:016X}')
                     self.logger.log(e)
                     break
             if ep_pa is not None:
@@ -266,7 +266,7 @@ class s3script_modify(BaseModule):
         ep_size = len(self.DISPATCH_ENTRYPOINT_INSTR)
         self.cs.mem.write_physical_mem(ep_pa, ep_size, self.DISPATCH_ENTRYPOINT_INSTR)
         new_ep = self.cs.mem.read_physical_mem(ep_pa, ep_size)
-        self.logger.log("[*] New DISPATCH entry-point at 0x{:016X} (size = 0x{:X}):".format(ep_pa, ep_size))
+        self.logger.log(f'[*] New DISPATCH entry-point at 0x{ep_pa:016X} (size = 0x{ep_size:X}):')
         print_buffer_bytes(new_ep)
         return True
 
@@ -274,10 +274,10 @@ class s3script_modify(BaseModule):
         if address is None:
             (smram_base, _, _) = self.cs.cpu.get_SMRAM()
             (_, address) = self.cs.mem.alloc_physical_mem(0x1000, smram_base)
-            self.logger.log("[*] Allocated memory at 0x{:016X} as a target of MEM_WRITE opcode".format(address))
+            self.logger.log(f'[*] Allocated memory at 0x{address:016X} as a target of MEM_WRITE opcode')
 
         val = self.cs.mem.read_physical_mem_dword(address)
-        self.logger.log("[*] Original value at 0x{:016X}: 0x{:08X}".format(address, val))
+        self.logger.log(f'[*] Original value at 0x{address:016X}: 0x{val:08X}')
 
         (bootscript_PAs, parsed_scripts) = self.get_bootscript()
         if parsed_scripts is None:
@@ -286,14 +286,14 @@ class s3script_modify(BaseModule):
         for bootscript_pa in bootscript_PAs:
             if bootscript_pa == 0:
                 continue
-            self.logger.log("[*] Looking for MEM_WRITE opcode in the script at 0x{:016X}..".format(bootscript_pa))
+            self.logger.log(f'[*] Looking for MEM_WRITE opcode in the script at 0x{bootscript_pa:016X}..')
             for e in parsed_scripts[bootscript_pa]:
                 if (e.decoded_opcode is not None) and (cmd2opcode['mmio_wr'] == e.decoded_opcode.opcode):
 
-                    self.logger.log_good("Found opcode at offset 0x{:X}".format(e.offset_in_script))
+                    self.logger.log_good(f'Found opcode at offset 0x{e.offset_in_script:X}')
                     self.logger.log(e)
                     pa = bootscript_pa + e.offset_in_script
-                    self.logger.log("[*] Modifying S3 boot script entry at address 0x{:016X}..".format(pa))
+                    self.logger.log(f'[*] Modifying S3 boot script entry at address 0x{pa:016X}..')
 
                     orig_entry_buf = self.cs.mem.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Original entry:")
@@ -307,10 +307,10 @@ class s3script_modify(BaseModule):
                     new_entry_buf = self.cs.mem.read_physical_mem(pa, e.length)
                     self.logger.log("[*] Modified entry:")
                     print_buffer_bytes(new_entry_buf)
-                    self.logger.log('After sleep/resume, read address 0x{:08X} and look for value 0x{:08X}'.format(address, new_value))
+                    self.logger.log(f'After sleep/resume, read address 0x{address:08X} and look for value 0x{new_value:08X}')
                     return True
 
-        self.logger.log_bad("Did not find required 0x{:X} opcode in the script".format(cmd2opcode['mmio_wr']))
+        self.logger.log_bad(f'Did not find required 0x{cmd2opcode["mmio_wr"]:X} opcode in the script')
         return False
 
     def modify_s3_add(self, new_opcode):
@@ -325,28 +325,28 @@ class s3script_modify(BaseModule):
                 continue
             script_buffer = self.cs.mem.read_physical_mem(bootscript_pa, 4)
             script_type, _ = id_s3bootscript_type(script_buffer, False)
-            self.logger.log("[*] S3 boot script type: 0x{:0X}".format(script_type))
+            self.logger.log(f'[*] S3 boot script type: 0x{script_type:0X}')
 
-            self.logger.log("[*] Looking for TERMINATE opcode in the script at 0x{:016X}..".format(bootscript_pa))
+            self.logger.log(f'[*] Looking for TERMINATE opcode in the script at 0x{bootscript_pa:016X}..')
             for e in parsed_scripts[bootscript_pa]:
                 if (e.index is not None) and (e.index != -1):
                     e_index = e.index + 1
 
                 if (e.decoded_opcode is not None) and (terminate_opcode == e.decoded_opcode.opcode):
-                    self.logger.log_good("Found TERMINATE opcode at offset 0x{:X}".format(e.offset_in_script))
+                    self.logger.log_good(f'Found TERMINATE opcode at offset 0x{e.offset_in_script:X}')
                     self.logger.log(e)
                     pa = bootscript_pa + e.offset_in_script
                     orig_entry_buf = self.cs.mem.read_physical_mem(pa, e.length)
 
                     self.logger.log("[*] New S3 boot script opcode:")
                     self.logger.log(new_opcode)
-                    self.logger.log("[*] Adding new opcode entry at address 0x{:016X}..".format(pa))
+                    self.logger.log(f'[*] Adding new opcode entry at address 0x{pa:016X}..')
                     new_entry = create_s3bootscript_entry_buffer(script_type, new_opcode, e_index)
                     print_buffer_bytes(new_entry)
 
                     self.cs.mem.write_physical_mem(pa, len(new_entry), new_entry)
                     last_entry_pa = pa + len(new_entry)
-                    self.logger.log("[*] Moving TERMINATE opcode to the last entry at 0x{:016X}..".format(last_entry_pa))
+                    self.logger.log(f'[*] Moving TERMINATE opcode to the last entry at 0x{last_entry_pa:016X}..')
                     self.cs.mem.write_physical_mem(last_entry_pa, len(orig_entry_buf), orig_entry_buf)
                     return True
 
@@ -362,13 +362,13 @@ class s3script_modify(BaseModule):
             scmd = module_argv[1].lower() if len(module_argv) > 1 else 'dispatch_ep'
             if scmd in cmd2opcode:
                 if len(module_argv) < 4:
-                    self.logger.log_error('Expected module options: -a replace_op,{},<reg_address>,<value>'.format(scmd))
+                    self.logger.log_error(f'Expected module options: -a replace_op,{scmd},<reg_address>,<value>')
                     return ModuleResult.ERROR
                 reg_address = int(module_argv[2], 16)
                 value = int(module_argv[3], 16)
                 sts = self.modify_s3_reg(cmd2opcode[scmd], reg_address, value)
                 if sts:
-                    self.logger.log('[*] After sleep/resume, check the value of register 0x{:X} is 0x{:X}'.format(reg_address, value))
+                    self.logger.log(f'[*] After sleep/resume, check the value of register 0x{reg_address:X} is 0x{value:X}')
             elif 'dispatch' == scmd:
                 sts = self.modify_s3_dispatch()
             elif 'dispatch_ep' == scmd:
@@ -378,7 +378,7 @@ class s3script_modify(BaseModule):
                 address = int(module_argv[3], 16) if len(module_argv) == 4 else None
                 sts = self.modify_s3_mem(address, new_value)
             else:
-                self.logger.log_error("Unrecognized module command-line argument: {}".format(scmd))
+                self.logger.log_error(f'Unrecognized module command-line argument: {scmd}')
                 self.logger.log(examples_str)
                 return ModuleResult.ERROR
         elif op == 'add_op':
@@ -386,18 +386,18 @@ class s3script_modify(BaseModule):
             new_opcode = None
             if scmd in cmd2opcode:
                 if len(module_argv) < 5:
-                    self.logger.log_error('Expected module options: -a add_op,{},<reg_address>,<value>,<width>'.format(scmd))
+                    self.logger.log_error(f'Expected module options: -a add_op,{scmd},<reg_address>,<value>,<width>')
                     return ModuleResult.ERROR
                 address = int(module_argv[2], 16)
                 value = int(module_argv[3], 16)
                 width = int(module_argv[4], 16)
                 width_val = script_width_values[width]
-                value_buff = struct.pack("<{}".format(script_width_formats[width_val]), value)
+                value_buff = struct.pack(f'<{script_width_formats[width_val]}', value)
 
                 if cmd2opcode[scmd] in write_opcodes:
                     new_opcode = op_io_pci_mem(cmd2opcode[scmd], None, width_val, address, 0, 1, value_buff, None, None)
                 else:
-                    self.logger.log_error("Unsupported opcode: {}".format(scmd))
+                    self.logger.log_error(f'Unsupported opcode: {scmd}')
                     self.logger.log(examples_str)
                     return ModuleResult.ERROR
             elif 'dispatch' == scmd:
@@ -409,13 +409,13 @@ class s3script_modify(BaseModule):
                     entrypoint = int(module_argv[2], 16)
                 new_opcode = op_dispatch(dispatch_opcode, None, entrypoint)
             else:
-                self.logger.log_error("Unrecognized opcode: {}".format(scmd))
+                self.logger.log_error(f'Unrecognized opcode: {scmd}')
                 self.logger.log(examples_str)
                 return ModuleResult.ERROR
 
             sts = self.modify_s3_add(new_opcode)
         else:
-            self.logger.log_error("Unrecognized module command-line argument: {}".format(op))
+            self.logger.log_error(f'Unrecognized module command-line argument: {op}')
             self.logger.log(examples_str)
             return ModuleResult.ERROR
 

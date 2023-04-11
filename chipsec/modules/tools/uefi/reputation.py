@@ -83,15 +83,15 @@ Please run 'pip install virustotal-api' and try again.""")
 
         if vt_report["results"]["response_code"] == 0:
             # Hash is unknown to VT.
-            self.logger.log_important("Unfamiliar EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log_important(f'Unfamiliar EFI binary found in the UEFI firmware image\n{efi_module}')
             return False
 
         if vt_report["results"]["positives"] >= self.vt_threshold:
-            self.logger.log_bad("Suspicious EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log_bad(f'Suspicious EFI binary found in the UEFI firmware image\n{efi_module}')
             return True
 
         if self.logger.VERBOSE:
-            self.logger.log("Benign EFI binary found in the UEFI firmware image\n{}".format(efi_module))
+            self.logger.log(f'Benign EFI binary found in the UEFI firmware image\n{efi_module}')
 
         return False
 
@@ -128,13 +128,13 @@ Please run 'pip install virustotal-api' and try again.""")
         if len(module_argv) > 2:
             # Use provided firmware image
             image_file = module_argv[2]
-            self.logger.log("[*] Reading FW image from file: {}".format(image_file))
+            self.logger.log(f'[*] Reading FW image from file: {image_file}')
         else:
             # Read firmware image directly from SPI flash memory
             self.spi = SPI(self.cs)
             (base, limit, _) = self.spi.get_SPI_region(BIOS)
             image_size = limit + 1 - base
-            self.logger.log("[*] Dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size))
+            self.logger.log(f'[*] Dumping FW image from ROM to {image_file}: 0x{base:08X} bytes at [0x{limit:08X}:0x{image_size:08X}]')
             self.logger.log("[*] This may take a few minutes (instead, use 'chipsec_util spi dump')...")
             self.spi.read_spi_to_file(base, image_size, image_file)
 

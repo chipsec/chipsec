@@ -83,10 +83,10 @@ class scan_blocked(BaseModule):
     def check_blockedlist(self):
         res = ModuleResult.PASSED
 
-        self.logger.log("[*] Searching for EFI binaries that match criteria from '{}':".format(self.cfg_name))
+        self.logger.log(f'[*] Searching for EFI binaries that match criteria from \'{self.cfg_name}\':')
         for k in self.efi_blockedlist.keys():
             entry = self.efi_blockedlist[k]
-            self.logger.log("    {:16} - {}".format(k, entry['description'] if 'description' in entry else ''))
+            self.logger.log(f'    {k:16} - {entry["description"] if "description" in entry else ""}')
 
         # parse the UEFI firmware image and look for EFI modules matching the block-list
         efi_tree = build_efi_model(self.image, None)
@@ -121,14 +121,14 @@ class scan_blocked(BaseModule):
             self.spi = SPI(self.cs)
             (base, limit, _) = self.spi.get_SPI_region(BIOS)
             image_size = limit + 1 - base
-            self.logger.log("[*] Dumping FW image from ROM to {}: 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, base, limit, image_size))
+            self.logger.log(f'[*] Dumping FW image from ROM to {image_file}: 0x{base:08X} bytes at [0x{limit:08X}:0x{image_size:08X}]')
             self.logger.log("[*] This may take a few minutes (instead, use 'chipsec_util spi dump')...")
             self.spi.read_spi_to_file(base, image_size, image_file)
             self.cpuid = self.cs.get_cpuid()
         elif len(module_argv) > 0:
             # Use provided firmware image
             image_file = module_argv[0]
-            self.logger.log("[*] Reading FW image from file: {}".format(image_file))
+            self.logger.log(f'[*] Reading FW image from file: {image_file}')
 
         self.image = read_file(image_file)
 

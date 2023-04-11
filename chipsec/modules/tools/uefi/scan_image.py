@@ -110,9 +110,9 @@ class scan_image(BaseModule):
         self.logger.log("[*] Generating a list of EFI executables from firmware image...")
         efi_tree = build_efi_model(self.image, None)
         matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
-        self.logger.log("[*] Found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list), self.image_file))
-        self.logger.log("[*] Creating JSON file '{}'...".format(json_pth))
-        write_file("{}".format(json_pth), json.dumps(self.efi_list, indent=2, separators=(',', ': '), cls=UUIDEncoder))
+        self.logger.log(f'[*] Found {len(self.efi_list):d} EFI executables in UEFI firmware image \'{self.image_file}\'')
+        self.logger.log(f'[*] Creating JSON file \'{json_pth}\'...')
+        write_file(f'{json_pth}', json.dumps(self.efi_list, indent=2, separators=(',', ': '), cls=UUIDEncoder))
         return ModuleResult.PASSED
 
     #
@@ -123,14 +123,14 @@ class scan_image(BaseModule):
         with open(json_pth) as data_file:
             self.efilist = json.load(data_file)
 
-        self.logger.log("[*] Checking EFI executables against the list '{}'".format(json_pth))
+        self.logger.log(f'[*] Checking EFI executables against the list \'{json_pth}\'')
 
         # parse the UEFI firmware image and look for EFI modules matching list
         # - match only executable EFI sections (PE/COFF, TE)
         # - find all occurrences of matching EFI modules
         efi_tree = build_efi_model(self.image, None)
         matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
-        self.logger.log("[*] Found {:d} EFI executables in UEFI firmware image '{}'".format(len(self.efi_list), self.image_file))
+        self.logger.log(f'[*] Found {len(self.efi_list):d} EFI executables in UEFI firmware image \'{self.image_file}\'')
 
         for m in self.efi_list:
             if not (m in self.efilist):
@@ -138,13 +138,13 @@ class scan_image(BaseModule):
                 guid = self.efi_list[m]["guid"] if 'guid' in self.efi_list[m] else '?'
                 name = self.efi_list[m]["name"] if 'name' in self.efi_list[m] else '<unknown>'
                 sha1 = self.efi_list[m]["sha1"] if 'sha1' in self.efi_list[m] else ''
-                self.logger.log_important("Found EFI executable not in the list:\n    {} (sha256)\n    {} (sha1)\n    {{{}}}\n    {}".format(m, sha1, guid, name))
+                self.logger.log_important(f'Found EFI executable not in the list:\n    {m} (sha256)\n    {sha1} (sha1)\n    {{{guid}}}\n    {name}')
 
         if len(self.suspect_modules) > 0:
-            self.logger.log_warning("Found {:d} EFI executables not in the list '{}'".format(len(self.suspect_modules), json_pth))
+            self.logger.log_warning(f'Found {len(self.suspect_modules):d} EFI executables not in the list \'{json_pth}\'')
             return ModuleResult.WARNING
         else:
-            self.logger.log_passed("All EFI executables match the list '{}'".format(json_pth))
+            self.logger.log_passed(f'All EFI executables match the list \'{json_pth}\'')
             return ModuleResult.PASSED
 
     def usage(self):
@@ -165,14 +165,14 @@ class scan_image(BaseModule):
             elif len(module_argv) > 2:
                 json_file = module_argv[1]
                 image_file = module_argv[2]
-                self.logger.log("[*] Reading firmware from '{}'...".format(image_file))
+                self.logger.log(f'[*] Reading firmware from \'{image_file}\'...')
             else:
                 image_file = DEF_FWIMAGE_FILE
                 json_file = DEF_EFILIST_FILE
                 self.spi = SPI(self.cs)
                 (base, limit, _) = self.spi.get_SPI_region(BIOS)
                 image_size = limit + 1 - base
-                self.logger.log("[*] Dumping firmware image from ROM to '{}': 0x{:08X} bytes at [0x{:08X}:0x{:08X}]".format(image_file, image_size, base, limit))
+                self.logger.log(f'[*] Dumping firmware image from ROM to \'{image_file}\': 0x{image_size:08X} bytes at [0x{base:08X}:0x{limit:08X}]')
                 self.spi.read_spi_to_file(base, image_size, image_file)
 
             self.image_file = image_file
@@ -181,13 +181,13 @@ class scan_image(BaseModule):
 
             if op == 'generate':
                 if os.path.exists(json_pth):
-                    self.logger.log_error("JSON file '{}' already exists. Exiting...".format(json_file))
+                    self.logger.log_error(f'JSON file \'{json_file}\' already exists. Exiting...')
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.generate_efilist(json_pth)
             elif op == 'check':
                 if not os.path.exists(json_pth):
-                    self.logger.log_error("JSON file '{}' doesn't exists. Exiting...".format(json_file))
+                    self.logger.log_error(f'JSON file \'{json_file}\' doesn\'t exist. Exiting...')
                     self.res = ModuleResult.ERROR
                 else:
                     self.res = self.check_list(json_pth)
