@@ -89,7 +89,7 @@ class rogue_mmio_bar(BaseModule):
 
         # copy all registers from MMIO range to new location in memory
         # we do that once rather than before every SMI since we return after first change detected
-        self.logger.log("[*] copying BAR 0x{:X} > 0x{:X}".format(base, self.reloc_mmio))
+        self.logger.log(f'[*] copying BAR 0x{base:X} > 0x{self.reloc_mmio:X}')
         orig_mmio = self.copy_bar(base, self.reloc_mmio, size)
         if self.logger.VERBOSE:
             self.cs.mmio.dump_MMIO(base, size)
@@ -98,12 +98,12 @@ class rogue_mmio_bar(BaseModule):
         for smi_code in range(self.smic_start, self.smic_end + 1):
             for smi_data in range(self.smid_start, self.smid_end + 1):
                 for ecx in range(self.smif_start, self.smif_end + 1):
-                    self.logger.log("> SMI# {:02X}: data {:02X}, func (ECX) {:X}".format(smi_code, smi_data, ecx))
+                    self.logger.log(f'> SMI# {smi_code:02X}: data {smi_data:02X}, func (ECX) {ecx:X}')
                     if FLUSH_OUTPUT_AFTER_SMI:
                         self.logger.flush()
 
                     # point MMIO range to new location (relocate MMIO range)
-                    self.logger.log("  relocating BAR 0x{:X}".format(bar))
+                    self.logger.log(f'  relocating BAR 0x{bar:X}')
                     if not self.modify_bar(b, d, f, bar_off, is64bit, bar, new_bar):
                         continue
 
@@ -112,14 +112,14 @@ class rogue_mmio_bar(BaseModule):
 
                     # restore original location of MMIO range
                     self.restore_bar(b, d, f, bar_off, is64bit, bar)
-                    self.logger.log("  restored BAR with 0x{:X}".format(bar))
+                    self.logger.log(f'  restored BAR with 0x{bar:X}')
 
                     # check the contents at the address range used to relocate MMIO BAR
                     buf = self.cs.mem.read_physical_mem(self.reloc_mmio, size)
                     diff = DIFF(orig_mmio, buf, size)
                     self.logger.log("  checking relocated MMIO")
                     if len(diff) > 0:
-                        self.logger.log_important("changes found at 0x{:X} +{}".format(self.reloc_mmio, diff))
+                        self.logger.log_important(f'changes found at 0x{self.reloc_mmio:X} +{diff}')
                         if self.logger.VERBOSE:
                             write_file('mmio_mem.new', buf)
                         return True
@@ -140,9 +140,9 @@ class rogue_mmio_bar(BaseModule):
         l = self.cs.pci.read_dword(b, d, f, off)
         if l != (new_bar & 0xFFFFFFFF):
             self.restore_bar(b, d, f, off, is64bit, bar)
-            self.logger.log("  skipping ({:X} != {:X})".format(l, new_bar))
+            self.logger.log(f'  skipping ({l:X} != {new_bar:X})')
             return False
-        self.logger.log("  new BAR: 0x{:X}".format(l))
+        self.logger.log(f'  new BAR: 0x{l:X}')
         return True
 
     def restore_bar(self, b, d, f, off, is64bit, bar):
@@ -174,7 +174,7 @@ class rogue_mmio_bar(BaseModule):
 
         self.logger.log("[*] Testing MMIO of PCIe devices:")
         for (b, d, f, _, _) in pcie_devices:
-            self.logger.log("    {:02X}:{:02X}.{:X}".format(b, d, f))
+            self.logger.log(f'    {b:02X}:{d:02X}.{f:X}')
 
         # allocate a page or SMM communication buffer (often supplied in EBX register)
         _, self.comm = self.cs.mem.alloc_physical_mem(0x1000, BOUNDARY_4GB - 1)
@@ -183,21 +183,21 @@ class rogue_mmio_bar(BaseModule):
         # allocate range in physical memory (should cover all MMIO ranges including GTTMMADR)
         bsz = 2 * MAX_MMIO_RANGE_SIZE
         (va, pa) = self.cs.mem.alloc_physical_mem(bsz, BOUNDARY_4GB - 1)
-        self.logger.log("[*] Allocated memory range : 0x{:016X} (0x{:X} bytes)".format(pa, bsz))
+        self.logger.log(f'[*] Allocated memory range : 0x{pa:016X} (0x{bsz:X} bytes)')
         self.cs.mem.write_physical_mem(pa, bsz, _MEM_FILL_VALUE * bsz)
         # align at the MAX_MMIO_RANGE_SIZE boundary within allocated range
         self.reloc_mmio = pa & (~(MAX_MMIO_RANGE_SIZE - 1))
         if self.reloc_mmio < pa:
             self.reloc_mmio += MAX_MMIO_RANGE_SIZE
-        self.logger.log("[*] MMIO relocation address: 0x{:016X}\n".format(self.reloc_mmio))
+        self.logger.log(f'[*] MMIO relocation address: 0x{self.reloc_mmio:016X}\n')
 
         for (b, d, f, vid, did) in pcie_devices:
-            self.logger.log("[*] Enumerating device {:02X}:{:02X}.{:X} MMIO BARs..".format(b, d, f))
+            self.logger.log(f'[*] Enumerating device {b:02X}:{d:02X}.{f:X} MMIO BARs..')
             device_bars = self.cs.pci.get_device_bars(b, d, f, True)
             for (base, isMMIO, is64bit, bar_off, bar, size) in device_bars:
                 if isMMIO and size <= MAX_MMIO_RANGE_SIZE:
                     self.logger.flush()
-                    self.logger.log("[*] Found MMIO BAR +0x{:02X} (base 0x{:016X}, size 0x{:X})".format(bar_off, base, size))
+                    self.logger.log(f'[*] Found MMIO BAR +0x{bar_off:02X} (base 0x{base:016X}, size 0x{size:X})')
                     new_bar = ((self.reloc_mmio & PCI_HDR_BAR_BASE_MASK_MMIO64) | (bar & PCI_HDR_BAR_CFGBITS_MASK))
                     if self.smi_mmio_range_fuzz(0, b, d, f, bar_off, is64bit, bar, new_bar, base, size):
                         return ModuleResult.FAILED
