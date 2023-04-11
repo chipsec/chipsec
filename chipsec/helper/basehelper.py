@@ -39,9 +39,6 @@ class Helper:
         self.name = "Helper"
         self.driverpath = None
 
-    def use_native_api(self):
-        return (not self.driver_loaded)
-
     def create(self, start_driver):
         if logger().VERBOSE:
             logger().log("[helper] Helper created")

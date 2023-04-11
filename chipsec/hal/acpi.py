@@ -30,7 +30,7 @@ from collections import defaultdict
 from collections import namedtuple
 
 from chipsec.defines import bytestostring
-from chipsec.exceptions import UnimplementedNativeAPIError
+from chipsec.exceptions import UnimplementedAPIError
 from chipsec.file import read_file
 from chipsec.hal import acpi_tables
 from chipsec.hal.hal_base import HALBase
@@ -372,7 +372,7 @@ class ACPI(HALBase):
             if sdt is not None:
                 self.get_table_list_from_SDT(sdt, is_xsdt)
             self.get_DSDT_from_FADT()
-        except UnimplementedNativeAPIError:
+        except UnimplementedAPIError:
             # 2. If didn't work, try using get_ACPI_table if a helper implemented
             #    reading ACPI tables via native API which some OS may provide
             logger().log_hal("[acpi] Trying to enumerate ACPI tables using get_ACPI_table...")
@@ -465,7 +465,7 @@ class ACPI(HALBase):
                     t_size = self.cs.mem.read_physical_mem_dword(table_address + 4)
                     t_data = self.cs.mem.read_physical_mem(table_address, t_size)
                     acpi_tables_data.append(t_data)
-            except UnimplementedNativeAPIError:
+            except UnimplementedAPIError:
                 # 2. If didn't work, try using get_ACPI_table if a helper implemented
                 #    reading ACPI tables via native API which some OS may provide
                 logger().log_hal("[acpi] trying to extract ACPI table using get_ACPI_table...")
