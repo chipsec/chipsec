@@ -8,6 +8,7 @@
 chipsec.egg-info
 dist
 build
+MANIFEST
 
 # Linux driver
 chipsec/helper/linux/*.ko
