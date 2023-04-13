@@ -34,50 +34,51 @@ from random import getrandbits, randint
 from time import strftime, localtime
 from chipsec.module_common import BaseModule
 from chipsec.defines import DD
+from typing import Dict, List, Tuple
 
 
 class BaseModuleDebug(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.debug = False
-        self.promt = ''
+        self.prompt = ''
 
-    def __del__(self):
+    def __del__(self) -> None:
         pass
 
     ##
     # msg
     ##
-    def msg(self, message):
-        sys.stdout.write('[{}]  {}\n'.format(self.promt, message))
+    def msg(self, message: str) -> None:
+        sys.stdout.write(f'[{self.prompt}]  {message}\n')
         return
 
     ##
     # err
     ##
-    def err(self, message):
-        sys.stdout.write('[{}]  **** ERROR: {}\n'.format(self.promt, message))
+    def err(self, message: str) -> None:
+        sys.stdout.write(f'[{self.prompt}]  **** ERROR: {message}\n')
         return
 
     ##
     # dbg
     ##
-    def dbg(self, message):
+    def dbg(self, message: str):
         if self.debug:
-            sys.stdout.write('[{}]  {}\n'.format(self.promt, message))
+            sys.stdout.write(f'[{self.prompt}]  {message}\n')
         return
 
     ##
     # hex
     ##
-    def hex(self, title, data, w=16):
+    def hex(self, title: str, data:str, w=16) -> None:
         if title and data:
-            title = '-' * 6 + title + '-' * w * 3
-            sys.stdout.write('[{}]  {}'.format(self.promt, title[:w * 3 + 15]))
+            title = f'{"-" * 6}{title}{"-" * w * 3}'
+            sys.stdout.write(f'[{self.prompt}]  {title[:w * 3 + 15]}')
         a = 0
         for c in data:
             if a % w == 0:
-                sys.stdout.write('\n[{}]  {:08X}: '.format(self.promt, a))
+                sys.stdout.write(f'\n[{self.prompt}]  {a:08X}: ')
             elif a % w % 8 == 0:
                 sys.stdout.write('| ')
             sys.stdout.write('{:02X} '.format(ord(c)))
@@ -88,19 +89,19 @@ class BaseModuleDebug(BaseModule):
     ##
     # fatal
     ##
-    def fatal(self, message):
-        sys.stdout.write('[{}]  **** FATAL: {}\n'.format(self.promt, message))
+    def fatal(self, message: str) -> None:
+        sys.stdout.write(f'[{self.prompt}]  **** FATAL: {message}\n')
         exit(1)
         return
 
     ##
     # info_bitwise
     ##
-    def info_bitwise(self, reg, desc):
+    def info_bitwise(self, reg: int, desc: Dict[int, str]) -> None:
         i = 0
         while reg != 0:
             if i in desc:
-                self.msg('       Bit {:2d}:  {:d}  {}'.format(i, reg & 0x1, desc[i]))
+                self.msg(f'       Bit {i:2d}:  {(reg & 0x1):d}  {desc[i]}')
             i += 1
             reg = reg >> 1
         return
@@ -116,29 +117,29 @@ class BaseModuleSupport(BaseModuleDebug):
         self.statistics = {}
         self.hv_connectionid = {}
 
-    def __del__(self):
+    def __del__(self) -> None:
         # self.dump_initial_data("initial_data_auto_generated.json")
         BaseModuleDebug.__del__(self)
 
-    def stats_reset(self):
+    def stats_reset(self) -> None:
         self.statistics = {}
         return
 
-    def stats_event(self, name):
+    def stats_event(self, name: str) -> None:
         self.statistics[name] = self.statistics.get(name, 0) + 1
         return
 
-    def stats_print(self, title):
+    def stats_print(self, title: str) -> None:
         self.msg('')
-        self.msg((' {} '.format(title).center(72 - len(self.promt), '*')))
+        self.msg(f' {title} '.center(72 - len(self.prompt), '*'))
         for name in sorted(self.statistics, key=self.statistics.get, reverse=True):
-            self.msg('{:50} : {:d}'.format(name, self.statistics[name]))
+            self.msg(f'{name:50} : {self.statistics[name]:d}')
         self.msg('')
         return
 
-    def get_initial_data(self, statuses, vector, size, padding='\x00'):
-        connectionid_message = [(' '.join(["{:02x}".format(x) for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 1]
-        connectionid_event = [(' '.join(["{:02x}".format(x) for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 2]
+    def get_initial_data(self, statuses: List[str], vector: int, size: int, padding='\x00') -> List[str]:        
+        connectionid_message = [(' '.join([f'{x:02x}' for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 1]
+        connectionid_event = [(' '.join([f'{x:02x}' for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 2]
         result = []
         for status in statuses:
             for item in self.initial_data:
@@ -152,20 +153,20 @@ class BaseModuleSupport(BaseModuleDebug):
             result = [padding * size]
         return result
 
-    def add_initial_data(self, vector, buffer, status):
+    def add_initial_data(self, vector: int, buffer: str, status: str) -> None:
         found = False
         buffer = buffer.rstrip("\x00")
-        buffer = " ".join("{:02x}".format(x) for x in buffer)
+        buffer = ' '.join(f'{x:02x}' for x in buffer)
         for item in self.initial_data:
             if int(item['vector'], 16) == vector:
                 if item['data'] == buffer:
                     found = True
                     break
         if not found:
-            self.initial_data.append({"vector": "{:02X}".format(vector), "status": status, "data": buffer})
+            self.initial_data.append({"vector": f'{vector:02X}', "status": status, "data": buffer})
         return
 
-    def dump_initial_data(self, filename):
+    def dump_initial_data(self, filename: str) -> None:
         if self.initial_data:
             with open(self.path + filename, "w") as json_file:
                 json.dump(self.initial_data, json_file, indent=4)
@@ -177,17 +178,18 @@ class BaseModuleHwAccess(BaseModuleSupport):
     ##
     # cpuid_info
     ##
-    def cpuid_info(self, eax, ecx, desc):
+    def cpuid_info(self, eax: int, ecx: int, desc: str) -> Tuple[int, int, int, int]:
         val = self.cs.cpu.cpuid(eax, ecx)
         self.msg('')
-        self.msg('CPUID.{:X}h.{:X}h > {}'.format(eax, ecx, desc))
-        self.msg('EAX: 0x{:08X} EBX: 0x{:08X} ECX: 0x{:08X} EDX: 0x{:08X}'.format(val[0], val[1], val[2], val[3]))
+        self.msg(f'CPUID.{eax:X}h.{ecx:X}h > {desc}')
+        self.msg(f'EAX: 0x{val[0]:08X} EBX: 0x{val[1]:08X} ECX: 0x{val[2]:08X} EDX: 0x{val[3]:08X}')
         return val
 
     ##
     # rdmsr
     ##
-    def rdmsr(self, msr):
+    def rdmsr(self, msr: int) -> Tuple[int, int]:
+        eax, edx = (0, 0)
         temp = sys.stdout
         sys.stdout = open(os.devnull, 'wb')
         try:
@@ -202,7 +204,7 @@ class BaseModuleHwAccess(BaseModuleSupport):
     ##
     # wrmsr
     ##
-    def wrmsr(self, msr, value):
+    def wrmsr(self, msr: int, value: int) -> None:
         temp = sys.stdout
         sys.stdout = open(os.devnull, 'wb')
         try:
@@ -217,7 +219,7 @@ class BaseModuleHwAccess(BaseModuleSupport):
 ### COMMON ROUTINES ############################################################
 
 
-def weighted_choice(choices):
+def weighted_choice(choices: List[Tuple[int, float]]) -> int:
     total = sum(w for c, w in choices)
     r = random.uniform(0, total)
     x = 0
@@ -228,47 +230,47 @@ def weighted_choice(choices):
     assert False, "Invalid parameters"
 
 
-def rand_dd(n, rndbytes=1, rndbits=1):
+def rand_dd(n: int, rndbytes: int = 1, rndbits: int = 1) -> List[int]:
     weights = [(0x00000000, 0.85), (0xFFFFFFFF, 0.10), (0xFFFF0000, 0.05), (0xFFFFFF00, 0.05)]
-    buffer = ''
+    buffer = b''
     for i in range(n):
         buffer += DD(weighted_choice(weights))
     buffer = list(buffer)
     for i in range(rndbytes):
         pos = randint(0, len(buffer) - 1)
-        buffer[pos] = chr(randint(0, 255))
+        buffer[pos] = randint(0, 255)
     for i in range(rndbits):
         pos = randint(0, len(buffer) - 1)
-        buffer[pos] = chr(ord(buffer[pos]) ^ (0x1 << randint(0, 7)))
-    buffer = ''.join(buffer)
+        buffer[pos] = (buffer[pos]) ^ (0x1 << randint(0, 7))
+        buffer = ''.join(buffer)
     return buffer
 
 
-def overwrite(buffer, string, position):
+def overwrite(buffer: bytes, string: bytes, position: int) -> bytes:
     return buffer[:position] + string + buffer[position + len(string):]
 
 
-def get_int_arg(arg):
+def get_int_arg(arg: str) -> int:
     try:
-        arg = int(eval(arg))
+        ret = int(eval(arg))
     except:
         print("\n  ERROR: Invalid parameter\n")
         exit(1)
-    return arg
+    return ret
 
 
-def hv_hciv(rep_start, rep_count, call_code, fast=0):
+def hv_hciv(rep_start: int, rep_count: int, call_code: int, fast: int = 0) -> int:
     return (((rep_start & 0x0FFF) << 48) + ((rep_count & 0x0FFF) << 32) + ((fast & 0x1) << 16) + (call_code & 0xFFFF))
 
 
-def uuid(id):
+def uuid(id: bytes) -> str:
     return '{{{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}}}'.format(*struct.unpack('<IHH8B', id))
 
 ### OPTIONAL ROUTINES ##########################################################
 
 
 class session_logger:
-    def __init__(self, log, details):
+    def __init__(self, log: bool, details: str):
         self.defstdout = sys.stdout
         self.log = log
         self.log2term = True
@@ -276,8 +278,8 @@ class session_logger:
         if self.log:
             #            logpath = 'logs/'
             #            logfile = '{}.log'.format(details)
-            logpath = 'logs/{}/'.format(strftime("%Yww%W.%w", localtime()))
-            logfile = '{}-{}.log'.format(details, strftime("%H%M", localtime()))
+            logpath = f'logs/{strftime("%Yww%W.%w", localtime())}/'
+            logfile = f'{details}-{strftime("%H%M", localtime())}.log'
             try:
                 os.makedirs(logpath)
             except OSError:
@@ -285,13 +287,19 @@ class session_logger:
             self.terminal = sys.stdout
             self.logfile = open(logpath + logfile, 'a')
 
-    def write(self, message):
+    def write(self, message: str) -> None:
         if self.log and self.log2term:
             self.terminal.write(message)
         if self.log and self.log2file:
             self.logfile.write(message)
 
-    def closefile(self):
+    def flush(self) -> None:
+        if self.log and self.log2term:
+            self.terminal.flush()
+        if self.log and self.log2file:
+            self.logfile.flush()
+
+    def closefile(self) -> None:
         if self.log:
             self.logfile.close()
             sys.stdout = self.defstdout
