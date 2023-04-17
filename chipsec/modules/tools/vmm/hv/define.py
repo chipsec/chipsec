@@ -512,7 +512,7 @@ def set_variables(varlist):
     for i in varlist:
         var = re.sub(r"([a-z])([A-Z]+)", r"\1_\2", varlist[i])
         var = var.upper()
-        exec("global {}; {}={:d}".format(var, var, i))
+        exec(f'global {var}; {var}={i:d}')
 
 
 set_variables(msrs)
