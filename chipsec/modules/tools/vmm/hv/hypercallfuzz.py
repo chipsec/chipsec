@@ -107,13 +107,13 @@ class HypercallFuzz(BaseModule):
 
         elif command == 'status-fuzzing':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL {:04X}'.format(i)
+                hv.promt = f'HYPERCALL {i:04X}'
                 hv.msg('[*] Scan hypercall for success status')
                 hv.scan_for_success_status(i, testnum)
 
         elif command == 'params-info':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL {:04X}'.format(i)
+                hv.promt = f'HYPERCALL {i:04X}'
                 if (hv.hv_hypercalls[i][2] == HV_STATUS_SUCCESS):
                     hv.msg('Scan hypercall for input parameters')
                     hv.scan_input_parameters(i, 32)
@@ -121,7 +121,7 @@ class HypercallFuzz(BaseModule):
 
         elif command == 'params-fuzzing':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL {:04X}'.format(i)
+                hv.promt = f'HYPERCALL {i:04X}'
                 if (hv.hv_hypercalls[i][2] == HV_STATUS_SUCCESS):
                     hv.msg('Fuzzing hypercall for input parameters')
                     hv.scan_input_parameters(i, 32)
@@ -130,7 +130,7 @@ class HypercallFuzz(BaseModule):
 
         elif command == 'custom-fuzzing':
             for i in hypercalls:
-                hv.promt = 'HYPERCALL {:04X}'.format(i)
+                hv.promt = f'HYPERCALL {i:04X}'
                 hv.custom_fuzzing(i, testnum)
 
         else:

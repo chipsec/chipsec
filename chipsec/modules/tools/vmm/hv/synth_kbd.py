@@ -92,7 +92,7 @@ class synth_kbd(BaseModule):
         vb.vmbus_request_offers()
         relid = vb.get_relid_by_guid(HV_KBD_GUID)
         if relid == 0:
-            vb.fatal('Could not found keyboard device with GUID: {}'.format(HV_KBD_GUID))
+            vb.fatal(f'Could not found keyboard device with GUID: {HV_KBD_GUID}')
 
         vb.ringbuffers[relid] = RingBufferFuzzer()
         vb.ringbuffers[relid].ringbuffer_alloc(4)
@@ -124,14 +124,14 @@ class synth_kbd(BaseModule):
                         continue
                     msg_type, code, rsvd, info = unpack('<LHHL', synth_kbd_msg[:12])
                     if msg_type == SYNTH_KBD_EVENT:
-                        vb.msg('keystroke: {:04X}  flags: {:08X}'.format(code, info))
+                        vb.msg(f'keystroke: {code:04X}  flags: {info:08X}')
                         vb.ringbuffers[relid].fuzzing = (command == 'fuzzing')
                         if code == 0x0046:
                             vb.msg('*** Control Break ***')
                             vb.ringbuffers[relid].fuzzing = False
                             break
                     else:
-                        vb.hex('unhandled message type: {:d}'.format(msg_type), synth_kbd_msg)
+                        vb.hex(f'unhandled message type: {msg_type:d}', synth_kbd_msg)
             else:
                 vb.err('synth_kbd protocol request has failed!')
 
