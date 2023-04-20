@@ -28,8 +28,9 @@ import errno
 import traceback
 import sys
 from ctypes import Array
-from typing import Tuple, List, Optional
-
+from typing import Tuple, List, Dict, Optional, AnyStr, TYPE_CHECKING
+if TYPE_CHECKING:
+    from chipsec.library.types import EfiVariableType
 import chipsec.file
 from chipsec.logger import logger
 from chipsec.exceptions import UnimplementedAPIError, OsHelperError
@@ -37,7 +38,6 @@ from chipsec.exceptions import UnimplementedAPIError, OsHelperError
 avail_helpers = []
 
 ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
-
 
 def f_mod_zip(x: str):
     return (x.find('__init__') == -1 and ZIP_HELPER_RE.match(x))
@@ -90,7 +90,7 @@ class OsHelper:
                 if logger().DEBUG:
                     logger().log("Unable to load helper: {}".format(helper))
 
-    def start(self, start_driver: bool, driver_exists: Optional[bool] = None, to_file: Optional[bool] = None, from_file: bool = False) -> None:
+    def start(self, start_driver: bool, driver_exists: Optional[bool] = None, to_file: Optional[bool] = None, from_file: Optional[bool] = False) -> None:
         if to_file is not None:
             from chipsec.helper.file.filehelper import FileCmds
             self.filecmds = FileCmds(to_file)
@@ -200,7 +200,7 @@ class OsHelper:
             self.filecmds.AddElement("read_mmio_reg", (bar_base + offset, size), ret)
         return ret
 
-    def write_mmio_reg(self, bar_base: int, size, value: int, offset: int = 0, bar_size: Optional[int] = None) -> int:
+    def write_mmio_reg(self, bar_base: int, size: int, value: int, offset: int = 0, bar_size: Optional[int] = None) -> int:
         if self.use_native_api() and hasattr(self.helper, 'native_write_mmio_reg'):
             ret = self.helper.native_write_mmio_reg(bar_base, bar_size, offset, size, value)
         else:
@@ -212,7 +212,7 @@ class OsHelper:
     #
     # physical_address is 64 bit integer
     #
-    def read_physical_mem(self, phys_address: int, length: int) -> int:
+    def read_physical_mem(self, phys_address: int, length: int) -> bytes:
         if self.use_native_api() and hasattr(self.helper, 'native_read_phys_mem'):
             ret = self.helper.native_read_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length)
         else:
@@ -221,7 +221,7 @@ class OsHelper:
             self.filecmds.AddElement("read_physical_mem", ((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length), ret)
         return ret
 
-    def write_physical_mem(self, phys_address: int, length: int, buf) -> int:
+    def write_physical_mem(self, phys_address: int, length: int, buf: AnyStr) -> int:
         if self.use_native_api() and hasattr(self.helper, 'native_write_phys_mem'):
             ret = self.helper.native_write_phys_mem((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length, buf)
         else:
@@ -230,7 +230,7 @@ class OsHelper:
             self.filecmds.AddElement("write_physical_mem", ((phys_address >> 32) & 0xFFFFFFFF, phys_address & 0xFFFFFFFF, length, buf), ret)
         return ret
 
-    def alloc_physical_mem(self, length: int, max_phys_address: int) -> int:
+    def alloc_physical_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
         if self.use_native_api() and hasattr(self.helper, 'native_alloc_phys_mem'):
             ret = self.helper.native_alloc_phys_mem(length, max_phys_address)
         else:
@@ -248,7 +248,7 @@ class OsHelper:
             self.filecmds.AddElement("free_physical_mem", (physical_address), ret)
         return ret
 
-    def va2pa(self, va: int) -> int:
+    def va2pa(self, va: int) -> Tuple[int, int]:
         if self.use_native_api() and hasattr(self.helper, 'native_va2pa'):
             ret = self.helper.native_va2pa(va)
         else:
@@ -315,7 +315,7 @@ class OsHelper:
     #
     # Read/Write MSR on a specific CPU thread
     #
-    def read_msr(self, cpu_thread_id: int, msr_addr: int) -> int:
+    def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
         if self.use_native_api() and hasattr(self.helper, 'native_read_msr'):
             ret = self.helper.native_read_msr(cpu_thread_id, msr_addr)
         else:
@@ -393,7 +393,7 @@ class OsHelper:
             self.filecmds.AddElement("delete_EFI_variable", (name, guid), ret)
         return ret
 
-    def list_EFI_variables(self) -> Optional[List[str]]:
+    def list_EFI_variables(self) -> Optional[Dict[str, List['EfiVariableType']]]:
         if self.use_native_api() and hasattr(self.helper, 'native_list_EFI_variables'):
             ret = self.helper.native_list_EFI_variables()
         else:
@@ -405,11 +405,11 @@ class OsHelper:
     #
     # ACPI
     #
-    def get_ACPI_SDT(self) -> Optional[Array]:
-        ret = self.helper.get_ACPI_SDT()
+    def get_ACPI_SDT(self) -> Tuple[Optional[Array], bool]:
+        ret, xsdt = self.helper.get_ACPI_SDT()
         if self.filecmds is not None:
             self.filecmds.AddElement("get_ACPI_SDT", (), ret)
-        return ret
+        return ret, xsdt
 
     def get_ACPI_table(self, table_name: str) -> Optional[Array]:
         # return self.helper.get_ACPI_table( table_name )
@@ -526,7 +526,7 @@ class OsHelper:
     # Speculation control
     #
 
-    def retpoline_enabled(self) -> int:
+    def retpoline_enabled(self) -> bool:
         if self.use_native_api() and hasattr(self.helper, 'native_retpoline_enabled'):
             ret = self.helper.native_retpoline_enabled()
         else:
