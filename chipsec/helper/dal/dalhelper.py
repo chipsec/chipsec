@@ -31,23 +31,21 @@ import struct
 from chipsec.logger import logger
 import itpii
 from ctypes import c_char
-from typing import Optional, Tuple
+from typing import Tuple
 from chipsec.helper.basehelper import Helper
-from chipsec.exceptions import DALHelperError
-
-SYSTEM_HALTED = True
+from chipsec.exceptions import DALHelperError, UnimplementedAPIError
 
 
 class DALHelper(Helper):
     def __init__(self):
         super(DALHelper, self).__init__()
         self.base = itpii.baseaccess()
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper')
+        self.is_system_halted = True
+        logger().log_debug('[helper] DAL Helper')
         if not len(self.base.threads):
             logger().log('[helper] No threads detected!  DAL Helper will fail to load!')
         elif self.base.threads[self.find_thread()].cv.isrunning:
-            SYSTEM_HALTED = False
+            self.is_system_halted = False
             self.base.halt()
         self.os_system = '(Via Intel DAL)'
         self.os_release = '(N/A)'
@@ -58,7 +56,7 @@ class DALHelper(Helper):
     def __del__(self):
         if not len(self.base.threads):
             logger().log('[helper] No threads detected!')
-        elif not SYSTEM_HALTED:
+        elif not self.is_system_halted:
             logger().log('[helper] Threads are halted')
         else:
             self.base.go()
@@ -70,20 +68,19 @@ class DALHelper(Helper):
 ###############################################################################################
 
     def create(self, start_driver: bool) -> bool:
-        if logger().DEBUG:
-            logger().log('[helper] DAL Helper created')
+        logger().log_debug('[helper] DAL Helper created')
         return True
 
     def start(self, start_driver: bool, driver_exhists: bool = False) -> bool:
         self.driver_loaded = True
         if self.base.threads[self.find_thread()].cv.isrunning:
             self.base.halt()
-            SYSTEM_HALTED = False
+            self.is_system_halted = False
         logger().log_debug('[helper] DAL Helper started/loaded')
         return True
 
     def stop(self, start_driver: bool) -> bool:
-        if not SYSTEM_HALTED:
+        if not self.is_system_halted:
             self.base.go()
         logger().log_debug('[helper] DAL Helper stopped/unloaded')
         return True
@@ -189,6 +186,15 @@ class DALHelper(Helper):
     def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: bytes) -> int:
         return self.write_physical_mem((phys_address_hi << 32) | phys_address_lo, length, buf)
 
+    def va2pa(self, va):
+        raise UnimplementedAPIError('va2pa')
+
+    def alloc_phys_mem(self, length, max_phys_address):
+        raise UnimplementedAPIError('alloc_phys_mem')
+
+    def free_phys_mem(self, physical_address):
+        raise UnimplementedAPIError('free_phys_mem')
+
     #
     # CPU I/O port access
     #
@@ -279,8 +285,6 @@ class DALHelper(Helper):
         return True
 
     def load_ucode_update(self, core_id: int, ucode_update_buf: int) -> bool:
-        if logger().DEBUG:
-            logger().log_error("[helper] API load_ucode_update() is not supported yet")
         return False
 
     def get_threads_count(self) -> int:
@@ -296,10 +300,11 @@ class DALHelper(Helper):
         redx = self.base.threads[ie_thread].cpuid_edx(eax, ecx)
         return (reax, rebx, recx, redx)
 
-    def get_descriptor_table(self, cpu_thread_id: int, desc_table_code: int) -> Optional[Tuple[int, int, int]]:
-        if logger().DEBUG:
-            logger().log_error('[helper] API get_descriptor_table() is not supported')
-        return None
+    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
+        raise UnimplementedAPIError('get_descriptor_table')
+
+    def retpoline_enabled(self) -> bool:
+        return False
 
     #
     # EFI Variable API
@@ -308,47 +313,29 @@ class DALHelper(Helper):
     def EFI_supported(self) -> bool:
         return False
 
-    # Placeholders for EFI Variable API
+    def delete_EFI_variable(self, name, guid):
+        raise UnimplementedAPIError('delete_EFI_variable')
 
-    def delete_EFI_variable(self, name: str, guid: str) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API delete_EFI_variable() is not supported')
-        return None
+    def native_delete_EFI_variable(self, name, guid):
+        raise UnimplementedAPIError('native_delete_EFI_variable')
 
-    def native_delete_EFI_variable(self, name: str, guid: str) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API native_delete_EFI_variable() is not supported')
-        return None
+    def list_EFI_variables(self):
+        raise UnimplementedAPIError('list_EFI_variables')
 
-    def list_EFI_variables(self) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API list_EFI_variables() is not supported')
-        return None
+    def native_list_EFI_variables(self):
+        raise UnimplementedAPIError('native_list_EFI_variables')
 
-    def native_list_EFI_variables(self) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API native_list_EFI_variables() is not supported')
-        return None
+    def get_EFI_variable(self, name, guid, attrs):
+        raise UnimplementedAPIError('get_EFI_variable')
 
-    def get_EFI_variable(self, name: str, guid: str, attrs: Optional[int] = None) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API get_EFI_variable() is not supported')
-        return None
+    def native_get_EFI_variable(self, name, guid, attrs):
+        raise UnimplementedAPIError('native_get_EFI_variable')
 
-    def native_get_EFI_variable(self, name: str, guid: str, attrs: Optional[int] = None) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API native_get_EFI_variable() is not supported')
-        return None
+    def set_EFI_variable(self, name, guid, data, datasize, attrs):
+        raise UnimplementedAPIError('set_EFI_variable')
 
-    def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: int, attrs: Optional[int] = None) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API set_EFI_variable() is not supported')
-        return None
-
-    def native_set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: int, attrs: Optional[int] = None) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API native_set_EFI_variable() is not supported')
-        return None
+    def native_set_EFI_variable(self, name, guid, data, datasize, attrs):
+        raise UnimplementedAPIError('native_set_EFI_variable')
 
     #
     # Memory-mapped I/O (MMIO) access
@@ -387,64 +374,51 @@ class DALHelper(Helper):
     #
     # Interrupts
     #
-    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
-        if logger().DEBUG:
-            logger().log_error('[helper] API send_sw_smi() is not supported')
-        return None
+    def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+        raise UnimplementedAPIError('send_sw_smi')
 
-    def set_affinity(self, value) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API set_affinity() is not supported')
-        return None
+    def set_affinity(self, value):
+        raise UnimplementedAPIError('set_affinity')
 
-    def get_affinity(self) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API get_affinity() is not supported')
-        return None
+    def get_affinity(self):
+        raise UnimplementedAPIError('get_affinity')
 
     #
     # ACPI tables access
     #
-    def get_ACPI_SDT(self) -> Tuple[None, bool]:
-        if logger().DEBUG:
-            logger().log_error('[helper] API get_ACPI_SDT() is not supported')
-        return (None, False)
+    def get_ACPI_SDT(self):
+        raise UnimplementedAPIError('get_ACPI_SDT')
 
-    def native_get_ACPI_table(self, table_name: str) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API native_get_ACPI_table() is not supported')
-        return None
+    def native_get_ACPI_table(self, table_name):
+        raise UnimplementedAPIError('native_get_ACPI_table')
 
-    def get_ACPI_table(self, table_name: str) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API get_ACPI_table() is not supported')
-        return None
+    def get_ACPI_table(self, table_name):
+        raise UnimplementedAPIError('get_ACPI_table')
 
     #
     # IOSF Message Bus access
     #
-    def msgbus_send_read_message(self, mcr: int, mcrx: int) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API msgbus_send_read_message() is not supported')
-        return None
+    def msgbus_send_read_message(self, mcr, mcrx):
+        raise UnimplementedAPIError('msgbus_send_read_message')
 
-    def msgbus_send_write_message(self, mcr: int, mcrx: int, mdr: int) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API msgbus_send_write_message() is not supported')
-        return None
+    def msgbus_send_write_message(self, mcr, mcrx, mdr):
+        raise UnimplementedAPIError('msgbus_send_write_message')
 
-    def msgbus_send_message(self, mcr: int, mcrx: int, mdr: Optional[int] = None) -> None:
-        if logger().DEBUG:
-            logger().log_error('[helper] API msgbus_send_message() is not supported')
-        return None
+    def msgbus_send_message(self, mcr, mcrx, mdr):
+        raise UnimplementedAPIError('msgbus_send_message')
 
     #
     # File system
     #
     def get_tool_info(self, tool_type: str) -> Tuple[str, str]:
-        if logger().DEBUG:
-            logger().log_error('[helper] API get_tool_info() is not supported')
         return ('', '')
+
+
+    def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer):
+        raise UnimplementedAPIError('hypercall')
+
+    def getcwd(self):
+        raise UnimplementedAPIError('getcwd')
 
 
 def get_helper() -> DALHelper:
