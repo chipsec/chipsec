@@ -40,33 +40,24 @@ _MODULE_NAME = 'memconfig'
 TAGS = [MTAG_HWCONFIG]
 
 
-memmap_registers = {
-    "PCI0.0.0_GGC": 'GGCLOCK',
-    "PCI0.0.0_PAVPC": 'PAVPLCK',
-    "PCI0.0.0_DPR": 'LOCK',
-    "PCI0.0.0_MESEG_MASK": 'MELCK',
-    "PCI0.0.0_REMAPBASE": 'LOCK',
-    "PCI0.0.0_REMAPLIMIT": 'LOCK',
-    "PCI0.0.0_TOM": 'LOCK',
-    "PCI0.0.0_TOUUD": 'LOCK',
-    "PCI0.0.0_BDSM": 'LOCK',
-    "PCI0.0.0_BGSM": 'LOCK',
-    "PCI0.0.0_TSEGMB": 'LOCK',
-    "PCI0.0.0_TOLUD": 'LOCK'
-}
-
-memmap_registers_dev0bars = [
-    "PCI0.0.0_PXPEPBAR",
-    "PCI0.0.0_MCHBAR",
-    "PCI0.0.0_PCIEXBAR",
-    "PCI0.0.0_DMIBAR",
-]
-
-
 class memconfig(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.memmap_registers = {
+            "PCI0.0.0_GGC": 'GGCLOCK',
+            "PCI0.0.0_PAVPC": 'PAVPLCK',
+            "PCI0.0.0_DPR": 'LOCK',
+            "PCI0.0.0_MESEG_MASK": 'MELCK',
+            "PCI0.0.0_REMAPBASE": 'LOCK',
+            "PCI0.0.0_REMAPLIMIT": 'LOCK',
+            "PCI0.0.0_TOM": 'LOCK',
+            "PCI0.0.0_TOUUD": 'LOCK',
+            "PCI0.0.0_BDSM": 'LOCK',
+            "PCI0.0.0_BGSM": 'LOCK',
+            "PCI0.0.0_TSEGMB": 'LOCK',
+            "PCI0.0.0_TOLUD": 'LOCK'
+        }
 
     def is_supported(self):
         if self.cs.is_intel():
@@ -85,7 +76,7 @@ class memconfig(BaseModule):
         if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
 
-        regs = sorted(memmap_registers.keys())
+        regs = sorted(self.memmap_registers.keys())
         all_locked = True
 
         self.logger.log('[*]')
@@ -94,7 +85,7 @@ class memconfig(BaseModule):
         else:
             self.logger.log('[*] Checking register lock state:')
         for reg in regs:
-            reg_field = memmap_registers[reg]
+            reg_field = self.memmap_registers[reg]
             if not self.cs.register_has_field(reg, reg_field):
                 self.logger.log_important(f'Skipping Validation: Register {reg} or field {reg_field} was not defined for this platform.')
                 continue
