@@ -207,6 +207,7 @@ if platform.system().lower() == "windows":
         Extension(
             'EfiCompressor',
             sources=[
+                os.path.join('chipsec_tools', 'compression', 'Bra86.c'),
                 os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
                 os.path.join('chipsec_tools', 'compression', 'Compress.c'),
                 os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
@@ -227,6 +228,7 @@ elif platform.system().lower() == "linux":
         Extension(
             'EfiCompressor',
             sources=[
+                os.path.join('chipsec_tools', 'compression', 'Bra86.c'),
                 os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
                 os.path.join('chipsec_tools', 'compression', 'Compress.c'),
                 os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
