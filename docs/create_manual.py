@@ -60,7 +60,6 @@ NotWantedFilesList = [
     'chipsec.chipset.rst',
     'chipsec.command.rst',
     'chipsec.defines.rst',
-    'chipsec.exceptions.rst',
     'chipsec.file.rst',
     'chipsec.logger.rst',
     'chipsec.module.rst',
@@ -71,7 +70,7 @@ NotWantedFilesList = [
 
 def RunAutoDoc() -> None:
     try:
-        os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {os.path.join(CHIPSEC_DIR, "*test*")}')
+        os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {os.path.join(CHIPSEC_DIR, "*test*")} {os.path.join(CHIPSEC_DIR, "*exceptions*")}')
     except Exception:
         print('Unable to run sphinx-apidoc')
         raise
