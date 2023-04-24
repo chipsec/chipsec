@@ -82,7 +82,7 @@ class msr_fuzz (BaseModule):
     def fuzz_MSRs(self, msr_addr_start, random_order=False):
         msr_addr_range = 0x10000
         msr_addr_end = msr_addr_start + msr_addr_range
-        self.logger.log("[*] Fuzzing MSRs in range 0x{:08X}:0x{:08X}..".format(msr_addr_start, msr_addr_end))
+        self.logger.log(f'[*] Fuzzing MSRs in range 0x{msr_addr_start:08X}:0x{msr_addr_end:08X}..')
         it = 0
         if random_order:
             it_max = _NO_ITERATIONS_TO_FUZZ
@@ -100,13 +100,13 @@ class msr_fuzz (BaseModule):
 
             if msr_addr not in _EXCLUDE_MSR:
                 if _READ_MSR:
-                    self.logger.log("[*] rdmsr 0x{:08X}".format(msr_addr))
+                    self.logger.log(f'[*] rdmsr 0x{msr_addr:08X}')
                     try:
                         (_, _) = self.cs.msr.read_msr(0, msr_addr)
                     except:
                         pass
 
-                self.logger.log("[*] wrmsr 0x{:08X}".format(msr_addr))
+                self.logger.log(f'[*] wrmsr 0x{msr_addr:08X}')
 
                 if _FUZZ_VALUE_0_all1s:
                     try:
@@ -135,7 +135,7 @@ class msr_fuzz (BaseModule):
         return True
 
     def run(self, module_argv):
-        self.logger.start_test("Fuzzing CPU Model Specific Registers (MSR)")
+        self.logger.start_test('Fuzzing CPU Model Specific Registers (MSR)')
 
         _random_order = False
         if (len(module_argv) > 0) and ('random' == module_argv[0].lower()):
@@ -144,16 +144,16 @@ class msr_fuzz (BaseModule):
         global _NO_ITERATIONS_TO_FUZZ
         _NO_ITERATIONS_TO_FUZZ = 100000
 
-        self.logger.log("[*] Configuration:")
-        self.logger.log("    Mode: {}".format('random' if _random_order else 'sequential'))
+        self.logger.log('[*] Configuration:')
+        self.logger.log(f'    Mode: {"random" if _random_order else "sequential"}')
         if _random_order:
-            self.logger.log("    Number of iterations: {:d}".format(_NO_ITERATIONS_TO_FUZZ))
+            self.logger.log(f'    Number of iterations: {_NO_ITERATIONS_TO_FUZZ:d}')
 
-        self.logger.log("\n[*] Fuzzing Low MSR range...")
+        self.logger.log('\n[*] Fuzzing Low MSR range...')
         self.fuzz_MSRs(0x0, _random_order)
-        self.logger.log("\n[*] Fuzzing High MSR range...")
+        self.logger.log('\n[*] Fuzzing High MSR range...')
         self.fuzz_MSRs(0xC0000000, _random_order)
-        self.logger.log("\n[*] Fuzzing VMM synthetic MSR range...")
+        self.logger.log('\n[*] Fuzzing VMM synthetic MSR range...')
         self.fuzz_MSRs(0x40000000, _random_order)
 
         self.logger.log_information('Module completed')
