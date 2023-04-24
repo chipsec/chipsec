@@ -65,7 +65,7 @@ class HypercallFuzz(BaseModule):
         try:
             value = int(arg, base)
         except ValueError:
-            self.logger.log_error("Invalid integer parameter: '{}' (using default value: {:d})".format(arg, defvalue))
+            self.logger.log_error(f'Invalid integer parameter: \'{arg}\' (using default value: {defvalue:d})')
             value = defvalue
         return value
 
@@ -95,7 +95,7 @@ class HypercallFuzz(BaseModule):
                 code = int(arg1, 16)
             except ValueError:
                 if arg1.lower() not in name2code:
-                    self.logger.log_error("Unknown hypercall: '{}'".format(arg1))
+                    self.logger.log_error(f'Unknown hypercall: \'{arg1}\'')
                     return ModuleResult.ERROR
                 code = name2code[arg1.lower()]
             count = self.get_int(arg2)
@@ -114,7 +114,7 @@ class HypercallFuzz(BaseModule):
             else:
                 xen.fuzz_hypercalls_randomly(vectors, count)
         else:
-            self.logger.log('Invalid command: {}\n'.format(command))
+            self.logger.log(f'Invalid command: {command}\n')
             self.usage()
 
         self.logger.log_information('Module completed')

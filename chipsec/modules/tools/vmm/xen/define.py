@@ -133,16 +133,16 @@ def get_iverr(status, bits=64):
 
 
 def get_hypercall_status(code, brief=False):
-    defstatus = ['0x{:016X}'.format(code), 'Status 0x{:016X}'.format(code)]
+    defstatus = [f'0x{code:016X}', f'Status 0x{code:016X}']
     if (code >> 32) == 0xFFFFFFFF:
         code = get_iverr(code)
-        defstatus = ['XEN_ERRNO_{:04X}'.format(code), 'Unknown error 0x{:04X}'.format(code)]
+        defstatus = [f'XEN_ERRNO_{code:04X}', f'Unknown error 0x{code:04X}']
     desc = hypercall_status_codes.get(code, defstatus)
     return desc[0] if brief else desc[1]
 
 
 def get_hypercall_status_extended(code):
-    return '{} - {}'.format(get_hypercall_status(code, False), get_hypercall_status(code, True))
+    return f'{get_hypercall_status(code, False)} - {get_hypercall_status(code, True)}'
 
 
 def get_invalid_hypercall_code():
@@ -236,7 +236,7 @@ def set_variables(varlist):
     for i in varlist:
         var = re.sub(r"([a-z])([A-Z]+)", r"\1_\2", varlist[i])
         var = var.upper()
-        exec("global {}; {}={:d}".format(var, var, i))
+        exec(f'global {var}; {var}={i:d}')
 
 
 set_variables(hypercall_names)
