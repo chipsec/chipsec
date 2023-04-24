@@ -233,7 +233,8 @@ lzmaf86decompress(
   DstDataSize = SrcData.len;
   DstBuf = (VOID *)malloc(DstDataSize);
   if (DstBuf == NULL) {
-    return EFI_OUT_OF_RESOURCES;
+    Py_INCREF(Py_None);
+    return Py_None;
   }
   memcpy(DstBuf, SrcData.buf, DstDataSize);
 
@@ -272,7 +273,8 @@ lzmaf86compress(
   DstDataSize = SrcData.len;
   DstBuf = (VOID *)malloc(DstDataSize);
   if (DstBuf == NULL) {
-    return EFI_OUT_OF_RESOURCES;
+    Py_INCREF(Py_None);
+    return Py_None;
   }
   memcpy(DstBuf, SrcData.buf, DstDataSize);
 
