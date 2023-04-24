@@ -81,9 +81,9 @@ class iofuzz(BaseModule):
     def fuzz_ports(self, iterations, write_count, random_order=False):
 
         if random_order:
-            self.logger.log("[*] Fuzzing randomly chosen {:d} I/O ports..\n".format(iterations))
+            self.logger.log(f'[*] Fuzzing randomly chosen {iterations:d} I/O ports..\n')
         else:
-            self.logger.log("[*] Fuzzing I/O ports in a range 0:0x{:X}..\n".format(iterations - 1))
+            self.logger.log(f'[*] Fuzzing I/O ports in a range 0:0x{iterations - 1:X}..\n')
 
         io_addr = 0
         for it in range(iterations):
@@ -97,10 +97,10 @@ class iofuzz(BaseModule):
                 io_addr = it
 
             if io_addr in _EXCLUDE_PORTS:
-                self.logger.log("[*] Skipping port 0x{:04X}".format(io_addr))
+                self.logger.log(f'[*] Skipping port 0x{io_addr:04X}')
                 continue
 
-            self.logger.log("[*] Fuzzing I/O port 0x{:04X}".format(io_addr))
+            self.logger.log(f'[*] Fuzzing I/O port 0x{io_addr:04X}')
 
             self.logger.log("    Reading port")
             port_value = self.cs.io.read_port_byte(io_addr)
@@ -122,7 +122,7 @@ class iofuzz(BaseModule):
                 except:
                     pass
 
-            self.logger.log("    Writing values 0..{:X} ({:d} times each)".format(MAX_PORT_VALUE, write_count))
+            self.logger.log(f'    Writing values 0..{MAX_PORT_VALUE:X} ({write_count:d} times each)')
             for v in range(MAX_PORT_VALUE + 1):
                 for _ in range(write_count):
                     try:
@@ -142,10 +142,10 @@ class iofuzz(BaseModule):
         else:
             iterations = DEFAULT_RANDOM_ITERATIONS if _random_order else MAX_PORTS
 
-        self.logger.log("\n[*] Configuration:")
-        self.logger.log("    Mode             : {}".format('random' if _random_order else 'exhaustive'))
-        self.logger.log("    Write count      : {:d}".format(write_count))
-        self.logger.log("    Ports/iterations : {:d}\n".format(iterations))
+        self.logger.log('\n[*] Configuration:')
+        self.logger.log(f'    Mode             : {"random" if _random_order else "exhaustive"}')
+        self.logger.log(f'    Write count      : {write_count:d}')
+        self.logger.log(f'    Ports/iterations : {iterations:d}\n')
 
         self.res = self.fuzz_ports(iterations, write_count, _random_order)
 
