@@ -94,12 +94,12 @@ class hypercallfuzz(BaseModule):
 
     def fuzz_generic_hypercalls(self):
         _fmt = '{:02X}' if self.maxval <= 0xFF else ('{:04X}' if self.maxval <= 0xFFFF else ('{:08X}' if self.maxval <= 0xFFFFFFFF else '{:016X}'))
-        _str = "{} hcall rax={},rbx={},rcx={},rdx={},rdi={},rsi={},r8={},r9={},r10={},r11={}".format('{:d}', _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt, _fmt)
+        _str = f'{{:d}} hcall rax={_fmt},rbx={_fmt},rcx={_fmt},rdx={_fmt},rdi={_fmt},rsi={_fmt},r8={_fmt},r9={_fmt},r10={_fmt},r11={_fmt}'
 
         t = time.time()
         if self.random_order:
 
-            self.logger.log("[*] Fuzzing {:d} random hypercalls with random arguments...".format(self.iterations))
+            self.logger.log(f'[*] Fuzzing {self.iterations:d} random hypercalls with random arguments...')
             for it in range(self.iterations):
                 rax = random.randint(0, self.gprs['rax'])
                 rbx = random.randint(0, self.gprs['rbx'])
@@ -114,7 +114,7 @@ class hypercallfuzz(BaseModule):
                 if _LOG_ALL_GPRS:
                     self.logger.log(_str.format(it, rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11))
                 else:
-                    self.logger.log("{:d} hcall".format(it))
+                    self.logger.log(f'{it:d} hcall')
                 if _FLUSH_LOG_EACH_ITER:
                     self.logger.flush()
                 try:
@@ -137,7 +137,7 @@ class hypercallfuzz(BaseModule):
                                                     if _LOG_ALL_GPRS:
                                                         self.logger.log(_str.format(it, rax, rbx, rcx, rdx, rdi, rsi, r8, r9, r10, r11))
                                                     else:
-                                                        self.logger.log("{:d} hcall".format(it))
+                                                        self.logger.log(f'{it:d} hcall')
                                                     if _FLUSH_LOG_EACH_ITER:
                                                         self.logger.flush()
                                                     try:
@@ -146,7 +146,7 @@ class hypercallfuzz(BaseModule):
                                                     except:
                                                         pass
 
-        self.logger.log("[*] Finished fuzzing: time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log(f'[*] Finished fuzzing: time elapsed {time.time() - t:.3f}')
         return ModuleResult.WARNING
 
     def run(self, module_argv):
@@ -167,11 +167,11 @@ class hypercallfuzz(BaseModule):
         if self.vector_reg is not None:
             self.gprs[self.vector_reg] = DEFAULT_VECTOR_MAXVAL
 
-        self.logger.log("\n[*] Configuration:")
-        self.logger.log("    Mode               : {}".format('random' if self.random_order else 'exhaustive'))
-        self.logger.log("    Hypercall vector in: {}".format(self.vector_reg))
-        self.logger.log("    Max register value : 0x{:X}".format(self.maxval))
-        self.logger.log("    Iterations         : {:d}\n".format(self.iterations))
+        self.logger.log('\n[*] Configuration:')
+        self.logger.log(f'    Mode               : {"random" if self.random_order else "exhaustive"}')
+        self.logger.log(f'    Hypercall vector in: {self.vector_reg}')
+        self.logger.log(f'    Max register value : 0x{self.maxval:X}')
+        self.logger.log(f'    Iterations         : {self.iterations:d}\n')
 
         self.res = self.fuzz_generic_hypercalls()
 

@@ -85,10 +85,10 @@ _LOG_OUT_RESULTS = False
 
 class cpuid_fuzz (BaseModule):
 
-    def fuzz_CPUID(self, eax_start, random_order=False):
+    def fuzz_CPUID(self, eax_start, random_order = False):
         eax_range = _NO_EAX_TO_FUZZ
         eax_end = eax_start + eax_range
-        self.logger.log("[*] Fuzzing CPUID with EAX in range 0x{:08X}:0x{:08X}..".format(eax_start, eax_end))
+        self.logger.log(f'[*] Fuzzing CPUID with EAX in range 0x{eax_start:08X}:0x{eax_end:08X}..')
         it = 0
         if random_order:
             it_max = _NO_ITERATIONS_TO_FUZZ
@@ -103,18 +103,18 @@ class cpuid_fuzz (BaseModule):
             if _FLUSH_LOG_EACH_ITER:
                 self.logger.flush()
             if eax not in _EXCLUDE_CPUID:
-                self.logger.log("[*] CPUID EAX: 0x{:08X}".format(eax))
+                self.logger.log(f'[*] CPUID EAX: 0x{eax:08X}')
                 if _FUZZ_ECX_RANDOM:
                     ecx = random.randint(0, 0xFFFFFFFF)
                     (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid(eax, ecx)
                 else:
                     for ecx in range(_MAX_ECX):
-                        self.logger.log("  > ECX: 0x{:08X}".format(ecx))
+                        self.logger.log(f'  > ECX: 0x{ecx:08X}')
                         if _FLUSH_LOG_EACH_ITER:
                             self.logger.flush()
                         (r_eax, r_ebx, r_ecx, r_edx) = self.cs.cpu.cpuid(eax, ecx)
                         if _LOG_OUT_RESULTS:
-                            self.logger.log("    Out: EAX=0x{:08X}, EBX=0x{:08X}, ECX=0x{:08X}, EDX=0x{:08X}".format(r_eax, r_ebx, r_ecx, r_edx))
+                            self.logger.log(f'    Out: EAX=0x{r_eax:08X}, EBX=0x{r_ebx:08X}, ECX=0x{r_ecx:08X}, EDX=0x{r_edx:08X}')
             it += 1
         return True
 
@@ -125,15 +125,15 @@ class cpuid_fuzz (BaseModule):
         if (len(module_argv) > 0) and ('random' == module_argv[0]):
             _random_order = True
 
-        self.logger.log("[*] Configuration:")
-        self.logger.log("    Mode: {}".format('random' if _random_order else 'sequential'))
-        self.logger.log("    Step to fuzz range of EAX values (_EAX_FUZZ_STEP): 0x{:X}".format(_EAX_FUZZ_STEP))
-        self.logger.log("    No of EAX values to fuzz within each step (_NO_EAX_TO_FUZZ): 0x{:X}".format(_NO_EAX_TO_FUZZ))
-        self.logger.log("    Fuzz ECX with random values? (_FUZZ_ECX_RANDOM): {:d}".format(_FUZZ_ECX_RANDOM))
-        self.logger.log("    Max ECX value (_MAX_ECX): 0x{:08X}".format(_MAX_ECX))
-        self.logger.log("    Exclude the following EAX values from fuzzing (_EXCLUDE_CPUID): {}".format(str(_EXCLUDE_CPUID)))
-        self.logger.log("    Flush log file after each iteration (_FLUSH_LOG_EACH_ITER): {:d}".format(_FLUSH_LOG_EACH_ITER))
-        self.logger.log("    Log output results (_LOG_OUT_RESULTS): {:d}".format(_LOG_OUT_RESULTS))
+        self.logger.log(f'[*] Configuration:')
+        self.logger.log(f'    Mode: {"random" if _random_order else "sequential"}')
+        self.logger.log(f'    Step to fuzz range of EAX values (_EAX_FUZZ_STEP): 0x{_EAX_FUZZ_STEP:X}')
+        self.logger.log(f'    No of EAX values to fuzz within each step (_NO_EAX_TO_FUZZ): 0x{_NO_EAX_TO_FUZZ:X}')
+        self.logger.log(f'    Fuzz ECX with random values? (_FUZZ_ECX_RANDOM): {_FUZZ_ECX_RANDOM:d}')
+        self.logger.log(f'    Max ECX value (_MAX_ECX): 0x{_MAX_ECX:08X}')
+        self.logger.log(f'    Exclude the following EAX values from fuzzing (_EXCLUDE_CPUID): {str(_EXCLUDE_CPUID)}')
+        self.logger.log(f'    Flush log file after each iteration (_FLUSH_LOG_EACH_ITER): {_FLUSH_LOG_EACH_ITER:d}')
+        self.logger.log(f'    Log output results (_LOG_OUT_RESULTS): {_LOG_OUT_RESULTS:d}')
 
         steps = 0x100000000 // _EAX_FUZZ_STEP
         for s in range(steps):
