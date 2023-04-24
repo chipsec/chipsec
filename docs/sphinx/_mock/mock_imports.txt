@@ -1,0 +1,1 @@
+efi,common,itpii,fcntl,resource,chipsec_tools,chipsec.chipset,edk2
