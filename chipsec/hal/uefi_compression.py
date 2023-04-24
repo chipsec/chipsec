@@ -47,10 +47,12 @@ COMPRESSION_TYPE_LZMA = 3
 COMPRESSION_TYPE_BROTLI = 4
 COMPRESSION_TYPE_EFI_STANDARD = 5
 COMPRESSION_TYPE_UNKNOWN = 6
+COMPRESSION_TYPE_LZMAF86 = 7
 COMPRESSION_TYPES_ALGORITHMS: List[int] = [COMPRESSION_TYPE_LZMA,
                                            COMPRESSION_TYPE_TIANO,
                                            COMPRESSION_TYPE_UEFI,
                                            COMPRESSION_TYPE_BROTLI,
+                                           COMPRESSION_TYPE_LZMAF86,
                                            COMPRESSION_TYPE_NONE, ]
 COMPRESSION_TYPES: List[int] = [COMPRESSION_TYPE_NONE,
                                 COMPRESSION_TYPE_TIANO,
@@ -58,7 +60,8 @@ COMPRESSION_TYPES: List[int] = [COMPRESSION_TYPE_NONE,
                                 COMPRESSION_TYPE_LZMA,
                                 COMPRESSION_TYPE_BROTLI,
                                 COMPRESSION_TYPE_EFI_STANDARD,
-                                COMPRESSION_TYPE_UNKNOWN, ]
+                                COMPRESSION_TYPE_UNKNOWN,
+                                COMPRESSION_TYPE_LZMAF86, ]
 
 
 class UEFICompression:
@@ -92,7 +95,7 @@ class UEFICompression:
                     data = EfiCompressor.UefiDecompress(compressed_data)
                 except Exception:
                     data = b''
-            elif compression_type == COMPRESSION_TYPE_LZMA and has_lzma:
+            elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86] and has_lzma:
                 try:
                     data = lzma.decompress(compressed_data)
                 except lzma.LZMAError:
@@ -103,6 +106,11 @@ class UEFICompression:
                         buf = compressed_data[:5] + b'\xFF' * 8 + compressed_data[13:]
                         data = lzma.decompress(buf)
                     except lzma.LZMAError:
+                        data = b''
+                if compression_type == COMPRESSION_TYPE_LZMAF86:
+                    try:
+                        data = EfiCompressor.LZMAf86Decompress(data)
+                    except Exception as msg:
                         data = b''
             elif compression_type == COMPRESSION_TYPE_BROTLI and has_brotli:
                 try:
@@ -156,7 +164,9 @@ class UEFICompression:
                     data = EfiCompressor.UefiCompress(uncompressed_data)
                 except Exception:
                     data = b''
-            elif compression_type == COMPRESSION_TYPE_LZMA:
+            elif compression_type in [COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_LZMAF86]:
+                if compression_type == COMPRESSION_TYPE_LZMAF86:
+                    uncompressed_data = EfiCompressor.LZMAf86Compress(uncompressed_data)
                 try:
                     data = lzma.compress(uncompressed_data)
                 except lzma.LZMAError:

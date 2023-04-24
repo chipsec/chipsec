@@ -38,11 +38,12 @@ import os
 
 setup(
     name="EfiCompressor",
-    version="0.01",
+    version="0.02",
     ext_modules=[
         Extension(
             'EfiCompressor',
             sources=[
+                'Bra86.c',
                 'Decompress.c',
                 'Compress.c',
                 'EfiCompress.c',
