@@ -149,7 +149,7 @@ class VMBusFuzz(VMBusDiscovery):
                     for i in fuzzing_range:
                         randstr = pack('<Q', getrandbits(64))[:cmdarg2]
                         self.fuzzing_rules = {m: {i: randstr}}
-                        self.logger.log('[VMBUS] Message: {:d}/{:d}  Fuzzing {:d} byte(s): position {:d} out of {:d}'.format(m + 1, len(self.training_msginfo), len(randstr), i, n))
+                        self.logger.log(f'[VMBUS] Message: {m + 1:d}/{len(self.training_msginfo):d}  Fuzzing {len(randstr):d} byte(s): position {i:d} out of {n:d}')
                         self.vmbus_clear()
                         if len(self.supported_versions):
                             self.vmbus_connect(version)
