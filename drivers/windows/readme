@@ -1,0 +1,76 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!                                              WARNING
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!
+!! Chipsec should only be run on test systems! It should not be installed/deployed on end-user systems!
+!! 
+!! There are multiple reasons for that:
+!! 
+!! 1. Chipsec kernel drivers provide raw access to HW resources to user-mode applications
+!! (like access to physical memory). This would allow malware to compromise the OS kernel.
+!!
+!! 2. The driver is distributed as a source code. In order to load it on OS which requires signed drivers
+!! (e.g. x64 Microsoft Windows 7 and higher), you'll need to enable TestSigning mode and self-sign the
+!! driver binary. Enabling TestSigning (or equivalent) mode also turns off important protection of OS kernel.
+!!
+!! 3. Due to the nature of access to HW resources, if any chipsec module issues incorrect access
+!! to these HW resources, OS can crash/hang.
+!!
+!! If, for any reason, you want to production sign chipsec driver and deploy chipsec on end-user systems,
+!! DON'T!
+!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Build CHIPSEC kernel driver with Visual Studio
+----------------------------------------------------
+-Install the latest verion of Visual Studio and WDK
+  You can find instructions to install Visual Studio and WDK from https://docs.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk
+- Open the Visual Studio project file (drivers/windows/chipsec_hlpr.vcxproj) using Visual Studio
+- Select Platform and configuration (X86 or x64, Release).
+- Go to Build -> Build Solution
+- If build process completed without errors, the driver binary will be moved into the chipsec helper directory <CHIPSEC_ROOT_DIR>\chipsec\helper\windows\windows_amd64 (or i386) directory
+- Enable loading of test-signed kernel mode drivers (see chipsec-manual.pdf for details)
+
+Notes
+-----------------------------------------------------
+- if build errors are with signing are encountered, try running as Administrator
+- The .vcxproj file points to the latest SDK, if this is incompatible with the WDK, change the configuration to a compatible SDK within the project properties
+
+
+Build CHIPSEC kernel driver (Old Method)
+----------------------------------------------------
+
+- Install WDK 7600
+  You can get WDK (e.g. WDK 7600.16385.1) from http://www.microsoft.com/en-us/download/details.aspx?id=11800
+- Open WDK build environment command prompt:
+  "x86 Free Build Environment" or "x64 Free Build Environment" (for release build)
+  "x86 Checked Build Environment" or "x64 Checked Build Environment" (for debug build)
+- cd <CHIPSEC_ROOT_DIR>\drivers\windows
+- build -cZg
+- If build process completed without errors, the driver binary ("chipsec_hlpr.sys") will be in <CHIPSEC_ROOT_DIR>\drivers\windows\sys\amd64 (or i386) directory
+
+
+2. (Windows x64 only) Sign the driver
+----------------------------------------------------
+
+- As Administrator, run in "x64 Free Build Environment" (or "x64 Checked Build Environment"):
+  makecert -r -n "CN=Chipsec" -ss ChipsecCertStore -sr LocalMachine
+- cd <CHIPSEC_ROOT_DIR>\drivers\windows\sign
+- Run "sign64_sys.bat" to sign "chipsec_hlpr.sys" file  
+- If any error/warning returned, create a new certificate store and modify "sign64_sys.bat" accordingly
+- You'll need to enable loading of test-signed kernel mode drivers (see chipsec-manual.pdf for details)
+
+3. Copy the driver to CHIPSEC framework
+----------------------------------------------------
+- On Windows x64, copy signed "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\windows\windows_amd64 directory
+- On Windows x86, copy "chipsec_hlpr.sys" to <CHIPSEC_ROOT_DIR>\chipsec\helper\windows\windows_x86 directory
+
+4. Build the compression tools
+----------------------------------------------------
+- Navigate to the chipsec_tools\compression directory
+- run the build.cmd
+
+Alternately download prebuild compession tools
+----------------------------------------------------
+- Download compression tools from https://github.com/tianocore/edk2-BaseTools-win32/archive/master.zip
+- Unzip the archive into the chipsec_tools/compression/bin directory

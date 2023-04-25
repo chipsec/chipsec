@@ -42,7 +42,7 @@ import sys
 print('Python', sys.version)
 
 import py2exe
-WIN_DRIVER_INSTALL_PATH = "chipsec/helper/win"
+WIN_DRIVER_INSTALL_PATH = "chipsec/helper/windows"
 VERSION_FILE="VERSION"
 
 build_dir = os.getcwd()
@@ -52,7 +52,7 @@ tool_dir   = root_dir
 cfg_dir    = os.path.join(tool_dir, "chipsec", "cfg")
 version_file = os.path.join(root_dir, "chipsec", VERSION_FILE)
 
-win_7_x86 = os.path.join(bin_dir, 'win7-x86');
+win_7_x86 = os.path.join(bin_dir, 'windows-x86');
 
 
 print(os.getcwd())
@@ -62,7 +62,7 @@ print(os.getcwd())
 
 
 data_files = [
-    (WIN_DRIVER_INSTALL_PATH + "/win7_x86", ['chipsec/helper/win/win7_x86/chipsec_hlpr.sys']),
+    (WIN_DRIVER_INSTALL_PATH + "/windows_x86", ['chipsec/helper/windows/windows_x86/chipsec_hlpr.sys']),
     ('chipsec/modules/tools/uefi', ['chipsec/modules/tools/uefi/blockedlist.json']),
     ('chipsec/modules/tools/secureboot', [
         'chipsec/modules/tools/secureboot/Shell.efi',

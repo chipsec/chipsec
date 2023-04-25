@@ -25,10 +25,11 @@
 #
 ##################################################################################
 
-import platform, os
+import platform
 from chipsec.helper.oshelper import avail_helpers
+    
 if "windows" == platform.system().lower():
-    __all__ = ["win32helper"]
-    avail_helpers.append("win32helper")
+    __all__ = ["windowshelper"]
+    avail_helpers.append("windowshelper")
 else:
     __all__ = []

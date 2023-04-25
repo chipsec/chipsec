@@ -21,11 +21,11 @@ drivers/linux/modules.order
 
 # Windows driver
 .vs/
-chipsec/helper/win/win7_amd64/
-chipsec/helper/win/win7_x86/
-drivers/win7/Debug/
-drivers/win7/Release/
-drivers/win7/x64/
+chipsec/helper/windows/windows_amd64/
+chipsec/helper/windows/windows_x86/
+drivers/windows/Debug/
+drivers/windows/Release/
+drivers/windows/x64/
 
 # Compression tools
 chipsec_tools/compression/Bin/
