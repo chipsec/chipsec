@@ -1,0 +1,25 @@
+TARGETNAME=chipsec_hlpr
+TARGETPATH=.\sys
+TARGETTYPE=DRIVER
+
+TARGETLIBS=$(DDK_LIB_PATH)\wdmsec.lib
+
+INCLUDES=include
+
+AMD64_SOURCES=amd64\cpu.asm
+I386_SOURCES=i386\cpu.asm
+
+SOURCES=driver.c chipsec_hlpr.rc
+386_ADBGFLAGS=/Fl$(O)\cpu.lst
+LINKER_FLAGS= $(LINKER_FLAGS) \
+    /VERBOSE \
+    /MAP
+#    /SECTION:.text,,ALIGN=4096 \
+#    /SECTION:.rdata,,ALIGN=4096 \
+#    /SECTION:.data,,ALIGN=4096 \
+#    /SECTION:.bss,,ALIGN=4096 \
+#    /SECTION:INIT,,ALIGN=4096 \
+#    /SECTION:.rsrc,,ALIGN=4096 \
+#    /SECTION:.reloc,,ALIGN=4096 \
+#    /SECTION:chipsec_code,,ALIGN=4096
+

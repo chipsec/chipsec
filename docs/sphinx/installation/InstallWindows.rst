@@ -102,14 +102,14 @@ Alternate Build Methods
 
 Method 1:
 
-   - Open the Visual Studio project file (drivers/win7/chipsec_hlpr.vcxproj) using Visual Studio
+   - Open the Visual Studio project file (drivers/windows/chipsec_hlpr.vcxproj) using Visual Studio
    - Select Platform and configuration (X86 or x64, Release)
    - Go to Build -> Build Solution
 
 Method 2:
 
    - Open a VS developer command prompt
-   - ``> cd <CHIPSEC_ROOT_DIR>\drivers\win7``
+   - ``> cd <CHIPSEC_ROOT_DIR>\drivers\windows``
    - Build driver using msbuild command:
       - ``> msbuild /p:Platform=x64``
 
@@ -119,7 +119,7 @@ Method 2:
 
 If build process is completed without any errors, the driver binary will be moved into the chipsec helper directory: 
    
-   ``<CHIPSEC_ROOT_DIR>\chipsec\helper\win\win7_amd64 (or i386)``
+   ``<CHIPSEC_ROOT_DIR>\chipsec\helper\windows\windows_amd64 (or i386)``
 
 **Build the compression tools**
 

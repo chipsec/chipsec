@@ -111,7 +111,7 @@ class build_ext(_build_ext):
 
     def _build_win_driver(self):
         log.info("building the windows driver")
-        build_driver = os.path.join("drivers", "win7")
+        build_driver = os.path.join("drivers", "windows")
         cur_dir = os.getcwd()
         os.chdir(build_driver)
         # Run the makefile there.
@@ -199,8 +199,8 @@ install_requires = []
 extra_kw = []
 
 if platform.system().lower() == "windows":
-    package_data["chipsec.helper.win"] = ['win7_amd64/*.sys']
-    package_data["chipsec.helper.rwe"] = ['win7_amd64/*.sys']
+    package_data["chipsec.helper.windows"] = ['windows_amd64/*.sys']
+    package_data["chipsec.helper.rwe"] = ['windows_amd64/*.sys']
     package_data["chipsec_tools.compression"] = ['*']
     install_requires.append("pywin32")
     extra_kw = [

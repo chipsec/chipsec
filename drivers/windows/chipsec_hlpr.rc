@@ -1,0 +1,9 @@
+#include <windows.h>
+#include <ntverp.h>
+
+#define VER_FILETYPE            VFT_DRV
+#define VER_FILESUBTYPE         VFT2_DRV_SYSTEM
+#define VER_FILEDESCRIPTION_STR "CHIPSEC Driver"
+#define VER_INTERNALNAME_STR    "chipsec_hlpr.sys"
+#define VER_FILEVERSION         1,0,00,00
+#define VER_FILEVERSION_STR     "1.0.0.0"

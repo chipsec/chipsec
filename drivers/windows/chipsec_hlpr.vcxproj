@@ -97,8 +97,8 @@
       <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
     <PostBuildEvent>
-      <Command>mkdir ..\..\chipsec\helper\win\win7_amd64
-copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
+      <Command>mkdir ..\..\chipsec\helper\windows\windows_amd64
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\windows\windows_amd64</Command>
     </PostBuildEvent>
     <DriverSign>
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
@@ -115,8 +115,8 @@ copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
       <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir ..\..\chipsec\helper\win\win7_x86
-copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
+      <Command>mkdir ..\..\chipsec\helper\windows\windows_x86
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\windows\windows_x86</Command>
     </PostBuildEvent>
     <DriverSign>
       <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
@@ -131,8 +131,8 @@ copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
       <IncludePaths>$(SDK_INC_PATH)</IncludePaths>
     </MASM>
     <PostBuildEvent>
-      <Command>mkdir ..\..\chipsec\helper\win\win7_x86
-copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
+      <Command>mkdir ..\..\chipsec\helper\windows\windows_x86
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\windows\windows_x86</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -140,8 +140,8 @@ copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_x86</Command>
       <AdditionalDependencies>$(DDK_LIB_PATH)wdmsec.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>mkdir ..\..\chipsec\helper\win\win7_amd64
-copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\win\win7_amd64</Command>
+      <Command>mkdir ..\..\chipsec\helper\windows\windows_amd64
+copy "$(DbgengLocalCommand)" ..\..\chipsec\helper\windows\windows_amd64</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

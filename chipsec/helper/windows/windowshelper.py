@@ -62,7 +62,7 @@ kernel32 = windll.kernel32
 
 drv_hndl_error_msg = "Cannot open chipsec driver handle. Make sure chipsec driver is installed and started if you are using option -e (see README)"
 
-DRIVER_FILE_PATHS = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper", "win", f'win7_{platform.machine().lower()}')]
+DRIVER_FILE_PATHS = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper", "windows", f'windows_{platform.machine().lower()}')]
 DRIVER_FILE_NAME = "chipsec_hlpr.sys"
 DEVICE_FILE = "\\\\.\\chipsec_hlpr"
 SERVICE_NAME = "chipsec"
@@ -235,19 +235,19 @@ def _handle_error(err: str, hr: int = 0) -> None:
     raise OsHelperError(err, hr)
 
 
-class Win32Helper(Helper):
+class WindowsHelper(Helper):
 
     def __init__(self):
-        super(Win32Helper, self).__init__()
+        super(WindowsHelper, self).__init__()
 
         self.os_system = platform.system()
         self.os_release = platform.release()
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname = platform.uname()
-        self.name = "Win32Helper"
+        self.name = "WindowsHelper"
         if "windows" == self.os_system.lower():
-            win_ver = f"win7_{self.os_machine.lower()}"
+            win_ver = f"windows_{self.os_machine.lower()}"
             if ("5" == self.os_release):
                 win_ver = "winxp"
             logger().log_debug(f'[helper] OS: {self.os_system} {self.os_release} {self.os_version}')
@@ -926,5 +926,5 @@ class Win32Helper(Helper):
 #
 
 
-def get_helper() -> Win32Helper:
-    return Win32Helper()
+def get_helper() -> WindowsHelper:
+    return WindowsHelper()
