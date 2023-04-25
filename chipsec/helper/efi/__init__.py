@@ -26,9 +26,8 @@
 ##################################################################################
 
 import sys
-from chipsec.helper.oshelper import avail_helpers
+
 if sys.platform.startswith('uefi') or sys.platform.startswith('EFI'):
     __all__ = ["efihelper"]
-    avail_helpers.append("efihelper")
 else:
     __all__ = []

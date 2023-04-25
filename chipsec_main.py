@@ -47,7 +47,7 @@ import chipsec.result_deltas
 from chipsec import defines
 from chipsec import module_common
 from chipsec import chipset
-from chipsec.helper import oshelper
+from chipsec.helper.oshelper import helper
 from chipsec.logger import logger
 from chipsec.banner import print_banner, print_banner_properties
 from chipsec.testcase import ExitCode, TestCase, ChipsecResults
@@ -92,7 +92,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('--deltas', dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
     adv_options.add_argument('--record', dest='_to_file', help='run chipsec and clone helper results into JSON file')
     adv_options.add_argument('--replay', dest='_from_file', help='replay a chipsec run with JSON file')
-    adv_options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
+    adv_options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in helper().getAvailableHelpers()])
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
 
