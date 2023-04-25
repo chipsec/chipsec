@@ -88,22 +88,22 @@ class Helper:
     #
     # physical_address is 64 bit integer
     #
-    def read_phys_mem(self, phys_address_hi, phys_address_lo, length):
+    def read_phys_mem(self, phys_address, length):
         raise NotImplementedError()
 
-    def write_phys_mem(self, phys_address_hi, phys_address_lo, length, buf):
+    def write_phys_mem(self, phys_address, length, buf):
         raise NotImplementedError()
 
     def alloc_phys_mem(self, length, max_phys_address):
         raise NotImplementedError()
 
-    def free_phys_mem(self, physical_address):
+    def free_phys_mem(self, phys_address):
         raise NotImplementedError()
 
     def va2pa(self, va):
         raise NotImplementedError()
 
-    def map_io_space(self, physical_address, length, cache_type):
+    def map_io_space(self, phys_address, length, cache_type):
         raise NotImplementedError()
 
     #

@@ -134,7 +134,7 @@ class Msr:
 
     def dump_Descriptor_Table(self, cpu_thread_id: int, code: int, num_entries: Optional[int] = None) -> Tuple[int, int]:
         (limit, _, pa) = self.helper.get_descriptor_table(cpu_thread_id, code)
-        dt = self.helper.read_physical_mem(pa, limit + 1)
+        dt = self.helper.read_phys_mem(pa, limit + 1)
         total_num = len(dt) // 16
         if (num_entries is None) or (total_num < num_entries):
             num_entries = total_num

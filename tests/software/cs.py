@@ -54,13 +54,12 @@ class TestChipsecCs(unittest.TestCase):
         with the output.
         """
         _cs = chipset.cs()
-        _cs.helper.helper = helper_class()
         _cs.init_xml_configuration()
         logger.logger().HAL = True
         logger.logger().VERBOSE = True
         logger.logger().set_log_file(self.log_file)
         try:
-            _cs.init(platform, pch, True)
+            _cs.init(platform, pch, helper_class())
             ret = getattr(_cs, arg.split()[0])()
         finally:
             logger.logger().close()

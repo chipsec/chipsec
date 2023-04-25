@@ -532,15 +532,18 @@ class WindowsHelper(Helper):
 # Actual driver IOCTL functions to access HW resources
 ###############################################################################################
 
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
+    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
         out_length = length
-        in_buf = struct.pack('3I', phys_address_hi, phys_address_lo, length)
+        hi = (phys_address >> 32) & 0xFFFFFFFF
+        lo = phys_address & 0xFFFFFFFF
+        in_buf = struct.pack('3I', hi, lo, length)
         out_buf = self._ioctl(IOCTL_READ_PHYSMEM, in_buf, out_length)
         return bytes(out_buf)
 
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: AnyStr):
-        in_length = length + 12
-        in_buf = struct.pack('3I', phys_address_hi, phys_address_lo, length) + stringtobytes(buf)
+    def write_phys_mem(self, phys_address: int, length: int, buf: AnyStr):
+        hi = (phys_address >> 32) & 0xFFFFFFFF
+        lo = phys_address & 0xFFFFFFFF
+        in_buf = struct.pack('3I', hi, lo, length) + stringtobytes(buf)
         out_buf = self._ioctl(IOCTL_WRITE_PHYSMEM, in_buf, 4)
         return out_buf
 
