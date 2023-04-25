@@ -30,7 +30,7 @@ import importlib
 import argparse
 
 from typing import Sequence, Optional, Dict, Any
-from chipsec.helper import oshelper
+from chipsec.helper.oshelper import helper
 from chipsec.logger import logger, level
 from chipsec.banner import print_banner, print_banner_properties
 from chipsec.exceptions import UnknownChipsetError
@@ -108,7 +108,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
                          help="chipsec won't need kernel mode functions so don't load chipsec driver")
     options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
                          help='run chipsec even if the platform is not recognized')
-    options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in oshelper.avail_helpers])
+    options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in helper().getAvailableHelpers()])
     options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(cmds.keys()), type=str.lower, default="help",
                          help="Util command to run: {{{}}}".format(','.join(sorted(cmds.keys()))))
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)

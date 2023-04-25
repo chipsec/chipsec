@@ -18,6 +18,5 @@
 # chipsec@intel.com
 #
 
-from chipsec.helper.oshelper import avail_helpers
+
 __all__ = ["filehelper"]
-avail_helpers.append("filehelper")
