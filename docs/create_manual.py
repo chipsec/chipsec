@@ -50,9 +50,7 @@ SPHINX_MOD_DIR = os.path.join(SPHINX_DIR, 'modules')
 SPHINX_SCRIPTS_DIR = os.path.join(SPHINX_DIR, '_scripts')
 CHIPSEC_DIR = os.path.normpath(DOCS_DIR + os.sep + os.pardir)
 
-NotWantedFilesList = [ 
-    'chipsec_tools.rst',
-    'chipsec_tools.windows.rst',
+NotWantedFilesList = [
     'setup.rst',
     'chipsec.rst',
     'chipsec.banner.rst',
