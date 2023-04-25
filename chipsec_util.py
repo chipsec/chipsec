@@ -101,7 +101,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
                          help="chipsec won't need kernel mode functions so don't load chipsec driver")
     options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
                          help='run chipsec even if the platform is not recognized')
-    options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in helper().getAvailableHelpers()])
+    options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=[i for i in helper().get_available_helpers()])
     options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(cmds.keys()), type=str.lower, default="help",
                          help="Util command to run: {{{}}}".format(','.join(sorted(cmds.keys()))))
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)
@@ -129,8 +129,6 @@ class ChipsecUtil:
         self.__dict__.update(switches)
         self.argv = argv
         self.parse_switches()
-
-    def init_cs(self):
         self._cs = cs()
 
     def parse_switches(self) -> None:
@@ -160,8 +158,6 @@ class ChipsecUtil:
         if self._show_banner:
             print_banner(self.argv, get_version(), get_message())
 
-        self.init_cs()
-
         # @TODO: change later
         # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
         self.argv = ['dummy'] + [self._cmd] + self._cmd_args
@@ -169,8 +165,7 @@ class ChipsecUtil:
 
         if self._load_config:
             try:
-                self._cs.init(self._platform, self._pch, comm.requires_driver() and not self._no_driver,
-                              self._driver_exists)
+                self._cs.init(self._platform, self._pch, self._helper,  comm.requires_driver(), True)
             except UnknownChipsetError as msg:
                 self.logger.log("*******************************************************************\n"
                                 "* Unknown platform!\n"
@@ -194,7 +189,7 @@ class ChipsecUtil:
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()
         if comm.requires_driver() and not self._no_driver:
-            self._cs.destroy(True)
+            self._cs.destroy_helper(True)
         return comm.ExitCode
 
 def run(cli_cmd: str = '') -> int:
