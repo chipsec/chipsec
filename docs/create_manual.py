@@ -70,7 +70,7 @@ NotWantedFilesList = [
 
 def RunAutoDoc() -> None:
     try:
-        os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {os.path.join(CHIPSEC_DIR, "*test*")} {os.path.join(CHIPSEC_DIR, "*exceptions*")}')
+        os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {os.path.join(CHIPSEC_DIR, "*test*")} {os.path.join(CHIPSEC_DIR, "*exceptions*")} {os.path.join(CHIPSEC_DIR, "*tool*")}')
     except Exception:
         print('Unable to run sphinx-apidoc')
         raise
