@@ -57,7 +57,7 @@ class sinkhole(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self):
-        if not (self.cs.helper.is_windows() or self.cs.helper.is_linux()):
+        if not (self.cs.os_helper.is_windows() or self.cs.os_helper.is_linux()):
             self.logger.log_important('Unsupported OS found.  Skipping module.')
             self.logger.log_important('Supported OS: Windows or Linux')
             self.res = ModuleResult.NOTAPPLICABLE

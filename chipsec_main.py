@@ -86,7 +86,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="don't log timestamps", action='store_true')
     adv_options.add_argument('--deltas', dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
-    adv_options.add_argument('--helper', dest='_driver_exists', help='specify OS Helper', choices=[i for i in helper().getAvailableHelpers()])
+    adv_options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=[i for i in helper().get_available_helpers()])
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
 
@@ -116,11 +116,8 @@ class ChipsecMain:
         self.message = defines.get_message()
         self.__dict__.update(switches)
         self.argv = argv
-
-        self.parse_switches()
-
-    def init_cs(self):
         self._cs = chipset.cs()
+        self.parse_switches()
 
     ##################################################################################
     # Module API
@@ -386,8 +383,6 @@ class ChipsecMain:
 
     def main(self) -> int:
 
-        self.init_cs()
-
         if self._show_banner:
             print_banner(self.argv, defines.get_version(), defines.get_message())
 
@@ -396,7 +391,7 @@ class ChipsecMain:
 
         if self._load_config:
             try:
-                self._cs.init(self._platform, self._pch, (not self._no_driver), self._driver_exists)
+                self._cs.init(self._platform, self._pch, self._helper)
             except UnknownChipsetError as msg:
                 self.logger.log_error("Platform is not supported ({}).".format(str(msg)))
                 if self._unknownPlatform:
@@ -439,7 +434,7 @@ class ChipsecMain:
         else:
             modules_failed = self.run_all_modules()
 
-        self._cs.destroy((not self._no_driver))
+        self._cs.destroy_helper((not self._no_driver))
         del self._cs
         self.logger.disable()
         return modules_failed

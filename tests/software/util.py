@@ -56,10 +56,10 @@ class TestChipsecUtil(unittest.TestCase):
         with the output.
         """
         chipsec_util._cs = chipset.cs()
-        chipsec_util._cs.helper.helper = helper_class()
         args = arg.split()
         par = chipsec_util.parse_args(args)
         util = chipsec_util.ChipsecUtil(par, args)
+        util._helper = helper_class()
         util.logger.VERBOSE = True
         util.logger.HAL = True
         util.logger.set_log_file(self.log_file)
