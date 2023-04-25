@@ -242,17 +242,15 @@ class LinuxHelper(Helper):
                 return res.to_bytes(2, 'little')
         return b''
 
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, newval: bytes) -> int:
+    def write_phys_mem(self, phys_address: int, length: int, newval: bytes) -> int:
         if (newval is None) or (self.dev_fh is None):
             return 0
-        addr = (phys_address_hi << 32) | phys_address_lo
-        self.dev_fh.seek(addr)
+        self.dev_fh.seek(phys_address)
         res = self.__mem_block(length, newval)
         return int.from_bytes(res, 'little')
 
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
-        addr = (phys_address_hi << 32) | phys_address_lo
-        self.dev_fh.seek(addr)
+    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
+        self.dev_fh.seek(phys_address)
         return self.__mem_block(length)
 
     def va2pa(self, va: int) -> Tuple[Optional[int], int]:

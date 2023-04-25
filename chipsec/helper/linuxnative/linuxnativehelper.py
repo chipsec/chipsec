@@ -287,15 +287,13 @@ class LinuxNativeHelper(Helper):
             self.mappings.append(mapping)
 
 
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
-        phys_address = (phys_address_hi << 32) | phys_address_lo
+    def read_phys_mem(self, phys_address, length: int) -> bytes:
         if self.devmem_available():
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             return os.read(self.dev_mem, length)
         return b'\x00'
 
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, newval: bytes) -> int:
-        phys_address = (phys_address_hi << 32) | phys_address_lo
+    def write_phys_mem(self, phys_address, length: int, newval: bytes) -> int:
         if newval is None:
             return None
         if self.devmem_available():

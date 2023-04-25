@@ -152,7 +152,7 @@ class DALHelper(Helper):
     # Physical memory access
     #
 
-    def read_physical_mem(self, phys_address: int, length: int, bytewise: bool = False) -> bytes:
+    def read_phys_mem(self, phys_address: int, length: int, bytewise: bool = False) -> bytes:
         if bytewise:
             width = 1
         else:
@@ -168,7 +168,7 @@ class DALHelper(Helper):
             width = width // 2
         return b''.join(out_buf)
 
-    def write_physical_mem(self, phys_address: int, length: int, buf: bytes, bytewise: bool = False) -> int:
+    def write_phys_mem(self, phys_address: int, length: int, buf: bytes, bytewise: bool = False) -> int:
         if bytewise:
             width = 1
         else:
@@ -182,12 +182,6 @@ class DALHelper(Helper):
                 ptr += width
             width = width // 2
         return 1
-
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
-        return self.read_physical_mem((phys_address_hi << 32) | phys_address_lo, length)
-
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: bytes) -> int:
-        return self.write_physical_mem((phys_address_hi << 32) | phys_address_lo, length, buf)
 
     def va2pa(self, va):
         raise UnimplementedAPIError('va2pa')
@@ -336,7 +330,7 @@ class DALHelper(Helper):
         return physical_address
 
     def read_mmio_reg(self, phys_address: int, size: int) -> int:
-        out_buf = self.read_physical_mem(phys_address, size)
+        out_buf = self.read_phys_mem(phys_address, size)
         if size == 8:
             value = struct.unpack('=Q', out_buf[:size])[0]
         elif size == 4:
@@ -360,7 +354,7 @@ class DALHelper(Helper):
             buf = struct.pack('=B', value & 0xFF)
         else:
             buf = bytes(1)
-        return self.write_physical_mem(phys_address, size, buf)
+        return self.write_phys_mem(phys_address, size, buf)
 
     #
     # Interrupts

@@ -50,7 +50,7 @@ class Memory(HALBase):
 
     def read_physical_mem(self, phys_address: int, length: int) -> bytes:
         self.logger.log_hal(f'[mem] 0x{phys_address:016X}')
-        return self.helper.read_physical_mem(phys_address, length)
+        return self.helper.read_phys_mem(phys_address, length)
 
     def read_physical_mem_qword(self, phys_address: int) -> int:
         out_buf = self.read_physical_mem(phys_address, 8)
@@ -82,7 +82,7 @@ class Memory(HALBase):
         if self.logger.HAL:
             self.logger.log(f'[mem] buffer len = 0x{length:X} to PA = 0x{phys_address:016X}')
             print_buffer_bytes(buf)
-        return self.helper.write_physical_mem(phys_address, length, buf)
+        return self.helper.write_phys_mem(phys_address, length, buf)
 
     def write_physical_mem_dword(self, phys_address: int, dword_value: int) -> int:
         self.logger.log_hal(f'[mem] dword to PA = 0x{phys_address:016X} <- 0x{dword_value:08X}')
@@ -99,7 +99,7 @@ class Memory(HALBase):
     # Allocate physical memory buffer
 
     def alloc_physical_mem(self, length: int, max_phys_address: int = 0xFFFFFFFFFFFFFFFF) -> Tuple[int, int]:
-        (va, pa) = self.helper.alloc_physical_mem(length, max_phys_address)
+        (va, pa) = self.helper.alloc_phys_mem(length, max_phys_address)
         self.logger.log_hal(f'[mem] Allocated: PA = 0x{pa:016X}, VA = 0x{va:016X}')
         return (va, pa)
 
@@ -121,7 +121,7 @@ class Memory(HALBase):
     # Free physical memory buffer
 
     def free_physical_mem(self, pa: int) -> bool:
-        ret = self.helper.free_physical_mem(pa)
+        ret = self.helper.free_phys_mem(pa)
         self.logger.log_hal(f'[mem] Deallocated : PA = 0x{pa:016X}')
         return True if ret == 1 else False
 
