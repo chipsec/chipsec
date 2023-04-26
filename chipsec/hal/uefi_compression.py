@@ -23,7 +23,11 @@ try:
     has_brotli = True
 except ImportError:
     has_brotli = False
-import lzma
+try:
+    import lzma
+    has_lzma = True
+except ImportError:
+    has_lzma = False
 try:
     import EfiCompressor
     has_eficomp = True
@@ -88,7 +92,7 @@ class UEFICompression:
                     data = EfiCompressor.UefiDecompress(compressed_data)
                 except Exception:
                     data = b''
-            elif compression_type == COMPRESSION_TYPE_LZMA:
+            elif compression_type == COMPRESSION_TYPE_LZMA and has_lzma:
                 try:
                     data = lzma.decompress(compressed_data)
                 except lzma.LZMAError:
