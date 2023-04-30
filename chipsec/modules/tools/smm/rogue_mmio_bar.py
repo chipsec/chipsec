@@ -20,7 +20,7 @@
 Experimental module that may help checking SMM firmware for MMIO BAR hijacking
 vulnerabilities described in the following presentation:
 
-`BARing the System: New vulnerabilities in Coreboot & UEFI based systems <http://www.intelsecurity.com/advanced-threat-research/content/data/REConBrussels2017_BARing_the_system.pdf>`_ by Intel Advanced Threat Research team at RECon Brussels 2017
+`BARing the System: New vulnerabilities in Coreboot & UEFI based systems <https://web.archive.org/web/20170702042016/http://www.intelsecurity.com/advanced-threat-research/content/data/REConBrussels2017_BARing_the_system.pdf>`_ by Intel Advanced Threat Research team at RECon Brussels 2017
 
 Usage:
     ``chipsec_main -m tools.smm.rogue_mmio_bar [-a <smi_start:smi_end>,<b:d.f>]``
