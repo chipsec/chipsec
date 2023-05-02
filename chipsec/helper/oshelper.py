@@ -23,14 +23,13 @@ Abstracts support for various OS/environments, wrapper around platform specific 
 """
 
 import os
-import re
 import errno
 import importlib
 import platform
 import traceback
 import sys
 from ctypes import Array
-from typing import Tuple, List, Dict, Optional, AnyStr, TYPE_CHECKING
+from typing import Tuple, List, Dict, Optional, AnyStr, Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType
 from chipsec.file import get_main_dir, TOOLS_DIR
@@ -39,15 +38,6 @@ from chipsec.helper.basehelper import Helper
 from chipsec.exceptions import UnimplementedAPIError, OsHelperError
 
 avail_helpers = []
-
-ZIP_HELPER_RE = re.compile("^chipsec\/helper\/\w+\/\w+\.pyc$", re.IGNORECASE)
-
-def f_mod_zip(x: str):
-    return (x.find('__init__') == -1 and ZIP_HELPER_RE.match(x))
-
-
-def map_modname_zip(x: str) -> str:
-    return (x.rpartition('.')[0]).replace('/', '.')
 
 
 def get_tools_path() -> str:
@@ -86,6 +76,7 @@ class OsHelper:
         helper_dir = os.path.join(get_main_dir(), "chipsec", "helper")
         helpers = [os.path.basename(f) for f in os.listdir(helper_dir)
                     if os.path.isdir(os.path.join(helper_dir, f)) and not os.path.basename(f).startswith("__")]
+
         for helper in helpers:
             helper_path = ''
             try:
@@ -95,18 +86,18 @@ class OsHelper:
             except ImportError as msg:
                 logger().log_debug(f"Unable to load helper: {helper}")
 
-    def getHelper(self, name: str) -> any:
+    def getHelper(self, name: str) -> Any:
         ret = None
         if name in self.avail_helpers:
             ret = self.avail_helpers[name].get_helper()
         return ret
-    
+
     def getAvailableHelpers(self) -> List[str]:
         return self.avail_helpers.keys()
 
     def getBaseHelper(self):
         return Helper()
-    
+
     def getDefaultHelper(self):
         ret = None
         if self.is_linux():
