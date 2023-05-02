@@ -335,11 +335,6 @@ class Logger:
         """Logs an Warning message"""
         self.log(text, level.WARNING)
 
-    def log_skipped(self, text):
-        """Logs a SKIPPED message."""
-        text = f'SKIPPED: " {text}'
-        self.log(text, level.INFO, "YELLOW")
-
     def log_not_applicable(self, text):
         """Logs a NOT APPLICABLE message."""
         text = f'NOT APPLICABLE: {text}'
