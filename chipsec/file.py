@@ -77,14 +77,6 @@ def write_file(filename: str, buffer: Any, append: bool = False) -> bool:
     return True
 
 
-# determine if CHIPSEC is loaded as chipsec.exe or in python
-def main_is_frozen() -> bool:
-    return (hasattr(sys, "frozen") or  # new py2exe
-            hasattr(sys, "importers"))  # old py2exe
-
-
 def get_main_dir() -> str:
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-    if main_is_frozen():
-        path = os.path.dirname(sys.executable)
     return path

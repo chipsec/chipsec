@@ -61,15 +61,8 @@ def get_option_width(width_op):
 def import_cmds() -> Dict[str, Any]:
     """Determine available chipsec_util commands"""
     # determine if CHIPSEC is loaded as chipsec_*.exe or in python
-    CHIPSEC_LOADED_AS_EXE = True if (hasattr(sys, "frozen") or hasattr(sys, "importers")) else False
-    if CHIPSEC_LOADED_AS_EXE:
-        import zipfile
-        myzip = zipfile.ZipFile(os.path.join(get_main_dir(), "library.zip"))
-        cmds = [i.replace('/', '.').replace('chipsec.utilcmd.', '')[:-4] for i in myzip.namelist()
-                if 'chipsec/utilcmd/' in i and i[-4:] == ".pyc" and not os.path.basename(i)[:2] == '__']
-    else:
-        cmds_dir = os.path.join(get_main_dir(), "chipsec", "utilcmd")
-        cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
+    cmds_dir = os.path.join(get_main_dir(), "chipsec", "utilcmd")
+    cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
 
     if logger().DEBUG:
         logger().log('[CHIPSEC] Loaded command-line extensions:')
