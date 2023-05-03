@@ -582,8 +582,7 @@ class SPI(hal_base.HALBase):
 
     def write_spi_from_file(self, spi_fla: int, filename: str) -> bool:
         buf = read_file(filename)
-        buf_str = b''.join(struct.unpack('c' * len(buf), buf))
-        return self.write_spi(spi_fla, buf_str)
+        return self.write_spi(spi_fla, buf)
         # return self.write_spi( spi_fla, struct.unpack('B'*len(buf), buf) )
 
     def read_spi(self, spi_fla: int, data_byte_count: int) -> bytes:
