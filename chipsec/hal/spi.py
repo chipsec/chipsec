@@ -582,7 +582,7 @@ class SPI(hal_base.HALBase):
 
     def write_spi_from_file(self, spi_fla: int, filename: str) -> bool:
         buf = read_file(filename)
-        buf_str = ''.join(struct.unpack('c' * len(buf), buf))
+        buf_str = b''.join(struct.unpack('c' * len(buf), buf))
         return self.write_spi(spi_fla, buf_str)
         # return self.write_spi( spi_fla, struct.unpack('B'*len(buf), buf) )
 
@@ -638,7 +638,7 @@ class SPI(hal_base.HALBase):
 
         return buf
 
-    def write_spi(self, spi_fla: int, buf: str) -> bool:
+    def write_spi(self, spi_fla: int, buf: bytes) -> bool:
 
         self.check_hardware_sequencing()
 
@@ -658,7 +658,7 @@ class SPI(hal_base.HALBase):
         for i in range(n):
             if self.logger.UTIL_TRACE or self.logger.HAL:
                 self.logger.log(f'[spi] Writing chunk {i:d} of 0x{dbc:x} bytes to 0x{spi_fla + i * dbc:x}')
-            dword_value = (ord(buf[i * dbc + 3]) << 24) | (ord(buf[i * dbc + 2]) << 16) | (ord(buf[i * dbc + 1]) << 8) | ord(buf[i * dbc])
+            dword_value = ((buf[i * dbc + 3]) << 24) | ((buf[i * dbc + 2]) << 16) | ((buf[i * dbc + 1]) << 8) | (buf[i * dbc])
             if self.logger.HAL:
                 self.logger.log(f'[spi] in FDATA00 = 0x{dword_value:08X}')
             self.spi_reg_write(self.fdata0_off, dword_value)
