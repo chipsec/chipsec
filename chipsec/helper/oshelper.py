@@ -84,8 +84,8 @@ class OsHelper:
 
     def loadHelpers(self) -> None:
         helper_dir = os.path.join(get_main_dir(), "chipsec", "helper")
-        helpers = [os.path.basename(f) for f in os.scandir(helper_dir)
-                    if f.is_dir() and not os.path.basename(f).startswith("__")]
+        helpers = [os.path.basename(f) for f in os.listdir(helper_dir)
+                    if os.path.isdir(os.path.join(helper_dir, f)) and not os.path.basename(f).startswith("__")]
         for helper in helpers:
             helper_path = ''
             try:
