@@ -46,19 +46,17 @@ TOOLS_DIR = 'chipsec_tools'
 
 def read_file(filename: str, size: int = 0) -> bytes:
     try:
-        f = open(filename, 'rb')
+        with open(filename, 'rb') as f:
+            if size:
+                _file = f.read(size)
+            else:
+                _file = f.read()
+            logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:256}'")
+            return _file
+            
     except:
         logger().log_error(f"Unable to open file '{filename:.256}' for read access")
         return b''
-
-    if size:
-        _file = f.read(size)
-    else:
-        _file = f.read()
-    f.close()
-
-    logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:256}'")
-    return _file
 
 
 def write_file(filename: str, buffer: Any, append: bool = False) -> bool:
