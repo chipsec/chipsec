@@ -13,6 +13,7 @@ https://www.intel.com/content/www/us/en/products/docs/chipsets/300-series-chipse
   <!-- #################################### -->
   <info>
     <sku did="0x9D84" name="PCH-U" code="PCH_3xxOP" longname="Intel 300 series On-Package PCH" />
+    <sku did="0x9D85" name="PCH-U" code="PCH_3xxOP" longname="Intel 300 series On-Package PCH" />
   </info>
 
   <!-- #################################### -->
