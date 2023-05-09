@@ -1115,11 +1115,11 @@ class LinuxHelper(Helper):
     #
     # Interrupts
     #
-    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
+    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
         self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(f'7{self._pack}', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
-        ret = struct.unpack(f'7{self._pack}', out_buf)[0]
+        ret = struct.unpack(f'7{self._pack}', out_buf)
         return ret
 
     #

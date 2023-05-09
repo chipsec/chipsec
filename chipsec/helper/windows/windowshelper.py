@@ -816,7 +816,7 @@ class WindowsHelper(Helper):
     #
     # Interrupts
     #
-    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
+    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
         if (sys.maxsize < 2**32 and self.os_machine == 'AMD64') or (sys.maxsize > 2**32 and self.os_machine == 'i386'):
             logger().log(f"[helper] Python architecture must match OS architecture.  Run with {self.os_machine} architecture of python")
         out_length = struct.calcsize(_smi_msg_t_fmt)
@@ -824,7 +824,7 @@ class WindowsHelper(Helper):
         in_buf = struct.pack(_smi_msg_t_fmt, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         out_buf = self._ioctl(IOCTL_SWSMI, in_buf, out_length)
         if out_buf:
-            ret = struct.unpack(_smi_msg_t_fmt, out_buf)[0]
+            ret = struct.unpack(_smi_msg_t_fmt, out_buf)
         else:
             ret = None
         return ret

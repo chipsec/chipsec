@@ -31,7 +31,7 @@ usage:
 
 import struct
 import uuid
-from typing import Optional
+from typing import Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.logger import logger, print_buffer_bytes
 from chipsec.hal.acpi import ACPI
@@ -50,7 +50,7 @@ class Interrupts(hal_base.HALBase):
     def __init__(self, cs):
         super(Interrupts, self).__init__(cs)
 
-    def send_SW_SMI(self, thread_id: int, SMI_code_port_value: int, SMI_data_port_value: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
+    def send_SW_SMI(self, thread_id: int, SMI_code_port_value: int, SMI_data_port_value: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
         SMI_code_data = (SMI_data_port_value << 8 | SMI_code_port_value)
         logger().log_hal(
             f"[intr] Sending SW SMI: code port 0x{SMI_APMC_PORT:02X} <- 0x{SMI_code_port_value:02X}, data port 0x{SMI_APMC_PORT + 1:02X} <- 0x{SMI_data_port_value:02X} (0x{SMI_code_data:04X})")
