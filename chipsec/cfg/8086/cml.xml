@@ -8,10 +8,6 @@
   <!--                                      -->
   <!-- #################################### -->
   <info family="core" detection_value="A0652, A0653, A0655, A0660, A0661">
-    <sku did="0x3E20" name="CometLake" code="CML" longname="CometLake H8 Core / XeonW" />
-    <sku did="0x3E33" name="CometLake" code="CML" longname="CometLake v1 U6 Core" />
-    <sku did="0x3E34" name="CometLake" code="CML" longname="CometLake v1 U4 Core" />
-    <sku did="0x3E35" name="CometLake" code="CML" longname="CometLake v1 U2 Core" />
     <sku did="0x9B33" name="CometLake" code="CML" longname="CometLake S10 Core" />
     <sku did="0x9B43" name="CometLake" code="CML" longname="CometLake S8 Core" />
     <sku did="0x9B44" name="CometLake" code="CML" longname="CometLake H8 Core / XeonW" />
