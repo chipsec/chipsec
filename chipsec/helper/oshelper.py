@@ -121,10 +121,7 @@ class OsHelper:
             ret = self.getBaseHelper()
         return ret
 
-    def start(self, start_driver: bool, driver_exists: Optional[bool] = None, to_file: Optional[bool] = None, from_file: Optional[bool] = False) -> None:
-        if to_file is not None:
-            from chipsec.helper.file.filehelper import FileCmds
-            self.filecmds = FileCmds(to_file)
+    def start(self, start_driver: bool, driver_exists: Optional[bool] = None) -> None:
         if driver_exists is not None:
             for name in self.avail_helpers:
                 if name == driver_exists:
@@ -132,7 +129,7 @@ class OsHelper:
         try:
             if not self.helper.create(start_driver):
                 raise OsHelperError("failed to create OS helper", 1)
-            if not self.helper.start(start_driver, from_file):
+            if not self.helper.start(start_driver):
                 raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
             if logger().DEBUG:
@@ -531,7 +528,7 @@ class OsHelper:
     #
     # Send SW SMI
     #
-    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
+    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
         if self.use_native_api() and hasattr(self.helper, 'native_send_sw_smi'):
             ret = self.helper.native_send_sw_smi(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         else:
