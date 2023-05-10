@@ -32,11 +32,12 @@ from time import time
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand
+from typing import Any, Dict
 
 
 class CONFIGCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(usage=__doc__)
 
         subparsers = parser.add_subparsers()
@@ -50,7 +51,7 @@ class CONFIGCommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return False
 
-    def show(self):
+    def show(self) -> None:
         if self.config == "ALL":
             config = ['CONFIG_PCI', 'REGISTERS', 'MMIO_BARS', 'IO_BARS', 'MEMORY_RANGES', 'CONTROLS', 'BUS', 'LOCKS']
         else:
@@ -62,95 +63,91 @@ class CONFIGCommand(BaseCommand):
             self.logger.log(mconfig)
             for name in self.name:
                 if mconfig == "REGISTERS":
-                    self.logger.log('\t{} - {}'.format(name, self.register_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.register_details(cfg[name])}')
                 elif mconfig == "CONFIG_PCI":
-                    self.logger.log('\t{} - {}'.format(name, self.pci_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.pci_details(cfg[name])}')
                 elif mconfig == "MMIO_BARS":
-                    self.logger.log('\t{} - {}'.format(name, self.mmio_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.mmio_details(cfg[name])}')
                 elif mconfig == "IO_BARS":
-                    self.logger.log('\t{} - {}'.format(name, self.io_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.io_details(cfg[name])}')
                 elif mconfig == "MEMORY_RANGES":
-                    self.logger.log('\t{} - {}'.format(name, self.mem_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.mem_details(cfg[name])}')
                 elif mconfig == "CONTROLS":
-                    self.logger.log('\t{} - {}'.format(name, self.control_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.control_details(cfg[name])}')
                 elif mconfig == "LOCKS":
-                    self.logger.log('\t{} - {}'.format(name, self.lock_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.lock_details(cfg[name])}')
                 elif mconfig == "BUS":
-                    self.logger.log('\t{} - {}'.format(name, self.bus_details(cfg[name])))
+                    self.logger.log(f'\t{name} - {self.bus_details(cfg[name])}')
 
-    def register_details(self, regi):
+    def register_details(self, regi: Dict[str, Any]) -> str:
+        ret = ''
         if regi['type'] == 'pcicfg' or regi['type'] == 'mmcfg':
             if 'device' in regi.keys():
-                ret = "device: {}, offset: {}, size: {}".format(regi['device'], regi['offset'], regi['size'])
+                ret = f'device: {regi["device"]}, offset: {regi["offset"]}, size: {regi["size"]}'
             else:
-                ret = "bus: {}, dev: {}, func: {}, offset: {}, size: {}".format(regi['bus'], regi['dev'], regi['fun'], regi['offset'], regi['size'])
+                ret = f'bus: {regi["bus"]}, dev: {regi["dev"]}, func: {regi["fun"]}, offset: {regi["offset"]}, size: {regi["size"]}'
         elif regi['type'] == 'mmio':
-            ret = "bar: {}, offset: {}, size: {}".format(regi['bar'], regi['offset'], regi['size'])
+            ret = f'bar: {regi["bar"]}, offset: {regi["offset"]}, size: {regi["size"]}'
         elif regi['type'] == 'mm_msgbus':
-            ret = "port: {}, offset: {}, size: {}".format(regi['port'], regi['offset'], regi['size'])
+            ret = f'port: {regi["port"]}, offset: {regi["offset"]}, size: {regi["size"]}'
         elif regi['type'] == 'io':
-            ret = "port: {}, size: {}".format(regi['port'], regi['size'])
+            ret = f'port: {regi["port"]}, size: {regi["size"]}'
         elif regi['type'] == 'iobar':
-            ret = "bar: {}, offset: {}, size: {}".format(regi['bar'], regi['offset'], regi['size'])
+            ret = f'bar: {regi["bar"]}, offset: {regi["offset"]}, size: {regi["size"]}'
         elif regi['type'] == 'msr':
-            ret = "msr: {}, size: {}".format(regi['msr'], regi['size'])
+            ret = f'msr: {regi["msr"]}, size: {regi["size"]}'
         elif regi['type'] == 'R Byte':
-            ret = "offset: {}, size: {}".format(regi['offset'], regi['size'])
+            ret = f'offset: {regi["offset"]}, size: {regi["size"]}'
         elif regi['type'] == 'memory':
-            ret = "access: {}, address: {}, offset: {}, size: {}".format(regi['access'], regi['address'], regi['offset'], regi['size'])
+            ret = f'access: {regi["access"]}, address: {regi["address"]}, offset: {regi["offset"]}, size: {regi["size"]}'
         if 'FIELDS' in regi.keys():
             for key in regi['FIELDS'].keys():
-                ret += ('\n\t\t{} - bit {}:{}'.format(key, regi['FIELDS'][key]['bit'], int(regi['FIELDS'][key]['size']) + int(regi['FIELDS'][key]['bit']) - 1))
+                extension = (f'\n\t\t{key} - bit {regi["FIELDS"][key]["bit"]}:{int(regi["FIELDS"][key]["size"]) + int(regi["FIELDS"][key]["bit"]) - 1}')
+                ret += extension
         return ret
 
-    def pci_details(self, regi):
-        ret = "bus: {}, dev: {}, func: {}, vid: {}, did: {}".format(regi['bus'], regi['dev'], regi['fun'], regi['vid'], regi['did'] if 'did' in regi.keys() else None)
+    def pci_details(self, regi: Dict[str, Any]) -> str:
+        ret = f'bus: {regi["bus"]}, dev: {regi["dev"]}, func: {regi["fun"]}, vid: {regi["vid"]}, did: {regi["did"] if "did" in regi.keys() else None}'
         return ret
 
-    def mmio_details(self, regi):
+    def mmio_details(self, regi: Dict[str, Any]) -> str:
+        regi_size = regi['size'] if 'size' in regi.keys() else None
+        fixed_addr = regi['fixed_address'] if 'fixed_address' in regi.keys() else None
         if 'register' in regi.keys():
-            ret = "register: {}, base_field: {}, size: {}, fixed_address: {}".format(
-                regi['register'], regi['base_field'], regi['size'] if 'size' in regi.keys() else None,
-                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = f'register: {regi["register"]}, base_field: {regi["base_field"]}, size: {regi_size}, fixed_address: {fixed_addr}'
         else:
-            ret = "bus: {}, dev: {}, func: {}, mask: {}, width: {}, size: {}, fixed_address: {}".format(
-                regi['bus'], regi['dev'], regi['fun'], regi['mask'], regi['width'],
-                regi['size'] if 'size' in regi.keys() else None,
-                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = f'bus: {regi["bus"]}, dev: {regi["dev"]}, func: {regi["fun"]}, mask: {regi["mask"]}, width: {regi["width"]}, size: {regi_size}, fixed_address: {fixed_addr}'
         return ret
 
-    def io_details(self, regi):
+    def io_details(self, regi: Dict[str, Any]) -> str:
+        regi_size = regi['size'] if 'size' in regi.keys() else None
+        fixed_addr = regi['fixed_address'] if 'fixed_address' in regi.keys() else None
         if 'register' in regi.keys():
-            ret = "register: {}, base_field: {}, size: {}, fixed_address: {}".format(
-                regi['register'], regi['base_field'], regi['size'] if 'size' in regi.keys() else None,
-                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = f'register: {regi["register"]}, base_field: {regi["base_field"]}, size: {regi_size}, fixed_address: {fixed_addr}'
         else:
-            ret = "bus: {}, dev: {}, func: {}, reg: {}, mask: {}, size: {}, fixed_address: {}".format(
-                regi['bus'], regi['dev'], regi['fun'], regi["reg"], regi['mask'],
-                regi['size'] if 'size' in regi.keys() else None,
-                regi['fixed_address'] if 'fixed_address' in regi.keys() else None)
+            ret = f'bus: {regi["bus"]}, dev: {regi["dev"]}, func: {regi["fun"]}, reg: {regi["reg"]}, mask: {regi["mask"]}, size: {regi_size}, fixed_address: {fixed_addr}'
         return ret
 
-    def mem_details(self, regi):
-        ret = "access: {}, address: {}, size: {}".format(regi['access'], regi['address'], regi['size'])
+    def mem_details(self, regi: Dict[str, Any]) -> str:
+        ret = f'access: {regi["access"]}, address: {regi["address"]}, size: {regi["size"]}'
         return ret
 
-    def control_details(self, regi):
-        ret = "register: {}, field: {}".format(regi['register'], regi['field'])
+    def control_details(self, regi: Dict[str, Any]) -> str:
+        ret = f'register: {regi["register"]}, field: {regi["field"]}'
         return ret
 
-    def lock_details(self, regi):
-        ret = "register: {}, field: {}, value: {}".format(regi['register'], regi['field'], regi['value'])
+    def lock_details(self, regi: Dict[str, Any]) -> str:
+        ret = f'register: {regi["register"]}, field: {regi["field"]}, value: {regi["value"]}'
         return ret
 
-    def bus_details(self, regi):
-        ret = "bus: {}".format(regi)
+    def bus_details(self, regi: str) -> str:
+        ret = f'bus: {regi}'
         return ret
 
-    def run(self):
+    def run(self) -> None:
         t = time()
         self.func()
-        self.logger.log("[CHIPSEC] (config) time elapsed {:.3f}".format(time() - t))
+        self.logger.log(f'[CHIPSEC] (config) time elapsed {time() - t:.3f}')
         return
 
 
