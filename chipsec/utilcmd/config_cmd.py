@@ -144,7 +144,7 @@ class CONFIGCommand(BaseCommand):
         ret = f'bus: {regi}'
         return ret
 
-    def run(self):
+    def run(self) -> None:
         t = time()
         self.func()
         self.logger.log(f'[CHIPSEC] (config) time elapsed {time() - t:.3f}')
