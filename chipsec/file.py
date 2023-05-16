@@ -51,7 +51,7 @@ def read_file(filename: str, size: int = 0) -> bytes:
                 _file = f.read(size)
             else:
                 _file = f.read()
-            logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:256}'")
+            logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:.256}'")
             return _file
             
     except:
