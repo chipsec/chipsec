@@ -41,6 +41,7 @@ from argparse import ArgumentParser
 from chipsec.hal.cpu import CPU
 from chipsec.exceptions import CPURuntimeError
 from chipsec.command import BaseCommand
+from typing import Dict, List, Optional, Union
 
 # ###################################################################
 #
@@ -51,7 +52,7 @@ from chipsec.command import BaseCommand
 
 class CPUCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_info = subparsers.add_parser('info')
@@ -75,7 +76,7 @@ class CPUCommand(BaseCommand):
 
         return True
 
-    def cpu_info(self):
+    def cpu_info(self) -> None:
         self.logger.log("[CHIPSEC] CPU information:")
         ht = self.cs.cpu.is_HT_active()
         threads_per_core = self.cs.cpu.get_number_logical_processor_per_core()
@@ -93,7 +94,7 @@ class CPUCommand(BaseCommand):
         except Exception:
             pass
 
-    def cpu_topology(self):
+    def cpu_topology(self) -> Dict[str, Dict[int, List[int]]]:
         self.logger.log("[CHIPSEC] CPU information:")
         ht = self.cs.cpu.is_HT_active()
         threads_per_core = self.cs.cpu.get_number_logical_processor_per_core()
@@ -115,14 +116,14 @@ class CPUCommand(BaseCommand):
 
         return topology
 
-    def cpu_cr(self):
+    def cpu_cr(self) -> Optional[Union[bool, int]]:
         if self.value is not None:
-            self.logger.log("[CHIPSEC] CPU{:d}: write CR{:d} <- 0x{:08X}".format(self.thread, self.cr_number, self.value))
+            self.logger.log(f'[CHIPSEC] CPU{self.thread:d}: write CR{self.cr_number:d} <- 0x{self.value:08X}')
             self.cs.cpu.write_cr(self.thread, self.cr_number, self.value)
             return True
         elif self.cr_number is not None:
             value = self.cs.cpu.read_cr(self.thread, self.cr_number)
-            self.logger.log("[CHIPSEC] CPU{:d}: read CR{:d} -> 0x{:08X}".format(self.thread, self.cr_number, value))
+            self.logger.log(f'[CHIPSEC] CPU{self.thread:d}: read CR{self.cr_number:d} -> 0x{value:08X}')
             return value
         else:
             for tid in range(self.cs.msr.get_cpu_thread_count()):
@@ -131,16 +132,16 @@ class CPUCommand(BaseCommand):
                 cr3 = self.cs.cpu.read_cr(tid, 3)
                 cr4 = self.cs.cpu.read_cr(tid, 4)
                 cr8 = self.cs.cpu.read_cr(tid, 8)
-                self.logger.log("[CHIPSEC][cpu{:d}] x86 Control Registers:".format(tid))
-                self.logger.log("  CR0: 0x{:016X}".format(cr0))
-                self.logger.log("  CR2: 0x{:016X}".format(cr2))
-                self.logger.log("  CR3: 0x{:016X}".format(cr3))
-                self.logger.log("  CR4: 0x{:016X}".format(cr4))
-                self.logger.log("  CR8: 0x{:016X}".format(cr8))
+                self.logger.log(f'[CHIPSEC][cpu{tid:d}] x86 Control Registers:')
+                self.logger.log(f'  CR0: 0x{cr0:016X}')
+                self.logger.log(f'  CR2: 0x{cr2:016X}')
+                self.logger.log(f'  CR3: 0x{cr3:016X}')
+                self.logger.log(f'  CR4: 0x{cr4:016X}')
+                self.logger.log(f'  CR8: 0x{cr8:016X}')
 
     def cpu_cpuid(self):
-        self.logger.log("[CHIPSEC] CPUID < EAX: 0x{:08X}".format(self.eax))
-        self.logger.log("[CHIPSEC]         ECX: 0x{:08X}".format(self.ecx))
+        self.logger.log(f'[CHIPSEC] CPUID < EAX: 0x{self.eax:08X}')
+        self.logger.log(f'[CHIPSEC]         ECX: 0x{self.ecx:08X}')
 
         (_eax, _ebx, _ecx, _edx) = self.cs.cpu.cpuid(self.eax, self.ecx)
 
