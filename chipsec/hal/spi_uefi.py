@@ -258,6 +258,7 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
     fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
     fv = []
     while fwbin is not None:
+        fw_offset = fwbin.Size + fwbin.Offset
         fwbin.calc_hashes()
         if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
             fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
@@ -273,7 +274,12 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
         elif fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
             fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
             fv.append(fwbin)
-        fwbin = NextFwFile(fv_img, fv_size, fwbin.Size + fwbin.Offset, polarity)
+        fwbin = NextFwFile(fv_img, fv_size, fw_offset, polarity)
+        if fwbin is None and fv_size > fw_offset:
+            non_UEFI = EFI_SECTION(fw_offset, 'Non-UEFI_data', 0xFF, fv_img[fw_offset:], 0, fv_size - fw_offset)
+            non_UEFI.Comments = 'Attempting to identify modules in non_UEFI Data Section'
+            non_UEFI.children = build_efi_tree(fv_img[fw_offset:], fwtype)
+            fv.append(non_UEFI)
     return fv
 
 

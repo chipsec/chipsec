@@ -275,7 +275,7 @@ class EFI_SECTION(EFI_MODULE):
         if self.DataOffset:
             _s += f' DataOffset {self.DataOffset:04X}h'
         if self.Comments:
-            _s += f'Comments {self.Comments}'
+            _s += f' Comments {self.Comments}'
         _s += super(EFI_SECTION, self).__str__()
         return bytestostring(_s)
 
