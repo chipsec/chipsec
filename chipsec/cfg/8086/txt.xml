@@ -199,7 +199,7 @@ only the public space registers were described here.
     <register name="TXT_SPAD_CLEAR" type="memory" access="mmio" address="0xFED30000" offset="0x7A0" size="8" desc="TXT SPAD Clear"/>
 
     <register name="TXT_VER_FTIF" type="memory" access="mmio" address="0xFED30000" offset="0x800" size="4" desc="TXT FT Interface">
-      <field name="TPM_IF" bit="16" size="4" desc="TPM Inteface (0 if not present, 1 for LPC, 5 for SPI, 7 for CRB and fTPM)"/>
+      <field name="TPM_IF" bit="16" size="4" desc="TPM Interface (0 if not present, 1 for LPC, 5 for SPI, 7 for CRB and fTPM)"/>
     </register>
     <register name="TXT_PCH_DIDVID" type="memory" access="mmio" address="0xFED30000" offset="0x810" size="8" desc="TXT Platform Controller Hub Device ID">
       <field name="VID" bit="0" size="16" desc="Vendor ID"/>
@@ -219,7 +219,7 @@ only the public space registers were described here.
       <field name="SECRETS_STS" bit="1" size="1" desc="Secrets in Memory"/>
       <field name="BLOCK_MEM_STS" bit="2" size="1" desc="Block Memory"/>
       <field name="RESET_STS" bit="3" size="1" desc="Reset Status"/>
-      <field name="RESET_STS" bit="32" size="1" desc="Reset Policy"/>
+      <field name="RESET_POLICY" bit="32" size="1" desc="Reset Policy"/>
     </register>
 
     <register name="TXT_FT_REGS1" type="memory" access="mmio" address="0xFED30000" offset="0x900" size="4" desc="TXT FT Regs 1"/>
