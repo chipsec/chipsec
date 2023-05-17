@@ -29,7 +29,10 @@ From the Intel(R) DFx Abstraction Layer Python* Command Line Interface User Guid
 import struct
 
 from chipsec.logger import logger
-import itpii
+try:
+    import itpii
+except:
+    pass
 from ctypes import c_char
 from typing import Tuple
 from chipsec.helper.basehelper import Helper
@@ -284,8 +287,8 @@ class DALHelper(Helper):
             return False
         return True
 
-    def load_ucode_update(self, core_id: int, ucode_update_buf: int) -> bool:
-        return False
+    def load_ucode_update(self, core_id, ucode_update_buf):
+        raise UnimplementedAPIError('load_ucode_update')
 
     def get_threads_count(self) -> int:
         no_threads = len(self.base.threads)
