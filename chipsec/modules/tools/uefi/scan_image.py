@@ -60,7 +60,7 @@ from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.spi import SPI, BIOS
-from chipsec.hal.uefi_fv import EFI_SECTION, SECTION_NAMES, EFI_SECTION_PE32
+from chipsec.hal.uefi_fv import EFI_MODULE, EFI_SECTION, SECTION_NAMES, EFI_SECTION_PE32
 from chipsec.hal.spi_uefi import build_efi_model, search_efi_tree, EFIModuleType, UUIDEncoder
 from chipsec.file import write_file, read_file
 
@@ -76,8 +76,9 @@ class scan_image(BaseModule):
         BaseModule.__init__(self)
         self.uefi = UEFI(self.cs)
         self.image = None
-        self.efi_list = None
+        self.efi_list = {}
         self.suspect_modules = {}
+        self.duplicate_list = []
 
     def is_supported(self):
         return True
@@ -85,11 +86,9 @@ class scan_image(BaseModule):
     #
     # callbacks to uefi_search.check_match_criteria
     #
-    def genlist_callback(self, efi_module):
+    def genlist_callback(self, efi_module: EFI_MODULE) -> None:
         md = {}
         if type(efi_module) == EFI_SECTION:
-            # if efi_module.MD5:
-            #   md["md5"] = efi_module.MD5
             if efi_module.SHA256:
                 md["sha1"] = efi_module.SHA1
             if efi_module.parentGuid:
@@ -98,19 +97,23 @@ class scan_image(BaseModule):
                 md["name"] = efi_module.ui_string
             if efi_module.Name and efi_module.Name != SECTION_NAMES[EFI_SECTION_PE32]:
                 md["type"] = efi_module.Name
-            self.efi_list[efi_module.SHA256] = md
+            if efi_module.SHA256 in self.efi_list.keys():
+                self.duplicate_list.append(efi_module.SHA256)
+            else:
+                self.efi_list[efi_module.SHA256] = md
         else:
             pass
 
     #
     # Generates new list of EFI executable binaries
     #
-    def generate_efilist(self, json_pth):
-        self.efi_list = {}
+    def generate_efilist(self, json_pth: str) -> int:
         self.logger.log("[*] Generating a list of EFI executables from firmware image...")
         efi_tree = build_efi_model(self.image, None)
-        matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
+        search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
         self.logger.log(f'[*] Found {len(self.efi_list):d} EFI executables in UEFI firmware image \'{self.image_file}\'')
+        self.logger.log(f'[*] Found {len(self.duplicate_list)} duplicate executables')
+        self.logger.log_verbose(f'\t{chr(10).join(i for i in self.duplicate_list)}')
         self.logger.log(f'[*] Creating JSON file \'{json_pth}\'...')
         write_file(f'{json_pth}', json.dumps(self.efi_list, indent=2, separators=(',', ': '), cls=UUIDEncoder))
         return ModuleResult.PASSED
@@ -118,8 +121,7 @@ class scan_image(BaseModule):
     #
     # Checks EFI executable binaries against allowed list
     #
-    def check_list(self, json_pth):
-        self.efi_list = {}
+    def check_list(self, json_pth: str) -> int:
         with open(json_pth) as data_file:
             self.efilist = json.load(data_file)
 
@@ -129,7 +131,7 @@ class scan_image(BaseModule):
         # - match only executable EFI sections (PE/COFF, TE)
         # - find all occurrences of matching EFI modules
         efi_tree = build_efi_model(self.image, None)
-        matching_modules = search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
+        search_efi_tree(efi_tree, self.genlist_callback, EFIModuleType.SECTION_EXE, True)
         self.logger.log(f'[*] Found {len(self.efi_list):d} EFI executables in UEFI firmware image \'{self.image_file}\'')
 
         for m in self.efi_list:
