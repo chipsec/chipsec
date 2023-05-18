@@ -122,6 +122,7 @@ class Chipset:
         self.pch_code = CHIPSET_CODE_UNKNOWN
         self.pch_longname = 'Unrecognized PCH'
         self.pch_id = CHIPSET_ID_UNKNOWN
+        self.cpuid = None
         self.Cfg = Cfg()
 
         #
@@ -204,9 +205,9 @@ class Chipset:
         vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
         # get cpuid only if driver using driver (otherwise it will cause problems)
         if start_driver or self.helper.is_linux():
-            cpuid = self.get_cpuid()
+            self.cpuid = self.get_cpuid()
         else:
-            cpuid = None
+            self.cpuid = None
 
         # initialize chipset values to unknown
         _unknown_platform = True
@@ -227,13 +228,13 @@ class Chipset:
             did_found = did in self.chipset_dictionary[vid]
             #check if multiple platform found by [vid][did]
             multiple_found = len(self.chipset_dictionary[vid][did]) > 1
-            logger().log_debug(f'read out cpuid:{cpuid}, platforms found per vid & did:{self.chipset_dictionary[vid][did]}, multiple:{multiple_found}')
+            logger().log_debug(f'read out cpuid:{self.cpuid}, platforms found per vid & did:{self.chipset_dictionary[vid][did]}, multiple:{multiple_found}')
             for i in self.detection_dictionary.keys():
                 logger().log_debug(f'cpuid detection val:{i}, plat:{self.detection_dictionary[i]}')
-            cpuid_found = cpuid in self.detection_dictionary.keys()
+            cpuid_found = self.cpuid in self.detection_dictionary.keys()
             if vid_found and did_found and multiple_found and cpuid_found:
                 for item in self.chipset_dictionary[vid][did]:
-                    if self.detection_dictionary[cpuid] == item['code']:
+                    if self.detection_dictionary[self.cpuid] == item['code']:
                         # matched processor with detection value, cpuid used to decide the correct platform
                         _unknown_platform = False
                         data_dict = item
@@ -253,8 +254,8 @@ class Chipset:
                 self.rid = rid
             elif cpuid_found:
                 _unknown_platform = False
-                self.code = self.detection_dictionary[cpuid]
-                self.longname = self.detection_dictionary[cpuid]
+                self.code = self.detection_dictionary[self.cpuid]
+                self.longname = self.detection_dictionary[self.cpuid]
                 self.vid = vid
                 self.did = did
                 self.rid = rid
@@ -268,8 +269,8 @@ class Chipset:
             self.code = platform_code
             self.longname = platform_code
             msg = f'Platform: Actual values: VID = 0x{vid:04X}, DID = 0x{did:04X}, RID = 0x{rid:02X}'
-            if cpuid:
-                msg += f', CPUID = 0x{cpuid}'
+            if self.cpuid:
+                msg += f', CPUID = 0x{self.cpuid}'
             logger().log(f'[CHIPSEC] {msg}')
 
         if req_pch_code is not None:
@@ -338,7 +339,7 @@ class Chipset:
         return self.pch_longname
 
     def print_chipset(self):
-        logger().log(f'[*] Platform: {self.longname}\n          CPUID: {self.get_cpuid()}\n           VID: {self.vid:04X}\n          DID: {self.did:04X}\n          RID: {self.rid:02X}')
+        logger().log(f'[*] Platform: {self.longname}\n          CPUID: {self.cpuid}\n           VID: {self.vid:04X}\n          DID: {self.did:04X}\n          RID: {self.rid:02X}')
 
     def print_pch(self):
         logger().log(f'[*] PCH     : {self.pch_longname}\n          VID: {self.pch_vid:04X}\n          DID: {self.pch_did:04X}\n          RID: {self.pch_rid:02X}')
