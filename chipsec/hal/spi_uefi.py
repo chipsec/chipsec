@@ -257,20 +257,34 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
     polarity = bool(Attributes & EFI_FVB2_ERASE_POLARITY)
     fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
     fv = []
+    padding = 0
     while fwbin is not None:
         fw_offset = fwbin.Size + fwbin.Offset
         fwbin.calc_hashes()
+        if padding != fwbin.Offset:
+            non_UEFI = EFI_SECTION(padding, 'Padding', EFI_FV_FILETYPE_FFS_PAD, fv_img[padding:fw_offset - 1], 0, fwbin.Offset - padding)
+            non_UEFI.Comments = 'Attempting to identify modules in Padding Section'
+            non_UEFI.children = build_efi_tree(fv_img[padding:fwbin.Offset - 1], None)
+            if non_UEFI.children:
+                fv.append(non_UEFI)
+        padding += fw_offset
         if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
             fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
             fv.append(fwbin)
         elif fwbin.Type == EFI_FV_FILETYPE_RAW:
             if fwbin.Name != NVAR_NVRAM_FS_FILE:
-                fwbin.children = build_efi_tree(fwbin.Image[fwbin.HeaderSize:], fwtype)
+                fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
                 fv.append(fwbin)
             else:
                 fwbin.isNVRAM = True
                 fwbin.NVRAMType = FWType.EFI_FW_TYPE_NVAR
                 fv.append(fwbin)
+        elif fwbin.Type == EFI_FV_FILETYPE_FFS_PAD:
+            non_UEFI = EFI_SECTION(fwbin.Offset, 'Padding', fwbin.Type, fv_img[fw_offset:], 0, fwbin.Size)
+            non_UEFI.Comments = 'Attempting to identify modules in Padding Section'
+            non_UEFI.children = build_efi_tree(fwbin.Image, None)
+            if non_UEFI.children:
+                fv.append(non_UEFI)
         elif fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
             fwbin.children = build_efi_modules_tree(fwtype, fwbin.Image, fwbin.Size, fwbin.HeaderSize, polarity)
             fv.append(fwbin)
@@ -278,8 +292,9 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
         if fwbin is None and fv_size > fw_offset:
             non_UEFI = EFI_SECTION(fw_offset, 'Non-UEFI_data', 0xFF, fv_img[fw_offset:], 0, fv_size - fw_offset)
             non_UEFI.Comments = 'Attempting to identify modules in non_UEFI Data Section'
-            non_UEFI.children = build_efi_tree(fv_img[fw_offset:], fwtype)
-            fv.append(non_UEFI)
+            non_UEFI.children = build_efi_tree(fv_img[fw_offset:], None)
+            if non_UEFI.children:
+                fv.append(non_UEFI)
     return fv
 
 
