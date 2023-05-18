@@ -45,7 +45,7 @@ from chipsec.logger import logger
 from chipsec.file import write_file, read_file
 from chipsec.hal.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
 from chipsec.hal.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
-from chipsec.hal.uefi_platform import FWType, ParsePFS, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
+from chipsec.hal.uefi_platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE
 from chipsec.hal.uefi import identify_EFI_NVRAM, parse_EFI_variables
 from chipsec.hal.uefi_fv import EFI_SECTION_PE32, EFI_SECTION_TE, EFI_SECTION_PIC, EFI_SECTION_COMPATIBILITY16, EFI_FIRMWARE_FILE_SYSTEM2_GUID
 from chipsec.hal.uefi_fv import EFI_FIRMWARE_FILE_SYSTEM_GUID, EFI_SECTIONS_EXE, EFI_SECTION_USER_INTERFACE, EFI_SECTION_GUID_DEFINED
@@ -342,18 +342,7 @@ def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = N
 
 
 def build_efi_model(data: bytes, fwtype: str) -> List['EFI_MODULE']:
-    # Try PFS first
-    result = ParsePFS(data)
-    if result[0]:
-        model = []
-        for d in result[0]:
-            m = build_efi_tree(d, fwtype)
-            model.extend(m)
-        if len(result[1]) > 0:
-            m = build_efi_tree(result[1], fwtype)
-            model.extend(m)
-    else:
-        model = build_efi_tree(data, fwtype)
+    model = build_efi_tree(data, fwtype)
     update_efi_tree(model)
     return model
 
