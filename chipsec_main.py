@@ -444,6 +444,11 @@ class ChipsecMain:
         self.logger.disable()
         return modules_failed
 
+def run(cli_cmd: str = '') -> int:
+    cli_cmds = []
+    if cli_cmd:
+        cli_cmds = cli_cmd.strip().split(' ')
+    return main(cli_cmds)
 
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
     par = parse_args(argv)
