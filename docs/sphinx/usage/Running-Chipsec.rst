@@ -39,27 +39,27 @@ Using as a Python Package
 
 Install CHIPSEC manually or from PyPI. You can then use CHIPSEC from your Python project or from the Python shell:
 
-To install and run CHIPSEC as a package:
+To install and run CHIPSEC as a package:
 
-``# python setup.py install``
+``# python setup.py install``
 
-``# sudo chipsec_main``
+``# sudo chipsec_main``
 
 From the Python shell:
 
 >>> import chipsec_main
->>> chipsec_main.main()
->>> chipsec_main.main(['-m','common.bios_wp'])
+>>> chipsec_main.run()
+>>> chipsec_main.run('-m common.bios_wp')
 
 >>> import chipsec_util
->>> chipsec_util.main()
->>> chipsec_util.main(['spi','info'])
+>>> chipsec_util.run()
+>>> chipsec_util.run('spi info')
 
-To use CHIPSEC *in place* without installing it:
+To use CHIPSEC *in place* without installing it:
 
-``# python setup.py build_ext -i``
+``# python setup.py build_ext -i``
 
-``# sudo python chipsec_main.py``
+``# sudo python chipsec_main.py``
 
 chipsec_main options
 --------------------
