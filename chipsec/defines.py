@@ -22,6 +22,7 @@ import struct
 import os
 import string
 import platform
+from time import strftime
 from typing import Dict, Tuple, Optional, AnyStr, Iterable
 
 import chipsec.file
@@ -219,6 +220,10 @@ def get_message() -> str:
         with open(msg_file, "r") as msgFile:
             msg_str = msgFile.read()
     return msg_str
+
+
+def get_datetime_str() -> str:
+    return strftime('%a%b%d%y-%H%M%S')
 
 
 class ARCH_VID:
