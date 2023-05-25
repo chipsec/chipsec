@@ -48,8 +48,7 @@ LOG_PATH = os.path.join(os.getcwd(), "logs")
 if not os.path.exists(LOG_PATH):
     os.mkdir(LOG_PATH)
 
-LOGGER_NAME = 'CHIPSEC'
-
+LOGGER_NAME = 'CHIPSEC_LOGGER'
 
 class level(Enum):
     DEBUG = 10
@@ -195,28 +194,23 @@ class chipsecStreamFormatter(logging.Formatter):
 class Logger:
     """Class for logging to console, text file, XML."""
 
-    def __init__(self, profile='debug.conf'):
+    def __init__(self):
         """The Constructor."""
         self.mytime = localtime()
         self.logfile = None
         self.ALWAYS_FLUSH = False
         self.logstream = logging.StreamHandler(sys.stdout)
-        logname = f"{strftime('%a%b%d%y-%H%M%S')}.log"
-        logPath = os.path.join(LOG_PATH, logname)
-        fileH = logging.FileHandler(logPath)
         self.chipsecLogger = logging.getLogger(LOGGER_NAME)
         self.chipsecLogger.setLevel(logging.DEBUG)
         self.chipsecLogger.addHandler(self.logstream)
-        self.chipsecLogger.addHandler(fileH)
         self.chipsecLogger.addFilter(chipsecFilter(LOGGER_NAME))
         self.chipsecLogger.propagate = False
         logging.addLevelName(level.VERBOSE.value, level.VERBOSE.name)
         logging.addLevelName(level.HAL.value, level.HAL.name)
         logging.addLevelName(level.HELPER.value, level.HELPER.name)
-        logFormatter = chipsecLogFormatter('%(additional)s%(message)s')
         streamFormatter = chipsecStreamFormatter('%(additional)s%(message)s')
         self.logstream.setFormatter(streamFormatter)
-        fileH.setFormatter(logFormatter)
+        self.logFormatter = chipsecLogFormatter('%(additional)s%(message)s')
 
     def log(self, text: str, level: level = level.INFO, color: Optional[str] = ...) -> None:
         """Sends plain text to logging."""
@@ -247,23 +241,31 @@ class Logger:
             self.chipsecLogger.setLevel(level.VERBOSE.value)
         else:
             self.chipsecLogger.setLevel(level.INFO.value)
+    
+    def set_autolog_file(self):
+        log_file_name = f'{strftime("%a%b%d%y-%H%M%S")}.log'
+        log_path = os.path.join(LOG_PATH, log_file_name)
+        file_handler = logging.FileHandler(log_path)
+        self.chipsecLogger.addHandler(file_handler)
+        file_handler.setFormatter(self.logFormatter)
 
     def set_log_file(self, name=None):
         """Sets the log file for the output."""
         # Close current log file if it's opened
         self.disable()
-        self.LOG_FILE_NAME = name
+        self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
         # specifying name=None effectively disables logging to file
 
         if self.LOG_FILE_NAME:
             # Open new log file and keep it opened
             try:
                 # creates FileHandler for log file
-                self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='w')
-                self.chipsecLogger.addHandler(self.logfile)  # adds filehandler to root logger
-                self.LOG_TO_FILE = True
+                self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='a')
             except Exception:
-                print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
+                print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')               
+            self.chipsecLogger.addHandler(self.logfile)
+            self.logfile.setFormatter(self.logFormatter)
+            self.LOG_TO_FILE = True
             self.chipsecLogger.removeHandler(self.logstream)
         else:
             try:
