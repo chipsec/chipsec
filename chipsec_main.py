@@ -89,6 +89,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=helper().get_available_helpers())
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
+    adv_options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="chipsec won't save logs automatically")
 
     par = vars(parser.parse_args(argv))
 
@@ -355,6 +356,9 @@ class ChipsecMain:
         self.logger.setlevel()
         if self.log:
             self.logger.set_log_file(self.log)
+            self._autolog_disable = True
+        if self._autolog_disable is False:
+            self.logger.set_autolog_file()
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):
             self.logger.log("[*] Use of the -a command no longer needs to have arguments concatenated with ','")
             self._module_argv = self._module_argv[0].split(',')
@@ -362,6 +366,8 @@ class ChipsecMain:
             self.logger.log_warning("Ignoring unsupported platform warning and continue execution.")
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
+        
+
 
     def properties(self):
         ret = OrderedDict()
