@@ -27,10 +27,12 @@
 
 
 import mmap
+from ctypes import CDLL, CFUNCTYPE, addressof, c_uint16, c_uint32, c_void_p, get_errno
+from typing import Callable
 
-from ctypes import cdll, c_ubyte, CFUNCTYPE, c_uint32, c_uint16, c_void_p, addressof
+from chipsec.exceptions import OsHelperError
 
-IN_PORT = [
+IN_PORT = bytes((
     0x55,                   # push   %rbp
     0x48, 0x89, 0xe5,       # mov    %rsp,%rbp
     0x89, 0xf8,             # mov    %edi,%eax
@@ -42,10 +44,10 @@ IN_PORT = [
     0x8b, 0x45, 0xfc,       # mov    -0x4(%rbp),%eax
     0x5d,                   # pop    %rbp
     0xc3,                   # retq
-]
+))
 
 
-OUT_PORT = [
+OUT_PORT = bytes((
     0x55,                   # push   %rbp
     0x48, 0x89, 0xe5,       # mov    %rsp,%rbp
     0x89, 0x7d, 0xfc,       # mov    %edi,-0x4(%rbp)
@@ -57,49 +59,54 @@ OUT_PORT = [
     0x90,                   # nop
     0x5d,                   # pop    %rbp
     0xc3,                   # retq
-]
+))
 
 
-class PORTS:
-    def __init__(self):
-        clib = cdll.LoadLibrary("libc.so.6")
-        clib.iopl(3)
+class Ports:
+    # Use a unique Ports instance, to avoid allocating memory mappings every time it is used
+    instance = None
 
-        opc = IN_PORT
-        size = len(opc)
-        code = (c_ubyte * size)(*opc)
-        self.addr = mmap.mmap(-1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
-        self.addr.write(bytes(code))
+    def __init__(self) -> None:
+        clib = CDLL("libc.so.6", use_errno=True)
+        if clib.iopl(3) == -1:
+            raise OsHelperError("Unable to use I/O ports using iopl", get_errno())
+
+        self.inl_addr = mmap.mmap(-1, mmap.PAGESIZE, flags=mmap.MAP_PRIVATE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        self.inl_addr.write(IN_PORT)
         in_func_type = CFUNCTYPE(c_uint32, c_uint16)
-        self.in_fp = c_void_p.from_buffer(self.addr)
-        self.inl_ptr = in_func_type(addressof(self.in_fp))
+        in_fp = c_void_p.from_buffer(self.inl_addr)
+        self.inl_ptr: Callable[[int], int] = in_func_type(addressof(in_fp))
 
-        opc = OUT_PORT
-        size = len(opc)
-        code = (c_ubyte * size)(*opc)
-        self.addr = mmap.mmap(-1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
-        self.addr.write(bytes(code))
+        self.outl_addr = mmap.mmap(-1, mmap.PAGESIZE, flags=mmap.MAP_PRIVATE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        self.outl_addr.write(OUT_PORT)
         out_func_type = CFUNCTYPE(None, c_uint32, c_uint16)
-        self.out_fp = c_void_p.from_buffer(self.addr)
-        self.outl_ptr = out_func_type(addressof(self.out_fp))
+        out_fp = c_void_p.from_buffer(self.outl_addr)
+        self.outl_ptr: Callable[[int, int], None] = out_func_type(addressof(out_fp))
 
-    def inl(self, port):
+    @classmethod
+    def get_instance(cls) -> "Ports":
+        if cls.instance is None:
+            cls.instance = cls()
+        return cls.instance
+
+    def inl(self, port: int) -> int:
         x = self.inl_ptr(port)
         return x
 
-    def outl(self, value, port):
+    def outl(self, value: int, port: int) -> None:
         self.outl_ptr(value, port)
 
 
-class LEGACY_PCI:
-    def __init__(self):
-        self.ports = PORTS()
-
-    def read_pci_config(self, bus, dev, func, offset):
-        self.ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
-        v = self.ports.inl(0xcfc)
+class LegacyPci:
+    @staticmethod
+    def read_pci_config(bus: int, dev: int, func: int, offset: int) -> int:
+        ports = Ports.get_instance()
+        ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
+        v = ports.inl(0xcfc)
         return v
 
-    def write_pci_config(self, bus, dev, func, offset, value):
-        self.ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
-        self.ports.outl(value, 0xcfc)
+    @staticmethod
+    def write_pci_config(bus: int, dev: int, func: int, offset: int, value: int) -> None:
+        ports = Ports.get_instance()
+        ports.outl(0x80000000 | (bus << 16) | (dev << 11) | (func << 8) | offset, 0xcf8)
+        ports.outl(value, 0xcfc)
