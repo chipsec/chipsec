@@ -222,7 +222,7 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     logger().log(s)
     logger().log('--------------------------------------------------------')
     for r in range(nr):
-        s = 'f{r:-2d} {spi.SPI_REGION_NAMES[r]:20s} '
+        s = f'{r:-2d} {spi.SPI_REGION_NAMES[r]:20s} '
         for m in range(nm):
             access_s = ''
             mask = (0x1 << r)
