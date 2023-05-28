@@ -33,7 +33,7 @@ from typing import Optional, Tuple
 from chipsec import defines
 from chipsec.exceptions import OsHelperError
 from chipsec.helper.basehelper import Helper
-from chipsec.helper.linuxnative.legacy_pci import LEGACY_PCI
+from chipsec.helper.linuxnative.legacy_pci import LegacyPci
 from chipsec.logger import logger
 
 
@@ -64,7 +64,6 @@ class LinuxNativeHelper(Helper):
         self.dev_mem = None
         self.dev_port = None
         self.dev_msr = None
-        self.legacy_pci = None
 
         # A list of all the mappings allocated via map_io_space. When using
         # read/write MMIO, if the region is already mapped in the process's
@@ -173,17 +172,11 @@ class LinuxNativeHelper(Helper):
 ###############################################################################################
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int, domain: int = 0) -> int:
-        device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
-                      domain=domain, bus=bus, device=device, function=function)
+        device_name = f"{domain:04x}:{bus:02x}:{device:02x}.{function}"
         device_path = f"/sys/bus/pci/devices/{device_name}/config"
         if not os.path.exists(device_path):
             if offset < 256:
-                if self.legacy_pci:
-                    pci = self.legacy_pci
-                else:
-                    pci = LEGACY_PCI()
-                    self.legacy_pci = pci
-                value = pci.read_pci_config(bus, device, function, offset)
+                value = LegacyPci.read_pci_config(bus, device, function, offset)
                 if size == 1:
                     value = value & 0xFF
                 elif size == 2:
@@ -211,9 +204,7 @@ class LinuxNativeHelper(Helper):
         device_path = f"/sys/bus/pci/devices/{device_name}/config"
         if not os.path.exists(device_path):
             if offset < 256:
-                if not self.legacy_pci:
-                    self.legacy_pci = LEGACY_PCI()
-                self.legacy_pci.write_pci_config(bus, device, function, offset, value)
+                LegacyPci.write_pci_config(bus, device, function, offset, value)
                 return -1
         try:
             with open(device_path, "wb") as config:
