@@ -37,7 +37,7 @@ usage:
 
 import os
 from typing import Any
-from chipsec.defines import get_datetime_str
+from chipsec.library.string_library import get_datetime_str
 from chipsec.logger import logger
 
 TOOLS_DIR = 'chipsec_tools'
