@@ -83,7 +83,7 @@ def decompress_section_data(section_dir_path: str, sec_fs_name: str, compressed_
 def compress_image(image: bytes, compression_type: int) -> bytes:
     uefi_uc = UEFICompression()
     logger().log_hal(f'[uefi] Compressing EFI binary (type = 0x{compression_type:X})\n')
-    compressed_image = uefi_uc.compress_EFI_binary(image,  compression_type)
+    compressed_image = uefi_uc.compress_EFI_binary(image, compression_type)
     return compressed_image
 
 
@@ -252,7 +252,6 @@ def build_efi_modules_tree(fwtype: str, data: bytes, Size: int, offset: int, pol
 # fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 
 
-
 def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
     fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
     polarity = bool(Attributes & EFI_FVB2_ERASE_POLARITY)
@@ -392,24 +391,24 @@ def search_efi_tree(modules: List['EFI_MODULE'],
                     findall: bool = True
                     ) -> List['EFI_MODULE']:
     matching_modules = []
-    for m in modules:
+    for module in modules:
         if search_callback is not None:
-            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(m) == EFI_SECTION) or \
-               ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(m) == EFI_SECTION and m.Type in EFI_SECTIONS_EXE)) or \
-               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(m) == EFI_FV) or \
-               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(m) == EFI_FILE):
-                if search_callback(m):
-                    matching_modules.append(m)
+            if ((match_module_types & EFIModuleType.SECTION == EFIModuleType.SECTION) and type(module) == EFI_SECTION) or \
+               ((match_module_types & EFIModuleType.SECTION_EXE == EFIModuleType.SECTION_EXE) and (type(module) == EFI_SECTION and module.Type in EFI_SECTIONS_EXE)) or \
+               ((match_module_types & EFIModuleType.FV == EFIModuleType.FV) and type(module) == EFI_FV) or \
+               ((match_module_types & EFIModuleType.FILE == EFIModuleType.FILE) and type(module) == EFI_FILE):
+                if search_callback(module):
+                    matching_modules.append(module)
                     if not findall:
-                        return []
+                        return [module]
 
         # recurse search if current module node has children nodes
-        if len(m.children) > 0:
-            matches = search_efi_tree(m.children, search_callback, match_module_types, findall)
+        if len(module.children) > 0:
+            matches = search_efi_tree(module.children, search_callback, match_module_types, findall)
             if len(matches) > 0:
                 matching_modules.extend(matches)
                 if not findall:
-                    return []
+                    return [module]
 
     return matching_modules
 
