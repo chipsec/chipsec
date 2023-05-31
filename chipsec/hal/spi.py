@@ -670,7 +670,7 @@ class SPI(hal_base.HALBase):
                 self.logger.log(f'[spi] Writing remaining 0x{r:x} bytes to FLA = 0x{spi_fla + n * dbc:x}')
             dword_value = 0
             for j in range(r):
-                dword_value |= (ord(buf[n * dbc + j]) << 8 * j)
+                dword_value |= (buf[n * dbc + j] << 8 * j)
             if self.logger.HAL:
                 self.logger.log(f'[spi] in FDATA00 = 0x{dword_value:08X}')
             self.spi_reg_write(self.fdata0_off, dword_value)
