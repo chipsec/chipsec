@@ -49,9 +49,8 @@ from chipsec.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
 from chipsec.file import write_file, read_file
 from chipsec.logger import print_buffer, print_buffer_bytes
 from chipsec.hal import hal_base, mmio
-from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import JEDEC_ID
-from chipsec.exceptions import SpiRuntimeError
+from chipsec.exceptions import SpiRuntimeError, UnimplementedAPIError
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4
@@ -198,7 +197,7 @@ class SPI(hal_base.HALBase):
         # speed of MMIO access later on.
         try:
             self.cs.helper.map_io_space(self.rcba_spi_base, SPI_MMIO_BASE_LENGTH, 0)
-        except oshelper.UnimplementedAPIError:
+        except UnimplementedAPIError:
             pass
 
         # Reading definitions of SPI flash controller registers
