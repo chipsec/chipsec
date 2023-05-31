@@ -36,7 +36,7 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
 
             def read_phys_mem(self, pa, length):
                 if (pa & 0xffffffff) == 0x400:
-                    return "EFGH"
+                    return b"EFGH"
                 else:
                     parent = super(ACPIHelper, self)
                     return parent.read_phys_mem(pa, length)
@@ -57,11 +57,11 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                 if (pa_lo >= self.EBDA_ADDRESS and
                         pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
                     # Simulate a condition where there is no RSDP in EBDA
-                    return "\xFF" * length
+                    return b"\xFF" * length
                 elif pa_lo == 0xE0000:
                     return self.rsdp_descriptor[:length]
                 elif pa_lo == 0x300:
-                    return "ABCD"
+                    return b"ABCD"
                 else:
                     parent = super(ACPIHelper, self)
                     return parent.read_phys_mem(pa, length)
