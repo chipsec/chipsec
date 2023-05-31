@@ -34,10 +34,10 @@ http://en.wikipedia.org/wiki/Serial_presence_detect
 """
 
 import struct
-from typing import List
+from typing import Any, List
 from collections import namedtuple
 
-from chipsec.logger import logger, print_buffer
+from chipsec.logger import logger, print_buffer_bytes
 
 SPD_SMBUS_ADDRESS = 0xA0  # A2, A4, A6, A8, AA, AC, AE
 SPD_SMBUS_ADDRESS_DIMM0 = SPD_SMBUS_ADDRESS
@@ -315,19 +315,15 @@ class SPD:
     def write_byte(self, offset: int, value: int, device: int = SPD_SMBUS_ADDRESS) -> bool:
         return self.smbus.write_byte(device, offset, value)
 
-    def read_range(self, start_offset: int, size: int, device: int = SPD_SMBUS_ADDRESS) -> List[str]:
-        buffer = [chr(0xFF)] * size
-        for i in range(size):
-            buffer[i] = chr(self.read_byte(start_offset + i, device))
-        return buffer
+    def read_range(self, start_offset: int, size: int, device: int = SPD_SMBUS_ADDRESS) -> bytes:
+        return bytes(self.read_byte(start_offset + i, device) for i in range(size))
 
-    def write_range(self, start_offset: int, buffer: List[str], device: int = SPD_SMBUS_ADDRESS) -> bool:
-        size = len(buffer)
-        for i in range(size):
-            self.write_byte(start_offset + i, ord(buffer[i]), device)
+    def write_range(self, start_offset: int, buffer: bytes, device: int = SPD_SMBUS_ADDRESS) -> bool:
+        for i, b in enumerate(buffer):
+            self.write_byte(start_offset + i, b, device)
         return True
 
-    def dump_spd_rom(self, device: int = SPD_SMBUS_ADDRESS) -> List[str]:
+    def dump_spd_rom(self, device: int = SPD_SMBUS_ADDRESS) -> bytes:
         return self.read_range(0x0, 0x100, device)
 
     #
@@ -390,12 +386,11 @@ class SPD:
         return is_spd_present
 
     def decode(self, device: int = SPD_SMBUS_ADDRESS) -> None:
-        spd = None
+        spd: Any = None
         device_type = self.getDRAMDeviceType(device)
-        spd_rom = self.dump_spd_rom(device)
+        spd_buffer = self.dump_spd_rom(device)
         logger().log(f'[spd][0x{device:02X}] Serial Presence Detect (SPD) EEPROM contents:')
-        print_buffer(spd_rom)
-        spd_buffer = ''.join(spd_rom).encode('utf_8')
+        print_buffer_bytes(spd_buffer)
 
         if DRAM_DEVICE_TYPE_DDR == device_type:
             spd = SPD_DDR(*struct.unpack_from(SPD_DDR_FORMAT, spd_buffer))

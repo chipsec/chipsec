@@ -40,7 +40,7 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand
 
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from chipsec.hal.ec import EC
 
 
@@ -82,7 +82,7 @@ class ECCommand(BaseCommand):
         self.logger.log("[CHIPSEC] EC dump")
 
         buf = self._ec.read_range(0, self.size)
-        print_buffer(buf)
+        print_buffer_bytes(buf)
 
     def command(self):
         self.logger.log("[CHIPSEC] Sending EC command 0x{:X}".format(self.cmd))
@@ -93,7 +93,7 @@ class ECCommand(BaseCommand):
         if self.size:
             buf = self._ec.read_range(self.offset, self.size)
             self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(self.offset, self.size))
-            print_buffer(buf)
+            print_buffer_bytes(buf)
         else:
             val = self._ec.read_memory(
                 self.offset) if self.offset < 0x100 else self._ec.read_memory_extended(self.offset)
@@ -114,10 +114,8 @@ class ECCommand(BaseCommand):
             self.logger.log("[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
         else:
             self.logger.log("[CHIPSEC] EC index I/O: dumping memory...")
-            mem = []
-            for off in range(0x10000):
-                mem.append(chr(self._ec.read_idx(off)))
-            print_buffer(mem)
+            mem = [self._ec.read_idx(off) for off in range(0x10000)]
+            print_buffer_bytes(mem)
 
     def run(self):
         t = time.time()

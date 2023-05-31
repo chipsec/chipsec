@@ -43,7 +43,7 @@ Usage:
 """
 from typing import List, Optional
 from chipsec.hal import hal_base
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 
 #
 # Embedded Controller ACPI ports
@@ -134,34 +134,33 @@ class EC(hal_base.HALBase):
         self.write_data(word_offset >> 8)
         return self.write_data(data)
 
-    def read_range(self, start_offset: int, size: int) -> List[str]:
-        buffer = [chr(0xFF)] * size
+    def read_range(self, start_offset: int, size: int) -> bytes:
+        buffer = [0xFF] * size
         for i in range(size):
             if start_offset + i < 0x100:
                 mem_value = self.read_memory(start_offset + i)
                 if mem_value is not None:
-                    buffer[i] = chr(mem_value)
+                    buffer[i] = mem_value
                 else:
                     self.logger.log_hal(f'[ec] Unable to read EC offset 0x{start_offset + i:X}')
             else:
                 mem_value = self.read_memory_extended(start_offset + i)
                 if mem_value is not None:
-                    buffer[i] = chr(mem_value)
+                    buffer[i] = mem_value
                 else:
                     self.logger.log_hal(f'[ec] Unable to read EC offset 0x{start_offset + i:X}')
 
         self.logger.log_hal(f'[ec] read EC memory from offset {start_offset:X} size {size:X}:')
         if self.logger.HAL:
-            print_buffer(buffer)
-        return buffer
+            print_buffer_bytes(buffer)
+        return bytes(buffer)
 
-    def write_range(self, start_offset: int, buffer: List[str]) -> bool:
-        size = len(buffer)
-        for i in range(size):
-            self.write_memory(start_offset + i, ord(buffer[i]))
-        self.logger.log_hal(f'[ec] write EC memory to offset {start_offset:X} size {size:X}:')
+    def write_range(self, start_offset: int, buffer: bytes) -> bool:
+        for i, b in enumerate(buffer):
+            self.write_memory(start_offset + i, b)
+        self.logger.log_hal(f'[ec] write EC memory to offset {start_offset:X} size {len(buffer):X}:')
         if self.logger.HAL:
-            print_buffer(buffer)
+            print_buffer_bytes(buffer)
         return True
 
     #
