@@ -24,7 +24,6 @@ Logging functions
 import logging
 import platform
 import string
-import binascii
 import sys
 import os
 import atexit
@@ -445,15 +444,6 @@ def find_required_col_widths(col_data: List[List[int]], minimum_width=2) -> List
 ##################################################################################
 # Hex dump functions
 ##################################################################################
-
-
-def hex_to_text(value):
-    '''Generate text string based on bytestrings'''
-    text = binascii.unhexlify(f'{value:x}')[::-1]
-    if isinstance(text, str):
-        return text   # Python 2.x
-    else:
-        return text.decode('latin-1')   # Python 3.x
 
 
 def bytes2string(buffer, length=16):
