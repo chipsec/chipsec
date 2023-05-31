@@ -34,7 +34,7 @@ Examples:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 
 TAGS = [MTAG_BIOS]
 
@@ -54,8 +54,8 @@ class bios_kbrd_buffer(BaseModule):
         self.logger.log("[*] Keyboard buffer head pointer = 0x{:X} (at 0x41A), tail pointer = 0x{:X} (at 0x41C)".format(kbrd_buf_head, kbrd_buf_tail))
         bios_kbrd_buf = self.cs.mem.read_physical_mem(0x41E, 32)
         self.logger.log("[*] Keyboard buffer contents (at 0x41E):")
+        print_buffer_bytes(bios_kbrd_buf)
         bios_kbrd_buf = bios_kbrd_buf.decode('latin_1')
-        print_buffer(bios_kbrd_buf)
 
         has_contents = False
 

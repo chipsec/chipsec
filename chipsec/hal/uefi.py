@@ -35,7 +35,7 @@ from chipsec.hal.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI
 from chipsec.hal.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, EFI_VARIABLE_HARDWARE_ERROR_RECORD, SECURE_BOOT_SIG_VAR
 from chipsec.hal.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT, EFI_SYSTEM_TABLE_SIGNATURE, EFI_RUNTIME_SERVICES_SIGNATURE, EFI_BOOT_SERVICES_SIGNATURE
 from chipsec.hal.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
-from chipsec.logger import logger, print_buffer
+from chipsec.logger import logger, print_buffer_bytes
 from chipsec.file import write_file, read_file
 from chipsec.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
@@ -73,7 +73,7 @@ def parse_script(script: bytes, log_script: bool = False) -> List['S3BOOTSCRIPT_
     logger().log_hal(f'[uefi] S3 Resume Boot-Script size: 0x{off:X}')
     logger().log_hal('\n[uefi] [++++++++++ S3 Resume Boot-Script Buffer ++++++++++]')
     if logger().HAL:
-        print_buffer(bytestostring(script[: off]))
+        print_buffer_bytes(script[: off])
 
     return s3_boot_script_entries
 
@@ -204,13 +204,13 @@ def print_efi_variable(offset: int, var_buf: bytes, var_header: EFI_TABLE_HEADER
 
     # Print Variable Data
     logger().log('Data:')
-    print_buffer(bytestostring(var_data))
+    print_buffer_bytes(var_data)
 
     # Print Variable Full Contents
     if logger().VERBOSE:
         logger().log('Full Contents:')
         if var_buf is not None:
-            print_buffer(bytestostring(var_buf))
+            print_buffer_bytes(var_buf)
 
 
 def print_sorted_EFI_variables(variables: Dict[str, 'EfiVariableType']) -> None:
@@ -405,7 +405,7 @@ class UEFI(hal_base.HALBase):
                 logger().log_hal(f'[uefi] Found: {efivar_name} {{{guid}}} {get_attr_string(attrs)} variable')
                 logger().log_hal(f'[uefi] {efivar_name} variable data:')
                 if logger().HAL:
-                    print_buffer(bytestostring(data))
+                    print_buffer_bytes(data)
 
                 varsz = len(data)
                 if 4 == varsz:
@@ -424,7 +424,7 @@ class UEFI(hal_base.HALBase):
                 AcpiVariableSet = self.helper.read_phys_mem(AcpiGlobalAddr, ACPI_VARIABLE_SET_STRUCT_SIZE)
                 logger().log_hal('[uefi] AcpiVariableSet structure:')
                 if logger().HAL:
-                    print_buffer(bytestostring(AcpiVariableSet))
+                    print_buffer_bytes(AcpiVariableSet)
                 AcpiVariableSet_fmt = '<6Q'
                 # if len(AcpiVariableSet) < struct.calcsize(AcpiVariableSet_fmt):
                 #    logger().log_error( 'Unrecognized format of AcpiVariableSet structure' )
@@ -481,7 +481,7 @@ class UEFI(hal_base.HALBase):
                 write_file(filename, var)
             if logger().UTIL_TRACE or logger().HAL:
                 logger().log(f'[uefi] EFI variable {guid}:{name} :')
-                print_buffer(bytestostring(var))
+                print_buffer_bytes(var)
         return var
 
     def set_EFI_variable(self, name: str, guid: str, var: bytes, datasize: Optional[int] = None, attrs: Optional[int] = None) -> Optional[int]:
@@ -558,7 +558,7 @@ class UEFI(hal_base.HALBase):
                         table_buf = self.cs.mem.read_physical_mem(table_pa, EFI_TABLE_HEADER_SIZE + table_size)
                     table = EFI_TABLES[table_sig]['struct'](*struct.unpack_from(EFI_TABLES[table_sig]['fmt'], table_buf[EFI_TABLE_HEADER_SIZE:]))
                     if logger().HAL:
-                        print_buffer(bytestostring(table_buf))
+                        print_buffer_bytes(table_buf)
                     logger().log_hal(f'[uefi] {EFI_TABLES[table_sig]["name"]}:')
                     logger().log_hal(str(table_header))
                     logger().log_hal(str(table))
@@ -628,33 +628,33 @@ class UEFI(hal_base.HALBase):
         if found:
             logger().log('[uefi] EFI System Table:')
             if table_buf is not None:
-                print_buffer(bytestostring(table_buf))
+                print_buffer_bytes(table_buf)
             logger().log(str(hdr))
             logger().log(str(table))
         (found, _, ect, ect_buf) = self.find_EFI_Configuration_Table()
         if found:
             logger().log('\n[uefi] EFI Configuration Table:')
             if ect_buf is not None:
-                print_buffer(bytestostring(ect_buf))
+                print_buffer_bytes(ect_buf)
             logger().log(str(ect))
         (found, pa, hdr, table, table_buf) = self.find_EFI_RuntimeServices_Table()
         if found:
             logger().log('\n[uefi] EFI Runtime Services Table:')
             if table_buf is not None:
-                print_buffer(bytestostring(table_buf))
+                print_buffer_bytes(table_buf)
             logger().log(str(hdr))
             logger().log(str(table))
         (found, pa, hdr, table, table_buf) = self.find_EFI_BootServices_Table()
         if found:
             logger().log('\n[uefi] EFI Boot Services Table:')
             if table_buf is not None:
-                print_buffer(bytestostring(table_buf))
+                print_buffer_bytes(table_buf)
             logger().log(str(hdr))
             logger().log(str(table))
         (found, pa, hdr, table, table_buf) = self.find_EFI_DXEServices_Table()
         if found:
             logger().log('\n[uefi] EFI DXE Services Table:')
             if table_buf is not None:
-                print_buffer(bytestostring(table_buf))
+                print_buffer_bytes(table_buf)
             logger().log(str(hdr))
             logger().log(str(table))

@@ -47,7 +47,7 @@ import time
 from typing import Dict, Tuple, Optional
 from chipsec.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
 from chipsec.file import write_file, read_file
-from chipsec.logger import print_buffer, print_buffer_bytes
+from chipsec.logger import print_buffer_bytes
 from chipsec.hal import hal_base, mmio
 from chipsec.helper import oshelper
 from chipsec.hal.spi_jedec_ids import JEDEC_ID
@@ -577,7 +577,7 @@ class SPI(hal_base.HALBase):
         if filename is not None:
             write_file(filename, buf)
         else:
-            print_buffer(buf, 16)
+            print_buffer_bytes(buf, 16)
         return buf
 
     def write_spi_from_file(self, spi_fla: int, filename: str) -> bool:
