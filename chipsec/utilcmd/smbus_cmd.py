@@ -30,7 +30,7 @@ Examples:
 import time
 
 from chipsec.command import BaseCommand
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from chipsec.hal.smbus import SMBus
 from argparse import ArgumentParser
 
@@ -59,7 +59,7 @@ class SMBusCommand(BaseCommand):
         if self.size is not None:
             buf = self._smbus.read_range(self.dev_addr, self.start_off, self.size)
             self.logger.log("[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} size 0x{:X}".format(self.dev_addr, self.start_off, self.size))
-            print_buffer(buf)
+            print_buffer_bytes(buf)
         else:
             val = self._smbus.read_byte(self.dev_addr, self.start_off)
             self.logger.log("[CHIPSEC] SMBus read: device 0x{:X} offset 0x{:X} = 0x{:X}".format(self.dev_addr, self.start_off, val))
