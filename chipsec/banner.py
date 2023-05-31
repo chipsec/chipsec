@@ -64,7 +64,7 @@ def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]
 [CHIPSEC] Python  : {python_version} ({python_arch})
 [CHIPSEC] Helper  : {helper_name} ({driver_path})
 [CHIPSEC] Platform: {cs.longname}
-[CHIPSEC]    CPUID: {cs.get_cpuid()}
+[CHIPSEC]    CPUID: {cs.cpuid}
 [CHIPSEC]      VID: {cs.vid:04X}
 [CHIPSEC]      DID: {cs.did:04X}
 [CHIPSEC]      RID: {cs.rid:02X}'''
