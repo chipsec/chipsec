@@ -316,7 +316,6 @@ class LinuxHelper(Helper):
         in_buf = struct.pack(f'3{self._pack}', io_port, size, 0)
         out_buf = self.ioctl(IOCTL_RDIO, in_buf)
         try:
-            # print_buffer(out_buf)
             if 1 == size:
                 value = struct.unpack(f'3{self._pack}', out_buf)[2] & 0xff
             elif 2 == size:

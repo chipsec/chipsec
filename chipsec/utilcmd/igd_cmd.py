@@ -33,7 +33,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from argparse import ArgumentParser
 from chipsec.file import read_file, write_file
 from chipsec.hal import igd
@@ -72,7 +72,7 @@ class IgdCommand(BaseCommand):
             write_file(self.file_name, buffer)
             self.logger.log("[CHIPSEC] Written 0x{:X} bytes to '{}'".format(len(buffer), self.file_name))
         else:
-            print_buffer(buffer)
+            print_buffer_bytes(buffer)
 
     def write_dma(self):
         if not os.path.exists(self.file_value):

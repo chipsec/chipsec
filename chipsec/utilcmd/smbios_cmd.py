@@ -32,8 +32,7 @@ from argparse import ArgumentParser
 from time import time
 from chipsec.command import BaseCommand
 from chipsec.hal.smbios import SMBIOS
-from chipsec.logger import print_buffer
-from chipsec.defines import bytestostring
+from chipsec.logger import print_buffer_bytes
 
 
 class smbios_cmd(BaseCommand):
@@ -81,7 +80,7 @@ class smbios_cmd(BaseCommand):
                 if header is not None:
                     self.logger.log(header)
                 self.logger.log('[CHIPSEC] Raw Data')
-                print_buffer(bytestostring(data))
+                print_buffer_bytes(data)
             elif self.method == 'decoded':
                 self.logger.log(data)
             self.logger.log('==================================================================')
