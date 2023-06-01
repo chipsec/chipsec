@@ -91,7 +91,7 @@ class DecodeCommand(BaseCommand):
 
         _orig_logname = self.logger.LOG_FILE_NAME
 
-        pth = os.path.join(self.cs.helper.getcwd(), self._rom + ".dir")
+        pth = os.path.join(self.cs.os_helper.getcwd(), self._rom + ".dir")
         if not os.path.exists(pth):
             os.makedirs(pth)
 

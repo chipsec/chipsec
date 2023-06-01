@@ -218,12 +218,6 @@ class Helper:
         raise NotImplementedError()
 
     #
-    # File system
-    #
-    def getcwd(self):
-        raise NotImplementedError()
-
-    #
     # Speculation control
     #
     def retpoline_enabled(self):
