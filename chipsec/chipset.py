@@ -201,6 +201,15 @@ class Chipset:
         else:
             return f'{extfamily:02X}{ret}'
 
+    
+    @classmethod
+    def basic_init_with_helper(cls, helper = None):
+        _cs = cls()
+        _cs.load_helper(helper)
+        _cs.start_helper()
+        return _cs
+
+    
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True):
         _unknown_platform = False
         self.reqs_pch = None
