@@ -75,10 +75,6 @@ goto :finish
 
 :donesetup
 if %CHIPSEC_BUILD% == "0" goto :finish
-if defined VS140COMNTOOLS goto :newbuild
-if defined VS160COMNTOOLS goto :newbuild
-if defined VS170COMNTOOLS goto :newbuild
-goto :finish
 
 :newbuild
 if %CHIPSEC_BUILD% == "64" call msbuild /t:Build /p:Configuration=Debug /p:Platform=x64 chipsec_hlpr.vcxproj
