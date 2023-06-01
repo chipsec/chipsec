@@ -60,7 +60,6 @@ def get_option_width(width_op):
 
 def import_cmds() -> Dict[str, Any]:
     """Determine available chipsec_util commands"""
-    # determine if CHIPSEC is loaded as chipsec_*.exe or in python
     cmds_dir = os.path.join(get_main_dir(), "chipsec", "utilcmd")
     cmds = [i[:-3] for i in os.listdir(cmds_dir) if i[-3:] == ".py" and not i[:2] == "__"]
 
@@ -99,7 +98,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=cs().pch_codes, type=str.upper)
     options.add_argument('-n', '--no_driver', dest='_no_driver', action='store_true',
                          help="Chipsec won't need kernel mode functions so don't load chipsec driver")
-    options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
+    options.add_argument('-i', '--ignore_platform', dest='_ignore_platform', action='store_true',
                          help='Run chipsec even if the platform is not recognized (Deprecated)')
     options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers())
     options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
@@ -171,29 +170,28 @@ class ChipsecUtil:
         # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
         self.argv = ['dummy'] + [self._cmd] + self._cmd_args
         comm = self.commands[self._cmd](self.argv, cs=self._cs)
+        req_driver = comm.requires_driver()
+        if req_driver and self._no_driver:
+            self.logger.log("Cannot run without driver loaded", level.ERROR)
+            sys.exit(ExitCode.OK)
 
-        if self._load_config:
-            try:
-                self._cs.init(self._platform, self._pch, self._helper, comm.requires_driver(), True)
-            except UnknownChipsetError as msg:
-                self.logger.log("*******************************************************************\n"
-                                "* Unknown platform!\n"
-                                "* Platform dependent functionality will likely be incorrect\n"
-                                f"* Error Message: \"{str(msg)}\"\n"
-                                "*******************************************************************", level.WARNING)
-                if self._unknownPlatform:
-                    self.logger.log('To run anyways please use -i command-line option\n\n', level.ERROR)
-                    sys.exit(ExitCode.OK)
-            except Exception as msg:
-                self.logger.log(str(msg), level.ERROR)
-                sys.exit(ExitCode.EXCEPTION)
+        try:
+            self._cs.init(self._platform, self._pch, self._helper, ((not self._no_driver) and req_driver), self._load_config, self._ignore_platform)
+        except UnknownChipsetError as msg:
+            self.logger.log_error("Platform is not supported ({}).".format(str(msg)))
+            self.logger.log_error('To specify a cpu please use -p command-line option')
+            self.logger.log_error('To specify a pch please use --pch command-line option\n')
+            self.logger.log_error('If the correct configuration is not loaded, results should not be trusted.')
+            sys.exit(ExitCode.EXCEPTION)
+        
+        except Exception as msg:
+            self.logger.log(str(msg), level.ERROR)
+            sys.exit(ExitCode.EXCEPTION)
 
-            if self._show_banner:
-                print_banner_properties(self._cs, os_version())
-        else:
-            if comm.requires_driver():
-                self.logger.log("Cannot run without driver loaded", level.ERROR)
-                sys.exit(ExitCode.OK)
+        if self._show_banner:
+            print_banner_properties(self._cs, os_version())
+    
+            
 
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()
