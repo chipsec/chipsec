@@ -366,7 +366,7 @@ class LinuxNativeHelper(Helper):
             buf = struct.pack("2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
             if written != 8:
-                logger().log_debug(f"Cannot write {buf:8X} to MSR {msr_addr:x}")
+                logger().log_debug(f"Cannot write {buf.hex()} to MSR {msr_addr:x}")
             return written
         return False
 
