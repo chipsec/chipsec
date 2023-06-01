@@ -298,7 +298,7 @@ class UEFICommand(BaseCommand):
         self.logger.log("[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename))
         _orig_logname = self.logger.LOG_FILE_NAME
         self.logger.set_log_file(self.filename + '.UEFI.lst')
-        cur_dir = self.cs.helper.getcwd()
+        cur_dir = self.cs.os_helper.getcwd()
         ftypes = []
         inv_filetypes = {v: k for k, v in FILE_TYPE_NAMES.items()}
         if self.filetypes:

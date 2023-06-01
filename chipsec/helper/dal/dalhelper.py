@@ -399,8 +399,6 @@ class DALHelper(Helper):
     def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer):
         raise UnimplementedAPIError('hypercall')
 
-    def getcwd(self):
-        raise UnimplementedAPIError('getcwd')
 
 
 def get_helper() -> DALHelper:

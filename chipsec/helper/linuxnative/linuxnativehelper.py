@@ -165,8 +165,6 @@ class LinuxNativeHelper(Helper):
             os.close(self.dev_mem)
         self.dev_mem = None
         
-    def getcwd(self) -> str:
-        return(os.getcwd())
 
 ###############################################################################################
 # Actual API functions to access HW resources

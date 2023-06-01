@@ -501,9 +501,6 @@ class WindowsHelper(Helper):
             sum = sum + procs
         return sum
 
-    def getcwd(self) -> str:
-        return (f'\\\\?\\{os.getcwd()}')
-
     #
     # Generic IOCTL call function
     #

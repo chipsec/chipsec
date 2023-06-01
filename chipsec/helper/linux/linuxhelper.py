@@ -630,9 +630,6 @@ class LinuxHelper(Helper):
         tool_path = os.path.join(get_tools_path(), self.os_system.lower())
         return tool_name, tool_path
 
-    def getcwd(self) -> str:
-        return os.getcwd()
-
     def get_page_is_ram(self) -> Optional[bytes]:
         PROC_KALLSYMS = "/proc/kallsyms"
         symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()

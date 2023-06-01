@@ -132,6 +132,10 @@ class OsHelper:
 
     def is_macos(self) -> bool:
         return 'darwin' == platform.system().lower()
+    
+    def getcwd(self) -> str:
+        return os.getcwd()
+
 
    
 

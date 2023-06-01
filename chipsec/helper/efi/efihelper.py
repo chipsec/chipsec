@@ -246,9 +246,6 @@ class EfiHelper(Helper):
         tool_path = os.path.join(get_tools_path(), self.os_system.lower())
         return (tool_name, tool_path)
 
-    def getcwd(self) -> str:
-        return os.getcwd()
-
     #
     # EFI Variable API
     #
