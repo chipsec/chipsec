@@ -35,10 +35,9 @@ usage:
     >>> write_file(filename, buffer)
 """
 
-import sys
 import os
-
 from typing import Any
+from chipsec.library.string_library import get_datetime_str
 from chipsec.logger import logger
 
 TOOLS_DIR = 'chipsec_tools'
@@ -46,19 +45,17 @@ TOOLS_DIR = 'chipsec_tools'
 
 def read_file(filename: str, size: int = 0) -> bytes:
     try:
-        f = open(filename, 'rb')
+        with open(filename, 'rb') as f:
+            if size:
+                _file = f.read(size)
+            else:
+                _file = f.read()
+            logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:.256}'")
+            return _file
+
     except:
         logger().log_error(f"Unable to open file '{filename:.256}' for read access")
         return b''
-
-    if size:
-        _file = f.read(size)
-    else:
-        _file = f.read()
-    f.close()
-
-    logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:256}'")
-    return _file
 
 
 def write_file(filename: str, buffer: Any, append: bool = False) -> bool:
@@ -77,14 +74,14 @@ def write_file(filename: str, buffer: Any, append: bool = False) -> bool:
     return True
 
 
-# determine if CHIPSEC is loaded as chipsec.exe or in python
-def main_is_frozen() -> bool:
-    return (hasattr(sys, "frozen") or  # new py2exe
-            hasattr(sys, "importers"))  # old py2exe
+def write_unique_file(file_buffer: Any, file_name: str = '', file_extension: str = '') -> str:
+    """Writes file with the name <file_name>_<year><month><day>-<hour><minute><second>.<file_extension>"""
+    file_str = f'{file_name}_' if file_name else ''
+    file_ext = f'.{file_extension}' if file_extension else ''
+    file_name_str = f'{file_str}{get_datetime_str()}{file_ext}'
+    return file_name_str if write_file(file_name_str, file_buffer) else ''
 
 
 def get_main_dir() -> str:
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
-    if main_is_frozen():
-        path = os.path.dirname(sys.executable)
     return path

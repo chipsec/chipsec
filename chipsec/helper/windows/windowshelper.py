@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from pywintypes import PyHANDLE
 import win32api, win32process, win32security, win32file, win32serviceutil
 
-from chipsec.exceptions import OsHelperError, HWAccessViolationError, UnimplementedAPIError, UnimplementedNativeAPIError
+from chipsec.exceptions import OsHelperError, HWAccessViolationError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
 from chipsec.defines import stringtobytes, bytestostring
 from chipsec.logger import logger
@@ -420,9 +420,7 @@ class WindowsHelper(Helper):
     # Start chipsec service
     #
     def start(self, start_driver: bool, driver_exists: bool = False) -> bool:
-        # we are in native API mode so not starting the service/driver
-        if not start_driver:
-            return True
+
         self.use_existing_service = (win32serviceutil.QueryServiceStatus(SERVICE_NAME)[1] == win32service.SERVICE_RUNNING)
 
         if self.use_existing_service:
@@ -534,23 +532,20 @@ class WindowsHelper(Helper):
 # Actual driver IOCTL functions to access HW resources
 ###############################################################################################
 
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
+    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
         out_length = length
-        in_buf = struct.pack('3I', phys_address_hi, phys_address_lo, length)
+        hi = (phys_address >> 32) & 0xFFFFFFFF
+        lo = phys_address & 0xFFFFFFFF
+        in_buf = struct.pack('3I', hi, lo, length)
         out_buf = self._ioctl(IOCTL_READ_PHYSMEM, in_buf, out_length)
         return bytes(out_buf)
 
-    def native_read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int):
-        raise UnimplementedNativeAPIError("native_read_phys_mem")
-
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: AnyStr):
-        in_length = length + 12
-        in_buf = struct.pack('3I', phys_address_hi, phys_address_lo, length) + stringtobytes(buf)
+    def write_phys_mem(self, phys_address: int, length: int, buf: AnyStr):
+        hi = (phys_address >> 32) & 0xFFFFFFFF
+        lo = phys_address & 0xFFFFFFFF
+        in_buf = struct.pack('3I', hi, lo, length) + stringtobytes(buf)
         out_buf = self._ioctl(IOCTL_WRITE_PHYSMEM, in_buf, 4)
         return out_buf
-
-    def native_write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf):
-        raise UnimplementedNativeAPIError("native_write_phys_mem")
 
     # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg(self, phys_address: int, size: int) -> int:

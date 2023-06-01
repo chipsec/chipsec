@@ -1760,14 +1760,10 @@ static unsigned long chipsec_lookup_name(const char *name)
 
     /*
      * Buffer for each line of kallsyms file.
-     * The symbol names are limited to KSYM_NAME_LEN=128. When Linux is
-     * compiled with clang's Control Flow Integrity, there are large symbols
-     * such as
-     * __typeid__ZTSFvPvP15ieee80211_local11set_key_cmdP21ieee80211_sub_if_dataP13ieee80211_staP18ieee80211_key_confE_global_addr
-     * which lead to a line with 142 characters.
-     * Some use a buffer which can hold 256 characters, to be safe.
+     * Linux defines KSYM_NAME_LEN to 512 since 6.1, with a rational documented in commit
+     * https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/include/linux/kallsyms.h?id=b8a94bfb33952bb17fbc65f8903d242a721c533d
      */
-    char proc_ksyms_entry[256] = {0};
+    char proc_ksyms_entry[512] = {0};
 
     proc_ksyms = filp_open("/proc/kallsyms", O_RDONLY, 0);
     if (proc_ksyms == NULL)

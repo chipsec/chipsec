@@ -35,7 +35,7 @@ usage:
 """
 
 from typing import Dict, Tuple, Optional
-from chipsec.logger import logger, print_buffer
+from chipsec.logger import logger, print_buffer_bytes
 
 
 DESCRIPTOR_TABLE_CODE_IDTR = 0
@@ -134,21 +134,21 @@ class Msr:
 
     def dump_Descriptor_Table(self, cpu_thread_id: int, code: int, num_entries: Optional[int] = None) -> Tuple[int, int]:
         (limit, _, pa) = self.helper.get_descriptor_table(cpu_thread_id, code)
-        dt = self.helper.read_physical_mem(pa, limit + 1)
+        dt = self.helper.read_phys_mem(pa, limit + 1)
         total_num = len(dt) // 16
         if (num_entries is None) or (total_num < num_entries):
             num_entries = total_num
         logger().log(f'[cpu{cpu_thread_id:d}] Physical Address: 0x{pa:016X}')
         logger().log(f'[cpu{cpu_thread_id:d}] # of entries    : {total_num:d}')
         logger().log(f'[cpu{cpu_thread_id:d}] Contents ({num_entries:d} entries):')
-        print_buffer(dt)
+        print_buffer_bytes(dt)
         logger().log('--------------------------------------')
         logger().log('#    segment:offset         attributes')
         logger().log('--------------------------------------')
         for i in range(0, num_entries):
-            offset = (ord(dt[i * 16 + 11]) << 56) | (ord(dt[i * 16 + 10]) << 48) | (ord(dt[i * 16 + 9]) << 40) | (ord(dt[i * 16 + 8]) << 32) | (ord(dt[i * 16 + 7]) << 24) | (ord(dt[i * 16 + 6]) << 16) | (ord(dt[i * 16 + 1]) << 8) | ord(dt[i * 16 + 0])
-            segsel = (ord(dt[i * 16 + 3]) << 8) | ord(dt[i * 16 + 2])
-            attr = (ord(dt[i * 16 + 5]) << 8) | ord(dt[i * 16 + 4])
+            offset = (dt[i * 16 + 11] << 56) | (dt[i * 16 + 10] << 48) | (dt[i * 16 + 9] << 40) | (dt[i * 16 + 8] << 32) | (dt[i * 16 + 7] << 24) | (dt[i * 16 + 6] << 16) | (dt[i * 16 + 1] << 8) | dt[i * 16 + 0]
+            segsel = (dt[i * 16 + 3] << 8) | dt[i * 16 + 2]
+            attr = (dt[i * 16 + 5] << 8) | dt[i * 16 + 4]
             logger().log(f'{i:03d}  {segsel:04X}:{offset:016X}  0x{attr:04X}')
 
         return (pa, dt)

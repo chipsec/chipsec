@@ -91,23 +91,6 @@ class build_ext(_build_ext):
         # Finally, we clean up the build directory.
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
-    def _build_darwin_driver(self):
-        log.info("building the OSX driver")
-        build_driver = os.path.join(self.real_build_lib, "drivers", "osx")
-        xcodeproject = os.path.join(build_driver, "chipsec.xcodeproj")
-        # We copy the drivers extension to the build directory.
-        self.copy_tree(os.path.join("drivers", "osx"), build_driver)
-        # Run the command line version of XCode there.
-        subprocess.check_output(["xcodebuild", "-project", xcodeproject,
-                                 "-target", "chipsec"])
-        # And copy the resulting .kext (directory) to the right place.
-        # That is to the source directory if we are in "develop" mode,
-        # otherwise to the helper subdirectory in the build directory.
-        root_dst = "" if self.inplace else self.real_build_lib
-        dst = os.path.join(root_dst, "chipsec", "helper", "osx", "chipsec.kext")
-        self.copy_tree(os.path.join(build_driver, "build", "Release", "chipsec.kext"), dst)
-        # Finally, we clean up the build directory.
-        dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
     def _build_win_driver(self):
         log.info("building the windows driver")
@@ -132,8 +115,6 @@ class build_ext(_build_ext):
         self.real_build_lib = os.path.realpath(self.build_lib)
         if platform.system().lower() == "linux":
             driver_build_function = self._build_linux_driver
-        elif platform.system().lower() == "darwin":
-            driver_build_function = self._build_darwin_driver
         elif platform.system().lower() == "windows":
             driver_build_function = self._build_win_driver
 
@@ -207,6 +188,7 @@ if platform.system().lower() == "windows":
         Extension(
             'EfiCompressor',
             sources=[
+                os.path.join('chipsec_tools', 'compression', 'Bra86.c'),
                 os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
                 os.path.join('chipsec_tools', 'compression', 'Compress.c'),
                 os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),
@@ -227,6 +209,7 @@ elif platform.system().lower() == "linux":
         Extension(
             'EfiCompressor',
             sources=[
+                os.path.join('chipsec_tools', 'compression', 'Bra86.c'),
                 os.path.join('chipsec_tools', 'compression', 'Decompress.c'),
                 os.path.join('chipsec_tools', 'compression', 'Compress.c'),
                 os.path.join('chipsec_tools', 'compression', 'EfiCompress.c'),

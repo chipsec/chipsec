@@ -30,8 +30,8 @@ class TestDescChipsecUtil(util.TestChipsecUtil):
             def get_descriptor_table(self, cpu_thread_id, desc_table_code):
                 return (63, 0x1000, 0x0)
 
-            def read_phys_mem(self, pa_hi, pa_lo, length):
-                return "\xff" * length
+            def read_phys_mem(self, pa, length):
+                return b"\xff" * length
 
         self._chipsec_util("gdt 0", GDTHelper)
         self.assertIn(b"# of entries    : 4", self.log)

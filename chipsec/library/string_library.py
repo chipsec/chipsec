@@ -1,6 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2016, Google
-# Copyright (c) 2018-2019, Intel Corporation
+# Copyright (c) 2023, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -11,10 +10,15 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# Contact information:
+# chipsec@intel.com
+#
 
-import platform
+from time import strftime
 
-if 'darwin' == platform.system().lower():
-    __all__ = ["osxhelper"]
-else:
-    __all__ = []
+def get_datetime_str() -> str:
+    return strftime('%a%b%d%y-%H%M%S')

@@ -34,12 +34,12 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                 super(ACPIHelper, self).__init__()
                 self._add_entry_to_xsdt(0x400)
 
-            def read_phys_mem(self, pa_hi, pa_lo, length):
-                if pa_lo == 0x400:
-                    return "EFGH"
+            def read_phys_mem(self, pa, length):
+                if (pa & 0xffffffff) == 0x400:
+                    return b"EFGH"
                 else:
                     parent = super(ACPIHelper, self)
-                    return parent.read_phys_mem(pa_hi, pa_lo, length)
+                    return parent.read_phys_mem(pa, length)
 
         self._chipsec_util("acpi list", ACPIHelper)
         self._assertLogValue("EFGH", "0x0000000000000400")
@@ -52,18 +52,19 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                 super(ACPIHelper, self).__init__()
                 self._add_entry_to_rsdt(0x300)
 
-            def read_phys_mem(self, pa_hi, pa_lo, length):
+            def read_phys_mem(self, pa, length):
+                pa_lo = pa & 0xFFFFFFFF
                 if (pa_lo >= self.EBDA_ADDRESS and
                         pa_lo < self.RSDP_ADDRESS + len(self.rsdp_descriptor)):
                     # Simulate a condition where there is no RSDP in EBDA
-                    return "\xFF" * length
+                    return b"\xFF" * length
                 elif pa_lo == 0xE0000:
                     return self.rsdp_descriptor[:length]
                 elif pa_lo == 0x300:
-                    return "ABCD"
+                    return b"ABCD"
                 else:
                     parent = super(ACPIHelper, self)
-                    return parent.read_phys_mem(pa_hi, pa_lo, length)
+                    return parent.read_phys_mem(pa, length)
 
         self._chipsec_util("acpi list", ACPIHelper)
         self._assertLogValue("ABCD", "0x0000000000000300")
@@ -140,12 +141,13 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                                b"CRRV" +                   # Creator Revision
                                struct.pack("<Q", 0x129))  # AML code
 
-            def read_phys_mem(self, pa_hi, pa_lo, length):
+            def read_phys_mem(self, pa, length):
+                pa_lo = pa & 0xFFFFFFFF
                 if pa_lo == self.DSDT_ADDRESS:
                     return self.DSDT_DESCRIPTOR[:length]
                 else:
                     parent = super(DSDTParsingHelper, self)
-                    return parent.read_phys_mem(pa_hi, pa_lo, length)
+                    return parent.read_phys_mem(pa, length)
 
         self._chipsec_util("acpi table DSDT", DSDTParsingHelper)
         self.assertIn(b"OEMDSD", self.log)
@@ -204,7 +206,8 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                 self._add_entry_to_rsdt(0x600)
                 self._add_entry_to_rsdt(0x800)
 
-            def read_phys_mem(self, pa_hi, pa_lo, length):
+            def read_phys_mem(self, pa, length):
+                pa_lo = pa & 0xFFFFFFFF
                 if pa_lo == 0x400:
                     return self.SSDT1_DESCRIPTOR[:length]
                 elif pa_lo == 0x600:
@@ -213,7 +216,7 @@ class TestACPIChipsecUtil(util.TestChipsecUtil):
                     return self.SSDT3_DESCRIPTOR[:length]
                 else:
                     parent = super(SSDTParsingHelper, self)
-                    return parent.read_phys_mem(pa_hi, pa_lo, length)
+                    return parent.read_phys_mem(pa, length)
 
         self._chipsec_util("acpi list", SSDTParsingHelper)
         self._assertLogValue("SSDT", ("0x0000000000000400, "

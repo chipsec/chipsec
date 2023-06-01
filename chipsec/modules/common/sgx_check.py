@@ -75,7 +75,7 @@ class sgx_check(BaseModule):
 
     def is_supported(self):
         sgx_cpu_support = False
-        if self.cs.helper.is_efi():
+        if self.cs.os_helper.is_efi():
             self.logger.log_important('Currently this module cannot run within the EFI Shell. Exiting.')
         elif not self.cs.register_has_field('IA32_FEATURE_CONTROL', 'SGX_GLOBAL_EN'):
             self.logger.log_important('IA32_FEATURE_CONTROL.SGX_GLOBAL_EN not defined for platform.  Skipping module.')

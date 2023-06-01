@@ -29,7 +29,10 @@ From the Intel(R) DFx Abstraction Layer Python* Command Line Interface User Guid
 import struct
 
 from chipsec.logger import logger
-import itpii
+try:
+    import itpii
+except:
+    pass
 from ctypes import c_char
 from typing import Tuple
 from chipsec.helper.basehelper import Helper
@@ -149,7 +152,7 @@ class DALHelper(Helper):
     # Physical memory access
     #
 
-    def read_physical_mem(self, phys_address: int, length: int, bytewise: bool = False) -> bytes:
+    def read_phys_mem(self, phys_address: int, length: int, bytewise: bool = False) -> bytes:
         if bytewise:
             width = 1
         else:
@@ -165,7 +168,7 @@ class DALHelper(Helper):
             width = width // 2
         return b''.join(out_buf)
 
-    def write_physical_mem(self, phys_address: int, length: int, buf: bytes, bytewise: bool = False) -> int:
+    def write_phys_mem(self, phys_address: int, length: int, buf: bytes, bytewise: bool = False) -> int:
         if bytewise:
             width = 1
         else:
@@ -179,12 +182,6 @@ class DALHelper(Helper):
                 ptr += width
             width = width // 2
         return 1
-
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
-        return self.read_physical_mem((phys_address_hi << 32) | phys_address_lo, length)
-
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: bytes) -> int:
-        return self.write_physical_mem((phys_address_hi << 32) | phys_address_lo, length, buf)
 
     def va2pa(self, va):
         raise UnimplementedAPIError('va2pa')
@@ -284,8 +281,8 @@ class DALHelper(Helper):
             return False
         return True
 
-    def load_ucode_update(self, core_id: int, ucode_update_buf: int) -> bool:
-        return False
+    def load_ucode_update(self, core_id, ucode_update_buf):
+        raise UnimplementedAPIError('load_ucode_update')
 
     def get_threads_count(self) -> int:
         no_threads = len(self.base.threads)
@@ -316,26 +313,14 @@ class DALHelper(Helper):
     def delete_EFI_variable(self, name, guid):
         raise UnimplementedAPIError('delete_EFI_variable')
 
-    def native_delete_EFI_variable(self, name, guid):
-        raise UnimplementedAPIError('native_delete_EFI_variable')
-
     def list_EFI_variables(self):
         raise UnimplementedAPIError('list_EFI_variables')
-
-    def native_list_EFI_variables(self):
-        raise UnimplementedAPIError('native_list_EFI_variables')
 
     def get_EFI_variable(self, name, guid, attrs):
         raise UnimplementedAPIError('get_EFI_variable')
 
-    def native_get_EFI_variable(self, name, guid, attrs):
-        raise UnimplementedAPIError('native_get_EFI_variable')
-
     def set_EFI_variable(self, name, guid, data, datasize, attrs):
         raise UnimplementedAPIError('set_EFI_variable')
-
-    def native_set_EFI_variable(self, name, guid, data, datasize, attrs):
-        raise UnimplementedAPIError('native_set_EFI_variable')
 
     #
     # Memory-mapped I/O (MMIO) access
@@ -345,7 +330,7 @@ class DALHelper(Helper):
         return physical_address
 
     def read_mmio_reg(self, phys_address: int, size: int) -> int:
-        out_buf = self.read_physical_mem(phys_address, size)
+        out_buf = self.read_phys_mem(phys_address, size)
         if size == 8:
             value = struct.unpack('=Q', out_buf[:size])[0]
         elif size == 4:
@@ -369,7 +354,7 @@ class DALHelper(Helper):
             buf = struct.pack('=B', value & 0xFF)
         else:
             buf = bytes(1)
-        return self.write_physical_mem(phys_address, size, buf)
+        return self.write_phys_mem(phys_address, size, buf)
 
     #
     # Interrupts
@@ -388,9 +373,6 @@ class DALHelper(Helper):
     #
     def get_ACPI_SDT(self):
         raise UnimplementedAPIError('get_ACPI_SDT')
-
-    def native_get_ACPI_table(self, table_name):
-        raise UnimplementedAPIError('native_get_ACPI_table')
 
     def get_ACPI_table(self, table_name):
         raise UnimplementedAPIError('get_ACPI_table')

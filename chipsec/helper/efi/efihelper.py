@@ -102,18 +102,22 @@ class EfiHelper(Helper):
     # Physical memory access
     #
 
+    def split_address(self, pa: int) -> Tuple[int, int]:
+        return (pa & 0xFFFFFFFF, (pa >> 32) & 0xFFFFFFFF)
 
-    def read_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int) -> bytes:
-        return edk2.readmem(phys_address_lo, phys_address_hi, length)
+    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
+        pa_lo, pa_hi = self.split_address(phys_address)
+        return edk2.readmem(pa_lo, pa_hi, length)
 
-    def write_phys_mem(self, phys_address_hi: int, phys_address_lo: int, length: int, buf: bytes) -> int:
+    def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
+        pa_lo, pa_hi = self.split_address(phys_address)
         if type(buf) == bytearray:
             buf = bytes(buf)
         if 4 == length:
             dword_value = struct.unpack('I', buf)[0]
-            res = edk2.writemem_dword(phys_address_lo, phys_address_hi, dword_value)
+            res = edk2.writemem_dword(pa_lo, pa_hi, dword_value)
         else:
-            res = edk2.writemem(phys_address_lo, phys_address_hi, buf)
+            res = edk2.writemem(pa_lo, pa_hi, buf)
         return res
 
     def alloc_phys_mem(self, length: int, max_pa: int) -> Tuple[int, int]:

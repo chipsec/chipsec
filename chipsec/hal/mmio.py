@@ -87,43 +87,41 @@ class MMIO(hal_base.HALBase):
         if size > 8:
             if self.logger.HAL:
                 self.logger.log_warning("MMIO read cannot exceed 8")
-        reg_value = self.cs.helper.read_mmio_reg(bar_base, size, offset, bar_size)
+        reg_value = self.cs.helper.read_mmio_reg(bar_base+offset, size)
         self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
         return reg_value
 
     def read_MMIO_reg_byte(self, bar_base: int, offset: int) -> int:
-        reg_value = self.cs.helper.read_mmio_reg(bar_base, 1, offset)
-        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
-        return reg_value
-
+        return self.read_MMIO_reg(bar_base, offset, 1)
+        
     def read_MMIO_reg_word(self, bar_base: int, offset: int) -> int:
-        reg_value = self.cs.helper.read_mmio_reg(bar_base, 2, offset)
-        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
-        return reg_value
+        return self.read_MMIO_reg(bar_base, offset, 2)
 
     def read_MMIO_reg_dword(self, bar_base: int, offset: int) -> int:
-        reg_value = self.cs.helper.read_mmio_reg(bar_base, 4, offset)
-        self.logger.log_hal(f'[mmio] 0x{bar_base:08X} + 0x{offset:08X} = 0x{reg_value:08X}')
-        return reg_value
+        return self.read_MMIO_reg(bar_base, offset, 4)
 
     #
     # Write MMIO register as an offset off of MMIO range base address
     #
-    def write_MMIO_reg(self, bar_base: int, offset: int, value: int, size: int = 4, bar_size: Optional[int] = None) -> Optional[int]:
+    def write_MMIO_reg(self, bar_base: int, offset: int, value: int, size: int = 4) -> int:
+        address = bar_base + offset
         self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
-        self.cs.helper.write_mmio_reg(bar_base, size, value, offset, bar_size)
+        return self.cs.helper.write_mmio_reg(address, size, value)
 
-    def write_MMIO_reg_byte(self, bar_base: int, offset: int, value: int) -> Optional[int]:
+    def write_MMIO_reg_byte(self, bar_base: int, offset: int, value: int) -> int:
+        address = bar_base + offset
         self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
-        self.cs.helper.write_mmio_reg(bar_base, 1, value, offset)
+        return self.cs.helper.write_mmio_reg(address, 1, value)
 
-    def write_MMIO_reg_word(self, bar_base: int, offset: int, value: int) -> Optional[int]:
+    def write_MMIO_reg_word(self, bar_base: int, offset: int, value: int) -> int:
+        address = bar_base + offset
         self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
-        self.cs.helper.write_mmio_reg(bar_base, 2, value, offset)
+        return self.cs.helper.write_mmio_reg(address, 2, value)
 
-    def write_MMIO_reg_dword(self, bar_base: int, offset: int, value: int) -> Optional[int]:
+    def write_MMIO_reg_dword(self, bar_base: int, offset: int, value: int) -> int:
+        address = bar_base + offset
         self.logger.log_hal(f'[mmio] write 0x{bar_base:08X} + 0x{offset:08X} = 0x{value:08X}')
-        self.cs.helper.write_mmio_reg(bar_base, 4, value, offset)
+        return self.cs.helper.write_mmio_reg(address, 4, value)
 
     #
     # Read MMIO registers as offsets off of MMIO range base address
@@ -353,9 +351,10 @@ class MMIO(hal_base.HALBase):
     # Write MMIO register from MMIO range defined by MMIO BAR name
     #
     def write_MMIO_BAR_reg(self, bar_name: str, offset: int, value: int, size: int = 4, bus: Optional[int] = None) -> Optional[int]:
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)
+        (bar_base, _) = self.get_MMIO_BAR_base_address(bar_name, bus)
         # @TODO: check offset exceeds BAR size
-        return self.write_MMIO_reg(bar_base, offset, value, size, bar_size)
+        
+        return self.write_MMIO_reg(bar_base, offset, value, size)
 
     def read_MMIO_BAR(self, bar_name: str, bus: Optional[int] = None) -> List[int]:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address(bar_name, bus)

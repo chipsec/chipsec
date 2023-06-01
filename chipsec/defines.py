@@ -23,8 +23,7 @@ import os
 import string
 import platform
 from typing import Dict, Tuple, Optional, AnyStr, Iterable
-
-import chipsec.file
+from chipsec.file import get_main_dir
 
 BIT0 = 0x0001
 BIT1 = 0x0002
@@ -186,7 +185,7 @@ def unpack1(string: bytes, size: int) -> int:
 
 def get_version() -> str:
     version_strs = []
-    chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
+    chipsec_folder = os.path.abspath(get_main_dir())
     for fname in sorted([x for x in os.listdir(os.path.join(chipsec_folder, "chipsec")) if x.startswith('VERSION')]):
         version_file = os.path.join(chipsec_folder, "chipsec", fname)
         with open(version_file, "r") as verFile:
@@ -213,7 +212,7 @@ def is_all_ones(value: int, size: int, width: int = 8) -> bool:
 
 def get_message() -> str:
     msg_str = ""
-    chipsec_folder = os.path.abspath(chipsec.file.get_main_dir())
+    chipsec_folder = os.path.abspath(get_main_dir())
     msg_file = os.path.join(chipsec_folder, "chipsec", "MESSAGE")
     if os.path.exists(msg_file):
         with open(msg_file, "r") as msgFile:

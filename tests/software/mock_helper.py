@@ -69,9 +69,6 @@ class TestHelper(Helper):
         else:
             raise Exception("Unexpected PCI read")
 
-    def read_physical_mem(self, phys_address, length):
-        return self.read_phys_mem(phys_address >> 32, phys_address & 0xFFFFFFFF, length)
-
     def get_threads_count(self):
         return 2
 
@@ -170,7 +167,8 @@ class ACPIHelper(TestHelper):
         self.rsdt_descriptor = self._create_rsdt()
         self.xsdt_descriptor = self._create_xsdt()
 
-    def read_phys_mem(self, pa_hi, pa_lo, length):
+    def read_phys_mem(self, pa, length):
+        pa_lo = pa & 0xFFFFFFFF
         if pa_lo == 0x40E:
             return struct.pack("<H", self.EBDA_ADDRESS >> 4)
         elif (pa_lo >= self.EBDA_ADDRESS and
@@ -227,12 +225,13 @@ class DSDTParsingHelper(ACPIHelper):
         self._add_fadt_to_sdt_entries()
         self.fadt_descriptor = self._create_fadt()
 
-    def read_phys_mem(self, pa_hi, pa_lo, length):
+    def read_phys_mem(self, pa, length):
+        pa_lo = pa & 0xFFFFFFFF
         if pa_lo == self.FADT_ADDRESS:
             return self.fadt_descriptor[:length]
         else:
             parent = super(DSDTParsingHelper, self)
-            return parent.read_phys_mem(pa_hi, pa_lo, length)
+            return parent.read_phys_mem(pa, length)
 
 
 class SPIHelper(TestHelper):

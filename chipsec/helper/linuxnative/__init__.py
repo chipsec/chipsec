@@ -1,5 +1,5 @@
 # CHIPSEC: Platform Security Assessment Framework
-# Copyright (c) 2010-2021, Intel Corporation
+# Copyright (c) 2023, Intel Corporation
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,12 +18,16 @@
 # chipsec@intel.com
 #
 
-try:
-    from chipsec.helper.custom_helpers import *
-except ImportError:
-    pass
-from chipsec.helper.dal import *
-from chipsec.helper.efi import *
-from chipsec.helper.linux import *
-from chipsec.helper.linuxnative import *
-from chipsec.helper.windows import *
+
+##################################################################################
+#
+# List of all extension modules: add your module name here
+#
+##################################################################################
+
+import platform
+
+if "linux" == platform.system().lower():
+    __all__ = ["linuxnativehelper"]
+else:
+    __all__ = []

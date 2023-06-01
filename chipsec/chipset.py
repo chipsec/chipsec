@@ -26,12 +26,14 @@ import collections
 import os
 import fnmatch
 import xml.etree.ElementTree as ET
+from errno import ENXIO
 
-from chipsec.helper.oshelper import OsHelper
+from chipsec.helper.oshelper import helper as os_helper
+from chipsec.helper.basehelper import Helper
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
-from chipsec.exceptions import RegisterTypeNotFoundError
+from chipsec.exceptions import RegisterTypeNotFoundError, OsHelperError
 
 from chipsec.logger import logger
 from chipsec.defines import is_hex, is_all_ones, ARCH_VID
@@ -102,11 +104,8 @@ except ImportError:
 
 class Chipset:
 
-    def __init__(self, helper=None):
-        if helper is None:
-            self.helper = OsHelper()
-        else:
-            self.helper = helper
+    def __init__(self):
+        self.helper = Helper()
 
         self.init_xml_configuration()
 
@@ -122,8 +121,26 @@ class Chipset:
         self.pch_code = CHIPSET_CODE_UNKNOWN
         self.pch_longname = 'Unrecognized PCH'
         self.pch_id = CHIPSET_ID_UNKNOWN
+        self.cpuid = None
         self.Cfg = Cfg()
+        self.os_helper = os_helper()
+        self.set_hal_objects()
+        
+        #
+        # All HAL components which use above 'basic primitive' HAL components
+        # should be instantiated in modules/utilcmd with an instance of chipset
+        # Examples:
+        # - initializing SPI HAL component in a module or util extension:
+        #   self.spi = SPI( self.cs )
+        #
 
+    ##################################################################################
+    #
+    # Initialization
+    #
+    ##################################################################################
+    
+    def set_hal_objects(self):
         #
         # Initializing 'basic primitive' HAL components
         # (HAL components directly using native OS helper functionality)
@@ -138,19 +155,7 @@ class Chipset:
         self.mmio = mmio.MMIO(self)
         self.iobar = iobar.IOBAR(self)
         self.igd = igd.IGD(self)
-        #
-        # All HAL components which use above 'basic primitive' HAL components
-        # should be instantiated in modules/utilcmd with an instance of chipset
-        # Examples:
-        # - initializing SPI HAL component in a module or util extension:
-        #   self.spi = SPI( self.cs )
-        #
-
-    ##################################################################################
-    #
-    # Initialization
-    #
-    ##################################################################################
+    
     def detect_platform(self):
         vid = 0xFFFF
         did = 0xFFFF
@@ -196,19 +201,21 @@ class Chipset:
         else:
             return f'{extfamily:02X}{ret}'
 
-    def init(self, platform_code, req_pch_code, start_driver, driver_exists=None):
+    def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True):
         _unknown_platform = False
         self.reqs_pch = None
-        self.helper.start(start_driver, driver_exists)
-        api_mode_str = 'using OS native API (not using CHIPSEC kernel module)' if self.use_native_api() else 'using CHIPSEC kernel module API'
-        logger().log(f'[CHIPSEC] API mode: {api_mode_str}')
+        self.load_helper(helper_name)
+
+        if start_helper:
+            self.start_helper()
+        self.set_hal_objects()
 
         vid, did, rid, pch_vid, pch_did, pch_rid = self.detect_platform()
         # get cpuid only if driver using driver (otherwise it will cause problems)
-        if start_driver or self.helper.is_linux():
-            cpuid = self.get_cpuid()
+        if start_helper:
+            self.cpuid = self.get_cpuid()
         else:
-            cpuid = None
+            self.cpuid = None
 
         # initialize chipset values to unknown
         _unknown_platform = True
@@ -226,16 +233,16 @@ class Chipset:
         if platform_code is None:
             # platform code was not passed in try to determine based upon cpu id
             vid_found = vid in self.chipset_dictionary
-            did_found = did in self.chipset_dictionary[vid]
+            did_found = vid_found and (did in self.chipset_dictionary[vid])
             #check if multiple platform found by [vid][did]
-            multiple_found = len(self.chipset_dictionary[vid][did]) > 1
-            logger().log_debug(f'read out cpuid:{cpuid}, platforms found per vid & did:{self.chipset_dictionary[vid][did]}, multiple:{multiple_found}')
+            multiple_found = did_found and len(self.chipset_dictionary[vid][did]) > 1
+            logger().log_debug(f'read out cpuid:{self.cpuid}, platforms found per vid & did:{self.chipset_dictionary[vid][did] if did_found else None}, multiple:{multiple_found}')
             for i in self.detection_dictionary.keys():
                 logger().log_debug(f'cpuid detection val:{i}, plat:{self.detection_dictionary[i]}')
-            cpuid_found = cpuid in self.detection_dictionary.keys()
+            cpuid_found = self.cpuid in self.detection_dictionary.keys()
             if vid_found and did_found and multiple_found and cpuid_found:
                 for item in self.chipset_dictionary[vid][did]:
-                    if self.detection_dictionary[cpuid] == item['code']:
+                    if self.detection_dictionary[self.cpuid] == item['code']:
                         # matched processor with detection value, cpuid used to decide the correct platform
                         _unknown_platform = False
                         data_dict = item
@@ -255,8 +262,8 @@ class Chipset:
                 self.rid = rid
             elif cpuid_found:
                 _unknown_platform = False
-                self.code = self.detection_dictionary[cpuid]
-                self.longname = self.detection_dictionary[cpuid]
+                self.code = self.detection_dictionary[self.cpuid]
+                self.longname = self.detection_dictionary[self.cpuid]
                 self.vid = vid
                 self.did = did
                 self.rid = rid
@@ -270,8 +277,8 @@ class Chipset:
             self.code = platform_code
             self.longname = platform_code
             msg = f'Platform: Actual values: VID = 0x{vid:04X}, DID = 0x{did:04X}, RID = 0x{rid:02X}'
-            if cpuid:
-                msg += f', CPUID = 0x{cpuid}'
+            if self.cpuid:
+                msg += f', CPUID = 0x{self.cpuid}'
             logger().log(f'[CHIPSEC] {msg}')
 
         if req_pch_code is not None:
@@ -303,7 +310,7 @@ class Chipset:
             self.pch_rid = pch_rid
         if _unknown_platform:
             msg = f'Unknown Platform: VID = 0x{vid:04X}, DID = 0x{did:04X}, RID = 0x{rid:02X}'
-            if start_driver:
+            if start_helper:
                 logger().log_error(msg)
                 raise UnknownChipsetError(msg)
             else:
@@ -315,7 +322,7 @@ class Chipset:
             _unknown_pch = False
         if _unknown_pch:
             msg = f'Unknown PCH: VID = 0x{pch_vid:04X}, DID = 0x{pch_did:04X}, RID = 0x{pch_rid:02X}'
-            if self.reqs_pch and start_driver:
+            if self.reqs_pch and start_helper:
                 logger().log_error(f'Chipset requires a supported PCH to be loaded. {msg}')
                 raise UnknownChipsetError(msg)
             else:
@@ -324,8 +331,43 @@ class Chipset:
             msg = 'Results from this system may be incorrect.'
             logger().log(f'[!]            {msg}')
 
-    def destroy(self, start_driver):
-        self.helper.stop(start_driver)
+    def load_helper(self, helper_name):
+        if helper_name:
+            if isinstance(helper_name, Helper):
+                self.helper = helper_name
+            else:
+                self.helper = self.os_helper.get_helper(helper_name)
+                if self.helper is None:
+                    raise OsHelperError(f'Helper named {helper_name} not found in available helpers', 1)
+        else:
+            self.helper = self.os_helper.get_default_helper()
+
+    def start_helper(self):
+        try:
+            if not self.helper.create(True):
+                raise OsHelperError("failed to create OS helper", 1)
+            if not self.helper.start(True):
+                raise OsHelperError("failed to start OS helper", 1)
+        except Exception as msg:
+            logger().log_debug(traceback.format_exc())
+            error_no = ENXIO
+            if hasattr(msg, 'errorcode'):
+                error_no = msg.errorcode
+            raise OsHelperError("Message: \"{}\"".format(msg), error_no)
+
+    def switch_helper(self, helper_name):
+        oldName = self.helper.name
+        self.destroy_helper(True)
+        self.loadHelper(helper_name)
+        self.startHelper()
+        return oldName
+
+    def destroy_helper(self, start_driver):
+        if not self.helper.stop(start_driver):
+            logger().log_warning("failed to stop OS helper")
+        else:
+            if not self.helper.delete(start_driver):
+                logger().log_warning("failed to delete OS helper")
 
     def get_chipset_code(self):
         return self.code
@@ -340,7 +382,7 @@ class Chipset:
         return self.pch_longname
 
     def print_chipset(self):
-        logger().log(f'[*] Platform: {self.longname}\n          CPUID: {self.get_cpuid()}\n           VID: {self.vid:04X}\n          DID: {self.did:04X}\n          RID: {self.rid:02X}')
+        logger().log(f'[*] Platform: {self.longname}\n          CPUID: {self.cpuid}\n           VID: {self.vid:04X}\n          DID: {self.did:04X}\n          RID: {self.rid:02X}')
 
     def print_pch(self):
         logger().log(f'[*] PCH     : {self.pch_longname}\n          VID: {self.pch_vid:04X}\n          DID: {self.pch_did:04X}\n          RID: {self.pch_rid:02X}')
@@ -365,9 +407,6 @@ class Chipset:
     def is_arch(self, *arch_vid: int) -> bool:
         """Check support for multiple architecture VIDs"""
         return self.vid in arch_vid
-
-    def use_native_api(self):
-        return self.helper.use_native_api()
 
     def print_supported_chipsets(self):
         logger().log("\nSupported platforms:\n")
@@ -1410,7 +1449,7 @@ _chipset = None
 
 def cs():
     global _chipset
-    from chipsec.helper.oshelper import helper
+
     if _chipset is None:
-        _chipset = Chipset(helper())
+        _chipset = Chipset()
     return _chipset

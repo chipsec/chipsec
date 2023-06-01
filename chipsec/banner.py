@@ -56,7 +56,7 @@ def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]
     is_python_64 = True if (sys.maxsize > 2**32) else False
     python_version = platform.python_version()
     python_arch = '64-bit' if is_python_64 else '32-bit'
-    (helper_name, driver_path) = cs.helper.helper.get_info()
+    (helper_name, driver_path) = cs.helper.get_info()
     include_pch_str = cs.reqs_pch or (cs.reqs_pch is None)
 
     banner_prop = f'''

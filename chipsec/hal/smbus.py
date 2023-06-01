@@ -223,16 +223,13 @@ class SMBus(hal_base.HALBase):
         self.logger.log_hal(f'[smbus] write to device {target_address:X} off {offset:X} = {value:X}')
         return True
 
-    def read_range(self, target_address: int, start_offset: int, size: int) -> List[str]:
-        buffer = [chr(0xFF)] * size
-        for i in range(size):
-            buffer[i] = chr(self.read_byte(target_address, start_offset + i))
+    def read_range(self, target_address: int, start_offset: int, size: int) -> bytes:
+        buffer = bytes(self.read_byte(target_address, start_offset + i) for i in range(size))
         self.logger.log_hal(f'[smbus] reading {size:d} bytes from device 0x{target_address:X} at offset {start_offset:X}')
         return buffer
 
-    def write_range(self, target_address: int, start_offset: int, buffer: List[str]) -> bool:
-        size = len(buffer)
-        for i in range(size):
-            self.write_byte(target_address, start_offset + i, ord(buffer[i]))
+    def write_range(self, target_address: int, start_offset: int, buffer: bytes) -> bool:
+        for i, b in enumerate(buffer):
+            self.write_byte(target_address, start_offset + i, b)
         self.logger.log_hal(f'[smbus] writing {size:d} bytes to device 0x{target_address:X} at offset {start_offset:X}')
         return True

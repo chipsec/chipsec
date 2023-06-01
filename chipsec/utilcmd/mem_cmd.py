@@ -49,7 +49,7 @@ from chipsec.command import BaseCommand
 from chipsec.defines import ALIGNED_4KB, BOUNDARY_4KB, bytestostring
 from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
 from chipsec.file import read_file, write_file, get_main_dir
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from argparse import ArgumentParser
 
 # Physical Memory
@@ -147,7 +147,7 @@ class MemCommand(BaseCommand):
             write_file(self.file_name, buffer)
             self.logger.log("[CHIPSEC] Written 0x{:X} bytes to '{}'".format(len(buffer), self.file_name))
         else:
-            print_buffer(bytestostring(buffer))
+            print_buffer_bytes(buffer)
 
     def mem_readval(self):
         width = 0x4

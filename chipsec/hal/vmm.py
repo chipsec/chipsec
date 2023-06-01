@@ -71,7 +71,7 @@ class VMM:
     def hypercall64_memory_based(self, hypervisor_input_value: int, parameters: AnyStr, size: int = 0) -> int:
         self.cs.mem.write_physical_mem(self.membuf0_pa, len(parameters[:0x1000]), parameters[:0x1000])
         regs = self.helper.hypercall(hypervisor_input_value & ~0x00010000, self.membuf0_pa, self.membuf1_pa)
-        self.output = self.helper.read_physical_mem(self.membuf1_pa, size) if size > 0 else ''
+        self.output = self.helper.read_phys_mem(self.membuf1_pa, size) if size > 0 else ''
         return regs
 
     def hypercall64_fast(self, hypervisor_input_value: int, param0: int = 0, param1: int = 0) -> int:

@@ -29,8 +29,7 @@ usage:
 
 import struct
 from typing import Dict, List, Optional, Tuple
-from chipsec.logger import logger, print_buffer
-from chipsec.defines import bytestostring
+from chipsec.logger import logger, print_buffer_bytes
 from chipsec.hal import spi
 from binascii import hexlify
 
@@ -222,7 +221,7 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     logger().log(s)
     logger().log('--------------------------------------------------------')
     for r in range(nr):
-        s = 'f{r:-2d} {spi.SPI_REGION_NAMES[r]:20s} '
+        s = f'{r:-2d} {spi.SPI_REGION_NAMES[r]:20s} '
         for m in range(nm):
             access_s = ''
             mask = (0x1 << r)
@@ -254,7 +253,7 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     logger().log('')
     logger().log(f'+ 0x{0xF00:04X} OEM Section:')
     logger().log('========================================================')
-    print_buffer(bytestostring(fd[0xF00:]))
+    print_buffer_bytes(fd[0xF00:])
 
     logger().log('')
     logger().log('########################################################')

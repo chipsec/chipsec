@@ -534,7 +534,7 @@ class te(BaseModule):
                 self.logger.log("[*] no bootloaders to replace. Exit...")
                 return ModuleResult.SKIPPED
 
-            do_mount = self.cs.helper.is_windows()  # @TODO
+            do_mount = self.cs.os_helper.is_windows()  # @TODO
             if 'restore_bootloader' == mode:
                 sts = restore_bootloader(bootloader_paths, do_mount)
             elif 'replace_bootloader' == mode:

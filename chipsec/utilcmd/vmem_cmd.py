@@ -49,7 +49,7 @@ import chipsec_util
 from chipsec.command import BaseCommand
 from chipsec.hal import virtmem
 from chipsec.defines import bytestostring
-from chipsec.logger import print_buffer
+from chipsec.logger import print_buffer_bytes
 from chipsec.file import write_file, read_file
 from argparse import ArgumentParser
 
@@ -112,7 +112,7 @@ class VMemCommand(BaseCommand):
             write_file(self.buf_file, buffer)
             self.logger.log("[CHIPSEC] Written 0x{:X} bytes to '{}'".format(len(buffer), self.buf_file))
         else:
-            print_buffer(bytestostring(buffer))
+            print_buffer_bytes(buffer)
 
     def vmem_readval(self):
         width = 0x4

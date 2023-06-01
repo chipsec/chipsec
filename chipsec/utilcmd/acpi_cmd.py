@@ -49,7 +49,7 @@ from chipsec.command import BaseCommand
 
 class ACPICommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_list = subparsers.add_parser('list')
@@ -63,23 +63,23 @@ class ACPICommand(BaseCommand):
             return False
         return True
 
-    def acpi_list(self):
-        self.logger.log("[CHIPSEC] Enumerating ACPI tables..")
+    def acpi_list(self) -> None:
+        self.logger.log('[CHIPSEC] Enumerating ACPI tables..')
         self._acpi.print_ACPI_table_list()
 
-    def acpi_table(self):
+    def acpi_table(self) -> None:
         name = self._name[0]
         if not self._file and not self._acpi.is_ACPI_table_present(name):
-            self.logger.log_error("Please specify table name from {}".format(self._acpi.tableList.keys()))
+            self.logger.log_error(f'Please specify table name from {self._acpi.tableList.keys()}')
             return
         elif self._file and not path_exists(name):
-            self.logger.log_error("[CHIPSEC] Unable to find file '{}'".format(name))
+            self.logger.log_error(f"[CHIPSEC] Unable to find file '{name}'")
             return
-        self.logger.log("[CHIPSEC] reading ACPI table {} '{}'".format('from file' if self._file else '', name))
+        self.logger.log(f"[CHIPSEC] reading ACPI table {'from file' if self._file else ''} '{name}'")
         self._acpi.dump_ACPI_table(name, self._file)
         return
 
-    def run(self):
+    def run(self) -> None:
         t = time()
         try:
             self._acpi = ACPI(self.cs)
@@ -87,7 +87,7 @@ class ACPICommand(BaseCommand):
             print(msg)
             return
         self.func()
-        self.logger.log("[CHIPSEC] (acpi) time elapsed {:.3f}".format(time() - t))
+        self.logger.log(f'[CHIPSEC] (acpi) time elapsed {time() - t:.3f}')
 
 
 commands = {'acpi': ACPICommand}
