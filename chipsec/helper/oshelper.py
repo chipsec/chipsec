@@ -93,7 +93,7 @@ class OsHelper:
         return ret
     
     def get_available_helpers(self) -> List[str]:
-        return self.avail_helpers.keys()
+        return sorted(self.avail_helpers.keys())
 
     def get_base_helper(self):
         return Helper()

@@ -101,7 +101,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
                          help="chipsec won't need kernel mode functions so don't load chipsec driver")
     options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
                          help='run chipsec even if the platform is not recognized')
-    options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=[i for i in helper().get_available_helpers()])
+    options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=helper().get_available_helpers())
     options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(cmds.keys()), type=str.lower, default="help",
                          help="Util command to run: {{{}}}".format(','.join(sorted(cmds.keys()))))
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)
