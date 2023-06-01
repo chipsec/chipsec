@@ -86,7 +86,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="don't log timestamps", action='store_true')
     adv_options.add_argument('--deltas', dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
-    adv_options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=[i for i in helper().get_available_helpers()])
+    adv_options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=helper().get_available_helpers())
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
 
