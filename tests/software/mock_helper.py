@@ -17,7 +17,6 @@
 
 import struct
 
-from chipsec.helper import oshelper
 from chipsec.helper.basehelper import Helper
 from chipsec.exceptions import UnimplementedAPIError
 
@@ -74,6 +73,109 @@ class TestHelper(Helper):
 
     def cpuid(self, eax, ecx):
         return 0x406F1, 0, 0, 0
+
+    def write_pci_reg(self, bus, device, function, address, value, size):
+        raise UnimplementedAPIError('write_pci_reg')
+
+    def get_info(self):
+        return self.name, self.driverpath
+
+    def read_mmio_reg(self, phys_address, size):
+        raise UnimplementedAPIError('read_mmio_reg')
+
+    def write_mmio_reg(self, phys_address, size, value):
+        raise UnimplementedAPIError('write_mmio_reg')
+
+    def read_phys_mem(self, phys_address, length):
+        raise UnimplementedAPIError('read_phys_mem')
+
+    def write_phys_mem(self, phys_address, length, buf):
+        raise UnimplementedAPIError('write_phys_mem')
+
+    def alloc_phys_mem(self, length, max_phys_address):
+        raise UnimplementedAPIError('alloc_phys_mem')
+
+    def free_phys_mem(self, physical_address):
+        raise UnimplementedAPIError('free_phys_mem')
+
+    def va2pa(self, va):
+        raise UnimplementedAPIError('va2pa')
+
+    def map_io_space(self, physical_address, length, cache_type):
+        raise UnimplementedAPIError('map_io_space')
+
+    def read_io_port(self, io_port, size):
+        raise UnimplementedAPIError('read_io_port')
+
+    def write_io_port(self, io_port, value, size):
+        raise UnimplementedAPIError('write_io_port')
+
+    def read_cr(self, cpu_thread_id, cr_number):
+        raise UnimplementedAPIError('read_cr')
+
+    def write_cr(self, cpu_thread_id, cr_number, value):
+        raise UnimplementedAPIError('write_cr')
+
+    def read_msr(self, cpu_thread_id, msr_addr):
+        raise UnimplementedAPIError('read_msr')
+
+    def write_msr(self, cpu_thread_id, msr_addr, eax, edx):
+        raise UnimplementedAPIError('write_msr')
+
+    def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
+        raise UnimplementedAPIError('load_ucode_update')
+
+    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
+        raise UnimplementedAPIError('get_descriptor_table')
+
+    def EFI_supported(self):
+        raise UnimplementedAPIError('EFI_supported')
+
+    def get_EFI_variable(self, name, guid):
+        raise UnimplementedAPIError('get_EFI_variable')
+
+    def set_EFI_variable(self, name, guid, data, datasize, attrs):
+        raise UnimplementedAPIError('set_EFI_variable')
+
+    def delete_EFI_variable(self, name, guid):
+        raise UnimplementedAPIError('delete_EFI_variable')
+
+    def list_EFI_variables(self):
+        raise UnimplementedAPIError('list_EFI_variables')
+
+    def get_ACPI_SDT(self):
+        raise UnimplementedAPIError('get_ACPI_SDT')
+
+    def get_ACPI_table(self, table_name):
+        raise UnimplementedAPIError('get_ACPI_table')
+
+    def msgbus_send_read_message(self, mcr, mcrx):
+        raise UnimplementedAPIError('msgbus_send_read_message')
+
+    def msgbus_send_write_message(self, mcr, mcrx, mdr):
+        raise UnimplementedAPIError('msgbus_send_write_message')
+
+    def msgbus_send_message(self, mcr, mcrx, mdr):
+        raise UnimplementedAPIError('msgbus_send_message')
+
+    def get_affinity(self):
+        raise UnimplementedAPIError('get_affinity')
+
+    def set_affinity(self, value):
+        raise UnimplementedAPIError('set_affinity')
+
+    def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
+        raise UnimplementedAPIError('send_sw_smi')
+
+    def hypercall(self, rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer):
+        raise UnimplementedAPIError('hypercall')
+
+    def getcwd(self):
+        raise UnimplementedAPIError('getcwd')
+
+    def retpoline_enabled(self) -> bool:
+        return False
+
 
 
 class ACPIHelper(TestHelper):
