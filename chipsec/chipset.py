@@ -1327,7 +1327,7 @@ class Chipset:
         control = self.Cfg.CONTROLS[control_name]
         reg = control['register']
         field = control['field']
-        return self.write_register_field(reg, field, control_value, cpu_thread)
+        return self.write_register_field(reg, field, control_value, cpu_thread=cpu_thread)
 
     def is_control_defined(self, control_name):
         try:
