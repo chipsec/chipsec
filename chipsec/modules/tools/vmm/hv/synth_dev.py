@@ -37,7 +37,6 @@ Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To us
 import time
 from struct import *
 from random import *
-from binascii import *
 from chipsec.modules.tools.vmm.hv.define import *
 from chipsec.modules.tools.vmm.common import *
 from chipsec.modules.tools.vmm.hv.vmbus import *
@@ -83,7 +82,7 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
         if len(info) == 0:
             return
         for i in self.responses:
-            self.msg(f'{"  " * indent}{hexlify(i):20}:{hexlify(info[i]["message"]):20}  {info[i]["count"]:4d}')
+            self.msg(f'{"  " * indent}{i.hex():20}:{info[i]["message"].hex():20}  {info[i]["count"]:4d}')
             self.print_1(info[i]['next'], indent + 1)
         return
 

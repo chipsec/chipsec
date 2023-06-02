@@ -29,7 +29,6 @@ import random
 import os.path
 import json
 import pprint
-import binascii
 from random import getrandbits, randint
 from time import strftime, localtime
 from chipsec.module_common import BaseModule
