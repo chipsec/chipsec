@@ -232,17 +232,23 @@ class LinuxNativeHelper(Helper):
                 if not region:
                     logger().log_error(f"Unable to map region {phys_address:08x}")
 
-            # Create memoryview into mmap'ed region in dword granularity
+            # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
-            region_dw = region_mv.cast('I')
-            # read one DWORD
-            offset_in_region = (phys_address - region.start) // 4
-            reg = region_dw[offset_in_region]
-            return reg
+            offset_in_region = phys_address - region.start
+            if size == 1:
+                return region_mv[offset_in_region]
+
+            if offset_in_region % size == 0:
+                # Read aligned value
+                region_casted = region_mv.cast(defines.SIZE2FORMAT[size])
+                return region_casted[offset_in_region // size]
+
+            # Read unaligned value
+            return defines.unpack1(region_mv[offset_in_region:offset_in_region + size], size)
         return 0
 
     # @TODO fix memory mapping and bar_size
-    def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
+    def write_mmio_reg(self, phys_address: int, size: int, value: int) -> None:
         if self.devmem_available():
             reg = defines.pack1(value, size)
             region = self.memory_mapping(phys_address, size)
@@ -252,16 +258,21 @@ class LinuxNativeHelper(Helper):
                 if not region:
                     logger().log_error(f"Unable to map region {phys_address:08x}")
 
-            # Create memoryview into mmap'ed region in dword granularity
+            # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
-            region_dw = region_mv.cast('I')
-            # Create memoryview containing data in dword
-            data_mv = memoryview(reg)
-            data_dw = data_mv.cast('I')
-            # write one DWORD
-            offset_in_region = (phys_address - region.start) // 4
-            region_dw[offset_in_region] = data_dw[0]
-        return 0
+            offset_in_region = phys_address - region.start
+            if size == 1:
+                region_mv[offset_in_region] = value
+                return
+
+            if offset_in_region % size == 0:
+                # Write aligned value
+                region_casted = region_mv.cast(defines.SIZE2FORMAT[size])
+                region_casted[offset_in_region // size] = value
+                return
+
+            # Write unaligned value
+            region_mv[offset_in_region:offset_in_region + size] = reg
 
 
     def memory_mapping(self, base: int, size: int) -> Optional[MemoryMapping]:
