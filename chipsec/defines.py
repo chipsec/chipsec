@@ -197,8 +197,8 @@ def os_version() -> Tuple[str, str, str, str]:
     return platform.system(), platform.release(), platform.version(), platform.machine()
 
 
-def is_printable(seq) -> bool:
-    return set(seq).issubset(set(string.printable))
+def is_printable(seq: AnyStr) -> bool:
+    return set(bytestostring(seq)).issubset(set(string.printable))
 
 
 def is_hex(maybe_hex: Iterable) -> bool:
