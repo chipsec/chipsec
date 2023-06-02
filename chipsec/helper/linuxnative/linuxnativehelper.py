@@ -42,6 +42,7 @@ class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
     This subclass keeps tracks of the start and end of the mapping.
     """
+
     def __init__(self, fileno, length, flags, prot, offset):
         self.start = offset
         self.end = offset + length
@@ -164,7 +165,6 @@ class LinuxNativeHelper(Helper):
         if self.dev_mem:
             os.close(self.dev_mem)
         self.dev_mem = None
-        
 
 ###############################################################################################
 # Actual API functions to access HW resources
@@ -195,7 +195,6 @@ class LinuxNativeHelper(Helper):
                 return reg
         except IOError as err:
             raise OsHelperError(f"Unable to open {device_path}", err.errno)
-        
 
     def write_pci_reg(self, bus: int, device: int, function: int, offset: int, value: int, size: int = 4, domain: int = 0) -> int:
         device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
@@ -211,7 +210,7 @@ class LinuxNativeHelper(Helper):
                 config.write(defines.pack1(value, size))
         except IOError as err:
             raise OsHelperError(f"Unable to open {device_path}", err.errno)
-        
+
         return 0
 
     # @TODO fix memory mapping and bar_size
@@ -266,7 +265,6 @@ class LinuxNativeHelper(Helper):
             # Write unaligned value
             region_mv[offset_in_region:offset_in_region + size] = reg
 
-
     def memory_mapping(self, base: int, size: int) -> Optional[MemoryMapping]:
         """Returns the mmap region that fully encompasses this area.
         Returns None if no region matches.
@@ -286,7 +284,6 @@ class LinuxNativeHelper(Helper):
                                     mmap.PROT_READ | mmap.PROT_WRITE,
                                     offset=page_aligned_base)
             self.mappings.append(mapping)
-
 
     def read_phys_mem(self, phys_address, length: int) -> bytes:
         if self.devmem_available():
@@ -373,7 +370,7 @@ class LinuxNativeHelper(Helper):
 
     def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
         raise NotImplementedError()
-    
+
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         raise NotImplementedError()
 
@@ -397,11 +394,11 @@ class LinuxNativeHelper(Helper):
 
     def get_ACPI_table(self, table_name):
         raise NotImplementedError()
-    
+
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
         _cpuid = CPUID()
         return _cpuid(eax, ecx)
-    
+
     def msgbus_send_read_message(self, mcr, mcrx):
         raise NotImplementedError()
 
@@ -410,7 +407,7 @@ class LinuxNativeHelper(Helper):
 
     def msgbus_send_message(self, mcr, mcrx, mdr):
         raise NotImplementedError()
-    
+
     #
     # Affinity functions
     #
@@ -447,7 +444,11 @@ class LinuxNativeHelper(Helper):
     def hypercall(self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0):
         raise NotImplementedError()
 
-
+    #
+    # Speculation control
+    #
+    def retpoline_enabled(self):
+        raise NotImplementedError("retpoline_enabled")
 
     def get_bios_version(self) -> str:
         try:

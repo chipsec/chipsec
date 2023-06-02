@@ -105,7 +105,6 @@ except ImportError:
 class Chipset:
 
     def __init__(self):
-        self.helper = Helper()
 
         self.init_xml_configuration()
 
@@ -123,6 +122,7 @@ class Chipset:
         self.pch_id = CHIPSET_ID_UNKNOWN
         self.cpuid = None
         self.Cfg = Cfg()
+        self.helper = None
         self.os_helper = os_helper()
         self.set_hal_objects()
         
