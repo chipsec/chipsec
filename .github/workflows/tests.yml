@@ -144,6 +144,7 @@ jobs:
     strategy:
       matrix:
         python:
+          - "3.11"
           - "3.10"
           - "3.9"
           - "3.8"
@@ -182,11 +183,13 @@ jobs:
     strategy:
       matrix:
         versions:
+          - {ubuntu: "22.04", python: "3.11"}
           - {ubuntu: "22.04", python: "3.10"}
           - {ubuntu: "22.04", python: "3.9"}
           - {ubuntu: "22.04", python: "3.8"}
           - {ubuntu: "22.04", python: "3.7"}
 
+          - {ubuntu: "20.04", python: "3.11"}
           - {ubuntu: "20.04", python: "3.10"}
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}
