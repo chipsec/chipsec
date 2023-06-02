@@ -180,7 +180,7 @@ class Chipset:
                 vid_did = self.pci.read_dword(bus, dev, fun, 0)
                 pch_vid = vid_did & 0xFFFF
                 pch_did = (vid_did >> 16) & 0xFFFF
-                pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
+                pch_rid = self.pci.read_byte(bus, dev, fun, PCI_HDR_RID_OFF)
             except:
                 if logger().DEBUG:
                     logger().log_error("pci.read_dword couldn't read PCH VID/DID")
