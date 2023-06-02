@@ -26,7 +26,6 @@ Usage:
 """
 
 from argparse import ArgumentParser
-import binascii
 from chipsec.command import BaseCommand
 from chipsec.exceptions import HWAccessViolationError
 import struct
@@ -115,8 +114,7 @@ class TXTCommand(BaseCommand):
                                  self.cs.read_register("TXT_PUBLIC_KEY_2"),
                                  self.cs.read_register("TXT_PUBLIC_KEY_3"),
                                  )
-        self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(
-            binascii.hexlify(txt_pubkey).decode("ascii")))
+        self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(txt_pubkey.hex()))
 
         try:
             eax, edx = self.cs.msr.read_msr(0, 0x20)
@@ -127,8 +125,7 @@ class TXTCommand(BaseCommand):
             pubkey_in_msr += struct.pack("<II", eax, edx)
             eax, edx = self.cs.msr.read_msr(0, 0x23)
             pubkey_in_msr += struct.pack("<II", eax, edx)
-            self.logger.log("[CHIPSEC] Public Key Hash in MSR[0x20...0x23]: {}".format(
-                binascii.hexlify(pubkey_in_msr).decode("ascii")))
+            self.logger.log("[CHIPSEC] Public Key Hash in MSR[0x20...0x23]: {}".format(pubkey_in_msr.hex()))
         except HWAccessViolationError as exc:
             # Report the exception and continue
             self.logger.log("[CHIPSEC] Unable to read Public Key Hash in MSR[0x20...0x23]: {}".format(exc))

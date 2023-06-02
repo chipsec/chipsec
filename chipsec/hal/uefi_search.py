@@ -33,7 +33,6 @@ usage:
 """
 
 import re
-import binascii
 from uuid import UUID
 from typing import Dict, Callable, Optional, Any
 
@@ -146,7 +145,7 @@ def check_rules(efi: EFI_SECTION, rules: Dict[str, Any], entry_name: str, _log: 
             if m:
                 match_result |= MATCH_REGEXP
                 _str = m.group(0)
-                hexver = binascii.hexlify(_str)
+                hexver = _str.hex()
                 printver = f" ('{_str}')" if defines.is_printable(_str) else ''
                 what = f"bytes '{hexver}'{printver}"
                 offset = m.start()

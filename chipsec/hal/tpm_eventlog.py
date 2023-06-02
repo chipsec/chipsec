@@ -26,7 +26,6 @@ Based on the following specifications:
 `TCG PC Client Platform Firmware Profile Specification <https://trustedcomputinggroup.org/wp-content/uploads/PC-ClientSpecific_Platform_Profile_for_TPM_2p0_Systems_v51.pdf>`_
 """
 
-import binascii
 import struct
 
 from typing import Any, Dict, BinaryIO, Optional, Type, TypeVar
@@ -81,7 +80,7 @@ class TcgPcrEvent:
             t = self.event_type_name
         else:
             t = f'(0x{self.event_type:x}'
-        return f'PCR: {self.pcr_index:d}\ttype: {t.ljust(EVENT_TYPE_MAX_LENGTH)}\tsize: 0x{self.event_size:x}\tdigest: {binascii.hexlify(self.digest)}'
+        return f'PCR: {self.pcr_index:d}\ttype: {t.ljust(EVENT_TYPE_MAX_LENGTH)}\tsize: 0x{self.event_size:x}\tdigest: {self.digest.hex()}'
 
 
 class SCRTMVersion(TcgPcrEvent):
