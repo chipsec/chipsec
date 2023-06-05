@@ -27,7 +27,7 @@ import os
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.hal.uefi_common import S3BOOTSCRIPT_ENTRY, EFI_SYSTEM_TABLE
-    from chipsec.hal.uefi_platform import EfiVariableType
+    from chipsec.hal.uefi_platform import EfiVariableType, EfiTableType
 from chipsec.hal import hal_base, uefi_platform
 from chipsec.hal.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
 from chipsec.hal.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
@@ -164,7 +164,7 @@ def get_attr_string(attr: int) -> str:
         attr_str = f'{attr_str}AW+'
     return attr_str[:-1].lstrip()
 
-def print_efi_variable(offset: int, var_buf: bytes, var_header: EFI_TABLE_HEADER, var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
+def print_efi_variable(offset: int, var_buf: bytes, var_header: 'EfiTableType', var_name: str, var_data: bytes, var_guid: str, var_attrib: int) -> None:
     logger().log('\n--------------------------------')
     logger().log(f'EFI Variable (offset = 0x{offset:X}):')
     logger().log('--------------------------------')
@@ -213,16 +213,16 @@ def print_efi_variable(offset: int, var_buf: bytes, var_header: EFI_TABLE_HEADER
             print_buffer_bytes(var_buf)
 
 
-def print_sorted_EFI_variables(variables: Dict[str, 'EfiVariableType']) -> None:
+def print_sorted_EFI_variables(variables: Dict[str, List['EfiVariableType']]) -> None:
     sorted_names = sorted(variables.keys())
-    rec: Tuple[int, bytes, EFI_TABLE_HEADER, bytes, str, int]
+    rec: Tuple[int, bytes, EfiTableType, bytes, str, int]
     for name in sorted_names:
         for rec in variables[name]:
             #                   off,    buf,     hdr,         data,   guid,   attrs
             print_efi_variable(rec[0], rec[1], rec[2], name, rec[3], rec[4], rec[5])
 
 
-def decode_EFI_variables(efi_vars: Dict[str, 'EfiVariableType'], nvram_pth: str) -> None:
+def decode_EFI_variables(efi_vars: Dict[str, List['EfiVariableType']], nvram_pth: str) -> None:
     # print decoded and sorted EFI variables into a log file
     print_sorted_EFI_variables(efi_vars)
     # write each EFI variable into its own binary file
@@ -370,11 +370,11 @@ class UEFI(hal_base.HALBase):
 
     # @TODO: Do not use, will be removed
 
-    def read_EFI_variables(self, efi_var_store: Optional[bytes], authvars: bool) -> Dict[str, 'EfiVariableType']:
+    def read_EFI_variables(self, efi_var_store: Optional[bytes], authvars: bool) -> Dict[str, List['EfiVariableType']]:
         if efi_var_store is None:
             logger().log_error('efi_var_store is None')
             return {}
-        variables: Dict[str, EfiVariableType] = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
+        variables: Dict[str, List[EfiVariableType]] = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables'](efi_var_store)
         if logger().UTIL_TRACE:
             print_sorted_EFI_variables(variables)
         return variables

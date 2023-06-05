@@ -25,9 +25,7 @@ Platform specific UEFI functionality (parsing platform specific EFI NVRAM, capsu
 import struct
 from collections import namedtuple
 from uuid import UUID
-from typing import Dict, List, Tuple, Optional, Union, Any, TYPE_CHECKING
-if TYPE_CHECKING:
-    from chipsec.hal.uefi_common import EFI_TABLE_HEADER
+from typing import Dict, List, Tuple, Optional, Union, Any
 from chipsec import defines
 from chipsec.logger import logger
 from chipsec.hal.uefi_common import bit_set, VARIABLE_SIGNATURE_VSS, S3BootScriptOpcode_MDE, op_io_pci_mem, S3BootScriptOpcode_EdkCompat, EFI_GUID_STR, EFI_GUID_SIZE
@@ -37,7 +35,8 @@ from chipsec.hal.uefi_common import EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABL
 from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
 from chipsec.hal.uefi_fv import NextFwVolume, NextFwFile, EFI_FVB2_ERASE_POLARITY, EFI_FV_FILETYPE_RAW
 
-EfiVariableType = Tuple[int, Optional[bytes], Optional['EFI_TABLE_HEADER'], bytes, str, int]
+EfiTableType = Union['EFI_HDR_VSS', 'EFI_HDR_VSS_AUTH', 'EFI_HDR_VSS_APPLE', None]
+EfiVariableType = Tuple[int, bytes, EfiTableType, bytes, str, int]
 
 #
 # List of supported types of EFI NVRAM format (platform/vendor specific)
@@ -194,11 +193,11 @@ def getNVstore_EFI_AUTH(nvram_buf: bytes) -> NvStore:
     return _getNVstore_EFI(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
 
 
-def getEFIvariables_UEFI(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_UEFI(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS)
 
 
-def getEFIvariables_UEFI_AUTH(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_UEFI_AUTH(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
 
 
@@ -319,7 +318,7 @@ def _ord(c: Union[str, int]) -> int:
     return ord(c) if isinstance(c, str) else c
 
 
-def getEFIvariables_NVAR(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_NVAR(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     name = ''
     start = nvram_buf.find(NVAR_EFIvar_signature)
     nvram_size = len(nvram_buf)
@@ -393,7 +392,7 @@ def getEFIvariables_NVAR(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
         if name not in variables.keys():
             variables[name] = []
         #                       off, buf,  hdr,  data, guid, attrs
-        variables[name].append((nof, None, None, data, guid, attribs))
+        variables[name].append((nof, b'', None, data, guid, attribs))
         nof = nof + size
     return variables
 
@@ -663,7 +662,7 @@ def isCorrectVSStype(nvram_buf: bytes, vss_type: str):
     return False
 
 
-def _getEFIvariables_VSS(nvram_buf: bytes, _fwtype: str) -> Dict[str, EfiVariableType]:
+def _getEFIvariables_VSS(nvram_buf: bytes, _fwtype: str) -> Dict[str, List[EfiVariableType]]:
     variables = dict()
     nvsize = len(nvram_buf)
     if _fwtype in (FWType.EFI_FW_TYPE_VSS, FWType.EFI_FW_TYPE_VSS2):
@@ -733,23 +732,23 @@ def _getEFIvariables_VSS(nvram_buf: bytes, _fwtype: str) -> Dict[str, EfiVariabl
     return variables
 
 
-def getEFIvariables_VSS(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_VSS(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS)
 
 
-def getEFIvariables_VSS_AUTH(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_VSS_AUTH(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_AUTH)
 
 
-def getEFIvariables_VSS2(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_VSS2(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS2)
 
 
-def getEFIvariables_VSS2_AUTH(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_VSS2_AUTH(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS2_AUTH)
 
 
-def getEFIvariables_VSS_APPLE(nvram_buf: bytes) -> Dict[str, EfiVariableType]:
+def getEFIvariables_VSS_APPLE(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     return _getEFIvariables_VSS(nvram_buf, FWType.EFI_FW_TYPE_VSS_APPLE)
 
 
@@ -782,8 +781,7 @@ def getNVstore_EVSA(nvram_buf: bytes) -> NvStore:
         fv = NextFwVolume(nvram_buf, fv.Offset, fv.Size)
     return l
 
-
-def EFIvar_EVSA(nvram_buf: bytes) -> Dict[str, Tuple[int, Optional[bytes], Optional['EFI_TABLE_HEADER'], bytes, str, int]]:
+def EFIvar_EVSA(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     image_size = len(nvram_buf)
     sn = 0
     EVSA_RECORD = "<IIII"
@@ -856,9 +854,9 @@ def EFIvar_EVSA(nvram_buf: bytes) -> Dict[str, Tuple[int, Optional[bytes], Optio
             else:
                 guid = guid_map[GuidId]
             if name not in variables.keys():
-                variables[name] = (0, None, None, b'', '', 0)
+                variables[name] = []
             #                       off,   buf,  hdr,  data,         guid, attrs
-            variables[name].append((start, None, None, var_value[2], guid, var_value[1]))
+            variables[name].append((start, b'', None, var_value[2], guid, var_value[1]))
         fof = fof + Length
     return variables
 
