@@ -33,16 +33,14 @@ A new helper folder should be created under
 ``chipsec/helper/new_helper``
 
 ``chipsec/helper/new_helper/__init__.py`` within the new folder needs to
-add the helper to avail_helpers list
+add the helper name to list ``__all__``
 
 ::
 
    import platform
-   from chipsec.helper.oshelper import avail_helpers
 
    if "linux" == platform.system().lower():
        __all__ = [ "linuxhelper" ]
-       avail_helpers.append("linuxhelper")
    else:
        __all__ = [ ]
 

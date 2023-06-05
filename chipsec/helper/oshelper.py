@@ -37,8 +37,6 @@ from chipsec.logger import logger
 from chipsec.helper.basehelper import Helper
 from chipsec.exceptions import UnimplementedAPIError, OsHelperError
 
-avail_helpers = []
-
 
 def get_tools_path() -> str:
     return os.path.normpath(os.path.join(get_main_dir(), TOOLS_DIR))
