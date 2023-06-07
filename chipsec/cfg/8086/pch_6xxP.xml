@@ -31,6 +31,7 @@ XML configuration file for 6XX series pch
   <!-- #################################### -->
   <info>
     <sku did="0x5182" name="6xxP" code="PCH_6XXP" longname="Intel ADL-P (600) PCH" />
+    <sku did="0x519D" name="6xxP" code="PCH_6XXP" longname="Intel RPL-P (600) PCH" />
   </info>
 
   <!-- #################################### -->
