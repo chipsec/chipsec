@@ -101,18 +101,18 @@ class CPUCommand(BaseCommand):
         threads_per_pkg = self.cs.cpu.get_number_logical_processor_per_package()
         cores_per_pkg = self.cs.cpu.get_number_physical_processor_per_package()
         num_threads = self.cs.helper.get_threads_count()
-        self.logger.log("          Hyper-Threading         : {}".format('Enabled' if ht else 'Disabled'))
-        self.logger.log("          CPU cores per package   : {:d}".format(cores_per_pkg))
-        self.logger.log("          CPU threads per core    : {:d}".format(threads_per_core))
-        self.logger.log("          CPU threads per package : {:d}".format(threads_per_pkg))
-        self.logger.log("          Total threads           : {:d}".format(num_threads))
+        self.logger.log(f'          Hyper-Threading         : {"Enabled" if ht else "Disabled"}')
+        self.logger.log(f'          CPU cores per package   : {cores_per_pkg:d}')
+        self.logger.log(f'          CPU threads per core    : {threads_per_core:d}')
+        self.logger.log(f'          CPU threads per package : {threads_per_pkg:d}')
+        self.logger.log(f'          Total threads           : {num_threads:d}')
         topology = self.cs.cpu.get_cpu_topology()
         self.logger.log("          Packages:")
         for p in topology['packages']:
-            self.logger.log("              {:d}: {}".format(p, topology['packages'][p]))
+            self.logger.log(f'              {p:d}: {topology["packages"][p]}')
         self.logger.log("          Cores:")
         for c in topology['cores']:
-            self.logger.log("              {:d}: {}".format(c, topology['cores'][c]))
+            self.logger.log(f'              {c:d}: {topology["cores"][c]}')
 
         return topology
 
@@ -152,16 +152,16 @@ class CPUCommand(BaseCommand):
 
     def cpu_pt(self) -> None:
         if self.cr3 is not None:
-            pt_fname = 'pt_{:08X}'.format(self.cr3)
-            self.logger.log("[CHIPSEC] paging physical base (CR3): 0x{:016X}".format(self.cr3))
-            self.logger.log("[CHIPSEC] dumping paging hierarchy to '{}'...".format(pt_fname))
+            pt_fname = f'pt_{self.cr3:08X}'
+            self.logger.log(f'[CHIPSEC] paging physical base (CR3): 0x{self.cr3:016X}')
+            self.logger.log(f'[CHIPSEC] dumping paging hierarchy to \'{pt_fname}\'...')
             self.cs.cpu.dump_page_tables(self.cr3, pt_fname)
         else:
             for tid in range(self.cs.msr.get_cpu_thread_count()):
                 cr3 = self.cs.cpu.read_cr(tid, 3)
-                pt_fname = 'cpu{:d}_pt_{:08X}'.format(tid, cr3)
-                self.logger.log("[CHIPSEC][cpu{:d}] paging physical base (CR3): 0x{:016X}".format(tid, cr3))
-                self.logger.log("[CHIPSEC][cpu{:d}] dumping paging hierarchy to '{}'...".format(tid, pt_fname))
+                pt_fname = f'cpu{tid:d}_pt_{cr3:08X}'
+                self.logger.log(f'[CHIPSEC][cpu{tid:d}] paging physical base (CR3): 0x{cr3:016X}')
+                self.logger.log(f'[CHIPSEC][cpu{tid:d}] dumping paging hierarchy to \'{pt_fname}\'...')
                 self.cs.cpu.dump_page_tables(cr3, pt_fname)
 
     def run(self) -> None:
@@ -173,7 +173,7 @@ class CPUCommand(BaseCommand):
             return
 
         self.func()
-        self.logger.log("[CHIPSEC] (cpu) time elapsed {:.3f}".format(time() - t))
+        self.logger.log(f'[CHIPSEC] (cpu) time elapsed {time() - t:.3f}')
 
 
 commands = {'cpu': CPUCommand}
