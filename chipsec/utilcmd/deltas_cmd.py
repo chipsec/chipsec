@@ -38,7 +38,7 @@ import chipsec.result_deltas
 
 class DeltasCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_prev_log', metavar='<previous>', help='previous log file')
         parser.add_argument('_cur_log', metavar='<current>', help='current log file')
@@ -47,7 +47,7 @@ class DeltasCommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return False
 
-    def run(self):
+    def run(self) -> None:
         start_time = time()
 
         # Read files and determine deltas
@@ -65,7 +65,7 @@ class DeltasCommand(BaseCommand):
             elif self._out_format.upper() == 'XML':
                 chipsec.result_deltas.log_deltas_xml(deltas, self._out_name)
             else:
-                self.logger.log_error('Output log format not supported: {}'.format(self._out_format))
+                self.logger.log_error(f'Output log format not supported: {self._out_format}')
 
         # Display the results
         chipsec.result_deltas.display_deltas(deltas, True, start_time)
