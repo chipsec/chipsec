@@ -164,12 +164,24 @@ only the public space registers were described here.
     <register name="TXT_SCRATCHPAD_5" type="memory" access="mmio" address="0xFED30000" offset="0x368" size="8" desc="TXT Scratchpad 5"/>
     <register name="TXT_INCREMENT_2" type="memory" access="mmio" address="0xFED30000" offset="0x370" size="8" desc="TXT Increment 2"/>
     <register name="TXT_SCRATCHPAD" type="memory" access="mmio" address="0xFED30000" offset="0x378" size="8" desc="ACM Policy Status">
+      <field name="KM_ID" bit="0" size="4" desc="Key Manifest ID used for verified Key Manifest"/>
+      <field name="MEASURED_BOOT" bit="4" size="1" desc="Perform measured boot"/>
+      <field name="VERIFIED_BOOT" bit="5" size="1" desc="Perform verified boot"/>
+      <field name="HAP" bit="6" size="1" desc="High Assurance Platform"/>
+      <field name="TXT_SUPPORTED" bit="7" size="1" desc="TXT Supported"/>
+      <field name="BOOT_MEDIA" bit="8" size="1" desc="Boot media"/>
+      <field name="DCD" bit="9" size="1" desc="Disable CPU Debug"/>
+      <field name="DBI" bit="10" size="1" desc="Disable BSP Init"/>
+      <field name="PBE" bit="11" size="1" desc="Protect BIOS Environment"/>
+      <field name="BBP" bit="12" size="1" desc="Bypass Boot Policy, fast S3 resume"/>
       <field name="TPM_TYPE" bit="13" size="2" desc="TPM type detected by Startup ACM (0 for no TPM, 1 for dTPM1.2, 2 for dTPM2.0, 3 for PTT)"/>
       <field name="TPM_SUCCESS" bit="15" size="1" desc="TPM Success"/>
       <field name="BOOT_POLICIES_2" bit="17" size="1" desc="Boot Policies"/>
       <field name="BACKUP_ACTION" bit="18" size="2" desc="Backup Action"/>
       <field name="TXT_PROFILE" bit="20" size="5" desc="TXT Profile"/>
       <field name="MEMORY_SCRUB_POLICY" bit="25" size="2" desc="Memory Scrub Policy"/>
+      <field name="KM_ARB_EN" bit="27" size="1" desc="KM ARB (Key Manifest Anti-Rollback) enable"/>
+      <field name="BPM_ARB_EN" bit="28" size="1" desc="BPM ARB (Boot Policy Manifest Anti-Rollback) enable"/>
       <field name="IBB_DMA_PROTECTION" bit="29" size="1" desc="IBB (Initial Boot Block) DMA Protection"/>
       <field name="S_CRTM_STATUS" bit="32" size="3" desc="Startup ACM S-CRTM establishment"/>
       <field name="CPU_COSIGNING_ENABLE" bit="35" size="1" desc="CPU co-signing enabled"/>
