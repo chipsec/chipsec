@@ -233,6 +233,11 @@ f-Strings
      - f-strings support = for self-documenting expressions
      - 3.8
      - No
+   * - `PEP 701 <https://www.python.org/dev/peps/pep-0701/>`_
+     - Syntactic formalization of f-strings
+     - Lift some restrictions from PEP 498 and formalize grammar for f-strings
+     - 3.12
+     - No
 
 
 Type Hints
@@ -346,6 +351,16 @@ This table lists which Type Hint PEPs are in scope for CHIPSEC.
    * - `PEP 692 <https://www.python.org/dev/peps/pep-0692/>`_
      - Using TypedDict for more precise kwargs typing
      - A new syntax for specifying kwargs type as a TypedDict without breaking current behavior
+     - 3.12
+     - No
+   * - `PEP 695 <https://www.python.org/dev/peps/pep-0695/>`_
+     - Type Parameter Syntax
+     - A syntax for specifying type parameters within a generic class, function, or type alias. And introduces a new statement for declaring type aliases.
+     - 3.12
+     - No
+   * - `PEP 698 <https://www.python.org/dev/peps/pep-0698/>`_
+     - Override Decorator for Static Typing
+     - Adds @override decorator to allow type checkers to prevent a class of bugs that occur when a base class changes methods that are inherited by derived classes.
      - 3.12
      - No
 
