@@ -47,7 +47,7 @@ from chipsec.hal.ec import EC
 # Embedded Controller
 class ECCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(usage=__doc__)
 
         parser_offset = ArgumentParser(add_help=False)
@@ -78,46 +78,46 @@ class ECCommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return hasattr(self, 'func')
 
-    def dump(self):
+    def dump(self) -> None:
         self.logger.log("[CHIPSEC] EC dump")
 
         buf = self._ec.read_range(0, self.size)
         print_buffer_bytes(buf)
 
-    def command(self):
-        self.logger.log("[CHIPSEC] Sending EC command 0x{:X}".format(self.cmd))
+    def command(self) -> None:
+        self.logger.log(f'[CHIPSEC] Sending EC command 0x{self.cmd:X}')
 
         self._ec.write_command(self.cmd)
 
-    def read(self):
+    def read(self) -> None:
         if self.size:
             buf = self._ec.read_range(self.offset, self.size)
-            self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} size 0x{:X}".format(self.offset, self.size))
+            self.logger.log(f'[CHIPSEC] EC memory read: offset 0x{self.offset:X} size 0x{self.size:X}')
             print_buffer_bytes(buf)
         else:
             val = self._ec.read_memory(
                 self.offset) if self.offset < 0x100 else self._ec.read_memory_extended(self.offset)
-            self.logger.log("[CHIPSEC] EC memory read: offset 0x{:X} = 0x{:X}".format(self.start_offset, val))
+            self.logger.log(f'[CHIPSEC] EC memory read: offset 0x{self.start_offset:X} = 0x{val:X}')
 
-    def write(self):
-        self.logger.log("[CHIPSEC] EC memory write: offset 0x{:X} = 0x{:X}".format(self.offset, self.wval))
+    def write(self) -> None:
+        self.logger.log(f'[CHIPSEC] EC memory write: offset 0x{self.offset:X} = 0x{self.wval:X}')
 
         if self.offset < 0x100:
             self._ec.write_memory(self.offset, self.wval)
         else:
             self._ec.write_memory_extended(self.offset, self.wval)
 
-    def index(self):
+    def index(self) -> None:
 
         if self.offset:
             val = self._ec.read_idx(self.offset)
-            self.logger.log("[CHIPSEC] EC index I/O: reading memory offset 0x{:X}: 0x{:X}".format(self.offset, val))
+            self.logger.log(f'[CHIPSEC] EC index I/O: reading memory offset 0x{self.offset:X}: 0x{val:X}')
         else:
             self.logger.log("[CHIPSEC] EC index I/O: dumping memory...")
             mem = [self._ec.read_idx(off) for off in range(0x10000)]
             print_buffer_bytes(mem)
 
-    def run(self):
+    def run(self) -> None:
         t = time.time()
         try:
             self._ec = EC(self.cs)
@@ -125,7 +125,7 @@ class ECCommand(BaseCommand):
             print(msg)
             return
         self.func()
-        self.logger.log("[CHIPSEC] (ec) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log(f'[CHIPSEC] (ec) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'ec': ECCommand}
