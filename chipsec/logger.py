@@ -200,7 +200,7 @@ class Logger:
         self.ALWAYS_FLUSH = False
         self.logstream = logging.StreamHandler(sys.stdout)
         self.chipsecLogger = logging.getLogger(LOGGER_NAME)
-        self.chipsecLogger.setLevel(logging.DEBUG)
+        self.chipsecLogger.setLevel(logging.INFO)
         self.chipsecLogger.addHandler(self.logstream)
         self.chipsecLogger.addFilter(chipsecFilter(LOGGER_NAME))
         self.chipsecLogger.propagate = False
