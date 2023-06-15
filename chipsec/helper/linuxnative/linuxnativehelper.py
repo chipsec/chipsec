@@ -33,6 +33,7 @@ from typing import Optional, Tuple
 from chipsec import defines
 from chipsec.exceptions import OsHelperError
 from chipsec.helper.basehelper import Helper
+from chipsec.helper.linuxnative.cpuid import CPUID
 from chipsec.helper.linuxnative.legacy_pci import LegacyPci
 from chipsec.logger import logger
 
@@ -398,8 +399,7 @@ class LinuxNativeHelper(Helper):
         raise NotImplementedError()
     
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        import chipsec.helper.linuxnative.cpuid as cpuid
-        _cpuid = cpuid.CPUID()
+        _cpuid = CPUID()
         return _cpuid(eax, ecx)
     
     def msgbus_send_read_message(self, mcr, mcrx):
