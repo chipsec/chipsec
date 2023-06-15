@@ -26,10 +26,9 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-import platform
-from ctypes import c_uint32, c_void_p, c_ubyte, sizeof, addressof
-from ctypes import Structure, POINTER, CFUNCTYPE
 import mmap
+import platform
+from ctypes import CFUNCTYPE, POINTER, Structure, addressof, c_uint32, c_void_p, sizeof
 
 # Posix x86_64:
 # Three first call registers : RDI, RSI, RDX
@@ -39,7 +38,7 @@ import mmap
 # Three first call registers : Stack (%esp)
 # Volatile registers         : EAX, ECX, EDX
 
-_POSIX_64_OPC = [
+_POSIX_64_OPC = bytes((
     0x53,                    # push   %rbx
     0x89, 0xf0,              # mov    %esi,%eax
     0x89, 0xd1,              # mov    %edx,%ecx
@@ -50,9 +49,9 @@ _POSIX_64_OPC = [
     0x89, 0x57, 0x0c,        # mov    %edx,0xc(%rdi)
     0x5b,                    # pop    %rbx
     0xc3                     # retq
-]
+))
 
-_CDECL_32_OPC = [
+_CDECL_32_OPC = bytes((
     0x53,                    # push   %ebx
     0x57,                    # push   %edi
     0x8b, 0x7c, 0x24, 0x0c,  # mov    0xc(%esp),%edi
@@ -66,7 +65,7 @@ _CDECL_32_OPC = [
     0x5f,                    # pop    %edi
     0x5b,                    # pop    %ebx
     0xc3                     # ret
-]
+))
 
 is_64bit = sizeof(c_void_p) == 8
 
@@ -80,13 +79,9 @@ class CPUID:
         if platform.machine() not in ("AMD64", "x86_64", "x86", "i686"):
             raise SystemError("Only available for x86")
 
-        opc = _POSIX_64_OPC if is_64bit else _CDECL_32_OPC
-
-        size = len(opc)
-        code = (c_ubyte * size)(*opc)
-
-        self.addr = mmap.mmap(-1, mmap.PAGESIZE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
-        self.addr.write(bytes(code))
+        code: bytes = _POSIX_64_OPC if is_64bit else _CDECL_32_OPC
+        self.addr = mmap.mmap(-1, mmap.PAGESIZE, flags=mmap.MAP_PRIVATE, prot=mmap.PROT_READ | mmap.PROT_WRITE | mmap.PROT_EXEC)
+        self.addr.write(code)
 
         func_type = CFUNCTYPE(None, POINTER(CPUID_struct), c_uint32, c_uint32)
         self.fp = c_void_p.from_buffer(self.addr)
