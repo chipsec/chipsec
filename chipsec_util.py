@@ -107,6 +107,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)
     options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
     options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
+    options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="chipsec won't save logs automatically")
 
     par = vars(parser.parse_args(argv))
 
@@ -145,6 +146,10 @@ class ChipsecUtil:
         self.logger.setlevel()
         if self.log:
             self.logger.set_log_file(self.log)
+            self._autolog_disable = True
+        if self._autolog_disable is False:
+            self.logger.set_autolog_file()
+
         if not self._cmd_args:
             self._cmd_args = ["--help"]
 
@@ -165,7 +170,7 @@ class ChipsecUtil:
 
         if self._load_config:
             try:
-                self._cs.init(self._platform, self._pch, self._helper,  comm.requires_driver(), True)
+                self._cs.init(self._platform, self._pch, self._helper, comm.requires_driver(), True)
             except UnknownChipsetError as msg:
                 self.logger.log("*******************************************************************\n"
                                 "* Unknown platform!\n"
@@ -192,11 +197,13 @@ class ChipsecUtil:
             self._cs.destroy_helper(True)
         return comm.ExitCode
 
+
 def run(cli_cmd: str = '') -> int:
     cli_cmds = []
     if cli_cmd:
         cli_cmds = cli_cmd.strip().split(' ')
     return main(cli_cmds)
+
 
 def main(argv: Sequence[str] = sys.argv[1:]) -> int:
     par = parse_args(argv)
