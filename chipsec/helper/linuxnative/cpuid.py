@@ -26,8 +26,6 @@
 # CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-from __future__ import print_function
-
 import platform
 from ctypes import c_uint32, c_void_p, c_ubyte, sizeof, addressof
 from ctypes import Structure, POINTER, CFUNCTYPE
