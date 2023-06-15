@@ -29,7 +29,7 @@
 from __future__ import print_function
 
 import platform
-from ctypes import c_uint32, c_void_p, c_voidp, c_ubyte, sizeof, addressof
+from ctypes import c_uint32, c_void_p, c_ubyte, sizeof, addressof
 from ctypes import Structure, POINTER, CFUNCTYPE
 import mmap
 
@@ -70,7 +70,7 @@ _CDECL_32_OPC = [
     0xc3                     # ret
 ]
 
-is_64bit = sizeof(c_voidp) == 8
+is_64bit = sizeof(c_void_p) == 8
 
 
 class CPUID_struct(Structure):
