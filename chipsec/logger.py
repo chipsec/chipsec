@@ -43,7 +43,8 @@ except ImportError:
     except ImportError:
         has_WConio = False
 
-LOG_PATH = os.path.join(os.getcwd(), "logs")
+dir_path = os.path.dirname(os.path.realpath(__file__))
+LOG_PATH = os.path.join(dir_path, os.pardir, "logs")
 if not os.path.exists(LOG_PATH):
     os.mkdir(LOG_PATH)
 
@@ -252,10 +253,10 @@ class Logger:
         """Sets the log file for the output."""
         # Close current log file if it's opened
         self.disable()
-        self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
+        
         # specifying name=None effectively disables logging to file
-
-        if self.LOG_FILE_NAME:
+        if name:
+            self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
             # Open new log file and keep it opened
             try:
                 # creates FileHandler for log file
