@@ -125,7 +125,6 @@ class Chipset:
         self.helper = None
         self.os_helper = os_helper()
         self.set_hal_objects()
-        
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -133,6 +132,7 @@ class Chipset:
         # - initializing SPI HAL component in a module or util extension:
         #   self.spi = SPI( self.cs )
         #
+        self.using_return_codes = False
 
     ##################################################################################
     #

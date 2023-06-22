@@ -90,6 +90,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='Skip configuration and driver loading')
     adv_options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="Chipsec won't save logs automatically")
+    adv_options.add_argument('-rc', dest='_return_codes', help='Return codes mode', action='store_true')
 
     par = vars(parser.parse_args(argv))
 
@@ -359,6 +360,9 @@ class ChipsecMain:
             self._autolog_disable = True
         if self._autolog_disable is False:
             self.logger.set_autolog_file()
+        if self._return_codes:
+            self.logger.log_warning("Return codes feature is currently Work in Progress!!!")
+            self._cs.using_return_codes = True
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):
             self.logger.log("[*] Use of the -a command no longer needs to have arguments concatenated with ','")
             self._module_argv = self._module_argv[0].split(',')

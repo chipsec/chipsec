@@ -105,6 +105,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
     options.add_argument('--skip_config', dest='_load_config', action='store_false', help='Skip configuration and driver loading')
     options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="Chipsec won't save logs automatically")
+    options.add_argument('-rc', dest='_return_codes', help='Return codes mode', action='store_true')
     options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(cmds.keys()), type=str.lower, default="help",
                          help="Util command to run: {{{}}}".format(','.join(sorted(cmds.keys()))))
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)
@@ -149,6 +150,9 @@ class ChipsecUtil:
             self._autolog_disable = True
         if self._autolog_disable is False:
             self.logger.set_autolog_file()
+        if self._return_codes:
+            self.logger.log_warning("Return codes feature is currently Work in Progress!!!")
+            self._cs.using_return_codes = True
 
         if not self._cmd_args:
             self._cmd_args = ["--help"]
