@@ -42,8 +42,6 @@ def get_tools_path() -> str:
     return os.path.normpath(os.path.join(get_main_dir(), TOOLS_DIR))
 
 
-import chipsec.helper.helpers as chiphelpers
-
 # OS Helper
 #
 # Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver

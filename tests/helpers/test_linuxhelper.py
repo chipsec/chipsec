@@ -23,24 +23,9 @@ import unittest
 from unittest.mock import patch, Mock
 from multiprocessing import cpu_count
 from struct import pack
-
 import sys
 
 from chipsec.exceptions import UnimplementedAPIError
-sys.modules['fcntl'] = Mock()
-sys.modules['resource'] = Mock()
-
-sys.modules['pywintypes'] = Mock()
-sys.modules['win32service'] = Mock()
-sys.modules['winerror'] = Mock()
-sys.modules['win32file'] = Mock()
-sys.modules['win32api'] = Mock()
-sys.modules['win32process'] = Mock()
-sys.modules['win32security'] = Mock()
-sys.modules['win32serviceutil'] = Mock()
-
-
-# import chipsec.helper.linux.linuxhelper
 
 # assuming 64 bit system. Will break on 32bit system. (would need to swap Q > I in pack())
 def pack_Q(num_of_q: int, expected_value: int, expected_value_index:int = 0) -> bytes:
@@ -62,6 +47,21 @@ def pack_ioport(expected_value:int) -> bytes:
 @patch('chipsec.helper.linux.linuxhelper.fcntl')  
 class LinuxHelperTest(unittest.TestCase):
     
+    @classmethod
+    def setUpClass(cls):
+        # Set up mock modules
+        cls._mocked_modules = ['fcntl', 'resource', 'pywintypes', 'win32service',
+                               'winerror', 'win32file', 'win32api', 'win32process', 
+                               'win32security', 'win32serviceutil']
+        for mod in cls._mocked_modules:
+            sys.modules[mod] = Mock()
+
+    @classmethod
+    def tearDownClass(cls):
+        # remove mocked modules
+        for mod in cls._mocked_modules:
+            del sys.modules[mod]
+
     ioctldict = {
         (0xc0084301, b'\xb8\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'):
             pack_ioport(0x1),
