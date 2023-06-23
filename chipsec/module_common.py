@@ -21,13 +21,20 @@
 
 """
 Common include file for modules
+
+
 """
 
-import chipsec.logger
 import chipsec.chipset
+from enum import Enum
+from chipsec.defines import bit, is_set
+from chipsec.logger import logger
 
 
 class ModuleResult:
+    # -------------------------------------------------------
+    # Legacy results
+    # -------------------------------------------------------
     FAILED = 0
     PASSED = 1
     WARNING = 2
@@ -36,8 +43,58 @@ class ModuleResult:
     INFORMATION = 5
     NOTAPPLICABLE = 6
     ERROR = -1
+    # -------------------------------------------------------
+    class status(Enum):
+        SUCCESS = [0x0000000000000000, "Test module completed successfully"]
+        LOCKS = [bit(31), "Locks are not set"] 
+        MITIGATION = [bit(30), "Does not support mitigation"]
+        CONFIGURATION = [bit(29), "Configuration not set"] 
+        PROTECTION = [bit(28), "Protection not supported/enabled"]
+        ACCESS_RW = [bit(27), "Read or write access issues"]
+        ALL_FFS = [bit(19), "Read returned all 0xFFs"]
+        ALL_00S = [bit(18), "Read returned all 0x00s"]
+        DEVICE_DISABLED = [bit(17), "Device is disabled"]
+        FEATURE_DISABLED = [bit(16), "Feature is disabled"]
+        VERIFY = [bit(12), "Manual verification/further testing recommended"]
+        UNSUPPORTED_FEATURE = [bit(11), "Feature not supported"] 
+        DEBUG_FEATURE = [bit(10), "A debug feature is enabled or an unexpected debug state was discovered on this platform"]
+        NOT_APPLICABLE = [bit(9), "Skipping module since it is not supported"]
+        INFORMATION = [bit(0), "For your information"]
+        INVALID = [0xFFFFFFFFFFFFFFFF, "Error running the test"]
+    
+    def __init__(self, ID: int = 0, url: str = ""):
+        self._id = ID
+        self._url = url
+        self._result = 0x00000000
+        self._return_code = self.status.SUCCESS.value[0]
+        self._message = ''
+        self.logger = logger()
 
+    def setTestID(self) -> None:
+        self._return_code ^= self._id << 4
+    
+    def setStatusBit(self, status) -> None:
+        if is_set(self._result, status.value[0]) is not True:
+            self._result ^= status.value[0]
+            self._message += ' / ' + status.value[1]
+            
+    def setResultBits(self) -> None:
+        self._return_code ^= self._result << 32
 
+    def buildRC(self) -> int:
+        self.setResultBits()
+        self.setTestID()
+        if self._result == self.status.SUCCESS.value[0]:   
+            self.logger.log_good(f"RC 0x{self._return_code:016x}: {self.status.SUCCESS.value[1]}")
+        else:  
+            self.logger.log_important(f"For next steps: {self._url}")
+            self.logger.log_important(f"RC 0x{self._return_code:016x}: {self._message}")
+        
+        return self._return_code
+
+# -------------------------------------------------------
+# Legacy results
+# -------------------------------------------------------
 result_priority = {
     ModuleResult.PASSED: 0,
     ModuleResult.NOTAPPLICABLE: 0,
@@ -60,16 +117,21 @@ ModuleResultName = {
     ModuleResult.NOTAPPLICABLE: "NotApplicable"
 }
 
-
-def getModuleResultName(res):
+def getModuleResultName(res) -> str:
+    if chipsec.chipset.cs().using_return_codes:
+        return "Passed" if (res & 0xFFFFFFFF00000000) == 0 else "Failed"
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
-
+# -------------------------------------------------------
 
 class BaseModule:
     def __init__(self):
         self.cs = chipsec.chipset.cs()
-        self.logger = chipsec.logger.logger()
+        self.logger = logger()
+        # -------------------------------------------------------
+        # Legacy results
+        # -------------------------------------------------------
         self.res = ModuleResult.PASSED
+        # -------------------------------------------------------
 
     def is_supported(self):
         """
@@ -77,10 +139,12 @@ class BaseModule:
         depending whether or not this module is supported in the currently running
         platform.
         To access the currently running platform use
-
         """
         return True
 
+    # -------------------------------------------------------
+    # Legacy results
+    # -------------------------------------------------------
     def update_res(self, value):
         if value not in result_priority:
             self.logger.log_verbose(f'Attempting to set invalid result status: {value}')
@@ -89,16 +153,7 @@ class BaseModule:
         new_priority = result_priority[value]
         if new_priority >= cur_priority:
             self.res = value
-
-    def display_res_check(self, pass_msg, error_msg):
-        if self.res == ModuleResult.PASSED:
-            self.logger.log_passed(pass_msg)
-        elif self.res == ModuleResult.FAILED:
-            self.logger.log_failed(error_msg)
-        elif self.res == ModuleResult.WARNING:
-            self.logger.log_warning(error_msg)
-        elif self.res == ModuleResult.INFORMATION:
-            self.logger.log_information(error_msg)
+    # -------------------------------------------------------
 
     def run(self, module_argv):
         raise NotImplementedError('Sub-class should overwrite the run() method')

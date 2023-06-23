@@ -272,7 +272,7 @@ class ChipsecMain:
             self.logger.log("[+] loaded {}".format(modx))
 
     def run_loaded_modules(self):
-        results = ChipsecResults()
+        results = ChipsecResults(self._return_codes)
         results.add_properties(self.properties())
 
         # Print a list of all loaded modules
