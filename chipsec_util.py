@@ -85,29 +85,29 @@ def import_cmds() -> Dict[str, Any]:
 
 def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     """Parse the arguments provided on the command line."""
-    global_usage = "All numeric values are in hex\n<width> is in {1, byte, 2, word, 4, dword}\n\n"
+    global_usage = "Additional arguments for specific command.\n\n All numeric values are in hex\n<width> is in {1, byte, 2, word, 4, dword}\n\n"
     cmds = import_cmds()
     parser = argparse.ArgumentParser(usage='%(prog)s [options] <command>', add_help=False)
     options = parser.add_argument_group('Options')
-    options.add_argument('-h', '--help', dest='show_help', help="show this message and exit", action='store_true')
-    options.add_argument('-v', '--verbose', help='verbose mode', action='store_true')
-    options.add_argument('--hal', help='HAL mode', action='store_true')
-    options.add_argument('-d', '--debug', help='debug mode', action='store_true')
-    options.add_argument('-vv', '--vverbose', help='very verbose HAL debug mode', action='store_true')
-    options.add_argument('-l', '--log', help='output to log file')
-    options.add_argument('-p', '--platform', dest='_platform', help='explicitly specify platform code', choices=cs().chipset_codes, type=str.upper)
-    options.add_argument('--pch', dest='_pch', help='explicitly specify PCH code', choices=cs().pch_codes, type=str.upper)
+    options.add_argument('-h', '--help', dest='show_help', help="Show this message and exit", action='store_true')
+    options.add_argument('-v', '--verbose', help='Verbose logging', action='store_true')
+    options.add_argument('--hal', help='HAL logging', action='store_true')
+    options.add_argument('-d', '--debug', help='Debug logging', action='store_true')
+    options.add_argument('-vv', '--vverbose', help='Very verbose logging (Verbose + HAL + Debug)', action='store_true')
+    options.add_argument('-l', '--log', help='Output to log file')
+    options.add_argument('-p', '--platform', dest='_platform', help='Explicitly specify platform code', choices=cs().chipset_codes, type=str.upper)
+    options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=cs().pch_codes, type=str.upper)
     options.add_argument('-n', '--no_driver', dest='_no_driver', action='store_true',
-                         help="chipsec won't need kernel mode functions so don't load chipsec driver")
+                         help="Chipsec won't need kernel mode functions so don't load chipsec driver")
     options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
-                         help='run chipsec even if the platform is not recognized')
-    options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=helper().get_available_helpers())
+                         help='Run chipsec even if the platform is not recognized (Deprecated)')
+    options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers())
+    options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
+    options.add_argument('--skip_config', dest='_load_config', action='store_false', help='Skip configuration and driver loading')
+    options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="Chipsec won't save logs automatically")
     options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(cmds.keys()), type=str.lower, default="help",
                          help="Util command to run: {{{}}}".format(','.join(sorted(cmds.keys()))))
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)
-    options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
-    options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
-    options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="chipsec won't save logs automatically")
 
     par = vars(parser.parse_args(argv))
 
