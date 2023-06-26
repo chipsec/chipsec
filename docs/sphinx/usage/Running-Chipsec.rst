@@ -73,17 +73,17 @@ chipsec_main options
      -m, --module _MODULE                Specify module to run (example: -m common.bios_wp)
      -mx, --module_exclude _MODULE1 ...  Specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)
      -a, --module_args _MODULE_ARGV      Additional module arguments
-     -v, --verbose                       Verbose mode
-     -vv, --vverbose                     Very verbose HAL debug mode
-     --hal                               HAL mode
-     -d, --debug                         Debug mode
+     -v, --verbose                       Verbose logging
+     --hal                               HAL logging
+     -d, --debug                         Debug logging
      -l, --log  LOG                      Output to log file
+     -vv, --vverbose                     Very verbose logging (verbose + HAL + debug)
 
    Advanced Options:
      -p, --platform _PLATFORM            Explicitly specify platform code
      --pch _PCH                          Explicitly specify PCH code
      -n, --no_driver                     Chipsec won't need kernel mode functions so don't load chipsec driver
-     -i, --ignore_platform               Run chipsec even if the platform is not recognized (not recommended)
+     -i, --ignore_platform               Run chipsec even if the platform is not recognized (Deprecated)
      -j, --json _JSON_OUT                Specify filename for JSON output
      -x, --xml _XML_OUT                  Specify filename for xml output (JUnit style)
      -k, --markdown                      Specify filename for markdown output
@@ -93,28 +93,32 @@ chipsec_main options
      --failfast                          Fail on any exception and exit (don't mask exceptions)
      --no_time                           Don't log timestamps
      --deltas _DELTAS_FILE               Specifies a JSON log file to compute result deltas from
-     --record _TO_FILE                   Run chipsec and clone helper results into JSON file
-     --replay _FROM_FILE                 Replay a chipsec run with JSON file
      --helper _HELPER                    Specify OS Helper
      -nb, --no_banner                    Chipsec won't display banner information
      --skip_config                       Skip configuration and driver loading
+     -nl                                 Chipsec won't save logs automatically
 
 chipsec_util options
 --------------------
 
 ::
 
-   usage: chipsec_util.py [options] <command>
+   usage: chipsec_util.py [options] <command> [<args>]
 
    Options:
      -h, --help                   Show this message and exit
-     -v, --verbose                Verbose mode
-     --hal                        HAL mode
-     -d, --debug                  Debug mode
+     -v, --verbose                Verbose logging
+     --hal                        HAL logging
+     -d, --debug                  Debug logging
+     -vv, --vverbose              Very verbose logging (verbose + HAL + debug)
      -l, --log  LOG               Output to log file
      -p, --platform _PLATFORM     Explicitly specify platform code
      --pch _PCH                   Explicitly specify PCH code
      -n, --no_driver              Chipsec won't need kernel mode functions so don't load chipsec driver
-     -i, --ignore_platform        Run chipsec even if the platform is not recognized (not recommended)
-     Command _CMD                 Util command to run
-     Command _ARGS                All numeric values are in hex <width> is in {1 - byte, 2 - word, 4 - dword}
+     -i, --ignore_platform        Run chipsec even if the platform is not recognized (Deprecated)
+     --helper _HELPER             Specify OS Helper
+     -nb, --no_banner             Chipsec won't display banner information
+     --skip_config                Skip configuration and driver loading
+     -nl                          Chipsec won't save logs automatically
+     command                      Util command to run
+     args                         Additional arguments for specific command. All numeric values are in hex. <width> is in {1 - byte, 2 - word, 4 - dword}
