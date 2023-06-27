@@ -1,0 +1,77 @@
+﻿;pci filter driver inf
+
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=System
+ClassGuid={4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider=%MSFT%
+PnpLockdown=1
+CatalogFile=pcifilter.cat
+DriverVer=05/29/2023,1.00.0000.1
+
+[Manufacturer]
+%MSFT%=Microsoft,NTamd64
+
+[Microsoft.NTamd64]
+%pcifilter.DeviceDesc%=pcifilter_Device, *pnp0a03
+
+;;;;; files ;;;;;
+[SourceDisksNames]
+1 = %DISK_NAME%,,,""
+
+[SourceDisksFiles]
+pcifilter.sys = 1,,
+
+[Drivers_Dir]
+pcifilter.sys
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[pcifilter_Device]
+CopyFiles=Drivers_Dir
+
+;;;;; registry ;;;;;;
+[pcifilter_Device.HW]
+AddReg = PCI_Filter_AddReg
+
+[PCI_Filter_AddReg]
+HKR,,"UpperFilters", 0x00010000, "pcifilter"
+
+;;;;; install pcifilter service ;;;;;;
+[pcifilter_Device.Services]
+AddService = pci, %SPSVCINST_ASSOCSERVICE%, pci_ServiceInst
+AddService = pcifilter,,pcifilter_ServiceInst
+
+;[pcifilter_Device,CoInstallers]
+[pci_ServiceInst]
+DisplayName    = "PCI Bus Driver"
+ServiceType    = %SERVICE_KERNEL_DRIVER%
+StartType      = %SERVICE_BOOT_START%
+ErrorControl   = %SERVICE_ERROR_NORMAL%
+ServiceBinary  = %12%\pci.sys
+LoadOrderGroup = "Boot Bus Extender"
+
+[pcifilter_ServiceInst]
+DisplayName    = %pcifilter_svcdesc%
+ServiceType    = %SERVICE_KERNEL_DRIVER%
+StartType      = %SERVICE_BOOT_START%
+ErrorControl   = %SERVICE_ERROR_NORMAL%
+ServiceBinary  = %12%\pcifilter.sys
+LoadOrderGroup = "PnP Filter"
+
+;;;;; string definition ;;;;;;;;
+[Strings]
+MSFT = "Intel"
+STDDEV = "(Standard system devices)"
+pcifilter.DeviceDesc = "PCI Bus Filter"
+SystemClassName = "System devices"
+pcifilter_svcdesc = "PCI Filter Driver"
+DISK_NAME = "PCI Filter Driver Install Disk"
+SPSVCINST_ASSOCSERVICE = 0x00000002
+SERVICE_KERNEL_DRIVER  = 1
+SERVICE_BOOT_START     = 0
+SERVICE_DEMAND_START   = 3
+SERVICE_ERROR_NORMAL   = 1
+
