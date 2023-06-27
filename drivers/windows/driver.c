@@ -25,7 +25,10 @@ chipsec@intel.com
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <initguid.h>
+#include <wdmguid.h>
 #include "driver.h"
+
 
 //#pragma comment(lib, "wdmsec.lib")
 //#pragma comment(lib, "bufferoverflowK.lib")
@@ -33,6 +36,10 @@ chipsec@intel.com
 #pragma comment(linker, "/section:chipsec_code,EWP")
 
 #pragma code_seg("chipsec_code$__c")
+
+PPCI_BUS_INTERFACE_STANDARD PPCIbusInterface=NULL;	//pci driver interface
+PFILE_OBJECT pcifo=NULL;		//pci bus filter driver file object
+PDEVICE_OBJECT pcifido=NULL;	//pci bus filter driver device object
 
 typedef
 PVOID
@@ -55,7 +62,7 @@ PFN_ExAllocatePool2 pfnExAllocatePool2 = NULL;
 PFN_ExAllocatePoolWithTag pfnExAllocatePoolWithTag = NULL;
 
 UINT32
-ReadPCICfg(
+ReadPCICfg_Legacy(
   UINT8 bus,
   UINT8 dev,
   UINT8 fun,
@@ -73,7 +80,7 @@ ReadPCICfg(
 }
 
 VOID
-WritePCICfg(
+WritePCICfg_Legacy(
   UINT8 bus,
   UINT8 dev,
   UINT8 fun,
@@ -136,27 +143,186 @@ DWORD pci_read_dword(WORD bus, WORD dev, WORD func, BYTE offset )
 
 void _dump_buffer( unsigned char * b, unsigned int len )
 {
-  unsigned int i;
-  unsigned int j;
+    unsigned int i;
+    unsigned int j;
 
-  for( i = 0; i < len; i+=8 ){
-    for (j = 0; j < 8; j++) {
-			if (i + j >= len)
-				DbgPrint("   ");
-			else
-				DbgPrint("%02X ", b[i + j]);
-		}
-		DbgPrint(": ");
-		for (j = 0; j < 8; j++) {
-			if (i + j >= len)
-				DbgPrint("   ");
-			else
-				DbgPrint("%c ", b[i + j]);
-		}
-		DbgPrint("\n");
-  }
+    for( i = 0; i < len; i+=8 ){
+        for (j = 0; j < 8; j++) {
+            if (i + j >= len)
+                DbgPrint("   ");
+            else
+                DbgPrint("%02X ", b[i + j]);
+        }
+        DbgPrint(": ");
+        for (j = 0; j < 8; j++) {
+            if (i + j >= len)
+                DbgPrint("   ");
+            else
+                DbgPrint("%c ", b[i + j]);
+        }
+        DbgPrint("\n");
+    }
 }
 
+
+NTSTATUS PutPciBusInterface()
+{
+    if (PPCIbusInterface && PPCIbusInterface->InterfaceDereference)
+    {
+        (*PPCIbusInterface->InterfaceDereference)(PPCIbusInterface->Context);
+
+        ExFreePool(PPCIbusInterface);
+    }
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS GetPciBusInterface()
+{
+    KEVENT event;
+    NTSTATUS ntStatus;
+    UNICODE_STRING pcifidoNameU;
+    PIRP irp;
+    IO_STATUS_BLOCK ioStatus;
+    PIO_STACK_LOCATION irpStack;
+
+    if (pfnExAllocatePool2 != NULL) {
+        PPCIbusInterface = (PPCI_BUS_INTERFACE_STANDARD)pfnExAllocatePool2( POOL_FLAG_NON_PAGED, sizeof(PCI_BUS_INTERFACE_STANDARD), 0x3184 );
+    } else if (pfnExAllocatePoolWithTag != NULL) {
+        // Fall back to call the old api
+        PPCIbusInterface = (PPCI_BUS_INTERFACE_STANDARD)pfnExAllocatePoolWithTag( POOL_FLAG_NON_PAGED, sizeof(PCI_BUS_INTERFACE_STANDARD), 0x3184 );
+    }
+    else {
+        DbgPrint("[chipsec] ERROR: couldn't find the correct kernel api\n");
+        ntStatus = STATUS_NOT_IMPLEMENTED;
+        return ntStatus;
+    }
+
+    if (PPCIbusInterface == NULL)
+    {
+        ntStatus = STATUS_INSUFFICIENT_RESOURCES;
+        return ntStatus;
+    }
+    RtlZeroMemory(PPCIbusInterface, sizeof(PCI_BUS_INTERFACE_STANDARD));
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    RtlInitUnicodeString(&pcifidoNameU, L"\\Device\\ChipsecPCIFilter");
+
+    ntStatus = IoGetDeviceObjectPointer(&pcifidoNameU,
+        FILE_READ_DATA | FILE_WRITE_DATA,
+        &pcifo,
+        &pcifido);
+
+    if (NT_SUCCESS(ntStatus))
+    {
+        DbgPrint("Got pci filter device object: 0x%x", pcifido);
+    }
+    else
+    {
+        DbgPrint("Get pci filter device object failed, code=0x%x", ntStatus);
+
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    irp=IoBuildSynchronousFsdRequest(IRP_MJ_PNP,
+                                     pcifido,
+                                     NULL,
+                                     0,
+                                     NULL,
+                                     &event,
+                                     &ioStatus);
+
+    if (irp==NULL)
+    {
+        ntStatus = STATUS_INSUFFICIENT_RESOURCES;
+        goto End;
+    }
+
+    irpStack=IoGetNextIrpStackLocation(irp);
+    irpStack->MinorFunction=IRP_MN_QUERY_INTERFACE;
+    irpStack->Parameters.QueryInterface.InterfaceType=(LPGUID)&GUID_PCI_BUS_INTERFACE_STANDARD;
+    irpStack->Parameters.QueryInterface.Size=sizeof(PCI_BUS_INTERFACE_STANDARD);
+    irpStack->Parameters.QueryInterface.Version=PCI_BUS_INTERFACE_STANDARD_VERSION;
+    irpStack->Parameters.QueryInterface.Interface=(PINTERFACE)PPCIbusInterface;
+    irpStack->Parameters.QueryInterface.InterfaceSpecificData=NULL;
+
+    irp->IoStatus.Status=STATUS_NOT_SUPPORTED ;
+
+    ntStatus=IoCallDriver(pcifido, irp);
+
+    if (ntStatus==STATUS_PENDING)
+    {
+        KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+        ntStatus=ioStatus.Status;
+        if (PPCIbusInterface->ReadConfig == NULL)
+        {
+            DbgPrint("Get pci filter device object busInterface failed, code=0x%x", ntStatus);
+        }
+    }
+End:
+    KeClearEvent(&event);
+    return ntStatus;
+}
+
+static NTSTATUS ReadPciConfig(BYTE bus, BYTE dev, BYTE fun, BYTE off, BYTE size, DWORD* pValue)
+{
+    NTSTATUS ntStatus = STATUS_UNSUCCESSFUL;
+
+    PCI_SLOT_NUMBER slot;
+    ULONG ulRet;
+
+    slot.u.AsULONG = 0;
+    slot.u.bits.DeviceNumber = dev;
+    slot.u.bits.FunctionNumber = fun;
+
+    ulRet = (*PPCIbusInterface->ReadConfig)(PPCIbusInterface->Context,
+        bus,
+        slot.u.AsULONG,
+        pValue,
+        off,
+        size);
+
+    if (ulRet == size)
+    {
+        ntStatus = STATUS_SUCCESS;
+        DbgPrint("Read %d bytes from pci config space", ulRet);
+    }
+    else{
+        ntStatus = STATUS_UNSUCCESSFUL;
+    }
+    return ntStatus;
+}
+
+static NTSTATUS WritePciConfig(BYTE bus, BYTE dev, BYTE fun, BYTE off, BYTE size, DWORD value)
+{
+    NTSTATUS ntStatus = STATUS_UNSUCCESSFUL;
+    PVOID pValue = & value;
+
+    PCI_SLOT_NUMBER slot;
+    ULONG ulRet;
+
+    slot.u.AsULONG = 0;
+    slot.u.bits.DeviceNumber = dev;
+    slot.u.bits.FunctionNumber = fun;
+
+    ulRet = (*PPCIbusInterface->WriteConfig)(PPCIbusInterface->Context,
+        bus,
+        slot.u.AsULONG,
+        pValue,
+        off,
+        size);
+
+    if (ulRet == size)
+    {
+        ntStatus = STATUS_SUCCESS;
+        DbgPrint("Write %d bytes to pci config space", ulRet);
+    }
+    else{
+        ntStatus = STATUS_UNSUCCESSFUL;
+    }
+
+    return ntStatus;
+}
 
 
 NTSTATUS
@@ -169,31 +335,20 @@ DriverEntry(
     UNICODE_STRING DeviceName;
     UNICODE_STRING DosDeviceName;
 
-	UNREFERENCED_PARAMETER(RegistryPath);
+    UNREFERENCED_PARAMETER(RegistryPath);
 
-    //
+    RtlInitUnicodeString(&functionName, L"ExAllocatePool2");
+    pfnExAllocatePool2 = (PFN_ExAllocatePool2)MmGetSystemRoutineAddress(&functionName);
+    RtlInitUnicodeString(&functionName, L"ExAllocatePoolWithTag");
+    pfnExAllocatePoolWithTag = (PFN_ExAllocatePoolWithTag)MmGetSystemRoutineAddress(&functionName);
+    if (pfnExAllocatePool2 == NULL && pfnExAllocatePoolWithTag == NULL) {
+        DbgPrint("[chipsec] ERROR: couldn't find the correct kernel api\n");
+        Status = STATUS_NOT_IMPLEMENTED;
+        return Status;
+    }
+
     // Initialize a unicode string for the drivers object name.
-    //
     RtlInitUnicodeString( &DeviceName, DEVICE_NAME_U );
-
-    //
-    // Attempt to create a named device object
-    //
-
-//
-// SDDL_DEVOBJ_SYS_ALL_ADM_ALL allows the kernel, system, and admin complete
-// control over the device. No other users may access the device
-//
-/*
-DECLARE_CONST_UNICODE_STRING(
-    SDDL_DEVOBJ_SYS_ALL_ADM_ALL,
-    L"D:P(A;;GA;;;SY)(A;;GA;;;BA)"
-    );
-*/
-
-// -- Security descriptor
-//RtlInitUnicodeString(&sd,
-//  _T("D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GA;;;BU)(A;;GA;;;WD)"));
 
     Status = IoCreateDeviceSecure(
       DriverObject,
@@ -213,9 +368,7 @@ DECLARE_CONST_UNICODE_STRING(
         return Status;
       }
 
-    //
     // Create the symbolic link that the Win32 app can access the device
-    //
     RtlInitUnicodeString (&DosDeviceName, DEVICE_NAME_DOS );
     Status = IoCreateSymbolicLink(&DosDeviceName, &DeviceName);
     if( !NT_SUCCESS(Status) )
@@ -228,19 +381,21 @@ DECLARE_CONST_UNICODE_STRING(
         return Status;
       }
 
-    //
     // Initialize the dispatch table of the driver object.
     // NT sends requests to these routines.
-    //
     DriverObject->MajorFunction[IRP_MJ_CREATE]         = DriverOpen;
     DriverObject->MajorFunction[IRP_MJ_CLOSE]          = DriverClose;
     DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DriverDeviceControl;
     DriverObject->DriverUnload                         = DriverUnload;
 
+    Status = GetPciBusInterface();
+    if (PPCIbusInterface->ReadConfig == NULL)
+    {
+        //keep using legacy pci access if can't get pci bus interface from filter driver, so return STATUS_SUCCESS
+        Status = STATUS_SUCCESS;
+    }
     return Status;
-
 }
-
 
 NTSTATUS
 DriverOpen(
@@ -248,12 +403,9 @@ DriverOpen(
     IN PIRP Irp
     )
 {
-
     DbgPrint( "[chipsec] >> DriverOpen (DeviceObject = 0x%p)\n", DeviceObject );
 
-    //
     // Complete the request and return status.
-    //
     Irp->IoStatus.Status = STATUS_SUCCESS;
     Irp->IoStatus.Information = FILE_OPENED;
     IoCompleteRequest(Irp, IO_NO_INCREMENT);
@@ -288,6 +440,8 @@ DriverUnload(
 
     DbgPrint( "[chipsec] >> DriverUnload (DriverObject = 0x%p)\n", DriverObject );
 
+    PutPciBusInterface();
+
     RtlInitUnicodeString(&DosDeviceName, DEVICE_NAME_DOS );
     Status = IoDeleteSymbolicLink (&DosDeviceName );
     if( !NT_SUCCESS(Status) )
@@ -299,9 +453,7 @@ DriverUnload(
       {
         IoDeleteDevice(DriverObject->DeviceObject);
       }
-
     return;
-
 }
 
 
@@ -410,9 +562,7 @@ DriverDeviceControl(
     PROCESSOR_NUMBER   _proc_number = {0, 0, 0};
     KAFFINITY          _kaffinity = 0;
 
-    //
     // Get the current IRP stack location of this request
-    //
     IrpSp = IoGetCurrentIrpStackLocation (Irp);
     IOControlCode = IrpSp->Parameters.DeviceIoControl.IoControlCode;
 
@@ -420,9 +570,7 @@ DriverDeviceControl(
     DbgPrint( "[chipsec] DeviceObject = 0x%p IOCTL = 0x%x\n", DeviceObject, IOControlCode );
     DbgPrint( "[chipsec] InputBufferLength = 0x%x, OutputBufferLength = 0x%x\n", IrpSp->Parameters.DeviceIoControl.InputBufferLength, IrpSp->Parameters.DeviceIoControl.OutputBufferLength );
 
-    //
     // CPU thread ID
-    //
     _num_active_cpus = KeQueryActiveProcessorCountEx( ALL_PROCESSOR_GROUPS );
     _num_groups      = KeQueryActiveGroupCount();
     _cpu_thread_id   = KeGetCurrentProcessorNumberEx( &_proc_number );
@@ -435,42 +583,46 @@ DriverDeviceControl(
     DbgPrint( "[chipsec] Current CPU number         : %u\n", _proc_number.Number );
     DbgPrint( "[chipsec] Current CPU thread         : %u\n", _cpu_thread_id );
 
-    //
     // Switch on the IOCTL code that is being requested by the user.  If the
     // operation is a valid one for this device do the needful.
-    //
     Irp -> IoStatus.Information = 0;
     switch( IOControlCode )
       {
         case READ_PCI_CFG_REGISTER:
-          {
-            DWORD val;
+        {
+            DWORD val = 0;
             BYTE size = 0;
             WORD bdf[4];
             BYTE bus = 0, dev = 0, fun = 0, off = 0;
-            DbgPrint( "[chipsec] > READ_PCI_CFG_REGISTER\n" );
+            DbgPrint("[chipsec] > READ_PCI_CFG_REGISTER\n");
 
-            RtlCopyBytes( bdf,Irp->AssociatedIrp.SystemBuffer, 4*sizeof(WORD) );
-            RtlCopyBytes( &size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + 4*sizeof(WORD), sizeof(BYTE) );
+            RtlCopyBytes(bdf, Irp->AssociatedIrp.SystemBuffer, 4 * sizeof(WORD));
+            RtlCopyBytes(&size, (BYTE*)Irp->AssociatedIrp.SystemBuffer + 4 * sizeof(WORD), sizeof(BYTE));
             bus = (UINT8)bdf[0];
             dev = (UINT8)bdf[1];
             fun = (UINT8)bdf[2];
             off = (UINT8)bdf[3];
 
-            if( 1 != size && 2 != size && 4 != size)
-              {
-              DbgPrint( "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
-              Status = STATUS_INVALID_PARAMETER;
-              break;
-              }
-            val = ReadPCICfg( bus, dev, fun, off, size );
+            if (1 != size && 2 != size && 4 != size)
+            {
+                DbgPrint("[chipsec] ERROR: STATUS_INVALID_PARAMETER\n");
+                Status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+            if (PPCIbusInterface->ReadConfig == NULL)
+            {
+                val = ReadPCICfg_Legacy( bus, dev, fun, off, size );
+                Status = STATUS_SUCCESS;
+            }
+            else {
+                Status = ReadPciConfig(bus, dev, fun, off, size, &val);
+            }
 
             IrpSp->Parameters.Read.Length = size;
             RtlCopyBytes( Irp->AssociatedIrp.SystemBuffer, (VOID*)&val, size );
             DbgPrint( "[chipsec][READ_PCI_CFG_REGISTER] B/D/F: %#04x/%#04x/%#04x, OFFSET: %#04x, value = %#010x (size = 0x%x)\n", bus, dev, fun, off, val, size );
 
             dwBytesWritten = IrpSp->Parameters.Read.Length;
-            Status = STATUS_SUCCESS;
             break;
           }
         case WRITE_PCI_CFG_REGISTER:
@@ -490,9 +642,14 @@ DriverDeviceControl(
 
             val = ((DWORD)bdf[5] << 16) | bdf[4];
             DbgPrint( "[chipsec][WRITE_PCI_CFG_REGISTER] B/D/F: %#02x/%#02x/%#02x, OFFSET: %#02x, value = %#010x (size = %#02x)\n", bus, dev, fun, off, val, size );
-            WritePCICfg( bus, dev, fun, off, size, val );
-
-            Status = STATUS_SUCCESS;
+            if (PPCIbusInterface->WriteConfig == NULL)
+            {
+                WritePCICfg_Legacy( bus, dev, fun, off, size, val );
+                Status = STATUS_SUCCESS;
+            }
+            else {
+                Status = WritePciConfig(bus, dev, fun, off, size, val);
+            }
             break;
           }
         case IOCTL_READ_PHYSMEM:
@@ -565,7 +722,7 @@ DriverDeviceControl(
                 phys_addr.LowPart  = ((UINT32*)pInBuf)[1];
                 len                = ((UINT32*)pInBuf)[2];
 
-				        pInBuf = pInBuf + (3 * sizeof(UINT32));
+                pInBuf = pInBuf + (3 * sizeof(UINT32));
 
                 if( IrpSp->Parameters.DeviceIoControl.InputBufferLength < len + 3*sizeof(UINT32) )
                   {
@@ -863,16 +1020,11 @@ DriverDeviceControl(
                 break;
               }
 
-            RtlInitUnicodeString(&functionName, L"ExAllocatePool2");
-            pfnExAllocatePool2 = (PFN_ExAllocatePool2)MmGetSystemRoutineAddress(&functionName);
-            RtlInitUnicodeString(&functionName, L"ExAllocatePoolWithTag");
-            pfnExAllocatePoolWithTag = (PFN_ExAllocatePoolWithTag)MmGetSystemRoutineAddress(&functionName);
-
             if (pfnExAllocatePool2 != NULL) {
-                ucode_buf = pfnExAllocatePool2( NonPagedPool, ucode_size, 0x3184 );
+                ucode_buf = pfnExAllocatePool2( POOL_FLAG_NON_PAGED, ucode_size, 0x3184 );
             } else if (pfnExAllocatePoolWithTag != NULL) {
                 // Fall back to call the old api            
-                ucode_buf = pfnExAllocatePoolWithTag( NonPagedPool, ucode_size, 0x3184 );
+                ucode_buf = pfnExAllocatePoolWithTag( POOL_FLAG_NON_PAGED, ucode_size, 0x3184 );
             }
             else {
                 DbgPrint("[chipsec] ERROR: couldn't find the correct kernel api\n");
@@ -892,27 +1044,21 @@ DriverDeviceControl(
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] ucode update contents:\n" );
             _dump_buffer( (unsigned char *)ucode_buf, min(ucode_size,0x100) );
 
-            // --
             // -- read IA32_BIOS_SIGN_ID MSR to save current patch ID
             // -- we'll need this value later to verify the microcode update was successful
-            // --
             _rdmsr(MSR_IA32_BIOS_SIGN_ID, &_eax[0], &_edx[0]);
 
-            // --
             // -- trigger CPU ucode patch update
             // -- pInBuf points to the beginning of ucode update binary
-            // --
             _wrmsr( MSR_IA32_BIOS_UPDT_TRIG, (UINT32)((ucode_start >> 32) & 0xFFFFFFFF), (UINT32)(ucode_start & 0xFFFFFFFF) );
 
             ExFreePoolWithTag( ucode_buf, 0x3184 );
 
-            // --
             // -- check if patch was loaded
             // --
             // -- need to clear IA32_BIOS_SIGN_ID MSR first
             // -- CPUID will deposit an update ID value in 64-bit MSR at address MSR_IA32_BIOS_SIGN_ID
             // -- read IA32_BIOS_SIGN_ID MSR to check patch ID != previous patch ID
-            // --
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] checking ucode update was loaded..\n" );
             DbgPrint( "[chipsec][IOCTL_LOAD_UCODE_UPDATE] clear IA32_BIOS_SIGN_ID, CPUID EAX=1, read back IA32_BIOS_SIGN_ID\n" );
             _wrmsr( MSR_IA32_BIOS_SIGN_ID, 0, 0 );
@@ -943,7 +1089,7 @@ DriverDeviceControl(
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	            DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
+                DbgPrint( "[chipsec][IOCTL_WRMSR] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -970,9 +1116,7 @@ DriverDeviceControl(
             _edx      = msrData[2];
             DbgPrint( "[chipsec][IOCTL_WRMSR] WRMSR( 0x%x ) <-- 0x%08x%08x\n", _msr_addr, _edx, _eax );
 
-            // --
             // -- write MSR
-            // --
             __try
               {
                 _wrmsr( _msr_addr, _edx, _eax );
@@ -1166,7 +1310,7 @@ DriverDeviceControl(
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	              DbgPrint( "[chipsec] ERROR: NO data provided\n" );
+                DbgPrint( "[chipsec] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -1185,9 +1329,8 @@ DriverDeviceControl(
             DbgPrint( "                       RDX = 0x%I64x\n", smi_msg.rdx );
             DbgPrint( "                       RSI = 0x%I64x\n", smi_msg.rsi );
             DbgPrint( "                       RDI = 0x%I64x\n", smi_msg.rdi );
-            // --
+
             // -- send SMI using port 0xB2
-            // --
             __try
               {
                 _swsmi( &smi_msg );
@@ -1224,7 +1367,7 @@ DriverDeviceControl(
             pInBuf = Irp->AssociatedIrp.SystemBuffer;
             if( !pInBuf )
               {
-	        DbgPrint( "[chipsec] ERROR: NO data provided\n" );
+                DbgPrint( "[chipsec] ERROR: NO data provided\n" );
                 Status = STATUS_INVALID_PARAMETER;
                 break;
               }
@@ -1453,9 +1596,7 @@ DriverDeviceControl(
     DbgPrint( "[chipsec] Current CPU number                  : %u\n", _proc_number.Number );
     DbgPrint( "[chipsec] Current CPU thread                  : %ul\n", _cpu_thread_id );
  
-    // --
     // -- Complete the I/O request, Record the status of the I/O action.
-    // --
     Irp->IoStatus.Status = Status;
     Irp->IoStatus.Information = dwBytesWritten;
 
