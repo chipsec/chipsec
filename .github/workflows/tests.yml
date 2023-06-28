@@ -169,11 +169,18 @@ jobs:
       shell: bash
       run: python3 setup.py build_ext -i
 
-    - name: Upload Windows driver
+    - name: Upload Windows Main driver
       uses: actions/upload-artifact@v3
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
-        path: drivers/windows/x64
+        path: drivers/windows/chipsec/x64
+        if-no-files-found: error
+    
+    - name: Upload Windows PCI Filter driver
+      uses: actions/upload-artifact@v3
+      with:
+        name: drivers_windows_x64__from_py${{ matrix.python }}
+        path: drivers/windows/pcifilter/x64
         if-no-files-found: error
 
     - name: Run Python tests
