@@ -173,7 +173,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
-        path: drivers/windows/x64
+        path: drivers/windows/
         if-no-files-found: error
 
     - name: Run Python tests
