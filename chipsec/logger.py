@@ -262,11 +262,12 @@ class Logger:
                 # creates FileHandler for log file
                 self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='a')
             except Exception:
-                print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')               
-            self.chipsecLogger.addHandler(self.logfile)
-            self.logfile.setFormatter(self.logFormatter)
-            self.LOG_TO_FILE = True
-            self.chipsecLogger.removeHandler(self.logstream)
+                print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
+            else:             
+                self.chipsecLogger.addHandler(self.logfile)
+                self.logfile.setFormatter(self.logFormatter)
+                self.LOG_TO_FILE = True
+                self.chipsecLogger.removeHandler(self.logstream)
         else:
             try:
                 self.chipsecLogger.addHandler(self.logstream)
