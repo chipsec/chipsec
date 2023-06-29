@@ -61,7 +61,7 @@ class remap(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(1, 'https://chipsec.github.io/modules/chipsec.modules.common.remap.html') # Arg: test ID
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_core():
             rbase_exist = self.cs.is_register_defined('PCI0.0.0_REMAPBASE')
             rlimit_exist = self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT')
@@ -81,7 +81,18 @@ class remap(BaseModule):
             self.res = ModuleResult.NOTAPPLICABLE
         return False
 
-    def check_remap_config(self):
+    def is_ibecc_enabled(self) -> bool:
+        if self.cs.is_register_defined('IBECC_ACTIVATE'):
+            edsr = self.cs.read_register_field('IBECC_ACTIVATE', 'IBECC_EN')
+            if edsr == 1:
+                return True
+            else:
+                self.logger.log_verbose('IBECC is not enabled!')
+        else:
+            self.logger.log_verbose('IBECC is not defined!')
+        return False
+
+    def check_remap_config(self) -> int:
         is_warning = False
 
         remapbase = self.cs.read_register('PCI0.0.0_REMAPBASE')
@@ -90,11 +101,12 @@ class remap(BaseModule):
         tolud = self.cs.read_register('PCI0.0.0_TOLUD')
         tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB')
         self.logger.log("[*] Registers:")
-        self.logger.log("[*]   TOUUD     : 0x{:016X}".format(touud))
-        self.logger.log("[*]   REMAPLIMIT: 0x{:016X}".format(remaplimit))
-        self.logger.log("[*]   REMAPBASE : 0x{:016X}".format(remapbase))
-        self.logger.log("[*]   TOLUD     : 0x{:08X}".format(tolud))
-        self.logger.log("[*]   TSEGMB    : 0x{:08X}\n".format(tsegmb))
+        self.logger.log(f"[*]   TOUUD     : 0x{touud:016X}")
+        self.logger.log(f"[*]   REMAPLIMIT: 0x{remaplimit:016X}")
+        self.logger.log(f"[*]   REMAPBASE : 0x{remapbase:016X}")
+        self.logger.log(f"[*]   TOLUD     : 0x{tolud:08X}")
+        self.logger.log(f"[*]   TSEGMB    : 0x{tsegmb:08X}")
+        self.logger.log("")
 
         ia_untrusted = 0
         if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
@@ -103,20 +115,19 @@ class remap(BaseModule):
         remaplimit_lock = remaplimit & 0x1
         touud_lock = touud & 0x1
         tolud_lock = tolud & 0x1
-        tsegmb_lock = tsegmb & 0x1
         remapbase &= _REMAP_ADDR_MASK
         remaplimit &= _REMAP_ADDR_MASK
-        #remaplimit |= 0xFFFFF
         touud &= _REMAP_ADDR_MASK
         tolud &= _TOLUD_MASK
         tsegmb &= _TOLUD_MASK
         self.logger.log("[*] Memory Map:")
-        self.logger.log("[*]   Top Of Upper Memory: 0x{:016X}".format(touud))
-        self.logger.log("[*]   Remap Limit Address: 0x{:016X}".format(remaplimit | 0xFFFFF))
-        self.logger.log("[*]   Remap Base Address : 0x{:016X}".format(remapbase))
-        self.logger.log("[*]   4GB                : 0x{:016X}".format(BIT32))
-        self.logger.log("[*]   Top Of Low Memory  : 0x{:016X}".format(tolud))
-        self.logger.log("[*]   TSEG (SMRAM) Base  : 0x{:016X}\n".format(tsegmb))
+        self.logger.log(f"[*]   Top Of Upper Memory: 0x{touud:016X}")
+        self.logger.log(f"[*]   Remap Limit Address: 0x{(remaplimit | 0xFFFFF):016X}")
+        self.logger.log(f"[*]   Remap Base Address : 0x{remapbase:016X}")
+        self.logger.log(f"[*]   4GB                : 0x{BIT32:016X}")
+        self.logger.log(f"[*]   Top Of Low Memory  : 0x{tolud:016X}")
+        self.logger.log(f"[*]   TSEG (SMRAM) Base  : 0x{tsegmb:016X}")
+        self.logger.log('')
 
         remap_ok = True
 
@@ -130,7 +141,10 @@ class remap(BaseModule):
         else:
             self.logger.log("[*]   Memory Remap is enabled")
             remaplimit_addr = (remaplimit | 0xFFFFF)
-            ok = ((remaplimit_addr + 1) == touud)
+            if self.is_ibecc_enabled():
+                ok = (remaplimit_addr > touud) and (remapbase < touud)
+            else:
+                ok = ((remaplimit_addr + 1) == touud)
             remap_ok = remap_ok and ok
             if ok:
                 self.logger.log_good("  Remap window configuration is correct: REMAPBASE <= REMAPLIMIT < TOUUD")
@@ -194,7 +208,7 @@ class remap(BaseModule):
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run(self, module_argv):
+    def run(self, _) -> int:
         self.logger.start_test("Memory Remapping Configuration")
 
         self.res = self.check_remap_config()
