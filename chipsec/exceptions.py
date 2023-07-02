@@ -36,7 +36,7 @@ class RegisterTypeNotFoundError(RuntimeError):
 
 
 class CSReadError(RuntimeError):
-    def __init__(self, msg):
+    def __init__(self, msg: str) -> None:
         super(CSReadError, self).__init__(msg)
 
 # HAL
@@ -137,7 +137,7 @@ class InvalidMemoryAddress (RuntimeError):
 
 
 class OsHelperError (RuntimeError):
-    def __init__(self, msg, errorcode):
+    def __init__(self, msg: str, errorcode: int) -> None:
         super(OsHelperError, self).__init__(msg)
         self.errorcode = errorcode
 
@@ -147,7 +147,7 @@ class HWAccessViolationError (OsHelperError):
 
 
 class UnimplementedAPIError (OsHelperError):
-    def __init__(self, api_name):
+    def __init__(self, api_name: str) -> None:
         super(UnimplementedAPIError, self).__init__(f"'{api_name}' is not implemented", 0)
 
 
