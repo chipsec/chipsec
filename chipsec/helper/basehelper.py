@@ -50,7 +50,7 @@ class Helper(ABC):
         pass
 
     @abstractmethod
-    def start(self, start_driver: bool, from_file: bool) -> bool:
+    def start(self, start_driver: bool) -> bool:
         pass
 
     @abstractmethod
