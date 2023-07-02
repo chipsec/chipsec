@@ -43,7 +43,7 @@ class TestHelper(Helper):
     def delete(self, start_driver):
         return True
 
-    def start(self, start_driver, driver_exists=False, tofile=None, fromfile=None):
+    def start(self, start_driver, driver_exists=False):
         return True
 
     def stop(self, start_driver):
