@@ -179,6 +179,13 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);ndis.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir ..\..\..\chipsec\helper\windows\windows_x86
+      copy "$(DbgengLocalCommand)" ..\..\..\chipsec\helper\windows\windows_x86</Command>
+    </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -196,6 +203,13 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);ndis.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir ..\..\..\chipsec\helper\windows\windows_x86
+      copy "$(DbgengLocalCommand)" ..\..\..\chipsec\helper\windows\windows_x86</Command>
+    </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -213,6 +227,13 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);ndis.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir ..\..\..\chipsec\helper\windows\windows_amd64
+      copy "$(DbgengLocalCommand)" ..\..\..\chipsec\helper\windows\windows_amd64</Command>
+    </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -230,6 +251,13 @@
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);ndis.lib</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>mkdir ..\..\..\chipsec\helper\windows\windows_amd64
+      copy "$(DbgengLocalCommand)" ..\..\..\chipsec\helper\windows\windows_amd64</Command>
+    </PostBuildEvent>
+    <DriverSign>
+      <FileDigestAlgorithm>SHA256</FileDigestAlgorithm>
+    </DriverSign>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>

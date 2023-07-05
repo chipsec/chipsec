@@ -92,17 +92,23 @@ class build_ext(_build_ext):
         dir_util.remove_tree(os.path.join(self.real_build_lib, "drivers"))
 
 
-    def _build_win_driver(self):
-        log.info("building the windows driver")
-        build_driver = os.path.join("drivers", "windows")
+    def _build_win_driver(self, path):
         cur_dir = os.getcwd()
-        os.chdir(build_driver)
+        os.chdir(path)
         # Run the makefile there.
         if platform.machine().endswith("64"):
             subprocess.call(["install.cmd"])
         else:
             subprocess.call(["install.cmd", "32"])
         os.chdir(cur_dir)
+
+    def _build_all_win_drivers(self):
+        log.info("building the windows chipsec driver")
+        driver_path = os.path.join("drivers", "windows", "chipsec")
+        self._build_win_driver(driver_path)
+        log.info("building the windows pcifilter driver")
+        driver_path = os.path.join("drivers", "windows", "pcifilter")
+        self._build_win_driver(driver_path)
 
     def run(self):
         # First, we build the standard extensions.
@@ -116,7 +122,7 @@ class build_ext(_build_ext):
         if platform.system().lower() == "linux":
             driver_build_function = self._build_linux_driver
         elif platform.system().lower() == "windows":
-            driver_build_function = self._build_win_driver
+            driver_build_function = self._build_all_win_drivers
 
         if not self.skip_driver:
             driver_build_function()
