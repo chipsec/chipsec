@@ -38,14 +38,14 @@ from chipsec.hal import mmio
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 class MMCfgBaseCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         return True
 
-    def run(self):
+    def run(self) -> None:
         _mmio = mmio.MMIO(self.cs)
         pciexbar, pciexbar_sz = _mmio.get_MMCFG_base_address()
-        self.logger.log("[CHIPSEC] Memory Mapped Config Base: 0x{:016X}".format(pciexbar))
-        self.logger.log("[CHIPSEC] Memory Mapped Config Size: 0x{:016X}".format(pciexbar_sz))
+        self.logger.log(f'[CHIPSEC] Memory Mapped Config Base: 0x{pciexbar:016X}')
+        self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar_sz:016X}')
         self.logger.log('')
 
 

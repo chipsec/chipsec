@@ -58,28 +58,28 @@ from chipsec.hal.uefi import uefi_platform
 
 class DecodeCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_rom', metavar='<rom>', help='file to decode')
         parser.add_argument('_fwtype', metavar='fw_type', nargs='?', help='firmware type', default=None)
         parser.parse_args(self.argv[2:], namespace=self)
         return False
 
-    def decode_types(self):
-        self.logger.log("\n<fw_type> should be in [ {} ]\n".format(" | ".join(["{}".format(t) for t in uefi_platform.fw_types])))
+    def decode_types(self) -> None:
+        self.logger.log(f'\n<fw_type> should be in [ {" | ".join([f"{t}" for t in uefi_platform.fw_types])} ]\n')
 
-    def decode_rom(self):
-        self.logger.log("[CHIPSEC] Decoding SPI ROM image from a file '{}'".format(self._rom))
+    def decode_rom(self) -> bool:
+        self.logger.log(f'[CHIPSEC] Decoding SPI ROM image from a file \'{self._rom}\'')
         f = read_file(self._rom)
         if not f:
             return False
         (fd_off, fd) = get_spi_flash_descriptor(f)
         if (-1 == fd_off) or (fd is None):
-            self.logger.log_error("Could not find SPI Flash descriptor in the binary '{}'".format(self._rom))
+            self.logger.log_error(f'Could not find SPI Flash descriptor in the binary \'{self._rom}\'')
             self.logger.log_information("To decode an image without a flash decriptor try chipsec_util uefi decode")
             return False
 
-        self.logger.log("[CHIPSEC] Found SPI Flash descriptor at offset 0x{:X} in the binary '{}'".format(fd_off, self._rom))
+        self.logger.log(f'[CHIPSEC] Found SPI Flash descriptor at offset 0x{fd_off:X} in the binary \'{self._rom}\'')
         rom = f[fd_off:]
 
         # Decoding SPI Flash Regions
@@ -91,7 +91,7 @@ class DecodeCommand(BaseCommand):
 
         _orig_logname = self.logger.LOG_FILE_NAME
 
-        pth = os.path.join(self.cs.helper.getcwd(), self._rom + ".dir")
+        pth = os.path.join(self.cs.os_helper.getcwd(), self._rom + ".dir")
         if not os.path.exists(pth):
             os.makedirs(pth)
 
@@ -103,7 +103,7 @@ class DecodeCommand(BaseCommand):
             notused = r[5]
             if not notused:
                 region_data = rom[base:limit + 1]
-                fname = os.path.join(pth, '{:d}_{:04X}-{:04X}_{}.bin'.format(idx, base, limit, name))
+                fname = os.path.join(pth, f'{idx:d}_{base:04X}-{limit:04X}_{name}.bin')
                 write_file(fname, region_data)
                 if FLASH_DESCRIPTOR == idx:
                     # Decoding Flash Descriptor
@@ -115,14 +115,15 @@ class DecodeCommand(BaseCommand):
                     decode_uefi_region(pth, fname, self._fwtype)
 
         self.logger.set_log_file(_orig_logname)
+        return True
 
-    def run(self):
+    def run(self) -> None:
         t = time()
         if self._rom.lower() == 'types':
             self.decode_types()
         else:
             self.decode_rom()
-        self.logger.log("[CHIPSEC] (decode) time elapsed {:.3f}".format(time() - t))
+        self.logger.log(f'[CHIPSEC] (decode) time elapsed {time() - t:.3f}')
 
 
 commands = {"decode": DecodeCommand}

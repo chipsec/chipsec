@@ -31,7 +31,6 @@ import struct
 from typing import Dict, List, Optional, Tuple
 from chipsec.logger import logger, print_buffer_bytes
 from chipsec.hal import spi
-from binascii import hexlify
 
 SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A)
 SPI_FLASH_DESCRIPTOR_SIZE = 0x1000
@@ -101,7 +100,7 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     fd = rom[fd_off: fd_off + SPI_FLASH_DESCRIPTOR_SIZE]
     fd_sig = struct.unpack_from('=I', fd[0x10:0x14])[0]
 
-    logger().log(f'+ 0x0000 Reserved : 0x{hexlify(fd[0x0:0xF]).upper()}')
+    logger().log(f'+ 0x0000 Reserved : 0x{fd[0x0:0xF].hex().upper()}')
     logger().log(f'+ 0x0010 Signature: 0x{fd_sig:08X}')
 
     #

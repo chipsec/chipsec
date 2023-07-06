@@ -404,15 +404,10 @@ class LinuxHelper(Helper):
     # IOSF Message Bus access
     #
     def msgbus_send_read_message(self, mcr: int, mcrx: int) -> Optional[int]:
-        mdr_out = 0
-        in_buf = struct.pack(f'5{self._pack}', MSGBUS_MDR_OUT_MASK, mcr, mcrx, 0, mdr_out)
-        out_buf = self.ioctl(IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
-        mdr_out = struct.unpack(f'5{self._pack}', out_buf)[4]
-        return mdr_out
+        return self.msgbus_send_message(mcr, mcrx)
 
     def msgbus_send_write_message(self, mcr: int, mcrx: int, mdr: int) -> None:
-        in_buf = struct.pack(f'5{self._pack}', MSGBUS_MDR_IN_MASK, mcr, mcrx, mdr, 0)
-        out_buf = self.ioctl(IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
+        self.msgbus_send_message(mcr, mcrx, mdr)
         return None
 
     def msgbus_send_message(self, mcr: int, mcrx: int, mdr: Optional[int] = None) -> int:
@@ -629,9 +624,6 @@ class LinuxHelper(Helper):
         tool_name = _tools[tool_type] if tool_type in _tools else None
         tool_path = os.path.join(get_tools_path(), self.os_system.lower())
         return tool_name, tool_path
-
-    def getcwd(self) -> str:
-        return os.getcwd()
 
     def get_page_is_ram(self) -> Optional[bytes]:
         PROC_KALLSYMS = "/proc/kallsyms"

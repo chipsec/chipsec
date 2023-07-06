@@ -33,7 +33,8 @@ from typing import Optional, Tuple
 from chipsec import defines
 from chipsec.exceptions import OsHelperError
 from chipsec.helper.basehelper import Helper
-from chipsec.helper.linuxnative.legacy_pci import LEGACY_PCI
+from chipsec.helper.linuxnative.cpuid import CPUID
+from chipsec.helper.linuxnative.legacy_pci import LegacyPci
 from chipsec.logger import logger
 
 
@@ -41,6 +42,7 @@ class MemoryMapping(mmap.mmap):
     """Memory mapping based on Python's mmap.
     This subclass keeps tracks of the start and end of the mapping.
     """
+
     def __init__(self, fileno, length, flags, prot, offset):
         self.start = offset
         self.end = offset + length
@@ -64,7 +66,6 @@ class LinuxNativeHelper(Helper):
         self.dev_mem = None
         self.dev_port = None
         self.dev_msr = None
-        self.legacy_pci = None
 
         # A list of all the mappings allocated via map_io_space. When using
         # read/write MMIO, if the region is already mapped in the process's
@@ -164,26 +165,17 @@ class LinuxNativeHelper(Helper):
         if self.dev_mem:
             os.close(self.dev_mem)
         self.dev_mem = None
-        
-    def getcwd(self) -> str:
-        return(os.getcwd())
 
 ###############################################################################################
 # Actual API functions to access HW resources
 ###############################################################################################
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int, domain: int = 0) -> int:
-        device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
-                      domain=domain, bus=bus, device=device, function=function)
+        device_name = f"{domain:04x}:{bus:02x}:{device:02x}.{function}"
         device_path = f"/sys/bus/pci/devices/{device_name}/config"
         if not os.path.exists(device_path):
             if offset < 256:
-                if self.legacy_pci:
-                    pci = self.legacy_pci
-                else:
-                    pci = LEGACY_PCI()
-                    self.legacy_pci = pci
-                value = pci.read_pci_config(bus, device, function, offset)
+                value = LegacyPci.read_pci_config(bus, device, function, offset)
                 if size == 1:
                     value = value & 0xFF
                 elif size == 2:
@@ -203,7 +195,6 @@ class LinuxNativeHelper(Helper):
                 return reg
         except IOError as err:
             raise OsHelperError(f"Unable to open {device_path}", err.errno)
-        
 
     def write_pci_reg(self, bus: int, device: int, function: int, offset: int, value: int, size: int = 4, domain: int = 0) -> int:
         device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
@@ -211,9 +202,7 @@ class LinuxNativeHelper(Helper):
         device_path = f"/sys/bus/pci/devices/{device_name}/config"
         if not os.path.exists(device_path):
             if offset < 256:
-                if not self.legacy_pci:
-                    self.legacy_pci = LEGACY_PCI()
-                self.legacy_pci.write_pci_config(bus, device, function, offset, value)
+                LegacyPci.write_pci_config(bus, device, function, offset, value)
                 return -1
         try:
             with open(device_path, "wb") as config:
@@ -221,7 +210,7 @@ class LinuxNativeHelper(Helper):
                 config.write(defines.pack1(value, size))
         except IOError as err:
             raise OsHelperError(f"Unable to open {device_path}", err.errno)
-        
+
         return 0
 
     # @TODO fix memory mapping and bar_size
@@ -234,17 +223,23 @@ class LinuxNativeHelper(Helper):
                 if not region:
                     logger().log_error(f"Unable to map region {phys_address:08x}")
 
-            # Create memoryview into mmap'ed region in dword granularity
+            # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
-            region_dw = region_mv.cast('I')
-            # read one DWORD
-            offset_in_region = (phys_address - region.start) // 4
-            reg = region_dw[offset_in_region]
-            return reg
+            offset_in_region = phys_address - region.start
+            if size == 1:
+                return region_mv[offset_in_region]
+
+            if offset_in_region % size == 0:
+                # Read aligned value
+                region_casted = region_mv.cast(defines.SIZE2FORMAT[size])
+                return region_casted[offset_in_region // size]
+
+            # Read unaligned value
+            return defines.unpack1(region_mv[offset_in_region:offset_in_region + size], size)
         return 0
 
     # @TODO fix memory mapping and bar_size
-    def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
+    def write_mmio_reg(self, phys_address: int, size: int, value: int) -> None:
         if self.devmem_available():
             reg = defines.pack1(value, size)
             region = self.memory_mapping(phys_address, size)
@@ -254,17 +249,21 @@ class LinuxNativeHelper(Helper):
                 if not region:
                     logger().log_error(f"Unable to map region {phys_address:08x}")
 
-            # Create memoryview into mmap'ed region in dword granularity
+            # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
-            region_dw = region_mv.cast('I')
-            # Create memoryview containing data in dword
-            data_mv = memoryview(reg)
-            data_dw = data_mv.cast('I')
-            # write one DWORD
-            offset_in_region = (phys_address - region.start) // 4
-            region_dw[offset_in_region] = data_dw[0]
-        return 0
+            offset_in_region = phys_address - region.start
+            if size == 1:
+                region_mv[offset_in_region] = value
+                return
 
+            if offset_in_region % size == 0:
+                # Write aligned value
+                region_casted = region_mv.cast(defines.SIZE2FORMAT[size])
+                region_casted[offset_in_region // size] = value
+                return
+
+            # Write unaligned value
+            region_mv[offset_in_region:offset_in_region + size] = reg
 
     def memory_mapping(self, base: int, size: int) -> Optional[MemoryMapping]:
         """Returns the mmap region that fully encompasses this area.
@@ -285,7 +284,6 @@ class LinuxNativeHelper(Helper):
                                     mmap.PROT_READ | mmap.PROT_WRITE,
                                     offset=page_aligned_base)
             self.mappings.append(mapping)
-
 
     def read_phys_mem(self, phys_address, length: int) -> bytes:
         if self.devmem_available():
@@ -366,13 +364,13 @@ class LinuxNativeHelper(Helper):
             buf = struct.pack("2I", eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
             if written != 8:
-                logger().log_debug(f"Cannot write {buf:8X} to MSR {msr_addr:x}")
+                logger().log_debug(f"Cannot write {buf.hex()} to MSR {msr_addr:x}")
             return written
         return False
 
     def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
         raise NotImplementedError()
-    
+
     def get_descriptor_table(self, cpu_thread_id, desc_table_code):
         raise NotImplementedError()
 
@@ -396,12 +394,11 @@ class LinuxNativeHelper(Helper):
 
     def get_ACPI_table(self, table_name):
         raise NotImplementedError()
-    
+
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        import chipsec.helper.linuxnative.cpuid as cpuid
-        _cpuid = cpuid.CPUID()
+        _cpuid = CPUID()
         return _cpuid(eax, ecx)
-    
+
     def msgbus_send_read_message(self, mcr, mcrx):
         raise NotImplementedError()
 
@@ -410,7 +407,7 @@ class LinuxNativeHelper(Helper):
 
     def msgbus_send_message(self, mcr, mcrx, mdr):
         raise NotImplementedError()
-    
+
     #
     # Affinity functions
     #
@@ -447,7 +444,11 @@ class LinuxNativeHelper(Helper):
     def hypercall(self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0):
         raise NotImplementedError()
 
-
+    #
+    # Speculation control
+    #
+    def retpoline_enabled(self):
+        raise NotImplementedError("retpoline_enabled")
 
     def get_bios_version(self) -> str:
         try:

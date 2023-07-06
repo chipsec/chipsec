@@ -60,35 +60,37 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter,
                                      epilog=ExitCode.help_epilog, add_help=False)
     options = parser.add_argument_group('Options')
-    options.add_argument('-h', '--help', help="show this message and exit", action='store_true')
-    options.add_argument('-m', '--module', dest='_module', help='specify module to run (example: -m common.bios_wp)')
-    options.add_argument('-mx', '--module_exclude', dest='_module_exclude', nargs='+', help='specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)')
-    options.add_argument('-a', '--module_args', nargs='*', dest="_module_argv", help="additional module arguments")
-    options.add_argument('-v', '--verbose', help='verbose mode', action='store_true')
-    options.add_argument('--hal', help='HAL mode', action='store_true')
-    options.add_argument('-d', '--debug', help='debug mode', action='store_true')
-    options.add_argument('-l', '--log', help='output to log file')
-    options.add_argument('-vv', '--vverbose', help='very verbose HAL debug mode', action='store_true')
+    options.add_argument('-h', '--help', help="Show this message and exit", action='store_true')
+    options.add_argument('-m', '--module', dest='_module', help='Specify module to run (example: -m common.bios_wp)')
+    options.add_argument('-mx', '--module_exclude', dest='_module_exclude', nargs='+', help='Specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)')
+    options.add_argument('-a', '--module_args', nargs='*', dest="_module_argv", help="Additional module arguments")
+    options.add_argument('-v', '--verbose', help='Verbose logging', action='store_true')
+    options.add_argument('--hal', help='HAL logging', action='store_true')
+    options.add_argument('-d', '--debug', help='Debug logging', action='store_true')
+    options.add_argument('-l', '--log', help='Output to log file')
+    options.add_argument('-vv', '--vverbose', help='Very verbose logging (verbose + HAL + debug)', action='store_true')
     adv_options = parser.add_argument_group('Advanced Options')
-    adv_options.add_argument('-p', '--platform', dest='_platform', help='explicitly specify platform code',
+    adv_options.add_argument('-p', '--platform', dest='_platform', help='Explicitly specify platform code',
                              choices=chipset.cs().chipset_codes, type=str.upper)
-    adv_options.add_argument('--pch', dest='_pch', help='explicitly specify PCH code', choices=chipset.cs().pch_codes, type=str.upper)
+    adv_options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=chipset.cs().pch_codes, type=str.upper)
     adv_options.add_argument('-n', '--no_driver', dest='_no_driver', action='store_true',
-                             help="chipsec won't need kernel mode functions so don't load chipsec driver")
+                             help="Chipsec won't need kernel mode functions so don't load chipsec driver")
     adv_options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
-                             help='run chipsec even if the platform is not recognized')
-    adv_options.add_argument('-j', '--json', dest='_json_out', help='specify filename for JSON output')
-    adv_options.add_argument('-x', '--xml', dest='_xml_out', help='specify filename for xml output (JUnit style)')
-    adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='specify filename for markdown output')
-    adv_options.add_argument('-t', '--moduletype', dest='USER_MODULE_TAGS', type=str.upper, default=[], help='run tests of a specific type (tag)')
-    adv_options.add_argument('--list_tags', dest='_list_tags', action='store_true', help='list all the available options for -t,--moduletype')
-    adv_options.add_argument('-I', '--include', dest='IMPORT_PATHS', default=[], help='specify additional path to load modules from')
-    adv_options.add_argument('--failfast', help="fail on any exception and exit (don't mask exceptions)", action='store_true')
-    adv_options.add_argument('--no_time', help="don't log timestamps", action='store_true')
-    adv_options.add_argument('--deltas', dest='_deltas_file', help='specifies a JSON log file to compute result deltas from')
-    adv_options.add_argument('--helper', dest='_helper', help='specify OS Helper', choices=[i for i in helper().get_available_helpers()])
-    adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="chipsec won't display banner information")
-    adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='skip configuration and driver loading')
+                             help='Run chipsec even if the platform is not recognized (Deprecated)')
+    adv_options.add_argument('-j', '--json', dest='_json_out', help='Specify filename for JSON output')
+    adv_options.add_argument('-x', '--xml', dest='_xml_out', help='Specify filename for xml output (JUnit style)')
+    adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='Specify filename for markdown output')
+    adv_options.add_argument('-t', '--moduletype', dest='USER_MODULE_TAGS', type=str.upper, default=[], help='Run tests of a specific type (tag)')
+    adv_options.add_argument('--list_tags', dest='_list_tags', action='store_true', help='List all the available options for -t,--moduletype')
+    adv_options.add_argument('-I', '--include', dest='IMPORT_PATHS', default=[], help='Specify additional path to load modules from')
+    adv_options.add_argument('--failfast', help="Fail on any exception and exit (don't mask exceptions)", action='store_true')
+    adv_options.add_argument('--no_time', help="Don't log timestamps", action='store_true')
+    adv_options.add_argument('--deltas', dest='_deltas_file', help='Specifies a JSON log file to compute result deltas from')
+    adv_options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers())
+    adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
+    adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='Skip configuration and driver loading')
+    adv_options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="Chipsec won't save logs automatically")
+    adv_options.add_argument('-rc', dest='_return_codes', help='Return codes mode', action='store_true')
 
     par = vars(parser.parse_args(argv))
 
@@ -270,7 +272,7 @@ class ChipsecMain:
             self.logger.log("[+] loaded {}".format(modx))
 
     def run_loaded_modules(self):
-        results = ChipsecResults()
+        results = ChipsecResults(self._return_codes)
         results.add_properties(self.properties())
 
         # Print a list of all loaded modules
@@ -355,6 +357,12 @@ class ChipsecMain:
         self.logger.setlevel()
         if self.log:
             self.logger.set_log_file(self.log)
+            self._autolog_disable = True
+        if self._autolog_disable is False:
+            self.logger.set_autolog_file()
+        if self._return_codes:
+            self.logger.log_warning("Return codes feature is currently Work in Progress!!!")
+            self._cs.using_return_codes = True
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):
             self.logger.log("[*] Use of the -a command no longer needs to have arguments concatenated with ','")
             self._module_argv = self._module_argv[0].split(',')
@@ -362,6 +370,8 @@ class ChipsecMain:
             self.logger.log_warning("Ignoring unsupported platform warning and continue execution.")
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
+        
+
 
     def properties(self):
         ret = OrderedDict()

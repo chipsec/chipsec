@@ -105,7 +105,6 @@ except ImportError:
 class Chipset:
 
     def __init__(self):
-        self.helper = Helper()
 
         self.init_xml_configuration()
 
@@ -123,9 +122,9 @@ class Chipset:
         self.pch_id = CHIPSET_ID_UNKNOWN
         self.cpuid = None
         self.Cfg = Cfg()
+        self.helper = None
         self.os_helper = os_helper()
         self.set_hal_objects()
-        
         #
         # All HAL components which use above 'basic primitive' HAL components
         # should be instantiated in modules/utilcmd with an instance of chipset
@@ -133,6 +132,7 @@ class Chipset:
         # - initializing SPI HAL component in a module or util extension:
         #   self.spi = SPI( self.cs )
         #
+        self.using_return_codes = False
 
     ##################################################################################
     #
@@ -180,7 +180,7 @@ class Chipset:
                 vid_did = self.pci.read_dword(bus, dev, fun, 0)
                 pch_vid = vid_did & 0xFFFF
                 pch_did = (vid_did >> 16) & 0xFFFF
-                pch_rid = self.pci.read_byte(0, 31, 0, PCI_HDR_RID_OFF)
+                pch_rid = self.pci.read_byte(bus, dev, fun, PCI_HDR_RID_OFF)
             except:
                 if logger().DEBUG:
                     logger().log_error("pci.read_dword couldn't read PCH VID/DID")
@@ -201,6 +201,15 @@ class Chipset:
         else:
             return f'{extfamily:02X}{ret}'
 
+    
+    @classmethod
+    def basic_init_with_helper(cls, helper = None):
+        _cs = cls()
+        _cs.load_helper(helper)
+        _cs.start_helper()
+        return _cs
+
+    
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True):
         _unknown_platform = False
         self.reqs_pch = None
@@ -1318,7 +1327,7 @@ class Chipset:
         control = self.Cfg.CONTROLS[control_name]
         reg = control['register']
         field = control['field']
-        return self.write_register_field(reg, field, control_value, cpu_thread)
+        return self.write_register_field(reg, field, control_value, cpu_thread=cpu_thread)
 
     def is_control_defined(self, control_name):
         try:

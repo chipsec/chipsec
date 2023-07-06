@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         distro:
+          - {name: "alpine", tag: "3.18", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.17", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.16", variant: "-lts", image_prefix: "docker.io/library/"}
           - {name: "alpine", tag: "3.15", variant: "-lts", image_prefix: "docker.io/library/"}
@@ -19,6 +20,7 @@ jobs:
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
           - {name: "centos", tag: "stream8", image_prefix: "quay.io/centos/"}
           - {name: "centos", tag: "7", image_prefix: "quay.io/centos/"}
+          - {name: "debian", tag: "bookworm-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "23.04", image_prefix: "docker.io/library/"}
@@ -144,6 +146,7 @@ jobs:
     strategy:
       matrix:
         python:
+          - "3.11"
           - "3.10"
           - "3.9"
           - "3.8"
@@ -182,11 +185,13 @@ jobs:
     strategy:
       matrix:
         versions:
+          - {ubuntu: "22.04", python: "3.11"}
           - {ubuntu: "22.04", python: "3.10"}
           - {ubuntu: "22.04", python: "3.9"}
           - {ubuntu: "22.04", python: "3.8"}
           - {ubuntu: "22.04", python: "3.7"}
 
+          - {ubuntu: "20.04", python: "3.11"}
           - {ubuntu: "20.04", python: "3.10"}
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}

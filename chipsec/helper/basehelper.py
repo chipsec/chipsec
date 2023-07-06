@@ -17,12 +17,17 @@
 # Contact information:
 # chipsec@intel.com
 #
-from chipsec.logger import logger
+
+from abc import ABC, abstractmethod
+from typing import Dict, List, Tuple, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from chipsec.library.types import EfiVariableType
+    from ctypes import Array
 
 # Base class for the helpers
 
 
-class Helper:
+class Helper(ABC):
     class __metaclass__(type):
         def __init__(cls, name, bases, attrs):
             if not hasattr(cls, 'registry'):
@@ -30,36 +35,33 @@ class Helper:
             else:
                 cls.registry.append((name, cls))
 
+    @abstractmethod
     def __init__(self):
         self.driver_loaded = False
-        self.os_system = "basehelper"
-        self.os_release = "0.0"
-        self.os_version = "0.0"
-        self.os_machine = "base"
-        self.name = "Helper"
-        self.driverpath = None
+        self.os_system = 'basehelper'
+        self.os_release = '0.0'
+        self.os_version = '0.0'
+        self.os_machine = 'base'
+        self.name = 'Helper'
+        self.driverpath = ''
 
-    def create(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper created")
-        raise NotImplementedError()
+    @abstractmethod
+    def create(self, start_driver: bool) -> bool:
+        pass
 
-    def start(self, start_driver, from_file=None):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper started/loaded")
-        raise NotImplementedError()
+    @abstractmethod
+    def start(self, start_driver: bool, from_file: bool) -> bool:
+        pass
 
-    def stop(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper stopped/unloaded")
-        raise NotImplementedError()
+    @abstractmethod
+    def stop(self, start_driver: bool) -> bool:
+        pass
 
-    def delete(self, start_driver):
-        if logger().VERBOSE:
-            logger().log("[helper] Helper deleted")
-        raise NotImplementedError()
+    @abstractmethod
+    def delete(self, start_driver: bool) -> bool:
+        pass
 
-    def get_info(self):
+    def get_info(self) -> Tuple[str, str]:
         return self.name, self.driverpath
 
     #################################################################################################
@@ -68,163 +70,190 @@ class Helper:
     #
     # Read/Write PCI configuration registers via legacy CF8/CFC ports
     #
-    def read_pci_reg(self, bus, device, function, address, size):
-        """Read PCI configuration registers via legacy CF8/CFC ports"""
-        raise NotImplementedError()
+    @abstractmethod
+    def read_pci_reg(self, bus: int, device: int, function: int, address: int, size: int) -> int:
+        pass
 
-    def write_pci_reg(self, bus, device, function, address, value, size):
-        """Write PCI configuration registers via legacy CF8/CFC ports"""
-        raise NotImplementedError()
+    @abstractmethod
+    def write_pci_reg(self, bus: int, device: int, function: int, address: int, value: int, size: int) -> int:
+        pass
 
     #
     # read/write mmio
     #
-    def read_mmio_reg(self, phys_address, size):
-        raise NotImplementedError()
+    @abstractmethod
+    def read_mmio_reg(self, phys_address: int, size: int) -> int:
+        pass
 
-    def write_mmio_reg(self, phys_address, size, value):
-        raise NotImplementedError()
+    @abstractmethod
+    def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
+        pass
 
     #
     # physical_address is 64 bit integer
     #
-    def read_phys_mem(self, phys_address, length):
-        raise NotImplementedError()
+    @abstractmethod
+    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
+        pass
 
-    def write_phys_mem(self, phys_address, length, buf):
-        raise NotImplementedError()
+    @abstractmethod
+    def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
+        pass
 
-    def alloc_phys_mem(self, length, max_phys_address):
-        raise NotImplementedError()
+    @abstractmethod
+    def alloc_phys_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
+        pass
 
-    def free_phys_mem(self, phys_address):
-        raise NotImplementedError()
+    @abstractmethod
+    def free_phys_mem(self, physical_address: int):
+        pass
 
-    def va2pa(self, va):
-        raise NotImplementedError()
+    @abstractmethod
+    def va2pa(self, va: int) -> Tuple[int, int]:
+        pass
 
-    def map_io_space(self, phys_address, length, cache_type):
-        raise NotImplementedError()
+    @abstractmethod
+    def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
+        pass
 
     #
-    # Read/Write I/O portline 462,
+    # Read/Write I/O port
     #
-    def read_io_port(self, io_port, size):
-        raise NotImplementedError()
+    @abstractmethod
+    def read_io_port(self, io_port: int, size: int) -> int:
+        pass
 
-    def write_io_port(self, io_port, value, size):
-        raise NotImplementedError()
+    @abstractmethod
+    def write_io_port(self, io_port: int, value: int, size: int) -> int:
+        pass
 
     #
     # Read/Write CR registers
     #
-    def read_cr(self, cpu_thread_id, cr_number):
-        raise NotImplementedError()
+    @abstractmethod
+    def read_cr(self, cpu_thread_id: int, cr_number: int) -> int:
+        pass
 
-    def write_cr(self, cpu_thread_id, cr_number, value):
-        raise NotImplementedError()
+    @abstractmethod
+    def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
+        pass
 
     #
     # Read/Write MSR on a specific CPU thread
     #
-    def read_msr(self, cpu_thread_id, msr_addr):
-        raise NotImplementedError()
+    @abstractmethod
+    def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
+        pass
 
-    def write_msr(self, cpu_thread_id, msr_addr, eax, edx):
-        raise NotImplementedError()
+    @abstractmethod
+    def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> int:
+        pass
 
     #
     # Load CPU microcode update on a specific CPU thread
     #
-    def load_ucode_update(self, cpu_thread_id, ucode_update_buf):
-        raise NotImplementedError()
+    @abstractmethod
+    def load_ucode_update(self, cpu_thread_id: int, ucode_update_buf: bytes) -> bool:
+        pass
 
     #
     # Read IDTR/GDTR/LDTR on a specific CPU thread
     #
-    def get_descriptor_table(self, cpu_thread_id, desc_table_code):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_descriptor_table(self, cpu_thread_id: int, desc_table_code: int) -> Optional[Tuple[int, int, int]]:
+        pass
 
     #
     # EFI Variable API
     #
-    def EFI_supported(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def EFI_supported(self) -> bool:
+        pass
 
-    def get_EFI_variable(self, name, guid):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_EFI_variable(self, name: str, guid: str) -> Optional[bytes]:
+        pass
 
-    def set_EFI_variable(self, name, guid, data, datasize=None, attrs=None):
-        raise NotImplementedError()
+    @abstractmethod
+    def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: Optional[int], attrs: Optional[int]) -> Optional[int]:
+        pass
 
-    def delete_EFI_variable(self, name, guid):
-        raise NotImplementedError()
+    @abstractmethod
+    def delete_EFI_variable(self, name: str, guid: str) -> Optional[int]:
+        pass
 
-    def list_EFI_variables(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def list_EFI_variables(self) -> Optional[Dict[str, List['EfiVariableType']]]:
+        pass
 
     #
     # ACPI
     #
-    def get_ACPI_SDT(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
+        pass
 
-    def get_ACPI_table(self, table_name):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_ACPI_table(self, table_name: str) -> Optional['Array']:
+        pass
 
     #
     # CPUID
     #
-    def cpuid(self, eax, ecx):
-        raise NotImplementedError()
+    @abstractmethod
+    def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
+        pass
 
     #
     # IOSF Message Bus access
     #
-    def msgbus_send_read_message(self, mcr, mcrx):
-        raise NotImplementedError()
+    @abstractmethod
+    def msgbus_send_read_message(self, mcr: int, mcrx: int) -> Optional[int]:
+        pass
 
-    def msgbus_send_write_message(self, mcr, mcrx, mdr):
-        raise NotImplementedError()
+    @abstractmethod
+    def msgbus_send_write_message(self, mcr: int, mcrx: int, mdr: int) -> None:
+        pass
 
-    def msgbus_send_message(self, mcr, mcrx, mdr):
-        raise NotImplementedError()
+    @abstractmethod
+    def msgbus_send_message(self, mcr: int, mcrx: int, mdr: Optional[int]) -> Optional[int]:
+        pass
 
     #
     # Affinity
     #
-    def get_affinity(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_affinity(self) -> Optional[int]:
+        pass
 
-    def set_affinity(self, value):
-        raise NotImplementedError()
+    @abstractmethod
+    def set_affinity(self, value: int) -> Optional[int]:
+        pass
 
     #
     # Logical CPU count
     #
-    def get_threads_count(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def get_threads_count(self) -> int:
+        pass
 
     #
     # Send SW SMI
     #
-    def send_sw_smi(self, cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi):
-        raise NotImplementedError()
+    @abstractmethod
+    def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
+        pass
 
     #
     # Hypercall
     #
-    def hypercall(self, rcx=0, rdx=0, r8=0, r9=0, r10=0, r11=0, rax=0, rbx=0, rdi=0, rsi=0, xmm_buffer=0):
-        raise NotImplementedError()
-
-    #
-    # File system
-    #
-    def getcwd(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def hypercall(self, rcx: int, rdx: int, r8: int, r9: int, r10: int, r11: int, rax: int, rbx: int, rdi: int, rsi: int, xmm_buffer: int) -> int:
+        pass
 
     #
     # Speculation control
     #
-    def retpoline_enabled(self):
-        raise NotImplementedError()
+    @abstractmethod
+    def retpoline_enabled(self) -> bool:
+        pass

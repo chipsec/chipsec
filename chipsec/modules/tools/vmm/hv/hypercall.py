@@ -26,7 +26,6 @@ Hyper-V specific hypercall functionality
 import os
 import sys
 import time
-import binascii
 import chipsec_util
 from random import *
 from struct import *
@@ -411,7 +410,7 @@ class HyperVHypercall(BaseModuleHwAccess):
                         buffer = pack('<4LQ', connid, 0, messagetype, payloadsize, message0)
                         result = hv.hypercall64_memory_based(hciv, buffer)
                         statistics[result] = 1 if result not in statistics else statistics[result] + 1
-                        self.dbg(f'HvPostMessage: {get_hypercall_status(result)} {binascii.hexlify(buffer)}')
+                        self.dbg(f'HvPostMessage: {get_hypercall_status(result)} {buffer.hex()}')
 
         elif hcname == 'HvSignalEvent':
             self.msg(f'Hypercall: {hcname} ')

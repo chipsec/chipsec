@@ -71,7 +71,7 @@ class SMICommand(BaseCommand):
     >>> chipsec_util smi smmc 0x79dfe000 0x79efdfff ed32d533-99e6-4209-9cc02d72cdd998a7 0x79dfaaaa payload.bin
     """
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(prog='chipsec_util smi', usage=SMICommand.__doc__)
         subparsers = parser.add_subparsers()
 
@@ -102,51 +102,51 @@ class SMICommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-    def smi_count(self):
+    def smi_count(self) -> None:
         self.logger.log("[CHIPSEC] SMI count:")
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             smi_cnt = self.cs.read_register_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
-            self.logger.log("  CPU{:d}: {:d}".format(tid, smi_cnt))
+            self.logger.log(f'  CPU{tid:d}: {smi_cnt:d}')
 
-    def smi_smmc(self):
+    def smi_smmc(self) -> None:
         if os.path.isfile(self.payload):
             with open(self.payload, 'rb') as f:
                 self.payload = f.read()
 
-        self.logger.log("Searching for \'smmc\' in range 0x{:x}-0x{:x}".format(self.RTC_start, self.RTC_end))
+        self.logger.log(f'Searching for \'smmc\' in range 0x{self.RTC_start:x}-0x{self.RTC_end:x}')
         # scan for SMM_CORE_PRIVATE_DATA smmc signature
         smmc_loc = self.interrupts.find_smmc(self.RTC_start, self.RTC_end)
         if (smmc_loc == 0):
             self.logger.log(" Couldn't find smmc signature")
             return
-        self.logger.log("Found \'smmc\' structure at 0x{:x}".format(smmc_loc))
+        self.logger.log(f'Found \'smmc\' structure at 0x{smmc_loc:x}')
 
         ReturnStatus = self.interrupts.send_smmc_SMI(smmc_loc, self.guid, self.payload, self.payload_loc, CommandPort=self.port)
         # TODO Translate ReturnStatus to EFI_STATUS enum
-        self.logger.log("ReturnStatus: 0x{:x} ({})".format(ReturnStatus, EFI_ERROR_STR(ReturnStatus)))
+        self.logger.log(f'ReturnStatus: 0x{ReturnStatus:x} ({EFI_ERROR_STR(ReturnStatus)})')
 
-    def smi_send(self):
-        self.logger.log("[CHIPSEC] Sending SW SMI (code: 0x{:02X}, data: 0x{:02X})..".format(self.SMI_code_port_value, self.SMI_data_port_value))
+    def smi_send(self) -> None:
+        self.logger.log(f'[CHIPSEC] Sending SW SMI (code: 0x{self.SMI_code_port_value:02X}, data: 0x{self.SMI_data_port_value:02X})..')
         if self._rax is None:
             self.interrupts.send_SMI_APMC(self.SMI_code_port_value, self.SMI_data_port_value)
         else:
-            self.logger.log("          RAX: 0x{:016X} (AX will be overridden with values of SW SMI ports B2/B3)".format(self._rax))
-            self.logger.log("          RBX: 0x{:016X}".format(self._rbx))
-            self.logger.log("          RCX: 0x{:016X}".format(self._rcx))
-            self.logger.log("          RDX: 0x{:016X} (DX will be overridden with 0x00B2)".format(self._rdx))
-            self.logger.log("          RSI: 0x{:016X}".format(self._rsi))
-            self.logger.log("          RDI: 0x{:016X}".format(self._rdi))
+            self.logger.log(f'          RAX: 0x{self._rax:016X} (AX will be overridden with values of SW SMI ports B2/B3)')
+            self.logger.log(f'          RBX: 0x{self._rbx:016X}')
+            self.logger.log(f'          RCX: 0x{self._rcx:016X}')
+            self.logger.log(f'          RDX: 0x{self._rdx:016X} (DX will be overridden with 0x00B2)')
+            self.logger.log(f'          RSI: 0x{self._rsi:016X}')
+            self.logger.log(f'          RDI: 0x{self._rdi:016X}')
             ret = self.interrupts.send_SW_SMI(self.thread_id, self.SMI_code_port_value, self.SMI_data_port_value, self._rax, self._rbx, self._rcx, self._rdx, self._rsi, self._rdi)
             if not ret is None:
                 self.logger.log("Return values")
-                self.logger.log("          RAX: {:16X}".format(ret[1]))
-                self.logger.log("          RBX: {:16X}".format(ret[2]))
-                self.logger.log("          RCX: {:16X}".format(ret[3]))
-                self.logger.log("          RDX: {:16X}".format(ret[4]))
-                self.logger.log("          RSI: {:16X}".format(ret[5]))
-                self.logger.log("          RDI: {:16X}".format(ret[6]))
+                self.logger.log(f'          RAX: {ret[1]:16X}')
+                self.logger.log(f'          RBX: {ret[2]:16X}')
+                self.logger.log(f'          RCX: {ret[3]:16X}')
+                self.logger.log(f'          RDX: {ret[4]:16X}')
+                self.logger.log(f'          RSI: {ret[5]:16X}')
+                self.logger.log(f'          RDI: {ret[6]:16X}')
 
-    def run(self):
+    def run(self) -> None:
         try:
             self.interrupts = Interrupts(self.cs)
         except RuntimeError as msg:
@@ -157,7 +157,7 @@ class SMICommand(BaseCommand):
 
         self.func()
 
-        self.logger.log("[CHIPSEC] (smi) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log(f'[CHIPSEC] (smi) time elapsed {time.time() - t:.3f}')
 
 
 class NMICommand(BaseCommand):
@@ -169,10 +169,10 @@ class NMICommand(BaseCommand):
     >>> chipsec_util nmi
     """
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         return True
 
-    def run(self):
+    def run(self) -> None:
         try:
             interrupts = Interrupts(self.cs)
         except RuntimeError as msg:
@@ -182,7 +182,7 @@ class NMICommand(BaseCommand):
         t = time.time()
         self.logger.log("[CHIPSEC] Sending NMI#...")
         interrupts.send_NMI()
-        self.logger.log("[CHIPSEC] (nmi) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log(f'[CHIPSEC] (nmi) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'smi': SMICommand, 'nmi': NMICommand}

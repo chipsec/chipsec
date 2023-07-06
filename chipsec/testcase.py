@@ -56,7 +56,6 @@ class ExitCode:
 
 """
 
-
 class TestCase:
     def __init__(self, name: str) -> None:
         self.name = name
@@ -86,12 +85,13 @@ class TestCase:
 
 
 class ChipsecResults:
-    def __init__(self):
+    def __init__(self, rc: bool = False):
         self.test_cases = []
         self.properties = None
         self.summary = False
         self.exceptions = []
         self.time = None
+        self.using_return_codes = rc
 
     def add_properties(self, properties: Dict[str, str]) -> None:
         self.properties = properties
@@ -107,7 +107,15 @@ class ChipsecResults:
     def add_exception(self, name):
         self.exceptions.append(str(name))
 
-    def order_summary(self) -> Dict[str, List[TestCase]]:
+    def get_return_code(self) -> Dict[str, List[TestCase]]:
+        if self.using_return_codes:
+            return self.get_return_codeRC()
+        return self.get_return_codeL()
+    
+    # -------------------------------------------------------
+    # Legacy results
+    # -------------------------------------------------------
+    def order_summaryL(self) -> Dict[str, List[TestCase]]:
         self.summary = True
         ret = OrderedDict()
         passed = []
@@ -146,8 +154,8 @@ class ChipsecResults:
         ret['exceptions'] = self.exceptions
         return ret
 
-    def get_return_code(self) -> int:
-        summary = self.order_summary()
+    def get_return_codeL(self) -> int:
+        summary = self.order_summaryL()
         if len(summary['failed to run']) != 0:
             return ExitCode.ERROR
         elif len(summary['exceptions']) != 0:
@@ -164,6 +172,36 @@ class ChipsecResults:
             return ExitCode.INFORMATION
         else:
             return ExitCode.OK
+    # -------------------------------------------------------
+        
+    def order_summaryRC(self):
+        if self.time is None:
+            self.set_time()
+        self.summary = True
+        ret = OrderedDict()
+        passed = []
+        failed = []
+        executed = 0
+        for test in self.test_cases:
+            executed += 1
+            fields = test.get_fields()
+            if fields['result'] == 'Passed':
+                passed.append(fields['name'])
+            elif fields['result'] == 'Failed':
+                failed.append(fields['name'])
+        ret['total'] = executed
+        ret['failed'] = failed
+        ret['passed'] = passed
+        ret['exceptions'] = self.exceptions
+        return ret
+
+    def get_return_codeRC(self):
+        summary = self.order_summaryRC()
+        if len(summary['failed']) != 0:
+            return ExitCode.FAIL
+        else:
+            return ExitCode.OK
+
 
     def set_time(self, pTime: Optional[float] = None) -> None:
         """Sets the time"""
@@ -272,9 +310,15 @@ class ChipsecResults:
             ret_string += f'\n# {result:s}:{len(destination[result]):d}\n'
             ret_string += ''.join(destination[result])
         return ret_string
-
+    
     def print_summary(self, runtime: Optional[float] = None) -> None:
-        summary = self.order_summary()
+        if self.using_return_codes:
+            self.print_summaryRC(runtime)
+        else:
+            self.print_summaryL(runtime)
+
+    def print_summaryL(self, runtime: Optional[float] = None) -> None:
+        summary = self.order_summaryL()
         filler = '*' * 27
         logger().log(f'\n[CHIPSEC] {filler}  SUMMARY  {filler}')
         if runtime is not None:
@@ -305,4 +349,25 @@ class ChipsecResults:
                         logger().log_failed(mod)
                     elif result in ['not applicable', 'skipped']:
                         logger().log_not_applicable(mod)
+        logger().log('[CHIPSEC] *****************************************************************')
+
+    def print_summaryRC(self, runtime: Optional[float] = None) -> None:
+        summary = self.order_summaryRC()
+        filler = '*' * 27
+        logger().log(f'\n[CHIPSEC] {filler}  SUMMARY  {filler}')
+        if runtime is not None:
+            logger().log(f'[CHIPSEC] Time elapsed            {runtime:.3f}')
+
+        for result in summary.keys():
+            if result == 'total':
+                logger().log(f'[CHIPSEC] Modules {result:16}{summary[result]:d}')
+            elif result == 'exceptions':
+                if len(summary[result]) > 0:
+                    logger().log(f'[CHIPSEC] Modules with {result:11}{len(summary[result]):d}:')
+                    for mod in summary[result]:
+                        logger().log_error(mod)
+            else:
+                logger().log(f'[CHIPSEC] Modules {result:16}{len(summary[result]):d}:')
+                for mod in summary[result]:
+                    logger().log(f"    {mod}")
         logger().log('[CHIPSEC] *****************************************************************')

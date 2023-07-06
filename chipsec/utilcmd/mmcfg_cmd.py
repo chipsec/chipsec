@@ -42,7 +42,7 @@ from argparse import ArgumentParser
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 class MMCfgCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requires_driver(self) -> bool:
         parser = ArgumentParser(prog='chipsec_util mmcfg', usage=__doc__)
         parser.add_argument('bus', type=lambda x: int(x, 16), help='Bus (hex)')
         parser.add_argument('device', type=lambda x: int(x, 16), help='Device (hex)')
@@ -55,7 +55,7 @@ class MMCfgCommand(BaseCommand):
         parser.parse_args(self.argv[2:], namespace=self)
         return True
 
-    def run(self):
+    def run(self) -> None:
         t = time.time()
         _mmio = mmio.MMIO(self.cs)
 
@@ -74,13 +74,13 @@ class MMCfgCommand(BaseCommand):
 
         if self.value is not None:
             _mmio.write_mmcfg_reg(self.bus, self.device, self.function, self.offset, _width, self.value)
-            self.logger.log("[CHIPSEC] Writing MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(self.bus, self.device, self.function, self.offset, self.value))
+            self.logger.log(f'[CHIPSEC] Writing MMCFG register ({self.bus:02d}:{self.device:02d}.{self.function:d} + 0x{self.offset:02X}): 0x{self.value:X}')
         else:
             data = _mmio.read_mmcfg_reg(self.bus, self.device, self.function, self.offset, _width)
-            self.logger.log("[CHIPSEC] Reading MMCFG register ({:02d}:{:02d}.{:d} + 0x{:02X}): 0x{:X}".format(self.bus, self.device, self.function, self.offset, data))
+            self.logger.log(f'[CHIPSEC] Reading MMCFG register ({self.bus:02d}:{self.device:02d}.{self.function:d} + 0x{self.offset:02X}): 0x{data:X}')
 
         self.logger.log('')
-        self.logger.log("[CHIPSEC] (mmcfg) time elapsed {:.3f}".format(time.time() - t))
+        self.logger.log(f'[CHIPSEC] (mmcfg) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'mmcfg': MMCfgCommand}
