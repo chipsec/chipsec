@@ -330,6 +330,8 @@ def getEFIvariables_NVAR(nvram_buf: bytes) -> Dict[str, List[EfiVariableType]]:
     EMPTY = 0xffffffff
     while (nof + nvar_size) < nvram_size:
         start_id, size, next, attributes = struct.unpack(EFI_HDR_NVAR, nvram_buf[nof:nof + nvar_size])
+        if size == 0:
+            break
         next = get_3b_size(next)
         valid = (bit_set(attributes, NVRAM_ATTR_VLD) and (not bit_set(attributes, NVRAM_ATTR_DATA)))
         if not valid:
