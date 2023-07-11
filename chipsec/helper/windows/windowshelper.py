@@ -68,7 +68,7 @@ DEVICE_FILE = "\\\\.\\chipsec_hlpr"
 SERVICE_NAME = "chipsec"
 DISPLAY_NAME = "CHIPSEC Service"
 
-CHIPSEC_INSTALL_PATH = os.path.join(sys.prefix, "Lib\site-packages\chipsec")
+CHIPSEC_INSTALL_PATH = os.path.join(sys.prefix, "Lib", "site-packages", "chipsec")
 
 # Status Codes
 STATUS_PRIVILEGED_INSTRUCTION = 0xC0000096
