@@ -19,10 +19,8 @@
 #
 
 import unittest
-import logging
 from unittest.mock import Mock
 from chipsec.modules.common.cpu.cpu_info import cpu_info
-from chipsec.module_common import ModuleResult
 
 
 class TestCpuInfo(unittest.TestCase):
@@ -41,7 +39,7 @@ class TestCpuInfo(unittest.TestCase):
         mock_self.cs.register_has_field.return_value = True
         result = cpu_info.is_supported(mock_self)
         self.assertTrue(result)
-		
+
 
 
 if __name__ == '__main__':
