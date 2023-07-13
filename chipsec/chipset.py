@@ -30,6 +30,7 @@ from errno import ENXIO
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
+from chipsec.helper.nonehelper import NoneHelper
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
@@ -214,6 +215,7 @@ class Chipset:
 
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True, ignore_platform=False):
         self.reqs_pch = None
+        self.load_config = load_config
 
         # initialize chipset values to unknown
         self._unknown_platform = True
@@ -235,9 +237,11 @@ class Chipset:
             self.vid, self.did, self.rid, self.pch_vid, self.pch_did, self.pch_rid = self.read_platform_ids()
             # get cpuid only if using driver (otherwise it will cause problems)
             self.get_cpuid()
+        else:
+            self.load_helper(NoneHelper())
 
         
-        if load_config:
+        if self.load_config:
             if not ignore_platform and platform_code is None:
                 self.detect_platform()
 
@@ -281,21 +285,22 @@ class Chipset:
                 else:
                     logger().log_warning("Platform dependent functionality is likely to be incorrect")
             self.init_cfg()
+            if self._unknown_platform:
+                msg = f'Unknown Platform: VID = 0x{self.vid:04X}, DID = 0x{self.did:04X}, RID = 0x{self.rid:02X}'
+                logger().log(f'[!]       {msg}; Using Default.')
+            if self.reqs_pch == False:
+                self.pch_longname = self.longname
+                self._unknown_pch = False
+            if self._unknown_pch:
+                msg = f'Unknown PCH: VID = 0x{self.pch_vid:04X}, DID = 0x{self.pch_did:04X}, RID = 0x{self.pch_rid:02X}'
+                logger().log(f'[!]       {msg}; Using Default.')
+            if self._unknown_pch or self._unknown_platform:
+                msg = 'If you are trying to use configuration data, results from this run will likely be incorrect.'
+                logger().log_warning(f'[!]  {msg}')
+        
             
 
-        if self._unknown_platform:
-            msg = f'Unknown Platform: VID = 0x{self.vid:04X}, DID = 0x{self.did:04X}, RID = 0x{self.rid:02X}'
-            logger().log(f'[!]       {msg}; Using Default.')
         
-        if self.reqs_pch == False:
-            self.pch_longname = self.longname
-            self._unknown_pch = False
-        if self._unknown_pch:
-            msg = f'Unknown PCH: VID = 0x{self.pch_vid:04X}, DID = 0x{self.pch_did:04X}, RID = 0x{self.pch_rid:02X}'
-            logger().log(f'[!]       {msg}; Using Default.')
-        if self._unknown_pch or self._unknown_platform:
-            msg = 'If using configuration data, results from this system will likely be incorrect.'
-            logger().log_warning(f'[!]            {msg}')
 
     def detect_platform(self):
         # platform code was not passed in try to determine based upon cpu id
