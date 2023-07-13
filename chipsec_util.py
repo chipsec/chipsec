@@ -28,6 +28,7 @@ import os
 import sys
 import importlib
 import argparse
+from time import time
 
 from typing import Sequence, Optional, Dict, Any
 from chipsec.helper.oshelper import helper
@@ -108,7 +109,6 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options.add_argument('_cmd', metavar='Command', nargs='?', choices=sorted(cmds.keys()), type=str.lower, default="help",
                          help="Util command to run: {{{}}}".format(','.join(sorted(cmds.keys()))))
     options.add_argument('_cmd_args', metavar='Command Args', nargs=argparse.REMAINDER, help=global_usage)
-
     par = vars(parser.parse_args(argv))
 
     if par['_cmd'] == 'help' or par['show_help']:
@@ -162,40 +162,49 @@ class ChipsecUtil:
 
     def main(self) -> int:
         """Receives and executes the commands"""
-
         if self._show_banner:
             print_banner(self.argv, get_version(), get_message())
 
-        # @TODO: change later
-        # all util cmds assume 'chipsec_util.py' as the first arg so adding dummy first arg
-        self.argv = ['dummy'] + [self._cmd] + self._cmd_args
-        comm = self.commands[self._cmd](self.argv, cs=self._cs)
-        req_driver = comm.requires_driver()
-        if req_driver and self._no_driver:
-            self.logger.log("Cannot run without driver loaded", level.ERROR)
-            sys.exit(ExitCode.OK)
+        comm = self.commands[self._cmd](self._cmd_args, cs=self._cs)
+        comm.parse_arguments()
+        reqs = comm.requirements()
+        if reqs.load_driver() and self._no_driver:
+            self.logger.log("Cannot run command without a driver loaded.", level.ERROR)
+            return ExitCode.ERROR
+            
+        if reqs.load_config() and not self._load_config:
+            self.logger.log("Cannot run command without a config loaded. Please run with -p and/or --pch if needed.", level.ERROR)
+            return ExitCode.ERROR
 
         try:
-            self._cs.init(self._platform, self._pch, self._helper, ((not self._no_driver) and req_driver), self._load_config, self._ignore_platform)
+            self._cs.init(self._platform, self._pch, self._helper, reqs.load_driver(), reqs.load_config(), self._ignore_platform)
         except UnknownChipsetError as msg:
             self.logger.log_error("Platform is not supported ({}).".format(str(msg)))
             self.logger.log_error('To specify a cpu please use -p command-line option')
             self.logger.log_error('To specify a pch please use --pch command-line option\n')
             self.logger.log_error('If the correct configuration is not loaded, results should not be trusted.')
-            sys.exit(ExitCode.EXCEPTION)
-        
+            return ExitCode.EXCEPTION
         except Exception as msg:
             self.logger.log(str(msg), level.ERROR)
-            sys.exit(ExitCode.EXCEPTION)
+            return ExitCode.EXCEPTION
 
         if self._show_banner:
             print_banner_properties(self._cs, os_version())
-    
-            
 
-        self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
+        self.logger.log(f"[CHIPSEC] Executing command '{self._cmd}' with args {self._cmd_args}\n")
+        
+        try:
+            comm.set_up()
+        except Exception as msg:
+            self.logger.log_error(msg)
+            return
+        
+        t = time()
         comm.run()
-        if comm.requires_driver() and not self._no_driver:
+        self.logger.log(f"[CHIPSEC] Time elapsed {time()-t:.3f}")
+        
+        comm.tear_down()
+        if reqs.load_driver() and not self._no_driver:
             self._cs.destroy_helper()
         return comm.ExitCode
 
