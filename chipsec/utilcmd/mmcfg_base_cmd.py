@@ -31,15 +31,18 @@ Examples:
 >>> chipsec_util mmcfg_base
 """
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import mmio
 
 
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 class MMCfgBaseCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
-        return True
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
+        return
 
     def run(self) -> None:
         _mmio = mmio.MMIO(self.cs)

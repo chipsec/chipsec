@@ -31,22 +31,23 @@ Examples:
 >>> chipsec_util msr 0x8B 0x0 0x0 0
 """
 
-from chipsec.command import BaseCommand
-from chipsec.hal.msr import Msr
+from chipsec.command import BaseCommand, toLoad
 from argparse import ArgumentParser
 
 
 # CPU Model Specific Registers
 class MSRCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util msr', usage=__doc__)
         parser.add_argument('msr_addr', type=lambda x: int(x, 16), metavar='<msr>', help='MSR address (hex)')
         parser.add_argument('msr_input1', type=lambda x: int(x, 16), metavar='MSR Value', nargs='?', default=None, help='EAX (hex)')
         parser.add_argument('msr_input2', type=lambda x: int(x, 16), metavar='MSR Value', nargs='?', default=None, help='EDX (hex)')
         parser.add_argument('cpu_id', type=lambda x: int(x, 16), metavar='CPU ID', nargs='?', default=None, help='CPU ID (hex)')
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def run(self):
         if self.msr_input1 is None:

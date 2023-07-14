@@ -32,10 +32,9 @@ Examples:
 >>> chipsec_util vmm virtio 0:6.0
 """
 
-import time
 import re
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.vmm import VMM, get_virtio_devices, VirtIO_Device
 from chipsec.hal.pci import print_pci_devices
 from chipsec.exceptions import VMMRuntimeError
@@ -44,7 +43,10 @@ from argparse import ArgumentParser
 
 class VMMCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util vmm', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -73,8 +75,7 @@ class VMMCommand(BaseCommand):
         parser_virtio.add_argument('bdf', type=str, nargs='?', default=None, help='<bus>:<device>.<function>')
         parser_virtio.set_defaults(func=self.vmm_virtio)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def vmm_virtio(self):
         if self.bdf is not None:
@@ -133,8 +134,6 @@ class VMMCommand(BaseCommand):
             return
 
     def run(self):
-        t = time.time()
-
         try:
             self.vmm = VMM(self.cs)
         except VMMRuntimeError as msg:
@@ -144,8 +143,6 @@ class VMMCommand(BaseCommand):
         self.vmm.init()
 
         self.func()
-
-        self.logger.log("[CHIPSEC] (vmm) time elapsed {:.3f}".format((time.time() - t)))
 
 
 commands = {'vmm': VMMCommand}

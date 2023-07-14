@@ -38,10 +38,9 @@ Examples:
 >>> chipsec_util mmio write-abs 0xFE010000 0x74 0x04 0xFFFF0000
 """
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import mmio
 from argparse import ArgumentParser
-from time import time
 
 
 # ###################################################################
@@ -51,7 +50,10 @@ from time import time
 # ###################################################################
 class MMIOCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util mmio', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -106,10 +108,10 @@ class MMIOCommand(BaseCommand):
         parser_write_abs.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
         parser_write_abs.set_defaults(func=self.write_abs)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        if hasattr(self, 'func'):
-            return True
-        return False
+        parser.parse_args(self.argv, namespace=self)
+
+    def set_up(self) -> None:
+        self._mmio = mmio.MMIO(self.cs)
 
     def list_bars(self):
         self._mmio.list_MMIO_BARs()
@@ -167,11 +169,6 @@ class MMIOCommand(BaseCommand):
             self._mmio.write_MMIO_reg_dword(self.base, self.offset, self.value & 0xFFFFFFFF)
             self._mmio.write_MMIO_reg_dword(self.base, self.offset + 4, (self.value >> 32) & 0xFFFFFFFF)
 
-    def run(self):
-        self._mmio = mmio.MMIO(self.cs)
-        t = time()
-        self.func()
-        self.logger.log("[CHIPSEC] (mmio) time elapsed {:.3f}".format(time() - t))
 
 
 commands = {'mmio': MMIOCommand}

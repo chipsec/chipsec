@@ -33,12 +33,11 @@ Examples:
 """
 
 from os.path import exists as path_exists
-from time import time
 from argparse import ArgumentParser
 
 from chipsec.hal.acpi import ACPI
 from chipsec.exceptions import AcpiRuntimeError
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 
 # ###################################################################
 #
@@ -47,21 +46,26 @@ from chipsec.command import BaseCommand
 # ###################################################################
 
 
-class ACPICommand(BaseCommand):
+class ACPICommand(BaseCommand):    
+    def requirements(self) -> toLoad:
+        if self.func == self.acpi_table and self._file:
+            return toLoad.Nil # TODO: Fix this case. Need to update ACPI HAL to not try to auto-populate tables.
+        return toLoad.Driver
 
-    def requires_driver(self) -> bool:
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_list = subparsers.add_parser('list')
         parser_list.set_defaults(func=self.acpi_list)
+
         parser_table = subparsers.add_parser('table')
         parser_table.add_argument('-f', '--file', dest='_file', help='Read from file', action='store_true')
         parser_table.add_argument('_name', metavar='table|filename', nargs=1, help="table to list")
         parser_table.set_defaults(func=self.acpi_table)
-        parser.parse_args(self.argv[2:], namespace=self)
-        if self.func == self.acpi_table and self._file:
-            return False
-        return True
+        parser.parse_args(self.argv, namespace=self)
+    
+    def set_up(self) -> None:
+        self._acpi = ACPI(self.cs)
 
     def acpi_list(self) -> None:
         self.logger.log('[CHIPSEC] Enumerating ACPI tables..')
@@ -79,15 +83,6 @@ class ACPICommand(BaseCommand):
         self._acpi.dump_ACPI_table(name, self._file)
         return
 
-    def run(self) -> None:
-        t = time()
-        try:
-            self._acpi = ACPI(self.cs)
-        except AcpiRuntimeError as msg:
-            print(msg)
-            return
-        self.func()
-        self.logger.log(f'[CHIPSEC] (acpi) time elapsed {time() - t:.3f}')
 
 
 commands = {'acpi': ACPICommand}

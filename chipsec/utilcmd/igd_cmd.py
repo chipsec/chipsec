@@ -32,19 +32,21 @@ Examples:
 >>> chipsec_util igd dmawrite 0x2217F1000 0x4 deadbeef
 """
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.logger import print_buffer_bytes
 from argparse import ArgumentParser
 from chipsec.file import read_file, write_file
 from chipsec.hal import igd
-from time import time
 import os
 
 
 # Port I/O
 class IgdCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util igd', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -60,10 +62,8 @@ class IgdCommand(BaseCommand):
         parser_write.add_argument('file_value', type=str, help='Data to write [Value|<file_name>]')
         parser_write.set_defaults(func=self.write_dma)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        if hasattr(self, 'func'):
-            return True
-        return False
+        parser.parse_args(self.argv, namespace=self)
+        
 
     def read_dma(self) -> None:
         self.logger.log(f'[CHIPSEC] Reading buffer from memory: PA = 0x{self.address:016X}, len = 0x{self.width:X}..')
@@ -101,11 +101,7 @@ class IgdCommand(BaseCommand):
             self.logger.log('[CHIPSEC] Looks like internal graphics device is not enabled')
             return
 
-        t = time()
-
         self.func()
-
-        self.logger.log(f'[CHIPSEC] (mem) time elapsed {time() - t:.3f}')
 
 
 commands = {'igd': IgdCommand}

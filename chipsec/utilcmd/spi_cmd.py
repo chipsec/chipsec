@@ -44,9 +44,8 @@ Examples:
 >>> chipsec_util spi jedec decode
 """
 
-import time
 import os
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.spi import SPI, BIOS
 from chipsec.exceptions import SpiRuntimeError
 from argparse import ArgumentParser
@@ -55,7 +54,10 @@ from argparse import ArgumentParser
 # SPI Flash Controller
 class SPICommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util spi', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_info = subparsers.add_parser('info')
@@ -90,8 +92,11 @@ class SPICommand(BaseCommand):
         parser_jedec.add_argument('option', type=str, nargs='?', default='', help='Optional decode')
         parser_jedec.set_defaults(func=self.spi_jedec)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
+
+    def set_up(self) -> None:
+        self._spi = SPI(self.cs)
+        self._msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
 
     def spi_info(self):
         self.logger.log("[CHIPSEC] SPI flash memory information\n")
@@ -169,19 +174,5 @@ class SPICommand(BaseCommand):
                 self.logger.log('')
             else:
                 self.logger.log(' JEDEC ID command is not supported')
-
-    def run(self):
-        try:
-            self._spi = SPI(self.cs)
-        except SpiRuntimeError as msg:
-            self.logger.log_error(msg)
-            return
-
-        self._msg = "it may take a few minutes (use DEBUG or VERBOSE logger options to see progress)"
-        t = time.time()
-        self.func()
-
-        self.logger.log("[CHIPSEC] (spi) time elapsed {:.3f}".format(time.time() - t))
-
 
 commands = {'spi': SPICommand}

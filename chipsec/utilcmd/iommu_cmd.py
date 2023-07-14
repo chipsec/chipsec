@@ -37,17 +37,19 @@ Examples:
 >>> chipsec_util iommu pt
 """
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import acpi, iommu
 from argparse import ArgumentParser
 from chipsec.exceptions import IOMMUError, AcpiRuntimeError
-import time
 
 
 # I/O Memory Management Unit (IOMMU), e.g. Intel VT-d
 class IOMMUCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util iommu', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -74,8 +76,7 @@ class IOMMUCommand(BaseCommand):
         parser_pt.add_argument('engine', type=str, default='', nargs='?', help='IOMMU Engine')
         parser_pt.set_defaults(func=self.iommu_pt)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def iommu_list(self) -> None:
         self.logger.log("[CHIPSEC] Enumerating supported IOMMU engines..")
@@ -138,9 +139,7 @@ class IOMMUCommand(BaseCommand):
         self.iommu_engine('pt')
 
     def run(self) -> None:
-        t = time.time()
         self.func()
-        self.logger.log(f'[CHIPSEC] (iommu) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'iommu': IOMMUCommand}

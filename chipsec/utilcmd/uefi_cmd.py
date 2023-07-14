@@ -26,7 +26,7 @@ The uefi command provides access to UEFI variables, both on the live system and 
 >>> chipsec_util uefi var-list
 >>> chipsec_util uefi var-find <name>|<GUID>
 >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
->>> chipsec_util uefi decode --fwtype <rom_file> [filetypes]
+>>> chipsec_util uefi decode <rom_file> [filetypes]
 >>> chipsec_util uefi nvram[-auth] <rom_file> [fwtype]
 >>> chipsec_util uefi keys <keyvar_file>
 >>> chipsec_util uefi tables
@@ -53,11 +53,10 @@ Examples:
 """
 
 import os
-import time
 import uuid
 from argparse import ArgumentParser
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.uefi_common import EFI_STATUS_DICT, parse_efivar_file
 from chipsec.file import write_file, read_file
 from chipsec.hal.spi_uefi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
@@ -72,7 +71,12 @@ from chipsec.hal.uefi_platform import fw_types
 # Unified Extensible Firmware Interface (UEFI)
 class UEFICommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        if 'decode' in self.argv:
+            return toLoad.Nil
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util uefi', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -178,12 +182,10 @@ class UEFICommand(BaseCommand):
         parser_assemble.add_argument('efi_file', type=str, help='')
         parser_assemble.set_defaults(func=self.assemble)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
 
-        # No driver for decode functionality
-        if 'decode' in self.argv:
-            return False
-        return True
+    def set_up(self) -> None:
+        self._uefi = UEFI(self.cs)
 
     def var_read(self):
         self.logger.log("[CHIPSEC] Reading EFI variable Name='{}' GUID={{{}}} to '{}' via Variable API..".format(self.name, self.guid, self.filename))
@@ -429,13 +431,6 @@ class UEFICommand(BaseCommand):
             return
 
         self.logger.log("[CHIPSEC]  UEFI file was successfully assembled! Binary file size: {:d}, compressed UEFI file size: {:d}".format(len(raw_image), len(uefi_image)))
-
-    def run(self):
-        t = time.time()
-        self._uefi = UEFI(self.cs)
-        self.func()
-        self.logger.log("[CHIPSEC] (uefi) time elapsed {:.3f}".format(time.time() - t))
-        return
 
 
 commands = {'uefi': UEFICommand}

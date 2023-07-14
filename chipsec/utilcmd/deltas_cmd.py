@@ -32,20 +32,22 @@ Example:
 from time import time
 from argparse import ArgumentParser
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 import chipsec.result_deltas
 
 
 class DeltasCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.Nil
+    
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_prev_log', metavar='<previous>', help='previous log file')
         parser.add_argument('_cur_log', metavar='<current>', help='current log file')
         parser.add_argument('_out_format', metavar='out-format', choices=['JSON', 'XML'], default='JSON', help='output format')
         parser.add_argument('_out_name', metavar='out-name', nargs='?', default=None, help='output filename')
-        parser.parse_args(self.argv[2:], namespace=self)
-        return False
+        parser.parse_args(self.argv, namespace=self)
 
     def run(self) -> None:
         start_time = time()

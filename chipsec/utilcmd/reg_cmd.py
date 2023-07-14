@@ -35,13 +35,16 @@ Examples:
 >>> chipsec_util reg set_control BiosLockEnable 0x1
 """
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from argparse import ArgumentParser
 
 
 class RegisterCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util reg', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -75,8 +78,7 @@ class RegisterCommand(BaseCommand):
         parser_setcontrol.add_argument('value', type=lambda x: int(x, 16), help='Value (hex)')
         parser_setcontrol.set_defaults(func=self.reg_set_control)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def reg_read(self):
         if self.field_name is not None:
@@ -118,10 +120,5 @@ class RegisterCommand(BaseCommand):
             self.logger.log("[CHIPSEC] Setting control {} < 0x{:X}".format(self.control_name, self.value))
         else:
             self.logger.log_error("[CHIPSEC] Control '{}' isn't defined".format(self.control_name))
-
-    def run(self):
-
-        self.func()
-
 
 commands = {'reg': RegisterCommand}

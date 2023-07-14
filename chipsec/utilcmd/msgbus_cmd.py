@@ -38,16 +38,17 @@ Examples:
 >>> chipsec_util msgbus message  0x3 0x2E 0x11 0x0
 """
 
-import time
-
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from argparse import ArgumentParser
 
 
 # Message Bus
 class MsgBusCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util msgbus', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -80,8 +81,7 @@ class MsgBusCommand(BaseCommand):
         parser_message.add_argument('val', type=lambda x: int(x, 16), nargs='?', default=None, help='Value (hex)')
         parser_message.set_defaults(func=self.msgbus_message)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def msgbus_read(self):
         self.logger.log("[CHIPSEC] msgbus read: port 0x{:02X} + 0x{:08X}".format(self.port, self.reg))
@@ -106,15 +106,12 @@ class MsgBusCommand(BaseCommand):
         return self._msgbus.msgbus_send_message(self.port, self.reg, self.opcode, self.val)
 
     def run(self):
-        t = time.time()
         self._msgbus = self.cs.msgbus
 
         res = self.func()
 
         if res is not None:
             self.logger.log("[CHIPSEC] Result: 0x{:08X}".format(res))
-
-        self.logger.log("[CHIPSEC] (msgbus) time elapsed {:.3f}".format(time.time() - t))
 
 
 commands = {'msgbus': MsgBusCommand}
