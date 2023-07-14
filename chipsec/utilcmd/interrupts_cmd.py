@@ -41,10 +41,9 @@ Examples:
 >>> chipsec_util nmi
 """
 
-import time
 import os
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.interrupts import Interrupts
 from chipsec.hal.uefi_common import EFI_ERROR_STR
 from argparse import ArgumentParser
@@ -71,7 +70,10 @@ class SMICommand(BaseCommand):
     >>> chipsec_util smi smmc 0x79dfe000 0x79efdfff ed32d533-99e6-4209-9cc02d72cdd998a7 0x79dfaaaa payload.bin
     """
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util smi', usage=SMICommand.__doc__)
         subparsers = parser.add_subparsers()
 
@@ -99,8 +101,7 @@ class SMICommand(BaseCommand):
         parser_smmc.add_argument('port', type=lambda x: int(x, 16), nargs='?', default=0x0, help='Port (hex) [default=0]')
         parser_smmc.set_defaults(func=self.smi_smmc)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def smi_count(self) -> None:
         self.logger.log("[CHIPSEC] SMI count:")
@@ -153,11 +154,7 @@ class SMICommand(BaseCommand):
             self.logger.log(msg)
             return
 
-        t = time.time()
-
         self.func()
-
-        self.logger.log(f'[CHIPSEC] (smi) time elapsed {time.time() - t:.3f}')
 
 
 class NMICommand(BaseCommand):
@@ -169,8 +166,11 @@ class NMICommand(BaseCommand):
     >>> chipsec_util nmi
     """
 
-    def requires_driver(self) -> bool:
-        return True
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
+        return
 
     def run(self) -> None:
         try:
@@ -179,10 +179,8 @@ class NMICommand(BaseCommand):
             self.logger.log(msg)
             return
 
-        t = time.time()
         self.logger.log("[CHIPSEC] Sending NMI#...")
         interrupts.send_NMI()
-        self.logger.log(f'[CHIPSEC] (nmi) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'smi': SMICommand, 'nmi': NMICommand}

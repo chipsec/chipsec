@@ -43,10 +43,9 @@ KEY:
 
 """
 
-from time import time
 from argparse import ArgumentParser
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.locks import locks, LockResult
 from chipsec.defines import is_set
 
@@ -55,7 +54,10 @@ class LOCKCHECKCommand(BaseCommand):
 
     version = "0.5"
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util check', usage=LOCKCHECKCommand.__doc__)
 
         parser_lockname = ArgumentParser(add_help=False)
@@ -75,9 +77,15 @@ class LOCKCHECKCommand(BaseCommand):
         parser_check = subparsers.add_parser('lock', parents=[parser_lockname])
         parser_check.set_defaults(func=self.check_lock)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
 
-        return True
+    def set_up(self) -> None:
+        CONSISTENCY_CHECKING = True # TODO: Not doing anything.
+        self.logger.set_always_flush(True)
+        self._locks = locks(self.cs)
+    
+    def tear_down(self) -> None:
+        self.logger.set_always_flush(False)
 
     def log_key(self) -> None:
         self.logger.log("""
@@ -156,19 +164,6 @@ KEY:
         if not self.logger.HAL:
             self.logger.log(res)
         return res
-
-    def run(self) -> None:
-        CONSISTENCY_CHECKING = True
-        self.logger.set_always_flush(True)
-        try:
-            self._locks = locks(self.cs)
-        except Exception as msg:
-            self.logger.log(msg)
-            return
-        t = time()
-        self.func()
-        self.logger.set_always_flush(False)
-        self.logger.log(f"[CHIPSEC] (Lock Check) time elapsed {time() - t:.3f}")
 
 
 commands = {'check': LOCKCHECKCommand}

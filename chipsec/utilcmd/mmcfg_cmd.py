@@ -32,9 +32,7 @@ Examples:
 >>> chipsec_util mmcfg 0 0 0 0x98 dword 0x004E0040
 """
 
-import time
-
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import mmio
 from argparse import ArgumentParser
 
@@ -42,7 +40,10 @@ from argparse import ArgumentParser
 # Access to Memory Mapped PCIe Configuration Space (MMCFG)
 class MMCfgCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util mmcfg', usage=__doc__)
         parser.add_argument('bus', type=lambda x: int(x, 16), help='Bus (hex)')
         parser.add_argument('device', type=lambda x: int(x, 16), help='Device (hex)')
@@ -52,11 +53,9 @@ class MMCfgCommand(BaseCommand):
         parser.add_argument('value', type=lambda x: int(x, 16), nargs='?', default=None, help='Value to write (hex)')
         parser.set_defaults()
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def run(self) -> None:
-        t = time.time()
         _mmio = mmio.MMIO(self.cs)
 
         try:
@@ -80,7 +79,6 @@ class MMCfgCommand(BaseCommand):
             self.logger.log(f'[CHIPSEC] Reading MMCFG register ({self.bus:02d}:{self.device:02d}.{self.function:d} + 0x{self.offset:02X}): 0x{data:X}')
 
         self.logger.log('')
-        self.logger.log(f'[CHIPSEC] (mmcfg) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'mmcfg': MMCfgCommand}

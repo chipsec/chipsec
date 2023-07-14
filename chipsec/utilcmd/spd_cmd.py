@@ -34,16 +34,17 @@ Examples:
 >>> chipsec_util spd write 0xA0 0x0 0xAA
 """
 
-import time
-
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import smbus, spd
 from argparse import ArgumentParser
 
 
 class SPDCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -65,8 +66,7 @@ class SPDCommand(BaseCommand):
         parser_write.add_argument('val', type=lambda x: int(x, 16), help="Byte Value (hex)")
         parser_write.set_defaults(func=self.spd_write)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def spd_detect(self):
         self.logger.log("[CHIPSEC] Searching for DIMMs with SPD...")
@@ -118,17 +118,11 @@ class SPDCommand(BaseCommand):
         except BaseException as msg:
             self.logger.log_error(msg)
             return
-
-        t = time.time()
-
         if not _smbus.is_SMBus_supported():
             self.logger.log("[CHIPSEC] SMBus controller is not supported")
             return
-
         self.dev_addr = spd.SPD_SMBUS_ADDRESS
         self.func()
-
-        self.logger.log("[CHIPSEC] (spd) time elapsed {:.3f}".format(time.time() - t))
 
 
 commands = {'spd': SPDCommand}

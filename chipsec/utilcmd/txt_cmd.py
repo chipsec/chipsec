@@ -26,22 +26,24 @@ Usage:
 """
 
 from argparse import ArgumentParser
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.exceptions import HWAccessViolationError
 import struct
 
 
 class TXTCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_state = subparsers.add_parser('dump')
         parser_state.set_defaults(func=self.txt_dump)
         parser_state = subparsers.add_parser('state')
         parser_state.set_defaults(func=self.txt_state)
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def txt_dump(self):
         # Read TXT Public area as hexdump, with absolute address and skipping zeros
@@ -159,9 +161,6 @@ class TXTCommand(BaseCommand):
         self._log_register("TXT_VER_QPIIF")
         self._log_register("TXT_PCH_DIDVID")
         self._log_register("INSMM")
-
-    def run(self):
-        self.func()
 
 
 commands = {'txt': TXTCommand}

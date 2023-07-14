@@ -35,12 +35,9 @@ Examples:
 >>> chipsec_util cpu topology
 """
 
-from time import time
 from argparse import ArgumentParser
 
-from chipsec.hal.cpu import CPU
-from chipsec.exceptions import CPURuntimeError
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from typing import Dict, List, Optional, Union
 
 # ###################################################################
@@ -51,8 +48,11 @@ from typing import Dict, List, Optional, Union
 
 
 class CPUCommand(BaseCommand):
+    
+    def requirements(self) -> toLoad:
+        return toLoad.All
 
-    def requires_driver(self) -> bool:
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_info = subparsers.add_parser('info')
@@ -72,9 +72,7 @@ class CPUCommand(BaseCommand):
         parser_cpuid.add_argument('ecx', type=lambda x: int(x, 0), nargs='?', default=0)
         parser_pt.add_argument('cr3', type=lambda x: int(x, 0), nargs='?', default=None)
 
-        parser.parse_args(self.argv[2:], namespace=CPUCommand)
-
-        return True
+        parser.parse_args(self.argv, namespace=CPUCommand)
 
     def cpu_info(self) -> None:
         self.logger.log("[CHIPSEC] CPU information:")
@@ -163,17 +161,6 @@ class CPUCommand(BaseCommand):
                 self.logger.log(f'[CHIPSEC][cpu{tid:d}] paging physical base (CR3): 0x{cr3:016X}')
                 self.logger.log(f'[CHIPSEC][cpu{tid:d}] dumping paging hierarchy to \'{pt_fname}\'...')
                 self.cs.cpu.dump_page_tables(cr3, pt_fname)
-
-    def run(self) -> None:
-        t = time()
-        try:
-            self._cpu = CPU(self.cs)
-        except CPURuntimeError as msg:
-            print(msg)
-            return
-
-        self.func()
-        self.logger.log(f'[CHIPSEC] (cpu) time elapsed {time() - t:.3f}')
 
 
 commands = {'cpu': CPUCommand}

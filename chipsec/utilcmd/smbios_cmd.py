@@ -29,15 +29,17 @@ Examples:
 """
 
 from argparse import ArgumentParser
-from time import time
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.smbios import SMBIOS
 from chipsec.logger import print_buffer_bytes
 
 
 class smbios_cmd(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util smbios', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_entrypoint = subparsers.add_parser('entrypoint')
@@ -50,8 +52,7 @@ class smbios_cmd(BaseCommand):
         parser_get.add_argument('-f', '--force', action='store_true', dest='_force_32',
                                 help='Force reading from 32bit structures')
         parser_get.set_defaults(func=self.smbios_get)
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def smbios_ep(self):
         self.logger.log('[CHIPSEC] SMBIOS Entry Point Structures')
@@ -86,8 +87,6 @@ class smbios_cmd(BaseCommand):
             self.logger.log('==================================================================')
 
     def run(self):
-        t = time()
-
         # Create and initialize SMBIOS object for commands to use
         try:
             self.logger.log('[CHIPSEC] Attempting to detect SMBIOS structures')
@@ -101,7 +100,6 @@ class smbios_cmd(BaseCommand):
             return
 
         self.func()
-        self.logger.log('[CHIPSEC] (smbios) time elapsed {:.3f}'.format(time() - t))
 
 
 commands = {'smbios': smbios_cmd}

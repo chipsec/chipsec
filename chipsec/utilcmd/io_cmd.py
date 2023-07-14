@@ -34,17 +34,19 @@ Examples:
 >>> chipsec_util io write 0x430 1 0x0
 """
 
-import time
 from argparse import ArgumentParser
 
 from chipsec.hal import iobar
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.exceptions import IOBARRuntimeError
 
 
 class PortIOCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util io', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -65,9 +67,10 @@ class PortIOCommand(BaseCommand):
         parser_w.add_argument('_value', metavar='value', type=lambda x: int(x, 0), help="value")
         parser_w.set_defaults(func=self.io_write)
 
-        parser.parse_args(self.argv[2:], namespace=self)
+        parser.parse_args(self.argv, namespace=self)
 
-        return True
+    def set_up(self) -> None:
+        self._iobar = iobar.IOBAR(self.cs)
 
     def io_list(self) -> None:
         self._iobar.list_IO_BARs()
@@ -98,19 +101,5 @@ class PortIOCommand(BaseCommand):
         self.logger.log(
             f'[CHIPSEC] OUT 0x{self._port:04X} <- 0x{self._value:08X} (size = 0x{self._width:02X})')
         return
-
-    def run(self) -> None:
-        try:
-            self._iobar = iobar.IOBAR(self.cs)
-        except IOBARRuntimeError as msg:
-            self.logger.log(msg)
-            return
-
-        t = time.time()
-
-        self.func()
-
-        self.logger.log(f'[CHIPSEC] (io) time elapsed {time.time() - t:.3f}')
-
 
 commands = {'io': PortIOCommand}

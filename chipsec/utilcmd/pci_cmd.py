@@ -44,9 +44,7 @@ Examples:
 >>> chipsec_util pci cmd 1
 """
 
-import time
-
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.logger import pretty_print_hex_buffer
 from argparse import ArgumentParser
 from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
@@ -58,7 +56,10 @@ from chipsec.hal.pci import PCI_HDR_CLS_OFF, PCI_HDR_SUB_CLS_OFF, PCI_HDR_CMD_OF
 
 class PCICommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util pci', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_enumerate = subparsers.add_parser('enumerate')
@@ -100,8 +101,7 @@ class PCICommand(BaseCommand):
         parser_cmd.add_argument('pci_sub_class', type=lambda x: int(x, 16), default=None, nargs='?', help='Subclass (hex)')
         parser_cmd.set_defaults(func=self.pci_cmd)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def pci_enumerate(self):
         self.logger.log("[CHIPSEC] Enumerating available PCIe devices...")
@@ -191,13 +191,6 @@ class PCICommand(BaseCommand):
             if (cmd_reg & self.cmd_mask) == 0:
                 continue
             self.logger.log('{:02X}:{:02X}.{:X} | {:04X}:{:04X} | {:04X} | {:02X}  | {:02X}'.format(b, d, f, vid, did, cmd_reg, dev_cls, dev_sub_cls))
-
-    def run(self):
-        t = time.time()
-
-        self.func()
-
-        self.logger.log("[CHIPSEC] (pci) time elapsed {:.3f}".format(time.time() - t))
 
 
 commands = {'pci': PCICommand}

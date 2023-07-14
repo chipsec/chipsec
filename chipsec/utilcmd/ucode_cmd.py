@@ -28,9 +28,7 @@ Examples:
 >>> chipsec_util ucode decode ucode.pdb
 """
 
-import time
-
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.file import read_file
 from chipsec.hal.ucode import dump_ucode_update_header
 from argparse import ArgumentParser
@@ -44,7 +42,10 @@ from argparse import ArgumentParser
 
 class UCodeCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_id = subparsers.add_parser('id')
@@ -58,8 +59,7 @@ class UCodeCommand(BaseCommand):
 
         parser_decode = subparsers.add_parser('decode')
         parser_decode.add_argument('ucode_filename', type=str, help='ucode file name (.PDB format)')
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def ucode_id(self):
         if self.cpu_thread_id is None:
@@ -85,11 +85,6 @@ class UCodeCommand(BaseCommand):
         pdb_ucode_buffer = read_file(self.ucode_filename)
         self.logger.log("[CHIPSEC] Decoding Microcode Update header of PDB file: '{}'".format(self.ucode_filename))
         dump_ucode_update_header(pdb_ucode_buffer)
-
-    def run(self):
-        t = time.time()
-        self.func()
-        self.logger.log("[CHIPSEC] (ucode) time elapsed {:.3f}".format(time.time() - t))
 
 
 commands = {'ucode': UCodeCommand}
