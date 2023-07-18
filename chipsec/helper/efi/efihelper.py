@@ -74,22 +74,22 @@ class EfiHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
 
-    def create(self, start_driver: bool) -> bool:
+    def create(self) -> bool:
         logger().log_debug('[helper] UEFI Helper created')
         return True
 
-    def start(self, start_driver: bool, driver_exists: bool = False) -> bool:
+    def start(self) -> bool:
         # The driver is part of the modified version of edk2.
         # It is always considered as loaded.
         self.driver_loaded = True
         logger().log_debug('[helper] UEFI Helper started/loaded')
         return True
 
-    def stop(self, start_driver: bool) -> bool:
+    def stop(self) -> bool:
         logger().log_debug('[helper] UEFI Helper stopped/unloaded')
         return True
 
-    def delete(self, start_driver: bool) -> bool:
+    def delete(self) -> bool:
         logger().log_debug('[helper] UEFI Helper deleted')
         return True
 
@@ -268,16 +268,16 @@ class EfiHelper(Helper):
         (_, data, _) = self.get_EFI_variable_full(name, guidstr)
         return data
 
-    def set_EFI_variable(self, name: str, guidstr: str, data: bytes, datasize: Optional[int] = None, attrs: Optional[int] = 0x7) -> int:
+    def set_EFI_variable(self, name: str, guidstr: str, buffer: bytes, buffer_size: Optional[int] = None, attrs: Optional[int] = 0x7) -> int:
 
-        if datasize is None:
-            datasize = len(data)
+        if buffer_size is None:
+            buffer_size = len(buffer)
         if attrs is None:
             attrs = 0x07
             if logger().VERBOSE:
                 logger().log_important(f'Setting attributes to: {attrs:04X}')
 
-        (Status, datasize, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), data, datasize)
+        (Status, buffer_size, guidstr) = edk2.SetVariable(name, guidstr, int(attrs), buffer, buffer_size)
 
         return Status
 

@@ -196,7 +196,7 @@ class ChipsecUtil:
         self.logger.log("[CHIPSEC] Executing command '{}' with args {}\n".format(self._cmd, self.argv[2:]))
         comm.run()
         if comm.requires_driver() and not self._no_driver:
-            self._cs.destroy_helper(True)
+            self._cs.destroy_helper()
         return comm.ExitCode
 
 

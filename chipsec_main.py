@@ -441,7 +441,7 @@ class ChipsecMain:
         else:
             modules_failed = self.run_all_modules()
         if not self._no_driver:
-            self._cs.destroy_helper(True)
+            self._cs.destroy_helper()
         del self._cs
         self.logger.disable()
         return modules_failed
