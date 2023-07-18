@@ -46,19 +46,19 @@ class Helper(ABC):
         self.driverpath = ''
 
     @abstractmethod
-    def create(self, start_driver: bool) -> bool:
+    def create(self) -> bool:
         pass
 
     @abstractmethod
-    def start(self, start_driver: bool) -> bool:
+    def start(self) -> bool:
         pass
 
     @abstractmethod
-    def stop(self, start_driver: bool) -> bool:
+    def stop(self) -> bool:
         pass
 
     @abstractmethod
-    def delete(self, start_driver: bool) -> bool:
+    def delete(self) -> bool:
         pass
 
     def get_info(self) -> Tuple[str, str]:
@@ -93,27 +93,27 @@ class Helper(ABC):
     # physical_address is 64 bit integer
     #
     @abstractmethod
-    def read_phys_mem(self, phys_address: int, length: int) -> bytes:
+    def read_phys_mem(self, phys_address: int, size: int) -> bytes:
         pass
 
     @abstractmethod
-    def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
+    def write_phys_mem(self, phys_address: int, size: int, buffer: bytes) -> int:
         pass
 
     @abstractmethod
-    def alloc_phys_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
+    def alloc_phys_mem(self, size: int, max_phys_address: int) -> Tuple[int, int]:
         pass
 
     @abstractmethod
-    def free_phys_mem(self, physical_address: int):
+    def free_phys_mem(self, phys_address: int):
         pass
 
     @abstractmethod
-    def va2pa(self, va: int) -> Tuple[int, int]:
+    def va2pa(self, virtual_address: int) -> Tuple[int, int]:
         pass
 
     @abstractmethod
-    def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
+    def map_io_space(self, phys_address: int, size: int, cache_type: int) -> int:
         pass
 
     #
@@ -153,7 +153,7 @@ class Helper(ABC):
     # Load CPU microcode update on a specific CPU thread
     #
     @abstractmethod
-    def load_ucode_update(self, cpu_thread_id: int, ucode_update_buf: bytes) -> bool:
+    def load_ucode_update(self, cpu_thread_id: int, ucode_update_buffer: bytes) -> bool:
         pass
 
     #
@@ -175,7 +175,7 @@ class Helper(ABC):
         pass
 
     @abstractmethod
-    def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: Optional[int], attrs: Optional[int]) -> Optional[int]:
+    def set_EFI_variable(self, name: str, guid: str, buffer: bytes, buffer_size: Optional[int], attrs: Optional[int]) -> Optional[int]:
         pass
 
     @abstractmethod

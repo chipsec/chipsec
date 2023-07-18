@@ -75,21 +75,21 @@ class LinuxNativeHelper(Helper):
 ###############################################################################################
 # Driver/service management functions
 ###############################################################################################
-    def create(self, start_driver: bool) -> bool:
+    def create(self) -> bool:
         logger().log_debug("[helper] Linux Helper created")
         return True
 
-    def start(self, start_driver: bool) -> bool:
+    def start(self) -> bool:
         self.init()
         logger().log_debug("[helper] Linux Helper started/loaded")
         return True
 
-    def stop(self, start_driver: bool) -> bool:
+    def stop(self) -> bool:
         self.close()
         logger().log_debug("[helper] Linux Helper stopped/unloaded")
         return True
 
-    def delete(self, start_driver: bool) -> bool:
+    def delete(self) -> bool:
         logger().log_debug("[helper] Linux Helper deleted")
         return True
 
@@ -380,7 +380,7 @@ class LinuxNativeHelper(Helper):
     def get_EFI_variable(self, name, guid):
         raise NotImplementedError()
 
-    def set_EFI_variable(self, name, guid, data, datasize=None, attrs=None):
+    def set_EFI_variable(self, name, guid, buffer, buffer_size=None, attrs=None):
         raise NotImplementedError()
 
     def delete_EFI_variable(self, name, guid):

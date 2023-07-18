@@ -341,9 +341,9 @@ class Chipset:
 
     def start_helper(self):
         try:
-            if not self.helper.create(True):
+            if not self.helper.create():
                 raise OsHelperError("failed to create OS helper", 1)
-            if not self.helper.start(True):
+            if not self.helper.start():
                 raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
             logger().log_debug(traceback.format_exc())
@@ -355,16 +355,16 @@ class Chipset:
 
     def switch_helper(self, helper_name):
         oldName = self.helper.name
-        self.destroy_helper(True)
+        self.destroy_helper()
         self.load_helper(helper_name)
         self.start_helper()
         return oldName
 
-    def destroy_helper(self, start_driver):
-        if not self.helper.stop(start_driver):
+    def destroy_helper(self):
+        if not self.helper.stop():
             logger().log_warning("failed to stop OS helper")
         else:
-            if not self.helper.delete(start_driver):
+            if not self.helper.delete():
                 logger().log_warning("failed to delete OS helper")
 
     def get_chipset_code(self):

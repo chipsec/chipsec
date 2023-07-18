@@ -37,16 +37,16 @@ class TestHelper(Helper):
         self.driver_loaded = True
         self.name = "TestHelper"
 
-    def create(self, start_driver):
+    def create(self):
         return True
 
-    def delete(self, start_driver):
+    def delete(self):
         return True
 
-    def start(self, start_driver, driver_exists=False):
+    def start(self):
         return True
 
-    def stop(self, start_driver):
+    def stop(self):
         return True
 
      # This will be used to probe the device, fake a Broadwell CPU
@@ -134,7 +134,7 @@ class TestHelper(Helper):
     def get_EFI_variable(self, name, guid):
         raise UnimplementedAPIError('get_EFI_variable')
 
-    def set_EFI_variable(self, name, guid, data, datasize, attrs):
+    def set_EFI_variable(self, name, guid, buffer, buffer_size, attrs):
         raise UnimplementedAPIError('set_EFI_variable')
 
     def delete_EFI_variable(self, name, guid):

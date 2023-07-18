@@ -82,13 +82,13 @@ class DALHelper(Helper):
         logger().log_debug('[helper] DAL Helper started/loaded')
         return True
 
-    def stop(self, start_driver: bool) -> bool:
+    def stop(self) -> bool:
         if not self.is_system_halted:
             self.base.go()
         logger().log_debug('[helper] DAL Helper stopped/unloaded')
         return True
 
-    def delete(self, start_driver: bool) -> bool:
+    def delete(self) -> bool:
         logger().log_debug('[helper] DAL Helper deleted')
         return True
 
@@ -319,7 +319,7 @@ class DALHelper(Helper):
     def get_EFI_variable(self, name, guid, attrs):
         raise UnimplementedAPIError('get_EFI_variable')
 
-    def set_EFI_variable(self, name, guid, data, datasize, attrs):
+    def set_EFI_variable(self, name, guid, buffer, buffer_size, attrs):
         raise UnimplementedAPIError('set_EFI_variable')
 
     #
