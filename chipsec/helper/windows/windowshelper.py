@@ -466,7 +466,7 @@ class WindowsHelper(Helper):
         if (0x6 == kernel32.GetLastError()):
             win32api.CloseHandle(self.driver_handle)
             self.driver_handle = None
-            self.get_driver_handle()
+            self._get_driver_handle()
             logger().log_warning(f"Invalid handle: re-opened device '{self.device_file:.64}' (new handle: {int(self.driver_handle):08X})")
             return False
         return True
@@ -491,7 +491,7 @@ class WindowsHelper(Helper):
             _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
 
         out_buf = (c_char * out_length)()
-        self.get_driver_handle()
+        self._get_driver_handle()
         try:
             out_buf = win32file.DeviceIoControl(self.driver_handle, ioctl_code, in_buf, out_length, None)
         except pywintypes.error as _err:
