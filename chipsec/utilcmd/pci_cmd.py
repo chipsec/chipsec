@@ -110,11 +110,11 @@ class PCICommand(BaseCommand):
     def pci_dump(self):
         if self.bus is not None:
             if self.device is not None and self.function is not None:
-                devices = [(self.bus, self.device, self.function, 0x0000, 0x0000)]
+                devices = [(self.bus, self.device, self.function, 0x0000, 0x0000, 0x0000)]
             else:
                 devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
 
-            for (_bus, _device, _function, _vid, _did) in devices:
+            for (_bus, _device, _function, _vid, _did, _rid) in devices:
                 self.logger.log("[CHIPSEC] PCI device {:02X}:{:02X}.{:02X} configuration:".format(_bus, _device, _function))
                 cfg_buf = self.cs.pci.dump_pci_config(_bus, _device, _function)
                 pretty_print_hex_buffer(cfg_buf)
@@ -125,11 +125,11 @@ class PCICommand(BaseCommand):
     def pci_xrom(self):
         if self.bus is not None:
             if self.device is not None and self.function is not None:
-                devices = [(self.bus, self.device, self.function, 0x0000, 0x0000)]
+                devices = [(self.bus, self.device, self.function, 0x0000, 0x0000, 0x000)]
             else:
                 devices = self.cs.pci.enumerate_devices(self.bus, self.device, self.function)
 
-            for (_bus, _device, _function, _vid, _did) in devices:
+            for (_bus, _device, _function, _vid, _did, _rid) in devices:
                 self.logger.log("[CHIPSEC] Locating PCI expansion ROM (XROM) of {:02X}:{:02X}.{:02X}...".format(_bus, _device, _function))
                 exists, xrom = self.cs.pci.find_XROM(_bus, _device, _function, True, True, self.xrom_addr)
                 if exists:
@@ -180,7 +180,7 @@ class PCICommand(BaseCommand):
     def pci_cmd(self):
         self.logger.log('BDF     | VID:DID   | CMD  | CLS | Sub CLS')
         self.logger.log('------------------------------------------')
-        for (b, d, f, vid, did) in self.cs.pci.enumerate_devices():
+        for (b, d, f, vid, did, rid) in self.cs.pci.enumerate_devices():
             dev_cls = self.cs.pci.read_byte(b, d, f, PCI_HDR_CLS_OFF)
             if self.pci_class is not None and (dev_cls != self.pci_class):
                 continue

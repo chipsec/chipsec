@@ -99,7 +99,7 @@ class VMMCommand(BaseCommand):
         if len(virt_dev) > 0:
             self.logger.log("[CHIPSEC] Available VirtIO devices:")
             print_pci_devices(virt_dev)
-            for (b, d, f, vid, did) in virt_dev:
+            for (b, d, f, vid, did, rid) in virt_dev:
                 VirtIO_Device(self.cs, b, d, f).dump_device()
         else:
             self.logger.log("[CHIPSEC] No VirtIO devices found")

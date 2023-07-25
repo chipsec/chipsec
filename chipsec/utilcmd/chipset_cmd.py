@@ -47,10 +47,10 @@ class PlatformCommand(BaseCommand):
 
     def run(self):
         try:
-            self.cs.print_supported_chipsets()
+            self.cs.Cfg.print_supported_chipsets()
             self.logger.log("")
-            self.cs.print_chipset()
-            self.cs.print_pch()
+            self.cs.Cfg.print_platform_info()
+            self.cs.Cfg.print_pch_info()
         except UnknownChipsetError as msg:
             self.logger.log_error(msg)
 

@@ -41,7 +41,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_HWCONFIG
 from chipsec.hal.cmos import CMOS
-from chipsec.chipset import CHIPSET_CODE_AVN
+from chipsec.config import CHIPSET_CODE_AVN
 TAGS = [MTAG_BIOS, MTAG_HWCONFIG]
 
 
@@ -55,7 +55,7 @@ class rtclock(BaseModule):
         self.test_value = 0xAA
 
     def is_supported(self):
-        if self.cs.is_core() or (self.cs.get_chipset_code() == CHIPSET_CODE_AVN):
+        if self.cs.is_core() or (self.cs.Cfg.get_chipset_code() == CHIPSET_CODE_AVN):
             if self.cs.is_register_defined('RC'):
                 return True
             self.logger.log_important('RC register not defined for platform.  Skipping module.')
