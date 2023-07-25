@@ -63,17 +63,17 @@ def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]
 [CHIPSEC] OS      : {system} {release} {version} {machine}
 [CHIPSEC] Python  : {python_version} ({python_arch})
 [CHIPSEC] Helper  : {helper_name} ({driver_path})
-[CHIPSEC] Platform: {cs.longname}
-[CHIPSEC]    CPUID: {cs.cpuid}
-[CHIPSEC]      VID: {cs.vid:04X}
-[CHIPSEC]      DID: {cs.did:04X}
-[CHIPSEC]      RID: {cs.rid:02X}'''
+[CHIPSEC] Platform: {cs.Cfg.longname}
+[CHIPSEC]    CPUID: {cs.Cfg.cpuid:05X}
+[CHIPSEC]      VID: {cs.Cfg.vid:04X}
+[CHIPSEC]      DID: {cs.Cfg.did:04X}
+[CHIPSEC]      RID: {cs.Cfg.rid:02X}'''
     if include_pch_str:
         banner_prop += f'''
-[CHIPSEC] PCH     : {cs.pch_longname}
-[CHIPSEC]      VID: {cs.pch_vid:04X}
-[CHIPSEC]      DID: {cs.pch_did:04X}
-[CHIPSEC]      RID: {cs.pch_rid:02X}
+[CHIPSEC] PCH     : {cs.Cfg.pch_longname}
+[CHIPSEC]      VID: {cs.Cfg.pch_vid:04X}
+[CHIPSEC]      DID: {cs.Cfg.pch_did:04X}
+[CHIPSEC]      RID: {cs.Cfg.pch_rid:02X}
 '''
     if not is_python_64 and machine.endswith('64'):
         banner_prop += 'Python architecture (32-bit) is different from OS architecture (64-bit)'
