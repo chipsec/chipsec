@@ -71,8 +71,8 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options.add_argument('-vv', '--vverbose', help='Very verbose logging (verbose + HAL + debug)', action='store_true')
     adv_options = parser.add_argument_group('Advanced Options')
     adv_options.add_argument('-p', '--platform', dest='_platform', help='Explicitly specify platform code',
-                             choices=chipset.cs().chipset_codes, type=str.upper)
-    adv_options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=chipset.cs().pch_codes, type=str.upper)
+                             choices=chipset.cs().Cfg.proc_codes, type=str.upper)
+    adv_options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=chipset.cs().Cfg.pch_codes, type=str.upper)
     adv_options.add_argument('-n', '--no_driver', dest='_no_driver', action='store_true',
                              help="Chipsec won't need kernel mode functions so don't load chipsec driver")
     adv_options.add_argument('-i', '--ignore_platform', dest='_ignore_platform', action='store_true',
@@ -244,8 +244,8 @@ class ChipsecMain:
         # Step 2.
         # Load platform-specific modules from the corresponding platform module directory
         #
-        chipset_path = os.path.join(self.Modules_Path, self._cs.code.lower())
-        if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.code) and os.path.exists(chipset_path):
+        chipset_path = os.path.join(self.Modules_Path, self._cs.Cfg.code.lower())
+        if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.Cfg.code) and os.path.exists(chipset_path):
             self.logger.log("[*] loading platform specific modules from \"{}\" ..".format(
                 chipset_path.replace(os.getcwd(), '.')))
             self.load_modules_from_path(chipset_path)
@@ -378,11 +378,11 @@ class ChipsecMain:
         ret["OS"] = "{} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release,
                                          self._cs.helper.os_version, self._cs.helper.os_machine)
         ret["Python"] = "Python {}".format(platform.python_version())
-        ret["Platform"] = "{}, CPUID: {}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.cpuid, self._cs.vid,
-                                                                                        self._cs.did, self._cs.rid)
+        ret["Platform"] = "{}, CPUID: {}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.Cfg.longname, self._cs.Cfg.cpuid, self._cs.Cfg.vid,
+                                                                                        self._cs.Cfg.did, self._cs.Cfg.rid)
         if not self._cs.is_atom():
-            ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid,
-                                                                           self._cs.pch_did, self._cs.pch_rid)
+            ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.Cfg.pch_longname, self._cs.Cfg.pch_vid,
+                                                                           self._cs.Cfg.pch_did, self._cs.Cfg.pch_rid)
         ret["Version"] = "{}".format(self.version)
         ret["Message"] = "{}".format(self.message)
         return ret

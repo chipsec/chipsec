@@ -35,6 +35,10 @@ class RegisterTypeNotFoundError(RuntimeError):
     pass
 
 
+class CSConfigError(RuntimeError):
+    pass
+
+
 class CSReadError(RuntimeError):
     def __init__(self, msg: str) -> None:
         super(CSReadError, self).__init__(msg)
