@@ -35,7 +35,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/655259
 <!-- Information                          -->
 <!--                                      -->
 <!-- #################################### -->
-<info family="core" detection_value="90670-90672, 90674-90675, 906a0-906a4">
+<info family="core" detection_value="0x90670-0x90672, 0x90674-0x90675, 0x906a0-0x906a4">
     <sku did="0x4601" name="AlderLake" code="ADL" longname="ADL-P/U15 2+8"/>
     <sku did="0x4602" name="AlderLake" code="ADL" longname="ADL-U9 2+8"/>
     <sku did="0x4609" name="AlderLake" code="ADL" longname="ADL-U15 2+4"/>

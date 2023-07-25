@@ -35,7 +35,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/636761
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="A0671">
+  <info family="core" detection_value="0xA0671">
     <sku did="0x4C43" name="RocketLake" code="RKL" longname="RocketLake S 8 Core"/>
     <sku did="0x4C53" name="RocketLake" code="RKL" longname="RocketLake S 6 Core" />
   </info>

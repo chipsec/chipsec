@@ -8,7 +8,7 @@ XML configuration file for Haswell based platforms
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="3069x,4066x">
+  <info family="core" detection_value="0x30690-0x3069f,0x40660-0x4066f">
     <sku did="0x0C00" name="Haswell" code="HSW" longname="Desktop 4th Generation Core Processor (Haswell CPU / Lynx Point PCH" />
     <sku did="0x0C04" name="Haswell" code="HSW" longname="Mobile 4th Generation Core Processor (Haswell M/H / Lynx Point PCH)" />
     <sku did="0x0C08" name="Haswell" code="HSW" longname="Intel Xeon Processor E3-1200 v3 (Haswell CPU, C220 Series PCH)" />

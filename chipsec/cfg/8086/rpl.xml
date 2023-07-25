@@ -35,7 +35,7 @@ https://cdrdv2.intel.com/v1/dl/getContent/743844
 <!-- Information                          -->
 <!--                                      -->
 <!-- #################################### -->
-    <info family="core" detection_value="b0671">
+    <info family="core" detection_value="0xb0671">
         <sku did="0xA700" name="Raptor Lake" code="RPL" longname="RPL-S 8+16"/>
         <sku did="0xA702" name="Raptor Lake" code="RPL" longname="RPL-HX 8+16"/>
         <sku did="0xA703" name="Raptor Lake" code="RPL" longname="RPL-S 8+8"/>

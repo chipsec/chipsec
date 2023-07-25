@@ -21,7 +21,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="506ex">
+  <info family="core" detection_value="0x506e0-0x506ef">
     <sku did="0x1904" name="Skylake" code="SKL" longname="Mobile 6th Generation Core Processor (Skylake U)" />
     <sku did="0x190C" name="Skylake" code="SKL" longname="Mobile 6th Generation Core Processor (Skylake Y)" />
     <sku did="0x1900" name="Skylake" code="SKL" longname="Mobile 6th Generation Core Processor Dual Core (Skylake H)" />
