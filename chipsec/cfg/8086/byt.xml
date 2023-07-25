@@ -12,7 +12,7 @@ XML configuration for Bay Trail based platforms
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="atom" detection_value="30671-30673, 30679">
+  <info family="atom" detection_value="0x30671-0x30673, 0x30679">
     <sku did="0x0F00" name="Baytrail" code="BYT" longname="Bay Trail SoC" />
   </info>
 

@@ -10,7 +10,7 @@ document id 334818/334819
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="atom" detection_value="506c8, 506c9, 506ca">
+  <info family="atom" detection_value="0x506c8, 0x506c9, 0x506ca">
     <sku did="0x5AF0" name="Apollo Lake" code="APL" longname="Apollo Lake" />
   </info>
 

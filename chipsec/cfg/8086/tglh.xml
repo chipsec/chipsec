@@ -36,7 +36,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="806c1, 806c2, 806d1">
+  <info family="core" detection_value="0x806c1, 0x806c2, 0x806d1">
     <sku did="0x9A36" name="TigerLake" code="TGLH" longname="TGL-H (8 Cores)"/>
     <sku did="0x9A26" name="TigerLake" code="TGLH" longname="TGL-H (6 Cores)"/>
   </info>

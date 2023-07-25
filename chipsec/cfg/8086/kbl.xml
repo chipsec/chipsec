@@ -15,7 +15,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="8067x, 906e9">
+  <info family="core" detection_value="0x80670-0x8067f, 0x906e9">
     <sku did="0x5900" name="Kabylake" code="KBL" longname="Mobile 7th Generation Core Processor (Kabylake H)" />
     <sku did="0x5904" name="Kabylake" code="KBL" longname="Mobile 7th Generation Core Processor (Kabylake U)" />
     <sku did="0x590C" name="Kabylake" code="KBL" longname="Mobile 7th Generation Core Processor (Kabylake Y)" />

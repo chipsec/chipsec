@@ -14,7 +14,7 @@ Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub 
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="xeon" detection_value="406f1">
+  <info family="xeon" detection_value="0x406f1">
     <sku did="0x6F00" name="Broadwell Server" code="BDX" longname="Intel Xeon Processor E5/E7 v4 (Broadwell Server CPU / Wellsburg PCH)" />
   </info>
 

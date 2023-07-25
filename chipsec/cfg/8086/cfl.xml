@@ -12,7 +12,7 @@ XML configuration file for Coffee Lake
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="906EA-906ED, 806EA">
+  <info family="core" detection_value="0x906EA-0x906ED, 0x806EA">
     <sku did="0x3E0F" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (CoffeeLake S 2 Cores)" />
     <sku did="0x3E1F" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (Coffeelake S 4 Cores)" />
     <sku did="0x3EC2" name="CoffeeLake" code="CFL" longname="Desktop 8th Generation Core Processor (Coffeelake S 6 Cores)" />

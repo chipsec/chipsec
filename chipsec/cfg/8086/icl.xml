@@ -27,7 +27,7 @@ chipsec@intel.com
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="706e4, 706E5">
+  <info family="core" detection_value="0x706e4, 0x706E5">
     <sku did="0x8A00" name="IceLake" code="ICL" longname="(IceLake Y 2 Cores)" />
     <sku did="0x8A02" name="IceLake" code="ICL" longname="(IceLake U 2 Cores)" />
     <sku did="0x8A10" name="IceLake" code="ICL" longname="(IceLake Y 4 Cores)" />

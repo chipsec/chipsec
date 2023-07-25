@@ -9,7 +9,7 @@ XML configuration file for Denverton
 -->
 
   <!-- #################################### -->
-  <info family="atom" detection_value="506f0, 506f1">
+  <info family="atom" detection_value="0x506f0, 0x506f1">
     <sku did="0x1980" name="Denverton" code="DNV" longname="Intel Atom Processor C3000 Product Family" />
     <sku did="0x1993" name="Denverton" code="DNV" longname="Intel Atom Processor C3000 Product Family" />
     <sku did="0x1994" name="Denverton" code="DNV" longname="Intel Atom Processor C3000 Product Family" />
