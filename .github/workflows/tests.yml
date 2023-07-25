@@ -237,7 +237,9 @@ jobs:
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
     - name: Run Python tests
-      run: python3 setup.py test
+      run: |
+        python3 -m unittest
+        python3 tests/cfg_checker.py
 
     - name: Install chipsec
       run: sudo python3 setup.py install
