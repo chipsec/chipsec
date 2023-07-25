@@ -85,19 +85,19 @@ class IOBAR(hal_base.HALBase):
                     empty_base = 0
         else:
             # this method is not preferred
-            base = self.cs.pci.read_word(int(bar['bus'], 16), int(bar['dev'], 16), int(bar['fun'], 16), int(bar['reg'], 16))
+            base = self.cs.pci.read_word(bar['bus'], bar['dev'], bar['fun'], bar['reg'])
             empty_base = 0xFFFF
 
         if 'fixed_address' in bar and (base == empty_base or base == 0):
-            base = int(bar['fixed_address'], 16)
+            base = bar['fixed_address']
             if logger().HAL:
                 logger().log(f'[iobar] Using fixed address for {bar_name}: 0x{base:016X}')
 
         if 'mask' in bar:
-            base = base & int(bar['mask'], 16)
+            base = base & bar['mask']
         if 'offset' in bar:
-            base = base + int(bar['offset'], 16)
-        size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_IO_BAR_SIZE
+            base = base + bar['offset']
+        size = bar['size'] if ('size' in bar) else DEFAULT_IO_BAR_SIZE
 
         if logger().HAL:
             logger().log(f'[iobar] {bar_name}: 0x{base:04X} (size = 0x{size:X})')
