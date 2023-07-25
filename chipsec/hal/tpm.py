@@ -356,7 +356,7 @@ class TPM(hal_base.HALBase):
         self.logger.log('=' * 64)
 
     def dump_register(self, register_name: str, locality: str) -> None:
-        self.cs.Cfg.REGISTERS[register_name]['address'] = str(hex(int(self.cs.Cfg.REGISTERS[register_name]['address'], 16) ^ LOCALITY[locality]))
+        self.cs.Cfg.REGISTERS[register_name]['address'] = str(hex(self.cs.Cfg.REGISTERS[register_name]['address'] ^ LOCALITY[locality]))
         register = self.cs.read_register_dict(register_name)
 
         self.log_register_header(register_name, locality)

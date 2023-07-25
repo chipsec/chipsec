@@ -228,11 +228,11 @@ class MMIO(hal_base.HALBase):
             if _bus is not None:
                 b = _bus
             else:
-                b = int(bar['bus'], 16)
-            d = int(bar['dev'], 16)
-            f = int(bar['fun'], 16)
-            r = int(bar['reg'], 16)
-            width = int(bar['width'], 16)
+                b = bar['bus']
+            d = bar['dev']
+            f = bar['fun']
+            r = bar['reg']
+            width = bar['width']
             reg_mask = (1 << (width * 8)) - 1
             if 8 == width:
                 base_lo = self.cs.pci.read_dword(b, d, f, r)
@@ -242,12 +242,12 @@ class MMIO(hal_base.HALBase):
                 base = self.cs.pci.read_dword(b, d, f, r)
 
         if 'fixed_address' in bar and (base == reg_mask or base == 0):
-            base = int(bar['fixed_address'], 16)
+            base = bar['fixed_address']
             self.logger.log_hal(f'[mmio] Using fixed address for {bar_name}: 0x{base:016X}')
         if 'mask' in bar:
-            base &= int(bar['mask'], 16)
+            base &= bar['mask']
         if 'offset' in bar:
-            base = base + int(bar['offset'], 16)
+            base = base + bar['offset']
         if 'align_bits' in bar:
             _buses = self.cs.get_register_bus(bar['base_reg'])
             _bus = _buses[0] if _buses else None
@@ -260,7 +260,7 @@ class MMIO(hal_base.HALBase):
             limit += start
             size = limit - base
         else:
-            size = int(bar['size'], 16) if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
+            size = bar['size'] if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
         self.logger.log_hal(f'[mmio] {bar_name}: 0x{base:016X} (size = 0x{size:X})')
         if base == 0:
@@ -289,11 +289,11 @@ class MMIO(hal_base.HALBase):
             if bus is not None:
                 b = bus
             else:
-                b = int(bar['bus'], 16)
-            d = int(bar['dev'], 16)
-            f = int(bar['fun'], 16)
-            r = int(bar['reg'], 16)
-            width = int(bar['width'], 16)
+                b = bar['bus']
+            d = bar['dev']
+            f = bar['fun']
+            r = bar['reg']
+            width = bar['width']
             if not self.cs.pci.is_enabled(b, d, f):
                 return False
             if 8 == width:
@@ -324,11 +324,11 @@ class MMIO(hal_base.HALBase):
                 base = self.cs.read_register(bar_reg)
         else:
             # this method is not preferred (less flexible)
-            b = int(bar['bus'], 16)
-            d = int(bar['dev'], 16)
-            f = int(bar['fun'], 16)
-            r = int(bar['reg'], 16)
-            width = int(bar['width'], 16)
+            b = bar['bus']
+            d = bar['dev']
+            f = bar['fun']
+            r = bar['reg']
+            width = bar['width']
             if 8 == width:
                 base_lo = self.cs.pci.read_dword(b, d, f, r)
                 base_hi = self.cs.pci.read_dword(b, d, f, r + 4)
@@ -336,7 +336,7 @@ class MMIO(hal_base.HALBase):
             else:
                 base = self.cs.pci.read_dword(b, d, f, r)
 
-        #if 'mask' in bar: base &= int(bar['mask'],16)
+        #if 'mask' in bar: base &= bar['mask']
         return (0 != base)
 
     #
@@ -383,7 +383,7 @@ class MMIO(hal_base.HALBase):
                     if 'bus' in self.cs.get_register_def(_bar['register']):
                         bus_data = [int(self.cs.get_register_def(_bar['register'])['bus'], 16)]
             elif 'bus' in _bar:
-                bus_data = [int(_bar['bus'], 16)]
+                bus_data = [_bar['bus']]
             else:
                 continue
             for bus in bus_data:
@@ -397,11 +397,11 @@ class MMIO(hal_base.HALBase):
                 if 'register' in _bar:
                     _s = _bar['register']
                     if 'offset' in _bar:
-                        _s += (f' + 0x{int(_bar["offset"], 16):X}')
+                        _s += (f' + 0x{_bar["offset"]:X}')
                 else:
-                    bus_value = int(_bar["bus"], 16)
-                    dev_value = int(_bar["dev"], 16)
-                    fun_value = int(_bar["fun"], 16)
+                    bus_value = _bar["bus"]
+                    dev_value = _bar["dev"]
+                    fun_value = _bar["fun"]
                     _s = f'{bus_value:02X}:{dev_value:02X}.{fun_value:01X} + {_bar["reg"]}'
 
                 self.logger.log(f' {_bar_name:12} |  {bus or 0:02X} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')

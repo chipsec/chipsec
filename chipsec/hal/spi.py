@@ -202,27 +202,27 @@ class SPI(hal_base.HALBase):
 
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
-        self.hsfs_off = int(self.cs.get_register_def("HSFS")['offset'], 16)
-        self.hsfc_off = int(self.cs.get_register_def("HSFC")['offset'], 16)
-        self.faddr_off = int(self.cs.get_register_def("FADDR")['offset'], 16)
-        self.fdata0_off = int(self.cs.get_register_def("FDATA0")['offset'], 16)
-        self.fdata1_off = int(self.cs.get_register_def("FDATA1")['offset'], 16)
-        self.fdata2_off = int(self.cs.get_register_def("FDATA2")['offset'], 16)
-        self.fdata3_off = int(self.cs.get_register_def("FDATA3")['offset'], 16)
-        self.fdata4_off = int(self.cs.get_register_def("FDATA4")['offset'], 16)
-        self.fdata5_off = int(self.cs.get_register_def("FDATA5")['offset'], 16)
-        self.fdata6_off = int(self.cs.get_register_def("FDATA6")['offset'], 16)
-        self.fdata7_off = int(self.cs.get_register_def("FDATA7")['offset'], 16)
-        self.fdata8_off = int(self.cs.get_register_def("FDATA8")['offset'], 16)
-        self.fdata9_off = int(self.cs.get_register_def("FDATA9")['offset'], 16)
-        self.fdata10_off = int(self.cs.get_register_def("FDATA10")['offset'], 16)
-        self.fdata11_off = int(self.cs.get_register_def("FDATA11")['offset'], 16)
-        self.fdata12_off = int(self.cs.get_register_def("FDATA12")['offset'], 16)
-        self.fdata13_off = int(self.cs.get_register_def("FDATA13")['offset'], 16)
-        self.fdata14_off = int(self.cs.get_register_def("FDATA14")['offset'], 16)
-        self.fdata15_off = int(self.cs.get_register_def("FDATA15")['offset'], 16)
-        self.bios_ptinx = int(self.cs.get_register_def("BIOS_PTINX")['offset'], 16)
-        self.bios_ptdata = int(self.cs.get_register_def("BIOS_PTDATA")['offset'], 16)
+        self.hsfs_off = self.cs.get_register_def("HSFS")['offset']
+        self.hsfc_off = self.cs.get_register_def("HSFC")['offset']
+        self.faddr_off = self.cs.get_register_def("FADDR")['offset']
+        self.fdata0_off = self.cs.get_register_def("FDATA0")['offset']
+        self.fdata1_off = self.cs.get_register_def("FDATA1")['offset']
+        self.fdata2_off = self.cs.get_register_def("FDATA2")['offset']
+        self.fdata3_off = self.cs.get_register_def("FDATA3")['offset']
+        self.fdata4_off = self.cs.get_register_def("FDATA4")['offset']
+        self.fdata5_off = self.cs.get_register_def("FDATA5")['offset']
+        self.fdata6_off = self.cs.get_register_def("FDATA6")['offset']
+        self.fdata7_off = self.cs.get_register_def("FDATA7")['offset']
+        self.fdata8_off = self.cs.get_register_def("FDATA8")['offset']
+        self.fdata9_off = self.cs.get_register_def("FDATA9")['offset']
+        self.fdata10_off = self.cs.get_register_def("FDATA10")['offset']
+        self.fdata11_off = self.cs.get_register_def("FDATA11")['offset']
+        self.fdata12_off = self.cs.get_register_def("FDATA12")['offset']
+        self.fdata13_off = self.cs.get_register_def("FDATA13")['offset']
+        self.fdata14_off = self.cs.get_register_def("FDATA14")['offset']
+        self.fdata15_off = self.cs.get_register_def("FDATA15")['offset']
+        self.bios_ptinx = self.cs.get_register_def("BIOS_PTINX")['offset']
+        self.bios_ptdata = self.cs.get_register_def("BIOS_PTDATA")['offset']
 
         self.logger.log_hal("[spi] Reading SPI flash controller registers definitions:")
         self.logger.log_hal(f'      HSFS   offset = 0x{self.hsfs_off:04X}')
@@ -278,7 +278,7 @@ class SPI(hal_base.HALBase):
             return (0, 0, 0, 0, 0, 0)
 
         pr_name = f'PR{pr_num:x}'
-        pr_j_reg = int(self.cs.get_register_def(pr_name)['offset'], 16)
+        pr_j_reg = self.cs.get_register_def(pr_name)['offset']
         pr_j = self.cs.read_register(pr_name)
 
         # Protected Range Base corresponds to FLA bits 24:12
