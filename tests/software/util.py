@@ -55,7 +55,6 @@ class TestChipsecUtil(unittest.TestCase):
         It verifies that no error is being reported. self.log will be populated
         with the output.
         """
-        chipsec_util._cs = chipset.cs()
         args = arg.split()
         par = chipsec_util.parse_args(args)
         util = chipsec_util.ChipsecUtil(par, args)
