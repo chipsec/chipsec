@@ -215,7 +215,7 @@ class UEFICommand(BaseCommand):
             return
         self.logger.log("[CHIPSEC] Decoding EFI Variables..")
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file('efi_variables.lst')
+        self.logger.set_log_file('efi_variables.lst', False)
         nvram_pth = 'efi_variables.dir'
         if not os.path.exists(nvram_pth):
             os.makedirs(nvram_pth)
@@ -269,7 +269,7 @@ class UEFICommand(BaseCommand):
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file( (self.romfilename + '.nv.lst') )
+        self.logger.set_log_file( (self.romfilename + '.nv.lst'), False)
         parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
         self.logger.set_log_file( _orig_logname )
 
@@ -286,7 +286,7 @@ class UEFICommand(BaseCommand):
             return
 
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file( (self.romfilename + '.nv.lst') )
+        self.logger.set_log_file( (self.romfilename + '.nv.lst'), False)
         parse_EFI_variables( self.romfilename, rom, authvars, self.fwtype )
         self.logger.set_log_file( _orig_logname )
 
@@ -297,7 +297,7 @@ class UEFICommand(BaseCommand):
 
         self.logger.log("[CHIPSEC] Parsing EFI volumes from '{}'..".format(self.filename))
         _orig_logname = self.logger.LOG_FILE_NAME
-        self.logger.set_log_file(self.filename + '.UEFI.lst')
+        self.logger.set_log_file(self.filename + '.UEFI.lst', False)
         cur_dir = self.cs.os_helper.getcwd()
         ftypes = []
         inv_filetypes = {v: k for k, v in FILE_TYPE_NAMES.items()}
