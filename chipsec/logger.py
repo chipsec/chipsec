@@ -50,6 +50,7 @@ if not os.path.exists(LOG_PATH):
 
 LOGGER_NAME = 'CHIPSEC_LOGGER'
 
+
 class level(Enum):
     DEBUG = 10
     HELPER = 11
@@ -241,7 +242,7 @@ class Logger:
             self.chipsecLogger.setLevel(level.VERBOSE.value)
         else:
             self.chipsecLogger.setLevel(level.INFO.value)
-    
+
     def set_autolog_file(self):
         log_file_name = f'{strftime("%a%b%d%y-%H%M%S")}.log'
         log_path = os.path.join(LOG_PATH, log_file_name)
@@ -249,21 +250,24 @@ class Logger:
         self.chipsecLogger.addHandler(file_handler)
         file_handler.setFormatter(self.logFormatter)
 
-    def set_log_file(self, name=None):
+    def set_log_file(self, name: str, tologpath: Optional[bool] = True):
         """Sets the log file for the output."""
         # Close current log file if it's opened
         self.disable()
-        
-        # specifying name=None effectively disables logging to file
+
+        # specifying empty string (name='') effectively disables logging to file
         if name:
-            self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
+            if tologpath:
+                self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
+            else:
+                self.LOG_FILE_NAME = name
             # Open new log file and keep it opened
             try:
                 # creates FileHandler for log file
                 self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='a')
             except Exception:
                 print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
-            else:             
+            else:
                 self.chipsecLogger.addHandler(self.logfile)
                 self.logfile.setFormatter(self.logFormatter)
                 self.LOG_TO_FILE = True
@@ -290,7 +294,7 @@ class Logger:
     def disable(self) -> None:
         """Disables the logging to file and closes the file if any."""
         self.LOG_TO_FILE = False
-        self.LOG_FILE_NAME = None
+        self.LOG_FILE_NAME = ''
         self.close()
 
     def flush(self) -> None:
@@ -380,11 +384,10 @@ class Logger:
         text = f'{text}[x][ ======================================================================='
         self.log(text, level.INFO, 'BLUE')
 
-
     def _write_log(self, text, filename):
         """Write text to defined log file"""
         self.chipsecLogger.log(level.INFO.value, text)
-        if self.ALWAYS_FLUSH:
+        if self.ALWAYS_FLUSH and self.logfile is not None:
             try:
                 self.logfile.close()
                 self.logfile = open(self.LOG_FILE_NAME, 'a+')
