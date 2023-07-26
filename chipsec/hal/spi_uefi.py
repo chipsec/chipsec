@@ -531,7 +531,7 @@ def decode_uefi_region(pth: str, fname: str, fwtype: str, filetype: List[int] = 
             logger().log_error(f'Unrecognized NVRAM type {fwtype}')
         return
     nvram_fname = os.path.join(bios_pth, (f'nvram_{fwtype}'))
-    logger().set_log_file(f'{nvram_fname}.nvram.lst')
+    logger().set_log_file(f'{nvram_fname}.nvram.lst', False)
     parse_EFI_variables(nvram_fname, region_data, False, fwtype)
 
 
