@@ -250,7 +250,7 @@ class Logger:
         self.chipsecLogger.addHandler(file_handler)
         file_handler.setFormatter(self.logFormatter)
 
-    def set_log_file(self, name: str, tologpath: Optional[bool] = True):
+    def set_log_file(self, name: str, tologpath: bool = True):
         """Sets the log file for the output."""
         # Close current log file if it's opened
         self.disable()
