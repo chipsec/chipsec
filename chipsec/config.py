@@ -242,8 +242,8 @@ class Cfg:
         parser_path = os.path.join(get_main_dir(), 'chipsec', 'cfg', 'parsers')
         if not os.path.isdir(parser_path):
             raise CSConfigError('Unable to locate configuration parsers: {}'.format(parser_path))
-        parser_files = [f.name for f in sorted(os.scandir(parser_path), key=lambda x: x.name)
-                        if fnmatch(f.name, '*.py') and not fnmatch(f.name, '__init__.py')]
+        parser_files = [f for f in sorted(os.listdir(parser_path))
+                        if fnmatch(f, '*.py') and not fnmatch(f, '__init__.py')]
         for parser in parser_files:
             parser_name = '.'.join(['chipsec', 'cfg', 'parsers', os.path.splitext(parser)[0]])
             self.logger.log_debug('[*] Importing parser: {}'.format(parser_name))
@@ -267,11 +267,11 @@ class Cfg:
     def add_extra_configs(self, path, filename=None, loadnow=False):
         config_path = os.path.join(get_main_dir(), 'chipsec', 'cfg', path)
         if os.path.isdir(config_path) and filename is None:
-            self.load_extra = [config_data(None, None, f.path) for f in sorted(os.scandir(config_path), key=lambda x: x.name)
-                            if fnmatch(f.name, '*.xml')]
+            self.load_extra = [config_data(None, None, os.path.join(config_path, f)) for f in sorted(os.listdir(config_path))
+                               if fnmatch(f, '*.xml')]
         elif os.path.isdir(config_path) and filename:
-            self.load_extra = [config_data(None, None, f.path) for f in sorted(os.scandir(config_path), key=lambda x: x.name)
-                            if fnmatch(f.name, '*.xml') and fnmatch(f.name, filename)]
+            self.load_extra = [config_data(None, None, os.path.join(config_path, f)) for f in sorted(os.listdir(config_path))
+                               if fnmatch(f, '*.xml') and fnmatch(f, filename)]
         else:
             raise CSConfigError('Unable to locate configuration file(s): {}'.format(config_path.xml_file))
         if loadnow and self.load_extra:
@@ -283,12 +283,12 @@ class Cfg:
 
         # Locate all root configuration files
         cfg_files = []
-        cfg_vids = [f.name for f in os.scandir(cfg_path) if f.is_dir() and is_hex(f.name)]
+        cfg_vids = [f for f in os.listdir(cfg_path) if os.path.isdir(os.path.join(cfg_path, f)) and is_hex(f)]
         for vid_str in cfg_vids:
             root_path = os.path.join(cfg_path, vid_str)
-            cfg_files.extend([config_data(vid_str, None, f.path)
-                             for f in sorted(os.scandir(root_path), key=lambda x: x.name)
-                             if fnmatch(f.name, '*.xml')])
+            cfg_files.extend([config_data(vid_str, None, os.path.join(root_path, f))
+                             for f in sorted(os.listdir(root_path))
+                             if fnmatch(f, '*.xml')])
 
         # Process platform info data and generate lookup tables
         for fxml in cfg_files:
@@ -366,10 +366,10 @@ class Cfg:
 
         # Locate all common configuration files
         cfg_files = []
-        cfg_vids = [f.name for f in os.scandir(cfg_path) if f.is_dir() and is_hex(f.name)]
+        cfg_vids = [f for f in os.listdir(cfg_path) if os.path.isdir(os.path.join(cfg_path, f)) and is_hex(f)]
         if vid in cfg_vids:
             root_path = os.path.join(cfg_path, vid)
-            cfg_files.extend([config_data(vid, None, f.path)
-                             for f in sorted(os.scandir(root_path), key=lambda x: x.name)
-                             if fnmatch(f.name, '*.xml') and fnmatch(f.name, 'common*')])
+            cfg_files.extend([config_data(vid, None, os.path.join(root_path, f))
+                             for f in sorted(os.listdir(root_path))
+                             if fnmatch(f, '*.xml') and fnmatch(f, 'common*')])
         return cfg_files
