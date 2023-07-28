@@ -149,8 +149,11 @@ class CoreConfig(BaseConfigParser):
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if pci_info:
-            self.cfg.BUS[name] = pci_info['bus']
-            pci_info['bus'] = pci_info['bus'][0]
+            if type(pci_info['bus']) is int: # TODO: Investigate why this is needed
+                self.cfg.BUS[name] = [pci_info['bus']]
+            else:
+                self.cfg.BUS[name] = pci_info['bus']
+                pci_info['bus'] = pci_info['bus'][0]
             self.cfg.CONFIG_PCI[name] = copy.copy(pci_info)
         else:
             self.cfg.CONFIG_PCI[name] = copy.deepcopy(dev_attr)
