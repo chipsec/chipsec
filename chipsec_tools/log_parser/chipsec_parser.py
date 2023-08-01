@@ -1,6 +1,7 @@
 from lxml import etree
+from typing import Any, Dict, List, Tuple
 
-def parse_testsuite(tree):
+def parse_testsuite(tree: etree) -> Dict[Any, Any]:
     st = tree.xpath('//testsuites/testsuite')
     assert(len(st) == 1),"more than one test-suite in XML file"
     st = st[0]
@@ -9,7 +10,7 @@ def parse_testsuite(tree):
     res.update(dict([(x.attrib['name'], x.attrib['value']) for x in st.iterfind('.//properties/property')]))
     return res
 
-def parse_test_cases(tree):
+def parse_test_cases(tree: etree) -> List[Dict[Any, Any]]:
     st = tree.xpath('//testsuites/testsuite')[0]
     entries = []
     for case in st.iterfind('.//testcase'):
@@ -25,7 +26,7 @@ def parse_test_cases(tree):
     return entries
 
 
-def parse_chipsec_xml(fdlike):
+def parse_chipsec_xml(fdlike: str) -> Tuple[Dict[Any, Any], List[Any]]:
     if isinstance(fdlike,str):
         fd = open(fdlike, 'rb')
     else:
