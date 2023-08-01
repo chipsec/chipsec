@@ -6,13 +6,14 @@ from jinja2 import *
 import tempfile
 import os
 import random
+from typing import Any, Dict, List, Tuple
 
 app = Flask(__name__)
 logger = getLogger("ChipsecParser")
 env = Environment(loader=FileSystemLoader('templates'),autoescape=select_autoescape(['html']))
 upload_template = env.get_template("report.html")
 
-def parse_file(f):
+def parse_file(f: request) -> Tuple[Dict[Any, Any], List[Any]]:
         save_path = os.path.join(tempfile.gettempdir(),secure_filename(f.filename) + str(random.randint(2**63,2**64)))
         f.save(save_path)
         suite_data, case_data = parse_chipsec_xml(save_path)
@@ -21,7 +22,7 @@ def parse_file(f):
 
 
 @app.route('/', methods=['GET', 'POST'])
-def upload():
+def upload() -> render_template:
     if request.method == 'POST':
         f = request.files['file']
         suite_data, case_data = parse_file(f)
@@ -31,7 +32,7 @@ def upload():
         return render_template('upload.html')
 
 @app.route("/healthz")
-def healthz():
+def healthz() -> Tuple[str, int]:
     return "{}",200 
 
 
