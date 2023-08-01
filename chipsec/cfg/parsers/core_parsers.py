@@ -170,7 +170,7 @@ class CoreConfig(BaseConfigParser):
                 continue
             dev_name = dev_attr['name']
             self._process_pci_dev(stage_data.vid_str, dev_name, dev_attr)
-            self.logger.log_debug('    + {:16}: {}'.format(dev_attr['name'], dev_attr))
+            self.logger.log_debug(f"    + {dev_attr['name']:16}: {dev_attr}")
 
         return ret_val
 
@@ -198,12 +198,12 @@ class CoreConfig(BaseConfigParser):
         for reg in et_node.iter('register'):
             reg_attr = _config_convert_data(reg)
             if 'name' not in reg_attr:
-                self.logger.log_error('Missing name entry for {}'.format(reg_attr))
+                self.logger.log_error(f'Missing name entry for {reg_attr}')
                 continue
             reg_name = reg_attr['name']
             if 'undef' in reg_attr:
                 if reg_name in dest:
-                    self.logger.log_debug("    - {:16}: {}".format(reg_name, reg_attr['undef']))
+                    self.logger.log_debug(f"    - {reg_name:16}: {reg_attr['undef']}")
                     dest.pop(reg_name, None)
                 continue
 
@@ -211,7 +211,7 @@ class CoreConfig(BaseConfigParser):
             if 'desc' not in reg_attr:
                 reg_attr['desc'] = reg_name
             if 'size' not in reg_attr:
-                self.logger.log_error('Missing size entry for {:16}: {}'.format(reg_name, reg_attr))
+                self.logger.log_debug(f'Missing size entry for {reg_name:16}: {reg_attr}. Assuming 4 bytes')
                 reg_attr['size'] = 4
 
             # Get existing field data
@@ -239,7 +239,7 @@ class CoreConfig(BaseConfigParser):
             # Store all register data
             reg_attr['FIELDS'] = reg_fields
             self.cfg.REGISTERS[reg_name] = reg_attr
-            self.logger.log_debug('    + {:16}: {}'.format(reg_name, reg_attr))
+            self.logger.log_debug(f'    + {reg_name:16}: {reg_attr}')
         return ret_val
 
     def _add_entry_simple(self, dest, stage_data, et_node, node_name):
@@ -247,17 +247,17 @@ class CoreConfig(BaseConfigParser):
         for node in et_node.iter(node_name):
             attrs = _config_convert_data(node)
             if 'name' not in attrs:
-                self.logger.log_error('Missing name entry for {}'.format(attrs))
+                self.logger.log_error(f'Missing name entry for {attrs}')
                 continue
             if 'undef' in attrs:
                 if attrs['name'] in dest:
-                    self.logger.log_debug("    - {:16}: {}".format(attrs['name'], attrs['undef']))
+                    self.logger.log_debug(f"    - {attrs['name']:16}: {attrs['undef']}")
                     dest.pop(attrs['name'], None)
                 continue
             if 'desc' not in attrs:
                 attrs['desc'] = attrs['name']
             dest[attrs['name']] = attrs
-            self.logger.log_debug('    + {:16}: {}'.format(attrs['name'], attrs))
+            self.logger.log_debug(f"    + {attrs['name']:16}: {attrs}")
         return ret_val
 
 
