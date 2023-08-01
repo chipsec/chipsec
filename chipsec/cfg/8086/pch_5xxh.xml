@@ -56,7 +56,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="eSPI"     bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x4388,0x4387,0x4386,0x4385,438F" />
+    <device name="eSPI"     bus="0" dev="0x1F" fun="0" vid="0x8086" did="0x4388,0x4387,0x4386,0x4385,0x438F" />
     <device name="P2SBC"    bus="0" dev="0x1F" fun="1" vid="0x8086" did="0x43A0" />
     <device name="PMC"      bus="0" dev="0x1F" fun="2" vid="0x8086" did="0x43A1" />
     <device name="HDA"      bus="0" dev="0x1F" fun="3" vid="0x8086" did="0x43C8,0x43C9,0x43CA,0x43CB,0x43CC,0x43CD,0x43CE,0x43CF" />
