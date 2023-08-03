@@ -18,8 +18,6 @@
 
 
 # To execute: python -m unittest tests.helpers.test_recordhelper
-
-from filecmp import cmp
 from os import remove
 import unittest
 from os.path import join, isfile
@@ -47,7 +45,7 @@ class RecordHelperTest(unittest.TestCase):
 
         pci_read_value = self.recordhelper.read_pci_reg(0,0,0,0,0x1)
         self.assertEqual(pci_read_value, 0x86)
-        
+
         pci_read_value = self.recordhelper.read_pci_reg(0,0,0,0,0x2)
         self.assertEqual(pci_read_value, 0x8086)
 
@@ -77,7 +75,7 @@ class RecordHelperTest(unittest.TestCase):
 
         cpuid_value = self.recordhelper.cpuid(1, 0)
         self.assertEqual(cpuid_value, (526057, 51382272, 2147154879, 3219913727))
-    
+
         cpuid_value = self.recordhelper.cpuid(2, 0)
         self.assertEqual(cpuid_value, (1979933441, 15775231, 0, 12779520))
 
@@ -98,6 +96,21 @@ class RecordHelperTest(unittest.TestCase):
 
         self.assertTrue(self.recordhelper.stop())
         self.assertTrue(self.recordhelper.delete())
+        self.assertTrue(self._compare_replay_and_record())
 
-        self.assertTrue(cmp(self.original_file, self.temp_file, shallow=False))
-        
+    def _compare_replay_and_record(self):
+        file1 = open(self.original_file, 'r')
+        file2 = open(self.temp_file, 'r')
+        lines1 = file1.readlines()
+        lines2 = file2.readlines()
+        file1.close()
+        file2.close()
+        if len(lines1) != len(lines2):
+            return False
+        for i in range(len(lines1)):
+            if lines1[i] != lines2[i]:
+                print(f"{self.original_file} line {i+1}:{lines1[i]}")
+                print(f"{self.temp_file} line {i+1}:{lines2[i]}")
+                return False
+        return True
+
