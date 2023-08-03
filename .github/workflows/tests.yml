@@ -151,7 +151,6 @@ jobs:
           - "3.9"
           - "3.8"
           - "3.7"
-          - "3.6"
 
     steps:
     - uses: actions/checkout@v3
@@ -203,7 +202,6 @@ jobs:
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}
           - {ubuntu: "20.04", python: "3.7"}
-          - {ubuntu: "20.04", python: "3.6"}
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
@@ -224,6 +222,7 @@ jobs:
         sudo apt-get install -qqy dkms nasm python3-setuptools
         pip install distro
         pip install -r linux_requirements.txt
+        sudo pip install -r linux_requirements.txt
 
     - name: Build the driver with Python
       run: python3 setup.py build_ext -i
