@@ -1,2 +1,2 @@
 brotli >=1.0.9
-setuptools
+setuptools >= 62.4.0
