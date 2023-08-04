@@ -40,6 +40,7 @@ Registers used:
 
 """
 
+from chipsec.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, ModuleResult
 
 _MODULE_NAME = 'vbox_crash_apicbase'
@@ -55,7 +56,10 @@ class vbox_crash_apicbase(BaseModule):
         self.cs.print_register('IA32_APIC_BASE', apicbase_msr)
         apicbase_msr = 0xDEADBEEF00000000 | (apicbase_msr & 0xFFFFFFFF)
         self.logger.log(f'[*] Writing 0x{apicbase_msr:016X} to IA32_APIC_BASE MSR..')
-        self.cs.write_register('IA32_APIC_BASE', apicbase_msr, tid)
+        try:
+            self.cs.write_register('IA32_APIC_BASE', apicbase_msr, tid)
+        except HWAccessViolationError:
+            self.logger.log('System blocked write attempt.')
 
         # If we are here, then we are fine ;)
         self.logger.log_passed("VMM/Host OS didn't crash (not vulnerable)")

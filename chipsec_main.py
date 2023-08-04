@@ -434,17 +434,17 @@ class ChipsecMain:
         if self.logger.DEBUG:
             self.logger.log("[*] Running from {}".format(os.getcwd()))
 
-        modules_failed = 0
+        self.main_return = 0
         if self._module:
             self.load_module(self._module, self._module_argv)
-            modules_failed = self.run_loaded_modules()
+            self.main_return = self.run_loaded_modules()
         else:
-            modules_failed = self.run_all_modules()
+            self.main_return = self.run_all_modules()
         if not self._no_driver:
             self._cs.destroy_helper()
         del self._cs
         self.logger.disable()
-        return modules_failed
+        return self.main_return
 
 def run(cli_cmd: str = '') -> int:
     cli_cmds = []
