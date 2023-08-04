@@ -99,18 +99,16 @@ class RecordHelperTest(unittest.TestCase):
         self.assertTrue(self._compare_replay_and_record())
 
     def _compare_replay_and_record(self):
-        file1 = open(self.original_file, 'r')
-        file2 = open(self.temp_file, 'r')
-        lines1 = file1.readlines()
-        lines2 = file2.readlines()
-        file1.close()
-        file2.close()
-        if len(lines1) != len(lines2):
+        with open(self.original_file, 'r') as of:
+            original_lines = of.readlines()
+        with open(self.temp_file, 'r') as tf:
+            temp_lines = tf.readlines()
+        if len(original_lines) != len(temp_lines):
             return False
-        for i in range(len(lines1)):
-            if lines1[i] != lines2[i]:
-                print(f"{self.original_file} line {i+1}:{lines1[i]}")
-                print(f"{self.temp_file} line {i+1}:{lines2[i]}")
+        for i in range(len(original_lines)):
+            if original_lines[i] != temp_lines[i]:
+                print(f"{self.original_file} line {i+1}:{original_lines[i]}")
+                print(f"{self.temp_file} line {i+1}:{temp_lines[i]}")
                 return False
         return True
 
