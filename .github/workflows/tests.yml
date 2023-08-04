@@ -184,7 +184,7 @@ jobs:
 
     - name: Run Python tests
       shell: bash
-      run: python setup.py test
+      run: python -m unittest
 
   ubuntu-test:
     name: Test on Ubuntu
@@ -246,5 +246,6 @@ jobs:
     - name: Run chipsec_main
       run: |
         PYTHONEXE="$(which python)"
-        sudo ${PYTHONEXE} chipsec_main.py --ignore_platform
+        CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX 1>&2); echo $?)"
+        if echo "0 1 2 4 8" | grep -qw $CHIPSECEXIT; then $(exit 0); else $(exit $CHIPSECEXIT); fi
 
