@@ -183,6 +183,12 @@ def unpack1(string: bytes, size: int) -> int:
     return struct.unpack(SIZE2FORMAT[size], string)[0]
 
 
+def get_bits(value: int, start: int, nbits: int) -> int:
+    ret = value >> start
+    ret &= (1 << nbits) - 1
+    return ret
+
+
 def get_version() -> str:
     version_strs = []
     chipsec_folder = os.path.abspath(get_main_dir())
