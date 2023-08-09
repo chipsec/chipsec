@@ -46,6 +46,8 @@ usage:
 from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.exceptions import CSReadError
+from chipsec.logger import logger
+from chipsec.defines import get_bits
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
 
@@ -460,3 +462,98 @@ class MMIO(hal_base.HALBase):
         self.write_MMIO_reg(pciexbar, pciexbar_off, (value & mask), size)
         self.logger.log_hal(f'[mmcfg] writing {bus:02d}:{dev:02d}.{fun:d} + 0x{off:02X} (MMCFG + 0x{pciexbar_off:08X}): 0x{value:08X}')
         return True
+
+    def get_extended_capabilities(self, bus: int, dev: int, fun: int) -> List['ECEntry']:
+        retcap = []
+        off = 0x100
+        while off and off != 0xFFF:
+            cap = self.read_mmcfg_reg(bus, dev, fun, off, 4)
+            retcap.append(ECEntry(bus, dev, fun, off, cap))
+            off = get_bits(cap, 20, 12)
+        return retcap
+
+    def get_vsec(self, bus: int, dev: int, fun: int, ecoff: int) -> 'VSECEntry':
+        off = ecoff + 4
+        vsec = self.read_mmcfg_reg(bus, dev, fun, off, 4)
+        return VSECEntry(vsec)
+
+
+class ECEntry:
+    def __init__(self, bus: int, dev: int, fun: int, off: int, value: int):
+        self.bus = bus
+        self.dev = dev
+        self.fun = fun
+        self.off = off
+        self.next = get_bits(value, 20, 12)
+        self.ver = get_bits(value, 16, 4)
+        self.id = get_bits(value, 0, 16)
+
+
+class VSECEntry:
+    def __init__(self, value: int):
+        self.size = get_bits(value, 20, 12)
+        self.rev = get_bits(value, 16, 4)
+        self.id = get_bits(value, 0, 16)
+
+
+def print_pci_extended_capability(ecentries: List[ECEntry]) -> None:
+    currentbdf = (None, None, None)
+    for ecentry in ecentries:
+        if currentbdf != (ecentry.bus, ecentry.dev, ecentry.fun):
+            currentbdf = (ecentry.bus, ecentry.dev, ecentry.fun)
+            logger().log(f'Extended Capbilities for 0x{ecentry.bus:02X}:{ecentry.dev:02X}.{ecentry.fun:X}:')
+        logger().log(f'\tNext Capability Offset: {ecentry.next:03X}')
+        logger().log(f'\tCapability Version: {ecentry.ver:01X}')
+        logger().log(f'\tCapability ID: {ecentry.id:04X} - {ecIDs.get(ecentry.id, "Reserved")}')
+
+
+# pci extended capability IDs
+ecIDs = {
+    0x0: 'Null Capability',
+    0x1: 'Advanced Error Reporting (AER)',
+    0x2: 'Virtual Channel (VC)',
+    0x3: 'Device Serial Number',
+    0x4: 'Power Budgeting',
+    0x5: 'Root Complex Link Declaration',
+    0x6: 'Root Complex Internal Link Control',
+    0x7: 'Root Complex Event Collector Endpoint Association',
+    0x8: 'Multi-Function Virtual Channel (MFVC)',
+    0x9: 'Virtual Channel (VC)',
+    0xA: 'Root Complex Register Block (RCRB) Header',
+    0xB: 'Vendor-Specific Extended Capability (VSEC)',
+    0xC: 'Configuration Access Correlation (CAC)',
+    0xD: 'Access Control Services (ACS)',
+    0xE: 'Alternative Routing-ID Interpretation (ARI)',
+    0xF: 'Address Translation Services (ATS)',
+    0x10: 'Single Root I/O Virtualizaiton (SR-IOV)',
+    0x11: 'Multi-Root I/O Virtualization (MR-IOV)',
+    0x12: 'Multicast',
+    0x13: 'Page Request Interface (PRI)',
+    0x14: 'Reserved for AMD',
+    0x15: 'Resizable BAR',
+    0x16: 'Dynamic Power Allocation (DPA)',
+    0x17: 'TPH Requester',
+    0x18: 'Latency Tolerance Reporting (LTR)',
+    0x19: 'Secondary PCI Express',
+    0x1A: 'Protocol Multiplexing (PMUX)',
+    0x1B: 'Process Address Space ID (PASID)',
+    0x1C: 'LN Requester (LNR)',
+    0x1D: 'Downstream Port Containment (DPC)',
+    0x1E: 'L1 PM Substates',
+    0x1F: 'Precision Time Measurement (PTM)',
+    0x20: 'PCI Express over M-PHY (M-PCIe)',
+    0x21: 'FRS Queueing',
+    0x22: 'Readiness Time Reporting',
+    0x23: 'Designanated Vendor-Specific Extended Capability',
+    0x24: 'VF Resizable BAR',
+    0x25: 'Data Link Feature',
+    0x26: 'Physical Layer 16.0 GT/s',
+    0x27: 'Lane Margining at the Receiver',
+    0x28: 'Hiearchy ID',
+    0x29: 'Native PCIe Enclosure Management (NPEM)',
+    0x2A: 'Physical Layer 32.0 GT/s',
+    0x2B: 'Alternative Protocol',
+    0x2C: 'System Firmware Intermediary (SFI)',
+    0x2D: 'Shadow Functions',
+    0x2E: 'Data Object Exchange'
+}
