@@ -39,7 +39,7 @@ from chipsec.config import Cfg, CHIPSET_CODE_UNKNOWN, PROC_FAMILY
 # DEBUG Flags
 QUIET_PCI_ENUM = True
 LOAD_COMMON = True
-CONSISTENCY_CHECKING = False
+
 
 
 class RegisterType:
@@ -77,6 +77,8 @@ class Chipset:
         self.Cfg.load_parsers()
         self.Cfg.load_platform_info()
         self.using_return_codes = False
+        self.consistency_checking = False
+
     def set_hal_objects(self):
         #
         # Initializing 'basic primitive' HAL components
@@ -425,7 +427,7 @@ class Chipset:
             f = reg['fun']
             o = reg['offset']
             size = reg['size']
-            if do_check and CONSISTENCY_CHECKING:
+            if do_check and self.consistency_checking:
                 if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
                     raise CSReadError(f'PCI Device is not available ({b}:{d}.{f})')
             if RegisterType.PCICFG == rtype:
