@@ -80,12 +80,17 @@ class LOCKCHECKCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def set_up(self) -> None:
-        CONSISTENCY_CHECKING = True # TODO: Not doing anything.
+        self.flip_consistency_checking = False
+        if not self.cs.consistency_checking:
+            self.flip_consistency_checking = True
+            self.cs.consistency_checking = True
         self.logger.set_always_flush(True)
         self._locks = locks(self.cs)
     
     def tear_down(self) -> None:
         self.logger.set_always_flush(False)
+        if self.flip_consistency_checking:
+            self.cs.consistency_checking = False
 
     def log_key(self) -> None:
         self.logger.log("""
