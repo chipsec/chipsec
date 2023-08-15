@@ -136,9 +136,12 @@ class ConfigChecker():
         vid_list = [f for f in listdir(self.cfg_path) if op.isdir(op.join(self.cfg_path, f)) and is_hex(f)]
         for vid in vid_list:
             for cfg_file in listdir(op.join(self.cfg_path, vid)):
+                filepath = op.join(self.cfg_path, vid, cfg_file)
+                if op.isdir(filepath):
+                    print("d", end="")
+                    continue
                 print(".", end="")
-                filepath = op.join(vid, cfg_file)
-                tree = ET.parse(op.join(self.cfg_path, filepath))
+                tree = ET.parse(filepath)
                 root = tree.getroot()
                 self.check_registers(root, filepath)
                 self.check_platform_codes(root, filepath)
