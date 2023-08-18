@@ -118,7 +118,6 @@ class Chipset:
         _cs.start_helper()
         return _cs
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True, ignore_platform=False):
-        self.reqs_pch = None
         self.load_config = load_config
         _unknown_proc = True
         _unknown_pch = True
@@ -139,11 +138,11 @@ class Chipset:
             if not ignore_platform:
                 self.Cfg.platform_detection(platform_code, req_pch_code, self.cpuid)
                 _unknown_proc = self.Cfg.get_chipset_code() is None
-                _unknown_pch = self.Cfg.is_pch_req() and self.Cfg.get_pch_code() == CHIPSET_CODE_UNKNOWN
-
+                if self.Cfg.is_pch_req() == False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
+                    _unknown_pch = False
                 if _unknown_proc:
-                    msg = 'Unknown Platform: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.Cfg.vid, self.Cfg.did, self.Cfg.rid)
-                    if start_driver:
+                    msg = f'Unknown Platform: VID = 0x{self.Cfg.vid:04X}, DID = 0x{self.Cfg.did:04X}, RID = 0x{self.Cfg.rid:02X}, CPUID = 0x{self.cpuid:X}'
+                    if start_helper:
                         logger().log_error(msg)
                         raise UnknownChipsetError(msg)
                     else:
@@ -154,8 +153,9 @@ class Chipset:
                 if logger().DEBUG:
                     logger().log("[*] Discovering Bus Configuration:")
             if _unknown_pch:
+                self.Cfg.print_bus_zero_dids()
                 msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.Cfg.pch_vid, self.Cfg.pch_did, self.Cfg.pch_rid)
-                if self.reqs_pch and start_driver:
+                if self.Cfg.is_pch_req() and start_helper:
                     logger().log_error("Chipset requires a supported PCH to be loaded. {}".format(msg))
                     raise UnknownChipsetError(msg)
                 else:
