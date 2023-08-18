@@ -124,17 +124,25 @@ class Cfg:
         return self.req_pch
 
     def print_platform_info(self):
-        self.logger.log("Platform: {}".format(self.longname))
+        self.logger.log(f"Platform: {self.longname}")
         self.logger.log(f'\tCPUID: {self.cpuid:X}')
-        self.logger.log("\tVID: {:04X}".format(self.vid))
-        self.logger.log("\tDID: {:04X}".format(self.did))
-        self.logger.log("\tRID: {:02X}".format(self.rid))
+        self.logger.log(f"\tVID: {self.vid:04X}")
+        self.logger.log(f"\tDID: {self.did:04X}")
+        self.logger.log(f"\tRID: {self.rid:02X}")
+        
+    def print_bus_zero_dids(self):
+        self.logger.log("Bus 0 Device DIDs:")
+        for vid in self.CONFIG_PCI_RAW:
+            for did in self.CONFIG_PCI_RAW[vid]:
+                device = self.CONFIG_PCI_RAW[vid][did]
+                if 0 in device['bus'] and device['fun'] == 0:
+                    self.logger.log(f'    {device["bus"][0]:02X}:{device["dev"]:02X}.{device["fun"]:01X}: 0x{device["did"]:X}')
 
     def print_pch_info(self):
-        self.logger.log("Platform: {}".format(self.pch_longname))
-        self.logger.log("\tVID: {:04X}".format(self.pch_vid))
-        self.logger.log("\tDID: {:04X}".format(self.pch_did))
-        self.logger.log("\tRID: {:02X}".format(self.pch_rid))
+        self.logger.log(f"Platform: {self.pch_longname}")
+        self.logger.log(f"\tVID: {self.pch_vid:04X}")
+        self.logger.log(f"\tDID: {self.pch_did:04X}")
+        self.logger.log(f"\tRID: {self.pch_rid:02X}")
 
     def print_supported_chipsets(self):
         fmtStr = " {:4} | {:4} | {:14} | {:6} | {:40}"
@@ -185,12 +193,13 @@ class Cfg:
         if data.vid_str not in dest:
             dest[data.vid_str] = {}
         for sku in data.sku_list:
-            did_str = self._make_hex_key_str(sku['did'])
-            if did_str not in dest[data.vid_str]:
-                dest[data.vid_str][did_str] = []
-            sku['req_pch'] = data.req_pch
-            sku['detect'] = data.detect_vals
-            dest[data.vid_str][did_str].append(sku)
+            for did in sku['did']:
+                did_str = self._make_hex_key_str(did)
+                if did_str not in dest[data.vid_str]:
+                    dest[data.vid_str][did_str] = []
+                sku['req_pch'] = data.req_pch
+                sku['detect'] = data.detect_vals
+                dest[data.vid_str][did_str].append(sku)
 
     def _find_sku_data(self, dict_ref, code, detect_val=None):
         possible_sku = []
@@ -208,7 +217,9 @@ class Cfg:
                             possible_sku.append(sku)
                             continue
                     return sku
-        if possible_sku and len(possible_sku) == 1:
+        if possible_sku:
+            if len(possible_sku) > 1:
+                logger().log_warning("Multiple SKUs found for detection value")
             return possible_sku.pop()
         return None
 
@@ -314,7 +325,7 @@ class Cfg:
         sku = self._find_sku_data(self.proc_dictionary, proc_code, cpuid)
         if sku:
             self.vid = sku['vid']
-            self.did = sku['did']
+            self.did = sku['did'][0]
             self.code = sku['code']
             if not proc_code:
                 vid_str = self._make_hex_key_str(self.vid)
@@ -327,7 +338,7 @@ class Cfg:
         sku = self._find_sku_data(self.pch_dictionary, pch_code)
         if sku:
             self.pch_vid = sku['vid']
-            self.pch_did = sku['did']
+            self.pch_did = sku['did'][0]
             self.pch_code = sku['code']
             if not pch_code:
                 vid_str = self._make_hex_key_str(self.pch_vid)

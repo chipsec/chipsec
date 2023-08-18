@@ -79,7 +79,7 @@ class PlatformInfo(BaseConfigParser):
 
     def handle_info(self, et_node, stage_data):
         platform = ''
-        req_pch = False
+        req_pch = None
         family = None
         proc_code = None
         pch_code = None
@@ -106,7 +106,7 @@ class PlatformInfo(BaseConfigParser):
             if 'detection_value' in cfg_info:
                 detect_vals = cfg_info['detection_value']
             for sku in info.iter('sku'):
-                sku_info = _config_convert_data(sku)
+                sku_info = _config_convert_data(sku, True)
                 if 'code' not in sku_info or sku_info['code'] != platform.upper():
                     sku_info['code'] = platform.upper()
                 if 'vid' not in sku_info:
