@@ -77,4 +77,4 @@ class TestChipsecUtil(unittest.TestCase):
         expression: name [:=] value.
         """
         exp = r'(^|\W){}\s*[:=]\s*{}($|\W)'.format(name, value)
-        self.assertRegexpMatches(self.log, exp.encode())
+        self.assertRegex(self.log, exp.encode())
