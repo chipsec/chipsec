@@ -14,7 +14,7 @@ Intel (c) C610 Series Chipset and Intel (c) X99 Chipset Platform Controller Hub 
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="xeon" detection_value="3069x, 4066x">
+  <info family="xeon" detection_value="0x30690-0x3069f, 0x40660-0x4066f">
     <sku did="0x2F00" name="Haswell Server" code="HSX" longname="Server 4th Generation Core Processor (Haswell Server CPU / Wellsburg PCH)" />
   </info>
 

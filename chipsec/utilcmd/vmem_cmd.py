@@ -46,7 +46,7 @@ Examples:
 import os
 import chipsec_util
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import virtmem
 from chipsec.defines import bytestostring
 from chipsec.logger import print_buffer_bytes
@@ -57,7 +57,10 @@ from argparse import ArgumentParser
 # Virtual Memory
 class VMemCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -97,8 +100,10 @@ class VMemCommand(BaseCommand):
         parser_getphys = subparsers.add_parser('getphys')
         parser_getphys.add_argument('virt_address', type=lambda x: int(x, 16), help='Address (hex)')
         parser_getphys.set_defaults(func=self.vmem_getphys)
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
+
+    def set_up(self) -> None:
+        self._vmem = virtmem.VirtMemory(self.cs)
 
     def vmem_read(self):
         self.logger.log('[CHIPSEC] Reading buffer from memory: VA = 0x{:016X}, len = 0x{:X}.'.format(self.virt_address, self.size))
@@ -221,14 +226,6 @@ class VMemCommand(BaseCommand):
             self.logger.log('[CHIPSEC] Virtual memory:')
             self.logger.log('          VA = 0x{:016X}'.format(self.virt_address))
             self.logger.log('          PA = 0x{:016X}'.format(pa))
-
-    def run(self):
-        try:
-            self._vmem = virtmem.VirtMemory(self.cs)
-        except:
-            return
-
-        self.func()
 
 
 commands = {'vmem': VMemCommand}

@@ -35,10 +35,9 @@ Examples:
 >>> chipsec_util ec index
 """
 
-import time
 from argparse import ArgumentParser
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 
 from chipsec.logger import print_buffer_bytes
 from chipsec.hal.ec import EC
@@ -47,7 +46,12 @@ from chipsec.hal.ec import EC
 # Embedded Controller
 class ECCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        if hasattr(self, 'func'):
+            return toLoad.Driver
+        return toLoad.Nil
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
 
         parser_offset = ArgumentParser(add_help=False)
@@ -75,8 +79,10 @@ class ECCommand(BaseCommand):
         parser_index = subparsers.add_parser('index', parents=[parser_offset])
         parser_index.set_defaults(func=self.index)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return hasattr(self, 'func')
+        parser.parse_args(self.argv, namespace=self)
+        
+    def set_up(self) -> None:
+        self._ec = EC(self.cs)
 
     def dump(self) -> None:
         self.logger.log("[CHIPSEC] EC dump")
@@ -117,15 +123,6 @@ class ECCommand(BaseCommand):
             mem = [self._ec.read_idx(off) for off in range(0x10000)]
             print_buffer_bytes(mem)
 
-    def run(self) -> None:
-        t = time.time()
-        try:
-            self._ec = EC(self.cs)
-        except BaseException as msg:
-            print(msg)
-            return
-        self.func()
-        self.logger.log(f'[CHIPSEC] (ec) time elapsed {time.time() - t:.3f}')
 
 
 commands = {'ec': ECCommand}

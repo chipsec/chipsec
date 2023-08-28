@@ -7,6 +7,8 @@ XML configuration file for Intel Virtualization Technology for Directed I/O (VT-
   http://www.intel.com/content/dam/www/public/us/en/documents/product-specifications/vt-directed-io-spec.pdf
 -->
 
+  <info></info>
+
   <!-- #################################### -->
   <!--                                      -->
   <!-- VT-d Configuration registers              -->

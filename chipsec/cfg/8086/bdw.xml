@@ -9,7 +9,7 @@ XML configuration for Broadwell based platforms
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="306dx, 4067x">
+  <info family="core" detection_value="0x306d0-0x306df, 0x40670-0x4067f">
     <sku did="0x1600" name="Broadwell" code="BDW" longname="Desktop 5th Generation Core Processor (Broadwell CPU / Wildcat Point PCH)" />
     <sku did="0x1604" name="Broadwell" code="BDW" longname="Mobile 5th Generation Core Processor (Broadwell M/H / Wildcat Point PCH)" />
     <sku did="0x1610" name="Broadwell" code="BDW" longname="Desktop 5th Generation Core Processor (Broadwell H / Wildcat Point PCH)" />

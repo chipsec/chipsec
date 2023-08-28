@@ -161,24 +161,24 @@ class LinuxHelper(Helper):
             subprocess.call(["rmmod", self.MODULE_NAME])
             logger().log_debug(f'Module for {self.DEVICE_NAME} unloaded successfully')
 
-    def create(self, start_driver):
+    def create(self):
         logger().log_debug("[helper] Linux Helper created")
         return True
 
-    def start(self, start_driver: bool, driver_exists: bool = False) -> bool:
+    def start(self) -> bool:
         self.unload_chipsec_module()
         self.load_chipsec_module()
         self.init()
         logger().log_debug("[helper] Linux Helper started/loaded")
         return True
 
-    def stop(self, start_driver: bool) -> bool:
+    def stop(self) -> bool:
         self.close()
         self.unload_chipsec_module()
         logger().log_debug("[helper] Linux Helper stopped/unloaded")
         return True
 
-    def delete(self, start_driver: bool) -> bool:
+    def delete(self) -> bool:
         logger().log_debug("[helper] Linux Helper deleted")
         return True
 
@@ -454,8 +454,8 @@ class LinuxHelper(Helper):
     def get_EFI_variable(self, name: str, guid: str, attrs: Optional[int] = None) -> bytes:
         return self.kern_get_EFI_variable(name, guid)
 
-    def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: int, attrs: Optional[int] = None) -> int:
-        return self.kern_set_EFI_variable(name, guid, data)
+    def set_EFI_variable(self, name: str, guid: str, buffer: bytes, buffer_size: int, attrs: Optional[int] = None) -> int:
+        return self.kern_set_EFI_variable(name, guid, buffer)
 
     #
     # Internal (U)EFI Variable API functions via CHIPSEC kernel module

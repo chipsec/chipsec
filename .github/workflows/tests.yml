@@ -151,7 +151,6 @@ jobs:
           - "3.9"
           - "3.8"
           - "3.7"
-          - "3.6"
 
     steps:
     - uses: actions/checkout@v3
@@ -169,16 +168,23 @@ jobs:
       shell: bash
       run: python3 setup.py build_ext -i
 
-    - name: Upload Windows driver
+    - name: Upload Windows Main driver
       uses: actions/upload-artifact@v3
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
-        path: drivers/windows/x64
+        path: drivers/windows/chipsec/x64
+        if-no-files-found: error
+    
+    - name: Upload Windows PCI Filter driver
+      uses: actions/upload-artifact@v3
+      with:
+        name: drivers_windows_x64__from_py${{ matrix.python }}
+        path: drivers/windows/pcifilter/x64
         if-no-files-found: error
 
     - name: Run Python tests
       shell: bash
-      run: python setup.py test
+      run: python -m unittest
 
   ubuntu-test:
     name: Test on Ubuntu
@@ -196,7 +202,6 @@ jobs:
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}
           - {ubuntu: "20.04", python: "3.7"}
-          - {ubuntu: "20.04", python: "3.6"}
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
@@ -217,6 +222,7 @@ jobs:
         sudo apt-get install -qqy dkms nasm python3-setuptools
         pip install distro
         pip install -r linux_requirements.txt
+        sudo pip install -r linux_requirements.txt
 
     - name: Build the driver with Python
       run: python3 setup.py build_ext -i
@@ -230,7 +236,9 @@ jobs:
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
     - name: Run Python tests
-      run: python3 setup.py test
+      run: |
+        python3 -m unittest
+        python3 tests/cfg_checker.py
 
     - name: Install chipsec
       run: sudo python3 setup.py install
@@ -238,5 +246,6 @@ jobs:
     - name: Run chipsec_main
       run: |
         PYTHONEXE="$(which python)"
-        sudo ${PYTHONEXE} chipsec_main.py --ignore_platform
+        CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX 1>&2); echo $?)"
+        if echo "0 1 2 4 8" | grep -qw $CHIPSECEXIT; then $(exit 0); else $(exit $CHIPSECEXIT); fi
 

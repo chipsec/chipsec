@@ -15,7 +15,7 @@ XML configuration for Cherry Trail and Braswell SoCs
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="atom" detection_value="30651">
+  <info family="atom" detection_value="0x30651">
     <sku did="0x2280" name="Braswell/Cherry Trail" code="CHT" longname="Braswell/Cherry Trail SoC" />
   </info>
 

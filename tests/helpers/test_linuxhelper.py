@@ -129,15 +129,15 @@ class LinuxHelperTest(unittest.TestCase):
             subprocess_check_output().return_value = True
             subprocess_call().return_value = True
             # breakpoint()
-            self.assertTrue(self.lhelper.create(True))
-            self.assertTrue(self.lhelper.start(True))
+            self.assertTrue(self.lhelper.create())
+            self.assertTrue(self.lhelper.start())
             # breakpoint()
             pass
         
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
-        self.assertTrue(self.lhelper.delete(True))
+        self.assertTrue(self.lhelper.delete())
         
     def test_map_io_space(self, _, lh_ioctl):
         self.assertRaises(UnimplementedAPIError, self.lhelper.map_io_space, 0,0,0)

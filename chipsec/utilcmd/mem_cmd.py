@@ -43,9 +43,8 @@ Examples:
 """
 
 import os
-import time
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.defines import ALIGNED_4KB, BOUNDARY_4KB, bytestostring
 from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
 from chipsec.file import read_file, write_file, get_main_dir
@@ -57,7 +56,10 @@ from argparse import ArgumentParser
 
 class MemCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.Driver
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util mem', usage=__doc__)
         subparsers = parser.add_subparsers()
 
@@ -98,9 +100,8 @@ class MemCommand(BaseCommand):
         parser_search.add_argument('length', type=lambda x: int(x, 16), help='Length to search (hex)')
         parser_search.add_argument('value', type=str, help='Value to search for')
         parser_search.set_defaults(func=self.mem_search)
+        parser.parse_args(self.argv, namespace=self)
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
 
     def dump_region_to_path(self, path: str, pa_start: int, pa_end: int) -> None:
         if pa_start >= pa_end:
@@ -207,11 +208,5 @@ class MemCommand(BaseCommand):
             self.cs.mem.write_physical_mem_word(self.phys_address, self.write_data)
         elif 0x4 == width:
             self.cs.mem.write_physical_mem_dword(self.phys_address, self.write_data)
-
-    def run(self) -> None:
-        t = time.time()
-        self.func()
-        self.logger.log(f'[CHIPSEC] (mem) time elapsed {time.time() - t:.3f}')
-
 
 commands = {'mem': MemCommand}

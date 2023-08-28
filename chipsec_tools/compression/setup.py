@@ -33,8 +33,8 @@
 ##
 # Import Modules
 #
-from distutils.core import setup, Extension
-import os
+from os import path
+from setuptools import setup, Extension
 
 setup(
     name="EfiCompressor",
@@ -49,12 +49,12 @@ setup(
                 'EfiCompress.c',
                 'TianoCompress.c',
                 'EfiCompressor.c'
-                ],
+            ],
             include_dirs=[
                 'Include',
-                os.path.join('Include', 'Common'),
-                os.path.join('Include', 'X64'),
-                ],
-            )
-        ],
-  )
+                path.join('Include', 'Common'),
+                path.join('Include', 'X64'),
+            ],
+        )
+    ],
+)

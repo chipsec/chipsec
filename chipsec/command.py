@@ -17,20 +17,53 @@
 #
 
 
-import chipsec.logger
-from chipsec.testcase import ExitCode
+from enum import Enum
+import traceback
 
+from chipsec.logger import logger
+from chipsec.testcase import ExitCode
 
 class BaseCommand:
 
     def __init__(self, argv, cs=None):
         self.argv = argv
-        self.logger = chipsec.logger.logger()
+        self.logger = logger()
         self.cs = cs
         self.ExitCode = ExitCode.OK
 
-    def run(self):
-        raise NotImplementedError('sub class should overwrite the run() method')
+    def run(self) -> None:
+        try:
+            self.func()
+        except Exception:
+            self.logger.log_error('An error occured during the execution of the command!')
+            self.logger.log_error('Please run with the debug option for further details')
+            if logger().DEBUG:
+                traceback.print_exc()
 
-    def requires_driver(self):
-        raise NotImplementedError('sub class should overwrite the requires_driver() method')
+    def set_up(self) -> None:
+        pass
+    
+    def tear_down(self) -> None:
+        pass
+
+    def parse_arguments(self) -> None:
+        raise NotImplementedError('sub class should overwrite the parse_arguments() method')
+    
+    def requirements(self) -> 'toLoad':
+        raise NotImplementedError('sub class should overwrite the requirements() method')
+    
+class toLoad(Enum):
+    Nil = 0
+    Config = 1
+    Driver = 2
+    All = 3
+
+    def load_config(self) -> bool:
+        if self in [self.Config, self.All]:
+            return True
+        return False
+
+    def load_driver(self) -> bool:
+        if self in [self.Driver, self.All]:
+            return True
+        return False

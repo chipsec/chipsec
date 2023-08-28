@@ -26,9 +26,7 @@ Examples:
 >>> chipsec_util spidesc spi.bin
 """
 
-import time
-
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.file import read_file
 from chipsec.hal.spi_descriptor import parse_spi_flash_descriptor
 from argparse import ArgumentParser
@@ -36,22 +34,21 @@ from argparse import ArgumentParser
 
 class SPIDescCommand(BaseCommand):
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.Config
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(prog='chipsec_util spidesc', usage=__doc__)
         parser.add_argument('fd_file', type=str, help='File name')
         parser.set_defaults()
-        parser.parse_args(self.argv[2:], namespace=self)
-        return False
+        parser.parse_args(self.argv, namespace=self)
 
     def run(self):
-        t = time.time()
 
         self.logger.log("[CHIPSEC] Parsing SPI Flash Descriptor from file '{}'\n".format(self.fd_file))
         fd = read_file(self.fd_file)
         if fd:
             parse_spi_flash_descriptor(self.cs, fd)
-
-        self.logger.log("\n[CHIPSEC] (spidesc) time elapsed {:.3f}".format(time.time() - t))
 
 
 commands = {'spidesc': SPIDescCommand}

@@ -41,3 +41,7 @@ class CpuID(hal_base.HALBase):
         (eax, ebx, ecx, edx) = self.helper.cpuid(eax, ecx)
         logger().log_hal(f'[cpuid] out: EAX=0x{eax:08X}, EBX=0x{ebx:08X}, ECX=0x{ecx:08X}, EDX=0x{edx:08X}')
         return (eax, ebx, ecx, edx)
+
+    def get_proc_info(self):
+        (eax, _, _, _) = self.cpuid(0x01, 0x00)
+        return eax

@@ -173,7 +173,7 @@ class rogue_mmio_bar(BaseModule):
             pcie_devices = self.cs.pci.enumerate_devices()
 
         self.logger.log("[*] Testing MMIO of PCIe devices:")
-        for (b, d, f, _, _) in pcie_devices:
+        for (b, d, f, _, _, _) in pcie_devices:
             self.logger.log(f'    {b:02X}:{d:02X}.{f:X}')
 
         # allocate a page or SMM communication buffer (often supplied in EBX register)
@@ -191,7 +191,7 @@ class rogue_mmio_bar(BaseModule):
             self.reloc_mmio += MAX_MMIO_RANGE_SIZE
         self.logger.log(f'[*] MMIO relocation address: 0x{self.reloc_mmio:016X}\n')
 
-        for (b, d, f, vid, did) in pcie_devices:
+        for (b, d, f, vid, did, _) in pcie_devices:
             self.logger.log(f'[*] Enumerating device {b:02X}:{d:02X}.{f:X} MMIO BARs..')
             device_bars = self.cs.pci.get_device_bars(b, d, f, True)
             for (base, isMMIO, is64bit, bar_off, bar, size) in device_bars:

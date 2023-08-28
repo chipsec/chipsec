@@ -9,7 +9,7 @@ XML configuration for Sandy Bridge based platforms
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="core" detection_value="306e0, 306e2-306e4,  206d6-206d7">
+  <info family="core" detection_value="0x306e0, 0x306e2-0x306e4, 0x206d6-0x206d7">
     <sku did="0x0100" name="Sandy Bridge" code="SNB" longname="Desktop 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)" />
     <sku did="0x0104" name="Sandy Bridge" code="SNB" longname="Mobile 2nd Generation Core Processor (Sandy Bridge CPU / Cougar Point PCH)" />
     <sku did="0x0108" name="Sandy Bridge" code="SNB" longname="Intel Xeon Processor E3-1200 (Sandy Bridge CPU, C200 Series PCH)" />

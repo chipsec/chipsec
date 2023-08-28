@@ -9,7 +9,7 @@ XML configuration for Quark based platforms
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="quark" detection_value="590">
+  <info family="quark" detection_value="0x590">
     <sku did="0x0958" name="Galileo " code="QRK" longname="Intel Quark SoC X1000" />
   </info>
 

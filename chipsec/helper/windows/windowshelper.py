@@ -68,7 +68,7 @@ DEVICE_FILE = "\\\\.\\chipsec_hlpr"
 SERVICE_NAME = "chipsec"
 DISPLAY_NAME = "CHIPSEC Service"
 
-CHIPSEC_INSTALL_PATH = os.path.join(sys.prefix, "Lib\site-packages\chipsec")
+CHIPSEC_INSTALL_PATH = os.path.join(sys.prefix, "Lib", "site-packages", "chipsec")
 
 # Status Codes
 STATUS_PRIVILEGED_INSTRUCTION = 0xC0000096
@@ -336,13 +336,7 @@ class WindowsHelper(Helper):
         logger().log_warning("*******************************************************************")
         logger().log("")
 
-    #
-    # Create (register/install) chipsec service
-    #
-    def create(self, start_driver: bool) -> bool:
-        if not start_driver:
-            return True
-
+    def create(self) -> bool:
         # check DRIVER_FILE_PATHS for the DRIVER_FILE_NAME
         self.driver_path = None
         for path in DRIVER_FILE_PATHS:
@@ -392,34 +386,7 @@ class WindowsHelper(Helper):
 
         return True
 
-    #
-    # Remove (delete/unregister/uninstall) chipsec service
-    #
-    def delete(self, start_driver: bool) -> bool:
-        if not start_driver:
-            return True
-        if self.use_existing_service:
-            return True
-
-        if win32serviceutil.QueryServiceStatus(SERVICE_NAME)[1] != win32service.SERVICE_STOPPED:
-            logger().log_warning(f"Cannot delete service '{SERVICE_NAME}' (not stopped)")
-            return False
-
-        logger().log_debug("[helper] Deleting service '{SERVICE_NAME}'...")
-        try:
-            win32serviceutil.RemoveService(SERVICE_NAME)
-            logger().log_debug("[helper] Service '{SERVICE_NAME}' deleted")
-        except win32service.error as err:
-            if logger().DEBUG:
-                logger().log_warning("RemoveService failed: {err.args[2]} ({err.args[0]:d})")
-            return False
-
-        return True
-
-    #
-    # Start chipsec service
-    #
-    def start(self, start_driver: bool, driver_exists: bool = False) -> bool:
+    def start(self) -> bool:
 
         self.use_existing_service = (win32serviceutil.QueryServiceStatus(SERVICE_NAME)[1] == win32service.SERVICE_RUNNING)
 
@@ -438,12 +405,7 @@ class WindowsHelper(Helper):
         self.driverpath = win32serviceutil.LocateSpecificServiceExe(SERVICE_NAME)
         return True
 
-    #
-    # Stop chipsec service
-    #
-    def stop(self, start_driver: bool) -> bool:
-        if not start_driver:
-            return True
+    def stop(self) -> bool:
         if self.use_existing_service:
             return True
 
@@ -469,7 +431,26 @@ class WindowsHelper(Helper):
 
         return True
 
-    def get_driver_handle(self) -> 'PyHANDLE':
+    def delete(self) -> bool:
+        if self.use_existing_service:
+            return True
+
+        if win32serviceutil.QueryServiceStatus(SERVICE_NAME)[1] != win32service.SERVICE_STOPPED:
+            logger().log_warning(f"Cannot delete service '{SERVICE_NAME}' (not stopped)")
+            return False
+
+        logger().log_debug("[helper] Deleting service '{SERVICE_NAME}'...")
+        try:
+            win32serviceutil.RemoveService(SERVICE_NAME)
+            logger().log_debug("[helper] Service '{SERVICE_NAME}' deleted")
+        except win32service.error as err:
+            if logger().DEBUG:
+                logger().log_warning("RemoveService failed: {err.args[2]} ({err.args[0]:d})")
+            return False
+
+        return True
+
+    def _get_driver_handle(self) -> 'PyHANDLE':
         # This is bad but DeviceIoControl fails occasionally if new device handle is not opened every time ;(
         if (self.driver_handle is not None) and (INVALID_HANDLE_VALUE != self.driver_handle):
             return self.driver_handle
@@ -485,7 +466,7 @@ class WindowsHelper(Helper):
         if (0x6 == kernel32.GetLastError()):
             win32api.CloseHandle(self.driver_handle)
             self.driver_handle = None
-            self.get_driver_handle()
+            self._get_driver_handle()
             logger().log_warning(f"Invalid handle: re-opened device '{self.device_file:.64}' (new handle: {int(self.driver_handle):08X})")
             return False
         return True
@@ -510,7 +491,7 @@ class WindowsHelper(Helper):
             _handle_error("chipsec kernel driver is not loaded (in native API mode?)")
 
         out_buf = (c_char * out_length)()
-        self.get_driver_handle()
+        self._get_driver_handle()
         try:
             out_buf = win32file.DeviceIoControl(self.driver_handle, ioctl_code, in_buf, out_length, None)
         except pywintypes.error as _err:
@@ -749,9 +730,9 @@ class WindowsHelper(Helper):
         (status, data, attributes) = self.get_EFI_variable_full(name, guid, attrs)
         return data
 
-    def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: Optional[int], attrs: Optional[int]) -> int:
-        var = bytes(0) if data is None else data
-        var_len = len(var) if datasize is None else datasize
+    def set_EFI_variable(self, name: str, guid: str, buffer: bytes, buffer_size: Optional[int], attrs: Optional[int]) -> int:
+        var = bytes(0) if buffer is None else buffer
+        var_len = len(var) if buffer_size is None else buffer_size
         if isinstance(attrs, (str, bytes)):
             attrs_data = f'{bytestostring(attrs):\x00<8}'[:8]
             attrs = struct.unpack("Q", stringtobytes(attrs_data))[0]
@@ -773,7 +754,7 @@ class WindowsHelper(Helper):
         return status
 
     def delete_EFI_variable(self, name: str, guid: str) -> int:
-        return self.set_EFI_variable(name, guid, None, datasize=0, attrs=None)
+        return self.set_EFI_variable(name, guid, None, buffer_size=0, attrs=None)
 
     def list_EFI_variables(self, infcls: int = 2) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
         logger().log_debug(f'[helper] -> NtEnumerateSystemEnvironmentValuesEx( infcls={infcls:d} )...')

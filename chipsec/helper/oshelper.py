@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 from chipsec.file import get_main_dir, TOOLS_DIR
 from chipsec.logger import logger
 from chipsec.helper.basehelper import Helper
+from chipsec.helper.nonehelper import NoneHelper
 from chipsec.exceptions import UnimplementedAPIError, OsHelperError
 
 
@@ -92,7 +93,7 @@ class OsHelper:
         return sorted(self.avail_helpers.keys())
 
     def get_base_helper(self):
-        return Helper()
+        return NoneHelper()
     
     def get_default_helper(self):
         ret = None

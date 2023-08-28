@@ -30,7 +30,7 @@ try:
 except ImportError:
     _importlib = False
 
-MODPATH_RE = re.compile("^\w+(\.\w+)*$")
+MODPATH_RE = re.compile(r"^\w+(\.\w+)*$")
 
 
 class Module:

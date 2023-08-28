@@ -129,7 +129,7 @@ class pcie_overlap_fuzz(BaseModule):
             self.fuzz_unaligned(bar, rand * 4, is64bit)
 
     def fuzz_overlap_pcie_device(self, pcie_devices):
-        for (b1, d1, f1, _, _) in pcie_devices:
+        for (b1, d1, f1, _, _, _) in pcie_devices:
             self.logger.log("[*] Overlapping MMIO bars...")
             device_bars1 = self.cs.pci.get_device_bars(b1, d1, f1, bCalcSize=True)
             for (bar1, isMMIO1, is64bit1, bar_off1, _, size1) in device_bars1:

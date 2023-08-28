@@ -71,11 +71,11 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options.add_argument('-vv', '--vverbose', help='Very verbose logging (verbose + HAL + debug)', action='store_true')
     adv_options = parser.add_argument_group('Advanced Options')
     adv_options.add_argument('-p', '--platform', dest='_platform', help='Explicitly specify platform code',
-                             choices=chipset.cs().chipset_codes, type=str.upper)
-    adv_options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=chipset.cs().pch_codes, type=str.upper)
+                             choices=chipset.cs().Cfg.proc_codes, type=str.upper)
+    adv_options.add_argument('--pch', dest='_pch', help='Explicitly specify PCH code', choices=chipset.cs().Cfg.pch_codes, type=str.upper)
     adv_options.add_argument('-n', '--no_driver', dest='_no_driver', action='store_true',
                              help="Chipsec won't need kernel mode functions so don't load chipsec driver")
-    adv_options.add_argument('-i', '--ignore_platform', dest='_unknownPlatform', action='store_false',
+    adv_options.add_argument('-i', '--ignore_platform', dest='_ignore_platform', action='store_true',
                              help='Run chipsec even if the platform is not recognized (Deprecated)')
     adv_options.add_argument('-j', '--json', dest='_json_out', help='Specify filename for JSON output')
     adv_options.add_argument('-x', '--xml', dest='_xml_out', help='Specify filename for xml output (JUnit style)')
@@ -244,8 +244,8 @@ class ChipsecMain:
         # Step 2.
         # Load platform-specific modules from the corresponding platform module directory
         #
-        chipset_path = os.path.join(self.Modules_Path, self._cs.code.lower())
-        if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.code) and os.path.exists(chipset_path):
+        chipset_path = os.path.join(self.Modules_Path, self._cs.Cfg.code.lower())
+        if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.Cfg.code) and os.path.exists(chipset_path):
             self.logger.log("[*] loading platform specific modules from \"{}\" ..".format(
                 chipset_path.replace(os.getcwd(), '.')))
             self.load_modules_from_path(chipset_path)
@@ -366,7 +366,7 @@ class ChipsecMain:
         if self._module_argv and len(self._module_argv) == 1 and self._module_argv[0].count(','):
             self.logger.log("[*] Use of the -a command no longer needs to have arguments concatenated with ','")
             self._module_argv = self._module_argv[0].split(',')
-        if self._unknownPlatform is False:
+        if self._ignore_platform:
             self.logger.log_warning("Ignoring unsupported platform warning and continue execution.")
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
@@ -378,11 +378,11 @@ class ChipsecMain:
         ret["OS"] = "{} {} {} {}".format(self._cs.helper.os_system, self._cs.helper.os_release,
                                          self._cs.helper.os_version, self._cs.helper.os_machine)
         ret["Python"] = "Python {}".format(platform.python_version())
-        ret["Platform"] = "{}, CPUID: {}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.longname, self._cs.cpuid, self._cs.vid,
-                                                                                        self._cs.did, self._cs.rid)
+        ret["Platform"] = "{}, CPUID: {}, VID: {:04X}, DID: {:04X}, RID: {:02X}".format(self._cs.Cfg.longname, self._cs.Cfg.cpuid, self._cs.Cfg.vid,
+                                                                                        self._cs.Cfg.did, self._cs.Cfg.rid)
         if not self._cs.is_atom():
-            ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.pch_longname, self._cs.pch_vid,
-                                                                           self._cs.pch_did, self._cs.pch_rid)
+            ret["PCH"] = "{}, VID: {:04X}, DID: {:04X} RID: {:02X}".format(self._cs.Cfg.pch_longname, self._cs.Cfg.pch_vid,
+                                                                           self._cs.Cfg.pch_did, self._cs.Cfg.pch_rid)
         ret["Version"] = "{}".format(self.version)
         ret["Message"] = "{}".format(self.message)
         return ret
@@ -399,55 +399,52 @@ class ChipsecMain:
         for import_path in self.IMPORT_PATHS:
             sys.path.append(os.path.abspath(import_path))
 
-        if self._load_config:
-            try:
-                self._cs.init(self._platform, self._pch, self._helper)
-            except UnknownChipsetError as msg:
-                self.logger.log_error("Platform is not supported ({}).".format(str(msg)))
-                if self._unknownPlatform:
-                    self.logger.log_error('To specify a cpu please use -p command-line option')
-                    self.logger.log_error('To specify a pch please use --pch command-line option\n')
-                    self.logger.log_error('If the correct configuration is not loaded, results should not be trusted.')
-                    if self.logger.DEBUG:
-                        self.logger.log_bad(traceback.format_exc())
-                    if self.failfast:
-                        raise msg
-                    return ExitCode.EXCEPTION
-                self.logger.log_warning("Platform dependent functionality is likely to be incorrect")
-            except OsHelperError as os_helper_error:
-                self.logger.log_error(str(os_helper_error))
+        try:
+            self._cs.init(self._platform, self._pch, self._helper, not self._no_driver, self._load_config, self._ignore_platform)
+        except UnknownChipsetError as msg:
+            self.logger.log_error("Platform is not supported ({}).".format(str(msg)))
+            if self._ignore_platform:
+                self.logger.log_error('To specify a cpu please use -p command-line option')
+                self.logger.log_error('To specify a pch please use --pch command-line option\n')
+                self.logger.log_error('If the correct configuration is not loaded, results should not be trusted.')
                 if self.logger.DEBUG:
                     self.logger.log_bad(traceback.format_exc())
                 if self.failfast:
-                    raise os_helper_error
+                    raise msg
                 return ExitCode.EXCEPTION
-            except BaseException as be:
-                self.logger.log_bad(traceback.format_exc())
-                if self.failfast:
-                    raise be
-                return ExitCode.EXCEPTION
-
-            if self._show_banner:
-                print_banner_properties(self._cs, defines.os_version())
-        else:
             self.logger.log_warning("Platform dependent functionality is likely to be incorrect")
+        except OsHelperError as os_helper_error:
+            self.logger.log_error(str(os_helper_error))
+            if self.logger.DEBUG:
+                self.logger.log_bad(traceback.format_exc())
+            if self.failfast:
+                raise os_helper_error
+            return ExitCode.EXCEPTION
+        except BaseException as be:
+            self.logger.log_bad(traceback.format_exc())
+            if self.failfast:
+                raise be
+            return ExitCode.EXCEPTION
 
+        if self._show_banner:
+            print_banner_properties(self._cs, defines.os_version())
+        
         self.logger.log(" ")
 
         if self.logger.DEBUG:
             self.logger.log("[*] Running from {}".format(os.getcwd()))
 
-        modules_failed = 0
+        self.main_return = 0
         if self._module:
             self.load_module(self._module, self._module_argv)
-            modules_failed = self.run_loaded_modules()
+            self.main_return = self.run_loaded_modules()
         else:
-            modules_failed = self.run_all_modules()
-
-        self._cs.destroy_helper((not self._no_driver))
+            self.main_return = self.run_all_modules()
+        if not self._no_driver:
+            self._cs.destroy_helper()
         del self._cs
         self.logger.disable()
-        return modules_failed
+        return self.main_return
 
 def run(cli_cmd: str = '') -> int:
     cli_cmds = []

@@ -10,7 +10,7 @@ Intel (c) Xeon Processor Scalable Family datasheet Vol. 2
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="xeon" detection_value="406ex, 506ex, 50650-5065B">
+  <info family="xeon" detection_value="0x406e0-0x406ef, 0x506e0-0x506ef, 0x50650-0x5065B">
     <sku did="0x2020" name="Skylake" code="SKX" longname="Intel Xeon Processor E5/E7 v5 (Skylake)" />
   </info>
 

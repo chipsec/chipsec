@@ -29,7 +29,7 @@ chipsec@intel.com
   <!-- Information                          -->
   <!--                                      -->
   <!-- #################################### -->
-  <info family="xeon" detection_value='606A5, 606A6'>
+  <info family="xeon" detection_value='0x606A5, 0x606A6'>
     <sku did="0x09A2" name="IceLake" code="ICX" longname="Intel Xeon Processor E5/E7 v7 (Icelake CPU)" />
   </info>
 

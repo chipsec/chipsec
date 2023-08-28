@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <configuration>
+  <info></info>
 <!--
 Configuration of Intel TXT register, following the guide:
 

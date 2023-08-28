@@ -37,17 +37,20 @@ class TestHelper(Helper):
         self.driver_loaded = True
         self.name = "TestHelper"
 
-    def create(self, start_driver):
+    def create(self):
         return True
 
-    def delete(self, start_driver):
+    def delete(self):
         return True
 
-    def start(self, start_driver, driver_exists=False, tofile=None, fromfile=None):
+    def start(self):
         return True
 
-    def stop(self, start_driver):
+    def stop(self):
         return True
+
+    def _generate_size_ffs(self, size: int) -> int:
+        return ~(~0xFF << (size-1) * 8)
 
      # This will be used to probe the device, fake a Broadwell CPU
     def read_pci_reg(self, bus, device, function, address, size):
@@ -66,7 +69,7 @@ class TestHelper(Helper):
             else:
                 return 0x9D438086
         else:
-            raise Exception("Unexpected PCI read")
+            return self._generate_size_ffs(size)
 
     def get_threads_count(self):
         return 2
@@ -134,7 +137,7 @@ class TestHelper(Helper):
     def get_EFI_variable(self, name, guid):
         raise UnimplementedAPIError('get_EFI_variable')
 
-    def set_EFI_variable(self, name, guid, data, datasize, attrs):
+    def set_EFI_variable(self, name, guid, buffer, buffer_size, attrs):
         raise UnimplementedAPIError('set_EFI_variable')
 
     def delete_EFI_variable(self, name, guid):
@@ -359,10 +362,7 @@ class SPIHelper(TestHelper):
                 return 0xDEADBEEF
             elif address == 0x0:
                 return 0xAAAA8086
-            else:
-                raise Exception("Unexpected PCI read")
-        else:
-            return super(SPIHelper, self).read_pci_reg(bus, device,
+        return super(SPIHelper, self).read_pci_reg(bus, device,
                                                        function,
                                                        address, size)
 
@@ -405,7 +405,7 @@ class ValidChipsetHelper(TestHelper):
             else:
                 return 0x9D438086
         else:
-            raise Exception("Unexpected PCI read")
+            return self._generate_size_ffs(size)
 
 
 class InvalidChipsetHelper(TestHelper):
@@ -425,7 +425,7 @@ class InvalidChipsetHelper(TestHelper):
             else:
                 return 0x9D438086
         else:
-            raise Exception("Unexpected PCI read")
+            return self._generate_size_ffs(size)
 
     def cpuid(self, eax, ecx):
         return 0xfffff, 0, 0, 0
@@ -438,7 +438,7 @@ class InvalidPchHelper(TestHelper):
             elif size == 2:
                 return 0x8086
             else:
-                return 0x19048086
+                return 0xBEEF8086
         elif (bus, device, function) == (0, 0x1f, 0):
             if size == 1:
                 return 0x86
@@ -447,4 +447,4 @@ class InvalidPchHelper(TestHelper):
             else:
                 return 0xBEEF8086
         else:
-            raise Exception("Unexpected PCI read")
+            return self._generate_size_ffs(size)

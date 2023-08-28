@@ -91,9 +91,9 @@ class VMM:
         logger().log_hal(f'[vmm] Dumping EPT paging hierarchy at EPTP 0x{eptp:08X}...')
         if pt_fname is None:
             pt_fname = (f'ept_{eptp:08X}')
-        logger().set_log_file(pt_fname)
+        logger().set_log_file(pt_fname, False)
         paging_ept.read_pt_and_show_status(pt_fname, 'EPT', eptp)
-        logger().set_log_file(_orig_logname)
+        logger().set_log_file(_orig_logname, False)
         if paging_ept.failure:
             logger().log_error('Could not dump EPT page tables')
 

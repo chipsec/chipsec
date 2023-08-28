@@ -41,7 +41,7 @@ Examples:
 >>> chipsec_util tpm command continueselftest 0
 """
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import tpm_eventlog
 from chipsec.hal import tpm
 from chipsec.exceptions import TpmRuntimeError
@@ -52,7 +52,10 @@ class TPMCommand(BaseCommand):
 
     no_driver_cmd = ['parse_log']
 
-    def requires_driver(self):
+    def requirements(self) -> toLoad:
+        return toLoad.All
+
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_parse = subparsers.add_parser('parse_log')
@@ -68,8 +71,7 @@ class TPMCommand(BaseCommand):
         parser_state = subparsers.add_parser('state')
         parser_state.add_argument('locality', type=str, choices=['0', '1', '2', '3', '4'], help='Locality')
         parser_state.set_defaults(func=self.tpm_state)
-        parser.parse_args(self.argv[2:], namespace=self)
-        return True
+        parser.parse_args(self.argv, namespace=self)
 
     def tpm_parse(self):
         with open(self.file, 'rb') as log:

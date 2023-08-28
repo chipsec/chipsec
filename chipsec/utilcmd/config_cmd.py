@@ -28,16 +28,18 @@ Examples:
 >>> chipsec_util config show REGISTERS BC
 """
 
-from time import time
 from argparse import ArgumentParser
 
-from chipsec.command import BaseCommand
+from chipsec.command import BaseCommand, toLoad
 from typing import Any, Dict
 
 
 class CONFIGCommand(BaseCommand):
 
-    def requires_driver(self) -> bool:
+    def requirements(self) -> toLoad:
+        return toLoad.Config
+    
+    def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
 
         subparsers = parser.add_subparsers()
@@ -48,8 +50,8 @@ class CONFIGCommand(BaseCommand):
         parser_show.add_argument('name', type=str, nargs='*', help="Specific Name", default=[])
         parser_show.set_defaults(func=self.show, config="ALL")
 
-        parser.parse_args(self.argv[2:], namespace=self)
-        return False
+        parser.parse_args(self.argv, namespace=self)
+
 
     def show(self) -> None:
         if self.config == "ALL":
@@ -143,12 +145,6 @@ class CONFIGCommand(BaseCommand):
     def bus_details(self, regi: str) -> str:
         ret = f'bus: {regi}'
         return ret
-
-    def run(self) -> None:
-        t = time()
-        self.func()
-        self.logger.log(f'[CHIPSEC] (config) time elapsed {time() - t:.3f}')
-        return
 
 
 commands = {'config': CONFIGCommand}
