@@ -240,6 +240,10 @@ jobs:
         python3 -m unittest
         python3 tests/cfg_checker.py
 
+    - name: pylint pilot for modules folder
+      run: |
+        pylint chipsec/modules
+
     - name: Install chipsec
       run: sudo python3 setup.py install
 
