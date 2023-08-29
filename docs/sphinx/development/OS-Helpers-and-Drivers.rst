@@ -20,32 +20,12 @@ I/O, PCI, MSR, UEFI Variables, etc.
 Create a New Helper
 -------------------
 
-Helper needs to be added to the import list either within helpers.py or
-custom_helpers.py
+Helper needs to be added into the helper folder with a folder structure like: ``chipsec/helper/<type>/<type>helper.py``
 
 Example
 ~~~~~~~
 
-The new helper should be added to either ``chipsec/helper/helpers.py``
-or ``chipsec/helper/custom_helpers.py``
-
-A new helper folder should be created under
-``chipsec/helper/new_helper``
-
-``chipsec/helper/new_helper/__init__.py`` within the new folder needs to
-add the helper name to list ``__all__``
-
-::
-
-   import platform
-
-   if "linux" == platform.system().lower():
-       __all__ = [ "linuxhelper" ]
-   else:
-       __all__ = [ ]
-
-``chipsec/helper/new_helper/new_helper.py`` should import from Helper
-Base Class
+The new helper should be added to ``chipsec/helper/new/newhelper.py`` and should import from Helper Base Class
 
 ::
 
