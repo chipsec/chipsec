@@ -37,7 +37,7 @@ usage:
 
 import os
 from typing import Any
-from chipsec.library.string_library import get_datetime_str
+from chipsec.library.strings import get_datetime_str
 from chipsec.logger import logger
 
 TOOLS_DIR = 'chipsec_tools'
@@ -52,8 +52,7 @@ def read_file(filename: str, size: int = 0) -> bytes:
                 _file = f.read()
             logger().log_debug(f"[file] Read {len(_file):d} bytes from '{filename:.256}'")
             return _file
-
-    except:
+    except OSError:
         logger().log_error(f"Unable to open file '{filename:.256}' for read access")
         return b''
 
@@ -64,7 +63,7 @@ def write_file(filename: str, buffer: Any, append: bool = False) -> bool:
         perm += 'b'
     try:
         f = open(filename, perm)
-    except:
+    except OSError:
         logger().log_error(f"Unable to open file '{filename:.256}' for write access")
         return False
     f.write(buffer)
