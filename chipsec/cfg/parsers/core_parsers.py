@@ -145,7 +145,8 @@ class CoreConfig(BaseConfigParser):
                    dev_attr['fun'] == pci_data['fun']:
                     self._add_dev(vid_str, dev_name, pci_data, dev_attr)
                     break
-        self._add_dev(vid_str, dev_name, None, dev_attr)
+        if dev_name not in self.cfg.CONFIG_PCI:
+            self._add_dev(vid_str, dev_name, None, dev_attr)
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if pci_info:
