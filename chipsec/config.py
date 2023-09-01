@@ -222,6 +222,17 @@ class Cfg:
                 logger().log_warning("Multiple SKUs found for detection value")
             return possible_sku.pop()
         return None
+    
+    def _find_did(self, sku):
+        vid_str = self._make_hex_key_str(sku['vid'])
+        if 'did' in sku and sku['did'] is int:
+            return sku['did']
+        else:
+            for did in sku['did']:
+                did_str = self._make_hex_key_str(did)
+                if did_str in self.CONFIG_PCI_RAW[vid_str]:
+                    return did
+        return 0xFFFF
 
     def _get_config_iter(self, fxml):
         tree = ET.parse(fxml.xml_file)
@@ -325,7 +336,7 @@ class Cfg:
         sku = self._find_sku_data(self.proc_dictionary, proc_code, cpuid)
         if sku:
             self.vid = sku['vid']
-            self.did = sku['did'][0]
+            self.did = self._find_did(sku)
             self.code = sku['code']
             if not proc_code:
                 vid_str = self._make_hex_key_str(self.vid)
@@ -338,7 +349,7 @@ class Cfg:
         sku = self._find_sku_data(self.pch_dictionary, pch_code)
         if sku:
             self.pch_vid = sku['vid']
-            self.pch_did = sku['did'][0]
+            self.pch_did = self._find_did(sku)
             self.pch_code = sku['code']
             if not pch_code:
                 vid_str = self._make_hex_key_str(self.pch_vid)
