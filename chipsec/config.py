@@ -284,7 +284,7 @@ class Cfg:
             self.load_extra = [config_data(None, None, os.path.join(config_path, f)) for f in sorted(os.listdir(config_path))
                                if fnmatch(f, '*.xml') and fnmatch(f, filename)]
         else:
-            raise CSConfigError('Unable to locate configuration file(s): {}'.format(config_path.xml_file))
+            raise CSConfigError('Unable to locate configuration file(s): {}'.format(config_path))
         if loadnow and self.load_extra:
             self._load_sec_configs(self.load_extra, Stage.EXTRA)
 
