@@ -35,6 +35,7 @@ Usage:
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
 import time
+import traceback
 from struct import *
 from random import *
 from chipsec.modules.tools.vmm.hv.define import *
