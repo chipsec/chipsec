@@ -182,7 +182,7 @@ class CoreConfig(BaseConfigParser):
         return self._add_entry_simple(self.cfg.IO_BARS, stage_data, et_node, 'bar')
 
     def handle_ima(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.IO_BARS, stage_data, et_node, 'indirect')
+        return self._add_entry_simple(self.cfg.IMA_REGISTERS, stage_data, et_node, 'indirect')
 
     def handle_locks(self, et_node, stage_data):
         return self._add_entry_simple(self.cfg.LOCKS, stage_data, et_node, 'lock')
