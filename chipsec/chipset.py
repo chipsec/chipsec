@@ -21,6 +21,8 @@
 """
 Contains platform identification functions
 """
+import errno
+import traceback
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
@@ -186,7 +188,7 @@ class Chipset:
                 raise OsHelperError("failed to start OS helper", 1)
         except Exception as msg:
             logger().log_debug(traceback.format_exc())
-            error_no = ENXIO
+            error_no = errno.ENXIO
             if hasattr(msg, 'errorcode'):
                 error_no = msg.errorcode
             raise OsHelperError("Message: \"{}\"".format(msg), error_no)
