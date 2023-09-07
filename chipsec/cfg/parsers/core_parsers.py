@@ -141,7 +141,10 @@ class CoreConfig(BaseConfigParser):
         else:
             for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                 pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                if dev_attr['bus'] == pci_data['bus'] and dev_attr['dev'] == pci_data['dev'] and \
+                bus_match = dev_attr['bus'] == pci_data['bus'] \
+                    if type(pci_data['bus']) is int else \
+                    dev_attr['bus'] in pci_data['bus']  # TODO: Investigate why this is needed
+                if bus_match and dev_attr['dev'] == pci_data['dev'] and \
                    dev_attr['fun'] == pci_data['fun']:
                     self._add_dev(vid_str, dev_name, pci_data, dev_attr)
                     break

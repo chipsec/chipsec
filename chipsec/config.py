@@ -130,14 +130,6 @@ class Cfg:
         self.logger.log(f"\tDID: {self.did:04X}")
         self.logger.log(f"\tRID: {self.rid:02X}")
         
-    def print_bus_zero_dids(self):
-        self.logger.log("Bus 0 Device DIDs:")
-        for vid in self.CONFIG_PCI_RAW:
-            for did in self.CONFIG_PCI_RAW[vid]:
-                device = self.CONFIG_PCI_RAW[vid][did]
-                if 0 in device['bus'] and device['fun'] == 0:
-                    self.logger.log(f'    {device["bus"][0]:02X}:{device["dev"]:02X}.{device["fun"]:01X}: 0x{device["did"]:X}')
-
     def print_pch_info(self):
         self.logger.log(f"Platform: {self.pch_longname}")
         self.logger.log(f"\tVID: {self.pch_vid:04X}")
