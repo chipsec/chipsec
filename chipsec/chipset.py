@@ -155,7 +155,7 @@ class Chipset:
                 if logger().DEBUG:
                     logger().log("[*] Discovering Bus Configuration:")
             if _unknown_pch:
-                self.Cfg.print_bus_zero_dids()
+                pci.print_pci_devices(self.pci.enumerate_devices())
                 msg = 'Unknown PCH: VID = 0x{:04X}, DID = 0x{:04X}, RID = 0x{:02X}'.format(self.Cfg.pch_vid, self.Cfg.pch_did, self.Cfg.pch_rid)
                 if self.Cfg.is_pch_req() and start_helper:
                     logger().log_error("Chipset requires a supported PCH to be loaded. {}".format(msg))
