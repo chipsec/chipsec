@@ -108,3 +108,9 @@ def is_all_ones(value: int, size: int, width: int = 8) -> bool:
 
 def ones_complement(value: int, number_of_bits: int = 64) -> int:
     return ((1 << number_of_bits) - 1) ^ value
+
+
+def get_bits(value: int, start: int, nbits: int) -> int:
+    ret = value >> start
+    ret &= (1 << nbits) - 1
+    return ret
