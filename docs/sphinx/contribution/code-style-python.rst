@@ -405,3 +405,33 @@ At this time, Assignment Expressions (Walrus operator) are not supported.
      - Adds a way to assign to variables within an expression
      - 3.8
      - No
+
+
+Deprecate distutils module support
+==================================
+
+Python 3.12 will deprecate and remove the distutils module.  In order for CHIPSEC to support this and furture versions of Python, setuptools should be used instead of distutils.
+
+The setuptools module has been updated to fully replace distutils but requires an up-to-date version.
+
+- Minimum setuptools version: `62.0.0 <https://pypi.org/project/setuptools/62.0.0/>`_ (requires Python >= 3.7)
+
+- Recommended setuptools version: latest
+
+**Note**: If you get any `setuptools.command.build` errors, verify that you have (at least) the minimum setuptools version.
+
+.. list-table:: PEP versions supported by CHIPSEC
+   :widths: 12 23 25 12 12
+   :header-rows: 1
+
+   * - PEP / bpo
+     - Title
+     - Summary
+     - Python Version
+     - Supported
+   * - `PEP 632 <https://peps.python.org/pep-0632//>`_
+     - Deprecate distutils module
+     - Mark the distutils module as deprecated (3.10) and then remove it (3.12)
+     - 3.12
+     - Yes
+
