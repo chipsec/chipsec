@@ -36,7 +36,6 @@ from os.path import exists as path_exists
 from argparse import ArgumentParser
 
 from chipsec.hal.acpi import ACPI
-from chipsec.exceptions import AcpiRuntimeError
 from chipsec.command import BaseCommand, toLoad
 
 # ###################################################################
@@ -46,11 +45,11 @@ from chipsec.command import BaseCommand, toLoad
 # ###################################################################
 
 
-class ACPICommand(BaseCommand):    
+class ACPICommand(BaseCommand):
     def requirements(self) -> toLoad:
         if self.func == self.acpi_table and self._file:
             return toLoad.Nil # TODO: Fix this case. Need to update ACPI HAL to not try to auto-populate tables.
-        return toLoad.Driver
+        return toLoad.All
 
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
@@ -63,7 +62,7 @@ class ACPICommand(BaseCommand):
         parser_table.add_argument('_name', metavar='table|filename', nargs=1, help="table to list")
         parser_table.set_defaults(func=self.acpi_table)
         parser.parse_args(self.argv, namespace=self)
-    
+
     def set_up(self) -> None:
         self._acpi = ACPI(self.cs)
 
@@ -82,7 +81,6 @@ class ACPICommand(BaseCommand):
         self.logger.log(f"[CHIPSEC] reading ACPI table {'from file' if self._file else ''} '{name}'")
         self._acpi.dump_ACPI_table(name, self._file)
         return
-
 
 
 commands = {'acpi': ACPICommand}
