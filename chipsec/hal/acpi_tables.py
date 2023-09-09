@@ -30,7 +30,7 @@ __version__ = '0.1'
 import struct
 from collections import namedtuple
 from uuid import UUID
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 from chipsec.logger import logger, dump_buffer_bytes
 from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
 
@@ -108,12 +108,14 @@ class DMAR (ACPI_TABLE):
     def __init__(self):
         self.dmar_structures = []
         self.DMAR_TABLE_FORMAT = {
-            'DeviceScope_FORMAT': '=BBHBB',
+            'DeviceScope_FORMAT': '=BBBBBB',
             'DRHD_FORMAT': '=HHBBHQ',
             'RMRR_FORMAT': '=HHHHQQ',
             'ATSR_FORMAT': '=HHBBH',
             'RHSA_FORMAT': '=HHIQI',
-            'ANDD_FORMAT': 'HH3sB'
+            'ANDD_FORMAT': 'HH3sB',
+            'SATC_FORMAT': 'HHBBH',
+            'SIDP_FORMAT': 'HHHH'
         }
 
     def parse(self, table_content: bytes) -> None:
@@ -152,53 +154,27 @@ class DMAR (ACPI_TABLE):
             ret = self._get_DMAR_structure_RHSA(DataStructure)
         elif 0x04 == _type:
             ret = self._get_DMAR_structure_ANDD(DataStructure)
+        elif 0x05 == _type:
+            return self._get_DMAR_structure_SATC(DataStructure)
+        elif 0x06 == _type:
+            return self._get_DMAR_structure_SIDP(DataStructure)
         else:
             ret = (f"\n  Unknown DMAR structure 0x{_type:02X}\n")
         return str(ret)
 
     def _get_DMAR_structure_DRHD(self, structure: bytes) -> 'ACPI_TABLE_DMAR_DRHD':
-        device_scope = []
-        fmt = '=BB'
-        step = struct.calcsize(fmt)
         off = struct.calcsize(self.DMAR_TABLE_FORMAT["DRHD_FORMAT"])
-        while off < len(structure) - 1:
-            (_, length) = struct.unpack(fmt, structure[off:off + step])
-            if 0 == length:
-                break
-            path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
-            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + (f'{path_sz:d}s')
-            device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
-            off += length
+        device_scope = self._get_DMAR_Device_Scope_list(structure[off:])
         return ACPI_TABLE_DMAR_DRHD(*struct.unpack_from(self.DMAR_TABLE_FORMAT["DRHD_FORMAT"], structure), DeviceScope=device_scope)
 
     def _get_DMAR_structure_RMRR(self, structure: bytes) -> 'ACPI_TABLE_DMAR_RMRR':
-        device_scope = []
-        fmt = '=HH'
-        step = struct.calcsize(fmt)
         off = struct.calcsize(self.DMAR_TABLE_FORMAT["RMRR_FORMAT"])
-        while off < len(structure) - 1:
-            (_, length) = struct.unpack(fmt, structure[off:off + step])
-            if 0 == length:
-                break
-            path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
-            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + (f'{path_sz:d}s')
-            device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
-            off += length
+        device_scope = self._get_DMAR_Device_Scope_list(structure[off:])
         return ACPI_TABLE_DMAR_RMRR(*struct.unpack_from(self.DMAR_TABLE_FORMAT["RMRR_FORMAT"], structure), DeviceScope=device_scope)
 
     def _get_DMAR_structure_ATSR(self, structure: bytes) -> 'ACPI_TABLE_DMAR_ATSR':
-        device_scope = []
-        fmt = '=HH'
-        step = struct.calcsize(fmt)
         off = struct.calcsize(self.DMAR_TABLE_FORMAT["ATSR_FORMAT"])
-        while off < len(structure) - 1:
-            (_, length) = struct.unpack(fmt, structure[off:off + step])
-            if 0 == length:
-                break
-            path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
-            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + (f'{path_sz:d}s')
-            device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
-            off += length
+        device_scope = self._get_DMAR_Device_Scope_list(structure[off:])
         return ACPI_TABLE_DMAR_ATSR(*struct.unpack_from(self.DMAR_TABLE_FORMAT["ATSR_FORMAT"], structure), DeviceScope=device_scope)
 
     def _get_DMAR_structure_RHSA(self, structure: bytes) -> 'ACPI_TABLE_DMAR_RHSA':
@@ -210,6 +186,31 @@ class DMAR (ACPI_TABLE):
         dmr_len = length - struct.calcsize(self.DMAR_TABLE_FORMAT["ANDD_FORMAT"])
         f = self.DMAR_TABLE_FORMAT["ANDD_FORMAT"] + (f'{dmr_len:d}s')
         return ACPI_TABLE_DMAR_ANDD(*struct.unpack_from(f, structure))
+
+    def _get_DMAR_structure_SATC(self, structure: bytes) -> 'ACPI_TABLE_DMAR_SATC':
+        off = struct.calcsize(self.DMAR_TABLE_FORMAT["SATC_FORMAT"])
+        device_scope = self._get_DMAR_Device_Scope_list(structure[off:])
+        return ACPI_TABLE_DMAR_SATC(*struct.unpack_from(self.DMAR_TABLE_FORMAT["SATC_FORMAT"], structure), DeviceScope=device_scope)
+
+    def _get_DMAR_structure_SIDP(self, structure: bytes) -> 'ACPI_TABLE_DMAR_SIDP':
+        off = struct.calcsize(self.DMAR_TABLE_FORMAT["SIDP_FORMAT"])
+        device_scope = self._get_DMAR_Device_Scope_list(structure[off:])
+        return ACPI_TABLE_DMAR_SIDP(*struct.unpack_from(self.DMAR_TABLE_FORMAT["SIDP_FORMAT"], structure), DeviceScope=device_scope)
+
+    def _get_DMAR_Device_Scope_list(self, structure: bytes) -> List['ACPI_TABLE_DMAR_DeviceScope']:
+        device_scope = []
+        fmt = '=BB'
+        step = struct.calcsize(fmt)
+        off = 0
+        while off < len(structure) - 1:
+            (_type, length) = struct.unpack(fmt, structure[off:off + step])
+            if 0 == length:
+                break
+            path_sz = length - struct.calcsize(self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"])
+            f = self.DMAR_TABLE_FORMAT["DeviceScope_FORMAT"] + ('{:d}s'.format(path_sz))
+            device_scope.append(ACPI_TABLE_DMAR_DeviceScope(*struct.unpack_from(f, structure[off:off + length])))
+            off += length
+        return device_scope
 
 #
 # DMAR Device Scope
@@ -230,11 +231,11 @@ DMAR_DS_TYPE = {
 }
 
 
-class ACPI_TABLE_DMAR_DeviceScope(namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Type Length Reserved EnumerationID StartBusNum Path')):
+class ACPI_TABLE_DMAR_DeviceScope(namedtuple('ACPI_TABLE_DMAR_DeviceScope', 'Type Length Flags Reserved EnumerationID StartBusNum Path')):
     __slots__ = ()
 
     def __str__(self) -> str:
-        return f"""      {DMAR_DS_TYPE[self.Type]} ({self.Type:02X}): Len: 0x{self.Length:02X}, Rsvd: 0x{self.Reserved:04X}, Enum ID: 0x{self.EnumerationID:02X}, Start Bus#: 0x{self.StartBusNum:02X}, Path: {self.Path.hex()}"""
+        return f"""      {DMAR_DS_TYPE[self.Type]} ({self.Type:02X}): Len: 0x{self.Length:02X}, Flags: 0x{self.Flags:02X}, Rsvd: 0x{self.Reserved:02X}, Enum ID: 0x{self.EnumerationID:02X}, Start Bus#: 0x{self.StartBusNum:02X}, Path: {self.Path.hex()}\n"""
 
 #
 # DMAR DMA Remapping Hardware Unit Definition (DRHD) Structure
@@ -337,6 +338,45 @@ class ACPI_TABLE_DMAR_ANDD(namedtuple('ACPI_TABLE_DMAR_ANDD', 'Type Length Reser
     ACPI Device Number    : 0x{self.ACPIDevNum:02X}
     ACPI Object Name      : {self.ACPIObjectName}
 """
+
+
+#
+# DMAR SoC Integrated Address Translation Cache Reporting (SATC) Structure
+#
+class ACPI_TABLE_DMAR_SATC(namedtuple('ACPI_TABLE_DMAR_SATC', 'Type Length Flags Reserved SegmentNumber DeviceScope')):
+    __slots__ = ()
+
+    def __str__(self):
+        _str = f"""
+  SoC Integrated Address Translation Cache (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Flags                 : 0x{self.Flags:02X}
+    Reserved (0)          : 0x{self.Reserved:02X}
+    Segment Number        : 0x{self.SegmentNumber:016X}
+"""
+        _str += '    Device Scope          :\n'
+        for ds in self.DeviceScope:
+            _str += str(ds)
+        return _str
+
+
+#
+# DMAR SoC Integrated Address Translation Cache Reporting (SIDP) Structure
+#
+class ACPI_TABLE_DMAR_SIDP(namedtuple('ACPI_TABLE_DMAR_SIDP', 'Type Length Reserved SegmentNumber DeviceScope')):
+    __slots__ = ()
+
+    def __str__(self):
+        _str = f"""
+  SoC Integrated Address Translation Cache Reporting Structure (0x{self.Type:04X}):
+    Length                : 0x{self.Length:04X}
+    Reserved (0)          : 0x{self.Reserved:02X}
+    Segment Number        : 0x{self.SegmentNumber:016X}
+"""
+        _str += '    Device Scope          :\n'
+        for ds in self.DeviceScope:
+            _str += str(ds)
+        return _str
 
 ########################################################################################################
 #
