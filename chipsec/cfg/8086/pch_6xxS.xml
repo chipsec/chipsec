@@ -71,9 +71,11 @@ Based upon datasheet(s): 648364 and 680836
   <!--                                      -->
   <!-- #################################### -->
   <pci>
-    <device name="P2SBC"  bus="0" dev="0x1F" fun="1" vid="0x8086" />
-    <device name="SMBUS"  bus="0" dev="0x1F" fun="4" vid="0x8086" />
-    <device name="SPI"    bus="0" dev="0x1F" fun="5" vid="0x8086" />
+    <device name="P2SBC"   bus="0" dev="0x1F" fun="1" vid="0x8086" did="0x7AA0" />
+    <device name="PMC"     bus="0" dev="0x1F" fun="2" vid="0x8086" did="0x7AA1" />
+    <device name="HDAUDIO" bus="0" dev="0x1F" fun="3" vid="0x8086" did="0x7AD0, 0x7AD1, 0x7AD2, 0x7AD3, 0x7AD4, 0x7AD5, 0x7AD6, 0x7AD7" />
+    <device name="SMBUS"   bus="0" dev="0x1F" fun="4" vid="0x8086" did="0x7AA3" />
+    <device name="SPI"     bus="0" dev="0x1F" fun="5" vid="0x8086" did="0x7AA4" />
   </pci>
 
   <!-- #################################### -->
