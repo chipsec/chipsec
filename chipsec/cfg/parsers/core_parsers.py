@@ -44,10 +44,10 @@ def _config_convert_data(xml_node, did_is_range=False):
     INT_KEYS = ['dev', 'fun', 'vid', 'did', 'rid', 'offset',
                 'bit', 'size', 'port', 'msr', 'value', 'address',
                 'fixed_address', 'base_align', 'align_bits', 'mask',
-                'reg_align', 'limit_align', 'regh_align', 'bus',
+                'reg_align', 'limit_align', 'regh_align',
                 'width', 'reg']
     BOOL_KEYS = ['req_pch']
-    INT_LIST_KEYS = []
+    INT_LIST_KEYS = ['bus']
     STR_LIST_KEYS = ['config']
     RANGE_LIST_KEYS = ['detection_value']
     if did_is_range:
@@ -141,10 +141,8 @@ class CoreConfig(BaseConfigParser):
         else:
             for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                 pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                bus_match = dev_attr['bus'] == pci_data['bus'] \
-                    if type(pci_data['bus']) is int else \
-                    dev_attr['bus'] in pci_data['bus']  # TODO: Investigate why this is needed
-                if bus_match and dev_attr['dev'] == pci_data['dev'] and \
+                
+                if dev_attr['bus'] in pci_data['bus'] and dev_attr['dev'] == pci_data['dev'] and \
                    dev_attr['fun'] == pci_data['fun']:
                     self._add_dev(vid_str, dev_name, pci_data, dev_attr)
                     break
@@ -153,11 +151,7 @@ class CoreConfig(BaseConfigParser):
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
         if pci_info:
-            if type(pci_info['bus']) is int: # TODO: Investigate why this is needed
-                self.cfg.BUS[name] = [pci_info['bus']]
-            else:
-                self.cfg.BUS[name] = pci_info['bus']
-                pci_info['bus'] = pci_info['bus'][0]
+            self.cfg.BUS[name] = pci_info['bus']
             self.cfg.CONFIG_PCI[name] = copy.copy(pci_info)
         else:
             self.cfg.CONFIG_PCI[name] = copy.deepcopy(dev_attr)

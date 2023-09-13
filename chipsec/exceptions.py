@@ -34,6 +34,11 @@ class RegisterNotFoundError(RuntimeError):
 class RegisterTypeNotFoundError(RuntimeError):
     pass
 
+class CSBusNotFoundError(RuntimeError):
+    pass
+
+class CSFirstNotFoundError(RuntimeError):
+    pass
 
 class CSConfigError(RuntimeError):
     pass
