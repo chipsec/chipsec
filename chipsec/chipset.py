@@ -23,6 +23,7 @@ Contains platform identification functions
 """
 import errno
 import traceback
+from typing import Union
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
@@ -31,6 +32,7 @@ from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, 
 from chipsec.hal.pci import PCI_HDR_RID_OFF
 from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
 from chipsec.exceptions import RegisterTypeNotFoundError, OsHelperError
+from chipsec.exceptions import CSFirstNotFoundError, CSBusNotFoundError
 
 from chipsec.logger import logger
 from chipsec.defines import is_hex, is_all_ones, ARCH_VID
@@ -253,11 +255,24 @@ class Chipset:
     #
     ##################################################################################
 
+    def get_first_bus(self, device:dict) -> int:
+        if 'bus' in device:
+            return self.get_first(device['bus'])
+        raise CSBusNotFoundError()
+        
+    
+    def get_first(self, a_list:Union[list, int]) -> int:
+        if type(a_list) is int:
+            return a_list
+        if type(a_list) is list:
+            return a_list[0]
+        raise CSFirstNotFoundError()
+    
     def get_device_BDF(self, device_name):
         device = self.Cfg.CONFIG_PCI[device_name]
         if device is None or device == {}:
             raise DeviceNotFoundError('DeviceNotFound: {}'.format(device_name))
-        b = device['bus']
+        b = self.get_first_bus(device)
         d = device['dev']
         f = device['fun']
         return (b, d, f)
@@ -280,7 +295,7 @@ class Chipset:
                 if bus is not None:
                     b = bus
                 else:
-                    b = reg['bus']
+                    b = self.get_first_bus(reg)
                 d = reg['dev']
                 f = reg['fun']
                 return self.pci.is_enabled(b, d, f)
@@ -356,7 +371,7 @@ class Chipset:
             if reg_def["type"] in ["pcicfg", "mmcfg"]:
                 if dev_name in self.Cfg.CONFIG_PCI:
                     dev = self.Cfg.CONFIG_PCI[dev_name]
-                    reg_def['bus'] = dev['bus']
+                    reg_def['bus'] = self.get_first_bus(dev)
                     reg_def['dev'] = dev['dev']
                     reg_def['fun'] = dev['fun']
             elif reg_def["type"] == "memory":
@@ -422,9 +437,9 @@ class Chipset:
         reg_value = 0
         if (RegisterType.PCICFG == rtype) or (RegisterType.MMCFG == rtype):
             if bus is not None:
-                b = bus
+                b = self.get_first(bus)
             else:
-                b = reg['bus']
+                b = self.get_first_bus(reg)
             d = reg['dev']
             f = reg['fun']
             o = reg['offset']
@@ -518,7 +533,7 @@ class Chipset:
             if bus is not None:
                 b = bus
             else:
-                b = reg['bus']
+                b = self.get_first_bus(reg)
             d = reg['dev']
             f = reg['fun']
             o = reg['offset']
@@ -754,7 +769,7 @@ class Chipset:
             if bus is not None:
                 b = bus
             else:
-                b = reg['bus']
+                b = self.get_first_bus(reg)
             d = reg['dev']
             f = reg['fun']
             o = reg['offset']

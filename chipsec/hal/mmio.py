@@ -230,7 +230,7 @@ class MMIO(hal_base.HALBase):
             if _bus is not None:
                 b = _bus
             else:
-                b = bar['bus']
+                b = self.cs.get_first_bus(bar)
             d = bar['dev']
             f = bar['fun']
             r = bar['reg']
@@ -291,7 +291,7 @@ class MMIO(hal_base.HALBase):
             if bus is not None:
                 b = bus
             else:
-                b = bar['bus']
+                b = self.cs.get_first_bus(bar)
             d = bar['dev']
             f = bar['fun']
             r = bar['reg']
@@ -326,7 +326,7 @@ class MMIO(hal_base.HALBase):
                 base = self.cs.read_register(bar_reg)
         else:
             # this method is not preferred (less flexible)
-            b = bar['bus']
+            b = self.cs.get_first_bus(bar)
             d = bar['dev']
             f = bar['fun']
             r = bar['reg']
