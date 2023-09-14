@@ -757,7 +757,7 @@ class SPI(hal_base.HALBase):
                     param_length = (data_dword_1 >> 24) & 0xFF
                     param_table_pointer = (data_dword_2 & 0x00FFFFFF)
                     self.logger.log(f'    ** Parameter version number:{param_major_version}.{param_minor_version}')
-                    self.logger.log(f'    ** Pramaeter length in double words: {hex(param_length)}')
+                    self.logger.log(f'    ** Parameter length in double words: {hex(param_length)}')
                     self.logger.log(f'    ** Parameter ID: {hex(id_manuf)}')
                     self.logger.log(f'    ** Parameter Table Pointer(byte address): {hex(param_table_pointer)} ')
                     pTable_offset_list.append(param_table_pointer)
