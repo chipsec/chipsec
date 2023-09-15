@@ -164,8 +164,8 @@ def check_rules(efi: EFI_SECTION, rules: Dict[str, Any], entry_name: str, _log: 
                 match_result |= MATCH_CPUID
             else:
                 cpuids = rule['cpuid'].upper().split(',')
-                if cpuid.upper() in cpuids:
-                    cpuidwhat = cpuid.upper()
+                if f'{cpuid:X}' in cpuids:
+                    cpuidwhat = f'{cpuid:X}'
                     match_result |= MATCH_CPUID
 
         brule_match = ((match_result & match_mask) == match_mask)
