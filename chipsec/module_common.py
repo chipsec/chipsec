@@ -69,9 +69,6 @@ class ModuleResult:
         self._return_code = self.status.SUCCESS.value[0]
         self._message = ''
         self.logger = logger()
-
-    def setTestID(self) -> None:
-        self._return_code ^= self._id << 4
     
     def setStatusBit(self, status) -> None:
         if is_set(self._result, status.value[0]) is not True:
@@ -81,15 +78,26 @@ class ModuleResult:
     def setResultBits(self) -> None:
         self._return_code ^= self._result << 32
 
-    def buildRC(self) -> int:
-        self.setResultBits()
-        self.setTestID()
+    def setTestID(self) -> None:
+        self._return_code ^= self._id << 4
+
+    def printLogOutput(self) -> None:
         if self._result == self.status.SUCCESS.value[0]:   
             self.logger.log_good(f"RC 0x{self._return_code:016x}: {self.status.SUCCESS.value[1]}")
         else:  
             self.logger.log_important(f"For next steps: {self._url}")
             self.logger.log_important(f"RC 0x{self._return_code:016x}: {self._message}")
-        
+
+    def buildReturnCode(self) -> None:
+        self.setResultBits()
+        self.setTestID()
+        self.printLogOutput()
+
+    def getReturnCode(self, result: int) -> int:
+        if chipsec.chipset.cs().using_return_codes:
+            self.buildReturnCode()
+        else:
+            self._return_code = result
         return self._return_code
 
 # -------------------------------------------------------
