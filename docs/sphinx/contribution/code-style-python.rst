@@ -429,7 +429,7 @@ The setuptools module has been updated to fully replace distutils but requires a
      - Summary
      - Python Version
      - Supported
-   * - `PEP 632 <https://peps.python.org/pep-0632//>`_
+   * - `PEP 632 <https://peps.python.org/pep-0632/>`_
      - Deprecate distutils module
      - Mark the distutils module as deprecated (3.10) and then remove it (3.12)
      - 3.12
