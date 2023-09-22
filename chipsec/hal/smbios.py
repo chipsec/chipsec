@@ -114,15 +114,15 @@ SMBIOS_STRUCT_TERM_VAL = 0x0000
 
 
 SMBIOS_BIOS_INFO_ENTRY_ID = 0
-SMBIOS_BIOS_INFO_2_0_ENTRY_FMT = '=BBHBBHBBQ'
-SMBIOS_BIOS_INFO_2_0_ENTRY_SIZE = struct.calcsize(SMBIOS_BIOS_INFO_2_0_ENTRY_FMT)
-SMBIOS_BIOS_INFO_2_0_FORMAT_STRING_FAILED = """
+SMBIOS_BIOS_INFO_3_6_ENTRY_FMT = '=BBHBBHBBQHBBBBH'
+SMBIOS_BIOS_INFO_3_6_ENTRY_SIZE = struct.calcsize(SMBIOS_BIOS_INFO_3_6_ENTRY_FMT)
+SMBIOS_BIOS_INFO_3_6_FORMAT_STRING_FAILED = """
 SMBIOS BIOS Information structure decode failed
 """
 
 
-class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_INFO_2_0_ENTRY', 'type length handle vendor_str version_str segment \
-    release_str rom_sz bios_char strings')):
+class SMBIOS_BIOS_INFO_3_6(namedtuple('SMBIOS_BIOS_INFO_3_6_ENTRY', 'type length handle vendor_str version_str segment \
+    release_str rom_sz bios_char bios_char_ext bios_major bios_minor ec_major ec_minor ext_rom_sz strings')):
     __slots__ = ()
 
     def __str__(self) -> str:
@@ -147,6 +147,12 @@ SMBIOS BIOS Information:
   BIOS Release Date         : {rel_str:s}
   BIOS ROM Size             : 0x{self.rom_sz:02X}
   BIOS Characteristics      : 0x{self.bios_char:016X}
+  BIOS Characteristics Ext  : 0x{self.bios_char_ext:016X}
+  System BIOS Major Rel     : {self.bios_major:d}
+  System BIOS Minor Rel     : {self.bios_minor:d}
+  EC FW Major Rel           : {self.ec_major:d}
+  EC FW Minor Rel           : {self.ec_minor:d}
+  Extended BIOS ROM Size    : 0x{self.ext_rom_sz:016X}
 """
 
 
@@ -187,11 +193,11 @@ SMBIOS System Information:
   Serial Number             : {ser_str:s}
 """
 
-SmbiosInfo = Union[SMBIOS_BIOS_INFO_2_0, SMBIOS_SYSTEM_INFO_2_0]
+SmbiosInfo = Union[SMBIOS_BIOS_INFO_3_6, SMBIOS_SYSTEM_INFO_2_0]
 StructDecode = Dict[str, Any]  # TODO: Replace Any when TypeDict (PEP 589) supported
 
 struct_decode_tree: Dict[int, StructDecode] = {
-    SMBIOS_BIOS_INFO_ENTRY_ID: {'class': SMBIOS_BIOS_INFO_2_0, 'format': SMBIOS_BIOS_INFO_2_0_ENTRY_FMT},
+    SMBIOS_BIOS_INFO_ENTRY_ID: {'class': SMBIOS_BIOS_INFO_3_6, 'format': SMBIOS_BIOS_INFO_3_6_ENTRY_FMT},
     SMBIOS_SYSTEM_INFO_ENTRY_ID: {'class': SMBIOS_SYSTEM_INFO_2_0, 'format': SMBIOS_SYSTEM_INFO_2_0_ENTRY_FMT}
 }
 
