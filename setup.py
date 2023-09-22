@@ -30,7 +30,10 @@ import platform
 import logging
 import subprocess
 from shutil import rmtree
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, find_packages, Extension, __version__ as _sutver
+
+if _sutver and int(_sutver.split('.')[0]) < 62:
+    raise RuntimeError("Setuptools version must be greater than 62.0.0. Please upgrade using 'pip install setuptools --upgrade'")
 
 from setuptools.command.install import install as _install
 from setuptools.command.build import build as _build
@@ -38,6 +41,7 @@ from setuptools.command.sdist import sdist as _sdist
 from setuptools.command.build_ext import build_ext as _build_ext
 
 NO_DRIVER_MARKER_FILE = 'README.NO_KERNEL_DRIVER'
+
 
 
 def long_description():
