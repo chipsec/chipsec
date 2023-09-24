@@ -84,6 +84,9 @@ _LOG_OUT_RESULTS = False
 
 
 class cpuid_fuzz (BaseModule):
+    def __init__(self):
+        BaseModule().__init__()
+        self.rc_res = ModuleResult(17, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.cpuid_fuzz.html')
 
     def fuzz_CPUID(self, eax_start, random_order = False):
         eax_range = _NO_EAX_TO_FUZZ
@@ -141,5 +144,6 @@ class cpuid_fuzz (BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res

@@ -75,6 +75,7 @@ class ept_finder(BaseModule):
         BaseModule.__init__(self)
         self.read_from_file = False
         self.par = []
+        self.rc_res = ModuleResult(18, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.ept_finder.html')
 
     def read_physical_mem(self, addr, size=0x1000):
         if self.read_from_file:
@@ -207,21 +208,24 @@ class ept_finder(BaseModule):
             else:
                 self.logger.log_error('Invalid parameters')
                 self.logger.log(self.__doc__.replace('`', ''))
-                return ModuleResult.ERROR
+                self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
+                return self.rc_res.getReturnCode(ModuleResult.ERROR)
         else:
             revision_id = self.cs.msr.read_msr(0, 0x480)[0]
             self.par = self.get_memory_ranges()
 
         if len(self.par) == 0:
             self.logger.log_error("Memory ranges are not defined!")
-            return ModuleResult.ERROR
+            self.rc_res.setStatusBit(self.rc_res.status.UNDEFINED_RANGES)
+            return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
         if (len(module_argv) == 2) and (module_argv[0] == "dump"):
             for (pa, end_pa, _) in self.par:
                 postfix = "lo" if pa == 0x0 else "hi" if pa == 0x100000000 else "0x{:08x}".format(pa)
                 filename = "{}.dram_{}".format(module_argv[1], postfix)
                 self.dump_dram(filename, pa, end_pa)
-            return ModuleResult.PASSED
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            return self.rc_res.getReturnCode(ModuleResult.PASSED)
 
         self.logger.log('[*] Searching Extended Page Tables ...')
         ept_pt_list = self.find_ept_pt({}, 0, 4)
@@ -255,4 +259,5 @@ class ept_finder(BaseModule):
                 ept.save_configuration(self.path + 'ept_{:08x}.py'.format(eptp))
             count += 1
 
-        return ModuleResult.INFORMATION
+        self.rc_res.setStatusBit(self.rc_res.status.INFORMATION)
+        return self.rc_res.getReturnCode(ModuleResult.INFORMATION)
