@@ -88,7 +88,7 @@ class synth_kbd(BaseModule):
         else:
             self.usage()
             self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
-            return self.rc_res.getReturnCode(ModuleResult.SKIPPED)
+            return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
         vb = VMBusDiscovery()
         vb.debug = True
