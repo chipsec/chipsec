@@ -26,21 +26,23 @@ Management and communication with Windows kernel mode driver which provides acce
     http://sourceforge.net/projects/pywin32/
 """
 
+import errno
 import os.path
+import platform
+import pywintypes
 import struct
 import sys
-import platform
-import errno
-from collections import namedtuple
-from ctypes import *
-from typing import Dict, List, Optional, Tuple, AnyStr, TYPE_CHECKING
-import pywintypes
-import win32service  # win32serviceutil, win32api, win32con
 import winerror
+import win32service
+import win32api, win32process, win32security, win32serviceutil, win32file
+from collections import namedtuple
+from ctypes import windll, Structure, pythonapi, py_object,  Array, POINTER
+from ctypes import addressof, sizeof, create_string_buffer, WinError
+from ctypes import c_ushort, c_char_p, c_size_t, c_int, c_uint32, c_wchar_p, c_void_p, c_char
+from typing import Dict, List, Optional, Tuple, AnyStr, TYPE_CHECKING
 from win32file import FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_OVERLAPPED, INVALID_HANDLE_VALUE
 if TYPE_CHECKING:
     from pywintypes import PyHANDLE
-import win32api, win32process, win32security, win32file, win32serviceutil
 
 from chipsec.exceptions import OsHelperError, HWAccessViolationError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
@@ -454,7 +456,6 @@ class WindowsHelper(Helper):
         # This is bad but DeviceIoControl fails occasionally if new device handle is not opened every time ;(
         if (self.driver_handle is not None) and (INVALID_HANDLE_VALUE != self.driver_handle):
             return self.driver_handle
-
         self.driver_handle = win32file.CreateFile(self.device_file, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, None, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, None)
         if (self.driver_handle is None) or (INVALID_HANDLE_VALUE == self.driver_handle):
             _handle_error(drv_hndl_error_msg, errno.ENXIO)
