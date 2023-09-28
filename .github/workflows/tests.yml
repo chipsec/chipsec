@@ -139,26 +139,32 @@ jobs:
         path: ${{ steps.modinfo.outputs.module_path }}
         if-no-files-found: error
 
-  windows-driver:
-    name: Windows driver
-    runs-on: [windows-2019, windows-2022]
-
+  windows_driver:
+    name: Windows driver build matrix
     strategy:
       matrix:
-        python:
-          - "3.11"
-          - "3.10"
-          - "3.9"
-          - "3.8"
-          - "3.7"
-
+        versions:
+          - {window: "2019", python: "3.11"}
+          - {window: "2019", python: "3.10"}
+          - {window: "2019", python: "3.9"}
+          - {window: "2019", python: "3.8"}
+          - {window: "2019", python: "3.7"}
+          
+          - {window: "2022", python: "3.11"}
+          - {window: "2022", python: "3.10"}
+          - {window: "2022", python: "3.9"}
+          - {window: "2022", python: "3.8"}
+          - {window: "2022", python: "3.7"}
+          
+    runs-on: windows-${{ matrix.versions.window }}
+    
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python }}
+    - name: Set up Python ${{ matrix.versions.python }}
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python }}
+        python-version: ${{ matrix.versions.python }}
 
     - name: Install dependencies
       shell: bash
@@ -202,6 +208,7 @@ jobs:
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}
           - {ubuntu: "20.04", python: "3.7"}
+          
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
