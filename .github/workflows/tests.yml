@@ -140,7 +140,7 @@ jobs:
         if-no-files-found: error
 
   windows_driver:
-    name: Windows driver build matrix
+    name: Windows driver matrix
     strategy:
       matrix:
         versions:
@@ -188,9 +188,19 @@ jobs:
         path: drivers/windows/pcifilter/x64
         if-no-files-found: error
 
-    - name: Run Python tests
+    - name: Run Python unit tests
       shell: bash
       run: python -m unittest
+      
+    - name: Run xml cfg checker
+        python3 tests/cfg_checker.py
+        
+    - name: Run chipsec tests
+      shell: bash
+      run: |
+        python chipsec_util.py cpu info
+        python chipsec_main.py
+
 
   ubuntu-test:
     name: Test on Ubuntu
@@ -242,9 +252,11 @@ jobs:
         sudo dkms add drivers/linux
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
-    - name: Run Python tests
+    - name: Run Python unit tests
       run: |
         python3 -m unittest
+        
+    - name: Run xml cfg checker
         python3 tests/cfg_checker.py
 
     - name: pylint pilot for modules folder
@@ -254,7 +266,7 @@ jobs:
     - name: Install chipsec
       run: sudo python3 setup.py install
 
-    - name: Run chipsec_main
+    - name: Run chipsec_main test
       run: |
         PYTHONEXE="$(which python)"
         CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX 1>&2); echo $?)"
