@@ -193,6 +193,8 @@ jobs:
       run: python -m unittest
       
     - name: Run xml cfg checker
+      shell: bash
+      run: |
         python3 tests/cfg_checker.py
         
     - name: Run chipsec tests
