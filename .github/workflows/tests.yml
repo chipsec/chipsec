@@ -259,6 +259,7 @@ jobs:
         python3 -m unittest
         
     - name: Run xml cfg checker
+      run: |
         python3 tests/cfg_checker.py
 
     - name: pylint pilot for modules folder
