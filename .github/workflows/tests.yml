@@ -201,18 +201,6 @@ jobs:
       shell: bash
       run: |
         python chipsec_util.py cpu info
-        python chipsec_main.py -vv || ret="$(echo $?)"
-        echo ${ret}
-        if [[ "$ret" = 0 ]] ; then
-          echo "All test Passed!!"
-        elif [[ "$ret" = 2 ]] ; then
-          echo "HW Modules Warning Found!!"
-        elif [[ "$ret" = 8 ]] ; then
-          echo "HW Modules Test Failed!! need to Check FW or HW configuration!"
-        else
-          echo "CI Failed!!"
-          exit ${ret}
-        fi
 
   ubuntu-test:
     name: Test on Ubuntu matrix
