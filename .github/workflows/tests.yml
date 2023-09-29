@@ -172,7 +172,7 @@ jobs:
 
     - name: Build Windows driver
       shell: bash
-      run: python3 setup.py build_ext -i
+      run: python setup.py build_ext -i
 
     - name: Upload Windows Main driver
       uses: actions/upload-artifact@v3
@@ -195,7 +195,7 @@ jobs:
     - name: Run xml cfg checker
       shell: bash
       run: |
-        python3 tests/cfg_checker.py
+        python tests/cfg_checker.py
         
     - name: Run chipsec tests
       shell: bash
