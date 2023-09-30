@@ -139,26 +139,32 @@ jobs:
         path: ${{ steps.modinfo.outputs.module_path }}
         if-no-files-found: error
 
-  windows-driver:
-    name: Windows driver
-    runs-on: windows-2019
-
+  windows_driver:
+    name: Windows driver matrix
     strategy:
       matrix:
-        python:
-          - "3.11"
-          - "3.10"
-          - "3.9"
-          - "3.8"
-          - "3.7"
-
+        versions:
+          - {window: "2019", python: "3.11"}
+          - {window: "2019", python: "3.10"}
+          - {window: "2019", python: "3.9"}
+          - {window: "2019", python: "3.8"}
+          - {window: "2019", python: "3.7"}
+          
+          - {window: "2022", python: "3.11"}
+          - {window: "2022", python: "3.10"}
+          - {window: "2022", python: "3.9"}
+          - {window: "2022", python: "3.8"}
+          - {window: "2022", python: "3.7"}
+          
+    runs-on: windows-${{ matrix.versions.window }}
+    
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python }}
+    - name: Set up Python ${{ matrix.versions.python }}
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python }}
+        python-version: ${{ matrix.versions.python }}
 
     - name: Install dependencies
       shell: bash
@@ -166,7 +172,7 @@ jobs:
 
     - name: Build Windows driver
       shell: bash
-      run: python3 setup.py build_ext -i
+      run: python setup.py build_ext -i
 
     - name: Upload Windows Main driver
       uses: actions/upload-artifact@v3
@@ -182,12 +188,22 @@ jobs:
         path: drivers/windows/pcifilter/x64
         if-no-files-found: error
 
-    - name: Run Python tests
+    - name: Run Python unit tests
       shell: bash
       run: python -m unittest
+      
+    - name: Run xml cfg checker
+      shell: bash
+      run: |
+        python tests/cfg_checker.py
+        
+    - name: Run chipsec tests
+      shell: bash
+      run: |
+        python chipsec_util.py cpu info
 
   ubuntu-test:
-    name: Test on Ubuntu
+    name: Test on Ubuntu matrix
     strategy:
       matrix:
         versions:
@@ -202,6 +218,7 @@ jobs:
           - {ubuntu: "20.04", python: "3.9"}
           - {ubuntu: "20.04", python: "3.8"}
           - {ubuntu: "20.04", python: "3.7"}
+          
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
@@ -235,9 +252,12 @@ jobs:
         sudo dkms add drivers/linux
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
-    - name: Run Python tests
+    - name: Run Python unit tests
       run: |
         python3 -m unittest
+        
+    - name: Run xml cfg checker
+      run: |
         python3 tests/cfg_checker.py
 
     - name: pylint pilot for modules folder
@@ -247,7 +267,7 @@ jobs:
     - name: Install chipsec
       run: sudo python3 setup.py install
 
-    - name: Run chipsec_main
+    - name: Run chipsec_main test
       run: |
         PYTHONEXE="$(which python)"
         CHIPSECEXIT="$($(sudo ${PYTHONEXE} chipsec_main.py -p PMC_I440FX 1>&2); echo $?)"
