@@ -34,7 +34,7 @@ class EliteBook1040UbuntuTest(test_ubuntu.GenericUbuntuTest):
         "chipsec.modules.smm_dma",
     ]
 
-    SKIPPED = [
+    WARNING = [
         "chipsec.modules.common.secureboot.variables",
         "chipsec.modules.common.uefi.s3bootscript",
         "chipsec.modules.common.uefi.access_uefispec",

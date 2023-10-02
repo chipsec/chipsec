@@ -166,7 +166,7 @@ class ChipsecMain:
             if self.verify_module_tags(modx):
                 result = modx.run(module_argv)
             else:
-                return module_common.ModuleResult.SKIPPED
+                return module_common.ModuleResult.NOTAPPLICABLE
         except BaseException as msg:
             if self.logger.DEBUG:
                 self.logger.log_bad(traceback.format_exc())

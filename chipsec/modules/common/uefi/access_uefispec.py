@@ -150,7 +150,7 @@ class access_uefispec(BaseModule):
         if vars is None:
             self.logger.log_warning('Could not enumerate UEFI Variables from runtime.')
             self.logger.log_important("Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually.")
-            return ModuleResult.SKIPPED
+            return ModuleResult.WARNING
 
         uefispec_concern = []
         ro_concern = []

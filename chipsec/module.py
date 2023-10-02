@@ -90,9 +90,6 @@ class Module:
                     if self.mod_obj.res == ModuleResult.NOTAPPLICABLE:
                         result = ModuleResult.NOTAPPLICABLE
                         self.logger.log(f'Skipping module {self.name} since it is not applicable in this environment and/or platform')
-                    else:
-                        result = ModuleResult.SKIPPED
-                        self.logger.log(f'Skipping module {self.name} since it is not supported in this environment and/or platform')
 
         return result
 

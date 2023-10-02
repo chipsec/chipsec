@@ -30,7 +30,6 @@ from typing import Dict, List, Type, Optional
 
 class ExitCode:
     OK = 0
-    SKIPPED = 1
     WARNING = 2
     DEPRECATED = 4
     FAIL = 8
@@ -45,7 +44,6 @@ class ExitCode:
   CHIPSEC returns an integer exit code:
   - Exit code is 0:       all modules ran successfully and passed
   - Exit code is not 0:   each bit means the following:
-      - Bit 0: SKIPPED         at least one module was skipped for the platform
       - Bit 1: WARNING         at least one module had a warning
       - Bit 2: DEPRECATED      at least one module uses deprecated API
       - Bit 3: FAIL            at least one module failed
@@ -122,7 +120,6 @@ class ChipsecResults:
         failed = []
         errors = []
         warnings = []
-        skipped = []
         information = []
         notapplicable = []
         executed = 0
@@ -137,8 +134,6 @@ class ChipsecResults:
                 errors.append(fields['name'])
             elif fields['result'] == 'Warning':
                 warnings.append(fields['name'])
-            elif fields['result'] == 'Skipped':
-                skipped.append(fields['name'])
             elif fields['result'] == 'Information':
                 information.append(fields['name'])
             elif fields['result'] == 'NotApplicable':
@@ -149,7 +144,6 @@ class ChipsecResults:
         ret['information'] = information
         ret['failed'] = failed
         ret['warnings'] = warnings
-        ret['skipped'] = skipped
         ret['not applicable'] = notapplicable
         ret['exceptions'] = self.exceptions
         return ret
@@ -164,8 +158,6 @@ class ChipsecResults:
             return ExitCode.FAIL
         elif len(summary['warnings']) != 0:
             return ExitCode.WARNING
-        elif len(summary['skipped']) != 0:
-            return ExitCode.SKIPPED
         elif len(summary['not applicable']) != 0:
             return ExitCode.NOTAPPLICABLE
         elif len(summary['information']) != 0:
@@ -282,7 +274,6 @@ class ChipsecResults:
         failed = []
         error = []
         warning = []
-        skipped = []
         information = []
         notapplicable = []
         deprecated = []
@@ -290,7 +281,6 @@ class ChipsecResults:
                        'Failed': failed,
                        'Error': error,
                        'Warning': warning,
-                       'Skipped': skipped,
                        'Information': information,
                        'NotApplicable': notapplicable,
                        'Deprecated': deprecated
@@ -347,7 +337,7 @@ class ChipsecResults:
                         logger().log_information(mod)
                     elif result == 'failed':
                         logger().log_failed(mod)
-                    elif result in ['not applicable', 'skipped']:
+                    elif result == 'not applicable':
                         logger().log_not_applicable(mod)
         logger().log('[CHIPSEC] *****************************************************************')
 
