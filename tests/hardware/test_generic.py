@@ -72,5 +72,5 @@ class GenericHardwareTest(unittest.TestCase):
                              "At least one test raised an error")
         for test in self.PASS:
             self.assertIn("PASSED: {}".format(test), self.log)
-        for test in self.SKIPPED:
-            self.assertIn("SKIPPED: {}".format(test), self.log)
+        for test in self.WARNING:
+            self.assertIn("WARNING: {}".format(test), self.log)

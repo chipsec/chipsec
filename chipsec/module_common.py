@@ -38,7 +38,6 @@ class ModuleResult:
     FAILED = 0
     PASSED = 1
     WARNING = 2
-    SKIPPED = 3
     DEPRECATED = 4
     INFORMATION = 5
     NOTAPPLICABLE = 6
@@ -112,7 +111,6 @@ result_priority = {
     ModuleResult.PASSED: 0,
     ModuleResult.NOTAPPLICABLE: 0,
     ModuleResult.DEPRECATED: 0,
-    ModuleResult.SKIPPED: 0,
     ModuleResult.INFORMATION: 1,
     ModuleResult.WARNING: 2,
     ModuleResult.FAILED: 3,
@@ -123,7 +121,6 @@ ModuleResultName = {
     ModuleResult.FAILED: 'Failed',
     ModuleResult.PASSED: 'Passed',
     ModuleResult.WARNING: 'Warning',
-    ModuleResult.SKIPPED: 'Skipped',
     ModuleResult.DEPRECATED: 'Deprecated',
     ModuleResult.INFORMATION: 'Information',
     ModuleResult.ERROR: 'Error',
