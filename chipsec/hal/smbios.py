@@ -43,7 +43,7 @@ SMBIOS_2_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_2_x_ENTRY_POINT_FMT)
 
 
 class SMBIOS_2_x_ENTRY_POINT(namedtuple('SMBIOS_2_x_ENTRY_POINT', 'Anchor EntryCs EntryLen MajorVer MinorVer MaxSize EntryRev \
-    FormatArea0 FormatArea1 FormatArea2 FormatArea3 FormatArea4 IntAnchor IntCs TableLen TableAddr NumStructures BcdRev')):
+        FormatArea0 FormatArea1 FormatArea2 FormatArea3 FormatArea4 IntAnchor IntCs TableLen TableAddr NumStructures BcdRev')):
     __slots__ = ()
 
     def __str__(self) -> str:
@@ -74,7 +74,7 @@ SMBIOS_3_x_ENTRY_POINT_SIZE = struct.calcsize(SMBIOS_3_x_ENTRY_POINT_FMT)
 
 
 class SMBIOS_3_x_ENTRY_POINT(namedtuple('SMBIOS_3_x_ENTRY_POINT', 'Anchor EntryCs EntryLen MajorVer MinorVer Docrev EntryRev \
-    Reserved MaxSize TableAddr')):
+        Reserved MaxSize TableAddr')):
     __slots__ = ()
 
     def __str__(self) -> str:
@@ -122,7 +122,7 @@ SMBIOS BIOS Information structure decode failed
 
 
 class SMBIOS_BIOS_INFO_2_0(namedtuple('SMBIOS_BIOS_INFO_2_0_ENTRY', 'type length handle vendor_str version_str segment \
-    release_str rom_sz bios_char strings')):
+        release_str rom_sz bios_char strings')):
     __slots__ = ()
 
     def __str__(self) -> str:
@@ -159,7 +159,7 @@ SMBIOS System Information structure decode failed
 
 
 class SMBIOS_SYSTEM_INFO_2_0(namedtuple('SMBIOS_SYSTEM_INFO_2_0_ENTRY', 'type length handle manufacturer_str product_str \
-    version_str serial_str strings')):
+        version_str serial_str strings')):
     __slots__ = ()
 
     def __str__(self) -> str:
@@ -187,6 +187,7 @@ SMBIOS System Information:
   Serial Number             : {ser_str:s}
 """
 
+
 SmbiosInfo = Union[SMBIOS_BIOS_INFO_2_0, SMBIOS_SYSTEM_INFO_2_0]
 StructDecode = Dict[str, Any]  # TODO: Replace Any when TypeDict (PEP 589) supported
 
@@ -208,7 +209,6 @@ class SMBIOS(hal_base.HALBase):
         self.smbios_3_pa = None
         self.smbios_3_ep = None
         self.smbios_3_data = None
-
 
     def __get_raw_struct(self, table: bytes, start_offset: int) -> Tuple[Optional[bytes], Optional[int]]:
         """
@@ -467,7 +467,7 @@ class SMBIOS(hal_base.HALBase):
         logger().log_hal(f'+ Found {len(ret_val):d} strings')
         return ret_val
 
-    def get_decoded_structs(self, struct_type: Optional[int] = None, force_32bit: bool =False) -> Optional[List[Type[SmbiosInfo]]]:
+    def get_decoded_structs(self, struct_type: Optional[int] = None, force_32bit: bool = False) -> Optional[List[Type[SmbiosInfo]]]:
         ret_val = []
 
         # Determine if the structure exists in the table
