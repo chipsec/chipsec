@@ -79,7 +79,7 @@ _EXCLUDE_PORTS = []
 class iofuzz(BaseModule):
     def __init__(self):
         BaseModule().__init__()
-        self.rc_res = ModuleResult(20, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.iofuzz.html')
+        self.rc_res = ModuleResult(0x485df2e, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.iofuzz.html')
 
     def fuzz_ports(self, iterations, write_count, random_order=False):
 

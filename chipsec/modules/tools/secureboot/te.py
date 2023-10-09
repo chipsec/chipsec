@@ -493,7 +493,7 @@ class te(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(3, 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html')
+        self.rc_res = ModuleResult(0x2d6c9a9, 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html')
 
     def is_supported(self):
         #win8 = self.cs.helper.is_win8_or_greater()
