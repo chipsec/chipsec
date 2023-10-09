@@ -70,7 +70,7 @@ class rogue_mmio_bar(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._interrupts = Interrupts(self.cs)
-        self.rc_res = ModuleResult(4, 'https://chipsec.github.io/modules/chipsec.modules.tools.smm.rogue_mmio_bar.html')
+        self.rc_res = ModuleResult(0x293f9e8, 'https://chipsec.github.io/modules/chipsec.modules.tools.smm.rogue_mmio_bar.html')
 
         # SMI code to be written to I/O port 0xB2
         self.smic_start = 0x00

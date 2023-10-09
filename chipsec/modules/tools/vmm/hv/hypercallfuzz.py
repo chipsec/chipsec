@@ -48,7 +48,7 @@ excluded_hypercalls_from_fuzzing = excluded_hypercalls_from_scan + [HV_POST_MESS
 class HypercallFuzz(BaseModule):
     def __init__(self):
         BaseModule().__init__()
-        self.rc_res = ModuleResult(10, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html')
+        self.rc_res = ModuleResult(0x6dc9bb0, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html')
 
     def usage(self):
         print('  Usage:')

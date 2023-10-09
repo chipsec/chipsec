@@ -65,7 +65,7 @@ class VMBusFuzz(VMBusDiscovery):
         self.fuzzing = False
         self.fuzzing_rules = {}
         self.current_message = 0
-        self.rc_res = ModuleResult(13, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.vmbusfuzz.html')
+        self.rc_res = ModuleResult(0x17f285c, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.vmbusfuzz.html')
 
     ##
     # hv_post_msg - Fuzzing a message to be sent

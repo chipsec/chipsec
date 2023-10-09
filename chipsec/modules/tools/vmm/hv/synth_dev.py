@@ -96,7 +96,7 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
 class synth_dev(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(11, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_dev.html')
+        self.rc_res = ModuleResult(0x6221b7e, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_dev.html')
 
     def usage(self):
         print('  Usage:')

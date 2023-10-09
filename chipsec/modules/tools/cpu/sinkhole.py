@@ -55,7 +55,7 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(2, 'https://chipsec.github.io/modules/chipsec.modules.tools.cpu.sinkhole.html')
+        self.rc_res = ModuleResult(0x230312a, 'https://chipsec.github.io/modules/chipsec.modules.tools.cpu.sinkhole.html')
 
     def is_supported(self):
         if not (self.cs.os_helper.is_windows() or self.cs.os_helper.is_linux()):
