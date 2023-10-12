@@ -147,7 +147,7 @@ The following registers are defined in the reference PPR but have not been inclu
     <range name="DMA_2"               access="mmio" address="0xFEDCD000" size="0x0FFF" />
     <range name="DMA_3"               access="mmio" address="0xFEDCE000" size="0x0FFF" />
     <range name="UART_2"              access="mmio" address="0xFEDCF000" size="0x0FFF" />
-    <range name="UART_3"              access="mmio" address="00FEDD0000" size="0x4FFF" />
+    <range name="UART_3"              access="mmio" address="0xFEDD0000" size="0x4FFF" />
     <!-- See below for a more detailed breakdown of EMMC Control Space -->
     <range name="EMMC_Control"        access="mmio" address="0xFEDD5000" size="0x0FFF" />
 
