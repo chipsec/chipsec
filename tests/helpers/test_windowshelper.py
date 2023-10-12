@@ -50,7 +50,7 @@ class WindowsHelperTest(unittest.TestCase):
         # Set up mock modules
         cls._mocked_modules = ['pywintypes', 'win32service', 'windll',
                                'winerror', 'win32file', 'win32api', 'win32process', 
-                               'win32security', 'win32serviceutil', 'ctypes']
+                               'win32security', 'win32serviceutil', 'ctypes', 'win32.lib']
         for mod in cls._mocked_modules:
             sys.modules[mod] = Mock()
 
