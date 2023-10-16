@@ -70,10 +70,11 @@ class wsmt(BaseModule):
         if (not wsmt_table.fixed_comm_buffers) or (not wsmt_table.comm_buffer_nested_ptr_protection) or (not wsmt_table.system_resource_protection):
             self.logger.log_warning('WSMT table is present but certain mitigations are missing.')
             self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
-            res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+            self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         else:
             self.logger.log_passed("WSMT table is present and reports all supported mitigations.")
-        return res
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            self.res = self.rc_res.getReturnCode(ModuleResult.PASSED)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
@@ -81,7 +82,7 @@ class wsmt(BaseModule):
     # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("WSMT Configuration")
-        self.res = self.check_wsmt()
+        self.check_wsmt()
         if self.res == ModuleResult.WARNING:
             self.logger.log_important('Manual analysis of SMI handlers is required to determine if they can be abused by attackers to circumvent VBS.')
         return self.res
