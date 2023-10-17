@@ -18,22 +18,21 @@
 # chipsec@intel.com
 #
 
+# To execute: python[3] -m unittest tests.modules.test_sgx_check
+
 import unittest
 import os
-from chipsec.module_common import ModuleResult
-import chipsec.helper.replay.replayhelper as rph
-from chipsec_main import ChipsecMain, parse_args
-from chipsec.file import get_main_dir
 
+from chipsec.module_common import ModuleResult
+from chipsec.file import get_main_dir
+from tests.modules.run_chipsec_module import setup_run_destroy_module
 
 class TestSgxCheck(unittest.TestCase):
     def test_sgx_check_warning(self) -> None:
-        cli_cmds = "-m common.sgx_check".strip().split(' ')
-        par = parse_args(cli_cmds)
-        csm = ChipsecMain(par, cli_cmds)
-        replayHelper = rph.ReplayHelper(os.path.join(get_main_dir(), "tests", "modules", "sgx_check_1.json"))
-        csm._helper = replayHelper
-        self.assertEqual(csm.main(), ModuleResult.WARNING)
+        init_replay_file = os.path.join(get_main_dir(), "tests", "modules", "adlenumerate.json")
+        sgx_replay_file = os.path.join(get_main_dir(), "tests", "modules", "sgx_check_1.json")
+        retval = setup_run_destroy_module(init_replay_file, "common.sgx_check", module_replay_file=sgx_replay_file)
+        self.assertEqual(retval, ModuleResult.WARNING)
 
 
 if __name__ == '__main__':
