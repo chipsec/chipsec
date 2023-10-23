@@ -41,12 +41,14 @@ TAGS = [MTAG_HWCONFIG]
 class ia_untrusted(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x63d2b37, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.ia_untrusted.html')
 
     def is_supported(self):
         if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             return True
         self.logger.log_important('MSR_BIOS_DONE.IA_UNTRUSTED is not defined for platform.  Skipping checks.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_untrusted(self):
@@ -56,6 +58,7 @@ class ia_untrusted(BaseModule):
             soc = self.cs.read_register_field('MSR_BIOS_DONE', 'SoC_BIOS_DONE')
             if soc == 0:
                 res = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
                 self.logger.log_bad('SoC_BIOS_DONE not set.')
             else:
                 self.logger.log_good('SoC_BIOS_DONE set.')
@@ -68,6 +71,7 @@ class ia_untrusted(BaseModule):
             ia_untrusted = self.cs.get_register_field('MSR_BIOS_DONE', bd, "IA_UNTRUSTED")
             if ia_untrusted == 0:
                 res = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
                 self.logger.log_bad('IA_UNTRUSTED not set on thread {:d}.'.format(tid))
             else:
                 self.logger.log_good('IA_UNTRUSTED set on thread {:d}.'.format(tid))
@@ -81,4 +85,5 @@ class ia_untrusted(BaseModule):
             self.logger.log_passed("IA_UNTRUSTED set on all threads")
         elif self.res == ModuleResult.FAILED:
             self.logger.log_failed("IA_UNTRUSTED not set on all threads")
-        return self.res
+        
+        return self.rc_res.getReturnCode(self.res)

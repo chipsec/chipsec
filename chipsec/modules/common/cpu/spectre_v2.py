@@ -135,6 +135,7 @@ class spectre_v2(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xceea2c8, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html')
 
     def is_supported(self):
         if self.cs.is_register_defined('IA32_ARCH_CAPABILITIES'):
@@ -143,7 +144,8 @@ class spectre_v2(BaseModule):
             self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
         else:
             self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_spectre_mitigations(self):
@@ -252,16 +254,20 @@ class spectre_v2(BaseModule):
         #
         if not ibrs_ibpb_supported:
             res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
             self.logger.log_failed("CPU mitigation (IBRS) is missing")
         elif not ibrs_enh_supported:
             res = ModuleResult.WARNING
+            self.rc_res.setStatusBit(self.rc_res.status.PROTECTION)
             self.logger.log_warning("CPU supports mitigation (IBRS) but doesn't support enhanced IBRS")
         elif ibrs_enh_supported and (not ibrs_enabled):
             res = ModuleResult.WARNING
+            self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
             self.logger.log_warning("CPU supports mitigation (enhanced IBRS) but OS is not using it")
         else:
             if not stibp_supported:
                 res = ModuleResult.WARNING
+                self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
                 self.logger.log_warning("CPU supports mitigation (enhanced IBRS) but STIBP is not supported")
             else:
                 res = ModuleResult.PASSED
@@ -284,4 +290,4 @@ class spectre_v2(BaseModule):
     def run(self, module_argv):
         self.logger.start_test("Checks for Branch Target Injection / Spectre v2 (CVE-2017-5715)")
         self.res = self.check_spectre_mitigations()
-        return self.res
+        return self.rc_res.getReturnCode(self.res)
