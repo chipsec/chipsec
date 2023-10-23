@@ -23,6 +23,7 @@
 #     chipsec_main.py or chipsec_util.py
 
 import sys
+import os
 from json import dumps, loads
 class Split_Enumeration:
     def __init__(self, filename:str = "") -> None:
@@ -33,7 +34,7 @@ class Split_Enumeration:
             self.load_data()
         
     def set_filename(self, filename: str) -> None:
-        self.filename = filename.rstrip(".json")
+        self.filename = os.path.splitext(filename)[0]
         
     def load_data(self) -> None:
         if not self.filename:
