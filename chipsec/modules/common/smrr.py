@@ -60,6 +60,7 @@ class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xdf11080, 'https://chipsec.github.io/modules/chipsec.modules.common.smrr.html')
 
     def is_supported(self):
         mtrr_exist = self.cs.is_register_defined('MTRRCAP')
@@ -68,7 +69,8 @@ class smrr(BaseModule):
         if mtrr_exist and pbase_exist and pmask_exist:
             return True
         self.logger.log_information('Required registers are not defined for this platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     #
