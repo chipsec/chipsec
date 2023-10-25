@@ -99,13 +99,15 @@ class me_mfg_mode(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x98e5e8c, 'https://chipsec.github.io/modules/chipsec.modules.common.me_mfg_mode.html')
 
     def is_supported(self):
         if self.cs.is_device_enabled("MEI1"):
             return True
         else:
             self.logger.log_important('MEI1 not enabled.  Skipping module.')
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
 
     def check_me_mfg_mode(self):
@@ -118,8 +120,10 @@ class me_mfg_mode(BaseModule):
             self.logger.log_passed("ME is not in Manufacturing Mode")
         else:
             self.logger.log_failed("ME is in Manufacturing Mode")
+            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
 
-        return me_mfg_mode_res
+        return self.rc_res.getReturnCode(me_mfg_mode_res)
+
 
     def run(self, module_argv):
         self.logger.start_test("ME Manufacturing Mode")

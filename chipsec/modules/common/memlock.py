@@ -51,6 +51,7 @@ class memlock(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x4e16e90, 'https://chipsec.github.io/modules/chipsec.modules.common.memlock.html')
         self.is_read_error = False
 
     def is_supported(self):
@@ -63,7 +64,8 @@ class memlock(BaseModule):
                 self.logger.log_important("'MSR_LT_LOCK_MEMORY.LT_LOCK' not defined for platform.  Skipping module.")
         else:
             self.logger.log_important('Found an Atom based platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_MSR_LT_LOCK_MEMORY(self):
@@ -93,11 +95,14 @@ class memlock(BaseModule):
             self.logger.log_error('There was a problem reading MSR_LT_LOCK_MEMORY.')
             self.logger.log_important('Possible the environment or a platform feature is preventing these reads.')
             self.res = ModuleResult.ERROR
+            self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
         elif check_MSR_LT_LOCK_MEMORY_test_fail == True:
             self.logger.log_failed("MSR_LT_LOCK_MEMORY.LT_LOCK bit is not configured correctly")
             self.res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
         else:
             self.logger.log_passed('MSR_LT_LOCK_MEMORY.LT_LOCK bit is set')
             self.res = ModuleResult.PASSED
 
-        return self.res
+        return self.rc_res.getReturnCode(self.res)
+

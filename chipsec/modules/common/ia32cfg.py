@@ -46,6 +46,7 @@ TAGS = [MTAG_HWCONFIG]
 class ia32cfg(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xcc8cd5d, 'https://chipsec.github.io/modules/chipsec.modules.common.ia32cfg.html')
         self.res = ModuleResult.PASSED
 
     def is_supported(self):
@@ -55,7 +56,8 @@ class ia32cfg(BaseModule):
             self.logger.log_important('Ia32FeatureControlLock control not defined for platform.  Skipping module.')
         else:
             self.logger.log_important('IA32_FEATURE_CONTROL register not defined for platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_ia32feature_control(self):
@@ -70,13 +72,15 @@ class ia32cfg(BaseModule):
             self.logger.log("[*] cpu{:d}: IA32_FEATURE_CONTROL Lock = {:d}".format(tid, feature_cntl_lock))
             if 0 == feature_cntl_lock:
                 res = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
+
 
         if res == ModuleResult.PASSED:
             self.logger.log_passed("IA32_FEATURE_CONTROL MSR is locked on all logical CPUs")
         else:
             self.logger.log_failed("IA32_FEATURE_CONTROL MSR is not locked on all logical CPUs")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     def run(self, module_argv):
         self.logger.start_test("IA32 Feature Control Lock")
