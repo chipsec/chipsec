@@ -52,13 +52,15 @@ class bios_smi(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x744c3dc, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_smi.html')
 
     def is_supported(self):
         if not self.cs.is_control_defined('SmmBiosWriteProtection') or \
            not self.cs.is_control_defined('TCOSMILock') or \
            not self.cs.is_control_defined('SMILock') or \
            not self.cs.is_control_defined('BiosWriteEnable'):
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             self.logger.log_important('Required controls not defined for platform.  Skipping module.')
             return False
         return True
@@ -127,11 +129,14 @@ class bios_smi(BaseModule):
             self.logger.log_passed("All required SMI sources seem to be enabled and locked")
         elif ok and warn:
             res = ModuleResult.WARNING
+            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
             self.logger.log_warning("One or more warnings detected when checking SMI enable state")
         else:
             res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             self.logger.log_failed("Not all required SMI sources are enabled and locked")
-        return res
+        
+        return self.rc_res.getReturnCode(res)
 
     def run(self, module_argv):
         self.logger.start_test("SMI Events Configuration")

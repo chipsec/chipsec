@@ -69,6 +69,7 @@ class bios_wp(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.spi = SPI(self.cs)
+        self.rc_res = ModuleResult(0xd1e21a2, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_wp.html')
 
     def is_supported(self):
         ble_exists = self.cs.is_control_defined('BiosLockEnable')
@@ -78,7 +79,8 @@ class bios_wp(BaseModule):
         if ble_exists and bioswe_exists and smmbwp_exists:
             return True
         self.logger.log_important('Required Controls are not defined for platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_BIOS_write_protection(self):
@@ -172,8 +174,8 @@ class bios_wp(BaseModule):
                 self.logger.log_failed("BIOS is NOT protected completely")
 
         if wp or spr:
-            self.res = ModuleResult.PASSED
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            return self.rc_res.getReturnCode(ModuleResult.PASSED)
         else:
-            self.res = ModuleResult.FAILED
-
-        return self.res
+            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+            return self.rc_res.getReturnCode(ModuleResult.FAILED)

@@ -44,6 +44,7 @@ COMMON_FILL_PTRN = "".join(['{:1}'.format((chr(x + 0x1E))) for x in range(32)])
 class bios_kbrd_buffer(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x5ebf705, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_kbrd_buffer.html')
 
     def is_supported(self):
         return True
@@ -61,7 +62,8 @@ class bios_kbrd_buffer(BaseModule):
 
         if COMMON_FILL_PTRN == bios_kbrd_buf:
             self.logger.log_good("Keyboard buffer is filled with common fill pattern")
-            return ModuleResult.PASSED
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            return self.rc_res.getReturnCode(ModuleResult.PASSED)
 
         for x in bios_kbrd_buf:
             if ("\x00" != x) and ("\x20" != x):
@@ -81,7 +83,12 @@ class bios_kbrd_buffer(BaseModule):
         else:
             self.logger.log_passed("Keyboard buffer looks empty. Pre-boot passwords don't seem to be exposed")
 
-        return (ModuleResult.WARNING if has_contents else ModuleResult.PASSED)
+        if has_contents:
+            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+            return self.rc_res.getReturnCode(ModuleResult.WARNING)
+        else:
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            return self.rc_res.getReturnCode(ModuleResult.PASSED)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
