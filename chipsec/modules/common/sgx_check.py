@@ -71,6 +71,7 @@ TAGS = [MTAG_HWCONFIG]
 class sgx_check(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xb64a5d0, 'https://chipsec.github.io/modules/chipsec.modules.common.sgx_check.html')
         self.helper = self.cs.helper
         self.res = ModuleResult.PASSED
 
@@ -93,7 +94,8 @@ class sgx_check(BaseModule):
                     self.logger.log_verbose(f"[*]CPU{tid:d}: does not support SGX")
                     self.logger.log_important('SGX not supported.  Skipping module.')
         if not sgx_cpu_support:
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return sgx_cpu_support
 
     def check_sgx_config(self) -> int:

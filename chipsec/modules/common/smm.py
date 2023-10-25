@@ -46,12 +46,14 @@ class smm(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x3486891, 'https://chipsec.github.io/modules/chipsec.modules.common.smm.html')
 
     def is_supported(self):
         if self.cs.is_core() and self.cs.is_register_defined('PCI0.0.0_SMRAMC'):
             return True
         self.logger.log("Either not a Core (client) platform or 'PCI0.0.0_SMRAMC' not defined for platform. Skipping module.")
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_SMRAMC(self):
