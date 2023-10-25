@@ -59,7 +59,7 @@ class debugenabled(BaseModule):
         # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
         (_, _, ecx, _) = self.cs.cpu.cpuid(1, 0)
         supported = (ecx & BIT11) != 0
-        if not supported:
+        if not supported and not self.cs.is_register_defined('ECTRL'):
             self.logger.log_important('CPU Debug features are not supported on this platform.  Skipping module.')
             self.res = ModuleResult.NOTAPPLICABLE
         return supported
