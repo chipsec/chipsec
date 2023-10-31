@@ -82,8 +82,8 @@ class smrr(BaseModule):
             self.logger.log_good("OK. SMRR range protection is supported")
         else:
             self.logger.log_not_applicable("CPU does not support SMRR range protection of SMRAM")
-            return ModuleResult.NOTAPPLICABLE
-
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         #
         # SMRR are supported
         #
@@ -175,12 +175,13 @@ class smrr(BaseModule):
         self.logger.log('')
         if not smrr_ok:
             res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
             self.logger.log_failed("SMRR protection against cache attack is not configured properly")
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed("SMRR protection against cache attack is properly configured")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
@@ -188,8 +189,6 @@ class smrr(BaseModule):
     # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("CPU SMM Cache Poisoning / System Management Range Registers")
-
         do_modify = (len(module_argv) > 0) and (module_argv[0] == OPT_MODIFY)
-
         self.res = self.check_SMRR(do_modify)
         return self.res

@@ -74,11 +74,13 @@ class smm(BaseModule):
             else:
                 res = ModuleResult.FAILED
                 self.logger.log_failed("Compatible SMRAM is not properly locked. Expected ( D_LCK = 1, D_OPEN = 0 )")
+                self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
         else:
             res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.FEATURE_DISABLED)
             self.logger.log("[*] Compatible SMRAM is not enabled. Skipping..")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
@@ -86,6 +88,5 @@ class smm(BaseModule):
     # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("Compatible SMM memory (SMRAM) Protection")
-
         self.res = self.check_SMRAMC()
         return self.res

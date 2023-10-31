@@ -52,7 +52,7 @@ class smm_code_chk(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x2b91d03, 'https://chipsec.github.io/modules/chipsec.modules.common.smm_code_chk.html')
+        self.rc_res = ModuleResult(0x08f743d, 'https://chipsec.github.io/modules/chipsec.modules.common.smm_code_chk.html')
 
     def is_supported(self):
         if not self.cs.is_register_defined('MSR_SMM_FEATURE_CONTROL'):
@@ -63,7 +63,7 @@ class smm_code_chk(BaseModule):
             self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
             self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
-
+            
         # The Intel SDM states that MSR_SMM_FEATURE_CONTROL can only be accessed while the CPU executes in SMM.
         # However, in reality many users report that there is no problem reading this register from outside of SMM.
         # Just to be on the safe side of things, we'll verify we can read this register successfully before moving on.
@@ -71,7 +71,8 @@ class smm_code_chk(BaseModule):
             self.cs.read_register('MSR_SMM_FEATURE_CONTROL')
         except HWAccessViolationError:
             self.logger.log_important('MSR_SMM_FEATURE_CONTROL is unreadable.  Skipping module.')
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         else:
             return True
@@ -88,6 +89,7 @@ class smm_code_chk(BaseModule):
                 res = ModuleResult.PASSED
             else:
                 res = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
         else:
             # MSR_SMM_MCA_CAP (the register that reports enhanced SMM capabilities) can only be read from SMM.
             # Thus, there is no way to tell whether the the CPU doesn't support SMM_Code_Chk_En in the first place,
@@ -108,19 +110,22 @@ class smm_code_chk(BaseModule):
         # Check that all CPUs have the same value of MSR_SMM_FEATURE_CONTROL.
         if not all(_ == results[0] for _ in results):
             self.logger.log_failed("MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs")
+            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
             return ModuleResult.FAILED
 
         res = results[0]
         if res == ModuleResult.FAILED:
             self.logger.log_failed("SMM_Code_Chk_En is enabled but not locked down")
+            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
         elif res == ModuleResult.WARNING:
             self.logger.log_warning("""[*] SMM_Code_Chk_En is not enabled.
 This can happen either because this feature is not supported by the CPU or because the BIOS forgot to enable it.
 Please consult the Intel SDM to determine whether or not your CPU supports SMM_Code_Chk_En.""")
+            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
         else:
             self.logger.log_passed("SMM_Code_Chk_En is enabled and locked down")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
