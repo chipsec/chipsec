@@ -52,7 +52,7 @@ EVTCHOP_INIT_CONTROL = 11
 
 class xsa188(BaseModule):
     def __init__(self):
-        BaseModule().__init__()
+        BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x13a3575, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.xen.xsa188.html')
 
     def run(self, module_argv):
