@@ -47,7 +47,7 @@ class ModuleResult:
         SUCCESS = [0x0000000000000000, 'Test module completed successfully']
         LOCKS = [bit(31), 'Locks are not set'] 
         MITIGATION = [bit(30), 'Does not support mitigation']
-        CONFIGURATION = [bit(29), 'Configuration not set'] 
+        CONFIGURATION = [bit(29), 'Configuration not valid'] 
         PROTECTION = [bit(28), 'Protection not supported/enabled']
         ACCESS_RW = [bit(27), 'Read or write access issues']
         RESTORE = [bit(26), 'Cannot restore binary/value']
