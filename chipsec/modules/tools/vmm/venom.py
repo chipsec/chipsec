@@ -60,7 +60,7 @@ FD_CMD = 0x8E  # FD_CMD_DRIVE_SPECIFICATION_COMMAND # FD_CMD_READ_ID = 0x0A
 
 class venom (BaseModule):
     def __init__(self):
-        BaseModule().__init__()
+        BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x6e48a35, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.venom.html')
 
     def venom_impl(self):

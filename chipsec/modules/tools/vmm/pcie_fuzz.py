@@ -77,7 +77,7 @@ _EXCLUDE_BAR = []
 
 class pcie_fuzz(BaseModule):
     def __init__(self):
-        BaseModule().__init__()
+        BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x61c1431, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.pcie_fuzz.html')
 
     def fuzz_io_bar(self, bar, size=0x100):
