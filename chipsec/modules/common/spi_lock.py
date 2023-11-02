@@ -52,10 +52,13 @@ class spi_lock(BaseModule):
 
     def __init__(self):
         super(spi_lock, self).__init__()
+        self.rc_res = ModuleResult(0xf73c7bd, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_lock.html')
 
     def is_supported(self):
         if self.cs.is_control_defined('FlashLockDown'):
             return True
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         self.logger.log_important('FlashLockDown control not define for platform.  Skipping module.')
         return False
 
@@ -68,6 +71,7 @@ class spi_lock(BaseModule):
                 self.logger.log_good('SPI write status disable set.')
             else:
                 res = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
                 self.logger.log_bad('SPI write status disable not set.')
             reg_print = False
 
@@ -76,6 +80,7 @@ class spi_lock(BaseModule):
             self.logger.log_good("SPI Flash Controller configuration is locked")
         else:
             res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             self.logger.log_bad("SPI Flash Controller configuration is not locked")
         reg_print = False
 
@@ -86,7 +91,7 @@ class spi_lock(BaseModule):
         else:
             self.logger.log_warning("Unable to determine if SPI Flash Controller is locked correctly.")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     def run(self, module_argv):
         self.logger.start_test("SPI Flash Controller Configuration Locks")
