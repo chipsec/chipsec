@@ -42,11 +42,13 @@ class spi_fdopss(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x9b73a54, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_fdopss.html')
 
     def is_supported(self):
         if not self.cs.register_has_field('HSFS', 'FDOPSS'):
             self.logger.log_important('HSFS.FDOPSS field not defined for platform.  Skipping module.')
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         return True
 
@@ -57,10 +59,11 @@ class spi_fdopss(BaseModule):
 
         if (fdopss != 0):
             self.logger.log_passed("SPI Flash Descriptor Security Override is disabled")
-            return ModuleResult.PASSED
+            return self.rc_res.getReturnCode(ModuleResult.PASSED)
         else:
             self.logger.log_failed("SPI Flash Descriptor Security Override is enabled")
-            return ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
+            return self.rc_res.getReturnCode(ModuleResult.FAILED)
 
     # --------------------------------------------------------------------------
     # run( module_argv )

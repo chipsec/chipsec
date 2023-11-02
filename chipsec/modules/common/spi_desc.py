@@ -49,12 +49,14 @@ class spi_desc(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x63fa19c, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_desc.html')
 
     def is_supported(self):
         if self.cs.register_has_all_fields('FRAP', ['BRRA', 'BRWA']):
             return True
         self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     ##
@@ -70,6 +72,7 @@ class spi_desc(BaseModule):
         self.logger.log("[*] Software access to SPI flash regions: read = 0x{:02X}, write = 0x{:02X}".format(brra, brwa))
         if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 
         self.logger.log('')
@@ -78,7 +81,8 @@ class spi_desc(BaseModule):
         elif ModuleResult.FAILED == res:
             self.logger.log_failed("SPI flash permissions allow SW to write flash descriptor")
             self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
-        return res
+        
+        return self.rc_res.getReturnCode(res)
 
     def run(self, module_argv):
         self.logger.start_test("SPI Flash Region Access Control")
