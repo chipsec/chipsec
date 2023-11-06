@@ -438,7 +438,7 @@ class InvalidPchHelper(TestHelper):
             elif size == 2:
                 return 0x8086
             else:
-                return 0xBEEF8086
+                return 0x19048086
         elif (bus, device, function) == (0, 0x1f, 0):
             if size == 1:
                 return 0x86

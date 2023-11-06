@@ -22,7 +22,7 @@ from tests.software import cs
 from tests.software import mock_helper
 
 
-class TestPlatformChipsecCs(cs.TestChipsecCs):
+class TestPlatformChipsecCs(cs.TestChipsecCs, unittest.TestCase):
     """Test the platform commands exposed by chipsec chipset."""
 
     def test_platform(self):
@@ -34,8 +34,8 @@ class TestPlatformChipsecCs(cs.TestChipsecCs):
         self.assertEqual('CML', p)
 
     def test_platform_invalid(self):
-        p = self._chipsec_cs("get_chipset_code", mock_helper.InvalidChipsetHelper)
-        self.assertEqual(CHIPSET_CODE_UNKNOWN, p)
+        self.assertRaises(UnknownChipsetError, self._chipsec_cs, "get_chipset_code", mock_helper.InvalidChipsetHelper)
+        # self.assertEqual(CHIPSET_CODE_UNKNOWN, p)
 
     def test_pch(self):
         p = self._chipsec_cs("get_pch_code", mock_helper.ValidChipsetHelper)
