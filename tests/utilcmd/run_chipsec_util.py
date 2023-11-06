@@ -26,7 +26,7 @@ from chipsec_util import ChipsecUtil, parse_args
 import chipsec.logger
 
 
-def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> bool:
+def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> int:
     csu._cs.init(csu._platform, csu._pch, csu._helper, not csu._no_driver, csu._load_config, csu._ignore_platform)
     if util_replay_file:
         csu._helper.config_file = util_replay_file
@@ -38,7 +38,8 @@ def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> bool:
     comm.tear_down()
     return comm.ExitCode
 
-def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str = "", util_replay_file: str = "") -> bool:
+def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str = "", util_replay_file: str = "") -> int:
+    chipsec.logger._logger.disable()
     chipsec.logger._logger = Mock()
     arg_str = f" {util_args}" if util_args else ""
     cli_cmds = f"{util_name}{arg_str}".strip().split(' ')
