@@ -25,7 +25,7 @@ import os
 
 from chipsec.file import get_main_dir
 from chipsec.testcase import ExitCode
-from tests.modules.run_chipsec_module import setup_run_destroy_module
+from tests.modules.run_chipsec_module import setup_run_destroy_module_with_mock_logger
 
 class TestTglModules(unittest.TestCase):
     def setUp(self) -> None:
@@ -35,10 +35,10 @@ class TestTglModules(unittest.TestCase):
     def derive_filename(self, module_name:str) -> str:
         return f"{module_name.replace('.', '-')}_test.json"
 
-    def run_and_test_module(self, module_name:str, expected_returncode:int, mock_logger = True) -> None:
+    def run_and_test_module(self, module_name:str, expected_returncode:int) -> None:
         test_recording = self.derive_filename(module_name)
         replay_file = os.path.join(self.folder_path, test_recording)
-        retval = setup_run_destroy_module(self.init_replay_file, module_name, module_replay_file=replay_file, mock_logger=mock_logger)
+        retval = setup_run_destroy_module_with_mock_logger(self.init_replay_file, module_name, module_replay_file=replay_file)
         self.assertEqual(retval, expected_returncode, f"Expected: {expected_returncode} but got: {retval}")
                    
     def test_tgl_module_bios_smi(self):
