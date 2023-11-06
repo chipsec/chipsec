@@ -141,7 +141,7 @@ class Chipset:
         if load_config:
             if not ignore_platform:
                 self.Cfg.platform_detection(platform_code, req_pch_code, self.cpuid)
-                _unknown_proc = self.Cfg.get_chipset_code() is None
+                _unknown_proc = not bool(self.Cfg.get_chipset_code())
                 if self.Cfg.is_pch_req() == False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
                     _unknown_pch = False
                 if _unknown_proc:
