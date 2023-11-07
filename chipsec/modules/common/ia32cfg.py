@@ -38,6 +38,7 @@ Registers used:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
+from typing import List
 
 
 TAGS = [MTAG_HWCONFIG]
@@ -49,7 +50,7 @@ class ia32cfg(BaseModule):
         self.rc_res = ModuleResult(0xcc8cd5d, 'https://chipsec.github.io/modules/chipsec.modules.common.ia32cfg.html')
         self.res = ModuleResult.PASSED
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_register_defined('IA32_FEATURE_CONTROL'):
             if self.cs.is_control_defined('Ia32FeatureControlLock'):
                 return True
@@ -60,7 +61,7 @@ class ia32cfg(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_ia32feature_control(self):
+    def check_ia32feature_control(self) -> int:
         self.logger.log("[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs..")
 
         res = ModuleResult.PASSED
@@ -69,7 +70,7 @@ class ia32cfg(BaseModule):
                 feature_cntl = self.cs.read_register('IA32_FEATURE_CONTROL', tid)
                 self.cs.print_register('IA32_FEATURE_CONTROL', feature_cntl)
             feature_cntl_lock = self.cs.get_control('Ia32FeatureControlLock', tid)
-            self.logger.log("[*] cpu{:d}: IA32_FEATURE_CONTROL Lock = {:d}".format(tid, feature_cntl_lock))
+            self.logger.log(f"[*] cpu{tid:d}: IA32_FEATURE_CONTROL Lock = {feature_cntl_lock:d}")
             if 0 == feature_cntl_lock:
                 res = ModuleResult.FAILED
                 self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
@@ -82,7 +83,7 @@ class ia32cfg(BaseModule):
 
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("IA32 Feature Control Lock")
         self.res = self.check_ia32feature_control()
         return self.res

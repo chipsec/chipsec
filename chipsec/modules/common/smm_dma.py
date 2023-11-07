@@ -56,6 +56,7 @@ Supported Platforms:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_SMM, MTAG_HWCONFIG
+from typing import List
 
 _MODULE_NAME = 'smm_dma'
 
@@ -68,7 +69,7 @@ class smm_dma(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x72f5ed1, 'https://chipsec.github.io/modules/chipsec.modules.common.smm_dma.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
         if self.cs.is_atom():
             self.logger.log_important('Module not supported on Atom platforms.  Skipping module.')
@@ -85,7 +86,7 @@ class smm_dma(BaseModule):
         else:
             return True
 
-    def check_tseg_locks(self):
+    def check_tseg_locks(self) -> int:
         tseg_base_lock = self.cs.get_control('TSEGBaseLock')
         tseg_limit_lock = self.cs.get_control('TSEGLimitLock')
         ia_untrusted = 0
@@ -100,13 +101,13 @@ class smm_dma(BaseModule):
             self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             return ModuleResult.FAILED
 
-    def check_tseg_config(self):
+    def check_tseg_config(self) -> int:
         res = ModuleResult.FAILED
         (tseg_base, tseg_limit, tseg_size) = self.cs.cpu.get_TSEG()
-        self.logger.log("[*] TSEG      : 0x{:016X} - 0x{:016X} (size = 0x{:08X})".format(tseg_base, tseg_limit, tseg_size))
+        self.logger.log(f"[*] TSEG      : 0x{tseg_base:016X} - 0x{tseg_limit:016X} (size = 0x{tseg_size:08X})")
         if self.cs.cpu.check_SMRR_supported():
             (smram_base, smram_limit, smram_size) = self.cs.cpu.get_SMRR_SMRAM()
-            self.logger.log("[*] SMRR range: 0x{:016X} - 0x{:016X} (size = 0x{:08X})\n".format(smram_base, smram_limit, smram_size))
+            self.logger.log(f"[*] SMRR range: 0x{smram_base:016X} - 0x{smram_limit:016X} (size = 0x{smram_size:08X})\n")
         else:
             smram_base = 0
             smram_limit = 0
@@ -133,7 +134,7 @@ class smm_dma(BaseModule):
 
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SMM TSEG Range Configuration Check")
         self.res = self.check_tseg_config()
         return self.res

@@ -127,6 +127,7 @@ References:
 from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM, ModuleResult
 from chipsec.exceptions import HWAccessViolationError, UnimplementedAPIError
 from chipsec.defines import BIT26, BIT27, BIT29
+from typing import List
 
 TAGS = [MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM]
 
@@ -137,7 +138,7 @@ class spectre_v2(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0xceea2c8, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_register_defined('IA32_ARCH_CAPABILITIES'):
             if self.cs.is_register_defined('IA32_SPEC_CTRL'):
                 return True
@@ -148,7 +149,7 @@ class spectre_v2(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_spectre_mitigations(self):
+    def check_spectre_mitigations(self) -> int:
         try:
             cpu_thread_count = self.cs.msr.get_cpu_thread_count()
         except:
@@ -161,9 +162,9 @@ class spectre_v2(BaseModule):
         ibrs_ibpb_supported = (r_edx & BIT26) > 0
         stibp_supported = (r_edx & BIT27) > 0
         arch_cap_supported = (r_edx & BIT29) > 0
-        self.logger.log("[*] CPUID.7H:EDX[26] = {:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)".format(ibrs_ibpb_supported))
-        self.logger.log("[*] CPUID.7H:EDX[27] = {:d} Single Thread Indirect Branch Predictors (STIBP)".format(stibp_supported))
-        self.logger.log("[*] CPUID.7H:EDX[29] = {:d} IA32_ARCH_CAPABILITIES".format(arch_cap_supported))
+        self.logger.log(f"[*] CPUID.7H:EDX[26] = {ibrs_ibpb_supported:d} Indirect Branch Restricted Speculation (IBRS) & Predictor Barrier (IBPB)")
+        self.logger.log(f"[*] CPUID.7H:EDX[27] = {stibp_supported:d} Single Thread Indirect Branch Predictors (STIBP)")
+        self.logger.log(f"[*] CPUID.7H:EDX[29] = {arch_cap_supported:d} IA32_ARCH_CAPABILITIES")
 
         if ibrs_ibpb_supported:
             self.logger.log_good("CPU supports IBRS and IBPB")
@@ -188,7 +189,7 @@ class spectre_v2(BaseModule):
                     break
 
                 ibrs_all = self.cs.get_register_field('IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL')
-                self.logger.log("[*]   cpu{:d}: IBRS_ALL = {:x}".format(tid, ibrs_all))
+                self.logger.log(f"[*]   cpu{tid:d}: IBRS_ALL = {ibrs_all:x}")
                 if 0 == ibrs_all:
                     ibrs_enh_supported = False
                     break
@@ -215,13 +216,13 @@ class spectre_v2(BaseModule):
                     break
 
                 ibrs = self.cs.get_register_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS')
-                self.logger.log("[*]   cpu{:d}: IA32_SPEC_CTRL[IBRS] = {:x}".format(tid, ibrs))
+                self.logger.log(f"[*]   cpu{tid:d}: IA32_SPEC_CTRL[IBRS] = {ibrs:x}")
                 if 0 == ibrs:
                     ibrs_enabled = False
 
                 # ok to access STIBP bit even if STIBP is not supported
                 stibp = self.cs.get_register_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP')
-                self.logger.log("[*]   cpu{:d}: IA32_SPEC_CTRL[STIBP] = {:x}".format(tid, stibp))
+                self.logger.log(f"[*]   cpu{tid:d}: IA32_SPEC_CTRL[STIBP] = {stibp:x}")
                 if 1 == stibp:
                     stibp_enabled_count += 1
 
@@ -287,7 +288,7 @@ class spectre_v2(BaseModule):
 
         return res
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Checks for Branch Target Injection / Spectre v2 (CVE-2017-5715)")
         self.res = self.check_spectre_mitigations()
         return self.rc_res.getReturnCode(self.res)

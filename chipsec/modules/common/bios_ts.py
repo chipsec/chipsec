@@ -39,6 +39,7 @@ Registers used:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from typing import List
 TAGS = [MTAG_BIOS]
 
 
@@ -47,7 +48,7 @@ class bios_ts(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x98e2db0, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_ts.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_control_defined('BiosInterfaceLockDown'):
             return True
         self.logger.log_important('BiosInterfaceLockDown control not defined for platform.  Skipping module.')
@@ -55,9 +56,9 @@ class bios_ts(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_bios_iface_lock(self):
+    def check_bios_iface_lock(self) -> int:
         bild = self.cs.get_control('BiosInterfaceLockDown')
-        self.logger.log("[*] BiosInterfaceLockDown (BILD) control = {:d}".format(bild))
+        self.logger.log(f"[*] BiosInterfaceLockDown (BILD) control = {bild:d}")
 
         if self.cs.is_control_defined('TopSwapStatus'):
             if self.cs.is_control_all_ffs('TopSwapStatus'):
@@ -65,7 +66,7 @@ class bios_ts(BaseModule):
                 self.logger.log_verbose('TopSwapStatus read returned all 0xFs.')
             else:
                 tss = self.cs.get_control('TopSwapStatus')
-                self.logger.log("[*] BIOS Top Swap mode is {} (TSS = {:d})".format('enabled' if (1 == tss) else 'disabled', tss))
+                self.logger.log(f"[*] BIOS Top Swap mode is {'enabled' if (1 == tss) else 'disabled'} (TSS = {tss:d})")
 
         if self.cs.is_control_defined('TopSwap'):
             if self.cs.is_control_all_ffs('TopSwap'):
@@ -73,7 +74,7 @@ class bios_ts(BaseModule):
                 self.logger.log_verbose('TopSwap read returned all 0xFs.')
             else:
                 ts = self.cs.get_control('TopSwap')
-                self.logger.log("[*] RTC TopSwap control (TS) = {:x}".format(ts))
+                self.logger.log(f"[*] RTC TopSwap control (TS) = {ts:x}")
 
         if bild == 0:
             res = ModuleResult.FAILED
@@ -85,7 +86,7 @@ class bios_ts(BaseModule):
         
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("BIOS Interface Lock (including Top Swap Mode)")
         self.res = self.check_bios_iface_lock()
         return self.res

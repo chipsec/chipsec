@@ -52,6 +52,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
 from chipsec.hal.msr import MemType
+from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
@@ -62,7 +63,7 @@ class smrr(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0xdf11080, 'https://chipsec.github.io/modules/chipsec.modules.common.smrr.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         mtrr_exist = self.cs.is_register_defined('MTRRCAP')
         pbase_exist = self.cs.is_register_defined('IA32_SMRR_PHYSBASE')
         pmask_exist = self.cs.is_register_defined('IA32_SMRR_PHYSMASK')
@@ -76,7 +77,7 @@ class smrr(BaseModule):
     #
     # Check that SMRR are supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
-    def check_SMRR(self, do_modify):
+    def check_SMRR(self, do_modify: bool) -> int:
 
         if self.cs.cpu.check_SMRR_supported():
             self.logger.log_good("OK. SMRR range protection is supported")
@@ -98,13 +99,13 @@ class smrr(BaseModule):
         self.cs.print_register('IA32_SMRR_PHYSBASE', msr_smrrbase)
         smrrbase = self.cs.get_register_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'PhysBase', True)
         smrrtype = self.cs.get_register_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type')
-        self.logger.log("[*] SMRR range base: 0x{:016X}".format(smrrbase))
+        self.logger.log(f"[*] SMRR range base: 0x{smrrbase:016X}")
 
         if smrrtype in MemType:
-            self.logger.log("[*] SMRR range memory type is {}".format(MemType[smrrtype]))
+            self.logger.log(f"[*] SMRR range memory type is {MemType[smrrtype]}")
         else:
             smrr_ok = False
-            self.logger.log_bad("SMRR range memory type 0x{:X} is invalid".format(smrrtype))
+            self.logger.log_bad(f"SMRR range memory type 0x{smrrtype:X} is invalid")
 
         if 0 == smrrbase:
             smrr_ok = False
@@ -122,7 +123,7 @@ class smrr(BaseModule):
         self.cs.print_register('IA32_SMRR_PHYSMASK', msr_smrrmask)
         smrrmask = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True)
         smrrvalid = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid')
-        self.logger.log("[*] SMRR range mask: 0x{:016X}".format(smrrmask))
+        self.logger.log(f"[*] SMRR range mask: 0x{smrrmask:016X}")
 
         if not (smrrvalid and (0 != smrrmask)):
             smrr_ok = False
@@ -139,7 +140,7 @@ class smrr(BaseModule):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             msr_base = self.cs.read_register('IA32_SMRR_PHYSBASE', tid)
             msr_mask = self.cs.read_register('IA32_SMRR_PHYSMASK', tid)
-            self.logger.log("[CPU{:d}] SMRR_PHYSBASE = {:016X}, SMRR_PHYSMASK = {:016X}".format(tid, msr_base, msr_mask))
+            self.logger.log(f"[CPU{tid:d}] SMRR_PHYSBASE = {msr_base:016X}, SMRR_PHYSMASK = {msr_mask:016X}")
             if (msr_base != msr_smrrbase) or (msr_mask != msr_smrrmask):
                 smrr_ok = False
                 self.logger.log_bad("SMRR range base/mask do not match on all logical CPUs")
@@ -153,7 +154,7 @@ class smrr(BaseModule):
         # writes should be dropped, reads should return all F's
         #
 
-        self.logger.log("[*] Trying to read memory at SMRR base 0x{:08X}..".format(smrrbase))
+        self.logger.log(f"[*] Trying to read memory at SMRR base 0x{smrrbase:08X}..")
 
         ok = 0xFFFFFFFF == self.cs.mem.read_physical_mem_dword(smrrbase)
         smrr_ok = smrr_ok and ok
@@ -163,7 +164,7 @@ class smrr(BaseModule):
             self.logger.log_failed("SMRR reads are not blocked in non-SMM mode")  # all F's are not returned
 
         if (do_modify):
-            self.logger.log("[*] Trying to modify memory at SMRR base 0x{:08X}..".format(smrrbase))
+            self.logger.log(f"[*] Trying to modify memory at SMRR base 0x{smrrbase:08X}..")
             self.cs.mem.write_physical_mem_dword(smrrbase, 0x90909090)
             ok = 0x90909090 != self.cs.mem.read_physical_mem_dword(smrrbase)
             smrr_ok = smrr_ok and ok
@@ -187,7 +188,7 @@ class smrr(BaseModule):
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("CPU SMM Cache Poisoning / System Management Range Registers")
         do_modify = (len(module_argv) > 0) and (module_argv[0] == OPT_MODIFY)
         self.res = self.check_SMRR(do_modify)

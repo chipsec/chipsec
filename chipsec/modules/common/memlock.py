@@ -43,6 +43,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.exceptions import HWAccessViolationError
+from typing import List
 
 _MODULE_NAME = 'memlock'
 
@@ -54,7 +55,7 @@ class memlock(BaseModule):
         self.rc_res = ModuleResult(0x4e16e90, 'https://chipsec.github.io/modules/chipsec.modules.common.memlock.html')
         self.is_read_error = False
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         # Workaround for Atom based processors.  Accessing this MSR on these systems
         # causes a GP fault and can't be caught in UEFI Shell.
         if not self.cs.is_atom():
@@ -68,7 +69,7 @@ class memlock(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_MSR_LT_LOCK_MEMORY(self):
+    def check_MSR_LT_LOCK_MEMORY(self) -> bool:
         self.logger.log('[*] Checking MSR_LT_LOCK_MEMORY status')
         status = False
         for tid in range(self.cs.msr.get_cpu_thread_count()):
@@ -82,12 +83,12 @@ class memlock(BaseModule):
             if self.logger.VERBOSE:
                 self.cs.print_register('MSR_LT_LOCK_MEMORY', lt_lock_msr)
             lt_lock = self.cs.get_register_field('MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK')
-            self.logger.log("[*]   cpu{:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {:x}".format(tid, lt_lock))
+            self.logger.log(f"[*]   cpu{tid:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {lt_lock:x}")
             if 0 == lt_lock:
                 status = True
         return status
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Check MSR_LT_LOCK_MEMORY")
         check_MSR_LT_LOCK_MEMORY_test_fail = self.check_MSR_LT_LOCK_MEMORY()
 

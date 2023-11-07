@@ -38,6 +38,7 @@ This module will only run on client (core) platforms that have PCI0.0.0_SMRAMC d
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
@@ -48,7 +49,7 @@ class smm(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x3486891, 'https://chipsec.github.io/modules/chipsec.modules.common.smm.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_core() and self.cs.is_register_defined('PCI0.0.0_SMRAMC'):
             return True
         self.logger.log("Either not a Core (client) platform or 'PCI0.0.0_SMRAMC' not defined for platform. Skipping module.")
@@ -56,7 +57,7 @@ class smm(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_SMRAMC(self):
+    def check_SMRAMC(self) -> int:
 
         regval = self.cs.read_register('PCI0.0.0_SMRAMC')
         g_smrame = self.cs.get_register_field('PCI0.0.0_SMRAMC', regval, 'G_SMRAME')
@@ -86,7 +87,7 @@ class smm(BaseModule):
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Compatible SMM memory (SMRAM) Protection")
         self.res = self.check_SMRAMC()
         return self.res

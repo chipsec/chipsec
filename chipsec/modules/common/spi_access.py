@@ -47,6 +47,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
+from typing import List
 
 TAGS = [MTAG_BIOS]
 
@@ -58,7 +59,7 @@ class spi_access(BaseModule):
         self.spi = SPI(self.cs)
         self.rc_res = ModuleResult(0x23bb5d0, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_access.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.register_has_field('HSFS', 'FDV') and self.cs.register_has_field('FRAP', 'BRWA'):
             return True
         self.logger.log_important('HSFS.FDV or FRAP.BRWA registers not defined for platform.  Skipping module.')
@@ -68,7 +69,7 @@ class spi_access(BaseModule):
 
     ##
     # Displays the SPI Regions Access Permissions
-    def check_flash_access_permissions(self):
+    def check_flash_access_permissions(self) -> int:
 
         res = ModuleResult.PASSED
         fdv = self.cs.read_register_field('HSFS', 'FDV') == 1
@@ -120,7 +121,7 @@ class spi_access(BaseModule):
 
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Region Access Control")
         self.spi.display_SPI_Ranges_Access_Permissions()
         self.res = self.check_flash_access_permissions()

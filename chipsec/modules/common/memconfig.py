@@ -34,6 +34,7 @@ Example:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
+from typing import List
 
 _MODULE_NAME = 'memconfig'
 
@@ -60,7 +61,7 @@ class memconfig(BaseModule):
             "PCI0.0.0_TOLUD": 'LOCK'
         }
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_intel():
             if self.cs.is_core():
                 return True
@@ -71,7 +72,7 @@ class memconfig(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_memmap_locks(self):
+    def check_memmap_locks(self) -> int:
 
         # Determine if IA_UNTRUSTED can be used to lock the system.
         ia_untrusted = None
@@ -121,7 +122,7 @@ class memconfig(BaseModule):
 
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Host Bridge Memory Map Locks")
 
         self.res = self.check_memmap_locks()
