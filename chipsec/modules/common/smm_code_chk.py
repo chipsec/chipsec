@@ -44,6 +44,7 @@ Registers used:
 """
 from chipsec.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+from typing import List
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
 
@@ -54,7 +55,7 @@ class smm_code_chk(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x08f743d, 'https://chipsec.github.io/modules/chipsec.modules.common.smm_code_chk.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if not self.cs.is_register_defined('MSR_SMM_FEATURE_CONTROL'):
             # The MSR_SMM_FEATURE_CONTROL register is available starting from:
             # * 4th Generation Intel® Core™ Processors (Haswell microarchitecture)
@@ -77,7 +78,7 @@ class smm_code_chk(BaseModule):
         else:
             return True
 
-    def _check_SMM_Code_Chk_En(self, thread_id):
+    def _check_SMM_Code_Chk_En(self, thread_id: int) -> int:
         regval = self.cs.read_register('MSR_SMM_FEATURE_CONTROL', thread_id)
         lock = self.cs.get_register_field('MSR_SMM_FEATURE_CONTROL', regval, 'LOCK')
         code_chk_en = self.cs.get_register_field('MSR_SMM_FEATURE_CONTROL', regval, 'SMM_Code_Chk_En')
@@ -101,7 +102,7 @@ class smm_code_chk(BaseModule):
 
         return res
 
-    def check_SMM_Code_Chk_En(self):
+    def check_SMM_Code_Chk_En(self) -> int:
 
         results = []
         for tid in range(self.cs.msr.get_cpu_thread_count()):
@@ -131,7 +132,7 @@ Please consult the Intel SDM to determine whether or not your CPU supports SMM_C
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SMM_Code_Chk_En (SMM Call-Out) Protection")
         self.res = self.check_SMM_Code_Chk_En()
         return self.res

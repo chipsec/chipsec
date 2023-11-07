@@ -48,7 +48,7 @@ from chipsec.hal.uefi import UEFI, SECURE_BOOT_VARIABLES, IS_VARIABLE_ATTRIBUTE,
 from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.hal.uefi import SECURE_BOOT_OPTIONAL_VARIABLES
 from chipsec.hal.uefi_common import StatusCode
-from typing import AnyStr, Optional
+from typing import AnyStr, List, Optional
 
 # ############################################################
 # SPECIFY PLATFORMS THIS MODULE IS APPLICABLE TO
@@ -195,7 +195,7 @@ class variables(BaseModule):
                 self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
                 return self.rc_res.getReturnCode(ModuleResult.PASSED)
 
-    def run(self, *module_argv: str) -> int:
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('Attributes of Secure Boot EFI Variables')
 
         do_modify = (len(module_argv) > 0) and (module_argv[0] == OPT_MODIFY)

@@ -34,6 +34,7 @@ Registers used:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from typing import List
 
 TAGS = [MTAG_BIOS]
 
@@ -44,7 +45,7 @@ class spi_fdopss(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x9b73a54, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_fdopss.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if not self.cs.register_has_field('HSFS', 'FDOPSS'):
             self.logger.log_important('HSFS.FDOPSS field not defined for platform.  Skipping module.')
             self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
@@ -52,7 +53,7 @@ class spi_fdopss(BaseModule):
             return False
         return True
 
-    def check_fd_security_override_strap(self):
+    def check_fd_security_override_strap(self) -> int:
         hsfs_reg = self.cs.read_register('HSFS')
         self.cs.print_register('HSFS', hsfs_reg)
         fdopss = self.cs.get_register_field('HSFS', hsfs_reg, 'FDOPSS')
@@ -69,7 +70,7 @@ class spi_fdopss(BaseModule):
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Descriptor Security Override Pin-Strap")
         self.res = self.check_fd_security_override_strap()
         return self.res

@@ -42,6 +42,7 @@ Registers used:
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_HWCONFIG
 from chipsec.hal.cmos import CMOS
 from chipsec.config import CHIPSET_CODE_AVN
+from typing import List
 TAGS = [MTAG_BIOS, MTAG_HWCONFIG]
 
 
@@ -55,7 +56,7 @@ class rtclock(BaseModule):
         self.test_offset = 0x38
         self.test_value = 0xAA
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_core() or (self.cs.Cfg.get_chipset_code() == CHIPSET_CODE_AVN):
             if self.cs.is_register_defined('RC'):
                 return True
@@ -66,7 +67,7 @@ class rtclock(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_rtclock(self):
+    def check_rtclock(self) -> int:
         ll = ul = 0
         check_config_regs = self.cs.read_register('RC') != 0xFFFFFFFF
 
@@ -121,7 +122,7 @@ class rtclock(BaseModule):
 
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Protected RTC memory locations")
 
         if len(module_argv) >= 1:

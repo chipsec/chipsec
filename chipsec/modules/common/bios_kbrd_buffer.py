@@ -35,10 +35,11 @@ Examples:
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 from chipsec.logger import print_buffer_bytes
+from typing import List
 
 TAGS = [MTAG_BIOS]
 
-COMMON_FILL_PTRN = "".join(['{:1}'.format((chr(x + 0x1E))) for x in range(32)])
+COMMON_FILL_PTRN = "".join([f'{(chr(x + 0x1E)):1}' for x in range(32)])
 
 
 class bios_kbrd_buffer(BaseModule):
@@ -46,13 +47,13 @@ class bios_kbrd_buffer(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x5ebf705, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_kbrd_buffer.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         return True
 
-    def check_BIOS_keyboard_buffer(self):
+    def check_BIOS_keyboard_buffer(self) -> int:
         kbrd_buf_head = self.cs.mem.read_physical_mem_dword(0x41A) & 0x000000FF
         kbrd_buf_tail = self.cs.mem.read_physical_mem_dword(0x41C) & 0x000000FF
-        self.logger.log("[*] Keyboard buffer head pointer = 0x{:X} (at 0x41A), tail pointer = 0x{:X} (at 0x41C)".format(kbrd_buf_head, kbrd_buf_tail))
+        self.logger.log(f"[*] Keyboard buffer head pointer = 0x{kbrd_buf_head:X} (at 0x41A), tail pointer = 0x{kbrd_buf_tail:X} (at 0x41C)")
         bios_kbrd_buf = self.cs.mem.read_physical_mem(0x41E, 32)
         self.logger.log("[*] Keyboard buffer contents (at 0x41E):")
         print_buffer_bytes(bios_kbrd_buf)
@@ -71,8 +72,8 @@ class bios_kbrd_buffer(BaseModule):
                 break
 
         if (0x1E < kbrd_buf_tail) and (kbrd_buf_tail <= 0x1E + 32):
-            self.logger.log_bad("Keyboard buffer tail points inside the buffer (= 0x{:X})".format(kbrd_buf_tail))
-            self.logger.log("    It may potentially expose lengths of pre-boot passwords. Was your password {:d} characters long?".format((kbrd_buf_tail + 2 - 0x1E) // 2))
+            self.logger.log_bad(f"Keyboard buffer tail points inside the buffer (= 0x{kbrd_buf_tail:X})")
+            self.logger.log(f"    It may potentially expose lengths of pre-boot passwords. Was your password {(kbrd_buf_tail + 2 - 0x1E) // 2:d} characters long?")
 
         self.logger.log("[*] Checking contents of the keyboard buffer..\n")
 
@@ -94,7 +95,7 @@ class bios_kbrd_buffer(BaseModule):
     # run( module_argv )
     # Required function: run here all tests from this module
     # --------------------------------------------------------------------------
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Pre-boot Passwords in the BIOS Keyboard Buffer")
         self.res = self.check_BIOS_keyboard_buffer()
         return self.res

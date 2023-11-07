@@ -41,6 +41,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
 from chipsec.hal.spi import FLASH_DESCRIPTOR
+from typing import List
 
 TAGS = [MTAG_BIOS]
 
@@ -51,7 +52,7 @@ class spi_desc(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x63fa19c, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_desc.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.register_has_all_fields('FRAP', ['BRRA', 'BRWA']):
             return True
         self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
@@ -61,7 +62,7 @@ class spi_desc(BaseModule):
 
     ##
     # Displays the SPI Regions Access Permissions
-    def check_flash_access_permissions(self):
+    def check_flash_access_permissions(self) -> int:
 
         res = ModuleResult.PASSED
         frap = self.cs.read_register('FRAP')
@@ -69,7 +70,7 @@ class spi_desc(BaseModule):
         brra = self.cs.get_register_field('FRAP', frap, 'BRRA')
         brwa = self.cs.get_register_field('FRAP', frap, 'BRWA')
 
-        self.logger.log("[*] Software access to SPI flash regions: read = 0x{:02X}, write = 0x{:02X}".format(brra, brwa))
+        self.logger.log(f"[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}")
         if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
             self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
@@ -84,7 +85,7 @@ class spi_desc(BaseModule):
         
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Region Access Control")
         self.res = self.check_flash_access_permissions()
         return self.res

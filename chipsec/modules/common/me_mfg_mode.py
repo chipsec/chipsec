@@ -93,6 +93,7 @@ Hardware registers used:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult
+from typing import List
 
 
 class me_mfg_mode(BaseModule):
@@ -101,7 +102,7 @@ class me_mfg_mode(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x98e5e8c, 'https://chipsec.github.io/modules/chipsec.modules.common.me_mfg_mode.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_device_enabled("MEI1"):
             return True
         else:
@@ -110,7 +111,7 @@ class me_mfg_mode(BaseModule):
             self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
 
-    def check_me_mfg_mode(self):
+    def check_me_mfg_mode(self) -> int:
         me_mfg_mode_res = ModuleResult.FAILED
         me_hfs_reg = self.cs.read_register('HFS')
         me_mfg_mode = self.cs.get_register_field('HFS', me_hfs_reg, 'MFG_MODE')
@@ -125,7 +126,7 @@ class me_mfg_mode(BaseModule):
         return self.rc_res.getReturnCode(me_mfg_mode_res)
 
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("ME Manufacturing Mode")
         self.res = self.check_me_mfg_mode()
         return self.res

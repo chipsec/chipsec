@@ -42,14 +42,14 @@ Registers used:
 import struct
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.defines import bytestostring
-
+from typing import List
 
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
         self.rc_res = ModuleResult(0x74b9b60, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.register_has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
             return True
         self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
@@ -57,7 +57,7 @@ class cpu_info(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         # Log the start of the test
         self.logger.start_test('Current Processor Information:')
 
@@ -73,7 +73,7 @@ class cpu_info(BaseModule):
                 self.cs.helper.set_affinity(thread)
 
             # Display thread
-            self.logger.log('[*] Thread {:04d}'.format(thread))
+            self.logger.log(f'[*] Thread {thread:04d}')
 
             # Get processor brand string
             brand = ''
@@ -82,7 +82,7 @@ class cpu_info(BaseModule):
                 for i in range(4):
                     brand += bytestostring(struct.pack('<I', regs[i]))
             brand = brand.rstrip('\x00')
-            self.logger.log('[*] Processor: {}'.format(brand))
+            self.logger.log(f'[*] Processor: {brand}')
 
             # Get processor version information
             (eax, _, _, _) = self.cs.cpu.cpuid(0x01, 0x00)
@@ -93,11 +93,11 @@ class cpu_info(BaseModule):
                 model = ((eax >> 12) & 0xF0) | model
             if family == 0x0F:
                 family = ((eax >> 20) & 0xFF) | family
-            self.logger.log('[*]            Family: {:02X} Model: {:02X} Stepping: {:01X}'.format(family, model, stepping))
+            self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
             # Get microcode revision
             microcode_rev = self.cs.read_register_field('IA32_BIOS_SIGN_ID', 'Microcode', cpu_thread=thread)
-            self.logger.log('[*]            Microcode: {:08X}'.format(microcode_rev))
+            self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')
             self.logger.log('[*]')
 
         self.logger.log_information('Processor information displayed')

@@ -53,6 +53,7 @@ Examples:
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.hal.smbus import SMBus
 from chipsec.hal.spd import SPD
+from typing import List
 
 
 class spd_wd(BaseModule):
@@ -61,7 +62,7 @@ class spd_wd(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x122cf72, 'https://chipsec.github.io/modules/chipsec.modules.common.spd_wd.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if self.cs.is_device_enabled('SMBUS'):
             if self.cs.register_has_field('SMBUS_HCFG', 'SPD_WD'):
                 return True
@@ -73,7 +74,7 @@ class spd_wd(BaseModule):
         self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
-    def check_spd_wd(self):
+    def check_spd_wd(self) -> int:
         try:
             _smbus = SMBus(self.cs)
             _spd = SPD(_smbus)
@@ -103,7 +104,7 @@ class spd_wd(BaseModule):
 
         return self.rc_res.getReturnCode(self.res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPD Write Disable")
         self.logger.log('')
 

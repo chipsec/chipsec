@@ -42,6 +42,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.defines import BIT11
+from typing import List
 
 _MODULE_NAME = 'debugenabled'
 
@@ -55,7 +56,7 @@ class debugenabled(BaseModule):
         self.is_debug_set = False
         self.is_lock_set = True
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         # Use CPUID Function 1 to determine if the IA32_DEBUG_INTERFACE MSR is supported.
         # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
         (_, _, ecx, _) = self.cs.cpu.cpuid(1, 0)
@@ -66,7 +67,7 @@ class debugenabled(BaseModule):
             self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
-    def check_dci(self):
+    def check_dci(self) -> int:
         TestFail = ModuleResult.PASSED
         self.logger.log('')
         self.logger.log('[*] Checking DCI register status')
@@ -82,7 +83,7 @@ class debugenabled(BaseModule):
             self.logger.log_good('DCI Debug is disabled')
         return TestFail
 
-    def check_cpu_debug_enable(self):
+    def check_cpu_debug_enable(self) -> int:
         self.logger.log('')
         self.logger.log('[*] Checking IA32_DEBUG_INTERFACE MSR status')
         TestFail = ModuleResult.PASSED
@@ -115,7 +116,7 @@ class debugenabled(BaseModule):
                 self.logger.log_good('CPU debug interface state is correct.')
         return TestFail
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('Debug features test')
 
         cpu_debug_test_fail = self.check_cpu_debug_enable()

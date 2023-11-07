@@ -43,6 +43,7 @@ Registers used:
 """
 
 from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM
+from typing import List
 
 
 TAGS = [MTAG_BIOS, MTAG_SMM]
@@ -54,7 +55,7 @@ class bios_smi(BaseModule):
         BaseModule.__init__(self)
         self.rc_res = ModuleResult(0x744c3dc, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_smi.html')
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         if not self.cs.is_control_defined('SmmBiosWriteProtection') or \
            not self.cs.is_control_defined('TCOSMILock') or \
            not self.cs.is_control_defined('SMILock') or \
@@ -65,7 +66,7 @@ class bios_smi(BaseModule):
             return False
         return True
 
-    def check_SMI_locks(self):
+    def check_SMI_locks(self) -> int:
 
         #
         # Checking SMM_BWP first in BIOS control to warn if SMM write-protection of the BIOS is not enabled
@@ -86,8 +87,8 @@ class bios_smi(BaseModule):
             self.logger.log("[*] Checking SMI enables..")
             tco_en = self.cs.get_control('TCOSMIEnable')
             gbl_smi_en = self.cs.get_control('GlobalSMIEnable')
-            self.logger.log("    Global SMI enable: {:d}".format(gbl_smi_en))
-            self.logger.log("    TCO SMI enable   : {:d}".format(tco_en))
+            self.logger.log(f"    Global SMI enable: {gbl_smi_en:d}")
+            self.logger.log(f"    TCO SMI enable   : {tco_en:d}")
 
             if gbl_smi_en != 1:
                 ok = False
@@ -138,7 +139,7 @@ class bios_smi(BaseModule):
         
         return self.rc_res.getReturnCode(res)
 
-    def run(self, module_argv):
+    def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SMI Events Configuration")
         self.res = self.check_SMI_locks()
         return self.res
