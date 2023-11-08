@@ -23,7 +23,7 @@ Contains platform identification functions
 """
 import errno
 import traceback
-from typing import Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
@@ -231,21 +231,28 @@ class Chipset:
         """Check support for multiple architecture VIDs"""
         return self.Cfg.vid in arch_vid
 
-    def init_cfg_bus(self):
+    def init_cfg_bus(self) -> None:
         logger().log_debug('[*] Loading device buses..')
+        old_log_state = (False, False, False)
         if QUIET_PCI_ENUM:
-            old_log_state = (logger().HAL, logger().DEBUG, logger().VERBOSE)
-            logger().HAL, logger().DEBUG, logger().VERBOSE = (False, False, False)
-            logger().setlevel()
+            old_log_state = self.save_log_state()
+            self.set_log_state((False, False, False))
         try:
             enum_devices = self.pci.enumerate_devices()
         except Exception:
             logger().log_debug('[*] Unable to enumerate PCI devices.')
             enum_devices = []
         if QUIET_PCI_ENUM:
-            logger().HAL, logger().DEBUG, logger().VERBOSE = old_log_state
-            logger().setlevel()
+            self.set_log_state(old_log_state)
         self.Cfg.set_pci_data(enum_devices)
+
+    def set_log_state(self, log_state: Tuple[bool, bool, bool]) -> None:
+        logger().HAL, logger().DEBUG, logger().VERBOSE = log_state
+        logger().setlevel()
+
+    def save_log_state(self) -> Tuple[bool, bool, bool]:
+        old_log_state = (logger().HAL, logger().DEBUG, logger().VERBOSE)
+        return old_log_state
 
 
     ##################################################################################
@@ -363,41 +370,53 @@ class Chipset:
             return False
         else:
             return True
+        
+    def get_pci_register_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
+        if dev_name in self.Cfg.CONFIG_PCI:
+            dev = self.Cfg.CONFIG_PCI[dev_name]
+            reg_def['bus'] = self.get_first_bus(dev)
+            reg_def['dev'] = dev['dev']
+            reg_def['fun'] = dev['fun']
+        return reg_def
+    
+    def get_memory_register_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
+        if dev_name in self.Cfg.MEMORY_RANGES:
+            dev = self.Cfg.MEMORY_RANGES[dev_name]
+            reg_def['address'] = dev['address']
+            reg_def['access'] = dev['access']
+        else:
+            logger().log_error(f'Memory device {dev_name} not found')
+        return reg_def
 
-    def get_register_def(self, reg_name):
+    def get_indirect_register_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
+        if dev_name in self.Cfg.IMA_REGISTERS:
+            dev = self.Cfg.IMA_REGISTERS[dev_name]
+            if ('base' in dev):
+                reg_def['base'] = dev['base']
+            else:
+                reg_def['base'] = "0"
+            if (dev['index'] in self.Cfg.REGISTERS):
+                reg_def['index'] = dev['index']
+            else:
+                logger().log_error(f'Index register {dev["index"]} not found')
+            if (dev['data'] in self.Cfg.REGISTERS):
+                reg_def['data'] = dev['data']
+            else:
+                logger().log_error(f'Data register {dev["data"]} not found')
+        else:
+            logger().log_error(f'Indirect access device {dev_name} not found')
+        return reg_def
+
+    def get_register_def(self, reg_name: str):
         reg_def = self.Cfg.REGISTERS[reg_name]
         if "device" in reg_def:
             dev_name = reg_def["device"]
             if reg_def["type"] in ["pcicfg", "mmcfg"]:
-                if dev_name in self.Cfg.CONFIG_PCI:
-                    dev = self.Cfg.CONFIG_PCI[dev_name]
-                    reg_def['bus'] = self.get_first_bus(dev)
-                    reg_def['dev'] = dev['dev']
-                    reg_def['fun'] = dev['fun']
+                reg_def = self.get_pci_register_def(reg_def, dev_name)
             elif reg_def["type"] == "memory":
-                if dev_name in self.Cfg.MEMORY_RANGES:
-                    dev = self.Cfg.MEMORY_RANGES[dev_name]
-                    reg_def['address'] = dev['address']
-                    reg_def['access'] = dev['access']
-                else:
-                    logger().log_error(f'Memory device {dev_name} not found')
+                reg_def = self.get_memory_register_def(reg_def, dev_name)
             elif reg_def["type"] == "indirect":
-                if dev_name in self.Cfg.IMA_REGISTERS:
-                    dev = self.Cfg.IMA_REGISTERS[dev_name]
-                    if ('base' in dev):
-                        reg_def['base'] = dev['base']
-                    else:
-                        reg_def['base'] = "0"
-                    if (dev['index'] in self.Cfg.REGISTERS):
-                        reg_def['index'] = dev['index']
-                    else:
-                        logger().log_error(f'Index register {dev["index"]} not found')
-                    if (dev['data'] in self.Cfg.REGISTERS):
-                        reg_def['data'] = dev['data']
-                    else:
-                        logger().log_error(f'Data register {dev["data"]} not found')
-                else:
-                    logger().log_error(f'Indirect access device {dev_name} not found')
+                reg_def = self.get_indirect_register_def(reg_def, dev_name)
         return reg_def
 
     def get_register_bus(self, reg_name):
@@ -431,71 +450,98 @@ class Chipset:
                 logger().log_important(f"No bus value defined for device '{dev_name}'")
         return buses
 
-    def read_register(self, reg_name, cpu_thread=0, bus=None, do_check=True):
+    def read_pci_register(self, bus: Optional[int], reg: Dict[str, Any], rtype: str, do_check: bool) -> int:
+        reg_value = 0
+        if bus is not None:
+            b = self.get_first(bus)
+        else:
+            b = self.get_first_bus(reg)
+        d = reg['dev']
+        f = reg['fun']
+        o = reg['offset']
+        size = reg['size']
+        if do_check and self.consistency_checking:
+            if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
+                raise CSReadError(f'PCI Device is not available ({b}:{d}.{f})')
+        if RegisterType.PCICFG == rtype:
+            if 1 == size:
+                reg_value = self.pci.read_byte(b, d, f, o)
+            elif 2 == size:
+                reg_value = self.pci.read_word(b, d, f, o)
+            elif 4 == size:
+                reg_value = self.pci.read_dword(b, d, f, o)
+            elif 8 == size:
+                reg_value = (self.pci.read_dword(b, d, f, o + 4) << 32) | self.pci.read_dword(b, d, f, o)
+        elif RegisterType.MMCFG == rtype:
+            reg_value = self.mmio.read_mmcfg_reg(b, d, f, o, size)
+        return reg_value
+
+    def read_mmio_register(self, bus: Optional[int], reg: Dict[str, Any]) -> int:
+        _bus = bus
+        if self.mmio.get_MMIO_BAR_base_address(reg['bar'], _bus)[0] != 0:
+            reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], reg['offset'], reg['size'], _bus)
+        else:
+            raise CSReadError(f'MMIO Bar ({reg["bar"]}) base address is 0')
+        return reg_value
+
+    def read_msr_register(self, cpu_thread: int, reg: Dict[str, Any]) -> int:
+        (eax, edx) = self.msr.read_msr(cpu_thread, reg['msr'])
+        return (edx << 32) | eax
+    
+    def read_portio_register(self, reg: Dict[str, Any]) -> int:
+        port = reg['port']
+        size = reg['size']
+        return self.io._read_port(port, size)
+    
+    def read_iobar_register(self, reg: Dict[str, Any]) -> int:
+        if self.iobar.get_IO_BAR_base_address(reg['bar'])[0] != 0:
+            reg_value = self.iobar.read_IO_BAR_reg(reg['bar'], reg['offset'], reg['size'])
+        else:
+            raise CSReadError(f'IO Bar ({reg["bar"]}) base address is 0')
+        return reg_value
+    
+    def read_memory_register(self, reg: Dict[str, Any]) -> int:
+        reg_value = 0
+        if reg['access'] == 'dram':
+            size = reg['size']
+            if 1 == size:
+                reg_value = self.mem.read_physical_mem_byte(reg['address'])
+            elif 2 == size:
+                reg_value = self.mem.read_physical_mem_word(reg['address'])
+            elif 4 == size:
+                reg_value = self.mem.read_physical_mem_dword(reg['address'])
+            elif 8 == size:
+                reg_value = self.mem.read_physical_mem_qword(reg['address'])
+        elif reg['access'] == 'mmio':
+            reg_value = self.mmio.read_MMIO_reg(reg['address'], reg['offset'], reg['size'])
+        return reg_value
+    
+    def read_ima_regsiter(self, reg: Dict[str, Any]) -> int:
+        self.write_register(reg['index'], reg['offset'] + reg['base'])
+        return self.read_register(reg['data'])
+
+    def read_register(self, reg_name, cpu_thread=0, bus=None, do_check=True) -> int:
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         reg_value = 0
-        if (RegisterType.PCICFG == rtype) or (RegisterType.MMCFG == rtype):
-            if bus is not None:
-                b = self.get_first(bus)
-            else:
-                b = self.get_first_bus(reg)
-            d = reg['dev']
-            f = reg['fun']
-            o = reg['offset']
-            size = reg['size']
-            if do_check and self.consistency_checking:
-                if self.pci.get_DIDVID(b, d, f) == (0xFFFF, 0xFFFF):
-                    raise CSReadError(f'PCI Device is not available ({b}:{d}.{f})')
-            if RegisterType.PCICFG == rtype:
-                if 1 == size:
-                    reg_value = self.pci.read_byte(b, d, f, o)
-                elif 2 == size:
-                    reg_value = self.pci.read_word(b, d, f, o)
-                elif 4 == size:
-                    reg_value = self.pci.read_dword(b, d, f, o)
-                elif 8 == size:
-                    reg_value = (self.pci.read_dword(b, d, f, o + 4) << 32) | self.pci.read_dword(b, d, f, o)
-            elif RegisterType.MMCFG == rtype:
-                reg_value = self.mmio.read_mmcfg_reg(b, d, f, o, size)
-        elif RegisterType.MMIO == rtype:
-            _bus = bus
-            if self.mmio.get_MMIO_BAR_base_address(reg['bar'], _bus)[0] != 0:
-                reg_value = self.mmio.read_MMIO_BAR_reg(reg['bar'], reg['offset'], reg['size'], _bus)
-            else:
-                raise CSReadError(f'MMIO Bar ({reg["bar"]}) base address is 0')
-        elif RegisterType.MSR == rtype:
-            (eax, edx) = self.msr.read_msr(cpu_thread, reg['msr'])
-            reg_value = (edx << 32) | eax
-        elif RegisterType.PORTIO == rtype:
-            port = reg['port']
-            size = reg['size']
-            reg_value = self.io._read_port(port, size)
-        elif RegisterType.IOBAR == rtype:
-            if self.iobar.get_IO_BAR_base_address(reg['bar'])[0] != 0:
-                reg_value = self.iobar.read_IO_BAR_reg(reg['bar'], reg['offset'], reg['size'])
-            else:
-                raise CSReadError(f'IO Bar ({reg["bar"]}) base address is 0')
-        elif RegisterType.MSGBUS == rtype:
+        if (rtype == RegisterType.PCICFG) or (rtype == RegisterType.MMCFG):
+            reg_value = self.read_pci_register(bus, reg, rtype, do_check)
+        elif rtype == RegisterType.MMIO:
+            reg_value = self.read_mmio_register(bus, reg)
+        elif rtype == RegisterType.MSR:
+            reg_value = self.read_msr_register(cpu_thread, reg)
+        elif rtype == RegisterType.PORTIO:
+            reg_value = self.read_portio_register(reg)
+        elif rtype == RegisterType.IOBAR:
+            reg_value = self.read_iobar_register(reg)
+        elif rtype == RegisterType.MSGBUS:
             reg_value = self.msgbus.msgbus_reg_read(reg['port'], reg['offset'])
-        elif RegisterType.MM_MSGBUS == rtype:
+        elif rtype == RegisterType.MM_MSGBUS:
             reg_value = self.msgbus.mm_msgbus_reg_read(reg['port'], reg['offset'])
-        elif RegisterType.MEMORY == rtype:
-            if reg['access'] == 'dram':
-                size = reg['size']
-                if 1 == size:
-                    reg_value = self.mem.read_physical_mem_byte(reg['address'])
-                elif 2 == size:
-                    reg_value = self.mem.read_physical_mem_word(reg['address'])
-                elif 4 == size:
-                    reg_value = self.mem.read_physical_mem_dword(reg['address'])
-                elif 8 == size:
-                    reg_value = self.mem.read_physical_mem_qword(reg['address'])
-            elif reg['access'] == 'mmio':
-                reg_value = self.mmio.read_MMIO_reg(reg['address'], reg['offset'], reg['size'])
-        elif RegisterType.IMA == rtype:
-            self.write_register(reg['index'], reg['offset'] + reg['base'])
-            reg_value = self.read_register(reg['data'])
+        elif rtype == RegisterType.MEMORY:
+            reg_value = self.read_memory_register(reg)
+        elif rtype == RegisterType.IMA:
+            reg_value = self.read_ima_regsiter(reg)
         else:
             raise RegisterTypeNotFoundError(f'Register type not found: {rtype}')
 
@@ -526,85 +572,110 @@ class Chipset:
             values.append(self.read_register(reg_name, cpu_thread))
         return values
 
+    def write_pci_register(self, bus: Optional[int], reg: Dict[str, Any], rtype: str, reg_value: int) -> None:
+        if bus is not None:
+            b = bus
+        else:
+            b = self.get_first_bus(reg)
+        d = reg['dev']
+        f = reg['fun']
+        o = reg['offset']
+        size = reg['size']
+        if RegisterType.PCICFG == rtype:
+            if 1 == size:
+                self.pci.write_byte(b, d, f, o, reg_value)
+            elif 2 == size:
+                self.pci.write_word(b, d, f, o, reg_value)
+            elif 4 == size:
+                self.pci.write_dword(b, d, f, o, reg_value)
+            elif 8 == size:
+                self.pci.write_dword(b, d, f, o, (reg_value & 0xFFFFFFFF))
+                self.pci.write_dword(b, d, f, o + 4, (reg_value >> 32 & 0xFFFFFFFF))
+        elif RegisterType.MMCFG == rtype:
+            self.mmio.write_mmcfg_reg(b, d, f, o, size, reg_value)
+
+    def write_msr_register(self, reg: Dict[str, Any], reg_value: int, cpu_thread: int) -> None:
+        eax = (reg_value & 0xFFFFFFFF)
+        edx = ((reg_value >> 32) & 0xFFFFFFFF)
+        self.msr.write_msr(cpu_thread, reg['msr'], eax, edx)
+
+    def write_portio_register(self, reg: Dict[str, Any], reg_value: int) -> None:
+        port = reg['port']
+        size = reg['size']
+        self.io._write_port(port, reg_value, size)
+
+    def write_memory_register(self, reg: Dict[str, Any], reg_value: int) -> None:
+        if reg['access'] == 'dram':
+            self.mem.write_physical_mem(reg['address'], reg['size'], reg_value)
+        elif reg['access'] == 'mmio':
+            self.mmio.write_MMIO_reg(reg['address'], reg['offset'], reg_value, reg['size'])
+
+    def write_ima_register(self, reg: Dict[str, Any], reg_value: int) -> None:
+        self.write_register(reg['index'], reg['offset'] + reg['base'])
+        self.write_register(reg['data'], reg_value)
+
     def write_register(self, reg_name, reg_value, cpu_thread=0, bus=None):
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
-        if (RegisterType.PCICFG == rtype) or (RegisterType.MMCFG == rtype):
-            if bus is not None:
-                b = bus
-            else:
-                b = self.get_first_bus(reg)
-            d = reg['dev']
-            f = reg['fun']
-            o = reg['offset']
-            size = reg['size']
-            if RegisterType.PCICFG == rtype:
-                if 1 == size:
-                    self.pci.write_byte(b, d, f, o, reg_value)
-                elif 2 == size:
-                    self.pci.write_word(b, d, f, o, reg_value)
-                elif 4 == size:
-                    self.pci.write_dword(b, d, f, o, reg_value)
-                elif 8 == size:
-                    self.pci.write_dword(b, d, f, o, (reg_value & 0xFFFFFFFF))
-                    self.pci.write_dword(b, d, f, o + 4, (reg_value >> 32 & 0xFFFFFFFF))
-            elif RegisterType.MMCFG == rtype:
-                self.mmio.write_mmcfg_reg(b, d, f, o, size, reg_value)
-        elif RegisterType.MMIO == rtype:
+        if (rtype == RegisterType.PCICFG) or (rtype == RegisterType.MMCFG):
+            self.write_pci_register(bus, reg, rtype, reg_value)
+        elif rtype == RegisterType.MMIO:
             self.mmio.write_MMIO_BAR_reg(reg['bar'], reg['offset'], reg_value, reg['size'], bus)
-        elif RegisterType.MSR == rtype:
-            eax = (reg_value & 0xFFFFFFFF)
-            edx = ((reg_value >> 32) & 0xFFFFFFFF)
-            self.msr.write_msr(cpu_thread, reg['msr'], eax, edx)
-        elif RegisterType.PORTIO == rtype:
-            port = reg['port']
-            size = reg['size']
-            self.io._write_port(port, reg_value, size)
-        elif RegisterType.IOBAR == rtype:
+        elif rtype == RegisterType.MSR:
+            self.write_msr_register(reg, reg_value, cpu_thread)
+        elif rtype == RegisterType.PORTIO:
+            self.write_portio_register(reg, reg_value)
+        elif rtype == RegisterType.IOBAR:
             self.iobar.write_IO_BAR_reg(reg['bar'], reg['offset'], reg['size'], reg_value)
-        elif RegisterType.MSGBUS == rtype:
+        elif rtype == RegisterType.MSGBUS:
             self.msgbus.msgbus_reg_write(reg['port'], reg['offset'], reg_value)
-        elif RegisterType.MM_MSGBUS == rtype:
+        elif rtype == RegisterType.MM_MSGBUS:
             self.msgbus.mm_msgbus_reg_write(reg['port'], reg['offset'], reg_value)
-        elif RegisterType.MEMORY == rtype:
-            if reg['access'] == 'dram':
-                self.mem.write_physical_mem(reg['address'], reg['size'], reg_value)
-            elif reg['access'] == 'mmio':
-                self.mmio.write_MMIO_reg(reg['address'], reg['offset'], reg_value, reg['size'])
-        elif RegisterType.IMA == rtype:
-            self.write_register(reg['index'], reg['offset'] + reg['base'])
-            self.write_register(reg['data'], reg_value)
+        elif rtype == RegisterType.MEMORY:
+            self.write_memory_register(reg, reg_value)
+        elif rtype == RegisterType.IMA:
+            self.write_ima_register(reg, reg_value)
         else:
             raise RegisterTypeNotFoundError(f'Register type not found: {rtype}')
         return True
 
+    def write_msr_register_all(self, reg, reg_name, reg_values) -> bool:
+        ret = False
+        topology = self.cpu.get_cpu_topology()
+        if 'scope' in reg.keys() and reg['scope'] == "packages":
+            packages = topology['packages']
+            threads_to_use = [packages[p][0] for p in packages]
+        elif 'scope' in reg.keys() and reg['scope'] == "cores":
+            cores = topology['cores']
+            threads_to_use = [cores[p][0] for p in cores]
+        else:  # Default to threads
+            threads_to_use = range(self.helper.get_threads_count())
+        if len(reg_values) == len(threads_to_use):
+            value = 0
+            for t in threads_to_use:
+                self.write_register(reg_name, reg_values[value], t)
+                value += 1
+            ret = True
+        return ret
+    
+    def write_pci_register_all(self, reg_name, reg_values, cpu_thread, bus_data) -> bool:
+        ret = False
+        values = len(bus_data)
+        if len(reg_values) == values:
+            for index in range(values):
+                self.write_register(reg_name, reg_values[index], cpu_thread, bus_data[index])
+            ret = True
+        return ret
+    
     def write_register_all(self, reg_name, reg_values, cpu_thread=0):
         reg = self.get_register_def(reg_name)
         rtype = reg['type']
         bus_data = self.get_register_bus(reg_name)
         ret = False
-        if RegisterType.MSR == rtype:
-            topology = self.cpu.get_cpu_topology()
-            if 'scope' in reg.keys() and reg['scope'] == "packages":
-                packages = topology['packages']
-                threads_to_use = [packages[p][0] for p in packages]
-            elif 'scope' in reg.keys() and reg['scope'] == "cores":
-                cores = topology['cores']
-                threads_to_use = [cores[p][0] for p in cores]
-            else:  # Default to threads
-                threads_to_use = range(self.helper.get_threads_count())
-            if len(reg_values) == len(threads_to_use):
-                value = 0
-                for t in threads_to_use:
-                    self.write_register(reg_name, reg_values[value], t)
-                    value += 1
-                ret = True
+        if rtype == RegisterType.MSR:
+            ret = self.write_msr_register_all(reg, reg_name, reg_values)
         elif rtype in [RegisterType.MMCFG, RegisterType.PCICFG, RegisterType.MMIO] and bus_data:
-            values = len(bus_data)
-            if len(reg_values) == values:
-                for index in range(values):
-                    self.write_register(reg_name, reg_values[index], cpu_thread, bus_data[index])
-                ret = True
+            ret = self.write_pci_register_all(reg_name, reg_values, cpu_thread, bus_data)
         else:
             if len(reg_values) == 1:
                 self.write_register(reg_name, reg_values[0])
