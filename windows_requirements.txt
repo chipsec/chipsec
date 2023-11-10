@@ -4,3 +4,4 @@ WConio2
 brotli >=1.0.9
 pycryptodome
 pylint
+pyyaml
