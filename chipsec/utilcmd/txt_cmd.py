@@ -28,6 +28,7 @@ Usage:
 from argparse import ArgumentParser
 from chipsec.command import BaseCommand, toLoad
 from chipsec.exceptions import HWAccessViolationError
+from chipsec.testcase import ExitCode
 import struct
 
 
@@ -66,10 +67,10 @@ class TXTCommand(BaseCommand):
         value = self.cs.read_register(reg_name)
         desc = reg_def["desc"]
         if reg_def["type"] == "memory":
-            addr = int(reg_def["address"], 16) + int(reg_def["offset"], 16)
+            addr = reg_def["address"] + reg_def["offset"]
             desc += ", at {:08X}".format(addr)
         self.logger.log("[CHIPSEC] {} = 0x{:0{width}X} ({})".format(
-            reg_name, value, desc, width=int(reg_def['size'], 16) * 2))
+            reg_name, value, desc, width=reg_def['size'] * 2))
 
         if 'FIELDS' in reg_def:
             sorted_fields = sorted(reg_def['FIELDS'].items(), key=lambda field: int(field[1]['bit']))
@@ -162,5 +163,10 @@ class TXTCommand(BaseCommand):
         self._log_register("TXT_PCH_DIDVID")
         self._log_register("INSMM")
 
+    def run(self):
+        try:
+            self.func()
+        except Exception:
+            self.ExitCode = ExitCode.ERROR
 
 commands = {'txt': TXTCommand}

@@ -46,12 +46,14 @@ class smm(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x3486891, 'https://chipsec.github.io/modules/chipsec.modules.common.smm.html')
 
     def is_supported(self):
         if self.cs.is_core() and self.cs.is_register_defined('PCI0.0.0_SMRAMC'):
             return True
         self.logger.log("Either not a Core (client) platform or 'PCI0.0.0_SMRAMC' not defined for platform. Skipping module.")
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_SMRAMC(self):
@@ -72,11 +74,13 @@ class smm(BaseModule):
             else:
                 res = ModuleResult.FAILED
                 self.logger.log_failed("Compatible SMRAM is not properly locked. Expected ( D_LCK = 1, D_OPEN = 0 )")
+                self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
         else:
-            res = ModuleResult.SKIPPED
+            res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.FEATURE_DISABLED)
             self.logger.log("[*] Compatible SMRAM is not enabled. Skipping..")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
@@ -84,6 +88,5 @@ class smm(BaseModule):
     # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("Compatible SMM memory (SMRAM) Protection")
-
         self.res = self.check_SMRAMC()
         return self.res

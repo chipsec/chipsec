@@ -12,9 +12,6 @@ messages and meaning of information returned by CHIPSEC.
 Results
 -------
 
-Currently, the SKIPPED return value is ambiguous. The proposed **new**
-definition of the return values is listed below:
-
 .. list-table:: Generic results meanings
    :widths: 25 25
    :header-rows: 1
@@ -27,7 +24,7 @@ definition of the return values is listed below:
      - A known **vulnerability** has been detected
    * - WARNING
      - We have detected something that could be a vulnerability but **manual analysis is required** to confirm (inconclusive)
-   * - NOT_APPLICABLE (SKIPPED)
+   * - NOT_APPLICABLE
      - The issue checked by this module is not applicable to this platform. This result can be ignored
    * - INFORMATION
      - This module does not check for a vulnerability. It just prints information about the system

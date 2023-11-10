@@ -51,6 +51,10 @@ EVTCHOP_INIT_CONTROL = 11
 
 
 class xsa188(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x13a3575, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.xen.xsa188.html')
+
     def run(self, module_argv):
         self.logger.start_test('Xen XSA-188 PoC check')
         (args_va, args_pa) = self.cs.mem.alloc_physical_mem(0x1000, 0xFFFFFFFFFFFFFFFF)
@@ -62,5 +66,6 @@ class xsa188(BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res

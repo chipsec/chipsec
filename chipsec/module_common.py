@@ -38,31 +38,35 @@ class ModuleResult:
     FAILED = 0
     PASSED = 1
     WARNING = 2
-    SKIPPED = 3
     DEPRECATED = 4
     INFORMATION = 5
     NOTAPPLICABLE = 6
     ERROR = -1
     # -------------------------------------------------------
     class status(Enum):
-        SUCCESS = [0x0000000000000000, "Test module completed successfully"]
-        LOCKS = [bit(31), "Locks are not set"] 
-        MITIGATION = [bit(30), "Does not support mitigation"]
-        CONFIGURATION = [bit(29), "Configuration not set"] 
-        PROTECTION = [bit(28), "Protection not supported/enabled"]
-        ACCESS_RW = [bit(27), "Read or write access issues"]
-        ALL_FFS = [bit(19), "Read returned all 0xFFs"]
-        ALL_00S = [bit(18), "Read returned all 0x00s"]
-        DEVICE_DISABLED = [bit(17), "Device is disabled"]
-        FEATURE_DISABLED = [bit(16), "Feature is disabled"]
-        VERIFY = [bit(12), "Manual verification/further testing recommended"]
-        UNSUPPORTED_FEATURE = [bit(11), "Feature not supported"] 
-        DEBUG_FEATURE = [bit(10), "A debug feature is enabled or an unexpected debug state was discovered on this platform"]
-        NOT_APPLICABLE = [bit(9), "Skipping module since it is not supported"]
-        INFORMATION = [bit(0), "For your information"]
-        INVALID = [0xFFFFFFFFFFFFFFFF, "Error running the test"]
+        SUCCESS = [0x0000000000000000, 'Test module completed successfully']
+        LOCKS = [bit(31), 'Locks are not set'] 
+        MITIGATION = [bit(30), 'Does not support mitigation']
+        CONFIGURATION = [bit(29), 'Configuration not valid'] 
+        PROTECTION = [bit(28), 'Protection not supported/enabled']
+        ACCESS_RW = [bit(27), 'Read or write access issues']
+        RESTORE = [bit(26), 'Cannot restore binary/value']
+        POTENTIALLY_VULNERABLE = [bit(25), 'Found potential vulnerabilities']
+        ALL_FFS = [bit(19), 'Read returned all 0xFFs']
+        ALL_00S = [bit(18), 'Read returned all 0x00s']
+        DEVICE_DISABLED = [bit(17), 'Device is disabled']
+        FEATURE_DISABLED = [bit(16), 'Feature is disabled']
+        PARSE_ERROR = [bit(15), 'Issue parsing the data']
+        UNDEFINED_RANGES = [bit(14), 'Memory ranges are not defined']
+        VERIFY = [bit(12), 'Manual verification/further testing recommended']
+        UNSUPPORTED_FEATURE = [bit(11), 'Feature not supported']
+        UNSUPPORTED_OPTION = [bit(10), 'Option not supported'] 
+        DEBUG_FEATURE = [bit(9), 'A debug feature is enabled or an unexpected debug state was discovered on this platform']
+        NOT_APPLICABLE = [bit(8), 'Skipping module since it is not supported']
+        INFORMATION = [bit(0), 'For your information']
+        INVALID = [0xFFFFFFFFFFFFFFFF, 'Error running the test']
     
-    def __init__(self, ID: int = 0, url: str = ""):
+    def __init__(self, ID: int = 0, url: str = ''):
         self._id = ID
         self._url = url
         self._result = 0x00000000
@@ -83,7 +87,7 @@ class ModuleResult:
 
     def printLogOutput(self) -> None:
         if self._result == self.status.SUCCESS.value[0]:   
-            self.logger.log_good(f"RC 0x{self._return_code:016x}: {self.status.SUCCESS.value[1]}")
+            self.logger.log_good(f'RC 0x{self._return_code:016x}: {self.status.SUCCESS.value[1]}')
         else:  
             self.logger.log_important(f"For next steps: {self._url}")
             self.logger.log_important(f"RC 0x{self._return_code:016x}: {self._message}")
@@ -107,7 +111,6 @@ result_priority = {
     ModuleResult.PASSED: 0,
     ModuleResult.NOTAPPLICABLE: 0,
     ModuleResult.DEPRECATED: 0,
-    ModuleResult.SKIPPED: 0,
     ModuleResult.INFORMATION: 1,
     ModuleResult.WARNING: 2,
     ModuleResult.FAILED: 3,
@@ -115,19 +118,18 @@ result_priority = {
 }
 
 ModuleResultName = {
-    ModuleResult.FAILED: "Failed",
-    ModuleResult.PASSED: "Passed",
-    ModuleResult.WARNING: "Warning",
-    ModuleResult.SKIPPED: "Skipped",
-    ModuleResult.DEPRECATED: "Deprecated",
-    ModuleResult.INFORMATION: "Information",
-    ModuleResult.ERROR: "Error",
-    ModuleResult.NOTAPPLICABLE: "NotApplicable"
+    ModuleResult.FAILED: 'Failed',
+    ModuleResult.PASSED: 'Passed',
+    ModuleResult.WARNING: 'Warning',
+    ModuleResult.DEPRECATED: 'Deprecated',
+    ModuleResult.INFORMATION: 'Information',
+    ModuleResult.ERROR: 'Error',
+    ModuleResult.NOTAPPLICABLE: 'NotApplicable'
 }
 
 def getModuleResultName(res) -> str:
     if chipsec.chipset.cs().using_return_codes:
-        return "Passed" if (res & 0xFFFFFFFF00000000) == 0 else "Failed"
+        return 'Passed' if (res & 0xFFFFFFFF00000000) == 0 else 'Failed'
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
 # -------------------------------------------------------
 
@@ -167,20 +169,20 @@ class BaseModule:
         raise NotImplementedError('Sub-class should overwrite the run() method')
 
 
-MTAG_BIOS = "BIOS"
-MTAG_SMM = "SMM"
-MTAG_SECUREBOOT = "SECUREBOOT"
-MTAG_HWCONFIG = "HWCONFIG"
-MTAG_CPU = "CPU"
+MTAG_BIOS = 'BIOS'
+MTAG_SMM = 'SMM'
+MTAG_SECUREBOOT = 'SECUREBOOT'
+MTAG_HWCONFIG = 'HWCONFIG'
+MTAG_CPU = 'CPU'
 
 
 # ! [Available Tags]
 MTAG_METAS = {
-    MTAG_BIOS: "System Firmware (BIOS/UEFI) Modules",
-    MTAG_SMM: "System Management Mode (SMM) Modules",
-    MTAG_SECUREBOOT: "Secure Boot Modules",
-    MTAG_HWCONFIG: "Hardware Configuration Modules",
-    MTAG_CPU: "CPU Modules",
+    MTAG_BIOS: 'System Firmware (BIOS/UEFI) Modules',
+    MTAG_SMM: 'System Management Mode (SMM) Modules',
+    MTAG_SECUREBOOT: 'Secure Boot Modules',
+    MTAG_HWCONFIG: 'Hardware Configuration Modules',
+    MTAG_CPU: 'CPU Modules',
 }
 # ! [Available Tags]
 MODULE_TAGS = dict([(_tag, []) for _tag in MTAG_METAS])

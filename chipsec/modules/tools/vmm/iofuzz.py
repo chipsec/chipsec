@@ -77,6 +77,9 @@ _EXCLUDE_PORTS = []
 
 
 class iofuzz(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x485df2e, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.iofuzz.html')
 
     def fuzz_ports(self, iterations, write_count, random_order=False):
 
@@ -130,7 +133,9 @@ class iofuzz(BaseModule):
                     except:
                         pass
 
-        return ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        return self.rc_res.getReturnCode(ModuleResult.WARNING)
+
 
     def run(self, module_argv):
         self.logger.start_test("I/O port fuzzer")

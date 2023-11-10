@@ -59,7 +59,7 @@ class remap(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(1, 'https://chipsec.github.io/modules/chipsec.modules.common.remap.html') # Arg: test ID
+        self.rc_res = ModuleResult(0x43aa254, 'https://chipsec.github.io/modules/chipsec.modules.common.remap.html')
 
     def is_supported(self) -> bool:
         if self.cs.is_core():
@@ -74,11 +74,8 @@ class remap(BaseModule):
         else:
             self.logger.log_important('Not a Core (client) platform.  Skipping module.')
 
-        if self.cs.using_return_codes:
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.rc_res.buildRC()
-        else:
-            self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def is_ibecc_enabled(self) -> bool:
@@ -199,10 +196,8 @@ class remap(BaseModule):
             self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             self.logger.log_failed("Memory Remap is not properly configured/locked. Remaping attack may be possible")
 
-        if self.cs.using_return_codes:
-            return self.rc_res.buildRC()
-        else:
-            return res
+        return self.rc_res.getReturnCode(res)
+
 
     # --------------------------------------------------------------------------
     # run( module_argv )

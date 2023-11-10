@@ -188,6 +188,7 @@ class smm_ptr(BaseModule):
         self.test_ptr_in_buffer = False
         self.fill_byte = _MEM_FILL_VALUE
         self.fill_size = _MEM_FILL_SIZE
+        self.rc_res = ModuleResult(0xf8457d4, 'https://chipsec.github.io/modules/chipsec.modules.tools.smm.smm_ptr.html')
 
     def is_supported(self):
         return True
@@ -486,7 +487,8 @@ class smm_ptr(BaseModule):
                     DUMP_GPRS_EVERY_SMI = False
             else:
                 self.logger.log_error(f'Unknown fuzzing mode \'{module_argv[0]}\'')
-                return ModuleResult.ERROR
+                self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
+                return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
         if len(module_argv) > 2:
             self.fill_size = int(module_argv[2], 16)
@@ -548,8 +550,11 @@ class smm_ptr(BaseModule):
 
         if bad_ptr_cnt > 0:
             self.logger.log_bad(f'<<< Done: found {bad_ptr_cnt:d} potential occurrences of unchecked input pointers')
+            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.FAILED)
         else:
             self.logger.log_good("<<< Done: didn't find unchecked input pointers in tested SMI handlers")
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            self.res = self.rc_res.getReturnCode(ModuleResult.PASSED)
 
-        self.res = ModuleResult.FAILED if (bad_ptr_cnt > 0) else ModuleResult.PASSED
         return self.res

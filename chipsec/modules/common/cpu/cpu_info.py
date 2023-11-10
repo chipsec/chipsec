@@ -47,18 +47,19 @@ from chipsec.defines import bytestostring
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
+        self.rc_res = ModuleResult(0x74b9b60, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html')
 
     def is_supported(self):
         if self.cs.register_has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
             return True
         self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def run(self, module_argv):
         # Log the start of the test
         self.logger.start_test('Current Processor Information:')
-        self.res = ModuleResult.INFORMATION
 
         # Determine number of threads to check
         thread_count = 1
@@ -100,4 +101,8 @@ class cpu_info(BaseModule):
             self.logger.log('[*]')
 
         self.logger.log_information('Processor information displayed')
-        return self.res
+        
+        self.rc_res.setStatusBit(self.rc_res.status.INFORMATION)
+        return self.rc_res.getReturnCode(ModuleResult.INFORMATION)
+
+

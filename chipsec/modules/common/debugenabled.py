@@ -50,6 +50,7 @@ class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xe516a56, 'https://chipsec.github.io/modules/chipsec.modules.common.debugenabled.html')
         self.is_enable_set = False
         self.is_debug_set = False
         self.is_lock_set = True
@@ -59,9 +60,10 @@ class debugenabled(BaseModule):
         # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
         (_, _, ecx, _) = self.cs.cpu.cpuid(1, 0)
         supported = (ecx & BIT11) != 0
-        if not supported:
+        if not supported and not self.cs.is_register_defined('ECTRL'):
             self.logger.log_important('CPU Debug features are not supported on this platform.  Skipping module.')
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def check_dci(self):
@@ -75,6 +77,7 @@ class debugenabled(BaseModule):
         if HDCIEN:
             self.logger.log_bad('DCI Debug is enabled')
             TestFail = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.DEBUG_FEATURE)
         else:
             self.logger.log_good('DCI Debug is disabled')
         return TestFail
@@ -96,13 +99,16 @@ class debugenabled(BaseModule):
                 self.logger.log_bad('CPU debug enable requested by software.')
                 self.is_enable_set = True
                 TestFail = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.DEBUG_FEATURE)
             if not IA32_DEBUG_INTERFACE_DEBUGELOCK:
                 self.logger.log_bad('CPU debug interface is not locked.')
                 self.is_lock_set = False
                 TestFail = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             if IA32_DEBUG_INTERFACE_DEBUGEOCCURED:
                 self.logger.log_important('Debug Occurred bit set in IA32_DEBUG_INTERFACE MSR')
                 self.is_debug_set = True
+                self.rc_res.setStatusBit(self.rc_res.status.DEBUG_FEATURE)
                 if TestFail == ModuleResult.PASSED:
                     TestFail = ModuleResult.WARNING
             if TestFail == ModuleResult.PASSED:
@@ -130,10 +136,10 @@ class debugenabled(BaseModule):
 
         if (dci_test_fail == ModuleResult.FAILED) or (cpu_debug_test_fail == ModuleResult.FAILED):
             self.logger.log_failed('One or more of the debug checks have failed and a debug feature is enabled')
-            self.res = ModuleResult.FAILED
+            self.res = self.rc_res.getReturnCode(ModuleResult.FAILED)
         elif (dci_test_fail == ModuleResult.WARNING) or (cpu_debug_test_fail == ModuleResult.WARNING):
             self.logger.log_warning('An unexpected debug state was discovered on this platform')
-            self.res = ModuleResult.WARNING
+            self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         else:
             self.logger.log_passed('All checks have successfully passed')
 

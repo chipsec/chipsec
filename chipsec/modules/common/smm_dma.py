@@ -66,17 +66,21 @@ class smm_dma(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x72f5ed1, 'https://chipsec.github.io/modules/chipsec.modules.common.smm_dma.html')
 
     def is_supported(self):
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
         if self.cs.is_atom():
             self.logger.log_important('Module not supported on Atom platforms.  Skipping module.')
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         elif self.cs.is_server():
             self.logger.log_important('Xeon (server) platform detected.  Skipping module.')
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         elif not self.cs.is_control_defined('TSEGBaseLock') or not self.cs.is_control_defined('TSEGLimitLock'):
             self.logger.log_important('TSEGBaseLock and/or TSEGLimitLock control(s) not defined for platform.  Skipping module.')
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         else:
             return True
@@ -93,6 +97,7 @@ class smm_dma(BaseModule):
             return ModuleResult.PASSED
         else:
             self.logger.log_bad("TSEG range is not locked")
+            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             return ModuleResult.FAILED
 
     def check_tseg_config(self):
@@ -111,6 +116,7 @@ class smm_dma(BaseModule):
         if (0 == smram_base) and (0 == smram_limit):
             res = ModuleResult.WARNING
             self.logger.log_warning("TSEG is properly configured but can't determine if it covers entire SMRAM")
+            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
         else:
             if (tseg_base <= smram_base) and (smram_limit <= tseg_limit):
                 self.logger.log_good("TSEG range covers entire SMRAM")
@@ -119,11 +125,13 @@ class smm_dma(BaseModule):
                     self.logger.log_passed("TSEG is properly configured. SMRAM is protected from DMA attacks")
                 else:
                     self.logger.log_failed("TSEG is properly configured, but the configuration is not locked.")
+                    self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
             else:
                 self.logger.log_bad("TSEG range doesn't cover entire SMRAM")
                 self.logger.log_failed("TSEG is not properly configured. Portions of SMRAM may be vulnerable to DMA attacks")
+                self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     def run(self, module_argv):
         self.logger.start_test("SMM TSEG Range Configuration Check")

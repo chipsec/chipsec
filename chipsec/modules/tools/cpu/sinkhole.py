@@ -55,18 +55,21 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x230312a, 'https://chipsec.github.io/modules/chipsec.modules.tools.cpu.sinkhole.html')
 
     def is_supported(self):
         if not (self.cs.os_helper.is_windows() or self.cs.os_helper.is_linux()):
             self.logger.log_important('Unsupported OS found.  Skipping module.')
             self.logger.log_important('Supported OS: Windows or Linux')
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         elif not self.cs.is_register_defined('IA32_APIC_BASE') or \
                 not self.cs.is_register_defined('IA32_SMRR_PHYSBASE') or \
                 not self.cs.is_register_defined('IA32_SMRR_PHYSMASK'):
             self.logger.log_error("Couldn't find definition of required configuration registers.")
-            self.res = ModuleResult.ERROR
+            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
+            self.res =self.rc_res.getReturnCode(ModuleResult.ERROR)
             return False
         else:
             return True
@@ -98,17 +101,19 @@ class sinkhole(BaseModule):
         self.logger.log(f'[*] New IA32_APIC_BASE: 0x{apic_base_msr_new:016X}')
 
         if apic_base_msr_new == apic_base_msr:
-            res = ModuleResult.PASSED
             self.logger.log_good("Could not modify IA32_APIC_BASE to overlap SMRR")
             self.logger.log_passed("CPU does not seem to have SMM memory sinkhole vulnerability")
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            res = ModuleResult.PASSED
         else:
             self.logger.log_bad("Could modify IA32_APIC_BASE to overlap SMRR")
             self.cs.write_register('IA32_APIC_BASE', apic_base_msr, 0)
             self.logger.log(f'[*] Restored original value 0x{apic_base_msr:016X}')
-            res = ModuleResult.FAILED
             self.logger.log_failed("CPU is susceptible to SMM memory sinkhole vulnerability.  Verify that SMRR is programmed correctly.")
+            self.rc_res.setStatusBit(self.rc_res.status.PROTECTION)
+            res = ModuleResult.FAILED
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
@@ -122,5 +127,7 @@ class sinkhole(BaseModule):
             self.res = self.check_LAPIC_SMRR_overlap()
         else:
             self.logger.log_important("CPU does not support SMRR range protection of SMRAM.  Skipping module.")
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        
         return self.res

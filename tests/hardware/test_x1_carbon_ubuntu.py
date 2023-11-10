@@ -36,7 +36,7 @@ class X1CarbonUbuntuTest(test_ubuntu.GenericUbuntuTest):
         "chipsec.modules.smm_dma"
     ]
 
-    SKIPPED = []
+    WARNING = []
 
     def test_main(self):
         self._generic_main()

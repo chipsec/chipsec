@@ -44,6 +44,7 @@ class memconfig(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x9feb705, 'https://chipsec.github.io/modules/chipsec.modules.common.memconfig.html')
         self.memmap_registers = {
             "PCI0.0.0_GGC": 'GGCLOCK',
             "PCI0.0.0_PAVPC": 'PAVPLCK',
@@ -66,7 +67,8 @@ class memconfig(BaseModule):
             self.logger.log_important("Not a 'Core' (Desktop) platform.  Skipping test.")
         else:
             self.logger.log_important("Not an Intel platform.  Skipping test.")
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_memmap_locks(self):
@@ -115,8 +117,9 @@ class memconfig(BaseModule):
         else:
             res = ModuleResult.FAILED
             self.logger.log_failed("Not all memory map registers are locked down")
+            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     def run(self, module_argv):
         self.logger.start_test("Host Bridge Memory Map Locks")

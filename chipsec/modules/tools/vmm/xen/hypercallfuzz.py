@@ -56,6 +56,9 @@ from chipsec.modules.tools.vmm.xen.hypercall import XenHypercall
 
 
 class HypercallFuzz(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x9e42fe3, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.xen.hypercallfuzz.html')
 
     def usage(self):
         self.logger.log(self.__doc__.replace('`', ''))
@@ -76,7 +79,7 @@ class HypercallFuzz(BaseModule):
         arg2 = module_argv[2] if len(module_argv) > 2 else ''
 
         xen = XenHypercall()
-        xen.promt = 'CHIPSEC'
+        xen.prompt = 'CHIPSEC'
         xen.debug = False
 
         if command == 'help':
@@ -96,7 +99,8 @@ class HypercallFuzz(BaseModule):
             except ValueError:
                 if arg1.lower() not in name2code:
                     self.logger.log_error(f'Unknown hypercall: \'{arg1}\'')
-                    return ModuleResult.ERROR
+                    self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
+                    return self.rc_res.getReturnCode(ModuleResult.ERROR)
                 code = name2code[arg1.lower()]
             count = self.get_int(arg2)
             xen.fuzz_hypercall(code, count)
@@ -119,5 +123,6 @@ class HypercallFuzz(BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res

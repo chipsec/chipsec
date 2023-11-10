@@ -60,6 +60,7 @@ class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xdf11080, 'https://chipsec.github.io/modules/chipsec.modules.common.smrr.html')
 
     def is_supported(self):
         mtrr_exist = self.cs.is_register_defined('MTRRCAP')
@@ -68,7 +69,8 @@ class smrr(BaseModule):
         if mtrr_exist and pbase_exist and pmask_exist:
             return True
         self.logger.log_information('Required registers are not defined for this platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     #
@@ -80,8 +82,8 @@ class smrr(BaseModule):
             self.logger.log_good("OK. SMRR range protection is supported")
         else:
             self.logger.log_not_applicable("CPU does not support SMRR range protection of SMRAM")
-            return ModuleResult.NOTAPPLICABLE
-
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         #
         # SMRR are supported
         #
@@ -173,12 +175,13 @@ class smrr(BaseModule):
         self.logger.log('')
         if not smrr_ok:
             res = ModuleResult.FAILED
+            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
             self.logger.log_failed("SMRR protection against cache attack is not configured properly")
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed("SMRR protection against cache attack is properly configured")
 
-        return res
+        return self.rc_res.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )
@@ -186,8 +189,6 @@ class smrr(BaseModule):
     # --------------------------------------------------------------------------
     def run(self, module_argv):
         self.logger.start_test("CPU SMM Cache Poisoning / System Management Range Registers")
-
         do_modify = (len(module_argv) > 0) and (module_argv[0] == OPT_MODIFY)
-
         self.res = self.check_SMRR(do_modify)
         return self.res

@@ -94,6 +94,10 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
 
 
 class synth_dev(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x6221b7e, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_dev.html')
+
     def usage(self):
         print('  Usage:')
         print('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info')
@@ -149,4 +153,5 @@ class synth_dev(BaseModule):
         finally:
             vb.vmbus_rescind_all_offers()
             del vb
-        return ModuleResult.PASSED
+        self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+        return self.rc_res.getReturnCode(ModuleResult.PASSED)

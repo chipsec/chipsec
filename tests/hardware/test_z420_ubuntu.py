@@ -33,7 +33,7 @@ class Z420UbuntuTest(test_ubuntu.GenericUbuntuTest):
     ]
 
     # This platform does not support the following tests
-    SKIPPED = [
+    WARNING = [
         "chipsec.modules.common.smm",
         "chipsec.modules.remap",
         "chipsec.modules.smm_dma"

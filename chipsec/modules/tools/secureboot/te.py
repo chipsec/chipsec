@@ -493,6 +493,7 @@ class te(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x2d6c9a9, 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html')
 
     def is_supported(self):
         #win8 = self.cs.helper.is_win8_or_greater()
@@ -516,7 +517,8 @@ class te(BaseModule):
                 file_path = module_argv[1]
             if not os.path.exists(file_path):
                 self.logger.log_error(f'Cannot find file \'{file_path}\'')
-                return ModuleResult.ERROR
+                self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+                return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
             sts = replace_efi_binary(file_path, file_path)
 
@@ -527,12 +529,14 @@ class te(BaseModule):
                 te_cfg = module_argv[1]
             if not os.path.exists(te_cfg):
                 self.logger.log_error(f'Cannot find file \'{te_cfg}\'')
-                return ModuleResult.ERROR
+                self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+                return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
             bootloader_paths = get_bootloader_paths(te_cfg)
             if len(bootloader_paths) == 0:
                 self.logger.log("[*] no bootloaders to replace. Exit...")
-                return ModuleResult.SKIPPED
+                self.rc_res.setStatusBit(self.rc_res.status.FEATURE_DISABLED)
+                return self.rc_res.getReturnCode(ModuleResult.WARNING) 
 
             do_mount = self.cs.os_helper.is_windows()  # @TODO
             if 'restore_bootloader' == mode:
@@ -545,4 +549,9 @@ class te(BaseModule):
         else:
             self.logger.log_error(f'Invalid mode: \'{mode}\'')
 
-        return (ModuleResult.PASSED if sts else ModuleResult.ERROR)
+        if sts:
+            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+            return self.rc_res.getReturnCode(ModuleResult.PASSED) 
+        else:
+            self.rc_res.setStatusBit(self.rc_res.status.RESTORE)
+            return self.rc_res.getReturnCode(ModuleResult.ERROR)

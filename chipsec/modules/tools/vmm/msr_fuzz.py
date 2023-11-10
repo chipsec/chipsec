@@ -78,6 +78,9 @@ _EXCLUDE_MSR = []
 
 
 class msr_fuzz (BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x2e31482, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.msr_fuzz.html')
 
     def fuzz_MSRs(self, msr_addr_start, random_order=False):
         msr_addr_range = 0x10000
@@ -158,5 +161,6 @@ class msr_fuzz (BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res

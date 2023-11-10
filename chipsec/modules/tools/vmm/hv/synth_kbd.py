@@ -70,6 +70,10 @@ class RingBufferFuzzer(RingBuffer):
 
 
 class synth_kbd(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x0d28d62, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_kbd.html')
+
     def usage(self):
         print('  Usage:')
         print('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
@@ -83,7 +87,8 @@ class synth_kbd(BaseModule):
             command = module_argv[0]
         else:
             self.usage()
-            return ModuleResult.SKIPPED
+            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
+            return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
         vb = VMBusDiscovery()
         vb.debug = True
@@ -148,4 +153,5 @@ class synth_kbd(BaseModule):
             vb.vmbus_rescind_all_offers()
             del vb.ringbuffers[relid]
             del vb
-        return ModuleResult.PASSED
+        self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+        return self.rc_res.getReturnCode(ModuleResult.PASSED)

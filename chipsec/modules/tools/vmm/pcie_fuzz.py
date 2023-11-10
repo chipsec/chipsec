@@ -76,6 +76,9 @@ _EXCLUDE_BAR = []
 
 
 class pcie_fuzz(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x61c1431, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.pcie_fuzz.html')
 
     def fuzz_io_bar(self, bar, size=0x100):
         port_off = 0
@@ -214,5 +217,6 @@ class pcie_fuzz(BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res

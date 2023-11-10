@@ -65,6 +65,9 @@ _EXCLUDE_MMIO_BAR2 = []
 
 
 class pcie_overlap_fuzz(BaseModule):
+    def __init__(self):
+        BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0x19702b2, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.pcie_overlap_fuzz.html')
 
     def overlap_mmio_range(self, bus1, dev1, fun1, is64bit1, off1, bus2, dev2, fun2, is64bit2, off2, direction):
         base_lo1 = self.cs.pci.read_dword(bus1, dev1, fun1, off1)
@@ -166,5 +169,6 @@ class pcie_overlap_fuzz(BaseModule):
 
         self.logger.log_information('Module completed!')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res

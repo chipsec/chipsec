@@ -76,12 +76,14 @@ class s3bootscript(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
+        self.rc_res = ModuleResult(0x9e3cf54, 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.s3bootscript.html')
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log("OS does not support UEFI Runtime API")
-            self.res = ModuleResult.NOTAPPLICABLE
+            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def is_inside_SMRAM(self, pa):
@@ -145,7 +147,9 @@ class s3bootscript(BaseModule):
             if not found:
                 self.logger.log_good("Didn't find any S3 boot-scripts in EFI variables")
                 self.logger.log_warning("S3 Boot-Script was not found. Firmware may be using other ways to store/locate it, or OS might be blocking access.")
-                return ModuleResult.WARNING
+                self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+                return self.rc_res.getReturnCode(ModuleResult.WARNING)
+
 
             self.logger.log_important('Found {:d} S3 boot-script(s) in EFI variables'.format(len(bootscript_PAs)))
 
@@ -161,14 +165,17 @@ class s3bootscript(BaseModule):
             if (res & DISPATCH_OPCODES_UNPROTECTED) != 0:
                 # DISPATCH_OPCODES_UNPROTECTED
                 status = ModuleResult.FAILED
+                self.rc_res.setStatusBit(self.rc_res.status.PROTECTION)
                 self.logger.log_failed('S3 Boot-Script and Dispatch entry-points do not appear to be protected')
             else:
                 # DISPATCH_OPCODES_PROTECTED
                 status = ModuleResult.WARNING
+                self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
                 self.logger.log_warning('S3 Boot-Script is not in SMRAM but Dispatch entry-points appear to be protected. Recommend further testing')
         else:
             # BOOTSCRIPT_INSIDE_SMRAM
             status = ModuleResult.WARNING
+            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
             self.logger.log_warning("S3 Boot-Script is inside SMRAM. The script is protected but Dispatch opcodes cannot be inspected")
 
         self.logger.log_important("Additional testing of the S3 boot-script can be done using tools.uefi.s3script_modify")
@@ -177,11 +184,11 @@ class s3bootscript(BaseModule):
 
     def run(self, module_argv):
         self.logger.start_test("S3 Resume Boot-Script Protections")
-        self.res = ModuleResult.ERROR
 
         if len(module_argv) > 2:
             self.logger.log_error('Expected module options: -a <bootscript_address>')
-            return self.res
+            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
+            return self.rc_res.getReturnCode(ModuleResult.ERROR)
 
         script_pa = None
 
@@ -202,4 +209,5 @@ class s3bootscript(BaseModule):
             if self.logger.VERBOSE:
                 raise
             self.res = ModuleResult.ERROR
-        return self.res
+
+        return self.rc_res.getReturnCode(self.res)

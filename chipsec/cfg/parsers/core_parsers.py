@@ -131,12 +131,14 @@ class CoreConfig(BaseConfigParser):
         return Stage.DEVICE_CFG
 
     def _process_pci_dev(self, vid_str, dev_name, dev_attr):
+        device_added = False
         if 'did' in dev_attr:
             for did in dev_attr['did']:
                 did_str = self.cfg._make_hex_key_str(did)
                 if did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
                     self._add_dev(vid_str, dev_name, pci_data, dev_attr)
+                    device_added = True
                     break
         else:
             for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
@@ -145,8 +147,9 @@ class CoreConfig(BaseConfigParser):
                 if dev_attr['bus'] in pci_data['bus'] and dev_attr['dev'] == pci_data['dev'] and \
                    dev_attr['fun'] == pci_data['fun']:
                     self._add_dev(vid_str, dev_name, pci_data, dev_attr)
+                    device_added = True
                     break
-        if dev_name not in self.cfg.CONFIG_PCI:
+        if not device_added:
             self._add_dev(vid_str, dev_name, None, dev_attr)
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):

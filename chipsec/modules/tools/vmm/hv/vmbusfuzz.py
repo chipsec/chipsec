@@ -65,6 +65,7 @@ class VMBusFuzz(VMBusDiscovery):
         self.fuzzing = False
         self.fuzzing_rules = {}
         self.current_message = 0
+        self.rc_res = ModuleResult(0x17f285c, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.vmbusfuzz.html')
 
     ##
     # hv_post_msg - Fuzzing a message to be sent
@@ -167,5 +168,6 @@ class VMBusFuzz(VMBusDiscovery):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
         return self.res
