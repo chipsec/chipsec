@@ -32,7 +32,7 @@ from argparse import ArgumentParser
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.smbios import SMBIOS
 from chipsec.logger import print_buffer_bytes
-
+from chipsec.options import Options
 
 class smbios_cmd(BaseCommand):
 
@@ -40,12 +40,19 @@ class smbios_cmd(BaseCommand):
         return toLoad.All
 
     def parse_arguments(self) -> None:
+        options = Options()
+        util_cfg = options.get_section_data('Util_Config')
+        try:
+            default_type = util_cfg['smbios_get_type']
+        except:
+            default_type = None
+
         parser = ArgumentParser(prog='chipsec_util smbios', usage=__doc__)
         subparsers = parser.add_subparsers()
         parser_entrypoint = subparsers.add_parser('entrypoint')
         parser_entrypoint.set_defaults(func=self.smbios_ep)
         parser_get = subparsers.add_parser('get')
-        parser_get.add_argument('method', choices=['raw', 'decoded'], default='raw', nargs='?',
+        parser_get.add_argument('method', choices=['raw', 'decoded'], default=default_type, nargs='?',
                                 help='Get raw data or decoded data.  Decoded data may not exist for all structures')
         parser_get.add_argument('type', type=int, default=None, nargs='?',
                                 help='SMBIOS type to search for')
