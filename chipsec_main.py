@@ -180,7 +180,7 @@ class ChipsecMain:
     # 2. a path to the pyc file inside a zip file    i.e. chipsec/modules/common/bios_wp.pyc
     # 3. the name of the module                      i.e. chipsec.modules.common.bios_wp
     def get_module_name(self, full_path):
-        name = full_path
+        name = full_path.lower()
         # case #1, the full path: remove prefix
         if full_path.startswith(self.CHIPSEC_FOLDER + os.path.sep):
             name = full_path.replace(self.CHIPSEC_FOLDER + os.path.sep, '')
