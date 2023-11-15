@@ -34,7 +34,7 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
 import chipsec.result_deltas
-
+from chipsec.options import Options
 
 class DeltasCommand(BaseCommand):
 
@@ -42,11 +42,18 @@ class DeltasCommand(BaseCommand):
         return toLoad.Nil
     
     def parse_arguments(self) -> None:
+        options = Options()
+        try:
+            default_format = options.get_section_data('Util_Config','log_output_deltas_format')
+            default_out_file =  options.get_section_data('Util_Config','deltas_output_file')
+        except:
+            default_format = 'JSON'
+            default_out_file = 'log_output_deltas.json'
         parser = ArgumentParser(usage=__doc__)
         parser.add_argument('_prev_log', metavar='<previous>', help='previous log file')
         parser.add_argument('_cur_log', metavar='<current>', help='current log file')
-        parser.add_argument('_out_format', metavar='out-format', choices=['JSON', 'XML'], default='JSON', help='output format')
-        parser.add_argument('_out_name', metavar='out-name', nargs='?', default=None, help='output filename')
+        parser.add_argument('_out_format', nargs='?', choices=['JSON', 'XML'], default=default_format, help='output format')
+        parser.add_argument('_out_name', nargs='?', default=default_out_file, help='output filename')
         parser.parse_args(self.argv, namespace=self)
 
     def run(self) -> None:
