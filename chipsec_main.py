@@ -48,6 +48,7 @@ from chipsec.logger import logger
 from chipsec.banner import print_banner, print_banner_properties
 from chipsec.testcase import ExitCode, TestCase, ChipsecResults
 from chipsec.exceptions import UnknownChipsetError, OsHelperError
+from chipsec.options import Options
 
 try:
     import importlib
@@ -56,6 +57,11 @@ except ImportError:
 
 
 def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
+    options = Options()
+    try:
+        default_helper = options.get_section_data('Main_Config', 'default_helper')
+    except:
+        default_helper = None
     """Parse the arguments provided on the command line."""
     parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter,
                                      epilog=ExitCode.help_epilog, add_help=False)
@@ -86,7 +92,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('--failfast', help="Fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="Don't log timestamps", action='store_true')
     adv_options.add_argument('--deltas', dest='_deltas_file', help='Specifies a JSON log file to compute result deltas from')
-    adv_options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers())
+    adv_options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers(), default=default_helper)
     adv_options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
     adv_options.add_argument('--skip_config', dest='_load_config', action='store_false', help='Skip configuration and driver loading')
     adv_options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="Chipsec won't save logs automatically")
