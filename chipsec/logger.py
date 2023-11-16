@@ -44,9 +44,7 @@ except ImportError:
         has_WConio = False
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-LOG_PATH = os.path.join(dir_path, os.pardir, "logs")
-if not os.path.exists(LOG_PATH):
-    os.mkdir(LOG_PATH)
+LOG_PATH = os.path.join(dir_path, os.pardir, "logs")    
 
 LOGGER_NAME = 'CHIPSEC_LOGGER'
 
@@ -243,12 +241,24 @@ class Logger:
         else:
             self.chipsecLogger.setLevel(level.INFO.value)
 
+    def create_logs_folder(self):
+        if not os.path.exists(LOG_PATH):
+            try:
+                os.mkdir(LOG_PATH)
+            except:
+                print('Unable to create logs folder')
+                return False
+        return True
+
     def set_autolog_file(self):
-        log_file_name = f'{strftime("%a%b%d%y-%H%M%S")}.log'
-        log_path = os.path.join(LOG_PATH, log_file_name)
-        file_handler = logging.FileHandler(log_path)
-        self.chipsecLogger.addHandler(file_handler)
-        file_handler.setFormatter(self.logFormatter)
+        if self.create_logs_folder():
+            log_file_name = f'{strftime("%a%b%d%y-%H%M%S")}.log'
+            log_path = os.path.join(LOG_PATH, log_file_name)
+            file_handler = logging.FileHandler(log_path)
+            self.chipsecLogger.addHandler(file_handler)
+            file_handler.setFormatter(self.logFormatter)
+        else:
+            print('Unable to autolog')
 
     def set_log_file(self, name: str, tologpath: bool = True):
         """Sets the log file for the output."""
@@ -256,7 +266,7 @@ class Logger:
         self.disable()
 
         # specifying empty string (name='') effectively disables logging to file
-        if name:
+        if name and self.create_logs_folder():
             if tologpath:
                 self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
             else:
