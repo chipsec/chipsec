@@ -47,10 +47,9 @@ from typing import Dict, List, Optional, Union
 # ###################################################################
 
 
-class CPUCommand(BaseCommand):
-    
+class CPUCommand(BaseCommand):    
     def requirements(self) -> toLoad:
-        return toLoad.All
+        return self.required
 
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
@@ -60,6 +59,7 @@ class CPUCommand(BaseCommand):
         parser_cpuid = subparsers.add_parser('cpuid')
         parser_pt = subparsers.add_parser('pt')
         parser_topology = subparsers.add_parser('topology')
+        parser.set_defaults(required=toLoad.Driver)
         parser_info.set_defaults(func=self.cpu_info)
         parser_cr.set_defaults(func=self.cpu_cr)
         parser_cpuid.set_defaults(func=self.cpu_cpuid)

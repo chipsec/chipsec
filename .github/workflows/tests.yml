@@ -200,7 +200,7 @@ jobs:
     - name: Run chipsec tests
       shell: bash
       run: |
-        python chipsec_util.py cpu info
+        python chipsec_util.py -vv cpu info
 
   ubuntu-test:
     name: Test on Ubuntu matrix
