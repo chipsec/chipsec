@@ -203,8 +203,10 @@ class Logger:
         self.logstream = logging.StreamHandler(sys.stdout)
         self.chipsecLogger = logging.getLogger(LOGGER_NAME)
         self.chipsecLogger.setLevel(logging.INFO)
-        self.chipsecLogger.addHandler(self.logstream)
-        self.chipsecLogger.addFilter(chipsecFilter(LOGGER_NAME))
+        if not self.chipsecLogger.handlers:
+            self.chipsecLogger.addHandler(self.logstream)
+        if not self.chipsecLogger.filters:
+            self.chipsecLogger.addFilter(chipsecFilter(LOGGER_NAME))
         self.chipsecLogger.propagate = False
         logging.addLevelName(level.VERBOSE.value, level.VERBOSE.name)
         logging.addLevelName(level.HAL.value, level.HAL.name)
@@ -290,6 +292,11 @@ class Logger:
                 print('WARNING: Could not close log file')
             finally:
                 self.logfile = None
+    def remove_chipsec_logger(self) -> None:
+        while self.chipsecLogger.filters:
+            self.chipsecLogger.removeFilter(self.chipsecLogger.filters[0])
+        while self.chipsecLogger.handlers:
+            self.chipsecLogger.removeHandler(self.chipsecLogger.handlers[0])
 
     def disable(self) -> None:
         """Disables the logging to file and closes the file if any."""
