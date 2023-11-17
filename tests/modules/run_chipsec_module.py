@@ -37,7 +37,7 @@ def run_chipsec_module(csm: ChipsecMain, module_replay_file: str) -> int:
     return ret
 
 def setup_run_destroy_module_with_mock_logger(init_replay_file: str, module_str: str, module_args: str = "", module_replay_file: str = "") -> int:
-    chipsec.logger._logger.disable()
+    chipsec.logger._logger.remove_chipsec_logger()
     chipsec.logger._logger = Mock()
     chipsec.logger._logger.VERBOSE = False
     chipsec.logger._logger.DEBUG = False
