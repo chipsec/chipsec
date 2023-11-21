@@ -20,11 +20,8 @@
 
 import os
 import configparser
-from fnmatch import fnmatch
-from chipsec.file import read_file
 from chipsec.file import get_main_dir
 from chipsec.exceptions import CSConfigError
-from chipsec.logger import logger
 
 
 class Options(object):
