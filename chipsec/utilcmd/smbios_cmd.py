@@ -43,7 +43,7 @@ class smbios_cmd(BaseCommand):
         options = Options()
         try:
             default_type = options.get_section_data('Util_Config', 'smbios_get_type')
-        except:
+        except Exception:
             default_type = 'raw'
 
         parser = ArgumentParser(prog='chipsec_util smbios', usage=__doc__)
