@@ -40,13 +40,13 @@ class DeltasCommand(BaseCommand):
 
     def requirements(self) -> toLoad:
         return toLoad.Nil
-    
+
     def parse_arguments(self) -> None:
         options = Options()
         try:
             default_format = options.get_section_data('Util_Config','log_output_deltas_format')
             default_out_file =  options.get_section_data('Util_Config','deltas_output_file')
-        except:
+        except Exception:
             default_format = 'JSON'
             default_out_file = 'log_output_deltas.json'
         parser = ArgumentParser(usage=__doc__)

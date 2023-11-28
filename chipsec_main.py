@@ -60,7 +60,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options = Options()
     try:
         default_helper = options.get_section_data('Main_Config', 'default_helper')
-    except:
+    except Exception:
         default_helper = None
     """Parse the arguments provided on the command line."""
     parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -376,7 +376,7 @@ class ChipsecMain:
             self.logger.log_warning("Ignoring unsupported platform warning and continue execution.")
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
-        
+
 
 
     def properties(self):
@@ -434,7 +434,7 @@ class ChipsecMain:
 
         if self._show_banner:
             print_banner_properties(self._cs, defines.os_version())
-        
+
         self.logger.log(" ")
 
         if self.logger.DEBUG:
