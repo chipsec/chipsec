@@ -41,6 +41,7 @@ def setup_run_destroy_module_with_mock_logger(init_replay_file: str, module_str:
     chipsec.logger._logger = Mock()
     chipsec.logger._logger.VERBOSE = False
     chipsec.logger._logger.DEBUG = False
+    chipsec.logger._logger.HAL = False
     retval = setup_run_destroy_module(init_replay_file, module_str, module_args, module_replay_file)
     chipsec.logger._logger = chipsec.logger.Logger()
     return retval
