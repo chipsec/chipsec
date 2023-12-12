@@ -79,8 +79,10 @@ class IOMMUCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def iommu_list(self) -> None:
-        self.logger.log("[CHIPSEC] Enumerating supported IOMMU engines..")
-        self.logger.log(iommu.IOMMU_ENGINES.keys())
+        self.logger.log("[CHIPSEC] Enumerating supported IOMMU engine names:")
+        self.logger.log(f'{list(iommu.IOMMU_ENGINES.keys())}')
+        self.logger.log_important('\nNote: These are the IOMMU engine names supported by iommu_cmd.')
+        self.logger.log_important('It does not mean they are supported/enabled in the current platform.')
 
     def iommu_engine(self, cmd) -> None:
         try:
