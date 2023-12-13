@@ -269,7 +269,7 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
                 fv.append(non_UEFI)
         padding += fw_offset
         if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
-            fwbin.children = efi_data_search(fwbin.Image, fwtype, polarity)
+            fwbin.children = efi_data_search(fwbin.Image[fwbin.HeaderSize:], fwtype, polarity)
             fv.append(fwbin)
         elif fwbin.Type == EFI_FV_FILETYPE_RAW:
             if fwbin.Name != NVAR_NVRAM_FS_FILE:
@@ -286,7 +286,7 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
             if non_UEFI.children:
                 fv.append(non_UEFI)
         elif fwbin.State not in (EFI_FILE_HEADER_CONSTRUCTION, EFI_FILE_HEADER_INVALID, EFI_FILE_HEADER_VALID):
-            fwbin.children = efi_data_search(fwbin.Image, fwtype, polarity)
+            fwbin.children = efi_data_search(fwbin.Image[fwbin.HeaderSize:], fwtype, polarity)
             fv.append(fwbin)
         fwbin = NextFwFile(fv_img, fv_size, fw_offset, polarity)
         if fwbin is None and fv_size > fw_offset:
