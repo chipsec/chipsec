@@ -95,7 +95,7 @@ class MMIO(hal_base.HALBase):
 
     def read_MMIO_reg_byte(self, bar_base: int, offset: int) -> int:
         return self.read_MMIO_reg(bar_base, offset, 1)
-        
+
     def read_MMIO_reg_word(self, bar_base: int, offset: int) -> int:
         return self.read_MMIO_reg(bar_base, offset, 2)
 
@@ -355,7 +355,7 @@ class MMIO(hal_base.HALBase):
     def write_MMIO_BAR_reg(self, bar_name: str, offset: int, value: int, size: int = 4, bus: Optional[int] = None) -> Optional[int]:
         (bar_base, _) = self.get_MMIO_BAR_base_address(bar_name, bus)
         # @TODO: check offset exceeds BAR size
-        
+
         return self.write_MMIO_reg(bar_base, offset, value, size)
 
     def read_MMIO_BAR(self, bar_name: str, bus: Optional[int] = None) -> List[int]:
@@ -488,12 +488,24 @@ class ECEntry:
         self.ver = get_bits(value, 16, 4)
         self.id = get_bits(value, 0, 16)
 
+    def __str__(self) -> str:
+        ret = f'\tNext Capability Offset: {self.next:03X}'
+        ret += f'\tCapability Version: {self.ver:01X}'
+        ret += f'\tCapability ID: {self.id:04X} - {ecIDs.get(self.id, "Reserved")}'
+        return ret
+
 
 class VSECEntry:
     def __init__(self, value: int):
         self.size = get_bits(value, 20, 12)
         self.rev = get_bits(value, 16, 4)
         self.id = get_bits(value, 0, 16)
+
+    def __str__(self) -> str:
+        ret = f'\tVSEC Size: {self.size:03X}'
+        ret += f'\tVSEC Revision: {self.rev:01X}'
+        ret += f'\tVSEC ID: {self.id:04X}'
+        return ret
 
 
 def print_pci_extended_capability(ecentries: List[ECEntry]) -> None:
