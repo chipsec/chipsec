@@ -31,7 +31,8 @@ class Options(object):
             raise CSConfigError(f'Unable to locate configuration options: {options_path}')
         options_name = os.path.join(options_path, 'cmd_options.ini')
         self.config = configparser.ConfigParser()
-        self.config.read(options_name)
+        with open(options_name) as options_file:
+            self.config.read_file(options_file)
 
 
     def get_section_data(self, section, key):
