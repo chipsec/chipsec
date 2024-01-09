@@ -176,8 +176,8 @@ Install PCI Filter Driver
 
 .. figure:: ../_images/driver_files.png
    :alt: Check The Filter Drvier Files
-   :width: 1109
-   :height: 493
+   :width: 1000
+   :height: 470
 
    Check The Filter Drvier Files
 
@@ -186,8 +186,8 @@ Install PCI Filter Driver
 
 .. figure:: ../_images/update_driver.png
    :alt: Update The PCI Device Driver
-   :width: 958
-   :height: 780
+   :width: 950
+   :height: 760
 
    Update The PCI Device Driver
 
@@ -197,8 +197,8 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/browse_driver.png
    :alt: Browse The PCI Filter Driver
-   :width: 958
-   :height: 739
+   :width: 950
+   :height: 720
 
    Browse The PCI Filter Driver
 
@@ -207,8 +207,8 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/pickup_driver.png
    :alt: Pickup The PCI Filter Driver
-   :width: 958
-   :height: 739
+   :width: 948
+   :height: 729
 
    Pickup The PCI Filter Driver
 
@@ -222,8 +222,8 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/install_driver_from_disk.png
    :alt: Install The Filter Driver From Disk
-   :width: 962
-   :height: 745
+   :width: 940
+   :height: 720
 
    Install The Filter Driver From Disk
 
@@ -231,8 +231,8 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/installing_driver.png
    :alt: Installing The Filter Driver
-   :width: 962
-   :height: 745
+   :width: 940
+   :height: 720
 
    Installing The Filter Driver
 
@@ -240,8 +240,8 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/installing_finished.png
    :alt: Finish The Filter Driver Installing
-   :width: 962
-   :height: 745
+   :width: 940
+   :height: 720
 
    Finish The Filter Driver Installing
 
@@ -249,8 +249,8 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/restart.png
    :alt: Restart Computer
-   :width: 1000
-   :height: 500
+   :width: 980
+   :height: 480
 
    Restart Computer
 
@@ -258,8 +258,8 @@ Install PCI Filter Driver
  
  .. figure:: ../_images/check_installed_driver.png
    :alt: Check The Installed Device Driver
-   :width: 1101
-   :height: 803
+   :width: 1000
+   :height: 780
 
    Check The Installed Device Driver
 
@@ -268,26 +268,29 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/driver_dev_info.png
    :alt: Check The Driver Device Info
-   :width: 622
-   :height: 650
+   :width: 600
+   :height: 600
 
    Check The Driver Device Info
 
+
+
 Filter Driver Access PCI Config Space Test
 ------------------------------------------
-
 **Dump PCI Config Test**
 
  .. figure:: ../_images/pci_dump_test.png
    :alt: Dump PCI Config
    :width: 850
-   :height: 720
+   :height: 700
 
+   ``py chipsec_util.py pci dump 0 0 0``
 
 **PCI Enumeration Test**
-
  .. figure:: ../_images/pci_enum_test.png
    :alt: PCI Enumeration Test
-   :width: 982
-   :height: 801
+   :width: 980
+   :height: 740
+
+   ``py chipsec_util.py pci enumerate``
 
