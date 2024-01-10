@@ -146,17 +146,17 @@ Windows PCI Filter Driver
 
 **Filter driver background**
 
-Since July 31, Microsoft has released Windows 2020-KB4568831 (OS Build 19041.423) Preview. you should not access the PCI configuration space using the legacy API, it might result in the Windows BSOD (Blue Screen of Death). The BSOD trigger condition is “Windows version >= (OS Build 19041.423) && Secure Devices (SDEV) ACPI table && VBS enabled”. Therefore, we have introduced a PCI filter driver that collaborates with the chipsec main driver to access the PCI configuration space. If you do not meet these conditions, you do not need to install the PCI filter driver, and you can use the chipsec main helper driver directly.
+Since July 31, 2020 Microsoft has released Windows 2020-KB4568831 (OS Build 19041.423) Preview. Microsoft recommends to not access the PCI configuration space using the legacy API, as it might result in the Windows BSOD (Blue Screen of Death). The BSOD trigger condition is “Windows version >= (OS Build 19041.423) && Secure Devices (SDEV) ACPI table && VBS enabled”. Therefore, CHIPSEC now includes a PCI filter driver which supplements the original CHIPSEC Windows Driver to access the PCI configuration space. A system requires the PCI Filter Driver if the conditions above are met.
 
-Windows devices that receive the July 31, 2020-KB4568831 (OS Build 19041.423) Preview or later updates restrict how processes 
-can access peripheral component interconnect (PCI) device configuration space if a Secure Devices (SDEV) ACPI table is present 
-and Virtualization-based Security (VBS) is running. Processes that have to access PCI device configuration space must use 
-officially supported mechanisms.The SDEV table defines secure hardware devices in ACPI. VBS is enabled on a system if security 
-features that use virtualization are enabled. Some examples of these features are Hypervisor Code Integrity or Windows Defender 
-Credential Guard. The new restrictions are designed to prevent malicious processes from modifying the configuration space of 
-secure devices. Device drivers or other system processes must not try to manipulate the configuration space of any PCI devices, 
-except by using the Microsoft-provided bus interfaces or IRP. If a process tries to access PCI configuration space in an unsupported 
-manner (such as by parsing MCFG table and mapping configuration space to virtual memory), Windows denies access to the process and 
+Windows devices that receive the 2020-KB4568831 (OS Build 19041.423) Preview or later updates restrict how processes
+can access peripheral component interconnect (PCI) device configuration space if a Secure Devices (SDEV) ACPI table is present
+and Virtualization-based Security (VBS) is running. Processes that have to access PCI device configuration space must use
+officially supported mechanisms.The SDEV table defines secure hardware devices in ACPI. VBS is enabled on a system if security
+features that use virtualization are enabled. Some examples of these features are Hypervisor Code Integrity or Windows Defender
+Credential Guard. The new restrictions are designed to prevent malicious processes from modifying the configuration space of
+secure devices. Device drivers or other system processes must not try to manipulate the configuration space of any PCI devices,
+except by using the Microsoft-provided bus interfaces or IRP. If a process tries to access PCI configuration space in an unsupported
+manner (such as by parsing MCFG table and mapping configuration space to virtual memory), Windows denies access to the process and
 generates a Stop error. For more detail please refer below link: https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/stop-error-lenovo-thinkpad-kb4568831-uefi
 
 
@@ -171,50 +171,37 @@ generates a Stop error. For more detail please refer below link: https://learn.m
 
 Install PCI Filter Driver
 -------------------------
-**Check The Filter Drvier Files**
-
+**Locate the Filter Driver Files: chipsec/helper/windows/windows_amd64/**
 
 .. figure:: ../_images/driver_files.png
    :alt: Check The Filter Drvier Files
-   :width: 1000
-   :height: 470
+   :width: 920
+   :height: 340
 
-   Check The Filter Drvier Files
 
-**Update The PCI Device Driver**
-
+**Update The PCI Device Driver From Device Manager**
 
 .. figure:: ../_images/update_driver.png
    :alt: Update The PCI Device Driver
-   :width: 950
-   :height: 760
-
-   Update The PCI Device Driver
+   :width: 920
+   :height: 630
 
 
 **Browse The PCI Filter Driver**
 
-
  .. figure:: ../_images/browse_driver.png
    :alt: Browse The PCI Filter Driver
-   :width: 950
-   :height: 720
+   :width: 920
+   :height: 630
 
-   Browse The PCI Filter Driver
 
-**Pickup The PCI Filter Driver**
+**Manually Select The PCI Bus Filter Driver**
 
 
  .. figure:: ../_images/pickup_driver.png
    :alt: Pickup The PCI Filter Driver
-   :width: 948
-   :height: 729
-
-   Pickup The PCI Filter Driver
-
-
-
-
+   :width: 920
+   :height: 630
 
 
 **Install The Filter Driver From Disk**
@@ -222,56 +209,48 @@ Install PCI Filter Driver
 
  .. figure:: ../_images/install_driver_from_disk.png
    :alt: Install The Filter Driver From Disk
-   :width: 940
-   :height: 720
+   :width: 920
+   :height: 650
 
-   Install The Filter Driver From Disk
 
 **Installing The Filter Driver**
 
  .. figure:: ../_images/installing_driver.png
    :alt: Installing The Filter Driver
-   :width: 940
-   :height: 720
+   :width: 920
+   :height: 650
 
-   Installing The Filter Driver
 
 **Finish The Filter Driver Installing**
 
  .. figure:: ../_images/installing_finished.png
    :alt: Finish The Filter Driver Installing
-   :width: 940
-   :height: 720
-
-   Finish The Filter Driver Installing
+   :width: 920
+   :height: 650
 
 **Restart Computer**
 
  .. figure:: ../_images/restart.png
    :alt: Restart Computer
-   :width: 980
-   :height: 480
+   :width: 920
+   :height: 420
 
-   Restart Computer
+**Check The Installed Device Driver From Device Manager**
 
-**Check The Installed Device Driver**
- 
  .. figure:: ../_images/check_installed_driver.png
    :alt: Check The Installed Device Driver
-   :width: 1000
-   :height: 780
+   :width: 920
+   :height: 650
 
-   Check The Installed Device Driver
 
 
 **Check The Driver Device Info**
 
  .. figure:: ../_images/driver_dev_info.png
    :alt: Check The Driver Device Info
-   :width: 600
-   :height: 600
+   :width: 700
+   :height: 700
 
-   Check The Driver Device Info
 
 
 
@@ -281,16 +260,16 @@ Filter Driver Access PCI Config Space Test
 
  .. figure:: ../_images/pci_dump_test.png
    :alt: Dump PCI Config
-   :width: 850
-   :height: 700
+   :width: 950
+   :height: 900
 
    ``py chipsec_util.py pci dump 0 0 0``
 
 **PCI Enumeration Test**
  .. figure:: ../_images/pci_enum_test.png
    :alt: PCI Enumeration Test
-   :width: 980
-   :height: 740
+   :width: 850
+   :height: 700
 
    ``py chipsec_util.py pci enumerate``
 
