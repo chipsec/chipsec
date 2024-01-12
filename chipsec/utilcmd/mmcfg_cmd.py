@@ -33,7 +33,7 @@ Examples:
 >>> chipsec_util mmcfg base
 >>> chipsec_util mmcfg read 0 0 0 0x200 4
 >>> chipsec_util mmcfg write 0 0 0 0x200 1 0x1A
->>> chipsec_util ec
+>>> chipsec_util mmcfg ec
 """
 
 from chipsec.command import BaseCommand, toLoad
@@ -70,6 +70,7 @@ class MMCfgCommand(BaseCommand):
         parser_write.add_argument('width', type=int, choices=[1, 2, 4], help='Width')
         parser_write.add_argument('value', type=lambda x: int(x, 16), help='Value to write (hex)')
 
+        # Print the pcie extended capabilities
         parser_ec = subparsers.add_parser('ec')
         parser_ec.set_defaults(func=self.ec)
 
