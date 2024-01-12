@@ -35,6 +35,7 @@ Example:
 
 from chipsec.module_common import BaseModule, ModuleResult
 from chipsec.defines import BIT7, BIT20
+from chipsec.exceptions import HWAccessViolationError
 
 
 class cet(BaseModule):
@@ -64,7 +65,7 @@ class cet(BaseModule):
         return self.cpuid_7_0__ecx_val & BIT20 != 0
 
     def setting_enabled(self, msr_val, field, mask, desc):
-        enabled = all((i & mask) != 0 for i in msr_val )
+        enabled = all((i & mask) != 0 for i in msr_val)
         part_enabled = any((i & mask) != 0 for i in msr_val)
         if enabled:
             self.logger.log(f'  {field}: {desc} is ENABLED')
@@ -81,13 +82,16 @@ class cet(BaseModule):
                   'NO_TRACK_EN',
                   'SUPPRESS_DIS',
                   'SUPPRESS']
-        msr_vals = self.cs.read_register_all(cet_msr)
-        reg = self.cs.get_register_def(cet_msr)
-        self.logger.log(f'{cet_msr} Settings:')
-        for key in fields:
-            mask = self.cs.get_register_field_mask(cet_msr, key, True)
-            desc = reg['FIELDS'][key]['desc']
-            self.setting_enabled(msr_vals, key, mask, desc)
+        try:
+            msr_vals = self.cs.read_register_all(cet_msr)
+            reg = self.cs.get_register_def(cet_msr)
+            self.logger.log(f'{cet_msr} Settings:')
+            for key in fields:
+                mask = self.cs.get_register_field_mask(cet_msr, key, True)
+                desc = reg['FIELDS'][key]['desc']
+                self.setting_enabled(msr_vals, key, mask, desc)
+        except HWAccessViolationError:
+            self.logger.log(f'Unable to read {cet_msr}')
 
     def check_cet(self):
         res = ModuleResult.INFORMATION

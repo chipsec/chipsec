@@ -654,7 +654,7 @@ Common (default) XML platform configuration file
     <register name="SGX_DEBUG_MODE" type="msr" msr="0x503" desc="SGX debug mode resiter">
       <field name="SGX_DEBUG_MODE_STATUS_BIT"   bit="1"  size="1" desc="Debug mode status but"/>
     </register>
-    <register name="IA32_U_CET" type="msr" msr="0x6A0" desc="CET user configuration">
+    <register name="IA32_U_CET" type="msr" msr="0x6A0" desc="CET User configuration">
       <field name="SH_STK_EN" bit="0" size="1" desc="Enable shadow stacks at CPL3" />
       <field name="WR_SHSTK_EN" bit="1" size="1" desc="Enables the WRSSD/WRSSQ instructions" />
       <field name="ENDBR_EN" bit="2" size="1" desc="Enable indirect branch tracking" />
