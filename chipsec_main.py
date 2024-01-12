@@ -239,17 +239,13 @@ class ChipsecMain:
         self.Loaded_Modules.sort()
 
     def load_my_modules(self):
-        #
         # Step 1.
         # Load modules common to all supported platforms
-        #
         common_path = os.path.join(self.Modules_Path, 'common')
         self.logger.log("[*] loading common modules from \"{}\" ..".format(common_path.replace(os.getcwd(), '.')))
         self.load_modules_from_path(common_path)
-        #
         # Step 2.
         # Load platform-specific modules from the corresponding platform module directory
-        #
         chipset_path = os.path.join(self.Modules_Path, self._cs.Cfg.code.lower())
         if (chipset.CHIPSET_CODE_UNKNOWN != self._cs.Cfg.code) and os.path.exists(chipset_path):
             self.logger.log("[*] loading platform specific modules from \"{}\" ..".format(
@@ -257,7 +253,6 @@ class ChipsecMain:
             self.load_modules_from_path(chipset_path)
         else:
             self.logger.log("[*] No platform specific modules to load")
-        #
         # Step 3.
         # Enumerate all modules from the root module directory
         self.logger.log("[*] loading modules from \"{}\" ..".format(self.Modules_Path.replace(os.getcwd(), '.')))
