@@ -24,10 +24,10 @@
 Standalone utility
 """
 
+import argparse
+import importlib
 import os
 import sys
-import importlib
-import argparse
 from time import time
 
 from typing import Sequence, Optional, Dict, Any
