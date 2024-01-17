@@ -140,3 +140,136 @@ When finished running CHIPSEC stop/delete service:
 
    ``sc stop chipsec``
    ``sc delete chipsec``
+
+Windows PCI Filter Driver
+-------------------------
+
+**Filter driver background**
+
+Since July 31, 2020 Microsoft has released Windows 2020-KB4568831 (OS Build 19041.423) Preview. Microsoft recommends to not access the PCI configuration space using the legacy API, as it might result in the Windows BSOD (Blue Screen of Death). The BSOD trigger condition is “Windows version >= (OS Build 19041.423) && Secure Devices (SDEV) ACPI table && VBS enabled”. Therefore, CHIPSEC now includes a PCI filter driver which supplements the original CHIPSEC Windows Driver to access the PCI configuration space. A system requires the PCI Filter Driver if the conditions above are met.
+
+Windows devices that receive the 2020-KB4568831 (OS Build 19041.423) Preview or later updates restrict how processes
+can access peripheral component interconnect (PCI) device configuration space if a Secure Devices (SDEV) ACPI table is present
+and Virtualization-based Security (VBS) is running. Processes that have to access PCI device configuration space must use
+officially supported mechanisms.The SDEV table defines secure hardware devices in ACPI. VBS is enabled on a system if security
+features that use virtualization are enabled. Some examples of these features are Hypervisor Code Integrity or Windows Defender
+Credential Guard. The new restrictions are designed to prevent malicious processes from modifying the configuration space of
+secure devices. Device drivers or other system processes must not try to manipulate the configuration space of any PCI devices,
+except by using the Microsoft-provided bus interfaces or IRP. If a process tries to access PCI configuration space in an unsupported
+manner (such as by parsing MCFG table and mapping configuration space to virtual memory), Windows denies access to the process and
+generates a Stop error. For more detail please refer below link: https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/stop-error-lenovo-thinkpad-kb4568831-uefi
+
+
+**Filter Driver and Main Helper Driver Architecture**
+
+.. figure:: ../_images/driver_architecture.png
+   :alt: CHIPSEC Main & Filter Drvier Architecture
+   :width: 1100
+   :height: 1000
+
+   CHIPSEC Main & Filter Drvier Architecture
+
+Install PCI Filter Driver
+-------------------------
+**Locate the Filter Driver Files: chipsec/helper/windows/windows_amd64/**
+
+.. figure:: ../_images/driver_files.png
+   :alt: Check The Filter Drvier Files
+   :width: 920
+   :height: 340
+
+
+**Update The PCI Device Driver From Device Manager**
+
+.. figure:: ../_images/update_driver.png
+   :alt: Update The PCI Device Driver
+   :width: 920
+   :height: 630
+
+
+**Browse The PCI Filter Driver**
+
+ .. figure:: ../_images/browse_driver.png
+   :alt: Browse The PCI Filter Driver
+   :width: 920
+   :height: 630
+
+
+**Manually Select The PCI Bus Filter Driver**
+
+
+ .. figure:: ../_images/pickup_driver.png
+   :alt: Pickup The PCI Filter Driver
+   :width: 920
+   :height: 630
+
+
+**Install The Filter Driver From Disk**
+
+
+ .. figure:: ../_images/install_driver_from_disk.png
+   :alt: Install The Filter Driver From Disk
+   :width: 920
+   :height: 650
+
+
+**Installing The Filter Driver**
+
+ .. figure:: ../_images/installing_driver.png
+   :alt: Installing The Filter Driver
+   :width: 920
+   :height: 650
+
+
+**Finish The Filter Driver Installing**
+
+ .. figure:: ../_images/installing_finished.png
+   :alt: Finish The Filter Driver Installing
+   :width: 920
+   :height: 650
+
+**Restart Computer**
+
+ .. figure:: ../_images/restart.png
+   :alt: Restart Computer
+   :width: 920
+   :height: 420
+
+**Check The Installed Device Driver From Device Manager**
+
+ .. figure:: ../_images/check_installed_driver.png
+   :alt: Check The Installed Device Driver
+   :width: 920
+   :height: 650
+
+
+
+**Check The Driver Device Info**
+
+ .. figure:: ../_images/driver_dev_info.png
+   :alt: Check The Driver Device Info
+   :width: 700
+   :height: 700
+
+
+
+
+Filter Driver Access PCI Config Space Test
+------------------------------------------
+**Dump PCI Config Test**
+
+ .. figure:: ../_images/pci_dump_test.png
+   :alt: Dump PCI Config
+   :width: 950
+   :height: 900
+
+   ``py chipsec_util.py pci dump 0 0 0``
+
+**PCI Enumeration Test**
+ .. figure:: ../_images/pci_enum_test.png
+   :alt: PCI Enumeration Test
+   :width: 850
+   :height: 700
+
+   ``py chipsec_util.py pci enumerate``
+
