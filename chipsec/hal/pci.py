@@ -40,12 +40,11 @@ import struct
 from collections import namedtuple
 import itertools
 from typing import List, Tuple, Optional
-from chipsec import defines
 from chipsec.logger import logger, pretty_print_hex_buffer
 from chipsec.file import write_file
 from chipsec.hal.pcidb import VENDORS, DEVICES
 from chipsec.exceptions import OsHelperError
-from chipsec.defines import is_all_ones
+from chipsec.defines import is_all_ones, MASK_16b, MASK_32b, MASK_64b, BOUNDARY_4KB
 
 #
 # PCI configuration header registers
@@ -411,59 +410,105 @@ class Pci:
                 pci_xroms.append(xrom)
         return pci_xroms
 
-    #
-    # Enumerating PCI device MMIO and I/O ranges (BARs)
-    #
+    def get_header_type(self, bus, dev, fun):
+        res = self.read_byte(bus, dev, fun, PCI_HDR_TYPE_OFF)
+        return res & PCI_HDR_TYPE_TYPE_MASK
 
     #
     # Calculates actual size of MMIO BAR range
-    # @TODO: for 64-bit BARs need to write both BAR registers for size calculation
-    def calc_bar_size(self, bus: int, dev: int, fun: int, off: int, reg) -> int:
-        self.write_dword(bus, dev, fun, off, defines.MASK_32b)
-        reg1 = self.read_dword(bus, dev, fun, off)
-        self.write_dword(bus, dev, fun, off, reg)
-        size = (~(reg1 & PCI_HDR_BAR_BASE_MASK_MMIO) & defines.MASK_32b) + 1
+    def calc_bar_size(self, bus: int, dev: int, fun: int, off: int, is64: bool, isMMIO: bool) -> int:
+        self.logger.log_hal(f'calc_bar_size {bus}:{dev}.{fun} offset{off}')
+        # Read the original value of the register
+        orig_regL = self.read_dword(bus, dev, fun, off)
+        self.logger.log_hal(f'orig_regL: {orig_regL:X}')
+        if is64:
+            orig_regH = self.read_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP)
+            self.logger.log_hal(f'orig_regH: {orig_regH:X}')
+        # Write all 1's to the register
+        self.write_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP, MASK_32b)
+        if is64:
+            self.write_dword(bus, dev, fun, off, MASK_32b)
+        # Read the register back
+        regL = self.read_dword(bus, dev, fun, off)
+        self.logger.log_hal(f'regL: {regL:X}')
+        if is64:
+            regH = self.read_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP)
+            self.logger.log_hal(f'regH: {regH:X}')
+        # Write original value back to register
+        self.write_dword(bus, dev, fun, off, orig_regL)
+        if is64:
+            self.write_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP, orig_regH)
+        # Calculate Sizing
+        if isMMIO and is64:
+            reg = regL | (regH << 32)
+            orig_reg = orig_regL | (orig_regH << 32)
+            if orig_reg == reg:
+                size = BOUNDARY_4KB
+            else:
+                size = (~(reg & PCI_HDR_BAR_BASE_MASK_MMIO64) & MASK_64b) + 1
+        elif isMMIO:
+            if regL == orig_regL:
+                size = BOUNDARY_4KB
+            else:
+                size = (~(regL & PCI_HDR_BAR_BASE_MASK_MMIO) & MASK_32b) + 1
+        else:
+            if regL == orig_regL:
+                size = 0x100
+            else:
+                size = (~(regL & PCI_HDR_BAR_BASE_MASK_IO) & MASK_16b) + 1
         return size
-    #
+
     # Returns all I/O and MMIO BARs defined in the PCIe header of the device
     # Returns array of elements in format (BAR_address, isMMIO, is64bit, BAR_reg_offset, BAR_reg_value)
-    # @TODO: need to account for Type 0 vs Type 1 headers
-
     def get_device_bars(self, bus: int, dev: int, fun: int, bCalcSize: bool = False) -> List[Tuple[int, bool, bool, int, int, int]]:
         _bars = []
+        hdr_type = self.get_header_type(bus, dev, fun)
+        if hdr_type == 0:
+            bounds = PCI_HDR_TYPE0_BAR2_HI_OFF
+        elif hdr_type == 1:
+            bounds = PCI_HDR_TYPE0_BAR1_LO_OFF
+        else:
+            bounds = PCI_HDR_BAR0_LO_OFF
+
         off = PCI_HDR_BAR0_LO_OFF
-        size = defines.BOUNDARY_4KB
-        while off <= PCI_HDR_TYPE0_BAR2_HI_OFF:
+        size = BOUNDARY_4KB
+        while off <= bounds:
             reg = self.read_dword(bus, dev, fun, off)
-            if reg and reg != defines.MASK_32b:
+            if reg and reg != MASK_32b:
                 # BAR is initialized
-                isMMIO = PCI_HDR_BAR_IOMMIO_MMIO == (reg & PCI_HDR_BAR_IOMMIO_MASK)
+                isMMIO = (PCI_HDR_BAR_IOMMIO_MMIO == (reg & PCI_HDR_BAR_IOMMIO_MASK))
                 if isMMIO:
                     # MMIO BAR
-                    _type = (reg & PCI_HDR_BAR_TYPE_MASK) >> PCI_HDR_BAR_TYPE_SHIFT
-                    if PCI_HDR_BAR_TYPE_64B == _type:
+                    mem_type = (reg & PCI_HDR_BAR_TYPE_MASK) >> PCI_HDR_BAR_TYPE_SHIFT
+                    if PCI_HDR_BAR_TYPE_64B == mem_type:
                         # 64-bit MMIO BAR
-                        if bCalcSize:
-                            size = self.calc_bar_size(bus, dev, fun, off, reg)
+                        if bCalcSize and hdr_type == 0:
+                            size = self.calc_bar_size(bus, dev, fun, off, True, True)
                         off += PCI_HDR_BAR_STEP
                         reg_hi = self.read_dword(bus, dev, fun, off)
                         reg |= (reg_hi << 32)
                         base = (reg & PCI_HDR_BAR_BASE_MASK_MMIO64)
-                        _bars.append((base, isMMIO, True, off - PCI_HDR_BAR_STEP, reg, size))
-                    elif PCI_HDR_BAR_TYPE_1MB == _type:
+                        if base != 0:
+                            _bars.append((base, isMMIO, True, off - PCI_HDR_BAR_STEP, reg, size))
+                    elif PCI_HDR_BAR_TYPE_1MB == mem_type:
                         # MMIO BAR below 1MB - not supported
                         pass
-                    elif PCI_HDR_BAR_TYPE_32B == _type:
+                    elif PCI_HDR_BAR_TYPE_32B == mem_type:
                         # 32-bit only MMIO BAR
                         base = (reg & PCI_HDR_BAR_BASE_MASK_MMIO)
-                        if bCalcSize:
-                            size = self.calc_bar_size(bus, dev, fun, off, reg)
-                        _bars.append((base, isMMIO, False, off, reg, size))
+                        if base != 0:
+                            if bCalcSize and hdr_type == 0:
+                                size = self.calc_bar_size(bus, dev, fun, off, False, True)
+                            _bars.append((base, isMMIO, False, off, reg, size))
                 else:
                     # I/O BAR
-                    # @TODO: calculate I/O BAR size, hardcoded to 0x100 for now
                     base = (reg & PCI_HDR_BAR_BASE_MASK_IO)
-                    _bars.append((base, isMMIO, False, off, reg, 0x100))
+                    if base != 0:
+                        if bCalcSize and hdr_type == 0:
+                            size = self.calc_bar_size(bus, dev, fun, off, False, False)
+                        else:
+                            size = 0x100
+                        _bars.append((base, isMMIO, False, off, reg, size))
             off += PCI_HDR_BAR_STEP
         return _bars
 
