@@ -84,7 +84,7 @@ def CleanupFilesNotWantedInDoc() -> None:
 def RunScripts() -> None:
     for script in os.listdir(os.path.join(SPHINX_SCRIPTS_DIR)):
         try:
-            os.system(f'python {os.path.join(SPHINX_SCRIPTS_DIR, script)}')
+            os.system(f'python3 {os.path.join(SPHINX_SCRIPTS_DIR, script)}')
         except Exception:
             print(f'Unable to run script: {script}')
             raise
