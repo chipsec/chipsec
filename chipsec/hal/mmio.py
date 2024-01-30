@@ -389,6 +389,7 @@ class MMIO(hal_base.HALBase):
             else:
                 continue
             for bus in bus_data:
+                bus = self.cs.get_first(bus)
                 try:
                     (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name, bus)
                 except:
@@ -401,7 +402,7 @@ class MMIO(hal_base.HALBase):
                     if 'offset' in _bar:
                         _s += (f' + 0x{_bar["offset"]:X}')
                 else:
-                    bus_value = _bar["bus"]
+                    bus_value = self.cs.get_first(_bar["bus"])
                     dev_value = _bar["dev"]
                     fun_value = _bar["fun"]
                     _s = f'{bus_value:02X}:{dev_value:02X}.{fun_value:01X} + {_bar["reg"]}'

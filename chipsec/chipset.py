@@ -437,7 +437,7 @@ class Chipset:
             if logger().DEBUG:
                 logger().log_important(f"Using discovered bus values for device '{dev_name}'")
             return buses
-        if 'bus' in self.Cfg.CONFIG_PCI[dev_name]:
+        if dev_name in self.Cfg.CONFIG_PCI and 'bus' in self.Cfg.CONFIG_PCI[dev_name]:
             (bus, dev, fun) = self.get_device_BDF(dev_name)
             if self.pci.is_enabled(bus, dev, fun):
                 if logger().DEBUG:
