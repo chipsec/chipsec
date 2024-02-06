@@ -121,8 +121,9 @@ class CPU(hal_base.HALBase):
         packages: Dict[int, List[int]] = {}
         cores: Dict[int, List[int]] = {}
         for thread in range(num_threads):
-            self.logger.log_hal(f'Setting affinity to: {thread:d}')
-            self.cs.helper.set_affinity(thread)
+            if num_threads > 1:
+                self.logger.log_hal(f'Setting affinity to: {thread:d}')
+                self.cs.helper.set_affinity(thread)
             eax = 0xb   # cpuid leaf 0B contains x2apic info
             ecx = 1     # ecx 1 will get us pkg_id in edx after shifting right by _eax
             (_eax, _, _, _edx) = self.cs.cpu.cpuid(eax, ecx)
