@@ -188,7 +188,8 @@ class LinuxHelper(Helper):
 
         estr = "Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}"
         try:
-            self.dev_fh = open(self.DEVICE_NAME, "rb+")
+            # Do not buffer access to physical memory...
+            self.dev_fh = open(self.DEVICE_NAME, "rb+", buffering=0)
             self.driver_loaded = True
         except IOError as e:
             raise OsHelperError(estr.format(str(e)), e.errno)
