@@ -401,20 +401,6 @@ class Logger:
         text = f'{text}[x][ ======================================================================='
         self.log(text, level.INFO, 'BLUE')
 
-    def _write_log(self, text, filename):
-        """Write text to defined log file"""
-        self.chipsecLogger.log(level.INFO.value, text)
-        if self.ALWAYS_FLUSH and self.logfile is not None:
-            try:
-                self.logfile.close()
-                self.logfile = open(self.LOG_FILE_NAME, 'a+')
-            except Exception:
-                self.disable()
-
-    def _save_to_log_file(self, text):
-        if self.LOG_TO_FILE:
-            self._write_log(text, self.LOG_FILE_NAME)
-
     VERBOSE: bool = False
     UTIL_TRACE: bool = False
     HAL: bool = False
