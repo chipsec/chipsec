@@ -53,6 +53,7 @@ class ModuleResult:
         RESTORE = [bit(26), 'Cannot restore binary/value']
         POTENTIALLY_VULNERABLE = [bit(25), 'Found potential vulnerabilities']
         MISMATCH = [bit(24), 'Data does not match expected value']
+        REGISTER_NOT_DEFINED = [bit(20), 'Register not defined in Configuration']
         ALL_FFS = [bit(19), 'Read returned all 0xFFs']
         ALL_00S = [bit(18), 'Read returned all 0x00s']
         DEVICE_DISABLED = [bit(17), 'Device is disabled']
