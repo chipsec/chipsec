@@ -120,10 +120,9 @@ class memconfig(BaseModule):
             self.logger.log_failed("Not all memory map registers are locked down")
             self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
 
-        return self.rc_res.getReturnCode(res)
+        return res
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Host Bridge Memory Map Locks")
-
         self.res = self.check_memmap_locks()
-        return self.res
+        return self.rc_res.getReturnCode(self.res)
