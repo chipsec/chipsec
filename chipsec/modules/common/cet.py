@@ -41,6 +41,7 @@ from chipsec.exceptions import HWAccessViolationError
 class cet(BaseModule):
     def __init__(self):
         super(cet, self).__init__()
+        self.rc_res = ModuleResult(0x014b813, 'https://chipsec.github.io/modules/chipsec.modules.common.cet.html')
         self.cpuid_7_0__ecx_val = None
 
     def is_supported(self):
@@ -48,7 +49,8 @@ class cet(BaseModule):
         if supported:
             return True
         self.logger.log_important('CET is not defined for the platform.  Skipping module.')
-        self.res = ModuleResult.NOTAPPLICABLE
+        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
+        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def get_cpuid_value(self) -> None:
