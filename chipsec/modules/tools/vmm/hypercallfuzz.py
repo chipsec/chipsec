@@ -81,6 +81,7 @@ class hypercallfuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.rc_res = ModuleResult(0xf918ec4, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html')
         self.vmm = VMM(self.cs)
 
         self.random_order = True
@@ -147,7 +148,6 @@ class hypercallfuzz(BaseModule):
                                                         pass
 
         self.logger.log(f'[*] Finished fuzzing: time elapsed {time.time() - t:.3f}')
-        return ModuleResult.WARNING
 
     def run(self, module_argv):
         self.logger.start_test("Dumb VMM hypercall fuzzer")
@@ -177,5 +177,5 @@ class hypercallfuzz(BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.res = ModuleResult.WARNING
-        return self.res
+        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        return self.rc_res.getReturnCode(ModuleResult.WARNING)
