@@ -50,7 +50,7 @@ class cpu_info(BaseModule):
         self.rc_res = ModuleResult(0x74b9b60, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html')
 
     def is_supported(self) -> bool:
-        if self.cs.register_has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
+        if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
             return True
         self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
         self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
@@ -96,7 +96,7 @@ class cpu_info(BaseModule):
             self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
             # Get microcode revision
-            microcode_rev = self.cs.read_register_field('IA32_BIOS_SIGN_ID', 'Microcode', cpu_thread=thread)
+            microcode_rev = self.cs.register.read_field('IA32_BIOS_SIGN_ID', 'Microcode', cpu_thread=thread)
             self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')
             self.logger.log('[*]')
 
