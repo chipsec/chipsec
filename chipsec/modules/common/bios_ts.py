@@ -38,7 +38,8 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 from typing import List
 TAGS = [MTAG_BIOS]
 
@@ -46,14 +47,15 @@ TAGS = [MTAG_BIOS]
 class bios_ts(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x98e2db0, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_ts.html')
+        self.result.id = 0x98e2db0
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_ts.html'
 
     def is_supported(self) -> bool:
         if self.cs.is_control_defined('BiosInterfaceLockDown'):
             return True
         self.logger.log_important('BiosInterfaceLockDown control not defined for platform.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_bios_iface_lock(self) -> int:
@@ -78,13 +80,13 @@ class bios_ts(BaseModule):
 
         if bild == 0:
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
+            self.result.setStatusBit(self.result.status.LOCKS)
             self.logger.log_failed("BIOS Interface is not locked (including Top Swap Mode)")
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed("BIOS Interface is locked (including Top Swap Mode)")
         
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("BIOS Interface Lock (including Top Swap Mode)")
