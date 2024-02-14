@@ -128,11 +128,6 @@ def is_set(val: int, bit_mask: int) -> bool:
     return bool(val & bit_mask != 0)
 
 
-def is_all_value(values_list, value):
-    '''Checks if all elements in a list equal a given value'''
-    return all(n == value for n in values_list)
-
-
 def scan_single_bit_mask(bit_mask: int) -> Optional[int]:
     for bit_num in range(0, 7):
         if bit_mask >> bit_num == 1:

@@ -73,9 +73,9 @@ class bios_wp(BaseModule):
         self.rc_res = ModuleResult(0xd1e21a2, 'https://chipsec.github.io/modules/chipsec.modules.common.bios_wp.html')
 
     def is_supported(self) -> bool:
-        ble_exists = self.cs.is_control_defined('BiosLockEnable')
-        bioswe_exists = self.cs.is_control_defined('BiosWriteEnable')
-        smmbwp_exists = self.cs.is_control_defined('SmmBiosWriteProtection')
+        ble_exists = self.cs.control.is_defined('BiosLockEnable')
+        bioswe_exists = self.cs.control.is_defined('BiosWriteEnable')
+        smmbwp_exists = self.cs.control.is_defined('SmmBiosWriteProtection')
 
         if ble_exists and bioswe_exists and smmbwp_exists:
             return True
@@ -85,9 +85,9 @@ class bios_wp(BaseModule):
         return False
 
     def check_BIOS_write_protection(self) -> int:
-        ble = self.cs.get_control('BiosLockEnable', with_print=True)
-        bioswe = self.cs.get_control('BiosWriteEnable')
-        smmbwp = self.cs.get_control('SmmBiosWriteProtection')
+        ble = self.cs.control.get('BiosLockEnable', with_print=True)
+        bioswe = self.cs.control.get('BiosWriteEnable')
+        smmbwp = self.cs.control.get('SmmBiosWriteProtection')
 
         # Is the BIOS flash region write protected?
         write_protected = 0
