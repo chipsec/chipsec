@@ -30,7 +30,7 @@ from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd, cpuid
 from chipsec.hal.pci import PCI_HDR_RID_OFF
-from chipsec.exceptions import UnknownChipsetError, DeviceNotFoundError, CSReadError
+from chipsec.exceptions import HWAccessViolationError, UnknownChipsetError, DeviceNotFoundError, CSReadError
 from chipsec.exceptions import RegisterTypeNotFoundError, OsHelperError
 from chipsec.exceptions import CSFirstNotFoundError, CSBusNotFoundError
 
@@ -486,7 +486,10 @@ class Chipset:
         return reg_value
 
     def read_msr_register(self, cpu_thread: int, reg: Dict[str, Any]) -> int:
-        (eax, edx) = self.msr.read_msr(cpu_thread, reg['msr'])
+        try:
+            (eax, edx) = self.msr.read_msr(cpu_thread, reg['msr'])
+        except HWAccessViolationError as err:
+            raise HWAccessViolationError(f'Error reading {reg["name"]}: {err}', err.errorcode)
         return (edx << 32) | eax
     
     def read_portio_register(self, reg: Dict[str, Any]) -> int:
