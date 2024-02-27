@@ -64,6 +64,9 @@ class access_uefispec(BaseModule):
 
         self.uefispec_vars = {
             # From UEFI Spec Table 11 "Global Variables"
+            # Updated to version 2.10 Section 3.3 "Globally Defined Variables"
+            # https://uefi.org/sites/default/files/resources/UEFI_Spec_2_10_Aug29.pdf
+            # https://uefi.org/specs/UEFI/2.10/03_Boot_Manager.html#globally-defined-variables
             "LangCodes": bs | rt,
             "Lang": nv | bs | rt,
             "Timeout": nv | bs | rt,
@@ -79,15 +82,23 @@ class access_uefispec(BaseModule):
             "Boot0002": nv | bs | rt,
             "BootOrder": nv | bs | rt,
 
+            "AuditMode": bs | rt,
             "BootNext": nv | bs | rt,
             "BootCurrent": bs | rt,
             "BootOptionSupport": bs | rt,
+            "CryptoIndications": nv | bs | rt,
+            "CryptoIndicationsSupport": bs | rt,
+            "CrytopIndicationsActive": bs | rt,
+            "DeployedMode": bs | rt,
+            "devAuthBoot": bs | rt,
+            "devdbDefault": bs | rt,
             "Driver0001": nv | bs | rt,
             "DriverOrder": nv | bs | rt,
             "Key0001": nv | bs | rt,
             "HwErrRecSupport": nv | bs | rt,  # HwErrRecSupport should be RO
             "SetupMode": bs | rt,  # SetupMode should be RO
             "KEK": nv | bs | rt | ta,
+            "OsRecoveryOrder": nv | bs | rt | ta,
             "PK": nv | bs | rt | ta,
             "SignatureSupport": bs | rt,  # RO
             "SecureBoot": bs | rt,  # RO
@@ -98,6 +109,9 @@ class access_uefispec(BaseModule):
             "dbtDefault": bs | rt,  # RO
             "OsIndicationsSupported": bs | rt,  # RO
             "OsIndications": nv | bs | rt,
+            "SysPrep0001": nv | bs | rt,
+            "SysPrep0002": nv | bs | rt,
+            "SysPrepOrder": nv | bs | rt,
             "VendorKeys": bs | rt  # RO
         }
 
