@@ -383,9 +383,9 @@ class MMIO(hal_base.HALBase):
                 bus_data = self.cs.get_register_bus(_bar['register'])
                 if not bus_data:
                     if 'bus' in self.cs.get_register_def(_bar['register']):
-                        bus_data = [int(self.cs.get_register_def(_bar['register'])['bus'], 16)]
+                        bus_data.extend(self.cs.get_register_def(_bar['register'])['bus'])
             elif 'bus' in _bar:
-                bus_data = [_bar['bus']]
+                bus_data.extend(_bar['bus'])
             else:
                 continue
             for bus in bus_data:
