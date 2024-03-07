@@ -45,7 +45,8 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
 from typing import List
 
@@ -57,14 +58,15 @@ class spi_access(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.spi = SPI(self.cs)
-        self.rc_res = ModuleResult(0x23bb5d0, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_access.html')
+        self.result.id = 0x23bb5d0
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_access.html'
 
     def is_supported(self) -> bool:
-        if self.cs.register_has_field('HSFS', 'FDV') and self.cs.register_has_field('FRAP', 'BRWA'):
+        if self.cs.register.has_field('HSFS', 'FDV') and self.cs.register.has_field('FRAP', 'BRWA'):
             return True
         self.logger.log_important('HSFS.FDV or FRAP.BRWA registers not defined for platform.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     ##
@@ -72,9 +74,9 @@ class spi_access(BaseModule):
     def check_flash_access_permissions(self) -> int:
 
         res = ModuleResult.PASSED
-        fdv = self.cs.read_register_field('HSFS', 'FDV') == 1
-        frap = self.cs.read_register('FRAP')
-        brwa = self.cs.get_register_field('FRAP', frap, 'BRWA')
+        fdv = self.cs.register.read_field('HSFS', 'FDV') == 1
+        frap = self.cs.register.read('FRAP')
+        brwa = self.cs.register.get_field('FRAP', frap, 'BRWA')
 
         # Informational
         # State of Flash Descriptor Valid bit
@@ -89,20 +91,20 @@ class spi_access(BaseModule):
         # CPU/Software access to GBe region
         if brwa & (1 << GBE):
             res = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
             self.logger.log_warning("Software has write access to GBe region in SPI flash")
 
         # Failures
         # CPU/Software access to Flash Descriptor region (Read Only)
         if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 
         # CPU/Software access to Intel ME region (Read Only)
         if brwa & (1 << ME):
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
             self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
 
         if fdv:
@@ -116,10 +118,10 @@ class spi_access(BaseModule):
                 self.logger.log_warning("Certain SPI flash regions are writeable by software")
         else:
             res = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
+            self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
             self.logger.log_warning("Either flash descriptor is not valid or not present on this system")
 
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Region Access Control")

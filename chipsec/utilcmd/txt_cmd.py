@@ -63,8 +63,8 @@ class TXTCommand(BaseCommand):
 
     def _log_register(self, reg_name):
         """Log the content of a register with lines starting with [CHIPSEC]"""
-        reg_def = self.cs.get_register_def(reg_name)
-        value = self.cs.read_register(reg_name)
+        reg_def = self.cs.register.get_def(reg_name)
+        value = self.cs.register.read(reg_name)
         desc = reg_def["desc"]
         if reg_def["type"] == "memory":
             addr = reg_def["address"] + reg_def["offset"]
@@ -112,10 +112,10 @@ class TXTCommand(BaseCommand):
 
         # Read hashes of public keys
         txt_pubkey = struct.pack("<QQQQ",
-                                 self.cs.read_register("TXT_PUBLIC_KEY_0"),
-                                 self.cs.read_register("TXT_PUBLIC_KEY_1"),
-                                 self.cs.read_register("TXT_PUBLIC_KEY_2"),
-                                 self.cs.read_register("TXT_PUBLIC_KEY_3"),
+                                 self.cs.register.read("TXT_PUBLIC_KEY_0"),
+                                 self.cs.register.read("TXT_PUBLIC_KEY_1"),
+                                 self.cs.register.read("TXT_PUBLIC_KEY_2"),
+                                 self.cs.register.read("TXT_PUBLIC_KEY_3"),
                                  )
         self.logger.log("[CHIPSEC] TXT Public Key Hash: {}".format(txt_pubkey.hex()))
 

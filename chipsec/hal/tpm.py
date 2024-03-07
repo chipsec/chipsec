@@ -357,7 +357,7 @@ class TPM(hal_base.HALBase):
 
     def dump_register(self, register_name: str, locality: str) -> None:
         self.cs.Cfg.REGISTERS[register_name]['address'] = self.cs.Cfg.REGISTERS[register_name]['address'] ^ LOCALITY[locality]
-        register = self.cs.read_register_dict(register_name)
+        register = self.cs.register.read_dict(register_name)
 
         self.log_register_header(register_name, locality)
 

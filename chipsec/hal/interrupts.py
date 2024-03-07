@@ -36,7 +36,7 @@ from chipsec.hal import hal_base
 from chipsec.logger import logger, print_buffer_bytes
 from chipsec.hal.acpi import ACPI
 from chipsec.hal.acpi_tables import UEFI_TABLE, GAS
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 
 SMI_APMC_PORT = 0xB2
 SMI_DATA_PORT = 0xB3
@@ -69,8 +69,8 @@ class Interrupts(hal_base.HALBase):
 
     def send_NMI(self) -> None:
         logger().log_hal("[intr] Sending NMI# through TCO1_CTL[NMI_NOW]")
-        reg, ba = self.cs.get_IO_space("TCOBASE")
-        tcobase = self.cs.read_register_field(reg, ba)
+        reg, ba = self.cs.device.get_IO_space("TCOBASE")
+        tcobase = self.cs.register.read_field(reg, ba)
         return self.cs.io.write_port_byte(tcobase + NMI_TCO1_CTL + 1, NMI_NOW)
 
     def find_ACPI_SMI_Buffer(self) -> Optional[UEFI_TABLE.CommBuffInfo]:

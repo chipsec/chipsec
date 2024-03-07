@@ -109,13 +109,13 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     flmap0 = struct.unpack_from('=I', fd[0x14:0x18])[0]
     flmap1 = struct.unpack_from('=I', fd[0x18:0x1C])[0]
     flmap2 = struct.unpack_from('=I', fd[0x1C:0x20])[0]
-    cs.print_register('FLMAP0', flmap0)
-    cs.print_register('FLMAP1', flmap1)
-    cs.print_register('FLMAP2', flmap2)
+    cs.register.print('FLMAP0', flmap0)
+    cs.register.print('FLMAP1', flmap1)
+    cs.register.print('FLMAP2', flmap2)
 
-    fcba = cs.get_register_field('FLMAP0', flmap0, 'FCBA')
-    nc = cs.get_register_field('FLMAP0', flmap0, 'NC')
-    frba = cs.get_register_field('FLMAP0', flmap0, 'FRBA')
+    fcba = cs.register.get_field('FLMAP0', flmap0, 'FCBA')
+    nc = cs.register.get_field('FLMAP0', flmap0, 'NC')
+    frba = cs.register.get_field('FLMAP0', flmap0, 'FRBA')
     fcba = fcba << 4
     frba = frba << 4
     nc += 1
@@ -127,17 +127,17 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     logger().log(f'  Number of Flash Components  : {nc:d}')
 
     nr = spi.SPI_REGION_NUMBER_IN_FD
-    if cs.register_has_field('FLMAP0', 'NR'):
-        nr = cs.get_register_field('FLMAP0', flmap0, 'NR')
+    if cs.register.has_field('FLMAP0', 'NR'):
+        nr = cs.register.get_field('FLMAP0', flmap0, 'NR')
         if nr == 0:
             logger().log_warning('only 1 region (FD) is found. Looks like flash descriptor binary is from Skylake platform or later. Try with option --platform')
         nr += 1
         logger().log(f'  Number of Regions           : {nr:d}')
 
-    fmba = cs.get_register_field('FLMAP1', flmap1, 'FMBA')
-    nm = cs.get_register_field('FLMAP1', flmap1, 'NM')
-    fpsba = cs.get_register_field('FLMAP1', flmap1, 'FPSBA')
-    psl = cs.get_register_field('FLMAP1', flmap1, 'PSL')
+    fmba = cs.register.get_field('FLMAP1', flmap1, 'FMBA')
+    nm = cs.register.get_field('FLMAP1', flmap1, 'NM')
+    fpsba = cs.register.get_field('FLMAP1', flmap1, 'FPSBA')
+    psl = cs.register.get_field('FLMAP1', flmap1, 'PSL')
     fmba = fmba << 4
     fpsba = fpsba << 4
     logger().log(f'  Flash Master Base Address   : 0x{fmba:08X}')
@@ -145,8 +145,8 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     logger().log(f'  Flash PCH Strap Base Address: 0x{fpsba:08X}')
     logger().log(f'  PCH Strap Length            : 0x{psl:X}')
 
-    fcpusba = cs.get_register_field('FLMAP2', flmap2, 'FCPUSBA')
-    cpusl = cs.get_register_field('FLMAP2', flmap2, 'CPUSL')
+    fcpusba = cs.register.get_field('FLMAP2', flmap2, 'FCPUSBA')
+    cpusl = cs.register.get_field('FLMAP2', flmap2, 'CPUSL')
     logger().log(f'  Flash CPU Strap Base Address: 0x{fcpusba:08X}')
     logger().log(f'  CPU Strap Length            : 0x{cpusl:X}')
 
@@ -175,10 +175,10 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     for r in range(nr):
         flreg_off = frba + r * 4
         flreg = struct.unpack_from('=I', fd[flreg_off:flreg_off + 0x4])[0]
-        if not cs.is_register_defined(f'FLREG{r:d}'):
+        if not cs.register.is_defined(f'FLREG{r:d}'):
             continue
-        base = cs.get_register_field((f'FLREG{r:d}'), flreg, 'RB') << spi.SPI_FLA_SHIFT
-        limit = cs.get_register_field((f'FLREG{r:d}'), flreg, 'RL') << spi.SPI_FLA_SHIFT
+        base = cs.register.get_field((f'FLREG{r:d}'), flreg, 'RB') << spi.SPI_FLA_SHIFT
+        limit = cs.register.get_field((f'FLREG{r:d}'), flreg, 'RL') << spi.SPI_FLA_SHIFT
         notused = '(not used)' if base > limit or flreg == 0xFFFFFFFF else ''
         flregs[r] = (flreg, base, limit, notused)
         logger().log(f'+ 0x{flreg_off:04X} FLREG{r:d}   : 0x{flreg:08X} {notused}')
@@ -203,8 +203,8 @@ def parse_spi_flash_descriptor(cs, rom: bytes) -> None:
     for m in range(nm):
         flmstr_off = fmba + m * 4
         flmstr = struct.unpack_from('=I', fd[flmstr_off:flmstr_off + 0x4])[0]
-        master_region_ra = cs.get_register_field('FLMSTR1', flmstr, 'MRRA')
-        master_region_wa = cs.get_register_field('FLMSTR1', flmstr, 'MRWA')
+        master_region_ra = cs.register.get_field('FLMSTR1', flmstr, 'MRRA')
+        master_region_wa = cs.register.get_field('FLMSTR1', flmstr, 'MRWA')
         flmstrs[m] = (master_region_ra, master_region_wa)
         logger().log(f'+ 0x{flmstr_off:04X} FLMSTR{m + 1:d}   : 0x{flmstr:08X}')
 

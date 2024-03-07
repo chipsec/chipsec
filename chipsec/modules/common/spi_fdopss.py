@@ -33,7 +33,8 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 from typing import List
 
 TAGS = [MTAG_BIOS]
@@ -43,28 +44,29 @@ class spi_fdopss(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x9b73a54, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_fdopss.html')
+        self.result.id = 0x9b73a54
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_fdopss.html'
 
     def is_supported(self) -> bool:
-        if not self.cs.register_has_field('HSFS', 'FDOPSS'):
+        if not self.cs.register.has_field('HSFS', 'FDOPSS'):
             self.logger.log_important('HSFS.FDOPSS field not defined for platform.  Skipping module.')
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         return True
 
     def check_fd_security_override_strap(self) -> int:
-        hsfs_reg = self.cs.read_register('HSFS')
-        self.cs.print_register('HSFS', hsfs_reg)
-        fdopss = self.cs.get_register_field('HSFS', hsfs_reg, 'FDOPSS')
+        hsfs_reg = self.cs.register.read('HSFS')
+        self.cs.register.print('HSFS', hsfs_reg)
+        fdopss = self.cs.register.get_field('HSFS', hsfs_reg, 'FDOPSS')
 
         if (fdopss != 0):
             self.logger.log_passed("SPI Flash Descriptor Security Override is disabled")
-            return self.rc_res.getReturnCode(ModuleResult.PASSED)
+            return self.result.getReturnCode(ModuleResult.PASSED)
         else:
             self.logger.log_failed("SPI Flash Descriptor Security Override is enabled")
-            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
-            return self.rc_res.getReturnCode(ModuleResult.FAILED)
+            self.result.setStatusBit(self.result.status.CONFIGURATION)
+            return self.result.getReturnCode(ModuleResult.FAILED)
 
     # --------------------------------------------------------------------------
     # run( module_argv )

@@ -99,7 +99,8 @@ examples_str = """  Examples:
 
 import struct
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.logger import print_buffer_bytes
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.uefi_common import S3BootScriptOpcode, script_width_values, script_width_formats, op_io_pci_mem, op_dispatch
@@ -136,7 +137,8 @@ class s3script_modify(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0xa33100e, 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.s3script_modify.html')
+        self.result.id = 0xa33100e
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.s3script_modify.html'
         self.logger.HAL = True
         self._uefi = UEFI(self.cs)
         self.bootscript_PAs = None
@@ -151,14 +153,14 @@ class s3script_modify(BaseModule):
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log("OS does not support UEFI Runtime API.  Skipping module.")
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         else:
             _, ps = self.get_bootscript()
             if not ps:
                 self.logger.log("Unable to locate boot script.  Skipping module.")
-                self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-                self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+                self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+                self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
                 supported = False
         return supported
 
@@ -366,8 +368,8 @@ class s3script_modify(BaseModule):
             if scmd in cmd2opcode:
                 if len(module_argv) < 4:
                     self.logger.log_error(f'Expected module options: -a replace_op,{scmd},<reg_address>,<value>')
-                    self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-                    return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                    self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+                    return self.result.getReturnCode(ModuleResult.ERROR)
                 reg_address = int(module_argv[2], 16)
                 value = int(module_argv[3], 16)
                 sts = self.modify_s3_reg(cmd2opcode[scmd], reg_address, value)
@@ -384,16 +386,16 @@ class s3script_modify(BaseModule):
             else:
                 self.logger.log_error(f'Unrecognized module command-line argument: {scmd}')
                 self.logger.log(examples_str)
-                self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-                return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+                return self.result.getReturnCode(ModuleResult.ERROR)
         elif op == 'add_op':
             scmd = module_argv[1].lower() if len(module_argv) > 1 else 'dispatch'
             new_opcode = None
             if scmd in cmd2opcode:
                 if len(module_argv) < 5:
                     self.logger.log_error(f'Expected module options: -a add_op,{scmd},<reg_address>,<value>,<width>')
-                    self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-                    return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                    self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+                    return self.result.getReturnCode(ModuleResult.ERROR)
                 address = int(module_argv[2], 16)
                 value = int(module_argv[3], 16)
                 width = int(module_argv[4], 16)
@@ -405,8 +407,8 @@ class s3script_modify(BaseModule):
                 else:
                     self.logger.log_error(f'Unsupported opcode: {scmd}')
                     self.logger.log(examples_str)
-                    self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-                    return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                    self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+                    return self.result.getReturnCode(ModuleResult.ERROR)
             elif 'dispatch' == scmd:
                 if len(module_argv) < 3:
                     (smram_base, _, _) = self.cs.cpu.get_SMRAM()
@@ -418,17 +420,17 @@ class s3script_modify(BaseModule):
             else:
                 self.logger.log_error(f'Unrecognized opcode: {scmd}')
                 self.logger.log(examples_str)
-                self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-                return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+                return self.result.getReturnCode(ModuleResult.ERROR)
 
             sts = self.modify_s3_add(new_opcode)
         else:
             self.logger.log_error(f'Unrecognized module command-line argument: {op}')
             self.logger.log(examples_str)
-            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-            return self.rc_res.getReturnCode(ModuleResult.ERROR)
+            self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+            return self.result.getReturnCode(ModuleResult.ERROR)
         
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+        self.result.setStatusBit(self.result.status.VERIFY)
 
         if sts:
             self.logger.log_passed('The script has been modified. Go to sleep..')
@@ -436,4 +438,4 @@ class s3script_modify(BaseModule):
         else:
             self.res = ModuleResult.FAILED
         
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)

@@ -24,7 +24,7 @@ import xml.etree.ElementTree as ET
 
 import chipsec.file
 from chipsec.logger import logger
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 
 
 def get_json_results(json_file):

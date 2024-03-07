@@ -49,7 +49,8 @@ import glob
 
 from chipsec.logger import logger
 from chipsec.file import write_file
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.paging import c_extended_page_tables
 
 
@@ -65,7 +66,7 @@ class c_extended_page_tables_from_file(c_extended_page_tables):
                 if (pa <= addr) and (addr + size <= end_pa):
                     source.seek(addr - pa)
                     return source.read(size)
-            logger().log_error("Invalid memory address: {:016x}-{:016x}".format(addr, addr + size))
+            logger().log_error(f'Invalid memory address: {addr:016x}-{addr + size:016x}')
             return '\xFF' * size
         return self.cs.mem.read_physical_mem(addr, size)
 
@@ -82,27 +83,27 @@ class ept_finder(BaseModule):
                 if (pa <= addr) and (addr + size <= end_pa):
                     source.seek(addr - pa)
                     return source.read(size)
-            self.logger.log_error("Invalid memory address: {:016x}-{:016x}".format(addr, addr + size))
+            self.logger.log_error(f'Invalid memory address: {addr:016x}-{addr + size:016x}')
             return '\xFF' * size
         return self.cs.mem.read_physical_mem(addr, size)
 
     def read_physical_mem_dword(self, addr):
-        return struct.unpack("<L", self.read_physical_mem(addr, 4))[0]
+        return struct.unpack('<L', self.read_physical_mem(addr, 4))[0]
 
     def get_memory_ranges(self):
         MASK = 0xFFFFFFFFFFFFF000
         tsegmb = None
         touud = None
 
-        if self.cs.is_register_defined('PCI0.0.0_TSEGMB'):
-            tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB') & MASK
+        if self.cs.register.is_defined('PCI0.0.0_TSEGMB'):
+            tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB') & MASK
         else:
-            self.logger.log_error("Couldn't find definition of required registers: TSEGMB")
+            self.logger.log_error('Couldn not find definition of required registers: TSEGMB')
 
-        if self.cs.is_register_defined('PCI0.0.0_TOUUD'):
-            touud = self.cs.read_register('PCI0.0.0_TOUUD') & MASK
+        if self.cs.register.is_defined('PCI0.0.0_TOUUD'):
+            touud = self.cs.register.read('PCI0.0.0_TOUUD') & MASK
         else:
-            self.logger.log_error("Couldn't find definition of required registers: TOUUD")
+            self.logger.log_error('Could not find definition of required registers: TOUUD')
 
         par = []
         if not (tsegmb is None):
@@ -181,29 +182,29 @@ class ept_finder(BaseModule):
         return pt_list
 
     def dump_dram(self, filename, pa, end_pa, buffer_size=0x100000):
-        with open(filename, "wb") as dram:
-            self.logger.log('[*] Dumping memory to {} ...'.format(filename))
+        with open(filename, 'wb') as dram:
+            self.logger.log(f'[*] Dumping memory to {filename} ...')
             while pa < end_pa:
                 dram.write(self.cs.mem.read_physical_mem(pa, min(end_pa - pa, buffer_size)))
                 pa += buffer_size
         return
 
     def run(self, module_argv):
-        self.logger.start_test("EPT Finder")
+        self.logger.start_test('EPT Finder')
 
-        self.read_from_file = (len(module_argv) > 0) and (module_argv[0] == "file")
+        self.read_from_file = (len(module_argv) > 0) and (module_argv[0] == 'file')
 
         if self.read_from_file:
             if len(module_argv) == 3:
                 revision_id = int(module_argv[2], 16)
-                pattern = "{}.dram_*".format(module_argv[1])
+                pattern = f'{module_argv[1]}.dram_*'
                 filenames = glob.glob(pattern)
                 for name in filenames:
                     addr = name[len(pattern) - 1:]
-                    addr = 0 if addr == "lo" else 0x100000000 if addr == "hi" else int(addr, 16)
+                    addr = 0 if addr == 'lo' else 0x100000000 if addr == 'hi' else int(addr, 16)
                     size = os.stat(name).st_size
-                    self.logger.log("  Mapping file to address: 0x{:012x}  size: 0x{:012x}  name: {}".format(addr, size, name))
-                    self.par.append((addr, addr + size, open(name, "rb")))
+                    self.logger.log(f'  Mapping file to address: 0x{addr:012x}  size: 0x{size:012x}  name: {name}')
+                    self.par.append((addr, addr + size, open(name, 'rb')))
             else:
                 self.logger.log_error('Invalid parameters')
                 self.logger.log(self.__doc__.replace('`', ''))
@@ -213,29 +214,29 @@ class ept_finder(BaseModule):
             self.par = self.get_memory_ranges()
 
         if len(self.par) == 0:
-            self.logger.log_error("Memory ranges are not defined!")
+            self.logger.log_error('Memory ranges are not defined!')
             return ModuleResult.ERROR
 
-        if (len(module_argv) == 2) and (module_argv[0] == "dump"):
+        if (len(module_argv) == 2) and (module_argv[0] == 'dump'):
             for (pa, end_pa, _) in self.par:
-                postfix = "lo" if pa == 0x0 else "hi" if pa == 0x100000000 else "0x{:08x}".format(pa)
-                filename = "{}.dram_{}".format(module_argv[1], postfix)
+                postfix = 'lo' if pa == 0x0 else 'hi' if pa == 0x100000000 else f'0x{pa:08x}'
+                filename = f'{module_argv[1]}.dram_{postfix}'
                 self.dump_dram(filename, pa, end_pa)
             return ModuleResult.PASSED
 
         self.logger.log('[*] Searching Extended Page Tables ...')
         ept_pt_list = self.find_ept_pt({}, 0, 4)
-        self.logger.log('[*] Found PTs  : {:d}'.format(len(ept_pt_list)))
+        self.logger.log(f'[*] Found PTs  : {len(ept_pt_list):d}')
         ept_pd_list = self.find_ept_pt(ept_pt_list, 4, 3)
-        self.logger.log('[*] Found PDs  : {:d}'.format(len(ept_pd_list)))
+        self.logger.log(f'[*] Found PDs  : {len(ept_pd_list):d}')
         ept_pdpt_list = self.find_ept_pt(ept_pd_list, 1, 2)
-        self.logger.log('[*] Found PDPTs: {:d}'.format(len(ept_pdpt_list)))
+        self.logger.log(f'[*] Found PDPTs: {len(ept_pdpt_list):d}')
         ept_pml4_list = self.find_ept_pt(ept_pdpt_list, 1, 1)
-        self.logger.log('[*] Found PML4s: {:d}'.format(len(ept_pml4_list)))
-        self.logger.log('[*] -> EPTP: ' + ' '.join(['{:08X}'.format(x) for x in sorted(ept_pml4_list.keys())]))
+        self.logger.log(f'[*] Found PML4s: {len(ept_pml4_list):d}')
+        self.logger.log('[*] -> EPTP: ' + ' '.join([f'{x:08X}' for x in sorted(ept_pml4_list.keys())]))
         ept_vmcs_list = self.find_vmcs_by_ept([x for x in ept_pml4_list.keys()], revision_id)
-        self.logger.log('[*] Found VMCSs: {:d}'.format(len(ept_vmcs_list)))
-        self.logger.log('[*] -> VMCS: ' + ' '.join(['{:08X}'.format(x) for x in sorted(ept_vmcs_list)]))
+        self.logger.log(f'[*] Found VMCSs: {len(ept_vmcs_list):d}')
+        self.logger.log('[*] -> VMCS: ' + ' '.join([f'{x:08X}' for x in sorted(ept_vmcs_list)]))
 
         try:
             self.path = 'VMs\\'
@@ -244,15 +245,15 @@ class ept_finder(BaseModule):
             pass
 
         for addr in sorted(ept_vmcs_list):
-            write_file(self.path + 'vmcs_{:08x}.bin'.format(addr), self.read_physical_mem(addr))
+            write_file(self.path + f'vmcs_{addr:08x}.bin', self.read_physical_mem(addr))
 
         count = 1
         for eptp in sorted(ept_pml4_list.keys()):
             ept = c_extended_page_tables_from_file(self.cs, self.read_from_file, self.par)
-            ept.prompt = '[VM{:d}]'.format(count)
-            ept.read_pt_and_show_status(self.path + 'ept_{:08x}'.format(eptp), 'Extended', eptp)
+            ept.prompt = f'[VM{count:d}]'
+            ept.read_pt_and_show_status(self.path + f'ept_{eptp:08x}', 'Extended', eptp)
             if not ept.failure:
-                ept.save_configuration(self.path + 'ept_{:08x}.py'.format(eptp))
+                ept.save_configuration(self.path + f'ept_{eptp:08x}.py')
             count += 1
 
         return ModuleResult.INFORMATION

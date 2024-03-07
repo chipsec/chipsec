@@ -47,7 +47,7 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.locks import locks, LockResult
-from chipsec.defines import is_set
+from chipsec.library.defines import is_set
 
 
 class LOCKCHECKCommand(BaseCommand):
@@ -153,7 +153,7 @@ KEY:
             res_str = 'Undoc'
         elif not is_set(is_locked, LockResult.CAN_READ):
             res_str = 'Hidden'
-        elif self.cs.get_lock_type(lock) == "RW/O":
+        elif self.cs.lock.get_type(lock) == "RW/O":
             res_str = 'RW/O'
         elif is_set(is_locked, LockResult.LOCKED):
             res_str = 'Locked'

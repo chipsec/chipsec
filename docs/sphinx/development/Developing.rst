@@ -17,7 +17,7 @@ Most modules read some platform configuration and then pass or fail based on the
 
    .. code-block:: python
 
-    ble = self.cs.get_control('BiosLockEnable')
+    ble = self.cs.control.get('BiosLockEnable')
 
 3. React based on the status of the control:
 

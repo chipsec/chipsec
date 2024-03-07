@@ -32,7 +32,7 @@ import pprint
 from random import getrandbits, randint
 from time import strftime, localtime
 from chipsec.module_common import BaseModule
-from chipsec.defines import DD
+from chipsec.library.defines import DD
 from typing import Dict, List, Tuple
 
 
@@ -80,7 +80,7 @@ class BaseModuleDebug(BaseModule):
                 sys.stdout.write(f'\n[{self.prompt}]  {a:08X}: ')
             elif a % w % 8 == 0:
                 sys.stdout.write('| ')
-            sys.stdout.write('{:02X} '.format(ord(c)))
+            sys.stdout.write(f'{ord(c):02X} ')
             a = a + 1
         sys.stdout.write('\n')
         return
@@ -111,13 +111,13 @@ class BaseModuleSupport(BaseModuleDebug):
         BaseModuleDebug.__init__(self)
         self.initial_data = []
         self.path = os.path.dirname(os.path.realpath(__file__))
-        with open(os.path.join(self.path, 'hv', 'initial_data.json'), "r") as json_file:
+        with open(os.path.join(self.path, 'hv', 'initial_data.json'), 'r') as json_file:
             self.initial_data = json.load(json_file)
         self.statistics = {}
         self.hv_connectionid = {}
 
     def __del__(self) -> None:
-        # self.dump_initial_data("initial_data_auto_generated.json")
+        # self.dump_initial_data('initial_data_auto_generated.json')
         BaseModuleDebug.__del__(self)
 
     def stats_reset(self) -> None:
@@ -136,7 +136,7 @@ class BaseModuleSupport(BaseModuleDebug):
         self.msg('')
         return
 
-    def get_initial_data(self, statuses: List[str], vector: int, size: int, padding='\x00') -> List[str]:        
+    def get_initial_data(self, statuses: List[str], vector: int, size: int, padding='\x00') -> List[str]:
         connectionid_message = [(' '.join([f'{x:02x}' for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 1]
         connectionid_event = [(' '.join([f'{x:02x}' for x in DD(k)])) for k, v in self.hv_connectionid.items() if v == 2]
         result = []
@@ -154,7 +154,7 @@ class BaseModuleSupport(BaseModuleDebug):
 
     def add_initial_data(self, vector: int, buffer: str, status: str) -> None:
         found = False
-        buffer = buffer.rstrip("\x00")
+        buffer = buffer.rstrip('\x00')
         buffer = ' '.join(f'{x:02x}' for x in buffer)
         for item in self.initial_data:
             if int(item['vector'], 16) == vector:
@@ -162,12 +162,12 @@ class BaseModuleSupport(BaseModuleDebug):
                     found = True
                     break
         if not found:
-            self.initial_data.append({"vector": f'{vector:02X}', "status": status, "data": buffer})
+            self.initial_data.append({'vector': f'{vector:02X}', 'status': status, 'data': buffer})
         return
 
     def dump_initial_data(self, filename: str) -> None:
         if self.initial_data:
-            with open(self.path + filename, "w") as json_file:
+            with open(self.path + filename, 'w') as json_file:
                 json.dump(self.initial_data, json_file, indent=4)
         return
 
@@ -226,7 +226,7 @@ def weighted_choice(choices: List[Tuple[int, float]]) -> int:
         if x + w >= r:
             return c
         x += w
-    assert False, "Invalid parameters"
+    assert False, 'Invalid parameters'
 
 
 def rand_dd(n: int, rndbytes: int = 1, rndbits: int = 1) -> List[int]:
@@ -253,7 +253,7 @@ def get_int_arg(arg: str) -> int:
     try:
         ret = int(eval(arg))
     except:
-        print("\n  ERROR: Invalid parameter\n")
+        print('\n  ERROR: Invalid parameter\n')
         exit(1)
     return ret
 
@@ -275,8 +275,6 @@ class session_logger:
         self.log2term = True
         self.log2file = True
         if self.log:
-            #            logpath = 'logs/'
-            #            logfile = '{}.log'.format(details)
             logpath = f'logs/{strftime("%Yww%W.%w", localtime())}/'
             logfile = f'{details}-{strftime("%H%M", localtime())}.log'
             try:

@@ -37,7 +37,7 @@ from chipsec.hal.uefi_common import IS_VARIABLE_ATTRIBUTE, EFI_TABLE_HEADER_FMT,
 from chipsec.hal.uefi_common import EFI_DXE_SERVICES_TABLE_SIGNATURE, EFI_CONFIGURATION_TABLE, ACPI_VARIABLE_SET_STRUCT_SIZE
 from chipsec.logger import logger, print_buffer_bytes
 from chipsec.file import write_file, read_file
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 from chipsec.helper.oshelper import OsHelperError
 
 

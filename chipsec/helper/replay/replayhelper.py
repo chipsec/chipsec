@@ -19,7 +19,7 @@ import os
 from errno import EACCES, EFAULT
 from glob import glob
 from typing import Any, Dict, List, Optional, Tuple
-from chipsec.defines import stringtobytes
+from chipsec.library.defines import stringtobytes
 from chipsec.exceptions import OsHelperError
 from chipsec.file import read_file
 from chipsec.logger import logger

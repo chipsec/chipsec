@@ -37,7 +37,7 @@ import sys
 from typing import Dict, List, Optional, Tuple, Iterable, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType
-from chipsec import defines
+from chipsec.library import defines
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper

@@ -43,8 +43,9 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG, MTAG_SMM
-from chipsec.defines import BIT32, ALIGNED_1MB
+from chipsec.module_common import BaseModule, MTAG_HWCONFIG, MTAG_SMM
+from chipsec.library.returncode import ModuleResult
+from chipsec.library.defines import BIT32, ALIGNED_1MB
 
 _MODULE_NAME = 'remap'
 
@@ -59,28 +60,29 @@ class remap(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x43aa254, 'https://chipsec.github.io/modules/chipsec.modules.common.remap.html')
+        self.result.id = 0x43aa254
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.remap.html'
 
     def is_supported(self) -> bool:
         if self.cs.is_core():
-            rbase_exist = self.cs.is_register_defined('PCI0.0.0_REMAPBASE')
-            rlimit_exist = self.cs.is_register_defined('PCI0.0.0_REMAPLIMIT')
-            touud_exist = self.cs.is_register_defined('PCI0.0.0_TOUUD')
-            tolud_exist = self.cs.is_register_defined('PCI0.0.0_TOLUD')
-            tseg_exist = self.cs.is_register_defined('PCI0.0.0_TSEGMB')
+            rbase_exist = self.cs.register.is_defined('PCI0.0.0_REMAPBASE')
+            rlimit_exist = self.cs.register.is_defined('PCI0.0.0_REMAPLIMIT')
+            touud_exist = self.cs.register.is_defined('PCI0.0.0_TOUUD')
+            tolud_exist = self.cs.register.is_defined('PCI0.0.0_TOLUD')
+            tseg_exist = self.cs.register.is_defined('PCI0.0.0_TSEGMB')
             if rbase_exist and rlimit_exist and touud_exist and tolud_exist and tseg_exist:
                 return True
             self.logger.log_important('Required register definitions not defined for platform.  Skipping module.')
         else:
             self.logger.log_important('Not a Core (client) platform.  Skipping module.')
 
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def is_ibecc_enabled(self) -> bool:
-        if self.cs.is_register_defined('IBECC_ACTIVATE'):
-            edsr = self.cs.read_register_field('IBECC_ACTIVATE', 'IBECC_EN')
+        if self.cs.register.is_defined('IBECC_ACTIVATE'):
+            edsr = self.cs.register.read_field('IBECC_ACTIVATE', 'IBECC_EN')
             if edsr == 1:
                 return True
             else:
@@ -92,11 +94,11 @@ class remap(BaseModule):
     def check_remap_config(self) -> int:
         is_warning = False
 
-        remapbase = self.cs.read_register('PCI0.0.0_REMAPBASE')
-        remaplimit = self.cs.read_register('PCI0.0.0_REMAPLIMIT')
-        touud = self.cs.read_register('PCI0.0.0_TOUUD')
-        tolud = self.cs.read_register('PCI0.0.0_TOLUD')
-        tsegmb = self.cs.read_register('PCI0.0.0_TSEGMB')
+        remapbase = self.cs.register.read('PCI0.0.0_REMAPBASE')
+        remaplimit = self.cs.register.read('PCI0.0.0_REMAPLIMIT')
+        touud = self.cs.register.read('PCI0.0.0_TOUUD')
+        tolud = self.cs.register.read('PCI0.0.0_TOLUD')
+        tsegmb = self.cs.register.read('PCI0.0.0_TSEGMB')
         self.logger.log("[*] Registers:")
         self.logger.log(f"[*]   TOUUD     : 0x{touud:016X}")
         self.logger.log(f"[*]   REMAPLIMIT: 0x{remaplimit:016X}")
@@ -106,8 +108,8 @@ class remap(BaseModule):
         self.logger.log("")
 
         ia_untrusted = 0
-        if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
-            ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
+        if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+            ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
         remapbase_lock = remapbase & 0x1
         remaplimit_lock = remaplimit & 0x1
         touud_lock = touud & 0x1
@@ -185,18 +187,18 @@ class remap(BaseModule):
                 self.logger.log_warning("Most Memory Remap registers are configured correctly and locked")
                 self.logger.log("[!] Manual verification of REMAP BASE and LIMIT register values may be needed.")
                 res = ModuleResult.WARNING
-                self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+                self.result.setStatusBit(self.result.status.VERIFY)
             else:
                 res = ModuleResult.PASSED
-                self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
+                self.result.setStatusBit(self.result.status.SUCCESS)
                 self.logger.log_passed("Memory Remap is configured correctly and locked")
         else:
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
-            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
+            self.result.setStatusBit(self.result.status.CONFIGURATION)
+            self.result.setStatusBit(self.result.status.LOCKS)
             self.logger.log_failed("Memory Remap is not properly configured/locked. Remaping attack may be possible")
 
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
 
     # --------------------------------------------------------------------------

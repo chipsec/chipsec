@@ -30,13 +30,13 @@ class TestCpuInfo(unittest.TestCase):
 
     def test_cpu_info_is_supported_false(self):
         mock_self = Mock()
-        mock_self.cs.register_has_field.return_value = False
+        mock_self.cs.register.has_field.return_value = False
         result = cpu_info.is_supported(mock_self)
         self.assertFalse(result)
 
     def test_cpu_info_is_supported_true(self):
         mock_self = Mock()
-        mock_self.cs.register_has_field.return_value = True
+        mock_self.cs.register.has_field.return_value = True
         result = cpu_info.is_supported(mock_self)
         self.assertTrue(result)
 

@@ -40,8 +40,8 @@ from typing import Dict, Sequence, Any, Optional
 import chipsec.file
 import chipsec.module
 import chipsec.result_deltas
-from chipsec import defines
-from chipsec import module_common
+from chipsec.library import defines
+from chipsec.library.returncode import ModuleResult, getModuleResultName
 from chipsec import chipset
 from chipsec.helper.oshelper import helper
 from chipsec.logger import logger
@@ -165,14 +165,14 @@ class ChipsecMain:
         result = None
         try:
             if not modx.do_import():
-                return module_common.ModuleResult.ERROR
+                return ModuleResult.ERROR
             if self.logger.DEBUG and not self._list_tags:
                 self.logger.log("[*] Module path: {}".format(modx.get_location()))
 
             if self.verify_module_tags(modx):
                 result = modx.run(module_argv)
             else:
-                return module_common.ModuleResult.NOTAPPLICABLE
+                return ModuleResult.NOTAPPLICABLE
         except BaseException as msg:
             if self.logger.DEBUG:
                 self.logger.log_bad(traceback.format_exc())
@@ -296,18 +296,18 @@ class ChipsecMain:
                 result = self.run_module(modx, modx_argv)
             except BaseException:
                 results.add_exception(modx)
-                result = module_common.ModuleResult.ERROR
+                result = ModuleResult.ERROR
                 if self.logger.DEBUG:
                     self.logger.log_bad(traceback.format_exc())
                 if self.failfast:
                     raise
 
             # Module uses the old API  display warning and try to run anyways
-            if result == module_common.ModuleResult.DEPRECATED:
+            if result == ModuleResult.DEPRECATED:
                 self.logger.log_error('Module {} does not inherit BaseModule class'.format(str(modx)))
 
             # Populate results
-            test_result.end_module(module_common.getModuleResultName(result), modx_argv if modx_argv else None)
+            test_result.end_module(getModuleResultName(result, self._return_codes), modx_argv if modx_argv else None)
             results.add_testcase(test_result)
 
         runtime = time.time() - t if not self.no_time else None

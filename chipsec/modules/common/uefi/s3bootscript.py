@@ -50,8 +50,9 @@ Examples:
     Requires an OS with UEFI Runtime API support.
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT
-from chipsec.defines import BOUNDARY_1MB, BOUNDARY_4GB
+from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, MTAG_SECUREBOOT
+from chipsec.library.returncode import ModuleResult
+from chipsec.library.defines import BOUNDARY_1MB, BOUNDARY_4GB
 from chipsec.hal.uefi import UEFI, parse_script
 from chipsec.hal.uefi_common import S3BootScriptOpcode, S3BOOTSCRIPT_ENTRY
 from typing import List
@@ -77,14 +78,15 @@ class s3bootscript(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
-        self.rc_res = ModuleResult(0x9e3cf54, 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.s3bootscript.html')
+        self.result.id = 0x9e3cf54
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.s3bootscript.html'
 
     def is_supported(self) -> bool:
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log("OS does not support UEFI Runtime API")
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def is_inside_SMRAM(self, pa: int) -> bool:
@@ -148,8 +150,8 @@ class s3bootscript(BaseModule):
             if not found:
                 self.logger.log_good("Didn't find any S3 boot-scripts in EFI variables")
                 self.logger.log_warning("S3 Boot-Script was not found. Firmware may be using other ways to store/locate it, or OS might be blocking access.")
-                self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-                return self.rc_res.getReturnCode(ModuleResult.WARNING)
+                self.result.setStatusBit(self.result.status.VERIFY)
+                return self.result.getReturnCode(ModuleResult.WARNING)
 
 
             self.logger.log_important(f'Found {len(bootscript_PAs):d} S3 boot-script(s) in EFI variables')
@@ -166,17 +168,17 @@ class s3bootscript(BaseModule):
             if (res & DISPATCH_OPCODES_UNPROTECTED) != 0:
                 # DISPATCH_OPCODES_UNPROTECTED
                 status = ModuleResult.FAILED
-                self.rc_res.setStatusBit(self.rc_res.status.PROTECTION)
+                self.result.setStatusBit(self.result.status.PROTECTION)
                 self.logger.log_failed('S3 Boot-Script and Dispatch entry-points do not appear to be protected')
             else:
                 # DISPATCH_OPCODES_PROTECTED
                 status = ModuleResult.WARNING
-                self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+                self.result.setStatusBit(self.result.status.VERIFY)
                 self.logger.log_warning('S3 Boot-Script is not in SMRAM but Dispatch entry-points appear to be protected. Recommend further testing')
         else:
             # BOOTSCRIPT_INSIDE_SMRAM
             status = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+            self.result.setStatusBit(self.result.status.VERIFY)
             self.logger.log_warning("S3 Boot-Script is inside SMRAM. The script is protected but Dispatch opcodes cannot be inspected")
 
         self.logger.log_important("Additional testing of the S3 boot-script can be done using tools.uefi.s3script_modify")
@@ -188,8 +190,8 @@ class s3bootscript(BaseModule):
 
         if len(module_argv) > 2:
             self.logger.log_error('Expected module options: -a <bootscript_address>')
-            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
-            return self.rc_res.getReturnCode(ModuleResult.ERROR)
+            self.result.setStatusBit(self.result.status.UNSUPPORTED_OPTION)
+            return self.result.getReturnCode(ModuleResult.ERROR)
 
         script_pa = None
 
@@ -211,4 +213,4 @@ class s3bootscript(BaseModule):
                 raise
             self.res = ModuleResult.ERROR
 
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)

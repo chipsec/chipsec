@@ -33,7 +33,8 @@ Example:
     - This module will only run on Core (client) platforms.
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, MTAG_HWCONFIG
+from chipsec.library.returncode import ModuleResult
 from typing import List
 
 _MODULE_NAME = 'memconfig'
@@ -45,7 +46,8 @@ class memconfig(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x9feb705, 'https://chipsec.github.io/modules/chipsec.modules.common.memconfig.html')
+        self.result.id = 0x9feb705
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.memconfig.html'
         self.memmap_registers = {
             "PCI0.0.0_GGC": 'GGCLOCK',
             "PCI0.0.0_PAVPC": 'PAVPLCK',
@@ -68,16 +70,16 @@ class memconfig(BaseModule):
             self.logger.log_important("Not a 'Core' (Desktop) platform.  Skipping test.")
         else:
             self.logger.log_important("Not an Intel platform.  Skipping test.")
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_memmap_locks(self) -> int:
 
         # Determine if IA_UNTRUSTED can be used to lock the system.
         ia_untrusted = None
-        if self.cs.register_has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
-            ia_untrusted = self.cs.read_register_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
+        if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
+            ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
 
         regs = sorted(self.memmap_registers.keys())
         all_locked = True
@@ -89,13 +91,13 @@ class memconfig(BaseModule):
             self.logger.log('[*] Checking register lock state:')
         for reg in regs:
             reg_field = self.memmap_registers[reg]
-            if not self.cs.register_has_field(reg, reg_field):
+            if not self.cs.register.has_field(reg, reg_field):
                 self.logger.log_important(f'Skipping Validation: Register {reg} or field {reg_field} was not defined for this platform.')
                 continue
-            reg_def = self.cs.get_register_def(reg)
-            reg_value = self.cs.read_register(reg)
+            reg_def = self.cs.register.get_def(reg)
+            reg_value = self.cs.register.read(reg)
             reg_desc = reg_def['desc']
-            locked = self.cs.get_register_field(reg, reg_value, reg_field)
+            locked = self.cs.register.get_field(reg, reg_value, reg_field)
             if locked == 1:
                 self.logger.log_good(f"{reg:20} = 0x{reg_value:016X} - LOCKED   - {reg_desc}")
             else:
@@ -118,11 +120,11 @@ class memconfig(BaseModule):
         else:
             res = ModuleResult.FAILED
             self.logger.log_failed("Not all memory map registers are locked down")
-            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
+            self.result.setStatusBit(self.result.status.LOCKS)
 
         return res
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Host Bridge Memory Map Locks")
         self.res = self.check_memmap_locks()
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)

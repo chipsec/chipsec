@@ -40,8 +40,9 @@ Example:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.defines import BOUNDARY_4GB
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
+from chipsec.library.defines import BOUNDARY_4GB
 from chipsec.file import write_file
 from chipsec.hal.pci import PCI_HDR_BAR_STEP, PCI_HDR_BAR_BASE_MASK_MMIO64, PCI_HDR_BAR_CFGBITS_MASK
 from chipsec.hal.interrupts import Interrupts
@@ -70,7 +71,8 @@ class rogue_mmio_bar(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._interrupts = Interrupts(self.cs)
-        self.rc_res = ModuleResult(0x293f9e8, 'https://chipsec.github.io/modules/chipsec.modules.tools.smm.rogue_mmio_bar.html')
+        self.result.id = 0x293f9e8
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.smm.rogue_mmio_bar.html'
 
         # SMI code to be written to I/O port 0xB2
         self.smic_start = 0x00
@@ -201,8 +203,8 @@ class rogue_mmio_bar(BaseModule):
                     self.logger.log(f'[*] Found MMIO BAR +0x{bar_off:02X} (base 0x{base:016X}, size 0x{size:X})')
                     new_bar = ((self.reloc_mmio & PCI_HDR_BAR_BASE_MASK_MMIO64) | (bar & PCI_HDR_BAR_CFGBITS_MASK))
                     if self.smi_mmio_range_fuzz(0, b, d, f, bar_off, is64bit, bar, new_bar, base, size):
-                        self.rc_res.setStatusBit(self.rc_res.status.RESTORE)
-                        return self.rc_res.getReturnCode(ModuleResult.FAILED)
+                        self.result.setStatusBit(self.result.status.RESTORE)
+                        return self.result.getReturnCode(ModuleResult.FAILED)
 
-        self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
-        return self.rc_res.getReturnCode(ModuleResult.PASSED)
+        self.result.setStatusBit(self.result.status.SUCCESS)
+        return self.result.getReturnCode(ModuleResult.PASSED)

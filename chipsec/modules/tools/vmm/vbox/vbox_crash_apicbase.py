@@ -41,7 +41,8 @@ Registers used:
 """
 
 from chipsec.exceptions import HWAccessViolationError
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 
 _MODULE_NAME = 'vbox_crash_apicbase'
 
@@ -49,23 +50,24 @@ _MODULE_NAME = 'vbox_crash_apicbase'
 class vbox_crash_apicbase(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x14428af, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.vbox.vbox_crash_apicbase.html')
+        self.result.id = 0x14428af
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.vbox.vbox_crash_apicbase.html'
 
     def run(self, module_argv):
-        self.logger.start_test("Host OS Crash due to IA32_APIC_BASE (Oracle VirtualBox CVE-2015-0377)")
+        self.logger.start_test('Host OS Crash due to IA32_APIC_BASE (Oracle VirtualBox CVE-2015-0377)')
 
         tid = 0
-        apicbase_msr = self.cs.read_register('IA32_APIC_BASE', tid)
-        self.cs.print_register('IA32_APIC_BASE', apicbase_msr)
+        apicbase_msr = self.cs.register.read('IA32_APIC_BASE', tid)
+        self.cs.register.print('IA32_APIC_BASE', apicbase_msr)
         apicbase_msr = 0xDEADBEEF00000000 | (apicbase_msr & 0xFFFFFFFF)
         self.logger.log(f'[*] Writing 0x{apicbase_msr:016X} to IA32_APIC_BASE MSR..')
         try:
-            self.cs.write_register('IA32_APIC_BASE', apicbase_msr, tid)
+            self.cs.register.write('IA32_APIC_BASE', apicbase_msr, tid)
         except HWAccessViolationError:
             self.logger.log('System blocked write attempt.')
 
         # If we are here, then we are fine ;)
         self.logger.log_passed("VMM/Host OS didn't crash (not vulnerable)")
-        self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
-        self.res = self.rc_res.getReturnCode(ModuleResult.PASSED)
+        self.result.setStatusBit(self.result.status.SUCCESS)
+        self.res = self.result.getReturnCode(ModuleResult.PASSED)
         return self.res

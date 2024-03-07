@@ -210,17 +210,17 @@ class TestHalCpu(unittest.TestCase):
 
     def test_hal_cpu_get_SMRR(self):
         mock_self = Mock()
-        mock_self.cs.read_register_field.side_effect = [0x88400000, 0xFFC00000]
+        mock_self.cs.register.read_field.side_effect = [0x88400000, 0xFFC00000]
         result = CPU.get_SMRR(mock_self)
         self.assertEqual(result, (0x88400000, 0xFFC00000))
 
     def test_hal_cpu_get_SMRR_cmd(self):
         mock_self = Mock()
-        mock_self.cs.read_register_field.side_effect = [0x88400000, 0xFFC00000]
+        mock_self.cs.register.read_field.side_effect = [0x88400000, 0xFFC00000]
         call_1 = call('IA32_SMRR_PHYSBASE', 'PhysBase', True)
         call_2 = call('IA32_SMRR_PHYSMASK', 'PhysMask', True)
         CPU.get_SMRR(mock_self)
-        mock_self.cs.read_register_field.assert_has_calls([call_1, call_2])
+        mock_self.cs.register.read_field.assert_has_calls([call_1, call_2])
 
     def test_hal_cpu_get_SMRR_SMRAM(self):
         mock_self = Mock()
@@ -234,14 +234,14 @@ class TestHalCpu(unittest.TestCase):
         call_1 = call('TSEG_BASE', 'base', preserve_field_position=True)
         call_2 = call('TSEG_LIMIT', 'limit', preserve_field_position=True)
         mock_self.cs.is_server.return_value = True
-        mock_self.cs.read_register_field.side_effect = [0x88400000, 0x88700000]
+        mock_self.cs.register.read_field.side_effect = [0x88400000, 0x88700000]
         CPU.get_TSEG(mock_self)
-        mock_self.cs.read_register_field.assert_has_calls([call_1, call_2])
+        mock_self.cs.register.read_field.assert_has_calls([call_1, call_2])
 
     def test_hal_cpu_get_TSEG_is_server_true(self):
         mock_self = Mock()
         mock_self.cs.is_server.return_value = True
-        mock_self.cs.read_register_field.side_effect = [0x88400000, 0x88700000]
+        mock_self.cs.register.read_field.side_effect = [0x88400000, 0x88700000]
         expected_result = (0x88400000, 0x887FFFFF, 0x400000)
         result = CPU.get_TSEG(mock_self)
         self.assertEqual(result, expected_result)
@@ -249,7 +249,7 @@ class TestHalCpu(unittest.TestCase):
     def test_hal_cpu_get_TSEG_is_server_false(self):
         mock_self = Mock()
         mock_self.cs.is_server.return_value = False
-        mock_self.cs.read_register_field.side_effect = [0x88400000, 0x88800000]
+        mock_self.cs.register.read_field.side_effect = [0x88400000, 0x88800000]
         expected_result = (0x88400000, 0x887FFFFF, 0x400000)
         result = CPU.get_TSEG(mock_self)
         self.assertEqual(result, expected_result)
@@ -259,9 +259,9 @@ class TestHalCpu(unittest.TestCase):
         call_1 = call('PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True)
         call_2 = call('PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True)
         mock_self.cs.is_server.return_value = False
-        mock_self.cs.read_register_field.side_effect = [0x88400000, 0x88800000]
+        mock_self.cs.register.read_field.side_effect = [0x88400000, 0x88800000]
         CPU.get_TSEG(mock_self)
-        mock_self.cs.read_register_field.assert_has_calls([call_1, call_2])
+        mock_self.cs.register.read_field.assert_has_calls([call_1, call_2])
 
     def test_hal_cpu_get_SMRAM_smrr_true(self):
         mock_self = MagicMock()
@@ -281,27 +281,27 @@ class TestHalCpu(unittest.TestCase):
 
     def test_hal_cpu_check_SMRR_supported_cmd2(self):
         mock_self = Mock()
-        mock_self.cs.read_register.return_value = 0x88442200
-        mock_self.cs.get_register_field.return_value = 0
+        mock_self.cs.register.read.return_value = 0x88442200
+        mock_self.cs.register.get_field.return_value = 0
         CPU.check_SMRR_supported(mock_self)
-        mock_self.cs.read_register.assert_called_with('MTRRCAP')
+        mock_self.cs.register.read.assert_called_with('MTRRCAP')
 
     def test_hal_cpu_check_SMRR_supported_cmd(self):
         mock_self = Mock()
-        mock_self.cs.read_register.return_value = 0x88442200
-        mock_self.cs.get_register_field.return_value = 0
+        mock_self.cs.register.read.return_value = 0x88442200
+        mock_self.cs.register.get_field.return_value = 0
         CPU.check_SMRR_supported(mock_self)
-        mock_self.cs.get_register_field.assert_called_with('MTRRCAP', 0x88442200, 'SMRR')
+        mock_self.cs.register.get_field.assert_called_with('MTRRCAP', 0x88442200, 'SMRR')
 
     def test_hal_cpu_check_SMRR_supported_false(self):
         mock_self = Mock()
-        mock_self.cs.get_register_field.return_value = 0
+        mock_self.cs.register.get_field.return_value = 0
         result = CPU.check_SMRR_supported(mock_self)
         self.assertFalse(result)
 
     def test_hal_cpu_check_SMRR_supported_true(self):
         mock_self = Mock()
-        mock_self.cs.get_register_field.return_value = 1
+        mock_self.cs.register.get_field.return_value = 1
         result = CPU.check_SMRR_supported(mock_self)
         self.assertTrue(result)
 

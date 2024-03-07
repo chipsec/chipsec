@@ -43,7 +43,8 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 from typing import List
 
 TAGS = [MTAG_BIOS]
@@ -53,35 +54,36 @@ class spi_lock(BaseModule):
 
     def __init__(self):
         super(spi_lock, self).__init__()
-        self.rc_res = ModuleResult(0xf73c7bd, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_lock.html')
+        self.result.id = 0xf73c7bd
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_lock.html'
 
     def is_supported(self) -> bool:
-        if self.cs.is_control_defined('FlashLockDown'):
+        if self.cs.control.is_defined('FlashLockDown'):
             return True
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         self.logger.log_important('FlashLockDown control not define for platform.  Skipping module.')
         return False
 
     def check_spi_lock(self) -> int:
         res = ModuleResult.PASSED
         reg_print = True
-        if self.cs.is_control_defined('SpiWriteStatusDis'):
-            wrsdis = self.cs.get_control('SpiWriteStatusDis', with_print=reg_print)
+        if self.cs.control.is_defined('SpiWriteStatusDis'):
+            wrsdis = self.cs.control.get('SpiWriteStatusDis', with_print=reg_print)
             if 1 == wrsdis:
                 self.logger.log_good('SPI write status disable set.')
             else:
                 res = ModuleResult.FAILED
-                self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
                 self.logger.log_bad('SPI write status disable not set.')
             reg_print = False
 
-        flockdn = self.cs.get_control('FlashLockDown', with_print=reg_print)
+        flockdn = self.cs.control.get('FlashLockDown', with_print=reg_print)
         if 1 == flockdn:
             self.logger.log_good("SPI Flash Controller configuration is locked")
         else:
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
+            self.result.setStatusBit(self.result.status.LOCKS)
             self.logger.log_bad("SPI Flash Controller configuration is not locked")
         reg_print = False
 
@@ -92,7 +94,7 @@ class spi_lock(BaseModule):
         else:
             self.logger.log_warning("Unable to determine if SPI Flash Controller is locked correctly.")
 
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Controller Configuration Locks")

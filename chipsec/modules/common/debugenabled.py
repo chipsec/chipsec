@@ -40,8 +40,9 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.defines import BIT11
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
+from chipsec.library.defines import BIT11
 from typing import List
 
 _MODULE_NAME = 'debugenabled'
@@ -51,7 +52,8 @@ class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0xe516a56, 'https://chipsec.github.io/modules/chipsec.modules.common.debugenabled.html')
+        self.result.id = 0xe516a56
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.debugenabled.html'
         self.is_enable_set = False
         self.is_debug_set = False
         self.is_lock_set = True
@@ -61,24 +63,24 @@ class debugenabled(BaseModule):
         # See IA32 SDM CPUID Instruction for details.  (SDBG ECX bit 11)
         (_, _, ecx, _) = self.cs.cpu.cpuid(1, 0)
         supported = (ecx & BIT11) != 0
-        if not supported and not self.cs.is_register_defined('ECTRL'):
+        if not supported and not self.cs.register.is_defined('ECTRL'):
             self.logger.log_important('CPU Debug features are not supported on this platform.  Skipping module.')
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def check_dci(self) -> int:
         TestFail = ModuleResult.PASSED
         self.logger.log('')
         self.logger.log('[*] Checking DCI register status')
-        ectrl = self.cs.read_register('ECTRL')
-        HDCIEN = self.cs.get_register_field('ECTRL', ectrl, 'ENABLE') == 1
+        ectrl = self.cs.register.read('ECTRL')
+        HDCIEN = self.cs.register.get_field('ECTRL', ectrl, 'ENABLE') == 1
         if self.logger.VERBOSE:
-            self.cs.print_register('ECTRL', ectrl)
+            self.cs.register.print('ECTRL', ectrl)
         if HDCIEN:
             self.logger.log_bad('DCI Debug is enabled')
             TestFail = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.DEBUG_FEATURE)
+            self.result.setStatusBit(self.result.status.DEBUG_FEATURE)
         else:
             self.logger.log_good('DCI Debug is disabled')
         return TestFail
@@ -88,28 +90,28 @@ class debugenabled(BaseModule):
         self.logger.log('[*] Checking IA32_DEBUG_INTERFACE MSR status')
         TestFail = ModuleResult.PASSED
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            dbgiface = self.cs.read_register('IA32_DEBUG_INTERFACE', tid)
-            IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
-            IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1
-            IA32_DEBUG_INTERFACE_DEBUGEOCCURED = self.cs.get_register_field('IA32_DEBUG_INTERFACE', dbgiface, 'DEBUG_OCCURRED') == 1
+            dbgiface = self.cs.register.read('IA32_DEBUG_INTERFACE', tid)
+            IA32_DEBUG_INTERFACE_DEBUGENABLE = self.cs.register.get_field('IA32_DEBUG_INTERFACE', dbgiface, 'ENABLE') == 1
+            IA32_DEBUG_INTERFACE_DEBUGELOCK = self.cs.register.get_field('IA32_DEBUG_INTERFACE', dbgiface, 'LOCK') == 1
+            IA32_DEBUG_INTERFACE_DEBUGEOCCURED = self.cs.register.get_field('IA32_DEBUG_INTERFACE', dbgiface, 'DEBUG_OCCURRED') == 1
 
             if self.logger.VERBOSE:
-                self.cs.print_register('IA32_DEBUG_INTERFACE', dbgiface)
+                self.cs.register.print('IA32_DEBUG_INTERFACE', dbgiface)
 
             if IA32_DEBUG_INTERFACE_DEBUGENABLE:
                 self.logger.log_bad('CPU debug enable requested by software.')
                 self.is_enable_set = True
                 TestFail = ModuleResult.FAILED
-                self.rc_res.setStatusBit(self.rc_res.status.DEBUG_FEATURE)
+                self.result.setStatusBit(self.result.status.DEBUG_FEATURE)
             if not IA32_DEBUG_INTERFACE_DEBUGELOCK:
                 self.logger.log_bad('CPU debug interface is not locked.')
                 self.is_lock_set = False
                 TestFail = ModuleResult.FAILED
-                self.rc_res.setStatusBit(self.rc_res.status.LOCKS)
+                self.result.setStatusBit(self.result.status.LOCKS)
             if IA32_DEBUG_INTERFACE_DEBUGEOCCURED:
                 self.logger.log_important('Debug Occurred bit set in IA32_DEBUG_INTERFACE MSR')
                 self.is_debug_set = True
-                self.rc_res.setStatusBit(self.rc_res.status.DEBUG_FEATURE)
+                self.result.setStatusBit(self.result.status.DEBUG_FEATURE)
                 if TestFail == ModuleResult.PASSED:
                     TestFail = ModuleResult.WARNING
             if TestFail == ModuleResult.PASSED:
@@ -122,7 +124,7 @@ class debugenabled(BaseModule):
         cpu_debug_test_fail = self.check_cpu_debug_enable()
 
         dci_test_fail = ModuleResult.PASSED
-        if self.cs.is_register_defined('ECTRL'):
+        if self.cs.register.is_defined('ECTRL'):
             dci_test_fail = self.check_dci()
 
         self.logger.log('')
@@ -137,10 +139,10 @@ class debugenabled(BaseModule):
 
         if (dci_test_fail == ModuleResult.FAILED) or (cpu_debug_test_fail == ModuleResult.FAILED):
             self.logger.log_failed('One or more of the debug checks have failed and a debug feature is enabled')
-            self.res = self.rc_res.getReturnCode(ModuleResult.FAILED)
+            self.res = self.result.getReturnCode(ModuleResult.FAILED)
         elif (dci_test_fail == ModuleResult.WARNING) or (cpu_debug_test_fail == ModuleResult.WARNING):
             self.logger.log_warning('An unexpected debug state was discovered on this platform')
-            self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+            self.res = self.result.getReturnCode(ModuleResult.WARNING)
         else:
             self.logger.log_passed('All checks have successfully passed')
 

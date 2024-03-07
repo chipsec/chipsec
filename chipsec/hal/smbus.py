@@ -67,10 +67,10 @@ class SMBus(hal_base.HALBase):
             raise IOBARNotFoundError('IOBARAccessError: SMBUS_BASE')
 
     def get_SMBus_HCFG(self) -> int:
-        if self.cs.is_register_defined('SMBUS_HCFG'):
-            reg_value = self.cs.read_register('SMBUS_HCFG')
+        if self.cs.register.is_defined('SMBUS_HCFG'):
+            reg_value = self.cs.register.read('SMBUS_HCFG')
             if self.logger.HAL:
-                self.cs.print_register('SMBUS_HCFG', reg_value)
+                self.cs.register.print('SMBUS_HCFG', reg_value)
             return reg_value
         else:
             raise RegisterNotFoundError('RegisterNotFound: SMBUS_HCFG')
@@ -80,10 +80,10 @@ class SMBus(hal_base.HALBase):
         self.get_SMBus_HCFG()
 
     def is_SMBus_enabled(self) -> bool:
-        return self.cs.is_device_enabled('SMBUS')
+        return self.cs.device.is_enabled('SMBUS')
 
     def is_SMBus_supported(self) -> bool:
-        (did, vid) = self.cs.get_DeviceVendorID('SMBUS')
+        (did, vid) = self.cs.device.get_VendorID('SMBUS')
         self.logger.log_hal(f'[smbus] SMBus Controller (DID,VID) = (0x{did:04X},0x{vid:04X})')
         if (0x8086 == vid):
             return True
@@ -93,25 +93,25 @@ class SMBus(hal_base.HALBase):
 
     def is_SMBus_host_controller_enabled(self) -> int:
         hcfg = self.get_SMBus_HCFG()
-        return self.cs.get_register_field("SMBUS_HCFG", hcfg, "HST_EN")
+        return self.cs.register.get_field("SMBUS_HCFG", hcfg, "HST_EN")
 
     def enable_SMBus_host_controller(self) -> None:
         # Enable SMBus Host Controller Interface in HCFG
-        reg_value = self.cs.read_register('SMBUS_HCFG')
+        reg_value = self.cs.register.read('SMBUS_HCFG')
         if 0 == (reg_value & 0x1):
-            self.cs.write_register('SMBUS_HCFG', (reg_value | 0x1))
+            self.cs.register.write('SMBUS_HCFG', (reg_value | 0x1))
         # @TODO: check SBA is programmed
         sba = self.get_SMBus_Base_Address()
         # Enable SMBus I/O Space
-        cmd = self.cs.read_register('SMBUS_CMD')
+        cmd = self.cs.register.read('SMBUS_CMD')
         if 0 == (cmd & 0x1):
-            self.cs.write_register('SMBUS_CMD', (cmd | 0x1))
+            self.cs.register.write('SMBUS_CMD', (cmd | 0x1))
 
     def reset_SMBus_controller(self) -> bool:
-        reg_value = self.cs.read_register('SMBUS_HCFG')
-        self.cs.write_register('SMBUS_HCFG', reg_value | 0x08)
+        reg_value = self.cs.register.read('SMBUS_HCFG')
+        self.cs.register.write('SMBUS_HCFG', reg_value | 0x08)
         for i in range(SMBUS_POLL_COUNT):
-            if (self.cs.read_register('SMBUS_HCFG') & 0x08) == 0:
+            if (self.cs.register.read('SMBUS_HCFG') & 0x08) == 0:
                 return True
         return False
 
@@ -124,7 +124,7 @@ class SMBus(hal_base.HALBase):
         busy = None
         for i in range(SMBUS_POLL_COUNT):
             #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
-            busy = self.cs.read_register_field(self.smb_reg_status, 'BUSY')
+            busy = self.cs.register.read_field(self.smb_reg_status, 'BUSY')
             if 0 == busy:
                 return True
         return 0 == busy
@@ -134,10 +134,10 @@ class SMBus(hal_base.HALBase):
         busy = None
         for i in range(SMBUS_POLL_COUNT):
             #time.sleep( SMBUS_POLL_SLEEP_INTERVAL )
-            sts = self.cs.read_register(self.smb_reg_status)
-            busy = self.cs.get_register_field(self.smb_reg_status, sts, 'BUSY')
-            intr = self.cs.get_register_field(self.smb_reg_status, sts, 'INTR')
-            failed = self.cs.get_register_field(self.smb_reg_status, sts, 'FAILED')
+            sts = self.cs.register.read(self.smb_reg_status)
+            busy = self.cs.register.get_field(self.smb_reg_status, sts, 'BUSY')
+            intr = self.cs.register.get_field(self.smb_reg_status, sts, 'INTR')
+            failed = self.cs.register.get_field(self.smb_reg_status, sts, 'FAILED')
             if 0 == busy and 1 == intr:
                 # if self.logger.HAL:
                 #    intr = chipsec.chipset.get_register_field( self.cs, self.smb_reg_status, sts, 'INTR' )
@@ -151,13 +151,13 @@ class SMBus(hal_base.HALBase):
                     self.logger.log_error("SMBus transaction failed (FAILED/ERROR bit = 1)")
                 return False
             else:
-                if self.cs.register_has_field(self.smb_reg_status, 'DEV_ERR'):
-                    if 1 == self.cs.get_register_field(self.smb_reg_status, sts, 'DEV_ERR'):
+                if self.cs.register.has_field(self.smb_reg_status, 'DEV_ERR'):
+                    if 1 == self.cs.register.get_field(self.smb_reg_status, sts, 'DEV_ERR'):
                         if self.logger.HAL:
                             self.logger.log_error("SMBus device error (invalid cmd, unclaimed cycle or time-out error)")
                         return False
-                if self.cs.register_has_field(self.smb_reg_status, 'BUS_ERR'):
-                    if 1 == self.cs.get_register_field(self.smb_reg_status, sts, 'BUS_ERR'):
+                if self.cs.register.has_field(self.smb_reg_status, 'BUS_ERR'):
+                    if 1 == self.cs.register.get_field(self.smb_reg_status, sts, 'BUS_ERR'):
                         if self.logger.HAL:
                             self.logger.log_error("SMBus bus error")
                         return False
@@ -165,28 +165,28 @@ class SMBus(hal_base.HALBase):
 
     def read_byte(self, target_address: int, offset: int) -> int:
         # clear status bits
-        self.cs.write_register(self.smb_reg_status, 0xFF)
+        self.cs.register.write(self.smb_reg_status, 0xFF)
 
         # SMBus txn RW direction = Read, SMBus slave address = target_address
         hst_sa = 0x0
-        hst_sa = self.cs.set_register_field(self.smb_reg_address, hst_sa, 'RW', SMBUS_COMMAND_READ)
-        hst_sa = self.cs.set_register_field(self.smb_reg_address, hst_sa, 'Address', target_address, True)
-        self.cs.write_register(self.smb_reg_address, hst_sa)
+        hst_sa = self.cs.register.set_field(self.smb_reg_address, hst_sa, 'RW', SMBUS_COMMAND_READ)
+        hst_sa = self.cs.register.set_field(self.smb_reg_address, hst_sa, 'Address', target_address, True)
+        self.cs.register.write(self.smb_reg_address, hst_sa)
         # command data = byte offset (bus txn address)
-        self.cs.write_register_field(self.smb_reg_command, 'DataOffset', offset)
+        self.cs.register.write_field(self.smb_reg_command, 'DataOffset', offset)
         # command = Byte Data
-        # if self.cs.register_has_field( self.smb_reg_control, 'SMB_CMD' ):
-        self.cs.write_register_field(self.smb_reg_control, 'SMB_CMD', SMBUS_COMMAND_BYTE_DATA)
+        # if self.cs.register.has_field( self.smb_reg_control, 'SMB_CMD' ):
+        self.cs.register.write_field(self.smb_reg_control, 'SMB_CMD', SMBUS_COMMAND_BYTE_DATA)
         # send SMBus txn
-        self.cs.write_register_field(self.smb_reg_control, 'START', 1)
+        self.cs.register.write_field(self.smb_reg_control, 'START', 1)
 
         # wait for cycle to complete
         if not self._wait_for_cycle():
             return 0xFF
         # read the data
-        value = self.cs.read_register_field(self.smb_reg_data0, 'Data')
+        value = self.cs.register.read_field(self.smb_reg_data0, 'Data')
         # clear status bits
-        self.cs.write_register(self.smb_reg_status, 0xFF)
+        self.cs.register.write(self.smb_reg_status, 0xFF)
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )
@@ -195,28 +195,28 @@ class SMBus(hal_base.HALBase):
 
     def write_byte(self, target_address: int, offset: int, value: int) -> bool:
         # clear status bits
-        self.cs.write_register(self.smb_reg_status, 0xFF)
+        self.cs.register.write(self.smb_reg_status, 0xFF)
 
         # SMBus txn RW direction = Write, SMBus slave address = target_address
         hst_sa = 0x0
-        hst_sa = self.cs.set_register_field(self.smb_reg_address, hst_sa, 'RW', SMBUS_COMMAND_WRITE)
-        hst_sa = self.cs.set_register_field(self.smb_reg_address, hst_sa, 'Address', target_address, True)
-        self.cs.write_register(self.smb_reg_address, hst_sa)
+        hst_sa = self.cs.register.set_field(self.smb_reg_address, hst_sa, 'RW', SMBUS_COMMAND_WRITE)
+        hst_sa = self.cs.register.set_field(self.smb_reg_address, hst_sa, 'Address', target_address, True)
+        self.cs.register.write(self.smb_reg_address, hst_sa)
         # command data = byte offset (bus txn address)
-        self.cs.write_register_field(self.smb_reg_command, 'DataOffset', offset)
+        self.cs.register.write_field(self.smb_reg_command, 'DataOffset', offset)
         # write the data
-        self.cs.write_register_field(self.smb_reg_data0, 'Data', value)
+        self.cs.register.write_field(self.smb_reg_data0, 'Data', value)
         # command = Byte Data
-        # if self.cs.register_has_field( self.smb_reg_control, 'SMB_CMD' ):
-        self.cs.write_register_field(self.smb_reg_control, 'SMB_CMD', SMBUS_COMMAND_BYTE_DATA)
+        # if self.cs.register.has_field( self.smb_reg_control, 'SMB_CMD' ):
+        self.cs.register.write_field(self.smb_reg_control, 'SMB_CMD', SMBUS_COMMAND_BYTE_DATA)
         # send SMBus txn
-        self.cs.write_register_field(self.smb_reg_control, 'START', 1)
+        self.cs.register.write_field(self.smb_reg_control, 'START', 1)
 
         # wait for cycle to complete
         if not self._wait_for_cycle():
             return False
         # clear status bits
-        self.cs.write_register(self.smb_reg_status, 0xFF)
+        self.cs.register.write(self.smb_reg_status, 0xFF)
         # clear address/offset registers
         #chipsec.chipset.write_register( self.cs, self.smb_reg_address, 0x0 )
         #chipsec.chipset.write_register( self.cs, self.smb_reg_command, 0x0 )

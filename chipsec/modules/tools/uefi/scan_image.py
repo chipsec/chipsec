@@ -56,7 +56,8 @@ in it against a list defined in ``efilist.json``
 import json
 import os
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.spi import SPI, BIOS

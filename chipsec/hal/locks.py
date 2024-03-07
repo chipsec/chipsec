@@ -21,7 +21,7 @@
 __version__ = '1.0'
 
 from typing import List, Optional
-from chipsec.defines import bit, is_set
+from chipsec.library.defines import bit, is_set
 from chipsec.hal.hal_base import HALBase
 from chipsec.exceptions import CSReadError, HWAccessViolationError
 
@@ -42,15 +42,15 @@ class locks(HALBase):
         """
         Return a list of locks defined within the configuration file
         """
-        return self.cs.get_lock_list()
+        return self.cs.lock.get_list()
 
     def lock_valid(self, lock_name: str, bus: Optional[int] = None) -> int:
         res = 0
-        if self.cs.is_lock_defined(lock_name):
+        if self.cs.lock.is_defined(lock_name):
             res |= LockResult.DEFINED
         try:
             self.cs.get_locked_value(lock_name)
-            self.cs.get_lock(lock_name, bus=bus)
+            self.cs.lock.get(lock_name, bus=bus)
             res |= LockResult.HAS_CONFIG
             res |= LockResult.CAN_READ
         except KeyError:
@@ -68,7 +68,7 @@ class locks(HALBase):
         res = self.lock_valid(lock_name, bus)
         if is_set(res, LockResult.HAS_CONFIG) and is_set(res, LockResult.CAN_READ):
             locked = self.cs.get_locked_value(lock_name)
-            lock_setting = self.cs.get_lock(lock_name, bus=bus)
+            lock_setting = self.cs.lock.get(lock_name, bus=bus)
             if not all(lock_setting[0] == elem for elem in lock_setting):
                 res |= LockResult.INCONSISTENT
             if all(locked == elem for elem in lock_setting):

@@ -59,7 +59,8 @@ Additional options set within the module:
 
 import random
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 
 MAX_PORTS = 0x10000
 MAX_PORT_VALUE = 0xFF
@@ -79,7 +80,8 @@ _EXCLUDE_PORTS = []
 class iofuzz(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x485df2e, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.iofuzz.html')
+        self.result.id = 0x485df2e
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.iofuzz.html'
 
     def fuzz_ports(self, iterations, write_count, random_order=False):
 
@@ -105,11 +107,11 @@ class iofuzz(BaseModule):
 
             self.logger.log(f'[*] Fuzzing I/O port 0x{io_addr:04X}')
 
-            self.logger.log("    Reading port")
+            self.logger.log('    Reading port')
             port_value = self.cs.io.read_port_byte(io_addr)
 
             if _FUZZ_SPECIAL_VALUES:
-                self.logger.log("    Writing special 1-2-4 byte values")
+                self.logger.log('    Writing special 1-2-4 byte values')
                 try:
                     self.cs.io.write_port_byte(io_addr, port_value)
                     self.cs.io.write_port_byte(io_addr, (~port_value) & 0xFF)
@@ -133,12 +135,12 @@ class iofuzz(BaseModule):
                     except:
                         pass
 
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        return self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        return self.result.getReturnCode(ModuleResult.WARNING)
 
 
     def run(self, module_argv):
-        self.logger.start_test("I/O port fuzzer")
+        self.logger.start_test('I/O port fuzzer')
 
         _random_order = (len(module_argv) > 0) and ('random' == module_argv[0].lower())
         write_count = int(module_argv[1]) if len(module_argv) > 1 else DEFAULT_PORT_WRITE_COUNT

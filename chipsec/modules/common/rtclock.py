@@ -39,7 +39,8 @@ Registers used:
     - This module will only run on Core platforms
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_HWCONFIG
+from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_HWCONFIG
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.cmos import CMOS
 from chipsec.config import CHIPSET_CODE_AVN
 from typing import List
@@ -51,31 +52,32 @@ class rtclock(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cmos = CMOS(self.cs)
-        self.rc_res = ModuleResult(0xb305218, 'https://chipsec.github.io/modules/chipsec.modules.common.rtclock.html')
+        self.result.id = 0xb305218
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.rtclock.html'
         self.user_request = False
         self.test_offset = 0x38
         self.test_value = 0xAA
 
     def is_supported(self) -> bool:
         if self.cs.is_core() or (self.cs.Cfg.get_chipset_code() == CHIPSET_CODE_AVN):
-            if self.cs.is_register_defined('RC'):
+            if self.cs.register.is_defined('RC'):
                 return True
             self.logger.log_important('RC register not defined for platform.  Skipping module.')
         else:
             self.logger.log_important('Not a Core platform.  Skipping check.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_rtclock(self) -> int:
         ll = ul = 0
-        check_config_regs = self.cs.read_register('RC') != 0xFFFFFFFF
+        check_config_regs = self.cs.register.read('RC') != 0xFFFFFFFF
 
         if check_config_regs:
-            rc_reg = self.cs.read_register('RC')
-            self.cs.print_register('RC', rc_reg)
-            ll = self.cs.get_register_field('RC', rc_reg, 'LL')
-            ul = self.cs.get_register_field('RC', rc_reg, 'UL')
+            rc_reg = self.cs.register.read('RC')
+            self.cs.register.print('RC', rc_reg)
+            ll = self.cs.register.get_field('RC', rc_reg, 'LL')
+            ul = self.cs.register.get_field('RC', rc_reg, 'UL')
         elif self.user_request:
             self.logger.log_important('Writing to CMOS to determine write protection (original values will be restored)')
 
@@ -100,8 +102,8 @@ class rtclock(BaseModule):
             self.logger.log_important("Unable to test lock bits without attempting to modify CMOS.")
             self.logger.log("[*] Run chipsec_main manually with the following commandline flags.")
             self.logger.log("[*] python chipsec_main -m common.rtclock -a modify")
-            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-            return self.rc_res.getReturnCode(ModuleResult.WARNING)
+            self.result.setStatusBit(self.result.status.VERIFY)
+            return self.result.getReturnCode(ModuleResult.WARNING)
 
         if ll == 1:
             self.logger.log_good("Protected bytes (0x38-0x3F) in low 128-byte bank of RTC memory are locked")
@@ -117,10 +119,10 @@ class rtclock(BaseModule):
             self.logger.log_passed("Protected locations in RTC memory are locked")
         else:
             res = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+            self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
             self.logger.log_warning("Protected locations in RTC memory are accessible (BIOS may not be using them)")
 
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Protected RTC memory locations")

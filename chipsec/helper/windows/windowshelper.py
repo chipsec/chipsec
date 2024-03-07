@@ -47,7 +47,7 @@ if TYPE_CHECKING:
 
 from chipsec.exceptions import OsHelperError, HWAccessViolationError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
-from chipsec.defines import stringtobytes, bytestostring
+from chipsec.library.defines import stringtobytes, bytestostring
 from chipsec.logger import logger
 import chipsec.file
 from chipsec.hal.uefi_common import EFI_GUID_STR
