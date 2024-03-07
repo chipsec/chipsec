@@ -50,7 +50,8 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
+from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM, OPT_MODIFY
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.msr import MemType
 from typing import List
 
@@ -61,17 +62,18 @@ class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0xdf11080, 'https://chipsec.github.io/modules/chipsec.modules.common.smrr.html')
+        self.result.id = 0xdf11080
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smrr.html'
 
     def is_supported(self) -> bool:
-        mtrr_exist = self.cs.is_register_defined('MTRRCAP')
-        pbase_exist = self.cs.is_register_defined('IA32_SMRR_PHYSBASE')
-        pmask_exist = self.cs.is_register_defined('IA32_SMRR_PHYSMASK')
+        mtrr_exist = self.cs.register.is_defined('MTRRCAP')
+        pbase_exist = self.cs.register.is_defined('IA32_SMRR_PHYSBASE')
+        pmask_exist = self.cs.register.is_defined('IA32_SMRR_PHYSMASK')
         if mtrr_exist and pbase_exist and pmask_exist:
             return True
         self.logger.log_information('Required registers are not defined for this platform.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     #
@@ -83,8 +85,8 @@ class smrr(BaseModule):
             self.logger.log_good("OK. SMRR range protection is supported")
         else:
             self.logger.log_not_applicable("CPU does not support SMRR range protection of SMRAM")
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         #
         # SMRR are supported
         #
@@ -95,10 +97,10 @@ class smrr(BaseModule):
         #
         self.logger.log('')
         self.logger.log("[*] Checking SMRR range base programming..")
-        msr_smrrbase = self.cs.read_register('IA32_SMRR_PHYSBASE')
-        self.cs.print_register('IA32_SMRR_PHYSBASE', msr_smrrbase)
-        smrrbase = self.cs.get_register_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'PhysBase', True)
-        smrrtype = self.cs.get_register_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type')
+        msr_smrrbase = self.cs.register.read('IA32_SMRR_PHYSBASE')
+        self.cs.register.print('IA32_SMRR_PHYSBASE', msr_smrrbase)
+        smrrbase = self.cs.register.get_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'PhysBase', True)
+        smrrtype = self.cs.register.get_field('IA32_SMRR_PHYSBASE', msr_smrrbase, 'Type')
         self.logger.log(f"[*] SMRR range base: 0x{smrrbase:016X}")
 
         if smrrtype in MemType:
@@ -119,10 +121,10 @@ class smrr(BaseModule):
         #
         self.logger.log('')
         self.logger.log("[*] Checking SMRR range mask programming..")
-        msr_smrrmask = self.cs.read_register('IA32_SMRR_PHYSMASK')
-        self.cs.print_register('IA32_SMRR_PHYSMASK', msr_smrrmask)
-        smrrmask = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True)
-        smrrvalid = self.cs.get_register_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid')
+        msr_smrrmask = self.cs.register.read('IA32_SMRR_PHYSMASK')
+        self.cs.register.print('IA32_SMRR_PHYSMASK', msr_smrrmask)
+        smrrmask = self.cs.register.get_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'PhysMask', True)
+        smrrvalid = self.cs.register.get_field('IA32_SMRR_PHYSMASK', msr_smrrmask, 'Valid')
         self.logger.log(f"[*] SMRR range mask: 0x{smrrmask:016X}")
 
         if not (smrrvalid and (0 != smrrmask)):
@@ -138,8 +140,8 @@ class smrr(BaseModule):
         self.logger.log('')
         self.logger.log("[*] Verifying that SMRR range base & mask are the same on all logical CPUs..")
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            msr_base = self.cs.read_register('IA32_SMRR_PHYSBASE', tid)
-            msr_mask = self.cs.read_register('IA32_SMRR_PHYSMASK', tid)
+            msr_base = self.cs.register.read('IA32_SMRR_PHYSBASE', tid)
+            msr_mask = self.cs.register.read('IA32_SMRR_PHYSMASK', tid)
             self.logger.log(f"[CPU{tid:d}] SMRR_PHYSBASE = {msr_base:016X}, SMRR_PHYSMASK = {msr_mask:016X}")
             if (msr_base != msr_smrrbase) or (msr_mask != msr_smrrmask):
                 smrr_ok = False
@@ -176,13 +178,13 @@ class smrr(BaseModule):
         self.logger.log('')
         if not smrr_ok:
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.CONFIGURATION)
+            self.result.setStatusBit(self.result.status.CONFIGURATION)
             self.logger.log_failed("SMRR protection against cache attack is not configured properly")
         else:
             res = ModuleResult.PASSED
             self.logger.log_passed("SMRR protection against cache attack is properly configured")
 
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
     # --------------------------------------------------------------------------
     # run( module_argv )

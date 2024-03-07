@@ -38,7 +38,7 @@ from chipsec.exceptions import UnknownChipsetError
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
 from chipsec.file import get_main_dir
-from chipsec.defines import get_version, get_message, os_version
+from chipsec.library.defines import get_version, get_message, os_version
 
 CMD_OPTS_WIDTH = ['byte', 'word', 'dword']
 

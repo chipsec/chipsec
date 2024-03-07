@@ -55,7 +55,8 @@ Additional options set within the module:
 
 import random
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 
 _MODULE_NAME = 'msr_fuzz'
 
@@ -80,7 +81,8 @@ _EXCLUDE_MSR = []
 class msr_fuzz (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x2e31482, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.msr_fuzz.html')
+        self.result.id = 0x2e31482
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.msr_fuzz.html'
 
     def fuzz_MSRs(self, msr_addr_start, random_order=False):
         msr_addr_range = 0x10000
@@ -161,6 +163,6 @@ class msr_fuzz (BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

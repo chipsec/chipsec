@@ -29,7 +29,7 @@ from typing import Dict, List, Tuple, Optional, Callable, Union
 from collections import defaultdict
 from collections import namedtuple
 
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 from chipsec.exceptions import UnimplementedAPIError
 from chipsec.file import read_file
 from chipsec.hal import acpi_tables

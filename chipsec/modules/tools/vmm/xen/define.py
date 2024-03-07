@@ -234,7 +234,7 @@ xenpmuop_commands = {
 def set_variables(varlist):
     import re
     for i in varlist:
-        var = re.sub(r"([a-z])([A-Z]+)", r"\1_\2", varlist[i])
+        var = re.sub(r'([a-z])([A-Z]+)', r'\1_\2', varlist[i])
         var = var.upper()
         exec(f'global {var}; {var}={i:d}')
 

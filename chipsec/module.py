@@ -22,7 +22,7 @@
 import re
 import traceback
 import chipsec.logger
-from chipsec.module_common import ModuleResult
+from chipsec.library.returncode import ModuleResult
 
 _importlib = True
 try:

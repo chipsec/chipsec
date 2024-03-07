@@ -40,21 +40,23 @@ Registers used:
 """
 
 import struct
-from chipsec.module_common import BaseModule, ModuleResult
-from chipsec.defines import bytestostring
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
+from chipsec.library.defines import bytestostring
 from typing import List
 
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
-        self.rc_res = ModuleResult(0x74b9b60, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html')
+        self.result.id = 0x74b9b60
+        self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
 
     def is_supported(self) -> bool:
         if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
             return True
         self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def run(self, module_argv: List[str]) -> int:
@@ -102,7 +104,7 @@ class cpu_info(BaseModule):
 
         self.logger.log_information('Processor information displayed')
         
-        self.rc_res.setStatusBit(self.rc_res.status.INFORMATION)
-        return self.rc_res.getReturnCode(ModuleResult.INFORMATION)
+        self.result.setStatusBit(self.result.status.INFORMATION)
+        return self.result.getReturnCode(ModuleResult.INFORMATION)
 
 

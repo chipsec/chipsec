@@ -124,9 +124,10 @@ References:
 
 """
 
-from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM, ModuleResult
+from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM
+from chipsec.library.returncode import ModuleResult
 from chipsec.exceptions import HWAccessViolationError, UnimplementedAPIError
-from chipsec.defines import BIT26, BIT27, BIT29
+from chipsec.library.defines import BIT26, BIT27, BIT29
 from typing import List
 
 TAGS = [MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM]
@@ -136,17 +137,18 @@ class spectre_v2(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0xceea2c8, 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html')
+        self.result.id = 0xceea2c8
+        self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html'
 
     def is_supported(self) -> bool:
-        if self.cs.is_register_defined('IA32_ARCH_CAPABILITIES'):
-            if self.cs.is_register_defined('IA32_SPEC_CTRL'):
+        if self.cs.register.is_defined('IA32_ARCH_CAPABILITIES'):
+            if self.cs.register.is_defined('IA32_SPEC_CTRL'):
                 return True
             self.logger.log_important('IA32_SPEC_CTRL register not defined for platform.  Skipping module.')
         else:
             self.logger.log_important('IA32_ARCH_CAPABILITIES register not defined for platform.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_spectre_mitigations(self) -> int:
@@ -182,13 +184,13 @@ class spectre_v2(BaseModule):
             for tid in range(cpu_thread_count):
                 arch_cap_msr = 0
                 try:
-                    arch_cap_msr = self.cs.read_register('IA32_ARCH_CAPABILITIES', tid)
+                    arch_cap_msr = self.cs.register.read('IA32_ARCH_CAPABILITIES', tid)
                 except HWAccessViolationError:
                     self.logger.log_error("Couldn't read IA32_ARCH_CAPABILITIES")
                     ibrs_enh_supported = False
                     break
 
-                ibrs_all = self.cs.get_register_field('IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL')
+                ibrs_all = self.cs.register.get_field('IA32_ARCH_CAPABILITIES', arch_cap_msr, 'IBRS_ALL')
                 self.logger.log(f"[*]   cpu{tid:d}: IBRS_ALL = {ibrs_all:x}")
                 if 0 == ibrs_all:
                     ibrs_enh_supported = False
@@ -209,19 +211,19 @@ class spectre_v2(BaseModule):
             for tid in range(cpu_thread_count):
                 spec_ctrl_msr = 0
                 try:
-                    spec_ctrl_msr = self.cs.read_register('IA32_SPEC_CTRL', tid)
+                    spec_ctrl_msr = self.cs.register.read('IA32_SPEC_CTRL', tid)
                 except HWAccessViolationError:
                     self.logger.log_error("Couldn't read IA32_SPEC_CTRL")
                     ibrs_enabled = False
                     break
 
-                ibrs = self.cs.get_register_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS')
+                ibrs = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'IBRS')
                 self.logger.log(f"[*]   cpu{tid:d}: IA32_SPEC_CTRL[IBRS] = {ibrs:x}")
                 if 0 == ibrs:
                     ibrs_enabled = False
 
                 # ok to access STIBP bit even if STIBP is not supported
-                stibp = self.cs.get_register_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP')
+                stibp = self.cs.register.get_field('IA32_SPEC_CTRL', spec_ctrl_msr, 'STIBP')
                 self.logger.log(f"[*]   cpu{tid:d}: IA32_SPEC_CTRL[STIBP] = {stibp:x}")
                 if 1 == stibp:
                     stibp_enabled_count += 1
@@ -255,20 +257,20 @@ class spectre_v2(BaseModule):
         #
         if not ibrs_ibpb_supported:
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
+            self.result.setStatusBit(self.result.status.MITIGATION)
             self.logger.log_failed("CPU mitigation (IBRS) is missing")
         elif not ibrs_enh_supported:
             res = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.PROTECTION)
+            self.result.setStatusBit(self.result.status.PROTECTION)
             self.logger.log_warning("CPU supports mitigation (IBRS) but doesn't support enhanced IBRS")
         elif ibrs_enh_supported and (not ibrs_enabled):
             res = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
+            self.result.setStatusBit(self.result.status.MITIGATION)
             self.logger.log_warning("CPU supports mitigation (enhanced IBRS) but OS is not using it")
         else:
             if not stibp_supported:
                 res = ModuleResult.WARNING
-                self.rc_res.setStatusBit(self.rc_res.status.MITIGATION)
+                self.result.setStatusBit(self.result.status.MITIGATION)
                 self.logger.log_warning("CPU supports mitigation (enhanced IBRS) but STIBP is not supported")
             else:
                 res = ModuleResult.PASSED
@@ -291,4 +293,4 @@ class spectre_v2(BaseModule):
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("Checks for Branch Target Injection / Spectre v2 (CVE-2017-5715)")
         self.res = self.check_spectre_mitigations()
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)

@@ -56,7 +56,8 @@ Additional options set within the module:
 """
 
 import random
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 
 _MODULE_NAME = 'cpuid_fuzz'
 
@@ -86,7 +87,8 @@ _LOG_OUT_RESULTS = False
 class cpuid_fuzz (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x846024f, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.cpuid_fuzz.html')
+        self.result.id = 0x846024f
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.cpuid_fuzz.html'
 
     def fuzz_CPUID(self, eax_start, random_order = False):
         eax_range = _NO_EAX_TO_FUZZ
@@ -122,7 +124,7 @@ class cpuid_fuzz (BaseModule):
         return True
 
     def run(self, module_argv):
-        self.logger.start_test("CPUID Fuzzer")
+        self.logger.start_test('CPUID Fuzzer')
 
         _random_order = False
         if (len(module_argv) > 0) and ('random' == module_argv[0]):
@@ -144,6 +146,6 @@ class cpuid_fuzz (BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

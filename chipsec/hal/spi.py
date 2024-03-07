@@ -45,7 +45,7 @@ usage:
 import struct
 import time
 from typing import Dict, Tuple, Optional
-from chipsec.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
+from chipsec.library.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
 from chipsec.file import write_file, read_file
 from chipsec.logger import print_buffer_bytes
 from chipsec.hal import hal_base, mmio
@@ -202,27 +202,27 @@ class SPI(hal_base.HALBase):
 
         # Reading definitions of SPI flash controller registers
         # which are required to send SPI cycles once for performance reasons
-        self.hsfs_off = self.cs.get_register_def("HSFS")['offset']
-        self.hsfc_off = self.cs.get_register_def("HSFC")['offset']
-        self.faddr_off = self.cs.get_register_def("FADDR")['offset']
-        self.fdata0_off = self.cs.get_register_def("FDATA0")['offset']
-        self.fdata1_off = self.cs.get_register_def("FDATA1")['offset']
-        self.fdata2_off = self.cs.get_register_def("FDATA2")['offset']
-        self.fdata3_off = self.cs.get_register_def("FDATA3")['offset']
-        self.fdata4_off = self.cs.get_register_def("FDATA4")['offset']
-        self.fdata5_off = self.cs.get_register_def("FDATA5")['offset']
-        self.fdata6_off = self.cs.get_register_def("FDATA6")['offset']
-        self.fdata7_off = self.cs.get_register_def("FDATA7")['offset']
-        self.fdata8_off = self.cs.get_register_def("FDATA8")['offset']
-        self.fdata9_off = self.cs.get_register_def("FDATA9")['offset']
-        self.fdata10_off = self.cs.get_register_def("FDATA10")['offset']
-        self.fdata11_off = self.cs.get_register_def("FDATA11")['offset']
-        self.fdata12_off = self.cs.get_register_def("FDATA12")['offset']
-        self.fdata13_off = self.cs.get_register_def("FDATA13")['offset']
-        self.fdata14_off = self.cs.get_register_def("FDATA14")['offset']
-        self.fdata15_off = self.cs.get_register_def("FDATA15")['offset']
-        self.bios_ptinx = self.cs.get_register_def("BIOS_PTINX")['offset']
-        self.bios_ptdata = self.cs.get_register_def("BIOS_PTDATA")['offset']
+        self.hsfs_off = self.cs.register.get_def("HSFS")['offset']
+        self.hsfc_off = self.cs.register.get_def("HSFC")['offset']
+        self.faddr_off = self.cs.register.get_def("FADDR")['offset']
+        self.fdata0_off = self.cs.register.get_def("FDATA0")['offset']
+        self.fdata1_off = self.cs.register.get_def("FDATA1")['offset']
+        self.fdata2_off = self.cs.register.get_def("FDATA2")['offset']
+        self.fdata3_off = self.cs.register.get_def("FDATA3")['offset']
+        self.fdata4_off = self.cs.register.get_def("FDATA4")['offset']
+        self.fdata5_off = self.cs.register.get_def("FDATA5")['offset']
+        self.fdata6_off = self.cs.register.get_def("FDATA6")['offset']
+        self.fdata7_off = self.cs.register.get_def("FDATA7")['offset']
+        self.fdata8_off = self.cs.register.get_def("FDATA8")['offset']
+        self.fdata9_off = self.cs.register.get_def("FDATA9")['offset']
+        self.fdata10_off = self.cs.register.get_def("FDATA10")['offset']
+        self.fdata11_off = self.cs.register.get_def("FDATA11")['offset']
+        self.fdata12_off = self.cs.register.get_def("FDATA12")['offset']
+        self.fdata13_off = self.cs.register.get_def("FDATA13")['offset']
+        self.fdata14_off = self.cs.register.get_def("FDATA14")['offset']
+        self.fdata15_off = self.cs.register.get_def("FDATA15")['offset']
+        self.bios_ptinx = self.cs.register.get_def("BIOS_PTINX")['offset']
+        self.bios_ptdata = self.cs.register.get_def("BIOS_PTDATA")['offset']
 
         self.logger.log_hal("[spi] Reading SPI flash controller registers definitions:")
         self.logger.log_hal(f'      HSFS   offset = 0x{self.hsfs_off:04X}')
@@ -247,13 +247,13 @@ class SPI(hal_base.HALBase):
 
     def get_SPI_region(self, spi_region_id: int) -> Tuple[int, int, int]:
         freg_name = SPI_REGION[spi_region_id]
-        if not self.cs.is_register_defined(freg_name):
+        if not self.cs.register.is_defined(freg_name):
             return (0, 0, 0)
-        freg = self.cs.read_register(freg_name)
+        freg = self.cs.register.read(freg_name)
         # Region Base corresponds to FLA bits 24:12
-        range_base = self.cs.get_register_field(freg_name, freg, 'RB') << SPI_FLA_SHIFT
+        range_base = self.cs.register.get_field(freg_name, freg, 'RB') << SPI_FLA_SHIFT
         # Region Limit corresponds to FLA bits 24:12
-        range_limit = self.cs.get_register_field(freg_name, freg, 'RL') << SPI_FLA_SHIFT
+        range_limit = self.cs.register.get_field(freg_name, freg, 'RL') << SPI_FLA_SHIFT
         # FLA bits 11:0 are assumed to be FFFh for the limit comparison
         range_limit |= SPI_FLA_PAGE_MASK
         return (range_base, range_limit, freg)
@@ -278,16 +278,16 @@ class SPI(hal_base.HALBase):
             return (0, 0, 0, 0, 0, 0)
 
         pr_name = f'PR{pr_num:x}'
-        pr_j_reg = self.cs.get_register_def(pr_name)['offset']
-        pr_j = self.cs.read_register(pr_name)
+        pr_j_reg = self.cs.register.get_def(pr_name)['offset']
+        pr_j = self.cs.register.read(pr_name)
 
         # Protected Range Base corresponds to FLA bits 24:12
-        base = self.cs.get_register_field(pr_name, pr_j, 'PRB') << SPI_FLA_SHIFT
+        base = self.cs.register.get_field(pr_name, pr_j, 'PRB') << SPI_FLA_SHIFT
         # Protected Range Limit corresponds to FLA bits 24:12
-        limit = self.cs.get_register_field(pr_name, pr_j, 'PRL') << SPI_FLA_SHIFT
+        limit = self.cs.register.get_field(pr_name, pr_j, 'PRL') << SPI_FLA_SHIFT
 
-        wpe = (0 != self.cs.get_register_field(pr_name, pr_j, 'WPE'))
-        rpe = (0 != self.cs.get_register_field(pr_name, pr_j, 'RPE'))
+        wpe = (0 != self.cs.register.get_field(pr_name, pr_j, 'WPE'))
+        rpe = (0 != self.cs.register.get_field(pr_name, pr_j, 'RPE'))
 
         # Check if this is a valid PRx config
         if wpe or rpe:
@@ -306,38 +306,38 @@ class SPI(hal_base.HALBase):
         self.logger.log("------------------------------------------------------------")
         self.logger.log("\nFlash Signature and Descriptor Map:")
         for j in range(5):
-            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_FSDM | (j << 2)))
-            fdod = self.cs.read_register('FDOD')
+            self.cs.register.write('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_FSDM | (j << 2)))
+            fdod = self.cs.register.read('FDOD')
             self.logger.log(f'{fdod:08X}')
 
         self.logger.log("\nComponents:")
         for j in range(3):
-            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_COMP | (j << 2)))
-            fdod = self.cs.read_register('FDOD')
+            self.cs.register.write('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_COMP | (j << 2)))
+            fdod = self.cs.register.read('FDOD')
             self.logger.log(f'{fdod:08X}')
 
         self.logger.log("\nRegions:")
         for j in range(5):
-            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_REGN | (j << 2)))
-            fdod = self.cs.read_register('FDOD')
+            self.cs.register.write('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_REGN | (j << 2)))
+            fdod = self.cs.register.read('FDOD')
             self.logger.log(f'{fdod:08X}')
 
         self.logger.log("\nMasters:")
         for j in range(3):
-            self.cs.write_register('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_MSTR | (j << 2)))
-            fdod = self.cs.read_register('FDOD')
+            self.cs.register.write('FDOC', (PCH_RCBA_SPI_FDOC_FDSS_MSTR | (j << 2)))
+            fdod = self.cs.register.read('FDOD')
             self.logger.log(f'{fdod:08X}')
 
     def display_SPI_opcode_info(self) -> None:
         self.logger.log("============================================================")
         self.logger.log("SPI Opcode Info")
         self.logger.log("------------------------------------------------------------")
-        preop = self.cs.read_register('PREOP')
+        preop = self.cs.register.read('PREOP')
         self.logger.log(f'PREOP : 0x{preop:04X}')
-        optype = self.cs.read_register('OPTYPE')
+        optype = self.cs.register.read('OPTYPE')
         self.logger.log(f'OPTYPE: 0x{optype:04X}')
-        opmenu_lo = self.cs.read_register('OPMENU_LO')
-        opmenu_hi = self.cs.read_register('OPMENU_HI')
+        opmenu_lo = self.cs.register.read('OPMENU_LO')
+        opmenu_hi = self.cs.register.read('OPMENU_HI')
         opmenu = ((opmenu_hi << 32) | opmenu_lo)
         self.logger.log(f'OPMENU: 0x{opmenu:016X}')
         self.logger.log('')
@@ -373,9 +373,9 @@ class SPI(hal_base.HALBase):
             self.logger.log(f'{region_id:d} {name:22} | {freg:08X}  | {base:08X} | {limit:08X} ')
 
     def display_BIOS_region(self) -> None:
-        bfpreg = self.cs.read_register('BFPR')
-        base = self.cs.get_register_field('BFPR', bfpreg, 'PRB') << SPI_FLA_SHIFT
-        limit = self.cs.get_register_field('BFPR', bfpreg, 'PRL') << SPI_FLA_SHIFT
+        bfpreg = self.cs.register.read('BFPR')
+        base = self.cs.register.get_field('BFPR', bfpreg, 'PRB') << SPI_FLA_SHIFT
+        limit = self.cs.register.get_field('BFPR', bfpreg, 'PRL') << SPI_FLA_SHIFT
         limit |= SPI_FLA_PAGE_MASK
         self.logger.log("BIOS Flash Primary Region")
         self.logger.log("------------------------------------------------------------")
@@ -386,13 +386,13 @@ class SPI(hal_base.HALBase):
     def display_SPI_Ranges_Access_Permissions(self) -> None:
         self.logger.log("SPI Flash Region Access Permissions")
         self.logger.log("------------------------------------------------------------")
-        fracc = self.cs.read_register('FRAP')
+        fracc = self.cs.register.read('FRAP')
         if self.logger.HAL:
-            self.cs.print_register('FRAP', fracc)
-        brra = self.cs.get_register_field('FRAP', fracc, 'BRRA')
-        brwa = self.cs.get_register_field('FRAP', fracc, 'BRWA')
-        bmrag = self.cs.get_register_field('FRAP', fracc, 'BMRAG')
-        bmwag = self.cs.get_register_field('FRAP', fracc, 'BMWAG')
+            self.cs.register.print('FRAP', fracc)
+        brra = self.cs.register.get_field('FRAP', fracc, 'BRRA')
+        brwa = self.cs.register.get_field('FRAP', fracc, 'BRWA')
+        bmrag = self.cs.register.get_field('FRAP', fracc, 'BMRAG')
+        bmwag = self.cs.register.get_field('FRAP', fracc, 'BMWAG')
         self.logger.log('')
         self.logger.log(f'BIOS Region Write Access Grant ({bmwag:02X}):')
         regions = self.get_SPI_regions()
@@ -448,9 +448,9 @@ class SPI(hal_base.HALBase):
     ##############################################################################################################
 
     def display_BIOS_write_protection(self) -> None:
-        if self.cs.is_register_defined('BC'):
-            reg_value = self.cs.read_register('BC')
-            self.cs.print_register('BC', reg_value)
+        if self.cs.register.is_defined('BC'):
+            reg_value = self.cs.register.read('BC')
+            self.cs.register.print('BC', reg_value)
         else:
             if self.logger.HAL:
                 self.logger.log_error("Could not locate the definition of 'BIOS Control' register..")
@@ -458,9 +458,9 @@ class SPI(hal_base.HALBase):
     def disable_BIOS_write_protection(self) -> bool:
         if self.logger.HAL:
             self.display_BIOS_write_protection()
-        ble = self.cs.get_control('BiosLockEnable')
-        bioswe = self.cs.get_control('BiosWriteEnable')
-        smmbwp = self.cs.get_control('SmmBiosWriteProtection')
+        ble = self.cs.control.get('BiosLockEnable')
+        bioswe = self.cs.control.get('BiosWriteEnable')
+        smmbwp = self.cs.control.get('SmmBiosWriteProtection')
 
         if smmbwp == 1:
             self.logger.log_hal("[spi] SMM BIOS write protection (SmmBiosWriteProtection) is enabled")
@@ -474,10 +474,10 @@ class SPI(hal_base.HALBase):
             self.logger.log_hal("[spi] BIOS write protection is enabled. Attempting to disable..")
 
         # Set BiosWriteEnable control bit
-        self.cs.set_control('BiosWriteEnable', 1)
+        self.cs.control.set('BiosWriteEnable', 1)
 
         # read BiosWriteEnable back to check if BIOS writes are enabled
-        bioswe = self.cs.get_control('BiosWriteEnable')
+        bioswe = self.cs.control.get('BiosWriteEnable')
 
         if self.logger.HAL:
             self.display_BIOS_write_protection()
@@ -560,7 +560,7 @@ class SPI(hal_base.HALBase):
 
     def check_hardware_sequencing(self) -> None:
         # Test if the flash decriptor is valid (and hardware sequencing enabled)
-        fdv = self.cs.read_register_field('HSFS', 'FDV')
+        fdv = self.cs.register.read_field('HSFS', 'FDV')
         if fdv == 0:
             self.logger.log_error("HSFS.FDV is 0, hardware sequencing is disabled")
             raise SpiRuntimeError("Chipset does not support hardware sequencing")
@@ -733,7 +733,7 @@ class SPI(hal_base.HALBase):
             self.logger.log("  * Parameter Header 1 (JEDEC)")
             self.logger.log(f'    ** Parameter version number: {param1_major_version}.{param1_minor_version}')
             self.logger.log(f'    ** Parameter length in double words: {hex(param1_length)}')
-            if (num_of_param_headers > 1) and self.cs.register_has_field('HSFS', 'FCYCLE'):
+            if (num_of_param_headers > 1) and self.cs.register.has_field('HSFS', 'FCYCLE'):
                 self.check_hardware_sequencing()
                 self.spi_reg_write(self.fdata12_off, 0x00000000)
                 self.spi_reg_write(self.fdata13_off, 0x00000000)
@@ -770,7 +770,7 @@ class SPI(hal_base.HALBase):
             for count in range(1, param1_length + 1):
                 sfdp_data = self.ptmesg(offset)
                 offset += 4
-                self.cs.print_register(f'DWORD{count}', sfdp_data)
+                self.cs.register.print(f'DWORD{count}', sfdp_data)
         return ret
 
     #
@@ -779,7 +779,7 @@ class SPI(hal_base.HALBase):
 
     def get_SPI_JEDEC_ID(self) -> int:
 
-        if self.cs.register_has_field('HSFS', 'FCYCLE'):
+        if self.cs.register.has_field('HSFS', 'FCYCLE'):
             self.check_hardware_sequencing()
 
             if not self._send_spi_cycle(HSFCTL_JEDEC_CYCLE, 4, 0):

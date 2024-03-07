@@ -51,7 +51,7 @@ class bios_ts(BaseModule):
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_ts.html'
 
     def is_supported(self) -> bool:
-        if self.cs.is_control_defined('BiosInterfaceLockDown'):
+        if self.cs.control.is_defined('BiosInterfaceLockDown'):
             return True
         self.logger.log_important('BiosInterfaceLockDown control not defined for platform.  Skipping module.')
         self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
@@ -59,23 +59,23 @@ class bios_ts(BaseModule):
         return False
 
     def check_bios_iface_lock(self) -> int:
-        bild = self.cs.get_control('BiosInterfaceLockDown')
+        bild = self.cs.control.get('BiosInterfaceLockDown')
         self.logger.log(f"[*] BiosInterfaceLockDown (BILD) control = {bild:d}")
 
-        if self.cs.is_control_defined('TopSwapStatus'):
-            if self.cs.is_control_all_ffs('TopSwapStatus'):
+        if self.cs.control.is_defined('TopSwapStatus'):
+            if self.cs.control.is_all_ffs('TopSwapStatus'):
                 self.logger.log("[*] BIOS Top Swap mode: can't determine status.")
                 self.logger.log_verbose('TopSwapStatus read returned all 0xFs.')
             else:
-                tss = self.cs.get_control('TopSwapStatus')
+                tss = self.cs.control.get('TopSwapStatus')
                 self.logger.log(f"[*] BIOS Top Swap mode is {'enabled' if (1 == tss) else 'disabled'} (TSS = {tss:d})")
 
-        if self.cs.is_control_defined('TopSwap'):
-            if self.cs.is_control_all_ffs('TopSwap'):
+        if self.cs.control.is_defined('TopSwap'):
+            if self.cs.control.is_all_ffs('TopSwap'):
                 self.logger.log("[*] RTC Top Swap control (TS): can't determine status.")
                 self.logger.log_verbose('TopSwap read returned all 0xFs.')
             else:
-                ts = self.cs.get_control('TopSwap')
+                ts = self.cs.control.get('TopSwap')
                 self.logger.log(f"[*] RTC TopSwap control (TS) = {ts:x}")
 
         if bild == 0:

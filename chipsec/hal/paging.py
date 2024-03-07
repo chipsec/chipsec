@@ -25,16 +25,16 @@ x64/IA-64 Paging functionality including x86 page tables, Extended Page Tables (
 import sys
 import struct
 from typing import Dict, List, Optional, Any
-import chipsec.defines
+import chipsec.library.defines as defines
 from chipsec.logger import logger
 from chipsec.exceptions import InvalidMemoryAddress
 
-ADDR_MASK = chipsec.defines.MASK_64b
+ADDR_MASK = defines.MASK_64b
 MAXPHYADDR = 0x000FFFFFFFFFF000
 
-SIZE_4KB = chipsec.defines.BOUNDARY_4KB
-SIZE_2MB = chipsec.defines.BOUNDARY_2MB
-SIZE_1GB = chipsec.defines.BOUNDARY_1GB
+SIZE_4KB = defines.BOUNDARY_4KB
+SIZE_2MB = defines.BOUNDARY_2MB
+SIZE_1GB = defines.BOUNDARY_1GB
 ADDR_4KB = 0xFFFFFFFFFFFFF000 & MAXPHYADDR
 ADDR_2MB = 0xFFFFFFFFFFE00000 & MAXPHYADDR
 ADDR_1GB = 0xFFFFFFFFC0000000 & MAXPHYADDR
@@ -314,10 +314,10 @@ class c_4level_page_tables(c_paging):
         return
 
     def is_present(self, entry: int) -> int:
-        return entry & chipsec.defines.BIT0
+        return entry & defines.BIT0
 
     def is_bigpage(self, entry: int) -> int:
-        return entry & chipsec.defines.BIT7
+        return entry & defines.BIT7
 
     def read_pml4(self, addr: int) -> None:
         pml4 = self.read_entries('pml4', addr)
@@ -332,11 +332,11 @@ class c_4level_page_tables(c_paging):
 
     def get_attr(self, entry: int) -> str:
         ret = ''
-        if entry & chipsec.defines.BIT1:
+        if entry & defines.BIT1:
             ret += 'W'
         else:
             ret += "R"
-        if entry & chipsec.defines.BIT2:
+        if entry & defines.BIT2:
             ret += 'U'
         else:
             ret += 'S'

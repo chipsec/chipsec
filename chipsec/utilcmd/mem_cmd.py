@@ -45,7 +45,7 @@ Examples:
 import os
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.defines import ALIGNED_4KB, BOUNDARY_4KB, bytestostring
+from chipsec.library.defines import ALIGNED_4KB, BOUNDARY_4KB, bytestostring
 from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
 from chipsec.file import read_file, write_file, get_main_dir
 from chipsec.logger import print_buffer_bytes

@@ -48,7 +48,8 @@ Additional options set within the module:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 
 _MODULE_NAME = 'venom'
 
@@ -61,7 +62,8 @@ FD_CMD = 0x8E  # FD_CMD_DRIVE_SPECIFICATION_COMMAND # FD_CMD_READ_ID = 0x0A
 class venom (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x6e48a35, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.venom.html')
+        self.result.id = 0x6e48a35
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.venom.html'
 
     def venom_impl(self):
         self.cs.io.write_port_byte(FDC_PORT_DATA_FIFO, FD_CMD)
@@ -70,12 +72,12 @@ class venom (BaseModule):
         return True
 
     def run(self, module_argv):
-        self.logger.start_test("QEMU VENOM vulnerability DoS PoC")
+        self.logger.start_test('QEMU VENOM vulnerability DoS PoC')
 
         self.venom_impl()
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

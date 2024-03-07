@@ -22,7 +22,7 @@ import struct
 import os
 import string
 import platform
-from typing import Dict, Tuple, Optional, AnyStr, Iterable
+from typing import Any, Dict, Tuple, Optional, AnyStr, Iterable
 from chipsec.file import get_main_dir
 
 BIT0 = 0x0001
@@ -224,6 +224,11 @@ def get_message() -> str:
         with open(msg_file, "r") as msgFile:
             msg_str = msgFile.read()
     return msg_str
+
+
+def is_all_value(value_list: list, value: Any) -> bool:
+    '''Checks if all elements in a list are equal to a given value'''
+    return all(n == value for n in value_list)
 
 
 class ARCH_VID:

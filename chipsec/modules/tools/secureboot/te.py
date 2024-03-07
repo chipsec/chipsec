@@ -55,7 +55,8 @@ import shutil
 import struct
 import sys
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.logger import logger
 
 
@@ -493,7 +494,8 @@ class te(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x2d6c9a9, 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html')
+        self.result.id = 0x2d6c9a9
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html'
 
     def is_supported(self):
         #win8 = self.cs.helper.is_win8_or_greater()
@@ -517,8 +519,8 @@ class te(BaseModule):
                 file_path = module_argv[1]
             if not os.path.exists(file_path):
                 self.logger.log_error(f'Cannot find file \'{file_path}\'')
-                self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
-                return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
+                return self.result.getReturnCode(ModuleResult.ERROR)
 
             sts = replace_efi_binary(file_path, file_path)
 
@@ -529,14 +531,14 @@ class te(BaseModule):
                 te_cfg = module_argv[1]
             if not os.path.exists(te_cfg):
                 self.logger.log_error(f'Cannot find file \'{te_cfg}\'')
-                self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
-                return self.rc_res.getReturnCode(ModuleResult.ERROR)
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
+                return self.result.getReturnCode(ModuleResult.ERROR)
 
             bootloader_paths = get_bootloader_paths(te_cfg)
             if len(bootloader_paths) == 0:
                 self.logger.log("[*] no bootloaders to replace. Exit...")
-                self.rc_res.setStatusBit(self.rc_res.status.FEATURE_DISABLED)
-                return self.rc_res.getReturnCode(ModuleResult.WARNING) 
+                self.result.setStatusBit(self.result.status.FEATURE_DISABLED)
+                return self.result.getReturnCode(ModuleResult.WARNING) 
 
             do_mount = self.cs.os_helper.is_windows()  # @TODO
             if 'restore_bootloader' == mode:
@@ -550,8 +552,8 @@ class te(BaseModule):
             self.logger.log_error(f'Invalid mode: \'{mode}\'')
 
         if sts:
-            self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
-            return self.rc_res.getReturnCode(ModuleResult.PASSED) 
+            self.result.setStatusBit(self.result.status.SUCCESS)
+            return self.result.getReturnCode(ModuleResult.PASSED) 
         else:
-            self.rc_res.setStatusBit(self.rc_res.status.RESTORE)
-            return self.rc_res.getReturnCode(ModuleResult.ERROR)
+            self.result.setStatusBit(self.result.status.RESTORE)
+            return self.result.getReturnCode(ModuleResult.ERROR)

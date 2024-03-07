@@ -106,7 +106,7 @@ class SMICommand(BaseCommand):
     def smi_count(self) -> None:
         self.logger.log("[CHIPSEC] SMI count:")
         for tid in range(self.cs.msr.get_cpu_thread_count()):
-            smi_cnt = self.cs.read_register_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
+            smi_cnt = self.cs.register.read_field('MSR_SMI_COUNT', 'Count', cpu_thread=tid)
             self.logger.log(f'  CPU{tid:d}: {smi_cnt:d}')
 
     def smi_smmc(self) -> None:

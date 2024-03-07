@@ -32,7 +32,7 @@ from typing import Dict, List, Tuple, Optional, Any, Callable
 
 from chipsec.file import read_file, write_file
 from chipsec.logger import logger, dump_buffer, dump_buffer_bytes
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 
 # from chipsec.helper.oshelper import helper
 

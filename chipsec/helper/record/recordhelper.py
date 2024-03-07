@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 
 from chipsec.logger import logger
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.oshelper import helper
 from chipsec.file import read_file, write_file

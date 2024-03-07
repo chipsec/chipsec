@@ -47,7 +47,7 @@ class IGD(hal_base.HALBase):
     def __identify_device(self) -> Tuple[bool, bool]:
         if self.enabled is None:
             try:
-                self.dev_id = self.cs.read_register("PCI0.2.0_DID")
+                self.dev_id = self.cs.register.read("PCI0.2.0_DID")
                 self.enabled = (self.dev_id != 0xFFFF)
                 if self.enabled:
                     self.is_legacy = bool(self.dev_id < 0x1600)
@@ -57,14 +57,14 @@ class IGD(hal_base.HALBase):
         return (self.enabled, self.is_legacy)
 
     def is_enabled(self) -> bool:
-        if self.cs.register_has_field("PCI0.0.0_DEVEN", "D2EN") and self.cs.register_has_field("PCI0.0.0_CAPID0_A", "IGD"):
-            if self.cs.read_register_field("PCI0.0.0_DEVEN", "D2EN") == 1 and self.cs.read_register_field("PCI0.0.0_CAPID0_A", "IGD") == 0:
+        if self.cs.register.has_field("PCI0.0.0_DEVEN", "D2EN") and self.cs.register.has_field("PCI0.0.0_CAPID0_A", "IGD"):
+            if self.cs.register.read_field("PCI0.0.0_DEVEN", "D2EN") == 1 and self.cs.register.read_field("PCI0.0.0_CAPID0_A", "IGD") == 0:
                 return True
-        elif self.cs.register_has_field("PCI0.0.0_DEVEN", "D2EN"):
-            if self.cs.read_register_field("PCI0.0.0_DEVEN", "D2EN") == 1:
+        elif self.cs.register.has_field("PCI0.0.0_DEVEN", "D2EN"):
+            if self.cs.register.read_field("PCI0.0.0_DEVEN", "D2EN") == 1:
                 return True
-        elif self.cs.register_has_field("PCI0.0.0_CAPID0_A", "IGD"):
-            if self.cs.read_register_field("PCI0.0.0_CAPID0_A", "IGD") == 0:
+        elif self.cs.register.has_field("PCI0.0.0_CAPID0_A", "IGD"):
+            if self.cs.register.read_field("PCI0.0.0_CAPID0_A", "IGD") == 0:
                 return True
         return self.is_device_enabled()
 

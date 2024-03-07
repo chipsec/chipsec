@@ -92,7 +92,8 @@ Hardware registers used:
     - HFS.MFG_MODE
 """
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from typing import List
 
 
@@ -100,30 +101,31 @@ class me_mfg_mode(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x98e5e8c, 'https://chipsec.github.io/modules/chipsec.modules.common.me_mfg_mode.html')
+        self.result.id = 0x98e5e8c
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.me_mfg_mode.html'
 
     def is_supported(self) -> bool:
-        if self.cs.is_device_enabled("MEI1"):
+        if self.cs.device.is_enabled("MEI1"):
             return True
         else:
             self.logger.log_important('MEI1 not enabled.  Skipping module.')
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
 
     def check_me_mfg_mode(self) -> int:
         me_mfg_mode_res = ModuleResult.FAILED
-        me_hfs_reg = self.cs.read_register('HFS')
-        me_mfg_mode = self.cs.get_register_field('HFS', me_hfs_reg, 'MFG_MODE')
+        me_hfs_reg = self.cs.register.read('HFS')
+        me_mfg_mode = self.cs.register.get_field('HFS', me_hfs_reg, 'MFG_MODE')
 
         if 0 == me_mfg_mode:
             me_mfg_mode_res = ModuleResult.PASSED
             self.logger.log_passed("ME is not in Manufacturing Mode")
         else:
             self.logger.log_failed("ME is in Manufacturing Mode")
-            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+            self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
 
-        return self.rc_res.getReturnCode(me_mfg_mode_res)
+        return self.result.getReturnCode(me_mfg_mode_res)
 
 
     def run(self, module_argv: List[str]) -> int:

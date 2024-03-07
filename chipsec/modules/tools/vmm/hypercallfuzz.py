@@ -60,7 +60,8 @@ Additional options set within the module:
 import random
 import time
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.vmm import VMM
 
 DEFAULT_VECTOR_MAXVAL = 0xFF
@@ -81,7 +82,8 @@ class hypercallfuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0xf918ec4, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html')
+        self.result.id = 0xf918ec4
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html'
         self.vmm = VMM(self.cs)
 
         self.random_order = True
@@ -124,7 +126,7 @@ class hypercallfuzz(BaseModule):
                     pass
         else:
             it = 0
-            self.logger.log("[*] Fuzzing hypercalls with arguments exhaustively...")
+            self.logger.log('[*] Fuzzing hypercalls with arguments exhaustively...')
             for rax in range(self.gprs['rax']):
                 for rbx in range(self.gprs['rbx']):
                     for rcx in range(self.gprs['rcx']):
@@ -150,7 +152,7 @@ class hypercallfuzz(BaseModule):
         self.logger.log(f'[*] Finished fuzzing: time elapsed {time.time() - t:.3f}')
 
     def run(self, module_argv):
-        self.logger.start_test("Dumb VMM hypercall fuzzer")
+        self.logger.start_test('Dumb VMM hypercall fuzzer')
 
         if len(module_argv) > 0:
             self.random_order = module_argv[0].lower() == 'random'
@@ -177,5 +179,5 @@ class hypercallfuzz(BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        return self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        return self.result.getReturnCode(ModuleResult.WARNING)

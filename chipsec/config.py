@@ -22,7 +22,7 @@ from fnmatch import fnmatch
 import importlib
 import os
 import xml.etree.ElementTree as ET
-from chipsec.defines import is_hex
+from chipsec.library.defines import is_hex
 from chipsec.exceptions import CSConfigError
 from chipsec.file import get_main_dir
 from chipsec.logger import logger

@@ -66,7 +66,7 @@ class Msr:
         thread_count = self.helper.get_threads_count()
         if thread_count is None or thread_count < 0:
             logger().log_hal("helper.get_threads_count didn't return anything. Reading MSR 0x35 to find out number of logical CPUs (use CPUID Leaf B instead?)")
-            thread_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Thread_Count")
+            thread_count = self.cs.register.read_field("IA32_MSR_CORE_THREAD_COUNT", "Thread_Count")
 
         if 0 == thread_count:
             thread_count = 1
@@ -75,7 +75,7 @@ class Msr:
 
     # @TODO: fix
     def get_cpu_core_count(self) -> int:
-        core_count = self.cs.read_register_field("IA32_MSR_CORE_THREAD_COUNT", "Core_Count")
+        core_count = self.cs.register.read_field("IA32_MSR_CORE_THREAD_COUNT", "Core_Count")
         return core_count
 
 
