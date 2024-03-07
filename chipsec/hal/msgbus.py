@@ -95,36 +95,36 @@ class MsgBus(hal_base.HALBase):
 
     def __MB_MESSAGE_MCR(self, port: int, reg: int, opcode: int) -> int:
         mcr = 0x0
-        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF)
-        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg)
-        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port)
-        mcr = self.cs.set_register_field('MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode)
+        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_WR_BYTE_ENABLES', 0xF)
+        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_ADDRESS_OFFSET', reg)
+        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_PORT', port)
+        mcr = self.cs.register.set_field('MSG_CTRL_REG', mcr, 'MESSAGE_OPCODE', opcode)
         return mcr
 
     def __MB_MESSAGE_MCRX(self, reg: int) -> int:
         mcrx = 0x0
-        mcrx = self.cs.set_register_field('MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True)
+        mcrx = self.cs.register.set_field('MSG_CTRL_REG_EXT', mcrx, 'MESSAGE_ADDRESS_OFFSET_EXT', (reg >> 8), preserve_field_position=True)
         return mcrx
 
     def __MB_MESSAGE_MDR(self, data: int) -> int:
         mdr = 0x0
-        mdr = self.cs.set_register_field('MSG_DATA_REG', mdr, 'MESSAGE_DATA', data)
+        mdr = self.cs.register.set_field('MSG_DATA_REG', mdr, 'MESSAGE_DATA', data)
         return mdr
 
     def __hide_p2sb(self, hide: bool) -> bool:
         if not self.p2sbHide:
-            if self.cs.register_has_field("P2SBC", "HIDE"):
+            if self.cs.register.has_field("P2SBC", "HIDE"):
                 self.p2sbHide = {'reg': 'P2SBC', 'field': 'HIDE'}
-            elif self.cs.register_has_field("P2SB_HIDE", "HIDE"):
+            elif self.cs.register.has_field("P2SB_HIDE", "HIDE"):
                 self.p2sbHide = {'reg': 'P2SB_HIDE', 'field': 'HIDE'}
             else:
                 raise RegisterNotFoundError('RegisterNotFound: P2SBC')
 
-        hidden = not self.cs.is_device_enabled('P2SBC')
+        hidden = not self.cs.device.is_enabled('P2SBC')
         if hide:
-            self.cs.write_register_field(self.p2sbHide['reg'], self.p2sbHide['field'], 1)
+            self.cs.register.write_field(self.p2sbHide['reg'], self.p2sbHide['field'], 1)
         else:
-            self.cs.write_register_field(self.p2sbHide['reg'], self.p2sbHide['field'], 0)
+            self.cs.register.write_field(self.p2sbHide['reg'], self.p2sbHide['field'], 0)
         return hidden
 
     #
@@ -187,20 +187,20 @@ class MsgBus(hal_base.HALBase):
 
     def mm_msgbus_reg_read(self, port: int, register: int) -> int:
         was_hidden = False
-        if self.cs.is_register_defined('P2SBC'):
+        if self.cs.register.is_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
         mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0]
         reg_val = self.cs.mmio.read_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF))
-        if self.cs.is_register_defined('P2SBC') and was_hidden:
+        if self.cs.register.is_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val
 
     def mm_msgbus_reg_write(self, port: int, register: int, data: int) -> Optional[int]:
         was_hidden = False
-        if self.cs.is_register_defined('P2SBC'):
+        if self.cs.register.is_defined('P2SBC'):
             was_hidden = self.__hide_p2sb(False)
         mmio_addr = self.cs.mmio.get_MMIO_BAR_base_address('SBREGBAR')[0]
         reg_val = self.cs.mmio.write_MMIO_reg_dword(mmio_addr, ((port & 0xFF) << 16) | (register & 0xFFFF), data)
-        if self.cs.is_register_defined('P2SBC') and was_hidden:
+        if self.cs.register.is_defined('P2SBC') and was_hidden:
             self.__hide_p2sb(True)
         return reg_val

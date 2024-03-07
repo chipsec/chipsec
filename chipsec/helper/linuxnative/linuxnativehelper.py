@@ -30,7 +30,7 @@ import struct
 import sys
 from typing import Optional, Tuple
 
-from chipsec import defines
+from chipsec.library import defines
 from chipsec.exceptions import OsHelperError
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.linuxnative.cpuid import CPUID

@@ -47,7 +47,7 @@ from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.exceptions import CSReadError
 from chipsec.logger import logger
-from chipsec.defines import get_bits
+from chipsec.library.defines import get_bits
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
 
@@ -159,7 +159,7 @@ class MMIO(hal_base.HALBase):
             _bar = self.cs.Cfg.MMIO_BARS[bar_name]
             if _bar is not None:
                 if 'register' in _bar:
-                    is_bar_defined = self.cs.is_register_defined(_bar['register'])
+                    is_bar_defined = self.cs.register.is_defined(_bar['register'])
                 elif ('bus' in _bar) and ('dev' in _bar) and ('fun' in _bar) and ('reg' in _bar):
                     # old definition
                     is_bar_defined = True
@@ -200,28 +200,28 @@ class MMIO(hal_base.HALBase):
             preserve = True
             bar_reg = bar['register']
             if _bus is None:
-                _buses = self.cs.get_register_bus(bar_reg)
+                _buses = self.cs.register.get_bus(bar_reg)
                 _bus = _buses[0] if _buses else None
             if 'align_bits' in bar:
                 preserve = False
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 try:
-                    base = self.cs.read_register_field(bar_reg, base_field, preserve, bus=_bus)
+                    base = self.cs.register.read_field(bar_reg, base_field, preserve, bus=_bus)
                 except CSReadError:
                     base = 0
                     self.logger.log_hal(f'[mmio] Unable to determine MMIO Base.  Using Base = 0x{base:X}')
                 try:
-                    reg_mask = self.cs.get_register_field_mask(bar_reg, base_field, preserve)
+                    reg_mask = self.cs.register.get_field_mask(bar_reg, base_field, preserve)
                 except CSReadError:
                     reg_mask = 0xFFFF
                     self.logger.log_hal(f'[mmio] Unable to determine MMIO Mask.  Using Mask = 0x{reg_mask:X}')
             else:
-                base = self.cs.read_register(bar_reg, bus=_bus)
-                reg_mask = self.cs.get_register_field_mask(bar_reg, preserve_field_position=preserve)
+                base = self.cs.register.read(bar_reg, bus=_bus)
+                reg_mask = self.cs.register.get_field_mask(bar_reg, preserve_field_position=preserve)
             if 'limit_field' in bar:
                 limit_field = bar['limit_field']
-                limit = self.cs.read_register_field(bar_reg, limit_field, bus=_bus)
+                limit = self.cs.register.read_field(bar_reg, limit_field, bus=_bus)
             else:
                 if self.logger.HAL:
                     self.logger.log_warning(f"[mmio] 'limit_field' field not defined for bar, using limit = 0x{limit:X}")
@@ -230,7 +230,7 @@ class MMIO(hal_base.HALBase):
             if _bus is not None:
                 b = _bus
             else:
-                b = self.cs.get_first_bus(bar)
+                b = self.cs.device.get_first_bus(bar)
             d = bar['dev']
             f = bar['fun']
             r = bar['reg']
@@ -251,9 +251,9 @@ class MMIO(hal_base.HALBase):
         if 'offset' in bar:
             base = base + bar['offset']
         if 'align_bits' in bar:
-            _buses = self.cs.get_register_bus(bar['base_reg'])
+            _buses = self.cs.register.get_bus(bar['base_reg'])
             _bus = _buses[0] if _buses else None
-            start = self.cs.read_register_field(bar['base_reg'], bar['base_addr'], bus=_bus)
+            start = self.cs.register.read_field(bar['base_reg'], bar['base_addr'], bus=_bus)
             start <<= int(bar['base_align'])
             base <<= int(bar['align_bits'])
             limit <<= int(bar['align_bits'])
@@ -285,13 +285,13 @@ class MMIO(hal_base.HALBase):
             bar_reg = bar['register']
             if 'enable_field' in bar:
                 bar_en_field = bar['enable_field']
-                is_enabled = (1 == self.cs.read_register_field(bar_reg, bar_en_field, bus=bus))
+                is_enabled = (1 == self.cs.register.read_field(bar_reg, bar_en_field, bus=bus))
         else:
             # this method is not preferred (less flexible)
             if bus is not None:
                 b = bus
             else:
-                b = self.cs.get_first_bus(bar)
+                b = self.cs.device.get_first_bus(bar)
             d = bar['dev']
             f = bar['fun']
             r = bar['reg']
@@ -321,12 +321,12 @@ class MMIO(hal_base.HALBase):
             bar_reg = bar['register']
             if 'base_field' in bar:
                 base_field = bar['base_field']
-                base = self.cs.read_register_field(bar_reg, base_field, preserve_field_position=True)
+                base = self.cs.register.read_field(bar_reg, base_field, preserve_field_position=True)
             else:
-                base = self.cs.read_register(bar_reg)
+                base = self.cs.register.read(bar_reg)
         else:
             # this method is not preferred (less flexible)
-            b = self.cs.get_first_bus(bar)
+            b = self.cs.device.get_first_bus(bar)
             d = bar['dev']
             f = bar['fun']
             r = bar['reg']
@@ -380,16 +380,16 @@ class MMIO(hal_base.HALBase):
             _bar = self.cs.Cfg.MMIO_BARS[_bar_name]
             bus_data = []
             if 'register' in _bar:
-                bus_data = self.cs.get_register_bus(_bar['register'])
+                bus_data = self.cs.register.get_bus(_bar['register'])
                 if not bus_data:
-                    if 'bus' in self.cs.get_register_def(_bar['register']):
-                        bus_data.extend(self.cs.get_register_def(_bar['register'])['bus'])
+                    if 'bus' in self.cs.register.get_def(_bar['register']):
+                        bus_data = [self.cs.register.get_def(_bar['register'])['bus']]
             elif 'bus' in _bar:
                 bus_data.extend(_bar['bus'])
             else:
                 continue
             for bus in bus_data:
-                bus = self.cs.get_first(bus)
+                bus = self.cs.device.get_first(bus)
                 try:
                     (_base, _size) = self.get_MMIO_BAR_base_address(_bar_name, bus)
                 except:
@@ -402,7 +402,7 @@ class MMIO(hal_base.HALBase):
                     if 'offset' in _bar:
                         _s += (f' + 0x{_bar["offset"]:X}')
                 else:
-                    bus_value = self.cs.get_first(_bar["bus"])
+                    bus_value = self.cs.device.get_first(_bar["bus"])
                     dev_value = _bar["dev"]
                     fun_value = _bar["fun"]
                     _s = f'{bus_value:02X}:{dev_value:02X}.{fun_value:01X} + {_bar["reg"]}'
@@ -415,8 +415,8 @@ class MMIO(hal_base.HALBase):
 
     def get_MMCFG_base_address(self) -> Tuple[int, int]:
         (bar_base, bar_size) = self.get_MMIO_BAR_base_address('MMCFG')
-        if self.cs.register_has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
-            len = self.cs.read_register_field("PCI0.0.0_PCIEXBAR", "LENGTH")
+        if self.cs.register.has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
+            len = self.cs.register.read_field("PCI0.0.0_PCIEXBAR", "LENGTH")
             if len == PCI_PCIEXBAR_REG_LENGTH_256MB:
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 2)
             elif len == PCI_PCIEXBAR_REG_LENGTH_128MB:
@@ -431,8 +431,8 @@ class MMIO(hal_base.HALBase):
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 5)
             if len == PCI_PCIEXBAR_REG_LENGTH_4096MB:
                 bar_base &= (PCI_PCIEBAR_REG_MASK << 6)
-        if self.cs.register_has_field("MmioCfgBaseAddr", "BusRange"):
-            num_buses = self.cs.read_register_field("MmioCfgBaseAddr", "BusRange")
+        if self.cs.register.has_field("MmioCfgBaseAddr", "BusRange"):
+            num_buses = self.cs.register.read_field("MmioCfgBaseAddr", "BusRange")
             if num_buses <= 8:
                 bar_size = 2**20 * 2**num_buses
             else:

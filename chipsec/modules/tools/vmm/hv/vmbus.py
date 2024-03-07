@@ -34,7 +34,7 @@ from chipsec.logger import *
 from chipsec.file import *
 from chipsec.module_common import *
 from chipsec.hal.vmm import VMM
-from chipsec.defines import *
+from chipsec.library.defines import *
 
 
 class RingBuffer(BaseModuleDebug):
@@ -49,8 +49,6 @@ class RingBuffer(BaseModuleDebug):
     def __del__(self):
         BaseModuleDebug.__del__(self)
         self.dbg('Free kernel memory (pfn pages)')
-        # for addr in self.base_addr:
-        #    self.cs.mem.free_physical_mem(addr)
         self.base_addr = []
         self.send_size = 0
         self.pfn = []
@@ -114,7 +112,7 @@ class RingBuffer(BaseModuleDebug):
     def ringbuffer_read(self):
         ring_data_size = (len(self.pfn) - self.send_size - 1) << 12
         buffer = self.cs.mem.read_physical_mem(self.pfn[self.send_size], 0x10)
-        write_index, read_index, interrupt_mask, pending_send_sz = unpack('<4L', buffer)
+        write_index, read_index, _, _ = unpack('<4L', buffer)
         delta = write_index - read_index
         avail = delta if delta >= 0 else ring_data_size + delta
         if avail == 0:
@@ -132,7 +130,7 @@ class RingBuffer(BaseModuleDebug):
     def ringbuffer_write(self, data):
         ring_data_size = (self.send_size - 1) << 12
         buffer = self.cs.mem.read_physical_mem(self.pfn[0], 0x10)
-        write_index, read_index, interrupt_mask, pending_send_sz = unpack('<4L', buffer)
+        write_index, read_index, _, _ = unpack('<4L', buffer)
         delta = read_index - write_index
         avail = delta if delta > 0 else ring_data_size + delta
         data += DD(0) + DD(write_index)
@@ -169,7 +167,7 @@ class HyperV(BaseModuleDebug):
         self.hypercall = VMM(self.cs)
         self.hypercall.init()
         self.membuf = self.cs.mem.alloc_physical_mem(4 * 0x1000, 0xFFFFFFFF)
-        self.cs.mem.write_physical_mem(self.membuf[1], 4 * 0x1000, '\x00' * 4 * 0x1000)
+        self.cs.mem.write_physical_mem(self.membuf[1], 4 * 0x1000, b'\x00' * 4 * 0x1000)
         self.old_sint2 = []
         self.old_simp = []
         self.old_siefp = []
@@ -307,13 +305,13 @@ class VMBus(HyperV):
     ##
     def vmbus_post_msg(self, message):
         if len(message) > 240:
-            self.err('vmbus_post_msg: message it too long {:d} bytes'.format(len(message)))
+            self.err(f'vmbus_post_msg: message it too long {len(message):d} bytes')
             message = message[:240]
         header = pack('<4L', VMBUS_MESSAGE_CONNECTION_ID, 0x0, 0x1, len(message))
         result = self.hv_post_msg(header + message)
         if result != HV_STATUS_SUCCESS:
             status = hypercall_status_codes[result] if result in hypercall_status_codes else ''
-            self.err('vmbus_post_msg returns  {:02X} {}'.format(result, status))
+            self.err(f'vmbus_post_msg returns  {result:02X} {status}')
         return result == HV_STATUS_SUCCESS
 
     ##
@@ -329,12 +327,12 @@ class VMBus(HyperV):
             msg_type, payload_size, msg_flags, rsvd, port_id = unpack('<LBBHQ', message[0:16])
             if msg_type not in [HVMSG_NONE, 0x0001]:
                 status = hv_message_type[msg_type] if msg_type in hv_message_type else ''
-                self.fatal('vmbus_recv_msg: unhandeled message type 0x{:08X} {}'.format(msg_type, status))
+                self.fatal(f'vmbus_recv_msg: unhandeled message type 0x{msg_type:08X} {status}')
             if (payload_size < 8) or (payload_size > 240):
-                self.msg('vmbus_recv_msg: invalid payload size {:d}'.format(payload_size))
+                self.msg(f'vmbus_recv_msg: invalid payload size {payload_size:d}')
                 payload_size = 240
             if rsvd != 0x0000:
-                self.msg('vmbus_recv_msg: invalid reserved field 0x{:04X}'.format(rsvd))
+                self.msg(f'vmbus_recv_msg: invalid reserved field 0x{rsvd:04X}')
             # if port_id != VMBUS_MESSAGE_PORT_ID:
             #    self.msg('vmbus_recv_msg: invalid ConnectionID 0x%016x' % port_id)
             message = message[16: 16 + payload_size]
@@ -346,7 +344,7 @@ class VMBus(HyperV):
     def vmbus_setevent(self, child_relid):
         self.dbg('Trigger an event notification on the specified channel ...')
         if child_relid not in self.open_channels:
-            self.err('vmbus_setevent could not find channel with child relid: {:d}'.format(child_relid))
+            self.err(f'vmbus_setevent could not find channel with child relid: {child_relid:d}')
             return False
         channel = self.open_channels[child_relid]['offer']
         if channel['monitor_allocated'] == 1:
@@ -362,7 +360,7 @@ class VMBus(HyperV):
             result = self.hv_signal_event(channel['connection_id'], 0x0)
             if result != 0:
                 status = hypercall_status_codes[result] if result in hypercall_status_codes else ''
-                self.err('vmbus_setevent returns  {:02X} {}'.format(result, status))
+                self.err(f'vmbus_setevent returns  {result:02X} {status}')
                 return False
         return True
 
@@ -513,10 +511,10 @@ class VMBus(HyperV):
             msgtype, padding = unpack('<LL', message[:8])
             message_body = message[8:]
 
-            self.dbg('vmbus_onmessage: message {:d} {}'.format(msgtype, vmbus_channel_message_type[msgtype]))
+            self.dbg(f'vmbus_onmessage: message {msgtype:d} {vmbus_channel_message_type[msgtype]}')
 
             if msgtype not in channelmsg:
-                self.msg('vmbus_onmessage: invalid message type {:d}'.format(msgtype))
+                self.msg(f'vmbus_onmessage: invalid message type {msgtype:d}')
                 self.hex('Message', message)
             elif channelmsg[msgtype] > len(message_body):
                 self.msg('vmbus_onmessage: message is too short!')
@@ -524,7 +522,7 @@ class VMBus(HyperV):
                 exit(1)
 
             if padding != 0x00000000:
-                self.msg('vmbus_onmessage invalid padding {:d}'.format(padding))
+                self.msg(f'vmbus_onmessage invalid padding {padding:d}')
 
         # vmbus_ongpadl_created - GPADL created handler
         if msgtype == CHANNELMSG_GPADL_CREATED:
@@ -668,7 +666,7 @@ class VMBusDiscovery(VMBus):
         for i in range(64):
             self.supported_versions = {}
             self.int_page = (FFs << (63 - i)) & FFs
-            self.dbg('Address: 0x{:016X}'.format(self.int_page))
+            self.dbg(f'Address: 0x{self.int_page:016X}')
             self.vmbus_connect(version)
             print(self.supported_versions)
         (self.int_page, self.monitor_page1, self.monitor_page2) = pages
@@ -682,7 +680,7 @@ class VMBusDiscovery(VMBus):
         self.msg('******************** Supported versions ********************')
         for version in sorted(self.supported_versions.keys()):
             status = 'Unknown' if version not in vmbus_versions else vmbus_versions[version]
-            self.msg('  {:d} . {:2d} - {}'.format(version >> 16, version & 0xFFFF, status))
+            self.msg(f'  {version >> 16:d} . {version & 0xFFFF:2d} - {status}')
         return
 
     ##
@@ -699,19 +697,19 @@ class VMBusDiscovery(VMBus):
                 if (n in channel_flags) and (((channel['flags'] >> n) & 0x1) == 0x1):
                     flags.append(channel_flags[n])
 
-            conid = 'Connection ID: 0x{:08X}'.format(channel['connection_id'])
-            relid = 'Child relid: 0x{:08X}'.format(channel['child_relid'])
-            mmios = 'MMIO: {:d}MB'.format(channel['mmio'])
-            subch = 'Sub channel: 0x{:04X}'.format(channel['sub_channel'])
-            monid = 'Monitor: {:d} ID=0x{:02X}'.format(channel['monitor_allocated'], channel['monitor_id'])
-            dintr = 'Dedicated interrupt: {:d}'.format(channel['dedicated_interrupt'])
-            flags = 'Flags: 0x{:04X} >{}'.format(channel['flags'], ', '.join(flags))
+            conid = f'Connection ID: 0x{channel["connection_id"]:08X}'
+            relid = f'Child relid: 0x{channel["child_relid"]:08X}'
+            mmios = f'MMIO: {channel["mmio"]:d}MB'
+            subch = f'Sub channel: 0x{channel["sub_channel"]:04X}'
+            monid = f'Monitor: {channel["monitor_allocated"]:d} ID=0x{channel["monitor_id"]:02X}'
+            dintr = f'Dedicated interrupt: {channel["dedicated_interrupt"]:d}'
+            flags = f'Flags: 0x{channel["flags"]:04X} >{", ".join(flags)}'
 
             self.msg('')
-            self.msg('{}'.format(channel['name']))
-            self.msg('  Hardware IDs:  {}   {}'.format(uuid(i[0x00:0x10]), uuid(i[0x10:0x20])))
-            self.msg('  {}   {}   {}   {}'.format(conid, relid, subch, monid))
-            self.msg('  {}   {}   {}'.format(mmios, dintr, flags))
+            self.msg(f'{channel["name"]}')
+            self.msg(f'  Hardware IDs:  {uuid(i[0x00:0x10])}   {uuid(i[0x10:0x20])}')
+            self.msg(f'  {conid}   {relid}   {subch}   {monid}')
+            self.msg(f'  {mmios}   {dintr}   {flags}')
         return
 
     ##
@@ -724,7 +722,7 @@ class VMBusDiscovery(VMBus):
         self.msg('---------------------------------------------------')
         for gpadl in sorted(self.created_gpadl.keys()):
             channel = self.created_gpadl[gpadl]
-            self.msg('  0x{:08X}   |  0x{:08X}   |  0x{:08X}'.format(gpadl, channel['child_relid'], channel['status']))
+            self.msg(f'  0x{gpadl:08X}   |  0x{channel["child_relid"]:08X}   |  0x{channel["status"]:08X}')
         self.msg('---------------------------------------------------')
         return
 
@@ -738,7 +736,7 @@ class VMBusDiscovery(VMBus):
         self.msg('---------------------------------------------------')
         for child_relid in sorted(self.open_channels):
             channel = self.open_channels[child_relid]
-            self.msg('  0x{:08X}   |  0x{:08X}   |  0x{:08X}'.format(child_relid, channel['openid'], channel['status']))
+            self.msg(f'  0x{child_relid:08X}   |  0x{channel["openid"]:08X}   |  0x{channel["status"]:08X}')
         self.msg('---------------------------------------------------')
         return
 
@@ -749,7 +747,7 @@ class VMBusDiscovery(VMBus):
         events = self.vmbus_recv_events()
         result = []
         for i in events:
-            result.append('{:02X}'.format(i))
+            result.append(f'{i:02X}')
         if len(result) != 0:
             self.msg('EVENTS: ' + ', '.join(result))
         return

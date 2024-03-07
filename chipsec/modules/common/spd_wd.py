@@ -50,7 +50,8 @@ Examples:
         - SMBUS_HCFG.SPD_WD is defined for the platform
 """
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.smbus import SMBus
 from chipsec.hal.spd import SPD
 from typing import List
@@ -60,18 +61,19 @@ class spd_wd(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x122cf72, 'https://chipsec.github.io/modules/chipsec.modules.common.spd_wd.html')
+        self.result.id = 0x122cf72
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spd_wd.html'
 
     def is_supported(self) -> bool:
-        if self.cs.is_device_enabled('SMBUS'):
-            if self.cs.register_has_field('SMBUS_HCFG', 'SPD_WD'):
+        if self.cs.device.is_enabled('SMBUS'):
+            if self.cs.register.has_field('SMBUS_HCFG', 'SPD_WD'):
                 return True
             else:
                 self.logger.log_important('SMBUS_HCFG.SPD_WD is not defined for this platform.  Skipping module.')
         else:
             self.logger.log_important('SMBUS device appears disabled.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_spd_wd(self) -> int:
@@ -80,14 +82,14 @@ class spd_wd(BaseModule):
             _spd = SPD(_smbus)
         except BaseException as msg:
             self.logger.log_error(msg)
-            self.rc_res.setStatusBit(self.rc_res.status.INFORMATION)
-            self.res = self.rc_res.getReturnCode(ModuleResult.ERROR)
+            self.result.setStatusBit(self.result.status.INFORMATION)
+            self.res = self.result.getReturnCode(ModuleResult.ERROR)
             return self.res
 
-        spd_wd_reg = self.cs.read_register('SMBUS_HCFG')
-        spd_wd = self.cs.get_register_field('SMBUS_HCFG', spd_wd_reg, 'SPD_WD')
+        spd_wd_reg = self.cs.register.read('SMBUS_HCFG')
+        spd_wd = self.cs.register.get_field('SMBUS_HCFG', spd_wd_reg, 'SPD_WD')
 
-        self.cs.print_register('SMBUS_HCFG', spd_wd_reg)
+        self.cs.register.print('SMBUS_HCFG', spd_wd_reg)
 
         if 1 == spd_wd:
             self.logger.log_passed("SPD Write Disable is set")
@@ -95,14 +97,14 @@ class spd_wd(BaseModule):
         else:
             if _spd.detect():
                 self.logger.log_failed("SPD Write Disable is not set and SPDs were detected")
-                self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+                self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
                 self.res = ModuleResult.FAILED
             else:
                 self.logger.log_information("SPD Write Disable is not set, but no SPDs detected")
-                self.rc_res.setStatusBit(self.rc_res.status.INFORMATION)
+                self.result.setStatusBit(self.result.status.INFORMATION)
                 self.res = ModuleResult.INFORMATION
 
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPD Write Disable")

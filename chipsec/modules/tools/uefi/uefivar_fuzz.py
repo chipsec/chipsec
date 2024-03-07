@@ -63,10 +63,11 @@ from time import time
 from uuid import uuid4, UUID
 import struct
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.file import write_file
 from chipsec.hal.uefi import UEFI
-from chipsec.defines import bytestostring
+from chipsec.library.defines import bytestostring
 
 from chipsec.fuzzing import primitives as prim
 
@@ -75,15 +76,16 @@ class uefivar_fuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x430f248, 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.uefivar_fuzz.html')
+        self.result.id = 0x430f248
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.uefivar_fuzz.html'
         self._uefi = UEFI(self.cs)
 
     def is_supported(self):
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log_important("OS does not support UEFI Runtime API.  Skipping module.")
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def rnd(self, n=1):
@@ -229,5 +231,5 @@ class uefivar_fuzz(BaseModule):
         self.logger.log_important('Evaluate the platform for expected behavior to determine PASS/FAIL')
         self.logger.log_important('Behavior can include platform stability and retaining protections.')
 
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        return self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        return self.result.getReturnCode(ModuleResult.WARNING)

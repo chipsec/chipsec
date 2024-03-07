@@ -24,7 +24,7 @@ Common include file for modules
 """
 
 from enum import Enum
-from chipsec.defines import bit, is_set
+from chipsec.library.defines import bit, is_set
 from chipsec.logger import logger
 from hashlib import sha256
 
@@ -91,23 +91,30 @@ class ReturnCode:
         self.setTestID()
         self.printLogOutput()
 
+    def resetReturnCodeValues(self):
+        self.id = 0x0
+        self._result = 0x00000000
+        self._return_code = self.status.SUCCESS.value[0]
+
     def getReturnCode(self, result: int) -> int:
         if self.cs.using_return_codes:
             self.buildReturnCode()
         else:
             self._return_code = result
-        return self._return_code
+        ret_value = self._return_code
+        self.resetReturnCodeValues()
+        return ret_value
 
 # -------------------------------------------------------
 # Legacy results
 # -------------------------------------------------------
 class ModuleResult(Enum):
-    FAILED = 0,
-    PASSED = 1,
-    WARNING = 2,
-    DEPRECATED = 4,
-    INFORMATION = 5,
-    NOTAPPLICABLE = 6,
+    FAILED = 0
+    PASSED = 1
+    WARNING = 2
+    DEPRECATED = 4
+    INFORMATION = 5
+    NOTAPPLICABLE = 6
     ERROR = -1
 
 result_priority = {

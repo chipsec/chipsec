@@ -32,7 +32,7 @@ from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, 
 from chipsec.exceptions import UnknownChipsetError, OsHelperError
 
 from chipsec.logger import logger
-from chipsec.defines import ARCH_VID
+from chipsec.library.defines import ARCH_VID
 from chipsec.library.register import Register
 from chipsec.library.lock import Lock
 from chipsec.library.control import Control
@@ -250,5 +250,5 @@ def cs():
     global _chipset
 
     if _chipset is None:
-        _chipset: Chipset = Chipset()
+        _chipset = Chipset()
     return _chipset

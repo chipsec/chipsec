@@ -27,7 +27,7 @@ from collections import namedtuple
 
 sys.path.append(op.abspath(op.join(__file__, "..", "..")))
 from chipsec.file import get_main_dir
-from chipsec.defines import is_hex
+from chipsec.library.defines import is_hex
 
 
 class ConfigChecker():

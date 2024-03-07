@@ -57,7 +57,7 @@ NotWantedFilesList = [
     'chipsec.cfg.rst',
     'chipsec.chipset.rst',
     'chipsec.command.rst',
-    'chipsec.defines.rst',
+    'chipsec.library.defines.rst',
     'chipsec.file.rst',
     'chipsec.logger.rst',
     'chipsec.module.rst',

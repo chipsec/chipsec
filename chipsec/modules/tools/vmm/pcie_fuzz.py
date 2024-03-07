@@ -58,7 +58,8 @@ Additional options set within the module:
 import time
 import random
 
-from chipsec.module_common import BaseModule, ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.pci import print_pci_devices
 
 
@@ -78,7 +79,8 @@ _EXCLUDE_BAR = []
 class pcie_fuzz(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x61c1431, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.pcie_fuzz.html')
+        self.result.id = 0x61c1431
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.pcie_fuzz.html'
 
     def fuzz_io_bar(self, bar, size=0x100):
         port_off = 0
@@ -170,7 +172,7 @@ class pcie_fuzz(BaseModule):
         return diff_index
 
     def fuzz_pcie_device(self, b, d, f):
-        self.logger.log("[*] Discovering MMIO and I/O BARs of the device..")
+        self.logger.log('[*] Discovering MMIO and I/O BARs of the device..')
         device_bars = self.cs.pci.get_device_bars(b, d, f, bCalcSize=CALC_BAR_SIZE)
         for (bar, isMMIO, is64bit, bar_off, bar_reg, size) in device_bars:
             if bar not in _EXCLUDE_BAR:
@@ -217,6 +219,6 @@ class pcie_fuzz(BaseModule):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

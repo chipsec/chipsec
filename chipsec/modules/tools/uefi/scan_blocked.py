@@ -52,7 +52,8 @@ Decodes ``uefi.rom`` binary with UEFI firmware image and checks for blocked EFI 
 import json
 import os
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi_uefi import search_efi_tree, build_efi_model, EFIModuleType
 from chipsec.hal.uefi import UEFI
 from chipsec.hal.spi import SPI, BIOS
@@ -68,7 +69,8 @@ class scan_blocked(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x5df9386, 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.scan_blocked.html')
+        self.result.id = 0x5df9386
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.scan_blocked.html'
         self.uefi = UEFI(self.cs)
         self.cfg_name = 'blockedlist.json'
         self.image = None
@@ -98,7 +100,7 @@ class scan_blocked(BaseModule):
         self.logger.log('')
         if found:
             res = ModuleResult.WARNING
-            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+            self.result.setStatusBit(self.result.status.VERIFY)
             self.logger.log_warning("Blocked EFI binary found in the UEFI firmware image")
         else:
             self.logger.log_passed("Didn't find any blocked EFI binary")
@@ -138,8 +140,8 @@ class scan_blocked(BaseModule):
             if len(module_argv) == 0:
                 self.logger.log_important('Unable to read SPI and generate FW image. Access may be blocked.')
             self.logger.log_error('No FW image file to read.  Exiting!')
-            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_FEATURE)
-            return self.rc_res.getReturnCode(ModuleResult.ERROR)
+            self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+            return self.result.getReturnCode(ModuleResult.ERROR)
 
         # Load JSON config with blocked EFI modules
         if len(module_argv) > 1:
@@ -149,5 +151,5 @@ class scan_blocked(BaseModule):
             self.efi_blockedlist = json.load(blockedlist_json)
 
         self.res = self.check_blockedlist()
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)
 

@@ -39,7 +39,8 @@ Registers used:
 
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_BIOS
+from chipsec.module_common import BaseModule, MTAG_BIOS
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi import FLASH_DESCRIPTOR
 from typing import List
 
@@ -50,14 +51,15 @@ class spi_desc(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x63fa19c, 'https://chipsec.github.io/modules/chipsec.modules.common.spi_desc.html')
+        self.result.id = 0x63fa19c
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_desc.html'
 
     def is_supported(self) -> bool:
-        if self.cs.register_has_all_fields('FRAP', ['BRRA', 'BRWA']):
+        if self.cs.register.has_all_fields('FRAP', ['BRRA', 'BRWA']):
             return True
         self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
-        self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-        self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     ##
@@ -65,15 +67,15 @@ class spi_desc(BaseModule):
     def check_flash_access_permissions(self) -> int:
 
         res = ModuleResult.PASSED
-        frap = self.cs.read_register('FRAP')
-        self.cs.print_register('FRAP', frap)
-        brra = self.cs.get_register_field('FRAP', frap, 'BRRA')
-        brwa = self.cs.get_register_field('FRAP', frap, 'BRWA')
+        frap = self.cs.register.read('FRAP')
+        self.cs.register.print('FRAP', frap)
+        brra = self.cs.register.get_field('FRAP', frap, 'BRRA')
+        brwa = self.cs.register.get_field('FRAP', frap, 'BRWA')
 
         self.logger.log(f"[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}")
         if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
-            self.rc_res.setStatusBit(self.rc_res.status.ACCESS_RW)
+            self.result.setStatusBit(self.result.status.ACCESS_RW)
             self.logger.log_bad("Software has write access to SPI flash descriptor")
 
         self.logger.log('')
@@ -83,7 +85,7 @@ class spi_desc(BaseModule):
             self.logger.log_failed("SPI flash permissions allow SW to write flash descriptor")
             self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
         
-        return self.rc_res.getReturnCode(res)
+        return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Region Access Control")

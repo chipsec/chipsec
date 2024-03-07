@@ -153,8 +153,8 @@ class CPU(hal_base.HALBase):
     # Return SMRR MSR physical base and mask
     #
     def get_SMRR(self) -> Tuple[int, int]:
-        smrambase = self.cs.read_register_field('IA32_SMRR_PHYSBASE', 'PhysBase', True)
-        smrrmask = self.cs.read_register_field('IA32_SMRR_PHYSMASK', 'PhysMask', True)
+        smrambase = self.cs.register.read_field('IA32_SMRR_PHYSBASE', 'PhysBase', True)
+        smrrmask = self.cs.register.read_field('IA32_SMRR_PHYSMASK', 'PhysMask', True)
         return (smrambase, smrrmask)
 
     #
@@ -173,13 +173,13 @@ class CPU(hal_base.HALBase):
     def get_TSEG(self) -> Tuple[int, int, int]:
         if self.cs.is_server():
             # tseg register has base and limit
-            tseg_base = self.cs.read_register_field('TSEG_BASE', 'base', preserve_field_position=True)
-            tseg_limit = self.cs.read_register_field('TSEG_LIMIT', 'limit', preserve_field_position=True)
+            tseg_base = self.cs.register.read_field('TSEG_BASE', 'base', preserve_field_position=True)
+            tseg_limit = self.cs.register.read_field('TSEG_LIMIT', 'limit', preserve_field_position=True)
             tseg_limit += 0xFFFFF
         else:
             # TSEG base is in TSEGMB, TSEG limit is BGSM - 1
-            tseg_base = self.cs.read_register_field('PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True)
-            bgsm = self.cs.read_register_field('PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True)
+            tseg_base = self.cs.register.read_field('PCI0.0.0_TSEGMB', 'TSEGMB', preserve_field_position=True)
+            bgsm = self.cs.register.read_field('PCI0.0.0_BGSM', 'BGSM', preserve_field_position=True)
             tseg_limit = bgsm - 1
 
         tseg_size = tseg_limit - tseg_base + 1
@@ -211,10 +211,10 @@ class CPU(hal_base.HALBase):
     # Check that SMRR is supported by CPU in IA32_MTRRCAP_MSR[SMRR]
     #
     def check_SMRR_supported(self) -> bool:
-        mtrrcap_msr_reg = self.cs.read_register('MTRRCAP')
+        mtrrcap_msr_reg = self.cs.register.read('MTRRCAP')
         if logger().HAL:
-            self.cs.print_register('MTRRCAP', mtrrcap_msr_reg)
-        smrr = self.cs.get_register_field('MTRRCAP', mtrrcap_msr_reg, 'SMRR')
+            self.cs.register.print('MTRRCAP', mtrrcap_msr_reg)
+        smrr = self.cs.register.get_field('MTRRCAP', mtrrcap_msr_reg, 'SMRR')
         return (1 == smrr)
 
     #

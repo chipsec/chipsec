@@ -33,7 +33,7 @@ from random import *
 from chipsec.modules.tools.vmm.hv.define import *
 from chipsec.modules.tools.vmm.common import *
 from chipsec.modules.tools.vmm.hv.vmbus import *
-from chipsec.defines import *
+from chipsec.library.defines import *
 import chipsec_util
 
 SYNTH_KBD_VERSION = 0x00010000
@@ -72,7 +72,8 @@ class RingBufferFuzzer(RingBuffer):
 class synth_kbd(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x0d28d62, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_kbd.html')
+        self.result.id = 0x0d28d62
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_kbd.html'
 
     def usage(self):
         print('  Usage:')
@@ -87,8 +88,8 @@ class synth_kbd(BaseModule):
             command = module_argv[0]
         else:
             self.usage()
-            self.rc_res.setStatusBit(self.rc_res.status.UNSUPPORTED_OPTION)
-            return self.rc_res.getReturnCode(ModuleResult.ERROR)
+            self.result.setStatusBit(self.result.status.UNSUPPORTED_OPTION)
+            return self.result.getReturnCode(ModuleResult.ERROR)
 
         vb = VMBusDiscovery()
         vb.debug = True
@@ -153,5 +154,5 @@ class synth_kbd(BaseModule):
             vb.vmbus_rescind_all_offers()
             del vb.ringbuffers[relid]
             del vb
-        self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
-        return self.rc_res.getReturnCode(ModuleResult.PASSED)
+        self.result.setStatusBit(self.result.status.SUCCESS)
+        return self.result.getReturnCode(ModuleResult.PASSED)

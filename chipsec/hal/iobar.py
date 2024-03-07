@@ -67,25 +67,25 @@ class IOBAR(hal_base.HALBase):
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 try:
-                    base = self.cs.read_register_field(bar_reg, base_field, preserve_field_position=True)
+                    base = self.cs.register.read_field(bar_reg, base_field, preserve_field_position=True)
                 except Exception:
                     base = 0
                 try:
-                    empty_base = self.cs.get_register_field_mask(bar_reg, base_field, preserve_field_position=True)
+                    empty_base = self.cs.register.get_field_mask(bar_reg, base_field, preserve_field_position=True)
                 except Exception:
                     empty_base = 0
             else:
                 try:
-                    base = self.cs.read_register(bar_reg)
+                    base = self.cs.register.read(bar_reg)
                 except Exception:
                     base = 0
                 try:
-                    empty_base = self.cs.get_register_field_mask(bar_reg, preserve_field_position=True)
+                    empty_base = self.cs.register.get_field_mask(bar_reg, preserve_field_position=True)
                 except Exception:
                     empty_base = 0
         else:
             # this method is not preferred
-            base = self.cs.pci.read_word(self.cs.get_first_bus(bar), bar['dev'], bar['fun'], bar['reg'])
+            base = self.cs.pci.read_word(self.cs.device.get_first_bus(bar), bar['dev'], bar['fun'], bar['reg'])
             empty_base = 0xFFFF
 
         if 'fixed_address' in bar and (base == empty_base or base == 0):
@@ -140,7 +140,7 @@ class IOBAR(hal_base.HALBase):
             bar_reg = bar['register']
             if 'enable_field' in bar:
                 bar_en_field = bar['enable_field']
-                is_enabled = (1 == self.cs.read_register_field(bar_reg, bar_en_field))
+                is_enabled = (1 == self.cs.register.read_field(bar_reg, bar_en_field))
         return is_enabled
 
     def list_IO_BARs(self) -> None:

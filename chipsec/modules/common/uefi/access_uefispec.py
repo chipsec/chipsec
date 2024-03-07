@@ -40,7 +40,8 @@ NOTE:
 Requires an OS with UEFI Runtime API support.
 """
 
-from chipsec.module_common import BaseModule, ModuleResult, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
+from chipsec.module_common import BaseModule, MTAG_SECUREBOOT, MTAG_BIOS, OPT_MODIFY
+from chipsec.library.returncode import ModuleResult
 from chipsec.hal.uefi import UEFI, EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS, get_attr_string
 from chipsec.hal.uefi import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
 from chipsec.hal.uefi_common import StatusCode
@@ -55,7 +56,8 @@ class access_uefispec(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
-        self.rc_res = ModuleResult(0xadd835b, 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.access_uefispec.html')
+        self.result.id = 0xadd835b
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.access_uefispec.html'
 
         nv = EFI_VARIABLE_NON_VOLATILE
         bs = EFI_VARIABLE_BOOTSERVICE_ACCESS
@@ -121,8 +123,8 @@ class access_uefispec(BaseModule):
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log("OS does not support UEFI Runtime API")
-            self.rc_res.setStatusBit(self.rc_res.status.NOT_APPLICABLE)
-            self.res = self.rc_res.getReturnCode(ModuleResult.NOTAPPLICABLE)
+            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
+            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def diff_var(self, data1: int, data2: int) -> bool:
@@ -167,8 +169,8 @@ class access_uefispec(BaseModule):
         if vars is None:
             self.logger.log_warning('Could not enumerate UEFI Variables from runtime.')
             self.logger.log_important("Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually.")
-            self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-            return self.rc_res.getReturnCode(ModuleResult.WARNING)
+            self.result.setStatusBit(self.result.status.VERIFY)
+            return self.result.getReturnCode(ModuleResult.WARNING)
 
         uefispec_concern = []
         ro_concern = []
@@ -200,7 +202,7 @@ class access_uefispec(BaseModule):
                             self.logger.log_important('  Missing attributes:' + get_attr_string(missing_attr))
                         if res != ModuleResult.FAILED:
                             res = ModuleResult.WARNING
-                        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
+                        self.result.setStatusBit(self.result.status.VERIFY)
 
                 if do_modify:
                     self.logger.log(f"[*] Testing modification of {name} ..")
@@ -208,7 +210,7 @@ class access_uefispec(BaseModule):
                         if self.can_modify(name, guid, data):
                             ro_concern.append(name)
                             self.logger.log_bad(f"Variable {name} should be read only.")
-                            self.rc_res.setStatusBit(self.rc_res.status.POTENTIALLY_VULNERABLE)
+                            self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
                             res = ModuleResult.FAILED
                     else:
                         if self.can_modify(name, guid, data):
@@ -246,4 +248,4 @@ class access_uefispec(BaseModule):
 
         do_modify = (len(module_argv) > 0 and module_argv[0] == OPT_MODIFY)
         self.res = self.check_vars(do_modify)
-        return self.rc_res.getReturnCode(self.res)
+        return self.result.getReturnCode(self.res)

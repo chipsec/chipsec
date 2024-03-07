@@ -50,7 +50,7 @@ import sys
 import traceback
 from struct import pack
 from random import getrandbits, choice
-from chipsec.module_common import ModuleResult
+from chipsec.library.returncode import ModuleResult
 from chipsec.modules.tools.vmm.common import session_logger, overwrite, get_int_arg
 from chipsec.modules.tools.vmm.hv.vmbus import VMBusDiscovery, HyperV, RingBuffer
 
@@ -65,7 +65,8 @@ class VMBusFuzz(VMBusDiscovery):
         self.fuzzing = False
         self.fuzzing_rules = {}
         self.current_message = 0
-        self.rc_res = ModuleResult(0x17f285c, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.vmbusfuzz.html')
+        self.result.id = 0x17f285c
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.vmbusfuzz.html'
 
     ##
     # hv_post_msg - Fuzzing a message to be sent
@@ -113,7 +114,7 @@ class VMBusFuzz(VMBusDiscovery):
         self.vmbus_rescind_all_offers()
 
     def run(self, module_argv):
-        self.logger.start_test("Hyper-V VMBus fuzzer")
+        self.logger.start_test('Hyper-V VMBus fuzzer')
 
         if len(module_argv) > 0:
             command = module_argv[0]
@@ -168,6 +169,6 @@ class VMBusFuzz(VMBusDiscovery):
 
         self.logger.log_information('Module completed')
         self.logger.log_warning('System may be in an unknown state, further evaluation may be needed.')
-        self.rc_res.setStatusBit(self.rc_res.status.VERIFY)
-        self.res = self.rc_res.getReturnCode(ModuleResult.WARNING)
+        self.result.setStatusBit(self.result.status.VERIFY)
+        self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

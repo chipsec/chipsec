@@ -71,16 +71,16 @@ class Register:
                 return self.cs.mmio.is_MMIO_BAR_enabled(bar_name, bus)
         return False
 
-    def get_pci_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
+    def _get_pci_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
         '''Return Bus Dev Fun of a PCI register'''
         if dev_name in self.cs.Cfg.CONFIG_PCI:
             dev = self.cs.Cfg.CONFIG_PCI[dev_name]
-            reg_def['bus'] = self.cs.get_first_bus(dev)
+            reg_def['bus'] = self.cs.device.get_first_bus(dev)
             reg_def['dev'] = dev['dev']
             reg_def['fun'] = dev['fun']
         return reg_def
 
-    def get_memory_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
+    def _get_memory_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
         '''Return address access of a MEM register'''
         if dev_name in self.cs.Cfg.MEMORY_RANGES:
             dev = self.cs.Cfg.MEMORY_RANGES[dev_name]
@@ -90,7 +90,7 @@ class Register:
             logger().log_error(f'Memory device {dev_name} not found')
         return reg_def
 
-    def get_indirect_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
+    def _get_indirect_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
         '''Return base index data of a IMA register'''
         if dev_name in self.cs.Cfg.IMA_REGISTERS:
             dev = self.cs.Cfg.IMA_REGISTERS[dev_name]
@@ -116,11 +116,11 @@ class Register:
         if "device" in reg_def:
             dev_name = reg_def["device"]
             if reg_def["type"] in ["pcicfg", "mmcfg"]:
-                reg_def = self.get_pci_def(reg_def, dev_name)
+                reg_def = self._get_pci_def(reg_def, dev_name)
             elif reg_def["type"] == "memory":
-                reg_def = self.get_memory_def(reg_def, dev_name)
+                reg_def = self._get_memory_def(reg_def, dev_name)
             elif reg_def["type"] == "indirect":
-                reg_def = self.get_indirect_def(reg_def, dev_name)
+                reg_def = self._get_indirect_def(reg_def, dev_name)
         return reg_def
 
     def get_bus(self, reg_name: str) -> List[int]:
@@ -139,9 +139,9 @@ class Register:
         '''Returns PCI register value'''
         reg_value = 0
         if bus is not None:
-            b = self.cs.get_first(bus)
+            b = self.cs.device.get_first(bus)
         else:
-            b = self.cs.get_first_bus(reg)
+            b = self.cs.device.get_first_bus(reg)
         d = reg['dev']
         f = reg['fun']
         o = reg['offset']
@@ -272,7 +272,7 @@ class Register:
         if bus is not None:
             b = bus
         else:
-            b = self.cs.get_first_bus(reg)
+            b = self.cs.device.get_first_bus(reg)
         d = reg['dev']
         f = reg['fun']
         o = reg['offset']
@@ -555,7 +555,7 @@ class Register:
             if bus is not None:
                 b = bus
             else:
-                b = self.cs.get_first_bus(reg)
+                b = self.cs.device.get_first_bus(reg)
             d = reg['dev']
             f = reg['fun']
             o = reg['offset']

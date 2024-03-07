@@ -48,7 +48,8 @@ excluded_hypercalls_from_fuzzing = excluded_hypercalls_from_scan + [HV_POST_MESS
 class HypercallFuzz(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.rc_res = ModuleResult(0x6dc9bb0, 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html')
+        self.result.id = 0x6dc9bb0
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html'
 
     def usage(self):
         print('  Usage:')
@@ -140,5 +141,5 @@ class HypercallFuzz(BaseModule):
             hv.err('Invalid mode!')
             self.usage()
 
-        self.rc_res.setStatusBit(self.rc_res.status.SUCCESS)
-        return self.rc_res.getReturnCode(ModuleResult.PASSED)
+        self.result.setStatusBit(self.result.status.SUCCESS)
+        return self.result.getReturnCode(ModuleResult.PASSED)
