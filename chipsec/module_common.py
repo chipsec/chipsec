@@ -132,7 +132,9 @@ ModuleResultName = {
 
 def getModuleResultName(res) -> str:
     if chipsec.chipset.cs().using_return_codes:
-        return 'Passed' if (res & 0xFFFFFFFF00000000) == 0 else 'Failed'
+        result_mask = 0xFFFFFFFF00000000
+        status = [ModuleResult.status.SUCCESS.value[0], ModuleResult.status.INFORMATION.value[0], ModuleResult.status.NOT_APPLICABLE.value[0]]
+        return 'Passed' if ((res & result_mask) >> 32) in status else 'Failed'
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
 # -------------------------------------------------------
 
