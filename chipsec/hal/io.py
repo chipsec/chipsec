@@ -71,23 +71,23 @@ class PortIO:
             logger().log(f"[io] reading byte from I/O port 0x{io_port:04X} -> 0x{value:02X}")
         return value
 
-    def write_port_byte(self, io_port: int, value: int) -> None:
+    def write_port_byte(self, io_port: int, value: int) -> int:
         if logger().HAL:
             logger().log(f"[io] writing byte to I/O port 0x{io_port:04X} <- 0x{value:02X}")
-        self.helper.write_io_port(io_port, value, 1)
-        return
+        status = self.helper.write_io_port(io_port, value, 1)
+        return status
 
-    def write_port_word(self, io_port: int, value: int) -> None:
+    def write_port_word(self, io_port: int, value: int) -> int:
         if logger().HAL:
             logger().log(f"[io] writing word to I/O port 0x{io_port:04X} <- 0x{value:04X}")
-        self.helper.write_io_port(io_port, value, 2)
-        return
+        status = self.helper.write_io_port(io_port, value, 2)
+        return status
 
-    def write_port_dword(self, io_port: int, value: int) -> None:
+    def write_port_dword(self, io_port: int, value: int) -> int:
         if logger().HAL:
             logger().log(f"[io] writing dword to I/O port 0x{io_port:04X} <- 0x{value:08X}")
-        self.helper.write_io_port(io_port, value, 4)
-        return
+        status = self.helper.write_io_port(io_port, value, 4)
+        return status
 
     #
     # Read registers from I/O range
