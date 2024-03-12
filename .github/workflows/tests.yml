@@ -2,6 +2,9 @@ name: Run tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   build-linux-km:
     name: Linux kernel module
@@ -33,7 +36,7 @@ jobs:
       image: docker://${{ matrix.distro.image_prefix }}${{ matrix.distro.name }}:${{ matrix.distro.tag }}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
     - name: Install Alpine dependencies
       if: matrix.distro.name == 'alpine'
@@ -133,7 +136,7 @@ jobs:
         modinfo "${MODULE}"
 
     - name: Upload Linux driver from ${{ steps.modinfo.outputs.module_path }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
       with:
         name: chipsec-${{ steps.versions.outputs.chipsec }}.${{ matrix.distro.name }}-${{ matrix.distro.tag }}${{ matrix.distro.variant }}-${{ steps.versions.outputs.kernel }}.${{ steps.versions.outputs.uname_m }}
         path: ${{ steps.modinfo.outputs.module_path }}
@@ -159,10 +162,10 @@ jobs:
     runs-on: windows-${{ matrix.versions.window }}
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
     - name: Set up Python ${{ matrix.versions.python }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: ${{ matrix.versions.python }}
 
@@ -175,14 +178,14 @@ jobs:
       run: python setup.py build_ext -i
 
     - name: Upload Windows Main driver
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
         path: drivers/windows/chipsec/x64
         if-no-files-found: error
     
     - name: Upload Windows PCI Filter driver
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
         path: drivers/windows/pcifilter/x64
@@ -218,11 +221,11 @@ jobs:
 
     steps:
     - name: Set up Python ${{ matrix.versions.python }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
       with:
         python-version: ${{ matrix.versions.python }}
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
     - name: Patch chipsec_main to return true even when some module failed
       run: |

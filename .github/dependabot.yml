@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+
+  - package-ecosystem: docker
+    directory: /chipsec_tools/log_parser
+    schedule:
+      interval: daily
+
+  - package-ecosystem: pip
+    directory: /chipsec_tools/log_parser
+    schedule:
+      interval: daily
