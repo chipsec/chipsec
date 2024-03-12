@@ -8,6 +8,9 @@ on:
   schedule:
     - cron: "24 15 * * 3"
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze
@@ -24,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
       - name: Install dependencies
         run: |
@@ -32,7 +35,7 @@ jobs:
           sudo apt-get install -qqy nasm
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@928ff8c822d966a999092a6a35e32177899afb7c # v2.24.6
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
@@ -43,6 +46,6 @@ jobs:
           make
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@928ff8c822d966a999092a6a35e32177899afb7c # v2.24.6
         with:
           category: "/language:${{ matrix.language }}"
