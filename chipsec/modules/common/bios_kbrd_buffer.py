@@ -35,7 +35,7 @@ Examples:
 
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 from typing import List
 
 TAGS = [MTAG_BIOS]

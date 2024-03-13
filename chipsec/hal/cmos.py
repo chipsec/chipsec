@@ -38,7 +38,7 @@ usage:
 """
 from typing import List
 from chipsec.hal import hal_base
-import chipsec.logger
+import chipsec.library.logger
 
 CMOS_ADDR_PORT_LOW = 0x70
 CMOS_DATA_PORT_LOW = 0x71
@@ -85,6 +85,6 @@ class CMOS(hal_base.HALBase):
 
     def dump(self) -> None:
         self.logger.log("Low CMOS memory contents:")
-        chipsec.logger.pretty_print_hex_buffer(self.dump_low())
+        chipsec.library.logger.pretty_print_hex_buffer(self.dump_low())
         self.logger.log("\nHigh CMOS memory contents:")
-        chipsec.logger.pretty_print_hex_buffer(self.dump_high())
+        chipsec.library.logger.pretty_print_hex_buffer(self.dump_high())

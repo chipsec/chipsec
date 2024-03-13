@@ -16,7 +16,7 @@
 #
 import unittest
 
-from chipsec.exceptions import UnknownChipsetError
+from chipsec.library.exceptions import UnknownChipsetError
 from chipsec.config import CHIPSET_CODE_UNKNOWN
 from tests.software import cs
 from tests.software import mock_helper

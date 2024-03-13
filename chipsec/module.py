@@ -21,7 +21,7 @@
 
 import re
 import traceback
-import chipsec.logger
+import chipsec.library.logger
 from chipsec.library.returncode import ModuleResult
 
 _importlib = True
@@ -35,7 +35,7 @@ MODPATH_RE = re.compile(r"^\w+(\.\w+)*$")
 
 class Module:
     def __init__(self, name):
-        self.logger = chipsec.logger.logger()
+        self.logger = chipsec.library.logger.logger()
         self.name = name
         self.module = None
         self.mod_obj = None

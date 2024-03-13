@@ -32,11 +32,11 @@ from ctypes import Array
 from typing import Tuple, List, Dict, Optional, AnyStr, Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType
-from chipsec.file import get_main_dir, TOOLS_DIR
-from chipsec.logger import logger
+from chipsec.library.file import get_main_dir, TOOLS_DIR
+from chipsec.library.logger import logger
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
-from chipsec.exceptions import UnimplementedAPIError, OsHelperError
+from chipsec.library.exceptions import OsHelperError
 
 
 def get_tools_path() -> str:

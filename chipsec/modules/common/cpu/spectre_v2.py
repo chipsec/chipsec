@@ -126,7 +126,7 @@ References:
 
 from chipsec.module_common import BaseModule, MTAG_CPU, MTAG_HWCONFIG, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
-from chipsec.exceptions import HWAccessViolationError, UnimplementedAPIError
+from chipsec.library.exceptions import HWAccessViolationError, UnimplementedAPIError
 from chipsec.library.defines import BIT26, BIT27, BIT29
 from typing import List
 

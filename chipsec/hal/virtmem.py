@@ -31,7 +31,7 @@ usage:
 
 import struct
 from typing import Tuple
-from chipsec.logger import logger, print_buffer_bytes
+from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.hal import hal_base
 
 

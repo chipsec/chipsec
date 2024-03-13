@@ -18,7 +18,7 @@
 import struct
 
 from chipsec.helper.basehelper import Helper
-from chipsec.exceptions import UnimplementedAPIError
+from chipsec.library.exceptions import UnimplementedAPIError
 
 
 class TestHelper(Helper):

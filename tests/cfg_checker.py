@@ -26,7 +26,7 @@ import xml.etree.ElementTree as ET
 from collections import namedtuple
 
 sys.path.append(op.abspath(op.join(__file__, "..", "..")))
-from chipsec.file import get_main_dir
+from chipsec.library.file import get_main_dir
 from chipsec.library.defines import is_hex
 
 

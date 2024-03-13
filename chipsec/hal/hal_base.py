@@ -23,10 +23,10 @@
 Base for HAL Components
 """
 
-import chipsec.logger
+import chipsec.library.logger
 
 
 class HALBase:
     def __init__(self, cs):
         self.cs = cs
-        self.logger = chipsec.logger.logger()
+        self.logger = chipsec.library.logger.logger()

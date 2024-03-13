@@ -30,8 +30,8 @@ from collections import namedtuple
 from uuid import UUID
 from typing import Dict, List, Tuple, Optional, Any, Callable
 
-from chipsec.file import read_file, write_file
-from chipsec.logger import logger, dump_buffer, dump_buffer_bytes
+from chipsec.library.file import read_file, write_file
+from chipsec.library.logger import logger, dump_buffer, dump_buffer_bytes
 from chipsec.library.defines import bytestostring
 
 # from chipsec.helper.oshelper import helper
@@ -438,7 +438,7 @@ def parse_auth_var(db: bytes, decode_dir: str) -> List[bytes]:
             var_name = codecs.decode(db[tof:tof + name_size], 'utf-16')
         except UnicodeDecodeError:
             logger().log_warning(f'Unable to decode {db[tof:tof + name_size]}')
-            var_name = "chipsec.exceptions!"
+            var_name = "chipsec.library.exceptions!"
         tof += name_size
         sig_data = db[tof:tof + cert_data_size]
         entries.append(sig_data)

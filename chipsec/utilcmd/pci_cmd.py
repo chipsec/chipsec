@@ -45,7 +45,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.logger import pretty_print_hex_buffer
+from chipsec.library.logger import pretty_print_hex_buffer
 from argparse import ArgumentParser
 from chipsec_util import get_option_width, is_option_valid_width, CMD_OPTS_WIDTH
 from chipsec.hal.pci import print_pci_devices, print_pci_XROMs

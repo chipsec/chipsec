@@ -19,7 +19,7 @@
 
 from collections import namedtuple
 from enum import Enum
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 
 class Stage(Enum):

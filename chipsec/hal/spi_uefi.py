@@ -41,8 +41,8 @@ from uuid import UUID
 from typing import Dict, List, Optional, Union, Any, Callable, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.hal.uefi_fv import EFI_MODULE
-from chipsec.logger import logger
-from chipsec.file import write_file, read_file
+from chipsec.library.logger import logger
+from chipsec.library.file import write_file, read_file
 from chipsec.hal.uefi_compression import COMPRESSION_TYPE_LZMA, COMPRESSION_TYPE_EFI_STANDARD, COMPRESSION_TYPES_ALGORITHMS, COMPRESSION_TYPE_UNKNOWN, COMPRESSION_TYPE_LZMAF86
 from chipsec.hal.uefi_common import bit_set, EFI_GUID_SIZE, EFI_GUID_FMT
 from chipsec.hal.uefi_platform import FWType, fw_types, EFI_NVRAM_GUIDS, EFI_PLATFORM_FS_GUIDS, NVAR_NVRAM_FS_FILE

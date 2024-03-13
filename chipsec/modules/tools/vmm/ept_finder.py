@@ -47,8 +47,8 @@ import os
 import struct
 import glob
 
-from chipsec.logger import logger
-from chipsec.file import write_file
+from chipsec.library.logger import logger
+from chipsec.library.file import write_file
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.paging import c_extended_page_tables
@@ -255,5 +255,9 @@ class ept_finder(BaseModule):
             if not ept.failure:
                 ept.save_configuration(self.path + f'ept_{eptp:08x}.py')
             count += 1
+            
+        for (_, _, source_fp) in self.par:
+            if source_fp:
+                source_fp.close()
 
         return ModuleResult.INFORMATION

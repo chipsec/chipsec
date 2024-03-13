@@ -62,7 +62,7 @@ Registers used:
 """
 
 _MODULE_NAME = 'sgx_check'
-from chipsec.exceptions import HWAccessViolationError
+from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, MTAG_HWCONFIG
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT0, BIT1, BIT2, BIT5, BIT6, BIT7, BIT8

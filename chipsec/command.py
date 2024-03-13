@@ -20,7 +20,7 @@
 from enum import Enum
 import traceback
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from chipsec.testcase import ExitCode
 
 class BaseCommand:

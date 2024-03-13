@@ -53,16 +53,16 @@ CHIPSEC_DIR = os.path.normpath(DOCS_DIR + os.sep + os.pardir)
 NotWantedFilesList = [
     'setup.rst',
     'chipsec.rst',
-    'chipsec.banner.rst',
+    'chipsec.library.banner.rst',
     'chipsec.cfg.rst',
     'chipsec.chipset.rst',
     'chipsec.command.rst',
     'chipsec.library.defines.rst',
-    'chipsec.file.rst',
-    'chipsec.logger.rst',
+    'chipsec.library.file.rst',
+    'chipsec.library.logger.rst',
     'chipsec.module.rst',
     'chipsec.module_common.rst',
-    'chipsec.result_deltas.rst',
+    'chipsec.library.result_deltas.rst',
     'chipsec_main.rst',
     'chipsec_util.rst']
 

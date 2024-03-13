@@ -23,9 +23,9 @@ import importlib
 import os
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex
-from chipsec.exceptions import CSConfigError
-from chipsec.file import get_main_dir
-from chipsec.logger import logger
+from chipsec.library.exceptions import CSConfigError
+from chipsec.library.file import get_main_dir
+from chipsec.library.logger import logger
 from chipsec.parsers import Stage
 from chipsec.parsers import stage_info, config_data
 

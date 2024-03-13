@@ -31,8 +31,8 @@ usage:
 import struct
 import os
 from typing import AnyStr
-from chipsec.logger import logger
-from chipsec.file import read_file
+from chipsec.library.logger import logger
+from chipsec.library.file import read_file
 
 IA32_MSR_BIOS_UPDT_TRIG = 0x79
 IA32_MSR_BIOS_SIGN_ID = 0x8B

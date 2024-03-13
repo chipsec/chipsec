@@ -19,11 +19,11 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from chipsec.library.defines import bytestostring
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.oshelper import helper
-from chipsec.file import read_file, write_file
+from chipsec.library.file import read_file, write_file
 
 
 class RecordHelper(Helper):

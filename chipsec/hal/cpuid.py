@@ -27,7 +27,7 @@ usage:
 
 from typing import Tuple
 from chipsec.hal import hal_base
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 
 class CpuID(hal_base.HALBase):

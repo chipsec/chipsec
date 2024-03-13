@@ -40,10 +40,10 @@ import struct
 from collections import namedtuple
 import itertools
 from typing import List, Tuple, Optional
-from chipsec.logger import logger, pretty_print_hex_buffer
-from chipsec.file import write_file
+from chipsec.library.logger import logger, pretty_print_hex_buffer
+from chipsec.library.file import write_file
 from chipsec.hal.pcidb import VENDORS, DEVICES
-from chipsec.exceptions import OsHelperError
+from chipsec.library.exceptions import OsHelperError
 from chipsec.library.defines import is_all_ones, MASK_16b, MASK_32b, MASK_64b, BOUNDARY_4KB
 
 #

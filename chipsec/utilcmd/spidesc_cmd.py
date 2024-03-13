@@ -27,7 +27,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.file import read_file
+from chipsec.library.file import read_file
 from chipsec.hal.spi_descriptor import parse_spi_flash_descriptor
 from argparse import ArgumentParser
 

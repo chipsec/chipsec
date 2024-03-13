@@ -23,15 +23,15 @@ Contains platform identification functions
 """
 import errno
 import traceback
-from typing import Tuple, Union
+from typing import Tuple
 
 from chipsec.helper.oshelper import helper as os_helper
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
 from chipsec.hal import cpu, io, iobar, mmio, msgbus, msr, pci, physmem, ucode, igd, cpuid
-from chipsec.exceptions import UnknownChipsetError, OsHelperError
+from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from chipsec.library.defines import ARCH_VID
 from chipsec.library.register import Register
 from chipsec.library.lock import Lock
@@ -70,7 +70,7 @@ class Chipset:
         self.using_return_codes = False
         self.consistency_checking = False
         self.lock = Lock(self)
-        self.register :Register = Register(self)
+        self.register = Register(self)
         self.control = Control(self)
         self.device = Device(self)
 
