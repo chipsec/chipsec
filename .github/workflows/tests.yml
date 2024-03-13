@@ -29,8 +29,7 @@ jobs:
           - {name: "ubuntu", tag: "23.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "22.04", image_prefix: "docker.io/library/"}
           - {name: "ubuntu", tag: "20.04", image_prefix: "docker.io/library/"}
-          - {name: "ubuntu", tag: "18.04", image_prefix: "docker.io/library/"}
-          - {name: "ubuntu", tag: "16.04", image_prefix: "docker.io/library/"}
+
     runs-on: ubuntu-22.04
     container:
       image: docker://${{ matrix.distro.image_prefix }}${{ matrix.distro.name }}:${{ matrix.distro.tag }}
