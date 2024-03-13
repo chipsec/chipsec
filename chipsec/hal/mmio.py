@@ -45,8 +45,8 @@ usage:
 """
 from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
-from chipsec.exceptions import CSReadError
-from chipsec.logger import logger
+from chipsec.library.exceptions import CSReadError
+from chipsec.library.logger import logger
 from chipsec.library.defines import get_bits
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000

@@ -33,15 +33,13 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.cmos import CMOS
-from chipsec.exceptions import CmosRuntimeError
 
 
 class CMOSCommand(BaseCommand):
 
-
     def requirements(self) -> toLoad:
         return toLoad.Driver
-    
+
     def parse_arguments(self) -> None:
         parser = ArgumentParser(usage=__doc__)
 
@@ -73,7 +71,7 @@ class CMOSCommand(BaseCommand):
 
     def set_up(self) -> None:
         self._cmos = CMOS(self.cs)
-    
+
     def cmos_dump(self) -> None:
         self.logger.log("[CHIPSEC] Dumping CMOS memory..")
         self._cmos.dump()

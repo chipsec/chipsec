@@ -37,7 +37,7 @@ import struct
 from typing import Any, List
 from collections import namedtuple
 
-from chipsec.logger import logger, print_buffer_bytes
+from chipsec.library.logger import logger, print_buffer_bytes
 
 SPD_SMBUS_ADDRESS = 0xA0  # A2, A4, A6, A8, AA, AC, AE
 SPD_SMBUS_ADDRESS_DIMM0 = SPD_SMBUS_ADDRESS

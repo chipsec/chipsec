@@ -27,7 +27,7 @@ Usage:
 
 from argparse import ArgumentParser
 from chipsec.command import BaseCommand, toLoad
-from chipsec.exceptions import HWAccessViolationError
+from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.testcase import ExitCode
 import struct
 

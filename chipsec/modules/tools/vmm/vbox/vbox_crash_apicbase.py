@@ -40,7 +40,7 @@ Registers used:
 
 """
 
-from chipsec.exceptions import HWAccessViolationError
+from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 

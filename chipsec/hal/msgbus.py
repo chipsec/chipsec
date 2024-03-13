@@ -37,7 +37,7 @@ usage:
 
 from typing import Optional
 from chipsec.hal import hal_base
-from chipsec.exceptions import RegisterNotFoundError
+from chipsec.library.exceptions import RegisterNotFoundError
 
 
 #

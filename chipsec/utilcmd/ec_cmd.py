@@ -39,7 +39,7 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
 
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal.ec import EC
 
 

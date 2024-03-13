@@ -37,7 +37,7 @@ import re
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.vmm import VMM, get_virtio_devices, VirtIO_Device
 from chipsec.hal.pci import print_pci_devices
-from chipsec.exceptions import VMMRuntimeError
+from chipsec.library.exceptions import VMMRuntimeError
 from argparse import ArgumentParser
 
 

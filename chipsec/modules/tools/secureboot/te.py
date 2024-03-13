@@ -57,7 +57,7 @@ import sys
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 
 DEFAULT_PE_FILE_PATH = "chipsec/modules/tools/secureboot/Shell.efi"

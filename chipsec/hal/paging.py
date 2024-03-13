@@ -26,8 +26,8 @@ import sys
 import struct
 from typing import Dict, List, Optional, Any
 import chipsec.library.defines as defines
-from chipsec.logger import logger
-from chipsec.exceptions import InvalidMemoryAddress
+from chipsec.library.logger import logger
+from chipsec.library.exceptions import InvalidMemoryAddress
 
 ADDR_MASK = defines.MASK_64b
 MAXPHYADDR = 0x000FFFFFFFFFF000

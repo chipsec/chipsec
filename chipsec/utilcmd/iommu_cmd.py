@@ -40,7 +40,7 @@ Examples:
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal import acpi, iommu
 from argparse import ArgumentParser
-from chipsec.exceptions import IOMMUError, AcpiRuntimeError
+from chipsec.library.exceptions import IOMMUError, AcpiRuntimeError
 
 
 # I/O Memory Management Unit (IOMMU), e.g. Intel VT-d

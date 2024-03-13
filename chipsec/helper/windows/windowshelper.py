@@ -45,11 +45,11 @@ from win32.lib import win32con
 if TYPE_CHECKING:
     from pywintypes import PyHANDLE
 
-from chipsec.exceptions import OsHelperError, HWAccessViolationError, UnimplementedAPIError
+from chipsec.library.exceptions import OsHelperError, HWAccessViolationError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
 from chipsec.library.defines import stringtobytes, bytestostring
-from chipsec.logger import logger
-import chipsec.file
+from chipsec.library.logger import logger
+import chipsec.library.file
 from chipsec.hal.uefi_common import EFI_GUID_STR
 
 
@@ -65,7 +65,7 @@ kernel32 = windll.kernel32
 
 drv_hndl_error_msg = "Cannot open chipsec driver handle. Make sure chipsec driver is installed and started if you are using option -e (see README)"
 
-DRIVER_FILE_PATHS = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper", "windows", f'windows_{platform.machine().lower()}')]
+DRIVER_FILE_PATHS = [os.path.join("C:\\", "Windows", "System32", "drivers"), os.path.join(chipsec.library.file.get_main_dir(), "chipsec", "helper", "windows", f'windows_{platform.machine().lower()}')]
 DRIVER_FILE_NAME = "chipsec_hlpr.sys"
 DEVICE_FILE = "\\\\.\\chipsec_hlpr"
 SERVICE_NAME = "chipsec"

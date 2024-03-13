@@ -38,7 +38,6 @@ from argparse import ArgumentParser
 
 from chipsec.hal import iobar
 from chipsec.command import BaseCommand, toLoad
-from chipsec.exceptions import IOBARRuntimeError
 
 
 class PortIOCommand(BaseCommand):

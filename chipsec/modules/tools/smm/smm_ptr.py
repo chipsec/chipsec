@@ -82,10 +82,10 @@ import os
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.file import write_file
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.file import write_file
+from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal.interrupts import Interrupts
-from chipsec.exceptions import BadSMIDetected
+from chipsec.library.exceptions import BadSMIDetected
 
 
 #################################################################

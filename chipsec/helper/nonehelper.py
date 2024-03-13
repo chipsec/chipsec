@@ -18,7 +18,7 @@
 # chipsec@intel.com
 #
 
-from chipsec.exceptions import UnimplementedAPIError
+from chipsec.library.exceptions import UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
 from typing import Dict, List, Tuple, Optional, TYPE_CHECKING
 if TYPE_CHECKING:

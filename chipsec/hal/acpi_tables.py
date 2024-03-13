@@ -31,7 +31,7 @@ import struct
 from collections import namedtuple
 from uuid import UUID
 from typing import List, Optional, Tuple
-from chipsec.logger import logger, dump_buffer_bytes
+from chipsec.library.logger import logger, dump_buffer_bytes
 from chipsec.hal.uefi_common import EFI_GUID_FMT, EFI_GUID_STR
 
 

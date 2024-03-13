@@ -43,7 +43,7 @@ Usage:
 """
 from typing import List, Optional
 from chipsec.hal import hal_base
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 
 #
 # Embedded Controller ACPI ports

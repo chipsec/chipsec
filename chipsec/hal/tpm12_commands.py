@@ -28,7 +28,7 @@ TCG TPM v1.2 Specification
 
 import struct
 from typing import Dict, Tuple
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 COMMAND_FORMAT = "=HIIIII"
 

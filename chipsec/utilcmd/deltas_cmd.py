@@ -33,8 +33,8 @@ from time import time
 from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
-import chipsec.result_deltas
-from chipsec.options import Options
+import chipsec.library.result_deltas
+from chipsec.library.options import Options
 
 class DeltasCommand(BaseCommand):
 
@@ -60,24 +60,24 @@ class DeltasCommand(BaseCommand):
         start_time = time()
 
         # Read files and determine deltas
-        previous = chipsec.result_deltas.get_json_results(self._prev_log)
-        current = chipsec.result_deltas.get_json_results(self._cur_log)
+        previous = chipsec.library.result_deltas.get_json_results(self._prev_log)
+        current = chipsec.library.result_deltas.get_json_results(self._cur_log)
         if previous is None or current is None:
             self.logger.log_error('Unable to process JSON log files.')
             return
-        deltas = chipsec.result_deltas.compute_result_deltas(previous, current)
+        deltas = chipsec.library.result_deltas.compute_result_deltas(previous, current)
 
         # Generate output file here...
         if self._out_name:
             if self._out_format == 'JSON':
-                chipsec.result_deltas.log_deltas_json(deltas, self._out_name)
+                chipsec.library.result_deltas.log_deltas_json(deltas, self._out_name)
             elif self._out_format.upper() == 'XML':
-                chipsec.result_deltas.log_deltas_xml(deltas, self._out_name)
+                chipsec.library.result_deltas.log_deltas_xml(deltas, self._out_name)
             else:
                 self.logger.log_error(f'Output log format not supported: {self._out_format}')
 
         # Display the results
-        chipsec.result_deltas.display_deltas(deltas, True, start_time)
+        chipsec.library.result_deltas.display_deltas(deltas, True, start_time)
 
         return
 

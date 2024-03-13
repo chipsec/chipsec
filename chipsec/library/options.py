@@ -20,8 +20,8 @@
 
 import os
 import configparser
-from chipsec.file import get_main_dir
-from chipsec.exceptions import CSConfigError
+from chipsec.library.file import get_main_dir
+from chipsec.library.exceptions import CSConfigError
 
 
 class Options(object):

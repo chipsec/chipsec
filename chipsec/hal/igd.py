@@ -33,7 +33,7 @@ usage:
 
 from typing import Optional, Tuple
 from chipsec.hal import hal_base
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 
 
 class IGD(hal_base.HALBase):

@@ -25,7 +25,7 @@ Common include file for modules
 
 from enum import Enum
 from chipsec.library.defines import bit, is_set
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from hashlib import sha256
 
 
@@ -139,6 +139,8 @@ ModuleResultName = {
 
 def getModuleResultName(res, using_return_codes) -> str:
     if using_return_codes:
-        return 'Passed' if (res & 0xFFFFFFFF00000000) == 0 else 'Failed'
+        result_mask = 0xFFFFFFFF00000000
+        status = [ReturnCode.status.SUCCESS.value[0], ReturnCode.status.INFORMATION.value[0], ReturnCode.status.NOT_APPLICABLE.value[0]]
+        return 'Passed' if ((res & result_mask) >> 32) in status else 'Failed'
     return ModuleResultName[res] if res in ModuleResultName else ModuleResultName[ModuleResult.ERROR]
 # -------------------------------------------------------

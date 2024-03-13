@@ -46,7 +46,7 @@ Examples:
 import os
 from argparse import ArgumentParser
 
-from chipsec.file import read_file, write_file
+from chipsec.library.file import read_file, write_file
 from chipsec.command import BaseCommand, toLoad
 
 from chipsec.hal.spi import FLASH_DESCRIPTOR, BIOS

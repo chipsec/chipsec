@@ -24,9 +24,9 @@ Main functionality to read/write configuration registers based on their XML conf
 
 from typing import Any, Dict, List, Optional
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from chipsec.library.defines import is_all_ones
-from chipsec.exceptions import CSReadError, RegisterTypeNotFoundError
+from chipsec.library.exceptions import CSReadError, RegisterTypeNotFoundError
 
 
 class RegisterType:
@@ -493,7 +493,7 @@ class Register:
             reg_value = self.read(reg_name, cpu_thread)
             reg_value_new = self.set_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
             ret = self.write(reg_name, reg_value_new, cpu_thread)
-        except:
+        except Exception:
             ret = False
         return ret
 

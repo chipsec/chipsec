@@ -4,7 +4,7 @@ Sample module code template
 .. code-block:: python
 
     from chipsec.module_common import BaseModule
-from chipsec.library.returncode import ModuleResult
+    from chipsec.library.returncode import ModuleResult
 
     class ModuleClass(BaseModule):
         """Class name aligns with file name, eg ModuleClass.py"""

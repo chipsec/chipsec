@@ -18,7 +18,7 @@
 # chipsec@intel.com
 #
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 class Control:
     def __init__(self, cs) -> None:
         self.cs = cs

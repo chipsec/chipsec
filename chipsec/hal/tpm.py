@@ -29,7 +29,7 @@ import struct
 from collections import namedtuple
 from typing import Dict, Tuple, Callable
 
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base
 import chipsec.hal.tpm12_commands
 

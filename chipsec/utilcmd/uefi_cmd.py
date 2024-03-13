@@ -58,7 +58,7 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.uefi_common import EFI_STATUS_DICT, parse_efivar_file
-from chipsec.file import write_file, read_file
+from chipsec.library.file import write_file, read_file
 from chipsec.hal.spi_uefi import decode_uefi_region, modify_uefi_region, compress_image, CMD_UEFI_FILE_REPLACE
 from chipsec.hal.spi_uefi import CMD_UEFI_FILE_INSERT_AFTER, CMD_UEFI_FILE_INSERT_BEFORE, CMD_UEFI_FILE_REMOVE
 from chipsec.hal.uefi import UEFI, decode_EFI_variables, get_attr_string, identify_EFI_NVRAM

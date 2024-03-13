@@ -22,7 +22,7 @@ import unittest
 from unittest.mock import patch, Mock
 import sys
 
-from chipsec.exceptions import UnimplementedAPIError
+from chipsec.library.exceptions import UnimplementedAPIError
 from tests.helpers.helper_utils import packer
 
 DEBUG = False # Set to True to print the args passed to the driver

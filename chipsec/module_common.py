@@ -25,7 +25,7 @@ Common include file for modules
 """
 
 import chipsec.chipset
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from chipsec.library.returncode import ModuleResult, ReturnCode, result_priority
 
 

@@ -34,14 +34,14 @@ Usage:
 
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
-import time
+import sys
 import traceback
-from struct import *
-from random import *
-from chipsec.modules.tools.vmm.hv.define import *
-from chipsec.modules.tools.vmm.common import *
-from chipsec.modules.tools.vmm.hv.vmbus import *
-import chipsec_util
+from struct import pack
+from chipsec.library.returncode import ModuleResult
+from chipsec.module_common import BaseModule
+from chipsec.modules.tools.vmm.common import session_logger, get_int_arg
+from chipsec.modules.tools.vmm.hv.define import VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED, vm_pkt
+from chipsec.modules.tools.vmm.hv.vmbus import RingBuffer, VMBusDiscovery
 
 sys.stdout = session_logger(True, 'synth_dev')
 
@@ -54,7 +54,8 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
     def send_1(self, relid, messages, info, order):
         if len(messages) > 0:
             msg_sent = messages.pop(0)
-            self.vmbus_sendpacket(relid, msg_sent, 0x0, VM_PKT_DATA_INBAND, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
+            vmpkt_datainband = list(vm_pkt.keys())[list(vm_pkt.values()).index('VM_PKT_DATA_INBAND')]
+            self.vmbus_sendpacket(relid, msg_sent, 0x0, vmpkt_datainband, VMBUS_DATA_PACKET_FLAG_COMPLETION_REQUESTED)
             msg_recv = self.vmbus_recvpacket(relid)
             if msg_recv != '':
                 (msg1, msg2) = (msg_recv, msg_sent) if order else (msg_sent, msg_recv)
@@ -147,7 +148,7 @@ class synth_dev(BaseModule):
 
         except KeyboardInterrupt:
             print('***** Control-C *****')
-        except Exception as error:
+        except Exception:
             print('\n\n')
             traceback.print_exc()
             print('\n\n')

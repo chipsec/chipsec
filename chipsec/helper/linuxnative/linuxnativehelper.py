@@ -31,11 +31,11 @@ import sys
 from typing import Optional, Tuple
 
 from chipsec.library import defines
-from chipsec.exceptions import OsHelperError
+from chipsec.library.exceptions import OsHelperError
 from chipsec.helper.basehelper import Helper
 from chipsec.helper.linuxnative.cpuid import CPUID
 from chipsec.helper.linuxnative.legacy_pci import LegacyPci
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 
 class MemoryMapping(mmap.mmap):
