@@ -30,7 +30,7 @@ except:
 
 
 import chipsec_main
-from chipsec import logger
+from chipsec.library import logger
 
 
 class GenericHardwareTest(unittest.TestCase):

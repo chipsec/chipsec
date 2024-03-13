@@ -25,7 +25,7 @@ CPU related functionality
 """
 from typing import Dict, List, Tuple, Optional
 from chipsec.hal import acpi, hal_base, paging
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 VMM_NONE = 0
 VMM_XEN = 0x1

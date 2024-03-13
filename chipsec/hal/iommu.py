@@ -24,7 +24,7 @@ Access to IOMMU engines
 """
 
 from chipsec.hal import hal_base, mmio, paging
-from chipsec.exceptions import IOMMUError
+from chipsec.library.exceptions import IOMMUError
 
 IOMMU_ENGINE_DEFAULT = 'VTD'
 IOMMU_ENGINE_GFX = 'GFXVTD'

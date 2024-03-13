@@ -29,7 +29,7 @@ Based on the following specifications:
 import struct
 
 from typing import Any, Dict, BinaryIO, Optional, Type, TypeVar
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 EventType = TypeVar('EventType', bound='TcgPcrEvent')
 

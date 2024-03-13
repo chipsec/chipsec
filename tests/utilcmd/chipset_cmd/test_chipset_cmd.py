@@ -25,7 +25,7 @@ To execute: python[3] -m unittest tests.utilcmd.chipset_cmd.test_chipset_cmd
 import unittest
 import os
 
-from chipsec.file import get_main_dir
+from chipsec.library.file import get_main_dir
 from tests.utilcmd.run_chipsec_util import setup_run_destroy_util
 from chipsec.testcase import ExitCode
 

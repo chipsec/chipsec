@@ -25,7 +25,7 @@ Common include file for modules
 
 from enum import Enum
 from chipsec.library.defines import bit, is_set
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from hashlib import sha256
 
 

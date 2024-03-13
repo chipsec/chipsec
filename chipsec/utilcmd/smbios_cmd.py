@@ -31,8 +31,8 @@ Examples:
 from argparse import ArgumentParser
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.smbios import SMBIOS
-from chipsec.logger import print_buffer_bytes
-from chipsec.options import Options
+from chipsec.library.logger import print_buffer_bytes
+from chipsec.library.options import Options
 
 class smbios_cmd(BaseCommand):
 

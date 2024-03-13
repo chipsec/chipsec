@@ -33,9 +33,9 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 from argparse import ArgumentParser
-from chipsec.file import read_file, write_file
+from chipsec.library.file import read_file, write_file
 from chipsec.hal import igd
 import os
 

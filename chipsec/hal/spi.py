@@ -46,11 +46,11 @@ import struct
 import time
 from typing import Dict, Tuple, Optional
 from chipsec.library.defines import ALIGNED_4KB, BIT0, BIT1, BIT2, BIT5
-from chipsec.file import write_file, read_file
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.file import write_file, read_file
+from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base, mmio
 from chipsec.hal.spi_jedec_ids import JEDEC_ID
-from chipsec.exceptions import SpiRuntimeError, UnimplementedAPIError
+from chipsec.library.exceptions import SpiRuntimeError, UnimplementedAPIError
 
 SPI_READ_WRITE_MAX_DBC = 64
 SPI_READ_WRITE_DEF_DBC = 4

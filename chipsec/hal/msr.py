@@ -35,7 +35,7 @@ usage:
 """
 
 from typing import Dict, Tuple, Optional
-from chipsec.logger import logger, print_buffer_bytes
+from chipsec.library.logger import logger, print_buffer_bytes
 
 
 DESCRIPTOR_TABLE_CODE_IDTR = 0

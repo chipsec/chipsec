@@ -23,7 +23,7 @@
 import unittest
 import os
 
-from chipsec.file import get_main_dir
+from chipsec.library.file import get_main_dir
 from chipsec.testcase import ExitCode
 from tests.modules.run_chipsec_module import setup_run_destroy_module_with_mock_logger
 

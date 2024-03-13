@@ -25,7 +25,7 @@ usage as a standalone utility:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.exceptions import UnknownChipsetError
+from chipsec.library.exceptions import UnknownChipsetError
 
 # ###################################################################
 #

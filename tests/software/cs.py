@@ -20,7 +20,7 @@ import unittest
 
 from tests.software import mock_helper
 
-from chipsec import logger
+from chipsec.library import logger
 from chipsec import chipset
 from chipsec.helper import oshelper
 

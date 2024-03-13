@@ -32,7 +32,7 @@ usage:
 """
 
 from typing import List
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 
 class PortIO:

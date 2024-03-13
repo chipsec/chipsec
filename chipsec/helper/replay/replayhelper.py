@@ -20,9 +20,9 @@ from errno import EACCES, EFAULT
 from glob import glob
 from typing import Any, Dict, List, Optional, Tuple
 from chipsec.library.defines import stringtobytes
-from chipsec.exceptions import OsHelperError
-from chipsec.file import read_file
-from chipsec.logger import logger
+from chipsec.library.exceptions import OsHelperError
+from chipsec.library.file import read_file
+from chipsec.library.logger import logger
 from chipsec.helper.basehelper import Helper
 
 

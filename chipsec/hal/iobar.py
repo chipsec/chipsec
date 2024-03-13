@@ -30,9 +30,9 @@ usage:
 """
 from typing import Tuple, List
 from chipsec.hal import hal_base
-from chipsec.logger import logger
-from chipsec.exceptions import IOBARNotFoundError
-from chipsec.exceptions import CSReadError
+from chipsec.library.logger import logger
+from chipsec.library.exceptions import IOBARNotFoundError
+from chipsec.library.exceptions import CSReadError
 
 DEFAULT_IO_BAR_SIZE = 0x100
 

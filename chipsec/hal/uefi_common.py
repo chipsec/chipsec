@@ -30,8 +30,8 @@ from collections import namedtuple
 from uuid import UUID
 from typing import Dict, List, Tuple, Optional, Any, Callable
 
-from chipsec.file import read_file, write_file
-from chipsec.logger import logger, dump_buffer, dump_buffer_bytes
+from chipsec.library.file import read_file, write_file
+from chipsec.library.logger import logger, dump_buffer, dump_buffer_bytes
 from chipsec.library.defines import bytestostring
 
 # from chipsec.helper.oshelper import helper

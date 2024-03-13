@@ -28,7 +28,7 @@ From the Intel(R) DFx Abstraction Layer Python* Command Line Interface User Guid
 
 import struct
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 try:
     import itpii
 except:
@@ -36,7 +36,7 @@ except:
 from ctypes import c_char
 from typing import Tuple
 from chipsec.helper.basehelper import Helper
-from chipsec.exceptions import DALHelperError, UnimplementedAPIError
+from chipsec.library.exceptions import DALHelperError, UnimplementedAPIError
 
 
 class DALHelper(Helper):

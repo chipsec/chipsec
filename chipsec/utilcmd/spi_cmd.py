@@ -47,7 +47,7 @@ Examples:
 import os
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.spi import SPI, BIOS
-from chipsec.exceptions import SpiRuntimeError
+from chipsec.library.exceptions import SpiRuntimeError
 from argparse import ArgumentParser
 
 

@@ -23,7 +23,7 @@ __version__ = '1.0'
 from typing import List, Optional
 from chipsec.library.defines import bit, is_set
 from chipsec.hal.hal_base import HALBase
-from chipsec.exceptions import CSReadError, HWAccessViolationError
+from chipsec.library.exceptions import CSReadError, HWAccessViolationError
 
 
 class LockResult:

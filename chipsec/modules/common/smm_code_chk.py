@@ -42,7 +42,7 @@ Registers used:
     - MSR_SMM_FEATURE_CONTROL may not be defined or readable on all platforms.
 
 """
-from chipsec.exceptions import HWAccessViolationError
+from chipsec.library.exceptions import HWAccessViolationError
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
 from chipsec.library.returncode import ModuleResult
 from typing import List

@@ -33,7 +33,7 @@ from argparse import ArgumentParser
 
 from chipsec.command import BaseCommand, toLoad
 from chipsec.hal.cmos import CMOS
-from chipsec.exceptions import CmosRuntimeError
+from chipsec.library.exceptions import CmosRuntimeError
 
 
 class CMOSCommand(BaseCommand):

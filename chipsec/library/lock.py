@@ -19,7 +19,7 @@
 #
 
 
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from typing import List, Optional, Set, Union
 
 class Lock:

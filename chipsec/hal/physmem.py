@@ -31,7 +31,7 @@ usage:
 from struct import unpack, pack
 from typing import Tuple, Optional
 from chipsec.hal.hal_base import HALBase
-from chipsec.logger import print_buffer_bytes
+from chipsec.library.logger import print_buffer_bytes
 
 
 class Memory(HALBase):

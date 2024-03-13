@@ -65,7 +65,7 @@ import struct
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.file import write_file
+from chipsec.library.file import write_file
 from chipsec.hal.uefi import UEFI
 from chipsec.library.defines import bytestostring
 

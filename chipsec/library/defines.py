@@ -23,7 +23,7 @@ import os
 import string
 import platform
 from typing import Any, Dict, Tuple, Optional, AnyStr, Iterable
-from chipsec.file import get_main_dir
+from chipsec.library.file import get_main_dir
 
 BIT0 = 0x0001
 BIT1 = 0x0002

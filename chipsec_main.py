@@ -37,18 +37,18 @@ from collections import OrderedDict
 
 from typing import Dict, Sequence, Any, Optional
 
-import chipsec.file
+import chipsec.library.file
 import chipsec.module
-import chipsec.result_deltas
+import chipsec.library.result_deltas
 from chipsec.library import defines
 from chipsec.library.returncode import ModuleResult, getModuleResultName
 from chipsec import chipset
 from chipsec.helper.oshelper import helper
-from chipsec.logger import logger
-from chipsec.banner import print_banner, print_banner_properties
+from chipsec.library.logger import logger
+from chipsec.library.banner import print_banner, print_banner_properties
 from chipsec.testcase import ExitCode, TestCase, ChipsecResults
-from chipsec.exceptions import UnknownChipsetError, OsHelperError
-from chipsec.options import Options
+from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
+from chipsec.library.options import Options
 
 try:
     import importlib
@@ -113,7 +113,7 @@ class ChipsecMain:
 
     def __init__(self, switches, argv):
         self.logger = logger()
-        self.CHIPSEC_FOLDER = os.path.abspath(chipsec.file.get_main_dir())
+        self.CHIPSEC_FOLDER = os.path.abspath(chipsec.library.file.get_main_dir())
         self.PYTHON_64_BITS = True if (sys.maxsize > 2**32) else False
         self.Import_Path = "chipsec.modules."
         self.Modules_Path = os.path.join(self.CHIPSEC_FOLDER, "chipsec", "modules")
@@ -313,22 +313,22 @@ class ChipsecMain:
         runtime = time.time() - t if not self.no_time else None
 
         if self._json_out:
-            chipsec.file.write_file(self._json_out, results.json_full())
+            chipsec.library.file.write_file(self._json_out, results.json_full())
 
         if self._xml_out:
-            chipsec.file.write_file(self._xml_out, results.xml_full(self._xml_out, runtime))
+            chipsec.library.file.write_file(self._xml_out, results.xml_full(self._xml_out, runtime))
 
         if self._markdown_out:
-            chipsec.file.write_file(self._markdown_out, results.markdown_full(self._markdown_out))
+            chipsec.library.file.write_file(self._markdown_out, results.markdown_full(self._markdown_out))
 
         test_deltas = None
         if self._deltas_file is not None:
-            prev_results = chipsec.result_deltas.get_json_results(self._deltas_file)
+            prev_results = chipsec.library.result_deltas.get_json_results(self._deltas_file)
             if prev_results is None:
                 self.logger.log_error("Delta processing disabled.  Displaying results summary.")
             else:
-                test_deltas = chipsec.result_deltas.compute_result_deltas(prev_results, results.get_results())
-                chipsec.result_deltas.display_deltas(test_deltas, self.no_time, t)
+                test_deltas = chipsec.library.result_deltas.compute_result_deltas(prev_results, results.get_results())
+                chipsec.library.result_deltas.display_deltas(test_deltas, self.no_time, t)
         elif not self._list_tags and results.get_current is not None:
             results.print_summary(runtime)
         else:

@@ -20,9 +20,9 @@
 
 
 from chipsec.library.register import RegisterType
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 from typing import List, Optional, Tuple, Union
-from chipsec.exceptions import CSFirstNotFoundError, CSBusNotFoundError, DeviceNotFoundError
+from chipsec.library.exceptions import CSFirstNotFoundError, CSBusNotFoundError, DeviceNotFoundError
 ##################################################################################
 #
 # Functions which access configuration of integrated PCI devices (interfaces, controllers)

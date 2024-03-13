@@ -26,7 +26,7 @@ import platform
 import sys
 from typing import Sequence, Tuple
 from chipsec.chipset import Chipset
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 
 def chipsec_banner(arguments: Sequence[str], version: str, message: str, custom_str: str = '') -> str:

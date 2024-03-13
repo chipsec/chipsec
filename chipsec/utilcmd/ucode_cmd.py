@@ -29,7 +29,7 @@ Examples:
 """
 
 from chipsec.command import BaseCommand, toLoad
-from chipsec.file import read_file
+from chipsec.library.file import read_file
 from chipsec.hal.ucode import dump_ucode_update_header
 from argparse import ArgumentParser
 

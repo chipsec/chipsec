@@ -35,7 +35,7 @@ except ImportError:
     has_eficomp = False
 
 from typing import List, Any
-from chipsec.logger import logger
+from chipsec.library.logger import logger
 
 #
 # Compression Types

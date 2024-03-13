@@ -39,10 +39,10 @@ if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType
 from chipsec.library import defines
 from chipsec.helper.oshelper import get_tools_path
-from chipsec.exceptions import OsHelperError, UnimplementedAPIError
+from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError
 from chipsec.helper.basehelper import Helper
-from chipsec.logger import logger
-import chipsec.file
+from chipsec.library.logger import logger
+import chipsec.library.file
 from chipsec.hal.uefi_common import EFI_VARIABLE_NON_VOLATILE, EFI_VARIABLE_BOOTSERVICE_ACCESS, EFI_VARIABLE_RUNTIME_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_HARDWARE_ERROR_RECORD, EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS
 from chipsec.hal.uefi_common import EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE
@@ -130,7 +130,7 @@ class LinuxHelper(Helper):
             else:
                 a2 = f'a2=0x{phys_mem_access_prot}'
 
-        driver_path = os.path.join(chipsec.file.get_main_dir(), "chipsec", "helper", "linux", "chipsec.ko")
+        driver_path = os.path.join(chipsec.library.file.get_main_dir(), "chipsec", "helper", "linux", "chipsec.ko")
         if not os.path.exists(driver_path):
             driver_path += ".xz"
             if not os.path.exists(driver_path):
@@ -628,7 +628,7 @@ class LinuxHelper(Helper):
 
     def get_page_is_ram(self) -> Optional[bytes]:
         PROC_KALLSYMS = "/proc/kallsyms"
-        symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
+        symarr = chipsec.library.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
             if b"page_is_ram" in line:
                 return line.split(b" ")[0]
@@ -636,7 +636,7 @@ class LinuxHelper(Helper):
 
     def get_phys_mem_access_prot(self) -> Optional[bytes]:
         PROC_KALLSYMS = "/proc/kallsyms"
-        symarr = chipsec.file.read_file(PROC_KALLSYMS).splitlines()
+        symarr = chipsec.library.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
             if b"phys_mem_access_prot" in line:
                 return line.split(b" ")[0]

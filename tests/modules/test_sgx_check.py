@@ -24,7 +24,7 @@ import unittest
 import os
 
 from chipsec.library.returncode import ModuleResult
-from chipsec.file import get_main_dir
+from chipsec.library.file import get_main_dir
 from tests.modules.run_chipsec_module import setup_run_destroy_module
 
 class TestSgxCheck(unittest.TestCase):

@@ -30,7 +30,7 @@ VMM specific functionality
 import struct
 
 from typing import AnyStr, Dict, List, Optional, Tuple
-from chipsec.logger import logger, pretty_print_hex_buffer
+from chipsec.library.logger import logger, pretty_print_hex_buffer
 import chipsec.hal.pcidb
 
 

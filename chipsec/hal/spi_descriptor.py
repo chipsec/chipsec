@@ -29,7 +29,7 @@ usage:
 
 import struct
 from typing import Dict, List, Optional, Tuple
-from chipsec.logger import logger, print_buffer_bytes
+from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.hal import spi
 
 SPI_FLASH_DESCRIPTOR_SIGNATURE = struct.pack('=I', 0x0FF0A55A)

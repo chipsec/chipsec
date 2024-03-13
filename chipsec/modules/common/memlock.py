@@ -43,7 +43,7 @@ Registers used:
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
-from chipsec.exceptions import HWAccessViolationError
+from chipsec.library.exceptions import HWAccessViolationError
 from typing import List
 
 _MODULE_NAME = 'memlock'
