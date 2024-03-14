@@ -83,6 +83,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
                              help="Chipsec won't need kernel mode functions so don't load chipsec driver")
     adv_options.add_argument('-i', '--ignore_platform', dest='_ignore_platform', action='store_true',
                              help='Run chipsec even if the platform is not recognized (Deprecated)')
+    adv_options.add_argument('--csv', dest='_csv_out', help='Specify filename for CSV output')
     adv_options.add_argument('-j', '--json', dest='_json_out', help='Specify filename for JSON output')
     adv_options.add_argument('-x', '--xml', dest='_xml_out', help='Specify filename for xml output (JUnit style)')
     adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='Specify filename for markdown output')
@@ -306,7 +307,7 @@ class ChipsecMain:
                 self.logger.log_error(f'Module {str(modx)} does not inherit BaseModule class')
 
             # Populate results
-            test_result.end_module(getModuleResultName(result, self._return_codes), modx_argv if modx_argv else None)
+            test_result.end_module(getModuleResultName(result, self._return_codes), result, modx_argv if modx_argv else None)
             results.add_testcase(test_result)
 
         runtime = time.time() - t if not self.no_time else None
@@ -319,6 +320,9 @@ class ChipsecMain:
 
         if self._markdown_out:
             chipsec.library.file.write_file(self._markdown_out, results.markdown_full(self._markdown_out))
+
+        if self._csv_out:
+            self.logger.log_csv(self._csv_out, results.test_cases)
 
         test_deltas = None
         if self._deltas_file is not None:
@@ -375,7 +379,6 @@ class ChipsecMain:
             self.logger.log_warning("Ignoring unsupported platform warning and continue execution.")
             self.logger.log_warning("Most results cannot be trusted.")
             self.logger.log_warning("Unless a platform independent module is being run, do not file issues against this run.")
-
 
 
     def properties(self):

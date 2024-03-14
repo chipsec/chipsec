@@ -21,6 +21,7 @@
 """
 Logging functions
 """
+import csv
 import logging
 import platform
 import string
@@ -122,6 +123,7 @@ class chipsecStreamFormatter(logging.Formatter):
                 'BLUE': WConio.LIGHTBLUE,
                 'PURPLE': WConio.LIGHTMAGENTA,
                 'CYAN': WConio.CYAN,
+                'BROWN': WConio.BROWN,
                 'WHITE': WConio.WHITE,
                 'LIGHT_GRAY': WConio.LIGHTGRAY,
             }
@@ -141,7 +143,8 @@ class chipsecStreamFormatter(logging.Formatter):
                 'GRAY': '30',
                 'RED': '31',
                 'GREEN': '32',
-                'YELLOW': '33',
+                'YELLOW': '133',
+                'BROWN': '33',
                 'BLUE': '34',
                 'PURPLE': '35',
                 'CYAN': '36',
@@ -167,7 +170,7 @@ class chipsecStreamFormatter(logging.Formatter):
         elif record.levelno == level.GOOD.value:
             color = 'GREEN'
         elif record.levelno == level.IMPORTANT.value:
-            color = 'CYAN'
+            color = 'BROWN'
         elif record.levelno == level.WARNING.value:
             color = 'YELLOW'
         elif record.levelno in [level.ERROR.value, level.BAD.value]:
@@ -261,6 +264,16 @@ class Logger:
             file_handler.setFormatter(self.logFormatter)
         else:
             print('Unable to autolog')
+
+    def log_csv(self, file_name, test_cases):
+        fields = ['name', 'result', 'code', 'output']
+        if not file_name.endswith('.csv'):
+            file_name = file_name + '.csv'
+        with open(file_name, 'w') as csv_file:
+            results_csv = csv.DictWriter(csv_file, fieldnames=fields)
+            results_csv.writeheader()
+            for test_case in test_cases:
+                results_csv.writerow(test_case.get_fields())
 
     def set_log_file(self, name: str, tologpath: bool = True):
         """Sets the log file for the output."""
