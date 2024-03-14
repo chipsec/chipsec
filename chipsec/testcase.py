@@ -58,6 +58,7 @@ class TestCase:
     def __init__(self, name: str) -> None:
         self.name = name
         self.result = ''
+        self.result_code = 0
         self.output = ''
         self.argv = ''
         self.desc = ''
@@ -66,7 +67,11 @@ class TestCase:
         self.time = None
 
     def get_fields(self) -> Dict[str, str]:
-        return {'name': self.name, 'output': self.output, 'result': self.result}
+        try:
+            result_code =  f'0x{self.result_code:016X}'
+        except ValueError:
+            result_code =  f'0x{self.result_code.value:016X}'
+        return {'name': self.name, 'output': self.output, 'result': self.result, 'code': result_code}
 
     def start_module(self) -> None:
         """Displays a banner for the module name provided."""
@@ -75,8 +80,9 @@ class TestCase:
         self.startTime = time.time()
         self.desc = self.name
 
-    def end_module(self, result: str, arg: str) -> None:
+    def end_module(self, result: str, result_code: int, arg: str) -> None:
         self.result = result
+        self.result_code = result_code
         self.argv = arg
         self.endTime = time.time()
         self.time = self.endTime - self.startTime
@@ -189,7 +195,9 @@ class ChipsecResults:
 
     def get_return_codeRC(self):
         summary = self.order_summaryRC()
-        if len(summary['failed']) != 0:
+        if len(self.test_cases) == 1:
+            return self.test_cases[0].result_code
+        elif len(summary['failed']) != 0:
             return ExitCode.FAIL
         else:
             return ExitCode.OK

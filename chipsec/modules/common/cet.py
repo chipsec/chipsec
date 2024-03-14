@@ -98,7 +98,6 @@ class cet(BaseModule):
             self.logger.log(f'Unable to read {cet_msr}')
 
     def check_cet(self):
-        res = ModuleResult.INFORMATION
         if self.support_shadow():
             self.logger.log("CET Shadow Stack is supported")
         else:
@@ -110,9 +109,11 @@ class cet(BaseModule):
         if self.cs.register.is_defined("IA32_U_CET") and self.cs.register.is_defined("IA32_S_CET"):
             self.print_cet_state("IA32_U_CET")
             self.print_cet_state('IA32_S_CET')
-        return res
+        
+        self.result.setStatusBit(self.result.status.INFORMATION)
+        self.res = self.result.getReturnCode(ModuleResult.INFORMATION)
 
     def run(self, module_argv):
         self.logger.start_test("Checking CET Settings")
-        self.res = self.check_cet()
+        self.check_cet()
         return self.res

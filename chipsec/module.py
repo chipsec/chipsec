@@ -87,7 +87,8 @@ class Module:
                 if self.mod_obj.is_supported():
                     result = self.mod_obj.run(module_argv)
                 else:
-                    result = ModuleResult.NOTAPPLICABLE
+                    self.mod_obj.result.setStatusBit(self.mod_obj.result.status.NOT_APPLICABLE)
+                    result = self.mod_obj.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
                     self.logger.log(f'Skipping module {self.name} since it is not applicable in this environment and/or platform')
 
         return result
