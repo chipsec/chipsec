@@ -84,3 +84,7 @@ def write_unique_file(file_buffer: Any, file_name: str = '', file_extension: str
 def get_main_dir() -> str:
     path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
     return path
+
+def get_module_dir() -> str:
+    path = os.path.join(get_main_dir(), "chipsec", "modules")
+    return path

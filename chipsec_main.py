@@ -49,6 +49,7 @@ from chipsec.library.banner import print_banner, print_banner_properties
 from chipsec.testcase import ExitCode, TestCase, ChipsecResults
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.options import Options
+from chipsec.library.module_helper import enumerate_modules, print_modules
 
 try:
     import importlib
@@ -88,6 +89,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='Specify filename for markdown output')
     adv_options.add_argument('-t', '--moduletype', dest='USER_MODULE_TAGS', type=str.upper, default=[], help='Run tests of a specific type (tag)')
     adv_options.add_argument('--list_tags', dest='_list_tags', action='store_true', help='List all the available options for -t,--moduletype')
+    adv_options.add_argument('-lm','--list_modules', dest='_list_modules', action='store_true', help='List all the available options for -m,--module/-mx,--module_exclude')
     adv_options.add_argument('-I', '--include', dest='IMPORT_PATHS', default=[], help='Specify additional path to load modules from')
     adv_options.add_argument('--failfast', help="Fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="Don't log timestamps", action='store_true')
@@ -99,11 +101,13 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('-rc', dest='_return_codes', help='Return codes mode', action='store_true')
 
     par = vars(parser.parse_args(argv))
-
     if par['help']:
         if par['_show_banner']:
             print_banner(argv, defines.get_version(), defines.get_message())
         parser.print_help()
+        return None
+    elif par['_list_modules']:
+        print_modules(enumerate_modules())
         return None
     else:
         return par
@@ -113,10 +117,10 @@ class ChipsecMain:
 
     def __init__(self, switches, argv):
         self.logger = logger()
-        self.CHIPSEC_FOLDER = os.path.abspath(chipsec.library.file.get_main_dir())
+        self.CHIPSEC_FOLDER = chipsec.library.file.get_main_dir()
         self.PYTHON_64_BITS = True if (sys.maxsize > 2**32) else False
         self.Import_Path = "chipsec.modules."
-        self.Modules_Path = os.path.join(self.CHIPSEC_FOLDER, "chipsec", "modules")
+        self.Modules_Path = chipsec.library.file.get_module_dir()
         self.Loaded_Modules = []
         self.AVAILABLE_TAGS = []
         self.MODPATH_RE = re.compile(r"^\w+(\.\w+)*$")
@@ -259,6 +263,7 @@ class ChipsecMain:
         #
         # Step 3.
         # Enumerate all modules from the root module directory
+        #
         self.logger.log(f'[*] loading modules from \"{self.Modules_Path.replace(os.getcwd(), ".")}\" ..')
         self.load_modules_from_path(self.Modules_Path, False)
 
