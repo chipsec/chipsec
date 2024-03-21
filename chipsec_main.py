@@ -49,6 +49,7 @@ from chipsec.library.banner import print_banner, print_banner_properties
 from chipsec.testcase import ExitCode, TestCase, ChipsecResults
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.options import Options
+from chipsec.library.module_helper import enumerate_modules, print_modules
 
 try:
     import importlib
@@ -66,6 +67,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter,
                                      epilog=ExitCode.help_epilog, add_help=False)
     options = parser.add_argument_group('Options')
+    #options.add_argument('-h', '--help', help="Show this message and exit", nargs='?', default='False')
     options.add_argument('-h', '--help', help="Show this message and exit", action='store_true')
     options.add_argument('-m', '--module', dest='_module', help='Specify module to run (example: -m common.bios_wp)')
     options.add_argument('-mx', '--module_exclude', dest='_module_exclude', nargs='+', help='Specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)')
@@ -88,6 +90,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('-k', '--markdown', dest='_markdown_out', help='Specify filename for markdown output')
     adv_options.add_argument('-t', '--moduletype', dest='USER_MODULE_TAGS', type=str.upper, default=[], help='Run tests of a specific type (tag)')
     adv_options.add_argument('--list_tags', dest='_list_tags', action='store_true', help='List all the available options for -t,--moduletype')
+    adv_options.add_argument('-lm','--list_modules', dest='_list_modules', action='store_true', help='List all the available options for -m,--module/-mx,--module_exclude')
     adv_options.add_argument('-I', '--include', dest='IMPORT_PATHS', default=[], help='Specify additional path to load modules from')
     adv_options.add_argument('--failfast', help="Fail on any exception and exit (don't mask exceptions)", action='store_true')
     adv_options.add_argument('--no_time', help="Don't log timestamps", action='store_true')
@@ -99,21 +102,35 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     adv_options.add_argument('-rc', dest='_return_codes', help='Return codes mode', action='store_true')
 
     par = vars(parser.parse_args(argv))
-
     if par['help']:
         if par['_show_banner']:
             print_banner(argv, defines.get_version(), defines.get_message())
         parser.print_help()
         return None
+    elif par['_list_modules']:
+        print_modules(enumerate_modules())
     else:
         return par
+    
+
+# def enumerate_tools():
+#     mod_path = chipsec.library.file.get_module_dir()
+#     tools_path = os.path.join(mod_path, 'tools')
+#     files = []
+#     for dirname, _, mod_fnames in os.walk(os.path.abspath(tools_path)):
+#         for modx in mod_fnames:
+#             if fnmatch.fnmatch(modx, '*.py') and not fnmatch.fnmatch(modx, '__init__.py'):
+#                 module_path = os.path.relpath(dirname, mod_path).replace("\\", ".")
+#                 files.append(f'{module_path}.{modx[:-3]}')
+#     return files
 
 
 class ChipsecMain:
 
     def __init__(self, switches, argv):
         self.logger = logger()
-        self.CHIPSEC_FOLDER = os.path.abspath(chipsec.library.file.get_main_dir())
+        #self.CHIPSEC_FOLDER = os.path.abspath(chipsec.library.file.get_main_dir())
+        self.CHIPSEC_FOLDER = chipsec.library.file.get_main_dir()
         self.PYTHON_64_BITS = True if (sys.maxsize > 2**32) else False
         self.Import_Path = "chipsec.modules."
         self.Modules_Path = os.path.join(self.CHIPSEC_FOLDER, "chipsec", "modules")
@@ -275,6 +292,16 @@ class ChipsecMain:
             self.logger.log("No modules have been loaded")
         for (modx, modx_argv) in self.Loaded_Modules:
             self.logger.log(f'[+] loaded {modx}')
+
+    # def enumerate_tools(self):
+    #     tools_path = os.path.join(self.Modules_Path, 'tools')
+    #     files = []
+    #     for dirname, _, mod_fnames in os.walk(os.path.abspath(tools_path)):
+    #         for modx in mod_fnames:
+    #             if fnmatch.fnmatch(modx, '*.py') and not fnmatch.fnmatch(modx, '__init__.py'):
+    #                 module_path = os.path.relpath(dirname, self.Modules_Path).replace("\\", ".")
+    #                 files.append(f'{module_path}.{modx[:-3]}')
+    #     return files
 
     def run_loaded_modules(self):
         results = ChipsecResults(self._return_codes)
