@@ -35,6 +35,11 @@ jobs:
       image: docker://${{ matrix.distro.image_prefix }}${{ matrix.distro.name }}:${{ matrix.distro.tag }}
 
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
     - name: Install Alpine dependencies
@@ -161,6 +166,11 @@ jobs:
     runs-on: windows-${{ matrix.versions.window }}
     
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
     - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
 
     - name: Set up Python ${{ matrix.versions.python }}
@@ -219,6 +229,11 @@ jobs:
     runs-on: ubuntu-${{ matrix.versions.ubuntu }}
 
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+      with:
+        egress-policy: audit
+
     - name: Set up Python ${{ matrix.versions.python }}
       uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
       with:
