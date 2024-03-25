@@ -22,7 +22,6 @@ jobs:
           - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
           - {name: "centos", tag: "stream8", image_prefix: "quay.io/centos/"}
-          - {name: "centos", tag: "7", image_prefix: "quay.io/centos/"}
           - {name: "debian", tag: "bookworm-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
