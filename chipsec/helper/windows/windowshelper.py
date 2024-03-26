@@ -777,10 +777,10 @@ class WindowsHelper(Helper):
             return None
         if 0 != status:
             lasterror = kernel32.GetLastError()
-            if (0xC0000001 == status and lasterror == 0x000003E6):  # ERROR_NOACCESS: Invalid access to memory location.  https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
-                if logger().DEBUG:
-                    logger().log_warning('NtEnumerateSystemEnvironmentValuesEx was not successful (NTSTATUS = 0xC0000001)')
-                logger().log_debug('[*] Your Windows has restricted access to UEFI variables.\nTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment')
+            if (0xC0000001 == status):  # ERROR_NOACCESS: Invalid access to memory location.  https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-erref/18d8fbe8-a967-4f1c-ae50-99ca8e491d2d
+                logger().log_warning('NtEnumerateSystemEnvironmentValuesEx was not successful')
+                logger().log_debug(f'NTSTATUS = 0x{status:08X}, LastError = 0x{lasterror:X}')
+                logger().log_warning('Looks like your version of Windows has restricted access to UEFI variables.\n\tTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment (Linux)')
                 return None
             else:
                 if logger().DEBUG:
