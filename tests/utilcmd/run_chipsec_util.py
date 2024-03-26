@@ -41,6 +41,9 @@ def run_chipsec_util(csu: ChipsecUtil, util_replay_file: str) -> int:
 def setup_run_destroy_util(init_replay_file: str, util_name: str, util_args: str = "", util_replay_file: str = "") -> int:
     chipsec.library.logger._logger.remove_chipsec_logger()
     chipsec.library.logger._logger = Mock()
+    chipsec.library.logger._logger.VERBOSE = False
+    chipsec.library.logger._logger.DEBUG = False
+    chipsec.library.logger._logger.HAL = False
     arg_str = f" {util_args}" if util_args else ""
     cli_cmds = f"{util_name}{arg_str}".strip().split(' ')
     par = parse_args(cli_cmds)
