@@ -413,7 +413,7 @@ class WindowsHelper(Helper):
         if self.use_existing_service:
             return True
 
-        logger().log_debug("[helper] Stopping service '{SERVICE_NAME}'...")
+        logger().log_debug(f"[helper] Stopping service '{SERVICE_NAME}'...")
         try:
             win32api.CloseHandle(self.driver_handle)
             self.driver_handle = None
@@ -443,13 +443,13 @@ class WindowsHelper(Helper):
             logger().log_warning(f"Cannot delete service '{SERVICE_NAME}' (not stopped)")
             return False
 
-        logger().log_debug("[helper] Deleting service '{SERVICE_NAME}'...")
+        logger().log_debug(f"[helper] Deleting service '{SERVICE_NAME}'...")
         try:
             win32serviceutil.RemoveService(SERVICE_NAME)
-            logger().log_debug("[helper] Service '{SERVICE_NAME}' deleted")
+            logger().log_debug(f"[helper] Service '{SERVICE_NAME}' deleted")
         except win32service.error as err:
             if logger().DEBUG:
-                logger().log_warning("RemoveService failed: {err.args[2]} ({err.args[0]:d})")
+                logger().log_warning(f"RemoveService failed: {err.args[2]} ({err.args[0]:d})")
             return False
 
         return True
