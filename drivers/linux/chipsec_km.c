@@ -117,6 +117,7 @@ typedef struct tagSMI_CONTEXT {
 typedef SMI_CONTEXT SMI_CTX, *PSMI_CTX; 
 
  void __swsmi__(SMI_CTX * ctx); 
+ void __swsmi_timed__(SMI_CTX * ctx, unsigned long * time);
 
   void _rdmsr( 
     unsigned long msr_num, // rdi
@@ -1077,7 +1078,7 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
 #endif
     }
     
-        case IOCTL_SWSMI:
+    case IOCTL_SWSMI:
     {
         //IN params: SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi 
 #ifdef CONFIG_X86
@@ -1093,6 +1094,33 @@ static long d_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioc
         __swsmi__((SMI_CTX *)ptr);
 
         if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * numargs)) > 0)
+            return -EFAULT;
+        break;
+#else
+        return -EOPNOTSUPP;
+#endif
+    }
+
+    case IOCTL_SWSMI_TIMED:
+    {
+        //IN params: SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi
+#ifdef CONFIG_X86
+
+        printk( KERN_INFO "[chipsec] > IOCTL_SWSMI_TIMED\n");
+        numargs = 7;
+        if(copy_from_user((void*)ptrbuf, (void*)ioctl_param, (sizeof(long) * numargs)) > 0)
+        {
+            printk( KERN_ALERT "[chipsec] ERROR: STATUS_INVALID_PARAMETER\n" );
+            break;
+        }
+
+        unsigned long m_time;
+        preempt_disable();
+        __swsmi_timed__((SMI_CTX *)ptr, &m_time);
+        preempt_enable();
+        ptrbuf[numargs] = m_time;
+
+        if(copy_to_user((void*)ioctl_param, (void*)ptrbuf, (sizeof(long) * (numargs + 1))) > 0)
             return -EFAULT;
         break;
 #else

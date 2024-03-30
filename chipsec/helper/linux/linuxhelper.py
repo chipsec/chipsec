@@ -73,6 +73,7 @@ IOCTL_WRMMIO = 0x13
 IOCTL_VA2PA = 0x14
 IOCTL_MSGBUS_SEND_MESSAGE = 0x15
 IOCTL_FREE_PHYSMEM = 0x16
+IOCTL_SWSMI_TIMED = 0x17
 
 _tools = {}
 
@@ -617,6 +618,13 @@ class LinuxHelper(Helper):
         in_buf = struct.pack(f'7{self._pack}', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         out_buf = self.ioctl(IOCTL_SWSMI, in_buf)
         ret = struct.unpack(f'7{self._pack}', out_buf)
+        return ret
+
+    def send_sw_smi_timed(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
+        self.set_affinity(cpu_thread_id)
+        in_buf = struct.pack(f'8{self._pack}', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi, 0)
+        out_buf = self.ioctl(IOCTL_SWSMI_TIMED, in_buf)
+        ret = struct.unpack(f'8{self._pack}', out_buf)
         return ret
 
     #
