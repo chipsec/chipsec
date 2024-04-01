@@ -76,8 +76,6 @@ class remap(BaseModule):
         else:
             self.logger.log_important('Not a Core (client) platform.  Skipping module.')
 
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def is_ibecc_enabled(self) -> bool:

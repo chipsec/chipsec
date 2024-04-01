@@ -63,8 +63,6 @@ class smm_code_chk(BaseModule):
             # * 4th Generation Intel® Core™ Processors (Haswell microarchitecture)
             # * Atom Processors Based on the Goldmont Microarchitecture
             self.logger.log_important('Register MSR_SMM_FEATURE_CONTROL not defined for platform.  Skipping module.')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
             
         # The Intel SDM states that MSR_SMM_FEATURE_CONTROL can only be accessed while the CPU executes in SMM.

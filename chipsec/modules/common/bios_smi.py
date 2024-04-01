@@ -62,8 +62,6 @@ class bios_smi(BaseModule):
            not self.cs.control.is_defined('TCOSMILock') or \
            not self.cs.control.is_defined('SMILock') or \
            not self.cs.control.is_defined('BiosWriteEnable'):
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             self.logger.log_important('Required controls not defined for platform.  Skipping module.')
             return False
         return True

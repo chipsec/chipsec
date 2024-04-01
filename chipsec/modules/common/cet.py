@@ -51,8 +51,6 @@ class cet(BaseModule):
         if supported:
             return True
         self.logger.log_important('CET is not defined for the platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def get_cpuid_value(self) -> None:

@@ -109,8 +109,6 @@ class me_mfg_mode(BaseModule):
             return True
         else:
             self.logger.log_important('MEI1 not enabled.  Skipping module.')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
 
     def check_me_mfg_mode(self) -> int:

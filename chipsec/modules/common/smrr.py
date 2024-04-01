@@ -72,8 +72,6 @@ class smrr(BaseModule):
         if mtrr_exist and pbase_exist and pmask_exist:
             return True
         self.logger.log_information('Required registers are not defined for this platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     #

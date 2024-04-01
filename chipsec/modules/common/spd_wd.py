@@ -72,8 +72,6 @@ class spd_wd(BaseModule):
                 self.logger.log_important('SMBUS_HCFG.SPD_WD is not defined for this platform.  Skipping module.')
         else:
             self.logger.log_important('SMBUS device appears disabled.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_spd_wd(self) -> int:

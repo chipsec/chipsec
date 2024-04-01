@@ -65,8 +65,6 @@ class rtclock(BaseModule):
             self.logger.log_important('RC register not defined for platform.  Skipping module.')
         else:
             self.logger.log_important('Not a Core platform.  Skipping check.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_rtclock(self) -> int:

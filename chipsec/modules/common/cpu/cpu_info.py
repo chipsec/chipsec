@@ -55,8 +55,6 @@ class cpu_info(BaseModule):
         if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
             return True
         self.logger.log_important('IA32_BIOS_SIGN_ID.Microcode not defined for platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def run(self, module_argv: List[str]) -> int:

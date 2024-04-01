@@ -65,8 +65,6 @@ class spi_access(BaseModule):
         if self.cs.register.has_field('HSFS', 'FDV') and self.cs.register.has_field('FRAP', 'BRWA'):
             return True
         self.logger.log_important('HSFS.FDV or FRAP.BRWA registers not defined for platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     ##

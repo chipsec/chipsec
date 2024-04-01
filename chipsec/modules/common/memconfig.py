@@ -70,8 +70,6 @@ class memconfig(BaseModule):
             self.logger.log_important("Not a 'Core' (Desktop) platform.  Skipping test.")
         else:
             self.logger.log_important("Not an Intel platform.  Skipping test.")
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_memmap_locks(self) -> int:

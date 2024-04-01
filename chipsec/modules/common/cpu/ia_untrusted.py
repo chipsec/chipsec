@@ -50,8 +50,6 @@ class ia_untrusted(BaseModule):
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             return True
         self.logger.log_important('MSR_BIOS_DONE.IA_UNTRUSTED is not defined for platform.  Skipping checks.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_untrusted(self) -> int:

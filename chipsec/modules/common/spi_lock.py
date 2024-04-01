@@ -60,8 +60,6 @@ class spi_lock(BaseModule):
     def is_supported(self) -> bool:
         if self.cs.control.is_defined('FlashLockDown'):
             return True
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         self.logger.log_important('FlashLockDown control not define for platform.  Skipping module.')
         return False
 

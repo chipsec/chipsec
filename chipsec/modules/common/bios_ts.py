@@ -54,8 +54,6 @@ class bios_ts(BaseModule):
         if self.cs.control.is_defined('BiosInterfaceLockDown'):
             return True
         self.logger.log_important('BiosInterfaceLockDown control not defined for platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_bios_iface_lock(self) -> int:
