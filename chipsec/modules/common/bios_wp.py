@@ -82,8 +82,6 @@ class bios_wp(BaseModule):
         if ble_exists and bioswe_exists and smmbwp_exists:
             return True
         self.logger.log_important('Required Controls are not defined for platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_BIOS_write_protection(self) -> int:

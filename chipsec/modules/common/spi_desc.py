@@ -58,8 +58,6 @@ class spi_desc(BaseModule):
         if self.cs.register.has_all_fields('FRAP', ['BRRA', 'BRWA']):
             return True
         self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     ##

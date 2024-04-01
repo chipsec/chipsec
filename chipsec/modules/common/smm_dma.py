@@ -72,18 +72,14 @@ class smm_dma(BaseModule):
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm_dma.html'
 
     def is_supported(self) -> bool:
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
         if self.cs.is_atom():
             self.logger.log_important('Module not supported on Atom platforms.  Skipping module.')
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         elif self.cs.is_server():
             self.logger.log_important('Xeon (server) platform detected.  Skipping module.')
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         elif not self.cs.control.is_defined('TSEGBaseLock') or not self.cs.control.is_defined('TSEGLimitLock'):
             self.logger.log_important('TSEGBaseLock and/or TSEGLimitLock control(s) not defined for platform.  Skipping module.')
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         else:
             return True

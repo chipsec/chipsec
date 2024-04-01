@@ -67,8 +67,6 @@ class memlock(BaseModule):
                 self.logger.log_important("'MSR_LT_LOCK_MEMORY.LT_LOCK' not defined for platform.  Skipping module.")
         else:
             self.logger.log_important('Found an Atom based platform.  Skipping module.')
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_MSR_LT_LOCK_MEMORY(self) -> bool:

@@ -50,8 +50,6 @@ class spi_fdopss(BaseModule):
     def is_supported(self) -> bool:
         if not self.cs.register.has_field('HSFS', 'FDOPSS'):
             self.logger.log_important('HSFS.FDOPSS field not defined for platform.  Skipping module.')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         return True
 

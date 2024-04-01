@@ -55,8 +55,6 @@ class smm(BaseModule):
         if self.cs.is_core() and self.cs.register.is_defined('PCI0.0.0_SMRAMC'):
             return True
         self.logger.log("Either not a Core (client) platform or 'PCI0.0.0_SMRAMC' not defined for platform. Skipping module.")
-        self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-        self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return False
 
     def check_SMRAMC(self) -> int:

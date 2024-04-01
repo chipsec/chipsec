@@ -65,8 +65,6 @@ class debugenabled(BaseModule):
         supported = (ecx & BIT11) != 0
         if not supported and not self.cs.register.is_defined('ECTRL'):
             self.logger.log_important('CPU Debug features are not supported on this platform.  Skipping module.')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def check_dci(self) -> int:

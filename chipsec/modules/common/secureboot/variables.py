@@ -72,8 +72,6 @@ class variables(BaseModule):
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log_important('OS does not support UEFI Runtime API.  Skipping module.')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         return supported
 
     def can_modify(self, name: str, guid: Optional[AnyStr], data: Optional[bytes]) -> bool:
