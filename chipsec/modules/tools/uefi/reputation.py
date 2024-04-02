@@ -69,8 +69,6 @@ class reputation(BaseModule):
         else:
             self.logger.log_important("""Can't import module 'virus_total_apis'.
 Please run 'pip install virustotal-api' and try again.""")
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
 
     def reputation_callback(self, efi_module):

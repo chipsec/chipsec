@@ -72,8 +72,6 @@ class smm_code_chk(BaseModule):
             self.cs.register.read('MSR_SMM_FEATURE_CONTROL')
         except HWAccessViolationError:
             self.logger.log_important('MSR_SMM_FEATURE_CONTROL is unreadable.  Skipping module.')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         else:
             return True
