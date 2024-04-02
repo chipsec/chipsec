@@ -63,15 +63,11 @@ class sinkhole(BaseModule):
         if not (self.cs.os_helper.is_windows() or self.cs.os_helper.is_linux()):
             self.logger.log_important('Unsupported OS found.  Skipping module.')
             self.logger.log_important('Supported OS: Windows or Linux')
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
             return False
         elif not self.cs.register.is_defined('IA32_APIC_BASE') or \
                 not self.cs.register.is_defined('IA32_SMRR_PHYSBASE') or \
                 not self.cs.register.is_defined('IA32_SMRR_PHYSMASK'):
             self.logger.log_error("Couldn't find definition of required configuration registers.")
-            self.result.setStatusBit(self.result.status.CONFIGURATION)
-            self.res =self.result.getReturnCode(ModuleResult.ERROR)
             return False
         else:
             return True

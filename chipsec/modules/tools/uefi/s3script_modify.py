@@ -153,14 +153,10 @@ class s3script_modify(BaseModule):
         supported = self.cs.helper.EFI_supported()
         if not supported:
             self.logger.log("OS does not support UEFI Runtime API.  Skipping module.")
-            self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-            self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
         else:
             _, ps = self.get_bootscript()
             if not ps:
                 self.logger.log("Unable to locate boot script.  Skipping module.")
-                self.result.setStatusBit(self.result.status.NOT_APPLICABLE)
-                self.res = self.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
                 supported = False
         return supported
 
