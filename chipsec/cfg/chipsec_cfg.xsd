@@ -187,6 +187,7 @@
   <xs:attribute name="size" type="xs:string" use="required"/>
   <xs:attribute name="desc" type="xs:string" use="optional"/>
   <xs:attribute name="access" type="regaccess_type" use="optional"/>
+  <xs:attribute name="lockedby" type="xs:string" use="optional"/>
 </xs:attributeGroup>
 
 <xs:complexType name="field_type">
@@ -208,6 +209,25 @@
   <xs:attribute name="name" type="xs:string" use="required"/>
   <xs:attribute name="register" type="xs:string" use="required"/>
   <xs:attribute name="field" type="xs:string" use="required"/>
+  <xs:attribute name="desc" type="xs:string" use="optional"/>
+</xs:attributeGroup>
+
+<!-- Locks -->
+<xs:complexType name="locks_type">
+  <xs:sequence>
+    <xs:element name="lock" type="lock_type" minOccurs="0" maxOccurs="unbounded"/>
+  </xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="lock_type">
+  <xs:attributeGroup ref="lock_attr"/>
+</xs:complexType>
+
+<xs:attributeGroup name="lock_attr">
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="register" type="xs:string" use="required"/>
+  <xs:attribute name="field" type="xs:string" use="required"/>
+  <xs:attribute name="value" type="xs:string" use="required"/>
   <xs:attribute name="desc" type="xs:string" use="optional"/>
 </xs:attributeGroup>
 
