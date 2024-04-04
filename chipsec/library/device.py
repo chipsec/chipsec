@@ -79,20 +79,11 @@ class Device:
 
     def get_bus(self, device_name: str) -> List[int]:
         '''Retrieves bus value(s) from PCI device'''
-        buses = self.cs.Cfg.BUS.get(device_name, [])
-        if buses:
+        buses = []
+        if device_name in self.cs.Cfg.CONFIG_PCI and 'bus' in self.cs.Cfg.CONFIG_PCI[device_name]:
             if logger().DEBUG:
                 logger().log_important(f"Using discovered bus values for device '{device_name}'")
-            return buses
-        if device_name in self.cs.Cfg.CONFIG_PCI and 'bus' in self.cs.Cfg.CONFIG_PCI[device_name]:
-            (bus, dev, fun) = self.get_BDF(device_name)
-            if self.cs.pci.is_enabled(bus, dev, fun):
-                if logger().DEBUG:
-                    logger().log_important(f"Using pre-defined bus values for device '{device_name}'")
-                buses = [bus]
-            else:
-                if logger().DEBUG:
-                    logger().log_important(f"Device '{device_name}' not enabled")
+            return self.cs.Cfg.CONFIG_PCI[device_name]['bus']
         else:
             if logger().DEBUG:
                 logger().log_important(f"No bus value defined for device '{device_name}'")
