@@ -156,10 +156,11 @@ class NoneHelper(Helper):
     #
     # ACPI
     #
-    def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
-        raise UnimplementedAPIError('NoneHelper')
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
+        raise UnimplementedAPIError('NoneHelper')
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
         raise UnimplementedAPIError('NoneHelper')
 
     #

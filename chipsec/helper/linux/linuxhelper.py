@@ -37,6 +37,7 @@ import sys
 from typing import Dict, List, Optional, Tuple, Iterable, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType
+    from ctypes import Array
 from chipsec.library import defines
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError
@@ -395,11 +396,11 @@ class LinuxHelper(Helper):
         in_buf = struct.pack(f'3{self._pack}', phys_address, size, value)
         out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
 
-    def get_ACPI_SDT(self):
-        raise UnimplementedAPIError("get_ACPI_SDT")
-
-    def get_ACPI_table(self, table_name):
+    def get_ACPI_table(self, table_name:str) -> Optional['Array']:
         raise UnimplementedAPIError("get_ACPI_table")
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
+        raise UnimplementedAPIError('enum_ACPI_table')
 
     #
     # IOSF Message Bus access

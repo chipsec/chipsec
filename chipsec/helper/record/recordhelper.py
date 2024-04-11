@@ -16,7 +16,9 @@
 
 from json import dumps, loads
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ctypes import Array
 from datetime import datetime
 
 from chipsec.library.logger import logger
@@ -242,14 +244,15 @@ class RecordHelper(Helper):
     #
     # ACPI
     #
-    def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
-        ret = self._subhelper.get_ACPI_SDT()
-        self._add_element("get_ACPI_SDT", (), ret)
-        return ret
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         ret = self._subhelper.get_ACPI_table(table_name)
         self._add_element("get_ACPI_table", (table_name), ret)
+        return ret
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
+        ret = self._subhelper.enum_ACPI_table()
+        self._add_element("enum_ACPI_table", (), ret)
         return ret
 
     #

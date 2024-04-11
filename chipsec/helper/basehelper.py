@@ -190,7 +190,7 @@ class Helper(ABC):
     # ACPI
     #
     @abstractmethod
-    def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
+    def enum_ACPI_tables(self) -> Optional['Array']:
         pass
 
     @abstractmethod

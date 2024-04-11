@@ -36,6 +36,7 @@ import edk2   # Python 3.6.8 on UEFI
 
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
+    from ctypes import Array
     from chipsec.library.types import EfiVariableType
 from chipsec.library.logger import logger
 from chipsec.helper.oshelper import get_tools_path
@@ -348,9 +349,6 @@ class EfiHelper(Helper):
     # ACPI tables access
     #
 
-    def get_ACPI_SDT(self) -> Tuple[None, bool]:
-        raise UnimplementedAPIError('get_ACPI_SDT')
-
     #
     # IOSF Message Bus access
     #
@@ -370,8 +368,11 @@ class EfiHelper(Helper):
     def free_phys_mem(self, physical_address):
         raise UnimplementedAPIError('free_phys_mem')
 
-    def get_ACPI_table(self, table_name):
+    def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise UnimplementedAPIError('get_ACPI_table')
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
+        raise UnimplementedAPIError('enum_ACPI_table')
 
     def get_affinity(self):
         raise UnimplementedAPIError('get_affinity')

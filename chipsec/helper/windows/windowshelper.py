@@ -848,14 +848,23 @@ class WindowsHelper(Helper):
         (eax, ebx, ecx, edx) = struct.unpack('4I', out_buf)
         return (eax, ebx, ecx, edx)
 
-    def get_ACPI_SDT(self) -> Tuple[Optional[Array], bool]:
-        sdt = self.native_get_ACPI_table('XSDT')  # FirmwareTableID_XSDT
-        xsdt = sdt is not None
-        if not xsdt:
-            sdt = self.native_get_ACPI_table('RSDT')  # FirmwareTableID_RSDT
-        return sdt, xsdt
+    def enum_ACPI_tables(self) -> Optional[Array]:
+        table_size = 36
+        tBuffer = create_string_buffer(table_size)
+        retVal = self.EnumSystemFirmwareTbls(FirmwareTableProviderSignature_ACPI, tBuffer, table_size)
+        if retVal == 0:
+            if logger().DEBUG:
+                logger().log_error(f'EnumSystemFirmwareTbls() returned error: {WinError()}')
+            return None
+        if retVal > table_size:
+            table_size = retVal
+            tBuffer = create_string_buffer(table_size)
+            retVal = self.EnumSystemFirmwareTbls(FirmwareTableProviderSignature_ACPI, tBuffer, table_size)
+        tables_array = [tBuffer[i:i+4] for i in range(0, retVal, 4)]
+        return tables_array
 
-    def native_get_ACPI_table(self, table_name: str) -> Optional[Array]:
+    # ACPI access is implemented through ACPI HAL rather than through kernel module
+    def get_ACPI_table(self, table_name: str) -> Optional[Array]:
         table_size = 36
         tBuffer = create_string_buffer(table_size)
         tbl = struct.unpack("<I", bytes(table_name, 'ascii'))[0]
@@ -869,10 +878,6 @@ class WindowsHelper(Helper):
             tBuffer = create_string_buffer(table_size)
             retVal = self.GetSystemFirmwareTbl(FirmwareTableProviderSignature_ACPI, tbl, tBuffer, table_size)
         return tBuffer[:retVal]
-
-    # ACPI access is implemented through ACPI HAL rather than through kernel module
-    def get_ACPI_table(self, table_name):
-        raise UnimplementedAPIError("get_ACPI_table")
 
     #
     # IOSF Message Bus access
