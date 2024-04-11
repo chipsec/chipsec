@@ -35,6 +35,7 @@ from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger, level
 from chipsec.library.banner import print_banner, print_banner_properties
 from chipsec.library.exceptions import UnknownChipsetError
+from chipsec.library.options import Options
 from chipsec.testcase import ExitCode
 from chipsec.chipset import cs
 from chipsec.library.file import get_main_dir
@@ -85,6 +86,9 @@ def import_cmds() -> Dict[str, Any]:
 
 def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     """Parse the arguments provided on the command line."""
+    options = Options()
+
+    default_helper = options.get_section_data('Util_Config', 'default_helper', None)
     global_usage = "Additional arguments for specific command.\n\n All numeric values are in hex\n<width> is in {1, byte, 2, word, 4, dword}\n\n"
     cmds = import_cmds()
     parser = argparse.ArgumentParser(usage='%(prog)s [options] <command>', add_help=False)
@@ -101,7 +105,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
                          help="Chipsec won't need kernel mode functions so don't load chipsec driver")
     options.add_argument('-i', '--ignore_platform', dest='_ignore_platform', action='store_true',
                          help='Run chipsec even if the platform is not recognized (Deprecated)')
-    options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers())
+    options.add_argument('--helper', dest='_helper', help='Specify OS Helper', choices=helper().get_available_helpers(), default=default_helper)
     options.add_argument('-nb', '--no_banner', dest='_show_banner', action='store_false', help="Chipsec won't display banner information")
     options.add_argument('--skip_config', dest='_load_config', action='store_false', help='Skip configuration and driver loading')
     options.add_argument('-nl', dest='_autolog_disable', action='store_true', help="Chipsec won't save logs automatically")
