@@ -28,7 +28,9 @@ import platform
 import resource
 import struct
 import sys
-from typing import Optional, Tuple
+from typing import Optional, Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ctypes import Array
 
 from chipsec.library import defines
 from chipsec.library.exceptions import OsHelperError
@@ -389,10 +391,10 @@ class LinuxNativeHelper(Helper):
     def list_EFI_variables(self):
         raise NotImplementedError()
 
-    def get_ACPI_SDT(self):
+    def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise NotImplementedError()
-
-    def get_ACPI_table(self, table_name):
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
         raise NotImplementedError()
 
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:

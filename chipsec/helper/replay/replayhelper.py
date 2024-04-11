@@ -182,11 +182,12 @@ class ReplayHelper(Helper):
     #
     # ACPI
     #
-    def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
-        return self._get_element_eval("get_ACPI_SDT", ())
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         return self._get_element_eval("get_ACPI_table", (table_name))
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
+        return self._get_element_eval("enum_ACPI_table", ())
 
     #
     # CPUID

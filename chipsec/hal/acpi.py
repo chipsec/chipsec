@@ -25,7 +25,7 @@ HAL component providing access to and decoding of ACPI tables
 __version__ = '0.1'
 
 import struct
-from typing import Dict, List, Tuple, Optional, Callable, Union
+from typing import Dict, List, Tuple, Optional, Callable, Union, TYPE_CHECKING
 from collections import defaultdict
 from collections import namedtuple
 
@@ -37,6 +37,9 @@ from chipsec.hal.hal_base import HALBase
 from chipsec.hal.uefi import UEFI
 from chipsec.library.logger import logger, print_buffer_bytes
 from chipsec.hal.acpi_tables import ACPI_TABLE
+
+if TYPE_CHECKING:
+    from ctypes import Array
 
 # ACPI Table Header Format
 ACPI_TABLE_HEADER_FORMAT = '=4sIBB6s8sI4sI'
@@ -346,7 +349,7 @@ class ACPI(HALBase):
             sdt_pa = None
             if logger().HAL:
                 logger().log("[acpi] Reading RSDT/XSDT using OS API...")
-            (sdt_buf, is_xsdt) = self.cs.helper.get_ACPI_SDT()
+            (sdt_buf, is_xsdt) = self.get_ACPI_SDT()
             sdt_header = self._parse_table_header(sdt_buf[:ACPI_TABLE_HEADER_SIZE])
 
         sdt_contents = sdt_buf[ACPI_TABLE_HEADER_SIZE:]
@@ -354,12 +357,28 @@ class ACPI(HALBase):
         sdt.parse(sdt_contents)
         return (is_xsdt, sdt_pa, sdt, sdt_header)
 
+
+
+    def get_ACPI_SDT(self) -> Tuple[Optional['Array'], bool]:
+        sdt = self.cs.helper.get_acpi_table('XSDT')  # FirmwareTableID_XSDT
+        xsdt = sdt is not None
+        if not xsdt:
+            sdt = self.get_acpi_table('RSDT')  # FirmwareTableID_RSDT
+        return sdt, xsdt
+
     #
     # Populates a list of ACPI tables available on the system
     #
     def get_ACPI_table_list(self) -> Dict[str, List[int]]:
         try:
-            # 1. Try to extract ACPI table(s) from physical memory
+            # 1. If didn't work, try using get_ACPI_table if a helper implemented
+            #    reading ACPI tables via native API which some OS may provide
+            # raise UnimplementedAPIError("asdf")
+            logger().log_hal("[acpi] Trying to enumerate ACPI tables using get_ACPI_table...")
+            for table_name in self.cs.helper.enum_ACPI_tables():
+                self.tableList[table_name.decode("utf-8")].append(0)
+        except UnimplementedAPIError:
+            # 2. Try to extract ACPI table(s) from physical memory
             #    read_physical_mem can be implemented using both
             #    CHIPSEC kernel module and OS native API
             logger().log_hal("[acpi] Trying to enumerate ACPI tables from physical memory...")
@@ -372,14 +391,6 @@ class ACPI(HALBase):
             if sdt is not None:
                 self.get_table_list_from_SDT(sdt, is_xsdt)
             self.get_DSDT_from_FADT()
-        except UnimplementedAPIError:
-            # 2. If didn't work, try using get_ACPI_table if a helper implemented
-            #    reading ACPI tables via native API which some OS may provide
-            logger().log_hal("[acpi] Trying to enumerate ACPI tables using get_ACPI_table...")
-            for t in ACPI_TABLES.keys():
-                table = self.cs.helper.get_ACPI_table(t)
-                if table:
-                    self.tableList[t].append(0)
 
         return self.tableList
 
@@ -457,7 +468,13 @@ class ACPI(HALBase):
             acpi_tables_data.append(read_file(name))
         else:
             try:
-                # 1. Try to extract ACPI table(s) from physical memory
+                # 1. Try to extract ACPI table(s) using get_ACPI_table if a helper implemented
+                #    reading ACPI tables via native API which some OS may provide
+                logger().log_hal("[acpi] trying to extract ACPI table using get_ACPI_table...")
+                t_data = self.cs.helper.get_ACPI_table(name)
+                acpi_tables_data.append(t_data)
+            except UnimplementedAPIError:
+                # 2. If didn't work, try scrubbing physical memory
                 #    read_physical_mem can be implemented using both
                 #    CHIPSEC kernel module and OS native API
                 logger().log_hal('[acpi] trying to extract ACPI table from physical memory...')
@@ -465,12 +482,6 @@ class ACPI(HALBase):
                     t_size = self.cs.mem.read_physical_mem_dword(table_address + 4)
                     t_data = self.cs.mem.read_physical_mem(table_address, t_size)
                     acpi_tables_data.append(t_data)
-            except UnimplementedAPIError:
-                # 2. If didn't work, try using get_ACPI_table if a helper implemented
-                #    reading ACPI tables via native API which some OS may provide
-                logger().log_hal("[acpi] trying to extract ACPI table using get_ACPI_table...")
-                t_data = self.cs.helper.get_ACPI_table(name)
-                acpi_tables_data.append(t_data)
 
         acpi_tables = []
         for data in acpi_tables_data:

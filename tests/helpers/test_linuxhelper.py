@@ -246,9 +246,6 @@ class LinuxHelperTest(unittest.TestCase):
     def test_write_mmio_reg(self, _, lh_ioctl):
         lh_ioctl.side_effect = LinuxHelperTest.ioctlret
         self.lhelper.write_mmio_reg(0x123,0x1, 0x22)
-    
-    def test_get_ACPI_SDT(self, _, lh_ioctl):
-        self.assertRaises(UnimplementedAPIError, self.lhelper.get_ACPI_SDT)
 
     def test_get_ACPI_table(self, _, lh_ioctl):
         self.assertRaises(UnimplementedAPIError, self.lhelper.get_ACPI_table, "SDEV")

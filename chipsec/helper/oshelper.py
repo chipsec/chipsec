@@ -28,7 +28,6 @@ import importlib
 import platform
 import traceback
 import sys
-from ctypes import Array
 from typing import Tuple, List, Dict, Optional, AnyStr, Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType

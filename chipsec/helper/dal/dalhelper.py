@@ -34,7 +34,9 @@ try:
 except:
     pass
 from ctypes import c_char
-from typing import Tuple
+from typing import Optional, Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ctypes import Array
 from chipsec.helper.basehelper import Helper
 from chipsec.library.exceptions import DALHelperError, UnimplementedAPIError
 
@@ -371,11 +373,11 @@ class DALHelper(Helper):
     #
     # ACPI tables access
     #
-    def get_ACPI_SDT(self):
-        raise UnimplementedAPIError('get_ACPI_SDT')
-
-    def get_ACPI_table(self, table_name):
+    def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise UnimplementedAPIError('get_ACPI_table')
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
+        raise UnimplementedAPIError('enum_ACPI_table')
 
     #
     # IOSF Message Bus access

@@ -19,6 +19,9 @@ import struct
 
 from chipsec.helper.basehelper import Helper
 from chipsec.library.exceptions import UnimplementedAPIError
+from typing import Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from ctypes import Array
 
 
 class TestHelper(Helper):
@@ -146,11 +149,11 @@ class TestHelper(Helper):
     def list_EFI_variables(self):
         raise UnimplementedAPIError('list_EFI_variables')
 
-    def get_ACPI_SDT(self):
-        raise UnimplementedAPIError('get_ACPI_SDT')
-
-    def get_ACPI_table(self, table_name):
+    def get_ACPI_table(self, table_name: str) -> Optional['Array']:
         raise UnimplementedAPIError('get_ACPI_table')
+    
+    def enum_ACPI_tables(self) -> Optional['Array']:
+        raise UnimplementedAPIError('enum_ACPI_table')
 
     def msgbus_send_read_message(self, mcr, mcrx):
         raise UnimplementedAPIError('msgbus_send_read_message')
