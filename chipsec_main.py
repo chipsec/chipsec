@@ -59,10 +59,9 @@ except ImportError:
 
 def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options = Options()
-    try:
-        default_helper = options.get_section_data('Main_Config', 'default_helper')
-    except Exception:
-        default_helper = None
+
+    default_helper = options.get_section_data('Main_Config', 'default_helper', None)
+
     """Parse the arguments provided on the command line."""
     parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter,
                                      epilog=ExitCode.help_epilog, add_help=False)
