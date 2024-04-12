@@ -304,7 +304,7 @@ class Pci:
                     elif f == 0 and spec:
                         break
                 except OsHelperError:
-                    self.logger.log_hal(f"[pci] unable to access B/D/F: {b:d}/{d:d}/{f:d}")
+                    logger().log_hal(f"[pci] unable to access B/D/F: {b:d}/{d:d}/{f:d}")
         return devices
 
     def dump_pci_config(self, bus: int, device: int, function: int) -> List[int]:
@@ -417,23 +417,23 @@ class Pci:
     #
     # Calculates actual size of MMIO BAR range
     def calc_bar_size(self, bus: int, dev: int, fun: int, off: int, is64: bool, isMMIO: bool) -> int:
-        self.logger.log_hal(f'calc_bar_size {bus}:{dev}.{fun} offset{off}')
+        logger().log_hal(f'calc_bar_size {bus}:{dev}.{fun} offset{off}')
         # Read the original value of the register
         orig_regL = self.read_dword(bus, dev, fun, off)
-        self.logger.log_hal(f'orig_regL: {orig_regL:X}')
+        logger().log_hal(f'orig_regL: {orig_regL:X}')
         if is64:
             orig_regH = self.read_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP)
-            self.logger.log_hal(f'orig_regH: {orig_regH:X}')
+            logger().log_hal(f'orig_regH: {orig_regH:X}')
         # Write all 1's to the register
         self.write_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP, MASK_32b)
         if is64:
             self.write_dword(bus, dev, fun, off, MASK_32b)
         # Read the register back
         regL = self.read_dword(bus, dev, fun, off)
-        self.logger.log_hal(f'regL: {regL:X}')
+        logger().log_hal(f'regL: {regL:X}')
         if is64:
             regH = self.read_dword(bus, dev, fun, off + PCI_HDR_BAR_STEP)
-            self.logger.log_hal(f'regH: {regH:X}')
+            logger().log_hal(f'regH: {regH:X}')
         # Write original value back to register
         self.write_dword(bus, dev, fun, off, orig_regL)
         if is64:
