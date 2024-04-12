@@ -166,25 +166,6 @@ class ChipsecMain:
                     run_it = True
         return run_it
 
-    def run_module(self, modx, module_argv):
-        result = None
-        try:
-            if not modx.do_import():
-                return ModuleResult.ERROR
-            if self.logger.DEBUG and not self._list_tags:
-                self.logger.log(f'[*] Module path: {modx.get_location()}')
-
-            if self.verify_module_tags(modx):
-                result = modx.run(module_argv)
-            else:
-                return ModuleResult.NOTAPPLICABLE
-        except BaseException as msg:
-            if self.logger.DEBUG:
-                self.logger.log_bad(traceback.format_exc())
-            self.logger.log_error(f'Exception occurred during {modx.get_name()}.run(): \'{str(msg)}\'')
-            raise msg
-        return result
-
     ##
     # full_path can be one of three things:
     # 1. the actual full path to the py or pyc file  i.e. c:\some_path\chipsec\modules\common\bios_wp.py
@@ -279,9 +260,29 @@ class ChipsecMain:
     def print_loaded_modules(self):
         if self.Loaded_Modules == []:
             self.logger.log("No modules have been loaded")
-        for (modx, modx_argv) in self.Loaded_Modules:
+        for (modx, _) in self.Loaded_Modules:
             self.logger.log(f'[+] loaded {modx}')
 
+    def run_module(self, modx, module_argv):
+        result = None
+        try:
+            if not modx.do_import():
+                return ModuleResult.ERROR
+            if self.logger.DEBUG and not self._list_tags:
+                self.logger.log(f'[*] Module path: {modx.get_location()}')
+
+            if self.verify_module_tags(modx):
+                result = modx.run(module_argv)
+            else:
+                modx.mod_obj.result.setStatusBit(modx.mod_obj.result.status.NOT_APPLICABLE)
+                return modx.mod_obj.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
+        except BaseException as msg:
+            if self.logger.DEBUG:
+                self.logger.log_bad(traceback.format_exc())
+            self.logger.log_error(f'Exception occurred during {modx.get_name()}.run(): \'{str(msg)}\'')
+            raise msg
+        return result
+    
     def run_loaded_modules(self):
         results = ChipsecResults(self._return_codes)
         results.add_properties(self.properties())
@@ -306,10 +307,6 @@ class ChipsecMain:
                     self.logger.log_bad(traceback.format_exc())
                 if self.failfast:
                     raise
-
-            # Module uses the old API  display warning and try to run anyways
-            if result == ModuleResult.DEPRECATED:
-                self.logger.log_error(f'Module {str(modx)} does not inherit BaseModule class')
 
             # Populate results
             test_result.end_module(getModuleResultName(result, self._return_codes), result, modx_argv if modx_argv else None)

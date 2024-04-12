@@ -64,9 +64,6 @@ class ReturnCode:
         self._message = ''
         self.logger = logger()
         self.cs = cs
-    
-    def generate_hash_id(self, className: str) -> str:
-        return sha256(className.encode("utf-8")).hexdigest()[:7]
 
     def setStatusBit(self, status) -> None:
         if is_set(self._result, status.value[0]) is not True:
@@ -104,6 +101,10 @@ class ReturnCode:
         ret_value = self._return_code
         self.resetReturnCodeValues()
         return ret_value
+
+def generate_hash_id(className: str) -> int:
+    generated_id = sha256(className.encode("utf-8")).hexdigest()[:7]
+    return int(generated_id, 16)
 
 # -------------------------------------------------------
 # Legacy results

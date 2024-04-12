@@ -42,7 +42,6 @@ from chipsec.library.exceptions import HWAccessViolationError
 class cet(BaseModule):
     def __init__(self):
         super(cet, self).__init__()
-        self.result.id = 0x014b813
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cet.html'
         self.cpuid_7_0__ecx_val = None
 

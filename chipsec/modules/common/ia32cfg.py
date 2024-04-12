@@ -48,7 +48,6 @@ TAGS = [MTAG_HWCONFIG]
 class ia32cfg(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xcc8cd5d
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.ia32cfg.html'
         self.res = ModuleResult.PASSED
 

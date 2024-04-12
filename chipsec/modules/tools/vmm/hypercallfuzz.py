@@ -82,7 +82,6 @@ class hypercallfuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xf918ec4
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html'
         self.vmm = VMM(self.cs)
 

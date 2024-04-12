@@ -48,7 +48,6 @@ from typing import List
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
-        self.result.id = 0x74b9b60
         self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
 
     def is_supported(self) -> bool:

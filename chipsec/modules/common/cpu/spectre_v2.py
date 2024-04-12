@@ -137,7 +137,6 @@ class spectre_v2(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xceea2c8
         self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.spectre_v2.html'
 
     def is_supported(self) -> bool:

@@ -54,7 +54,6 @@ class bios_smi(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x744c3dc
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_smi.html'
 
     def is_supported(self) -> bool:

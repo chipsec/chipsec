@@ -54,7 +54,6 @@ class spi_lock(BaseModule):
 
     def __init__(self):
         super(spi_lock, self).__init__()
-        self.result.id = 0xf73c7bd
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_lock.html'
 
     def is_supported(self) -> bool:

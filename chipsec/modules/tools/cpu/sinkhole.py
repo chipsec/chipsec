@@ -56,7 +56,6 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x230312a
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.cpu.sinkhole.html'
 
     def is_supported(self):

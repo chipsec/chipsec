@@ -20,9 +20,11 @@
 
 
 import re
+import os
 import traceback
+import pickle
 import chipsec.library.logger
-from chipsec.library.returncode import ModuleResult
+from chipsec.library.returncode import ModuleResult, generate_hash_id
 
 _importlib = True
 try:
@@ -39,6 +41,7 @@ class Module:
         self.name = name
         self.module = None
         self.mod_obj = None
+        self.module_ids = self.get_module_ids_dictionary()
 
     def __lt__(self, other):
         return self.name < other.name
@@ -72,29 +75,46 @@ class Module:
                     self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
+    
+    def get_module_ids_dictionary(self):
+        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.pkl'), 'rb') as module_ids_file:
+            module_ids = pickle.load(module_ids_file)
+        return module_ids
+    
+    def update_module_ids_file(self):
+        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.pkl'), 'wb') as module_ids_file:
+            pickle.dump(self.module_ids, module_ids_file)
 
+    def get_module_id(self, module_name):
+        if module_name in self.module_ids:
+            module_id = self.module_ids[module_name]
+        else:
+            module_id = generate_hash_id(module_name)
+            self.module_ids[module_name] = module_id
+            self.update_module_ids_file() 
+        return module_id
+    
     def run(self, module_argv):
-        result = self.get_module_object()
+        self.get_module_object()
 
-        if self.mod_obj is not None and result == ModuleResult.PASSED:
-            if module_argv is not None:
-                self.logger.log(f'[*] Module arguments ({len(module_argv):d}):')
-                self.logger.log(module_argv)
+        if module_argv:
+            self.logger.log(f'[*] Module arguments ({len(module_argv):d}):')
+            self.logger.log(module_argv)
+        else:
+            module_argv = []
+
+        if isinstance(self.mod_obj, chipsec.module_common.BaseModule):
+            self.mod_obj.result.id = self.get_module_id(self.name)
+            if self.mod_obj.is_supported():
+                result = self.mod_obj.run(module_argv)
             else:
-                module_argv = []
-
-            if isinstance(self.mod_obj, chipsec.module_common.BaseModule):
-                if self.mod_obj.is_supported():
-                    result = self.mod_obj.run(module_argv)
-                else:
-                    self.mod_obj.result.setStatusBit(self.mod_obj.result.status.NOT_APPLICABLE)
-                    result = self.mod_obj.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
-                    self.logger.log(f'Skipping module {self.name} since it is not applicable in this environment and/or platform')
+                self.mod_obj.result.setStatusBit(self.mod_obj.result.status.NOT_APPLICABLE)
+                result = self.mod_obj.result.getReturnCode(ModuleResult.NOTAPPLICABLE)
+                self.logger.log(f'Skipping module {self.name} since it is not applicable in this environment and/or platform')
 
         return result
 
     def get_module_object(self):
-        result = ModuleResult.PASSED
         if self.mod_obj is None:
             try:
                 if _importlib:
@@ -109,11 +129,10 @@ class Module:
                             if issubclass(iref, chipsec.module_common.BaseModule):
                                 if iname.lower() == class_name.lower():
                                     self.mod_obj = iref()
-                    if self.mod_obj is None:
-                        result = ModuleResult.DEPRECATED
-            except (AttributeError, TypeError) as ae:
-                result = ModuleResult.DEPRECATED
-        return result
+                if self.mod_obj is None:
+                    raise ModuleNotFoundError(self.module)
+            except (AttributeError, TypeError, ModuleNotFoundError):
+                self.logger.chipsecLogger.exception('Error getting module object')
 
     def get_location(self):
         myfile = ''

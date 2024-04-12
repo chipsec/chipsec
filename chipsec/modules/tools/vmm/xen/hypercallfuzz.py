@@ -59,7 +59,6 @@ from chipsec.modules.tools.vmm.xen.hypercall import XenHypercall
 class HypercallFuzz(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x9e42fe3
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.xen.hypercallfuzz.html'
 
     def usage(self):

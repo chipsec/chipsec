@@ -53,7 +53,6 @@ class memlock(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x4e16e90
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.memlock.html'
         self.is_read_error = False
 

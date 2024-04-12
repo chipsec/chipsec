@@ -71,7 +71,6 @@ class bios_wp(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.spi = SPI(self.cs)
-        self.result.id = 0xd1e21a2
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_wp.html'
 
     def is_supported(self) -> bool:

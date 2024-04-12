@@ -56,7 +56,6 @@ class access_uefispec(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
-        self.result.id = 0xadd835b
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.access_uefispec.html'
 
         nv = EFI_VARIABLE_NON_VOLATILE
@@ -168,7 +167,7 @@ class access_uefispec(BaseModule):
             self.logger.log_warning('Could not enumerate UEFI Variables from runtime.')
             self.logger.log_important("Note that UEFI variables may still exist, OS just did not expose runtime UEFI Variable API to read them.\nYou can extract variables directly from ROM file via 'chipsec_util.py uefi nvram bios.bin' command and verify their attributes manually.")
             self.result.setStatusBit(self.result.status.VERIFY)
-            return self.result.getReturnCode(ModuleResult.WARNING)
+            return ModuleResult.WARNING
 
         uefispec_concern = []
         ro_concern = []

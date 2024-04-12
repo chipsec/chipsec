@@ -56,7 +56,6 @@ class reputation(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x556ec74
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.reputation.html'
         self.uefi = UEFI(self.cs)
         self.image = None

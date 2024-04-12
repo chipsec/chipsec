@@ -79,7 +79,6 @@ _EXCLUDE_BAR = []
 class pcie_fuzz(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x61c1431
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.pcie_fuzz.html'
 
     def fuzz_io_bar(self, bar, size=0x100):

@@ -72,7 +72,6 @@ TAGS = [MTAG_HWCONFIG]
 class sgx_check(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xb64a5d0
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.sgx_check.html'
         self.helper = self.cs.helper
         self.res = ModuleResult.PASSED
