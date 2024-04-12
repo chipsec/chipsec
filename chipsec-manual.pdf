@@ -5461,7 +5461,7 @@ endobj
 endobj
 839 0 obj
 <<
-/Author () /CreationDate (D:20240328165057+00'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20240328165057+00'00') /Producer (ReportLab PDF Library - www.reportlab.com) 
+/Author () /CreationDate (D:20240412022614+00'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20240412022614+00'00') /Producer (ReportLab PDF Library - www.reportlab.com) 
   /Subject (\(unspecified\)) /Title () /Trapped /False
 >>
 endobj
@@ -5472,7 +5472,7 @@ endobj
 endobj
 841 0 obj
 <<
-/Count 297 /Dest [ 516 0 R /XYZ 57.02362 753.0236 0 ] /First 842 0 R /Last 1131 0 R /Parent 840 0 R /Title (CHIPSEC 1.13.0)
+/Count 297 /Dest [ 516 0 R /XYZ 57.02362 753.0236 0 ] /First 842 0 R /Last 1131 0 R /Parent 840 0 R /Title (CHIPSEC 1.13.1)
 >>
 endobj
 842 0 obj
@@ -7044,7 +7044,7 @@ n -10 0 491.2283 24 re B*
 Q
 q
 0 .443137 .772549 rg
-BT 1 0 0 1 0 3 Tm /F1 15 Tf 18 TL 193.5067 0 Td (version 1.13.0) Tj T* -193.5067 0 Td ET
+BT 1 0 0 1 0 3 Tm /F1 15 Tf 18 TL 193.5067 0 Td (version 1.13.1) Tj T* -193.5067 0 Td ET
 Q
 Q
 q
@@ -7068,7 +7068,7 @@ q
 1 0 0 1 57.02362 439.2343 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 205.8742 0 Td (March 28, 2024) Tj T* -205.8742 0 Td ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL 209.7642 0 Td (April 12, 2024) Tj T* -209.7642 0 Td ET
 Q
 Q
 q
@@ -7116,7 +7116,7 @@ BT /F1 10 Tf 12 TL ET
 q
 1 0 0 1 0 618.6 cm
 q
-BT 1 0 0 1 0 1.7 Tm 10.2 TL /F2 8.5 Tf 0 .4 .6 rg (CHIPSEC 1.13.0) Tj T* ET
+BT 1 0 0 1 0 1.7 Tm 10.2 TL /F2 8.5 Tf 0 .4 .6 rg (CHIPSEC 1.13.1) Tj T* ET
 Q
 Q
 q
@@ -10521,7 +10521,7 @@ q
 n -10 0 491.2283 30 re B*
 Q
 q
-BT 1 0 0 1 0 4 Tm 24 TL /F1 20 Tf 1 1 1 rg (CHIPSEC 1.13.0) Tj T* ET
+BT 1 0 0 1 0 4 Tm 24 TL /F1 20 Tf 1 1 1 rg (CHIPSEC 1.13.1) Tj T* ET
 Q
 Q
 q
@@ -10850,7 +10850,7 @@ q
 1 0 0 1 51.02362 773.1969 cm
 q
 0 0 0 rg
-BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (1 - CHIPSEC 1.13.0) Tj T* ET
+BT 1 0 0 1 0 2 Tm /F1 10 Tf 12 TL (1 - CHIPSEC 1.13.1) Tj T* ET
 Q
 Q
 q
@@ -51625,7 +51625,7 @@ xref
 trailer
 <<
 /ID 
-[<e4f82adc13033114b3e6128c8fec858a><e4f82adc13033114b3e6128c8fec858a>]
+[<3d792b8eae28f209960396f35ef0b394><3d792b8eae28f209960396f35ef0b394>]
 % ReportLab generated PDF document -- digest (http://www.reportlab.com)
 
 /Info 839 0 R
