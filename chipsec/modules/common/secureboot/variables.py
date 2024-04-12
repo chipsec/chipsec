@@ -65,7 +65,6 @@ class variables(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
-        self.result.id = 0x7af0b3e
         self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.secureboot.variables.html'
 
     def is_supported(self) -> bool:

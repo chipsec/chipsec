@@ -54,7 +54,6 @@ class smm_code_chk(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x08f743d
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm_code_chk.html'
 
     def is_supported(self) -> bool:

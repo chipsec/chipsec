@@ -43,7 +43,6 @@ TAGS = [MTAG_HWCONFIG]
 class ia_untrusted(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x63d2b37
         self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.ia_untrusted.html'
 
     def is_supported(self) -> bool:

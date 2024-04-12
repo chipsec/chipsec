@@ -78,7 +78,6 @@ class s3bootscript(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
-        self.result.id = 0x9e3cf54
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.s3bootscript.html'
 
     def is_supported(self) -> bool:
@@ -149,7 +148,7 @@ class s3bootscript(BaseModule):
                 self.logger.log_good("Didn't find any S3 boot-scripts in EFI variables")
                 self.logger.log_warning("S3 Boot-Script was not found. Firmware may be using other ways to store/locate it, or OS might be blocking access.")
                 self.result.setStatusBit(self.result.status.VERIFY)
-                return self.result.getReturnCode(ModuleResult.WARNING)
+                return ModuleResult.WARNING
 
 
             self.logger.log_important(f'Found {len(bootscript_PAs):d} S3 boot-script(s) in EFI variables')

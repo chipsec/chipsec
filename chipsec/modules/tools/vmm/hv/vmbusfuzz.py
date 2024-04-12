@@ -65,7 +65,6 @@ class VMBusFuzz(VMBusDiscovery):
         self.fuzzing = False
         self.fuzzing_rules = {}
         self.current_message = 0
-        self.result.id = 0x17f285c
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.vmbusfuzz.html'
 
     ##

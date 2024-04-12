@@ -137,7 +137,6 @@ class s3script_modify(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xa33100e
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.s3script_modify.html'
         self.logger.HAL = True
         self._uefi = UEFI(self.cs)

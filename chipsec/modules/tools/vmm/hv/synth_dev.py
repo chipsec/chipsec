@@ -97,7 +97,6 @@ class VMBusDeviceFuzzer(VMBusDiscovery):
 class synth_dev(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x6221b7e
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_dev.html'
 
     def usage(self):

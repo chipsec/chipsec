@@ -46,7 +46,6 @@ class wsmt(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._acpi = ACPI(self.cs)
-        self.result.id = 0x6ae0748
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.wsmt.html'
 
     def is_supported(self):

@@ -74,7 +74,6 @@ class RingBufferFuzzer(RingBuffer):
 class synth_kbd(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x0d28d62
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.synth_kbd.html'
 
     def usage(self):

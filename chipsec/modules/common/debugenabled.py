@@ -52,7 +52,6 @@ class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0xe516a56
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.debugenabled.html'
         self.is_enable_set = False
         self.is_debug_set = False
@@ -143,5 +142,6 @@ class debugenabled(BaseModule):
             self.res = self.result.getReturnCode(ModuleResult.WARNING)
         else:
             self.logger.log_passed('All checks have successfully passed')
+            self.res = self.result.getReturnCode(ModuleResult.PASSED)
 
         return self.res

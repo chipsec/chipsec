@@ -494,7 +494,6 @@ class te(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x2d6c9a9
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html'
 
     def is_supported(self):

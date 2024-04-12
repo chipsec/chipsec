@@ -51,7 +51,6 @@ class spi_desc(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x63fa19c
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_desc.html'
 
     def is_supported(self) -> bool:

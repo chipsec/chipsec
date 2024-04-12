@@ -46,7 +46,6 @@ COMMON_FILL_PTRN = "".join([f'{(chr(x + 0x1E)):1}' for x in range(32)])
 class bios_kbrd_buffer(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x5ebf705
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_kbrd_buffer.html'
 
     def is_supported(self) -> bool:

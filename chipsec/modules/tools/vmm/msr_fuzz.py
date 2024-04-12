@@ -81,7 +81,6 @@ _EXCLUDE_MSR = []
 class msr_fuzz (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x2e31482
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.msr_fuzz.html'
 
     def fuzz_MSRs(self, msr_addr_start, random_order=False):

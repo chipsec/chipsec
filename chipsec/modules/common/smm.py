@@ -48,7 +48,6 @@ class smm(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.id = 0x3486891
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm.html'
 
     def is_supported(self) -> bool:

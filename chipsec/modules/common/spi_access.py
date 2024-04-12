@@ -58,7 +58,6 @@ class spi_access(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.spi = SPI(self.cs)
-        self.result.id = 0x23bb5d0
         self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_access.html'
 
     def is_supported(self) -> bool:
