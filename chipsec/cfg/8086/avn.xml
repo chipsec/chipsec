@@ -36,6 +36,7 @@ XML configuration for Avoton based platforms
     <bar name="RCBA"     bus="0" dev="0x1F" fun="0" reg="0xF0" width="4" mask="0xFFFFC000"   size="0x4000" enable_bit="0" desc="Root Complex Base Address"/>
     <!-- 24.5.1 -->
     <bar name="SPIBAR" register="SBASE" base_field="Base" enable_field="Enable" size="0x200" desc="SPI Register Range"/>
+    <bar name="MMCFG"   register="BECREG" base_field="ECBASE" size="0x10000000" enable_bit="ECENABLE" desc="PCI Express Register Range"/>
   </mmio>
   
   <registers>
@@ -56,6 +57,16 @@ XML configuration for Avoton based platforms
       <field name="SRC"     bit="2" size="2" desc="SPI Read Configuration"/>
       <field name="TSS"     bit="4" size="1" desc="Top Swap Status"/>
       <field name="SMM_BWP" bit="5" size="1" desc="SMM BIOS Write Protect"/>
+    </register>
+
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Message Bus registers        -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+    <!-- B-unit -->
+    <register name="BECREG" type="msgbus" port="0x3" offset="0x27" size="4" desc="Extended Configuration Space Base" >
+      <field name="ECENABLE" bit="0"  size="1" desc="EC Enable"/>
+      <field name="ECBASE"   bit="28" size="4" desc="EC Boundary"/>
     </register>
 
   </registers>
