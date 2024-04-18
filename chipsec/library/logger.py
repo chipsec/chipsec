@@ -236,6 +236,12 @@ class Logger:
         """Logs a debug message"""
         self.log(text, level.DEBUG)
 
+    def set_log_level(self, verbose: bool, hal: bool, debug: bool, vverbose: bool) -> None:
+        self.VERBOSE = True if verbose or vverbose else self.VERBOSE
+        self.HAL = True if hal or vverbose else self.HAL
+        self.DEBUG = True if debug or vverbose else self.DEBUG
+        self.setlevel()
+
     def setlevel(self) -> None:
         if self.DEBUG:
             self.chipsecLogger.setLevel(level.DEBUG.value)
