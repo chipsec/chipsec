@@ -358,17 +358,7 @@ class ChipsecMain:
 
     def parse_switches(self) -> None:
         """Configure logging parameters based on arguments"""
-        if self.verbose:
-            self.logger.VERBOSE = True
-        if self.hal:
-            self.logger.HAL = True
-        if self.debug:
-            self.logger.DEBUG = True
-        if self.vverbose:
-            self.logger.VERBOSE = True
-            self.logger.DEBUG = True
-            self.logger.HAL = True
-        self.logger.setlevel()
+        self.logger.set_log_level(self.verbose, self.hal, self.debug, self.vverbose)
         if self.log:
             self.logger.set_log_file(self.log)
             self._autolog_disable = True
