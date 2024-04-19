@@ -139,7 +139,7 @@ jobs:
         modinfo "${MODULE}"
 
     - name: Upload Linux driver from ${{ steps.modinfo.outputs.module_path }}
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.3.2
       with:
         name: chipsec-${{ steps.versions.outputs.chipsec }}.${{ matrix.distro.name }}-${{ matrix.distro.tag }}${{ matrix.distro.variant }}-${{ steps.versions.outputs.kernel }}.${{ steps.versions.outputs.uname_m }}
         path: ${{ steps.modinfo.outputs.module_path }}
@@ -186,14 +186,14 @@ jobs:
       run: python setup.py build_ext -i
 
     - name: Upload Windows Main driver
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.3.2
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
         path: drivers/windows/chipsec/x64
         if-no-files-found: error
     
     - name: Upload Windows PCI Filter driver
-      uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+      uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # v4.3.2
       with:
         name: drivers_windows_x64__from_py${{ matrix.python }}
         path: drivers/windows/pcifilter/x64
