@@ -71,6 +71,7 @@ Examples:
 
     >>> chipsec_main.py -m tools.smm.smm_ptr
     >>> chipsec_main.py -m tools.smm.smm_ptr -a fuzzmore,0x0:0xFF -l smm.log
+    >>> chipsec_main.py -m tools.smm.smm_ptr -a scan,0x0:0xff
 
 .. warning ::
 
@@ -182,7 +183,7 @@ class smi_info:
         self.data = data
 
     def get_info(self):
-        if self.code == None:
+        if self.code is None:
             return None
         else:
             return f"duration {self.duration} code {self.code:02X} data {self.data:02X} ({gprs_info(self.gprs)})"
@@ -484,7 +485,7 @@ class smm_ptr(BaseModule):
         for line in fcfg:
             if '' == line.strip():
                 self.logger.log(f'\n[*] Testing SMI# 0x{_smi_desc.smi_code:02X} (data: 0x{_smi_desc.smi_data:02X}) {_smi_desc.name} ({_smi_desc.desc})')
-                if selfsmi_fuzz_iter(thread_id, _addr, _smi_desc):
+                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc):
                     bad_ptr_cnt += 1
                 _smi_desc = None
                 _smi_desc = smi_desc()
@@ -512,7 +513,7 @@ class smm_ptr(BaseModule):
 
         return bad_ptr_cnt
 
-    def test_fuzz(self, thread_id, smic_start, smic_end, _addr, _addr1, scan_mode=True):
+    def test_fuzz(self, thread_id, smic_start, smic_end, _addr, _addr1, scan_mode=False):
 
         scan = None
         if scan_mode:
@@ -562,19 +563,19 @@ class smm_ptr(BaseModule):
                             else:
                                 self.logger.log(f'    RBX: 0x{_addr:016X}')
                                 _smi_desc.gprs['rbx'] = gpr_value
-                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                     bad_ptr_cnt += 1
                                 _smi_desc.gprs['rbx'] = _FILL_VALUE_QWORD
 
                                 self.logger.log(f'    RSI: 0x{_addr:016X}')
                                 _smi_desc.gprs['rsi'] = gpr_value
-                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                     bad_ptr_cnt += 1
                                 _smi_desc.gprs['rsi'] = _FILL_VALUE_QWORD
 
                                 self.logger.log(f'    RDI: 0x{_addr:016X}')
                                 _smi_desc.gprs['rdi'] = gpr_value
-                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                                if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                     bad_ptr_cnt += 1
                                 _smi_desc.gprs['rdi'] = _FILL_VALUE_QWORD
                     else:
@@ -584,31 +585,31 @@ class smm_ptr(BaseModule):
                         else:
                             self.logger.log(f'    RBX: 0x{_addr:016X}')
                             _smi_desc.gprs['rbx'] = gpr_value
-                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                 bad_ptr_cnt += 1
                             _smi_desc.gprs['rbx'] = _FILL_VALUE_QWORD
 
                             self.logger.log(f'    RCX: 0x{_addr:016X}')
                             _smi_desc.gprs['rcx'] = gpr_value
-                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                 bad_ptr_cnt += 1
                             _smi_desc.gprs['rcx'] = _FILL_VALUE_QWORD
 
                             self.logger.log(f'    RSI: 0x{_addr:016X}')
                             _smi_desc.gprs['rsi'] = gpr_value
-                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                 bad_ptr_cnt += 1
                             _smi_desc.gprs['rsi'] = _FILL_VALUE_QWORD
 
                             self.logger.log(f'    RDI: 0x{_addr:016X}')
                             _smi_desc.gprs['rdi'] = gpr_value
-                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True, scan):
+                            if self.smi_fuzz_iter(thread_id, _addr, _smi_desc, False, True):
                                 bad_ptr_cnt += 1
                             _smi_desc.gprs['rdi'] = _FILL_VALUE_QWORD
                     if scan and scan.skip():
                         break
                 if scan_mode:
-                    msg = scan.log_smi_result(self.logger)
+                    scan.log_smi_result(self.logger)
                     scan.clear()
 
         return bad_ptr_cnt, scan
@@ -704,17 +705,18 @@ class smm_ptr(BaseModule):
         scan_mode = False
         try:
             if 'config' == test_mode:
-                bad_ptr_cnt, _ = self.test_config(thread_id, _smi_config_fname, _addr, _addr1)
+                bad_ptr_cnt = self.test_config(thread_id, _smi_config_fname, _addr, _addr1)
             elif test_mode in ['fuzz', 'fuzzmore']:
                 bad_ptr_cnt, _ = self.test_fuzz(thread_id, smic_start, smic_end, _addr, _addr1)
             elif test_mode in ['scan']:
                 scan_mode =  True
+                scan = None
                 bad_ptr_cnt, scan = self.test_fuzz(thread_id, smic_start, smic_end, _addr, _addr1, True)
         except BadSMIDetected as msg:
             bad_ptr_cnt = 1
             self.logger.log_important("Potentially bad SMI detected! Stopped fuzing (see FUZZ_BAIL_ON_1ST_DETECT option)")
 
-        if scan_mode:
+        if scan_mode and scan:
             self.logger.log_good(f'<<< Done: found {scan.get_total_outliers()} long-running SMIs')
         if bad_ptr_cnt > 0:
             self.logger.log_bad(f'<<< Done: found {bad_ptr_cnt:d} potential occurrences of unchecked input pointers')
