@@ -378,7 +378,6 @@ Common (default) XML platform configuration file
       <field name="LWSR"  bit="3"  size="1" desc="Lower Write Status Required"/>
       <field name="LWEWS" bit="4"  size="1" desc="Write Enable on Write Status"/>
       <field name="LEO"   bit="8"  size="8" desc="Lower Erase Opcode"/>
-      <field name="VCL"   bit="23" size="1" desc="Vendor Component Lock"/>
     </register>
     <register name="UVSCC" type="mmio" bar="SPIBAR" offset="0xC8" size="4" desc="Host Upper Vendor Specific Component Capabilities">
       <field name="UBES"  bit="0"  size="2" desc="Upper Block/Sector Erase Size"/>
