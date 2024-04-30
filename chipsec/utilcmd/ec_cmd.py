@@ -69,7 +69,7 @@ class ECCommand(BaseCommand):
         parser_dump = subparsers.add_parser('dump', parents=[parser_sz])
         parser_dump.set_defaults(func=self.dump, size=0x160)
 
-        parser_read = subparsers.add_parser('read', parents=[parser_offset])
+        parser_read = subparsers.add_parser('read', parents=[parser_offset, parser_sz])
         parser_read.set_defaults(func=self.read, size=None)
 
         parser_write = subparsers.add_parser('write', parents=[parser_offset])
@@ -103,7 +103,7 @@ class ECCommand(BaseCommand):
         else:
             val = self._ec.read_memory(
                 self.offset) if self.offset < 0x100 else self._ec.read_memory_extended(self.offset)
-            self.logger.log(f'[CHIPSEC] EC memory read: offset 0x{self.start_offset:X} = 0x{val:X}')
+            self.logger.log(f'[CHIPSEC] EC memory read: offset 0x{self.offset:X} = 0x{val:X}')
 
     def write(self) -> None:
         self.logger.log(f'[CHIPSEC] EC memory write: offset 0x{self.offset:X} = 0x{self.wval:X}')
