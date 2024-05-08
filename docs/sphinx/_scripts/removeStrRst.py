@@ -28,7 +28,7 @@ def modulesRst():
     for _, _, rstFiles in os.walk(os.path.join(doc_path, 'modules')):
         for file in rstFiles:
             f = open(os.path.join('modules', file), 'r')
-            title = f.readline().split('.')
+            title = f.readline()
             contents = f.read()
             f.close()
 
@@ -40,7 +40,7 @@ def modulesRst():
             contents = contents.replace(':members:', '')
             
             f = open(os.path.join('modules', file), 'w')
-            f.write(title[-1] + contents)
+            f.write(title + contents)
             f.close()
 
 # Create rst for xml files
