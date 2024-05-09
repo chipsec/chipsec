@@ -138,6 +138,10 @@ ModuleResultName = {
     ModuleResult.NOTAPPLICABLE: 'NotApplicable'
 }
 
+def max_result_priority(previous_result: ModuleResult, current_result: ModuleResult) -> ModuleResult:
+    '''Accepts two results and returns either current_result (if equal) or the max of the two'''
+    return previous_result if result_priority[previous_result] > result_priority[current_result] else current_result
+
 def getModuleResultName(res, using_return_codes) -> str:
     if using_return_codes:
         result_mask = 0xFFFFFFFF00000000
