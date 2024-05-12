@@ -163,7 +163,7 @@ class IOBAR(hal_base.HALBase):
             if 'register' in _bar:
                 _s = _bar['register']
                 if 'offset' in _bar:
-                    _s += (f' + 0x{int(_bar["offset"], 16):X}')
+                    _s += (f' + 0x{int(str(_bar["offset"]), 16):X}')
             else:
                 _s = f'{int(_bar["bus"], 16):02X}:{int(_bar["dev"], 16):02X}.{int(_bar["fun"], 16):01X} + {_bar["reg"]}'
 
