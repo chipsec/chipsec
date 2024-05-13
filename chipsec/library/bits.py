@@ -85,6 +85,10 @@ BIT61 = 0x2000000000000000
 BIT62 = 0x4000000000000000
 BIT63 = 0x8000000000000000
 
+def make_mask(size: int, mask_start:Optional[int] = 0) -> int:
+    mask = (1 << size) - 1
+    mask <<= mask_start
+    return mask
 
 def bit(bit_num: int) -> int:
     return int(1 << bit_num)
@@ -114,3 +118,9 @@ def get_bits(value: int, start: int, nbits: int) -> int:
     ret = value >> start
     ret &= (1 << nbits) - 1
     return ret
+
+def set_bits(bit: int, size:int, initial_value:int, value: int) -> int:
+    field_mask = make_mask(size)
+    new_value = initial_value & ~(field_mask << bit)  # keep other fields
+    new_value |= ((value & field_mask) << bit)
+    return new_value
