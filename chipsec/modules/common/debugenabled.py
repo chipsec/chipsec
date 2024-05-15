@@ -52,7 +52,6 @@ class debugenabled(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.debugenabled.html'
         self.is_enable_set = False
         self.is_debug_set = False
         self.is_lock_set = True

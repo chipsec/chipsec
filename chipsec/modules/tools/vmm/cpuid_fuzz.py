@@ -87,7 +87,6 @@ _LOG_OUT_RESULTS = False
 class cpuid_fuzz (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.cpuid_fuzz.html'
 
     def fuzz_CPUID(self, eax_start, random_order = False):
         eax_range = _NO_EAX_TO_FUZZ

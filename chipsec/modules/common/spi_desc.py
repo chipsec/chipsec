@@ -51,7 +51,6 @@ class spi_desc(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_desc.html'
 
     def is_supported(self) -> bool:
         if self.cs.register.has_all_fields('FRAP', ['BRRA', 'BRWA']):

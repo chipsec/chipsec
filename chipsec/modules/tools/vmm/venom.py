@@ -62,7 +62,6 @@ FD_CMD = 0x8E  # FD_CMD_DRIVE_SPECIFICATION_COMMAND # FD_CMD_READ_ID = 0x0A
 class venom (BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.venom.html'
 
     def venom_impl(self):
         self.cs.io.write_port_byte(FDC_PORT_DATA_FIFO, FD_CMD)

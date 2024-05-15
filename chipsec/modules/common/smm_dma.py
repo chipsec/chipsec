@@ -68,7 +68,6 @@ class smm_dma(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm_dma.html'
 
     def is_supported(self) -> bool:
         if self.cs.is_atom():

@@ -52,7 +52,6 @@ class rtclock(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.cmos = CMOS(self.cs)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.rtclock.html'
         self.user_request = False
         self.test_offset = 0x38
         self.test_value = 0xAA

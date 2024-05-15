@@ -50,7 +50,6 @@ _MODULE_NAME = 'vbox_crash_apicbase'
 class vbox_crash_apicbase(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.vbox.vbox_crash_apicbase.html'
 
     def run(self, module_argv):
         self.logger.start_test('Host OS Crash due to IA32_APIC_BASE (Oracle VirtualBox CVE-2015-0377)')

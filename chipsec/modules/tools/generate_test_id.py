@@ -39,7 +39,6 @@ import hashlib
 class generate_test_id(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.generate_test_id.html'
 
     def usage(self):
         self.logger.log(__doc__.replace('`', ''))

@@ -310,7 +310,6 @@ class smm_ptr(BaseModule):
         self.test_ptr_in_buffer = False
         self.fill_byte = _MEM_FILL_VALUE
         self.fill_size = _MEM_FILL_SIZE
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.smm.smm_ptr.html'
 
     def is_supported(self):
         return True

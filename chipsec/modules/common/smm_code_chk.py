@@ -54,7 +54,6 @@ class smm_code_chk(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smm_code_chk.html'
 
     def is_supported(self) -> bool:
         if not self.cs.register.is_defined('MSR_SMM_FEATURE_CONTROL'):

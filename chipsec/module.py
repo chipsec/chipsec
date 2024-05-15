@@ -22,8 +22,9 @@
 import re
 import os
 import traceback
-import pickle
+import json
 import chipsec.library.logger
+from chipsec.library.url import url
 from chipsec.library.returncode import ModuleResult, generate_hash_id
 
 _importlib = True
@@ -42,6 +43,7 @@ class Module:
         self.module = None
         self.mod_obj = None
         self.module_ids = self.get_module_ids_dictionary()
+        self.url = url()
 
     def __lt__(self, other):
         return self.name < other.name
@@ -77,15 +79,15 @@ class Module:
         return loaded
     
     def get_module_ids_dictionary(self):
-        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.pkl'), 'rb') as module_ids_file:
-            module_ids = pickle.load(module_ids_file)
+        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
+            module_ids = json.loads(module_ids_file.read())
         return module_ids
     
     def update_module_ids_file(self):
-        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.pkl'), 'wb') as module_ids_file:
-            pickle.dump(self.module_ids, module_ids_file)
+        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.json'), 'w') as module_ids_file:
+            module_ids_file.write(json.dumps(self.module_ids))
 
-    def get_module_id(self, module_name):
+    def get_module_id(self, module_name):  
         if module_name in self.module_ids:
             module_id = self.module_ids[module_name]
         else:
@@ -105,6 +107,7 @@ class Module:
 
         if isinstance(self.mod_obj, chipsec.module_common.BaseModule):
             self.mod_obj.result.id = self.get_module_id(self.name)
+            self.mod_obj.result.url = self.url.get_module_url(self.name)
             if self.mod_obj.is_supported():
                 result = self.mod_obj.run(module_argv)
             else:

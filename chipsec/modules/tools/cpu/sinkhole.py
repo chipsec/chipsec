@@ -56,7 +56,6 @@ class sinkhole(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.cpu.sinkhole.html'
 
     def is_supported(self):
         if not (self.cs.os_helper.is_windows() or self.cs.os_helper.is_linux()):
