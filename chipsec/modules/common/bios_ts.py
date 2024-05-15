@@ -47,7 +47,6 @@ TAGS = [MTAG_BIOS]
 class bios_ts(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_ts.html'
 
     def is_supported(self) -> bool:
         if self.cs.control.is_defined('BiosInterfaceLockDown'):

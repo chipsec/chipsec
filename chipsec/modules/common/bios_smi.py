@@ -54,7 +54,6 @@ class bios_smi(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_smi.html'
 
     def is_supported(self) -> bool:
         if not self.cs.control.is_defined('SmmBiosWriteProtection') or \

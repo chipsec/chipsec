@@ -46,7 +46,6 @@ class memconfig(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.memconfig.html'
         self.memmap_registers = {
             "PCI0.0.0_GGC": 'GGCLOCK',
             "PCI0.0.0_PAVPC": 'PAVPLCK',

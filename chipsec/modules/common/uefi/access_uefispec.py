@@ -56,7 +56,6 @@ class access_uefispec(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self._uefi = UEFI(self.cs)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.uefi.access_uefispec.html'
 
         nv = EFI_VARIABLE_NON_VOLATILE
         bs = EFI_VARIABLE_BOOTSERVICE_ACCESS

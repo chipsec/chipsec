@@ -80,7 +80,6 @@ _EXCLUDE_PORTS = []
 class iofuzz(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.iofuzz.html'
 
     def fuzz_ports(self, iterations, write_count, random_order=False):
 

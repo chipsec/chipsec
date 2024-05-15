@@ -76,7 +76,6 @@ class uefivar_fuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.uefivar_fuzz.html'
         self._uefi = UEFI(self.cs)
 
     def is_supported(self):

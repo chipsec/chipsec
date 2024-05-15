@@ -62,7 +62,6 @@ class smrr(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.smrr.html'
 
     def is_supported(self) -> bool:
         mtrr_exist = self.cs.register.is_defined('MTRRCAP')

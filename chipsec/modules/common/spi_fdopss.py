@@ -44,7 +44,6 @@ class spi_fdopss(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.spi_fdopss.html'
 
     def is_supported(self) -> bool:
         if not self.cs.register.has_field('HSFS', 'FDOPSS'):

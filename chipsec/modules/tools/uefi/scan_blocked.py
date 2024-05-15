@@ -69,7 +69,7 @@ class scan_blocked(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.uefi.scan_blocked.html'
+
         self.uefi = UEFI(self.cs)
         self.cfg_name = 'blockedlist.json'
         self.image = None

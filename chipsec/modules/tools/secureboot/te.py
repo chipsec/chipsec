@@ -494,7 +494,6 @@ class te(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.secureboot.te.html'
 
     def is_supported(self):
         #win8 = self.cs.helper.is_win8_or_greater()

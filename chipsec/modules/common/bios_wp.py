@@ -71,7 +71,6 @@ class bios_wp(BaseModule):
     def __init__(self):
         BaseModule.__init__(self)
         self.spi = SPI(self.cs)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.bios_wp.html'
 
     def is_supported(self) -> bool:
         ble_exists = self.cs.control.is_defined('BiosLockEnable')

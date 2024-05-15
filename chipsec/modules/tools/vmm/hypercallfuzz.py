@@ -82,9 +82,7 @@ class hypercallfuzz(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.tools.vmm.hv.hypercallfuzz.html'
         self.vmm = VMM(self.cs)
-
         self.random_order = True
         self.gprs = GPRS
         self.vector_reg = None
