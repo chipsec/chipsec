@@ -46,10 +46,12 @@ class MMCfgBaseCommand(BaseCommand):
 
     def run(self) -> None:
         _mmio = mmio.MMIO(self.cs)
-        pciexbar, pciexbar_sz = _mmio.get_MMCFG_base_address()
-        self.logger.log(f'[CHIPSEC] Memory Mapped Config Base: 0x{pciexbar:016X}')
-        self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar_sz:016X}')
-        self.logger.log('')
+        pciexbarlist = _mmio.get_MMCFG_base_addresses()
+        for pciexbar in pciexbarlist:
+            self.logger.log(f'[CHIPSEC] Memory Mapped Config Base: 0x{pciexbar[0]:016X}')
+            self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar[1]:016X}')
+            self.logger.log('')
+
 
 
 commands = {'mmcfg_base': MMCfgBaseCommand}
