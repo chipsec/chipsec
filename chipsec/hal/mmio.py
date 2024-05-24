@@ -412,9 +412,14 @@ class MMIO(hal_base.HALBase):
     ##################################################################################
     # Access to Memory Mapped PCIe Configuration Space
     ##################################################################################
+    def get_MMCFG_base_addresses(self) -> List[Tuple[int, int]]:
+        mmcfg_base_address_list = []
+        for bus in self.cs.Cfg.CONFIG_PCI['MemMap_VTd']['bus']:
+            mmcfg_base_address_list.append(self.get_MMCFG_base_address(bus))
+        return mmcfg_base_address_list
 
-    def get_MMCFG_base_address(self) -> Tuple[int, int]:
-        (bar_base, bar_size) = self.get_MMIO_BAR_base_address('MMCFG')
+    def get_MMCFG_base_address(self, bus: Optional[int] = None) -> Tuple[int, int]:
+        (bar_base, bar_size) = self.get_MMIO_BAR_base_address('MMCFG', bus)
         if self.cs.register.has_field("PCI0.0.0_PCIEXBAR", "LENGTH") and not self.cs.is_server():
             len = self.cs.register.read_field("PCI0.0.0_PCIEXBAR", "LENGTH")
             if len == PCI_PCIEXBAR_REG_LENGTH_256MB:
