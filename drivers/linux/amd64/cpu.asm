@@ -39,6 +39,8 @@
 
  global __cpuid__
  global __swsmi__
+ global __swsmi_timed__
+ global __swsmi_timed_test__
 
  section .text
 
@@ -417,6 +419,84 @@ __swsmi__:
     xchg rsi, [r10+028h] ; rsi_value
     xchg rdi, [r10+030h] ; rdi_value
 
+    ret
+
+;------------------------------------------------------------------------------
+;This function has two arguments: SMI_CTX structure pointer which contain SMI code and data values and 6 regs: rax, rbx, rcx, rdx, rsi, rdi:
+;    IN       UINT64	smi_code_data (only lower 16 bit used)
+;    IN/OUT   UINT64	rax_value
+;    IN/OUT   UINT64	rbx_value
+;    IN/OUT   UINT64	rcx_value
+;    IN/OUT   UINT64	rdx_value
+;    IN/OUT   UINT64	rsi_value
+;    IN/OUT   UINT64	rdi_value
+; The second argument is a pointer to an unsigned long to return the measured execution time
+;------------------------------------------------------------------------------
+;  void
+; __swsmi_timed__ (
+;    SMI_CTX ctx            // rdi
+;    unsigned long *time    // rsi
+;    )
+;------------------------------------------------------------------------------
+__swsmi_timed__:
+    mov  r10, rdi
+    push r12 ; callee-saved register
+    mov  r12, rsi
+
+    ; setting up GPR (arguments) to SMI handler call
+    ; notes:
+    ;   RAX will get partially overwritten (AX) by smi_code_data
+    xchg rax, [r10+08h]  ; rax_value (partially overwritten with smi_code_data)
+    mov  ax,  [r10+0h]   ; smi_code_data
+    xchg rbx, [r10+010h] ; rbx_value
+    xchg rcx, [r10+018h] ; rcx_value
+    xchg rdx, [r10+020h] ; rdx_value
+    xchg rsi, [r10+028h] ; rsi_value
+    xchg rdi, [r10+030h] ; rdi_value
+
+    ; Output smi_code_data split up to their designated ports, SW SMI data
+    ; (0xB3) and SW SMI control (0xB2), respectively.
+    ;
+    ; Resist from outputting both at once as a single word, as some systems
+    ; reject the request if the i/o spans more than a byte, e.g.:
+    ; https://github.com/tianocore/edk2-platforms/blob/aa3f6fd542e99dde4206537b095f1a2201275e75/Silicon/Intel/CoffeelakeSiliconPkg/Pch/PchSmiDispatcher/Smm/PchSmmSw.c#L314
+    ror ax, 8
+    out 0B3h, al
+
+    ; read time-stamp counter
+    mov r9, rax
+    mov r11, rdx
+    rdtsc
+    shl rdx, 32
+    or rax, rdx
+    mov r8, rax
+    mov rax, r9
+    mov rdx, r11
+
+    ; trigger SMI
+    ror ax, 8
+    out 0B2h, al
+
+    ; measure SMI execution time
+    mov r9, rax
+    mov r11, rdx
+    rdtsc
+    shl rdx, 32
+    or rax, rdx
+    sub rax, r8
+    mov [r12], rax
+    mov rax, r9
+    mov rdx, r11
+
+    ; some SMI handlers return data/errorcode in GPRs, need to return this to the caller
+    xchg rax, [r10+08h]  ; rax_value
+    xchg rbx, [r10+010h] ; rbx_value
+    xchg rcx, [r10+018h] ; rcx_value
+    xchg rdx, [r10+020h] ; rdx_value
+    xchg rsi, [r10+028h] ; rsi_value
+    xchg rdi, [r10+030h] ; rdi_value
+
+    pop r12
     ret
 
 ;------------------------------------------------------------------------------
