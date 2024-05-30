@@ -214,7 +214,7 @@ def get_device_name_by_didvid(vid: int, did: int) -> str:
     return ''
 
 
-def print_pci_devices(_devices: List[Tuple[int, int, int, int, int]]) -> None:
+def print_pci_devices(_devices: List[Tuple[int, int, int, int, int, int]]) -> None:
     logger().log("BDF     | VID:DID   | Vendor                       | Device")
     logger().log("-------------------------------------------------------------------------")
     for (b, d, f, vid, did, _) in _devices:

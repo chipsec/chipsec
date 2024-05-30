@@ -203,7 +203,7 @@ class pcie_fuzz(BaseModule):
             _bus = int(module_argv[0], 16)
             _dev = int(module_argv[1], 16)
             _fun = int(module_argv[2], 16)
-            pcie_devices.append((_bus, _dev, _fun, 0, 0))
+            pcie_devices.append((_bus, _dev, _fun, 0, 0, 0))
         else:
             self.logger.log('[*] Enumerating available PCIe devices..')
             pcie_devices = self.cs.pci.enumerate_devices()
