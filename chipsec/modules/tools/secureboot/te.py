@@ -517,6 +517,8 @@ class te(BaseModule):
                 file_path = module_argv[1]
             if not os.path.exists(file_path):
                 self.logger.log_error(f'Cannot find file \'{file_path}\'')
+                self.logger.log_error(f'Please download it from https://github.com/chipsec/chipsec/releases/download/binaries/Shell.efi ')
+                self.logger.log_error(f'And move file to \'{file_path}\'')
                 self.result.setStatusBit(self.result.status.ACCESS_RW)
                 return self.result.getReturnCode(ModuleResult.ERROR)
 
@@ -536,7 +538,7 @@ class te(BaseModule):
             if len(bootloader_paths) == 0:
                 self.logger.log("[*] no bootloaders to replace. Exit...")
                 self.result.setStatusBit(self.result.status.FEATURE_DISABLED)
-                return self.result.getReturnCode(ModuleResult.WARNING) 
+                return self.result.getReturnCode(ModuleResult.WARNING)
 
             do_mount = self.cs.os_helper.is_windows()  # @TODO
             if 'restore_bootloader' == mode:
@@ -551,7 +553,7 @@ class te(BaseModule):
 
         if sts:
             self.result.setStatusBit(self.result.status.SUCCESS)
-            return self.result.getReturnCode(ModuleResult.PASSED) 
+            return self.result.getReturnCode(ModuleResult.PASSED)
         else:
             self.result.setStatusBit(self.result.status.RESTORE)
             return self.result.getReturnCode(ModuleResult.ERROR)
