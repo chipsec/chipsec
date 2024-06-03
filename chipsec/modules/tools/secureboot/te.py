@@ -518,7 +518,7 @@ class te(BaseModule):
             if not os.path.exists(file_path):
                 self.logger.log_error(f'Cannot find file \'{file_path}\'')
                 self.logger.log_error(f'Please download it from https://github.com/chipsec/chipsec/releases/download/binaries/Shell.efi ')
-                self.logger.log_error(f'And put file to \'{file_path}\'')
+                self.logger.log_error(f'And move file to \'{file_path}\'')
                 self.result.setStatusBit(self.result.status.ACCESS_RW)
                 return self.result.getReturnCode(ModuleResult.ERROR)
 
