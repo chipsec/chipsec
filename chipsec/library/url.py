@@ -26,8 +26,10 @@ Library to build module URLs
 import os
 import json
 import re
+from chipsec.library.file import get_main_dir
 
-class url: 
+
+class url:
     def __init__(self):
         self.url_info = self.get_url_info()
         self.base_url = self.get_base_url()
@@ -36,15 +38,15 @@ class url:
         self.ends_with = self.url_info.get('ends_with', '')
 
     def get_url_info(self):
-        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'url_format.json'), 'r') as url_file:
-            return  json.loads(url_file.read())
-        
+        with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'url_format.json'), 'r') as url_file:
+            return json.loads(url_file.read())
+
     def get_base_url(self):
         if 'base_url' not in self.url_info:
-            raise Exception("Missing Base URL in url file")
+            raise Exception('Missing Base URL in url file')
         return self.url_info['base_url']
 
     def get_module_url(self, module_name: str) -> str:
-        module_name = re.sub(self.replace_find, self.replace_with , module_name)
+        module_name = re.sub(self.replace_find, self.replace_with, module_name)
         module_url = f'{self.base_url}{module_name}{self.ends_with}'
         return module_url

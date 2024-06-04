@@ -24,6 +24,7 @@ import os
 import traceback
 import json
 import chipsec.library.logger
+from chipsec.library.file import get_main_dir
 from chipsec.library.url import url
 from chipsec.library.returncode import ModuleResult, generate_hash_id
 
@@ -33,7 +34,7 @@ try:
 except ImportError:
     _importlib = False
 
-MODPATH_RE = re.compile(r"^\w+(\.\w+)*$")
+MODPATH_RE = re.compile(r'^\w+(\.\w+)*$')
 
 
 class Module:
@@ -77,25 +78,25 @@ class Module:
                     self.logger.log_bad(traceback.format_exc())
                 raise msg
         return loaded
-    
+
     def get_module_ids_dictionary(self):
-        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
+        with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'r') as module_ids_file:
             module_ids = json.loads(module_ids_file.read())
         return module_ids
-    
+
     def update_module_ids_file(self):
-        with open(os.path.join(os.getcwd(), 'chipsec', 'library', 'module_ids.json'), 'w') as module_ids_file:
+        with open(os.path.join(get_main_dir(), 'chipsec', 'library', 'module_ids.json'), 'w') as module_ids_file:
             module_ids_file.write(json.dumps(self.module_ids))
 
-    def get_module_id(self, module_name):  
+    def get_module_id(self, module_name):
         if module_name in self.module_ids:
             module_id = self.module_ids[module_name]
         else:
             module_id = generate_hash_id(module_name)
             self.module_ids[module_name] = module_id
-            self.update_module_ids_file() 
+            self.update_module_ids_file()
         return module_id
-    
+
     def run(self, module_argv):
         self.get_module_object()
 
@@ -141,7 +142,7 @@ class Module:
         myfile = ''
         try:
             if _importlib:
-                myfile = getattr(self.module, "__file__")
+                myfile = getattr(self.module, '__file__')
         except:
             pass
         return myfile
