@@ -21,7 +21,6 @@ jobs:
           - {name: "archlinux", tag: "latest", variant: "-zen", image_prefix: "docker.io/library/"}
           - {name: "archlinux", tag: "base", image_prefix: "docker.io/library/"}
           - {name: "centos", tag: "stream9", image_prefix: "quay.io/centos/"}
-          - {name: "centos", tag: "stream8", image_prefix: "quay.io/centos/"}
           - {name: "debian", tag: "bookworm-slim", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "11", image_prefix: "docker.io/library/"}
           - {name: "debian", tag: "10", image_prefix: "docker.io/library/"}
@@ -59,13 +58,7 @@ jobs:
     - name: Install CentOS dependencies
       if: matrix.distro.name == 'centos'
       run: |
-        if [ "${{ matrix.distro.tag }}" = 7 ] ; then
-            yum install -y kernel kernel-devel nasm
-            yum install -y elfutils-libelf-devel gcc git make
-        elif [ "${{ matrix.distro.tag }}" = stream8 ] ; then
-            dnf install -y --enablerepo=powertools kernel kernel-devel nasm
-            dnf install -y elfutils-libelf-devel gcc git make
-        elif [ "${{ matrix.distro.tag }}" = stream9 ] ; then
+        if [ "${{ matrix.distro.tag }}" = stream9 ] ; then
             dnf install -y --enablerepo=crb kernel kernel-devel nasm
             dnf install -y elfutils-libelf-devel gcc git make
         fi
