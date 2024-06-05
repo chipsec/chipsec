@@ -46,7 +46,7 @@ from chipsec import chipset
 from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger
 from chipsec.library.banner import print_banner, print_banner_properties
-from chipsec.testcase import ExitCode, TestCase, ChipsecResults
+from chipsec.testcase import ExitCode, TestCase, ReturnCodeResults, LegacyResults
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.options import Options
 from chipsec.library.module_helper import enumerate_modules, print_modules
@@ -283,7 +283,7 @@ class ChipsecMain:
         return result
     
     def run_loaded_modules(self):
-        results = ChipsecResults(self._return_codes)
+        results = ReturnCodeResults() if self._return_codes else LegacyResults()
         results.add_properties(self.properties())
 
         # Print a list of all loaded modules
@@ -333,7 +333,7 @@ class ChipsecMain:
             else:
                 test_deltas = chipsec.library.result_deltas.compute_result_deltas(prev_results, results.get_results())
                 chipsec.library.result_deltas.display_deltas(test_deltas, self.no_time, t)
-        elif not self._list_tags and results.get_current is not None:
+        elif not self._list_tags and results.get_current_testcase is not None:
             results.print_summary(runtime)
         else:
             self.logger.log("[*] Available tags are:")
