@@ -32,23 +32,9 @@ from time import localtime, strftime
 from typing import Tuple, Dict, List, Optional
 from enum import Enum
 
-try:
-    # Prefer WConio2 over the original WConio as it is more up-to-date and better maintained.
-    # See https://pypi.org/project/WConio2/ for more details.
-    import WConio2 as WConio
-    has_WConio = True
-except ImportError:
-    try:
-        import WConio
-        has_WConio = True
-    except ImportError:
-        has_WConio = False
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
-LOG_PATH = os.path.join(dir_path, os.pardir, "logs")    
-
+BASE_PATH = os.path.join(dir_path, os.pardir, os.pardir)
 LOGGER_NAME = 'CHIPSEC_LOGGER'
-
 
 class level(Enum):
     DEBUG = 10
@@ -113,47 +99,18 @@ class chipsecStreamFormatter(logging.Formatter):
     # Respect https://no-color.org/ convention, and disable colorization
     # when the output is not a terminal (eg. redirection to a file)
     mPlatform = platform.system().lower()
-    if is_atty and os.getenv('NO_COLOR') is None and (("windows" == mPlatform and has_WConio) or "linux" == mPlatform):
-        if "windows" == mPlatform:
-            colors = {
-                'BLACK': WConio.BLACK,
-                'RED': WConio.LIGHTRED,
-                'GREEN': WConio.LIGHTGREEN,
-                'YELLOW': WConio.YELLOW,
-                'BLUE': WConio.LIGHTBLUE,
-                'PURPLE': WConio.LIGHTMAGENTA,
-                'CYAN': WConio.CYAN,
-                'BROWN': WConio.BROWN,
-                'WHITE': WConio.WHITE,
-                'LIGHT_GRAY': WConio.LIGHTGRAY,
-            }
-
-            old_setting = WConio.gettextinfo()[4] & 0x00FF
-            atexit.register(WConio.textcolor, old_setting)
-
-        elif "linux" == mPlatform:
-            csi = '\x1b['
-            reset = '\x1b[0m'
-            colors = {
-                'END': '30',
-                'LIGHT': '120',
-                'DARK': '60',
-                'BACKGROUND': '70',
-                'LIGHT_BACKGROUND': '130',
-                'GRAY': '30',
-                'RED': '31',
-                'GREEN': '32',
-                'YELLOW': '133',
-                'BROWN': '33',
-                'BLUE': '34',
-                'PURPLE': '35',
-                'CYAN': '36',
-                'LIGHT_GRAY': '37',
-                'NORMAL': '38',
-                'WHITE': '39',
-            }
-        else:
-            colors = {}
+    if is_atty and os.getenv('NO_COLOR') is None and (("windows" == mPlatform) or "linux" == mPlatform):
+        os.system('color')
+        colors = {
+            'GREY':'\033[90m',
+            'RED':'\033[91m',
+            'GREEN':'\033[92m',
+            'YELLOW':'\033[93m',
+            'BLUE':'\033[94m',
+            'PURPLE':'\033[95m',
+            'CYAN':'\033[96m', 
+            'WHITE':'\033[97m',
+            'END':'\033[0m' }
     else:
         colors = {}
 
@@ -166,11 +123,11 @@ class chipsecStreamFormatter(logging.Formatter):
         if record.levelno == level.DEBUG.value:
             color = 'BLUE'
         elif record.levelno in [level.VERBOSE.value, level.HAL.value, level.HELPER.value]:
-            color = 'LIGHT_GRAY'
+            color = 'GREY'
         elif record.levelno == level.GOOD.value:
             color = 'GREEN'
         elif record.levelno == level.IMPORTANT.value:
-            color = 'BROWN'
+            color = 'CYAN'
         elif record.levelno == level.WARNING.value:
             color = 'YELLOW'
         elif record.levelno in [level.ERROR.value, level.BAD.value]:
@@ -183,12 +140,10 @@ class chipsecStreamFormatter(logging.Formatter):
             if record.args[0] is not None and record.args[0] in self.colors:
                 color = record.args[0]
             record.args = tuple()
-        if color in self.colors and "linux" == self.mPlatform:
-            log_fmt = f'{self.csi};{self.colors[color]}m{self.infmt}{self.reset}'
+        if color in self.colors:
+            log_fmt = f'{self.colors[color]}{self.infmt}{self.colors["END"]}'
         else:
             log_fmt = self.infmt
-        if color in self.colors and "windows" == self.mPlatform:
-            WConio.textcolor(self.colors[color])
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
 
@@ -201,6 +156,7 @@ class Logger:
         self.mytime = localtime()
         self.logfile = None
         self.ALWAYS_FLUSH = False
+        self.LOG_PATH = os.path.join(BASE_PATH, "logs")
         self.logstream = logging.StreamHandler(sys.stdout)
         self.chipsecLogger = logging.getLogger(LOGGER_NAME)
         self.chipsecLogger.setLevel(logging.INFO)
@@ -215,6 +171,7 @@ class Logger:
         streamFormatter = chipsecStreamFormatter('%(additional)s%(message)s')
         self.logstream.setFormatter(streamFormatter)
         self.logFormatter = chipsecLogFormatter('%(additional)s%(message)s')
+
 
     def log(self, text: str, level: level = level.INFO, color: Optional[str] = ...) -> None:
         """Sends plain text to logging."""
@@ -253,9 +210,9 @@ class Logger:
             self.chipsecLogger.setLevel(level.INFO.value)
 
     def create_logs_folder(self):
-        if not os.path.exists(LOG_PATH):
+        if not os.path.exists(self.LOG_PATH):
             try:
-                os.mkdir(LOG_PATH)
+                os.mkdir(self.LOG_PATH)
             except:
                 print('Unable to create logs folder')
                 return False
@@ -264,7 +221,7 @@ class Logger:
     def set_autolog_file(self):
         if self.create_logs_folder():
             log_file_name = f'{strftime("%a%b%d%y-%H%M%S")}.log'
-            log_path = os.path.join(LOG_PATH, log_file_name)
+            log_path = os.path.join(self.LOG_PATH, log_file_name)
             file_handler = logging.FileHandler(log_path)
             self.chipsecLogger.addHandler(file_handler)
             file_handler.setFormatter(self.logFormatter)
@@ -289,7 +246,7 @@ class Logger:
         # specifying empty string (name='') effectively disables logging to file
         if name and self.create_logs_folder():
             if tologpath:
-                self.LOG_FILE_NAME = os.path.join(LOG_PATH, name)
+                self.LOG_FILE_NAME = os.path.join(self.LOG_PATH, name)
             else:
                 self.LOG_FILE_NAME = name
             # Open new log file and keep it opened
@@ -350,15 +307,6 @@ class Logger:
     # -------------------------------------------------------
     # These logger methods are deprecated and will be removed
     # -------------------------------------------------------
-
-    def _log(self, text, level=level.INFO, color=None) -> None:
-        """Sends plain text to logging."""
-        try:
-            self.chipsecLogger.log(level.value, text, color)
-            if self.ALWAYS_FLUSH:
-                self.flush()
-        except BaseException:
-            print(text)
 
     def log_passed(self, text):   # Use log("text", self.logger.GOOD)
         """Logs a passed message."""
