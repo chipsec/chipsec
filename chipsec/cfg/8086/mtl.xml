@@ -105,7 +105,7 @@ https://www.intel.com/content/www/us/en/products/docs/processors/core/core-techn
 
     <!-- Processor Graphics -->
     <register name="GTTMMADR" type="pcicfg" bus="0" dev="0x2" fun="0" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address" >
-        <field name="BA" bit="26" size="6" desc="Memory Base Address"/>
+        <field name="BA" bit="4" size="60" desc="Memory Base Address"/>
     </register>
 
     <!-- Dynamic Tuning Technology -->
