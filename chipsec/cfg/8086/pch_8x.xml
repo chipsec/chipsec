@@ -35,6 +35,15 @@ XML configuration file for 8 series based platforms
   <!--                                      -->
   <!-- #################################### -->
   <info>
+    <sku did="0x7f02" name="FFES"  code="PCH_8x" longname="Full Featured Engineering Sample" />
+    <sku did="0x7f0f" name="FFES"  code="PCH_8x" longname="Full Featured Engineering Sample" />
+    <sku did="0x7f11" name="FFES"  code="PCH_8x" longname="Full Featured Engineering Sample" />
+    <sku did="0x7f07" name="H810"  code="PCH_8x" longname="Intel H810 (8 series) PCH" />
+    <sku did="0x7f06" name="B860"  code="PCH_8x" longname="Intel H860 (8 series) PCH" />
+    <sku did="0x7f03" name="Q870"  code="PCH_8x" longname="Intel Q870 (8 series) PCH" />
+    <sku did="0x7f04" name="Z890"  code="PCH_8x" longname="Intel Q890 (8 series) PCH" />
+    <sku did="0x7f0d" name="WM880" code="PCH_8x" longname="Intel WM880 (8 series) PCH" />
+    <sku did="0x7f0c" name="HM870" code="PCH_8x" longname="Intel HM780 (8 series) PCH" />
     <sku did="0x8C41" name="MES"   code="PCH_8x" longname="Mobile Engineering Sample" />
     <sku did="0x8C42" name="DES"   code="PCH_8x" longname="Desktop Engineering Sample" />
     <sku did="0x8C44" name="Z87"   code="PCH_8x" longname="Intel Z87 (8 series) PCH" />
