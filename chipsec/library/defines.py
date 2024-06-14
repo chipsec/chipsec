@@ -239,3 +239,5 @@ def is_all_value(value_list: list, value: Any) -> bool:
 class ARCH_VID:
     INTEL = 0x8086
     AMD = 0x1022
+
+

@@ -44,8 +44,8 @@ from chipsec.library.returncode import ModuleResult, getModuleResultName
 from chipsec import chipset
 from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger
-from chipsec.library.banner import print_banner, print_banner_properties
 from chipsec.testcase import ExitCode, TestCase, ReturnCodeResults, LegacyResults
+from chipsec.library.display import print_banner, print_banner_properties
 from chipsec.library.exceptions import UnknownChipsetError, OsHelperError
 from chipsec.library.options import Options
 from chipsec.library.module_helper import enumerate_modules, print_modules

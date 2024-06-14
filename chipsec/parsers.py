@@ -41,14 +41,14 @@ class Stage(Enum):
 # - stage_data - stage_info named tuple
 # - Returns - info_data named tuple
 stage_info = namedtuple('StageInfo', ['vid_str', 'configuration'])
-info_data = namedtuple('InfoData', ['family', 'proc_code', 'pch_code', 'detect_vals', 'req_pch', 'vid_str', 'sku_list'])
+info_data = namedtuple('InfoData', ['family', 'proc_code', 'pch_code', 'dev_code', 'detect_vals', 'req_pch', 'vid_str', 'sku_list'])
 
 # Stage.DEVICE_CFG
 # - Determine device configuration files
 # - stage_data - stage_dev named tuple for file being processed
 # - Returns - A list of config_data named tuples
 stage_dev = namedtuple('StageCore', ['vid_str', 'xml_file'])
-config_data = namedtuple('DevData', ['vid_str', 'dev_name', 'xml_file'])
+config_data = namedtuple('DevData', ['vid_str', 'dev_name', 'xml_file', 'component', 'attrs'])
 
 # Stage.CORE_SUPPORT
 # - Parse all core XML tags and update configuration data directly in object
@@ -66,6 +66,9 @@ class BaseConfigParser:
         self.logger = logger()
         self.cfg = cfg_obj
 
+    def parser_name(self):
+        return self.__class__.__name__
+    
     def startup(self):
         return None
 

@@ -116,10 +116,8 @@ class LinuxHelperTest(unittest.TestCase):
             os_path_exists().return_value = True
             subprocess_check_output().return_value = True
             subprocess_call().return_value = True
-            # breakpoint()
             self.assertTrue(self.lhelper.create())
             self.assertTrue(self.lhelper.start())
-            # breakpoint()
             pass
         
 

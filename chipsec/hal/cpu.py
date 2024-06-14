@@ -126,21 +126,21 @@ class CPU(hal_base.HALBase):
                 self.cs.helper.set_affinity(thread)
             eax = 0xb   # cpuid leaf 0B contains x2apic info
             ecx = 1     # ecx 1 will get us pkg_id in edx after shifting right by _eax
-            (_eax, _, _, _edx) = self.cs.cpu.cpuid(eax, ecx)
+            (_eax, _, _, _edx) = self.cpuid(eax, ecx)
             pkg_id = _edx >> (_eax & 0xf)
             if pkg_id not in packages:
                 packages[pkg_id] = []
             packages[pkg_id].append(thread)
 
             ecx = 0     # ecx 0 will get us the core_id in edx after shifting right by _eax
-            (_eax, _, _, _edx) = self.cs.cpu.cpuid(eax, ecx)
+            (_eax, _, _, _edx) = self.cpuid(eax, ecx)
             core_id = _edx >> (_eax & 0xf)
             if core_id not in cores:
                 cores[core_id] = []
             cores[core_id].append(thread)
             self.logger.log_hal(f'pkg id is {pkg_id:x}')
             self.logger.log_hal(f'core id is {core_id:x}')
-        topology = {'packages': packages, 'cores': cores}
+        topology = {'packages': packages, 'cores': cores, 'threads':num_threads}
         return topology
 
     # determine number of physical sockets using the CPUID and APIC ACPI table

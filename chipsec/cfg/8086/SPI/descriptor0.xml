@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<configuration>
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <!-- SPI Flash Descriptor registers -->
+        <register name="FLMAP0" type="mmio" bar="FDBAR" offset="0x14" size="4" desc="Flash Map 0 Register">
+            <field name="FCBA"    bit="0"  size="8" desc="Flash Component Base Address"/>
+            <field name="NC"      bit="8"  size="2" desc="Number of Components"/>
+            <field name="FRBA"    bit="16" size="8" desc="Flash Region Base Address"/>
+            <field name="NR"      bit="24" size="3" desc="Number of Regions"/>
+        </register>
+        <register name="FLMAP1" type="mmio" bar="FDBAR" offset="0x18" size="4" desc="Flash Map 1 Register">
+            <field name="FMBA"    bit="0"  size="8" desc="Flash Master Base Address"/>
+            <field name="NM"      bit="8"  size="2" desc="Number of Masters"/>
+            <field name="FPSBA"   bit="16" size="8" desc="Flash PCH Strap Base Address"/>
+            <field name="PSL"     bit="24" size="8" desc="PCH Strap Length"/>
+        </register>
+        <register name="FLMAP2" type="mmio" bar="FDBAR" offset="0x1C" size="4" desc="Flash Map 2 Register">
+            <field name="FCPUSBA" bit="0"  size="8" desc="Flash CPU Strap Base Address"/>
+            <field name="CPUSL"   bit="8"  size="8" desc="Processor Strap Length"/>
+            <field name="ICCRIBA" bit="16" size="8" desc="ICC Register Init Base Address"/>
+        </register>
+        <register name="FLREG0" type="mmio" bar="FRBA" offset="0x0" size="4" desc="Flash Region 0 (Flash Descriptor) Register">
+            <field name="RB"      bit="0"  size="13" desc="Region Base"/>
+            <field name="RL"      bit="16" size="13" desc="Region Limit"/>
+        </register>
+        <register name="FLREG1" type="mmio" bar="FRBA" offset="0x4" size="4" desc="Flash Region 1 (BIOS) Register">
+            <field name="RB"      bit="0"  size="13" desc="Region Base"/>
+            <field name="RL"      bit="16" size="13" desc="Region Limit"/>
+        </register>
+        <register name="FLREG2" type="mmio" bar="FRBA" offset="0x8" size="4" desc="Flash Region 2 (Intel ME) Register">
+            <field name="RB"      bit="0"  size="13" desc="Region Base"/>
+            <field name="RL"      bit="16" size="13" desc="Region Limit"/>
+        </register>
+        <register name="FLREG3" type="mmio" bar="FRBA" offset="0xC" size="4" desc="Flash Region 3 (GBe) Register">
+            <field name="RB"      bit="0"  size="13" desc="Region Base"/>
+            <field name="RL"      bit="16" size="13" desc="Region Limit"/>
+        </register>
+        <register name="FLREG4" type="mmio" bar="FRBA" offset="0x10" size="4" desc="Flash Region 4 (Platform Data) Register">
+            <field name="RB"      bit="0"  size="13" desc="Region Base"/>
+            <field name="RL"      bit="16" size="13" desc="Region Limit"/>
+        </register>
+        <register name="FLMSTR1" type="mmio" bar="FMBA" offset="0x0" size="4" desc="Flash Master 1">
+            <field name="MRRA"    bit="16" size="8" desc="Master Region Read Access"/>
+            <field name="MRWA"    bit="24" size="8" desc="Master Region Write Access"/>
+        </register>
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+    </controls>
+
+</configuration>
