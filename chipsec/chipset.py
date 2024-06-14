@@ -268,6 +268,35 @@ class Chipset:
     def save_log_state(self) -> Tuple[bool, bool, bool]:
         old_log_state = (self.logger.HAL, self.logger.DEBUG, self.logger.VERBOSE)
         return old_log_state
+    
+    def init_topology(self):
+        _cpu = cpu.CPU(self)
+        self.logger.log_debug('[*] Gathering CPU Topology..')
+        topology = _cpu.get_cpu_topology()
+        self.Cfg.set_topology(topology)
+
+    def is_all_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
+        if mask is None:
+            return all(n.value == value for n in regdata)
+        else:
+            newvalue = value & mask
+            return all((n.value & mask) == newvalue for n in regdata)
+
+    def is_any_value(self, regdata: Type[RegData], value: int, mask: Optional[int] = None) -> bool:
+        if mask is None:
+            return any(n.value == value for n in regdata)
+        else:
+            newvalue = value & mask
+            return any((n.value & mask) == newvalue for n in regdata)
+
+    #####
+    # Scoping functions
+    #####
+    def set_scope(self, scope):
+        self.Cfg.set_scope(scope)
+
+    def clear_scope(self):
+        self.Cfg.clear_scope()
 
     def init_topology(self):
         _cpu = cpu.CPU(self)
