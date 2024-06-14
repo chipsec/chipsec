@@ -137,6 +137,8 @@ class Register:
         return None #TODO Change to null register object
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
+        scope = self.cs.Cfg.get_scope(reg_name)
+        vid, device, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
         """Checks if the register has specific field"""
         scope = self.cs.Cfg.get_scope(reg_name)
         vid, device, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
@@ -178,14 +180,14 @@ class Register:
                                     ret.append(f'{v}.{d}.{r}.{f}')
         return ret
 
-    def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
-        """Checks if the register as all fields specified in list"""
-        ret = True
-        for field in field_list:
-            ret = ret and self.has_field(reg_name, field)
-            if not ret:
-                break
-        return ret
+    # def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
+    #     """Checks if the register as all fields specified in list"""
+    #     ret = True
+    #     for field in field_list:
+    #         ret = ret and self.has_field(reg_name, field)
+    #         if not ret:
+    #             break
+    #     return ret
 
     # def is_msr(self, reg_name: str) -> bool:
     #     """Returns True if register is type `msr`"""
