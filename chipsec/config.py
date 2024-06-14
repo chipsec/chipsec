@@ -28,8 +28,10 @@ from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError
 from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
+from chipsec.library.register import RegList
 from chipsec.parsers import Stage
 from chipsec.parsers import stage_info, config_data
+from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 
 
 scope_name = namedtuple("scope_name", ["vid", "parent", "name", "fields"])
@@ -41,8 +43,9 @@ PROC_FAMILY = {}
 class Cfg:
     def __init__(self):
         self.logger = logger()
-        self.keys = ["CONFIG_PCI", "REGISTERS", "MMIO_BARS", "IO_BARS", "IMA_REGISTERS", "MEMORY_RANGES", "CONTROLS", "BUS", "LOCKS", "LOCKEDBY"]
-        for key in self.keys:
+        self.parent_keys = ["CONFIG_PCI_RAW", "CONFIG_PCI", "MEMORY_RANGES", "MM_MSGBUS", "MSGBUS", "IO", "MSR", "MMIO_BARS", "IO_BARS"]
+        self.child_keys = ["IMA_REGISTERS", "REGISTERS", "CONTROLS", "LOCKS", "LOCKEDBY"]
+        for key in self.parent_keys + self.child_keys:
             setattr(self, key, {})
         self.XML_CONFIG_LOADED = False
 
@@ -51,11 +54,12 @@ class Cfg:
         self.pch_dictionary = {}
         self.pch_codes = set()
         self.device_dictionary = {}
+        self.device_codes = set()
         self.platform_xml_files = {}
         self.load_list = []
         self.load_extra = []
+        self.scope = {None: ''}
         self.parsers = []
-        self.cpuid = 0xFFFFF
 
         self.detection_dictionary = {}
 
@@ -64,7 +68,8 @@ class Cfg:
         self.did = 0xFFFF
         self.rid = 0xFF
         self.code = CHIPSET_CODE_UNKNOWN
-        self.longname = 'Unrecognized Platform'
+        self.longname = "Unrecognized Platform"
+        self.cpuid = 0xFFFFF
         self.pch_vid = 0xFFFF
         self.pch_did = 0xFFFF
         self.pch_rid = 0xFF
@@ -86,9 +91,10 @@ class Cfg:
         return str_val
     
     def _create_vid(self, vid_str):
+        key_list = self.parent_keys + self.child_keys
         skip_keys = ["LOCKS"]
         if vid_str not in self.CONFIG_PCI:
-            for key in self.keys:
+            for key in key_list:
                 if key in skip_keys:
                     continue
                 mdict = getattr(self, key)
@@ -113,17 +119,10 @@ class Cfg:
             if vid_str not in self.CONFIG_PCI_RAW:
                 self._create_vid(vid_str)
             if did_str not in self.CONFIG_PCI_RAW[vid_str]:
-                self.CONFIG_PCI_RAW[vid_str][did_str] = [pci_data]
+                pci_obj = PCIConfig(pci_data)
+                self.CONFIG_PCI_RAW[vid_str][did_str] = pci_obj
                 continue
-            found_config = False
-            for cfg_data in self.CONFIG_PCI_RAW[vid_str][did_str]:
-                if d == cfg_data['dev'] and f == cfg_data['fun']:
-                    found_config = True
-                    if b not in cfg_data['bus']:
-                        cfg_data['bus'].append(b)
-                    break
-            if not found_config:
-                self.CONFIG_PCI_RAW[vid_str][did_str].append(pci_data)
+            self.CONFIG_PCI_RAW[vid_str][did_str].add_obj(pci_data)
 
     ###
     # CPU topology info
@@ -210,7 +209,8 @@ class Cfg:
         if data.vid_str not in dest:
             dest[data.vid_str] = {}
         for sku in data.sku_list:
-            for did in sku['did']:
+            did_list = [sku['did']] if type(sku['did']) is int else sku['did']
+            for did in did_list:
                 did_str = self._make_hex_key_str(did)
                 if did_str not in dest[data.vid_str]:
                     dest[data.vid_str][did_str] = []
@@ -289,7 +289,7 @@ class Cfg:
 
     def _find_did(self, sku):
         vid_str = self._make_hex_key_str(sku['vid'])
-        if 'did' in sku and sku['did'] is int:
+        if 'did' in sku and type(sku['did']) is int:
             return sku['did']
         else:
             for did in sku['did']:
@@ -303,11 +303,18 @@ class Cfg:
         tree = ET.parse(fxml.xml_file)
         root = tree.getroot()
         return root.iter('configuration')
+    
+    def _get_sec_parser_name(self, root, stage):
+        if 'custom_parser' in root.attrib:
+            return root.attrib['custom_parser']
+        for parser in self.parsers:
+            if parser.get_stage() == stage:
+                return parser.parser_name()
 
     def _load_sec_configs(self, load_list, stage):
         stage_str = 'core' if stage == Stage.CORE_SUPPORT else 'custom'
-        tag_handlers = self._get_stage_parsers(stage)
-        if not load_list or not tag_handlers:
+        cfg_handlers = self._get_stage_parsers(stage)
+        if not load_list or not cfg_handlers:
             return
         for fxml in load_list:
             self.logger.log_debug(f'[*] Loading {stage_str} config data: [{fxml.dev_name}] - {fxml.xml_file}')
@@ -315,6 +322,8 @@ class Cfg:
                 self.logger.log_debug(f'[-] File not found: {fxml.xml_file}')
                 continue
             for config_root in self._get_config_iter(fxml):
+                parser_name = self._get_sec_parser_name(config_root, stage)
+                tag_handlers = cfg_handlers[parser_name] if parser_name in cfg_handlers else []
                 for tag in tag_handlers:
                     self.logger.log_debug(f'[*] Loading {tag} data...')
                     for node in config_root.iter(tag):
@@ -334,8 +343,9 @@ class Cfg:
             self.logger.log_debug(f'[*] Importing parser: {parser_name}')
             try:
                 module = importlib.import_module(parser_name)
-            except Exception:
+            except Exception as err:
                 self.logger.log_debug(f'[*] Failed to import {parser_name}')
+                self.logger.log_debug(err)
                 continue
             if not hasattr(module, 'parsers'):
                 self.logger.log_debug(f'[*] Missing parsers variable: {parser}')
@@ -363,17 +373,18 @@ class Cfg:
             self._load_sec_configs(self.load_extra, Stage.EXTRA)
 
     def load_platform_info(self):
-        tag_handlers = self._get_stage_parsers(Stage.GET_INFO)
+        info_handlers = self._get_stage_parsers(Stage.GET_INFO)
+        tag_handlers = info_handlers['PlatformInfo']
         cfg_path = os.path.join(get_main_dir(), 'chipsec', 'cfg')
 
         # Locate all root configuration files
         cfg_files = []
-        cfg_vids = [f for f in os.listdir(cfg_path) if os.path.isdir(os.path.join(cfg_path, f)) and is_hex(f)]
+        cfg_vids = [f.name for f in os.scandir(cfg_path) if f.is_dir() and is_hex(f.name)]
         for vid_str in cfg_vids:
             root_path = os.path.join(cfg_path, vid_str)
-            cfg_files.extend([config_data(vid_str, None, os.path.join(root_path, f))
-                             for f in sorted(os.listdir(root_path))
-                             if fnmatch(f, '*.xml')])
+            cfg_files.extend([config_data(vid_str, None, f.path, None, None)
+                             for f in sorted(os.scandir(root_path), key=lambda x: x.name)
+                             if fnmatch(f.name, '*.xml')])
 
         # Process platform info data and generate lookup tables
         for fxml in cfg_files:
@@ -413,10 +424,9 @@ class Cfg:
             if not proc_code:
                 vid_str = self._make_hex_key_str(self.vid)
                 did_str = self._make_hex_key_str(self.did)
-                try:
-                    self.rid = self.CONFIG_PCI_RAW[vid_str][did_str]['rid']
-                except Exception:
-                    self.rid = 0xFF
+                self.rid = self.CONFIG_PCI_RAW[vid_str][did_str].get_rid(0, 0, 0)
+            else:
+                raise CSConfigError("There is already a CPU detected, are you adding a new config?")
             self.longname = sku['longname']
             self.req_pch = sku['req_pch']
         else:
@@ -434,7 +444,11 @@ class Cfg:
             if not pch_code:
                 vid_str = self._make_hex_key_str(self.pch_vid)
                 did_str = self._make_hex_key_str(self.pch_did)
-                self.pch_rid = self.CONFIG_PCI_RAW[vid_str][did_str]['rid']
+                for cfg_data in self.CONFIG_PCI_RAW[vid_str][did_str]:
+                    if 0x31 == cfg_data['dev'] and 0x0 == cfg_data['fun']:
+                        self.rid = cfg_data['rid']
+            else:
+                raise CSConfigError("There is already a PCH detected, are you adding a new config?")
             self.pch_longname = sku['longname']
 
         # Create XML file load list
@@ -447,7 +461,8 @@ class Cfg:
 
     def load_platform_config(self):
         sec_load_list = []
-        tag_handlers = self._get_stage_parsers(Stage.DEVICE_CFG)
+        cfg_handlers = self._get_stage_parsers(Stage.DEVICE_CFG)
+        tag_handlers = cfg_handlers['DevConfig']
         for fxml in self.load_list:
             self.logger.log_debug(f'[*] Loading primary config data: {fxml.xml_file}')
             for config_root in self._get_config_iter(fxml):
@@ -460,16 +475,256 @@ class Cfg:
         if self.load_extra:
             self._load_sec_configs(self.load_extra, Stage.EXTRA)
 
-    def get_common_xml(self):
-        cfg_path = os.path.join(get_main_dir(), 'chipsec', 'cfg')
-        vid = f'{self.vid:X}'
 
-        # Locate all common configuration files
-        cfg_files = []
-        cfg_vids = [f for f in os.listdir(cfg_path) if os.path.isdir(os.path.join(cfg_path, f)) and is_hex(f)]
-        if vid in cfg_vids:
-            root_path = os.path.join(cfg_path, vid)
-            cfg_files.extend([config_data(vid, None, os.path.join(root_path, f))
-                             for f in sorted(os.listdir(root_path))
-                             if fnmatch(f, '*.xml') and fnmatch(f, 'common*')])
-        return cfg_files
+    ###
+    # Scoping Functions
+    ###
+    def set_scope(self, scope):
+        self.scope.update(scope)
+
+    def get_scope(self, name):
+        if '.' in name:
+            return ''
+        elif name in self.scope:
+            return self.scope[name]
+        else:
+            return self.scope[None]
+
+    def clear_scope(self):
+        self.scope = {None: ''}
+
+    def convert_internal_scope(self, scope, name):
+        if scope:
+            sname = scope + '.' + name
+        else:
+            sname = name
+        return scope_name(*(sname.split('.', 3)))
+
+
+    ###
+    # Control Functions
+    ###
+
+    def get_control_def(self, control_name):
+        return self.CONTROLS[control_name]
+
+    def is_control_defined(self, control_name):
+        return True if control_name in self.CONTROLS else False
+
+    def get_control_obj(self, control_name, instance=None):
+        controls = RegList()
+        if control_name in self.CONTROLS.keys():
+            if instance is not None and 'obj' in self.CONTROLS[control_name].keys():
+                return self.CONTROLS[control_name]['obj'][instance]
+            controls.extend(self.CONTROLS[control_name]['obj'])
+        return controls
+    
+
+    ###
+    # Register Functions
+    ###
+    def get_register_def(self, reg_name):
+        scope = self.get_scope(reg_name)
+        vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
+        reg_def = self.REGISTERS[vid][dev_name][register]
+        if reg_def["type"] in ["pcicfg", "mmcfg"]:
+            dev = self.CONFIG_PCI[vid][dev_name]
+            reg_def['bus'] = dev['bus']
+            reg_def['dev'] = dev['dev']
+            reg_def['fun'] = dev['fun']
+        elif reg_def["type"] == "memory":
+            dev = self.MEMORY_RANGES[vid][dev_name]
+            reg_def['address'] = dev['address']
+            reg_def['access'] = dev['access']
+        elif reg_def["type"] == "mm_msgbus":
+            dev = self.MM_MSGBUS[vid][dev_name]
+            reg_def['port'] = dev['port']
+        elif reg_def["type"] == "indirect":
+            dev = self.IMA_REGISTERS[vid][dev_name]
+            if ('base' in dev):
+                reg_def['base'] = dev['base']
+            else:
+                reg_def['base'] = "0"
+            if (dev['index'] in self.REGISTERS[vid][dev_name]):
+                reg_def['index'] = dev['index']
+            else:
+                logger().log_error("Index register {} not found".format(dev['index']))
+            if (dev['data'] in self.REGISTERS[vid][dev_name]):
+                reg_def['data'] = dev['data']
+            else:
+                logger().log_error("Data register {} not found".format(dev['data']))
+        return reg_def
+
+    def get_register_obj(self, reg_name, instance=None):
+        reg_def = RegList()
+        scope = self.get_scope(reg_name)
+        vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
+        if vid in self.REGISTERS and dev_name in self.REGISTERS[vid] and register in self.REGISTERS[vid][dev_name]:
+            reg_def.extend(self.REGISTERS[vid][dev_name][register]['obj'])
+        for reg_obj in reg_def:
+            if reg_obj.instance == instance:
+                return reg_obj
+        if instance is not None:
+            return RegList()
+        else:
+            return reg_def
+
+    def get_mmio_def(self, bar_name):
+        ret = None
+        scope = self.get_scope(bar_name)
+        vid, device, bar, _ = self.convert_internal_scope(scope, bar_name)
+        if vid in self.MMIO_BARS and device in self.MMIO_BARS[vid]:
+            if bar in self.MMIO_BARS[vid][device]:
+                ret = self.MMIO_BARS[vid][device][bar]
+        return ret
+
+    def get_io_def(self, bar_name):
+        scope = self.get_scope(bar_name)
+        vid, device, bar, _ = self.convert_internal_scope(scope, bar_name)
+        if bar in self.IO_BARS[vid][device]:
+            return self.IO_BARS[vid][device][bar]
+        else:
+            return None
+
+    def get_mem_def(self, range_name):
+        scope = self.get_scope(range_name)
+        vid, range, _, _ = self.convert_internal_scope(scope, range_name)
+        if range in self.MEMORY_RANGES[vid]:
+            return self.MEMORY_RANGES[vid][range]
+        else:
+            return None
+
+    def get_device_bus(self, dev_name):
+        scope = self.get_scope(dev_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, dev_name)
+        if vid in self.CONFIG_PCI and device in self.CONFIG_PCI[vid]:
+            return self.CONFIG_PCI[vid][device]["bus"]
+        else:
+            return None
+
+    def is_register_defined(self, reg_name):
+        scope = self.get_scope(reg_name)
+        vid, device, register, _ = self.convert_internal_scope(scope, reg_name)
+        try:
+            return (self.REGISTERS[vid][device].get(register, None) is not None)
+        except KeyError:
+            return False
+
+    def is_device_defined(self, dev_name):
+        scope = self.get_scope(dev_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, dev_name)
+        if self.CONFIG_PCI[vid].get(device, None) is None:
+            return False
+        else:
+            return True
+
+    def get_device_BDF(self, device_name):
+        scope = self.get_scope(device_name)
+        vid, device, _, _ = self.convert_internal_scope(scope, device_name)
+        try:
+            device = self.CONFIG_PCI[vid][device]
+        except KeyError:
+            device = None
+        if device is None or device == {}:
+            raise DeviceNotFoundError('DeviceNotFound: {}'.format(device_name))
+        b = device['bus']
+        d = device['dev']
+        f = device['fun']
+        return (b, d, f)
+
+    def register_has_field(self, reg_name, field_name):
+        scope = self.get_scope(reg_name)
+        vid, device, register, _ = self.convert_internal_scope(scope, reg_name)
+        try:
+            reg_def = self.REGISTERS[vid][device][register]
+        except KeyError:
+            return False
+        if 'FIELDS' not in reg_def:
+            return False
+        return (field_name in reg_def['FIELDS'])
+
+    def get_REGISTERS_match(self, name):
+        vid, device, register, field = self.convert_internal_scope("", name)
+        ret = []
+        if vid is None or vid == '*':
+            vid = self.REGISTERS.keys()
+        else:
+            vid = [vid]
+        for v in vid:
+            if v in self.REGISTERS:
+                if device is None or device == "*":
+                    dev = self.REGISTERS[v].keys()
+                else:
+                    dev = [device]
+                for d in dev:
+                    if d in self.REGISTERS[v]:
+                        if register is None or register == "*":
+                            reg = self.REGISTERS[v][d].keys()
+                        else:
+                            reg = [register]
+                        for r in reg:
+                            if r in self.REGISTERS[v][d]:
+                                if field is None or field == "*":
+                                    fld = self.REGISTERS[v][d][r]['FIELDS'].keys()
+                                else:
+                                    if field in self.REGISTERS[v][d][r]['FIELDS']:
+                                        fld = [field]
+                                    else:
+                                        fld = []
+                                for f in fld:
+                                    ret.append("{}.{}.{}.{}".format(v, d, r, f))
+        return ret
+
+    def get_MMIO_match(self, name):
+        vid, device, inbar, _ = self.convert_internal_scope("", name)
+        ret = []
+        if vid is None or vid == '*':
+            vid = self.REGISTERS.keys()
+        else:
+            vid = [vid]
+        for v in vid:
+            if v in self.MMIO_BARS:
+                if device is None or device == '*':
+                    dev = self.MMIO_BARS[v].keys()
+                else:
+                    dev = [device]
+                for d in dev:
+                    if d in self.MMIO_BARS[v]:
+                        if inbar is None or inbar == '*':
+                            bar = self.MMIO_BARS[v][d]
+                        else:
+                            bar = [inbar]
+                        for b in bar:
+                            if b in self.MMIO_BARS[v][d]:
+                                ret.append("{}.{}.{}".format(v, d, b))
+        return ret
+
+    ###
+    # Locks functions
+    ###
+    def get_lock_list(self):
+        return self.LOCKS.keys()
+
+    def is_lock_defined(self, lock_name):
+        return lock_name in self.LOCKS.keys()
+
+    def get_locked_value(self, lock_name):
+        logger().log_debug('Retrieve value for lock {}'.format(lock_name))
+        return self.LOCKS[lock_name]['value']
+
+    def get_lock_desc(self, lock_name):
+        return self.LOCKS[lock_name]['desc']
+
+    def get_lock_type(self, lock_name):
+        if 'type' in self.LOCKS[lock_name]:
+            mtype = self.LOCKS[lock_name]['type']
+        else:
+            mtype = "RW/L"
+        return mtype
+
+    def get_lockedby(self, lock_name):
+        vid, _, _, _ = self.convert_internal_scope("", lock_name)
+        if lock_name in self.LOCKEDBY[vid]:
+            return self.LOCKEDBY[vid][lock_name]
+        else:
+            return None

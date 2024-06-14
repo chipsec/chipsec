@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<configuration>
+
+  <mmio>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <!-- ME Host Firmware Status https://github.com/coreboot/coreboot/blob/master/src/southbridge/intel/*/{pch,me}.h -->
+    <register name="HFS" type="pcicfg" offset="0x40" size="4" desc="ME Host Firmware Status">
+      <field name="MFG_MODE"   bit="4" size="1" desc="ME Manufacturing Mode" />
+      <field name="FW_INIT_COMPLETE"   bit="9" size="1" desc="ME Firmware Initialization Complete" />
+      <field name="UPDATE_IN_PROGRESS"   bit="11" size="1" desc="ME Update In Progress" />
+    </register>
+  </registers>
+
+</configuration>
