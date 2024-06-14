@@ -87,6 +87,16 @@ class WindowsHelperTest(unittest.TestCase):
             ipacker.custom_pack(1,0x7FF0200,0),
         (0x22e048, b'\x00\x00\x00\x00\x00\x10\x00\x00\x08\x00\x00\x00'):
             qpacker.custom_pack(2,1,0),
+        (0x22e064, b'\x00\x00\x00\x00\x00\x00'):
+            b'3\x00\x05\x80\x00\x00\x00\x00',
+        (0x22e060, b'\x00\x003\x00\x05\x80\x00\x00\x00\x00\x00\x00\x00\x00'):
+            b'',
+        (0x22e034, b'\x00\x00\x00\x00:\x00\x00\x00'):
+            b'\x01\x00\x00\x00\x00\x00\x00\x00',  
+        (0x22e030, b'\x00\x00\x00\x00:\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00' ):
+            b'',
+        (0x22e040, b'\x00\x00\x00\x00\x01'):
+            b'W\x00\xb0\x1f\xeav\x04\xf8\xff\xff\xb0\xbf0\x03\x00\x00\x00\x00',
     }
 
     
@@ -218,21 +228,32 @@ class WindowsHelperTest(unittest.TestCase):
         self._assign_mocks(mocks)
         ioport_write_return = self.whelper.write_io_port(0xB8, 0x55, 4)
         self.assertTrue(ioport_write_return)
-#   
-#   # TODO def test_read_cr(self, *mocks):
-        # self._assign_mocks(mocks)
-#   
-#   # TODO def test_write_cr(self, *mocks):
-        # self._assign_mocks(mocks)
-#   
-#   # TODO def test_read_msr(self, *mocks):
-        # self._assign_mocks(mocks)
-#   
-#   # TODO def test_write_msr(self, *mocks):
-        # self._assign_mocks(mocks)
-#   
-#   # TODO def test_get_descriptor_table(self, *mocks):
-        # self._assign_mocks(mocks)
+  
+    def test_read_cr(self, *mocks):
+        self._assign_mocks(mocks)
+        read_cr_return = self.whelper.read_cr(0, 0)
+        self.assertEqual(read_cr_return, 0x80050033)
+  
+    def test_write_cr(self, *mocks):
+        self._assign_mocks(mocks)
+        write_cr_return = self.whelper.write_cr(0, 0, 0x80050033)
+        self.assertTrue(write_cr_return)
+  
+    def test_read_msr(self, *mocks):
+        self._assign_mocks(mocks)
+        read_msr_return = self.whelper.read_msr(0, 0x3A)
+        self.assertEqual(read_msr_return, (1, 0))
+  
+    def test_write_msr(self, *mocks):
+        self._assign_mocks(mocks)
+        write_msr_return = self.whelper.write_msr(0, 0x3a, 1, 0)
+        self.assertTrue(write_msr_return)
+  
+
+    def test_get_descriptor_table(self, *mocks):
+        self._assign_mocks(mocks)
+        get_des_table_return = self.whelper.get_descriptor_table(0, 1)
+        self.assertEqual(get_des_table_return,  (0x57, 0xfffff80476ea1fb0, 0x330bfb0))
 
     def test_cpuid_one(self, *mocks):
         self._assign_mocks(mocks)
