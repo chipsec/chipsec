@@ -52,7 +52,10 @@ from typing import List
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
-        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
+        self.cs.set_scope({
+            "IA32_BIOS_SIGN_ID": "8086.MSR.IA32_BIOS_SIGN_ID",
+        })
+        self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
 
     def is_supported(self) -> bool:
         if self.cs.is_intel():
@@ -64,17 +67,21 @@ class cpu_info(BaseModule):
         return False
 
     def run_intel(self, module_argv: List[str]) -> int:
-        thread_count = 1
-        if not self.cs.os_helper.is_efi():
-            thread_count = self.cs.msr.get_cpu_thread_count()
+        signId = self.cs.register.get_obj('IA32_BIOS_SIGN_ID')
 
-        for thread in range(thread_count):
+        # thread_count = 1
+        # if not self.cs.os_helper.is_efi():
+        #     thread_count = self.cs.msr.get_cpu_thread_count()
+
+        # for thread in range(thread_count):
+        for reg in signId:
             # Handle processor binding so we are always checking processor 0
             # for this example.  No need to do this in UEFI Shell.
             if not self.cs.os_helper.is_efi():
-                self.cs.helper.set_affinity(thread)
+                self.cs.helper.set_affinity(reg.instance)
+            regdata = reg.read_field('Microcode')
 
-            self.logger.log(f'[*] Thread {thread:04d}')
+            self.logger.log(f'[*] Thread {reg.instance:04d}')
 
             brand = ''
             for eax_val in [0x80000002, 0x80000003, 0x80000004]:
@@ -94,8 +101,7 @@ class cpu_info(BaseModule):
                 family = ((eax >> 20) & 0xFF) | family
             self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
-            microcode_rev = self.cs.register.read_field('IA32_BIOS_SIGN_ID', 'Microcode', cpu_thread=thread)
-            self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')
+            self.logger.log(f'[*]            Microcode: {regdata:08X}')
             self.logger.log('[*]')
 
         self.logger.log_information('Processor information displayed')

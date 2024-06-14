@@ -18,9 +18,30 @@
 # chipsec@intel.com
 
 import copy
+import os
+from chipsec.cfg.parsers.ip.iobar import IOBarConfig
+from chipsec.cfg.parsers.ip.io import IOConfig
+from chipsec.cfg.parsers.ip.memory import MemoryConfig
+from chipsec.cfg.parsers.ip.mmio_bar import MMIOBarConfig
+from chipsec.cfg.parsers.ip.mm_msgbus import MM_MSGBUSConfig
+from chipsec.cfg.parsers.ip.msgbus import MSGBUSConfig
+from chipsec.cfg.parsers.ip.msr import MSRConfig
+from chipsec.cfg.parsers.ip.pci_device import PCIConfig
+from chipsec.cfg.parsers.registers.controls import CONTROLHelper
+from chipsec.cfg.parsers.registers.io import IORegisters
+from chipsec.cfg.parsers.registers.iobar import IOBARRegisters
+from chipsec.cfg.parsers.registers.memory import MEMORYRegisters
+from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters
+from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters
+from chipsec.cfg.parsers.registers.mmio import MMIORegisters
+from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters
+from chipsec.cfg.parsers.registers.msr import MSRRegisters
+from chipsec.cfg.parsers.registers.pci import PCIRegisters
+from chipsec.cfg.parsers.registers.locks import LOCKSHelper
 from chipsec.parsers import BaseConfigParser
 from chipsec.parsers import Stage
-from chipsec.parsers import info_data
+from chipsec.parsers import info_data, config_data
+from chipsec.library.display import make_dict_hex
 
 CONFIG_TAG = 'configuration'
 
@@ -41,11 +62,15 @@ def _get_range_data(xml_node, attr):
 
 
 def _config_convert_data(xml_node, did_is_range=False):
+    # INT_KEYS = ['dev', 'fun', 'vid', 'did', 'rid', 'offset',
+    #             'bit', 'size', 'port', 'msr', 'value', 'address',
+    #             'fixed_address', 'base_align', 'align_bits', 'mask',
+    #             'reg_align', 'limit_align', 'regh_align',
+    #             'width', 'reg']
     INT_KEYS = ['dev', 'fun', 'vid', 'did', 'rid', 'offset',
                 'bit', 'size', 'port', 'msr', 'value', 'address',
                 'fixed_address', 'base_align', 'align_bits', 'mask',
-                'reg_align', 'limit_align', 'regh_align',
-                'width', 'reg']
+                'reg_align', 'limit_align', 'regh_align', 'default']
     BOOL_KEYS = ['req_pch']
     INT_LIST_KEYS = ['bus']
     STR_LIST_KEYS = ['config']
@@ -79,10 +104,12 @@ class PlatformInfo(BaseConfigParser):
 
     def handle_info(self, et_node, stage_data):
         platform = ''
-        req_pch = None
+        req_pch = False
         family = None
         proc_code = None
         pch_code = None
+        dev_code = None
+        device = None
         detect_vals = []
         sku_data = []
         vid_int = int(stage_data.vid_str, 16)
@@ -93,7 +120,11 @@ class PlatformInfo(BaseConfigParser):
             platform = cfg_info['platform']
         if 'req_pch' in cfg_info:
             req_pch = cfg_info['req_pch']
-        if platform and platform.lower().startswith('pch'):
+        if 'device' in cfg_info:
+            device = cfg_info['device']
+        if device:
+            dev_code = device.upper()
+        elif platform and platform.lower().startswith('pch'):
             pch_code = platform.upper()
         else:
             proc_code = platform.upper()
@@ -106,62 +137,149 @@ class PlatformInfo(BaseConfigParser):
             if 'detection_value' in cfg_info:
                 detect_vals = cfg_info['detection_value']
             for sku in info.iter('sku'):
-                sku_info = _config_convert_data(sku, True)
-                if 'code' not in sku_info or sku_info['code'] != platform.upper():
-                    sku_info['code'] = platform.upper()
+                sku_info = _config_convert_data(sku)
+                if 'code' not in sku_info:
+                    if platform:
+                        sku_info['code'] = platform.upper()
+                    elif device:
+                        sku_info['code'] = device.upper()
                 if 'vid' not in sku_info:
                     sku_info['vid'] = vid_int
                 sku_data.append(sku_info)
 
-        return info_data(family, proc_code, pch_code, detect_vals, req_pch, stage_data.vid_str, sku_data)
+        return info_data(family, proc_code, pch_code, dev_code, detect_vals, req_pch, stage_data.vid_str, sku_data)
 
 
-class CoreConfig(BaseConfigParser):
+
+class DevConfig(BaseConfigParser):
     def get_metadata(self):
         return {'pci': self.handle_pci,
-                'mmio': self.handle_mmio,
-                'io': self.handle_io,
-                'ima': self.handle_ima,
                 'memory': self.handle_memory,
-                'registers': self.handle_registers,
-                'controls': self.handle_controls,
-                'locks': self.handle_locks}
+                'mm_msgbus': self.handle_mm_msgbus,
+                'msgbus': self.handle_msgbus,
+                'io': self.handle_io,
+                'msr': self.handle_msr,
+                'mmiobar': self.handle_mmiobar,
+                'iobar': self.handle_iobar}
 
     def get_stage(self):
         return Stage.DEVICE_CFG
 
     def _process_pci_dev(self, vid_str, dev_name, dev_attr):
-        device_added = False
         if 'did' in dev_attr:
             for did in dev_attr['did']:
                 did_str = self.cfg._make_hex_key_str(did)
                 if vid_str in self.cfg.CONFIG_PCI_RAW and did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
-                    pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                    self._add_dev(vid_str, dev_name, pci_data, dev_attr)
-                    device_added = True
+                    cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
+                    self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
                     break
         else:
             if vid_str in self.cfg.CONFIG_PCI_RAW:
                 for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
-                    pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-
-                    if dev_attr['bus'] in pci_data['bus'] and dev_attr['dev'] == pci_data['dev'] and \
-                    dev_attr['fun'] == pci_data['fun']:
-                        self._add_dev(vid_str, dev_name, pci_data, dev_attr)
-                        device_added = True
-                        break
-        if not device_added:
+                    for pci_data in self.cfg.CONFIG_PCI_RAW[vid_str][did_str].instances.values():
+                        if any(b == pci_data.bus for b in dev_attr['bus']) and dev_attr['dev'] == pci_data.dev and \
+                        dev_attr['fun'] == pci_data.fun:
+                            cfg_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
+                            self._add_dev(vid_str, dev_name, cfg_data, dev_attr)
+                            break
+        if dev_name not in self.cfg.CONFIG_PCI[vid_str]:
             self._add_dev(vid_str, dev_name, None, dev_attr)
 
     def _add_dev(self, vid_str, name, pci_info, dev_attr):
+        if name not in self.cfg.CONFIG_PCI[vid_str]:
+            for key in ['MMIO_BARS', 'IO_BARS', 'REGISTERS']:
+                node = getattr(self.cfg, key)
+                if name not in node[vid_str]:
+                    node[vid_str][name] = {}
         if pci_info:
-            self.cfg.BUS[name] = pci_info['bus']
-            self.cfg.CONFIG_PCI[name] = copy.copy(pci_info)
+            pci_info.update_name(name)
+            if 'config' in dev_attr:
+                pci_info.add_config(dev_attr['config'])
+            self.cfg.CONFIG_PCI[vid_str][name] = pci_info
         else:
-            self.cfg.CONFIG_PCI[name] = copy.deepcopy(dev_attr)
-            self.cfg.BUS[name] = []
+            dev_attr['bus'] = None
             if 'did' in dev_attr:
-                self.cfg.CONFIG_PCI[name]['did'] = dev_attr['did'][0]
+                dev_attr['did'] = dev_attr['did'][0]
+            dev_attr['name'] = name
+            pci_obj = PCIConfig(dev_attr)
+            if 'config' in dev_attr:
+                pci_obj.add_config(dev_attr['config'])
+            self.cfg.CONFIG_PCI[vid_str][name] = pci_obj
+
+    def _make_reg_name(self, vid_str, device_name, reg_name):
+        return '.'.join([vid_str, device_name, reg_name])
+    
+    def _process_bar(self, vid_str, bar_name, bar_attr, dest, cfg_obj):
+        if 'register' in bar_attr:
+            bar_attr['register'] = self._make_reg_name(vid_str, bar_attr['device'], bar_attr['register'])
+        if 'base_reg' in bar_attr:
+            bar_attr['base_reg'] = self._make_reg_name(vid_str, bar_attr['device'], bar_attr['base_reg'])
+        if 'mmio_base' in bar_attr:
+            bar_attr['mmio_base'] = self._make_reg_name(vid_str, bar_attr['device'], bar_attr['mmio_base'])
+        if 'limit_register' in bar_attr:
+            bar_attr['limit_register'] = self._make_reg_name(vid_str, bar_attr['device'], bar_attr['limit_register'])
+
+        if vid_str not in dest:
+            dest[vid_str] = {}
+        if bar_attr['device'] not in dest[vid_str]:
+            dest[vid_str][bar_attr['device']] = {}
+        if bar_name in dest[vid_str][bar_attr['device']] and 'config' in bar_attr:
+            dest[vid_str][bar_attr['device']][bar_name].add_config(bar_attr['config'])
+        else:
+            bar_attr['ids'] = self.cfg.CONFIG_PCI[vid_str][bar_attr['device']].instances.values()
+            bar_obj = cfg_obj(bar_attr)
+            dest[vid_str][bar_attr['device']][bar_name] = bar_obj
+
+    def _process_def(self, dest, et_node, tag, stage_data, cfg_obj):
+        ret_val = []
+        vid_str = stage_data.vid_str
+
+        for node in et_node.iter(tag):
+            node_attr = _config_convert_data(node)
+            if 'name' not in node_attr or 'config' not in node_attr:
+                continue
+            dev_name = node_attr['name']
+            if dev_name not in dest[vid_str]:
+                print(dest, cfg_obj)
+                new_obj = cfg_obj(copy.deepcopy(node_attr))
+                dest[vid_str][dev_name] = new_obj
+            else:
+                mobj = dest[vid_str][dev_name]
+                mobj.add_config(node_attr['config'])
+            ret_val.extend(self._process_config(stage_data, dev_name, node_attr))
+            hex_dict = make_dict_hex(node_attr)
+            self.logger.log_debug(f"    + {node_attr['name']:16}: {hex_dict}")
+
+        return ret_val
+
+    def _process_config(self, stage_data, dev_name, dev_attr):
+        ret_val = []
+
+        attrs = {}
+        if 'config' in dev_attr:
+            component = dev_attr.get('component', None)
+            for attr in dev_attr.keys():
+                if attr not in ['config', 'name']:
+                    attrs[attr] = dev_attr[attr]
+            for fxml in dev_attr['config']:
+                cfg_file = fxml.replace('.', os.path.sep, fxml.count('.') - 1)
+                cfg_path = os.path.join(os.path.dirname(stage_data.xml_file), cfg_file)
+                ret_val.append(config_data(stage_data.vid_str, dev_name, cfg_path, component, attrs))
+
+        return ret_val
+
+    def _process_config_complex(self, stage_data, dev_name, dev_attr, component=None):
+        ret_val = []
+
+        attrs = {}
+        if dev_attr.config:
+            attrs['tmp'] = dev_attr.instances
+            for fxml in dev_attr.config:
+                cfg_file = fxml.replace('.', os.path.sep, fxml.count('.') - 1)
+                cfg_path = os.path.join(os.path.dirname(stage_data.xml_file), cfg_file)
+                ret_val.append(config_data(stage_data.vid_str, dev_name, cfg_path, component, attrs))
+
+        return ret_val
 
     def handle_pci(self, et_node, stage_data):
         ret_val = []
@@ -172,53 +290,122 @@ class CoreConfig(BaseConfigParser):
                 continue
             dev_name = dev_attr['name']
             self._process_pci_dev(stage_data.vid_str, dev_name, dev_attr)
-            self.logger.log_debug(f"    + {dev_attr['name']:16}: {dev_attr}")
-
+            ret_val.extend(self._process_config_complex(stage_data, dev_name, self.cfg.CONFIG_PCI[stage_data.vid_str][dev_name]))
+            hex_dict = make_dict_hex(dev_attr)
+            self.logger.log_debug(f"    + {dev_attr['name']:16}: {hex_dict}")
         return ret_val
 
-    def handle_controls(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.CONTROLS, stage_data, et_node, 'control')
+    def handle_memory(self, et_node, stage_data):
+        return self._process_def(self.cfg.MEMORY_RANGES, et_node, 'range', stage_data, MemoryConfig)
+
+    def handle_mm_msgbus(self, et_node, stage_data):
+        return self._process_def(self.cfg.MM_MSGBUS, et_node, 'definition', stage_data, MM_MSGBUSConfig)
+
+    def handle_msgbus(self, et_node, stage_data):
+        return self._process_def(self.cfg.MSGBUS, et_node, 'definition', stage_data, MSGBUSConfig)
 
     def handle_io(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.IO_BARS, stage_data, et_node, 'bar')
+        return self._process_def(self.cfg.IO, et_node, 'definition', stage_data, IOConfig)
+
+    def handle_msr(self, et_node, stage_data): ## TODO
+        return self._process_def(self.cfg.MSR, et_node, 'definition', stage_data, MSRConfig)
+
+    def _handle_bar(self, et_node, stage_data, dest, cfg_obj):
+        ret_val = []
+
+        for bar in et_node.iter('bar'):
+            bus_attr = _config_convert_data(bar, True)
+            if 'name' not in bus_attr or 'device' not in bus_attr:
+                self.logger.log_debug(f"Missing 'name' or 'device' in {bus_attr}")
+                continue
+            bar_name = bus_attr['name']
+            dev_name = bus_attr['device']
+            self._process_bar(stage_data.vid_str, bar_name, bus_attr, dest, cfg_obj)
+            ret_val.extend(self._process_config_complex(stage_data, bar_name, dest[stage_data.vid_str][dev_name][bar_name], dev_name))
+            hex_dict = make_dict_hex(bus_attr)
+            self.logger.log_debug(f"    + {bus_attr['name']:16}: {hex_dict}")
+        return ret_val
+
+    def handle_mmiobar(self, et_node, stage_data):
+        return self._handle_bar(et_node, stage_data, self.cfg.MMIO_BARS, MMIOBarConfig)
+
+    def handle_iobar(self, et_node, stage_data):
+        return self._handle_bar(et_node, stage_data, self.cfg.IO_BARS, IOBarConfig)
+
+
+
+class CoreConfig(BaseConfigParser):
+    def get_metadata(self):
+        return {'ima': self.handle_ima,
+                'registers': self.handle_registers,
+                'controls': self.handle_controls,
+                'locks': self.handle_locks}
+
+    def get_stage(self):
+        return Stage.CORE_SUPPORT
+
+    def _make_reg_name(self, stage_data, reg_name, override=False):
+        if hasattr(stage_data, "component_name") and stage_data.component_name is not None and override:
+            return '.'.join([stage_data.vid_str, stage_data.component_name, reg_name])
+        return '.'.join([stage_data.vid_str, stage_data.dev_name, reg_name])
+    
+    def _add_entry_simple(self, dest, stage_data, et_node, node_name):
+        flat_storage = ['control']
+        index_data = ['ima']
+        for node in et_node.iter(node_name):
+            attrs = _config_convert_data(node)
+
+            # Update storage information
+            if node_name in index_data:
+                attrs['index'] = self._make_reg_name(stage_data, attrs['index'])
+                attrs['data'] = self._make_reg_name(stage_data, attrs['data'])
+            else:
+                attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+
+            if 'base_reg' in attrs:
+                attrs['base_reg'] = self._make_reg_name(stage_data, attrs['base_reg'])
+
+            # Update storage location with new data
+            if node_name in flat_storage:
+                dest[attrs['name']] = attrs
+            else:
+                if stage_data.vid_str not in dest:
+                    dest[stage_data.vid_str] = {}
+                if stage_data.dev_name not in dest[stage_data.vid_str]:
+                    dest[stage_data.vid_str][stage_data.dev_name] = {}
+                dest[stage_data.vid_str][stage_data.dev_name][attrs['name']] = attrs
+            hex_dict = make_dict_hex(attrs)
+            self.logger.log_debug(f"    + {attrs['name']:16}: {hex_dict}")
 
     def handle_ima(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.IMA_REGISTERS, stage_data, et_node, 'indirect')
+        self._add_entry_simple(self.cfg.IMA_REGISTERS, stage_data, et_node, 'ima')
 
-    def handle_locks(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.LOCKS, stage_data, et_node, 'lock')
-
-    def handle_memory(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.MEMORY_RANGES, stage_data, et_node, 'range')
-
-    def handle_mmio(self, et_node, stage_data):
-        return self._add_entry_simple(self.cfg.MMIO_BARS, stage_data, et_node, 'bar')
-
-    def handle_registers(self, et_node, stage_data):
-        ret_val = []
-        dest = self.cfg.REGISTERS
+    def handle_registers(self, et_node, stage_data): # TODO: Refactor this function
         for reg in et_node.iter('register'):
             reg_attr = _config_convert_data(reg)
-            if 'name' not in reg_attr:
-                self.logger.log_error(f'Missing name entry for {reg_attr}')
-                continue
             reg_name = reg_attr['name']
-            if 'undef' in reg_attr:
-                if reg_name in dest:
-                    self.logger.log_debug(f"    - {reg_name:16}: {reg_attr['undef']}")
-                    dest.pop(reg_name, None)
-                continue
+
+            # Create register storage location if needed and store data
+            if stage_data.vid_str not in self.cfg.REGISTERS:
+                self.cfg.REGISTERS[stage_data.vid_str] = {}
+            if stage_data.dev_name not in self.cfg.REGISTERS[stage_data.vid_str]:
+                self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name] = {}
 
             # Patch missing or incorrect data
             if 'desc' not in reg_attr:
                 reg_attr['desc'] = reg_name
+            if reg_attr['type'] in ['pcicfg', 'mmcfg', 'mm_msg_bus']:
+                reg_attr['device'] = stage_data.dev_name
+            elif reg_attr['type'] in ['memory']:
+                reg_attr['range'] = stage_data.dev_name
+            elif reg_attr['type'] in ['mmio', 'iobar']:
+                    reg_attr['bar'] = self._make_reg_name(stage_data, reg_attr['bar'], True)
             if 'size' not in reg_attr:
-                self.logger.log_debug(f'Missing size entry for {reg_name:16}: {reg_attr}. Assuming 4 bytes')
-                reg_attr['size'] = 4
+                self.logger.log_hal(f'Error missing size within {reg_attr}')
 
             # Get existing field data
-            if reg_name in self.cfg.REGISTERS:
-                reg_fields = self.cfg.REGISTERS[reg_name]['FIELDS']
+            if reg_name in self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name]:
+                reg_fields = self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name][reg_name][0].fields
             else:
                 reg_fields = {}
 
@@ -228,11 +415,20 @@ class CoreConfig(BaseConfigParser):
 
                 # Locked by attributes need to be handled here due to embedding information in field data
                 if 'lockedby' in field_attr:
-                    lockedby = field_attr['lockedby']
-                    if lockedby in self.cfg.LOCKEDBY:
-                        self.cfg.LOCKEDBY[lockedby].append({reg_name, field_name})
+                    if field_attr['lockedby'].count('.') == 3:
+                        lockedby = field_attr['lockedby']
+                    elif field_attr['lockedby'].count('.') <= 1:
+                        lockedby = self._make_reg_name(stage_data, field_attr['lockedby'])
                     else:
-                        self.cfg.LOCKEDBY[lockedby] = [{reg_name, field_name}]
+                        self.logger.log_debug(f"[*] Invalid locked by reference: {field_attr['lockedby']}")
+                        lockedby = None
+                    if lockedby:
+                        lreg = self._make_reg_name(stage_data, reg_name, False)
+                        if lockedby in self.cfg.LOCKEDBY[stage_data.vid_str]:
+                            self.cfg.LOCKEDBY[stage_data.vid_str][lockedby].append({lreg, field_name})
+                        else:
+                            self.cfg.LOCKEDBY[stage_data.vid_str][lockedby] = [{lreg, field_name}]
+
                 # Handle rest of field data here
                 if 'desc' not in field_attr:
                     field_attr['desc'] = field_name
@@ -240,27 +436,105 @@ class CoreConfig(BaseConfigParser):
 
             # Store all register data
             reg_attr['FIELDS'] = reg_fields
-            self.cfg.REGISTERS[reg_name] = reg_attr
-            self.logger.log_debug(f'    + {reg_name:16}: {reg_attr}')
-        return ret_val
+            reg_attr.update(stage_data.attrs)
+            if reg_attr['type'] == 'pcicfg':
+                reg_obj = self.create_register_object_pci(PCIRegisters, reg_attr)
+            elif reg_attr['type'] == 'mmcfg':
+                reg_obj = self.create_register_object_pci(MMCFGRegisters, reg_attr)
+            elif reg_attr['type'] == 'mmio':
+                self.logger.log('mmio register')
+                self.logger.log(reg_attr)
+                reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
+            elif reg_attr['type'] == 'iobar':
+                reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
+            elif reg_attr['type'] == 'msr':
+                threads_to_use = None
+                if 'scope' in reg_attr.keys():
+                    if reg_attr['scope'] == 'package':
+                        packages = self.cfg.CPU['packages']
+                        threads_to_use = [packages[p][0] for p in packages]
+                    elif reg_attr['scope'] == 'cores':
+                        cores = self.cfg.CPU['cores']
+                        threads_to_use = [cores[p][0] for p in cores]
+                if threads_to_use is None:
+                    threads_to_use = range(self.cfg.CPU['threads'])
+                reg_obj = self.create_register_object(MSRRegisters, reg_attr, threads_to_use)
+            elif reg_attr['type'] == 'io':
+                reg_obj = self.create_register_object(IORegisters, reg_attr, [None])
+            elif reg_attr['type'] == 'msgbus':
+                reg_obj = self.create_register_object(MSGBUSRegisters, reg_attr, [None])
+            elif reg_attr['type'] == 'mm_msgbus':
+                reg_obj = self.create_register_object(MM_MSGBUSRegisters, reg_attr, [None])
+            elif reg_attr['type'] == 'memory':
+                reg_obj = self.create_register_object(MEMORYRegisters, reg_attr, [None])
+            else:
+                self.logger.log("Did not create register object for:")
+                self.logger.log(reg_attr)
+                continue
+            self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name][reg_name] = reg_obj
+            hex_dict = make_dict_hex(reg_attr)
+            self.logger.log_debug(f'    + {reg_name:16}: {hex_dict}')
 
-    def _add_entry_simple(self, dest, stage_data, et_node, node_name):
-        ret_val = []
-        for node in et_node.iter(node_name):
+
+    def create_register_object(self, objtype, regattr, instance_list):
+        reg_obj = []
+        for instance in instance_list:
+            regattr['instance'] = instance
+            reg_obj.append(objtype(regattr))
+        return reg_obj
+
+    def create_register_object_bar(self, objtype, regattr):
+        reg_obj = []
+        for instance in regattr['tmp'].values():
+            regattr['instance'] = instance
+            reg_obj.append(objtype(regattr))
+        return reg_obj
+
+    def create_register_object_pci(self, objtype, regattr):
+        reg_obj = []
+        for instance in regattr['tmp'].values():
+            regattr['instance'] = instance
+            reg_obj.append(objtype(regattr, instance))
+        return reg_obj if reg_obj else None
+
+    def handle_controls(self, et_node, stage_data):
+        for node in et_node.iter('control'):
             attrs = _config_convert_data(node)
-            if 'name' not in attrs:
-                self.logger.log_error(f'Missing name entry for {attrs}')
-                continue
-            if 'undef' in attrs:
-                if attrs['name'] in dest:
-                    self.logger.log_debug(f"    - {attrs['name']:16}: {attrs['undef']}")
-                    dest.pop(attrs['name'], None)
-                continue
-            if 'desc' not in attrs:
-                attrs['desc'] = attrs['name']
-            dest[attrs['name']] = attrs
-            self.logger.log_debug(f"    + {attrs['name']:16}: {attrs}")
-        return ret_val
+            regs = []
+            name = attrs['name']
+            if attrs['register'] in self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name]:
+                regs.extend(self.cfg.REGISTERS[stage_data.vid_str][stage_data.dev_name][attrs['register']])
+            attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+            objs = []
+            for reg in regs:
+                cont_obj = CONTROLHelper(attrs, reg)
+                objs.append(cont_obj)
+
+            # Update storage location with new data
+            self.cfg.CONTROLS[name] = objs
+            hex_dict = make_dict_hex(attrs)
+            self.logger.log_debug(f"    + {attrs['name']:16}: {hex_dict}")
+
+    def handle_locks(self, et_node, stage_data):
+        for node in et_node.iter('lock'):
+            attrs = _config_convert_data(node)
+            attrs['register'] = self._make_reg_name(stage_data, attrs['register'])
+            dest_name = attrs['register']
+            if 'field' in attrs:
+                dest_name = '.'.join([dest_name, attrs['field']])
+            self.cfg.LOCKS[dest_name] = LOCKSHelper(*self.get_lock_data(attrs))
+            hex_dict = make_dict_hex(attrs)
+            self.logger.log_debug(f"    + {dest_name:16}: {hex_dict}")
+
+    def get_lock_data(self, lock_attr):
+        retval = []
+        for val in ['register', 'field', 'type', 'value', 'dependency', 'dep_value']:
+            if val in lock_attr:
+                retval.append(lock_attr[val])
+            else:
+                retval.append(None)
+        return retval
+    
 
 
-parsers = [PlatformInfo, CoreConfig]
+parsers = [PlatformInfo, DevConfig, CoreConfig]

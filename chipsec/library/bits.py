@@ -116,10 +116,14 @@ def ones_complement(value: int, number_of_bits: int = 64) -> int:
     return ((1 << number_of_bits) - 1) ^ value
 
 
-def get_bits(value: int, start: int, nbits: int) -> int:
-    ret = value >> start
-    ret &= (1 << nbits) - 1
-    return ret
+def get_bits(value: int, field_bit: int, size: int, preserve_field_position: Optional[bool] = False) -> int:
+    field_mask = make_mask(size)
+    if preserve_field_position:
+        return value & (field_mask << field_bit)
+    else:
+        return (value >> field_bit) & field_mask
+    
+    
 
 
 def set_bits(bit: int, size: int, initial_value: int, value: int) -> int:
