@@ -17,12 +17,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-SMM_Code_Chk_En (SMM Call-Out) Protection check
+SMM_CODE_CHK_EN (SMM Call-Out) Protection check
 
-SMM_Code_Chk_En is a bit found in the MSR_SMM_FEATURE_CONTROL register.
+SMM_CODE_CHK_EN is a bit found in the MSR_SMM_FEATURE_CONTROL register.
 Once set to '1', any CPU that attempts to execute SMM code not within the ranges defined by the SMRR will assert an unrecoverable MCE.
 As such, enabling and locking this bit is an important step in mitigating SMM call-out vulnerabilities.
-This CHIPSEC module simply reads the register and checks that SMM_Code_Chk_En is set and locked.
+This CHIPSEC module simply reads the register and checks that SMM_CODE_CHK_EN is set and locked.
 
 Reference:
     - Intel 64 and IA-32 Architectures Software Developer Manual (SDM)
@@ -36,7 +36,7 @@ Examples:
 
 Registers used:
     - MSR_SMM_FEATURE_CONTROL.LOCK
-    - MSR_SMM_FEATURE_CONTROL.SMM_Code_Chk_En
+    - MSR_SMM_FEATURE_CONTROL.SMM_CODE_CHK_EN
 
 .. note::
     - MSR_SMM_FEATURE_CONTROL may not be defined or readable on all platforms.
@@ -77,7 +77,7 @@ class smm_code_chk(BaseModule):
     def _check_SMM_Code_Chk_En(self, thread_id: int) -> int:
         regval = self.cs.register.read('MSR_SMM_FEATURE_CONTROL', thread_id)
         lock = self.cs.register.get_field('MSR_SMM_FEATURE_CONTROL', regval, 'LOCK')
-        code_chk_en = self.cs.register.get_field('MSR_SMM_FEATURE_CONTROL', regval, 'SMM_Code_Chk_En')
+        code_chk_en = self.cs.register.get_field('MSR_SMM_FEATURE_CONTROL', regval, 'SMM_CODE_CHK_EN')
 
         self.cs.register.print('MSR_SMM_FEATURE_CONTROL', regval, cpu_thread=thread_id)
 
@@ -89,8 +89,8 @@ class smm_code_chk(BaseModule):
                 self.result.setStatusBit(self.result.status.LOCKS)
         else:
             # MSR_SMM_MCA_CAP (the register that reports enhanced SMM capabilities) can only be read from SMM.
-            # Thus, there is no way to tell whether the the CPU doesn't support SMM_Code_Chk_En in the first place,
-            # or the CPU supports SMM_Code_Chk_En but the BIOS forgot to enable it.
+            # Thus, there is no way to tell whether the the CPU doesn't support SMM_CODE_CHK_EN in the first place,
+            # or the CPU supports SMM_CODE_CHK_EN but the BIOS forgot to enable it.
             #
             # In either case, there is nothing that prevents SMM code from executing instructions outside the ranges defined by the SMRRs,
             # so we should at least issue a warning regarding that.
