@@ -102,7 +102,7 @@ http://www.intel.com/content/www/us/en/processors/core/core-technical-resources.
     </register>
     <register name="MSR_SMM_FEATURE_CONTROL" type="msr" msr="0x4E0" desc="Enhanced SMM Feature Control">
       <field name="LOCK"            bit="0" size="1"  desc="Lock bit" />
-      <field name="SMM_Code_Chk_En" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
+      <field name="SMM_CODE_CHK_EN" bit="2" size="1"  desc="Prevents SMM from executing code outside the ranges defined by the SMRR" />
     </register>
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- PCIe Configuration registers -->
