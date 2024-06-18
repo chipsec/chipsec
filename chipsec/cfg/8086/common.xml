@@ -689,8 +689,6 @@ Common (default) XML platform configuration file
     <control name="SmmBiosWriteProtection" register="BC"                   field="SMM_BWP"            desc="SMM BIOS Write Protection"/>
     <control name="BiosLockEnable"         register="BC"                   field="BLE"                desc="BIOS Lock Enable"/>
     <control name="BiosWriteEnable"        register="BC"                   field="BIOSWE"             desc="BIOS Write Enable"/>
-    <control name="TopSwapStatus"          register="BC"                   field="TSS"                desc="Top Swap Status"/>
-    <control name="TopSwap"                register="BUC"                  field="TS"                 desc="Top Swap"/>
     <control name="FlashLockDown"          register="HSFS"                 field="FLOCKDN"            desc="Flash Configuration Lock-Down"/>
     <control name="BiosInterfaceLockDown"  register="GCS"                  field="BILD"               desc="BIOS Interface Lock-Down"/>
     <control name="GlobalSMIEnable"        register="SMI_EN"               field="GBL_SMI_EN"         desc="Global SMI Enable"/>
