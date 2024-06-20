@@ -130,3 +130,43 @@ class Memory(HALBase):
         byte = self.read_physical_mem_byte(addr)
         self.write_physical_mem_byte(addr, (byte | (0x1 << (bit & 0x7))))
         return byte
+
+    # reference: https://github.com/tianocore/edk2/blob/c4fdec0a83d69bd0399b1b4351fa9c3af3c6fd65/UefiCpuPkg/Library/MtrrLib/MtrrLib.c#L816
+    def get_max_memory_bit_size(self):
+        CPU_EXTENDED_FUNCTION = 0x80000000
+        CPU_VIR_PHY_ADDRESS_SIZE = 0x80000008
+        CPUID_SIG = 0
+        CPUID_STRUCTURED_EXTENDED_FEATURE_FLAGS = 0x7
+        NONINTEL_DEFAULT_MAX_PA_SIZE = 36
+        MSR_IA32_TME_ACTIVATE = 0x982
+        MSR_TME_ACTIVATE_ENABLED_BIT = 1
+        MSR_TME_ACTIVATE_ENABLED_BIT_SIZE = 1
+        MSR_TME_ACTIVATE_MKTME_KEYID_BIT = 32
+        MSR_TME_ACTIVATE_MKTME_KEYID_BIT_SIZE = 4
+        phys_address_size = 0
+        DEFAULT_THREAD_ID = 0
+        eax, _, _, _ = self.helper.cpuid(CPU_EXTENDED_FUNCTION, 0)
+        if eax >= CPU_VIR_PHY_ADDRESS_SIZE:
+            eax, _, _, _ = self.helper.cpuid(CPU_VIR_PHY_ADDRESS_SIZE, 0)
+            phys_address_size = self.get_value_from_bit_def(eax, 0, 8)
+        else:
+            phys_address_size = NONINTEL_DEFAULT_MAX_PA_SIZE  # If not defined in CPUID, assume size 36 and non-standard Intel CPU
+        max_func, _, _, _ = self.helper.cpuid(CPUID_SIG, 0)
+        if max_func >= 0x7:
+            _, _, ex_feature, _ = self.helper.cpuid(CPUID_STRUCTURED_EXTENDED_FEATURE_FLAGS, 0)
+            ex_func = self.get_value_from_bit_def(ex_feature, 13, 1)
+            if ex_func == 1:
+                tme_active = self.helper.read_msr(DEFAULT_THREAD_ID, MSR_IA32_TME_ACTIVATE)
+                if self.get_value_from_bit_def(tme_active, MSR_TME_ACTIVATE_ENABLED_BIT, MSR_TME_ACTIVATE_ENABLED_BIT_SIZE) > 0:
+                    phys_address_size -= self.get_value_from_bit_def(tme_active, MSR_TME_ACTIVATE_MKTME_KEYID_BIT, MSR_TME_ACTIVATE_MKTME_KEYID_BIT_SIZE)
+        return phys_address_size
+
+    def get_max_memory_mask(self):
+        size = self.get_max_memory_bit_size()
+        return self.get_bit_mask(size)
+
+    def get_bit_mask(self, size):
+        return (1 << size) - 1
+
+    def get_value_from_bit_def(self, inputValue, fieldStartBit, fieldSize):
+        return (inputValue >> fieldStartBit) & self.get_bit_mask(fieldSize)
