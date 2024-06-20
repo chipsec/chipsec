@@ -33,6 +33,7 @@ Registers used:
 
 """
 
+from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
 from typing import List
@@ -70,5 +71,10 @@ class spi_fdopss(BaseModule):
     # --------------------------------------------------------------------------
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Descriptor Security Override Pin-Strap")
-        self.res = self.check_fd_security_override_strap()
+        try:
+            self.res = self.check_fd_security_override_strap()
+        except CSReadError as err:
+            self.logger.log_warning(f"Unable to read register: {err}")
+            self.result.setStatusBit(self.result.status.VERIFY)
+            self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

@@ -22,32 +22,32 @@
 Access to MMIO (Memory Mapped IO) BARs and Memory-Mapped PCI Configuration Space (MMCFG)
 
 usage:
-    >>> read_MMIO_reg(cs, bar_base, 0x0, 4)
-    >>> write_MMIO_reg(cs, bar_base, 0x0, 0xFFFFFFFF, 4)
-    >>> read_MMIO(cs, bar_base, 0x1000)
-    >>> dump_MMIO(cs, bar_base, 0x1000)
+    >>> read_MMIO_reg(bar_base, 0x0, 4)
+    >>> write_MMIO_reg(bar_base, 0x0, 0xFFFFFFFF, 4)
+    >>> read_MMIO(bar_base, 0x1000)
+    >>> dump_MMIO(bar_base, 0x1000)
 
     Access MMIO by BAR name:
 
-    >>> read_MMIO_BAR_reg(cs, 'MCHBAR', 0x0, 4)
-    >>> write_MMIO_BAR_reg(cs, 'MCHBAR', 0x0, 0xFFFFFFFF, 4)
-    >>> get_MMIO_BAR_base_address(cs, 'MCHBAR')
-    >>> is_MMIO_BAR_enabled(cs, 'MCHBAR')
-    >>> is_MMIO_BAR_programmed(cs, 'MCHBAR')
-    >>> dump_MMIO_BAR(cs, 'MCHBAR')
-    >>> list_MMIO_BARs(cs)
+    >>> read_MMIO_BAR_reg('MCHBAR', 0x0, 4)
+    >>> write_MMIO_BAR_reg('MCHBAR', 0x0, 0xFFFFFFFF, 4)
+    >>> get_MMIO_BAR_base_address('MCHBAR')
+    >>> is_MMIO_BAR_enabled('MCHBAR')
+    >>> is_MMIO_BAR_programmed('MCHBAR')
+    >>> dump_MMIO_BAR('MCHBAR')
+    >>> list_MMIO_BARs()
 
     Access Memory Mapped Config Space:
 
-    >>> get_MMCFG_base_address(cs)
-    >>> read_mmcfg_reg(cs, 0, 0, 0, 0x10, 4)
-    >>> read_mmcfg_reg(cs, 0, 0, 0, 0x10, 4, 0xFFFFFFFF)
+    >>> get_MMCFG_base_address()
+    >>> read_mmcfg_reg(0, 0, 0, 0x10, 4)
+    >>> read_mmcfg_reg(0, 0, 0, 0x10, 4, 0xFFFFFFFF)
 """
 from typing import List, Optional, Tuple
 from chipsec.hal import hal_base
 from chipsec.library.exceptions import CSReadError
 from chipsec.library.logger import logger
-from chipsec.library.defines import get_bits
+from chipsec.library.defines import get_bits, is_all_ones
 
 DEFAULT_MMIO_BAR_SIZE = 0x1000
 
@@ -196,6 +196,7 @@ class MMIO(hal_base.HALBase):
         _bus = bus
         limit = 0
 
+        is_ba_invalid = False
         if 'register' in bar:
             preserve = True
             bar_reg = bar['register']
@@ -211,6 +212,7 @@ class MMIO(hal_base.HALBase):
                 except CSReadError:
                     base = 0
                     self.logger.log_hal(f'[mmio] Unable to determine MMIO Base.  Using Base = 0x{base:X}')
+                is_ba_invalid = base == 0 or self.cs.register.is_field_all_ones(bar_reg, base_field, base)
                 try:
                     reg_mask = self.cs.register.get_field_mask(bar_reg, base_field, preserve)
                 except CSReadError:
@@ -236,12 +238,14 @@ class MMIO(hal_base.HALBase):
             r = bar['reg']
             width = bar['width']
             reg_mask = (1 << (width * 8)) - 1
+            size = 4 if width != 8 else 8
             if 8 == width:
                 base_lo = self.cs.pci.read_dword(b, d, f, r)
                 base_hi = self.cs.pci.read_dword(b, d, f, r + 4)
                 base = (base_hi << 32) | base_lo
             else:
                 base = self.cs.pci.read_dword(b, d, f, r)
+            is_ba_invalid = base == 0 or is_all_ones(base, size)
 
         if 'fixed_address' in bar and (base == reg_mask or base == 0):
             base = bar['fixed_address']
@@ -265,9 +269,9 @@ class MMIO(hal_base.HALBase):
             size = bar['size'] if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
         self.logger.log_hal(f'[mmio] {bar_name}: 0x{base:016X} (size = 0x{size:X})')
-        if base == 0:
-            self.logger.log_hal('[mmio] Base address was determined to be 0.')
-            raise CSReadError('[mmio] Base address was determined to be 0')
+        if is_ba_invalid:
+            self.logger.log_hal('[mmio] Base address was determined to be invalid.')
+            raise CSReadError(f'[mmio] Base address was determined to be invalid: 0x{base:016X}')
 
         if self.cache_bar_addresses_resolution:
             self.cached_bar_addresses[(bar_name, bus)] = (base, size)
