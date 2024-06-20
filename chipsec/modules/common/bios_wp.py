@@ -57,6 +57,7 @@ Registers used: (n = 0,1,2,3,4)
 
 """
 
+from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi import BIOS, SPI
@@ -70,7 +71,6 @@ class bios_wp(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.spi = SPI(self.cs)
 
     def is_supported(self) -> bool:
         ble_exists = self.cs.control.is_defined('BiosLockEnable')
@@ -155,8 +155,14 @@ class bios_wp(BaseModule):
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("BIOS Region Write Protection")
-        wp = self.check_BIOS_write_protection()
-        spr = self.check_SPI_protected_ranges()
+        try:
+            self.spi = SPI(self.cs)
+            wp = self.check_BIOS_write_protection()
+            spr = self.check_SPI_protected_ranges()
+        except CSReadError as err:
+            self.logger.log_warning(f"Unable to read register: {err}")
+            self.result.setStatusBit(self.result.status.VERIFY)
+            return self.result.getReturnCode(ModuleResult.WARNING)
 
         self.logger.log('')
         if wp:

@@ -38,6 +38,7 @@ Registers used:
 
 """
 
+from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
 from typing import List
@@ -86,5 +87,10 @@ class bios_ts(BaseModule):
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("BIOS Interface Lock (including Top Swap Mode)")
-        self.res = self.check_bios_iface_lock()
+        try:
+            self.res = self.check_bios_iface_lock()
+        except CSReadError as err:
+            self.logger.log_warning(f"Unable to read register: {err}")
+            self.result.setStatusBit(self.result.status.VERIFY)
+            self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

@@ -45,6 +45,7 @@ Registers used:
 
 """
 
+from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
 from chipsec.hal.spi import SPI, GBE, PLATFORM_DATA, ME, FLASH_DESCRIPTOR
@@ -57,7 +58,6 @@ class spi_access(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
-        self.spi = SPI(self.cs)
 
     def is_supported(self) -> bool:
         if self.cs.register.has_field('HSFS', 'FDV') and self.cs.register.has_field('FRAP', 'BRWA'):
@@ -121,6 +121,12 @@ class spi_access(BaseModule):
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Region Access Control")
-        self.spi.display_SPI_Ranges_Access_Permissions()
-        self.res = self.check_flash_access_permissions()
+        try:
+            self.spi = SPI(self.cs)
+            self.spi.display_SPI_Ranges_Access_Permissions()
+            self.res = self.check_flash_access_permissions()
+        except CSReadError as err:
+            self.logger.log_warning(f"Unable to read register: {err}")
+            self.result.setStatusBit(self.result.status.VERIFY)
+            self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

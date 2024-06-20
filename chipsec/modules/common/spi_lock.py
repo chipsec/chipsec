@@ -43,6 +43,7 @@ Registers used:
 
 """
 
+from chipsec.library.exceptions import CSReadError
 from chipsec.module_common import BaseModule, MTAG_BIOS
 from chipsec.library.returncode import ModuleResult
 from typing import List
@@ -94,5 +95,10 @@ class spi_lock(BaseModule):
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test("SPI Flash Controller Configuration Locks")
-        self.res = self.check_spi_lock()
+        try:
+            self.res = self.check_spi_lock()
+        except CSReadError as err:
+            self.logger.log_warning(f"Unable to read register: {err}")
+            self.result.setStatusBit(self.result.status.VERIFY)
+            self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res
