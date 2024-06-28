@@ -208,11 +208,14 @@ class MMIO(hal_base.HALBase):
             if 'base_field' in bar:
                 base_field = bar['base_field']
                 try:
-                    base = self.cs.register.read_field(bar_reg, base_field, preserve, bus=_bus)
+                    bar_value = self.cs.register.read(bar_reg, bus = _bus)
+                    base = self.cs.register.get_field(bar_reg, bar_value, base_field, preserve)
                 except CSReadError:
                     base = 0
                     self.logger.log_hal(f'[mmio] Unable to determine MMIO Base.  Using Base = 0x{base:X}')
-                is_ba_invalid = base == 0 or self.cs.register.is_field_all_ones(bar_reg, base_field, base)
+                is_ba_invalid = base == 0 or self.cs.register.is_all_ffs(bar_reg, bar_value)
+                if is_ba_invalid:
+                    self.logger.log_warning(f'[mmio] BAR value for {bar_name} is 0x{bar_value:016X}')
                 try:
                     reg_mask = self.cs.register.get_field_mask(bar_reg, base_field, preserve)
                 except CSReadError:
@@ -271,8 +274,9 @@ class MMIO(hal_base.HALBase):
 
         self.logger.log_hal(f'[mmio] {bar_name}: 0x{base:016X} (size = 0x{size:X})')
         if is_ba_invalid:
-            self.logger.log_hal('[mmio] Base address was determined to be invalid.')
-            raise CSReadError(f'[mmio] Base address was determined to be invalid: 0x{base:016X}')
+            msg = f'[mmio] Base address was determined to be invalid: 0x{base:016X}'
+            self.logger.log_hal(msg)
+            raise CSReadError(msg)
 
         if self.cache_bar_addresses_resolution:
             self.cached_bar_addresses[(bar_name, bus)] = (base, size)
