@@ -81,6 +81,7 @@ Examples:
 
 import struct
 import os
+import sys
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
@@ -88,6 +89,7 @@ from chipsec.library.file import write_file
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal.interrupts import Interrupts
 from chipsec.library.exceptions import BadSMIDetected
+from chipsec.helper.oshelper import OsHelper
 
 
 #################################################################
@@ -146,6 +148,9 @@ GPR_2ADDR = False
 # be long-running
 OUTLIER_THRESHOLD = 33.3
 
+# SMI count MSR
+MSR_SMI_COUNT = 0x00000034
+
 #
 # Defaults
 #
@@ -195,6 +200,37 @@ class scan_track:
         self.hist_smi_duration = 0
         self.hist_smi_num = 0
         self.outliers_hist = 0
+        self.helper = OsHelper().get_default_helper()
+        self.helper.init()
+        self.smi_count = self.get_smi_count()
+
+    def __del__(self):
+        self.helper.close()
+
+    def get_smi_count(self):
+        count = -1
+        #
+        # The SMI count is the same on all CPUs
+        #
+        cpu = 0
+        try:
+            count = self.helper.read_msr(cpu, MSR_SMI_COUNT)
+            count = count[1] << 32 | count[0]
+        except UnimplementedAPIError:
+            pass
+        return count
+
+    def valid_smi_count(self):
+        valid = False
+        count = self.get_smi_count()
+        if (count == -1):
+            return True
+        elif (count == self.smi_count + 1):
+            valid = True
+        self.smi_count = count
+        if not valid:
+            print("SMI contention detected", file=sys.stderr)
+        return valid
 
     def find_address_in_regs(self, gprs):
         for key, value in gprs.items():
@@ -204,9 +240,9 @@ class scan_track:
                 return key
 
     def clear(self):
-        self.max = smi_info(0);
-        self.min = smi_info(2**32-1);
-        self.outlier = smi_info(0);
+        self.max = smi_info(0)
+        self.min = smi_info(2**32-1)
+        self.outlier = smi_info(0)
         self.acc_smi_duration = 0
         self.acc_smi_num = 0
         self.avg_smi_duration = 0
@@ -360,7 +396,7 @@ class smm_ptr(BaseModule):
             self.logger.log(f'      RSI: 0x{rsi:016X}')
             self.logger.log(f'      RDI: 0x{rdi:016X}')
         ret = self.interrupts.send_SW_SMI_timed(thread_id, smi_code, smi_data, rax, rbx, rcx, rdx, rsi, rdi)
-        duration = ret[7];
+        duration = ret[7]
         return (True, duration)
 
     def check_memory(self, _addr, _smi_desc, fn, restore_contents=False):
@@ -443,12 +479,18 @@ class smm_ptr(BaseModule):
         if not scan:
             self.send_smi(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
         else:
-            _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+            while True:
+                _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+                if scan.valid_smi_count():
+                    break
             #
             # Re-do the call if it was identified as an outlier, due to periodic SMI delays
             #
             if scan.is_outlier(duration):
-                _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+                while True:
+                    _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
+                    if scan.valid_smi_count():
+                        break
         #
         # Check memory buffer if not in 'No Fill' mode
         #
