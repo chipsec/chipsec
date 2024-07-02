@@ -261,13 +261,13 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
     while fwbin is not None:
         fw_offset = fwbin.Size + fwbin.Offset
         fwbin.calc_hashes()
-        if padding != fwbin.Offset:
+        if padding < fwbin.Offset:
             non_UEFI = EFI_SECTION(padding, 'Padding', EFI_FV_FILETYPE_FFS_PAD, fv_img[padding:fw_offset - 1], 0, fwbin.Offset - padding)
             non_UEFI.Comments = 'Attempting to identify modules in Padding Section'
             non_UEFI.children = efi_data_search(fv_img[padding:fwbin.Offset - 1], fwtype, polarity)
             if non_UEFI.children:
                 fv.append(non_UEFI)
-        padding += fw_offset
+        padding = fw_offset
         if fwbin.Type not in (EFI_FV_FILETYPE_ALL, EFI_FV_FILETYPE_RAW, EFI_FV_FILETYPE_FFS_PAD):
             fwbin.children = efi_data_search(fwbin.Image[fwbin.HeaderSize:], fwtype, polarity)
             fv.append(fwbin)
@@ -324,6 +324,9 @@ def build_efi_tree(data: bytes, fwtype: str) -> List['EFI_MODULE']:
                 fv.NVRAMType = identify_EFI_NVRAM(fv.Image) if fwtype is None else fwtype
             except Exception:
                 logger().log_warning(f"Couldn't identify NVRAM in FV {{{fv.Guid}}}")
+            fwbin = build_efi_file_tree(fv.Image, fwtype)
+            for i in fwbin:
+                fv.children.append(i)
 
         fvolumes.append(fv)
         fv = NextFwVolume(data, fv.Offset, fv.Size)
