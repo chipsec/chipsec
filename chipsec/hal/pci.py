@@ -237,6 +237,7 @@ class Pci:
     def __init__(self, cs):
         self.cs = cs
         self.helper = cs.helper
+        self.hal_log_every_read = True
 
     #
     # Access to PCI configuration registers
@@ -244,17 +245,20 @@ class Pci:
 
     def read_dword(self, bus: int, device: int, function: int, address: int) -> int:
         value = self.helper.read_pci_reg(bus, device, function, address, 4)
-        logger().log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{value:08X}')
+        if self.hal_log_every_read or value != 0xFFFFFFFF:
+            logger().log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{value:08X}')
         return value
 
     def read_word(self, bus: int, device: int, function: int, address: int) -> int:
         word_value = self.helper.read_pci_reg(bus, device, function, address, 2)
-        logger().log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
+        if self.hal_log_every_read or word_value != 0xFFFF:
+            logger().log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{word_value:04X}')
         return word_value
 
     def read_byte(self, bus: int, device: int, function: int, address: int) -> int:
         byte_value = self.helper.read_pci_reg(bus, device, function, address, 1)
-        logger().log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
+        if self.hal_log_every_read or byte_value != 0xFF:
+            logger().log_hal(f'[pci] reading B/D/F: {bus:d}/{device:d}/{function:d}, offset: 0x{address:02X}, value: 0x{byte_value:02X}')
         return byte_value
 
     def write_byte(self, bus: int, device: int, function: int, address: int, byte_value: int) -> None:
@@ -278,7 +282,7 @@ class Pci:
 
     def enumerate_devices(self, bus: Optional[int] = None, device: Optional[int] = None, function: Optional[int] = None, spec: Optional[bool] = True) -> List[Tuple[int, int, int, int, int, int]]:
         devices = []
-
+        self.hal_log_every_read = False
         if bus is not None:
             bus_range = [bus]
         else:
@@ -305,6 +309,7 @@ class Pci:
                         break
                 except OsHelperError:
                     logger().log_hal(f"[pci] unable to access B/D/F: {b:d}/{d:d}/{f:d}")
+        self.hal_log_every_read = True
         return devices
 
     def dump_pci_config(self, bus: int, device: int, function: int) -> List[int]:
