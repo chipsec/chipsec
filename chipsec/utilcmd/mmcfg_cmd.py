@@ -77,9 +77,11 @@ class MMCfgCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def base(self):
-        pciexbar, pciexbar_sz = self.cs.mmio.get_MMCFG_base_address()
-        self.logger.log(f'[CHIPSEC] Memory Mapped Config Base: 0x{pciexbar:016X}')
-        self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar_sz:016X}')
+        pciexbarlist = self.cs.mmio.get_MMCFG_base_addresses()
+        for pciexbar in pciexbarlist:
+            self.logger.log(f'[CHIPSEC] Memory Mapped Config Base: 0x{pciexbar[0]:016X}')
+            self.logger.log(f'[CHIPSEC] Memory Mapped Config Size: 0x{pciexbar[1]:016X}')
+            self.logger.log('')
 
     def read(self):
         data = self.cs.mmio.read_mmcfg_reg(self.bus, self.device, self.function, self.offset, self.width)

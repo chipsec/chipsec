@@ -22,7 +22,6 @@
 """
 The uefi command provides access to UEFI variables, both on the live system and in a SPI flash image file.
 
->>> chipsec_util uefi types
 >>> chipsec_util uefi var-list
 >>> chipsec_util uefi var-find <name>|<GUID>
 >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
@@ -36,7 +35,6 @@ The uefi command provides access to UEFI variables, both on the live system and 
 
 Examples:
 
->>> chipsec_util uefi types
 >>> chipsec_util uefi var-list
 >>> chipsec_util uefi var-find PK
 >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
