@@ -312,7 +312,7 @@ def ValidateFwVolumeHeader(ZeroVector: str, FsGuid: UUID, FvLength: int, HeaderL
     fv_len = (FvLength <= size)
     fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
     if Checksum != Calcsum:
-        logger().log_warning(f'Firmware Volume {{{FsGuid}}} checksum does not match calculated checksum')
+        logger().log_hal(f'WARNING: Firmware Volume {{{FsGuid}}} checksum does not match calculated checksum')
     return fv_rsvd and fv_len and fv_header_len
 
 
@@ -381,10 +381,10 @@ def GetFvHeader(buffer: bytes, off: int = 0) -> Tuple[int, int, int]:
             size = size + (numblocks * lenblock)
         numblocks, lenblock = struct.unpack(EFI_FV_BLOCK_MAP_ENTRY, buffer[fof:fof + EFI_FV_BLOCK_MAP_ENTRY_SZ])
     if FvLength != size:
-        logger().log("ERROR: Volume Size not consistent with Block Maps")
+        logger().log_hal("ERROR: Volume Size not consistent with Block Maps")
         return (0, 0, 0)
     if size >= 0x40000000 or size == 0:
-        logger().log("ERROR: Volume is corrupted")
+        logger().log_hal("ERROR: Volume is corrupted")
         return (0, 0, 0)
     return (size, HeaderLength, Attributes)
 
@@ -425,11 +425,11 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
 
         # Validate fsize is a legal value
         if fsize == 0 or fsize > FvLength - cur_offset:
-            logger().log("Unable to get correct file size for NextFwFile corrupt header information")
+            logger().log_hal("Warning: Unable to get correct file size for NextFwFile corrupt header information")
             break
         # Get next_offset
         update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
-        if not((bit_set(State, EFI_FILE_DATA_VALID, polarity)) or update_or_deleted):
+        if not ((bit_set(State, EFI_FILE_DATA_VALID, polarity)) or update_or_deleted):
             # else:
             cur_offset = align(cur_offset + 1, 8)
             continue
