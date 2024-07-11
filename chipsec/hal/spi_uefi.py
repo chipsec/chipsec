@@ -574,7 +574,7 @@ def save_efi_tree_filetype(modules: List['EFI_MODULE'],
                            path: str = '',
                            lvl: int = 0,
                            filetype: List[int] = [],
-                           save: bool = False
+                           save: bool = True
                            ) -> List[Dict[str, Any]]:
     mod_dir_path = path
     modules_arr = []
@@ -582,7 +582,7 @@ def save_efi_tree_filetype(modules: List['EFI_MODULE'],
     for m in modules:
         md: Dict[str, Any] = {}
         m.indent = DEF_INDENT * lvl
-        if (isinstance(m, EFI_FILE) and m.Type in filetype) or save:
+        if (isinstance(m, EFI_FILE) and m.Type in filetype) and save:
             logger().log(str(m))
 
         # extract all non-function non-None members of EFI_MODULE objects
@@ -607,7 +607,7 @@ def save_efi_tree_filetype(modules: List['EFI_MODULE'],
                     os.makedirs(mod_dir_path)
         # save children modules
         if len(m.children) > 0:
-            md["children"] = save_efi_tree_filetype(m.children, m, mod_dir_path, lvl + 1, filetype)
+            md["children"] = save_efi_tree_filetype(m.children, m, mod_dir_path, lvl + 1, filetype, save)
         else:
             del md["children"]
 
