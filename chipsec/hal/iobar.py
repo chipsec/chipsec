@@ -165,7 +165,7 @@ class IOBAR(hal_base.HALBase):
                 if 'offset' in _bar:
                     _s += (f' + 0x{int(_bar["offset"], 16):X}')
             else:
-                _s = f'{int(_bar["bus"], 16):02X}:{int(_bar["dev"], 16):02X}.{int(_bar["fun"], 16):01X} + {_bar["reg"]}'
+                _s = f'{_bar["bus"][0]:02X}:{_bar["dev"]:02X}.{_bar["fun"]:01X} + {_bar["reg"]}'
 
             logger().log(f' {_bar_name:12} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
 
