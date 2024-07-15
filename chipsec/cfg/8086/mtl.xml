@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<configuration platform="MTL" req_pch="True">
+<configuration platform="MTL" req_pch="False">
 <!--
 CHIPSEC: Platform Security Assessment Framework
 Copyright (c) 2024, Intel Corporation
