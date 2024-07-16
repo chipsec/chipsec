@@ -425,7 +425,7 @@ def NextFwFile(FvImage: bytes, FvLength: int, fof: int, polarity: bool) -> Optio
 
         # Validate fsize is a legal value
         if fsize == 0 or fsize > FvLength - cur_offset:
-            logger().log_hal("Warning: Unable to get correct file size for NextFwFile corrupt header information")
+            logger().log_hal("WARNING: Unable to get correct file size for NextFwFile corrupt header information")
             break
         # Get next_offset
         update_or_deleted = (bit_set(State, EFI_FILE_MARKED_FOR_UPDATE, polarity)) or (bit_set(State, EFI_FILE_DELETED, polarity))
