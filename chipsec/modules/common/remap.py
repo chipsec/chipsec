@@ -106,8 +106,10 @@ class remap(BaseModule):
         ia_untrusted = 0
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
             ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
-        remapbase_lock = remapbase & 0x1
-        remaplimit_lock = remaplimit & 0x1
+        if self.cs.register.has_field('PCI0.0.0_REMAPBASE', 'LOCK'):
+            remapbase_lock = remapbase & 0x1
+        if self.cs.register.has_field('PCI0.0.0_REMAPLIMIT', 'LOCK'):
+            remaplimit_lock = remaplimit & 0x1
         touud_lock = touud & 0x1
         tolud_lock = tolud & 0x1
         remapbase &= _REMAP_ADDR_MASK
@@ -171,12 +173,13 @@ class remap(BaseModule):
         else:
             self.logger.log_bad("  TOLUD is not locked")
 
-        ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
-        remap_ok = remap_ok and ok
-        if ok:
-            self.logger.log_good("  REMAPBASE and REMAPLIMIT are locked")
-        else:
-            self.logger.log_bad("  REMAPBASE and REMAPLIMIT are not locked")
+        if self.cs.register.has_field('PCI0.0.0_REMAPBASE', 'LOCK') and self.cs.register.has_field('PCI0.0.0_REMAPLIMIT', 'LOCK'):
+            ok = ((0 != remapbase_lock) and (0 != remaplimit_lock)) or (0 != ia_untrusted)
+            remap_ok = remap_ok and ok
+            if ok:
+                self.logger.log_good("  REMAPBASE and REMAPLIMIT are locked")
+            else:
+                self.logger.log_bad("  REMAPBASE and REMAPLIMIT are not locked")
 
         if remap_ok:
             if is_warning:
