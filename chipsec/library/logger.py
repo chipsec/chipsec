@@ -100,7 +100,8 @@ class chipsecStreamFormatter(logging.Formatter):
     # when the output is not a terminal (eg. redirection to a file)
     mPlatform = platform.system().lower()
     if is_atty and os.getenv('NO_COLOR') is None and (("windows" == mPlatform) or "linux" == mPlatform):
-        os.system('color')
+        if mPlatform == 'windows':
+            _ = os.system('color')
         colors = {
             'GREY':'\033[90m',
             'RED':'\033[91m',
