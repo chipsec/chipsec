@@ -18,24 +18,42 @@
 # chipsec@intel.com
 
 
-try:
-    import brotli
-    has_brotli = True
-except ImportError:
-    has_brotli = False
-try:
-    import lzma
-    has_lzma = True
-except ImportError:
-    has_lzma = False
-try:
-    import EfiCompressor
-    has_eficomp = True
-except ImportError:
-    has_eficomp = False
+import platform
 
 from typing import List, Any
+
 from chipsec.library.logger import logger
+
+def show_import_error(import_name: str) -> None:
+    if platform.system().lower() in ('windows', 'linux', 'darwin'):
+        logger().log_error(f'Failed to import compression module "{import_name}"')
+
+try:
+    import brotli
+
+    has_brotli = True
+except ImportError as exception:
+    has_brotli = False
+
+    show_import_error(exception.name)
+
+try:
+    import lzma
+
+    has_lzma = True
+except ImportError as exception:
+    has_lzma = False
+
+    show_import_error(exception.name)
+
+try:
+    import EfiCompressor
+
+    has_eficomp = True
+except ImportError as exception:
+    has_eficomp = False
+
+    show_import_error(exception.name)
 
 #
 # Compression Types
