@@ -242,7 +242,7 @@ class LinuxHelper(Helper):
             else:
                 res = self.dev_fh.write(newval)
                 self.dev_fh.flush()
-                return res.to_bytes(2, 'little')
+                return res.to_bytes(4, 'little')
         return b''
 
     def write_phys_mem(self, phys_address: int, length: int, newval: bytes) -> int:
