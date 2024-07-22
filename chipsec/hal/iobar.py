@@ -152,22 +152,34 @@ class IOBAR(hal_base.HALBase):
             if not self.is_IO_BAR_defined(_bar_name):
                 continue
             _bar = self.cs.Cfg.IO_BARS[_bar_name]
-            try:
-                (_base, _size) = self.get_IO_BAR_base_address(_bar_name)
-            except CSReadError:
-                if self.logger.HAL:
-                    self.logger.log(f"Unable to find IO BAR {_bar_name}")
-                continue
-            _en = self.is_IO_BAR_enabled(_bar_name)
-
+            bus_data = []
             if 'register' in _bar:
-                _s = _bar['register']
-                if 'offset' in _bar:
-                    _s += (f' + 0x{int(_bar["offset"], 16):X}')
+                bus_data = self.cs.register.get_bus(_bar['register'])
+                if not bus_data:
+                    if 'bus' in self.cs.register.get_def(_bar['register']):
+                        bus_data = [self.cs.register.get_def(_bar['register'])['bus']]
+            elif 'bus' in _bar:
+                bus_data.extend(_bar['bus'])
             else:
-                _s = f'{int(_bar["bus"], 16):02X}:{int(_bar["dev"], 16):02X}.{int(_bar["fun"], 16):01X} + {_bar["reg"]}'
+                continue
 
-            logger().log(f' {_bar_name:12} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
+            for bus in bus_data:
+                try:
+                    (_base, _size) = self.get_IO_BAR_base_address(_bar_name)
+                except CSReadError:
+                    if self.logger.HAL:
+                        self.logger.log(f"Unable to find IO BAR {_bar_name}")
+                    continue
+                _en = self.is_IO_BAR_enabled(_bar_name)
+
+                if 'register' in _bar:
+                    _s = _bar['register']
+                    if 'offset' in _bar:
+                        _s += (f' + 0x{_bar["offset"]:X}')
+                else:
+                    _s = f'{bus:02X}:{_bar["dev"]:02X}.{_bar["fun"]:01X} + {_bar["reg"]}'
+
+                logger().log(f' {_bar_name:12} | {_s:14} | {_base:016X} | {_size:08X} | {_en:d}   | {_bar["desc"]}')
 
     #
     # Read I/O range by I/O BAR name
