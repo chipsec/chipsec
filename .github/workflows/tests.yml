@@ -243,6 +243,8 @@ jobs:
         sudo apt-get install -qqy dkms nasm python3-setuptools
         pip install distro
         pip install -r linux_requirements.txt
+        sudo pip uninstall importlib_metadata 
+        sudo pip install importlib_metadata --force-reinstall
         sudo pip install -r linux_requirements.txt
 
     - name: Build the driver with Python
