@@ -39,7 +39,8 @@ https://www.intel.com/content/www/us/en/products/docs/processors/core/core-techn
 </info>
 
 <mmio>
-    <bar name="MCHBAR" bus="0" dev="0" fun="0" reg="0x48" width="8" mask="0x3FFFFFE0000" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
+    <bar name="MCHBAR"     bus="0" dev="0"    fun="0" reg="0x48" width="8" mask="0x3FFFFFE0000" size="0x8000" enable_bit="0" desc="Host Memory Mapped Register Range"/>
+    <bar name="SPIBAR"     bus="0" dev="0x1F" fun="5" reg="0x10" width="4" mask="0xFFFFF000"    size="0x1000" desc="SPI Controller Register Range" offset="0x0"/>
     <bar name="TMBAR"      register="TMBAR"      base_field="BA" size="0x20000"   desc="" />
     <bar name="HDABAR"     register="HDABAR"     base_field="BA" size="0x4000"    desc="" />
     <bar name="VTDPVC0BAR" register="VTDPVC0BAR" base_field="BA" size="0x1000"    desc="" />
@@ -50,6 +51,7 @@ https://www.intel.com/content/www/us/en/products/docs/processors/core/core-techn
 </mmio>
 
 <pci>
+    <device name="SPI"    bus="0" dev="0x1F" fun="5" vid="0x8086" />
     <device name="VMD"    bus="0"   dev="0x14" fun="0" vid="0x8086" />
     <device name="P2SBC"  bus="0x0" dev="0x1F" fun="1" vid="0x8086" />
 </pci>
