@@ -91,7 +91,15 @@ class rogue_mmio_bar(BaseModule):
         # copy all registers from MMIO range to new location in memory
         # we do that once rather than before every SMI since we return after first change detected
         self.logger.log(f'[*] copying BAR 0x{base:X} > 0x{self.reloc_mmio:X}')
-        orig_mmio = self.copy_bar(base, self.reloc_mmio, size)
+        try:
+            orig_mmio = self.copy_bar(base, self.reloc_mmio, size)
+        except Exception as e:
+            self.logger.log_failed('Unable to copy bar. Skipping.')
+            self.logger.log_verbose(str(e))
+            if self.cs.os_helper.is_windows():
+                self.logger.log_important('Try running in Linux for better coverage.')
+            return False
+        
         if self.logger.VERBOSE:
             self.cs.mmio.dump_MMIO(base, size)
             write_file('mmio_mem.orig', orig_mmio)
