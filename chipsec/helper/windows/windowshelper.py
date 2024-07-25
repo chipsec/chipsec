@@ -521,12 +521,12 @@ class WindowsHelper(Helper):
         out_buf = self._ioctl(IOCTL_READ_PHYSMEM, in_buf, out_length)
         return bytes(out_buf)
 
-    def write_phys_mem(self, phys_address: int, length: int, buf: AnyStr):
+    def write_phys_mem(self, phys_address: int, length: int, buf: AnyStr) -> int:
         hi = (phys_address >> 32) & 0xFFFFFFFF
         lo = phys_address & 0xFFFFFFFF
         in_buf = struct.pack('3I', hi, lo, length) + stringtobytes(buf)
         out_buf = self._ioctl(IOCTL_WRITE_PHYSMEM, in_buf, 4)
-        return out_buf
+        return int.from_bytes(out_buf, 'little')
 
     # @TODO: Temporarily the same as read_phys_mem for compatibility
     def read_mmio_reg(self, phys_address: int, size: int) -> int:
@@ -559,7 +559,7 @@ class WindowsHelper(Helper):
             return False
         in_buf = struct.pack('3I', ((phys_address >> 32) & 0xFFFFFFFF), (phys_address & 0xFFFFFFFF), size) + buf
         out_buf = self._ioctl(IOCTL_WRITE_MMIO, in_buf, 4)
-        return out_buf
+        return int.from_bytes(out_buf, 'little')
 
     def alloc_phys_mem(self, length: int, max_pa: int) -> Tuple[int, int]:
         in_length = 12
@@ -620,9 +620,8 @@ class WindowsHelper(Helper):
 
     def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> int:
         out_length = 0
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack('=4I', cpu_thread_id, msr_addr, eax, edx)
-        out_buf = self._ioctl(IOCTL_WRMSR, in_buf, out_length)
+        self._ioctl(IOCTL_WRMSR, in_buf, out_length)
         return True
 
     def read_pci_reg(self, bus: int, device: int, function: int, address: int, size: int) -> int:
@@ -642,15 +641,13 @@ class WindowsHelper(Helper):
         bdf = PCI_BDF(bus & 0xFFFF, device & 0xFFFF, function & 0xFFFF, address & 0xFFFF)
         out_length = 0
         in_buf = struct.pack('4HIB', bdf.BUS, bdf.DEV, bdf.FUNC, bdf.OFF, value, size)
-        out_buf = self._ioctl(WRITE_PCI_CFG_REGISTER, in_buf, out_length)
+        self._ioctl(WRITE_PCI_CFG_REGISTER, in_buf, out_length)
         return True
 
     def load_ucode_update(self, cpu_thread_id: int, ucode_update_buf: bytes) -> bool:
-        in_length = len(ucode_update_buf) + 3
         out_length = 0
-        out_buf = (c_char * out_length)()
         in_buf = struct.pack('=IH', cpu_thread_id, len(ucode_update_buf)) + ucode_update_buf
-        out_buf = self._ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf, out_length)
+        self._ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf, out_length)
         return True
 
     def read_io_port(self, io_port: int, size: int) -> int:
@@ -667,7 +664,7 @@ class WindowsHelper(Helper):
 
     def write_io_port(self, io_port: int, value: int, size: int) -> bool:
         in_buf = struct.pack('=HIB', io_port, value, size)
-        out_buf = self._ioctl(IOCTL_WRITE_IO_PORT, in_buf, 0)
+        self._ioctl(IOCTL_WRITE_IO_PORT, in_buf, 0)
         return True
 
     def read_cr(self, cpu_thread_id: int, cr_number: int) -> int:
@@ -679,7 +676,7 @@ class WindowsHelper(Helper):
 
     def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
         in_buf = struct.pack('=HQI', cr_number, value, cpu_thread_id)
-        out_buf = self._ioctl(IOCTL_WRCR, in_buf, 0)
+        self._ioctl(IOCTL_WRCR, in_buf, 0)
         return True
 
     #
