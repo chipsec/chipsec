@@ -64,7 +64,7 @@ class WindowsHelperTest(unittest.TestCase):
     qpacker = packer()
     ioctl_dict = {
         (0x22e028, b'\x00\x00\x00\x004\x12\x00\x00\x08\x00\x00\x00abc'):
-            1,
+            b'\x01',
         (0x22e024, b'\x00\x00\x00\x00\x00P\x00\x00\x02\x00\x00\x00'):
             b'\xac\xdc',
         (0x22e054, b'E#\x01\x00\x00\x00\x00\x00'):

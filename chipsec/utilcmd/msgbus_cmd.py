@@ -84,25 +84,25 @@ class MsgBusCommand(BaseCommand):
         parser.parse_args(self.argv, namespace=self)
 
     def msgbus_read(self):
-        self.logger.log("[CHIPSEC] msgbus read: port 0x{:02X} + 0x{:08X}".format(self.port, self.reg))
+        self.logger.log(f'[CHIPSEC] msgbus read: port 0x{self.port:02X} + 0x{self.reg:08X}')
         return self._msgbus.msgbus_reg_read(self.port, self.reg)
 
     def msgbus_write(self):
-        self.logger.log("[CHIPSEC] msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(self.port, self.reg, self.val))
+        self.logger.log(f'[CHIPSEC] msgbus write: port 0x{self.port:02X} + 0x{self.reg:08X} < 0x{self.val:08X}')
         return self._msgbus.msgbus_reg_write(self.port, self.reg, self.val)
 
     def msgbus_mm_read(self):
-        self.logger.log("[CHIPSEC] MMIO msgbus read: port 0x{:02X} + 0x{:08X}".format(self.port, self.reg))
+        self.logger.log(f'[CHIPSEC] MMIO msgbus read: port 0x{self.port:02X} + 0x{self.reg:08X}')
         return self._msgbus.mm_msgbus_reg_read(self.port, self.reg)
 
     def msgbus_mm_write(self):
-        self.logger.log("[CHIPSEC] MMIO msgbus write: port 0x{:02X} + 0x{:08X} < 0x{:08X}".format(self.port, self.reg, self.val))
+        self.logger.log(f'[CHIPSEC] MMIO msgbus write: port 0x{self.port:02X} + 0x{self.reg:08X} < 0x{self.val:08X}')
         return self._msgbus.mm_msgbus_reg_write(self.port, self.reg, self.val)
 
     def msgbus_message(self):
-        self.logger.log("[CHIPSEC] msgbus message: port 0x{:02X} + 0x{:08X}, opcode: 0x{:02X}".format(self.port, self.reg, self.opcode))
+        self.logger.log(f'[CHIPSEC] msgbus message: port 0x{self.port:02X} + 0x{self.reg:08X}, opcode: 0x{self.opcode:02X}')
         if self.val is not None:
-            self.logger.log("[CHIPSEC]                 Data: 0x{:08X}".format(self.val))
+            self.logger.log(f'[CHIPSEC]                 Data: 0x{self.val:08X}')
         return self._msgbus.msgbus_send_message(self.port, self.reg, self.opcode, self.val)
 
     def run(self):
@@ -111,7 +111,7 @@ class MsgBusCommand(BaseCommand):
         res = self.func()
 
         if res is not None:
-            self.logger.log("[CHIPSEC] Result: 0x{:08X}".format(res))
+            self.logger.log(f'[CHIPSEC] Result: {hex(res)}')
 
 
 commands = {'msgbus': MsgBusCommand}
