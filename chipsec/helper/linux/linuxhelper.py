@@ -156,7 +156,7 @@ class LinuxHelper(Helper):
             logger().log_debug(f'Module {self.DEVICE_NAME} loaded successfully')
         else:
             logger().log_error(f'Fail to load module: {driver_path}')
-        self.driverpath = driver_path
+        self.driverpath = f'({driver_path})'
 
     def unload_chipsec_module(self) -> None:
         if self.driver_loaded or os.path.exists(self.DEVICE_NAME):
@@ -399,7 +399,7 @@ class LinuxHelper(Helper):
 
     def get_ACPI_table(self, table_name:str) -> Optional['Array']:
         raise UnimplementedAPIError("get_ACPI_table")
-    
+
     def enum_ACPI_tables(self) -> Optional['Array']:
         raise UnimplementedAPIError('enum_ACPI_table')
 
