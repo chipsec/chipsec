@@ -407,6 +407,7 @@ class WindowsHelper(Helper):
             except pywintypes.error as err:
                 _handle_error(f"Service '{SERVICE_NAME}' didn't start: {err.args[2]} ({err.args[0]:d})", err.args[0])
         self.driverpath = win32serviceutil.LocateSpecificServiceExe(SERVICE_NAME)
+        self.driverpath = f'({self.driverpath})'
         return True
 
     def stop(self) -> bool:
