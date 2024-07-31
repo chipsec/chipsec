@@ -336,15 +336,15 @@ class UEFICommand(BaseCommand):
 
     def insert_before(self):
         if get_guid_bin(self.guid) == '':
-            print('*** Error *** Invalid GUID: {}'.format(self.guid))
+            self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
         if not os.path.isfile(self.rom_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
             return
 
         if not os.path.isfile(self.efi_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
         rom_image = read_file(self.rom_file)
@@ -354,15 +354,15 @@ class UEFICommand(BaseCommand):
 
     def insert_after(self):
         if get_guid_bin(self.guid) == '':
-            print('*** Error *** Invalid GUID: {}'.format(self.guid))
+            self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
         if not os.path.isfile(self.rom_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
             return
 
         if not os.path.isfile(self.efi_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
         rom_image = read_file(self.rom_file)
@@ -372,15 +372,15 @@ class UEFICommand(BaseCommand):
 
     def replace(self):
         if get_guid_bin(self.guid) == '':
-            print('*** Error *** Invalid GUID: {}'.format(self.guid))
+            self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
         if not os.path.isfile(self.rom_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
             return
 
         if not os.path.isfile(self.efi_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.efi_file))
             return
 
         rom_image = read_file(self.rom_file)
@@ -390,11 +390,11 @@ class UEFICommand(BaseCommand):
 
     def remove(self):
         if get_guid_bin(self.guid) == '':
-            print('*** Error *** Invalid GUID: {}'.format(self.guid))
+            self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
         if not os.path.isfile(self.rom_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.rom_file))
             return
 
         rom_image = read_file(self.rom_file)
@@ -405,15 +405,15 @@ class UEFICommand(BaseCommand):
         compression = {'none': 0, 'tiano': 1, 'lzma': 2}
 
         if get_guid_bin(self.guid) == '':
-            print('*** Error *** Invalid GUID: {}'.format(self.guid))
+            self.logger.log_bad('*** Error *** Invalid GUID: {}'.format(self.guid))
             return
 
         if not os.path.isfile(self.raw_file):
-            print('*** Error *** File doesn\'t exist: {}'.format(self.raw_file))
+            self.logger.log_bad('*** Error *** File doesn\'t exist: {}'.format(self.raw_file))
             return
 
         if self.comp not in compression:
-            print('*** Error *** Unknown compression: {}'.format(self.comp))
+            self.logger.log_bad('*** Error *** Unknown compression: {}'.format(self.comp))
             return
 
         compression_type = compression[self.comp]
@@ -427,7 +427,7 @@ class UEFICommand(BaseCommand):
             uefi_image = assemble_uefi_file(self.guid, wrap_image)
             write_file(self.efi_file, uefi_image)
         else:
-            print('*** Error *** Unknow file type: {}'.format(self.file_type))
+            self.logger.log_bad('*** Error *** Unknow file type: {}'.format(self.file_type))
             return
 
         self.logger.log("[CHIPSEC]  UEFI file was successfully assembled! Binary file size: {:d}, compressed UEFI file size: {:d}".format(len(raw_image), len(uefi_image)))

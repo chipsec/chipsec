@@ -38,7 +38,7 @@ Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To us
 """
 from chipsec.modules.tools.vmm.hv.define import *
 from chipsec.modules.tools.vmm.hv.hypercall import *
-from chipsec.module_common import *
+from chipsec.module_common import BaseModule
 
 # Hypercall vectors excluded from scan/fuzzing
 excluded_hypercalls_from_scan = []
@@ -50,16 +50,7 @@ class HypercallFuzz(BaseModule):
         BaseModule.__init__(self)
 
     def usage(self):
-        print('  Usage:')
-        print('    chipsec_main.py -i -m tools.vmm.hv.hypercall [-a mode,vector,iterations]')
-        print('      mode                fuzzing mode')
-        print('        = status-fuzzing  finding parameters with hypercall success status')
-        print('        = params-info     shows input parameters valid ranges')
-        print('        = params-fuzzing  parameters fuzzing based on their valid ranges')
-        print('        = custom-fuzzing  fuzzing of known hypercalls')
-        print('      vector              hypercall vector')
-        print('      iterations          number of hypercall iterations')
-        print('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        self.logger.log(__doc__)
         return
 
     def run(self, module_argv):

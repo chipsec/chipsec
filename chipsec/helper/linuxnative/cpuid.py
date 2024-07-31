@@ -30,6 +30,7 @@ import mmap
 import platform
 from ctypes import CFUNCTYPE, POINTER, Structure, addressof, c_uint32, c_void_p, sizeof
 from typing import Callable, Generator, Tuple
+from chipsec.library.logger import logger
 
 # Posix x86_64:
 # Three first call registers : RDI, RSI, RDX
@@ -108,6 +109,7 @@ if __name__ == "__main__":
                 yield (eax, regs)
                 eax += 1
 
-    print(" ".join(x.ljust(8) for x in ("CPUID", "A", "B", "C", "D")).strip())
+    logger().log(" ".join(x.ljust(8) for x in ("CPUID", "A", "B", "C", "D")).strip())
     for eax, regs in valid_inputs():
-        print("%08x" % eax, " ".join("%08x" % reg for reg in regs))
+        reg_string = " ".join(f"{reg:08X}" for reg in regs)
+        logger().log(f'{eax:08X} {reg_string}')

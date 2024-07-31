@@ -88,7 +88,7 @@ class IOMMUCommand(BaseCommand):
         try:
             _iommu = iommu.IOMMU(self.cs)
         except IOMMUError as msg:
-            print(msg)
+            self.logger.log(msg)
             return
 
         if self.engine:
@@ -104,7 +104,7 @@ class IOMMUCommand(BaseCommand):
             try:
                 _acpi = acpi.ACPI(self.cs)
             except AcpiRuntimeError as msg:
-                print(msg)
+                self.logger.log(msg)
                 return
 
             if _acpi.is_ACPI_table_present(acpi.ACPI_TABLE_SIG_DMAR):
