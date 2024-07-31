@@ -23,13 +23,11 @@ Common functionality for VMM related modules/tools
 """
 
 import sys
-import socket
 import struct
 import random
 import os.path
 import json
-import pprint
-from random import getrandbits, randint
+from random import randint
 from time import strftime, localtime
 from chipsec.module_common import BaseModule
 from chipsec.library.defines import DD

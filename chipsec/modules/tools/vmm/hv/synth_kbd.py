@@ -23,7 +23,7 @@
 Hyper-V VMBus synthetic keyboard fuzzer. Fuzzes inbound ring buffer in VMBus virtual keyboard device.
 
 Usage:
-  ``chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz -l log.txt``
+  ``chipsec_main.py -m tools.vmm.hv.synth_kbd -a fuzz -l log.txt``
 
 Note: the fuzzer is incompatible with native VMBus driver (``vmbus.sys``). To use it, remove ``vmbus.sys``
 """
@@ -76,9 +76,7 @@ class synth_kbd(BaseModule):
         BaseModule.__init__(self)
 
     def usage(self):
-        print('  Usage:')
-        print('    chipsec_main.py -i -m tools.vmm.hv.synth_kbd -a fuzz')
-        print('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        self.logger.log(__doc__)
         return
 
     def run(self, module_argv):
@@ -144,11 +142,12 @@ class synth_kbd(BaseModule):
                 vb.err('synth_kbd protocol request has failed!')
 
         except KeyboardInterrupt:
-            print('***** Control-C *****')
+            self.logger.log('***** Control-C *****')
         except Exception:
-            print('\n\n')
-            traceback.print_exc()
-            print('\n\n')
+            self.logger.log('\n\n')
+            self.logger.log_bad(traceback.format_exc())
+            self.logger.log('\n\n')
+            
         finally:
             vb.vmbus_close(relid)
             vb.vmbus_teardown_gpadl(relid, vb.ringbuffers[relid].gpadl)

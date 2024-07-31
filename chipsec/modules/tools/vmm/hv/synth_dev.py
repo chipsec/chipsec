@@ -99,12 +99,7 @@ class synth_dev(BaseModule):
         BaseModule.__init__(self)
 
     def usage(self):
-        print('  Usage:')
-        print('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a info')
-        print('      print channel offers')
-        print('    chipsec_main.py -i -m tools.vmm.hv.synth_dev -a fuzz,<relid>')
-        print('      fuzzing device with specified relid')
-        print('  Note: the fuzzer is incompatible with native VMBus driver (vmbus.sys). To use it, remove vmbus.sys')
+        self.logger.log(__doc__)
         return
 
     def run(self, module_argv):
@@ -145,11 +140,11 @@ class synth_dev(BaseModule):
                 self.usage()
 
         except KeyboardInterrupt:
-            print('***** Control-C *****')
+            self.logger.log('***** Control-C *****')
         except Exception:
-            print('\n\n')
+            self.logger.log('\n\n')
             traceback.print_exc()
-            print('\n\n')
+            self.logger.log('\n\n')
         finally:
             vb.vmbus_rescind_all_offers()
             del vb

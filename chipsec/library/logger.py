@@ -215,7 +215,7 @@ class Logger:
             try:
                 os.mkdir(self.LOG_PATH)
             except:
-                print('Unable to create logs folder')
+                self.log('Unable to create logs folder')
                 return False
         return True
 
@@ -227,7 +227,7 @@ class Logger:
             self.chipsecLogger.addHandler(file_handler)
             file_handler.setFormatter(self.logFormatter)
         else:
-            print('Unable to autolog')
+            self.log('Unable to autolog')
 
     def log_csv(self, file_name, test_cases):
         fields = ['name', 'result', 'code', 'output']
@@ -255,7 +255,7 @@ class Logger:
                 # creates FileHandler for log file
                 self.logfile = logging.FileHandler(filename=self.LOG_FILE_NAME, mode='a')
             except Exception:
-                print(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
+                self.log(f'WARNING: Could not open log file: {self.LOG_FILE_NAME}')
             else:
                 self.chipsecLogger.addHandler(self.logfile)
                 self.logfile.setFormatter(self.logFormatter)
@@ -276,7 +276,7 @@ class Logger:
                 self.logfile.close()
                 self.logstream.flush()
             except Exception:
-                print('WARNING: Could not close log file')
+                self.log('WARNING: Could not close log file')
             finally:
                 self.logfile = None
     def remove_chipsec_logger(self) -> None:

@@ -409,7 +409,7 @@ def get_helper() -> DALHelper:
 
 if __name__ == '__main__':
     try:
-        print('Not doing anything...')
+        logger().log('Not doing anything...')
 
     except DALHelperError as msg:
         if logger().DEBUG:

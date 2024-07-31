@@ -131,8 +131,8 @@ class access_uefispec(BaseModule):
         newstr = ":".join(f"{c:02x}" for c in data2)
 
         if oldstr != newstr:
-            print(oldstr)
-            print(newstr)
+            self.logger.log(oldstr)
+            self.logger.log(newstr)
             return True
         else:
             return False
