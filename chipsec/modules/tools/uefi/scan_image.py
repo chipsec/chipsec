@@ -90,13 +90,13 @@ class scan_image(BaseModule):
     def genlist_callback(self, efi_module: EFI_MODULE) -> None:
         md = {}
         if type(efi_module) == EFI_SECTION:
-            if efi_module.SHA256:
+            if efi_module.SHA1:
                 md["sha1"] = efi_module.SHA1
             if efi_module.parentGuid:
                 md["guid"] = efi_module.parentGuid
             if efi_module.ui_string:
                 md["name"] = efi_module.ui_string
-            if efi_module.Name and efi_module.Name != SECTION_NAMES[EFI_SECTION_PE32]:
+            if efi_module.Name:
                 md["type"] = efi_module.Name
             if efi_module.SHA256 in self.efi_list.keys():
                 self.duplicate_list.append(efi_module.SHA256)
@@ -183,11 +183,7 @@ class scan_image(BaseModule):
             json_pth = os.path.abspath(json_file)
 
             if op == 'generate':
-                if os.path.exists(json_pth):
-                    self.logger.log_error(f'JSON file \'{json_file}\' already exists. Exiting...')
-                    self.res = ModuleResult.ERROR
-                else:
-                    self.res = self.generate_efilist(json_pth)
+                self.res = self.generate_efilist(json_pth)
             elif op == 'check':
                 if not os.path.exists(json_pth):
                     self.logger.log_error(f'JSON file \'{json_file}\' doesn\'t exist. Exiting...')
