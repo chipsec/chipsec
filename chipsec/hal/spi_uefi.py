@@ -144,7 +144,7 @@ def modify_uefi_region(data: bytes, command: int, guid: UUID, uefi_file: bytes =
     return data
 
 
-def build_efi_modules_tree(fwtype: str, data: bytes, Size: int, offset: int, polarity: bool) -> List[EFI_SECTION]:
+def build_efi_modules_tree(fwtype: Optional[str], data: bytes, Size: int, offset: int, polarity: bool) -> List[EFI_SECTION]:
     sections: List[EFI_SECTION] = []
     secn = 0
 
@@ -252,7 +252,7 @@ def build_efi_modules_tree(fwtype: str, data: bytes, Size: int, offset: int, pol
 # Input arguements:
 # fv_image - fv_image containing files
 # fwtype - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
-def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
+def build_efi_file_tree(fv_img: bytes, fwtype: Optional[str]) -> List[EFI_FILE]:
     fv_size, HeaderSize, Attributes = GetFvHeader(fv_img)
     polarity = bool(Attributes & EFI_FVB2_ERASE_POLARITY)
     fwbin = NextFwFile(fv_img, fv_size, HeaderSize, polarity)
@@ -305,7 +305,7 @@ def build_efi_file_tree(fv_img: bytes, fwtype: str) -> List[EFI_FILE]:
 #   data           - an image containing UEFI firmware volumes
 #   fwtype         - platform specific firmware type used to detect NVRAM format (VSS, EVSA, NVAR...)
 #
-def build_efi_tree(data: bytes, fwtype: str) -> List['EFI_MODULE']:
+def build_efi_tree(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
     fvolumes = []
     fv = NextFwVolume(data)
     while fv is not None:
@@ -338,7 +338,7 @@ def build_efi_tree(data: bytes, fwtype: str) -> List['EFI_MODULE']:
 # Attempt to find efi modules using calls to build_efi_tree, build_efi_file_tree,
 # and build_efi_modules_tree in succession.  Return once one of the calls is successful
 #
-def efi_data_search(data: bytes, fwtype: str, polarity: bool):
+def efi_data_search(data: bytes, fwtype: Optional[str], polarity: bool):
     efi_tree = build_efi_tree(data, fwtype)
     if not efi_tree:
         efi_tree = build_efi_file_tree(data, fwtype)
@@ -377,7 +377,7 @@ def update_efi_tree(modules: List['EFI_MODULE'], parent_guid: Optional[UUID] = N
     return ui_string
 
 
-def build_efi_model(data: bytes, fwtype: str) -> List['EFI_MODULE']:
+def build_efi_model(data: bytes, fwtype: Optional[str]) -> List['EFI_MODULE']:
     model = build_efi_tree(data, fwtype)
     update_efi_tree(model)
     return model
@@ -519,7 +519,7 @@ class UUIDEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def parse_uefi_region_from_file(filename: str, fwtype: str, outpath: Optional[str] = None, filetype: List[int] = []) -> None:
+def parse_uefi_region_from_file(filename: str, fwtype: Optional[str], outpath: Optional[str] = None, filetype: List[int] = []) -> None:
     # Create an output folder to dump EFI module tree
     if outpath is None:
         outpath = f'{filename}.dir'
@@ -540,7 +540,7 @@ def parse_uefi_region_from_file(filename: str, fwtype: str, outpath: Optional[st
     write_file(f'{filename}.UEFI.json', json.dumps(tree_json, indent=2, separators=(',', ': '), cls=UUIDEncoder))
 
 
-def decode_uefi_region(pth: str, fname: str, fwtype: str, filetype: List[int] = []) -> None:
+def decode_uefi_region(pth: str, fname: str, fwtype: Optional[str], filetype: List[int] = []) -> None:
 
     bios_pth = os.path.join(pth, f'{fname}.dir')
     if not os.path.exists(bios_pth):
