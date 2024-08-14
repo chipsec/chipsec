@@ -16,8 +16,7 @@ firmware and platform components, security assessment and fuzzing tools
 for various platform devices and interfaces, and tools acquiring
 critical firmware and device artifacts.
 
-CHIPSEC can run on *Windows*, *Linux*, *Mac OS* and *UEFI shell*. Mac OS
-support is Beta.
+CHIPSEC can run on *Windows*, *Linux*, and *UEFI shell*.
 
 .. warning::
 
@@ -53,7 +52,7 @@ support is Beta.
 Installation
 ------------
 
-CHIPSEC supports Windows, Linux, Mac OS X, DAL and UEFI shell.
+CHIPSEC supports Windows, Linux, DAL, and UEFI shell.
 Circumstances surrounding the target platform may change which of these
 environments is most appropriate.
 
