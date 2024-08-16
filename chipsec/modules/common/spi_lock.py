@@ -77,28 +77,28 @@ class spi_lock(BaseModule):
 
         flockdn = self.cs.control.get('FlashLockDown', with_print=reg_print)
         if 1 == flockdn:
-            self.logger.log_good("SPI Flash Controller configuration is locked")
+            self.logger.log_good('SPI Flash Controller configuration is locked')
         else:
             res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
-            self.logger.log_bad("SPI Flash Controller configuration is not locked")
+            self.logger.log_bad('SPI Flash Controller configuration is not locked')
         reg_print = False
 
         if res == ModuleResult.FAILED:
-            self.logger.log_failed("SPI Flash Controller not locked correctly.")
+            self.logger.log_failed('SPI Flash Controller not locked correctly.')
         elif res == ModuleResult.PASSED:
-            self.logger.log_passed("SPI Flash Controller locked correctly.")
+            self.logger.log_passed('SPI Flash Controller locked correctly.')
         else:
-            self.logger.log_warning("Unable to determine if SPI Flash Controller is locked correctly.")
+            self.logger.log_warning('Unable to determine if SPI Flash Controller is locked correctly.')
 
         return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("SPI Flash Controller Configuration Locks")
+        self.logger.start_test('SPI Flash Controller Configuration Locks')
         try:
             self.res = self.check_spi_lock()
         except CSReadError as err:
-            self.logger.log_warning(f"Unable to read register: {err}")
+            self.logger.log_warning(f'Unable to read register: {err}')
             self.result.setStatusBit(self.result.status.VERIFY)
             self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

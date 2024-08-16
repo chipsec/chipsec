@@ -81,13 +81,13 @@ class memlock(BaseModule):
             if self.logger.VERBOSE:
                 self.cs.register.print('MSR_LT_LOCK_MEMORY', lt_lock_msr)
             lt_lock = self.cs.register.get_field('MSR_LT_LOCK_MEMORY', lt_lock_msr, 'LT_LOCK')
-            self.logger.log(f"[*]   cpu{tid:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {lt_lock:x}")
+            self.logger.log(f'[*]   cpu{tid:d}: MSR_LT_LOCK_MEMORY[LT_LOCK] = {lt_lock:x}')
             if 0 == lt_lock:
                 status = True
         return status
 
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("Check MSR_LT_LOCK_MEMORY")
+        self.logger.start_test('Check MSR_LT_LOCK_MEMORY')
         check_MSR_LT_LOCK_MEMORY_test_fail = self.check_MSR_LT_LOCK_MEMORY()
 
         if self.is_read_error:
@@ -95,8 +95,8 @@ class memlock(BaseModule):
             self.logger.log_important('Possible the environment or a platform feature is preventing these reads.')
             self.res = ModuleResult.ERROR
             self.result.setStatusBit(self.result.status.ACCESS_RW)
-        elif check_MSR_LT_LOCK_MEMORY_test_fail == True:
-            self.logger.log_failed("MSR_LT_LOCK_MEMORY.LT_LOCK bit is not configured correctly")
+        elif check_MSR_LT_LOCK_MEMORY_test_fail is True:
+            self.logger.log_failed('MSR_LT_LOCK_MEMORY.LT_LOCK bit is not configured correctly')
             self.res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
         else:

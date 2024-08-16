@@ -20,9 +20,9 @@
 
 
 """
-The SPI Flash Descriptor indicates read/write permissions for devices to access regions of the flash memory. 
-This module simply reads the Flash Descriptor and checks that software cannot modify the Flash Descriptor itself. 
-If software can write to the Flash Descriptor, then software could bypass any protection defined by it. 
+The SPI Flash Descriptor indicates read/write permissions for devices to access regions of the flash memory.
+This module simply reads the Flash Descriptor and checks that software cannot modify the Flash Descriptor itself.
+If software can write to the Flash Descriptor, then software could bypass any protection defined by it.
 While often used for debugging, this should not be the case on production systems.
 
 This module checks that software cannot write to the flash descriptor.
@@ -59,8 +59,6 @@ class spi_desc(BaseModule):
         self.logger.log_important('FRAP.BRWA or FRAP.BRRA registers not defined for platform.  Skipping module.')
         return False
 
-    ##
-    # Displays the SPI Regions Access Permissions
     def check_flash_access_permissions(self) -> int:
 
         res = ModuleResult.PASSED
@@ -69,27 +67,27 @@ class spi_desc(BaseModule):
         brra = self.cs.register.get_field('FRAP', frap, 'BRRA')
         brwa = self.cs.register.get_field('FRAP', frap, 'BRWA')
 
-        self.logger.log(f"[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}")
+        self.logger.log(f'[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}')
         if brwa & (1 << FLASH_DESCRIPTOR):
             res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.ACCESS_RW)
-            self.logger.log_bad("Software has write access to SPI flash descriptor")
+            self.logger.log_bad('Software has write access to SPI flash descriptor')
 
         self.logger.log('')
         if ModuleResult.PASSED == res:
-            self.logger.log_passed("SPI flash permissions prevent SW from writing to flash descriptor")
+            self.logger.log_passed('SPI flash permissions prevent SW from writing to flash descriptor')
         elif ModuleResult.FAILED == res:
-            self.logger.log_failed("SPI flash permissions allow SW to write flash descriptor")
+            self.logger.log_failed('SPI flash permissions allow SW to write flash descriptor')
             self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
-        
+
         return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("SPI Flash Region Access Control")
+        self.logger.start_test('SPI Flash Region Access Control')
         try:
             self.res = self.check_flash_access_permissions()
         except CSReadError as err:
-            self.logger.log_warning(f"Unable to read register: {err}")
+            self.logger.log_warning(f'Unable to read register: {err}')
             self.result.setStatusBit(self.result.status.VERIFY)
             self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

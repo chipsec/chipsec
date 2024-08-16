@@ -103,7 +103,7 @@ class me_mfg_mode(BaseModule):
         BaseModule.__init__(self)
 
     def is_supported(self) -> bool:
-        if self.cs.device.is_enabled("MEI1"):
+        if self.cs.device.is_enabled('MEI1'):
             return True
         else:
             self.logger.log_important('MEI1 not enabled.  Skipping module.')
@@ -116,15 +116,14 @@ class me_mfg_mode(BaseModule):
 
         if 0 == me_mfg_mode:
             me_mfg_mode_res = ModuleResult.PASSED
-            self.logger.log_passed("ME is not in Manufacturing Mode")
+            self.logger.log_passed('ME is not in Manufacturing Mode')
         else:
-            self.logger.log_failed("ME is in Manufacturing Mode")
+            self.logger.log_failed('ME is in Manufacturing Mode')
             self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
 
         return self.result.getReturnCode(me_mfg_mode_res)
 
-
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("ME Manufacturing Mode")
+        self.logger.start_test('ME Manufacturing Mode')
         self.res = self.check_me_mfg_mode()
         return self.res

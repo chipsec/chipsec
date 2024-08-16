@@ -57,11 +57,11 @@ class bios_ts(BaseModule):
 
     def check_bios_iface_lock(self) -> int:
         bild = self.cs.control.get('BiosInterfaceLockDown')
-        self.logger.log(f"[*] BiosInterfaceLockDown (BILD) control = {bild:d}")
+        self.logger.log(f'[*] BiosInterfaceLockDown (BILD) control = {bild:d}')
 
         if self.cs.control.is_defined('TopSwapStatus'):
             if self.cs.control.is_all_ffs('TopSwapStatus'):
-                self.logger.log("[*] BIOS Top Swap mode: can't determine status.")
+                self.logger.log('[*] BIOS Top Swap mode: cannot determine status.')
                 self.logger.log_verbose('TopSwapStatus read returned all 0xFs.')
             else:
                 tss = self.cs.control.get('TopSwapStatus')
@@ -69,28 +69,28 @@ class bios_ts(BaseModule):
 
         if self.cs.control.is_defined('TopSwap'):
             if self.cs.control.is_all_ffs('TopSwap'):
-                self.logger.log("[*] RTC Top Swap control (TS): can't determine status.")
+                self.logger.log('[*] RTC Top Swap control (TS): cannot determine status.')
                 self.logger.log_verbose('TopSwap read returned all 0xFs.')
             else:
                 ts = self.cs.control.get('TopSwap')
-                self.logger.log(f"[*] RTC TopSwap control (TS) = {ts:x}")
+                self.logger.log(f'[*] RTC TopSwap control (TS) = {ts:x}')
 
         if bild == 0:
             res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
-            self.logger.log_failed("BIOS Interface is not locked (including Top Swap Mode)")
+            self.logger.log_failed('BIOS Interface is not locked (including Top Swap Mode)')
         else:
             res = ModuleResult.PASSED
-            self.logger.log_passed("BIOS Interface is locked (including Top Swap Mode)")
-        
+            self.logger.log_passed('BIOS Interface is locked (including Top Swap Mode)')
+
         return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("BIOS Interface Lock (including Top Swap Mode)")
+        self.logger.start_test('BIOS Interface Lock (including Top Swap Mode)')
         try:
             self.res = self.check_bios_iface_lock()
         except CSReadError as err:
-            self.logger.log_warning(f"Unable to read register: {err}")
+            self.logger.log_warning(f'Unable to read register: {err}')
             self.result.setStatusBit(self.result.status.VERIFY)
             self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

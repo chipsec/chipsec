@@ -44,7 +44,7 @@ class cet(BaseModule):
         super(cet, self).__init__()
         self.cpuid_7_0__ecx_val = None
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         supported = self.support_shadow()
         if supported:
             return True
@@ -64,7 +64,7 @@ class cet(BaseModule):
             self.get_cpuid_value()
         return self.cpuid_7_0__ecx_val & BIT20 != 0
 
-    def setting_enabled(self, msr_val, field, mask, desc):
+    def setting_enabled(self, msr_val, field, mask, desc) -> None:
         enabled = all((i & mask) != 0 for i in msr_val)
         part_enabled = any((i & mask) != 0 for i in msr_val)
         if enabled:
@@ -74,7 +74,7 @@ class cet(BaseModule):
         else:
             self.logger.log(f'  {field}: {desc} is NOT ENABLED')
 
-    def print_cet_state(self, cet_msr):
+    def print_cet_state(self, cet_msr) -> None:
         fields = ['SH_STK_EN',
                   'WR_SHSTK_EN',
                   'ENDBR_EN',
@@ -93,23 +93,23 @@ class cet(BaseModule):
         except HWAccessViolationError:
             self.logger.log(f'Unable to read {cet_msr}')
 
-    def check_cet(self):
+    def check_cet(self) -> None:
         if self.support_shadow():
-            self.logger.log("CET Shadow Stack is supported")
+            self.logger.log('CET Shadow Stack is supported')
         else:
-            self.logger.log("CET Shadow Stack is unsupported")
+            self.logger.log('CET Shadow Stack is unsupported')
         if self.support_ibt():
-            self.logger.log("CET Indirect Branch Tracking is supported")
+            self.logger.log('CET Indirect Branch Tracking is supported')
         else:
-            self.logger.log("CET Indirect Branch Tracking is unsupported")
-        if self.cs.register.is_defined("IA32_U_CET") and self.cs.register.is_defined("IA32_S_CET"):
-            self.print_cet_state("IA32_U_CET")
+            self.logger.log('CET Indirect Branch Tracking is unsupported')
+        if self.cs.register.is_defined('IA32_U_CET') and self.cs.register.is_defined('IA32_S_CET'):
+            self.print_cet_state('IA32_U_CET')
             self.print_cet_state('IA32_S_CET')
-        
+
         self.result.setStatusBit(self.result.status.INFORMATION)
         self.res = self.result.getReturnCode(ModuleResult.INFORMATION)
 
     def run(self, module_argv):
-        self.logger.start_test("Checking CET Settings")
+        self.logger.start_test('Checking CET Settings')
         self.check_cet()
         return self.res

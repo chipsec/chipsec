@@ -65,27 +65,22 @@ class smm(BaseModule):
         self.cs.register.print('PCI0.0.0_SMRAMC', regval)
 
         if 1 == g_smrame:
-            self.logger.log("[*] Compatible SMRAM is enabled")
-            # When D_LCK is set HW clears D_OPEN so generally no need to check for D_OPEN but doesn't hurt double checking
+            self.logger.log('[*] Compatible SMRAM is enabled')
             if (1 == d_lock) and (0 == d_open):
                 res = ModuleResult.PASSED
-                self.logger.log_passed("Compatible SMRAM is locked down")
+                self.logger.log_passed('Compatible SMRAM is locked down')
             else:
                 res = ModuleResult.FAILED
-                self.logger.log_failed("Compatible SMRAM is not properly locked. Expected ( D_LCK = 1, D_OPEN = 0 )")
+                self.logger.log_failed('Compatible SMRAM is not properly locked. Expected ( D_LCK = 1, D_OPEN = 0 )')
                 self.result.setStatusBit(self.result.status.LOCKS)
         else:
             res = ModuleResult.NOTAPPLICABLE
             self.result.setStatusBit(self.result.status.FEATURE_DISABLED)
-            self.logger.log("[*] Compatible SMRAM is not enabled. Skipping..")
+            self.logger.log('[*] Compatible SMRAM is not enabled. Skipping..')
 
         return self.result.getReturnCode(res)
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("Compatible SMM memory (SMRAM) Protection")
+        self.logger.start_test('Compatible SMM memory (SMRAM) Protection')
         self.res = self.check_SMRAMC()
         return self.res
