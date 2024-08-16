@@ -19,8 +19,9 @@ import platform
 import tempfile
 import unittest
 try:
-    import distro
-    mSystem = distro.linux_distribution()
+    from distro import os_release_info
+    os_info = os_release_info()
+    mSystem = (os_info['name'], os_info['version_id'], os_info['release_codename'])
 except:
     if platform.system() == "Windows":
         # Windows does not have a "distribution"

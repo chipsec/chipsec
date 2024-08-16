@@ -18,6 +18,8 @@ from json import loads
 import os
 from errno import EACCES, EFAULT
 from glob import glob
+import re
+from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple
 from chipsec.library.defines import stringtobytes
 from chipsec.library.exceptions import OsHelperError
@@ -62,6 +64,12 @@ class ReplayHelper(Helper):
     
     def _get_element_eval(self, cmd: str, args: Tuple) -> Optional[Any]:
         element = self._get_element(cmd, args)
+        if type(element) is str:
+            ematch = re.match(r'^!! <class \'(.*)\'>: (.*)', element)
+            if ematch:
+                eimport = ematch[1].split('.')
+                etype = getattr(import_module('.'.join(eimport[0:-1])), eimport[-1])
+                raise etype(ematch[2])
         try:
             evaledobject = eval(element)
         except Exception:
@@ -114,10 +122,10 @@ class ReplayHelper(Helper):
         return self._get_element_eval("alloc_phys_mem", (length, max_phys_address))
 
     def free_phys_mem(self, phys_address: int) -> Optional[int]:
-        return self._get_element_eval("free_phys_mem", (phys_address))
+        return self._get_element_eval("free_phys_mem", (phys_address, ))
 
     def va2pa(self, virtual_address: int) -> Tuple[int, int]:
-        return self._get_element_eval("va2pa", (virtual_address))
+        return self._get_element_eval("va2pa", (virtual_address, ))
 
     def map_io_space(self, phys_address: int, length: int, cache_type: int) -> int:
         return self._get_element_eval("map_io_space", (phys_address, length, cache_type))
@@ -184,10 +192,10 @@ class ReplayHelper(Helper):
     #
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
-        return self._get_element_eval("get_ACPI_table", (table_name))
+        return self._get_element_eval("get_ACPI_table", (table_name, ))
     
     def enum_ACPI_tables(self) -> Optional['Array']:
-        return self._get_element_eval("enum_ACPI_table", ())
+        return self._get_element_eval("enum_ACPI_tables", ())
 
     #
     # CPUID
@@ -214,7 +222,7 @@ class ReplayHelper(Helper):
         return self._get_element_eval("get_affinity", ())
 
     def set_affinity(self, value: int) -> Optional[int]:
-        return self._get_element_eval("set_affinity", (value))
+        return self._get_element_eval("set_affinity", (value, ))
 
     #
     # Logical CPU count
