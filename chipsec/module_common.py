@@ -40,7 +40,7 @@ class BaseModule:
         self.res = ModuleResult.PASSED
         # -------------------------------------------------------
 
-    def is_supported(self):
+    def is_supported(self) -> bool:
         """
         This method should be overwritten by the module returning True or False
         depending whether or not this module is supported in the currently running
@@ -52,7 +52,7 @@ class BaseModule:
     # -------------------------------------------------------
     # Legacy results
     # -------------------------------------------------------
-    def update_res(self, value):
+    def update_res(self, value) -> None:
         if value not in result_priority:
             self.logger.log_verbose(f'Attempting to set invalid result status: {value}')
             return
@@ -62,7 +62,10 @@ class BaseModule:
             self.res = value
     # -------------------------------------------------------
 
-    def run(self, module_argv):
+    def run(self, module_argv) -> int:
+        """
+        This method should be overwritten by the module returning int
+        """
         raise NotImplementedError('Sub-class should overwrite the run() method')
 
 
@@ -84,7 +87,4 @@ MTAG_METAS = {
 # ! [Available Tags]
 MODULE_TAGS = dict([(_tag, []) for _tag in MTAG_METAS])
 
-#
-# Common module command line options
-#
 OPT_MODIFY = 'modify'
