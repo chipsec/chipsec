@@ -172,7 +172,9 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: pip install -r windows_requirements.txt
+      run: |
+        pip install -r windows_requirements.txt
+        pip install pytest
 
     - name: Build Windows driver
       shell: bash
@@ -195,6 +197,10 @@ jobs:
     - name: Run Python unit tests
       shell: bash
       run: python -m unittest
+    
+    - name: Run Python pytest
+      shell: bash
+      run: python -m pytest tests
       
     - name: Run xml cfg checker
       shell: bash
@@ -241,7 +247,7 @@ jobs:
       run: |
         sudo apt-get update -q
         sudo apt-get install -qqy dkms nasm python3-setuptools
-        pip install distro
+        pip install distro pytest
         pip install -r linux_requirements.txt
         sudo pip uninstall importlib_metadata 
         sudo pip install importlib_metadata --force-reinstall
@@ -259,8 +265,10 @@ jobs:
         sudo dkms install -m chipsec -v "${CHIPSEC_MODULE_VER}" -k "${KERNEL_VER}"
 
     - name: Run Python unit tests
-      run: |
-        python3 -m unittest
+      run: python3 -m unittest
+
+    - name: Run Python pytest
+      run: python -m pytest tests
         
     - name: Run xml cfg checker
       run: |
