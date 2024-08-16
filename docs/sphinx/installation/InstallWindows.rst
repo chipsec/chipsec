@@ -163,23 +163,23 @@ generates a Stop error. For more detail please refer below link: https://learn.m
 **Filter Driver and Main Helper Driver Architecture**
 
 .. figure:: ../_images/driver_architecture.png
-   :alt: CHIPSEC Main & Filter Drvier Architecture
+   :alt: CHIPSEC Main & Filter Driver Architecture
    :width: 1100
    :height: 1000
 
-   CHIPSEC Main & Filter Drvier Architecture
+   CHIPSEC Main & Filter Driver Architecture
 
 Install PCI Filter Driver
 -------------------------
-**Locate the Filter Driver Files: chipsec/helper/windows/windows_amd64/**
+**1. Locate the Filter Driver Files: chipsec/helper/windows/windows_amd64/**
 
 .. figure:: ../_images/driver_files.png
-   :alt: Check The Filter Drvier Files
+   :alt: Check The Filter Driver Files
    :width: 920
    :height: 340
 
 
-**Update The PCI Device Driver From Device Manager**
+**2. Update The PCI Device Driver From Device Manager**
 
 .. figure:: ../_images/update_driver.png
    :alt: Update The PCI Device Driver
@@ -187,7 +187,7 @@ Install PCI Filter Driver
    :height: 630
 
 
-**Browse The PCI Filter Driver**
+**3. Browse The PCI Filter Driver**
 
  .. figure:: ../_images/browse_driver.png
    :alt: Browse The PCI Filter Driver
@@ -195,8 +195,7 @@ Install PCI Filter Driver
    :height: 630
 
 
-**Manually Select The PCI Bus Filter Driver**
-
+**4. Manually Select The PCI Bus Filter Driver**
 
  .. figure:: ../_images/pickup_driver.png
    :alt: Pickup The PCI Filter Driver
@@ -204,8 +203,7 @@ Install PCI Filter Driver
    :height: 630
 
 
-**Install The Filter Driver From Disk**
-
+**5. Install The Filter Driver From Disk**
 
  .. figure:: ../_images/install_driver_from_disk.png
    :alt: Install The Filter Driver From Disk
@@ -213,7 +211,7 @@ Install PCI Filter Driver
    :height: 650
 
 
-**Installing The Filter Driver**
+**6. Installing The Filter Driver**
 
  .. figure:: ../_images/installing_driver.png
    :alt: Installing The Filter Driver
@@ -221,21 +219,23 @@ Install PCI Filter Driver
    :height: 650
 
 
-**Finish The Filter Driver Installing**
+**7. Finish The Filter Driver Installing**
 
  .. figure:: ../_images/installing_finished.png
    :alt: Finish The Filter Driver Installing
    :width: 920
    :height: 650
 
-**Restart Computer**
+
+**8. Restart Computer**
 
  .. figure:: ../_images/restart.png
    :alt: Restart Computer
    :width: 920
    :height: 420
 
-**Check The Installed Device Driver From Device Manager**
+
+**9. Check The Installed Device Driver From Device Manager**
 
  .. figure:: ../_images/check_installed_driver.png
    :alt: Check The Installed Device Driver
@@ -243,15 +243,12 @@ Install PCI Filter Driver
    :height: 650
 
 
-
-**Check The Driver Device Info**
+**10. Check The Driver Device Info**
 
  .. figure:: ../_images/driver_dev_info.png
    :alt: Check The Driver Device Info
    :width: 700
    :height: 700
-
-
 
 
 Filter Driver Access PCI Config Space Test
