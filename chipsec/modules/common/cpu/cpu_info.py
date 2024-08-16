@@ -45,10 +45,11 @@ from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import bytestostring
 from typing import List
 
+
 class cpu_info(BaseModule):
     def __init__(self):
         super(cpu_info, self).__init__()
-        self.result.url ='https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
+        self.result.url = 'https://chipsec.github.io/modules/chipsec.modules.common.cpu.cpu_info.html'
 
     def is_supported(self) -> bool:
         if self.cs.register.has_field('IA32_BIOS_SIGN_ID', 'Microcode'):
@@ -57,10 +58,8 @@ class cpu_info(BaseModule):
         return False
 
     def run(self, module_argv: List[str]) -> int:
-        # Log the start of the test
         self.logger.start_test('Current Processor Information:')
 
-        # Determine number of threads to check
         thread_count = 1
         if not self.cs.os_helper.is_efi():
             thread_count = self.cs.msr.get_cpu_thread_count()
@@ -71,10 +70,8 @@ class cpu_info(BaseModule):
             if not self.cs.os_helper.is_efi():
                 self.cs.helper.set_affinity(thread)
 
-            # Display thread
             self.logger.log(f'[*] Thread {thread:04d}')
 
-            # Get processor brand string
             brand = ''
             for eax_val in [0x80000002, 0x80000003, 0x80000004]:
                 regs = self.cs.cpu.cpuid(eax_val, 0)
@@ -83,7 +80,6 @@ class cpu_info(BaseModule):
             brand = brand.rstrip('\x00')
             self.logger.log(f'[*] Processor: {brand}')
 
-            # Get processor version information
             (eax, _, _, _) = self.cs.cpu.cpuid(0x01, 0x00)
             stepping = eax & 0xF
             model = (eax >> 4) & 0xF
@@ -94,7 +90,6 @@ class cpu_info(BaseModule):
                 family = ((eax >> 20) & 0xFF) | family
             self.logger.log(f'[*]            Family: {family:02X} Model: {model:02X} Stepping: {stepping:01X}')
 
-            # Get microcode revision
             microcode_rev = self.cs.register.read_field('IA32_BIOS_SIGN_ID', 'Microcode', cpu_thread=thread)
             self.logger.log(f'[*]            Microcode: {microcode_rev:08X}')
             self.logger.log('[*]')
