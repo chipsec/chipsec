@@ -88,22 +88,21 @@ class spd_wd(BaseModule):
         self.cs.register.print('SMBUS_HCFG', spd_wd_reg)
 
         if 1 == spd_wd:
-            self.logger.log_passed("SPD Write Disable is set")
+            self.logger.log_passed('SPD Write Disable is set')
             self.res = ModuleResult.PASSED
         else:
             if _spd.detect():
-                self.logger.log_failed("SPD Write Disable is not set and SPDs were detected")
+                self.logger.log_failed('SPD Write Disable is not set and SPDs were detected')
                 self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
                 self.res = ModuleResult.FAILED
             else:
-                self.logger.log_information("SPD Write Disable is not set, but no SPDs detected")
+                self.logger.log_information('SPD Write Disable is not set, but no SPDs detected')
                 self.result.setStatusBit(self.result.status.INFORMATION)
                 self.res = ModuleResult.INFORMATION
 
         return self.result.getReturnCode(self.res)
 
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("SPD Write Disable")
+        self.logger.start_test('SPD Write Disable')
         self.logger.log('')
-
         return self.check_spd_wd()

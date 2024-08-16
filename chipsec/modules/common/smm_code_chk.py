@@ -62,7 +62,7 @@ class smm_code_chk(BaseModule):
             # * Atom Processors Based on the Goldmont Microarchitecture
             self.logger.log_important('Register MSR_SMM_FEATURE_CONTROL not defined for platform.  Skipping module.')
             return False
-            
+
         # The Intel SDM states that MSR_SMM_FEATURE_CONTROL can only be accessed while the CPU executes in SMM.
         # However, in reality many users report that there is no problem reading this register from outside of SMM.
         # Just to be on the safe side of things, we'll verify we can read this register successfully before moving on.
@@ -104,15 +104,14 @@ class smm_code_chk(BaseModule):
         for tid in range(self.cs.msr.get_cpu_thread_count()):
             results.append(self._check_SMM_Code_Chk_En(tid))
 
-        # Check that all CPUs have the same value of MSR_SMM_FEATURE_CONTROL.
         if not all(_ == results[0] for _ in results):
-            self.logger.log_failed("MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs")
+            self.logger.log_failed('MSR_SMM_FEATURE_CONTROL does not have the same value across all CPUs')
             self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
             return ModuleResult.FAILED
 
         res = results[0]
         if res == ModuleResult.FAILED:
-            self.logger.log_failed("SMM_Code_Chk_En is enabled but not locked down")
+            self.logger.log_failed('SMM_Code_Chk_En is enabled but not locked down')
             self.result.setStatusBit(self.result.status.LOCKS)
         elif res == ModuleResult.WARNING:
             self.logger.log_warning("""[*] SMM_Code_Chk_En is not enabled.
@@ -120,15 +119,11 @@ This can happen either because this feature is not supported by the CPU or becau
 Please consult the Intel SDM to determine whether or not your CPU supports SMM_Code_Chk_En.""")
             self.result.setStatusBit(self.result.status.VERIFY)
         else:
-            self.logger.log_passed("SMM_Code_Chk_En is enabled and locked down")
+            self.logger.log_passed('SMM_Code_Chk_En is enabled and locked down')
 
         return self.result.getReturnCode(res)
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("SMM_Code_Chk_En (SMM Call-Out) Protection")
+        self.logger.start_test('SMM_Code_Chk_En (SMM Call-Out) Protection')
         self.res = self.check_SMM_Code_Chk_En()
         return self.res

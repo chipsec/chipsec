@@ -19,8 +19,8 @@
 #
 
 """
-Checks for SPI Controller Flash Descriptor Security Override Pin Strap (FDOPSS). 
-On some systems, this may be routed to a jumper on the motherboard. 
+Checks for SPI Controller Flash Descriptor Security Override Pin Strap (FDOPSS).
+On some systems, this may be routed to a jumper on the motherboard.
 
 Usage:
     ``chipsec_main -m common.spi_fdopss``
@@ -58,23 +58,19 @@ class spi_fdopss(BaseModule):
         fdopss = self.cs.register.get_field('HSFS', hsfs_reg, 'FDOPSS')
 
         if (fdopss != 0):
-            self.logger.log_passed("SPI Flash Descriptor Security Override is disabled")
+            self.logger.log_passed('SPI Flash Descriptor Security Override is disabled')
             return self.result.getReturnCode(ModuleResult.PASSED)
         else:
-            self.logger.log_failed("SPI Flash Descriptor Security Override is enabled")
+            self.logger.log_failed('SPI Flash Descriptor Security Override is enabled')
             self.result.setStatusBit(self.result.status.CONFIGURATION)
             return self.result.getReturnCode(ModuleResult.FAILED)
 
-    # --------------------------------------------------------------------------
-    # run( module_argv )
-    # Required function: run here all tests from this module
-    # --------------------------------------------------------------------------
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("SPI Flash Descriptor Security Override Pin-Strap")
+        self.logger.start_test('SPI Flash Descriptor Security Override Pin-Strap')
         try:
             self.res = self.check_fd_security_override_strap()
         except CSReadError as err:
-            self.logger.log_warning(f"Unable to read register: {err}")
+            self.logger.log_warning(f'Unable to read register: {err}')
             self.result.setStatusBit(self.result.status.VERIFY)
             self.res = self.result.getReturnCode(ModuleResult.WARNING)
         return self.res

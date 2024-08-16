@@ -61,7 +61,7 @@ class ia32cfg(BaseModule):
         return False
 
     def check_ia32feature_control(self) -> int:
-        self.logger.log("[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs..")
+        self.logger.log('[*] Verifying IA32_Feature_Control MSR is locked on all logical CPUs..')
 
         res = ModuleResult.PASSED
         for tid in range(self.cs.msr.get_cpu_thread_count()):
@@ -69,20 +69,19 @@ class ia32cfg(BaseModule):
                 feature_cntl = self.cs.register.read('IA32_FEATURE_CONTROL', tid)
                 self.cs.register.print('IA32_FEATURE_CONTROL', feature_cntl)
             feature_cntl_lock = self.cs.control.get('Ia32FeatureControlLock', tid)
-            self.logger.log(f"[*] cpu{tid:d}: IA32_FEATURE_CONTROL Lock = {feature_cntl_lock:d}")
+            self.logger.log(f'[*] cpu{tid:d}: IA32_FEATURE_CONTROL Lock = {feature_cntl_lock:d}')
             if 0 == feature_cntl_lock:
                 res = ModuleResult.FAILED
                 self.result.setStatusBit(self.result.status.LOCKS)
 
-
         if res == ModuleResult.PASSED:
-            self.logger.log_passed("IA32_FEATURE_CONTROL MSR is locked on all logical CPUs")
+            self.logger.log_passed('IA32_FEATURE_CONTROL MSR is locked on all logical CPUs')
         else:
-            self.logger.log_failed("IA32_FEATURE_CONTROL MSR is not locked on all logical CPUs")
+            self.logger.log_failed('IA32_FEATURE_CONTROL MSR is not locked on all logical CPUs')
 
         return self.result.getReturnCode(res)
 
     def run(self, module_argv: List[str]) -> int:
-        self.logger.start_test("IA32 Feature Control Lock")
+        self.logger.start_test('IA32 Feature Control Lock')
         self.res = self.check_ia32feature_control()
         return self.res
