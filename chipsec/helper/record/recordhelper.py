@@ -14,6 +14,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from inspect import stack
 from json import dumps, loads
 import os
 from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
@@ -85,6 +86,20 @@ class RecordHelper(Helper):
             except Exception:
                 self._data = {}
 
+    def _call_subhelper(self, *myargs):
+        fname= stack()[1][3] # gets the name of the function that called _call_subhelper
+        func = getattr(self._subhelper, fname)
+        err = None
+        try:
+            ret = func(*myargs)
+        except Exception as e:
+            ret = f'!! {type(e)}: {e}'
+            err = e
+        self._add_element(fname, myargs, ret)
+        if err is not None:
+            raise err
+        return ret
+
     def create(self) -> bool:
         self.driver_created = True
         return self._subhelper.create()
@@ -106,225 +121,155 @@ class RecordHelper(Helper):
     
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int) -> int:
-        ret = self._subhelper.read_pci_reg(bus, device, function, offset, size)
-        self._add_element("read_pci_reg", (bus, device, function, offset, size), ret)
-        return ret
+        return self._call_subhelper(bus, device, function, offset, size)
 
     def write_pci_reg(self, bus: int, device: int, function: int, offset: int, value: int, size: int) -> int:
-        ret = self._subhelper.write_pci_reg(bus, device, function, offset, value, size)
-        self._add_element("write_pci_reg", (bus, device, function, offset, value, size), ret)
-        return ret
+        return self._call_subhelper(bus, device, function, offset, value, size)
 
     def read_mmio_reg(self, phys_address: int, size: int) -> int:
-        ret = self._subhelper.read_mmio_reg(phys_address, size)
-        self._add_element("read_mmio_reg", (phys_address, size), ret)
-        return ret
+        return self._call_subhelper(phys_address, size)
     
     def write_mmio_reg(self, phys_address: int, size: int, value: int) -> int:
-        ret = self._subhelper.write_mmio_reg(phys_address, size, value)
-        self._add_element("write_mmio_reg", (phys_address, size, value), ret)
-        return ret
+        return self._call_subhelper(phys_address, size, value)
         
     #
     # physical_address is 64 bit integer
     #
     def read_phys_mem(self, phys_address:int, length:int) -> bytes:
-        ret = self._subhelper.read_phys_mem(phys_address, length)
-        self._add_element("read_phys_mem", (phys_address, length), ret)
-        return ret
+        return self._call_subhelper(phys_address, length)
 
     def write_phys_mem(self, phys_address: int, length: int, buf: bytes) -> int:
-        ret = self._subhelper.write_phys_mem(phys_address, length, buf)
-        self._add_element("write_phys_mem", (phys_address, length, buf), ret)
-        return ret
+        return self._call_subhelper(phys_address, length, buf)
 
     def alloc_phys_mem(self, length: int, max_phys_address: int) -> Tuple[int, int]:
-        ret = self._subhelper.alloc_phys_mem(length, max_phys_address)
-        self._add_element("alloc_phys_mem", (length, max_phys_address), ret)
-        return ret
+        return self._call_subhelper(length, max_phys_address)
 
     def free_phys_mem(self, physical_address: int) -> Optional[int]:
-        ret = self._subhelper.free_phys_mem(physical_address)
-        self._add_element("free_phys_mem", (physical_address), ret)
-        return ret
+        return self._call_subhelper(physical_address)
 
     def va2pa(self, virtual_address: int) -> Tuple[int, int]:
-        ret = self._subhelper.va2pa(virtual_address)
-        self._add_element("va2pa", (virtual_address), ret)
-        return ret
+        return self._call_subhelper(virtual_address)
 
     def map_io_space(self, physical_address: int, length: int, cache_type: int) -> int:
-        ret = self._subhelper.map_io_space(physical_address, length, cache_type)
-        self._add_element("map_io_space", (physical_address, length, cache_type), ret)
-        return ret
-
+        return self._call_subhelper(physical_address, length, cache_type)
+        
     #
     # Read/Write I/O port
     #
     def read_io_port(self, io_port: int, size: int) -> int:
-        ret = self._subhelper.read_io_port(io_port, size)
-        self._add_element("read_io_port", (io_port, size), ret)
-        return ret
+        return self._call_subhelper(io_port, size)
 
     def write_io_port(self, io_port: int, value: int, size: int) -> int:
-        ret = self._subhelper.write_io_port(io_port, value, size)
-        self._add_element("write_io_port", (io_port, value, size), ret)
-        return ret
-
+        return self._call_subhelper(io_port, value, size)
+        
     #
     # Read/Write CR registers
     #
     def read_cr(self, cpu_thread_id: int, cr_number: int) -> int:
-        ret = self._subhelper.read_cr(cpu_thread_id, cr_number)
-        self._add_element("read_cr", (cpu_thread_id, cr_number), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, cr_number)
 
     def write_cr(self, cpu_thread_id: int, cr_number: int, value: int) -> int:
-        ret = self._subhelper.write_cr(cpu_thread_id, cr_number, value)
-        self._add_element("write_cr", (cpu_thread_id, cr_number, value), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, cr_number, value)
 
     #
     # Read/Write MSR on a specific CPU thread
     #
     def read_msr(self, cpu_thread_id: int, msr_addr: int) -> Tuple[int, int]:
-        ret = self._subhelper.read_msr(cpu_thread_id, msr_addr)
-        self._add_element("read_msr", (cpu_thread_id, msr_addr), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, msr_addr)
 
     def write_msr(self, cpu_thread_id: int, msr_addr: int, eax: int, edx: int) -> int:
-        ret = self._subhelper.write_msr(cpu_thread_id, msr_addr, eax, edx)
-        self._add_element("write_msr", (cpu_thread_id, msr_addr, eax, edx), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, msr_addr, eax, edx)
 
     #
     # Load CPU microcode update on a specific CPU thread
     #
     def load_ucode_update(self, cpu_thread_id: int, ucode_update_buf: bytes) -> bool:
-        ret = self._subhelper.load_ucode_update(cpu_thread_id, ucode_update_buf)
-        self._add_element("load_ucode_update", (cpu_thread_id, ucode_update_buf), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, ucode_update_buf)
 
     #
     # Read IDTR/GDTR/LDTR on a specific CPU thread
     #
     def get_descriptor_table(self, cpu_thread_id: int, desc_table_code: int) -> Optional[Tuple[int, int, int]]:
-        ret = self._subhelper.get_descriptor_table(cpu_thread_id, desc_table_code)
-        self._add_element("get_descriptor_table", (cpu_thread_id, desc_table_code), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, desc_table_code)
 
     #
     # EFI Variable API
     #
     def EFI_supported(self) -> bool:
-        ret = self._subhelper.EFI_supported()
-        self._add_element("EFI_supported", (), ret)
-        return ret
+        return self._call_subhelper()
 
     def get_EFI_variable(self, name: str, guid: str) -> Optional[bytes]:
-        ret = self._subhelper.get_EFI_variable(name, guid)
-        self._add_element("get_EFI_variable", (name, guid), ret)
-        return ret
+        return self._call_subhelper(name, guid)
 
     def set_EFI_variable(self, name: str, guid: str, data: bytes, datasize: Optional[int], attrs: Optional[int]) -> Optional[int]:
-        ret = self._subhelper.set_EFI_variable(name, guid, data, datasize, attrs)
-        self._add_element("set_EFI_variable", (name, guid, data, datasize, attrs), ret)
-        return ret
+        return self._call_subhelper(name, guid, data, datasize, attrs)
 
     def delete_EFI_variable(self, name: str, guid: str) -> Optional[int]:
-        ret = self._subhelper.delete_EFI_variable(name, guid)
-        self._add_element("delete_EFI_variable", (name, guid), ret)
-        return ret
+        return self._call_subhelper(name, guid)
 
     def list_EFI_variables(self) -> Optional[Dict[str, List['EfiVariableType']]]:
-        ret = self._subhelper.list_EFI_variables()
-        self._add_element("list_EFI_variables", (), ret)
-        return ret
+        return self._call_subhelper()
 
     #
     # ACPI
     #
 
     def get_ACPI_table(self, table_name: str) -> Optional['Array']:
-        ret = self._subhelper.get_ACPI_table(table_name)
-        self._add_element("get_ACPI_table", (table_name), ret)
-        return ret
-    
+        return self._call_subhelper(table_name)
+
     def enum_ACPI_tables(self) -> Optional['Array']:
-        ret = self._subhelper.enum_ACPI_table()
-        self._add_element("enum_ACPI_table", (), ret)
-        return ret
+        return self._call_subhelper()
 
     #
     # CPUID
     #
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        ret = self._subhelper.cpuid(eax, ecx)
-        self._add_element("cpuid", (eax, ecx), ret)
-        return ret
+        return self._call_subhelper(eax, ecx)
 
     #
     # IOSF Message Bus access
     #
     def msgbus_send_read_message(self, mcr: int, mcrx: int) -> Optional[int]:
-        ret = self._subhelper.msgbus_send_read_message(mcr, mcrx)
-        self._add_element("msgbus_send_read_message", (mcr, mcrx), ret)
-        return ret
+        return self._call_subhelper(mcr, mcrx)
 
     def msgbus_send_write_message(self, mcr: int, mcrx: int, mdr: int) -> None:
-        ret = self._subhelper.msgbus_send_write_message(mcr, mcrx, mdr)
-        self._add_element("msgbus_send_write_message", (mcr, mcrx, mdr), ret)
-        return ret
+        return self._call_subhelper(mcr, mcrx, mdr)
 
     def msgbus_send_message(self, mcr: int, mcrx: int, mdr: Optional[int]) -> Optional[int]:
-        ret = self._subhelper.msgbus_send_message(mcr, mcrx, mdr)
-        self._add_element("msgbus_send_message", (mcr, mcrx, mdr), ret)
-        return ret
+        return self._call_subhelper(mcr, mcrx, mdr)
 
     #
     # Affinity
     #
     def get_affinity(self) -> Optional[int]:
-        ret = self._subhelper.get_affinity()
-        self._add_element("get_affinity", (), ret)
-        return ret
+        return self._call_subhelper()
 
     def set_affinity(self, value: int) -> Optional[int]:
-        ret = self._subhelper.set_affinity(value)
-        self._add_element("set_affinity", (value), ret)
-        return ret
+        return self._call_subhelper(value)
 
     #
     # Logical CPU count
     #
     def get_threads_count(self) -> int:
-        ret = self._subhelper.get_threads_count()
-        self._add_element("get_threads_count", (), ret)
-        return ret
+        return self._call_subhelper()
 
     #
     # Send SW SMI
     #
     def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[int]:
-        ret = self._subhelper.send_sw_smi(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
-        self._add_element("send_sw_smi", (cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi), ret)
-        return ret
+        return self._call_subhelper(cpu_thread_id, SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
 
     #
     # Hypercall
     #
     def hypercall(self, rcx: int, rdx: int, r8: int, r9: int, r10: int, r11: int, rax: int, rbx: int, rdi: int, rsi: int, xmm_buffer: int) -> int:
-        ret = self._subhelper.hypercall(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
-        self._add_element("hypercall", (rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer), ret)
-        return ret
+        return self._call_subhelper(rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
 
     #
     # Speculation control
     #
     def retpoline_enabled(self) -> bool:
-        ret = self._subhelper.retpoline_enabled()
-        self._add_element("retpoline_enabled", (), ret)
-        return ret
+        return self._call_subhelper()
 
 def get_helper():
     return RecordHelper()

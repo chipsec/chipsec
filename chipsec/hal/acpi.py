@@ -472,6 +472,8 @@ class ACPI(HALBase):
                 #    reading ACPI tables via native API which some OS may provide
                 logger().log_hal("[acpi] trying to extract ACPI table using get_ACPI_table...")
                 t_data = self.cs.helper.get_ACPI_table(name)
+                if t_data is None:
+                    raise TypeError
                 acpi_tables_data.append(t_data)
             except UnimplementedAPIError:
                 # 2. If didn't work, try scrubbing physical memory
