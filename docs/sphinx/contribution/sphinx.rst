@@ -3,7 +3,7 @@
 Sphinx Version
 ==============
 
-The versions of Sphinx that can be utilized to generate CHIPSEC's documentation are 4.X.X, 5.X.X and 6.X.X.
+The versions of Sphinx that can be utilized to generate CHIPSEC's documentation are 6.X.X, 7.X.X and 8.X.X.
 
 
 Generating Documentation

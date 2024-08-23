@@ -1,1 +1,1 @@
-efi,common,itpii,fcntl,resource,chipsec_tools,chipsec.chipset,edk2
+efi,common,itpii,fcntl,resource,chipsec_tools,chipsec.chipset,edk2,chipsec.config,brotli,EfiCompressor,winerror,win32service,win32service,win32api,win32process,win32security,win32serviceutil,win32file,win32
