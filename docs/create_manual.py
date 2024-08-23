@@ -50,22 +50,6 @@ SPHINX_MOD_DIR = os.path.join(SPHINX_DIR, 'modules')
 SPHINX_SCRIPTS_DIR = os.path.join(SPHINX_DIR, '_scripts')
 CHIPSEC_DIR = os.path.normpath(DOCS_DIR + os.sep + os.pardir)
 
-NotWantedFilesList = [
-    'setup.rst',
-    'chipsec.rst',
-    'chipsec.library.banner.rst',
-    'chipsec.cfg.rst',
-    'chipsec.chipset.rst',
-    'chipsec.command.rst',
-    'chipsec.library.defines.rst',
-    'chipsec.library.file.rst',
-    'chipsec.library.logger.rst',
-    'chipsec.module.rst',
-    'chipsec.module_common.rst',
-    'chipsec.library.result_deltas.rst',
-    'chipsec_main.rst',
-    'chipsec_util.rst']
-
 def RunAutoDoc() -> None:
     try:
         os.system(f'sphinx-apidoc -e -f -T -d 10 -o modules {CHIPSEC_DIR} {os.path.join(CHIPSEC_DIR, "*test*")} {os.path.join(CHIPSEC_DIR, "*exceptions*")} {os.path.join(CHIPSEC_DIR, "*tool*")}')
@@ -74,12 +58,19 @@ def RunAutoDoc() -> None:
         raise
 
 def CleanupFilesNotWantedInDoc() -> None:
-    for file in NotWantedFilesList:
-        try:
-            os.remove(os.path.join(SPHINX_MOD_DIR, file))
-        except Exception:
-            print(f'Unable to remove {file}')
-            raise
+    NotWantedFilesList = []
+    list_path = os.path.join(os.path.dirname(__file__), '_remove')
+    for file in os.listdir(list_path):
+        with open(os.path.join(list_path, file), 'r') as f:
+            NotWantedFilesList = f.read()
+        for not_needed_file in NotWantedFilesList.split(','):
+            RemoveFile(not_needed_file)
+
+def RemoveFile(file):
+    try:
+        os.remove(os.path.join(SPHINX_MOD_DIR, file))
+    except Exception:
+        print(f'\t\tUnable to remove {file}!!!')
 
 def RunScripts() -> None:
     for script in os.listdir(os.path.join(SPHINX_SCRIPTS_DIR)):

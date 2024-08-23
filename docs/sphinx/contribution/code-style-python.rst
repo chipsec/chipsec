@@ -78,7 +78,7 @@ If in doubt, follow the existing code style and formatting.
         # Good
         import sys
         from chipsec.module_common import BaseModule
-from chipsec.library.returncode import ModuleResult
+        from chipsec.library.returncode import ModuleResult
 
         # Bad - using '*' and importing sys after local imports
         import *

@@ -45,23 +45,25 @@ def modulesRst():
 
 # Create rst for xml files
 def xmlRst():
+    moduleStr = ''
     for _, _, cfgFiles in os.walk(os.path.join(src_path, 'chipsec', 'cfg', '8086')):
-        moduleStr = ''
         for cfg in cfgFiles:
-            if ".py" not in cfg:
-                moduleStr += '\tchipsec.cfg.8086.{0}.rst\n'.format(cfg)
-                
-                with open(os.path.join(src_path, 'chipsec', 'cfg', '8086', cfg), 'r') as f:
-                    xmlContent = f.read()
-
-                commentBegins = xmlContent.find('<!--')
-                commentEnds = xmlContent.find('-->')
-                xmlComment = xmlContent[commentBegins+4:commentEnds] + '\n'
-                
-                with open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.' + cfg + '.rst'), 'w') as f:
-                    path = "chipsec\\\\cfg\\\\8086\\\\" + cfg
-                    f.write( cfg[:-4] + "\n" + "=" *len(cfg) + "\n\n" + "Path: " + path + "\n\n" + xmlComment )
-
+            if ".py" not in cfg: 
+                try:
+                    with open(os.path.join(src_path, 'chipsec', 'cfg', '8086', cfg), 'r') as f:
+                        xmlContent = f.read()
+                except Exception:
+                    print(f'\t\tUnable to remove {cfg}!!!')
+                else:
+                    moduleStr += '\tchipsec.cfg.8086.{0}.rst\n'.format(cfg)
+                    commentBegins = xmlContent.find('<!--')
+                    commentEnds = xmlContent.find('-->')
+                    xmlComment = xmlContent[commentBegins+4:commentEnds] + '\n'
+                    
+                    with open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.' + cfg + '.rst'), 'w') as f:
+                        path = "chipsec\\\\cfg\\\\8086\\\\" + cfg
+                        f.write( cfg[:-4] + "\n" + "=" *len(cfg) + "\n\n" + "Path: " + path + "\n\n" + xmlComment )
+                        
         with open(os.path.join(doc_path, 'modules', 'chipsec.cfg.8086.rst'), 'w') as f:
             f.write(".. toctree::\n\n" + moduleStr)
 

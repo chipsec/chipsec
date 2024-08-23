@@ -10,7 +10,7 @@ Processor: 0:0.0
 
 PCH: Scans enumerated PCI Devices for corresponding VID/DID per configurations. 
 
-Chip information located in ``chipsec/chipset.py``.
+Chip information located in ``chipsec/chipset.py``
 --------------------------------------------------
 
 Currently requires VID of 0x8086 (Intel) or 0x1022 (AMD).
