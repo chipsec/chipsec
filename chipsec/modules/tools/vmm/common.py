@@ -43,31 +43,19 @@ class BaseModuleDebug(BaseModule):
     def __del__(self) -> None:
         pass
 
-    ##
-    # msg
-    ##
     def msg(self, message: str) -> None:
         sys.stdout.write(f'[{self.prompt}]  {message}\n')
         return
 
-    ##
-    # err
-    ##
     def err(self, message: str) -> None:
         sys.stdout.write(f'[{self.prompt}]  **** ERROR: {message}\n')
         return
 
-    ##
-    # dbg
-    ##
     def dbg(self, message: str):
         if self.debug:
             sys.stdout.write(f'[{self.prompt}]  {message}\n')
         return
 
-    ##
-    # hex
-    ##
     def hex(self, title: str, data:str, w=16) -> None:
         if title and data:
             title = f'{"-" * 6}{title}{"-" * w * 3}'
@@ -83,17 +71,11 @@ class BaseModuleDebug(BaseModule):
         sys.stdout.write('\n')
         return
 
-    ##
-    # fatal
-    ##
     def fatal(self, message: str) -> None:
         sys.stdout.write(f'[{self.prompt}]  **** FATAL: {message}\n')
         exit(1)
         return
 
-    ##
-    # info_bitwise
-    ##
     def info_bitwise(self, reg: int, desc: Dict[int, str]) -> None:
         i = 0
         while reg != 0:
@@ -115,7 +97,6 @@ class BaseModuleSupport(BaseModuleDebug):
         self.hv_connectionid = {}
 
     def __del__(self) -> None:
-        # self.dump_initial_data('initial_data_auto_generated.json')
         BaseModuleDebug.__del__(self)
 
     def stats_reset(self) -> None:
@@ -172,9 +153,6 @@ class BaseModuleSupport(BaseModuleDebug):
 
 class BaseModuleHwAccess(BaseModuleSupport):
 
-    ##
-    # cpuid_info
-    ##
     def cpuid_info(self, eax: int, ecx: int, desc: str) -> Tuple[int, int, int, int]:
         val = self.cs.cpu.cpuid(eax, ecx)
         self.msg('')
@@ -182,9 +160,6 @@ class BaseModuleHwAccess(BaseModuleSupport):
         self.msg(f'EAX: 0x{val[0]:08X} EBX: 0x{val[1]:08X} ECX: 0x{val[2]:08X} EDX: 0x{val[3]:08X}')
         return val
 
-    ##
-    # rdmsr
-    ##
     def rdmsr(self, msr: int) -> Tuple[int, int]:
         eax, edx = (0, 0)
         temp = sys.stdout
@@ -198,9 +173,6 @@ class BaseModuleHwAccess(BaseModuleSupport):
         sys.stdout = temp
         return (edx, eax)
 
-    ##
-    # wrmsr
-    ##
     def wrmsr(self, msr: int, value: int) -> None:
         temp = sys.stdout
         sys.stdout = open(os.devnull, 'wb')
@@ -212,8 +184,6 @@ class BaseModuleHwAccess(BaseModuleSupport):
             raise
         sys.stdout = temp
         return
-
-### COMMON ROUTINES ############################################################
 
 
 def weighted_choice(choices: List[Tuple[int, float]]) -> int:
@@ -250,8 +220,8 @@ def overwrite(buffer: bytes, string: bytes, position: int) -> bytes:
 def get_int_arg(arg: str) -> int:
     try:
         ret = int(eval(arg))
-    except:
-        print('\n  ERROR: Invalid parameter\n')
+    except Exception:
+        sys.stdout.write('\n  ERROR: Invalid parameter\n')
         exit(1)
     return ret
 
@@ -262,8 +232,6 @@ def hv_hciv(rep_start: int, rep_count: int, call_code: int, fast: int = 0) -> in
 
 def uuid(id: bytes) -> str:
     return '{{{:08X}-{:04X}-{:04X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}}}'.format(*struct.unpack('<IHH8B', id))
-
-### OPTIONAL ROUTINES ##########################################################
 
 
 class session_logger:
