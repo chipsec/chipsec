@@ -135,7 +135,7 @@ PTR_IN_ALL_GPRS = False
 # SMI handler may take a pointer/PA from (some offset of off) address passed in GPRs and write to it
 # Treat contents at physical address passed in GPRs as pointers and check contents at that pointer
 # If they changed, SMI handler might have modified them
-#MODE_SECOND_ORDER_BUFFER  = True
+# MODE_SECOND_ORDER_BUFFER  = True
 
 # Max offset of the pointer (physical address)
 # of the 2nd order buffer written in the memory buffer passed to SMI
@@ -191,7 +191,7 @@ class smi_info:
         if self.code is None:
             return None
         else:
-            return f"duration {self.duration} code {self.code:02X} data {self.data:02X} ({gprs_info(self.gprs)})"
+            return f'duration {self.duration} code {self.code:02X} data {self.data:02X} ({gprs_info(self.gprs)})'
 
 
 class scan_track:
@@ -229,7 +229,7 @@ class scan_track:
             valid = True
         self.smi_count = count
         if not valid:
-            print("SMI contention detected", file=sys.stderr)
+            sys.stderr.write('SMI contention detected')
         return valid
 
     def find_address_in_regs(self, gprs):
@@ -241,7 +241,7 @@ class scan_track:
 
     def clear(self):
         self.max = smi_info(0)
-        self.min = smi_info(2**32-1)
+        self.min = smi_info(2**32 - 1)
         self.outlier = smi_info(0)
         self.acc_smi_duration = 0
         self.acc_smi_num = 0
@@ -298,9 +298,9 @@ class scan_track:
     def get_info(self):
         self.avg()
         avg = self.avg_smi_duration or self.hist_smi_duration
-        info = f"average {round(avg)} checked {self.avg_smi_num + self.outliers}"
+        info = f'average {round(avg)} checked {self.avg_smi_num + self.outliers}'
         if self.outliers:
-            info += f"\n    Identified outlier: {self.outlier.get_info()}"
+            info += f'\n    Identified outlier: {self.outlier.get_info()}'
         return info
 
     def log_smi_result(self, logger):
@@ -406,7 +406,7 @@ class smm_ptr(BaseModule):
         # Check if contents have changed at physical address passed in GPRs to SMI handler
         # If changed, SMI handler might have written to that address
         #
-        self.logger.log("    < Checking buffers")
+        self.logger.log('    < Checking buffers')
 
         expected_buf = FILL_BUFFER(self.fill_byte, self.fill_size, _smi_desc.ptr_in_buffer, _smi_desc.ptr, _smi_desc.ptr_offset, _smi_desc.sig, _smi_desc.sig_offset)
         buf = self.cs.mem.read_physical_mem(_addr, self.fill_size)
@@ -563,9 +563,9 @@ class smm_ptr(BaseModule):
 
         gprs_addr = {'rax': gpr_value, 'rbx': gpr_value, 'rcx': gpr_value, 'rdx': gpr_value, 'rsi': gpr_value, 'rdi': gpr_value}
         gprs_fill = {'rax': _FILL_VALUE_QWORD, 'rbx': _FILL_VALUE_QWORD, 'rcx': _FILL_VALUE_QWORD, 'rdx': _FILL_VALUE_QWORD, 'rsi': _FILL_VALUE_QWORD, 'rdi': _FILL_VALUE_QWORD}
-        self.logger.log("\n[*] >>> Fuzzing SMI handlers..")
-        self.logger.log("[*] AX in RAX will be overridden with values of SW SMI ports 0xB2/0xB3")
-        self.logger.log("    DX in RDX will be overridden with value 0x00B2")
+        self.logger.log('\n[*] >>> Fuzzing SMI handlers..')
+        self.logger.log('[*] AX in RAX will be overridden with values of SW SMI ports 0xB2/0xB3')
+        self.logger.log('    DX in RDX will be overridden with value 0x00B2')
 
         bad_ptr_cnt = 0
         _smi_desc = smi_desc()
@@ -655,16 +655,16 @@ class smm_ptr(BaseModule):
         return bad_ptr_cnt, scan
 
     def run(self, module_argv):
-        self.logger.start_test("A tool to test SMI handlers for pointer validation vulnerabilities")
-        self.logger.log("Usage: chipsec_main -m tools.smm.smm_ptr [ -a <mode>,<config_file>|<smic_start:smic_end>,<size>,<address> ]")
-        self.logger.log("  mode          SMI handlers testing mode")
-        self.logger.log("    = config    use SMI configuration file <config_file>")
-        self.logger.log("    = fuzz      fuzz all SMI handlers with code in the range <smic_start:smic_end>")
-        self.logger.log("    = fuzzmore  fuzz mode + pass '2nd-order' pointers within buffer to SMI handlers")
-        self.logger.log("    = scan      fuzz mode + time measurement to identify SMIs that trigger long-running code paths")
-        self.logger.log("  size          size of the memory buffer (in Hex)")
-        self.logger.log("  address       physical address of memory buffer to pass in GP regs to SMI handlers (in Hex)")
-        self.logger.log("    = smram     pass address of SMRAM base (system may hang in this mode!)\n")
+        self.logger.start_test('A tool to test SMI handlers for pointer validation vulnerabilities')
+        self.logger.log('Usage: chipsec_main -m tools.smm.smm_ptr [ -a <mode>,<config_file>|<smic_start:smic_end>,<size>,<address> ]')
+        self.logger.log('  mode          SMI handlers testing mode')
+        self.logger.log('    = config    use SMI configuration file <config_file>')
+        self.logger.log('    = fuzz      fuzz all SMI handlers with code in the range <smic_start:smic_end>')
+        self.logger.log('    = fuzzmore  fuzz mode + pass `2nd-order` pointers within buffer to SMI handlers')
+        self.logger.log('    = scan      fuzz mode + time measurement to identify SMIs that trigger long-running code paths')
+        self.logger.log('  size          size of the memory buffer (in Hex)')
+        self.logger.log('  address       physical address of memory buffer to pass in GP regs to SMI handlers (in Hex)')
+        self.logger.log('    = smram     pass address of SMRAM base (system may hang in this mode!)\n')
 
         test_mode = 'config'
         _smi_config_fname = 'chipsec/modules/tools/smm/smm_config.ini'
@@ -711,9 +711,7 @@ class smm_ptr(BaseModule):
             (_, _addr1) = self.cs.mem.alloc_physical_mem(self.fill_size, _MAX_ALLOC_PA)
             self.logger.log(f'[*] Allocated 2nd buffer (address will be in the 1st buffer): 0x{_addr1:016X}')
 
-        #
         # @TODO: Need to check that SW/APMC SMI is enabled
-        #
 
         self.logger.log('\n[*] Configuration:')
         self.logger.log(f'    SMI testing mode          : {test_mode}')
@@ -727,7 +725,7 @@ class smm_ptr(BaseModule):
             self.logger.log(f'      Second buffer pointer   : 0x{_addr1:016X} (address written to memory buffer)')
             self.logger.log(f'      Number of bytes to fill : 0x{self.fill_size:X}')
             self.logger.log(f'      Byte to fill with       : 0x{ord(self.fill_byte):X}')
-        self.logger.log(f'    Additional options (can be changed in the source code):f')
+        self.logger.log('    Additional options (can be changed in the source code):')
         self.logger.log(f'      Fuzzing SMI functions in ECX?          : {FUZZ_SMI_FUNCTIONS_IN_ECX:d}')
         self.logger.log(f'      Max value of SMI function in ECX       : 0x{MAX_SMI_FUNCTIONS:X}')
         self.logger.log(f'      Max value of SMI data (B3)             : 0x{MAX_SMI_DATA:X}')
@@ -752,9 +750,9 @@ class smm_ptr(BaseModule):
                 scan_mode =  True
                 scan = None
                 bad_ptr_cnt, scan = self.test_fuzz(thread_id, smic_start, smic_end, _addr, _addr1, True)
-        except BadSMIDetected as msg:
+        except BadSMIDetected:
             bad_ptr_cnt = 1
-            self.logger.log_important("Potentially bad SMI detected! Stopped fuzing (see FUZZ_BAIL_ON_1ST_DETECT option)")
+            self.logger.log_important('Potentially bad SMI detected! Stopped fuzing (see FUZZ_BAIL_ON_1ST_DETECT option)')
 
         if scan_mode and scan:
             self.logger.log_good(f'<<< Done: found {scan.get_total_outliers()} long-running SMIs')
@@ -763,7 +761,7 @@ class smm_ptr(BaseModule):
             self.result.setStatusBit(self.result.status.POTENTIALLY_VULNERABLE)
             self.res = self.result.getReturnCode(ModuleResult.FAILED)
         else:
-            self.logger.log_good("<<< Done: didn't find unchecked input pointers in tested SMI handlers")
+            self.logger.log_good('<<< Done: did not find unchecked input pointers in tested SMI handlers')
             self.result.setStatusBit(self.result.status.SUCCESS)
             self.res = self.result.getReturnCode(ModuleResult.PASSED)
 
