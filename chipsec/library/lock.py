@@ -22,12 +22,13 @@
 from chipsec.library.logger import logger
 from typing import List, Optional, Set, Union
 
+
 class Lock:
     def __init__(self, cs):
         self.cs = cs
 
-    def get(self, lock_name: str, cpu_thread: int=0, with_print: bool=False, bus: Optional[int]=None) -> Union[int, List[int]]:
-        '''Retrieves information for the lock associated with the register/field by lock_name.'''
+    def get(self, lock_name: str, cpu_thread: int = 0, with_print: bool = False, bus: Optional[int] = None) -> Union[int, List[int]]:
+        """Retrieves information for the lock associated with the register/field by lock_name."""
         lock = self.cs.Cfg.LOCKS[lock_name]
         reg = lock['register']
         field = lock['field']
@@ -46,8 +47,8 @@ class Lock:
             return self.cs.register.get_field_all(reg, reg_data, field)
         return reg_data
 
-    def set(self, lock_name: str, lock_value: int, cpu_thread: int=0, bus: Optional[int]=None) -> bool:
-        '''Sets the value of a lock associated with the given lock_name.'''
+    def set(self, lock_name: str, lock_value: int, cpu_thread: int = 0, bus: Optional[int] = None) -> bool:
+        """Sets the value of a lock associated with the given lock_name."""
         lock = self.cs.Cfg.LOCKS[lock_name]
         reg = lock['register']
         field = lock['field']
@@ -61,21 +62,21 @@ class Lock:
             return self.cs.register.write(reg, reg_data, cpu_thread, bus)
 
     def is_defined(self, lock_name: str) -> bool:
-        '''Checks if lock is defined in the XML config'''
+        """Checks if lock is defined in the XML config"""
         return lock_name in self.cs.Cfg.LOCKS.keys()
 
     def get_value(self, lock_name: str) -> int:
-        '''Retrieves the expected value of a lock associated with the lock_name.'''
+        """Retrieves the expected value of a lock associated with the lock_name."""
         if logger().DEBUG:
             logger().log(f'Retrieve value for lock {lock_name}')
         return self.cs.Cfg.LOCKS[lock_name]['value']
 
     def get_desc(self, lock_name: str) -> str:
-        '''Retrieves the description of a lock assoicated with the lock_name.'''
+        """Retrieves the description of a lock assoicated with the lock_name."""
         return self.cs.Cfg.LOCKS[lock_name]['desc']
 
     def get_type(self, lock_name: str) -> str:
-        '''Fetcheth the type of a register associated with the lock_name.'''
+        """Fetcheth the type of a register associated with the lock_name."""
         if 'type' in self.cs.Cfg.LOCKS[lock_name].keys():
             mtype = self.cs.Cfg.LOCKS[lock_name]['type']
         else:
@@ -83,18 +84,18 @@ class Lock:
         return mtype
 
     def get_list(self) -> List[str]:
-        '''Retrieve a list of locks that are currently loaded from config files.'''
+        """Retrieve a list of locks that are currently loaded from config files."""
         return list(self.cs.Cfg.LOCKS.keys())
 
     def get_mask(self, lock_name: str) -> int:
-        '''Retrieve the field mask of a register associated with the lock_name.'''
+        """Retrieve the field mask of a register associated with the lock_name."""
         lock = self.cs.Cfg.LOCKS[lock_name]
         reg = lock['register']
         field = lock['field']
         return self.cs.register.get_field_mask(reg, field)
 
     def get_lockedby(self, lock_name: str) -> Optional[List[Set[str]]]:
-        '''Retrieve a list of registers locked by lock_name.'''
+        """Retrieve a list of registers locked by lock_name."""
         if lock_name in self.cs.Cfg.LOCKEDBY.keys():
             return self.cs.Cfg.LOCKEDBY[lock_name]
         else:

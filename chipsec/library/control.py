@@ -19,12 +19,15 @@
 #
 
 from chipsec.library.logger import logger
+
+
 class Control:
+
     def __init__(self, cs) -> None:
         self.cs = cs
 
-    def get(self, control_name: str, cpu_thread: int=0, with_print: bool=False) -> int:
-        '''Reads some control field (by name)'''
+    def get(self, control_name: str, cpu_thread: int = 0, with_print: bool = False) -> int:
+        """Reads some control field (by name)"""
         control = self.cs.Cfg.CONTROLS[control_name]
         reg = control['register']
         field = control['field']
@@ -33,22 +36,22 @@ class Control:
             self.cs.register.print(reg, reg_data)
         return self.cs.register.get_field(reg, reg_data, field)
 
-    def set(self, control_name: str, control_value: int, cpu_thread: int=0) -> bool:
-        '''Writes some control field (by name)'''
+    def set(self, control_name: str, control_value: int, cpu_thread: int = 0) -> bool:
+        """Writes some control field (by name)"""
         control = self.cs.Cfg.CONTROLS[control_name]
         reg = control['register']
         field = control['field']
         return self.cs.register.write_field(reg, field, control_value, cpu_thread=cpu_thread)
 
-    def is_defined(self, control_name:str) -> bool:
-        '''Returns True if control_name Control is defined.'''
+    def is_defined(self, control_name: str) -> bool:
+        """Returns True if control_name Control is defined."""
         try:
             return (self.cs.Cfg.CONTROLS[control_name] is not None)
         except KeyError:
             return False
 
-    def is_all_ffs(self, control_name: str, cpu_thread: int=0, field_only: bool=False) -> bool:
-        '''Returns True if control_name Control value is all 0xFFs (all 1's)'''
+    def is_all_ffs(self, control_name: str, cpu_thread: int = 0, field_only: bool = False) -> bool:
+        """Returns True if control_name Control value is all 0xFFs (all 1's)"""
         if self.is_defined(control_name) is None:
             if logger().DEBUG:
                 logger().log_error(f"Control '{control_name}' not defined.")

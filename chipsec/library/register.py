@@ -18,9 +18,9 @@
 # chipsec@intel.com
 #
 
-'''
+"""
 Main functionality to read/write configuration registers based on their XML configuration
-'''
+"""
 
 from typing import Any, Dict, List, Optional
 
@@ -47,14 +47,14 @@ class Register:
         self.cs = cs
 
     def is_defined(self, reg_name: str) -> bool:
-        '''Checks if register is defined in the XML config'''
+        """Checks if register is defined in the XML config"""
         try:
             return (self.cs.Cfg.REGISTERS[reg_name] is not None)
         except KeyError:
             return False
 
     def is_device_enabled(self, reg_name: str, bus: Optional[int]=None) -> bool:
-        '''Checks if device is defined in the XML config'''
+        """Checks if device is defined in the XML config"""
         if reg_name in self.cs.Cfg.REGISTERS:
             reg = self.get_def(reg_name)
             rtype = reg['type']
@@ -72,7 +72,7 @@ class Register:
         return False
 
     def _get_pci_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
-        '''Return Bus Dev Fun of a PCI register'''
+        """Return Bus Dev Fun of a PCI register"""
         if dev_name in self.cs.Cfg.CONFIG_PCI:
             dev = self.cs.Cfg.CONFIG_PCI[dev_name]
             reg_def['bus'] = self.cs.device.get_first_bus(dev)
@@ -81,7 +81,7 @@ class Register:
         return reg_def
 
     def _get_memory_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
-        '''Return address access of a MEM register'''
+        """Return address access of a MEM register"""
         if dev_name in self.cs.Cfg.MEMORY_RANGES:
             dev = self.cs.Cfg.MEMORY_RANGES[dev_name]
             reg_def['address'] = dev['address']
@@ -91,7 +91,7 @@ class Register:
         return reg_def
 
     def _get_indirect_def(self, reg_def: Dict[str, Any], dev_name: str) -> Dict[str, Any]:
-        '''Return base index data of a IMA register'''
+        """Return base index data of a IMA register"""
         if dev_name in self.cs.Cfg.IMA_REGISTERS:
             dev = self.cs.Cfg.IMA_REGISTERS[dev_name]
             if ('base' in dev):
@@ -111,7 +111,7 @@ class Register:
         return reg_def
 
     def get_def(self, reg_name: str) -> Dict[str, Any]:
-        '''Return complete register definition'''
+        """Return complete register definition"""
         reg_def = self.cs.Cfg.REGISTERS[reg_name]
         if "device" in reg_def:
             dev_name = reg_def["device"]
@@ -124,7 +124,7 @@ class Register:
         return reg_def
 
     def get_bus(self, reg_name: str) -> List[int]:
-        '''Returns list of buses device/register was discovered on'''
+        """Returns list of buses device/register was discovered on"""
         device = self.cs.Cfg.REGISTERS[reg_name].get('device', '')
         if not device:
             if logger().DEBUG:
@@ -136,7 +136,7 @@ class Register:
         return self.cs.device.get_bus(device)
 
     def _read_pci(self, bus: Optional[int], reg: Dict[str, Any], rtype: str, do_check: bool) -> int:
-        '''Returns PCI register value'''
+        """Returns PCI register value"""
         reg_value = 0
         if bus is not None:
             b = self.cs.device.get_first(bus)
@@ -163,7 +163,7 @@ class Register:
         return reg_value
 
     def _read_mmio(self, bus: Optional[int], reg: Dict[str, Any]) -> int:
-        '''Returns MMIO register value'''
+        """Returns MMIO register value"""
         _bus = bus
         if self.cs.mmio.get_MMIO_BAR_base_address(reg['bar'], _bus)[0] != 0:
             reg_value = self.cs.mmio.read_MMIO_BAR_reg(reg['bar'], reg['offset'], reg['size'], _bus)
@@ -172,18 +172,18 @@ class Register:
         return reg_value
 
     def _read_msr(self, cpu_thread: int, reg: Dict[str, Any]) -> int:
-        '''Returns MSR register value'''
+        """Returns MSR register value"""
         (eax, edx) = self.cs.msr.read_msr(cpu_thread, reg['msr'])
         return (edx << 32) | eax
 
     def _read_portio(self, reg: Dict[str, Any]) -> int:
-        '''Returns PORTIO register value'''
+        """Returns PORTIO register value"""
         port = reg['port']
         size = reg['size']
         return self.cs.io._read_port(port, size)
 
     def _read_iobar(self, reg: Dict[str, Any]) -> int:
-        '''Returns IOBAR register value'''
+        """Returns IOBAR register value"""
         if self.cs.iobar.get_IO_BAR_base_address(reg['bar'])[0] != 0:
             reg_value = self.cs.iobar.read_IO_BAR_reg(reg['bar'], reg['offset'], reg['size'])
         else:
@@ -191,7 +191,7 @@ class Register:
         return reg_value
 
     def _read_memory(self, reg: Dict[str, Any]) -> int:
-        '''Returns MEM register value'''
+        """Returns MEM register value"""
         reg_value = 0
         if reg['access'] == 'dram':
             size = reg['size']
@@ -208,12 +208,12 @@ class Register:
         return reg_value
 
     def _read_ima(self, reg: Dict[str, Any]) -> int:
-        '''Returns IMA register value'''
+        """Returns IMA register value"""
         self.write(reg['index'], reg['offset'] + reg['base'])
         return self.read(reg['data'])
 
-    def read(self, reg_name: str, cpu_thread: int=0, bus: Optional[int]=None, do_check: bool=True) -> int:
-        '''Reads configuration register (by name)'''
+    def read(self, reg_name: str, cpu_thread: int = 0, bus: Optional[int] = None, do_check: bool = True) -> int:
+        """Reads configuration register (by name)"""
 
         reg = self.get_def(reg_name)
         rtype = reg['type']
@@ -241,18 +241,18 @@ class Register:
 
         return reg_value
 
-    def read_all(self, reg_name: str, cpu_thread: int=0) -> List[int]:
-        '''Reads all configuration register instances (by name)'''
+    def read_all(self, reg_name: str, cpu_thread: int = 0) -> List[int]:
+        """Reads all configuration register instances (by name)"""
         values = []
         bus_data = self.get_bus(reg_name)
         reg = self.get_def(reg_name)
         rtype = reg['type']
         if RegisterType.MSR == rtype:
             topology = self.cs.cpu.get_cpu_topology()
-            if 'scope' in reg.keys() and reg['scope'] == "packages":
+            if 'scope' in reg.keys() and reg['scope'] == 'packages':
                 packages = topology['packages']
                 threads_to_use = [packages[p][0] for p in packages]
-            elif 'scope' in reg.keys() and reg['scope'] == "cores":
+            elif 'scope' in reg.keys() and reg['scope'] == 'cores':
                 cores = topology['cores']
                 threads_to_use = [cores[p][0] for p in cores]
             else:  # Default to threads
@@ -268,7 +268,7 @@ class Register:
         return values
 
     def _write_pci(self, bus: Optional[int], reg: Dict[str, Any], rtype: str, reg_value: int) -> None:
-        '''Writes PCI register value'''
+        """Writes PCI register value"""
         if bus is not None:
             b = bus
         else:
@@ -291,31 +291,31 @@ class Register:
             self.cs.mmio.write_mmcfg_reg(b, d, f, o, size, reg_value)
 
     def _write_msr(self, reg: Dict[str, Any], reg_value: int, cpu_thread: int) -> None:
-        '''Writes MSR register value'''
+        """Writes MSR register value"""
         eax = (reg_value & 0xFFFFFFFF)
         edx = ((reg_value >> 32) & 0xFFFFFFFF)
         self.cs.msr.write_msr(cpu_thread, reg['msr'], eax, edx)
 
     def _write_portio(self, reg: Dict[str, Any], reg_value: int) -> None:
-        '''Writes PORTIO register value'''
+        """Writes PORTIO register value"""
         port = reg['port']
         size = reg['size']
         self.cs.io._write_port(port, reg_value, size)
 
     def _write_memory(self, reg: Dict[str, Any], reg_value: int) -> None:
-        '''Writes MEM register value'''
+        """Writes MEM register value"""
         if reg['access'] == 'dram':
             self.cs.mem.write_physical_mem(reg['address'], reg['size'], reg_value)
         elif reg['access'] == 'mmio':
             self.cs.mmio.write_MMIO_reg(reg['address'], reg['offset'], reg_value, reg['size'])
 
     def _write_ima(self, reg: Dict[str, Any], reg_value: int) -> None:
-        '''Writes IMA register value'''
+        """Writes IMA register value"""
         self.write(reg['index'], reg['offset'] + reg['base'])
         self.write(reg['data'], reg_value)
 
-    def write(self, reg_name: str, reg_value: int, cpu_thread: int=0, bus: Optional[int]=None) -> bool:
-        '''Writes configuration register (by name)'''
+    def write(self, reg_name: str, reg_value: int, cpu_thread: int = 0, bus: Optional[int] = None) -> bool:
+        """Writes configuration register (by name)"""
         reg = self.get_def(reg_name)
         rtype = reg['type']
         if (rtype == RegisterType.PCICFG) or (rtype == RegisterType.MMCFG):
@@ -341,7 +341,7 @@ class Register:
         return True
 
     def _write_msr_all(self, reg: Dict[str, Any], reg_name: str, reg_values: List[int]) -> bool:
-        '''Writes values to all instances of an MSR register'''
+        """Writes values to all instances of an MSR register"""
         ret = False
         topology = self.cs.cpu.get_cpu_topology()
         if 'scope' in reg.keys() and reg['scope'] == "packages":
@@ -361,7 +361,7 @@ class Register:
         return ret
 
     def _write_pci_all(self, reg_name: str, reg_values: List[int], cpu_thread: int, bus_data: List[int]) -> bool:
-        '''Writes values to all instances of a PCI register'''
+        """Writes values to all instances of a PCI register"""
         ret = False
         values = len(bus_data)
         if len(reg_values) == values:
@@ -370,8 +370,8 @@ class Register:
             ret = True
         return ret
 
-    def write_all(self, reg_name: str, reg_values: List[int], cpu_thread: int=0) -> bool:
-        '''Writes all configuration register instances (by name)'''
+    def write_all(self, reg_name: str, reg_values: List[int], cpu_thread: int = 0) -> bool:
+        """Writes all configuration register instances (by name)"""
         reg = self.get_def(reg_name)
         rtype = reg['type']
         bus_data = self.get_bus(reg_name)
@@ -387,8 +387,8 @@ class Register:
             logger().log("[write_register_all] There is a mismatch in the number of register values and registers to write")
         return ret
 
-    def write_all_single(self, reg_name: str, reg_value: int, cpu_thread: int=0) -> bool:
-        '''Writes all configuration register instances (by name)'''
+    def write_all_single(self, reg_name: str, reg_value: int, cpu_thread: int = 0) -> bool:
+        """Writes all configuration register instances (by name)"""
         reg = self.get_def(reg_name)
         rtype = reg['type']
         bus_data = self.get_bus(reg_name)
@@ -412,7 +412,7 @@ class Register:
         return True
 
     def read_dict(self, reg_name: str) -> Dict[str, Any]:
-        '''Returns complete register definition (with values)'''
+        """Returns complete register definition (with values)"""
         reg_value = self.read(reg_name)
         reg_def = self.get_def(reg_name)
         result = reg_def
@@ -426,8 +426,8 @@ class Register:
             result['FIELDS'][f]['value'] = (reg_value >> field_bit) & field_mask
         return result
 
-    def get_field_mask(self, reg_name: str, reg_field: Optional[str]=None, preserve_field_position: bool=False) -> int:
-        '''Returns the field mask for a register field definition (by name)'''
+    def get_field_mask(self, reg_name: str, reg_field: Optional[str] = None, preserve_field_position: bool = False) -> int:
+        """Returns the field mask for a register field definition (by name)"""
         reg_def = self.get_def(reg_name)
         if reg_field is not None:
             field_attrs = reg_def['FIELDS'][reg_field]
@@ -441,8 +441,8 @@ class Register:
         else:
             return mask
 
-    def get_field(self, reg_name: str, reg_value: int, field_name: str, preserve_field_position: bool=False) -> int:
-        '''Reads the value of the field (by name) of configuration register (by register value)'''
+    def get_field(self, reg_name: str, reg_value: int, field_name: str, preserve_field_position: bool = False) -> int:
+        """Reads the value of the field (by name) of configuration register (by register value)"""
         field_attrs = self.get_def(reg_name)['FIELDS'][field_name]
         field_bit = int(field_attrs['bit'])
         field_mask = (1 << int(field_attrs['size'])) - 1
@@ -451,15 +451,15 @@ class Register:
         else:
             return (reg_value >> field_bit) & field_mask
 
-    def get_field_all(self, reg_name: str, reg_values: List[int], field_name: str, preserve_field_position: bool=False) -> List[int]:
-        '''Reads the value of the field (by name) of all configuration register instances (by register value)'''
+    def get_field_all(self, reg_name: str, reg_values: List[int], field_name: str, preserve_field_position: bool = False) -> List[int]:
+        """Reads the value of the field (by name) of all configuration register instances (by register value)"""
         values = []
         for reg_value in reg_values:
             values.append(self.get_field(reg_name, reg_value, field_name, preserve_field_position))
         return values
 
-    def set_field(self, reg_name: str, reg_value: int, field_name: str, field_value: int, preserve_field_position: bool=False) -> int:
-        '''writes the value of the field (by name) of configuration register (by register value)'''
+    def set_field(self, reg_name: str, reg_value: int, field_name: str, field_value: int, preserve_field_position: bool = False) -> int:
+        """writes the value of the field (by name) of configuration register (by register value)"""
         field_attrs = self.get_def(reg_name)['FIELDS'][field_name]
         field_bit = int(field_attrs['bit'])
         field_mask = (1 << int(field_attrs['size'])) - 1
@@ -470,25 +470,25 @@ class Register:
             reg_value |= ((field_value & field_mask) << field_bit)
         return reg_value
 
-    def set_field_all(self, reg_name: str, reg_values: List[int], field_name: str, field_value: int, preserve_field_position: bool=False) -> List[int]:
-        '''Writes the value of the field (by name) of all configuration register instances (by register value)'''
+    def set_field_all(self, reg_name: str, reg_values: List[int], field_name: str, field_value: int, preserve_field_position: bool = False) -> List[int]:
+        """Writes the value of the field (by name) of all configuration register instances (by register value)"""
         values = []
         for reg_value in reg_values:
             values.append(self.set_field(reg_name, reg_value, field_name, field_value, preserve_field_position))
         return values
 
-    def read_field(self, reg_name: str, field_name: str, preserve_field_position: bool=False, cpu_thread: int=0, bus: Optional[int]=None) -> int:
-        '''Reads the value of the field (by name) of configuration register (by register name)'''
+    def read_field(self, reg_name: str, field_name: str, preserve_field_position: bool = False, cpu_thread: int = 0, bus: Optional[int] = None) -> int:
+        """Reads the value of the field (by name) of configuration register (by register name)"""
         reg_value = self.read(reg_name, cpu_thread, bus)
         return self.get_field(reg_name, reg_value, field_name, preserve_field_position)
 
-    def read_field_all(self, reg_name: str, field_name: str, preserve_field_position: bool=False, cpu_thread: int=0) -> List[int]:
-        '''Reads the value of the field (by name) of all configuration register instances (by register name)'''
+    def read_field_all(self, reg_name: str, field_name: str, preserve_field_position: bool = False, cpu_thread: int = 0) -> List[int]:
+        """Reads the value of the field (by name) of all configuration register instances (by register name)"""
         reg_values = self.read_all(reg_name, cpu_thread)
         return self.get_field_all(reg_name, reg_values, field_name, preserve_field_position)
 
-    def write_field(self, reg_name: str, field_name: str, field_value: int, preserve_field_position: bool=False, cpu_thread: int=0) -> bool:
-        '''Writes the value of the field (by name) of configuration register (by register name)'''
+    def write_field(self, reg_name: str, field_name: str, field_value: int, preserve_field_position: bool = False, cpu_thread: int = 0) -> bool:
+        """Writes the value of the field (by name) of configuration register (by register name)"""
         try:
             reg_value = self.read(reg_name, cpu_thread)
             reg_value_new = self.set_field(reg_name, reg_value, field_name, field_value, preserve_field_position)
@@ -497,14 +497,14 @@ class Register:
             ret = False
         return ret
 
-    def write_field_all(self, reg_name: str, field_name: str, field_value: int, preserve_field_position: bool=False, cpu_thread: int=0) -> bool:
-        '''Writes the value of the field (by name) of all configuration register instances (by register name)'''
+    def write_field_all(self, reg_name: str, field_name: str, field_value: int, preserve_field_position: bool = False, cpu_thread: int = 0) -> bool:
+        """Writes the value of the field (by name) of all configuration register instances (by register name)"""
         reg_values = self.read_all(reg_name, cpu_thread)
         reg_values_new = self.set_field_all(reg_name, reg_values, field_name, field_value, preserve_field_position)
         return self.write_all(reg_name, reg_values_new, cpu_thread)
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
-        '''Checks if the register has specific field'''
+        """Checks if the register has specific field"""
         try:
             reg_def = self.get_def(reg_name)
         except KeyError:
@@ -514,7 +514,7 @@ class Register:
         return (field_name in reg_def['FIELDS'])
 
     def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
-        '''Checks if the register as all fields specified in list'''
+        """Checks if the register as all fields specified in list"""
         ret = True
         for field in field_list:
             ret = ret and self.has_field(reg_name, field)
@@ -523,7 +523,7 @@ class Register:
         return ret
 
     def _fields_str(self, reg_def: Dict[str, Any], reg_val: int) -> str:
-        '''Returns string of all fields of a register and their values.'''
+        """Returns string of all fields of a register and their values."""
         reg_fields_str = ''
         if 'FIELDS' in reg_def:
             reg_fields_str += '\n'
@@ -544,8 +544,8 @@ class Register:
             reg_fields_str = reg_fields_str[:-1]
         return reg_fields_str
 
-    def print(self, reg_name: str, reg_val: int, bus: Optional[int]=None, cpu_thread: int=0) -> str:
-        '''Prints configuration register'''
+    def print(self, reg_name: str, reg_val: int, bus: Optional[int] = None, cpu_thread: int = 0) -> str:
+        """Prints configuration register"""
         reg = self.get_def(reg_name)
         rtype = reg['type']
         reg_str = ''
@@ -583,8 +583,8 @@ class Register:
         logger().log(reg_str)
         return reg_str
 
-    def print_all(self, reg_name: str, cpu_thread: int=0) -> str:
-        '''Prints all configuration register instances'''
+    def print_all(self, reg_name: str, cpu_thread: int = 0) -> str:
+        """Prints all configuration register instances"""
         reg_str = ''
         bus_data = self.get_bus(reg_name)
         reg = self.get_def(reg_name)
@@ -597,7 +597,7 @@ class Register:
             elif 'scope' in reg.keys() and reg['scope'] == "cores":
                 cores = topology['cores']
                 threads_to_use = [cores[p][0] for p in cores]
-            else:  # Default to threads
+            else:
                 threads_to_use = range(self.cs.helper.get_threads_count())
             for t in threads_to_use:
                 reg_val = self.read(reg_name, t)
@@ -612,14 +612,14 @@ class Register:
         return reg_str
 
     def is_msr(self, reg_name: str) -> bool:
-        '''Returns True if register is type `msr`'''
+        """Returns True if register is type `msr`"""
         if self.is_defined(reg_name):
             if self.cs.Cfg.REGISTERS[reg_name]['type'].lower() == 'msr':
                 return True
         return False
 
     def is_pci(self, reg_name: str) -> bool:
-        '''Returns True if register is type `pcicfg` or `mmcfg`'''
+        """Returns True if register is type `pcicfg` or `mmcfg`"""
         if self.is_defined(reg_name):
             reg_def = self.cs.Cfg.REGISTERS[reg_name]
             if (reg_def['type'].lower() == 'pcicfg') or (reg_def['type'].lower() == 'mmcfg'):
@@ -627,7 +627,7 @@ class Register:
         return False
 
     def is_all_ffs(self, reg_name: str, value: int) -> bool:
-        '''Returns True if register value is all 0xFFs'''
+        """Returns True if register value is all 0xFFs"""
         if self.is_msr(reg_name):
             size = 8
         else:
@@ -635,7 +635,7 @@ class Register:
         return is_all_ones(value, size)
 
     def is_field_all_ones(self, reg_name: str, field_name: str, value: int) -> bool:
-        '''Returns True if field value is all ones'''
+        """Returns True if field value is all ones"""
         reg_def = self.get_def(reg_name)
         size = reg_def['FIELDS'][field_name]['size']
         return is_all_ones(value, size, 1)

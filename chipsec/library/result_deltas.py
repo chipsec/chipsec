@@ -21,13 +21,14 @@
 import json
 import time
 import xml.etree.ElementTree as ET
+from typing import Any
 
 import chipsec.library.file
 from chipsec.library.logger import logger
 from chipsec.library.defines import bytestostring
 
 
-def get_json_results(json_file):
+def get_json_results(json_file: str) -> Any:
     file_data = chipsec.library.file.read_file(json_file)
     if file_data == 0:
         return None
@@ -44,23 +45,23 @@ def compute_result_deltas(previous, current):
     all_tests = set(current)
     all_tests.update(previous)
     for test in all_tests:
-        new_res = prev_res = "-------"
+        new_res = prev_res = '-------'
         try:
-            new_res = current[test]["result"]
+            new_res = current[test]['result']
         except Exception:
-            logger().log_debug("Exception getting current result")
+            logger().log_debug('Exception getting current result')
         try:
-            prev_res = previous[test]["result"]
+            prev_res = previous[test]['result']
         except Exception:
-            logger().log_debug("Exception getting previous result")
+            logger().log_debug('Exception getting previous result')
         if new_res != prev_res:
             deltas[test] = {'previous': prev_res, 'current': new_res}
     return deltas
 
 
-def display_deltas(deltas, hide_time, start_time):
-    logger().log("")
-    logger().log("[CHIPSEC] **********************  TEST DELTA SUMMARY  *********************")
+def display_deltas(deltas, hide_time, start_time) -> None:
+    logger().log('')
+    logger().log('[CHIPSEC] **********************  TEST DELTA SUMMARY  *********************')
     if not hide_time:
         logger().log(f'[CHIPSEC] Time elapsed          {time.time() - start_time:.3f}')
     if deltas:
@@ -69,16 +70,16 @@ def display_deltas(deltas, hide_time, start_time):
         for test in deltas:
             logger().log_bad(f'{test:46}| {deltas[test]["previous"]:10} | {deltas[test]["current"]:10}')
     else:
-        logger().log_good("No changes detected.")
-    logger().log("[CHIPSEC] *****************************************************************")
+        logger().log_good('No changes detected.')
+    logger().log('[CHIPSEC] *****************************************************************')
 
 
-def log_deltas_json(deltas, outfile):
+def log_deltas_json(deltas, outfile) -> None:
     deltas_json = json.dumps(deltas, sort_keys=True, indent=2, separators=(',', ': '))
     chipsec.library.file.write_file(outfile, deltas_json)
 
 
-def log_deltas_xml(deltas, outfile):
+def log_deltas_xml(deltas, outfile) -> None:
     xml_deltas = ET.ElementTree(ET.Element('deltas'))
     delta_root = xml_deltas.getroot()
     delta_root.text = '\n    '

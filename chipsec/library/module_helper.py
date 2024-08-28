@@ -24,16 +24,18 @@ from chipsec.library.logger import logger
 from chipsec.library.file import get_module_dir
 from typing import List
 
-def enumerate_modules():
+
+def enumerate_modules() -> List[str]:
     mod_path = get_module_dir()
     tools_path = os.path.join(mod_path)
     files = []
     for dirname, _, mod_fnames in os.walk(os.path.abspath(tools_path)):
         for modx in mod_fnames:
             if fnmatch.fnmatch(modx, '*.py') and not fnmatch.fnmatch(modx, '__init__.py'):
-                module_path = os.path.relpath(dirname, mod_path).replace("\\", ".").replace("/", ".")
+                module_path = os.path.relpath(dirname, mod_path).replace('\\', '.').replace('/', '.')
                 files.append(f'{module_path}.{modx[:-3]}')
     return files
+
 
 def print_modules(module_list: List[str]) -> None:
     logger().log('Enumerating modules...')
