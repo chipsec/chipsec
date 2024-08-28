@@ -18,7 +18,12 @@
 # chipsec@intel.com
 #
 
-# Chipset
+
+# ================================================
+# CHIPSEC common
+# ================================================
+
+
 class UnknownChipsetError(RuntimeError):
     pass
 
@@ -34,11 +39,14 @@ class RegisterNotFoundError(RuntimeError):
 class RegisterTypeNotFoundError(RuntimeError):
     pass
 
+
 class CSBusNotFoundError(RuntimeError):
     pass
 
+
 class CSFirstNotFoundError(RuntimeError):
     pass
+
 
 class CSConfigError(RuntimeError):
     pass
@@ -48,7 +56,9 @@ class CSReadError(RuntimeError):
     def __init__(self, msg: str) -> None:
         super(CSReadError, self).__init__(msg)
 
+# ================================================
 # HAL
+# ================================================
 
 
 class AcpiRuntimeError (RuntimeError):
@@ -142,8 +152,10 @@ class VMMRuntimeError (RuntimeError):
 class InvalidMemoryAddress (RuntimeError):
     pass
 
-# OS Helper
 
+# ================================================
+# OS Helper
+# ================================================
 
 class OsHelperError (RuntimeError):
     def __init__(self, msg: str, errorcode: int) -> None:
@@ -167,13 +179,17 @@ class DALHelperError (RuntimeError):
 class EfiHelperError (RuntimeError):
     pass
 
+# ================================================
 # Logger
+# ================================================
 
 
 class LoggerError (RuntimeWarning):
     pass
 
-# tools
+# ================================================
+# Tools
+# ================================================
 
 
 class BadSMIDetected (RuntimeError):

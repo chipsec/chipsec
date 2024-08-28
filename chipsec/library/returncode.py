@@ -32,9 +32,9 @@ from hashlib import sha256
 class ReturnCode:
     class status(Enum):
         SUCCESS = [0x0000000000000000, 'Test module completed successfully']
-        LOCKS = [bit(31), 'Locks are not set'] 
+        LOCKS = [bit(31), 'Locks are not set']
         MITIGATION = [bit(30), 'Does not support mitigation']
-        CONFIGURATION = [bit(29), 'Configuration not valid'] 
+        CONFIGURATION = [bit(29), 'Configuration not valid']
         PROTECTION = [bit(28), 'Protection not supported/enabled']
         ACCESS_RW = [bit(27), 'Read or write access issues']
         RESTORE = [bit(26), 'Cannot restore binary/value']
@@ -50,12 +50,12 @@ class ReturnCode:
         TIMEOUT = [bit(13), 'Operation timed out']
         VERIFY = [bit(12), 'Manual verification/further testing recommended']
         UNSUPPORTED_FEATURE = [bit(11), 'Feature not supported']
-        UNSUPPORTED_OPTION = [bit(10), 'Option not supported'] 
+        UNSUPPORTED_OPTION = [bit(10), 'Option not supported']
         DEBUG_FEATURE = [bit(9), 'A debug feature is enabled or an unexpected debug state was discovered on this platform']
         NOT_APPLICABLE = [bit(8), 'Skipping module since it is not supported']
         INFORMATION = [bit(0), 'For your information']
         INVALID = [0xFFFFFFFFFFFFFFFF, 'Error running the test']
-    
+
     def __init__(self, cs):
         self.id = 0x0
         self.url = ''
@@ -69,7 +69,7 @@ class ReturnCode:
         if is_set(self._result, status.value[0]) is not True:
             self._result ^= status.value[0]
             self._message += ' / ' + status.value[1]
-            
+
     def setResultBits(self) -> None:
         self._return_code ^= self._result << 32
 
@@ -77,9 +77,9 @@ class ReturnCode:
         self._return_code ^= self.id << 4
 
     def printLogOutput(self) -> None:
-        if self._result == self.status.SUCCESS.value[0]:   
+        if self._result == self.status.SUCCESS.value[0]:
             self.logger.log_good(f'RC 0x{self._return_code:016x}: {self.status.SUCCESS.value[1]}')
-        else:  
+        else:
             self.logger.log_important(f"For next steps: {self.url}")
             self.logger.log_important(f"RC 0x{self._return_code:016x}: {self._message}")
 
@@ -102,6 +102,7 @@ class ReturnCode:
         self.resetReturnCodeValues()
         return ret_value
 
+
 def generate_hash_id(className: str) -> int:
     generated_id = sha256(className.encode("utf-8")).hexdigest()[:7]
     return int(generated_id, 16)
@@ -109,6 +110,8 @@ def generate_hash_id(className: str) -> int:
 # -------------------------------------------------------
 # Legacy results
 # -------------------------------------------------------
+
+
 class ModuleResult(Enum):
     FAILED = 0
     PASSED = 1
@@ -117,6 +120,7 @@ class ModuleResult(Enum):
     INFORMATION = 5
     NOTAPPLICABLE = 6
     ERROR = -1
+
 
 result_priority = {
     ModuleResult.PASSED: 0,
@@ -138,9 +142,11 @@ ModuleResultName = {
     ModuleResult.NOTAPPLICABLE: 'NotApplicable'
 }
 
+
 def max_result_priority(previous_result: ModuleResult, current_result: ModuleResult) -> ModuleResult:
     '''Accepts two results and returns either current_result (if equal) or the max of the two'''
     return previous_result if result_priority[previous_result] > result_priority[current_result] else current_result
+
 
 def getModuleResultName(res, using_return_codes) -> str:
     if using_return_codes:

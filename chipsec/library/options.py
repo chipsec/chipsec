@@ -24,9 +24,13 @@ from typing import Any
 from chipsec.library.file import get_main_dir
 from chipsec.library.exceptions import CSConfigError
 
+
 class NoDefault():
     pass
+
+
 class Options(object):
+
     def __init__(self):
         options_path = os.path.join(get_main_dir(), 'chipsec', 'options')
         if not os.path.isdir(options_path):
@@ -36,7 +40,7 @@ class Options(object):
         with open(options_name) as options_file:
             self.config.read_file(options_file)
 
-    def get_section_data(self, section, key, default: Any = NoDefault):
+    def get_section_data(self, section, key, default: Any = NoDefault) -> str:
         try:
             ret_data = self.config.get(section, key)
         except Exception as e:

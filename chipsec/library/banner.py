@@ -84,5 +84,5 @@ def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]
 def print_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]) -> None:
 
     if not cs.load_config:
-        logger().log_warning("Not loading configurations. Platform will remain unknown.")
+        logger().log_warning('Not loading configurations. Platform will remain unknown.')
     logger().log(chipsec_banner_properties(cs, os_version))

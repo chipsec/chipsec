@@ -21,13 +21,13 @@
 """
 Logging functions
 """
+
 import csv
 import logging
 import platform
 import string
 import sys
 import os
-import atexit
 from time import localtime, strftime
 from typing import Tuple, Dict, List, Optional
 from enum import Enum
@@ -35,6 +35,7 @@ from enum import Enum
 dir_path = os.path.dirname(os.path.realpath(__file__))
 BASE_PATH = os.path.join(dir_path, os.pardir, os.pardir)
 LOGGER_NAME = 'CHIPSEC_LOGGER'
+
 
 class level(Enum):
     DEBUG = 10
@@ -103,15 +104,15 @@ class chipsecStreamFormatter(logging.Formatter):
         if mPlatform == 'windows':
             _ = os.system('color')
         colors = {
-            'GREY':'\033[90m',
-            'RED':'\033[91m',
-            'GREEN':'\033[92m',
-            'YELLOW':'\033[93m',
-            'BLUE':'\033[94m',
-            'PURPLE':'\033[95m',
-            'CYAN':'\033[96m', 
-            'WHITE':'\033[97m',
-            'END':'\033[0m' }
+            'GREY': '\033[90m',
+            'RED': '\033[91m',
+            'GREEN': '\033[92m',
+            'YELLOW': '\033[93m',
+            'BLUE': '\033[94m',
+            'PURPLE': '\033[95m',
+            'CYAN': '\033[96m', 
+            'WHITE': '\033[97m',
+            'END': '\033[0m'}
     else:
         colors = {}
 
@@ -173,7 +174,6 @@ class Logger:
         self.logstream.setFormatter(streamFormatter)
         self.logFormatter = chipsecLogFormatter('%(additional)s%(message)s')
 
-
     def log(self, text: str, level: level = level.INFO, color: Optional[str] = ...) -> None:
         """Sends plain text to logging."""
         self.chipsecLogger.log(level.value, text, color)
@@ -214,7 +214,7 @@ class Logger:
         if not os.path.exists(self.LOG_PATH):
             try:
                 os.mkdir(self.LOG_PATH)
-            except:
+            except (FileExistsError, FileNotFoundError):
                 self.log('Unable to create logs folder')
                 return False
         return True
@@ -279,6 +279,7 @@ class Logger:
                 self.log('WARNING: Could not close log file')
             finally:
                 self.logfile = None
+
     def remove_chipsec_logger(self) -> None:
         while self.chipsecLogger.filters:
             self.chipsecLogger.removeFilter(self.chipsecLogger.filters[0])
@@ -294,7 +295,6 @@ class Logger:
     def flush(self) -> None:
         sys.stdout.flush()
         if self.LOG_TO_FILE and self.logfile is not None:
-            # flush should work with new python logging
             try:
                 self.chipsecLogger.removeHandler(self.logfile)
                 self.logfile.flush()
@@ -425,7 +425,7 @@ def find_required_col_widths(col_data: List[List[int]], minimum_width=2) -> List
 
 
 def bytes2string(buffer, length=16):
-    '''Generate text string based on str with ASCII side panel'''
+    """Generate text string based on str with ASCII side panel"""
     output = []
     num_string = []
     ascii_string = []
