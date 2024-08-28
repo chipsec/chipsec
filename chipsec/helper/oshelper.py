@@ -28,23 +28,15 @@ import importlib
 import platform
 import traceback
 import sys
-from typing import Tuple, List, Dict, Optional, AnyStr, Any, TYPE_CHECKING
-if TYPE_CHECKING:
-    from chipsec.library.types import EfiVariableType
+from typing import List, Any
 from chipsec.library.file import get_main_dir, TOOLS_DIR
 from chipsec.library.logger import logger
-from chipsec.helper.basehelper import Helper
 from chipsec.helper.nonehelper import NoneHelper
 from chipsec.library.exceptions import OsHelperError
 
 
 def get_tools_path() -> str:
     return os.path.normpath(os.path.join(get_main_dir(), TOOLS_DIR))
-
-
-# OS Helper
-#
-# Abstracts support for various OS/environments, wrapper around platform specific code that invokes kernel driver
 
 
 class OsHelper:
@@ -55,13 +47,13 @@ class OsHelper:
         self.helper = self.get_default_helper()
         if (not self.helper):
             os_system = platform.system()
-            raise OsHelperError("Could not load any helpers for '{}' environment (unsupported environment?)".format(os_system), errno.ENODEV)
+            raise OsHelperError(f'Could not load any helpers for \'{os_system}\' environment (unsupported environment?)', errno.ENODEV)
         else:
-            if sys.version[0] == "2":
-                logger().log_warning("*****************************************************************************")
-                logger().log_warning("* !! Python 2 is deprecated and not supported. Please update to Python 3 !! *")
-                logger().log_warning("* !!                           Exiting CHIPSEC                           !! *")
-                logger().log_warning("*****************************************************************************")
+            if sys.version[0] == '2':
+                logger().log_warning('*****************************************************************************')
+                logger().log_warning('* !! Python 2 is deprecated and not supported. Please update to Python 3 !! *')
+                logger().log_warning('* !!                           Exiting CHIPSEC                           !! *')
+                logger().log_warning('*****************************************************************************')
                 sys.exit(0)
             self.os_system = self.helper.os_system
             self.os_release = self.helper.os_release
@@ -69,9 +61,9 @@ class OsHelper:
             self.os_machine = self.helper.os_machine
 
     def load_helpers(self) -> None:
-        helper_dir = os.path.join(get_main_dir(), "chipsec", "helper")
+        helper_dir = os.path.join(get_main_dir(), 'chipsec', 'helper')
         helpers = [os.path.basename(f) for f in os.listdir(helper_dir)
-                    if os.path.isdir(os.path.join(helper_dir, f)) and not os.path.basename(f).startswith("__")]
+                   if os.path.isdir(os.path.join(helper_dir, f)) and not os.path.basename(f).startswith('__')]
 
         for helper in helpers:
             helper_path = ''
@@ -79,36 +71,34 @@ class OsHelper:
                 helper_path = f'chipsec.helper.{helper}.{helper}helper'
                 hlpr = importlib.import_module(helper_path)
                 self.avail_helpers[f'{helper}helper'] = hlpr
-            except ImportError as msg:
-                logger().log_debug(f"Unable to load helper: {helper}")
+            except ImportError:
+                logger().log_debug(f'Unable to load helper: {helper}')
 
     def get_helper(self, name: str) -> Any:
         ret = None
         if name in self.avail_helpers:
             ret = self.avail_helpers[name].get_helper()
         return ret
-    
+
     def get_available_helpers(self) -> List[str]:
         return sorted(self.avail_helpers.keys())
 
     def get_base_helper(self):
         return NoneHelper()
-    
+
     def get_default_helper(self):
         ret = None
         if self.is_linux():
-            ret = self.get_helper("linuxhelper")
+            ret = self.get_helper('linuxhelper')
         elif self.is_windows():
-            ret = self.get_helper("windowshelper")
+            ret = self.get_helper('windowshelper')
         elif self.is_efi():
-            ret = self.get_helper("efihelper")
+            ret = self.get_helper('efihelper')
         elif self.is_dal():
-            ret = self.get_helper("dalhelper")
+            ret = self.get_helper('dalhelper')
         if ret is None:
             ret = self.get_base_helper()
         return ret
-
- 
 
     def is_dal(self) -> bool:
         return 'itpii' in sys.modules
@@ -128,12 +118,9 @@ class OsHelper:
 
     def is_macos(self) -> bool:
         return 'darwin' == platform.system().lower()
-    
+
     def getcwd(self) -> str:
         return os.getcwd()
-
-
-   
 
 
 _helper = None
