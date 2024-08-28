@@ -45,10 +45,12 @@ import shutil
 import sys
 
 DOCS_DIR = os.getcwd()
+RM_DIR = os.path.join(DOCS_DIR, '_remove')
 SPHINX_DIR = os.path.join(DOCS_DIR, 'sphinx')
 SPHINX_MOD_DIR = os.path.join(SPHINX_DIR, 'modules')
 SPHINX_SCRIPTS_DIR = os.path.join(SPHINX_DIR, '_scripts')
 CHIPSEC_DIR = os.path.normpath(DOCS_DIR + os.sep + os.pardir)
+
 
 def RunAutoDoc() -> None:
     try:
@@ -57,20 +59,22 @@ def RunAutoDoc() -> None:
         print('Unable to run sphinx-apidoc')
         raise
 
+
 def CleanupFilesNotWantedInDoc() -> None:
     NotWantedFilesList = []
-    list_path = os.path.join(os.path.dirname(__file__), '_remove')
-    for file in os.listdir(list_path):
-        with open(os.path.join(list_path, file), 'r') as f:
+    for file in os.listdir(RM_DIR):
+        with open(os.path.join(RM_DIR, file), 'r') as f:
             NotWantedFilesList = f.read()
         for not_needed_file in NotWantedFilesList.split(','):
             RemoveFile(not_needed_file)
+
 
 def RemoveFile(file):
     try:
         os.remove(os.path.join(SPHINX_MOD_DIR, file))
     except Exception:
         print(f'\t\tUnable to remove {file}!!!')
+
 
 def RunScripts() -> None:
     for script in os.listdir(os.path.join(SPHINX_SCRIPTS_DIR)):
@@ -80,12 +84,14 @@ def RunScripts() -> None:
             print(f'Unable to run script: {script}')
             raise
 
+
 def GeneratePDF() -> None:
     try:
         os.system(f'sphinx-build -b pdf -T {SPHINX_DIR} {CHIPSEC_DIR}')
     except Exception:
         print('Unable to generate PDF')
         raise
+
 
 def GenerateHTML() -> None:
     try:
@@ -94,6 +100,7 @@ def GenerateHTML() -> None:
         print('Unable to generate HTML')
         raise
 
+
 def GenerateJSON() -> None:
     try:
         os.system(f'sphinx-build -b json -T {SPHINX_DIR} {os.path.join(CHIPSEC_DIR, "manualJson")}')
@@ -101,10 +108,12 @@ def GenerateJSON() -> None:
         print('Unable to generate JSON')
         raise
 
+
 format_options_functions = {
     'html': GenerateHTML,
     'json': GenerateJSON
 }
+
 
 def GenerateHTMLorJSON(option: str) -> None:
     try:
@@ -113,10 +122,12 @@ def GenerateHTMLorJSON(option: str) -> None:
         print('Invalid format option')
         raise
 
+
 def DeleteSphinxCollateral() -> None:
     shutil.rmtree(os.path.join(CHIPSEC_DIR, '.doctrees'))
     shutil.rmtree(os.path.join(SPHINX_DIR, 'logs'))
     shutil.rmtree(SPHINX_MOD_DIR)
+
 
 def main(argv: Sequence[str] = sys.argv[1:]):
     print('******************** BUILDING DOCUMENTATION **************************')
@@ -132,6 +143,7 @@ def main(argv: Sequence[str] = sys.argv[1:]):
     except Exception:
         return 1
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
