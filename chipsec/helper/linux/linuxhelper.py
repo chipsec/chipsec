@@ -26,11 +26,8 @@ import array
 import ctypes
 import errno
 import fcntl
-import fnmatch
-import mmap
 import os
 import platform
-import resource
 import struct
 import subprocess
 import sys
@@ -77,15 +74,16 @@ IOCTL_SWSMI_TIMED = 0x17
 
 _tools = {}
 
+
 class LinuxHelper(Helper):
 
-    DEVICE_NAME = "/dev/chipsec"
-    DEV_MEM = "/dev/mem"
-    DEV_PORT = "/dev/port"
-    MODULE_NAME = "chipsec"
+    DEVICE_NAME = '/dev/chipsec'
+    DEV_MEM = '/dev/mem'
+    DEV_PORT = '/dev/port'
+    MODULE_NAME = 'chipsec'
     SUPPORT_KERNEL26_GET_PAGE_IS_RAM = False
     SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT = False
-    DKMS_DIR = "/var/lib/dkms/"
+    DKMS_DIR = '/var/lib/dkms/'
 
     def __init__(self):
         super(LinuxHelper, self).__init__()
@@ -94,7 +92,7 @@ class LinuxHelper(Helper):
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname = platform.uname()
-        self.name = "LinuxHelper"
+        self.name = 'LinuxHelper'
         self.dev_fh = None
         self.dev_mem = None
         self.dev_port = None
@@ -110,21 +108,19 @@ class LinuxHelper(Helper):
         from os.path import isdir, join
         p = os.path.join(self.DKMS_DIR, self.MODULE_NAME, version, self.os_release)
         os_machine_dir_name = [f for f in listdir(p) if isdir(join(p, f))][0]
-        return os.path.join(self.DKMS_DIR, self.MODULE_NAME, version, self.os_release, os_machine_dir_name, "module", "chipsec.ko")
-
-    # This function load CHIPSEC driver
+        return os.path.join(self.DKMS_DIR, self.MODULE_NAME, version, self.os_release, os_machine_dir_name, 'module', 'chipsec.ko')
 
     def load_chipsec_module(self):
-        page_is_ram = ""
-        phys_mem_access_prot = ""
-        a1 = ""
-        a2 = ""
+        page_is_ram = ''
+        phys_mem_access_prot = ''
+        a1 = ''
+        a2 = ''
         if self.SUPPORT_KERNEL26_GET_PAGE_IS_RAM:
             page_is_ram = self.get_page_is_ram()
             if not page_is_ram:
                 logger().log_debug("Cannot find symbol 'page_is_ram'")
             else:
-                a1 = f"a1=0x{page_is_ram}"
+                a1 = f'a1=0x{page_is_ram}'
         if self.SUPPORT_KERNEL26_GET_PHYS_MEM_ACCESS_PROT:
             phys_mem_access_prot = self.get_phys_mem_access_prot()
             if not phys_mem_access_prot:
@@ -132,21 +128,20 @@ class LinuxHelper(Helper):
             else:
                 a2 = f'a2=0x{phys_mem_access_prot}'
 
-        driver_path = os.path.join(chipsec.library.file.get_main_dir(), "chipsec", "helper", "linux", "chipsec.ko")
+        driver_path = os.path.join(chipsec.library.file.get_main_dir(), 'chipsec', 'helper', 'linux', 'chipsec.ko')
         if not os.path.exists(driver_path):
-            driver_path += ".xz"
+            driver_path += '.xz'
             if not os.path.exists(driver_path):
-                # check DKMS modules location
                 try:
                     driver_path = self.get_dkms_module_location()
                 except Exception:
                     pass
                 if not os.path.exists(driver_path):
-                    driver_path += ".xz"
+                    driver_path += '.xz'
                     if not os.path.exists(driver_path):
-                        raise Exception("Cannot find chipsec.ko module")
+                        raise Exception('Cannot find chipsec.ko module')
         try:
-            subprocess.check_output(["insmod", driver_path, a1, a2])
+            subprocess.check_output(['insmod', driver_path, a1, a2])
         except Exception as err:
             raise Exception(f'Could not start Linux Helper, are you running as Admin/root?\n\t{err}')
         uid = gid = 0
@@ -160,38 +155,38 @@ class LinuxHelper(Helper):
 
     def unload_chipsec_module(self) -> None:
         if self.driver_loaded or os.path.exists(self.DEVICE_NAME):
-            subprocess.call(["rmmod", self.MODULE_NAME])
+            subprocess.call(['rmmod', self.MODULE_NAME])
             logger().log_debug(f'Module for {self.DEVICE_NAME} unloaded successfully')
 
     def create(self):
-        logger().log_debug("[helper] Linux Helper created")
+        logger().log_debug('[helper] Linux Helper created')
         return True
 
     def start(self) -> bool:
         self.unload_chipsec_module()
         self.load_chipsec_module()
         self.init()
-        logger().log_debug("[helper] Linux Helper started/loaded")
+        logger().log_debug('[helper] Linux Helper started/loaded')
         return True
 
     def stop(self) -> bool:
         self.close()
         self.unload_chipsec_module()
-        logger().log_debug("[helper] Linux Helper stopped/unloaded")
+        logger().log_debug('[helper] Linux Helper stopped/unloaded')
         return True
 
     def delete(self) -> bool:
-        logger().log_debug("[helper] Linux Helper deleted")
+        logger().log_debug('[helper] Linux Helper deleted')
         return True
 
     def init(self) -> None:
         x64 = True if sys.maxsize > 2**32 else False
         self._pack = 'Q' if x64 else 'I'
 
-        estr = "Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}"
+        estr = 'Unable to open chipsec device. Did you run as root/sudo and load the driver?\n {}'
         try:
             # Do not buffer access to physical memory...
-            self.dev_fh = open(self.DEVICE_NAME, "rb+", buffering=0)
+            self.dev_fh = open(self.DEVICE_NAME, 'rb+', buffering=0)
             self.driver_loaded = True
         except IOError as e:
             raise OsHelperError(estr.format(str(e)), e.errno)
@@ -233,7 +228,7 @@ class LinuxHelper(Helper):
 ###############################################################################################
 
     def map_io_space(self, base: int, size: int, cache_type: int) -> None:
-        raise UnimplementedAPIError("map_io_space")
+        raise UnimplementedAPIError('map_io_space')
 
     def __mem_block(self, sz: int, newval: Optional[bytes] = None) -> bytes:
         if self.dev_fh is not None:
@@ -283,7 +278,7 @@ class LinuxHelper(Helper):
             ret = self.ioctl(IOCTL_RDPCI, d)
         except IOError:
             if logger().DEBUG:
-                logger().log_error("IOError\n")
+                logger().log_error('IOError\n')
             return 0
         x = struct.unpack(f'5{self._pack}', ret)
         return x[4]
@@ -295,7 +290,7 @@ class LinuxHelper(Helper):
             ret = self.ioctl(IOCTL_WRPCI, d)
         except IOError:
             if logger().DEBUG:
-                logger().log_error("IOError\n")
+                logger().log_error('IOError\n')
             return 0
         x = struct.unpack(f'5{self._pack}', ret)
         return x[4]
@@ -304,13 +299,13 @@ class LinuxHelper(Helper):
         cpu_ucode_thread_id = ctypes.c_int(cpu_thread_id)
 
         in_buf = struct.pack('=BH', cpu_thread_id, len(ucode_update_buf)) + ucode_update_buf
-        in_buf_final = array.array("c", in_buf)
+        in_buf_final = array.array('c', in_buf)
         out_length = 0
         try:
             out_buf = self.ioctl(IOCTL_LOAD_UCODE_PATCH, in_buf_final)
         except IOError:
             if logger().DEBUG:
-                logger().log_error("IOError IOCTL Load Patch\n")
+                logger().log_error('IOError IOCTL Load Patch\n')
             return False
 
         return True
@@ -325,7 +320,7 @@ class LinuxHelper(Helper):
                 value = struct.unpack(f'3{self._pack}', out_buf)[2] & 0xffff
             else:
                 value = struct.unpack(f'3{self._pack}', out_buf)[2] & 0xffffffff
-        except:
+        except struct.error:
             if logger().DEBUG:
                 logger().log_error(f"DeviceIoControl did not return value of proper size {size:x} (value = '{out_buf}'): returning 0")
             value = 0
@@ -372,13 +367,12 @@ class LinuxHelper(Helper):
         return (limit, base, pa)
 
     def cpuid(self, eax: int, ecx: int) -> Tuple[int, int, int, int]:
-        # add ecx
         in_buf = struct.pack(f'4{self._pack}', eax, 0, ecx, 0)
         out_buf = self.ioctl(IOCTL_CPUID, in_buf)
         return struct.unpack(f'4{self._pack}', out_buf)
 
     def alloc_phys_mem(self, num_bytes: int, max_addr: int):
-        in_buf = struct.pack("2" + self._pack, num_bytes, max_addr)
+        in_buf = struct.pack('2' + self._pack, num_bytes, max_addr)
         out_buf = self.ioctl(IOCTL_ALLOC_PHYSMEM, in_buf)
         return struct.unpack(f'2{self._pack}', out_buf)
 
@@ -398,14 +392,11 @@ class LinuxHelper(Helper):
         out_buf = self.ioctl(IOCTL_WRMMIO, in_buf)
 
     def get_ACPI_table(self, table_name:str) -> Optional['Array']:
-        raise UnimplementedAPIError("get_ACPI_table")
+        raise UnimplementedAPIError('get_ACPI_table')
 
     def enum_ACPI_tables(self) -> Optional['Array']:
         raise UnimplementedAPIError('enum_ACPI_table')
 
-    #
-    # IOSF Message Bus access
-    #
     def msgbus_send_read_message(self, mcr: int, mcrx: int) -> Optional[int]:
         return self.msgbus_send_message(mcr, mcrx)
 
@@ -422,10 +413,6 @@ class LinuxHelper(Helper):
         out_buf = self.ioctl(IOCTL_MSGBUS_SEND_MESSAGE, in_buf)
         mdr_out = struct.unpack(f'5{self._pack}', out_buf)[4]
         return mdr_out
-
-    #
-    # Affinity functions
-    #
 
     def get_affinity(self) -> Optional[int]:
         try:
@@ -446,10 +433,10 @@ class LinuxHelper(Helper):
     #########################################################
 
     def EFI_supported(self) -> bool:
-        return os.path.exists("/sys/firmware/efi/vars/") or os.path.exists("/sys/firmware/efi/efivars/")
+        return os.path.exists('/sys/firmware/efi/vars/') or os.path.exists('/sys/firmware/efi/efivars/')
 
     def delete_EFI_variable(self, name: str, guid: str) -> int:
-        return self.kern_set_EFI_variable(name, guid, b"")
+        return self.kern_set_EFI_variable(name, guid, b'')
 
     def list_EFI_variables(self) -> Optional[Dict[str, List['EfiVariableType']]]:
         return self.kern_list_EFI_variables()
@@ -465,7 +452,20 @@ class LinuxHelper(Helper):
     #
 
     def kern_get_EFI_variable_full(self, name: str, guid: str) -> 'EfiVariableType':
-        status_dict = {0: "EFI_SUCCESS", 1: "EFI_LOAD_ERROR", 2: "EFI_INVALID_PARAMETER", 3: "EFI_UNSUPPORTED", 4: "EFI_BAD_BUFFER_SIZE", 5: "EFI_BUFFER_TOO_SMALL", 6: "EFI_NOT_READY", 7: "EFI_DEVICE_ERROR", 8: "EFI_WRITE_PROTECTED", 9: "EFI_OUT_OF_RESOURCES", 14: "EFI_NOT_FOUND", 26: "EFI_SECURITY_VIOLATION"}
+        status_dict = {
+            0: 'EFI_SUCCESS',
+            1: 'EFI_LOAD_ERROR',
+            2: 'EFI_INVALID_PARAMETER',
+            3: 'EFI_UNSUPPORTED',
+            4: 'EFI_BAD_BUFFER_SIZE',
+            5: 'EFI_BUFFER_TOO_SMALL',
+            6: 'EFI_NOT_READY',
+            7: 'EFI_DEVICE_ERROR',
+            8: 'EFI_WRITE_PROTECTED',
+            9: 'EFI_OUT_OF_RESOURCES',
+            14: 'EFI_NOT_FOUND',
+            26: 'EFI_SECURITY_VIOLATION'
+            }
         off = 0
         data = b''
         attr = 0
@@ -488,25 +488,25 @@ class LinuxHelper(Helper):
         guid10 = int(guid[34:], 16)
 
         in_buf = struct.pack(f'13I{str(namelen)}s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
-        buffer = array.array("B", in_buf)
+        buffer = array.array('B', in_buf)
         stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
-        new_size, status = struct.unpack("2I", buffer[:8])
+        new_size, status = struct.unpack('2I', buffer[:8])
 
         if (status == 0x5):
             data_size = new_size + header_size + namelen  # size sent by driver + size of header (size + guid) + size of name
             in_buf = struct.pack(f'13I{str(namelen + new_size)}s', data_size, guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10, namelen, name.encode())
-            buffer = array.array("B", in_buf)
+            buffer = array.array('B', in_buf)
             try:
                 stat = self.ioctl(IOCTL_GET_EFIVAR, buffer)
             except IOError:
                 if logger().DEBUG:
-                    logger().log_error("IOError IOCTL GetUEFIvar\n")
+                    logger().log_error('IOError IOCTL GetUEFIvar\n')
                 return (off, buf, hdr, b'', guid, attr)
-            new_size, status = struct.unpack("2I", buffer[:8])
+            new_size, status = struct.unpack('2I', buffer[:8])
 
         if (new_size > data_size):
             if logger().DEBUG:
-                logger().log_error("Incorrect size returned from driver")
+                logger().log_error('Incorrect size returned from driver')
             return (off, buf, hdr, b'', guid, attr)
 
         if (status > 0):
@@ -517,7 +517,7 @@ class LinuxHelper(Helper):
             attr = 0
         else:
             data = buffer[base:base + new_size].tobytes()
-            attr = struct.unpack("I", buffer[8:12])[0]
+            attr = struct.unpack('I', buffer[8:12])[0]
         return (off, buf, hdr, data, guid, attr)
 
     def kern_get_EFI_variable(self, name: str, guid: str) -> bytes:
@@ -553,18 +553,18 @@ class LinuxHelper(Helper):
 
     def kern_set_EFI_variable(self, name: str, guid: str, value: bytes, attr: int = 0x7) -> int:
         status_dict = {
-            0: "EFI_SUCCESS",
-            1: "EFI_LOAD_ERROR",
-            2: "EFI_INVALID_PARAMETER",
-            3: "EFI_UNSUPPORTED",
-            4: "EFI_BAD_BUFFER_SIZE",
-            5: "EFI_BUFFER_TOO_SMALL",
-            6: "EFI_NOT_READY",
-            7: "EFI_DEVICE_ERROR",
-            8: "EFI_WRITE_PROTECTED",
-            9: "EFI_OUT_OF_RESOURCES",
-            14: "EFI_NOT_FOUND",
-            26: "EFI_SECURITY_VIOLATION"
+            0: 'EFI_SUCCESS',
+            1: 'EFI_LOAD_ERROR',
+            2: 'EFI_INVALID_PARAMETER',
+            3: 'EFI_UNSUPPORTED',
+            4: 'EFI_BAD_BUFFER_SIZE',
+            5: 'EFI_BUFFER_TOO_SMALL',
+            6: 'EFI_NOT_READY',
+            7: 'EFI_DEVICE_ERROR',
+            8: 'EFI_WRITE_PROTECTED',
+            9: 'EFI_OUT_OF_RESOURCES',
+            14: 'EFI_NOT_FOUND',
+            26: 'EFI_SECURITY_VIOLATION'
         }
 
         header_size = 60  # 4*15
@@ -590,9 +590,9 @@ class LinuxHelper(Helper):
         pack_formatting = f'15I{namelen}s{datalen}s'
         _guid = (guid0, guid1, guid2, guid3, guid4, guid5, guid6, guid7, guid8, guid9, guid10)
         in_buf = struct.pack(pack_formatting, data_size, *_guid, attr, namelen, datalen, name.encode('utf-8'), value)
-        buffer = array.array("B", in_buf)
+        buffer = array.array('B', in_buf)
         self.ioctl(IOCTL_SET_EFIVAR, buffer)
-        _, status = struct.unpack("2I", buffer[:8])
+        _, status = struct.unpack('2I', buffer[:8])
 
         if (status != 0):
             if logger().DEBUG:
@@ -601,18 +601,11 @@ class LinuxHelper(Helper):
             os.system('umount /sys/firmware/efi/efivars; mount -t efivarfs efivarfs /sys/firmware/efi/efivars')
         return status
 
-
-    #
-    # Hypercalls
-    #
     def hypercall(self, rcx: int, rdx: int, r8: int, r9: int, r10: int, r11: int, rax: int, rbx: int, rdi: int, rsi: int, xmm_buffer: int) -> int:
         in_buf = struct.pack(f'<11{self._pack}', rcx, rdx, r8, r9, r10, r11, rax, rbx, rdi, rsi, xmm_buffer)
         out_buf = self.ioctl(IOCTL_HYPERCALL, in_buf)
         return struct.unpack(f'<11{self._pack}', out_buf)[0]
 
-    #
-    # Interrupts
-    #
     def send_sw_smi(self, cpu_thread_id: int, SMI_code_data: int, _rax: int, _rbx: int, _rcx: int, _rdx: int, _rsi: int, _rdi: int) -> Optional[Tuple[int, int, int, int, int, int, int]]:
         self.set_affinity(cpu_thread_id)
         in_buf = struct.pack(f'7{self._pack}', SMI_code_data, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
@@ -627,42 +620,33 @@ class LinuxHelper(Helper):
         ret = struct.unpack(f'8{self._pack}', out_buf)
         return ret
 
-    #
-    # File system
-    #
     def get_tool_info(self, tool_type: str) -> Tuple[Optional[str], str]:
         tool_name = _tools[tool_type] if tool_type in _tools else None
         tool_path = os.path.join(get_tools_path(), self.os_system.lower())
         return tool_name, tool_path
 
     def get_page_is_ram(self) -> Optional[bytes]:
-        PROC_KALLSYMS = "/proc/kallsyms"
+        PROC_KALLSYMS = '/proc/kallsyms'
         symarr = chipsec.library.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
-            if b"page_is_ram" in line:
-                return line.split(b" ")[0]
+            if b'page_is_ram' in line:
+                return line.split(b' ')[0]
         return None
 
     def get_phys_mem_access_prot(self) -> Optional[bytes]:
-        PROC_KALLSYMS = "/proc/kallsyms"
+        PROC_KALLSYMS = '/proc/kallsyms'
         symarr = chipsec.library.file.read_file(PROC_KALLSYMS).splitlines()
         for line in symarr:
-            if b"phys_mem_access_prot" in line:
-                return line.split(b" ")[0]
+            if b'phys_mem_access_prot' in line:
+                return line.split(b' ')[0]
         return None
 
-    #
-    # Logical CPU count
-    #
     def get_threads_count(self) -> int:
         import multiprocessing
         return multiprocessing.cpu_count()
 
-    #
-    # Speculation control
-    #
     def retpoline_enabled(self):
-        raise NotImplementedError("retpoline_enabled")
+        raise NotImplementedError('retpoline_enabled')
 
 
 def get_helper():

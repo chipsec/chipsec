@@ -53,8 +53,8 @@ class MemoryMapping(mmap.mmap):
 
 class LinuxNativeHelper(Helper):
 
-    DEV_MEM = "/dev/mem"
-    DEV_PORT = "/dev/port"
+    DEV_MEM = '/dev/mem'
+    DEV_PORT = '/dev/port'
 
     def __init__(self):
         super(LinuxNativeHelper, self).__init__()
@@ -63,7 +63,7 @@ class LinuxNativeHelper(Helper):
         self.os_version = platform.version()
         self.os_machine = platform.machine()
         self.os_uname = platform.uname()
-        self.name = "LinuxNativeHelper"
+        self.name = 'LinuxNativeHelper'
         self.dev_fh = None
         self.dev_mem = None
         self.dev_port = None
@@ -78,21 +78,21 @@ class LinuxNativeHelper(Helper):
 # Driver/service management functions
 ###############################################################################################
     def create(self) -> bool:
-        logger().log_debug("[helper] Linux Helper created")
+        logger().log_debug('[helper] Linux Helper created')
         return True
 
     def start(self) -> bool:
         self.init()
-        logger().log_debug("[helper] Linux Helper started/loaded")
+        logger().log_debug('[helper] Linux Helper started/loaded')
         return True
 
     def stop(self) -> bool:
         self.close()
-        logger().log_debug("[helper] Linux Helper stopped/unloaded")
+        logger().log_debug('[helper] Linux Helper stopped/unloaded')
         return True
 
     def delete(self) -> bool:
-        logger().log_debug("[helper] Linux Helper deleted")
+        logger().log_debug('[helper] Linux Helper deleted')
         return True
 
     def init(self):
@@ -112,10 +112,10 @@ class LinuxNativeHelper(Helper):
             self.dev_mem = os.open(self.DEV_MEM, os.O_RDWR)
             return True
         except IOError as err:
-            raise OsHelperError("Unable to open /dev/mem.\n"
-                                "This command requires access to /dev/mem.\n"
-                                "Are you running this command as root?\n"
-                                f"{str(err)}", err.errno)
+            raise OsHelperError('Unable to open /dev/mem.\n'
+                                'This command requires access to /dev/mem.\n'
+                                'Are you running this command as root?\n'
+                                f'{str(err)}', err.errno)
 
     def devport_available(self) -> bool:
         """Check if /dev/port is usable.
@@ -130,10 +130,10 @@ class LinuxNativeHelper(Helper):
             self.dev_port = os.open(self.DEV_PORT, os.O_RDWR)
             return True
         except IOError as err:
-            raise OsHelperError("Unable to open /dev/port.\n"
-                                "This command requires access to /dev/port.\n"
-                                "Are you running this command as root?\n"
-                                f"{str(err)}", err.errno)
+            raise OsHelperError('Unable to open /dev/port.\n'
+                                'This command requires access to /dev/port.\n'
+                                'Are you running this command as root?\n'
+                                f'{str(err)}', err.errno)
 
     def devmsr_available(self) -> bool:
         """Check if /dev/cpu/CPUNUM/msr is usable.
@@ -147,21 +147,21 @@ class LinuxNativeHelper(Helper):
 
         try:
             self.dev_msr = {}
-            if not os.path.exists("/dev/cpu/0/msr"):
-                os.system("modprobe msr")
-            for cpu in os.listdir("/dev/cpu"):
-                logger().log_debug(f"found cpu = {str(cpu)}")
+            if not os.path.exists('/dev/cpu/0/msr'):
+                os.system('modprobe msr')
+            for cpu in os.listdir('/dev/cpu'):
+                logger().log_debug(f'found cpu = {str(cpu)}')
                 if cpu.isdigit():
                     cpu = int(cpu)
-                    self.dev_msr[cpu] = os.open(f"/dev/cpu/{str(cpu)}/msr", os.O_RDWR)
-                    logger().log_debug(f"Added dev_msr {str(cpu)}")
+                    self.dev_msr[cpu] = os.open(f'/dev/cpu/{str(cpu)}/msr', os.O_RDWR)
+                    logger().log_debug(f'Added dev_msr {str(cpu)}')
             return True
         except IOError as err:
-            raise OsHelperError("Unable to open /dev/cpu/CPUNUM/msr.\n"
-                                "This command requires access to /dev/cpu/CPUNUM/msr.\n"
-                                "Are you running this command as root?\n"
-                                "Do you have the msr kernel module installed?\n"
-                                f"{str(err)}", err.errno)
+            raise OsHelperError('Unable to open /dev/cpu/CPUNUM/msr.\n'
+                                'This command requires access to /dev/cpu/CPUNUM/msr.\n'
+                                'Are you running this command as root?\n'
+                                'Do you have the msr kernel module installed?\n'
+                                f'{str(err)}', err.errno)
 
     def close(self):
         if self.dev_mem:
@@ -173,8 +173,8 @@ class LinuxNativeHelper(Helper):
 ###############################################################################################
 
     def read_pci_reg(self, bus: int, device: int, function: int, offset: int, size: int, domain: int = 0) -> int:
-        device_name = f"{domain:04x}:{bus:02x}:{device:02x}.{function}"
-        device_path = f"/sys/bus/pci/devices/{device_name}/config"
+        device_name = f'{domain:04x}:{bus:02x}:{device:02x}.{function}'
+        device_path = f'/sys/bus/pci/devices/{device_name}/config'
         if not os.path.exists(device_path):
             if offset < 256:
                 value = LegacyPci.read_pci_config(bus, device, function, offset)
@@ -188,30 +188,29 @@ class LinuxNativeHelper(Helper):
                     value = value & 0xFFFF_FFFF_FFFF_FFFF
                 return value
             else:
-                raise ValueError("Offset out of bounds")
+                raise ValueError('Offset out of bounds')
         try:
-            with open(device_path, "rb") as config:
+            with open(device_path, 'rb') as config:
                 config.seek(offset)
                 reg = config.read(size)
                 reg = defines.unpack1(reg, size)
                 return reg
         except IOError as err:
-            raise OsHelperError(f"Unable to open {device_path}", err.errno)
+            raise OsHelperError(f'Unable to open {device_path}', err.errno)
 
     def write_pci_reg(self, bus: int, device: int, function: int, offset: int, value: int, size: int = 4, domain: int = 0) -> int:
-        device_name = "{domain:04x}:{bus:02x}:{device:02x}.{function}".format(
-                      domain=domain, bus=bus, device=device, function=function)
-        device_path = f"/sys/bus/pci/devices/{device_name}/config"
+        device_name = f'{domain:04x}:{bus:02x}:{device:02x}.{function}'
+        device_path = f'/sys/bus/pci/devices/{device_name}/config'
         if not os.path.exists(device_path):
             if offset < 256:
                 LegacyPci.write_pci_config(bus, device, function, offset, value)
                 return -1
         try:
-            with open(device_path, "wb") as config:
+            with open(device_path, 'wb') as config:
                 config.seek(offset)
                 config.write(defines.pack1(value, size))
         except IOError as err:
-            raise OsHelperError(f"Unable to open {device_path}", err.errno)
+            raise OsHelperError(f'Unable to open {device_path}', err.errno)
 
         return 0
 
@@ -223,7 +222,7 @@ class LinuxNativeHelper(Helper):
                 self.map_io_space(phys_address, size, 0)
                 region = self.memory_mapping(phys_address, size)
                 if not region:
-                    logger().log_error(f"Unable to map region {phys_address:08x}")
+                    logger().log_error(f'Unable to map region {phys_address:08x}')
 
             # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
@@ -249,7 +248,7 @@ class LinuxNativeHelper(Helper):
                 self.map_io_space(phys_address, size, 0)
                 region = self.memory_mapping(phys_address, size)
                 if not region:
-                    logger().log_error(f"Unable to map region {phys_address:08x}")
+                    logger().log_error(f'Unable to map region {phys_address:08x}')
 
             # Create memoryview into mmap'ed region
             region_mv = memoryview(region)
@@ -279,7 +278,7 @@ class LinuxNativeHelper(Helper):
     def map_io_space(self, base: int, size: int, cache_type: int) -> None:
         """Map to memory a specific region."""
         if self.devmem_available() and not self.memory_mapping(base, size):
-            logger().log_debug(f"[helper] Mapping 0x{base:x} to memory")
+            logger().log_debug(f'[helper] Mapping 0x{base:x} to memory')
             length = max(size, resource.getpagesize())
             page_aligned_base = base - (base % resource.getpagesize())
             mapping = MemoryMapping(self.dev_mem, length, mmap.MAP_SHARED,
@@ -300,7 +299,7 @@ class LinuxNativeHelper(Helper):
             os.lseek(self.dev_mem, phys_address, os.SEEK_SET)
             written = os.write(self.dev_mem, newval)
             if written != length:
-                logger().log_debug(f"Cannot write {newval} to memory {phys_address:016X} (wrote {written:d} of {length:d})")
+                logger().log_debug(f'Cannot write {newval} to memory {phys_address:016X} (wrote {written:d} of {length:d})')
             return written
         return -1
 
@@ -319,13 +318,13 @@ class LinuxNativeHelper(Helper):
 
             value = os.read(self.dev_port, size)
             if 1 == size:
-                return struct.unpack("B", value)[0]
+                return struct.unpack('B', value)[0]
             elif 2 == size:
-                return struct.unpack("H", value)[0]
+                return struct.unpack('H', value)[0]
             elif 4 == size:
-                return struct.unpack("I", value)[0]
+                return struct.unpack('I', value)[0]
             else:
-                raise ValueError("Invalid size")
+                raise ValueError('Invalid size')
         return -1
 
     def write_io_port(self, io_port: int, value: int, size: int) -> bool:
@@ -338,10 +337,10 @@ class LinuxNativeHelper(Helper):
             elif 4 == size:
                 fmt = 'I'
             else:
-                raise ValueError("Invalid size")
+                raise ValueError('Invalid size')
             written = os.write(self.dev_port, struct.pack(fmt, value))
             if written != size:
-                logger().log_debug(f"Cannot write {value} to port {io_port:x} (wrote {written:d} of {size:d})")
+                logger().log_debug(f'Cannot write {value} to port {io_port:x} (wrote {written:d} of {size:d})')
                 return False
             return True
         return False
@@ -356,17 +355,17 @@ class LinuxNativeHelper(Helper):
         if self.devmsr_available():
             os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
             buf = os.read(self.dev_msr[thread_id], 8)
-            unbuf = struct.unpack("2I", buf)
+            unbuf = struct.unpack('2I', buf)
             return (unbuf[0], unbuf[1])
         return (-1, -1)
 
     def write_msr(self, thread_id: int, msr_addr: int, eax: int, edx: int) -> int:
         if self.devmsr_available():
             os.lseek(self.dev_msr[thread_id], msr_addr, os.SEEK_SET)
-            buf = struct.pack("2I", eax, edx)
+            buf = struct.pack('2I', eax, edx)
             written = os.write(self.dev_msr[thread_id], buf)
             if written != 8:
-                logger().log_debug(f"Cannot write {buf.hex()} to MSR {msr_addr:x}")
+                logger().log_debug(f'Cannot write {buf.hex()} to MSR {msr_addr:x}')
             return written
         return False
 
@@ -450,11 +449,11 @@ class LinuxNativeHelper(Helper):
     # Speculation control
     #
     def retpoline_enabled(self):
-        raise NotImplementedError("retpoline_enabled")
+        raise NotImplementedError('retpoline_enabled')
 
     def get_bios_version(self) -> str:
         try:
-            filename = "/sys/class/dmi/id/bios_version"
+            filename = '/sys/class/dmi/id/bios_version'
             with open(filename, 'r') as outfile:
                 return outfile.read().strip()
         except FileNotFoundError:
