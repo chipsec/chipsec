@@ -16,6 +16,7 @@
 #
 import os
 import platform
+import distro
 import tempfile
 import unittest
 try:
@@ -27,7 +28,7 @@ except:
         # Windows does not have a "distribution"
         mSystem = None
     else:
-        mSystem = platform.dist()
+        mSystem = distro.linux_distribution()
 
 
 import chipsec_main
