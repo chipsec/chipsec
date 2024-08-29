@@ -16,6 +16,7 @@
 #
 import os
 import platform
+import distro
 import tempfile
 import unittest
 try:
