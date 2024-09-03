@@ -442,8 +442,6 @@ class CoreConfig(BaseConfigParser):
             elif reg_attr['type'] == 'mmcfg':
                 reg_obj = self.create_register_object_pci(MMCFGRegisters, reg_attr)
             elif reg_attr['type'] == 'mmio':
-                self.logger.log('mmio register')
-                self.logger.log(reg_attr)
                 reg_obj = self.create_register_object_bar(MMIORegisters, reg_attr)
             elif reg_attr['type'] == 'iobar':
                 reg_obj = self.create_register_object_bar(IOBARRegisters, reg_attr)
