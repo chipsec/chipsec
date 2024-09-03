@@ -27,17 +27,17 @@ from chipsec.cfg.parsers.ip.mm_msgbus import MM_MSGBUSConfig
 from chipsec.cfg.parsers.ip.msgbus import MSGBUSConfig
 from chipsec.cfg.parsers.ip.msr import MSRConfig
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
-from chipsec.cfg.parsers.registers.controls import CONTROLHelper
-from chipsec.cfg.parsers.registers.io import IORegisters
-from chipsec.cfg.parsers.registers.iobar import IOBARRegisters
-from chipsec.cfg.parsers.registers.memory import MEMORYRegisters
-from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters
-from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters
-from chipsec.cfg.parsers.registers.mmio import MMIORegisters
-from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters
-from chipsec.cfg.parsers.registers.msr import MSRRegisters
-from chipsec.cfg.parsers.registers.pci import PCIRegisters
-from chipsec.cfg.parsers.registers.locks import LOCKSHelper
+from chipsec.cfg.parsers.controls import CONTROLHelper
+from chipsec.cfg.parsers.locks import LOCKSHelper
+from chipsec.cfg.parsers.registers.io import IORegisters #
+from chipsec.cfg.parsers.registers.iobar import IOBARRegisters #
+from chipsec.cfg.parsers.registers.memory import MEMORYRegisters #
+from chipsec.cfg.parsers.registers.mm_msgbus import MM_MSGBUSRegisters #
+from chipsec.cfg.parsers.registers.mmcfg import MMCFGRegisters #
+from chipsec.cfg.parsers.registers.mmio import MMIORegisters #
+from chipsec.cfg.parsers.registers.msgbus import MSGBUSRegisters #
+from chipsec.cfg.parsers.registers.msr import MSRRegisters #
+from chipsec.cfg.parsers.registers.pci import PCIRegisters #pcicfg
 from chipsec.parsers import BaseConfigParser
 from chipsec.parsers import Stage
 from chipsec.parsers import info_data, config_data
