@@ -578,21 +578,8 @@ class Cfg:
                 ret = self.MMIO_BARS[vid][device][bar]
         return ret
 
-    def get_io_def(self, bar_name):
-        scope = self.get_scope(bar_name)
-        vid, device, bar, _ = self.convert_internal_scope(scope, bar_name)
-        if bar in self.IO_BARS[vid][device]:
-            return self.IO_BARS[vid][device][bar]
-        else:
-            return None
 
-    def get_mem_def(self, range_name):
-        scope = self.get_scope(range_name)
-        vid, range, _, _ = self.convert_internal_scope(scope, range_name)
-        if range in self.MEMORY_RANGES[vid]:
-            return self.MEMORY_RANGES[vid][range]
-        else:
-            return None
+
 
     def get_device_bus(self, dev_name):
         scope = self.get_scope(dev_name)
