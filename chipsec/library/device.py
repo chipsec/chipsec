@@ -28,6 +28,14 @@ class Device:
     def __init__(self, cs) -> None:
         self.cs = cs
 
+    def get_obj(self, device_name: str):
+        scope = self.cs.Cfg.get_scope(device_name)
+        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+        if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
+            return self.cs.Cfg.CONFIG_PCI[vid][device]
+        else:
+            return None
+
     def get_first_bus(self, device: dict) -> int:
         """Retrieves first value in bus list for PCI device"""
         if 'bus' in device:
@@ -44,10 +52,15 @@ class Device:
 
     def get_BDF(self, device_name: str) -> Tuple[int, int, int]:
         """Retrieves bus, device, and function values from PCI device"""
-        device = self.cs.Cfg.CONFIG_PCI[device_name]
+        scope = self.cs.Cfg.get_scope(device_name)
+        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+        try:
+            device = self.cs.Cfg.CONFIG_PCI[vid][device]
+        except KeyError:
+            device = None
         if device is None or device == {}:
             raise DeviceNotFoundError(f'DeviceNotFound: {device_name}')
-        b = self.get_first_bus(device)
+        b = device['bus']
         d = device['dev']
         f = device['fun']
         return (b, d, f)
@@ -66,31 +79,37 @@ class Device:
 
     def is_defined(self, device_name: str) -> bool:
         """Checks if device is defined in the XML config"""
-        if self.cs.Cfg.CONFIG_PCI.get(device_name, None) is None:
-            return False
-        else:
-            return True
+        scope = self.cs.Cfg.get_scope(device_name)
+        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+        return self.cs.Cfg.CONFIG_PCI[vid].get(device, None) is not None
 
     def get_bus(self, device_name: str) -> List[int]:
         """Retrieves bus value(s) from PCI device"""
-        buses = self.cs.Cfg.BUS.get(device_name, [])
-        if buses:
-            if logger().DEBUG:
-                logger().log_important(f"Using discovered bus values for device '{device_name}'")
-            return buses
-        if device_name in self.cs.Cfg.CONFIG_PCI and 'bus' in self.cs.Cfg.CONFIG_PCI[device_name]:
-            (bus, dev, fun) = self.get_BDF(device_name)
-            if self.cs.pci.is_enabled(bus, dev, fun):
-                if logger().DEBUG:
-                    logger().log_important(f"Using pre-defined bus values for device '{device_name}'")
-                buses = [bus]
-            else:
-                if logger().DEBUG:
-                    logger().log_important(f"Device '{device_name}' not enabled")
+        scope = self.cs.Cfg.get_scope(device_name)
+        vid, device, _, _ = self.cs.Cfg.convert_internal_scope(scope, device_name)
+        if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
+            return self.cs.Cfg.CONFIG_PCI[vid][device].bus
         else:
-            if logger().DEBUG:
-                logger().log_important(f"No bus value defined for device '{device_name}'")
-        return buses
+            return None
+
+        # buses = self.cs.Cfg.BUS.get(device_name, [])
+        # if buses:
+        #     if logger().DEBUG:
+        #         logger().log_important(f"Using discovered bus values for device '{device_name}'")
+        #     return buses
+        # if device_name in self.cs.Cfg.CONFIG_PCI and 'bus' in self.cs.Cfg.CONFIG_PCI[device_name]:
+        #     (bus, dev, fun) = self.get_BDF(device_name)
+        #     if self.cs.pci.is_enabled(bus, dev, fun):
+        #         if logger().DEBUG:
+        #             logger().log_important(f"Using pre-defined bus values for device '{device_name}'")
+        #         buses = [bus]
+        #     else:
+        #         if logger().DEBUG:
+        #             logger().log_important(f"Device '{device_name}' not enabled")
+        # else:
+        #     if logger().DEBUG:
+        #         logger().log_important(f"No bus value defined for device '{device_name}'")
+        # return buses
 
     def switch_def(self, target_device: str, source_device: str) -> None:
         """Changes bus, device, and function values of PCI device"""

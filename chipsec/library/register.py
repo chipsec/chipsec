@@ -136,14 +136,46 @@ class Register:
 
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
+        """Checks if the register has specific field"""
         scope = self.cs.Cfg.get_scope(reg_name)
         vid, device, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
-        """Checks if the register has specific field"""
         try:
             reg_def = self.cs.Cfg.REGISTERS[vid][device][register]
         except KeyError:
             return False
         return field_name in reg_def[0].fields
+
+    def get_match(self, name):
+        vid, device, register, field = self.cs.Cfg.convert_internal_scope("", name)
+        ret = []
+        if vid is None or vid == '*':
+            vid = self.cs.Cfg.REGISTERS.keys()
+        else:
+            vid = [vid]
+        for v in vid:
+            if v in self.cs.Cfg.REGISTERS:
+                if device is None or device == '*':
+                    dev = self.cs.Cfg.REGISTERS[v].keys()
+                else:
+                    dev = [device]
+                for d in dev:
+                    if d in self.cs.Cfg.REGISTERS[v]:
+                        if register is None or register == '*':
+                            reg = self.cs.Cfg.REGISTERS[v][d].keys()
+                        else:
+                            reg = [register]
+                        for r in reg:
+                            if r in self.cs.Cfg.REGISTERS[v][d]:
+                                if field is None or field == '*':
+                                    fld = self.cs.Cfg.REGISTERS[v][d][r][0].fields.keys()
+                                else:
+                                    if field in self.cs.CfgREGISTERS[v][d][r][0].fields:
+                                        fld = [field]
+                                    else:
+                                        fld = []
+                                for f in fld:
+                                    ret.append(f'{v}.{d}.{r}.{f}')
+        return ret
 
     # def has_all_fields(self, reg_name: str, field_list: List[str]) -> bool:
     #     """Checks if the register as all fields specified in list"""

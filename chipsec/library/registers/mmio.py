@@ -36,3 +36,26 @@ class MMIO(BaseRegister):
             if bar in self.cs.Cfg.MMIO_BARS[vid][device]:
                 ret = self.cs.Cfg.MMIO_BARS[vid][device][bar]
         return ret
+    
+    def get_match(self, name: str):
+        vid, device, inbar, _ = self.cs.Cfg.convert_internal_scope("", name)
+        ret = []
+        if vid is None or vid == '*':
+            vid = self.cs.Cfg.REGISTERS.keys()
+        else:
+            vid = [vid]
+        for v in vid:
+            if v in self.cs.Cfg.MMIO_BARS:
+                if device is None or device == '*':
+                    dev = self.cs.Cfg.MMIO_BARS[v].keys()
+                else:
+                    dev = [device]
+                for d in dev:
+                    if d in self.cs.Cfg.MMIO_BARS[v]:
+                        if inbar is None or inbar == '*':
+                            bar = self.cs.Cfg.MMIO_BARS[v][d]
+                        else:
+                            bar = [inbar]
+                        for b in bar:
+                            if b in self.cs.Cfg.MMIO_BARS[v][d]:
+                                ret.append(f'{v}.{d}.{b}')
