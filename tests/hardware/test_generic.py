@@ -21,8 +21,8 @@ import unittest
 try:
     from distro import os_release_info
     os_info = os_release_info()
-    mSystem = (os_info['name'], os_info['version_id'], os_info['release_codename'])
-except:
+    mSystem = (os_info['name'], os_info['version_id'], os_info['codename'])
+except Exception:
     if platform.system() == "Windows":
         # Windows does not have a "distribution"
         mSystem = None
