@@ -19,8 +19,9 @@
 #
 
 import string
+from collections.abc import Iterable
 from time import strftime
-from typing import AnyStr, Iterable
+from typing import AnyStr
 
 
 def get_datetime_str() -> str:

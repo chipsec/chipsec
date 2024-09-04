@@ -27,8 +27,8 @@
 
 
 import mmap
+from collections.abc import Callable
 from ctypes import CDLL, CFUNCTYPE, addressof, c_uint16, c_uint32, c_void_p, get_errno
-from typing import Callable
 
 from chipsec.library.exceptions import OsHelperError
 

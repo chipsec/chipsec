@@ -37,8 +37,9 @@ import struct
 import random
 import json
 import string
+from collections.abc import Callable
 from uuid import UUID
-from typing import Dict, List, Optional, Union, Any, Callable, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.hal.uefi_fv import EFI_MODULE
 from chipsec.library.logger import logger

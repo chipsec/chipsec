@@ -25,9 +25,9 @@ HAL component providing access to and decoding of ACPI tables
 __version__ = '0.1'
 
 import struct
-from typing import Dict, List, Tuple, Optional, Callable, Union, TYPE_CHECKING
-from collections import defaultdict
-from collections import namedtuple
+from collections import defaultdict, namedtuple
+from collections.abc import Callable
+from typing import Dict, List, Tuple, Optional, Union, TYPE_CHECKING
 
 from chipsec.library.defines import bytestostring
 from chipsec.library.exceptions import UnimplementedAPIError
