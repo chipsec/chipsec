@@ -24,7 +24,8 @@ Banner functions
 
 import platform
 import sys
-from typing import Sequence, Tuple
+from typing import Tuple, Sequence
+
 from chipsec.chipset import Chipset
 from chipsec.library.logger import logger
 

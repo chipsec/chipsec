@@ -34,8 +34,7 @@ import platform
 import time
 import traceback
 from collections import OrderedDict
-
-from typing import Dict, Sequence, Any, Optional
+from typing import Dict, Any, Optional, Sequence
 
 import chipsec.library.file
 import chipsec.module

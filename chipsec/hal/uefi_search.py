@@ -33,8 +33,9 @@ usage:
 """
 
 import re
+from collections.abc import Callable
+from typing import Dict, Optional, Any
 from uuid import UUID
-from typing import Dict, Callable, Optional, Any
 
 from chipsec.library import defines
 from chipsec.hal.spi_uefi import EFI_SECTION

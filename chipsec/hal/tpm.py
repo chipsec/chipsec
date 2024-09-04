@@ -27,7 +27,8 @@ https://trustedcomputinggroup.org
 
 import struct
 from collections import namedtuple
-from typing import Dict, Tuple, Callable
+from collections.abc import Callable
+from typing import Dict, Tuple
 
 from chipsec.library.logger import print_buffer_bytes
 from chipsec.hal import hal_base

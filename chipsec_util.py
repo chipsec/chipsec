@@ -29,8 +29,8 @@ import importlib
 import os
 import sys
 from time import time
+from typing import Optional, Dict, Any, Sequence
 
-from typing import Sequence, Optional, Dict, Any
 from chipsec.helper.oshelper import helper
 from chipsec.library.logger import logger, level
 from chipsec.library.banner import print_banner, print_banner_properties

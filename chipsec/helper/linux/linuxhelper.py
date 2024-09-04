@@ -31,10 +31,12 @@ import platform
 import struct
 import subprocess
 import sys
-from typing import Dict, List, Optional, Tuple, Iterable, TYPE_CHECKING
+from collections.abc import Iterable
+from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from chipsec.library.types import EfiVariableType
     from ctypes import Array
+
 from chipsec.library import defines
 from chipsec.helper.oshelper import get_tools_path
 from chipsec.library.exceptions import OsHelperError, UnimplementedAPIError

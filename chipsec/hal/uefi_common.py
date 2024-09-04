@@ -27,8 +27,9 @@ import os
 import struct
 import codecs
 from collections import namedtuple
+from collections.abc import Callable
+from typing import Dict, List, Tuple, Optional, Any
 from uuid import UUID
-from typing import Dict, List, Tuple, Optional, Any, Callable
 
 from chipsec.library.file import read_file, write_file
 from chipsec.library.logger import logger, dump_buffer, dump_buffer_bytes

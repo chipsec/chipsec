@@ -28,8 +28,9 @@
 
 import mmap
 import platform
+from collections.abc import Callable, Generator
 from ctypes import CFUNCTYPE, POINTER, Structure, addressof, c_uint32, c_void_p, sizeof
-from typing import Callable, Generator, Tuple
+from typing import Tuple
 from chipsec.library.logger import logger
 
 # Posix x86_64:
