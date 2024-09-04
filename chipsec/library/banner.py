@@ -26,6 +26,7 @@ import platform
 import sys
 from typing import Sequence, Tuple
 from chipsec.chipset import Chipset
+from chipsec.library.gil import gil_status
 from chipsec.library.logger import logger
 
 
@@ -61,7 +62,7 @@ def chipsec_banner_properties(cs: Chipset, os_version: Tuple[str, str, str, str]
 
     banner_prop = f'''
 [CHIPSEC] OS      : {system} {release} {version} {machine}
-[CHIPSEC] Python  : {python_version} ({python_arch})
+[CHIPSEC] Python  : {python_version} ({python_arch}) - {gil_status()} GIL
 [CHIPSEC] Helper  : {helper_name} {driver_path}
 [CHIPSEC] Platform: {cs.Cfg.longname}
 [CHIPSEC]    CPUID: {cs.Cfg.cpuid:05X}
