@@ -248,6 +248,7 @@ class MMIO(hal_base.HALBase):
             is_ba_invalid = base == 0 or is_all_ones(base, size)
 
         if 'fixed_address' in bar and (base == reg_mask or base == 0):
+            is_ba_invalid = False
             base = bar['fixed_address']
             self.logger.log_hal(f'[mmio] Using fixed address for {bar_name}: 0x{base:016X}')
         if 'mask' in bar:
