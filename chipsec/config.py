@@ -73,7 +73,7 @@ class Cfg:
         self.did = 0xFFFF
         self.rid = 0xFF
         self.code = CHIPSET_CODE_UNKNOWN
-        self.longname = "Unrecognized Platform"
+        self.longname = 'Unrecognized Platform'
         self.pch_vid = 0xFFFF
         self.pch_did = 0xFFFF
         self.pch_rid = 0xFF
@@ -85,7 +85,7 @@ class Cfg:
     # Private functions
     ###
     def _make_hex_key_str(self, int_val):
-        str_val = '{:04X}'.format(int_val)
+        str_val = f'{int_val:04X}'
         return str_val
 
     ###
@@ -124,23 +124,23 @@ class Cfg:
         return self.req_pch
 
     def print_platform_info(self):
-        self.logger.log(f"Platform: {self.longname}")
+        self.logger.log(f'Platform: {self.longname}')
         self.logger.log(f'\tCPUID: {self.cpuid:X}')
-        self.logger.log(f"\tVID: {self.vid:04X}")
-        self.logger.log(f"\tDID: {self.did:04X}")
-        self.logger.log(f"\tRID: {self.rid:02X}")
-        
+        self.logger.log(f'\tVID: {self.vid:04X}')
+        self.logger.log(f'\tDID: {self.did:04X}')
+        self.logger.log(f'\tRID: {self.rid:02X}')
+
     def print_pch_info(self):
-        self.logger.log(f"Platform: {self.pch_longname}")
-        self.logger.log(f"\tVID: {self.pch_vid:04X}")
-        self.logger.log(f"\tDID: {self.pch_did:04X}")
-        self.logger.log(f"\tRID: {self.pch_rid:02X}")
+        self.logger.log(f'Platform: {self.pch_longname}')
+        self.logger.log(f'\tVID: {self.pch_vid:04X}')
+        self.logger.log(f'\tDID: {self.pch_did:04X}')
+        self.logger.log(f'\tRID: {self.pch_rid:02X}')
 
     def print_supported_chipsets(self):
-        fmtStr = " {:4} | {:4} | {:14} | {:6} | {:40}"
-        self.logger.log("\nSupported platforms:\n")
-        self.logger.log(fmtStr.format("VID", "DID", "Name", "Code", "Long Name"))
-        self.logger.log("-" * 85)
+        fmtStr = ' {:4} | {:4} | {:14} | {:6} | {:40}'
+        self.logger.log('\nSupported platforms:\n')
+        self.logger.log(fmtStr.format('VID', 'DID', 'Name', 'Code', 'Long Name'))
+        self.logger.log('-' * 85)
         for _vid in sorted(self.proc_dictionary):
             for _did in sorted(self.proc_dictionary[_vid]):
                 for item in self.proc_dictionary[_vid][_did]:
@@ -193,28 +193,75 @@ class Cfg:
                 sku['detect'] = data.detect_vals
                 dest[data.vid_str][did_str].append(sku)
 
-    def _find_sku_data(self, dict_ref, code, detect_val=None):
-        possible_sku = []
-        for vid_str in dict_ref:
-            for did_str in dict_ref[vid_str]:
-                for sku in dict_ref[vid_str][did_str]:
-                    if code and sku['code'] != code.upper():
-                        continue
-                    if not code:
-                        if vid_str not in self.CONFIG_PCI_RAW:
-                            continue
-                        if did_str not in self.CONFIG_PCI_RAW[vid_str]:
-                            continue
-                        if sku['detect'] and detect_val and detect_val not in sku['detect']:
-                            possible_sku.append(sku)
-                            continue
-                    return sku
-        if possible_sku:
-            if len(possible_sku) > 1:
-                logger().log_warning("Multiple SKUs found for detection value")
-            return possible_sku.pop()
+    def _find_possible_skus_from_detection_value(self, dict_ref, detect_val):
+        possible_skus = {}
+        if detect_val:
+            for vid in self.vid_set:
+                for did in dict_ref[vid]:
+                    for sku in dict_ref[vid][did]:
+                        if 'detect' in sku:
+                            if detect_val in sku['detect']:
+                                if vid not in possible_skus:
+                                    possible_skus[vid] = {}
+                                if did not in possible_skus[vid]:
+                                    possible_skus[vid][did] = []
+                                possible_skus[vid][did].append(sku)
+        else:
+            possible_skus = dict_ref
+        return possible_skus
+
+    def _find_sku_from_code(self, dict_ref, code):
+        if code:
+            for vid in self.vid_set:
+                for did in dict_ref[vid]:
+                    for sku in dict_ref[vid][did]:
+                        if code.upper() == sku['code']:
+                            return sku
         return None
-    
+
+    def _find_sku_from_pci_raw(self, dict_ref):
+        for vid in self.vid_set:
+            try:
+                did_set = set(dict_ref[vid].keys()).intersection(set(self.CONFIG_PCI_RAW[vid].keys()))
+            except KeyError:
+                did_set = []
+            for did in did_set:
+                for sku in dict_ref[vid][did]:
+                    return sku
+        return None
+
+    def create_unknown_sku(self):
+        dev000 = self.get_dev_from_bdf_000()
+        return {'did': [dev000['did']], 'name': 'Unknown', 'code': 'UNKN', 'longname': 'Unknown Platform', 'vid': dev000['vid'], 'req_pch': None, 'detect': []}
+
+    def _find_sku_data(self, dict_ref, code, detect_val=None):
+        try:
+            self.vid_set = set(dict_ref.keys()).intersection(set(self.CONFIG_PCI_RAW.keys()))
+        except KeyError:
+            return self.create_unknown_sku()
+
+        possible_skus = self._find_possible_skus_from_detection_value(dict_ref, detect_val)
+        sku = self._find_sku_from_code(dict_ref, code)
+        if sku:
+            return sku
+
+        sku = self._find_sku_from_pci_raw(possible_skus)
+        if sku:
+            return sku
+
+        # Find SKU based on DID only
+        sku = self._find_sku_from_pci_raw(dict_ref)
+        if sku:
+            return sku
+
+        if possible_skus and detect_val:
+            if len(possible_skus) > 1:
+                self.logger.log_warning('Multiple SKUs found for detection value, using first in the list')
+            sku = possible_skus.popitem()[1].popitem()[1].pop()
+            sku['longname'] = f"{sku['code']} Generic"
+            return sku
+        return None
+
     def _find_did(self, sku):
         vid_str = self._make_hex_key_str(sku['vid'])
         if 'did' in sku and sku['did'] is int:
@@ -224,6 +271,7 @@ class Cfg:
                 did_str = self._make_hex_key_str(did)
                 if did_str in self.CONFIG_PCI_RAW[vid_str]:
                     return did
+        self.logger.log_warning('Enumerated Platform PCI DID not found in XML Configs. System info may not be 100% accurate.')
         return 0xFFFF
 
     def _get_config_iter(self, fxml):
@@ -237,15 +285,13 @@ class Cfg:
         if not load_list or not tag_handlers:
             return
         for fxml in load_list:
-            self.logger.log_debug('[*] Loading {} config data: [{}] - {}'.format(stage_str,
-                                                                                 fxml.dev_name,
-                                                                                 fxml.xml_file))
+            self.logger.log_debug(f'[*] Loading {stage_str} config data: [{fxml.dev_name}] - {fxml.xml_file}')
             if not os.path.isfile(fxml.xml_file):
-                self.logger.log_debug('[-] File not found: {}'.format(fxml.xml_file))
+                self.logger.log_debug(f'[-] File not found: {fxml.xml_file}')
                 continue
             for config_root in self._get_config_iter(fxml):
                 for tag in tag_handlers:
-                    self.logger.log_debug('[*] Loading {} data...'.format(tag))
+                    self.logger.log_debug(f'[*] Loading {tag} data...')
                     for node in config_root.iter(tag):
                         tag_handlers[tag](node, fxml)
 
@@ -255,25 +301,25 @@ class Cfg:
     def load_parsers(self):
         parser_path = os.path.join(get_main_dir(), 'chipsec', 'cfg', 'parsers')
         if not os.path.isdir(parser_path):
-            raise CSConfigError('Unable to locate configuration parsers: {}'.format(parser_path))
+            raise CSConfigError(f'Unable to locate configuration parsers: {parser_path}')
         parser_files = [f for f in sorted(os.listdir(parser_path))
                         if fnmatch(f, '*.py') and not fnmatch(f, '__init__.py')]
         for parser in parser_files:
             parser_name = '.'.join(['chipsec', 'cfg', 'parsers', os.path.splitext(parser)[0]])
-            self.logger.log_debug('[*] Importing parser: {}'.format(parser_name))
+            self.logger.log_debug(f'[*] Importing parser: {parser_name}')
             try:
                 module = importlib.import_module(parser_name)
             except Exception:
-                self.logger.log_debug('[*] Failed to import {}'.format(parser_name))
+                self.logger.log_debug(f'[*] Failed to import {parser_name}')
                 continue
             if not hasattr(module, 'parsers'):
-                self.logger.log_debug('[*] Missing parsers variable: {}'.format(parser))
+                self.logger.log_debug(f'[*] Missing parsers variable: {parser}')
                 continue
             for obj in module.parsers:
                 try:
                     parser_obj = obj(self)
                 except Exception:
-                    self.logger.log_debug('[*] Failed to create object: {}'.format(parser))
+                    self.logger.log_debug(f'[*] Failed to create object: {parser}')
                     continue
                 parser_obj.startup()
                 self.parsers.append(parser_obj)
@@ -287,7 +333,7 @@ class Cfg:
             self.load_extra = [config_data(None, None, os.path.join(config_path, f)) for f in sorted(os.listdir(config_path))
                                if fnmatch(f, '*.xml') and fnmatch(f, filename)]
         else:
-            raise CSConfigError('Unable to locate configuration file(s): {}'.format(config_path))
+            raise CSConfigError(f'Unable to locate configuration file(s): {config_path}')
         if loadnow and self.load_extra:
             self._load_sec_configs(self.load_extra, Stage.EXTRA)
 
@@ -306,7 +352,7 @@ class Cfg:
 
         # Process platform info data and generate lookup tables
         for fxml in cfg_files:
-            self.logger.log_debug('[*] Processing platform config information: {}'.format(fxml.xml_file))
+            self.logger.log_debug(f'[*] Processing platform config information: {fxml.xml_file}')
             for config_root in self._get_config_iter(fxml):
                 stage_data = stage_info(fxml.vid_str, config_root)
                 for tag in tag_handlers:
@@ -318,9 +364,16 @@ class Cfg:
 
         # Create platform global data
         for cc in self.proc_codes:
-            globals()["CHIPSET_CODE_{}".format(cc.upper())] = cc.upper()
+            globals()[f'CHIPSET_CODE_{cc.upper()}'] = cc.upper()
         for pc in self.pch_codes:
-            globals()["PCH_CODE_{}".format(pc[4:].upper())] = pc.upper()
+            globals()[f'PCH_CODE_{pc[4:].upper()}'] = pc.upper()
+
+    def get_dev_from_bdf_000(self):
+        for vid in self.CONFIG_PCI_RAW:
+            for did in self.CONFIG_PCI_RAW[vid]:
+                if 0 in self.CONFIG_PCI_RAW[vid][did]['bus'] and self.CONFIG_PCI_RAW[vid][did]['dev'] == 0 and self.CONFIG_PCI_RAW[vid][did]['fun'] == 0:
+                    return self.CONFIG_PCI_RAW[vid][did]
+        return {'vid': 0xFFFF, 'did': 0xFFFF, 'rid': 0xFF}
 
     def platform_detection(self, proc_code, pch_code, cpuid):
         # Detect processor files
@@ -329,13 +382,23 @@ class Cfg:
         if sku:
             self.vid = sku['vid']
             self.did = self._find_did(sku)
+            if self.did == 0xFFFF:
+                self.did = self.get_dev_from_bdf_000()['did']
             self.code = sku['code']
             if not proc_code:
                 vid_str = self._make_hex_key_str(self.vid)
                 did_str = self._make_hex_key_str(self.did)
-                self.rid = self.CONFIG_PCI_RAW[vid_str][did_str]['rid']
+                try:
+                    self.rid = self.CONFIG_PCI_RAW[vid_str][did_str]['rid']
+                except Exception:
+                    self.rid = 0xFF
             self.longname = sku['longname']
             self.req_pch = sku['req_pch']
+        else:
+            dev000 = self.get_dev_from_bdf_000()
+            self.vid = dev000['vid']
+            self.did = dev000['did']
+            self.rid = dev000['rid']
 
         # Detect PCH files
         sku = self._find_sku_data(self.pch_dictionary, pch_code)
@@ -363,10 +426,10 @@ class Cfg:
         sec_load_list = []
         tag_handlers = self._get_stage_parsers(Stage.DEVICE_CFG)
         for fxml in self.load_list:
-            self.logger.log_debug('[*] Loading primary config data: {}'.format(fxml.xml_file))
+            self.logger.log_debug(f'[*] Loading primary config data: {fxml.xml_file}')
             for config_root in self._get_config_iter(fxml):
                 for tag in tag_handlers:
-                    self.logger.log_debug('[*] Collecting {} configuration data...'.format(tag))
+                    self.logger.log_debug(f'[*] Collecting {tag} configuration data...')
                     for node in config_root.iter(tag):
                         sec_load_list.extend(tag_handlers[tag](node, fxml))
         self._load_sec_configs(sec_load_list, Stage.CORE_SUPPORT)
