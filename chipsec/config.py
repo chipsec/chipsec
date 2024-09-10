@@ -68,7 +68,7 @@ class Cfg:
         self.did = 0xFFFF
         self.rid = 0xFF
         self.code = CHIPSET_CODE_UNKNOWN
-        self.longname = "Unrecognized Platform"
+        self.longname = 'Unrecognized Platform'
         self.cpuid = 0xFFFFF
         self.pch_vid = 0xFFFF
         self.pch_did = 0xFFFF
