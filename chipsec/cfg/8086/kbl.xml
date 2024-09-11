@@ -22,20 +22,10 @@ Contact information:
 chipsec@intel.com
 -->
 
-  <!-- #################################### -->
-  <!--                                      -->
-  <!-- Information                          -->
-  <!--                                      -->
-  <!-- #################################### -->
   <info family="core" detection_value="0x806e9">
      <sku did="0x5904" name="Kabylake" code="KBL" longname="Mobile 7th Generation Core Processor (Kabylake U)" />
   </info>
 
-  <!-- #################################### -->
-  <!--                                      -->
-  <!-- Integrated devices                   -->
-  <!--                                      -->
-  <!-- #################################### -->
   <pci>
     <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" config="HOSTCTL.hostctl1.xml"/>
     <device name="HOSTCTL" bus="0x00" dev="0x00" fun="0" config="IOMMU.iommu.xml"/>
@@ -51,11 +41,6 @@ chipsec@intel.com
     <definition name="MSR" config="MSR.msr2.xml" />
   </msr>
 
-    <!-- #################################### -->
-  <!--                                      -->
-  <!-- Memory ranges                        -->
-  <!--                                      -->
-  <!-- #################################### -->
   <memory>
     <range name="TPM" access="mmio" address="0xFED40000" size="0x10000" config="TPM.tpm12.xml" />
   </memory>

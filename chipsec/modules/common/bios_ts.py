@@ -56,26 +56,18 @@ class bios_ts(BaseModule):
         return False
 
     def check_bios_iface_lock(self) -> int:
-        bild = self.cs.control.get('BiosInterfaceLockDown')
-        self.logger.log(f'[*] BiosInterfaceLockDown (BILD) control = {bild:d}')
+        bild = self.cs.control.get_list_by_name('BiosInterfaceLockDown')
+        bild.read_and_print()
 
         if self.cs.control.is_defined('TopSwapStatus'):
-            if self.cs.control.is_all_ffs('TopSwapStatus'):
-                self.logger.log('[*] BIOS Top Swap mode: cannot determine status.')
-                self.logger.log_verbose('TopSwapStatus read returned all 0xFs.')
-            else:
-                tss = self.cs.control.get('TopSwapStatus')
-                self.logger.log(f"[*] BIOS Top Swap mode is {'enabled' if (1 == tss) else 'disabled'} (TSS = {tss:d})")
+            top_swap_status = self.cs.control.get_list_by_name('TopSwapStatus')
+            top_swap_status.read_and_print()
 
         if self.cs.control.is_defined('TopSwap'):
-            if self.cs.control.is_all_ffs('TopSwap'):
-                self.logger.log('[*] RTC Top Swap control (TS): cannot determine status.')
-                self.logger.log_verbose('TopSwap read returned all 0xFs.')
-            else:
-                ts = self.cs.control.get('TopSwap')
-                self.logger.log(f'[*] RTC TopSwap control (TS) = {ts:x}')
+            top_swap = self.cs.control.get_list_by_name('TopSwap')
+            top_swap.read_and_print()
 
-        if bild == 0:
+        if bild.is_any_value(0):
             res = ModuleResult.FAILED
             self.result.setStatusBit(self.result.status.LOCKS)
             self.logger.log_failed('BIOS Interface is not locked (including Top Swap Mode)')

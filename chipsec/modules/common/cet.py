@@ -37,7 +37,7 @@ from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT7, BIT20
 from chipsec.library.exceptions import HWAccessViolationError
-from chipsec.library.register import RegList
+from chipsec.library.register import ObjList
 
 
 class cet(BaseModule):
@@ -65,7 +65,7 @@ class cet(BaseModule):
             self.get_cpuid_value()
         return self.cpuid_7_0__ecx_val & BIT20 != 0
 
-    def setting_enabled(self, msr_obj: RegList, field: str, desc: str) -> None:
+    def setting_enabled(self, msr_obj: ObjList, field: str, desc: str) -> None:
         enabled = msr_obj.is_all_field_value(1, field)
         part_enabled = msr_obj.is_any_field_value(1, field)
         if enabled:
@@ -84,7 +84,7 @@ class cet(BaseModule):
                   'SUPPRESS_DIS',
                   'SUPPRESS']
         try:
-            msr_objs = self.cs.register.get_obj(cet_msr)
+            msr_objs = self.cs.register.get_list_by_name(cet_msr)
             reg_def = self.cs.register.get_def(cet_msr)
             self.logger.log(f'{cet_msr} Settings:')
             for key in fields:
