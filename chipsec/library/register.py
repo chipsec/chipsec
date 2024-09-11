@@ -246,6 +246,12 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
     def __str__(self) -> str:
         return f'{self.name}: {self.value}'
 
+    def print(self) -> None:
+        self.logger.log(str(self))
+
+    def __str__(self) -> str:
+        return f'{self.name}: {self.value}'
+
     def set_value(self, value: int) -> None:
         self.value = value
 

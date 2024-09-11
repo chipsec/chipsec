@@ -269,7 +269,7 @@ class Chipset:
     def save_log_state(self) -> Tuple[bool, bool, bool]:
         old_log_state = (self.logger.HAL, self.logger.DEBUG, self.logger.VERBOSE)
         return old_log_state
-    
+
     def init_topology(self):
         _cpu = cpu.CPU(self)
         self.logger.log_debug('[*] Gathering CPU Topology..')
