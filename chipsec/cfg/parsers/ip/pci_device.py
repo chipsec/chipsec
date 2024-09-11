@@ -32,7 +32,7 @@ class PCIConfig(GenericConfig):
     def get_rid(self, bus, dev, fun):
         rid = 0xff
         for inst in self.instances.values():
-            if inst.bus == bus and inst.dev == dev and inst.fun == fun:
+            if bus in inst.bus and inst.dev == dev and inst.fun == fun:
                 rid = inst.rid
                 break
         return rid

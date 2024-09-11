@@ -67,7 +67,8 @@ class cpu_info(BaseModule):
         return False
 
     def run_intel(self, module_argv: List[str]) -> int:
-        signId = self.cs.register.get_obj('IA32_BIOS_SIGN_ID')
+
+        signId = self.cs.register.get_list_by_name('IA32_BIOS_SIGN_ID')
 
         # thread_count = 1
         # if not self.cs.os_helper.is_efi():

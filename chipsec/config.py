@@ -25,16 +25,16 @@ import re
 import os
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
-from chipsec.library.exceptions import CSConfigError
+from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
 from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
-from chipsec.library.register import RegList
+from chipsec.library.register import ObjList
 from chipsec.parsers import Stage
 from chipsec.parsers import stage_info, config_data
 from chipsec.cfg.parsers.ip.pci_device import PCIConfig
 
 
-scope_name = namedtuple("scope_name", ["vid", "parent", "name", "fields"])
+scope_name = namedtuple('scope_name', ['vid', 'parent', 'name', 'fields'])
 # Python 3.6 namedtuple does not accept defaults
 scope_name.__new__.__defaults__ = (None,) * 4
 
@@ -43,8 +43,8 @@ PROC_FAMILY = {}
 class Cfg:
     def __init__(self):
         self.logger = logger()
-        self.parent_keys = ["CONFIG_PCI_RAW", "CONFIG_PCI", "MEMORY_RANGES", "MM_MSGBUS", "MSGBUS", "IO", "MSR", "MMIO_BARS", "IO_BARS"]
-        self.child_keys = ["IMA_REGISTERS", "REGISTERS", "CONTROLS", "LOCKS", "LOCKEDBY"]
+        self.parent_keys = ['CONFIG_PCI_RAW', 'CONFIG_PCI', 'MEMORY_RANGES', 'MM_MSGBUS', 'MSGBUS', 'IO', 'MSR', 'MMIO_BARS', 'IO_BARS']
+        self.child_keys = ['IMA_REGISTERS', 'REGISTERS', 'CONTROLS', 'LOCKS', 'LOCKEDBY']
         for key in self.parent_keys + self.child_keys:
             setattr(self, key, {})
         self.XML_CONFIG_LOADED = False
@@ -92,7 +92,7 @@ class Cfg:
     
     def _create_vid(self, vid_str):
         key_list = self.parent_keys + self.child_keys
-        skip_keys = ["LOCKS"]
+        skip_keys = ['LOCKS']
         if vid_str not in self.CONFIG_PCI:
             for key in key_list:
                 if key in skip_keys:
@@ -177,7 +177,7 @@ class Cfg:
             if parser.get_stage() != stage:
                 continue
             if parser.parser_name() in handlers:
-                raise CSConfigError(f"Tag handlers already contain handlers for parser {parser.parser_name()}")
+                raise CSConfigError(f'Tag handlers already contain handlers for parser {parser.parser_name()}')
             handlers.update({parser.parser_name(): parser.get_metadata()})
         return handlers
 
@@ -426,7 +426,7 @@ class Cfg:
                 did_str = self._make_hex_key_str(self.did)
                 self.rid = self.CONFIG_PCI_RAW[vid_str][did_str].get_rid(0, 0, 0)
             else:
-                raise CSConfigError("There is already a CPU detected, are you adding a new config?")
+                raise CSConfigError('There is already a CPU detected, are you adding a new config?')
             self.longname = sku['longname']
             self.req_pch = sku['req_pch']
         else:
@@ -448,7 +448,7 @@ class Cfg:
                     if 0x31 == cfg_data['dev'] and 0x0 == cfg_data['fun']:
                         self.rid = cfg_data['rid']
             else:
-                raise CSConfigError("There is already a PCH detected, are you adding a new config?")
+                raise CSConfigError('There is already a PCH detected, are you adding a new config?')
             self.pch_longname = sku['longname']
 
         # Create XML file load list
@@ -512,7 +512,7 @@ class Cfg:
         return True if control_name in self.CONTROLS else False
 
     def get_control_obj(self, control_name, instance=None):
-        controls = RegList()
+        controls = ObjList()
         if control_name in self.CONTROLS.keys():
             if instance is not None and 'obj' in self.CONTROLS[control_name].keys():
                 return self.CONTROLS[control_name]['obj'][instance]
@@ -527,36 +527,36 @@ class Cfg:
         scope = self.get_scope(reg_name)
         vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
         reg_def = self.REGISTERS[vid][dev_name][register]
-        if reg_def["type"] in ["pcicfg", "mmcfg"]:
+        if reg_def['type'] in ['pcicfg', 'mmcfg']:
             dev = self.CONFIG_PCI[vid][dev_name]
             reg_def['bus'] = dev['bus']
             reg_def['dev'] = dev['dev']
             reg_def['fun'] = dev['fun']
-        elif reg_def["type"] == "memory":
+        elif reg_def['type'] == 'memory':
             dev = self.MEMORY_RANGES[vid][dev_name]
             reg_def['address'] = dev['address']
             reg_def['access'] = dev['access']
-        elif reg_def["type"] == "mm_msgbus":
+        elif reg_def['type'] == 'mm_msgbus':
             dev = self.MM_MSGBUS[vid][dev_name]
             reg_def['port'] = dev['port']
-        elif reg_def["type"] == "indirect":
+        elif reg_def['type'] == 'indirect':
             dev = self.IMA_REGISTERS[vid][dev_name]
             if ('base' in dev):
                 reg_def['base'] = dev['base']
             else:
-                reg_def['base'] = "0"
+                reg_def['base'] = '0'
             if (dev['index'] in self.REGISTERS[vid][dev_name]):
                 reg_def['index'] = dev['index']
             else:
-                logger().log_error("Index register {} not found".format(dev['index']))
+                logger().log_error(f"Index register {dev['index']} not found")
             if (dev['data'] in self.REGISTERS[vid][dev_name]):
                 reg_def['data'] = dev['data']
             else:
-                logger().log_error("Data register {} not found".format(dev['data']))
+                logger().log_error(f"Data register {dev['data']} not found")
         return reg_def
 
     def get_register_obj(self, reg_name, instance=None):
-        reg_def = RegList()
+        reg_def = ObjList()
         scope = self.get_scope(reg_name)
         vid, dev_name, register, _ = self.convert_internal_scope(scope, reg_name)
         if vid in self.REGISTERS and dev_name in self.REGISTERS[vid] and register in self.REGISTERS[vid][dev_name]:
@@ -565,7 +565,7 @@ class Cfg:
             if reg_obj.instance == instance:
                 return reg_obj
         if instance is not None:
-            return RegList()
+            return ObjList()
         else:
             return reg_def
 
@@ -585,7 +585,7 @@ class Cfg:
         scope = self.get_scope(dev_name)
         vid, device, _, _ = self.convert_internal_scope(scope, dev_name)
         if vid in self.CONFIG_PCI and device in self.CONFIG_PCI[vid]:
-            return self.CONFIG_PCI[vid][device]["bus"]
+            return self.CONFIG_PCI[vid][device]['bus']
         else:
             return None
 
@@ -613,7 +613,7 @@ class Cfg:
         except KeyError:
             device = None
         if device is None or device == {}:
-            raise DeviceNotFoundError('DeviceNotFound: {}'.format(device_name))
+            raise DeviceNotFoundError(f'DeviceNotFound: {device_name}')
         b = device['bus']
         d = device['dev']
         f = device['fun']
@@ -631,7 +631,7 @@ class Cfg:
         return (field_name in reg_def['FIELDS'])
 
     def get_REGISTERS_match(self, name):
-        vid, device, register, field = self.convert_internal_scope("", name)
+        vid, device, register, field = self.convert_internal_scope('', name)
         ret = []
         if vid is None or vid == '*':
             vid = self.REGISTERS.keys()
@@ -639,19 +639,19 @@ class Cfg:
             vid = [vid]
         for v in vid:
             if v in self.REGISTERS:
-                if device is None or device == "*":
+                if device is None or device == '*':
                     dev = self.REGISTERS[v].keys()
                 else:
                     dev = [device]
                 for d in dev:
                     if d in self.REGISTERS[v]:
-                        if register is None or register == "*":
+                        if register is None or register == '*':
                             reg = self.REGISTERS[v][d].keys()
                         else:
                             reg = [register]
                         for r in reg:
                             if r in self.REGISTERS[v][d]:
-                                if field is None or field == "*":
+                                if field is None or field == '*':
                                     fld = self.REGISTERS[v][d][r]['FIELDS'].keys()
                                 else:
                                     if field in self.REGISTERS[v][d][r]['FIELDS']:
@@ -659,11 +659,11 @@ class Cfg:
                                     else:
                                         fld = []
                                 for f in fld:
-                                    ret.append("{}.{}.{}.{}".format(v, d, r, f))
+                                    ret.append(f'{v}.{d}.{r}.{f}')
         return ret
 
     def get_MMIO_match(self, name):
-        vid, device, inbar, _ = self.convert_internal_scope("", name)
+        vid, device, inbar, _ = self.convert_internal_scope('', name)
         ret = []
         if vid is None or vid == '*':
             vid = self.REGISTERS.keys()
@@ -683,7 +683,7 @@ class Cfg:
                             bar = [inbar]
                         for b in bar:
                             if b in self.MMIO_BARS[v][d]:
-                                ret.append("{}.{}.{}".format(v, d, b))
+                                ret.append(f'{v}.{d}.{b}')
         return ret
 
     ###
@@ -696,7 +696,7 @@ class Cfg:
         return lock_name in self.LOCKS.keys()
 
     def get_locked_value(self, lock_name):
-        logger().log_debug('Retrieve value for lock {}'.format(lock_name))
+        logger().log_debug(f'Retrieve value for lock {lock_name}')
         return self.LOCKS[lock_name]['value']
 
     def get_lock_desc(self, lock_name):
@@ -706,11 +706,11 @@ class Cfg:
         if 'type' in self.LOCKS[lock_name]:
             mtype = self.LOCKS[lock_name]['type']
         else:
-            mtype = "RW/L"
+            mtype = 'RW/L'
         return mtype
 
     def get_lockedby(self, lock_name):
-        vid, _, _, _ = self.convert_internal_scope("", lock_name)
+        vid, _, _, _ = self.convert_internal_scope('', lock_name)
         if lock_name in self.LOCKEDBY[vid]:
             return self.LOCKEDBY[vid][lock_name]
         else:
