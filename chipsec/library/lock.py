@@ -27,6 +27,7 @@ class Lock:
     def __init__(self, cs):
         self.cs = cs
 
+    # TODO: Rename? Not sure what is actually stored in the LOCKS list.
     def get_obj(self, lock_name: str):
         return self.cs.Cfg.LOCKS.get(lock_name, None)
 

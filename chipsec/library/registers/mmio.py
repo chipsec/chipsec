@@ -24,6 +24,7 @@ Main functionality to get the definition of IO registers
 
 from chipsec.library.registers.baseregister import BaseRegister
 
+
 class MMIO(BaseRegister):
     def __init__(self, cs):
         super(MMIO, self).__init__(cs)
@@ -36,7 +37,7 @@ class MMIO(BaseRegister):
             if bar in self.cs.Cfg.MMIO_BARS[vid][device]:
                 ret = self.cs.Cfg.MMIO_BARS[vid][device][bar]
         return ret
-    
+
     def get_match(self, name: str):
         vid, device, inbar, _ = self.cs.Cfg.convert_internal_scope("", name)
         ret = []

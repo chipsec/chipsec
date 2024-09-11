@@ -27,8 +27,7 @@ from typing import Any, Dict, List, Optional
 from chipsec.parsers import BaseConfigHelper
 from chipsec.library.logger import logger
 from chipsec.library.bits import set_bits, get_bits, make_mask
-from chipsec.library.defines import is_all_ones
-from chipsec.library.exceptions import CSReadError, RegisterTypeNotFoundError, UninitializedRegisterError
+from chipsec.library.exceptions import UninitializedRegisterError
 from chipsec.library.registers.io import IO
 from chipsec.library.registers.iobar import IOBar
 from chipsec.library.registers.memory import Memory
@@ -74,7 +73,6 @@ class Register:
             return (self.cs.Cfg.REGISTERS[vid][device].get(register, None) is not None)
         except KeyError:
             return False
-
 
     def _get_pci_def(self, reg_def: Dict[str, Any], vid: str, dev_name: str) -> Dict[str, Any]:
         """Return Bus Dev Fun of a PCI register"""
@@ -189,7 +187,6 @@ class Register:
     #             break
     #     return ret
 
-
     # def is_msr(self, reg_name: str) -> bool:
     #     """Returns True if register is type `msr`"""
     #     if self.is_defined(reg_name):
@@ -218,9 +215,6 @@ class Register:
     #     reg_def = self.get_def(reg_name)
     #     size = reg_def['FIELDS'][field_name]['size']
     #     return is_all_ones(value, size, 1)
-
-
-
 
 
 class BaseConfigRegisterHelper(BaseConfigHelper):
@@ -358,12 +352,12 @@ class ObjList(list):
         for inst in self:
             logger().log(inst)
 
-    def is_all_value(self, value: int, mask:Optional[int]=None) -> bool:
+    def is_all_value(self, value: int, mask: Optional[int] = None) -> bool:
         if mask is None:
             return all(inst.value == value for inst in self)
         return all((inst.value & mask) == value for inst in self)
 
-    def is_any_value(self, value:int , mask:Optional[int]=None) -> bool:
+    def is_any_value(self, value: int, mask: Optional[int] = None) -> bool:
         if mask is None:
             return any(inst.value == value for inst in self)
         return any((inst.value & mask) == value for inst in self)
@@ -373,7 +367,7 @@ class ObjList(list):
 
     def is_any_field_value(self, value: int, field: str) -> bool:
         return any(inst.get_field(field) == value for inst in self)
-    
+
 
 class RegData(object):
     def __init__(self, value, instance):
