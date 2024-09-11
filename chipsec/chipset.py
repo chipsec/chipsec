@@ -104,11 +104,12 @@ class Chipset:
         return _cpuid.get_proc_info()
 
     @classmethod
-    def basic_init_with_helper(cls, helper = None):
+    def basic_init_with_helper(cls, helper=None):
         _cs = cls()
         _cs.load_helper(helper)
         _cs.start_helper()
         return _cs
+
     def init(self, platform_code, req_pch_code, helper_name=None, start_helper=True, load_config=True, ignore_platform=False):
         self.using_return_codes = False
         self.consistency_checking = False
@@ -134,10 +135,10 @@ class Chipset:
             self.cpuid = self.get_cpuid()
         else:
             self.load_helper(NoneHelper())
-        
+
         self.Cfg.load_parsers()
         self.Cfg.load_platform_info()
-        
+
         if load_config:
             self.init_cfg_bus()
             self.init_topology()
@@ -197,7 +198,6 @@ class Chipset:
             if hasattr(msg, 'errorcode'):
                 error_no = msg.errorcode
             raise OsHelperError(f'Message: "{msg}"', error_no)
-
 
     def switch_helper(self, helper_name):
         oldName = self.helper.name
@@ -269,7 +269,7 @@ class Chipset:
     def save_log_state(self) -> Tuple[bool, bool, bool]:
         old_log_state = (self.logger.HAL, self.logger.DEBUG, self.logger.VERBOSE)
         return old_log_state
-    
+
     def init_topology(self):
         _cpu = cpu.CPU(self)
         self.logger.log_debug('[*] Gathering CPU Topology..')
