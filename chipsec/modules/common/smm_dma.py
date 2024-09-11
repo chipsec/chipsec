@@ -68,6 +68,9 @@ class smm_dma(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "MSR_BIOS_DONE": "8086.MSR.MSR_BIOS_DONE",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.is_atom():
@@ -83,13 +86,19 @@ class smm_dma(BaseModule):
             return True
 
     def check_tseg_locks(self) -> int:
-        tseg_base_lock = self.cs.control.get('TSEGBaseLock')
-        tseg_limit_lock = self.cs.control.get('TSEGLimitLock')
-        ia_untrusted = 0
+        tseg_base_lock = self.cs.control.get_list_by_name('TSEGBaseLock')
+        tseg_base_lock.read()
+        base_lock = tseg_base_lock.is_all_value(1)
+        tseg_limit_lock = self.cs.control.get_list_by_name('TSEGLimitLock')
+        tseg_limit_lock.read()
+        limit_lock = tseg_limit_lock.is_all_value(1)
+        ia_untrusted = False
         if self.cs.register.has_field('MSR_BIOS_DONE', 'IA_UNTRUSTED'):
-            ia_untrusted = self.cs.register.read_field('MSR_BIOS_DONE', 'IA_UNTRUSTED')
+            bios_done = self.cs.register.get_list_by_name('MSR_BIOS_DONE')
+            bios_done.read()
+            ia_untrusted = bios_done.is_all_field_value(1, 'IA_UNTRUSTED')
 
-        if (tseg_base_lock and tseg_limit_lock) or (0 != ia_untrusted):
+        if (base_lock and limit_lock) or (ia_untrusted):
             self.logger.log_good("TSEG range is locked")
             return ModuleResult.PASSED
         else:

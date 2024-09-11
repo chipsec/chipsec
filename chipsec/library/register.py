@@ -121,19 +121,22 @@ class Register:
         return def_type_map[reg_def["type"]](reg_def, vid, dev_name)
 
     # rework any call to this function
-    def get_obj(self, reg_name: str, instance=None):
-        reg_def = RegList()
+    def get_list_by_name(self, reg_name: str) -> 'ObjList':
+        reg_def = ObjList()
         scope = self.cs.Cfg.get_scope(reg_name)
         vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
         if vid in self.cs.Cfg.REGISTERS and dev_name in self.cs.Cfg.REGISTERS[vid] and register in self.cs.Cfg.REGISTERS[vid][dev_name]:
             reg_def.extend(self.cs.Cfg.REGISTERS[vid][dev_name][register])
-        if instance is None:
-            return reg_def
-        for reg_obj in reg_def:
-            if reg_obj.instance == instance:
-                return reg_obj
-        return RegList()
+        return reg_def
 
+    def get_instance_by_name(self, reg_name: str, instance: Any):
+        scope = self.cs.Cfg.get_scope(reg_name)
+        vid, dev_name, register, _ = self.cs.Cfg.convert_internal_scope(scope, reg_name)
+        if vid in self.cs.Cfg.REGISTERS and dev_name in self.cs.Cfg.REGISTERS[vid] and register in self.cs.Cfg.REGISTERS[vid][dev_name]:
+            for reg_obj in self.cs.Cfg.REGISTERS[vid][dev_name][register]:
+                if reg_obj.instance == instance:
+                    return reg_obj
+        return None
 
     def has_field(self, reg_name: str, field_name: str) -> bool:
         """Checks if the register has specific field"""
@@ -145,7 +148,7 @@ class Register:
             return False
         return field_name in reg_def[0].fields
 
-    def get_match(self, name):
+    def get_match(self, name: str):
         vid, device, register, field = self.cs.Cfg.convert_internal_scope("", name)
         ret = []
         if vid is None or vid == '*':
@@ -233,18 +236,24 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
             self.default = None
         self.fields = cfg_obj['FIELDS']
 
-    def read(self):
+    def read(self) -> int:
         """Read the object"""
         raise NotImplementedError()
 
-    def write(self, value):
+    def write(self, value: int):
         """Write the object"""
         raise NotImplementedError()
+    
+    def print(self) -> None:
+        self.logger.log(str(self))
+    
+    def __str__(self) -> str:
+        return f'{self.name}: {self.value}'
 
-    def set_value(self, value):
+    def set_value(self, value: int) -> None:
         self.value = value
 
-    def set_field(self, field_name: str, field_value: int) -> None:
+    def set_field(self, field_name: str, field_value: int) -> int:
         field_attrs = self.fields[field_name]
         bit = field_attrs['bit']
         size = field_attrs['size']
@@ -259,10 +268,10 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         field_size = field_attrs['size']
         return get_bits(self.value, field_bit, field_size, preserve_field_position)
 
-    def has_field(self, field_name):
+    def has_field(self, field_name: str) -> bool:
         return self.fields.get(field_name, None) is not None
 
-    def get_mask(self):
+    def get_mask(self) -> int:
         mask = make_mask(self.size * 8)
         return mask
 
@@ -275,7 +284,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         mask = make_mask(size, mask_start)
         return mask
 
-    def write_field(self, field_name, field_value, update_value=False):
+    def write_field(self, field_name: str, field_value: int, update_value: bool = False) -> None:
         if update_value:
             self.read()
         if self.value is None:
@@ -287,7 +296,7 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         self.read()
         return self.get_field(field_name, preserve_field_position)
 
-    def _register_fields_str(self, verbose=False) -> str:
+    def _register_fields_str(self, verbose: bool = False) -> str:
         reg_fields_str = ''
         if self.fields:
             reg_fields_str += '\n'
@@ -312,48 +321,57 @@ class BaseConfigRegisterHelper(BaseConfigHelper):
         return reg_fields_str
 
 
-
-
-class RegList(list):
-    def __init__(self, iterable=[]):
+class ObjList(list):
+    def __init__(self, iterable: list = []):
         super().__init__(iterable)
 
-    def read(self):
+    def read(self) -> List[int]:
+        ret = []
         for inst in self:
-            inst.read()
+            ret.append(inst.read())
+        return ret
+    
+    def read_and_print(self):
+        self.read()
+        self.print()
+    
+    def read_and_verbose_print(self):
+        self.read()
+        if logger().VERBOSE:
+            self.print()
 
-    def read_field(self, field):
+    def read_field(self, field: str) -> List[int]:
         ret = []
         for inst in self:
             ret.append(inst.read_field(field))
         return ret
 
-    def write(self, value):
+    def write(self, value: int) -> None:
         for inst in self:
             inst.write(value)
 
-    def write_field(self, field, value):
+    def write_field(self, field: str, value: int) -> None:
         for inst in self:
             inst.write_field(field, value)
 
-    def print(self):
+    def print(self) -> None:
         for inst in self:
             logger().log(inst)
 
-    def is_all_value(self, value, mask=None):
+    def is_all_value(self, value: int, mask:Optional[int]=None) -> bool:
         if mask is None:
             return all(inst.value == value for inst in self)
         return all((inst.value & mask) == value for inst in self)
 
-    def is_any_value(self, value, mask=None):
+    def is_any_value(self, value:int , mask:Optional[int]=None) -> bool:
         if mask is None:
             return any(inst.value == value for inst in self)
         return any((inst.value & mask) == value for inst in self)
 
-    def is_all_field_value(self, value, field):
+    def is_all_field_value(self, value: int, field: str) -> bool:
         return all(inst.get_field(field) == value for inst in self)
 
-    def is_any_field_value(self, value, field):
+    def is_any_field_value(self, value: int, field: str) -> bool:
         return any(inst.get_field(field) == value for inst in self)
     
 

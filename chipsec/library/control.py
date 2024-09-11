@@ -19,7 +19,8 @@
 #
 
 from chipsec.library.logger import logger
-from chipsec.library.register import RegList
+from chipsec.library.register import ObjList
+from typing import Any
 
 
 class Control:
@@ -27,17 +28,19 @@ class Control:
     def __init__(self, cs) -> None:
         self.cs = cs
 
-    def get_obj(self, control_name:str, instance=None):
+    def get_list_by_name(self, control_name:str):
         """Gets list of control objects (by name)"""
-        controls = RegList()
+        controls = ObjList()
         if control_name in self.cs.Cfg.CONTROLS.keys():
             controls.extend(self.cs.Cfg.CONTROLS[control_name])
-            if instance is not None:
-                for ctrl in controls:
-                    if instance == ctrl.instance:
-                        return ctrl
-                return None
         return controls
+    
+    def get_instance_by_name(self, control_name: str, instance: Any):
+        if control_name in self.cs.Cfg.CONTROLS.keys():
+            for ctrl in self.cs.Cfg.CONTROLS[control_name]:
+                if instance == ctrl.instance:
+                    return ctrl
+        return None
 
     def get_def(self, control_name:str):
         """Gets control definition (by name)"""

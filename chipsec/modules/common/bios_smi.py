@@ -66,8 +66,9 @@ class bios_smi(BaseModule):
 
     def check_SMI_locks(self) -> int:
 
-        smm_bwp = self.cs.control.get('SmmBiosWriteProtection')
-        if 0 == smm_bwp:
+        smm_bwp = self.cs.control.get_list_by_name('SmmBiosWriteProtection')
+        smm_bwp.read_and_verbose_print()
+        if smm_bwp.is_any_value(0):
             self.logger.log_bad('SMM BIOS region write protection has not been enabled (SMM_BWP is not used)\n')
         else:
             self.logger.log_good('SMM BIOS region write protection is enabled (SMM_BWP is used)\n')
@@ -77,18 +78,18 @@ class bios_smi(BaseModule):
 
         if self.cs.control.is_defined('TCOSMIEnable') and self.cs.control.is_defined('GlobalSMIEnable'):
             self.logger.log('[*] Checking SMI enables..')
-            tco_en = self.cs.control.get('TCOSMIEnable')
-            gbl_smi_en = self.cs.control.get('GlobalSMIEnable')
-            self.logger.log(f'    Global SMI enable: {gbl_smi_en:d}')
-            self.logger.log(f'    TCO SMI enable   : {tco_en:d}')
+            tco_en = self.cs.control.get_list_by_name('TCOSMIEnable')
+            tco_en.read_and_print()
+            gbl_smi_en = self.cs.control.get_list_by_name('GlobalSMIEnable')
+            gbl_smi_en.read_and_print()
 
-            if gbl_smi_en != 1:
+            if not gbl_smi_en.is_all_value(1):
                 ok = False
                 self.logger.log_bad('Global SMI is not enabled')
-            elif (tco_en != 1) and (smm_bwp != 1):
+            elif not (tco_en.is_all_value(1) and smm_bwp.is_all_value(1)):
                 warn = True
                 self.logger.log_warning('TCO SMI is not enabled. BIOS may not be using it')
-            elif (tco_en != 1) and (smm_bwp == 1):
+            elif not tco_en.is_all_value(1) and smm_bwp.is_all_value(1):
                 ok = False
                 self.logger.log_bad('TCO SMI should be enabled if using SMM BIOS region protection')
             else:
@@ -96,15 +97,17 @@ class bios_smi(BaseModule):
             self.logger.log('')
             self.logger.log('[*] Checking SMI configuration locks..')
 
-        tco_lock = self.cs.control.get('TCOSMILock')
-        if tco_lock != 1:
-            ok = False
-            self.logger.log_bad('TCO SMI event configuration is not locked. TCO SMI events can be disabled')
-        else:
-            self.logger.log_good('TCO SMI configuration is locked (TCO SMI Lock)')
+        if self.cs.control.is_defined('TCOSMILock'):
+            tco_lock = self.cs.control.get_list_by_name('TCOSMILock')
+            if not tco_lock.is_all_value(1):
+                ok = False
+                self.logger.log_bad('TCO SMI event configuration is not locked. TCO SMI events can be disabled')
+            else:
+                self.logger.log_good('TCO SMI configuration is locked (TCO SMI Lock)')
 
-        smi_lock = self.cs.control.get('SMILock')
-        if smi_lock != 1:
+        smi_lock = self.cs.control.get_list_by_name('SMILock')
+        smi_lock.read_and_verbose_print()
+        if not smi_lock.is_all_value(1):
             ok = False
             self.logger.log_bad('SMI events global configuration is not locked. SMI events can be disabled')
         else:

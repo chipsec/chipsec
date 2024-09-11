@@ -63,7 +63,7 @@ class cpu_info(BaseModule):
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('Current Processor Information:')
 
-        signId = self.cs.register.get_obj('IA32_BIOS_SIGN_ID')
+        signId = self.cs.register.get_list_by_name('IA32_BIOS_SIGN_ID')
 
         # thread_count = 1
         # if not self.cs.os_helper.is_efi():

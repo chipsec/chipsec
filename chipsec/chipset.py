@@ -116,7 +116,8 @@ class Chipset:
         self.register = Register(self)
         self.control = Control(self)
         self.device = Device(self)
-        
+        raise_unknown_platform = False
+        msg = []
         self.load_config = load_config
         _unknown_proc = True
         _unknown_pch = True
@@ -145,10 +146,10 @@ class Chipset:
                 if self.Cfg.is_pch_req() is False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
                     _unknown_pch = False
                 if _unknown_proc:
-                    msg = f'Unknown Platform: VID = 0x{self.Cfg.vid:04X}, DID = 0x{self.Cfg.did:04X}, RID = 0x{self.Cfg.rid:02X}, CPUID = 0x{self.cpuid:X}'
+                    msg.append(f'Unknown Platform: VID = 0x{self.Cfg.vid:04X}, DID = 0x{self.Cfg.did:04X}, RID = 0x{self.Cfg.rid:02X}, CPUID = 0x{self.cpuid:X}')
                     if start_helper:
-                        self.logger.log_error(msg)
-                        raise UnknownChipsetError(msg)
+                        self.logger.log_error(msg[-1])
+                        raise_unknown_platform = True
                     else:
                         self.logger.log(f'[!]       {msg}; Using Default.')
             if not _unknown_proc:  # Don't initialize config if platform is unknown
@@ -157,17 +158,19 @@ class Chipset:
                 if self.logger.DEBUG:
                     self.logger.log("[*] Discovering Bus Configuration:")
             if _unknown_pch:
-                msg = f'Unknown PCH: VID = 0x{self.Cfg.pch_vid:04X}, DID = 0x{self.Cfg.pch_did:04X}, RID = 0x{self.Cfg.pch_rid:02X}'
+                msg.append(f'Unknown PCH: VID = 0x{self.Cfg.pch_vid:04X}, DID = 0x{self.Cfg.pch_did:04X}, RID = 0x{self.Cfg.pch_rid:02X}')
                 if self.Cfg.is_pch_req() and start_helper:
-                    self.logger.log_error(f'Chipset requires a supported PCH to be loaded. {msg}')
-                    raise UnknownChipsetError(msg)
+                    self.logger.log_error(f'Chipset requires a supported PCH to be loaded. {msg[-1]}')
+                    raise_unknown_platform = True
                 else:
-                    self.logger.log(f'[!]       {msg}; Using Default.')
+                    self.logger.log(f'[!]       {msg[-1]}; Using Default.')
         if start_helper and ((self.logger.VERBOSE) or (load_config and (_unknown_pch or _unknown_proc))):
             pci.print_pci_devices(self.pci.enumerate_devices())
         if _unknown_pch or _unknown_proc:
-            msg = 'Results from this system may be incorrect.'
-            self.logger.log(f'[!]            {msg}')
+            msg.append('Results from this system may be incorrect.')
+            self.logger.log(f'[!]            {msg[-1]}')
+        if raise_unknown_platform:
+            raise UnknownChipsetError('\n'.join(msg))
 
     def load_helper(self, helper_name):
         if helper_name:
@@ -297,7 +300,8 @@ class Chipset:
 
 _chipset = None
 
-def cs():
+
+def cs() -> Chipset:
     global _chipset
 
     if _chipset is None:
