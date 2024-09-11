@@ -19,7 +19,7 @@
 #
 
 
-from chipsec.library.logger import logger
+# from chipsec.library.logger import logger
 from typing import List, Optional, Tuple, Union
 from chipsec.library.exceptions import CSFirstNotFoundError, CSBusNotFoundError, DeviceNotFoundError
 
@@ -90,7 +90,7 @@ class Device:
         if vid in self.cs.Cfg.CONFIG_PCI and device in self.cs.Cfg.CONFIG_PCI[vid]:
             return self.cs.Cfg.CONFIG_PCI[vid][device].bus
         else:
-            return None
+            return []
 
         # buses = self.cs.Cfg.BUS.get(device_name, [])
         # if buses:

@@ -28,7 +28,7 @@ class Control:
     def __init__(self, cs) -> None:
         self.cs = cs
 
-    def get_list_by_name(self, control_name:str):
+    def get_list_by_name(self, control_name: str):
         """Gets list of control objects (by name)"""
         controls = ObjList()
         if control_name in self.cs.Cfg.CONTROLS.keys():
@@ -42,7 +42,14 @@ class Control:
                     return ctrl
         return None
 
-    def get_def(self, control_name:str):
+    def get_instance_by_name(self, control_name: str, instance: Any):
+        if control_name in self.cs.Cfg.CONTROLS.keys():
+            for ctrl in self.cs.Cfg.CONTROLS[control_name]:
+                if instance == ctrl.instance:
+                    return ctrl
+        return None
+
+    def get_def(self, control_name: str):
         """Gets control definition (by name)"""
         return self.cs.Cfg.CONTROLS[control_name]
 
