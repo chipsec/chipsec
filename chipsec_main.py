@@ -60,6 +60,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options = Options()
 
     default_helper = options.get_section_data('Main_Config', 'default_helper', None)
+    default_exclude = options.get_list_data('Main_Config', 'exclude_modules', [])
 
     """Parse the arguments provided on the command line."""
     parser = argparse.ArgumentParser(usage='%(prog)s [options]', formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -67,7 +68,7 @@ def parse_args(argv: Sequence[str]) -> Optional[Dict[str, Any]]:
     options = parser.add_argument_group('Options')
     options.add_argument('-h', '--help', help="Show this message and exit", action='store_true')
     options.add_argument('-m', '--module', dest='_module', help='Specify module to run (example: -m common.bios_wp)')
-    options.add_argument('-mx', '--module_exclude', dest='_module_exclude', nargs='+', help='Specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)')
+    options.add_argument('-mx', '--module_exclude', dest='_module_exclude', nargs='+', default=default_exclude, help='Specify module(s) to NOT run (example: -mx common.bios_wp common.cpu.cpu_info)')
     options.add_argument('-a', '--module_args', nargs='*', dest="_module_argv", help="Additional module arguments")
     options.add_argument('-v', '--verbose', help='Verbose logging', action='store_true')
     options.add_argument('--hal', help='HAL logging', action='store_true')

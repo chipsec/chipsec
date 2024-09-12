@@ -20,7 +20,7 @@
 
 import os
 import configparser
-from typing import Any
+from typing import Any, List
 from chipsec.library.file import get_main_dir
 from chipsec.library.exceptions import CSConfigError
 
@@ -40,7 +40,7 @@ class Options(object):
         with open(options_name) as options_file:
             self.config.read_file(options_file)
 
-    def get_section_data(self, section, key, default: Any = NoDefault) -> str:
+    def get_section_data(self, section: str, key: str, default: Any = NoDefault) -> str:
         try:
             ret_data = self.config.get(section, key)
         except Exception as e:
@@ -48,3 +48,8 @@ class Options(object):
                 raise e
             return default
         return ret_data
+
+    def get_list_data(self, list_section: str, list_key: str, list_default: Any, list_separator: str = ',') -> List[Any]:
+        raw_data = self.get_section_data(list_section, list_key, '').split(list_separator)
+        data = [item.strip() for item in raw_data]
+        return data if data[0] else list_default
