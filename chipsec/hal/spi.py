@@ -602,8 +602,13 @@ class SPI(hal_base.HALBase):
         if not cycle_done:
             self.logger.log_error("SPI cycle not ready")
             return b''
-
+        percentage_base = 50
+        percentage = n // percentage_base
+        if self.logger.UTIL_TRACE and not self.logger.HAL:
+            self.logger.log(f'_{"_" * percentage_base}|')
         for i in range(n):
+            if self.logger.UTIL_TRACE and not self.logger.HAL and ((i % percentage) == 0):
+                self.logger.log_inline('-')
             self.logger.log_hal(f'[spi] Reading chunk {i:d} of 0x{dbc:x} bytes from 0x{spi_fla + i * dbc:x}')
             if not self._send_spi_cycle(HSFCTL_READ_CYCLE, dbc - 1, spi_fla + i * dbc):
                 self.logger.log_error("SPI flash read failed")
@@ -613,6 +618,8 @@ class SPI(hal_base.HALBase):
                     if self.logger.HAL:
                         self.logger.log(f'[spi] FDATA00 + 0x{fdata_idx * 4:x}: 0x{dword_value:x}')
                     buf += struct.pack("I", dword_value)
+        if self.logger.UTIL_TRACE:
+                self.logger.log('\nSPI read complete')
 
         if (0 != r):
             self.logger.log_hal(f'[spi] Reading remaining 0x{r:x} bytes from 0x{spi_fla + n * dbc:x}')
@@ -634,7 +641,7 @@ class SPI(hal_base.HALBase):
         if self.logger.HAL:
             print_buffer_bytes(buf)
 
-        return buf
+        return bytes(buf)
 
     def write_spi(self, spi_fla: int, buf: bytes) -> bool:
 

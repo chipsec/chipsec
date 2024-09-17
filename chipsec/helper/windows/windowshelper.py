@@ -779,12 +779,11 @@ class WindowsHelper(Helper):
                 logger().log_warning('NtEnumerateSystemEnvironmentValuesEx was not successful')
                 logger().log_debug(f'NTSTATUS = 0x{status:08X}, LastError = 0x{lasterror:X}')
                 logger().log_warning('Looks like your version of Windows has restricted access to UEFI variables.\n\tTo use UEFI variable functions, chipsec needs to run in an older version of windows or in a different environment (Linux)')
-                return None
             else:
                 if logger().DEBUG:
                     logger().log_error(f'NtEnumerateSystemEnvironmentValuesEx failed (GetLastError = 0x{lasterror:X})')
                     logger().log_error(f'*** NTSTATUS: {status:08X}')
-                raise WinError()
+            return None
         logger().log_debug(f'[helper] len(efi_vars) = 0x{len(efi_vars):X} (should be 0x20000)')
         return getEFIvariables_NtEnumerateSystemEnvironmentValuesEx2(bytes(efi_vars))
 

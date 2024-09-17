@@ -24,6 +24,7 @@ The uefi command provides access to UEFI variables, both on the live system and 
 
 >>> chipsec_util uefi types
 >>> chipsec_util uefi var-list
+>>> chipsec_util uefi var-list-spi [rom_file]
 >>> chipsec_util uefi var-find <name>|<GUID>
 >>> chipsec_util uefi var-read|var-write|var-delete <name> <GUID> <efi_variable_file>
 >>> chipsec_util uefi decode <rom_file> [filetypes]
@@ -38,6 +39,7 @@ Examples:
 
 >>> chipsec_util uefi types
 >>> chipsec_util uefi var-list
+>>> chipsec_util uefi var-list-spi
 >>> chipsec_util uefi var-find PK
 >>> chipsec_util uefi var-read db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
 >>> chipsec_util uefi var-write db D719B2CB-3D3A-4596-A3BC-DAD00E67656F db.bin
@@ -74,6 +76,8 @@ class UEFICommand(BaseCommand):
     def requirements(self) -> toLoad:
         if 'decode' in self.argv:
             return toLoad.Nil
+        elif 'var-list-spi' in self.argv:
+            return toLoad.All
         return toLoad.Driver
 
     def parse_arguments(self) -> None:
@@ -103,6 +107,11 @@ class UEFICommand(BaseCommand):
         # var-list command args
         parser_var_list = subparsers.add_parser('var-list')
         parser_var_list.set_defaults(func=self.var_list)
+
+        # var-list-spi command args
+        parser_var_read = subparsers.add_parser('var-list-spi')
+        parser_var_read.add_argument('filename', type=str, nargs='?', default=None, help='Binary file of dumped rom if you have it')
+        parser_var_read.set_defaults(func=self.var_list_spi)
 
         # var-find command args
         parser_var_find = subparsers.add_parser('var-find')
@@ -212,6 +221,22 @@ class UEFICommand(BaseCommand):
     def var_list(self):
         self.logger.log("[CHIPSEC] Enumerating all EFI variables via OS specific EFI Variable API..")
         efi_vars = self._uefi.list_EFI_variables()
+        if efi_vars is None:
+            self.logger.log_important("[CHIPSEC] Could not enumerate EFI Variables. You can try using the `var-list-spi` subcommand. Exit..")
+            return
+        self.logger.log("[CHIPSEC] Decoding EFI Variables..")
+        _orig_logname = self.logger.LOG_FILE_NAME
+        self.logger.set_log_file('efi_variables.lst', False)
+        nvram_pth = 'efi_variables.dir'
+        if not os.path.exists(nvram_pth):
+            os.makedirs(nvram_pth)
+        decode_EFI_variables(efi_vars, nvram_pth)
+        self.logger.set_log_file(_orig_logname)
+        self.logger.log("[CHIPSEC] Variables are in efi_variables.lst log and efi_variables.dir directory")
+
+    def var_list_spi(self):
+        self.logger.log("[CHIPSEC] Enumerating all EFI variables via OS specific EFI Variable API..")
+        efi_vars = self._uefi.list_EFI_variables_spi(self.filename)
         if efi_vars is None:
             self.logger.log("[CHIPSEC] Could not enumerate EFI Variables (Legacy OS?). Exit..")
             return
