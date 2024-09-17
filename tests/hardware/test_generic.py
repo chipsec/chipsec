@@ -19,15 +19,14 @@ import platform
 import tempfile
 import unittest
 try:
-    from distro import os_release_info
-    os_info = os_release_info()
-    mSystem = (os_info['name'], os_info['version_id'], os_info['codename'])
+    from distro import codename, version, name
+    mSystem = (name(), version(), codename())
 except Exception:
-    if platform.system() == "Windows":
+    if hasattr(platform, 'linux_distribution'):
+        mSystem = platform.linux_distribution()
+    else:
         # Windows does not have a "distribution"
         mSystem = None
-    else:
-        mSystem = distro.linux_distribution()
 
 
 import chipsec_main
