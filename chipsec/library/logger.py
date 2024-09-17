@@ -238,6 +238,13 @@ class Logger:
     def set_terminators(self, term: str) -> None:
         for clhandler in self.chipsecLogger.handlers:
             clhandler.terminator = term
+    
+    def log_inline(self, msg: str) -> None:
+        """Logs a plain message without a newline charater at the end"""
+        orig_term = self.get_terminators().pop()
+        self.set_terminators('')
+        self.log(msg)
+        self.set_terminators(orig_term)
 
     def log_csv(self, file_name, test_cases):
         fields = ['name', 'result', 'code', 'output']

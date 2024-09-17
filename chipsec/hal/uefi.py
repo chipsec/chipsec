@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from chipsec.hal.uefi_common import S3BOOTSCRIPT_ENTRY, EFI_SYSTEM_TABLE
     from chipsec.hal.uefi_platform import EfiVariableType, EfiTableType
 from chipsec.hal import hal_base, uefi_platform
+from chipsec.hal.spi import SPI, BIOS
 from chipsec.hal.uefi_common import EFI_VENDOR_TABLE, EFI_VENDOR_TABLE_SIZE, EFI_VENDOR_TABLE_FORMAT, EFI_TABLE_HEADER_SIZE, EFI_TABLE_HEADER, EFI_TABLES, MAX_EFI_TABLE_SIZE
 from chipsec.hal.uefi_common import S3BootScriptOpcode, S3_BOOTSCRIPT_VARIABLES, parse_efivar_file, EFI_REVISIONS, AUTH_SIG_VAR, ESAL_SIG_VAR
 from chipsec.hal.uefi_common import EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS, EFI_VARIABLE_APPEND_WRITE, EFI_VARIABLE_NON_VOLATILE
@@ -288,7 +289,6 @@ def find_EFI_variable_store(rom_buffer: Optional[bytes], _FWType: Optional[str])
     offset = 0
     size = len(rom_buffer)
     nvram_header = None
-
     if _FWType is None:
         logger().log_hal(f'[uefi] find_EFI_variable_store(): _FWType is None. Bypassing find_EFI_variable_store().')
         return b''
@@ -349,24 +349,33 @@ class UEFI(hal_base.HALBase):
     # EFI NVRAM Parsing Functions
     ######################################################################
 
-    def dump_EFI_variables_from_SPI(self) -> bytes:
-        return self.read_EFI_variables_from_SPI(0, 0x800000)
+    def init_spi_hal(self) -> None:
+        if not hasattr(self, 'spi'):
+            self.spi = SPI(self.cs)
 
-    def read_EFI_variables_from_SPI(self, BIOS_region_base: int, BIOS_region_size: int) -> bytes:
-        rom = self.cs.spi.read_spi(BIOS_region_base, BIOS_region_size)
-        efi_var_store = find_EFI_variable_store(rom, self._FWType)
+    def dump_EFI_variables_from_SPI(self) -> bytes:
+        self.init_spi_hal()
+        (_, limit, _) = self.spi.get_SPI_region(BIOS)
+        spi_size = limit + 1
+        self.logger.log_hal(f'[uefi] Reading from SPI: 0x0-0x{spi_size:X}')
+        return self.read_EFI_variables_from_SPI(0, spi_size)
+
+    def read_EFI_variables_from_rom(self, rom: bytes) -> bytes:
+        self.logger.log_hal('[uefi] Looking for variables in SPI dump')
+        efi_var_store = find_EFI_variable_store(rom, 'nvar')
         if efi_var_store:
-            efi_vars = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables']
+            efi_vars = uefi_platform.EFI_VAR_DICT['nvar']['func_getefivariables'](efi_var_store)
             return efi_vars
         return efi_var_store
+
+    def read_EFI_variables_from_SPI(self, BIOS_region_base: int, BIOS_region_size: int) -> bytes:
+        self.init_spi_hal()
+        rom = self.spi.read_spi(BIOS_region_base, BIOS_region_size)
+        return self.read_EFI_variables_from_rom(rom)
 
     def read_EFI_variables_from_file(self, filename: str) -> bytes:
         rom = read_file(filename)
-        efi_var_store = find_EFI_variable_store(rom, self._FWType)
-        if efi_var_store:
-            efi_vars = uefi_platform.EFI_VAR_DICT[self._FWType]['func_getefivariables']
-            return efi_vars
-        return efi_var_store
+        return self.read_EFI_variables_from_rom(rom)
 
     # @TODO: Do not use, will be removed
 
@@ -472,7 +481,15 @@ class UEFI(hal_base.HALBase):
     ######################################################################
 
     def list_EFI_variables(self) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
-        return self.helper.list_EFI_variables()
+        varlist = self.helper.list_EFI_variables()
+        return varlist
+    
+    def list_EFI_variables_spi(self, filename: str = None) -> Optional[Dict[str, List[Tuple[int, bytes, int, bytes, str, int]]]]:
+        if filename:
+            varlist = self.read_EFI_variables_from_file(filename)
+        else:
+            varlist = self.dump_EFI_variables_from_SPI()
+        return varlist
 
     def get_EFI_variable(self, name: str, guid: str, filename: Optional[str] = None) -> Optional[bytes]:
         var = self.helper.get_EFI_variable(name, guid)
