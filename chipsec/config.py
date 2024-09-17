@@ -222,7 +222,7 @@ class Cfg:
         else:
             for did in sku['did']:
                 did_str = self._make_hex_key_str(did)
-                if did_str in self.CONFIG_PCI_RAW[vid_str]:
+                if vid_str in self.CONFIG_PCI_RAW and did_str in self.CONFIG_PCI_RAW[vid_str]:
                     return did
         return 0xFFFF
 
