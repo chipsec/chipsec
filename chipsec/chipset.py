@@ -120,7 +120,7 @@ class Chipset:
         # platform detection
 
         # get cpuid only if driver using driver (otherwise it will cause problems)
-        self.cpuid = None
+        self.cpuid = 0
         if start_helper:
             self.load_helper(helper_name)
             self.start_helper()
@@ -133,7 +133,7 @@ class Chipset:
             if not ignore_platform:
                 self.Cfg.platform_detection(platform_code, req_pch_code, self.cpuid)
                 _unknown_proc = not bool(self.Cfg.get_chipset_code())
-                if self.Cfg.is_pch_req() == False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
+                if self.Cfg.is_pch_req() is False or self.Cfg.get_pch_code() != CHIPSET_CODE_UNKNOWN:
                     _unknown_pch = False
                 if _unknown_proc:
                     msg = f'Unknown Platform: VID = 0x{self.Cfg.vid:04X}, DID = 0x{self.Cfg.did:04X}, RID = 0x{self.Cfg.rid:02X}, CPUID = 0x{self.cpuid:X}'

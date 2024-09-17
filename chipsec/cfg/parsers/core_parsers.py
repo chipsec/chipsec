@@ -135,20 +135,21 @@ class CoreConfig(BaseConfigParser):
         if 'did' in dev_attr:
             for did in dev_attr['did']:
                 did_str = self.cfg._make_hex_key_str(did)
-                if did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
+                if vid_str in self.cfg.CONFIG_PCI_RAW and did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
                     pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
                     self._add_dev(vid_str, dev_name, pci_data, dev_attr)
                     device_added = True
                     break
         else:
-            for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
-                pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
-                
-                if dev_attr['bus'] in pci_data['bus'] and dev_attr['dev'] == pci_data['dev'] and \
-                   dev_attr['fun'] == pci_data['fun']:
-                    self._add_dev(vid_str, dev_name, pci_data, dev_attr)
-                    device_added = True
-                    break
+            if vid_str in self.cfg.CONFIG_PCI_RAW:
+                for did_str in self.cfg.CONFIG_PCI_RAW[vid_str]:
+                    pci_data = self.cfg.CONFIG_PCI_RAW[vid_str][did_str]
+
+                    if dev_attr['bus'] in pci_data['bus'] and dev_attr['dev'] == pci_data['dev'] and \
+                    dev_attr['fun'] == pci_data['fun']:
+                        self._add_dev(vid_str, dev_name, pci_data, dev_attr)
+                        device_added = True
+                        break
         if not device_added:
             self._add_dev(vid_str, dev_name, None, dev_attr)
 
