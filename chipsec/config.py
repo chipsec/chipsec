@@ -26,6 +26,8 @@ import os
 import xml.etree.ElementTree as ET
 from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError, DeviceNotFoundError
+from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
+from chipsec.library.exceptions import CSConfigError
 from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
 from chipsec.library.register import ObjList
