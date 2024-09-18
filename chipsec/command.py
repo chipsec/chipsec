@@ -21,6 +21,7 @@ from enum import Enum
 import traceback
 
 from chipsec.library.logger import logger
+from chipsec.library.defines import CHIPSET_CODE_UNKNOWN
 from chipsec.testcase import ExitCode
 
 class BaseCommand:
@@ -39,6 +40,12 @@ class BaseCommand:
             self.logger.log_error('Please run with the debug option for further details')
             if logger().DEBUG:
                 traceback.print_exc()
+
+    def prerun(self) -> bool:
+        if self.requirements().load_config() and self.cs.Cfg.code == CHIPSET_CODE_UNKNOWN:
+            self.logger.log_error('This module requires a configuration to be loaded. Please use the "-p XXX" flag to specify a platform configuration to load.')
+            return False
+        return True
 
     def set_up(self) -> None:
         pass

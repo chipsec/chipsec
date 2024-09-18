@@ -187,7 +187,8 @@ class ChipsecUtil:
             return
         
         t = time()
-        comm.run()
+        if comm.prerun():
+            comm.run()
         self.logger.log(f"[CHIPSEC] Time elapsed {time()-t:.3f}")
         
         comm.tear_down()
