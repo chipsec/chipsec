@@ -119,6 +119,10 @@ MASK_16b = 0xFFFF
 MASK_32b = 0xFFFFFFFF
 MASK_64b = 0xFFFFFFFFFFFFFFFF
 
+CHIPSET_CODE_UNKNOWN = ''
+PCH_CODE_PREFIX = 'PCH_'
+CHIPSET_ID_UNKNOWN = 0
+
 
 def bit(bit_num: int) -> int:
     return int(1 << bit_num)

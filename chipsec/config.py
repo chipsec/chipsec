@@ -22,7 +22,7 @@ from fnmatch import fnmatch
 import importlib
 import os
 import xml.etree.ElementTree as ET
-from chipsec.library.defines import is_hex
+from chipsec.library.defines import is_hex, CHIPSET_CODE_UNKNOWN
 from chipsec.library.exceptions import CSConfigError
 from chipsec.library.file import get_main_dir
 from chipsec.library.logger import logger
@@ -31,14 +31,7 @@ from chipsec.parsers import stage_info, config_data
 
 LOAD_COMMON = True
 
-CHIPSET_ID_UNKNOWN = 0
-
-CHIPSET_CODE_UNKNOWN = ''
-
 PROC_FAMILY = {}
-
-PCH_CODE_PREFIX = 'PCH_'
-
 
 class Cfg:
     def __init__(self):
