@@ -29,9 +29,10 @@ usage:
 """
 
 from struct import unpack, pack
-from typing import Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
 from chipsec.hal.hal_base import HALBase
 from chipsec.library.logger import print_buffer_bytes
+from chipsec.library.bits import make_mask
 
 
 class Memory(HALBase):
@@ -163,10 +164,16 @@ class Memory(HALBase):
 
     def get_max_memory_mask(self):
         size = self.get_max_memory_bit_size()
-        return self.get_bit_mask(size)
+        return make_mask(size)
 
-    def get_bit_mask(self, size):
-        return (1 << size) - 1
 
     def get_value_from_bit_def(self, inputValue, fieldStartBit, fieldSize):
         return (inputValue >> fieldStartBit) & self.get_bit_mask(fieldSize)
+    
+    def get_def(self, range_name: str) -> Dict[str, Any]:
+        '''Return address access of a MEM register'''
+        scope = self.cs.Cfg.get_scope(range_name)
+        vid, range, _, _ = self.cs.Cfg.convert_internal_scope(scope, range_name)
+        if vid in self.cs.Cfg.MEMORY_RANGES and range in self.cs.Cfg.MEMORY_RANGES[vid]:
+            return self.cs.Cfg.MEMORY_RANGES[vid][range]
+        return None

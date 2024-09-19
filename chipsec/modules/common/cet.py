@@ -37,6 +37,7 @@ from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
 from chipsec.library.defines import BIT7, BIT20
 from chipsec.library.exceptions import HWAccessViolationError
+from chipsec.library.register import RegList
 
 
 class cet(BaseModule):
@@ -64,9 +65,9 @@ class cet(BaseModule):
             self.get_cpuid_value()
         return self.cpuid_7_0__ecx_val & BIT20 != 0
 
-    def setting_enabled(self, msr_val, field, mask, desc) -> None:
-        enabled = all((i & mask) != 0 for i in msr_val)
-        part_enabled = any((i & mask) != 0 for i in msr_val)
+    def setting_enabled(self, msr_obj: RegList, field: str, desc: str) -> None:
+        enabled = msr_obj.is_all_field_value(1, field)
+        part_enabled = msr_obj.is_any_field_value(1, field)
         if enabled:
             self.logger.log(f'  {field}: {desc} is ENABLED')
         elif part_enabled:
@@ -83,13 +84,12 @@ class cet(BaseModule):
                   'SUPPRESS_DIS',
                   'SUPPRESS']
         try:
-            msr_vals = self.cs.register.read_all(cet_msr)
-            reg = self.cs.register.get_def(cet_msr)
+            msr_objs = self.cs.register.get_obj(cet_msr)
+            reg_def = self.cs.register.get_def(cet_msr)
             self.logger.log(f'{cet_msr} Settings:')
             for key in fields:
-                mask = self.cs.register.get_field_mask(cet_msr, key, True)
-                desc = reg['FIELDS'][key]['desc']
-                self.setting_enabled(msr_vals, key, mask, desc)
+                desc = reg_def['FIELDS'][key]['desc']
+                self.setting_enabled(msr_objs, key, desc)
         except HWAccessViolationError:
             self.logger.log(f'Unable to read {cet_msr}')
 

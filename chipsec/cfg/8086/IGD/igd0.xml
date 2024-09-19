@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<configuration>
+
+  <mmio>
+    <bar name="GTTMMADR" register="GTTMMADR" base_field="MBA" size="0x1000000" desc="Graphics Translation Table Range"/>
+  </mmio>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- Configuration registers              -->
+  <!--                                      -->
+  <!-- #################################### -->
+  <registers>
+    <register name="DID" type="pcicfg" device="IGD" offset="2" size="2" desc="Device Identification Number" />
+
+    <register name="GTTMMADR" type="pcicfg" offset="0x10" size="8" desc="Graphics Translation Table Memory Mapped Range Address">
+        <field name="MBA" bit="24" size="40" desc="Memory Base Address (MBA_0)" />
+        <field name="ADM" bit="4" size="20" desc="Address Mask (ADM)" />
+        <field name="PREFMEM" bit="3" size="1" desc="Prefetchable Memory (PREFMEM)" />
+        <field name="MEMTYP" bit="1" size="2" desc="Memory Type (MEMTYP)" />
+        <field name="MIOS" bit="0" size="1" desc="Memory I/O Space (MIOS)" />
+    </register>
+  </registers>
+
+</configuration>

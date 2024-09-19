@@ -19,12 +19,29 @@
 #
 
 from chipsec.library.logger import logger
+from chipsec.library.register import RegList
 
 
 class Control:
 
     def __init__(self, cs) -> None:
         self.cs = cs
+
+    def get_obj(self, control_name:str, instance=None):
+        """Gets list of control objects (by name)"""
+        controls = RegList()
+        if control_name in self.cs.Cfg.CONTROLS.keys():
+            controls.extend(self.cs.Cfg.CONTROLS[control_name])
+            if instance is not None:
+                for ctrl in controls:
+                    if instance == ctrl.instance:
+                        return ctrl
+                return None
+        return controls
+
+    def get_def(self, control_name:str):
+        """Gets control definition (by name)"""
+        return self.cs.Cfg.CONTROLS[control_name]
 
     def get(self, control_name: str, cpu_thread: int = 0, with_print: bool = False) -> int:
         """Reads some control field (by name)"""
@@ -45,10 +62,7 @@ class Control:
 
     def is_defined(self, control_name: str) -> bool:
         """Returns True if control_name Control is defined."""
-        try:
-            return (self.cs.Cfg.CONTROLS[control_name] is not None)
-        except KeyError:
-            return False
+        return True if control_name in self.cs.Cfg.CONTROLS else False
 
     def is_all_ffs(self, control_name: str, cpu_thread: int = 0, field_only: bool = False) -> bool:
         """Returns True if control_name Control value is all 0xFFs (all 1's)"""

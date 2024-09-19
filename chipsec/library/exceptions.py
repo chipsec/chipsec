@@ -24,6 +24,12 @@
 # ================================================
 
 
+
+# Register
+class UninitializedRegisterError (RuntimeError):
+    pass
+
+# Chipset
 class UnknownChipsetError(RuntimeError):
     pass
 

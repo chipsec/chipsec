@@ -27,6 +27,9 @@ class Lock:
     def __init__(self, cs):
         self.cs = cs
 
+    def get_obj(self, lock_name: str):
+        return self.cs.Cfg.LOCKS.get(lock_name, None)
+
     def get(self, lock_name: str, cpu_thread: int = 0, with_print: bool = False, bus: Optional[int] = None) -> Union[int, List[int]]:
         """Retrieves information for the lock associated with the register/field by lock_name."""
         lock = self.cs.Cfg.LOCKS[lock_name]
@@ -96,7 +99,8 @@ class Lock:
 
     def get_lockedby(self, lock_name: str) -> Optional[List[Set[str]]]:
         """Retrieve a list of registers locked by lock_name."""
-        if lock_name in self.cs.Cfg.LOCKEDBY.keys():
-            return self.cs.Cfg.LOCKEDBY[lock_name]
+        vid, _, _, _ = self.cs.Cfg.convert_internal_scope("", lock_name)
+        if lock_name in self.cs.Cfg.LOCKEDBY[vid]:
+            return self.cs.Cfg.LOCKEDBY[vid][lock_name]
         else:
             return None

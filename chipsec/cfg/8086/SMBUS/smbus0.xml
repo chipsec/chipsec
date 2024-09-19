@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<configuration>
+
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Memory Mapped I/O spaces (MMIO BARs) -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <mmio>
+    </mmio>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- I/O spaces (I/O BARs)                -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <io>
+        <bar name="SMBUS_BASE" register="SMB_BASE" base_field="Base" size="0x20" desc="SMBus Base Address"/>
+    </io>
+
+    <!-- #################################### -->
+    <!--                                      -->
+    <!-- Configuration registers              -->
+    <!--                                      -->
+    <!-- #################################### -->
+    <registers>
+        <register name="SMBUS_VID"  type="pcicfg" offset="0x00" size="2" desc="VID" />
+        <register name="SMBUS_DID"  type="pcicfg" offset="0x02" size="2" desc="DID" />
+        <register name="SMBUS_CMD"  type="pcicfg" offset="0x04" size="2" desc="CMD" />
+        <register name="SMB_BASE"   type="pcicfg" offset="0x20" size="4" desc="SMBus Base Address">
+            <field  name="Base"      bit="5" size="11"   desc="Base Address"/>
+        </register>
+        <register name="SMBUS_HCFG" type="pcicfg" offset="0x40" size="1" desc="Host Configuration">
+            <field name="HST_EN"     bit="0" size="1"/>
+            <field name="SMB_SMI_EN" bit="1" size="1"/>
+            <field name="I2C_EN"     bit="2" size="2"/>
+            <field name="SSRESET"    bit="3" size="1"/>
+            <field name="SPD_WD"     bit="4" size="1"/>
+        </register>
+
+        <!-- SMBUS BASE -->
+        <register name="SMBUS_HST_STS" type="iobar" bar="SMBUS_BASE" offset="0x00" size="1" desc="SMBus Host Status">
+            <field name="BUSY"         bit="0" size="1" desc="SMBus Busy" />
+            <field name="INTR"         bit="1" size="1" desc="Interrupt" />
+            <field name="DEV_ERR"      bit="2" size="1" desc="Device Error" />
+            <field name="BUS_ERR"      bit="3" size="1" desc="Bus Error" />
+            <field name="FAILED"       bit="4" size="1" desc="SMBus Error/Failed" />
+            <field name="SMBALERT_STS" bit="5" size="1" desc="SMBALERT# Signal Status" />
+            <field name="INUSE_STS"    bit="6" size="1" desc="InUse Semaphore Status" />
+            <field name="DS"           bit="7" size="1" desc="Done Status" />
+        </register>
+        <register name="SMBUS_HST_CNT" type="iobar" bar="SMBUS_BASE" offset="0x02" size="1" desc="SMBus Host Control">
+            <field name="INTREN"       bit="0" size="1" desc="Interrupt Enable" />
+            <field name="KILL"         bit="1" size="1" desc="Kill" />
+            <field name="SMB_CMD"      bit="2" size="3" desc="Command" />
+            <field name="LAST_BYTE"    bit="5" size="1" desc="Last Byte (for Block Read commands)" />
+            <field name="START"        bit="6" size="1" desc="Start/Trigger" />
+            <field name="PEC_EN"       bit="7" size="1" desc="Packet Error Checking Enable" />
+        </register>
+        <register name="SMBUS_HST_CMD" type="iobar" bar="SMBUS_BASE" offset="0x03" size="1" desc="SMBus Host Command">
+            <field name="DataOffset"   bit="0" size="8" desc="Command Data" />
+        </register>
+        <register name="SMBUS_HST_SLVA" type="iobar" bar="SMBUS_BASE" offset="0x04" size="1" desc="SMBus Host Slave Address">
+            <field name="RW"           bit="0" size="1" desc="Read/Write Command" />
+            <field name="Address"      bit="1" size="7" desc="Slave Address" />
+        </register>
+        <register name="SMBUS_HST_D0" type="iobar" bar="SMBUS_BASE" offset="0x05" size="1" desc="SMBus Host Data 0">
+            <field name="Data"         bit="0" size="8" desc="Data0/Count" />
+        </register>
+        <register name="SMBUS_HST_D1" type="iobar" bar="SMBUS_BASE" offset="0x06" size="1" desc="SMBus Host Data 1">
+            <field name="Data"         bit="0" size="8" desc="Data1" />
+        </register>
+
+    </registers>
+
+  <!-- #################################### -->
+  <!--                                      -->
+  <!-- 'Controls'                           -->
+  <!--                                      -->
+  <!-- #################################### -->
+    <controls>
+    </controls>
+
+</configuration>
