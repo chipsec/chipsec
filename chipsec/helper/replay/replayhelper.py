@@ -73,7 +73,10 @@ class ReplayHelper(Helper):
         try:
             evaledobject = eval(element)
         except Exception:
-            return None
+            try:
+                evaledobject = stringtobytes(element)
+            except Exception:
+                return None
         return evaledobject
 
     def _get_element(self, cmd: str, args: Tuple) -> Optional[Any]:
