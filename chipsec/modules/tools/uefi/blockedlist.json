@@ -2,11 +2,10 @@
   "HT_UEFI_Rootkit": {
     "description": "HackingTeam UEFI Rootkit (https://www.mcafee.com/enterprise/en-us/threat-center/advanced-threat-research/uefi-rootkit.html)",
     "match": {
-      "rkloader"      : { "guid": "F50258A9-2F4D-4DA9-861E-BDA84D07A44C" },
-      "rkloader_name" : { "name": "rkloader" },
-      "Ntfs"          : { "guid": "F50248A9-2F4D-4DE9-86AE-BDA84D07A41C" },
-      "app"           : { "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0B" }
-    }
+        "rkloader"      : { "name": "rkloader", "guid": "F50258A9-2F4D-4DA9-861E-BDA84D07A44C" },
+        "Ntfs"          : { "guid": "F50248A9-2F4D-4DE9-86AE-BDA84D07A41C" },
+        "app"           : { "guid": "EAEA9AEC-C9C1-46E2-9D52-432AD25A9B0B" }
+      }
   },
 
   "MR_UEFI_Rootkit": {
