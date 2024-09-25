@@ -177,6 +177,8 @@ SPI_MASTER_NAMES: Dict[int, str] = {
     MASTER_EC: 'EC'
 }
 
+DEFAULT_PROGRESS_MAX = 50
+
 # @TODO: DEPRECATED
 
 
@@ -602,12 +604,12 @@ class SPI(hal_base.HALBase):
         if not cycle_done:
             self.logger.log_error("SPI cycle not ready")
             return b''
-        percentage_base = 50
-        percentage = n // percentage_base
+        progress_max = DEFAULT_PROGRESS_MAX if n > DEFAULT_PROGRESS_MAX or n <= 0 else n
+        progress_tick = n // progress_max
         if self.logger.UTIL_TRACE and not self.logger.HAL:
-            self.logger.log(f'_{"_" * percentage_base}|')
+            self.logger.log(f'_{"_" * progress_max}|')
         for i in range(n):
-            if self.logger.UTIL_TRACE and not self.logger.HAL and ((i % percentage) == 0):
+            if self.logger.UTIL_TRACE and not self.logger.HAL and ((i % progress_tick) == 0):
                 self.logger.log_inline('-')
             self.logger.log_hal(f'[spi] Reading chunk {i:d} of 0x{dbc:x} bytes from 0x{spi_fla + i * dbc:x}')
             if not self._send_spi_cycle(HSFCTL_READ_CYCLE, dbc - 1, spi_fla + i * dbc):
