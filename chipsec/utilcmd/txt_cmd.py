@@ -63,6 +63,8 @@ class TXTCommand(BaseCommand):
 
     def _log_register(self, reg_name):
         """Log the content of a register with lines starting with [CHIPSEC]"""
+        if not self.cs.register.is_defined(reg_name):
+            return
         reg_def = self.cs.register.get_def(reg_name)
         value = self.cs.register.read(reg_name)
         desc = reg_def["desc"]
