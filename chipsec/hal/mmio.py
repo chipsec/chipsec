@@ -269,6 +269,7 @@ class MMIO(hal_base.HALBase):
             limit += ((0x1 << int(bar['align_bits'])) - 1)
             limit += start
             size = limit - base
+            is_ba_invalid = base == 0 or is_all_ones(base, size)
         else:
             size = bar['size'] if ('size' in bar) else DEFAULT_MMIO_BAR_SIZE
 
