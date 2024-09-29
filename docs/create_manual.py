@@ -40,7 +40,8 @@ https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
 """
 
 import os
-from collections.abc import Sequence
+#from collections.abc import Sequence
+from typing import Sequence
 import shutil
 import sys
 
