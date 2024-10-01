@@ -307,19 +307,33 @@ def FvChecksum16(buffer: bytes) -> int:
     return ((0x10000 - FvSum16(buffer)) & 0xffff)
 
 
-def ValidateFwVolumeHeader(ZeroVector: str, FsGuid: UUID, FvLength: int, HeaderLength: int, ExtHeaderOffset: int, Reserved: int, size: int, Calcsum: int, Checksum: int) -> bool:
-    fv_rsvd = (Reserved == 0)
-    fv_len = (FvLength <= size)
+def ValidateFwVolumeHeader(FsGuid: UUID, FvLength: int, HeaderLength: int, ExtHeaderOffset: int, Reserved: int,
+                           size: int, Calcsum: int, Checksum: int) -> bool:
+    fv_rsvd = Reserved == 0
+    if not fv_rsvd:
+        logger().log_hal(f'WARNING: Firmware Volume {{{FsGuid}}} header has non-zero reserved values 0b{Reserved:b}')
+
+    fv_len = FvLength <= size
+    if not fv_len:
+        logger().log_hal(f'WARNING: Firmware Volume {{{FsGuid}}} data length 0x{FvLength:X} '
+                         f'exceeds total image length 0x{size:X}')
+
     fv_header_len = (ExtHeaderOffset < FvLength) and (HeaderLength < FvLength)
+    if not fv_header_len:
+        logger().log_hal(f'WARNING: Firmware Volume {{{FsGuid}}} header length 0x{HeaderLength:X} '
+                         f'exceeds or matches volume data length 0x{FvLength:X}')
+
     if Checksum != Calcsum:
-        logger().log_hal(f'WARNING: Firmware Volume {{{FsGuid}}} checksum does not match calculated checksum')
+        logger().log_hal(f'WARNING: Firmware Volume {{{FsGuid}}} checksum 0x{Checksum:X} '
+                         f'does not match calculated checksum 0x{Calcsum:X}')
+
     return fv_rsvd and fv_len and fv_header_len
 
 
 def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional[EFI_FV]:
     fof = off if last_fv_size == 0 else off + max(last_fv_size, EFI_FIRMWARE_VOLUME_HEADER_size)
     size = len(buffer)
-    while ((fof + EFI_FIRMWARE_VOLUME_HEADER_size) < size):
+    while (fof + EFI_FIRMWARE_VOLUME_HEADER_size) < size:
         fof = bytestostring(buffer).find("_FVH", fof)
         if fof == -1 or size - fof < EFI_FIRMWARE_VOLUME_HEADER_size:
             break
@@ -340,8 +354,9 @@ def NextFwVolume(buffer: bytes, off: int = 0, last_fv_size: int = 0) -> Optional
             fvh = fvh + tail
         CalcSum = FvChecksum16(fvh)
         FsGuid = UUID(bytes_le=FileSystemGuid0)
-        if (ValidateFwVolumeHeader(ZeroVector, FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, size, CalcSum, Checksum)):
-            return EFI_FV(fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, buffer[fof:fof + FvLength], CalcSum)
+        FvImage = buffer[fof:fof + FvLength]
+        if ValidateFwVolumeHeader(FsGuid, FvLength, HeaderLength, ExtHeaderOffset, Reserved, len(FvImage), CalcSum, Checksum):
+            return EFI_FV(fof, FsGuid, FvLength, Attributes, HeaderLength, Checksum, ExtHeaderOffset, FvImage, CalcSum)
         else:
             fof += 0x2C
     return None
