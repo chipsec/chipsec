@@ -143,12 +143,14 @@ jobs:
     strategy:
       matrix:
         versions:
+          - {window: "2019", python: "3.13"}
           - {window: "2019", python: "3.11"}
           - {window: "2019", python: "3.10"}
           - {window: "2019", python: "3.9"}
           - {window: "2019", python: "3.8"}
           - {window: "2019", python: "3.7"}
           
+          - {window: "2022", python: "3.13"}
           - {window: "2022", python: "3.11"}
           - {window: "2022", python: "3.10"}
           - {window: "2022", python: "3.9"}
@@ -212,12 +214,14 @@ jobs:
     strategy:
       matrix:
         versions:
+          - {ubuntu: "22.04", python: "3.13"}
           - {ubuntu: "22.04", python: "3.11"}
           - {ubuntu: "22.04", python: "3.10"}
           - {ubuntu: "22.04", python: "3.9"}
           - {ubuntu: "22.04", python: "3.8"}
           - {ubuntu: "22.04", python: "3.7"}
 
+          - {ubuntu: "20.04", python: "3.13"}
           - {ubuntu: "20.04", python: "3.11"}
           - {ubuntu: "20.04", python: "3.10"}
           - {ubuntu: "20.04", python: "3.9"}
