@@ -1,6 +1,6 @@
 # Contributing
 
-Refer to the *Contribution Guide* section of [Chipsec Documentation](https://chipsec.github.io/).
+Refer to the *Contribution Guide* section of [CHIPSEC Documentation](https://chipsec.github.io/).
 
 ### Sign your work
 
