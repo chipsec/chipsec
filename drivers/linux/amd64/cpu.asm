@@ -40,7 +40,6 @@
  global __cpuid__
  global __swsmi__
  global __swsmi_timed__
- global __swsmi_timed_test__
 
  section .text
 
@@ -463,6 +462,8 @@ __swsmi_timed__:
     ror ax, 8
     out 0B3h, al
 
+    wbinvd
+    mfence
     ; read time-stamp counter
     mov r9, rax
     mov r11, rdx

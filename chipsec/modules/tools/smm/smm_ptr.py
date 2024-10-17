@@ -82,6 +82,7 @@ Examples:
 import struct
 import os
 import sys
+import time
 
 from chipsec.module_common import BaseModule
 from chipsec.library.returncode import ModuleResult
@@ -147,6 +148,9 @@ GPR_2ADDR = False
 # Defines the time percentage increase at which the SMI call is considered to
 # be long-running
 OUTLIER_THRESHOLD = 33.3
+
+# Scan mode delay before retry
+SCAN_MODE_RETRY_DELAY = 0.01
 
 # SMI count MSR
 MSR_SMI_COUNT = 0x00000034
@@ -262,7 +266,7 @@ class scan_track:
                 self.max.update(duration, code, data, gprs.copy())
             elif duration < self.min.duration:
                 self.min.update(duration, code, data, gprs.copy())
-        else:
+        elif self.is_slow_outlier(duration):
             self.outliers += 1
             self.outliers_hist += 1
             self.outlier.update(duration, code, data, gprs.copy())
@@ -277,12 +281,28 @@ class scan_track:
             self.acc_smi_duration = 0
             self.acc_smi_num = 0
 
-    def is_outlier(self, value):
-        self.avg()
+    def is_slow_outlier(self, value):
         ret = False
         if self.avg_smi_duration and value > self.avg_smi_duration * (1 + OUTLIER_THRESHOLD / 100):
             ret = True
         if self.hist_smi_duration and value > self.hist_smi_duration * (1 + OUTLIER_THRESHOLD / 100):
+            ret = True
+        return ret
+
+    def is_fast_outlier(self, value):
+        ret = False
+        if self.avg_smi_duration and value < self.avg_smi_duration * (1 - OUTLIER_THRESHOLD / 100):
+            ret = True
+        if self.hist_smi_duration and value < self.hist_smi_duration * (1 - OUTLIER_THRESHOLD / 100):
+            ret = True
+        return ret
+
+    def is_outlier(self, value):
+        self.avg()
+        ret = False
+        if self.is_slow_outlier(value):
+            ret = True
+        if self.is_fast_outlier(value):
             ret = True
         return ret
 
@@ -487,6 +507,7 @@ class smm_ptr(BaseModule):
             # Re-do the call if it was identified as an outlier, due to periodic SMI delays
             #
             if scan.is_outlier(duration):
+                time.sleep(SCAN_MODE_RETRY_DELAY)
                 while True:
                     _, duration = self.send_smi_timed(thread_id, _smi_desc.smi_code, _smi_desc.smi_data, _smi_desc.name, _smi_desc.desc, _rax, _rbx, _rcx, _rdx, _rsi, _rdi)
                     if scan.valid_smi_count():
