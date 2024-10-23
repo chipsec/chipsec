@@ -34,7 +34,7 @@ usage:
 Examples:
     >>> chipsec_main.py -m common.smm
 
-This module will only run on client (core) platforms that have PCI0.0.0_SMRAMC defined.
+This module will only run on client (core) platforms that have SMRAMC defined.
 """
 
 from chipsec.module_common import BaseModule, MTAG_BIOS, MTAG_SMM
@@ -48,25 +48,24 @@ class smm(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            'SMRAMC': '8086.HOSTCTL.SMRAMC',
+        })
 
     def is_supported(self) -> bool:
-        if self.cs.is_core() and self.cs.register.is_defined('PCI0.0.0_SMRAMC'):
+        if self.cs.is_core() and self.cs.register.is_defined('SMRAMC'):
             return True
-        self.logger.log("Either not a Core (client) platform or 'PCI0.0.0_SMRAMC' not defined for platform. Skipping module.")
+        self.logger.log("Either not a Core (client) platform or 'SMRAMC' not defined for platform. Skipping module.")
         return False
 
     def check_SMRAMC(self) -> int:
 
-        regval = self.cs.register.read('PCI0.0.0_SMRAMC')
-        g_smrame = self.cs.register.get_field('PCI0.0.0_SMRAMC', regval, 'G_SMRAME')
-        d_open = self.cs.register.get_field('PCI0.0.0_SMRAMC', regval, 'D_OPEN')
-        d_lock = self.cs.register.get_field('PCI0.0.0_SMRAMC', regval, 'D_LCK')
+        regval = self.cs.register.get_list_by_name('SMRAMC')
+        regval.read_and_print()
 
-        self.cs.register.print('PCI0.0.0_SMRAMC', regval)
-
-        if 1 == g_smrame:
+        if regval.is_all_field_value(1, 'G_SMRAME'):
             self.logger.log('[*] Compatible SMRAM is enabled')
-            if (1 == d_lock) and (0 == d_open):
+            if regval.is_all_field_value(1, 'D_LCK') and regval.is_all_field_value(0, 'D_OPEN'):
                 res = ModuleResult.PASSED
                 self.logger.log_passed('Compatible SMRAM is locked down')
             else:

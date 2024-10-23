@@ -58,6 +58,10 @@ class spi_access(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "HSFS": "8086.SPI.HSFS",
+            "FRAP": "8086.SPI.FRAP",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.register.has_field('HSFS', 'FDV') and self.cs.register.has_field('FRAP', 'BRWA'):
@@ -66,48 +70,50 @@ class spi_access(BaseModule):
         return False
 
     def check_flash_access_permissions(self) -> int:
+        frap_objs = self.cs.register.get_list_by_name('FRAP')
+        frap_objs.read()
+        for frap in frap_objs:
+            self.logger.log_verbose(frap)
+            fdv_obj = self.cs.register.get_instance_by_name('HSFS', frap.instance)
+            fdv = fdv_obj.read_field('FDV') == 1
+            brwa = frap.get_field('BRWA')
 
-        res = ModuleResult.PASSED
-        fdv = self.cs.register.read_field('HSFS', 'FDV') == 1
-        frap = self.cs.register.read('FRAP')
-        brwa = self.cs.register.get_field('FRAP', frap, 'BRWA')
+            if not fdv:
+                self.logger.log("[*] Flash Descriptor Valid bit is not set")
+       
+            if brwa & (1 << PLATFORM_DATA):
+                self.logger.log("[*] Software has write access to Platform Data region in SPI flash (it's platform specific)")
 
-        if not fdv:
-            self.logger.log('[*] Flash Descriptor Valid bit is not set')
+            if brwa & (1 << GBE):
+                self.update_res(ModuleResult.WARNING)
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
+                self.logger.log_warning("Software has write access to GBe region in SPI flash")
 
-        if brwa & (1 << PLATFORM_DATA):
-            self.logger.log('[*] Software has write access to Platform Data region in SPI flash (platform specific)')
+            if brwa & (1 << FLASH_DESCRIPTOR):
+                self.update_res(ModuleResult.FAILED)
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
+                self.logger.log_bad("Software has write access to SPI flash descriptor")
 
-        if brwa & (1 << GBE):
-            res = ModuleResult.WARNING
-            self.result.setStatusBit(self.result.status.ACCESS_RW)
-            self.logger.log_warning('Software has write access to GBe region in SPI flash')
+            if brwa & (1 << ME):
+                self.update_res(ModuleResult.FAILED)
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
+                self.logger.log_bad("Software has write access to Management Engine (ME) region in SPI flash")
 
-        if brwa & (1 << FLASH_DESCRIPTOR):
-            res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.ACCESS_RW)
-            self.logger.log_bad('Software has write access to SPI flash descriptor')
+            if fdv:
+                if ModuleResult.PASSED == self.res:
+                    self.logger.log_good("SPI Flash Region Access Permissions in flash descriptor look ok")
+                elif ModuleResult.FAILED == self.res:
+                    self.logger.log_failed('SPI Flash Region Access Permissions are not programmed securely in flash descriptor')
+                    self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
+                    self.logger.log_important('If using alternative protections, this can be considered a WARNING')
+                elif ModuleResult.WARNING == self.res:
+                    self.logger.log_warning("Certain SPI flash regions are writeable by software")
+            else:
+                self.update_res(ModuleResult.WARNING)
+                self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
+                self.logger.log_warning("Either flash descriptor is not valid or not present on this system")
 
-        if brwa & (1 << ME):
-            res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.ACCESS_RW)
-            self.logger.log_bad('Software has write access to Management Engine (ME) region in SPI flash')
-
-        if fdv:
-            if ModuleResult.PASSED == res:
-                self.logger.log_passed('SPI Flash Region Access Permissions in flash descriptor look ok')
-            elif ModuleResult.FAILED == res:
-                self.logger.log_failed('SPI Flash Region Access Permissions are not programmed securely in flash descriptor')
-                self.logger.log_important('System may be using alternative protection by including descriptor region in SPI Protected Range Registers')
-                self.logger.log_important('If using alternative protections, this can be considered a WARNING')
-            elif ModuleResult.WARNING == res:
-                self.logger.log_warning('Certain SPI flash regions are writeable by software')
-        else:
-            res = ModuleResult.WARNING
-            self.result.setStatusBit(self.result.status.UNSUPPORTED_FEATURE)
-            self.logger.log_warning('Either flash descriptor is not valid or not present on this system')
-
-        return self.result.getReturnCode(res)
+        return self.result.getReturnCode(self.res)
 
     def run(self, module_argv: List[str]) -> int:
         self.logger.start_test('SPI Flash Region Access Control')

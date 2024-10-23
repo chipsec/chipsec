@@ -52,6 +52,9 @@ class spi_desc(BaseModule):
 
     def __init__(self):
         BaseModule.__init__(self)
+        self.cs.set_scope({
+            "FRAP": "8086.SPI.FRAP",
+        })
 
     def is_supported(self) -> bool:
         if self.cs.register.has_all_fields('FRAP', ['BRRA', 'BRWA']):
@@ -62,16 +65,17 @@ class spi_desc(BaseModule):
     def check_flash_access_permissions(self) -> int:
 
         res = ModuleResult.PASSED
-        frap = self.cs.register.read('FRAP')
-        self.cs.register.print('FRAP', frap)
-        brra = self.cs.register.get_field('FRAP', frap, 'BRRA')
-        brwa = self.cs.register.get_field('FRAP', frap, 'BRWA')
+        frap_registers = self.cs.register.get_list_by_name('FRAP')
+        frap_registers.read_and_print()
+        for frap in frap_registers:
+            brra = frap.get_field('BRRA')
+            brwa = frap.get_field('BRWA')
 
-        self.logger.log(f'[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}')
-        if brwa & (1 << FLASH_DESCRIPTOR):
-            res = ModuleResult.FAILED
-            self.result.setStatusBit(self.result.status.ACCESS_RW)
-            self.logger.log_bad('Software has write access to SPI flash descriptor')
+            self.logger.log(f'[*] Software access to SPI flash regions: read = 0x{brra:02X}, write = 0x{brwa:02X}')
+            if brwa & (1 << FLASH_DESCRIPTOR):
+                res = ModuleResult.FAILED
+                self.result.setStatusBit(self.result.status.ACCESS_RW)
+                self.logger.log_bad('Software has write access to SPI flash descriptor')
 
         self.logger.log('')
         if ModuleResult.PASSED == res:
